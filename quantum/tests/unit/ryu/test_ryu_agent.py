@@ -93,7 +93,7 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
         ])
 
         # OFPClient
-        self.mod_agent.client.OFPClient.assert_calls([
+        self.mod_agent.client.OFPClient.assert_has_calls([
             mock.call('192.168.0.1:8080')
         ])
 
@@ -114,7 +114,7 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
         ])
 
         # OVSBridge
-        self.ovsbridge.return_value.set_manager.assert_calls([
+        self.ovsbridge.return_value.set_manager.assert_has_calls([
             mock.call('ptcp:%d' % 16634)
         ])
 
@@ -135,7 +135,7 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
             self.mock_port_update(port=port)
 
         get_vif.assert_called_once_with(1)
-        self.sg_agent.assert_calls([
+        self.sg_agent.assert_has_calls([
             mock.call().refresh_firewall()
         ])
 
@@ -191,7 +191,7 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
 
         self.mock_process_devices_filter(port_info)
 
-        self.sg_agent.assert_calls([
+        self.sg_agent.assert_has_calls([
             mock.call().prepare_devices_filter(1)
         ])
 
@@ -200,7 +200,7 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
 
         self.mock_process_devices_filter(port_info)
 
-        self.sg_agent.assert_calls([
+        self.sg_agent.assert_has_calls([
             mock.call().remove_devices_filter(2)
         ])
 
@@ -209,7 +209,7 @@ class TestOVSQuantumOFPRyuAgent(RyuAgentTestCase):
 
         self.mock_process_devices_filter(port_info)
 
-        self.sg_agent.assert_calls([
+        self.sg_agent.assert_has_calls([
             mock.call().prepare_devices_filter(1),
             mock.call().remove_devices_filter(2)
         ])
@@ -237,10 +237,10 @@ class TestRyuPluginApi(RyuAgentTestCase):
             addr = api.get_ofp_rest_api_addr('context')
 
         self.assertEqual(addr, '10.0.0.1')
-        mock_msg.assert_calls([
+        mock_msg.assert_has_calls([
             mock.call('get_ofp_rest_api')
         ])
-        mock_call.assert_calls([
+        mock_call.assert_has_calls([
             mock.call('context', 'msg', topic='topics')
         ])
 
@@ -286,7 +286,7 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             br.find_datapath_id()
 
-        mock_get_dpid.assert_calls([
+        mock_get_dpid.assert_has_calls([
             mock.call()
         ])
         self.assertEqual(br.datapath_id, '1234')
@@ -297,7 +297,7 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             br.set_manager('target')
 
-        mock_vsctl.assert_calls([
+        mock_vsctl.assert_has_calls([
             mock.call(['set-manager', 'target'])
         ])
 
@@ -308,7 +308,7 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             ofport = br.get_ofport('name')
 
-        mock_db.assert_calls([
+        mock_db.assert_has_calls([
             mock.call('Interface', 'name', 'ofport')
         ])
         self.assertEqual(ofport, 1)
@@ -324,14 +324,14 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             ports = br._get_ports(get_port)
 
-        mock_name.assert_calls([
+        mock_name.assert_has_calls([
             mock.call()
         ])
-        mock_ofport.assert_calls([
+        mock_ofport.assert_has_calls([
             mock.call('p1'),
             mock.call('p2')
         ])
-        get_port.assert_calls([
+        get_port.assert_has_calls([
             mock.call('p1'),
             mock.call('p2')
         ])
@@ -349,7 +349,7 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             ports = br._get_ports(get_port)
 
-        mock_name.assert_calls([
+        mock_name.assert_has_calls([
             mock.call()
         ])
         self.assertEqual(mock_ofport.call_count, 0)
@@ -367,14 +367,14 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             ports = br._get_ports(get_port)
 
-        mock_name.assert_calls([
+        mock_name.assert_has_calls([
             mock.call()
         ])
-        mock_ofport.assert_calls([
+        mock_ofport.assert_has_calls([
             mock.call('p1'),
             mock.call('p2')
         ])
-        get_port.assert_calls([
+        get_port.assert_has_calls([
             mock.call('p2')
         ])
         self.assertEqual(len(ports), 1)
@@ -391,14 +391,14 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             ports = br._get_ports(get_port)
 
-        mock_name.assert_calls([
+        mock_name.assert_has_calls([
             mock.call()
         ])
-        mock_ofport.assert_calls([
+        mock_ofport.assert_has_calls([
             mock.call('p1'),
             mock.call('p2')
         ])
-        get_port.assert_calls([
+        get_port.assert_has_calls([
             mock.call('p1'),
             mock.call('p2')
         ])
@@ -416,14 +416,14 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             vifport = br._get_external_port('iface')
 
-        mock_db.assert_calls([
+        mock_db.assert_has_calls([
             mock.call('Interface', 'iface', 'external_ids'),
             mock.call('Interface', 'iface', 'options'),
         ])
-        mock_ofport.assert_calls([
+        mock_ofport.assert_has_calls([
             mock.call('iface')
         ])
-        mock_vif.assert_calls([
+        mock_vif.assert_has_calls([
             mock.call('iface', 1, None, None, br)
         ])
         self.assertEqual(vifport, mock_vif.return_value)
@@ -440,7 +440,7 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             vifport = br._get_external_port('iface')
 
-        mock_db.assert_calls([
+        mock_db.assert_has_calls([
             mock.call('Interface', 'iface', 'external_ids'),
         ])
         self.assertEqual(mock_ofport.call_count, 0)
@@ -458,7 +458,7 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             vifport = br._get_external_port('iface')
 
-        mock_db.assert_calls([
+        mock_db.assert_has_calls([
             mock.call('Interface', 'iface', 'external_ids'),
             mock.call('Interface', 'iface', 'options'),
         ])
@@ -474,7 +474,7 @@ class TestOVSBridge(RyuAgentTestCase):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             br.get_external_ports()
 
-        mock_port.assert_calls([
+        mock_port.assert_has_calls([
             mock.call(mock_extport)
         ])
 
@@ -489,12 +489,12 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         self.assertEqual(addr, '1.2.3.4')
 
     def test_get_ip_ip(self):
-        cfg_attrs = {'cfg_ip': '1.2.3.4',
-                     'cfg_iface': 'eth0'}
+        cfg_attrs = {'CONF.OVS.cfg_ip': '1.2.3.4',
+                     'CONF.OVS.cfg_iface': 'eth0'}
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
@@ -506,31 +506,31 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         self.assertEqual(ip, '1.2.3.4')
 
     def test_get_ip_iface(self):
-        cfg_attrs = {'cfg_ip': None,
-                     'cfg_iface': 'eth0'}
+        cfg_attrs = {'CONF.OVS.cfg_ip': None,
+                     'CONF.OVS.cfg_iface': 'eth0'}
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
         ) as (_cfg, mock_netifs, mock_myip):
             ip = self.mod_agent._get_ip('cfg_ip', 'cfg_iface')
 
-        mock_netifs.ifaddresses.assert_calls([
+        mock_netifs.ifaddresses.assert_has_calls([
             mock.call('eth0')
         ])
         self.assertEqual(mock_myip.call_count, 0)
         self.assertEqual(ip, '10.0.0.1')
 
     def test_get_ip_myip(self):
-        cfg_attrs = {'cfg_ip': None,
-                     'cfg_iface': None}
+        cfg_attrs = {'CONF.OVS.cfg_ip': None,
+                     'CONF.OVS.cfg_iface': None}
         netifs_attrs = {'AF_INET': 0,
                         'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
-            mock.patch('oslo.config.cfg.CONF.OVS', **cfg_attrs),
+            mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
@@ -538,7 +538,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
             ip = self.mod_agent._get_ip('cfg_ip', 'cfg_iface')
 
         self.assertEqual(mock_netifs.ifaddresses.call_count, 0)
-        mock_myip.assert_calls([
+        mock_myip.assert_has_calls([
             mock.call()
         ])
         self.assertEqual(ip, '172.16.0.1')
@@ -548,7 +548,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
                         return_value='1.2.3.4') as mock_getip:
             ip = self.mod_agent._get_tunnel_ip()
 
-        mock_getip.assert_calls([
+        mock_getip.assert_has_calls([
             mock.call('tunnel_ip', 'tunnel_interface')
         ])
         self.assertEqual(ip, '1.2.3.4')
@@ -558,17 +558,18 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
                         return_value='1.2.3.4') as mock_getip:
             ip = self.mod_agent._get_ovsdb_ip()
 
-        mock_getip.assert_calls([
+        mock_getip.assert_has_calls([
             mock.call('ovsdb_ip', 'ovsdb_interface')
         ])
         self.assertEqual(ip, '1.2.3.4')
 
     def mock_main(self):
-        cfg_attrs = {'OVS.integration_bridge': 'integ_br',
-                     'OVS.ovsdb_port': 16634,
-                     'AGENT.root_helper': 'helper'}
+        cfg_attrs = {'CONF.OVS.integration_bridge': 'integ_br',
+                     'CONF.OVS.ovsdb_port': 16634,
+                     'CONF.AGENT.polling_interval': 2,
+                     'CONF.AGENT.root_helper': 'helper'}
         with nested(
-            mock.patch('oslo.config.cfg.CONF', **cfg_attrs),
+            mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.logging_config'),
             mock.patch(self._AGENT_NAME + '._get_tunnel_ip',
                        return_value='10.0.0.1'),
@@ -577,7 +578,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         ) as (mock_conf, mock_log_conf, _tun, _ovsdb):
             self.mod_agent.main()
 
-        mock_log_conf.assert_calls([
+        mock_log_conf.assert_has_calls([
             mock.call(mock_conf)
         ])
 
@@ -587,7 +588,7 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
                         **agent_attrs) as mock_agent:
             self.assertRaises(SystemExit, self.mock_main)
 
-        mock_agent.assert_calls([
+        mock_agent.assert_has_calls([
             mock.call('integ_br', '10.0.0.1', '172.16.0.1', 16634, 2,
                       'helper'),
             mock.call().daemon_loop()
@@ -601,10 +602,10 @@ class TestRyuQuantumAgent(RyuAgentTestCase):
         ) as (mock_agent, mock_exit):
             self.assertRaises(SystemExit, self.mock_main)
 
-        mock_agent.assert_calls([
+        mock_agent.assert_has_calls([
             mock.call('integ_br', '10.0.0.1', '172.16.0.1', 16634, 2,
                       'helper')
         ])
-        mock_exit.assert_calls([
+        mock_exit.assert_has_calls([
             mock.call(1)
         ])
