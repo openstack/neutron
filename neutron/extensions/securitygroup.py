@@ -39,6 +39,11 @@ class SecurityGroupInvalidPortValue(qexception.InvalidInput):
     message = _("Invalid value for port %(port)s")
 
 
+class SecurityGroupInvalidIcmpValue(qexception.InvalidInput):
+    message = _("Invalid value for ICMP %(field)s (%(attr)s) "
+                "%(value)s. It must be 0 to 255.")
+
+
 class SecurityGroupInUse(qexception.InUse):
     message = _("Security Group %(id)s in use.")
 

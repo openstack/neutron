@@ -22,11 +22,17 @@ from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
 
 from neutron.api.v2 import attributes as attr
+from neutron.common import constants
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import uuidutils
+
+
+IP_PROTOCOL_MAP = {'tcp': constants.TCP_PROTOCOL,
+                   'udp': constants.UDP_PROTOCOL,
+                   'icmp': constants.ICMP_PROTOCOL}
 
 
 class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -284,6 +290,32 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         return self.create_security_group_rule_bulk_native(context,
                                                            bulk_rule)[0]
 
+    def _get_ip_proto_number(self, protocol):
+        if protocol is None:
+            return
+        return IP_PROTOCOL_MAP.get(protocol, protocol)
+
+    def _validate_port_range(self, rule):
+        """Check that port_range is valid."""
+        if (rule['port_range_min'] is None and
+            rule['port_range_max'] is None):
+            return
+        if not rule['protocol']:
+            raise ext_sg.SecurityGroupProtocolRequiredWithPorts()
+        ip_proto = self._get_ip_proto_number(rule['protocol'])
+        if ip_proto in [constants.TCP_PROTOCOL, constants.UDP_PROTOCOL]:
+            if (rule['port_range_min'] is not None and
+                rule['port_range_min'] <= rule['port_range_max']):
+                pass
+            else:
+                raise ext_sg.SecurityGroupInvalidPortRange()
+        elif ip_proto == constants.ICMP_PROTOCOL:
+            for attr, field in [('port_range_min', 'type'),
+                                ('port_range_max', 'code')]:
+                if rule[attr] > 255:
+                    raise ext_sg.SecurityGroupInvalidIcmpValue(
+                        field=field, attr=attr, value=rule[attr])
+
     def _validate_security_group_rules(self, context, security_group_rule):
         """Check that rules being installed.
 
@@ -297,16 +329,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             rule = rules.get('security_group_rule')
             new_rules.add(rule['security_group_id'])
 
-            # Check that port_range's are valid
-            if (rule['port_range_min'] is None and
-                rule['port_range_max'] is None):
-                pass
-            elif (rule['port_range_min'] is not None and
-                  rule['port_range_min'] <= rule['port_range_max']):
-                if not rule['protocol']:
-                    raise ext_sg.SecurityGroupProtocolRequiredWithPorts()
-            else:
-                raise ext_sg.SecurityGroupInvalidPortRange()
+            self._validate_port_range(rule)
 
             if rule['remote_ip_prefix'] and rule['remote_group_id']:
                 raise ext_sg.SecurityGroupRemoteGroupAndRemoteIpPrefix()
