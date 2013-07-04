@@ -567,3 +567,49 @@ class IptablesManager(object):
             remove_rules.remove(rule)
 
         return new_filter
+
+    def _get_traffic_counters_cmd_tables(self, chain, wrap=True):
+        name = get_chain_name(chain, wrap)
+
+        cmd_tables = [('iptables', key) for key, table in self.ipv4.items()
+                      if name in table._select_chain_set(wrap)]
+
+        cmd_tables += [('ip6tables', key) for key, table in self.ipv6.items()
+                       if name in table._select_chain_set(wrap)]
+
+        return cmd_tables
+
+    def get_traffic_counters(self, chain, wrap=True, zero=False):
+        """Return the sum of the traffic counters of all rules of a chain."""
+        cmd_tables = self._get_traffic_counters_cmd_tables(chain, wrap)
+        if not cmd_tables:
+            LOG.warn(_('Attempted to get traffic counters of chain %s which '
+                       'does not exist'), chain)
+            return
+
+        name = get_chain_name(chain, wrap)
+        acc = {'pkts': 0, 'bytes': 0}
+
+        for cmd, table in cmd_tables:
+            args = [cmd, '-t', table, '-L', name, '-n', '-v', '-x']
+            if zero:
+                args.append('-Z')
+            if self.namespace:
+                args = ['ip', 'netns', 'exec', self.namespace] + args
+            current_table = (self.execute(args,
+                             root_helper=self.root_helper))
+            current_lines = current_table.split('\n')
+
+            for line in current_lines[2:]:
+                if not line:
+                    break
+                data = line.split()
+                if (len(data) < 2 or
+                        not data[0].isdigit() or
+                        not data[1].isdigit()):
+                    break
+
+                acc['pkts'] += int(data[0])
+                acc['bytes'] += int(data[1])
+
+        return acc
