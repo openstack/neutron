@@ -554,7 +554,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2,
         # network or the broadcast address
         if (ip != net.network and
                 ip != net.broadcast and
-                net.netmask & ip == net.ip):
+                net.netmask & ip == net.network):
             return True
         return False
 
