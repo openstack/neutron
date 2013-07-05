@@ -34,6 +34,7 @@ class NECPluginV2Base(db_base_plugin_v2.NeutronDbPluginV2):
 
     def _make_packet_filter_dict(self, packet_filter, fields=None):
         res = {'id': packet_filter['id'],
+               'name': packet_filter['name'],
                'tenant_id': packet_filter['tenant_id'],
                'network_id': packet_filter['network_id'],
                'action': packet_filter['action'],
@@ -81,6 +82,7 @@ class NECPluginV2Base(db_base_plugin_v2.NeutronDbPluginV2):
 
         params = {'tenant_id': tenant_id,
                   'id': pf.get('id') or uuidutils.generate_uuid(),
+                  'name': pf['name'],
                   'network_id': pf['network_id'],
                   'priority': pf['priority'],
                   'action': pf['action'],
