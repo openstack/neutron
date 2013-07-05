@@ -475,3 +475,7 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                                                     (router1, router2,
                                                      router3),
                                                     ('name', 'asc'), 2, 2)
+
+
+class ExtraRouteDBTestCaseXML(ExtraRouteDBTestCase):
+    fmt = 'xml'
