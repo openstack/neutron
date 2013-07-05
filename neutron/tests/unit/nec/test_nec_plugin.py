@@ -13,38 +13,81 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+import fixtures
 import mock
 
+from neutron.common.test_lib import test_config
 from neutron.common import topics
-from neutron import context as q_context
+from neutron import context
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec import nec_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
+from neutron.tests.unit.nec import fake_ofc_manager
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
 PLUGIN_NAME = 'neutron.plugins.nec.nec_plugin.NECPluginV2'
-OFC_MANAGER = 'neutron.plugins.nec.nec_plugin.ofc_manager.OFCManager'
-OFC_DRIVER = 'neutron.tests.unit.nec.stub_ofc_driver.StubOFCDriver'
+NEC_PLUGIN_INI = """
+[DEFAULT]
+api_extensions_path = neutron/plugins/nec/extensions
+[OFC]
+driver = neutron.tests.unit.nec.stub_ofc_driver.StubOFCDriver
+enable_packet_filter = False
+"""
 
 
 class NecPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     _plugin_name = PLUGIN_NAME
-    PACKET_FILTER_ENABLE = False
+    _nec_ini = NEC_PLUGIN_INI
+
+    def _set_nec_ini(self):
+        self.nec_ini_file = self.useFixture(fixtures.TempDir()).join("nec.ini")
+        with open(self.nec_ini_file, 'w') as f:
+            f.write(self._nec_ini)
+        if 'config_files' in test_config.keys():
+            for c in test_config['config_files']:
+                if c.rfind("/nec.ini") > -1:
+                    test_config['config_files'].remove(c)
+            test_config['config_files'].append(self.nec_ini_file)
+        else:
+            test_config['config_files'] = [self.nec_ini_file]
+
+    def _clean_nec_ini(self):
+        test_config['config_files'].remove(self.nec_ini_file)
+        os.remove(self.nec_ini_file)
+        self.nec_ini_file = None
+
+    def rpcapi_update_ports(self, agent_id='nec-q-agent.fake',
+                            datapath_id="0xabc", added=[], removed=[]):
+        kwargs = {'topic': topics.AGENT,
+                  'agent_id': agent_id,
+                  'datapath_id': datapath_id,
+                  'port_added': added, 'port_removed': removed}
+        self.callback_nec.update_ports(self.context, **kwargs)
 
     def setUp(self):
         self.addCleanup(mock.patch.stopall)
-        ofc_manager_cls = mock.patch(OFC_MANAGER).start()
-        ofc_driver = ofc_manager_cls.return_value.driver
-        ofc_driver.filter_supported.return_value = self.PACKET_FILTER_ENABLE
+
+        self._set_nec_ini()
         super(NecPluginV2TestCase, self).setUp(self._plugin_name)
-        self.context = q_context.get_admin_context()
+        # NOTE: `test_config' is global, and most tests don't set
+        # test_config['config_files'] but read this in setUp().
+        # So clean test_config['config_files'] ASAP, to avoid side effects
+        # on other tests which are running at the same time.
+        self._clean_nec_ini()
+
         self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin.ofc = fake_ofc_manager.patch_ofc_manager()
+        self.ofc = self.plugin.ofc
+        self.callback_nec = nec_plugin.NECPluginV2RPCCallbacks(self.plugin)
+        self.context = context.get_admin_context()
 
 
 class TestNecBasicGet(test_plugin.TestBasicGet, NecPluginV2TestCase):
@@ -84,36 +127,6 @@ class TestNecPortBindingNoSG(TestNecPortBinding):
 
 class TestNecPortsV2Callback(NecPluginV2TestCase):
 
-    def setUp(self):
-        super(TestNecPortsV2Callback, self).setUp()
-        self.callbacks = nec_plugin.NECPluginV2RPCCallbacks(self.plugin)
-
-        self.ofc = self.plugin.ofc
-        self.ofc_port_exists = False
-        self._setup_side_effects()
-
-    def _setup_side_effects(self):
-        def _create_ofc_port_called(*args, **kwargs):
-            self.ofc_port_exists = True
-
-        def _delete_ofc_port_called(*args, **kwargs):
-            self.ofc_port_exists = False
-
-        def _exists_ofc_port_called(*args, **kwargs):
-            return self.ofc_port_exists
-
-        self.ofc.create_ofc_port.side_effect = _create_ofc_port_called
-        self.ofc.delete_ofc_port.side_effect = _delete_ofc_port_called
-        self.ofc.exists_ofc_port.side_effect = _exists_ofc_port_called
-
-    def _rpcapi_update_ports(self, agent_id='nec-q-agent.fake',
-                             datapath_id="0xabc", added=[], removed=[]):
-        kwargs = {'topic': topics.AGENT,
-                  'agent_id': agent_id,
-                  'datapath_id': datapath_id,
-                  'port_added': added, 'port_removed': removed}
-        self.callbacks.update_ports(self.context, **kwargs)
-
     def _get_portinfo(self, port_id):
         return ndb.get_portinfo(self.context.session, port_id)
 
@@ -126,7 +139,7 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             self.assertIsNone(self._get_portinfo(port_id))
 
             portinfo = {'id': port_id, 'port_no': 123}
-            self._rpcapi_update_ports(added=[portinfo])
+            self.rpcapi_update_ports(added=[portinfo])
 
             sport = self.plugin.get_port(self.context, port_id)
             self.assertEqual(sport['status'], 'ACTIVE')
@@ -152,14 +165,14 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             self.assertEqual(self.ofc.create_ofc_port.call_count, 0)
             self.assertIsNone(self._get_portinfo(port_id))
 
-            self._rpcapi_update_ports(added=[portinfo])
+            self.rpcapi_update_ports(added=[portinfo])
             self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 0)
             self.assertIsNotNone(self._get_portinfo(port_id))
 
             # Before port-deletion, switch port removed message is sent.
             if portinfo_delete_first:
-                self._rpcapi_update_ports(removed=[port_id])
+                self.rpcapi_update_ports(removed=[port_id])
                 self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
                 self.assertIsNone(self._get_portinfo(port_id))
 
@@ -167,7 +180,7 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
         if not portinfo_delete_first:
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
             self.assertIsNotNone(self._get_portinfo(port_id))
-            self._rpcapi_update_ports(removed=[port_id])
+            self.rpcapi_update_ports(removed=[port_id])
 
         # Ensure port deletion is called once.
         self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
@@ -183,7 +196,7 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
 
     def test_portinfo_added_unknown_port(self):
         portinfo = {'id': 'dummy-p1', 'port_no': 123}
-        self._rpcapi_update_ports(added=[portinfo])
+        self.rpcapi_update_ports(added=[portinfo])
         self.assertIsNotNone(ndb.get_portinfo(self.context.session,
                                               'dummy-p1'))
         self.assertEqual(self.ofc.exists_ofc_port.call_count, 0)
@@ -195,7 +208,7 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             self.assertEqual(self.ofc.create_ofc_port.call_count, 0)
 
             portinfo = {'id': port_id, 'port_no': 123}
-            self._rpcapi_update_ports(added=[portinfo])
+            self.rpcapi_update_ports(added=[portinfo])
             self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 0)
             self.assertEqual(ndb.get_portinfo(self.context.session,
@@ -203,7 +216,7 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
 
             if portinfo_change_first:
                 portinfo = {'id': port_id, 'port_no': 456}
-                self._rpcapi_update_ports(added=[portinfo])
+                self.rpcapi_update_ports(added=[portinfo])
                 # OFC port is recreated.
                 self.assertEqual(self.ofc.create_ofc_port.call_count, 2)
                 self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
@@ -216,7 +229,7 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
 
             portinfo = {'id': port_id, 'port_no': 456}
-            self._rpcapi_update_ports(added=[portinfo])
+            self.rpcapi_update_ports(added=[portinfo])
             # No OFC operations are expected.
             self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
@@ -239,22 +252,22 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             self.assertEqual(sport['status'], 'DOWN')
 
             portinfo_a = {'id': port_id, 'port_no': port_no_a}
-            self._rpcapi_update_ports(agent_id=agent_id_a,
-                                      datapath_id=datapath_id_a,
-                                      added=[portinfo_a])
+            self.rpcapi_update_ports(agent_id=agent_id_a,
+                                     datapath_id=datapath_id_a,
+                                     added=[portinfo_a])
 
             portinfo_b = {'id': port_id, 'port_no': port_no_b}
-            self._rpcapi_update_ports(agent_id=agent_id_b,
-                                      datapath_id=datapath_id_b,
-                                      added=[portinfo_b])
+            self.rpcapi_update_ports(agent_id=agent_id_b,
+                                     datapath_id=datapath_id_b,
+                                     added=[portinfo_b])
 
-            self._rpcapi_update_ports(agent_id=agent_id_a,
-                                      datapath_id=datapath_id_a,
-                                      removed=[port_id])
+            self.rpcapi_update_ports(agent_id=agent_id_a,
+                                     datapath_id=datapath_id_a,
+                                     removed=[port_id])
 
             sport = self.plugin.get_port(self.context, port_id)
             self.assertEqual(sport['status'], 'ACTIVE')
-            self.assertTrue(self.ofc_port_exists)
+            self.assertTrue(self.ofc.ofc_ports[port_id])
 
             expected = [
                 mock.call.exists_ofc_port(mock.ANY, port_id),
@@ -321,7 +334,6 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         return res.status_int
 
     def test_create_network(self):
-        self.ofc.exists_ofc_tenant.return_value = False
         net = None
         ctx = mock.ANY
         with self.network() as network:
@@ -339,7 +351,6 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         self.ofc.assert_has_calls(expected)
 
     def test_create_network_with_admin_state_down(self):
-        self.ofc.exists_ofc_tenant.return_value = False
         net = None
         ctx = mock.ANY
         with self.network(admin_state_up=False) as network:
@@ -356,7 +367,6 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         self.ofc.assert_has_calls(expected)
 
     def test_create_two_network(self):
-        self.ofc.exists_ofc_tenant.side_effect = [False, True]
         nets = []
         ctx = mock.ANY
         with self.network() as net1:
@@ -381,28 +391,29 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         self.ofc.assert_has_calls(expected)
 
     def test_create_network_fail(self):
-        self.ofc.exists_ofc_tenant.return_value = False
         self.ofc.create_ofc_network.side_effect = nexc.OFCException(
             reason='hoge')
 
         net = None
         ctx = mock.ANY
-        with self.network() as network:
+        # NOTE: We don't delete network through api, but db will be cleaned in
+        # tearDown(). When OFCManager has failed to create a network on OFC,
+        # it does not keeps ofc_network entry and will fail to delete this
+        # network from OFC. Deletion of network is not the scope of this test.
+        with self.network(do_delete=False) as network:
             net = network['network']
+            net_ref = self._show('networks', net['id'])
+            self.assertEqual(net_ref['network']['status'], 'ERROR')
 
         expected = [
             mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.create_ofc_tenant(ctx, self._tenant_id),
             mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
-                                         net['name']),
-            mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
-            mock.call.delete_ofc_tenant(ctx, self._tenant_id)
+                                         net['name'])
         ]
         self.ofc.assert_has_calls(expected)
 
     def test_update_network(self):
-        self.ofc.exists_ofc_tenant.return_value = False
-
         net = None
         ctx = mock.ANY
         with self.network() as network:
@@ -429,18 +440,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         ]
         self.ofc.assert_has_calls(expected)
 
-    def _rpcapi_update_ports(self, agent_id='nec-q-agent.fake',
-                             datapath_id="0xabc", added=[], removed=[]):
-        kwargs = {'topic': topics.AGENT,
-                  'agent_id': agent_id,
-                  'datapath_id': datapath_id,
-                  'port_added': added, 'port_removed': removed}
-        self.plugin.callback_nec.update_ports(self.context, **kwargs)
-
     def test_create_port_no_ofc_creation(self):
-        self.ofc.exists_ofc_tenant.return_value = False
-        self.ofc.exists_ofc_port.return_value = False
-
         net = None
         p1 = None
         ctx = mock.ANY
@@ -465,9 +465,6 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         self.ofc.assert_has_calls(expected)
 
     def test_create_port_with_ofc_creation(self):
-        self.ofc.exists_ofc_tenant.return_value = False
-        self.ofc.exists_ofc_port.side_effect = [False, True]
-
         net = None
         p1 = None
         ctx = mock.ANY
@@ -484,7 +481,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
 
                 # Register portinfo, then the port is created on OFC
                 portinfo = {'id': p1['id'], 'port_no': 123}
-                self._rpcapi_update_ports(added=[portinfo])
+                self.rpcapi_update_ports(added=[portinfo])
                 self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
 
         expected = [
@@ -504,9 +501,6 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         self.ofc.assert_has_calls(expected)
 
     def test_delete_network_with_dhcp_port(self):
-        self.ofc.exists_ofc_tenant.return_value = False
-        self.ofc.exists_ofc_port.side_effect = [False, True]
-
         ctx = mock.ANY
         with self.network() as network:
             with self.subnet(network=network):
@@ -518,7 +512,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
                                            'device_id': 'dhcp-port1'})
                 # Make sure that the port is created on OFC.
                 portinfo = {'id': p['id'], 'port_no': 123}
-                self._rpcapi_update_ports(added=[portinfo])
+                self.rpcapi_update_ports(added=[portinfo])
                 # In a case of dhcp port, the port is deleted automatically
                 # when delete_network.
 
@@ -543,9 +537,6 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         self._test_update_port_with_admin_state(resource='network')
 
     def _test_update_port_with_admin_state(self, resource='port'):
-        self.ofc.exists_ofc_tenant.return_value = False
-        self.ofc.exists_ofc_port.side_effect = [False, True, False]
-
         net = None
         p1 = None
         ctx = mock.ANY
@@ -572,7 +563,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
 
                     # Register portinfo, then the port is created on OFC
                     portinfo = {'id': p1['id'], 'port_no': 123}
-                    self._rpcapi_update_ports(added=[portinfo])
+                    self.rpcapi_update_ports(added=[portinfo])
                     self.assertFalse(self.ofc.create_ofc_port.call_count)
 
                     self._update_resource(resource, res_id,
