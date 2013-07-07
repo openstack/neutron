@@ -42,8 +42,8 @@ def parse_service_provider_opt():
     """Parse service definition opts and returns result."""
     def validate_name(name):
         if len(name) > 255:
-            raise n_exc.Invalid("Provider name is limited by 255 characters:"
-                                " %s" % name)
+            raise n_exc.Invalid(
+                _("Provider name is limited by 255 characters: %s") % name)
 
     svc_providers_opt = cfg.CONF.service_providers.service_provider
     res = []
@@ -79,14 +79,19 @@ def parse_service_provider_opt():
     return res
 
 
-class ServiceProviderNotFound(n_exc.NotFound):
-    message = _("Service provider could not be found "
+class ServiceProviderNotFound(n_exc.InvalidInput):
+    message = _("Service provider '%(provider)s' could not be found "
                 "for service type %(service_type)s")
 
 
-class DefaultServiceProviderNotFound(ServiceProviderNotFound):
+class DefaultServiceProviderNotFound(n_exc.InvalidInput):
     message = _("Service type %(service_type)s does not have a default "
                 "service provider")
+
+
+class ServiceProviderAlreadyAssociated(n_exc.Conflict):
+    message = _("Resource '%(resource_id)s' is already associated with "
+                "provider '%(provider)s' for service type '%(service_type)s'")
 
 
 class ProviderConfiguration(object):

@@ -354,11 +354,5 @@ class HaproxyOnHostPluginDriver(abstract_driver.LoadBalancerAbstractDriver):
         agent = self.get_pool_agent(context, pool_id)
         self.agent_rpc.modify_pool(context, pool_id, agent['host'])
 
-    def create_health_monitor(self, context, health_monitor):
-        pass
-
-    def delete_health_monitor(self, context, health_monitor):
-        self.plugin._delete_db_health_monitor(context, health_monitor["id"])
-
     def stats(self, context, pool_id):
         pass

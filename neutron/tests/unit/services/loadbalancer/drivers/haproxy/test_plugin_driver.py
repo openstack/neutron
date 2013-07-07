@@ -21,6 +21,7 @@ import mock
 from neutron.common import exceptions
 from neutron import context
 from neutron.db.loadbalancer import loadbalancer_db as ldb
+from neutron.db import servicetype_db as st_db
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
@@ -35,8 +36,12 @@ class TestLoadBalancerPluginBase(
     test_db_loadbalancer.LoadBalancerPluginDbTestCase):
 
     def setUp(self):
-        super(TestLoadBalancerPluginBase, self).setUp()
-
+        # needed to reload provider configuration
+        st_db.ServiceTypeManager._instance = None
+        super(TestLoadBalancerPluginBase, self).setUp(
+            lbaas_provider=('LOADBALANCER:lbaas:neutron.services.'
+                            'loadbalancer.drivers.haproxy.plugin_driver.'
+                            'HaproxyOnHostPluginDriver:default'))
         # create another API instance to make testing easier
         # pass a mock to our API instance
 
@@ -328,6 +333,13 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                    '.plugin_driver.HaproxyOnHostPluginDriver'
                    '.create_pool').start()
 
+        self.mock_get_driver = mock.patch.object(self.plugin_instance,
+                                                 '_get_driver')
+        self.mock_get_driver.return_value = (plugin_driver.
+                                             HaproxyOnHostPluginDriver(
+                                                 self.plugin_instance
+                                             ))
+
         self.addCleanup(mock.patch.stopall)
 
     def test_create_vip(self):
@@ -387,6 +399,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
         with self.pool() as pool:
             pool['pool']['status'] = 'INACTIVE'
             ctx = context.get_admin_context()
+            del pool['pool']['provider']
             self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
             self.mock_api.destroy_pool.assert_called_once_with(
                 mock.ANY, pool['pool']['id'], 'host')
@@ -396,6 +409,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
     def test_update_pool_no_vip_id(self):
         with self.pool() as pool:
             ctx = context.get_admin_context()
+            del pool['pool']['provider']
             self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
             self.assertFalse(self.mock_api.destroy_pool.called)
             self.assertFalse(self.mock_api.reload_pool.called)
@@ -405,6 +419,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
         with self.pool() as pool:
             with self.vip(pool=pool):
                 ctx = context.get_admin_context()
+                del pool['pool']['provider']
                 self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
                 self.mock_api.reload_pool.assert_called_once_with(
                     mock.ANY, pool['pool']['id'], 'host')

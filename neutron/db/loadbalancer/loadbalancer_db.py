@@ -25,6 +25,7 @@ from neutron.common import exceptions as q_exc
 from neutron.db import db_base_plugin_v2 as base_db
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import servicetype_db as st_db
 from neutron.extensions import loadbalancer
 from neutron.extensions.loadbalancer import LoadBalancerPluginBase
 from neutron import manager
@@ -129,6 +130,14 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
     monitors = orm.relationship("PoolMonitorAssociation", backref="pools",
                                 cascade="all, delete-orphan")
     vip = orm.relationship(Vip, backref='pool')
+
+    provider = orm.relationship(
+        st_db.ProviderResourceAssociation,
+        uselist=False,
+        lazy="joined",
+        primaryjoin="Pool.id==ProviderResourceAssociation.resource_id",
+        foreign_keys=[st_db.ProviderResourceAssociation.resource_id]
+    )
 
 
 class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -457,7 +466,12 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                'lb_method': pool['lb_method'],
                'admin_state_up': pool['admin_state_up'],
                'status': pool['status'],
-               'status_description': pool['status_description']}
+               'status_description': pool['status_description'],
+               'provider': ''
+               }
+
+        if pool.provider:
+            res['provider'] = pool.provider.provider_name
 
         # Get the associated members
         res['members'] = [member['id'] for member in pool['members']]
@@ -465,7 +479,6 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         # Get the associated health_monitors
         res['health_monitors'] = [
             monitor['monitor_id'] for monitor in pool['monitors']]
-
         return self._fields(res, fields)
 
     def update_pool_stats(self, context, pool_id, data=None):
@@ -523,12 +536,10 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
             pool_db.stats = self._create_pool_stats(context, pool_db['id'])
             context.session.add(pool_db)
 
-        pool_db = self._get_resource(context, Pool, pool_db['id'])
         return self._make_pool_dict(pool_db)
 
     def update_pool(self, context, id, pool):
         p = pool['pool']
-
         with context.session.begin(subtransactions=True):
             pool_db = self._get_resource(context, Pool, id)
             self.assert_modification_allowed(pool_db)

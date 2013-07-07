@@ -18,6 +18,12 @@
 import abc
 
 from neutron.api import extensions
+from neutron.db import servicetype_db as sdb
+from neutron.openstack.common import importutils
+from neutron.openstack.common import log as logging
+from neutron.services import provider_configuration as pconf
+
+LOG = logging.getLogger(__name__)
 
 
 class ServicePluginBase(extensions.PluginInterface):
@@ -46,3 +52,49 @@ class ServicePluginBase(extensions.PluginInterface):
     def get_plugin_description(self):
         """Return string description of the plugin."""
         pass
+
+
+def load_drivers(service_type, plugin):
+    """Loads drivers for specific service.
+
+    Passes plugin instance to driver's constructor
+    """
+    service_type_manager = sdb.ServiceTypeManager.get_instance()
+    providers = (service_type_manager.
+                 get_service_providers(
+                     None,
+                     filters={'service_type': [service_type]})
+                 )
+    if not providers:
+        msg = (_("No providers specified for '%s' service, exiting") %
+               service_type)
+        LOG.error(msg)
+        raise SystemExit(msg)
+
+    drivers = {}
+    for provider in providers:
+        try:
+            drivers[provider['name']] = importutils.import_object(
+                provider['driver'], plugin
+            )
+            LOG.debug(_("Loaded '%(provider)s' provider for service "
+                        "%(service_type)s"),
+                      {'provider': provider['driver'],
+                       'service_type': service_type})
+        except ImportError:
+            LOG.exception(_("Error loading provider '%(provider)s' for "
+                            "service %(service_type)s"),
+                          {'provider': provider['driver'],
+                           'service_type': service_type})
+            raise
+
+    default_provider = None
+    try:
+        provider = service_type_manager.get_default_service_provider(
+            None, service_type)
+        default_provider = provider['name']
+    except pconf.DefaultServiceProviderNotFound:
+        LOG.info(_("Default provider is not specified for service type %s"),
+                 service_type)
+
+    return drivers, default_provider

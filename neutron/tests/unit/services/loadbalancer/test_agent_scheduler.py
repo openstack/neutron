@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import mock
+from oslo.config import cfg
 from webob import exc
 
 from neutron.api import extensions
@@ -68,6 +69,15 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
             self.saved_attr_map[resource] = attrs.copy()
         service_plugins = {
             'lb_plugin_name': test_db_loadbalancer.DB_LB_PLUGIN_KLASS}
+
+        #default provider should support agent scheduling
+        cfg.CONF.set_override(
+            'service_provider',
+            [('LOADBALANCER:lbaas:neutron.services.'
+              'loadbalancer.drivers.haproxy.plugin_driver.'
+              'HaproxyOnHostPluginDriver:default')],
+            'service_providers')
+
         super(LBaaSAgentSchedulerTestCase, self).setUp(
             self.plugin_str, service_plugins=service_plugins)
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
@@ -131,7 +141,7 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
         self.assertRaises(lbaas_agentscheduler.NoEligibleLbaasAgent,
                           lbaas_plugin.create_pool, self.adminContext, pool)
 
-    def test_schedule_poll_with_down_agent(self):
+    def test_schedule_pool_with_down_agent(self):
         lbaas_hosta = {
             'binary': 'neutron-loadbalancer-agent',
             'host': LBAAS_HOSTA,
@@ -153,6 +163,7 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
                              'subnet_id': 'test',
                              'lb_method': 'ROUND_ROBIN',
                              'protocol': 'HTTP',
+                             'provider': 'lbaas',
                              'admin_state_up': True,
                              'tenant_id': 'test',
                              'description': 'test'}}
