@@ -266,7 +266,7 @@ class TestAttributes(base.BaseTestCase):
                            [{'nexthop': '10.0.2.20',
                              'destination': '100.0.0.0/8'},
                             {'nexthop': '10.0.2.20',
-                             'destination': '100.0.0.1/8'}]]
+                             'destination': '101.0.0.0/8'}]]
         for host_routes in hostroute_pools:
             msg = attributes._validate_hostroutes(host_routes, None)
             self.assertIsNone(msg)
@@ -371,7 +371,7 @@ class TestAttributes(base.BaseTestCase):
         self.assertIsNone(msg)
 
         # Valid - IPv6 with final octets
-        cidr = "fe80::0/24"
+        cidr = "fe80::/24"
         msg = attributes._validate_subnet(cidr,
                                           None)
         self.assertIsNone(msg)
@@ -380,21 +380,36 @@ class TestAttributes(base.BaseTestCase):
         cidr = "10.0.2.0"
         msg = attributes._validate_subnet(cidr,
                                           None)
-        error = "'%s' is not a valid IP subnet" % cidr
+        error = _("'%(data)s' isn't a recognized IP subnet cidr,"
+                  " '%(cidr)s' is recommended") % {"data": cidr,
+                                                   "cidr": "10.0.2.0/32"}
+        self.assertEqual(msg, error)
+
+        # Invalid - IPv4 with final octets
+        cidr = "192.168.1.1/24"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        error = _("'%(data)s' isn't a recognized IP subnet cidr,"
+                  " '%(cidr)s' is recommended") % {"data": cidr,
+                                                   "cidr": "192.168.1.0/24"}
         self.assertEqual(msg, error)
 
         # Invalid - IPv6 without final octets, missing mask
         cidr = "fe80::"
         msg = attributes._validate_subnet(cidr,
                                           None)
-        error = "'%s' is not a valid IP subnet" % cidr
+        error = _("'%(data)s' isn't a recognized IP subnet cidr,"
+                  " '%(cidr)s' is recommended") % {"data": cidr,
+                                                   "cidr": "fe80::/128"}
         self.assertEqual(msg, error)
 
         # Invalid - IPv6 with final octets, missing mask
         cidr = "fe80::0"
         msg = attributes._validate_subnet(cidr,
                                           None)
-        error = "'%s' is not a valid IP subnet" % cidr
+        error = _("'%(data)s' isn't a recognized IP subnet cidr,"
+                  " '%(cidr)s' is recommended") % {"data": cidr,
+                                                   "cidr": "fe80::/128"}
         self.assertEqual(msg, error)
 
         # Invalid - Address format error

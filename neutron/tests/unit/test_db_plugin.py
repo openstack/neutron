@@ -1347,7 +1347,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 res = self._create_subnet(self.fmt,
                                           tenant_id=tenant_id,
                                           net_id=net_id,
-                                          cidr='2607:f0d0:1002:51::0/124',
+                                          cidr='2607:f0d0:1002:51::/124',
                                           ip_version=6,
                                           gateway_ip=ATTR_NOT_SPECIFIED)
                 subnet2 = self.deserialize(self.fmt, res)
@@ -1539,26 +1539,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             # Allocate specific IP
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '10.0.0.55555'}]}
-            net_id = subnet['subnet']['network_id']
-            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 400)
-
-    def test_fixed_ip_valid_ip_non_root_cidr(self):
-        with self.subnet(cidr='10.0.0.254/24') as subnet:
-            # Allocate specific IP
-            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
-                                     'ip_address': '10.0.0.2'}]}
-            net_id = subnet['subnet']['network_id']
-            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 201)
-            port = self.deserialize(self.fmt, res)
-            self._delete('ports', port['port']['id'])
-
-    def test_fixed_ip_invalid_ip_non_root_cidr(self):
-        with self.subnet(cidr='10.0.0.254/24') as subnet:
-            # Allocate specific IP
-            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
-                                     'ip_address': '10.0.1.2'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
             self.assertEqual(res.status_int, 400)
@@ -2555,6 +2535,17 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(res.status_int, 403)
 
+    def test_create_subnet_bad_cidr(self):
+        with self.network() as network:
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'cidr': '10.0.2.5/24',
+                               'ip_version': 4,
+                               'tenant_id': network['network']['tenant_id']}}
+
+            subnet_req = self.new_create_request('subnets', data)
+            res = subnet_req.get_response(self.api)
+            self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
     def test_create_subnet_bad_ip_version(self):
         with self.network() as network:
             # Check bad IP version
@@ -2800,7 +2791,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_create_subnet_with_v6_allocation_pool(self):
         gateway_ip = 'fe80::1'
-        cidr = 'fe80::0/80'
+        cidr = 'fe80::/80'
         allocation_pools = [{'start': 'fe80::2',
                              'end': 'fe80::ffff:fffa:ffff'}]
         self._test_create_subnet(gateway_ip=gateway_ip,

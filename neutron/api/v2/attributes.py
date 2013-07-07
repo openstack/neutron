@@ -244,15 +244,20 @@ def _validate_ip_address_or_none(data, valid_values=None):
 
 
 def _validate_subnet(data, valid_values=None):
+    msg = None
     try:
-        netaddr.IPNetwork(_validate_no_whitespace(data))
-        if len(data.split('/')) == 2:
+        net = netaddr.IPNetwork(_validate_no_whitespace(data))
+        cidr = str(net.cidr)
+        if (cidr != data):
+            msg = _("'%(data)s' isn't a recognized IP subnet cidr,"
+                    " '%(cidr)s' is recommended") % {"data": data,
+                                                     "cidr": cidr}
+        else:
             return
     except Exception:
-        pass
-
-    msg = _("'%s' is not a valid IP subnet") % data
-    LOG.debug(msg)
+        msg = _("'%s' is not a valid IP subnet") % data
+    if msg:
+        LOG.debug(msg)
     return msg
 
 
