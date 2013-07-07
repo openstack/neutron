@@ -24,8 +24,3 @@ lock_path = $state_path/lock
 
 [database]
 connection = 'sqlite://'
-
-[default_servicetype]
-description = "default service type"
-service_definition=dummy:neutron.tests.unit.dummy_plugin.NeutronDummyPlugin
-
