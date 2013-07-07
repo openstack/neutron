@@ -30,12 +30,15 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log
 from neutron.openstack.common import rpc as c_rpc
+from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc
 
@@ -138,7 +141,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _extend_network_dict_provider(self, context, network):
         id = network['id']
-        segments = db.get_network_segments(context.session, id)
+        segments = self.get_network_segments(context, id)
         if not segments:
             LOG.error(_("Network %s has no segments"), id)
             network[provider.NETWORK_TYPE] = None
@@ -170,7 +173,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             network_id = port['network_id']
-            segments = db.get_network_segments(session, network_id)
+            segments = self.get_network_segments(context, network_id)
             if not segments:
                 LOG.warning(_("In _notify_port_updated() for port %(port_id), "
                               "network %(network_id) has no segments"),
@@ -183,6 +186,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                   segment[api.NETWORK_TYPE],
                                   segment[api.SEGMENTATION_ID],
                                   segment[api.PHYSICAL_NETWORK])
+
+    # TODO(apech): Need to override bulk operations
 
     def create_network(self, context, network):
         attrs = network['network']
@@ -203,7 +208,19 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # to TypeManager.
             db.add_network_segment(session, id, segment)
             self._extend_network_dict_provider(context, result)
+            mech_context = driver_context.NetworkContext(self,
+                                                         context,
+                                                         result,
+                                                         segments=[segment])
+            self.mechanism_manager.create_network_precommit(mech_context)
 
+        try:
+            self.mechanism_manager.create_network_postcommit(mech_context)
+        except ml2_exc.MechanismDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_("mechanism_manager.create_network failed, "
+                            "deleting network '%s'"), result['id'])
+                self.delete_network(context, result['id'])
         return result
 
     def update_network(self, context, id, network):
@@ -211,12 +228,24 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         session = context.session
         with session.begin(subtransactions=True):
-            result = super(Ml2Plugin, self).update_network(context, id,
-                                                           network)
-            self._process_l3_update(context, result, network['network'])
-            self._extend_network_dict_provider(context, result)
+            original_network = super(Ml2Plugin, self).get_network(context, id)
+            updated_network = super(Ml2Plugin, self).update_network(context,
+                                                                    id,
+                                                                    network)
+            self._process_l3_update(context, updated_network,
+                                    network['network'])
+            self._extend_network_dict_provider(context, updated_network)
+            mech_context = driver_context.NetworkContext(
+                self, context, updated_network,
+                original_network=original_network)
+            self.mechanism_manager.update_network_precommit(mech_context)
 
-        return result
+        # TODO(apech) - handle errors raised by update_network, potentially
+        # by re-calling update_network with the previous attributes. For
+        # now the error is propogated to the caller, which is expected to
+        # either undo/retry the operation or delete the resource.
+        self.mechanism_manager.update_network_postcommit(mech_context)
+        return updated_network
 
     def get_network(self, context, id, fields=None):
         session = context.session
@@ -241,16 +270,35 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return [self._fields(net, fields) for net in nets]
 
-    def delete_network(self, context, id):
+    def get_network_segments(self, context, id):
         session = context.session
         with session.begin(subtransactions=True):
             segments = db.get_network_segments(session, id)
+        return segments
+
+    def delete_network(self, context, id):
+        session = context.session
+        with session.begin(subtransactions=True):
+            network = self.get_network(context, id)
+            segments = self.get_network_segments(context, id)
+            mech_context = driver_context.NetworkContext(self,
+                                                         context,
+                                                         network,
+                                                         segments=segments)
+            self.mechanism_manager.delete_network_precommit(mech_context)
             super(Ml2Plugin, self).delete_network(context, id)
             for segment in segments:
                 self.type_manager.release_segment(session, segment)
             # The segment records are deleted via cascade from the
             # network record, so explicit removal is not necessary.
 
+        try:
+            self.mechanism_manager.delete_network_postcommit(mech_context)
+        except ml2_exc.MechanismDriverError:
+            # TODO(apech) - One or more mechanism driver failed to
+            # delete the network.  Ideally we'd notify the caller of
+            # the fact that an error occurred.
+            pass
         self.notifier.network_delete(context, id)
 
     def create_port(self, context, port):
@@ -266,7 +314,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                          result)
             self._process_port_create_security_group(context, result, sgids)
             self._extend_port_dict_binding(context, result)
+            mech_context = driver_context.PortContext(self, context, result)
+            self.mechanism_manager.create_port_precommit(mech_context)
 
+        try:
+            self.mechanism_manager.create_port_postcommit(mech_context)
+        except ml2_exc.MechanismDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_("mechanism_manager.create_port failed, "
+                            "deleting port '%s'"), result['id'])
+                self.delete_port(context, result['id'])
         self.notify_security_groups_member_updated(context, result)
         return result
 
@@ -285,6 +342,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                          attrs,
                                                          updated_port)
             self._extend_port_dict_binding(context, updated_port)
+            mech_context = driver_context.PortContext(
+                self, context, updated_port,
+                original_port=original_port)
+            self.mechanism_manager.update_port_precommit(mech_context)
+
+        # TODO(apech) - handle errors raised by update_port, potentially
+        # by re-calling update_port with the previous attributes. For
+        # now the error is propogated to the caller, which is expected to
+        # either undo/retry the operation or delete the resource.
+        self.mechanism_manager.update_port_postcommit(mech_context)
 
         need_port_update_notify |= self.is_security_group_member_updated(
             context, original_port, updated_port)
@@ -326,7 +393,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             self.disassociate_floatingips(context, id)
             port = self.get_port(context, id)
+            mech_context = driver_context.PortContext(self, context, port)
+            self.mechanism_manager.delete_port_precommit(mech_context)
             self._delete_port_security_group_bindings(context, id)
             super(Ml2Plugin, self).delete_port(context, id)
 
+        try:
+            self.mechanism_manager.delete_port_postcommit(mech_context)
+        except ml2_exc.MechanismDriverError:
+            # TODO(apech) - One or more mechanism driver failed to
+            # delete the port.  Ideally we'd notify the caller of the
+            # fact that an error occurred.
+            pass
         self.notify_security_groups_member_updated(context, port)

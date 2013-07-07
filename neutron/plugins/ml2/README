@@ -31,13 +31,13 @@ openvswitch and linuxbridge plugins' L2 agents, and should also work
 with the hyperv L2 agent. A modular agent may be developed as a
 follow-on effort.
 
-Support for mechanism drivers is currently skeletal. The
-MechanismDriver interface is currently a stub, with details to be
-defined in future versions. MechanismDrivers will be called both
-inside and following DB transactions for network and port
-create/update/delete operations. They will also be called to establish
-a port binding, determining the VIF type and network segment to be
-used.
+Support for mechanism drivers is currently a work-in-progress in
+pre-release Havana versions, and the interface is subject to change
+before the release of Havana. MechanismDrivers are currently called
+both inside and following DB transactions for network and port
+create/update/delete operations. In a future version, they will also
+called to establish a port binding, determining the VIF type and
+network segment to be used.
 
 The database schema and driver APIs support multi-segment networks,
 but the client API for multi-segment networks is not yet implemented.
