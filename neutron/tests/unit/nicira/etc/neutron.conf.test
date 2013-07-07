@@ -18,7 +18,7 @@ bind_port = 9696
 api_paste_config = api-paste.ini.test
 
 # The messaging module to use, defaults to kombu.
-rpc_backend = quantum.openstack.common.rpc.impl_fake
+rpc_backend = neutron.openstack.common.rpc.impl_fake
 
 lock_path = $state_path/lock
 
@@ -27,5 +27,5 @@ connection = 'sqlite://'
 
 [default_servicetype]
 description = "default service type"
-service_definition=dummy:quantum.tests.unit.dummy_plugin.QuantumDummyPlugin
+service_definition=dummy:neutron.tests.unit.dummy_plugin.NeutronDummyPlugin
 
