@@ -30,14 +30,14 @@ down_revision = '3cabb850f4a5'
 # Change to ['*'] if this migration applies to all plugins
 
 migration_for_plugins = [
-    'quantum.plugins.cisco.network_plugin.PluginV2'
+    'neutron.plugins.cisco.network_plugin.PluginV2'
 ]
 
 from alembic import op
 import sqlalchemy as sa
 
 
-from quantum.db import migration
+from neutron.db import migration
 
 
 def upgrade(active_plugin=None, options=None):
