@@ -66,12 +66,14 @@ def override_config(config, config_keys=None):
 def modernize_quantum_config(config):
     """Updates keys from old Quantum configurations for Neutron."""
     config_keys = [
+        'allowed_rpc_exception_modules',
         'core_plugin',
         'device_driver',
         'dhcp_driver',
         'driver_fqn',
         'interface_driver',
         'network_scheduler_driver',
+        'notification_driver',
         'router_scheduler_driver',
         'rpc_backend',
         'service_plugins',
