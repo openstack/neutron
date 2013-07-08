@@ -1,7 +1,7 @@
 [run]
 branch = True
-source = quantum
-omit = quantum/tests/*,quantum/plugins/cisco/tests/*,quantum/openstack/*
+source = neutron
+omit = neutron/tests/*,neutron/plugins/cisco/test/*,neutron/openstack/*
 
 [report]
 ignore-errors = True
