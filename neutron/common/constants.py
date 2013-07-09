@@ -71,4 +71,5 @@ PAGINATION_INFINITE = 'infinite'
 SORT_DIRECTION_ASC = 'asc'
 SORT_DIRECTION_DESC = 'desc'
 
-AGENT_SCHEDULER_EXT_ALIAS = 'agent_scheduler'
+L3_AGENT_SCHEDULER_EXT_ALIAS = 'l3_agent_scheduler'
+DHCP_AGENT_SCHEDULER_EXT_ALIAS = 'dhcp_agent_scheduler'

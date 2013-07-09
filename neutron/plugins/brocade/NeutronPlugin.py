@@ -197,7 +197,8 @@ class AgentNotifierApi(proxy.RpcProxy,
 class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       extraroute_db.ExtraRoute_db_mixin,
                       sg_db_rpc.SecurityGroupServerRpcMixin,
-                      agentschedulers_db.AgentSchedulerDbMixin):
+                      agentschedulers_db.L3AgentSchedulerDbMixin,
+                      agentschedulers_db.DhcpAgentSchedulerDbMixin):
     """BrocadePluginV2 is a Neutron plugin.
 
     Provides L2 Virtual Network functionality using VDX. Upper
@@ -213,7 +214,8 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         self.supported_extension_aliases = ["binding", "security-group",
                                             "router", "extraroute",
-                                            "agent", "agent_scheduler"]
+                                            "agent", "l3_agent_scheduler",
+                                            "dhcp_agent_scheduler"]
 
         self.physical_interface = (cfg.CONF.PHYSICAL_INTERFACE.
                                    physical_interface)

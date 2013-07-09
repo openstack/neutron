@@ -24,7 +24,8 @@ from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import model_base
 from neutron.db import models_v2
-from neutron.extensions import agentscheduler
+from neutron.extensions import dhcpagentscheduler
+from neutron.extensions import l3agentscheduler
 from neutron.openstack.common import log as logging
 
 
@@ -55,14 +56,11 @@ class RouterL3AgentBinding(model_base.BASEV2, models_v2.HasId):
                                           ondelete='CASCADE'))
 
 
-class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
-                            agents_db.AgentDbMixin):
-    """Mixin class to add agent scheduler extension to db_plugin_base_v2."""
+class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
+    """Common class for agent scheduler mixins."""
 
     dhcp_agent_notifier = None
     l3_agent_notifier = None
-    network_scheduler = None
-    router_scheduler = None
 
     @staticmethod
     def is_eligible_agent(active, agent):
@@ -77,101 +75,31 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
             return not agents_db.AgentDbMixin.is_agent_down(
                 agent['heartbeat_timestamp'])
 
-    def get_dhcp_agents_hosting_networks(
-        self, context, network_ids, active=None):
-        if not network_ids:
-            return []
-        query = context.session.query(NetworkDhcpAgentBinding)
-        query = query.options(joinedload('dhcp_agent'))
-        if len(network_ids) == 1:
-            query = query.filter(
-                NetworkDhcpAgentBinding.network_id == network_ids[0])
-        elif network_ids:
-            query = query.filter(
-                NetworkDhcpAgentBinding.network_id in network_ids)
-        if active is not None:
-            query = (query.filter(agents_db.Agent.admin_state_up == active))
+    def update_agent(self, context, id, agent):
+        original_agent = self.get_agent(context, id)
+        result = super(AgentSchedulerDbMixin, self).update_agent(
+            context, id, agent)
+        agent_data = agent['agent']
+        if ('admin_state_up' in agent_data and
+            original_agent['admin_state_up'] != agent_data['admin_state_up']):
+            if (original_agent['agent_type'] == constants.AGENT_TYPE_DHCP and
+                self.dhcp_agent_notifier):
+                self.dhcp_agent_notifier.agent_updated(
+                    context, agent_data['admin_state_up'],
+                    original_agent['host'])
+            elif (original_agent['agent_type'] == constants.AGENT_TYPE_L3 and
+                  self.l3_agent_notifier):
+                self.l3_agent_notifier.agent_updated(
+                    context, agent_data['admin_state_up'],
+                    original_agent['host'])
+        return result
 
-        return [binding.dhcp_agent
-                for binding in query
-                if AgentSchedulerDbMixin.is_eligible_agent(active,
-                                                           binding.dhcp_agent)]
 
-    def add_network_to_dhcp_agent(self, context, id, network_id):
-        self._get_network(context, network_id)
-        with context.session.begin(subtransactions=True):
-            agent_db = self._get_agent(context, id)
-            if (agent_db['agent_type'] != constants.AGENT_TYPE_DHCP or
-                not agent_db['admin_state_up']):
-                raise agentscheduler.InvalidDHCPAgent(id=id)
-            dhcp_agents = self.get_dhcp_agents_hosting_networks(
-                context, [network_id])
-            for dhcp_agent in dhcp_agents:
-                if id == dhcp_agent.id:
-                    raise agentscheduler.NetworkHostedByDHCPAgent(
-                        network_id=network_id, agent_id=id)
-            binding = NetworkDhcpAgentBinding()
-            binding.dhcp_agent_id = id
-            binding.network_id = network_id
-            context.session.add(binding)
-        if self.dhcp_agent_notifier:
-            self.dhcp_agent_notifier.network_added_to_agent(
-                context, network_id, agent_db.host)
+class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
+                              AgentSchedulerDbMixin):
+    """Mixin class to add l3 agent scheduler extension to db_plugin_base_v2."""
 
-    def remove_network_from_dhcp_agent(self, context, id, network_id):
-        agent = self._get_agent(context, id)
-        with context.session.begin(subtransactions=True):
-            try:
-                query = context.session.query(NetworkDhcpAgentBinding)
-                binding = query.filter(
-                    NetworkDhcpAgentBinding.network_id == network_id,
-                    NetworkDhcpAgentBinding.dhcp_agent_id == id).one()
-            except exc.NoResultFound:
-                raise agentscheduler.NetworkNotHostedByDhcpAgent(
-                    network_id=network_id, agent_id=id)
-            context.session.delete(binding)
-        if self.dhcp_agent_notifier:
-            self.dhcp_agent_notifier.network_removed_from_agent(
-                context, network_id, agent.host)
-
-    def list_networks_on_dhcp_agent(self, context, id):
-        query = context.session.query(NetworkDhcpAgentBinding.network_id)
-        query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == id)
-
-        net_ids = [item[0] for item in query]
-        if net_ids:
-            return {'networks':
-                    self.get_networks(context, filters={'id': net_ids})}
-        else:
-            return {'networks': []}
-
-    def list_active_networks_on_active_dhcp_agent(self, context, host):
-        agent = self._get_agent_by_type_and_host(
-            context, constants.AGENT_TYPE_DHCP, host)
-        if not agent.admin_state_up:
-            return []
-        query = context.session.query(NetworkDhcpAgentBinding.network_id)
-        query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == agent.id)
-
-        net_ids = [item[0] for item in query]
-        if net_ids:
-            return self.get_networks(
-                context,
-                filters={'id': net_ids, 'admin_state_up': [True]}
-            )
-        else:
-            return []
-
-    def list_dhcp_agents_hosting_network(self, context, network_id):
-        dhcp_agents = self.get_dhcp_agents_hosting_networks(
-            context, [network_id])
-        agent_ids = [dhcp_agent.id for dhcp_agent in dhcp_agents]
-        if agent_ids:
-            return {
-                'agents':
-                self.get_agents(context, filters={'id': agent_ids})}
-        else:
-            return {'agents': []}
+    router_scheduler = None
 
     def add_router_to_l3_agent(self, context, id, router_id):
         """Add a l3 agent to host a router."""
@@ -181,14 +109,14 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
             if (agent_db['agent_type'] != constants.AGENT_TYPE_L3 or
                 not agent_db['admin_state_up'] or
                 not self.get_l3_agent_candidates(router, [agent_db])):
-                raise agentscheduler.InvalidL3Agent(id=id)
+                raise l3agentscheduler.InvalidL3Agent(id=id)
             query = context.session.query(RouterL3AgentBinding)
             try:
                 binding = query.filter(
                     RouterL3AgentBinding.l3_agent_id == agent_db.id,
                     RouterL3AgentBinding.router_id == router_id).one()
                 if binding:
-                    raise agentscheduler.RouterHostedByL3Agent(
+                    raise l3agentscheduler.RouterHostedByL3Agent(
                         router_id=router_id, agent_id=id)
             except exc.NoResultFound:
                 pass
@@ -197,7 +125,7 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
                                                 agent_db.host,
                                                 router_id)
             if not result:
-                raise agentscheduler.RouterSchedulingFailed(
+                raise l3agentscheduler.RouterSchedulingFailed(
                     router_id=router_id, agent_id=id)
 
         if self.l3_agent_notifier:
@@ -220,7 +148,7 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
             try:
                 binding = query.one()
             except exc.NoResultFound:
-                raise agentscheduler.RouterNotHostedByL3Agent(
+                raise l3agentscheduler.RouterNotHostedByL3Agent(
                     router_id=router_id, agent_id=id)
             context.session.delete(binding)
         if self.l3_agent_notifier:
@@ -305,18 +233,6 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
             else:
                 return {'agents': []}
 
-    def schedule_network(self, context, created_network):
-        if self.network_scheduler:
-            chosen_agent = self.network_scheduler.schedule(
-                self, context, created_network)
-            if not chosen_agent:
-                LOG.warn(_('Fail scheduling network %s'), created_network)
-            return chosen_agent
-
-    def auto_schedule_networks(self, context, host):
-        if self.network_scheduler:
-            self.network_scheduler.auto_schedule_networks(self, context, host)
-
     def get_l3_agents(self, context, active=None, filters=None):
         query = context.session.query(agents_db.Agent)
         query = query.filter(
@@ -372,21 +288,118 @@ class AgentSchedulerDbMixin(agentscheduler.AgentSchedulerPluginBase,
         for router in routers:
             self.schedule_router(context, router)
 
-    def update_agent(self, context, id, agent):
-        original_agent = self.get_agent(context, id)
-        result = super(AgentSchedulerDbMixin, self).update_agent(
-            context, id, agent)
-        agent_data = agent['agent']
-        if ('admin_state_up' in agent_data and
-            original_agent['admin_state_up'] != agent_data['admin_state_up']):
-            if (original_agent['agent_type'] == constants.AGENT_TYPE_DHCP and
-                self.dhcp_agent_notifier):
-                self.dhcp_agent_notifier.agent_updated(
-                    context, agent_data['admin_state_up'],
-                    original_agent['host'])
-            elif (original_agent['agent_type'] == constants.AGENT_TYPE_L3 and
-                  self.l3_agent_notifier):
-                self.l3_agent_notifier.agent_updated(
-                    context, agent_data['admin_state_up'],
-                    original_agent['host'])
-        return result
+
+class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
+                                .DhcpAgentSchedulerPluginBase,
+                                AgentSchedulerDbMixin):
+    """Mixin class to add DHCP agent scheduler extension to db_plugin_base_v2.
+    """
+
+    network_scheduler = None
+
+    def get_dhcp_agents_hosting_networks(
+            self, context, network_ids, active=None):
+        if not network_ids:
+            return []
+        query = context.session.query(NetworkDhcpAgentBinding)
+        query = query.options(joinedload('dhcp_agent'))
+        if len(network_ids) == 1:
+            query = query.filter(
+                NetworkDhcpAgentBinding.network_id == network_ids[0])
+        elif network_ids:
+            query = query.filter(
+                NetworkDhcpAgentBinding.network_id in network_ids)
+        if active is not None:
+            query = (query.filter(agents_db.Agent.admin_state_up == active))
+
+        return [binding.dhcp_agent
+                for binding in query
+                if AgentSchedulerDbMixin.is_eligible_agent(active,
+                                                           binding.dhcp_agent)]
+
+    def add_network_to_dhcp_agent(self, context, id, network_id):
+        self._get_network(context, network_id)
+        with context.session.begin(subtransactions=True):
+            agent_db = self._get_agent(context, id)
+            if (agent_db['agent_type'] != constants.AGENT_TYPE_DHCP or
+                    not agent_db['admin_state_up']):
+                raise dhcpagentscheduler.InvalidDHCPAgent(id=id)
+            dhcp_agents = self.get_dhcp_agents_hosting_networks(
+                context, [network_id])
+            for dhcp_agent in dhcp_agents:
+                if id == dhcp_agent.id:
+                    raise dhcpagentscheduler.NetworkHostedByDHCPAgent(
+                        network_id=network_id, agent_id=id)
+            binding = NetworkDhcpAgentBinding()
+            binding.dhcp_agent_id = id
+            binding.network_id = network_id
+            context.session.add(binding)
+        if self.dhcp_agent_notifier:
+            self.dhcp_agent_notifier.network_added_to_agent(
+                context, network_id, agent_db.host)
+
+    def remove_network_from_dhcp_agent(self, context, id, network_id):
+        agent = self._get_agent(context, id)
+        with context.session.begin(subtransactions=True):
+            try:
+                query = context.session.query(NetworkDhcpAgentBinding)
+                binding = query.filter(
+                    NetworkDhcpAgentBinding.network_id == network_id,
+                    NetworkDhcpAgentBinding.dhcp_agent_id == id).one()
+            except exc.NoResultFound:
+                raise dhcpagentscheduler.NetworkNotHostedByDhcpAgent(
+                    network_id=network_id, agent_id=id)
+            context.session.delete(binding)
+        if self.dhcp_agent_notifier:
+            self.dhcp_agent_notifier.network_removed_from_agent(
+                context, network_id, agent.host)
+
+    def list_networks_on_dhcp_agent(self, context, id):
+        query = context.session.query(NetworkDhcpAgentBinding.network_id)
+        query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == id)
+
+        net_ids = [item[0] for item in query]
+        if net_ids:
+            return {'networks':
+                    self.get_networks(context, filters={'id': net_ids})}
+        else:
+            return {'networks': []}
+
+    def list_active_networks_on_active_dhcp_agent(self, context, host):
+        agent = self._get_agent_by_type_and_host(
+            context, constants.AGENT_TYPE_DHCP, host)
+        if not agent.admin_state_up:
+            return []
+        query = context.session.query(NetworkDhcpAgentBinding.network_id)
+        query = query.filter(NetworkDhcpAgentBinding.dhcp_agent_id == agent.id)
+
+        net_ids = [item[0] for item in query]
+        if net_ids:
+            return self.get_networks(
+                context,
+                filters={'id': net_ids, 'admin_state_up': [True]}
+            )
+        else:
+            return []
+
+    def list_dhcp_agents_hosting_network(self, context, network_id):
+        dhcp_agents = self.get_dhcp_agents_hosting_networks(
+            context, [network_id])
+        agent_ids = [dhcp_agent.id for dhcp_agent in dhcp_agents]
+        if agent_ids:
+            return {
+                'agents': self.get_agents(context, filters={'id': agent_ids})}
+        else:
+            return {'agents': []}
+
+    def schedule_network(self, context, created_network):
+        if self.network_scheduler:
+            chosen_agent = self.network_scheduler.schedule(
+                self, context, created_network)
+            if not chosen_agent:
+                LOG.warn(_('Fail scheduling network %s'), created_network)
+            return chosen_agent
+
+    def auto_schedule_networks(self, context, host):
+        if self.network_scheduler:
+            self.network_scheduler.auto_schedule_networks(self, context, host)

@@ -61,7 +61,7 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
         """Notify all the agents that are hosting the network."""
         plugin = manager.NeutronManager.get_plugin()
         if (method != 'network_delete_end' and utils.is_extension_supported(
-                plugin, constants.AGENT_SCHEDULER_EXT_ALIAS)):
+                plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS)):
             if method == 'port_create_end':
                 # we don't schedule when we create network
                 # because we want to give admin a chance to
