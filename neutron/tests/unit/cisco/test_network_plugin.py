@@ -38,6 +38,7 @@ from neutron.plugins.openvswitch import ovs_db_v2
 from neutron.tests.unit import test_db_plugin
 
 LOG = logging.getLogger(__name__)
+NEXUS_PLUGIN = 'neutron.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin'
 
 
 class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
@@ -50,6 +51,10 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         self.patch_obj = mock.patch.dict('sys.modules',
                                          {'ncclient': self.mock_ncclient})
         self.patch_obj.start()
+
+        cisco_config.cfg.CONF.set_override('nexus_plugin', NEXUS_PLUGIN,
+                                           'CISCO_PLUGINS')
+        self.addCleanup(cisco_config.cfg.CONF.reset)
 
         super(CiscoNetworkPluginV2TestCase, self).setUp(self._plugin_name)
         self.port_create_status = 'DOWN'
@@ -107,6 +112,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
             },
             cisco_config: {
                 'CISCO': {'nexus_driver': nexus_driver},
+                'CISCO_PLUGINS': {'nexus_plugin': NEXUS_PLUGIN},
             }
         }
 
@@ -118,12 +124,16 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                                                  group)
             self.addCleanup(module.cfg.CONF.reset)
 
+        # TODO(Henry): add tests for other devices
+        self.dev_id = 'NEXUS_SWITCH'
         self.switch_ip = '1.1.1.1'
-        nexus_config = {(self.switch_ip, 'username'): 'admin',
-                        (self.switch_ip, 'password'): 'mySecretPassword',
-                        (self.switch_ip, 'ssh_port'): 22,
-                        (self.switch_ip, 'testhost'): '1/1'}
-        mock.patch.dict(cisco_config.nexus_dictionary, nexus_config).start()
+        nexus_config = {
+            (self.dev_id, self.switch_ip, 'username'): 'admin',
+            (self.dev_id, self.switch_ip, 'password'): 'mySecretPassword',
+            (self.dev_id, self.switch_ip, 'ssh_port'): 22,
+            (self.dev_id, self.switch_ip, 'testhost'): '1/1',
+        }
+        mock.patch.dict(cisco_config.device_dictionary, nexus_config).start()
 
         patches = {
             '_should_call_create_net': True,

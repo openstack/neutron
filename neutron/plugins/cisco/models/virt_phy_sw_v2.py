@@ -59,7 +59,8 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                             'get_port', 'get_ports',
                             'create_subnet', 'create_subnet_bulk',
                             'delete_subnet', 'update_subnet',
-                            'get_subnet', 'get_subnets', ]
+                            'get_subnet', 'get_subnets',
+                            'create_or_update_agent', 'report_state']
 
     def __init__(self):
         """Initialize the segmentation manager.
@@ -71,9 +72,10 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
 
         for key in conf.CISCO_PLUGINS.keys():
             plugin_obj = conf.CISCO_PLUGINS[key]
-            self._plugins[key] = importutils.import_object(plugin_obj)
-            LOG.debug(_("Loaded device plugin %s\n"),
-                      conf.CISCO_PLUGINS[key])
+            if plugin_obj is not None:
+                self._plugins[key] = importutils.import_object(plugin_obj)
+                LOG.debug(_("Loaded device plugin %s\n"),
+                          conf.CISCO_PLUGINS[key])
 
         if ((const.VSWITCH_PLUGIN in self._plugins) and
             hasattr(self._plugins[const.VSWITCH_PLUGIN],
@@ -81,7 +83,6 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             self.supported_extension_aliases.extend(
                 self._plugins[const.VSWITCH_PLUGIN].
                 supported_extension_aliases)
-
         # At this point, all the database models should have been loaded. It's
         # possible that configure_db() may have been called by one of the
         # plugins loaded in above. Otherwise, this call is to make sure that
@@ -455,17 +456,15 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             vlan_name = conf.CISCO.vlan_name_prefix + str(vlan_id)
 
             n_args = [vlan_name, vlan_id, subnet['id'], gateway_ip, router_id]
-            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                                          self._func_name(),
-                                                          n_args)
-            return nexus_output
+            return self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                  self._func_name(),
+                                                  n_args)
         else:
             LOG.debug(_("No Nexus plugin, sending to vswitch"))
             n_args = [context, router_id, interface_info]
-            ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
-                                                        self._func_name(),
-                                                        n_args)
-            return ovs_output
+            return self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                                  self._func_name(),
+                                                  n_args)
 
     def remove_router_interface(self, context, router_id, interface_info):
         """Remove a router interface.
@@ -482,17 +481,15 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             vlan_id = self._get_segmentation_id(network_id)
             n_args = [vlan_id, router_id]
 
-            nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                                          self._func_name(),
-                                                          n_args)
-            return nexus_output
+            return self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                                  self._func_name(),
+                                                  n_args)
         else:
             LOG.debug(_("No Nexus plugin, sending to vswitch"))
             n_args = [context, router_id, interface_info]
-            ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
-                                                        self._func_name(),
-                                                        n_args)
-            return ovs_output
+            return self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                                  self._func_name(),
+                                                  n_args)
 
     def create_subnet(self, context, subnet):
         """For this model this method will be delegated to vswitch plugin."""

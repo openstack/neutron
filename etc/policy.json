@@ -105,5 +105,14 @@
     "create_floatingip": "rule:regular_user",
     "update_floatingip": "rule:admin_or_owner",
     "delete_floatingip": "rule:admin_or_owner",
-    "get_floatingip": "rule:admin_or_owner"
+    "get_floatingip": "rule:admin_or_owner",
+
+    "create_network_profile": "rule:admin_only",
+    "update_network_profile": "rule:admin_only",
+    "delete_network_profile": "rule:admin_only",
+    "get_network_profiles": "",
+    "get_network_profile": "",
+    "update_policy_profiles": "rule:admin_only",
+    "get_policy_profiles": "",
+    "get_policy_profile": ""
 }

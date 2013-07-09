@@ -1,0 +1,500 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
+# Copyright 2013 Cisco Systems, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+# @author: Abhishek Raut, Cisco Systems, Inc.
+
+import base64
+import httplib2
+import netaddr
+
+from neutron.common import exceptions as q_exc
+from neutron.extensions import providernet
+from neutron.openstack.common import log as logging
+from neutron.plugins.cisco.common import cisco_constants as c_const
+from neutron.plugins.cisco.common import cisco_credentials_v2 as c_cred
+from neutron.plugins.cisco.common import cisco_exceptions as c_exc
+from neutron.plugins.cisco.db import network_db_v2
+from neutron.plugins.cisco.extensions import n1kv_profile
+from neutron import wsgi
+
+LOG = logging.getLogger(__name__)
+
+
+class Client(object):
+
+    """
+    Client for the Cisco Nexus1000V Neutron Plugin.
+
+    This client implements functions to communicate with
+    Cisco Nexus1000V VSM.
+
+    For every Neutron objects, Cisco Nexus1000V Neutron Plugin
+    creates a corresponding object in the controller (Cisco
+    Nexus1000V VSM).
+
+    CONCEPTS:
+
+    Following are few concepts used in Nexus1000V VSM:
+
+    port-profiles:
+    Policy profiles correspond to port profiles on Nexus1000V VSM.
+    Port profiles are the primary mechanism by which network policy is
+    defined and applied to switch interfaces in a Nexus 1000V system.
+
+    network-segment:
+    Each network-segment represents a broadcast domain.
+
+    network-segment-pool:
+    A network-segment-pool contains one or more network-segments.
+
+    logical-network:
+    A logical-network contains one or more network-segment-pools.
+
+    bridge-domain:
+    A bridge-domain is created when the network-segment is of type VXLAN.
+    Each VXLAN <--> VLAN combination can be thought of as a bridge domain.
+
+    ip-pool:
+    Each ip-pool represents a subnet on the Nexus1000V VSM.
+
+    vm-network:
+    vm-network refers to a network-segment and policy-profile.
+    It maintains a list of ports that uses the network-segment and
+    policy-profile this vm-network refers to.
+
+    events:
+    Events correspond to commands that are logged on Nexus1000V VSM.
+    Events are used to poll for a certain resource on Nexus1000V VSM.
+    Event type of port_profile: Return all updates/create/deletes
+    of port profiles from the VSM.
+    Event type of port_profile_update: Return only updates regarding
+    policy-profiles.
+    Event type of port_profile_delete: Return only deleted policy profiles.
+
+
+    WORK FLOW:
+
+    For every network profile a corresponding logical-network and
+    a network-segment-pool, under this logical-network, will be created.
+
+    For every network created from a given network profile, a
+    network-segment will be added to the network-segment-pool corresponding
+    to that network profile.
+
+    A port is created on a network and associated with a policy-profile.
+    Hence for every unique combination of a network and a policy-profile, a
+    unique vm-network will be created and a reference to the port will be
+    added. If the same combination of network and policy-profile is used by
+    another port, the refernce to that port will be added to the same
+    vm-network.
+
+
+    """
+
+    # Metadata for deserializing xml
+    _serialization_metadata = {
+        "application/xml": {
+            "attributes": {
+                "network": ["id", "name"],
+                "port": ["id", "mac_address"],
+                "subnet": ["id", "prefix"]
+            },
+        },
+        "plurals": {
+            "networks": "network",
+            "ports": "port",
+            "set": "instance",
+            "subnets": "subnet"
+        }
+    }
+
+    # Define paths for the URI where the client connects for HTTP requests.
+    port_profiles_path = "/virtual-port-profile"
+    network_segments_path = "/network-segment"
+    network_segment_path = "/network-segment/%s"
+    network_segment_pools_path = "/network-segment-pool"
+    network_segment_pool_path = "/network-segment-pool/%s"
+    ip_pools_path = "/ip-pool-template"
+    ip_pool_path = "/ip-pool-template/%s"
+    ports_path = "/kvm/vm-network/%s/ports"
+    port_path = "/kvm/vm-network/%s/ports/%s"
+    vm_networks_path = "/kvm/vm-network"
+    vm_network_path = "/kvm/vm-network/%s"
+    bridge_domains_path = "/kvm/bridge-domain"
+    bridge_domain_path = "/kvm/bridge-domain/%s"
+    logical_networks_path = "/logical-network"
+    logical_network_path = "/logical-network/%s"
+    events_path = "/kvm/events"
+
+    def __init__(self, **kwargs):
+        """Initialize a new client for the plugin."""
+        self.format = 'json'
+        self.hosts = self._get_vsm_hosts()
+        self.action_prefix = 'http://%s/api/n1k' % self.hosts[0]
+
+    def list_port_profiles(self):
+        """
+        Fetch all policy profiles from the VSM.
+
+        :returns: XML string
+        """
+        return self._get(self.port_profiles_path)
+
+    def list_events(self, event_type=None, epoch=None):
+        """
+        Fetch all events of event_type from the VSM.
+
+        :param event_type: type of event to be listed.
+        :param epoch: timestamp after which the events occurred to be listed.
+        :returns: XML string
+        """
+        if event_type:
+            self.events_path = self.events_path + '?type=' + event_type
+        return self._get(self.events_path)
+
+    def create_bridge_domain(self, network):
+        """
+        Create a bridge domain on VSM.
+
+        :param network: network dict
+        """
+        body = {'name': network['name'] + '_bd',
+                'segmentId': network[providernet.SEGMENTATION_ID],
+                'groupIp': network[n1kv_profile.MULTICAST_IP], }
+        return self._post(self.bridge_domains_path,
+                          body=body)
+
+    def delete_bridge_domain(self, name):
+        """
+        Delete a bridge domain on VSM.
+
+        :param name: name of the bridge domain to be deleted
+        """
+        return self._delete(self.bridge_domain_path % (name))
+
+    def create_network_segment(self, network, network_profile):
+        """
+        Create a network segment on the VSM.
+
+        :param network: network dict
+        :param network_profile: network profile dict
+        """
+        LOG.debug(_("seg id %s\n"), network_profile['name'])
+        body = {'name': network['name'],
+                'id': network['id'],
+                'networkSegmentPool': network_profile['name'], }
+        if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VLAN:
+            body['vlan'] = network[providernet.SEGMENTATION_ID]
+        elif network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VXLAN:
+            body['bridgeDomain'] = network['name'] + '_bd'
+        return self._post(self.network_segments_path,
+                          body=body)
+
+    def update_network_segment(self, network_segment_name, body):
+        """
+        Update a network segment on the VSM.
+
+        Network segment on VSM can be updated to associate it with an ip-pool
+        or update its description and segment id.
+
+        :param network_segment_name: name of the network segment
+        :param body: dict of arguments to be updated
+        """
+        return self._post(self.network_segment_path % (network_segment_name),
+                          body=body)
+
+    def delete_network_segment(self, network_segment_name):
+        """
+        Delete a network segment on the VSM.
+
+        :param network_segment_name: name of the network segment
+        """
+        return self._delete(self.network_segment_path % (network_segment_name))
+
+    def create_logical_network(self, network_profile):
+        """
+        Create a logical network on the VSM.
+
+        :param network_profile: network profile dict
+        """
+        LOG.debug(_("logical network"))
+        body = {'name': network_profile['name']}
+        return self._post(self.logical_networks_path,
+                          body=body)
+
+    def delete_logical_network(self, network_profile):
+        """
+        Delete a logical network on VSM.
+
+        :param network_profile: network profile dict
+        """
+        return self._delete(
+            self.logical_network_path % (network_profile['name']))
+
+    def create_network_segment_pool(self, network_profile):
+        """
+        Create a network segment pool on the VSM.
+
+        :param network_profile: network profile dict
+        """
+        LOG.debug(_("network_segment_pool"))
+        body = {'name': network_profile['name'],
+                'id': network_profile['id'],
+                'logicalNetwork': network_profile['name']}
+        return self._post(self.network_segment_pools_path,
+                          body=body)
+
+    def update_network_segment_pool(self, network_segment_pool, body):
+        """
+        Update a network segment pool on the VSM.
+
+        :param network_segment_pool: string representing the name of network
+                                     segment pool to be updated
+        :param body: dictionary representing key values of network segment
+                     pool which need to be updated
+        """
+        return self._post(self.network_segment_pool_path %
+                          (network_segment_pool), body=body)
+
+    def delete_network_segment_pool(self, network_segment_pool_name):
+        """
+        Delete a network segment pool on the VSM.
+
+        :param network_segment_pool_name: name of the network segment pool
+        """
+        return self._delete(self.network_segment_pool_path %
+                            (network_segment_pool_name))
+
+    def create_ip_pool(self, subnet):
+        """
+        Create an ip-pool on the VSM.
+
+        :param subnet: subnet dict
+        """
+        if subnet['cidr']:
+            try:
+                ip = netaddr.IPNetwork(subnet['cidr'])
+                netmask = str(ip.netmask)
+                network_address = str(ip.network)
+            except netaddr.AddrFormatError:
+                msg = _("Invalid input for CIDR")
+                raise q_exc.InvalidInput(error_message=msg)
+        else:
+            netmask = network_address = ""
+
+        if subnet['allocation_pools']:
+            address_range_start = subnet['allocation_pools'][0]['start']
+            address_range_end = subnet['allocation_pools'][0]['end']
+        else:
+            address_range_start = None
+            address_range_end = None
+
+        body = {'addressRangeStart': address_range_start,
+                'addressRangeEnd': address_range_end,
+                'ipAddressSubnet': netmask,
+                'name': subnet['name'],
+                'gateway': subnet['gateway_ip'],
+                'networkAddress': network_address}
+        return self._post(self.ip_pools_path,
+                          body=body)
+
+    def delete_ip_pool(self, subnet_name):
+        """
+        Delete an ip-pool on the VSM.
+
+        :param subnet_name: name of the subnet
+        """
+        return self._delete(self.ip_pool_path % (subnet_name))
+
+    def create_vm_network(self,
+                          port,
+                          vm_network_name,
+                          policy_profile,
+                          network_name):
+        """
+        Create a VM network on the VSM.
+
+        :param port: port dict
+        :param vm_network_name: name of the VM network
+        :param policy_profile: policy profile dict
+        :param network_name: string representing the name of the network
+        """
+        body = {'name': vm_network_name,
+                'networkSegmentId': port['network_id'],
+                'networkSegment': network_name,
+                'portProfile': policy_profile['name'],
+                'portProfileId': policy_profile['id'],
+                }
+        return self._post(self.vm_networks_path,
+                          body=body)
+
+    def delete_vm_network(self, vm_network_name):
+        """
+        Delete a VM network on the VSM.
+
+        :param vm_network_name: name of the VM network
+        """
+        return self._delete(self.vm_network_path % (vm_network_name))
+
+    def create_n1kv_port(self, port, vm_network_name):
+        """
+        Create a port on the VSM.
+
+        :param port: port dict
+        :param vm_network_name: name of the VM network which imports this port
+        """
+        body = {'id': port['id'],
+                'macAddress': port['mac_address']}
+        return self._post(self.ports_path % (vm_network_name),
+                          body=body)
+
+    def update_n1kv_port(self, vm_network_name, port_id, body):
+        """
+        Update a port on the VSM.
+
+        Update the mac address associated with the port
+
+        :param vm_network_name: name of the VM network which imports this port
+        :param port_id: UUID of the port
+        :param body: dict of the arguments to be updated
+        """
+        return self._post(self.port_path % ((vm_network_name), (port_id)),
+                          body=body)
+
+    def delete_n1kv_port(self, vm_network_name, port_id):
+        """
+        Delete a port on the VSM.
+
+        :param vm_network_name: name of the VM network which imports this port
+        :param port_id: UUID of the port
+        """
+        return self._delete(self.port_path % ((vm_network_name), (port_id)))
+
+    def _do_request(self, method, action, body=None,
+                    headers=None):
+        """
+        Perform the HTTP request.
+
+        The response is in either XML format or plain text. A GET method will
+        invoke a XML response while a PUT/POST/DELETE returns message from the
+        VSM in plain text format.
+        Exception is raised when VSM replies with an INTERNAL SERVER ERROR HTTP
+        status code (500) i.e. an error has occurred on the VSM or SERVICE
+        UNAVAILABLE (503) i.e. VSM is not reachable.
+
+        :param method: type of the HTTP request. POST, GET, PUT or DELETE
+        :param action: path to which the client makes request
+        :param body: dict for arguments which are sent as part of the request
+        :param headers: header for the HTTP request
+        :returns: XML or plain text in HTTP response
+        """
+        action = self.action_prefix + action
+        if not headers and self.hosts:
+            headers = self._get_auth_header(self.hosts[0])
+        headers['Content-Type'] = self._set_content_type('json')
+        if body:
+            body = self._serialize(body)
+            LOG.debug(_("req: %s"), body)
+        resp, replybody = httplib2.Http().request(action,
+                                                  method,
+                                                  body=body,
+                                                  headers=headers)
+        LOG.debug(_("status_code %s"), resp.status)
+        if resp.status == 200:
+            if 'application/xml' in resp['content-type']:
+                return self._deserialize(replybody, resp.status)
+            elif 'text/plain' in resp['content-type']:
+                LOG.debug(_("VSM: %s"), replybody)
+        elif resp.status == 500:
+            raise c_exc.VSMError(reason=replybody)
+        elif resp.status == 503:
+            raise c_exc.VSMConnectionFailed
+
+    def _serialize(self, data):
+        """
+        Serialize a dictionary with a single key into either xml or json.
+
+        :param data: data in the form of dict
+        """
+        if data is None:
+            return None
+        elif type(data) is dict:
+            return wsgi.Serializer().serialize(data, self._set_content_type())
+        else:
+            raise Exception("unable to serialize object of type = '%s'" %
+                            type(data))
+
+    def _deserialize(self, data, status_code):
+        """
+        Deserialize an XML string into a dictionary.
+
+        :param data: XML string from the HTTP response
+        :param status_code: integer status code from the HTTP response
+        :return: data in the form of dict
+        """
+        if status_code == 204:
+            return data
+        return wsgi.Serializer(self._serialization_metadata).deserialize(
+            data, self._set_content_type('xml'))
+
+    def _set_content_type(self, format=None):
+        """
+        Set the mime-type to either 'xml' or 'json'.
+
+        :param format: format to be set.
+        :return: mime-type string
+        """
+        if not format:
+            format = self.format
+        return "application/%s" % (format)
+
+    def _delete(self, action, body=None, headers=None):
+        return self._do_request("DELETE", action, body=body,
+                                headers=headers)
+
+    def _get(self, action, body=None, headers=None):
+        return self._do_request("GET", action, body=body,
+                                headers=headers)
+
+    def _post(self, action, body=None, headers=None):
+        return self._do_request("POST", action, body=body,
+                                headers=headers)
+
+    def _put(self, action, body=None, headers=None):
+        return self._do_request("PUT", action, body=body,
+                                headers=headers)
+
+    def _get_vsm_hosts(self):
+        """
+        Retrieve a list of VSM ip addresses.
+
+        :return: list of host ip addresses
+        """
+        return [cr[c_const.CREDENTIAL_NAME] for cr in
+                network_db_v2.get_all_n1kv_credentials()]
+
+    def _get_auth_header(self, host_ip):
+        """
+        Retrieve header with auth info for the VSM.
+
+        :param host_ip: IP address of the VSM
+        :return: authorization header dict
+        """
+        username = c_cred.Store.get_username(host_ip)
+        password = c_cred.Store.get_password(host_ip)
+        auth = base64.encodestring("%s:%s" % (username, password))
+        header = {"Authorization": "Basic %s" % auth}
+        return header

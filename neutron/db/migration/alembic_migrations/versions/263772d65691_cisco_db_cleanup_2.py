@@ -43,12 +43,9 @@ def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    if 'credentials' in sa.MetaData().tables:
-        op.rename_table('credentials', 'cisco_credentials')
-    if 'nexusport_bindings' in sa.MetaData().tables:
-        op.rename_table('nexusport_bindings', 'cisco_nexusport_bindings')
-    if 'qoss' in sa.MetaData().tables:
-        op.rename_table('qoss', 'cisco_qos_policies')
+    op.rename_table('credentials', 'cisco_credentials')
+    op.rename_table('nexusport_bindings', 'cisco_nexusport_bindings')
+    op.rename_table('qoss', 'cisco_qos_policies')
 
     op.drop_table('cisco_vlan_ids')
 
@@ -64,9 +61,6 @@ def downgrade(active_plugins=None, options=None):
         sa.PrimaryKeyConstraint('vlan_id'),
     )
 
-    if 'cisco_credentials' in sa.MetaData().tables:
-        op.rename_table('cisco_credentials', 'credentials')
-    if 'cisco_nexusport_bindings' in sa.MetaData().tables:
-        op.rename_table('cisco_nexusport_bindings', 'nexusport_bindings')
-    if 'cisco_qos_policies' in sa.MetaData().tables:
-        op.rename_table('cisco_qos_policies', 'qoss')
+    op.rename_table('cisco_credentials', 'credentials')
+    op.rename_table('cisco_nexusport_bindings', 'nexusport_bindings')
+    op.rename_table('cisco_qos_policies', 'qoss')

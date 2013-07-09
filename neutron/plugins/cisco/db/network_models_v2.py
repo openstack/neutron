@@ -38,10 +38,10 @@ class Credential(model_base.BASEV2):
     __tablename__ = 'cisco_credentials'
 
     credential_id = sa.Column(sa.String(255))
-    tenant_id = sa.Column(sa.String(255), primary_key=True)
     credential_name = sa.Column(sa.String(255), primary_key=True)
     user_name = sa.Column(sa.String(255))
     password = sa.Column(sa.String(255))
+    type = sa.Column(sa.String(255))
 
 
 class ProviderNetwork(model_base.BASEV2):

@@ -116,7 +116,7 @@ class CiscoNetworkCredentialDbTest(base.BaseTestCase):
 
     """Unit tests for cisco.db.network_models_v2.Credential model."""
 
-    CredObj = collections.namedtuple('CredObj', 'tenant cname usr pwd')
+    CredObj = collections.namedtuple('CredObj', 'cname usr pwd ctype')
 
     def setUp(self):
         super(CiscoNetworkCredentialDbTest, self).setUp()
@@ -126,14 +126,14 @@ class CiscoNetworkCredentialDbTest(base.BaseTestCase):
 
     def _cred_test_obj(self, tnum, cnum):
         """Create a Credential test object from a pair of numbers."""
-        tenant = 'tenant_%s' % str(tnum)
-        cname = 'credential_%s' % str(cnum)
+        cname = 'credential_%s_%s' % (str(tnum), str(cnum))
         usr = 'User_%s_%s' % (str(tnum), str(cnum))
         pwd = 'Password_%s_%s' % (str(tnum), str(cnum))
-        return self.CredObj(tenant, cname, usr, pwd)
+        ctype = 'ctype_%s' % str(tnum)
+        return self.CredObj(cname, usr, pwd, ctype)
 
     def _assert_equal(self, credential, cred_obj):
-        self.assertEqual(credential.tenant_id, cred_obj.tenant)
+        self.assertEqual(credential.type, cred_obj.ctype)
         self.assertEqual(credential.credential_name, cred_obj.cname)
         self.assertEqual(credential.user_name, cred_obj.usr)
         self.assertEqual(credential.password, cred_obj.pwd)
@@ -141,100 +141,90 @@ class CiscoNetworkCredentialDbTest(base.BaseTestCase):
     def test_credential_add_remove(self):
         cred11 = self._cred_test_obj(1, 1)
         cred = cdb.add_credential(
-            cred11.tenant, cred11.cname, cred11.usr, cred11.pwd)
+            cred11.cname, cred11.usr, cred11.pwd, cred11.ctype)
         self._assert_equal(cred, cred11)
         cred_id = cred.credential_id
-        cred = cdb.remove_credential(cred11.tenant, cred_id)
+        cred = cdb.remove_credential(cred_id)
         self._assert_equal(cred, cred11)
-        cred = cdb.remove_credential(cred11.tenant, cred_id)
+        cred = cdb.remove_credential(cred_id)
         self.assertIsNone(cred)
 
     def test_credential_add_dup(self):
         cred22 = self._cred_test_obj(2, 2)
         cred = cdb.add_credential(
-            cred22.tenant, cred22.cname, cred22.usr, cred22.pwd)
+            cred22.cname, cred22.usr, cred22.pwd, cred22.ctype)
         self._assert_equal(cred, cred22)
         cred_id = cred.credential_id
         with testtools.ExpectedException(c_exc.CredentialAlreadyExists):
             cdb.add_credential(
-                cred22.tenant, cred22.cname, cred22.usr, cred22.pwd)
-        cred = cdb.remove_credential(cred22.tenant, cred_id)
+                cred22.cname, cred22.usr, cred22.pwd, cred22.ctype)
+        cred = cdb.remove_credential(cred_id)
         self._assert_equal(cred, cred22)
-        cred = cdb.remove_credential(cred22.tenant, cred_id)
+        cred = cdb.remove_credential(cred_id)
         self.assertIsNone(cred)
 
     def test_credential_get_id(self):
         cred11 = self._cred_test_obj(1, 1)
         cred11_id = cdb.add_credential(
-            cred11.tenant, cred11.cname, cred11.usr, cred11.pwd).credential_id
+            cred11.cname, cred11.usr, cred11.pwd, cred11.ctype).credential_id
         cred21 = self._cred_test_obj(2, 1)
         cred21_id = cdb.add_credential(
-            cred21.tenant, cred21.cname, cred21.usr, cred21.pwd).credential_id
+            cred21.cname, cred21.usr, cred21.pwd, cred21.ctype).credential_id
         cred22 = self._cred_test_obj(2, 2)
         cred22_id = cdb.add_credential(
-            cred22.tenant, cred22.cname, cred22.usr, cred22.pwd).credential_id
+            cred22.cname, cred22.usr, cred22.pwd, cred22.ctype).credential_id
 
-        cred = cdb.get_credential(cred11.tenant, cred11_id)
+        cred = cdb.get_credential(cred11_id)
         self._assert_equal(cred, cred11)
-        cred = cdb.get_credential(cred21.tenant, cred21_id)
+        cred = cdb.get_credential(cred21_id)
         self._assert_equal(cred, cred21)
-        cred = cdb.get_credential(cred21.tenant, cred22_id)
+        cred = cdb.get_credential(cred22_id)
         self._assert_equal(cred, cred22)
 
         with testtools.ExpectedException(c_exc.CredentialNotFound):
-            cdb.get_credential(cred11.tenant, "dummyCredentialId")
-        with testtools.ExpectedException(c_exc.CredentialNotFound):
-            cdb.get_credential(cred11.tenant, cred21_id)
-        with testtools.ExpectedException(c_exc.CredentialNotFound):
-            cdb.get_credential(cred21.tenant, cred11_id)
+            cdb.get_credential("dummyCredentialId")
 
-        cred_all_t1 = cdb.get_all_credentials(cred11.tenant)
-        self.assertEqual(len(cred_all_t1), 1)
-        cred_all_t2 = cdb.get_all_credentials(cred21.tenant)
-        self.assertEqual(len(cred_all_t2), 2)
-        cred_all_t3 = cdb.get_all_credentials("dummyTenant")
-        self.assertEqual(len(cred_all_t3), 0)
+        cred_all_t1 = cdb.get_all_credentials()
+        self.assertEqual(len(cred_all_t1), 3)
 
     def test_credential_get_name(self):
         cred11 = self._cred_test_obj(1, 1)
         cred11_id = cdb.add_credential(
-            cred11.tenant, cred11.cname, cred11.usr, cred11.pwd).credential_id
+            cred11.cname, cred11.usr, cred11.pwd, cred11.ctype).credential_id
         cred21 = self._cred_test_obj(2, 1)
         cred21_id = cdb.add_credential(
-            cred21.tenant, cred21.cname, cred21.usr, cred21.pwd).credential_id
+            cred21.cname, cred21.usr, cred21.pwd, cred21.ctype).credential_id
         cred22 = self._cred_test_obj(2, 2)
         cred22_id = cdb.add_credential(
-            cred22.tenant, cred22.cname, cred22.usr, cred22.pwd).credential_id
+            cred22.cname, cred22.usr, cred22.pwd, cred22.ctype).credential_id
         self.assertNotEqual(cred11_id, cred21_id)
         self.assertNotEqual(cred11_id, cred22_id)
         self.assertNotEqual(cred21_id, cred22_id)
 
-        cred = cdb.get_credential_name(cred11.tenant, cred11.cname)
+        cred = cdb.get_credential_name(cred11.cname)
         self._assert_equal(cred, cred11)
-        cred = cdb.get_credential_name(cred21.tenant, cred21.cname)
+        cred = cdb.get_credential_name(cred21.cname)
         self._assert_equal(cred, cred21)
-        cred = cdb.get_credential_name(cred22.tenant, cred22.cname)
+        cred = cdb.get_credential_name(cred22.cname)
         self._assert_equal(cred, cred22)
 
         with testtools.ExpectedException(c_exc.CredentialNameNotFound):
-            cdb.get_credential_name(cred11.tenant, "dummyCredentialName")
-        with testtools.ExpectedException(c_exc.CredentialNameNotFound):
-            cdb.get_credential_name(cred11.tenant, cred22.cname)
+            cdb.get_credential_name("dummyCredentialName")
 
     def test_credential_update(self):
         cred11 = self._cred_test_obj(1, 1)
         cred11_id = cdb.add_credential(
-            cred11.tenant, cred11.cname, cred11.usr, cred11.pwd).credential_id
-        cdb.update_credential(cred11.tenant, cred11_id)
+            cred11.cname, cred11.usr, cred11.pwd, cred11.ctype).credential_id
+        cdb.update_credential(cred11_id)
         new_usr = "new user name"
         new_pwd = "new password"
         new_credential = cdb.update_credential(
-            cred11.tenant, cred11_id, new_usr, new_pwd)
+            cred11_id, new_usr, new_pwd)
         expected_cred = self.CredObj(
-            cred11.tenant, cred11.cname, new_usr, new_pwd)
+            cred11.cname, new_usr, new_pwd, cred11.ctype)
         self._assert_equal(new_credential, expected_cred)
-        new_credential = cdb.get_credential(cred11.tenant, cred11_id)
+        new_credential = cdb.get_credential(cred11_id)
         self._assert_equal(new_credential, expected_cred)
         with testtools.ExpectedException(c_exc.CredentialNotFound):
             cdb.update_credential(
-                cred11.tenant, "dummyCredentialId", new_usr, new_pwd)
+                "dummyCredentialId", new_usr, new_pwd)
