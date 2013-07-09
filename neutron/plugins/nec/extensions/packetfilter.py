@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2012 NEC Corporation.
+# Copyright 2012-2013 NEC Corporation.
 # All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -23,6 +23,7 @@ from oslo.config import cfg
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
+from neutron.common import exceptions
 from neutron.manager import NeutronManager
 from neutron import quota
 
@@ -33,20 +34,36 @@ quota_packet_filter_opts = [
                help=_("Number of packet_filters allowed per tenant, "
                       "-1 for unlimited"))
 ]
-# Register the configuration options
 cfg.CONF.register_opts(quota_packet_filter_opts, 'QUOTAS')
 
 
-PACKET_FILTER_ACTION_REGEX = "(?i)^(allow|accept|drop|deny)$"
-PACKET_FILTER_NUMBER_REGEX = "(?i)^(0x[0-9a-fA-F]+|[0-9]+)$"
-PACKET_FILTER_PROTOCOL_REGEX = "(?i)^(icmp|tcp|udp|arp|0x[0-9a-fA-F]+|[0-9]+)$"
-PACKET_FILTER_ATTR_MAP = {
+def convert_to_int(data):
+    try:
+        return int(data, 0)
+    except (ValueError, TypeError):
+        pass
+    try:
+        return int(data)
+    except (ValueError, TypeError):
+        msg = _("'%s' is not a integer") % data
+        raise exceptions.InvalidInput(error_message=msg)
+
+
+ALIAS = 'packet-filter'
+RESOURCE = 'packet_filter'
+COLLECTION = 'packet_filters'
+PACKET_FILTER_ACTION_REGEX = '(?i)^(allow|accept|drop|deny)$'
+PACKET_FILTER_PROTOCOL_REGEX = (
+    '(?i)^(icmp|tcp|udp|arp|0x[0-9a-fA-F]+|[0-9]+|)$')
+PACKET_FILTER_ATTR_PARAMS = {
     'id': {'allow_post': False, 'allow_put': False,
            'validate': {'type:uuid': None},
            'is_visible': True},
     'name': {'allow_post': True, 'allow_put': True, 'default': '',
+             'validate': {'type:string': None},
              'is_visible': True},
     'tenant_id': {'allow_post': True, 'allow_put': False,
+                  'validate': {'type:string': None},
                   'required_by_policy': True,
                   'is_visible': True},
     'network_id': {'allow_post': True, 'allow_put': False,
@@ -62,9 +79,9 @@ PACKET_FILTER_ATTR_MAP = {
                'validate': {'type:regex': PACKET_FILTER_ACTION_REGEX},
                'is_visible': True},
     'priority': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:regex': PACKET_FILTER_NUMBER_REGEX},
+                 'convert_to': convert_to_int,
                  'is_visible': True},
-    'in_port': {'allow_post': True, 'allow_put': True,
+    'in_port': {'allow_post': True, 'allow_put': False,
                 'default': attributes.ATTR_NOT_SPECIFIED,
                 'validate': {'type:uuid': None},
                 'is_visible': True},
@@ -78,7 +95,7 @@ PACKET_FILTER_ATTR_MAP = {
                 'is_visible': True},
     'eth_type': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'validate': {'type:regex': PACKET_FILTER_NUMBER_REGEX},
+                 'convert_to': convert_to_int,
                  'is_visible': True},
     'src_cidr': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
@@ -94,40 +111,58 @@ PACKET_FILTER_ATTR_MAP = {
                  'is_visible': True},
     'src_port': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'validate': {'type:regex': PACKET_FILTER_NUMBER_REGEX},
+                 'convert_to': convert_to_int,
                  'is_visible': True},
     'dst_port': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'validate': {'type:regex': PACKET_FILTER_NUMBER_REGEX},
+                 'convert_to': convert_to_int,
                  'is_visible': True},
 }
+PACKET_FILTER_ATTR_MAP = {COLLECTION: PACKET_FILTER_ATTR_PARAMS}
 
 
 class Packetfilter(extensions.ExtensionDescriptor):
 
-    def get_name(self):
-        return "PacketFilters"
+    @classmethod
+    def get_name(cls):
+        return ALIAS
 
-    def get_alias(self):
-        return "PacketFilters"
+    @classmethod
+    def get_alias(cls):
+        return ALIAS
 
-    def get_description(self):
-        return "PacketFilters"
+    @classmethod
+    def get_description(cls):
+        return "PacketFilters on OFC"
 
-    def get_namespace(self):
+    @classmethod
+    def get_namespace(cls):
         return "http://www.nec.co.jp/api/ext/packet_filter/v2.0"
 
-    def get_updated(self):
-        return "2012-07-24T00:00:00+09:00"
+    @classmethod
+    def get_updated(cls):
+        return "2013-07-16T00:00:00+09:00"
 
-    def get_resources(self):
-        resource = base.create_resource('packet_filters', 'packet_filter',
-                                        NeutronManager.get_plugin(),
-                                        PACKET_FILTER_ATTR_MAP)
-        qresource = quota.CountableResource('packet_filter',
+    @classmethod
+    def get_resources(cls):
+        qresource = quota.CountableResource(RESOURCE,
                                             quota._count_resource,
-                                            'quota_packet_filter')
+                                            'quota_%s' % RESOURCE)
         quota.QUOTAS.register_resource(qresource)
-        return [extensions.ResourceExtension('packet_filters',
-                                             resource,
-                                             attr_map=PACKET_FILTER_ATTR_MAP)]
+
+        resource = base.create_resource(COLLECTION, RESOURCE,
+                                        NeutronManager.get_plugin(),
+                                        PACKET_FILTER_ATTR_PARAMS)
+        pf_ext = extensions.ResourceExtension(
+            COLLECTION, resource, attr_map=PACKET_FILTER_ATTR_PARAMS)
+        return [pf_ext]
+
+    def update_attributes_map(self, attributes):
+        super(Packetfilter, self).update_attributes_map(
+            attributes, extension_attrs_map=PACKET_FILTER_ATTR_MAP)
+
+    def get_extended_resources(self, version):
+        if version == "2.0":
+            return PACKET_FILTER_ATTR_MAP
+        else:
+            return {}
