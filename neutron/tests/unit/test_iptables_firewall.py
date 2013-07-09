@@ -27,7 +27,7 @@ from neutron.tests.unit import test_api_v2
 
 _uuid = test_api_v2._uuid
 FAKE_PREFIX = {'IPv4': '10.0.0.0/24',
-               'IPv6': 'fe80::0/48'}
+               'IPv6': 'fe80::/48'}
 FAKE_IP = {'IPv4': '10.0.0.1',
            'IPv6': 'fe80::1'}
 

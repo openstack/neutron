@@ -1149,7 +1149,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                    expected_code=exc.HTTPNotFound.code)
 
     def _test_floatingip_with_assoc_fails(self, plugin_class):
-        with self.subnet(cidr='200.0.0.1/24') as public_sub:
+        with self.subnet(cidr='200.0.0.0/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.port() as private_port:
                 with self.router() as r:
@@ -1187,7 +1187,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
             'neutron.db.l3_db.L3_NAT_db_mixin')
 
     def _test_floatingip_with_ip_generation_failure(self, plugin_class):
-        with self.subnet(cidr='200.0.0.1/24') as public_sub:
+        with self.subnet(cidr='200.0.0.0/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.port() as private_port:
                 with self.router() as r:
