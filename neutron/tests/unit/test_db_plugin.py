@@ -76,7 +76,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     fmt = 'json'
     resource_prefix_map = {}
 
-    def setUp(self, plugin=None, service_plugins=None):
+    def setUp(self, plugin=None, service_plugins=None,
+              ext_mgr=None):
         super(NeutronDbPluginV2TestCase, self).setUp()
 
         # Make sure at each test a new instance of the plugin is returned
@@ -148,8 +149,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                             native_sorting_attr_name, False))
 
         self._skip_native_sorting = not _is_native_sorting_support()
-
-        ext_mgr = test_config.get('extension_manager', None)
+        ext_mgr = ext_mgr or test_config.get('extension_manager')
         if ext_mgr:
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
