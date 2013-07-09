@@ -20,6 +20,7 @@ from sqlalchemy.orm import exc
 
 from neutron.db import api as db
 from neutron.openstack.common import log as logging
+from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_models_v2
 from neutron.plugins.openvswitch import ovs_models_v2
@@ -255,6 +256,55 @@ def update_credential(tenant_id, credential_id,
     except exc.NoResultFound:
         raise c_exc.CredentialNotFound(credential_id=credential_id,
                                        tenant_id=tenant_id)
+
+
+def add_provider_network(network_id, network_type, segmentation_id):
+    """Add a network to the provider network table."""
+    session = db.get_session()
+    if session.query(network_models_v2.ProviderNetwork).filter_by(
+            network_id=network_id).first():
+        raise c_exc.ProviderNetworkExists(network_id)
+    pnet = network_models_v2.ProviderNetwork(network_id=network_id,
+                                             network_type=network_type,
+                                             segmentation_id=segmentation_id)
+    session.add(pnet)
+    session.flush()
+
+
+def remove_provider_network(network_id):
+    """Remove network_id from the provider network table.
+
+    :param network_id: Any network id. If it is not in the table, do nothing.
+    :return: network_id if it was in the table and successfully removed.
+    """
+    session = db.get_session()
+    pnet = (session.query(network_models_v2.ProviderNetwork).
+            filter_by(network_id=network_id).first())
+    if pnet:
+        session.delete(pnet)
+        session.flush()
+        return network_id
+
+
+def is_provider_network(network_id):
+    """Return True if network_id is in the provider network table."""
+    session = db.get_session()
+    if session.query(network_models_v2.ProviderNetwork).filter_by(
+            network_id=network_id).first():
+        return True
+
+
+def is_provider_vlan(vlan_id):
+    """Check for a for a vlan provider network with the specified vland_id.
+
+    Returns True if the provider network table contains a vlan network
+    with the specified vlan_id.
+    """
+    session = db.get_session()
+    if (session.query(network_models_v2.ProviderNetwork).
+            filter_by(network_type=const.NETWORK_TYPE_VLAN,
+                      segmentation_id=vlan_id).first()):
+        return True
 
 
 def get_ovs_vlans():

@@ -59,15 +59,6 @@ class L2DevicePluginBase(object):
         pass
 
     @abstractmethod
-    def get_network_details(self, tenant_id, net_id, **kwargs):
-        """Get network details.
-
-        :returns:
-        :raises:
-        """
-        pass
-
-    @abstractmethod
     def update_network(self, tenant_id, net_id, name, **kwargs):
         """Update network.
 
