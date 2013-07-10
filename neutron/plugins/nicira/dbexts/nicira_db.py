@@ -72,6 +72,11 @@ def get_nvp_port_id(session, neutron_id):
         return
 
 
+def delete_neutron_nvp_port_mapping(session, neutron_id):
+    return (session.query(nicira_models.NeutronNvpPortMapping).
+            filter_by(quantum_id=neutron_id).delete())
+
+
 def unset_default_network_gateways(session):
     with session.begin(subtransactions=True):
         session.query(nicira_networkgw_db.NetworkGateway).update(
