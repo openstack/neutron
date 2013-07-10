@@ -23,43 +23,44 @@ subnets.
 
 from oslo.config import cfg
 
+from neutron.common import config
 from neutron import context
 from neutron import manager
-from neutron.common import config
 from neutron.openstack.common.notifier import api as notifier_api
 
-if __name__ == '__main__':
+
+def main():
     cfg.CONF(project='neutron')
     config.setup_logging(cfg.CONF)
 
-    context = context.get_admin_context()
+    cxt = context.get_admin_context()
     plugin = manager.NeutronManager.get_plugin()
-    for network in plugin.get_networks(context):
-        notifier_api.notify(context,
+    for network in plugin.get_networks(cxt):
+        notifier_api.notify(cxt,
                             notifier_api.publisher_id('network'),
                             'network.exists',
                             notifier_api.INFO,
                             {'network': network})
-    for subnet in plugin.get_subnets(context):
-        notifier_api.notify(context,
+    for subnet in plugin.get_subnets(cxt):
+        notifier_api.notify(cxt,
                             notifier_api.publisher_id('network'),
                             'subnet.exists',
                             notifier_api.INFO,
                             {'subnet': subnet})
-    for port in plugin.get_ports(context):
-        notifier_api.notify(context,
+    for port in plugin.get_ports(cxt):
+        notifier_api.notify(cxt,
                             notifier_api.publisher_id('network'),
                             'port.exists',
                             notifier_api.INFO,
                             {'port': port})
-    for router in plugin.get_routers(context):
-        notifier_api.notify(context,
+    for router in plugin.get_routers(cxt):
+        notifier_api.notify(cxt,
                             notifier_api.publisher_id('network'),
                             'router.exists',
                             notifier_api.INFO,
                             {'router': router})
-    for floatingip in plugin.get_floatingips(context):
-        notifier_api.notify(context,
+    for floatingip in plugin.get_floatingips(cxt):
+        notifier_api.notify(cxt,
                             notifier_api.publisher_id('network'),
                             'floatingip.exists',
                             notifier_api.INFO,
