@@ -355,6 +355,10 @@ class TestMidonetSubnetsV2(test_plugin.TestSubnetsV2,
         self):
         pass
 
+    def test_update_subnet_no_gateway(self):
+        self._setup_subnet_mocks()
+        super(TestMidonetSubnetsV2, self).test_update_subnet_no_gateway()
+
     def test_create_subnet_gateway_in_allocation_pool_returns_409(self):
         self._setup_subnet_mocks()
         super(TestMidonetSubnetsV2, self)\

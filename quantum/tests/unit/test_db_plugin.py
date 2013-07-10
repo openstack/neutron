@@ -2963,6 +2963,20 @@ class TestSubnetsV2(QuantumDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(res.status_int, 400)
 
+    def test_update_subnet_no_gateway(self):
+        with self.subnet() as subnet:
+            data = {'subnet': {'gateway_ip': '11.0.0.1'}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(res['subnet']['gateway_ip'],
+                             data['subnet']['gateway_ip'])
+            data = {'subnet': {'gateway_ip': None}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(None, data['subnet']['gateway_ip'])
+
     def test_update_subnet(self):
         with self.subnet() as subnet:
             data = {'subnet': {'gateway_ip': '11.0.0.1'}}
