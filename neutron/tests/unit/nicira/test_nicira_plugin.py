@@ -777,6 +777,12 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
         port = self.deserialize('json', res)
         self.assertEqual(ext_qos.QUEUE not in port['port'], True)
 
+    def test_dscp_value_out_of_range(self):
+        body = {'qos_queue': {'tenant_id': 'admin', 'dscp': '64',
+                              'name': 'foo', 'min': 20, 'max': 20}}
+        res = self._create_qos_queue('json', body)
+        self.assertEqual(res.status_int, 400)
+
     def test_non_admin_cannot_create_queue(self):
         body = {'qos_queue': {'tenant_id': 'not_admin',
                               'name': 'foo', 'min': 20, 'max': 20}}
