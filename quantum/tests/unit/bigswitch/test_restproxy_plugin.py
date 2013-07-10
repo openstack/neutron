@@ -41,16 +41,33 @@ class HTTPResponseMock():
         return "{'status': '200 OK'}"
 
 
+class HTTPResponseMock404():
+    status = 404
+    reason = 'Not Found'
+
+    def __init__(self, sock, debuglevel=0, strict=0, method=None,
+                 buffering=False):
+        pass
+
+    def read(self):
+        return "{'status': '404 Not Found'}"
+
+
 class HTTPConnectionMock():
 
     def __init__(self, server, port, timeout):
+        self.response = None
         pass
 
     def request(self, action, uri, body, headers):
+        if uri.endswith('attachment') and action == 'DELETE':
+            self.response = HTTPResponseMock404(None)
+        else:
+            self.response = HTTPResponseMock(None)
         return
 
     def getresponse(self):
-        return HTTPResponseMock(None)
+        return self.response
 
     def close(self):
         pass
