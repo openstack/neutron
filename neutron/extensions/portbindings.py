@@ -37,6 +37,7 @@ CAP_PORT_FILTER = 'port_filter'
 
 VIF_TYPE_UNBOUND = 'unbound'
 VIF_TYPE_BINDING_FAILED = 'binding_failed'
+VIF_TYPE_IOVISOR = 'iovisor'
 VIF_TYPE_OVS = 'ovs'
 VIF_TYPE_IVS = 'ivs'
 VIF_TYPE_BRIDGE = 'bridge'
