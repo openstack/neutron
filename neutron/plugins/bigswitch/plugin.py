@@ -268,13 +268,13 @@ class ServerPool(object):
         return ServerProxy(server, port, self.ssl, self.auth, self.neutron_id,
                            self.timeout, self.base_uri, self.name)
 
-    def server_failure(self, resp):
+    def server_failure(self, resp, ignore_codes=[]):
         """Define failure codes as required.
 
         Note: We assume 301-303 is a failure, and try the next server in
         the server pool.
         """
-        return resp[0] in FAILURE_CODES
+        return (resp[0] in FAILURE_CODES and resp[0] not in ignore_codes)
 
     def action_success(self, resp):
         """Defining success codes as required.
@@ -283,12 +283,12 @@ class ServerPool(object):
         """
         return resp[0] in SUCCESS_CODES
 
-    def rest_call(self, action, resource, data, headers):
+    def rest_call(self, action, resource, data, headers, ignore_codes):
         failed_servers = []
         while self.servers:
             active_server = self.servers[0]
             ret = active_server.rest_call(action, resource, data, headers)
-            if not self.server_failure(ret):
+            if not self.server_failure(ret, ignore_codes):
                 self.servers.extend(failed_servers)
                 return ret
             else:
@@ -308,17 +308,17 @@ class ServerPool(object):
         self.servers.extend(failed_servers)
         return (0, None, None, None)
 
-    def get(self, resource, data='', headers=None):
-        return self.rest_call('GET', resource, data, headers)
+    def get(self, resource, data='', headers=None, ignore_codes=[]):
+        return self.rest_call('GET', resource, data, headers, ignore_codes)
 
-    def put(self, resource, data, headers=None):
-        return self.rest_call('PUT', resource, data, headers)
+    def put(self, resource, data, headers=None, ignore_codes=[]):
+        return self.rest_call('PUT', resource, data, headers, ignore_codes)
 
-    def post(self, resource, data, headers=None):
-        return self.rest_call('POST', resource, data, headers)
+    def post(self, resource, data, headers=None, ignore_codes=[]):
+        return self.rest_call('POST', resource, data, headers, ignore_codes)
 
-    def delete(self, resource, data='', headers=None):
-        return self.rest_call('DELETE', resource, data, headers)
+    def delete(self, resource, data='', headers=None, ignore_codes=[]):
+        return self.rest_call('DELETE', resource, data, headers, ignore_codes)
 
 
 class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
@@ -790,12 +790,13 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         # delete from network ctrl. Remote error on delete is ignored
         try:
             resource = ATTACHMENT_PATH % (tenant_id, net_id, port_id)
-            ret = self.servers.delete(resource)
-            if not self.servers.action_success(ret):
+            ret = self.servers.delete(resource, ignore_codes=[404])
+            if self.servers.server_failure(ret, ignore_codes=[404]):
                 raise RemoteRestError(ret[2])
         except RemoteRestError as e:
             LOG.error(_("NeutronRestProxyV2: Unable to update remote port: "
                         "%s"), e.message)
+            raise
 
     def create_subnet(self, context, subnet):
         LOG.debug(_("NeutronRestProxyV2: create_subnet() called"))
