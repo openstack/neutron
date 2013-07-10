@@ -2,6 +2,7 @@ AUTHORS
 build/*
 build-stamp
 ChangeLog
+cover/
 .coverage
 covhtml/
 dist/
