@@ -53,13 +53,33 @@ class HTTPResponseMock404():
         return "{'status': '404 Not Found'}"
 
 
+class HTTPResponseMock500():
+    status = 500
+    reason = 'Internal Server Error'
+
+    def __init__(self, sock, debuglevel=0, strict=0, method=None,
+                 buffering=False):
+        pass
+
+    def read(self):
+        return "{'status': '500 Internal Server Error'}"
+
+
 class HTTPConnectionMock():
 
     def __init__(self, server, port, timeout):
-        self.response = None
-        pass
+        if port == 9000:
+            self.response = HTTPResponseMock500(None)
+            self.broken = True
+        else:
+            self.response = HTTPResponseMock(None)
+            self.broken = False
 
     def request(self, action, uri, body, headers):
+        if self.broken:
+            if "ExceptOnBadServer" in uri:
+                raise Exception("Broken server got an unexpected request")
+            return
         if uri.endswith('attachment') and action == 'DELETE':
             self.response = HTTPResponseMock404(None)
         else:
@@ -99,7 +119,14 @@ class TestBigSwitchProxyBasicGet(test_plugin.TestBasicGet,
 class TestBigSwitchProxyV2HTTPResponse(test_plugin.TestV2HTTPResponse,
                                        BigSwitchProxyPluginV2TestCase):
 
-    pass
+    def test_failover_memory(self):
+        # first request causes failover so next shouldn't hit bad server
+        with self.network() as net:
+            kwargs = {'tenant_id': 'ExceptOnBadServer'}
+            with self.network(**kwargs) as net:
+                req = self.new_show_request('networks', net['network']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, 200)
 
 
 class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
