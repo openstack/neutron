@@ -832,7 +832,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 ('timeout', 10),
                 ('max_retries', 3),
                 ('admin_state_up', True),
-                ('status', 'PENDING_CREATE')]
+                ('status', 'ACTIVE')]
         with self.health_monitor() as monitor:
             for k, v in keys:
                 self.assertEqual(monitor['health_monitor'][k], v)
@@ -916,7 +916,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     ('timeout', 10),
                     ('max_retries', 3),
                     ('admin_state_up', True),
-                    ('status', 'PENDING_CREATE')]
+                    ('status', 'ACTIVE')]
             req = self.new_show_request('health_monitors',
                                         monitor['health_monitor']['id'],
                                         fmt=self.fmt)
@@ -1224,6 +1224,35 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                                 pool['pool']['id'])
             self.assertEqual(updated_pool['status'], 'ACTIVE')
             self.assertFalse(pool['pool']['status_description'])
+
+    def test_update_pool_health_monitor(self):
+        with self.pool() as pool:
+            with self.health_monitor() as hm:
+                res = self.plugin.create_pool_health_monitor(
+                    context.get_admin_context(),
+                    hm, pool['pool']['id'])
+                self.assertEqual({'health_monitor':
+                                  [hm['health_monitor']['id']]},
+                                 res)
+
+                assoc = self.plugin.get_pool_health_monitor(
+                    context.get_admin_context(),
+                    hm['health_monitor']['id'],
+                    pool['pool']['id'])
+                self.assertEqual(assoc['status'], 'PENDING_CREATE')
+                self.assertIsNone(assoc['status_description'])
+
+                self.plugin.update_pool_health_monitor(
+                    context.get_admin_context(),
+                    hm['health_monitor']['id'],
+                    pool['pool']['id'],
+                    'ACTIVE', 'ok')
+                assoc = self.plugin.get_pool_health_monitor(
+                    context.get_admin_context(),
+                    hm['health_monitor']['id'],
+                    pool['pool']['id'])
+                self.assertEqual(assoc['status'], 'ACTIVE')
+                self.assertEqual(assoc['status_description'], 'ok')
 
 
 class TestLoadBalancerXML(TestLoadBalancer):

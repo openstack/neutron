@@ -49,6 +49,11 @@ class HealthMonitorNotFound(qexception.NotFound):
     message = _("Health_monitor %(monitor_id)s could not be found")
 
 
+class PoolMonitorAssociationNotFound(qexception.NotFound):
+    message = _("Monitor %(monitor_id)s is not associated "
+                "with Pool %(pool_id)s")
+
+
 class StateInvalid(qexception.NeutronException):
     message = _("Invalid state %(state)s of Loadbalancer resource %(id)s")
 
