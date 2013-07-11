@@ -43,7 +43,8 @@ class DefaultQueueAlreadyExists(qexception.InUse):
 
 
 class QueueInvalidDscp(qexception.InvalidInput):
-    message = _("Invalid value for dscp %(data)s must be integer.")
+    message = _("Invalid value for dscp %(data)s must be integer value"
+                "between 0 and 63.")
 
 
 class QueueMinGreaterMax(qexception.InvalidInput):
@@ -83,6 +84,13 @@ def convert_to_unsigned_int_or_none(val):
         raise qexception.InvalidInput(error_message=msg)
     return val
 
+
+def convert_to_unsigned_int_or_none_max_63(val):
+    val = convert_to_unsigned_int_or_none(val)
+    if val > 63:
+        raise QueueInvalidDscp(data=val)
+    return val
+
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
     'qos_queues': {
@@ -105,7 +113,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'default': 'untrusted', 'is_visible': True},
         'dscp': {'allow_post': True, 'allow_put': False,
                  'is_visible': True, 'default': '0',
-                 'convert_to': convert_to_unsigned_int_or_none},
+                 'convert_to': convert_to_unsigned_int_or_none_max_63},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'validate': {'type:string': None},
