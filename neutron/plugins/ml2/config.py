@@ -29,9 +29,9 @@ ml2_opts = [
                        "networks.")),
     cfg.ListOpt('mechanism_drivers',
                 default=[],
-                help=_("List of networking mechanism driver entrypoints to "
-                       "be loaded from the neutron.ml2.mechanism_drivers "
-                       "namespace.")),
+                help=_("An ordered list of networking mechanism driver "
+                       "entrypoints to be loaded from the "
+                       "neutron.ml2.mechanism_drivers namespace.")),
 ]
 
 
