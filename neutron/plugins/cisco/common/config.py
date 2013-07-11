@@ -93,10 +93,17 @@ class CiscoConfigOptions():
 
         Reads data from cisco_plugins.ini NEXUS_SWITCH section(s).
         """
-        for parsed_file in cfg.CONF._cparser.parsed:
+
+        multi_parser = cfg.MultiConfigParser()
+        read_ok = multi_parser.read(CONF.config_file)
+
+        if len(read_ok) != len(CONF.config_file):
+            raise cfg.Error("Some config files were not parsed properly")
+
+        for parsed_file in multi_parser.parsed:
             for parsed_item in parsed_file.keys():
                 nexus_name, sep, nexus_ip = parsed_item.partition(':')
-                if nexus_name == 'NEXUS_SWITCH':
+                if nexus_name.lower() == "nexus_switch":
                     for nexus_key, value in parsed_file[parsed_item].items():
                         nexus_dictionary[nexus_ip, nexus_key] = value[0]
 
