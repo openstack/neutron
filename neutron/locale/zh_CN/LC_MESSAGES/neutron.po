@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-09 19:55+0000\n"
+"POT-Creation-Date: 2013-07-12 19:55+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) "
@@ -381,116 +381,125 @@ msgid ""
 "enable_isolated_metadata = True"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:102
+#: neutron/agent/dhcp_agent.py:71
+msgid "Number of threads to use during sync process."
+msgstr ""
+
+#: neutron/agent/dhcp_agent.py:104
 #, python-format
 msgid ""
 "The '%s' DHCP-driver does not support retrieving of a list of existing "
 "networks"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:109 neutron/agent/dhcp_agent.py:782
+#: neutron/agent/dhcp_agent.py:111 neutron/agent/dhcp_agent.py:865
 msgid "DHCP agent started"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:137
+#: neutron/agent/dhcp_agent.py:139
 #, python-format
 msgid "Unable to %s dhcp."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:145
+#: neutron/agent/dhcp_agent.py:147
 msgid "Unable to update lease"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:149
+#: neutron/agent/dhcp_agent.py:151
 msgid "Synchronizing state"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:161
+#: neutron/agent/dhcp_agent.py:166
 msgid "Unable to sync network state."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:181 neutron/agent/dhcp_agent.py:219
+#: neutron/agent/dhcp_agent.py:186 neutron/agent/dhcp_agent.py:226
 #, python-format
 msgid "Network %s RPC info call failed."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:311
+#: neutron/agent/dhcp_agent.py:318
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:500 neutron/agent/l3_agent.py:149
+#: neutron/agent/dhcp_agent.py:528 neutron/agent/l3_agent.py:149
 #: neutron/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:508
+#: neutron/agent/dhcp_agent.py:536
 msgid "You must specify an interface driver"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:514 neutron/agent/l3_agent.py:192
+#: neutron/agent/dhcp_agent.py:542 neutron/agent/l3_agent.py:192
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:565
+#: neutron/agent/dhcp_agent.py:590
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:575
+#: neutron/agent/dhcp_agent.py:600
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:599 neutron/debug/debug_agent.py:75
+#: neutron/agent/dhcp_agent.py:641
+#, python-format
+msgid "DHCP port %(device_id)s on network %(network_id)s does not yet exist."
+msgstr ""
+
+#: neutron/agent/dhcp_agent.py:682 neutron/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:686
+#: neutron/agent/dhcp_agent.py:769
 msgid "Location to DHCP lease relay UNIX domain socket"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:716
+#: neutron/agent/dhcp_agent.py:799
 #, python-format
 msgid "Network ID %s is not a valid UUID"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:722
+#: neutron/agent/dhcp_agent.py:805
 msgid "Unable to parse lease relay msg to dict."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:723
+#: neutron/agent/dhcp_agent.py:806
 #, python-format
 msgid "Exception value: %s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:724
+#: neutron/agent/dhcp_agent.py:807
 #, python-format
 msgid "Message representation: %s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:726
+#: neutron/agent/dhcp_agent.py:809
 msgid "Unable update lease. Exception"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:765 neutron/agent/l3_agent.py:764
+#: neutron/agent/dhcp_agent.py:848 neutron/agent/l3_agent.py:764
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:771 neutron/agent/l3_agent.py:769
+#: neutron/agent/dhcp_agent.py:854 neutron/agent/l3_agent.py:769
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:228
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:184
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:215
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:779 neutron/agent/l3_agent.py:774
+#: neutron/agent/dhcp_agent.py:862 neutron/agent/l3_agent.py:774
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr ""
@@ -2125,43 +2134,58 @@ msgstr ""
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:35
+#: neutron/db/dhcp_rpc_base.py:53
 #, python-format
-msgid "Network list requested from %s"
+msgid "get_active_networks requested from %s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:52
+#: neutron/db/dhcp_rpc_base.py:60
+#, python-format
+msgid "get_active_networks_info from %s"
+msgstr ""
+
+#: neutron/db/dhcp_rpc_base.py:80
 #, python-format
 msgid "Network %(network_id)s requested from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:77
+#: neutron/db/dhcp_rpc_base.py:109
 #, python-format
 msgid "Port %(device_id)s for %(network_id)s requested from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:111
+#: neutron/db/dhcp_rpc_base.py:143
 #, python-format
 msgid ""
 "DHCP port %(device_id)s on network %(network_id)s does not exist on "
 "%(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:144
+#: neutron/db/dhcp_rpc_base.py:176
 #, python-format
 msgid "DHCP port deletion for %(network_id)s request from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:161
+#: neutron/db/dhcp_rpc_base.py:193
 #, python-format
 msgid "DHCP port remove fixed_ip for %(subnet_id)s request from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:185
+#: neutron/db/dhcp_rpc_base.py:217
 #, python-format
 msgid ""
 "Updating lease expiration for %(ip_address)s on network %(network_id)s "
 "from %(host)s."
+msgstr ""
+
+#: neutron/db/dhcp_rpc_base.py:231
+#, python-format
+msgid "Create dhcp port %(port)s from %(host)s."
+msgstr ""
+
+#: neutron/db/dhcp_rpc_base.py:247
+#, python-format
+msgid "Update dhcp port %(port)s from %(host)s."
 msgstr ""
 
 #: neutron/db/extraroute_db.py:38
@@ -2250,7 +2274,7 @@ msgid ""
 "assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:607 neutron/plugins/nicira/NeutronPlugin.py:1793
+#: neutron/db/l3_db.py:607 neutron/plugins/nicira/NeutronPlugin.py:1795
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
@@ -3879,25 +3903,25 @@ msgstr ""
 msgid "%s can not be found in database"
 msgstr ""
 
-#: neutron/plugins/brocade/NeutronPlugin.py:279
-#: neutron/plugins/brocade/NeutronPlugin.py:322
-#: neutron/plugins/brocade/NeutronPlugin.py:372
+#: neutron/plugins/brocade/NeutronPlugin.py:281
+#: neutron/plugins/brocade/NeutronPlugin.py:324
+#: neutron/plugins/brocade/NeutronPlugin.py:374
 msgid "Brocade NOS driver:"
 msgstr ""
 
-#: neutron/plugins/brocade/NeutronPlugin.py:280
-#: neutron/plugins/brocade/NeutronPlugin.py:323
-#: neutron/plugins/brocade/NeutronPlugin.py:373
+#: neutron/plugins/brocade/NeutronPlugin.py:282
+#: neutron/plugins/brocade/NeutronPlugin.py:325
+#: neutron/plugins/brocade/NeutronPlugin.py:375
 #, python-format
 msgid "%s"
 msgstr ""
 
-#: neutron/plugins/brocade/NeutronPlugin.py:281
+#: neutron/plugins/brocade/NeutronPlugin.py:283
 #, python-format
 msgid "Returning the allocated vlan (%d) to the pool"
 msgstr ""
 
-#: neutron/plugins/brocade/NeutronPlugin.py:289
+#: neutron/plugins/brocade/NeutronPlugin.py:291
 #, python-format
 msgid "Allocated vlan (%d) from the pool"
 msgstr ""
@@ -4525,7 +4549,7 @@ msgid "Invalid tenant_network_type: %s. Agent terminated!"
 msgstr ""
 
 #: neutron/plugins/hyperv/hyperv_neutron_plugin.py:194
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:278
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:281
 #: neutron/plugins/ml2/drivers/type_vlan.py:94
 #: neutron/plugins/mlnx/mlnx_plugin.py:107
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:320
@@ -4775,73 +4799,73 @@ msgstr ""
 msgid "Device %(device)s up %(agent_id)s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:244
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:247
 #: neutron/plugins/mlnx/mlnx_plugin.py:136
 #, python-format
 msgid "Invalid tenant_network_type: %s. Service terminated!"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:255
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:258
 msgid "Linux Bridge Plugin initialization complete"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:276
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:279
 #, python-format
 msgid "%s. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:317
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:320
 #: neutron/plugins/mlnx/mlnx_plugin.py:155
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:366
 msgid "provider:network_type required"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:321
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:324
 #: neutron/plugins/mlnx/mlnx_plugin.py:180
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:370
 msgid "provider:segmentation_id specified for flat network"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:327
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:330
 #: neutron/plugins/mlnx/mlnx_plugin.py:185
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:376
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:395
 msgid "provider:segmentation_id required"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:330
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:333
 #: neutron/plugins/mlnx/mlnx_plugin.py:188
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:379
 #, python-format
 msgid "provider:segmentation_id out of range (%(min_id)s through %(max_id)s)"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:337
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:340
 #: neutron/plugins/mlnx/mlnx_plugin.py:196
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:399
 msgid "provider:physical_network specified for local network"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:343
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:346
 #: neutron/plugins/mlnx/mlnx_plugin.py:200
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:405
 msgid "provider:segmentation_id specified for local network"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:349
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:352
 #: neutron/plugins/mlnx/mlnx_plugin.py:171
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:411
 #, python-format
 msgid "provider:network_type %s not supported"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:355
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:358
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:417
 #, python-format
 msgid "Unknown provider:physical_network %s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:361
+#: neutron/plugins/linuxbridge/lb_neutron_plugin.py:364
 #: neutron/plugins/mlnx/mlnx_plugin.py:218
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:423
 msgid "provider:physical_network required"
@@ -5780,8 +5804,8 @@ msgstr ""
 
 #: neutron/plugins/ml2/config.py:32
 msgid ""
-"List of networking mechanism driver entrypoints to be loaded from the "
-"neutron.ml2.mechanism_drivers namespace."
+"An ordered list of networking mechanism driver entrypoints to be loaded "
+"from the neutron.ml2.mechanism_drivers namespace."
 msgstr ""
 
 #: neutron/plugins/ml2/db.py:44
@@ -5799,75 +5823,105 @@ msgstr ""
 msgid "get_port_and_sgs() called for port_id %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:40
+#: neutron/plugins/ml2/managers.py:41
 #, python-format
 msgid "Configured type driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:45
+#: neutron/plugins/ml2/managers.py:46
 #, python-format
 msgid "Loaded type driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:53
+#: neutron/plugins/ml2/managers.py:54
 #, python-format
 msgid ""
 "Type driver '%(new_driver)s' ignored because type driver '%(old_driver)s'"
 " is already registered for type '%(type)s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:61
+#: neutron/plugins/ml2/managers.py:62
 #, python-format
 msgid "Registered types: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:69
+#: neutron/plugins/ml2/managers.py:70
 #, python-format
 msgid "No type driver for tenant network_type: %s. Service terminated!"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:73
+#: neutron/plugins/ml2/managers.py:74
 #, python-format
 msgid "Tenant network_types: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:77
+#: neutron/plugins/ml2/managers.py:78
 #, python-format
 msgid "Initializing driver for type '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:86
+#: neutron/plugins/ml2/managers.py:87
 #, python-format
 msgid "network_type value '%s' not supported"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:122
+#: neutron/plugins/ml2/managers.py:129
 #, python-format
 msgid "Configured mechanism driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:127
+#: neutron/plugins/ml2/managers.py:134
 #, python-format
 msgid "Loaded mechanism driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:103
+#: neutron/plugins/ml2/managers.py:145
+#, python-format
+msgid "Mechanism driver '%s' ignored because driver is already registered"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:151
+#, python-format
+msgid "Registered mechanism drivers: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:156
+#, python-format
+msgid "Initializing mechanism driver '%s'"
+msgstr ""
+
+#: neutron/plugins/ml2/managers.py:176
+#, python-format
+msgid "Mechanism driver '%(name)s' failed in %(method)s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:106
 msgid "Modular L2 Plugin initialization complete"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:131
+#: neutron/plugins/ml2/plugin.py:134
 msgid "network_type required if other provider attributes specified"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:145
+#: neutron/plugins/ml2/plugin.py:148
 #, python-format
 msgid "Network %s has no segments"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:177
+#: neutron/plugins/ml2/plugin.py:180
 msgid ""
 "In _notify_port_updated() for port %(port_id), network %(network_id) has "
 "no segments"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:223
+#, python-format
+msgid "mechanism_manager.create_network failed, deleting network '%s'"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:326
+#, python-format
+msgid "mechanism_manager.create_port failed, deleting port '%s'"
 msgstr ""
 
 #: neutron/plugins/ml2/rpc.py:79
@@ -5910,6 +5964,11 @@ msgstr ""
 #: neutron/plugins/ml2/rpc.py:153
 #, python-format
 msgid "Device %(device)s updated up by agent %(agent_id)s not found in database"
+msgstr ""
+
+#: neutron/plugins/ml2/common/exceptions.py:23
+#, python-format
+msgid "%(method)s failed."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_flat.py:31
@@ -6302,161 +6361,161 @@ msgstr ""
 msgid "Set_port_status as %s called"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:160
+#: neutron/plugins/nec/nec_plugin.py:159
 msgid "activate_port_if_ready(): skip, port.admin_state_up is False."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:164
+#: neutron/plugins/nec/nec_plugin.py:163
 msgid "activate_port_if_ready(): skip, network.admin_state_up is False."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:168
+#: neutron/plugins/nec/nec_plugin.py:167
 msgid "activate_port_if_ready(): skip, no portinfo for this port."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:187
+#: neutron/plugins/nec/nec_plugin.py:186
 msgid "activate_port_if_ready(): skip, ofc_port already exists."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:193
+#: neutron/plugins/nec/nec_plugin.py:192
 #, python-format
 msgid "create_ofc_port() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:211
+#: neutron/plugins/nec/nec_plugin.py:210
 #, python-format
 msgid "delete_ofc_port() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:215
+#: neutron/plugins/nec/nec_plugin.py:214
 msgid "deactivate_port(): skip, ofc_port does not exist."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:235
+#: neutron/plugins/nec/nec_plugin.py:234
 #, python-format
 msgid "NECPluginV2.create_network() called, network=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:254
+#: neutron/plugins/nec/nec_plugin.py:253
 #, python-format
 msgid "create_network() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:270
+#: neutron/plugins/nec/nec_plugin.py:269
 #, python-format
 msgid "NECPluginV2.update_network() called, id=%(id)s network=%(network)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:320
+#: neutron/plugins/nec/nec_plugin.py:319
 #, python-format
 msgid "NECPluginV2.delete_network() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:329
+#: neutron/plugins/nec/nec_plugin.py:328
 #, python-format
 msgid "delete_network(): deleting auto-delete port from OFC: %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:344
+#: neutron/plugins/nec/nec_plugin.py:343
 #, python-format
 msgid "delete_network() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:362
+#: neutron/plugins/nec/nec_plugin.py:361
 #, python-format
 msgid "delete_ofc_tenant() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:374
+#: neutron/plugins/nec/nec_plugin.py:373
 #, python-format
 msgid "NECPluginV2.create_port() called, port=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:393
+#: neutron/plugins/nec/nec_plugin.py:392
 #, python-format
 msgid "NECPluginV2.update_port() called, id=%(id)s port=%(port)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:419
+#: neutron/plugins/nec/nec_plugin.py:418
 #, python-format
 msgid "NECPluginV2.delete_port() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:480
+#: neutron/plugins/nec/nec_plugin.py:479
 msgid ""
 "_activate_packet_filter_if_ready(): skip, packet_filter.admin_state_up is"
 " False."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:484
+#: neutron/plugins/nec/nec_plugin.py:483
 msgid "_activate_packet_filter_if_ready(): skip, network.admin_state_up is False."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:488
+#: neutron/plugins/nec/nec_plugin.py:487
 msgid "_activate_packet_filter_if_ready(): skip, invalid in_port_id."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:492
+#: neutron/plugins/nec/nec_plugin.py:491
 msgid "_activate_packet_filter_if_ready(): skip, no portinfo for in_port."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:498
+#: neutron/plugins/nec/nec_plugin.py:497
 msgid ""
 "_activate_packet_filter_if_ready(): skip, ofc_packet_filter already "
 "exists."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:507
+#: neutron/plugins/nec/nec_plugin.py:506
 #, python-format
 msgid "create_ofc_packet_filter() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:520
+#: neutron/plugins/nec/nec_plugin.py:519
 msgid "_deactivate_packet_filter(): skip, ofc_packet_filter does not exist."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:526
+#: neutron/plugins/nec/nec_plugin.py:525
 #, python-format
 msgid "delete_ofc_packet_filter() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:537
+#: neutron/plugins/nec/nec_plugin.py:536
 #, python-format
 msgid "NECPluginV2.create_packet_filter() called, packet_filter=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:553
+#: neutron/plugins/nec/nec_plugin.py:552
 #, python-format
 msgid ""
 "NECPluginV2.update_packet_filter() called, id=%(id)s "
 "packet_filter=%(packet_filter)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:577
+#: neutron/plugins/nec/nec_plugin.py:576
 #, python-format
 msgid "NECPluginV2.delete_packet_filter() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:623
+#: neutron/plugins/nec/nec_plugin.py:622
 #, python-format
 msgid ""
 "NECPluginV2RPCCallbacks.get_port_from_device() called, device=%(device)s "
 "=> %(ret)s."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:654
+#: neutron/plugins/nec/nec_plugin.py:653
 #, python-format
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:673
+#: neutron/plugins/nec/nec_plugin.py:672
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message due to portinfo for "
 "port_id=%s was not registered"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:678
+#: neutron/plugins/nec/nec_plugin.py:677
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message received from different host "
@@ -6718,7 +6777,7 @@ msgid "Logical router resource %s not found on NVP platform"
 msgstr ""
 
 #: neutron/plugins/nicira/NeutronPlugin.py:579
-#: neutron/plugins/nicira/NeutronPlugin.py:1738
+#: neutron/plugins/nicira/NeutronPlugin.py:1740
 msgid "Unable to update logical routeron NVP Platform"
 msgstr ""
 
@@ -6819,171 +6878,171 @@ msgstr ""
 msgid "get_networks() completed for tenant %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1083
+#: neutron/plugins/nicira/NeutronPlugin.py:1085
 #, python-format
 msgid "Lswitch %s not found in NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1092
+#: neutron/plugins/nicira/NeutronPlugin.py:1094
 msgid "Unable to get ports"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1119
+#: neutron/plugins/nicira/NeutronPlugin.py:1121
 #, python-format
 msgid "Neutron logical port %s was not found on NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1126
+#: neutron/plugins/nicira/NeutronPlugin.py:1128
 #, python-format
 msgid ""
 "Found %s logical ports not bound to Neutron ports. Neutron and NVP are "
 "potentially out of sync"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1192
+#: neutron/plugins/nicira/NeutronPlugin.py:1194
 #, python-format
 msgid "Network %s was not found in NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1200
+#: neutron/plugins/nicira/NeutronPlugin.py:1202
 msgid "Unable to create port or set port attachment in NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1204
+#: neutron/plugins/nicira/NeutronPlugin.py:1206
 #, python-format
 msgid "create_port completed on NVP for tenant %(tenant_id)s: (%(id)s)"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1279
+#: neutron/plugins/nicira/NeutronPlugin.py:1281
 #, python-format
 msgid "Update port request: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1305
+#: neutron/plugins/nicira/NeutronPlugin.py:1307
 #, python-format
 msgid "Unable to update port id: %s."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1429
-#: neutron/plugins/nicira/NeutronPlugin.py:1473
+#: neutron/plugins/nicira/NeutronPlugin.py:1431
+#: neutron/plugins/nicira/NeutronPlugin.py:1475
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1442
+#: neutron/plugins/nicira/NeutronPlugin.py:1444
 msgid "Unable to create logical router on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1491
+#: neutron/plugins/nicira/NeutronPlugin.py:1493
 #, python-format
 msgid "Logical router %s not found on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1494
+#: neutron/plugins/nicira/NeutronPlugin.py:1496
 msgid "Unable to update logical router on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1514
+#: neutron/plugins/nicira/NeutronPlugin.py:1516
 #, python-format
 msgid "Logical router '%s' not found on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1518
+#: neutron/plugins/nicira/NeutronPlugin.py:1520
 msgid "Unable to delete logical routeron NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1538
+#: neutron/plugins/nicira/NeutronPlugin.py:1540
 #, python-format
 msgid ""
 "Current router status:%(router_status)s;Status in Neutron "
 "DB:%(db_router_status)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1565
+#: neutron/plugins/nicira/NeutronPlugin.py:1567
 msgid "Unable to get logical routers from NVP controller"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1587
+#: neutron/plugins/nicira/NeutronPlugin.py:1589
 #, python-format
 msgid ""
 "Found %s logical routers not bound to Neutron routers. Neutron and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1613
+#: neutron/plugins/nicira/NeutronPlugin.py:1615
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1648
+#: neutron/plugins/nicira/NeutronPlugin.py:1650
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1693
+#: neutron/plugins/nicira/NeutronPlugin.py:1695
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1705
+#: neutron/plugins/nicira/NeutronPlugin.py:1707
 #, python-format
 msgid ""
 "Unable to find NVP logical router port for Neutron port id:%s. Was this "
 "port ever paired with a logical router?"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1734
+#: neutron/plugins/nicira/NeutronPlugin.py:1736
 #, python-format
 msgid "Logical router port resource %s not found on NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1760
+#: neutron/plugins/nicira/NeutronPlugin.py:1762
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1766
+#: neutron/plugins/nicira/NeutronPlugin.py:1768
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1832
+#: neutron/plugins/nicira/NeutronPlugin.py:1834
 #, python-format
 msgid "Address list for NVP logical router port:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1856
+#: neutron/plugins/nicira/NeutronPlugin.py:1858
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1899
+#: neutron/plugins/nicira/NeutronPlugin.py:1901
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1902
+#: neutron/plugins/nicira/NeutronPlugin.py:1904
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1928
+#: neutron/plugins/nicira/NeutronPlugin.py:1930
 #, python-format
 msgid ""
 "Create_l2_gw_service did not return an uuid for the newly created "
 "resource:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1950
+#: neutron/plugins/nicira/NeutronPlugin.py:1952
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
@@ -7665,36 +7724,36 @@ msgstr ""
 
 #: neutron/plugins/nicira/extensions/nvp_qos.py:46
 #, python-format
-msgid "Invalid value for dscp %(data)s must be integer."
+msgid "Invalid value for dscp %(data)s must be integer valuebetween 0 and 63."
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:50
+#: neutron/plugins/nicira/extensions/nvp_qos.py:51
 msgid "Invalid bandwidth rate, min greater than max."
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:54
+#: neutron/plugins/nicira/extensions/nvp_qos.py:55
 #, python-format
 msgid "Invalid bandwidth rate, %(data)s must be a non negative integer."
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:59
+#: neutron/plugins/nicira/extensions/nvp_qos.py:60
 msgid "No DSCP field needed when QoS workload marked trusted"
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:63
+#: neutron/plugins/nicira/extensions/nvp_qos.py:64
 #, python-format
 msgid "Queue %(id)s does not exist"
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:67
+#: neutron/plugins/nicira/extensions/nvp_qos.py:68
 msgid "Unable to delete queue attached to port."
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:71
+#: neutron/plugins/nicira/extensions/nvp_qos.py:72
 msgid "Port is not associated with lqueue"
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:82
+#: neutron/plugins/nicira/extensions/nvp_qos.py:83
 #, python-format
 msgid "'%s' must be a non negative integer."
 msgstr ""
@@ -8329,13 +8388,13 @@ msgstr ""
 msgid "Router %(router_id)s is scheduled to L3 agent %(agent_id)s"
 msgstr ""
 
-#: neutron/server/__init__.py:34
+#: neutron/server/__init__.py:37
 msgid ""
 "ERROR: Unable to find configuration file via the default search paths "
 "(~/.neutron/, ~/, /etc/neutron/, /etc/) and the '--config-file' option!"
 msgstr ""
 
-#: neutron/server/__init__.py:41
+#: neutron/server/__init__.py:44
 #, python-format
 msgid "ERROR: %s"
 msgstr ""
@@ -8444,6 +8503,20 @@ msgstr ""
 msgid "Unexpected error code: %s"
 msgstr ""
 
+#: neutron/tests/unit/ml2/drivers/mechanism_logger.py:32
+#, python-format
+msgid ""
+"%(method)s called with network settings %(current)s (original settings "
+"%(original)s) and network segments %(segments)s"
+msgstr ""
+
+#: neutron/tests/unit/ml2/drivers/mechanism_logger.py:60
+#, python-format
+msgid ""
+"%(method)s called with port settings %(current)s (original settings "
+"%(original)s) on network %(network)s"
+msgstr ""
+
 #: neutron/tests/unit/nicira/fake_nvpapiclient.py:375
 #, python-format
 msgid "lswitch:%s not found"
@@ -8453,4 +8526,16 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
+
+#~ msgid "Network list requested from %s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "List of networking mechanism driver "
+#~ "entrypoints to be loaded from the "
+#~ "neutron.ml2.mechanism_drivers namespace."
+#~ msgstr ""
+
+#~ msgid "Invalid value for dscp %(data)s must be integer."
+#~ msgstr ""
 
