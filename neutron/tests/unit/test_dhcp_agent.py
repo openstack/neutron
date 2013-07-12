@@ -442,7 +442,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.cache = mock.Mock()
         cache_cls.return_value = self.cache
 
-        self.dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        with mock.patch.object(dhcp.Dnsmasq,
+                               'check_version') as check_v:
+            check_v.return_value = dhcp.Dnsmasq.MINIMUM_VERSION
+            self.dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         self.call_driver_p = mock.patch.object(self.dhcp, 'call_driver')
 
         self.call_driver = self.call_driver_p.start()
