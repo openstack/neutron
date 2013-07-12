@@ -111,7 +111,7 @@ def create_nvp_cluster(cluster_opts, concurrent_connections,
 class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    RPC_API_VERSION = '1.1'
 
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
@@ -1033,6 +1033,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         return net
 
     def get_ports(self, context, filters=None, fields=None):
+        if filters is None:
+            filters = {}
         with context.session.begin(subtransactions=True):
             neutron_lports = super(NvpPluginV2, self).get_ports(
                 context, filters)

@@ -32,7 +32,7 @@ class HyperVRpcCallbacks(
         l3_rpc_base.L3RpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    RPC_API_VERSION = '1.1'
 
     def __init__(self, notifier):
         self.notifier = notifier

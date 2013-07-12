@@ -29,10 +29,9 @@ LOG = logging.getLogger(__name__)
 class DhcpRpcCallbackMixin(object):
     """A mix-in that enable DHCP agent support in plugin implementations."""
 
-    def get_active_networks(self, context, **kwargs):
-        """Retrieve and return a list of the active network ids."""
+    def _get_active_networks(self, context, **kwargs):
+        """Retrieve and return a list of the active networks."""
         host = kwargs.get('host')
-        LOG.debug(_('Network list requested from %s'), host)
         plugin = manager.NeutronManager.get_plugin()
         if utils.is_extension_supported(
             plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS):
@@ -43,7 +42,36 @@ class DhcpRpcCallbackMixin(object):
         else:
             filters = dict(admin_state_up=[True])
             nets = plugin.get_networks(context, filters=filters)
+        return nets
+
+    def get_active_networks(self, context, **kwargs):
+        """Retrieve and return a list of the active network ids."""
+        # NOTE(arosen): This method is no longer used by the DHCP agent but is
+        # left so that quantum-dhcp-agents will still continue to work if
+        # quantum-server is upgraded and not the agent.
+        host = kwargs.get('host')
+        LOG.debug(_('get_active_networks requested from %s'), host)
+        nets = self._get_active_networks(context, **kwargs)
         return [net['id'] for net in nets]
+
+    def get_active_networks_info(self, context, **kwargs):
+        """Returns all the networks/subnets/ports in system."""
+        host = kwargs.get('host')
+        LOG.debug(_('get_active_networks_info from %s'), host)
+        networks = self._get_active_networks(context, **kwargs)
+        plugin = manager.NeutronManager.get_plugin()
+        filters = {'network_id': [network['id'] for network in networks]}
+        ports = plugin.get_ports(context, filters=filters)
+        filters['enable_dhcp'] = [True]
+        subnets = plugin.get_subnets(context, filters=filters)
+
+        for network in networks:
+            network['subnets'] = [subnet for subnet in subnets
+                                  if subnet['network_id'] == network['id']]
+            network['ports'] = [port for port in ports
+                                if port['network_id'] == network['id']]
+
+        return networks
 
     def get_network_info(self, context, **kwargs):
         """Retrieve and return a extended information about a network."""
@@ -68,6 +96,10 @@ class DhcpRpcCallbackMixin(object):
         network state.
 
         """
+        # NOTE(arosen): This method is no longer used by the DHCP agent but is
+        # left so that quantum-dhcp-agents will still continue to work if
+        # quantum-server is upgraded and not the agent.
+
         host = kwargs.get('host')
         network_id = kwargs.get('network_id')
         device_id = kwargs.get('device_id')
@@ -191,3 +223,30 @@ class DhcpRpcCallbackMixin(object):
 
         plugin.update_fixed_ip_lease_expiration(context, network_id,
                                                 ip_address, lease_remaining)
+
+    def create_dhcp_port(self, context, **kwargs):
+        """Create the dhcp port."""
+        host = kwargs.get('host')
+        port = kwargs.get('port')
+        LOG.debug(_('Create dhcp port %(port)s '
+                    'from %(host)s.'),
+                  {'port': port,
+                   'host': host})
+
+        port['port']['device_owner'] = constants.DEVICE_OWNER_DHCP
+        if 'mac_address' not in port['port']:
+            port['port']['mac_address'] = attributes.ATTR_NOT_SPECIFIED
+        plugin = manager.NeutronManager.get_plugin()
+        return plugin.create_port(context, port)
+
+    def update_dhcp_port(self, context, **kwargs):
+        """Update the dhcp port."""
+        host = kwargs.get('host')
+        port_id = kwargs.get('port_id')
+        port = kwargs.get('port')
+        LOG.debug(_('Update dhcp port %(port)s '
+                    'from %(host)s.'),
+                  {'port': port,
+                   'host': host})
+        plugin = manager.NeutronManager.get_plugin()
+        return plugin.update_port(context, port_id, port)

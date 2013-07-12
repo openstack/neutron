@@ -601,7 +601,7 @@ class NECPluginV2AgentNotifierApi(proxy.RpcProxy,
 
 class DhcpRpcCallback(dhcp_rpc_base.DhcpRpcCallbackMixin):
     # DhcpPluginApi BASE_RPC_API_VERSION
-    RPC_API_VERSION = '1.0'
+    RPC_API_VERSION = '1.1'
 
 
 class L3RpcCallback(l3_rpc_base.L3RpcCallbackMixin):

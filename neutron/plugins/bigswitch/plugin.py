@@ -323,7 +323,7 @@ class ServerPool(object):
 
 class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
-    RPC_API_VERSION = '1.0'
+    RPC_API_VERSION = '1.1'
 
     def create_rpc_dispatcher(self):
         return q_rpc.PluginRpcDispatcher([self])
