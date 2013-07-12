@@ -157,7 +157,7 @@ class SecurityGroupAgentRpcMixin(object):
             self.context, device_ids)
         with self.firewall.defer_apply():
             for device in devices.values():
-                LOG.debug(_("Update port filter for %s"), device)
+                LOG.debug(_("Update port filter for %s"), device['device'])
                 self.firewall.update_port_filter(device)
 
 
