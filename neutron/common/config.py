@@ -25,7 +25,6 @@ from oslo.config import cfg
 from paste import deploy
 
 from neutron.api.v2 import attributes
-from neutron.common import legacy
 from neutron.common import utils
 from neutron.openstack.common.db.sqlalchemy import session as db_session
 from neutron.openstack.common import log as logging
@@ -107,8 +106,6 @@ db_session.set_defaults(sql_connection=_SQL_CONNECTION_DEFAULT,
 def parse(args):
     cfg.CONF(args=args, project='neutron',
              version='%%prog %s' % neutron_version.release_string())
-
-    legacy.modernize_quantum_config(cfg.CONF)
 
     # Validate that the base_mac is of the correct format
     msg = attributes._validate_regex(cfg.CONF.base_mac,

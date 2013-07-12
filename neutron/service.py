@@ -23,6 +23,7 @@ import random
 from oslo.config import cfg
 
 from neutron.common import config
+from neutron.common import legacy
 from neutron import context
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -80,6 +81,7 @@ class NeutronApiService(WsgiService):
         # Log the options used when starting if we're in debug mode...
 
         config.setup_logging(cfg.CONF)
+        legacy.modernize_quantum_config(cfg.CONF)
         # Dump the initial option values
         cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
         service = cls(app_name)

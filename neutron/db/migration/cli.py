@@ -135,5 +135,6 @@ def main():
     config.neutron_config = CONF
 
     CONF()
+    #TODO(gongysh) enable logging
     legacy.modernize_quantum_config(CONF)
     CONF.command.func(config, CONF.command.name)
