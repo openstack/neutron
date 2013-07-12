@@ -109,7 +109,7 @@ class ChanceScheduler(object):
                 context.session.add(binding)
         return True
 
-    def schedule(self, plugin, context, sync_router):
+    def schedule(self, plugin, context, router_id):
         """Schedule the router to an active L3 agent if there
         is no enable L3 agent hosting it.
         """
@@ -119,14 +119,15 @@ class ChanceScheduler(object):
             # timing problem. Non-active l3 agent can return to
             # active any time
             l3_agents = plugin.get_l3_agents_hosting_routers(
-                context, [sync_router['id']], admin_state_up=True)
+                context, [router_id], admin_state_up=True)
             if l3_agents:
                 LOG.debug(_('Router %(router_id)s has already been hosted'
                             ' by L3 agent %(agent_id)s'),
-                          {'router_id': sync_router['id'],
+                          {'router_id': router_id,
                            'agent_id': l3_agents[0]['id']})
                 return
 
+            sync_router = plugin.get_router(context, router_id)
             active_l3_agents = plugin.get_l3_agents(context, active=True)
             if not active_l3_agents:
                 LOG.warn(_('No active L3 agents'))
