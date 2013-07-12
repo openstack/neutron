@@ -18,10 +18,9 @@
 from sqlalchemy import Column, Integer, String
 
 from neutron.db import model_base
-from neutron.plugins.cisco.db.l2network_models import L2NetworkBase
 
 
-class NexusPortBinding(model_base.BASEV2, L2NetworkBase):
+class NexusPortBinding(model_base.BASEV2):
     """Represents a binding of VM's to nexus ports."""
 
     __tablename__ = "nexusport_bindings"

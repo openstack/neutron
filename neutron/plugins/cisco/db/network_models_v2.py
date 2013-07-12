@@ -17,58 +17,12 @@
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
 from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy.orm import object_mapper
 
 from neutron.db import model_base
-from neutron.db import models_v2 as models  # noqa
 from neutron.openstack.common import uuidutils
 
 
-class L2NetworkBase(object):
-    """Base class for L2Network Models."""
-
-    #__table_args__ = {'mysql_engine': 'InnoDB'}
-
-    def __setitem__(self, key, value):
-        """Internal Dict set method."""
-        setattr(self, key, value)
-
-    def __getitem__(self, key):
-        """Internal Dict get method."""
-        return getattr(self, key)
-
-    def get(self, key, default=None):
-        """Dict get method."""
-        return getattr(self, key, default)
-
-    def __iter__(self):
-        """Iterate over table columns."""
-        self._i = iter(object_mapper(self).columns)
-        return self
-
-    def next(self):
-        """Next method for the iterator."""
-        n = self._i.next().name
-        return n, getattr(self, n)
-
-    def update(self, values):
-        """Make the model object behave like a dict."""
-        for k, v in values.iteritems():
-            setattr(self, k, v)
-
-    def iteritems(self):
-        """Make the model object behave like a dict.
-
-        Includes attributes from joins.
-        """
-        local = dict(self)
-        joined = dict([(k, v) for k, v in self.__dict__.iteritems()
-                       if not k[0] == '_'])
-        local.update(joined)
-        return local.iteritems()
-
-
-class VlanID(model_base.BASEV2, L2NetworkBase):
+class VlanID(model_base.BASEV2):
     """Represents a vlan_id usage."""
     __tablename__ = 'cisco_vlan_ids'
 
@@ -83,7 +37,7 @@ class VlanID(model_base.BASEV2, L2NetworkBase):
         return "<VlanID(%d,%s)>" % (self.vlan_id, self.vlan_used)
 
 
-class QoS(model_base.BASEV2, L2NetworkBase):
+class QoS(model_base.BASEV2):
     """Represents QoS for a tenant."""
 
     __tablename__ = 'qoss'
@@ -104,7 +58,7 @@ class QoS(model_base.BASEV2, L2NetworkBase):
                                        self.qos_name, self.qos_desc)
 
 
-class Credential(model_base.BASEV2, L2NetworkBase):
+class Credential(model_base.BASEV2):
     """Represents credentials for a tenant."""
 
     __tablename__ = 'credentials'

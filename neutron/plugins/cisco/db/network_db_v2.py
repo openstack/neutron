@@ -23,7 +23,6 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import network_models_v2
-from neutron.plugins.cisco.db import nexus_models_v2  # noqa
 from neutron.plugins.openvswitch import ovs_models_v2
 
 
@@ -81,7 +80,6 @@ def release_vlanid(vlan_id):
         return vlanid["vlan_used"]
     except exc.NoResultFound:
         raise c_exc.VlanIDNotFound(vlan_id=vlan_id)
-    return
 
 
 def delete_vlanid(vlan_id):
