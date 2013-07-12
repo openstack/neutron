@@ -36,6 +36,9 @@ service_opts = [
     cfg.IntOpt('periodic_interval',
                default=40,
                help=_('Seconds between running periodic tasks')),
+    cfg.IntOpt('api_workers',
+               default=0,
+               help=_('Number of separate worker processes for service')),
     cfg.IntOpt('periodic_fuzzy_delay',
                default=5,
                help=_('Range of seconds to randomly delay when starting the '
@@ -111,7 +114,8 @@ def _run_wsgi(app_name):
         LOG.error(_('No known API applications configured.'))
         return
     server = wsgi.Server("Neutron")
-    server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host)
+    server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host,
+                 workers=cfg.CONF.api_workers)
     # Dump all option values here after all options are parsed
     cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
     LOG.info(_("Neutron service started, listening on %(host)s:%(port)s"),
