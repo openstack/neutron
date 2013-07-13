@@ -17,6 +17,7 @@
 
 from oslo.config import cfg
 
+from neutron.common import legacy
 from neutron.db import api as qdbapi
 from neutron.db.loadbalancer import loadbalancer_db
 from neutron.openstack.common import importutils
@@ -35,6 +36,7 @@ lbaas_plugin_opts = [
 ]
 
 cfg.CONF.register_opts(lbaas_plugin_opts, "LBAAS")
+legacy.override_config(cfg.CONF, [('LBAAS', 'driver_fqn')])
 
 
 class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb):
