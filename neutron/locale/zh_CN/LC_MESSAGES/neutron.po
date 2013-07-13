@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-12 19:55+0000\n"
+"POT-Creation-Date: 2013-07-13 19:54+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) "
@@ -3694,7 +3694,7 @@ msgstr ""
 
 #: neutron/plugins/bigswitch/plugin.py:480
 #: neutron/plugins/bigswitch/plugin.py:528
-#: neutron/plugins/bigswitch/plugin.py:1281
+#: neutron/plugins/bigswitch/plugin.py:1282
 #, python-format
 msgid "NeutronRestProxyV2: Unable to update remote network: %s"
 msgstr ""
@@ -3740,100 +3740,100 @@ msgstr ""
 msgid "NeutronRestProxyV2: _unplug_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:801
+#: neutron/plugins/bigswitch/plugin.py:802
 msgid "NeutronRestProxyV2: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:822
+#: neutron/plugins/bigswitch/plugin.py:823
 msgid "NeutronRestProxyV2: update_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:845
+#: neutron/plugins/bigswitch/plugin.py:846
 msgid "NeutronRestProxyV2: delete_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:886
+#: neutron/plugins/bigswitch/plugin.py:887
 msgid "NeutronRestProxyV2: create_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:911
+#: neutron/plugins/bigswitch/plugin.py:912
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:922
+#: neutron/plugins/bigswitch/plugin.py:923
 msgid "NeutronRestProxyV2.update_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:944
+#: neutron/plugins/bigswitch/plugin.py:945
 #, python-format
 msgid "NeutronRestProxyV2: Unable to update remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:956
+#: neutron/plugins/bigswitch/plugin.py:957
 msgid "NeutronRestProxyV2: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:987
+#: neutron/plugins/bigswitch/plugin.py:988
 #, python-format
 msgid "NeutronRestProxyV2: Unable to delete remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:993
+#: neutron/plugins/bigswitch/plugin.py:994
 msgid "NeutronRestProxyV2: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1021
+#: neutron/plugins/bigswitch/plugin.py:1022
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create interface: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1032
+#: neutron/plugins/bigswitch/plugin.py:1033
 msgid "NeutronRestProxyV2: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1065
+#: neutron/plugins/bigswitch/plugin.py:1066
 #, python-format
 msgid "NeutronRestProxyV2:Unable to delete remote intf: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1073
+#: neutron/plugins/bigswitch/plugin.py:1074
 msgid "NeutronRestProxyV2: create_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1086
+#: neutron/plugins/bigswitch/plugin.py:1087
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote floatin IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1096
+#: neutron/plugins/bigswitch/plugin.py:1097
 msgid "NeutronRestProxyV2: update_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1119
+#: neutron/plugins/bigswitch/plugin.py:1120
 msgid "NeutronRestProxyV2: delete_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1202
+#: neutron/plugins/bigswitch/plugin.py:1203
 #, python-format
 msgid "NeutronRestProxy: Unable to update remote topology: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1298
+#: neutron/plugins/bigswitch/plugin.py:1299
 #, python-format
 msgid ""
 "Setting admin_state_up=False is not supported in this plugin version. "
 "Ignoring setting for resource: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1304
+#: neutron/plugins/bigswitch/plugin.py:1305
 #, python-format
 msgid ""
 "Operational status is internally set by the plugin. Ignoring setting "
 "status=%s."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1331
+#: neutron/plugins/bigswitch/plugin.py:1332
 #, python-format
 msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs. "
 msgstr ""
@@ -3996,8 +3996,7 @@ msgid "delete_subnet() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:278
-#: neutron/plugins/cisco/db/l2network_db.py:201
-#: neutron/plugins/cisco/db/network_db_v2.py:130
+#: neutron/plugins/cisco/db/network_db_v2.py:128
 msgid "get_all_qoss() called"
 msgstr ""
 
@@ -4236,65 +4235,36 @@ msgstr ""
 msgid "Nexus Driver Name"
 msgstr ""
 
-#: neutron/plugins/cisco/db/l2network_db.py:39
-#: neutron/plugins/cisco/db/network_db_v2.py:35
+#: neutron/plugins/cisco/db/network_db_v2.py:34
 msgid "create_vlanids() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/l2network_db.py:58
-#: neutron/plugins/cisco/db/l2network_db.py:126
-#: neutron/plugins/cisco/db/network_db_v2.py:54
-#: neutron/plugins/cisco/db/network_db_v2.py:122
+#: neutron/plugins/cisco/db/network_db_v2.py:53
+#: neutron/plugins/cisco/db/network_db_v2.py:120
 msgid "get_all_vlanids() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/l2network_db.py:65
-#: neutron/plugins/cisco/db/network_db_v2.py:61
+#: neutron/plugins/cisco/db/network_db_v2.py:60
 msgid "is_vlanid_used() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/l2network_db.py:77
-#: neutron/plugins/cisco/db/network_db_v2.py:73
+#: neutron/plugins/cisco/db/network_db_v2.py:72
 msgid "release_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/l2network_db.py:93
-#: neutron/plugins/cisco/db/network_db_v2.py:89
+#: neutron/plugins/cisco/db/network_db_v2.py:87
 msgid "delete_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/l2network_db.py:107
-#: neutron/plugins/cisco/db/network_db_v2.py:103
+#: neutron/plugins/cisco/db/network_db_v2.py:101
 msgid "reserve_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/l2network_db.py:134
-msgid "get_all_vlan_bindings() called"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l2network_db.py:141
-msgid "get_vlan_binding() called"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l2network_db.py:153
-msgid "add_vlan_binding() called"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l2network_db.py:169
-msgid "remove_vlan_binding() called"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l2network_db.py:183
-msgid "update_vlan_binding() called"
-msgstr ""
-
-#: neutron/plugins/cisco/db/l2network_db.py:209
-#: neutron/plugins/cisco/db/network_db_v2.py:138
+#: neutron/plugins/cisco/db/network_db_v2.py:136
 msgid "get_qos() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/l2network_db.py:223
-#: neutron/plugins/cisco/db/network_db_v2.py:152
+#: neutron/plugins/cisco/db/network_db_v2.py:150
 msgid "add_qos() called"
 msgstr ""
 
@@ -8527,15 +8497,18 @@ msgstr ""
 msgid "lrouter:%s not found"
 msgstr ""
 
-#~ msgid "Network list requested from %s"
+#~ msgid "get_all_vlan_bindings() called"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "List of networking mechanism driver "
-#~ "entrypoints to be loaded from the "
-#~ "neutron.ml2.mechanism_drivers namespace."
+#~ msgid "get_vlan_binding() called"
 #~ msgstr ""
 
-#~ msgid "Invalid value for dscp %(data)s must be integer."
+#~ msgid "add_vlan_binding() called"
+#~ msgstr ""
+
+#~ msgid "remove_vlan_binding() called"
+#~ msgstr ""
+
+#~ msgid "update_vlan_binding() called"
 #~ msgstr ""
 
