@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright (c) 2012 OpenStack Foundation.
+# Copyright (c) 2011 OpenStack Foundation.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -22,7 +22,7 @@ import logging.handlers
 import os
 import string
 
-from neutron.rootwrap import filters
+from neutron.openstack.common.rootwrap import filters
 
 
 class NoFilterMatched(Exception):
@@ -119,10 +119,10 @@ def load_filters(filters_path):
 
 
 def match_filter(filter_list, userargs, exec_dirs=[]):
-    """Return first matched filter from command filters.
+    """Checks user command and arguments through command filters.
 
-    Checks user command and arguments through command filters and
-    returns the first matching filter.
+    Returns the first matching filter.
+
     Raises NoFilterMatched if no filter matched.
     Raises FilterMatchNotExecutable if no executable was found for the
     best filter match.
@@ -131,15 +131,18 @@ def match_filter(filter_list, userargs, exec_dirs=[]):
 
     for f in filter_list:
         if f.match(userargs):
-            if isinstance(f, filters.ExecCommandFilter):
+            if isinstance(f, filters.ChainingFilter):
                 # This command calls exec verify that remaining args
                 # matches another filter.
+                def non_chain_filter(fltr):
+                    return (fltr.run_as == f.run_as
+                            and not isinstance(fltr, filters.ChainingFilter))
+
                 leaf_filters = [fltr for fltr in filter_list
-                                if not isinstance(fltr,
-                                                  filters.ExecCommandFilter)]
+                                if non_chain_filter(fltr)]
                 args = f.exec_args(userargs)
-                if (not args or not
-                    match_filter(leaf_filters, args, exec_dirs=exec_dirs)):
+                if (not args or not match_filter(leaf_filters,
+                                                 args, exec_dirs=exec_dirs)):
                     continue
 
             # Try other filters if executable is absent
