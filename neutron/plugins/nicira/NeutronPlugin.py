@@ -868,7 +868,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # Ensure there's an id in net_data
             net_data['id'] = new_net['id']
             # Process port security extension
-            self._process_network_create_port_security(context, net_data)
+            self._process_network_port_security_create(
+                context, net_data, new_net)
             # DB Operations for setting the network as external
             self._process_l3_create(context, new_net, net_data)
             # Process QoS queue extension
@@ -887,7 +888,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     net_data.get(pnet.SEGMENTATION_ID, 0))
                 self._extend_network_dict_provider(context, new_net,
                                                    net_binding)
-            self._extend_network_port_security_dict(context, new_net)
         self.schedule_network(context, new_net)
         return new_net
 
@@ -976,9 +976,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     raise nvp_exc.NvpPluginException(err_msg=err_msg)
             # Don't do field selection here otherwise we won't be able
             # to add provider networks fields
-            net_result = self._make_network_dict(network, None)
+            net_result = self._make_network_dict(network)
             self._extend_network_dict_provider(context, net_result)
-            self._extend_network_port_security_dict(context, net_result)
             self._extend_network_qos_queue(context, net_result)
         return self._fields(net_result, fields)
 
@@ -990,7 +989,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 super(NvpPluginV2, self).get_networks(context, filters))
             for net in neutron_lswitches:
                 self._extend_network_dict_provider(context, net)
-                self._extend_network_port_security_dict(context, net)
                 self._extend_network_qos_queue(context, net)
 
             tenant_ids = filters and filters.get('tenant_id') or None
@@ -1027,7 +1025,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             nvp_lswitches = dict(
                 (uuid, ls) for (uuid, ls) in nvp_lswitches.iteritems()
                 if uuid in set(filters['id']))
-
         for neutron_lswitch in neutron_lswitches:
             # Skip external networks as they do not exist in NVP
             if neutron_lswitch[l3.EXTERNAL]:
@@ -1063,7 +1060,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     row[field] = neutron_lswitch[field]
                 ret_fields.append(row)
             return ret_fields
-
         return neutron_lswitches
 
     def update_network(self, context, id, network):
@@ -1076,13 +1072,12 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             net = super(NvpPluginV2, self).update_network(context, id, network)
             if psec.PORTSECURITY in network['network']:
-                self._update_network_security_binding(
-                    context, id, network['network'][psec.PORTSECURITY])
+                self._process_network_port_security_update(
+                    context, network['network'], net)
             if network['network'].get(ext_qos.QUEUE):
                 net[ext_qos.QUEUE] = network['network'][ext_qos.QUEUE]
                 self._delete_network_queue_mapping(context, id)
                 self._process_network_queue_mapping(context, net)
-            self._extend_network_port_security_dict(context, net)
             self._process_l3_update(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
             self._extend_network_qos_queue(context, net)
@@ -1094,7 +1089,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             neutron_lports = super(NvpPluginV2, self).get_ports(
                 context, filters)
             for neutron_lport in neutron_lports:
-                self._extend_port_port_security_dict(context, neutron_lport)
                 self._extend_port_mac_learning_state(context, neutron_lport)
         if (filters.get('network_id') and len(filters.get('network_id')) and
             self._network_is_external(context, filters['network_id'][0])):
@@ -1218,7 +1212,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             (port_security, has_ip) = self._determine_port_security_and_has_ip(
                 context, port_data)
             port_data[psec.PORTSECURITY] = port_security
-            self._process_port_security_create(context, port_data)
+            self._process_port_port_security_create(
+                context, port_data, neutron_db)
             # security group extension checks
             if port_security and has_ip:
                 self._ensure_default_security_group_on_port(context, port)
@@ -1263,7 +1258,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             # remove since it will be added in extend based on policy
             del port_data[ext_qos.QUEUE]
-            self._extend_port_port_security_dict(context, port_data)
             self._extend_port_qos_queue(context, port_data)
             self._process_portbindings_create_and_update(context,
                                                          port, port_data)
@@ -1287,10 +1281,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             port['port'].pop('fixed_ips', None)
             ret_port.update(port['port'])
             tenant_id = self._get_tenant_id_for_create(context, ret_port)
-            # populate port_security setting
-            if psec.PORTSECURITY not in port['port']:
-                ret_port[psec.PORTSECURITY] = self._get_port_security_binding(
-                    context, id)
 
             has_ip = self._ip_on_port(ret_port)
             # checks if security groups were updated adding/modifying
@@ -1316,8 +1306,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                          sgids)
 
             if psec.PORTSECURITY in port['port']:
-                self._update_port_security_binding(
-                    context, id, ret_port[psec.PORTSECURITY])
+                self._process_port_port_security_update(
+                    context, port['port'], ret_port)
 
             ret_port[ext_qos.QUEUE] = self._check_for_queue_and_create(
                 context, ret_port)
@@ -1334,7 +1324,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 ret_port[mac_ext.MAC_LEARNING] = old_mac_learning_state
             self._delete_port_queue_mapping(context, ret_port['id'])
             self._process_port_queue_mapping(context, ret_port)
-            self._extend_port_port_security_dict(context, ret_port)
             LOG.warn(_("Update port request: %s"), port)
             nvp_port_id = self._nvp_get_port_id(
                 context, self.cluster, ret_port)
@@ -1425,7 +1414,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             neutron_db_port = super(NvpPluginV2, self).get_port(context,
                                                                 id, fields)
-            self._extend_port_port_security_dict(context, neutron_db_port)
             self._extend_port_qos_queue(context, neutron_db_port)
             self._extend_port_mac_learning_state(context, neutron_db_port)
 

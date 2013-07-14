@@ -433,9 +433,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             context.session.delete(rule)
 
     def _extend_port_dict_security_group(self, port_res, port_db):
-        # If port_db is provided, security groups will be accessed via
-        # sqlalchemy models. As they're loaded together with ports this
-        # will not cause an extra query.
+        # Security group bindings will be retrieved from the sqlalchemy
+        # model. As they're loaded eagerly with ports because of the
+        # joined load they will not cause an extra query.
         security_group_ids = [sec_group_mapping['security_group_id'] for
                               sec_group_mapping in port_db.security_groups]
         port_res[ext_sg.SECURITYGROUPS] = security_group_ids
