@@ -21,7 +21,7 @@ retry_interval = 2
 #   serverauth  :   <username:password>         (default: no auth)
 #   serverssl   :   True | False                (default: False)
 #
-servers=localhost:8899
+servers=localhost:9000,localhost:8899
 serverssl=False
 #serverauth=username:password
 

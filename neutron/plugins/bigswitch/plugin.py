@@ -184,10 +184,10 @@ class ServerProxy(object):
         self.success_codes = SUCCESS_CODES
         self.auth = None
         self.neutron_id = neutron_id
+        self.failed = False
         if auth:
             self.auth = 'Basic ' + base64.encodestring(auth).strip()
 
-    @utils.synchronized('bsn-rest-call', external=True)
     def rest_call(self, action, resource, data, headers):
         uri = self.base_uri + resource
         body = json.dumps(data)
@@ -283,13 +283,13 @@ class ServerPool(object):
         """
         return resp[0] in SUCCESS_CODES
 
+    @utils.synchronized('bsn-rest-call', external=True)
     def rest_call(self, action, resource, data, headers, ignore_codes):
-        failed_servers = []
-        while self.servers:
-            active_server = self.servers[0]
+        good_first = sorted(self.servers, key=lambda x: x.failed)
+        for active_server in good_first:
             ret = active_server.rest_call(action, resource, data, headers)
             if not self.server_failure(ret, ignore_codes):
-                self.servers.extend(failed_servers)
+                active_server.failed = False
                 return ret
             else:
                 LOG.error(_('ServerProxy: %(action)s failure for servers: '
@@ -297,15 +297,14 @@ class ServerPool(object):
                           {'action': action,
                            'server': (active_server.server,
                                       active_server.port)})
-                failed_servers.append(self.servers.pop(0))
+                active_server.failed = True
 
         # All servers failed, reset server list and try again next time
         LOG.error(_('ServerProxy: %(action)s failure for all servers: '
                     '%(server)r'),
                   {'action': action,
                    'server': tuple((s.server,
-                                    s.port) for s in failed_servers)})
-        self.servers.extend(failed_servers)
+                                    s.port) for s in self.servers)})
         return (0, None, None, None)
 
     def get(self, resource, data='', headers=None, ignore_codes=[]):
