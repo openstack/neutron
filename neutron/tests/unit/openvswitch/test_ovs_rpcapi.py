@@ -87,7 +87,8 @@ class rpcApiTestCase(base.BaseTestCase):
                                                  constants.TUNNEL,
                                                  topics.UPDATE),
                            'tunnel_update', rpc_method='fanout_cast',
-                           tunnel_ip='fake_ip', tunnel_id='fake_id')
+                           tunnel_ip='fake_ip', tunnel_id='fake_id',
+                           tunnel_type=None)
 
     def test_device_details(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)

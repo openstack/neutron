@@ -40,8 +40,13 @@ class CreateAgentConfigMap(base.BaseTestCase):
 
     def test_create_agent_config_map_fails_for_invalid_tunnel_config(self):
         self.addCleanup(cfg.CONF.reset)
-        # An ip address is required for tunneling but there is no default
-        cfg.CONF.set_override('tunnel_type', constants.TYPE_GRE,
+        # An ip address is required for tunneling but there is no default,
+        # verify this for both gre and vxlan tunnels.
+        cfg.CONF.set_override('tunnel_types', [constants.TYPE_GRE],
+                              group='AGENT')
+        with testtools.ExpectedException(ValueError):
+            ovs_neutron_agent.create_agent_config_map(cfg.CONF)
+        cfg.CONF.set_override('tunnel_types', [constants.TYPE_VXLAN],
                               group='AGENT')
         with testtools.ExpectedException(ValueError):
             ovs_neutron_agent.create_agent_config_map(cfg.CONF)
@@ -49,11 +54,11 @@ class CreateAgentConfigMap(base.BaseTestCase):
     def test_create_agent_config_map_enable_tunneling(self):
         self.addCleanup(cfg.CONF.reset)
         # Verify setting only enable_tunneling will default tunnel_type to GRE
-        cfg.CONF.set_override('tunnel_type', None, group='AGENT')
+        cfg.CONF.set_override('tunnel_types', None, group='AGENT')
         cfg.CONF.set_override('enable_tunneling', True, group='OVS')
         cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
         cfgmap = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
-        self.assertEqual(cfgmap['tunnel_type'], constants.TYPE_GRE)
+        self.assertEqual(cfgmap['tunnel_types'], [constants.TYPE_GRE])
 
     def test_create_agent_config_map_fails_no_local_ip(self):
         self.addCleanup(cfg.CONF.reset)
@@ -61,6 +66,21 @@ class CreateAgentConfigMap(base.BaseTestCase):
         cfg.CONF.set_override('enable_tunneling', True, group='OVS')
         with testtools.ExpectedException(ValueError):
             ovs_neutron_agent.create_agent_config_map(cfg.CONF)
+
+    def test_create_agent_config_map_fails_for_invalid_tunnel_type(self):
+        self.addCleanup(cfg.CONF.reset)
+        cfg.CONF.set_override('tunnel_types', ['foobar'], group='AGENT')
+        with testtools.ExpectedException(ValueError):
+            ovs_neutron_agent.create_agent_config_map(cfg.CONF)
+
+    def test_create_agent_config_map_multiple_tunnel_types(self):
+        self.addCleanup(cfg.CONF.reset)
+        cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
+        cfg.CONF.set_override('tunnel_types', [constants.TYPE_GRE,
+                              constants.TYPE_VXLAN], group='AGENT')
+        cfgmap = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
+        self.assertEqual(cfgmap['tunnel_types'],
+                         [constants.TYPE_GRE, constants.TYPE_VXLAN])
 
 
 class TestOvsNeutronAgent(base.BaseTestCase):
@@ -329,7 +349,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent.port_unbound("vif3", "netuid12345")
             self.assertEqual(reclvl_fn.call_count, 2)
 
-    def _check_ovs_vxlan_version(self, installed_version, min_vers,
+    def _check_ovs_vxlan_version(self, installed_usr_version,
+                                 installed_klm_version, min_vers,
                                  expecting_ok):
         with mock.patch(
                 'neutron.agent.linux.ovs_lib.get_installed_ovs_klm_version'
@@ -338,9 +359,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 'neutron.agent.linux.ovs_lib.get_installed_ovs_usr_version'
             ) as usr_cmd:
                 try:
-                    klm_cmd.return_value = installed_version
-                    usr_cmd.return_value = installed_version
-                    self.agent.tunnel_type = 'vxlan'
+                    klm_cmd.return_value = installed_klm_version
+                    usr_cmd.return_value = installed_usr_version
+                    self.agent.tunnel_types = 'vxlan'
                     ovs_neutron_agent.check_ovs_version(min_vers,
                                                         root_helper='sudo')
                     version_ok = True
@@ -350,21 +371,26 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.assertEqual(version_ok, expecting_ok)
 
     def test_check_minimum_version(self):
-        self._check_ovs_vxlan_version('1.10',
+        self._check_ovs_vxlan_version('1.10', '1.10',
                                       constants.MINIMUM_OVS_VXLAN_VERSION,
                                       expecting_ok=True)
 
     def test_check_future_version(self):
-        self._check_ovs_vxlan_version('1.11',
+        self._check_ovs_vxlan_version('1.11', '1.11',
                                       constants.MINIMUM_OVS_VXLAN_VERSION,
                                       expecting_ok=True)
 
     def test_check_fail_version(self):
-        self._check_ovs_vxlan_version('1.9',
+        self._check_ovs_vxlan_version('1.9', '1.9',
                                       constants.MINIMUM_OVS_VXLAN_VERSION,
                                       expecting_ok=False)
 
     def test_check_fail_no_version(self):
-        self._check_ovs_vxlan_version(None,
+        self._check_ovs_vxlan_version(None, None,
+                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+                                      expecting_ok=False)
+
+    def test_check_fail_klm_version(self):
+        self._check_ovs_vxlan_version('1.10', '1.9',
                                       constants.MINIMUM_OVS_VXLAN_VERSION,
                                       expecting_ok=False)
