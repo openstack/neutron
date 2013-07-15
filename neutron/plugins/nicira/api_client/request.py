@@ -190,8 +190,9 @@ class NvpApiRequest(object):
             # the conn to be released with is_conn_error == True
             # which puts the conn on the back of the client's priority
             # queue.
-            if response.status >= 500:
-                LOG.warn(_("[%(rid)d] Request '%(method) %(url)s' "
+            if (response.status == httplib.INTERNAL_SERVER_ERROR and
+                response.status > httplib.NOT_IMPLEMENTED):
+                LOG.warn(_("[%(rid)d] Request '%(method)s %(url)s' "
                            "received: %(status)s"),
                          {'rid': self._rid(), 'method': self._method,
                           'url': self._url, 'status': response.status})

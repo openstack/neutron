@@ -34,6 +34,7 @@ from neutron.plugins.nicira.extensions import nvp_networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
 from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import NvpApiClient
+from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.plugins.nicira import nvplib
 from neutron.tests.unit.nicira import fake_nvpapiclient
 import neutron.tests.unit.nicira.test_networkgw as test_l2_gw
@@ -86,7 +87,7 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
             return self.fc.fake_request(*args, **kwargs)
 
         # Emulate tests against NVP 2.x
-        instance.return_value.get_nvp_version.return_value = "2.999"
+        instance.return_value.get_nvp_version.return_value = NVPVersion("2.9")
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPluginV2TestCase, self).setUp(self._plugin_name)
         cfg.CONF.set_override('metadata_mode', None, 'NVP')
