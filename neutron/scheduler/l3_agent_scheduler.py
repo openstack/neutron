@@ -36,10 +36,11 @@ class ChanceScheduler(object):
     can be introduced later.
     """
 
-    def auto_schedule_routers(self, plugin, context, host, router_id):
+    def auto_schedule_routers(self, plugin, context, host, router_ids):
         """Schedule non-hosted routers to L3 Agent running on host.
-        If router_id is given, only this router is scheduled
-        if it is not hosted yet.
+        If router_ids is given, each router in router_ids is scheduled
+        if it is not scheduled yet. Otherwise all unscheduled routers
+        are scheduled.
         Don't schedule the routers which are hosted already
         by active l3 agents.
         """
@@ -59,42 +60,45 @@ class ChanceScheduler(object):
             if agents_db.AgentDbMixin.is_agent_down(
                 l3_agent.heartbeat_timestamp):
                 LOG.warn(_('L3 agent %s is not active'), l3_agent.id)
-            # check if the specified router is hosted
-            if router_id:
-                l3_agents = plugin.get_l3_agents_hosting_routers(
-                    context, [router_id], admin_state_up=True)
-                if l3_agents:
-                    LOG.debug(_('Router %(router_id)s has already been hosted'
-                                ' by L3 agent %(agent_id)s'),
-                              {'router_id': router_id,
-                               'agent_id': l3_agents[0]['id']})
+            # check if each of the specified routers is hosted
+            if router_ids:
+                unscheduled_router_ids = []
+                for router_id in router_ids:
+                    l3_agents = plugin.get_l3_agents_hosting_routers(
+                        context, [router_id], admin_state_up=True)
+                    if l3_agents:
+                        LOG.debug(_('Router %(router_id)s has already been'
+                                    ' hosted by L3 agent %(agent_id)s'),
+                                  {'router_id': router_id,
+                                   'agent_id': l3_agents[0]['id']})
+                    else:
+                        unscheduled_router_ids.append(router_id)
+                if not unscheduled_router_ids:
+                    # all (specified) routers are already scheduled
                     return False
-
-            # get the router ids
-            if router_id:
-                router_ids = [(router_id,)]
             else:
                 # get all routers that are not hosted
                 #TODO(gongysh) consider the disabled agent's router
                 stmt = ~exists().where(
                     l3_db.Router.id ==
                     agentschedulers_db.RouterL3AgentBinding.router_id)
-                router_ids = context.session.query(
-                    l3_db.Router.id).filter(stmt).all()
-            if not router_ids:
-                LOG.debug(_('No non-hosted routers'))
-                return False
+                unscheduled_router_ids = [router_id_[0] for router_id_ in
+                                          context.session.query(
+                                              l3_db.Router.id).filter(stmt)]
+                if not unscheduled_router_ids:
+                    LOG.debug(_('No non-hosted routers'))
+                    return False
 
             # check if the configuration of l3 agent is compatible
             # with the router
-            router_ids = [router_id_[0] for router_id_ in router_ids]
-            routers = plugin.get_routers(context, filters={'id': router_ids})
+            routers = plugin.get_routers(
+                context, filters={'id': unscheduled_router_ids})
             to_removed_ids = []
             for router in routers:
                 candidates = plugin.get_l3_agent_candidates(router, [l3_agent])
                 if not candidates:
                     to_removed_ids.append(router['id'])
-            router_ids = list(set(router_ids) - set(to_removed_ids))
+            router_ids = set(unscheduled_router_ids) - set(to_removed_ids)
             if not router_ids:
                 LOG.warn(_('No routers compatible with L3 agent configuration'
                            ' on host %s'), host)

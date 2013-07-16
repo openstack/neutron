@@ -33,22 +33,22 @@ class L3RpcCallbackMixin(object):
         """Sync routers according to filters to a specific agent.
 
         @param context: contain user information
-        @param kwargs: host, or router_id
+        @param kwargs: host, router_ids
         @return: a list of routers
                  with their interfaces and floating_ips
         """
-        router_id = kwargs.get('router_id')
+        router_ids = kwargs.get('router_ids')
         host = kwargs.get('host')
         context = neutron_context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
         if utils.is_extension_supported(
             plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.router_auto_schedule:
-                plugin.auto_schedule_routers(context, host, router_id)
+                plugin.auto_schedule_routers(context, host, router_ids)
             routers = plugin.list_active_sync_routers_on_active_l3_agent(
-                context, host, router_id)
+                context, host, router_ids)
         else:
-            routers = plugin.get_sync_data(context, router_id)
+            routers = plugin.get_sync_data(context, router_ids)
         LOG.debug(_("Routers returned to l3 agent:\n %s"),
                   jsonutils.dumps(routers, indent=5))
         return routers
