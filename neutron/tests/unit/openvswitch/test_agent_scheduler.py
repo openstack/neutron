@@ -1070,8 +1070,7 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                                               L3_HOSTA)
                 self._add_router_to_l3_agent(hosta_id,
                                              router1['router']['id'])
-                routers = plugin.get_sync_data(self.adminContext,
-                                               [router1['router']['id']])
+                routers = [router1['router']['id']]
             mock_l3.assert_called_with(
                 mock.ANY,
                 plugin.l3_agent_notifier.make_msg(

@@ -183,9 +183,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             # Ensure we actually have something to update
             if r.keys():
                 router_db.update(r)
-        routers = self.get_sync_data(context.elevated(),
-                                     [router_db['id']])
-        l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
+        l3_rpc_agent_api.L3AgentNotify.routers_updated(
+            context, [router_db['id']])
         return self._make_router_dict(router_db)
 
     def _create_router_gw_port(self, context, router, network_id):
@@ -336,27 +335,29 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             raise q_exc.BadRequest(resource='router', msg=msg)
 
         if 'port_id' in interface_info:
-            if 'subnet_id' in interface_info:
-                msg = _("Cannot specify both subnet-id and port-id")
-                raise q_exc.BadRequest(resource='router', msg=msg)
+            # make sure port update is committed
+            with context.session.begin(subtransactions=True):
+                if 'subnet_id' in interface_info:
+                    msg = _("Cannot specify both subnet-id and port-id")
+                    raise q_exc.BadRequest(resource='router', msg=msg)
 
-            port = self._get_port(context, interface_info['port_id'])
-            if port['device_id']:
-                raise q_exc.PortInUse(net_id=port['network_id'],
-                                      port_id=port['id'],
-                                      device_id=port['device_id'])
-            fixed_ips = [ip for ip in port['fixed_ips']]
-            if len(fixed_ips) != 1:
-                msg = _('Router port must have exactly one fixed IP')
-                raise q_exc.BadRequest(resource='router', msg=msg)
-            subnet_id = fixed_ips[0]['subnet_id']
-            subnet = self._get_subnet(context, subnet_id)
-            self._check_for_dup_router_subnet(context, router_id,
-                                              port['network_id'],
-                                              subnet['id'],
-                                              subnet['cidr'])
-            port.update({'device_id': router_id,
-                         'device_owner': DEVICE_OWNER_ROUTER_INTF})
+                port = self._get_port(context, interface_info['port_id'])
+                if port['device_id']:
+                    raise q_exc.PortInUse(net_id=port['network_id'],
+                                          port_id=port['id'],
+                                          device_id=port['device_id'])
+                fixed_ips = [ip for ip in port['fixed_ips']]
+                if len(fixed_ips) != 1:
+                    msg = _('Router port must have exactly one fixed IP')
+                    raise q_exc.BadRequest(resource='router', msg=msg)
+                subnet_id = fixed_ips[0]['subnet_id']
+                subnet = self._get_subnet(context, subnet_id)
+                self._check_for_dup_router_subnet(context, router_id,
+                                                  port['network_id'],
+                                                  subnet['id'],
+                                                  subnet['cidr'])
+                port.update({'device_id': router_id,
+                             'device_owner': DEVICE_OWNER_ROUTER_INTF})
         elif 'subnet_id' in interface_info:
             subnet_id = interface_info['subnet_id']
             subnet = self._get_subnet(context, subnet_id)
@@ -381,11 +382,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                  'device_owner': DEVICE_OWNER_ROUTER_INTF,
                  'name': ''}})
 
-        routers = self.get_sync_data(context.elevated(), [router_id])
         l3_rpc_agent_api.L3AgentNotify.routers_updated(
-            context, routers, 'add_router_interface',
-            {'network_id': port['network_id'],
-             'subnet_id': subnet_id})
+            context, [router_id], 'add_router_interface')
         info = {'id': router_id,
                 'tenant_id': subnet['tenant_id'],
                 'port_id': port['id'],
@@ -428,7 +426,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             subnet = self._get_subnet(context, subnet_id)
             self._confirm_router_interface_not_in_use(
                 context, router_id, subnet_id)
-            _network_id = port_db['network_id']
             self.delete_port(context, port_db['id'], l3_port_check=False)
         elif 'subnet_id' in interface_info:
             subnet_id = interface_info['subnet_id']
@@ -448,7 +445,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 for p in ports:
                     if p['fixed_ips'][0]['subnet_id'] == subnet_id:
                         port_id = p['id']
-                        _network_id = p['network_id']
                         self.delete_port(context, p['id'], l3_port_check=False)
                         found = True
                         break
@@ -458,11 +454,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if not found:
                 raise l3.RouterInterfaceNotFoundForSubnet(router_id=router_id,
                                                           subnet_id=subnet_id)
-        routers = self.get_sync_data(context.elevated(), [router_id])
         l3_rpc_agent_api.L3AgentNotify.routers_updated(
-            context, routers, 'remove_router_interface',
-            {'network_id': _network_id,
-             'subnet_id': subnet_id})
+            context, [router_id], 'remove_router_interface')
         info = {'id': router_id,
                 'tenant_id': subnet['tenant_id'],
                 'port_id': port_id,
@@ -674,9 +667,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         router_id = floatingip_db['router_id']
         if router_id:
-            routers = self.get_sync_data(context.elevated(), [router_id])
-            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers,
-                                                           'create_floatingip')
+            l3_rpc_agent_api.L3AgentNotify.routers_updated(
+                context, [router_id],
+                'create_floatingip')
         return self._make_floatingip_dict(floatingip_db)
 
     def update_floatingip(self, context, id, floatingip):
@@ -697,8 +690,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if router_id and router_id != before_router_id:
             router_ids.append(router_id)
         if router_ids:
-            routers = self.get_sync_data(context.elevated(), router_ids)
-            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers,
+            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, router_ids,
                                                            'update_floatingip')
         return self._make_floatingip_dict(floatingip_db)
 
@@ -711,9 +703,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                              floatingip['floating_port_id'],
                              l3_port_check=False)
         if router_id:
-            routers = self.get_sync_data(context.elevated(), [router_id])
-            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers,
-                                                           'delete_floatingip')
+            l3_rpc_agent_api.L3AgentNotify.routers_updated(
+                context, [router_id],
+                'delete_floatingip')
 
     def get_floatingip(self, context, id, fields=None):
         floatingip = self._get_floatingip(context, id)
@@ -782,8 +774,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 raise Exception(_('Multiple floating IPs found for port %s')
                                 % port_id)
         if router_id:
-            routers = self.get_sync_data(context.elevated(), [router_id])
-            l3_rpc_agent_api.L3AgentNotify.routers_updated(context, routers)
+            l3_rpc_agent_api.L3AgentNotify.routers_updated(
+                context, [router_id])
 
     def _network_is_external(self, context, net_id):
         try:

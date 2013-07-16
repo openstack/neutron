@@ -31,6 +31,7 @@ from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid
 HOSTNAME = 'myhost'
+FAKE_ID = _uuid()
 
 
 class TestBasicRouterOperations(base.BaseTestCase):
@@ -508,22 +509,29 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent._process_routers(routers)
         self.assertNotIn(routers[0]['id'], agent.router_info)
 
-    def testSingleLoopRouterRemoval(self):
+    def test_router_deleted(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_external_network_id.return_value = None
-        routers = [
-            {'id': _uuid(),
-             'admin_state_up': True,
-             'routes': [],
-             'external_gateway_info': {}}]
-        agent._process_routers(routers)
+        agent.router_deleted(None, FAKE_ID)
+        # verify that will set fullsync
+        self.assertTrue(FAKE_ID in agent.removed_routers)
 
-        agent.router_deleted(None, routers[0]['id'])
-        # verify that remove is called
-        self.assertEqual(self.mock_ip.get_devices.call_count, 1)
+    def test_routers_updated(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.routers_updated(None, [FAKE_ID])
+        # verify that will set fullsync
+        self.assertTrue(FAKE_ID in agent.updated_routers)
 
-        self.device_exists.assert_has_calls(
-            [mock.call(self.conf.external_network_bridge)])
+    def test_removed_from_agent(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.router_removed_from_agent(None, {'router_id': FAKE_ID})
+        # verify that will set fullsync
+        self.assertTrue(FAKE_ID in agent.removed_routers)
+
+    def test_added_to_agent(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.router_added_to_agent(None, [FAKE_ID])
+        # verify that will set fullsync
+        self.assertTrue(FAKE_ID in agent.updated_routers)
 
     def testDestroyNamespace(self):
 

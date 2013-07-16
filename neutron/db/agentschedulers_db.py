@@ -129,9 +129,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                     router_id=router_id, agent_id=id)
 
         if self.l3_agent_notifier:
-            routers = self.get_sync_data(context, [router_id])
             self.l3_agent_notifier.router_added_to_agent(
-                context, routers, agent_db.host)
+                context, [router_id], agent_db.host)
 
     def remove_router_from_l3_agent(self, context, id, router_id):
         """Remove the router from l3 agent.
