@@ -142,17 +142,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
         # jump to the security group chain
         device = self._get_device_name(port)
-        jump_rule = ['-m physdev --physdev-is-bridged --%s '
-                     '%s -j $%s' % (self.IPTABLES_DIRECTION[direction],
-                                    device,
-                                    SG_CHAIN)]
+        jump_rule = ['-m physdev --%s %s --physdev-is-bridged '
+                     '-j $%s' % (self.IPTABLES_DIRECTION[direction],
+                                 device,
+                                 SG_CHAIN)]
         self._add_rule_to_chain_v4v6('FORWARD', jump_rule, jump_rule)
 
         # jump to the chain based on the device
-        jump_rule = ['-m physdev --physdev-is-bridged --%s '
-                     '%s -j $%s' % (self.IPTABLES_DIRECTION[direction],
-                                    device,
-                                    chain_name)]
+        jump_rule = ['-m physdev --%s %s --physdev-is-bridged '
+                     '-j $%s' % (self.IPTABLES_DIRECTION[direction],
+                                 device,
+                                 chain_name)]
         self._add_rule_to_chain_v4v6(SG_CHAIN, jump_rule, jump_rule)
 
         if direction == EGRESS_DIRECTION:
@@ -191,7 +191,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _ip_spoofing_rule(self, port, ipv4_rules, ipv6_rules):
         #Note(nati) allow dhcp or RA packet
-        ipv4_rules += ['-p udp --sport 68 --dport 67 -j RETURN']
+        ipv4_rules += ['-p udp -m udp --sport 68 --dport 67 -j RETURN']
         ipv6_rules += ['-p icmpv6 -j RETURN']
         ipv4_addresses = []
         ipv6_addresses = []
@@ -207,7 +207,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _drop_dhcp_rule(self):
         #Note(nati) Drop dhcp packet from VM
-        return ['-p udp --sport 67 --dport 68 -j DROP']
+        return ['-p udp -m udp --sport 67 --dport 68 -j DROP']
 
     def _add_rule_by_security_group(self, port, direction):
         chain_name = self._port_chain_name(port, direction)
@@ -240,20 +240,24 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self._drop_invalid_packets(iptables_rules)
         self._allow_established(iptables_rules)
         for rule in security_group_rules:
-            args = ['-j RETURN']
+            # These arguments MUST be in the format iptables-save will
+            # display them: source/dest, protocol, sport, dport, target
+            # Otherwise the iptables_manager code won't be able to find
+            # them to preserve their [packet:byte] counts.
+            args = self._ip_prefix_arg('s',
+                                       rule.get('source_ip_prefix'))
+            args += self._ip_prefix_arg('d',
+                                        rule.get('dest_ip_prefix'))
             args += self._protocol_arg(rule.get('protocol'))
-            args += self._port_arg('dport',
-                                   rule.get('protocol'),
-                                   rule.get('port_range_min'),
-                                   rule.get('port_range_max'))
             args += self._port_arg('sport',
                                    rule.get('protocol'),
                                    rule.get('source_port_range_min'),
                                    rule.get('source_port_range_max'))
-            args += self._ip_prefix_arg('s',
-                                        rule.get('source_ip_prefix'))
-            args += self._ip_prefix_arg('d',
-                                        rule.get('dest_ip_prefix'))
+            args += self._port_arg('dport',
+                                   rule.get('protocol'),
+                                   rule.get('port_range_min'),
+                                   rule.get('port_range_max'))
+            args += ['-j RETURN']
             iptables_rules += [' '.join(args)]
 
         iptables_rules += ['-j $sg-fallback']
@@ -267,13 +271,18 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _allow_established(self, iptables_rules):
         # Allow established connections
-        iptables_rules += ['-m state --state ESTABLISHED,RELATED -j RETURN']
+        iptables_rules += ['-m state --state RELATED,ESTABLISHED -j RETURN']
         return iptables_rules
 
     def _protocol_arg(self, protocol):
-        if protocol:
-            return ['-p', protocol]
-        return []
+        if not protocol:
+            return []
+
+        iptables_rule = ['-p', protocol]
+        # iptables always adds '-m protocol' for udp and tcp
+        if protocol in ['udp', 'tcp']:
+            iptables_rule += ['-m', protocol]
+        return iptables_rule
 
     def _port_arg(self, direction, protocol, port_range_min, port_range_max):
         if not (protocol in ['udp', 'tcp'] and port_range_min):
