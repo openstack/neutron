@@ -180,7 +180,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 class PortSecurityDBTestCase(PortSecurityTestCase):
     def setUp(self, plugin=None):
-        test_config['plugin_name_v2'] = DB_PLUGIN_KLASS
+        test_config['plugin_name_v2'] = plugin or DB_PLUGIN_KLASS
         super(PortSecurityDBTestCase, self).setUp()
 
     def tearDown(self):
