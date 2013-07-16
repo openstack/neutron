@@ -23,6 +23,7 @@ import fixtures
 import mock
 
 import neutron
+from neutron.api.v2 import attributes
 from neutron.common import exceptions
 from neutron import context
 from neutron import manager
@@ -201,6 +202,19 @@ class DefaultPolicyTestCase(base.BaseTestCase):
                           self.context, "example:noexist", {})
 
 
+FAKE_RESOURCE_NAME = 'something'
+FAKE_RESOURCE = {"%ss" % FAKE_RESOURCE_NAME:
+                 {'attr': {'allow_post': True,
+                           'allow_put': True,
+                           'is_visible': True,
+                           'default': None,
+                           'enforce_policy': True,
+                           'validate': {'type:dict':
+                                        {'sub_attr_1': {'type:string': None},
+                                         'sub_attr_2': {'type:string': None}}}
+                           }}}
+
+
 class NeutronPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
@@ -210,6 +224,8 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         self.addCleanup(policy.reset)
         self.admin_only_legacy = "role:admin"
         self.admin_or_owner_legacy = "role:admin or tenant_id:%(tenant_id)s"
+        # Add a Fake 'something' resource to RESOURCE_ATTRIBUTE_MAP
+        attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCE)
         self.rules = dict((k, common_policy.parse_rule(v)) for k, v in {
             "context_is_admin": "role:admin",
             "admin_or_network_owner": "rule:context_is_admin or "
@@ -231,16 +247,24 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                            "rule:shared or "
                            "rule:external",
             "create_port:mac": "rule:admin_or_network_owner",
+            "create_something": "rule:admin_or_owner",
+            "create_something:attr": "rule:admin_or_owner",
+            "create_something:attr:sub_attr_1": "rule:admin_or_owner",
+            "create_something:attr:sub_attr_2": "rule:admin_only"
         }.items())
 
         def fakepolicyinit():
             common_policy.set_rules(common_policy.Rules(self.rules))
+
+        def remove_fake_resource():
+            del attributes.RESOURCE_ATTRIBUTE_MAP["%ss" % FAKE_RESOURCE_NAME]
 
         self.patcher = mock.patch.object(neutron.policy,
                                          'init',
                                          new=fakepolicyinit)
         self.patcher.start()
         self.addCleanup(self.patcher.stop)
+        self.addCleanup(remove_fake_resource)
         self.context = context.Context('fake', 'fake', roles=['user'])
         plugin_klass = importutils.import_class(
             "neutron.db.db_base_plugin_v2.NeutronDbPluginV2")
@@ -318,6 +342,47 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         target = {'shared': True, 'tenant_id': 'somebody_else'}
         self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
+
+    def _test_build_subattribute_match_rule(self, validate_value):
+        bk = FAKE_RESOURCE['%ss' % FAKE_RESOURCE_NAME]['attr']['validate']
+        FAKE_RESOURCE['%ss' % FAKE_RESOURCE_NAME]['attr']['validate'] = (
+            validate_value)
+        action = "create_something"
+        target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
+        self.assertFalse(policy._build_subattr_match_rule(
+            'attr',
+            FAKE_RESOURCE['%ss' % FAKE_RESOURCE_NAME]['attr'],
+            action,
+            target))
+        FAKE_RESOURCE['%ss' % FAKE_RESOURCE_NAME]['attr']['validate'] = bk
+
+    def test_build_subattribute_match_rule_empty_dict_validator(self):
+        self._test_build_subattribute_match_rule({})
+
+    def test_build_subattribute_match_rule_wrong_validation_info(self):
+        self._test_build_subattribute_match_rule(
+            {'type:dict': 'wrong_stuff'})
+
+    def test_enforce_subattribute(self):
+        action = "create_something"
+        target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
+        result = policy.enforce(self.context, action, target, None)
+        self.assertEqual(result, True)
+
+    def test_enforce_admin_only_subattribute(self):
+        action = "create_something"
+        target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x',
+                                                'sub_attr_2': 'y'}}
+        result = policy.enforce(context.get_admin_context(),
+                                action, target, None)
+        self.assertEqual(result, True)
+
+    def test_enforce_admin_only_subattribute_nonadminctx_returns_403(self):
+        action = "create_something"
+        target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x',
+                                                'sub_attr_2': 'y'}}
+        self.assertRaises(exceptions.PolicyNotAuthorized, policy.enforce,
+                          self.context, action, target, None)
 
     def test_enforce_regularuser_on_read(self):
         action = "get_network"

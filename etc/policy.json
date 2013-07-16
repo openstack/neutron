@@ -55,6 +55,9 @@
     "update_port:mac_learning_enabled": "rule:admin_or_network_owner",
     "delete_port": "rule:admin_or_owner",
 
+    "create_router:external_gateway_info:enable_snat": "rule:admin_only",
+    "update_router:external_gateway_info:enable_snat": "rule:admin_only",
+
     "create_service_type": "rule:admin_only",
     "update_service_type": "rule:admin_only",
     "delete_service_type": "rule:admin_only",

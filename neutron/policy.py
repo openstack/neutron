@@ -126,6 +126,31 @@ def _is_attribute_explicitly_set(attribute_name, resource, target):
             target[attribute_name] != resource[attribute_name]['default'])
 
 
+def _build_subattr_match_rule(attr_name, attr, action, target):
+    """Create the rule to match for sub-attribute policy checks."""
+    # TODO(salv-orlando): Instead of relying on validator info, introduce
+    # typing for API attributes
+    # Expect a dict as type descriptor
+    validate = attr['validate']
+    key = filter(lambda k: k.startswith('type:dict'), validate.keys())
+    if not key:
+        LOG.warn(_("Unable to find data type descriptor for attribute %s"),
+                 attr_name)
+        return
+    data = validate[key[0]]
+    if not isinstance(data, dict):
+        LOG.debug(_("Attribute type descriptor is not a dict. Unable to "
+                    "generate any sub-attr policy rule for %s."),
+                  attr_name)
+        return
+    sub_attr_rules = [policy.RuleCheck('rule', '%s:%s:%s' %
+                                       (action, attr_name,
+                                        sub_attr_name)) for
+                      sub_attr_name in data if sub_attr_name in
+                      target[attr_name]]
+    return policy.AndCheck(sub_attr_rules)
+
+
 def _build_match_rule(action, target):
     """Create the rule to match for a given action.
 
@@ -134,7 +159,9 @@ def _build_match_rule(action, target):
     2) add an entry for the specific action (e.g.: create_network)
     3) add an entry for attributes of a resource for which the action
        is being executed (e.g.: create_network:shared)
-
+    4) add an entry for sub-attributes of a resource for which the
+       action is being executed
+       (e.g.: create_router:external_gateway_info:network_id)
     """
 
     match_rule = policy.RuleCheck('rule', action)
@@ -152,8 +179,16 @@ def _build_match_rule(action, target):
                     if 'enforce_policy' in attribute:
                         attr_rule = policy.RuleCheck('rule', '%s:%s' %
                                                      (action, attribute_name))
+                        # Build match entries for sub-attributes, if present
+                        validate = attribute.get('validate')
+                        if (validate and any([k.startswith('type:dict') and v
+                                              for (k, v) in
+                                              validate.iteritems()])):
+                            attr_rule = policy.AndCheck(
+                                [attr_rule, _build_subattr_match_rule(
+                                    attribute_name, attribute,
+                                    action, target)])
                         match_rule = policy.AndCheck([match_rule, attr_rule])
-
     return match_rule
 
 
