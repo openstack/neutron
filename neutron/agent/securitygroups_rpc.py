@@ -125,13 +125,14 @@ class SecurityGroupAgentRpcMixin(object):
             'security_group_source_groups')
 
     def _security_group_updated(self, security_groups, attribute):
-        #check need update or not
+        devices = []
+        sec_grp_set = set(security_groups)
         for device in self.firewall.ports.values():
-            if set(device.get(attribute,
-                              [])).intersection(
-                    set(security_groups)):
-                    self.refresh_firewall()
-                    return
+            if sec_grp_set & set(device.get(attribute, [])):
+                devices.append(device)
+
+        if devices:
+            self.refresh_firewall(devices)
 
     def security_groups_provider_updated(self):
         LOG.info(_("Provider rule updated"))
@@ -148,10 +149,15 @@ class SecurityGroupAgentRpcMixin(object):
                     continue
                 self.firewall.remove_port_filter(device)
 
-    def refresh_firewall(self):
+    def refresh_firewall(self, devices=None):
         LOG.info(_("Refresh firewall rules"))
-        device_ids = self.firewall.ports.keys()
+
+        if devices:
+            device_ids = [d['device'] for d in devices]
+        else:
+            device_ids = self.firewall.ports.keys()
         if not device_ids:
+            LOG.info(_("No ports here to refresh firewall"))
             return
         devices = self.plugin_rpc.security_group_rules_for_devices(
             self.context, device_ids)
