@@ -29,6 +29,8 @@ warnings.warn(
     _('You are using old configuration values for the api-paste config. '
       'Please update for Neutron.')
 )
-sys.modules['quantum.api'] = api
 sys.modules['quantum.api.extensions'] = extensions
 sys.modules['quantum.api.v2'] = v2
+# The following assigment must be performed at the end of the module.
+# Otherwise local variables will be overwritten.
+sys.modules['quantum.api'] = api
