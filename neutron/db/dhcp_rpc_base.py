@@ -47,8 +47,8 @@ class DhcpRpcCallbackMixin(object):
     def get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active network ids."""
         # NOTE(arosen): This method is no longer used by the DHCP agent but is
-        # left so that quantum-dhcp-agents will still continue to work if
-        # quantum-server is upgraded and not the agent.
+        # left so that neutron-dhcp-agents will still continue to work if
+        # neutron-server is upgraded and not the agent.
         host = kwargs.get('host')
         LOG.debug(_('get_active_networks requested from %s'), host)
         nets = self._get_active_networks(context, **kwargs)
@@ -97,8 +97,8 @@ class DhcpRpcCallbackMixin(object):
 
         """
         # NOTE(arosen): This method is no longer used by the DHCP agent but is
-        # left so that quantum-dhcp-agents will still continue to work if
-        # quantum-server is upgraded and not the agent.
+        # left so that neutron-dhcp-agents will still continue to work if
+        # neutron-server is upgraded and not the agent.
 
         host = kwargs.get('host')
         network_id = kwargs.get('network_id')
@@ -209,20 +209,13 @@ class DhcpRpcCallbackMixin(object):
 
     def update_lease_expiration(self, context, **kwargs):
         """Release the fixed_ip associated the subnet on a port."""
+        # NOTE(arosen): This method is no longer used by the DHCP agent but is
+        # left so that neutron-dhcp-agents will still continue to work if
+        # neutron-server is upgraded and not the agent.
         host = kwargs.get('host')
-        network_id = kwargs.get('network_id')
-        ip_address = kwargs.get('ip_address')
-        lease_remaining = kwargs.get('lease_remaining')
 
-        LOG.debug(_('Updating lease expiration for %(ip_address)s on network '
-                    '%(network_id)s from %(host)s.'),
-                  {'ip_address': ip_address,
-                   'network_id': network_id,
-                   'host': host})
-        plugin = manager.NeutronManager.get_plugin()
-
-        plugin.update_fixed_ip_lease_expiration(context, network_id,
-                                                ip_address, lease_remaining)
+        LOG.warning(_('Updating lease expiration is now deprecated. Issued  '
+                      'from host %(host)s.') % host)
 
     def create_dhcp_port(self, context, **kwargs):
         """Create the dhcp port."""

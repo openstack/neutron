@@ -1191,7 +1191,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(ips[1]['subnet_id'], subnet['subnet']['id'])
 
     def test_update_port_update_ips(self):
-        """Update IP and generate new IP on port.
+        """Update IP and associate new IP on port.
 
         Check a port update with the specified subnet_id's. A IP address
         will be allocated for each subnet_id.
@@ -1200,7 +1200,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             with self.port(subnet=subnet) as port:
                 data = {'port': {'admin_state_up': False,
                                  'fixed_ips': [{'subnet_id':
-                                                subnet['subnet']['id']}]}}
+                                                subnet['subnet']['id'],
+                                                'ip_address': '10.0.0.3'}]}}
                 req = self.new_update_request('ports', data,
                                               port['port']['id'])
                 res = self.deserialize(self.fmt, req.get_response(self.api))
@@ -1227,9 +1228,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  data['port']['admin_state_up'])
                 ips = res['port']['fixed_ips']
                 self.assertEqual(len(ips), 2)
-                self.assertEqual(ips[0]['ip_address'], '10.0.0.3')
+                self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
                 self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
-                self.assertEqual(ips[1]['ip_address'], '10.0.0.4')
+                self.assertEqual(ips[1]['ip_address'], '10.0.0.3')
                 self.assertEqual(ips[1]['subnet_id'], subnet['subnet']['id'])
 
     def test_requested_duplicate_mac(self):
@@ -1634,57 +1635,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             res = port_req.get_response(self.api)
             self.assertEqual(res.status_int, 400)
 
-    def test_default_allocation_expiration(self):
-        cfg.CONF.set_override('dhcp_lease_duration', 120)
-        reference = datetime.datetime(2012, 8, 13, 23, 11, 0)
-
-        with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
-            mock_utcnow.return_value = reference
-
-            plugin = NeutronManager.get_plugin()
-            expires = plugin._default_allocation_expiration()
-            self.assertEqual(expires,
-                             reference + datetime.timedelta(seconds=120))
-
-    def test_update_fixed_ip_lease_expiration(self):
-        cfg.CONF.set_override('dhcp_lease_duration', 10)
-        plugin = NeutronManager.get_plugin()
-        with self.subnet() as subnet:
-            with self.port(subnet=subnet) as port:
-                update_context = context.Context('', port['port']['tenant_id'])
-                plugin.update_fixed_ip_lease_expiration(
-                    update_context,
-                    subnet['subnet']['network_id'],
-                    port['port']['fixed_ips'][0]['ip_address'],
-                    500)
-
-                q = update_context.session.query(models_v2.IPAllocation)
-                q = q.filter_by(
-                    port_id=port['port']['id'],
-                    ip_address=port['port']['fixed_ips'][0]['ip_address'])
-
-                ip_allocation = q.one()
-
-                self.assertThat(
-                    ip_allocation.expiration - timeutils.utcnow(),
-                    matchers.GreaterThan(datetime.timedelta(seconds=10)))
-
-    def test_port_delete_holds_ip(self):
-        base_class = db_base_plugin_v2.NeutronDbPluginV2
-        with mock.patch.object(base_class, '_hold_ip') as hold_ip:
-            with self.subnet() as subnet:
-                with self.port(subnet=subnet, no_delete=True) as port:
-                    req = self.new_delete_request('ports', port['port']['id'])
-                    res = req.get_response(self.api)
-                    self.assertEqual(res.status_int, 204)
-
-                    hold_ip.assert_called_once_with(
-                        mock.ANY,
-                        port['port']['network_id'],
-                        port['port']['fixed_ips'][0]['subnet_id'],
-                        port['port']['id'],
-                        port['port']['fixed_ips'][0]['ip_address'])
-
     def test_update_fixed_ip_lease_expiration_invalid_address(self):
         cfg.CONF.set_override('dhcp_lease_duration', 10)
         plugin = NeutronManager.get_plugin()
@@ -1698,27 +1648,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                         '255.255.255.0',
                         120)
                     self.assertTrue(log.mock_calls)
-
-    def test_hold_ip_address(self):
-        plugin = NeutronManager.get_plugin()
-        with self.subnet() as subnet:
-            with self.port(subnet=subnet) as port:
-                update_context = context.Context('', port['port']['tenant_id'])
-                port_id = port['port']['id']
-                with mock.patch.object(db_base_plugin_v2, 'LOG') as log:
-                    ip_address = port['port']['fixed_ips'][0]['ip_address']
-                    plugin._hold_ip(
-                        update_context,
-                        subnet['subnet']['network_id'],
-                        subnet['subnet']['id'],
-                        port_id,
-                        ip_address)
-                    self.assertTrue(log.mock_calls)
-
-                    q = update_context.session.query(models_v2.IPAllocation)
-                    q = q.filter_by(port_id=None, ip_address=ip_address)
-
-                self.assertEqual(q.count(), 1)
 
     def test_recycle_ip_address_without_allocation_pool(self):
         plugin = NeutronManager.get_plugin()
@@ -1741,47 +1670,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 q = update_context.session.query(models_v2.IPAllocation)
                 q = q.filter_by(subnet_id=subnet_id)
                 self.assertEqual(q.count(), 0)
-
-    def test_recycle_held_ip_address(self):
-        plugin = NeutronManager.get_plugin()
-        with self.subnet() as subnet:
-            with self.port(subnet=subnet) as port:
-                update_context = context.Context('', port['port']['tenant_id'])
-                port_id = port['port']['id']
-                port_obj = plugin._get_port(update_context, port_id)
-
-                for fixed_ip in port_obj.fixed_ips:
-                    fixed_ip.active = False
-                    fixed_ip.expiration = datetime.datetime.utcnow()
-
-                with mock.patch.object(plugin, '_recycle_ip') as rc:
-                    plugin._recycle_expired_ip_allocations(
-                        update_context, subnet['subnet']['network_id'])
-                    rc.assertEqual(len(rc.mock_calls), 1)
-                    self.assertEqual(update_context._recycled_networks,
-                                     set([subnet['subnet']['network_id']]))
-
-    def test_recycle_expired_previously_run_within_context(self):
-        plugin = NeutronManager.get_plugin()
-        with self.subnet() as subnet:
-            with self.port(subnet=subnet) as port:
-                update_context = context.Context('', port['port']['tenant_id'])
-                port_id = port['port']['id']
-                port_obj = plugin._get_port(update_context, port_id)
-
-                update_context._recycled_networks = set(
-                    [subnet['subnet']['network_id']])
-
-                for fixed_ip in port_obj.fixed_ips:
-                    fixed_ip.active = False
-                    fixed_ip.expiration = datetime.datetime.utcnow()
-
-                with mock.patch.object(plugin, '_recycle_ip') as rc:
-                    plugin._recycle_expired_ip_allocations(
-                        update_context, subnet['subnet']['network_id'])
-                    rc.assertFalse(rc.called)
-                    self.assertEqual(update_context._recycled_networks,
-                                     set([subnet['subnet']['network_id']]))
 
     def test_max_fixed_ips_exceeded(self):
         with self.subnet(gateway_ip='10.0.0.3',

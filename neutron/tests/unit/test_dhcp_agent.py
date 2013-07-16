@@ -17,7 +17,6 @@
 
 import copy
 import os
-import socket
 import sys
 import uuid
 
@@ -33,7 +32,6 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.openstack.common import jsonutils
 from neutron.tests import base
 
 
@@ -99,7 +97,8 @@ fake_port1 = FakeModel('12345678-1234-aaaa-1234567890ab',
 
 fake_port2 = FakeModel('12345678-1234-aaaa-123456789000',
                        mac_address='aa:bb:cc:dd:ee:99',
-                       network_id='12345678-1234-5678-1234567890ab')
+                       network_id='12345678-1234-5678-1234567890ab',
+                       fixed_ips=[])
 
 fake_meta_port = FakeModel('12345678-1234-aaaa-1234567890ab',
                            mac_address='aa:bb:cc:dd:ee:ff',
@@ -147,7 +146,6 @@ class TestDhcpAgent(base.BaseTestCase):
 
     def test_dhcp_agent_manager(self):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
-        lease_relay_str = 'neutron.agent.dhcp_agent.DhcpLeaseRelay'
         with mock.patch.object(DhcpAgentWithStateReport,
                                'sync_state',
                                autospec=True) as mock_sync_state:
@@ -155,34 +153,27 @@ class TestDhcpAgent(base.BaseTestCase):
                                    'periodic_resync',
                                    autospec=True) as mock_periodic_resync:
                 with mock.patch(state_rpc_str) as state_rpc:
-                    with mock.patch(lease_relay_str) as mock_lease_relay:
-                        with mock.patch.object(sys, 'argv') as sys_argv:
-                            sys_argv.return_value = [
-                                'dhcp', '--config-file',
-                                etcdir('neutron.conf.test')]
-                            cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
-                            config.register_agent_state_opts_helper(cfg.CONF)
-                            config.register_root_helper(cfg.CONF)
-                            cfg.CONF.register_opts(
-                                dhcp_agent.DeviceManager.OPTS)
-                            cfg.CONF.register_opts(
-                                dhcp_agent.DhcpLeaseRelay.OPTS)
-                            cfg.CONF.register_opts(dhcp.OPTS)
-                            cfg.CONF.register_opts(interface.OPTS)
-                            cfg.CONF(project='neutron')
-                            agent_mgr = DhcpAgentWithStateReport('testhost')
-                            eventlet.greenthread.sleep(1)
-                            agent_mgr.after_start()
-                            mock_sync_state.assert_called_once_with(agent_mgr)
-                            mock_periodic_resync.assert_called_once_with(
-                                agent_mgr)
-                            state_rpc.assert_has_calls(
-                                [mock.call(mock.ANY),
-                                 mock.call().report_state(mock.ANY, mock.ANY,
-                                                          mock.ANY)])
-                            mock_lease_relay.assert_has_calls(
-                                [mock.call(mock.ANY),
-                                 mock.call().start()])
+                    with mock.patch.object(sys, 'argv') as sys_argv:
+                        sys_argv.return_value = [
+                            'dhcp', '--config-file',
+                            etcdir('neutron.conf.test')]
+                        cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
+                        config.register_agent_state_opts_helper(cfg.CONF)
+                        config.register_root_helper(cfg.CONF)
+                        cfg.CONF.register_opts(
+                            dhcp_agent.DeviceManager.OPTS)
+                        cfg.CONF.register_opts(dhcp.OPTS)
+                        cfg.CONF.register_opts(interface.OPTS)
+                        cfg.CONF(project='neutron')
+                        agent_mgr = DhcpAgentWithStateReport('testhost')
+                        eventlet.greenthread.sleep(1)
+                        agent_mgr.after_start()
+                        mock_sync_state.assert_called_once_with(agent_mgr)
+                        mock_periodic_resync.assert_called_once_with(agent_mgr)
+                        state_rpc.assert_has_calls(
+                            [mock.call(mock.ANY),
+                             mock.call().report_state(mock.ANY, mock.ANY,
+                                                      mock.ANY)])
 
     def test_dhcp_agent_main_agent_manager(self):
         logging_str = 'neutron.agent.common.config.setup_logging'
@@ -202,13 +193,11 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             attrs_to_mock = dict(
                 [(a, mock.DEFAULT) for a in
-                 ['sync_state', 'lease_relay', 'periodic_resync']])
+                 ['sync_state', 'periodic_resync']])
             with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
                 dhcp.run()
                 mocks['sync_state'].assert_called_once_with()
                 mocks['periodic_resync'].assert_called_once_with()
-                mocks['lease_relay'].assert_has_mock_calls(
-                    [mock.call.start()])
 
     def test_ns_name(self):
         with mock.patch('neutron.agent.dhcp_agent.DeviceManager'):
@@ -253,28 +242,6 @@ class TestDhcpAgent(base.BaseTestCase):
                                                     'qdhcp-1',
                                                     mock.ANY)
                 self.assertEqual(log.call_count, 1)
-                self.assertTrue(dhcp.needs_resync)
-
-    def test_update_lease(self):
-        with mock.patch('neutron.agent.dhcp_agent.DhcpPluginApi') as plug:
-            dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            dhcp.update_lease('net_id', '192.168.1.1', 120)
-            plug.assert_has_calls(
-                [mock.call().update_lease_expiration(
-                    'net_id', '192.168.1.1', 120)])
-
-    def test_update_lease_failure(self):
-        with mock.patch('neutron.agent.dhcp_agent.DhcpPluginApi') as plug:
-            plug.return_value.update_lease_expiration.side_effect = Exception
-
-            with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
-                dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-                dhcp.update_lease('net_id', '192.168.1.1', 120)
-                plug.assert_has_calls(
-                    [mock.call().update_lease_expiration(
-                        'net_id', '192.168.1.1', 120)])
-
-                self.assertTrue(log.called)
                 self.assertTrue(dhcp.needs_resync)
 
     def _test_sync_state_helper(self, known_networks, active_networks):
@@ -425,7 +392,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpAgentEventHandler, self).setUp()
         cfg.CONF.register_opts(dhcp_agent.DeviceManager.OPTS)
-        cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
         cfg.CONF.register_opts(dhcp.OPTS)
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
@@ -754,12 +720,33 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def test_port_update_end(self):
         payload = dict(port=vars(fake_port2))
         self.cache.get_network_by_id.return_value = fake_network
+        self.cache.get_port_by_id.return_value = fake_port2
         self.dhcp.port_update_end(None, payload)
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id(fake_port2.network_id),
+             mock.call.get_port_by_id(fake_port2.id),
              mock.call.put_port(mock.ANY)])
         self.call_driver.assert_called_once_with('reload_allocations',
                                                  fake_network)
+
+    def test_port_update_change_ip_on_port(self):
+        payload = dict(port=vars(fake_port1))
+        self.cache.get_network_by_id.return_value = fake_network
+        updated_fake_port1 = copy.deepcopy(fake_port1)
+        updated_fake_port1.fixed_ips[0].ip_address = '172.9.9.99'
+        self.cache.get_port_by_id.return_value = updated_fake_port1
+        self.dhcp.port_update_end(None, payload)
+        self.cache.assert_has_calls(
+            [mock.call.get_network_by_id(fake_port1.network_id),
+             mock.call.get_port_by_id(fake_port1.id),
+             mock.call.put_port(mock.ANY)])
+        self.call_driver.assert_has_calls(
+            [mock.call.call_driver(
+                'release_lease',
+                fake_network,
+                mac_address=fake_port1.mac_address,
+                removed_ips=set([updated_fake_port1.fixed_ips[0].ip_address])),
+             mock.call.call_driver('reload_allocations', fake_network)])
 
     def test_port_delete_end(self):
         payload = dict(port_id=fake_port2.id)
@@ -767,13 +754,18 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.cache.get_port_by_id.return_value = fake_port2
 
         self.dhcp.port_delete_end(None, payload)
-
+        removed_ips = [fixed_ip.ip_address
+                       for fixed_ip in fake_port2.fixed_ips]
         self.cache.assert_has_calls(
             [mock.call.get_port_by_id(fake_port2.id),
              mock.call.get_network_by_id(fake_network.id),
              mock.call.remove_port(fake_port2)])
-        self.call_driver.assert_called_once_with('reload_allocations',
-                                                 fake_network)
+        self.call_driver.assert_has_calls(
+            [mock.call.call_driver('release_lease',
+                                   fake_network,
+                                   mac_address=fake_port2.mac_address,
+                                   removed_ips=removed_ips),
+             mock.call.call_driver('reload_allocations', fake_network)])
 
     def test_port_delete_end_unknown_port(self):
         payload = dict(port_id='unknown')
@@ -863,16 +855,6 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
                                               network_id='netid',
                                               subnet_id='subid',
                                               device_id='devid',
-                                              host='foo')
-
-    def test_update_lease_expiration(self):
-        with mock.patch.object(self.proxy, 'cast') as mock_cast:
-            self.proxy.update_lease_expiration('netid', 'ipaddr', 1)
-            self.assertTrue(mock_cast.called)
-        self.make_msg.assert_called_once_with('update_lease_expiration',
-                                              network_id='netid',
-                                              ip_address='ipaddr',
-                                              lease_remaining=1,
                                               host='foo')
 
 
@@ -1361,123 +1343,6 @@ class TestDeviceManager(base.BaseTestCase):
         device.route.get_gateway.assert_called_once()
         self.assertFalse(device.route.delete_gateway.called)
         device.route.add_gateway.assert_called_once_with('192.168.1.1')
-
-
-class TestDhcpLeaseRelay(base.BaseTestCase):
-    def setUp(self):
-        super(TestDhcpLeaseRelay, self).setUp()
-        cfg.CONF.register_opts(dhcp_agent.DhcpLeaseRelay.OPTS)
-        self.unlink_p = mock.patch('os.unlink')
-        self.unlink = self.unlink_p.start()
-
-    def tearDown(self):
-        self.unlink_p.stop()
-        super(TestDhcpLeaseRelay, self).tearDown()
-
-    def test_init_relay_socket_path_no_prev_socket(self):
-        with mock.patch('os.path.exists') as exists:
-            exists.return_value = False
-            self.unlink.side_effect = OSError
-
-            dhcp_agent.DhcpLeaseRelay(None)
-
-            self.unlink.assert_called_once_with(
-                cfg.CONF.dhcp_lease_relay_socket)
-            exists.assert_called_once_with(cfg.CONF.dhcp_lease_relay_socket)
-
-    def test_init_relay_socket_path_prev_socket_exists(self):
-        with mock.patch('os.path.exists') as exists:
-            exists.return_value = False
-
-            dhcp_agent.DhcpLeaseRelay(None)
-
-            self.unlink.assert_called_once_with(
-                cfg.CONF.dhcp_lease_relay_socket)
-            self.assertFalse(exists.called)
-
-    def test_init_relay_socket_path_prev_socket_unlink_failure(self):
-        self.unlink.side_effect = OSError
-        with mock.patch('os.path.exists') as exists:
-            exists.return_value = True
-            with testtools.ExpectedException(OSError):
-                dhcp_agent.DhcpLeaseRelay(None)
-
-                self.unlink.assert_called_once_with(
-                    cfg.CONF.dhcp_lease_relay_socket)
-                exists.assert_called_once_with(
-                    cfg.CONF.dhcp_lease_relay_socket)
-
-    def test_handler_valid_data(self):
-        network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-        ip_address = '192.168.1.9'
-        lease_remaining = 120
-
-        json_rep = jsonutils.dumps(dict(network_id=network_id,
-                                        lease_remaining=lease_remaining,
-                                        ip_address=ip_address))
-        handler = mock.Mock()
-        mock_sock = mock.Mock()
-        mock_sock.recv.return_value = json_rep
-
-        relay = dhcp_agent.DhcpLeaseRelay(handler)
-
-        relay._handler(mock_sock, mock.Mock())
-        mock_sock.assert_has_calls([mock.call.recv(1024), mock.call.close()])
-        handler.called_once_with(network_id, ip_address, lease_remaining)
-
-    def test_handler_invalid_data(self):
-        network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-        ip_address = '192.168.x.x'
-        lease_remaining = 120
-
-        json_rep = jsonutils.dumps(
-            dict(network_id=network_id,
-                 lease_remaining=lease_remaining,
-                 ip_address=ip_address))
-
-        handler = mock.Mock()
-        mock_sock = mock.Mock()
-        mock_sock.recv.return_value = json_rep
-
-        relay = dhcp_agent.DhcpLeaseRelay(handler)
-
-        with mock.patch('neutron.openstack.common.'
-                        'uuidutils.is_uuid_like') as validate:
-            validate.return_value = False
-
-            with mock.patch.object(dhcp_agent.LOG, 'warn') as log:
-
-                relay._handler(mock_sock, mock.Mock())
-                mock_sock.assert_has_calls(
-                    [mock.call.recv(1024), mock.call.close()])
-                self.assertFalse(handler.called)
-                self.assertTrue(log.called)
-
-    def test_handler_other_exception(self):
-        handler = mock.Mock()
-        mock_sock = mock.Mock()
-        mock_sock.recv.side_effect = Exception
-
-        relay = dhcp_agent.DhcpLeaseRelay(handler)
-
-        with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
-            relay._handler(mock_sock, mock.Mock())
-            mock_sock.assert_has_calls([mock.call.recv(1024)])
-            self.assertFalse(handler.called)
-            self.assertTrue(log.called)
-
-    def test_start(self):
-        with mock.patch.object(dhcp_agent, 'eventlet') as mock_eventlet:
-            handler = mock.Mock()
-            relay = dhcp_agent.DhcpLeaseRelay(handler)
-            relay.start()
-
-            mock_eventlet.assert_has_calls(
-                [mock.call.listen(cfg.CONF.dhcp_lease_relay_socket,
-                                  family=socket.AF_UNIX),
-                 mock.call.spawn(mock_eventlet.serve,
-                                 mock.call.listen.return_value,
-                                 relay._handler)])
 
 
 class TestDictModel(base.BaseTestCase):

@@ -99,7 +99,6 @@ class IPAllocation(model_base.BASEV2):
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id",
                                                         ondelete="CASCADE"),
                            nullable=False, primary_key=True)
-    expiration = sa.Column(sa.DateTime, nullable=True)
 
 
 class Route(object):

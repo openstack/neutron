@@ -37,12 +37,10 @@ from neutron.common import utils
 from neutron import context
 from neutron import manager
 from neutron.openstack.common import importutils
-from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import service
-from neutron.openstack.common import uuidutils
 from neutron import service as neutron_service
 
 LOG = logging.getLogger(__name__)
@@ -81,8 +79,10 @@ class DhcpAgent(manager.Manager):
         ctx = context.get_admin_context_without_session()
         self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, ctx)
         self.device_manager = DeviceManager(self.conf, self.plugin_rpc)
-        self.lease_relay = DhcpLeaseRelay(self.update_lease)
-
+        # create dhcp dir to store dhcp info
+        dhcp_dir = os.path.dirname("/%s/dhcp/" % self.conf.state_path)
+        if not os.path.isdir(dhcp_dir):
+            os.makedirs(dhcp_dir, 0o755)
         self.dhcp_version = self.dhcp_driver_cls.check_version()
         self._populate_networks_cache()
 
@@ -114,13 +114,12 @@ class DhcpAgent(manager.Manager):
         """Activate the DHCP agent."""
         self.sync_state()
         self.periodic_resync()
-        self.lease_relay.start()
 
     def _ns_name(self, network):
         if self.conf.use_namespaces:
             return NS_PREFIX + network.id
 
-    def call_driver(self, action, network):
+    def call_driver(self, action, network, **action_kwargs):
         """Invoke an action on a DHCP driver instance."""
         try:
             # the Driver expects something that is duck typed similar to
@@ -131,20 +130,12 @@ class DhcpAgent(manager.Manager):
                                           self.device_manager,
                                           self._ns_name(network),
                                           self.dhcp_version)
-            getattr(driver, action)()
+            getattr(driver, action)(**action_kwargs)
             return True
 
         except Exception:
             self.needs_resync = True
             LOG.exception(_('Unable to %s dhcp.'), action)
-
-    def update_lease(self, network_id, ip_address, time_remaining):
-        try:
-            self.plugin_rpc.update_lease_expiration(network_id, ip_address,
-                                                    time_remaining)
-        except Exception:
-            self.needs_resync = True
-            LOG.exception(_('Unable to update lease'))
 
     def sync_state(self):
         """Sync the local DHCP state with Neutron."""
@@ -246,6 +237,22 @@ class DhcpAgent(manager.Manager):
         if new_cidrs:
             self.device_manager.update(network)
 
+    def release_lease_for_removed_ips(self, port, network):
+        """Releases the dhcp lease for ips removed from a port."""
+        prev_port = self.cache.get_port_by_id(port.id)
+        if prev_port:
+            previous_ips = set(fixed_ip.ip_address
+                               for fixed_ip in prev_port.fixed_ips)
+            current_ips = set(fixed_ip.ip_address
+                              for fixed_ip in port.fixed_ips)
+            # pass in port with removed ips on it
+            removed_ips = previous_ips - current_ips
+            if removed_ips:
+                self.call_driver('release_lease',
+                                 network,
+                                 mac_address=port.mac_address,
+                                 removed_ips=removed_ips)
+
     @utils.synchronized('dhcp-agent')
     def network_create_end(self, context, payload):
         """Handle the network.create.end notification event."""
@@ -289,6 +296,7 @@ class DhcpAgent(manager.Manager):
         port = DictModel(payload['port'])
         network = self.cache.get_network_by_id(port.network_id)
         if network:
+            self.release_lease_for_removed_ips(port, network)
             self.cache.put_port(port)
             self.call_driver('reload_allocations', network)
 
@@ -302,6 +310,12 @@ class DhcpAgent(manager.Manager):
         if port:
             network = self.cache.get_network_by_id(port.network_id)
             self.cache.remove_port(port)
+            removed_ips = [fixed_ip.ip_address
+                           for fixed_ip in port.fixed_ips]
+            self.call_driver('release_lease',
+                             network,
+                             mac_address=port.mac_address,
+                             removed_ips=removed_ips)
             self.call_driver('reload_allocations', network)
 
     def enable_isolated_metadata_proxy(self, network):
@@ -434,16 +448,6 @@ class DhcpPluginApi(proxy.RpcProxy):
                                        device_id=device_id,
                                        host=self.host),
                          topic=self.topic)
-
-    def update_lease_expiration(self, network_id, ip_address, lease_remaining):
-        """Make a remote process call to update the ip lease expiration."""
-        self.cast(self.context,
-                  self.make_msg('update_lease_expiration',
-                                network_id=network_id,
-                                ip_address=ip_address,
-                                lease_remaining=lease_remaining,
-                                host=self.host),
-                  topic=self.topic)
 
 
 class NetworkCache(object):
@@ -747,67 +751,6 @@ class DictModel(object):
             setattr(self, key, value)
 
 
-class DhcpLeaseRelay(object):
-    """UNIX domain socket server for processing lease updates.
-
-    Network namespace isolation prevents the DHCP process from notifying
-    Neutron directly.  This class works around the limitation by using the
-    domain socket to pass the information.  This class handles message.
-    receiving and then calls the callback method.
-    """
-
-    OPTS = [
-        cfg.StrOpt('dhcp_lease_relay_socket',
-                   default='$state_path/dhcp/lease_relay',
-                   help=_('Location to DHCP lease relay UNIX domain socket'))
-    ]
-
-    def __init__(self, lease_update_callback):
-        self.callback = lease_update_callback
-
-        dirname = os.path.dirname(cfg.CONF.dhcp_lease_relay_socket)
-        if os.path.isdir(dirname):
-            try:
-                os.unlink(cfg.CONF.dhcp_lease_relay_socket)
-            except OSError:
-                if os.path.exists(cfg.CONF.dhcp_lease_relay_socket):
-                    raise
-        else:
-            os.makedirs(dirname, 0o755)
-
-    def _handler(self, client_sock, client_addr):
-        """Handle incoming lease relay stream connection.
-
-        This method will only read the first 1024 bytes and then close the
-        connection.  The limit exists to limit the impact of misbehaving
-        clients.
-        """
-        try:
-            msg = client_sock.recv(1024)
-            data = jsonutils.loads(msg)
-            client_sock.close()
-
-            network_id = data['network_id']
-            if not uuidutils.is_uuid_like(network_id):
-                raise ValueError(_("Network ID %s is not a valid UUID") %
-                                 network_id)
-            ip_address = str(netaddr.IPAddress(data['ip_address']))
-            lease_remaining = int(data['lease_remaining'])
-            self.callback(network_id, ip_address, lease_remaining)
-        except ValueError as e:
-            LOG.warn(_('Unable to parse lease relay msg to dict.'))
-            LOG.warn(_('Exception value: %s'), e)
-            LOG.warn(_('Message representation: %s'), repr(msg))
-        except Exception as e:
-            LOG.exception(_('Unable update lease. Exception'))
-
-    def start(self):
-        """Spawn a green thread to run the lease relay unix socket server."""
-        listener = eventlet.listen(cfg.CONF.dhcp_lease_relay_socket,
-                                   family=socket.AF_UNIX)
-        eventlet.spawn(eventlet.serve, listener, self._handler)
-
-
 class DhcpAgentWithStateReport(DhcpAgent):
     def __init__(self, host=None):
         super(DhcpAgentWithStateReport, self).__init__(host=host)
@@ -863,7 +806,6 @@ def register_options():
     config.register_agent_state_opts_helper(cfg.CONF)
     config.register_root_helper(cfg.CONF)
     cfg.CONF.register_opts(DeviceManager.OPTS)
-    cfg.CONF.register_opts(DhcpLeaseRelay.OPTS)
     cfg.CONF.register_opts(dhcp.OPTS)
     cfg.CONF.register_opts(interface.OPTS)
 

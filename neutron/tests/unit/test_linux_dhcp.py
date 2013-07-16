@@ -16,7 +16,6 @@
 #    under the License.
 
 import os
-import socket
 
 import mock
 from oslo.config import cfg
@@ -24,7 +23,6 @@ from oslo.config import cfg
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp
 from neutron.common import config as base_config
-from neutron.openstack.common import jsonutils
 from neutron.tests import base
 
 
@@ -184,6 +182,9 @@ class TestDhcpBase(base.BaseTestCase):
             def reload_allocations(self):
                 pass
 
+            def release_lease(self):
+                pass
+
             @property
             def active(self):
                 return True
@@ -209,6 +210,9 @@ class LocalChild(dhcp.DhcpLocalProcess):
     def spawn_process(self):
         self.called.append('spawn')
 
+    def release_lease(self):
+        self.called.append('release_lease')
+
 
 class TestBase(base.BaseTestCase):
     def setUp(self):
@@ -219,9 +223,6 @@ class TestBase(base.BaseTestCase):
         self.conf = config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(dhcp.OPTS)
-        self.conf.register_opt(
-            cfg.StrOpt('dhcp_lease_relay_socket',
-                       default='$state_path/dhcp/lease_relay'))
         self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
                                            default=True))
         self.conf(args=args)
@@ -230,9 +231,9 @@ class TestBase(base.BaseTestCase):
 
         self.replace_p = mock.patch('neutron.agent.linux.utils.replace_file')
         self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
+        self.addCleanup(self.replace_p.stop)
         self.addCleanup(self.execute_p.stop)
         self.safe = self.replace_p.start()
-        self.addCleanup(self.replace_p.stop)
         self.execute = self.execute_p.start()
 
 
@@ -433,7 +434,6 @@ class TestDnsmasq(TestBase):
             'exec',
             'qdhcp-ns',
             'env',
-            'NEUTRON_RELAY_SOCKET_PATH=/dhcp/lease_relay',
             'NEUTRON_NETWORK_ID=cccccccc-cccc-cccc-cccc-cccccccccccc',
             'dnsmasq',
             '--no-hosts',
@@ -445,11 +445,9 @@ class TestDnsmasq(TestBase):
             '--pid-file=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/pid',
             '--dhcp-hostsfile=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host',
             '--dhcp-optsfile=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts',
-            ('--dhcp-script=/usr/local/bin/neutron-dhcp-agent-'
-             'dnsmasq-lease-update'),
             '--leasefile-ro',
-            '--dhcp-range=set:tag0,192.168.0.0,static,120s',
-            '--dhcp-range=set:tag1,fdca:3ba5:a17a:4ba3::,static,120s']
+            '--dhcp-range=set:tag0,192.168.0.0,static,86400s',
+            '--dhcp-range=set:tag1,fdca:3ba5:a17a:4ba3::,static,86400s']
         expected.extend(extra_options)
 
         self.execute.return_value = ('', '')
@@ -585,6 +583,17 @@ tag:tag0,option:router""".lstrip()
 
         self.safe.assert_called_once_with('/foo/opts', expected)
 
+    def test_release_lease(self):
+        dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(), namespace='qdhcp-ns',
+                          version=float(2.59))
+        dm.release_lease(mac_address=FakePort2.mac_address,
+                         removed_ips=[FakePort2.fixed_ips[0].ip_address])
+        exp_args = ['ip', 'netns', 'exec', 'qdhcp-ns', 'dhcp_release',
+                    dm.interface_name, FakePort2.fixed_ips[0].ip_address,
+                    FakePort2.mac_address]
+        self.execute.assert_called_once_with(exp_args, root_helper='sudo',
+                                             check_exit_code=True)
+
     def test_reload_allocations(self):
         exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
         exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
@@ -692,69 +701,6 @@ tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
                 dm._make_subnet_interface_ip_map(),
                 {FakeV4Subnet.id: '192.168.0.1'}
             )
-
-    def _test_lease_relay_script_helper(self, action, lease_remaining,
-                                        path_exists=True):
-        relay_path = '/dhcp/relay_socket'
-        network_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-        mac_address = 'aa:bb:cc:dd:ee:ff'
-        ip_address = '192.168.1.9'
-
-        json_rep = jsonutils.dumps(dict(network_id=network_id,
-                                        lease_remaining=lease_remaining,
-                                        mac_address=mac_address,
-                                        ip_address=ip_address))
-
-        environ = {
-            'NEUTRON_NETWORK_ID': network_id,
-            'NEUTRON_RELAY_SOCKET_PATH': relay_path,
-            'DNSMASQ_TIME_REMAINING': '120',
-        }
-
-        def fake_environ(name, default=None):
-            return environ.get(name, default)
-
-        with mock.patch('os.environ') as mock_environ:
-            mock_environ.get.side_effect = fake_environ
-
-            with mock.patch.object(dhcp, 'sys') as mock_sys:
-                mock_sys.argv = [
-                    'lease-update',
-                    action,
-                    mac_address,
-                    ip_address,
-                ]
-
-                with mock.patch('socket.socket') as mock_socket:
-                    mock_conn = mock.Mock()
-                    mock_socket.return_value = mock_conn
-
-                    with mock.patch('os.path.exists') as mock_exists:
-                        mock_exists.return_value = path_exists
-
-                        dhcp.Dnsmasq.lease_update()
-
-                        mock_exists.assert_called_once_with(relay_path)
-                        if path_exists:
-                            mock_socket.assert_called_once_with(
-                                socket.AF_UNIX, socket.SOCK_STREAM)
-
-                            mock_conn.assert_has_calls(
-                                [mock.call.connect(relay_path),
-                                 mock.call.send(json_rep),
-                                 mock.call.close()])
-
-    def test_lease_relay_script_add(self):
-        self._test_lease_relay_script_helper('add', 120)
-
-    def test_lease_relay_script_old(self):
-        self._test_lease_relay_script_helper('old', 120)
-
-    def test_lease_relay_script_del(self):
-        self._test_lease_relay_script_helper('del', 0)
-
-    def test_lease_relay_script_add_socket_missing(self):
-        self._test_lease_relay_script_helper('add', 120, False)
 
     def test_remove_config_files(self):
         net = FakeV4Network()
