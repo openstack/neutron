@@ -931,7 +931,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
             ctx = context.get_admin_context()
-            self.plugin._update_pool_stats(ctx, pool_id)
+            self.plugin.update_pool_stats(ctx, pool_id)
             pool_obj = ctx.session.query(ldb.Pool).filter_by(id=pool_id).one()
             for key in keys:
                 self.assertEqual(pool_obj.stats.__dict__[key], 0)
@@ -948,7 +948,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
             ctx = context.get_admin_context()
-            self.assertRaises(ValueError, self.plugin._update_pool_stats,
+            self.assertRaises(ValueError, self.plugin.update_pool_stats,
                               ctx, pool_id, {k: v})
 
     def test_update_pool_stats(self):
@@ -959,7 +959,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
             ctx = context.get_admin_context()
-            self.plugin._update_pool_stats(ctx, pool_id, stats_data)
+            self.plugin.update_pool_stats(ctx, pool_id, stats_data)
             pool_obj = ctx.session.query(ldb.Pool).filter_by(id=pool_id).one()
             for k, v in stats_data.items():
                 self.assertEqual(pool_obj.stats.__dict__[k], v)

@@ -459,7 +459,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
         return self._fields(res, fields)
 
-    def _update_pool_stats(self, context, pool_id, data=None):
+    def update_pool_stats(self, context, pool_id, data=None):
         """Update a pool with new stats structure."""
         with context.session.begin(subtransactions=True):
             pool_db = self._get_resource(context, Pool, pool_id)
