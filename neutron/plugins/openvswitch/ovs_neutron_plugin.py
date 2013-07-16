@@ -69,8 +69,9 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
 
     RPC_API_VERSION = '1.1'
 
-    def __init__(self, notifier):
+    def __init__(self, notifier, tunnel_type):
         self.notifier = notifier
+        self.tunnel_type = tunnel_type
 
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
@@ -161,7 +162,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         entry['tunnels'] = tunnels
         # Notify all other listening agents
         self.notifier.tunnel_update(rpc_context, tunnel.ip_address,
-                                    tunnel.id, cfg.CONF.OVS.tunnel_type)
+                                    tunnel.id, self.tunnel_type)
         # Return the list of tunnels IP's to the agent
         return entry
 
@@ -281,6 +282,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       self.tenant_network_type)
             sys.exit(1)
         self.enable_tunneling = cfg.CONF.OVS.enable_tunneling
+        self.tunnel_type = None
         if self.enable_tunneling:
             self.tunnel_type = cfg.CONF.OVS.tunnel_type or constants.TYPE_GRE
         elif cfg.CONF.OVS.tunnel_type:
@@ -309,7 +311,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.notifier = AgentNotifierApi(topics.AGENT)
         self.dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
-        self.callbacks = OVSRpcCallbacks(self.notifier)
+        self.callbacks = OVSRpcCallbacks(self.notifier, self.tunnel_type)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
