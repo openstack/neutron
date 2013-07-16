@@ -633,6 +633,57 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     for k, v, in keys:
                         self.assertEqual(rule['security_group_rule'][k], v)
 
+    def test_create_security_group_rule_icmp_with_type_and_code(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            direction = "ingress"
+            remote_ip_prefix = "10.0.0.0/24"
+            protocol = 'icmp'
+            # port_range_min (ICMP type) is greater than port_range_max
+            # (ICMP code) in order to confirm min <= max port check is
+            # not called for ICMP.
+            port_range_min = 8
+            port_range_max = 5
+            keys = [('remote_ip_prefix', remote_ip_prefix),
+                    ('security_group_id', security_group_id),
+                    ('direction', direction),
+                    ('protocol', protocol),
+                    ('port_range_min', port_range_min),
+                    ('port_range_max', port_range_max)]
+            with self.security_group_rule(security_group_id, direction,
+                                          protocol, port_range_min,
+                                          port_range_max,
+                                          remote_ip_prefix) as rule:
+                for k, v, in keys:
+                    self.assertEqual(rule['security_group_rule'][k], v)
+
+    def test_create_security_group_rule_icmp_with_type_only(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            direction = "ingress"
+            remote_ip_prefix = "10.0.0.0/24"
+            protocol = 'icmp'
+            # ICMP type
+            port_range_min = 8
+            # ICMP code
+            port_range_max = None
+            keys = [('remote_ip_prefix', remote_ip_prefix),
+                    ('security_group_id', security_group_id),
+                    ('direction', direction),
+                    ('protocol', protocol),
+                    ('port_range_min', port_range_min),
+                    ('port_range_max', port_range_max)]
+            with self.security_group_rule(security_group_id, direction,
+                                          protocol, port_range_min,
+                                          port_range_max,
+                                          remote_ip_prefix) as rule:
+                for k, v, in keys:
+                    self.assertEqual(rule['security_group_rule'][k], v)
+
     def test_create_security_group_source_group_ip_and_ip_prefix(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
         direction = "ingress"
@@ -757,12 +808,14 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
             with self.security_group_rule(security_group_id):
-                rule = self._build_security_group_rule(
-                    sg['security_group']['id'], 'ingress', 'tcp', '50', '22')
-                self._create_security_group_rule(self.fmt, rule)
-                res = self._create_security_group_rule(self.fmt, rule)
-                self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 400)
+                for protocol in ['tcp', 'udp', 6, 17]:
+                    rule = self._build_security_group_rule(
+                        sg['security_group']['id'],
+                        'ingress', protocol, '50', '22')
+                    self._create_security_group_rule(self.fmt, rule)
+                    res = self._create_security_group_rule(self.fmt, rule)
+                    self.deserialize(self.fmt, res)
+                    self.assertEqual(res.status_int, 400)
 
     def test_create_security_group_rule_ports_but_no_protocol(self):
         name = 'webservers'
@@ -772,6 +825,58 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             with self.security_group_rule(security_group_id):
                 rule = self._build_security_group_rule(
                     sg['security_group']['id'], 'ingress', None, '22', '22')
+                self._create_security_group_rule(self.fmt, rule)
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.deserialize(self.fmt, res)
+                self.assertEqual(res.status_int, 400)
+
+    def test_create_security_group_rule_port_range_min_only(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            with self.security_group_rule(security_group_id):
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress', 'tcp', '22', None)
+                self._create_security_group_rule(self.fmt, rule)
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.deserialize(self.fmt, res)
+                self.assertEqual(res.status_int, 400)
+
+    def test_create_security_group_rule_port_range_max_only(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            with self.security_group_rule(security_group_id):
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress', 'tcp', None, '22')
+                self._create_security_group_rule(self.fmt, rule)
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.deserialize(self.fmt, res)
+                self.assertEqual(res.status_int, 400)
+
+    def test_create_security_group_rule_icmp_type_too_big(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            with self.security_group_rule(security_group_id):
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress', 'icmp', '256', None)
+                self._create_security_group_rule(self.fmt, rule)
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.deserialize(self.fmt, res)
+                self.assertEqual(res.status_int, 400)
+
+    def test_create_security_group_rule_icmp_code_too_big(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            with self.security_group_rule(security_group_id):
+                rule = self._build_security_group_rule(
+                    sg['security_group']['id'], 'ingress', 'icmp', '8', '256')
                 self._create_security_group_rule(self.fmt, rule)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
