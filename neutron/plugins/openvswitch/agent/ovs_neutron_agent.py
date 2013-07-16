@@ -289,7 +289,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         if not self.enable_tunneling:
             return
         tunnel_ip = kwargs.get('tunnel_ip')
-        tunnel_id = kwargs.get('tunnel_id')
+        tunnel_id = kwargs.get('tunnel_id', tunnel_ip)
+        if not tunnel_id:
+            tunnel_id = tunnel_ip
         tunnel_type = kwargs.get('tunnel_type')
         if not tunnel_type:
             LOG.error(_("No tunnel_type specified, cannot create tunnels"))
@@ -700,19 +702,19 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def tunnel_sync(self):
         resync = False
         try:
-            details = self.plugin_rpc.tunnel_sync(self.context, self.local_ip)
-            tunnels = details['tunnels']
-            for tunnel in tunnels:
-                if self.local_ip != tunnel['ip_address']:
-                    tunnel_type = tunnel.get('tunnel_type')
-                    if not tunnel_type:
-                        LOG.error(_('No tunnel_type specified, cannot add '
-                                    'tunnel port'))
-                        return
-                    tun_name = '%s-%s' % (tunnel_type, tunnel['id'])
-                    self.tun_br.add_tunnel_port(tun_name, tunnel['ip_address'],
-                                                tunnel_type,
-                                                self.vxlan_udp_port)
+            for tunnel_type in self.tunnel_types:
+                details = self.plugin_rpc.tunnel_sync(self.context,
+                                                      self.local_ip,
+                                                      tunnel_type)
+                tunnels = details['tunnels']
+                for tunnel in tunnels:
+                    if self.local_ip != tunnel['ip_address']:
+                        tunnel_id = tunnel.get('id', tunnel['ip_address'])
+                        tun_name = '%s-%s' % (tunnel_type, tunnel_id)
+                        self.tun_br.add_tunnel_port(tun_name,
+                                                    tunnel['ip_address'],
+                                                    tunnel_type,
+                                                    self.vxlan_udp_port)
         except Exception as e:
             LOG.debug(_("Unable to sync tunnel IP %(local_ip)s: %(e)s"),
                       {'local_ip': self.local_ip, 'e': e})

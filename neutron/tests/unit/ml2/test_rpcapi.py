@@ -23,6 +23,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import topics
 from neutron.openstack.common import context
 from neutron.openstack.common import rpc
+from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2 import rpc as plugin_rpc
 from neutron.tests import base
 
@@ -71,14 +72,14 @@ class RpcApiTestCase(base.BaseTestCase):
                            segmentation_id='fake_segmentation_id',
                            physical_network='fake_physical_network')
 
-    # def test_tunnel_update(self):
-    #     rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)
-    #     self._test_rpc_api(rpcapi,
-    #                        topics.get_topic_name(topics.AGENT,
-    #                                              constants.TUNNEL,
-    #                                              topics.UPDATE),
-    #                        'tunnel_update', rpc_method='fanout_cast',
-    #                        tunnel_ip='fake_ip', tunnel_id='fake_id')
+    def test_tunnel_update(self):
+        rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)
+        self._test_rpc_api(rpcapi,
+                           topics.get_topic_name(topics.AGENT,
+                                                 type_tunnel.TUNNEL,
+                                                 topics.UPDATE),
+                           'tunnel_update', rpc_method='fanout_cast',
+                           tunnel_ip='fake_ip', tunnel_type='gre')
 
     def test_device_details(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
@@ -94,11 +95,12 @@ class RpcApiTestCase(base.BaseTestCase):
                            device='fake_device',
                            agent_id='fake_agent_id')
 
-    # def test_tunnel_sync(self):
-    #     rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-    #     self._test_rpc_api(rpcapi, topics.PLUGIN,
-    #                        'tunnel_sync', rpc_method='call',
-    #                        tunnel_ip='fake_tunnel_ip')
+    def test_tunnel_sync(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        self._test_rpc_api(rpcapi, topics.PLUGIN,
+                           'tunnel_sync', rpc_method='call',
+                           tunnel_ip='fake_tunnel_ip',
+                           tunnel_type=None)
 
     def test_update_device_up(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)

@@ -20,7 +20,7 @@ from neutron import scheduler
 
 ml2_opts = [
     cfg.ListOpt('type_drivers',
-                default=['local', 'flat', 'vlan'],
+                default=['local', 'flat', 'vlan', 'gre'],
                 help=_("List of network type driver entrypoints to be loaded "
                        "from the neutron.ml2.type_drivers namespace.")),
     cfg.ListOpt('tenant_network_types',
