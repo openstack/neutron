@@ -123,4 +123,5 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
         self._test_hyperv_neutron_api(
             rpcapi, topics.PLUGIN,
             'tunnel_sync', rpc_method='call',
-            tunnel_ip='fake_tunnel_ip')
+            tunnel_ip='fake_tunnel_ip',
+            tunnel_type=None)

@@ -26,6 +26,9 @@ from neutron.openstack.common import log
 from neutron.openstack.common.rpc import proxy
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers import type_tunnel
+# REVISIT(kmestery): Allow the type and mechanism drivers to supply the
+# mixins and eventually remove the direct dependencies on type_tunnel.
 
 LOG = log.getLogger(__name__)
 
@@ -35,15 +38,20 @@ TAP_DEVICE_PREFIX_LENGTH = 3
 
 class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                    l3_rpc_base.L3RpcCallbackMixin,
-                   sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
+                   sg_db_rpc.SecurityGroupServerRpcCallbackMixin,
+                   type_tunnel.TunnelRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
     # history
     #   1.0 Initial version (from openvswitch/linuxbridge)
     #   1.1 Support Security Group RPC
 
-    def __init__(self, notifier):
-        self.notifier = notifier
+    def __init__(self, notifier, type_manager):
+        # REVISIT(kmestery): This depends on the first three super classes
+        # not having their own __init__ functions. If an __init__() is added
+        # to one, this could break. Fix this and add a unit test to cover this
+        # test in H3.
+        super(RpcCallbacks, self).__init__(notifier, type_manager)
 
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
@@ -156,12 +164,10 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
             if port.status != q_const.PORT_STATUS_ACTIVE:
                 port.status = q_const.PORT_STATUS_ACTIVE
 
-    # TODO(rkukura) Add tunnel_sync() here if not implemented via a
-    # driver.
-
 
 class AgentNotifierApi(proxy.RpcProxy,
-                       sg_rpc.SecurityGroupAgentRpcApiMixin):
+                       sg_rpc.SecurityGroupAgentRpcApiMixin,
+                       type_tunnel.TunnelAgentRpcApiMixin):
     """Agent side of the openvswitch rpc API.
 
     API version history:
@@ -183,9 +189,6 @@ class AgentNotifierApi(proxy.RpcProxy,
                                                        topics.PORT,
                                                        topics.UPDATE)
 
-        # TODO(rkukura): Add topic_tunnel_update here if not
-        # implemented via a driver.
-
     def network_delete(self, context, network_id):
         self.fanout_cast(context,
                          self.make_msg('network_delete',
@@ -201,6 +204,3 @@ class AgentNotifierApi(proxy.RpcProxy,
                                        segmentation_id=segmentation_id,
                                        physical_network=physical_network),
                          topic=self.topic_port_update)
-
-    # TODO(rkukura): Add tunnel_update() here if not
-    # implemented via a driver.
