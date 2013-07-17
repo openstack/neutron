@@ -276,10 +276,6 @@ class HaproxyOnHostPluginDriver(abstract_driver.LoadBalancerAbstractDriver):
         # monitors are unused here because agent will fetch what is necessary
         self.agent_rpc.modify_pool(context, pool_id)
 
-    def delete_health_monitor(self, context, healthmon_id, pool_id):
-        # healthmon_id is not used in this driver
-        self.agent_rpc.modify_pool(context, pool_id)
-
     def create_pool_health_monitor(self, context, healthmon, pool_id):
         # healthmon is not used here
         self.agent_rpc.modify_pool(context, pool_id)

@@ -322,6 +322,122 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                         vip['vip']['pool_id']
                     )
 
+    def test_create_pool(self):
+        with self.pool():
+            self.assertFalse(self.mock_api.reload_pool.called)
+            self.assertFalse(self.mock_api.modify_pool.called)
+            self.assertFalse(self.mock_api.destroy_pool.called)
+
+    def test_update_pool_non_active(self):
+        with self.pool() as pool:
+            pool['pool']['status'] = 'INACTIVE'
+            ctx = context.get_admin_context()
+            self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
+            self.mock_api.destroy_pool.assert_called_once_with(
+                mock.ANY, pool['pool']['id'])
+            self.assertFalse(self.mock_api.reload_pool.called)
+            self.assertFalse(self.mock_api.modify_pool.called)
+
+    def test_update_pool_no_vip_id(self):
+        with self.pool() as pool:
+            ctx = context.get_admin_context()
+            self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
+            self.assertFalse(self.mock_api.destroy_pool.called)
+            self.assertFalse(self.mock_api.reload_pool.called)
+            self.assertFalse(self.mock_api.modify_pool.called)
+
+    def test_update_pool_with_vip_id(self):
+        with self.pool() as pool:
+            with self.vip(pool=pool):
+                ctx = context.get_admin_context()
+                self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
+                self.mock_api.reload_pool.assert_called_once_with(
+                    mock.ANY, pool['pool']['id'])
+                self.assertFalse(self.mock_api.destroy_pool.called)
+                self.assertFalse(self.mock_api.modify_pool.called)
+
+    def test_delete_pool(self):
+        with self.pool(no_delete=True) as pool:
+            req = self.new_delete_request('pools',
+                                          pool['pool']['id'])
+            res = req.get_response(self.ext_api)
+            self.assertEqual(res.status_int, 204)
+            self.mock_api.destroy_pool.assert_called_once_with(
+                mock.ANY, pool['pool']['id'])
+
+    def test_create_member(self):
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            with self.member(pool_id=pool_id):
+                self.mock_api.modify_pool.assert_called_once_with(
+                    mock.ANY, pool_id)
+
+    def test_update_member(self):
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            with self.member(pool_id=pool_id) as member:
+                ctx = context.get_admin_context()
+                self.mock_api.modify_pool.reset_mock()
+                self.plugin_instance.update_member(
+                    ctx, member['member']['id'], member)
+                self.mock_api.modify_pool.assert_called_once_with(
+                    mock.ANY, pool_id)
+
+    def test_update_member_new_pool(self):
+        with self.pool() as pool1:
+            pool1_id = pool1['pool']['id']
+            with self.pool() as pool2:
+                pool2_id = pool2['pool']['id']
+                with self.member(pool_id=pool1_id) as member:
+                    ctx = context.get_admin_context()
+                    self.mock_api.modify_pool.reset_mock()
+                    member['member']['pool_id'] = pool2_id
+                    self.plugin_instance.update_member(ctx,
+                                                       member['member']['id'],
+                                                       member)
+                    self.assertEqual(2, self.mock_api.modify_pool.call_count)
+                    self.mock_api.modify_pool.assert_has_calls(
+                        [mock.call(mock.ANY, pool1_id),
+                         mock.call(mock.ANY, pool2_id)])
+
+    def test_delete_member(self):
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            with self.member(pool_id=pool_id,
+                             no_delete=True) as member:
+                self.mock_api.modify_pool.reset_mock()
+                req = self.new_delete_request('members',
+                                              member['member']['id'])
+                res = req.get_response(self.ext_api)
+                self.assertEqual(res.status_int, 204)
+                self.mock_api.modify_pool.assert_called_once_with(
+                    mock.ANY, pool_id)
+
+    def test_create_pool_health_monitor(self):
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            with self.health_monitor() as hm:
+                ctx = context.get_admin_context()
+                self.plugin_instance.create_pool_health_monitor(ctx,
+                                                                hm,
+                                                                pool_id)
+                self.mock_api.modify_pool.assert_called_once_with(
+                    mock.ANY, pool_id)
+
+    def test_delete_pool_health_monitor(self):
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            with self.health_monitor() as hm:
+                ctx = context.get_admin_context()
+                self.plugin_instance.create_pool_health_monitor(ctx,
+                                                                hm,
+                                                                pool_id)
+                self.mock_api.modify_pool.reset_mock()
+                self.plugin_instance.delete_pool_health_monitor(
+                    ctx, hm['health_monitor']['id'], pool_id)
+                self.mock_api.modify_pool.assert_called_once_with(
+                    mock.ANY, pool_id)
+
     def test_update_health_monitor_associated_with_pool(self):
         with self.health_monitor(type='HTTP') as monitor:
             with self.pool() as pool:
@@ -357,5 +473,3 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                     mock.ANY,
                     pool['pool']['id']
                 )
-
-    # TODO(obondarev): improve plugin_driver test coverage (bug 1191007)
