@@ -127,7 +127,9 @@ RXTX_FACTOR = 'rxtx_factor'
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
         RXTX_FACTOR: {'allow_post': True,
-                      'allow_put': False,
+                      # FIXME(arosen): the nvp plugin currently does not
+                      # implement updating rxtx factor on port.
+                      'allow_put': True,
                       'is_visible': False,
                       'default': 1,
                       'enforce_policy': True,
