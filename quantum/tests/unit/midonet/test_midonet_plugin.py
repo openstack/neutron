@@ -709,6 +709,11 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
     def test_recycling(self):
         pass
 
+    def test_recycle_ip_address_without_allocation_pool(self):
+        self._setup_port_mocks()
+        super(TestMidonetPortsV2,
+              self).test_recycle_ip_address_without_allocation_pool()
+
     def test_invalid_admin_state(self):
         self._setup_port_mocks()
         super(TestMidonetPortsV2, self).test_invalid_admin_state()
