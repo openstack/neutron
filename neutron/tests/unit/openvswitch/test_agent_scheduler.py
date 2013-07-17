@@ -568,10 +568,13 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         with self.router() as router:
             l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
             self._register_agent_states()
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
-            l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
+            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            ret_b = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTB)
             l3_agents = self._list_l3_agents_hosting_router(
                 router['router']['id'])
+            self.assertEqual(1, len(ret_a))
+            self.assertIn(router['router']['id'], [r['id'] for r in ret_a])
+            self.assertFalse(len(ret_b))
         self.assertEqual(1, len(l3_agents['agents']))
         self.assertEqual(L3_HOSTA, l3_agents['agents'][0]['host'])
 
@@ -681,6 +684,75 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         self.assertEqual(1, num_hosta_routers)
         self.assertEqual(1, len(l3_agents_1['agents']))
         self.assertEqual(0, len(l3_agents_2['agents']))
+
+    def test_rpc_sync_routers(self):
+        l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+        self._register_agent_states()
+
+        # No routers
+        ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+        self.assertEqual(0, len(ret_a))
+
+        with contextlib.nested(self.router(),
+                               self.router(),
+                               self.router()) as routers:
+            router_ids = [r['router']['id'] for r in routers]
+
+            # Get all routers
+            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA)
+            self.assertEqual(3, len(ret_a))
+            self.assertEqual(set(router_ids), set([r['id'] for r in ret_a]))
+
+            # Get all routers (router_ids=None)
+            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
+                                        router_ids=None)
+            self.assertEqual(3, len(ret_a))
+            self.assertEqual(set(router_ids), set([r['id'] for r in ret_a]))
+
+            # Get router2 only
+            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
+                                        router_ids=[router_ids[1]])
+            self.assertEqual(1, len(ret_a))
+            self.assertIn(router_ids[1], [r['id'] for r in ret_a])
+
+            # Get router1 and router3
+            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
+                                        router_ids=[router_ids[0],
+                                                    router_ids[2]])
+            self.assertEqual(2, len(ret_a))
+            self.assertIn(router_ids[0], [r['id'] for r in ret_a])
+            self.assertIn(router_ids[2], [r['id'] for r in ret_a])
+
+    def test_router_auto_schedule_for_specified_routers(self):
+
+        def _sync_router_with_ids(router_ids, exp_synced, exp_hosted, host_id):
+            ret_a = l3_rpc.sync_routers(self.adminContext, host=L3_HOSTA,
+                                        router_ids=router_ids)
+            self.assertEqual(exp_synced, len(ret_a))
+            for r in router_ids:
+                self.assertIn(r, [r['id'] for r in ret_a])
+            host_routers = self._list_routers_hosted_by_l3_agent(host_id)
+            num_host_routers = len(host_routers['routers'])
+            self.assertEqual(exp_hosted, num_host_routers)
+
+        l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
+        self._register_agent_states()
+        hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3, L3_HOSTA)
+
+        with contextlib.nested(self.router(), self.router(),
+                               self.router(), self.router()) as routers:
+            router_ids = [r['router']['id'] for r in routers]
+            # Sync router1 (router1 is scheduled)
+            _sync_router_with_ids([router_ids[0]], 1, 1, hosta_id)
+            # Sync router1 only (no router is scheduled)
+            _sync_router_with_ids([router_ids[0]], 1, 1, hosta_id)
+            # Schedule router2
+            _sync_router_with_ids([router_ids[1]], 1, 2, hosta_id)
+            # Sync router2 and router4 (router4 is scheduled)
+            _sync_router_with_ids([router_ids[1], router_ids[3]],
+                                  2, 3, hosta_id)
+            # Sync all routers (router3 is scheduled)
+            _sync_router_with_ids(router_ids, 4, 4, hosta_id)
 
     def test_router_schedule_with_candidates(self):
         l3_hosta = {

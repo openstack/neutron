@@ -67,11 +67,10 @@ class L3PluginApi(proxy.RpcProxy):
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
         self.host = host
 
-    def get_routers(self, context, fullsync=True, router_ids=None):
+    def get_routers(self, context, router_ids=None):
         """Make a remote process call to retrieve the sync data for routers."""
         return self.call(context,
                          self.make_msg('sync_routers', host=self.host,
-                                       fullsync=fullsync,
                                        router_ids=router_ids),
                          topic=self.topic)
 
