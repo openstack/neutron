@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright 2012 NEC Corporation.  All rights reserved.
+# Copyright 2012-2013 NEC Corporation.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -39,8 +39,9 @@ from neutron.openstack.common.rpc import proxy
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
-from neutron.plugins.nec.db import nec_plugin_base
+from neutron.plugins.nec.db import packetfilter as pf_db
 from neutron.plugins.nec import ofc_manager
+from neutron.plugins.nec import packet_filter
 
 LOG = logging.getLogger(__name__)
 
@@ -60,12 +61,13 @@ class OperationalStatus:
     ERROR = "ERROR"
 
 
-class NECPluginV2(nec_plugin_base.NECPluginV2Base,
+class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   extraroute_db.ExtraRoute_db_mixin,
                   l3_gwmode_db.L3_NAT_db_mixin,
                   sg_db_rpc.SecurityGroupServerRpcMixin,
                   agentschedulers_db.L3AgentSchedulerDbMixin,
-                  agentschedulers_db.DhcpAgentSchedulerDbMixin):
+                  agentschedulers_db.DhcpAgentSchedulerDbMixin,
+                  packet_filter.PacketFilterMixin):
     """NECPluginV2 controls an OpenFlow Controller.
 
     The Neutron NECPluginV2 maps L2 logical networks to L2 virtualized networks
@@ -82,24 +84,21 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
                                     "binding", "security-group",
                                     "extraroute", "agent",
                                     "l3_agent_scheduler",
-                                    "dhcp_agent_scheduler"]
+                                    "dhcp_agent_scheduler",
+                                    "packet-filter"]
 
     @property
     def supported_extension_aliases(self):
         if not hasattr(self, '_aliases'):
             aliases = self._supported_extension_aliases[:]
             sg_rpc.disable_security_group_extension_if_noop_driver(aliases)
+            self.remove_packet_filter_extension_if_disabled(aliases)
             self._aliases = aliases
         return self._aliases
 
     def __init__(self):
         ndb.initialize()
         self.ofc = ofc_manager.OFCManager()
-
-        self.packet_filter_enabled = (config.OFC.enable_packet_filter and
-                                      self.ofc.driver.filter_supported())
-        if self.packet_filter_enabled:
-            self.supported_extension_aliases.append("PacketFilters")
 
         # Set the plugin default extension path
         # if no api_extensions_path is specified.
@@ -172,14 +171,11 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         if self.packet_filter_enabled:
             if port_status is OperationalStatus.ACTIVE:
                 filters = dict(in_port=[port['id']],
-                               status=[OperationalStatus.DOWN],
+                               status=[pf_db.PF_STATUS_DOWN],
                                admin_state_up=[True])
-                pfs = (super(NECPluginV2, self).
-                       get_packet_filters(context, filters=filters))
+                pfs = self.get_packet_filters(context, filters=filters)
                 for pf in pfs:
-                    self._activate_packet_filter_if_ready(context, pf,
-                                                          network=network,
-                                                          in_port=port)
+                    self.activate_packet_filter_if_ready(context, pf)
 
         if port_status in [OperationalStatus.ACTIVE]:
             if self.ofc.exists_ofc_port(context, port['id']):
@@ -221,11 +217,10 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         # deactivate packet_filters after the port has deleted from OFC.
         if self.packet_filter_enabled:
             filters = dict(in_port=[port['id']],
-                           status=[OperationalStatus.ACTIVE])
-            pfs = super(NECPluginV2, self).get_packet_filters(context,
-                                                              filters=filters)
+                           status=[pf_db.PF_STATUS_ACTIVE])
+            pfs = self.get_packet_filters(context, filters=filters)
             for pf in pfs:
-                self._deactivate_packet_filter(context, pf)
+                self.deactivate_packet_filter(context, pf)
 
     # Quantm Plugin Basic methods
 
@@ -280,32 +275,22 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         if changed and not new_net['admin_state_up']:
             self._update_resource_status(context, "network", id,
                                          OperationalStatus.DOWN)
-            # disable all active ports and packet_filters of the network
+            # disable all active ports of the network
             filters = dict(network_id=[id], status=[OperationalStatus.ACTIVE])
             ports = super(NECPluginV2, self).get_ports(context,
                                                        filters=filters)
             for port in ports:
                 self.deactivate_port(context, port)
-            if self.packet_filter_enabled:
-                pfs = (super(NECPluginV2, self).
-                       get_packet_filters(context, filters=filters))
-                for pf in pfs:
-                    self._deactivate_packet_filter(context, pf)
         elif changed and new_net['admin_state_up']:
             self._update_resource_status(context, "network", id,
                                          OperationalStatus.ACTIVE)
-            # enable ports and packet_filters of the network
+            # enable ports of the network
             filters = dict(network_id=[id], status=[OperationalStatus.DOWN],
                            admin_state_up=[True])
             ports = super(NECPluginV2, self).get_ports(context,
                                                        filters=filters)
             for port in ports:
                 self.activate_port_if_ready(context, port, new_net)
-            if self.packet_filter_enabled:
-                pfs = (super(NECPluginV2, self).
-                       get_packet_filters(context, filters=filters))
-                for pf in pfs:
-                    self._activate_packet_filter_if_ready(context, pf, new_net)
 
         return new_net
 
@@ -329,11 +314,12 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
                         ' from OFC: %s'), port)
             self.deactivate_port(context, port)
 
-        # get packet_filters associated with the network
+        # delete all packet_filters of the network
         if self.packet_filter_enabled:
             filters = dict(network_id=[id])
-            pfs = (super(NECPluginV2, self).
-                   get_packet_filters(context, filters=filters))
+            pfs = self.get_packet_filters(context, filters=filters)
+            for pf in pfs:
+                self.delete_packet_filter(context, pf['id'])
 
         super(NECPluginV2, self).delete_network(context, id)
         try:
@@ -345,11 +331,6 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
             #       as an orphan resource. But, it does NOT harm any other
             #       resources, so this plugin just warns.
             LOG.warn(reason)
-
-        # delete all packet_filters of the network
-        if self.packet_filter_enabled:
-            for pf in pfs:
-                self.delete_packet_filter(context, pf['id'])
 
         # delete unnessary ofc_tenant
         filters = dict(tenant_id=[tenant_id])
@@ -426,8 +407,7 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
         # delete all packet_filters of the port
         if self.packet_filter_enabled:
             filters = dict(port_id=[id])
-            pfs = (super(NECPluginV2, self).
-                   get_packet_filters(context, filters=filters))
+            pfs = self.get_packet_filters(context, filters=filters)
             for packet_filter in pfs:
                 self.delete_packet_filter(context, packet_filter['id'])
 
@@ -455,129 +435,6 @@ class NECPluginV2(nec_plugin_base.NECPluginV2Base,
             for port in ports:
                 self._extend_port_dict_binding(context, port)
         return [self._fields(port, fields) for port in ports]
-
-    # For PacketFilter Extension
-
-    def _activate_packet_filter_if_ready(self, context, packet_filter,
-                                         network=None, in_port=None):
-        """Activate packet_filter by creating filter on OFC if ready.
-
-        Conditions to create packet_filter on OFC are:
-            * packet_filter admin_state is UP
-            * network admin_state is UP
-            * (if 'in_port' is specified) portinfo is available
-        """
-        net_id = packet_filter['network_id']
-        if not network:
-            network = super(NECPluginV2, self).get_network(context, net_id)
-        in_port_id = packet_filter.get("in_port")
-        if in_port_id and not in_port:
-            in_port = super(NECPluginV2, self).get_port(context, in_port_id)
-
-        pf_status = OperationalStatus.ACTIVE
-        if not packet_filter['admin_state_up']:
-            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
-                        "packet_filter.admin_state_up is False."))
-            pf_status = OperationalStatus.DOWN
-        elif not network['admin_state_up']:
-            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
-                        "network.admin_state_up is False."))
-            pf_status = OperationalStatus.DOWN
-        elif in_port_id and in_port_id is in_port.get('id'):
-            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
-                        "invalid in_port_id."))
-            pf_status = OperationalStatus.DOWN
-        elif in_port_id and not ndb.get_portinfo(context.session, in_port_id):
-            LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
-                        "no portinfo for in_port."))
-            pf_status = OperationalStatus.DOWN
-
-        if pf_status in [OperationalStatus.ACTIVE]:
-            if self.ofc.exists_ofc_packet_filter(context, packet_filter['id']):
-                LOG.debug(_("_activate_packet_filter_if_ready(): skip, "
-                            "ofc_packet_filter already exists."))
-            else:
-                try:
-                    (self.ofc.
-                     create_ofc_packet_filter(context,
-                                              packet_filter['id'],
-                                              packet_filter))
-                except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                    reason = _("create_ofc_packet_filter() failed due to "
-                               "%s") % exc
-                    LOG.error(reason)
-                    pf_status = OperationalStatus.ERROR
-
-        if pf_status is not packet_filter['status']:
-            self._update_resource_status(context, "packet_filter",
-                                         packet_filter['id'], pf_status)
-
-    def _deactivate_packet_filter(self, context, packet_filter):
-        """Deactivate packet_filter by deleting filter from OFC if exixts."""
-        pf_status = OperationalStatus.DOWN
-        if not self.ofc.exists_ofc_packet_filter(context, packet_filter['id']):
-            LOG.debug(_("_deactivate_packet_filter(): skip, "
-                        "ofc_packet_filter does not exist."))
-        else:
-            try:
-                self.ofc.delete_ofc_packet_filter(context, packet_filter['id'])
-            except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                reason = _("delete_ofc_packet_filter() failed due to "
-                           "%s") % exc
-                LOG.error(reason)
-                pf_status = OperationalStatus.ERROR
-
-        if pf_status is not packet_filter['status']:
-            self._update_resource_status(context, "packet_filter",
-                                         packet_filter['id'], pf_status)
-
-    def create_packet_filter(self, context, packet_filter):
-        """Create a new packet_filter entry on DB, then try to activate it."""
-        LOG.debug(_("NECPluginV2.create_packet_filter() called, "
-                    "packet_filter=%s ."), packet_filter)
-        new_pf = super(NECPluginV2, self).create_packet_filter(context,
-                                                               packet_filter)
-        self._update_resource_status(context, "packet_filter", new_pf['id'],
-                                     OperationalStatus.BUILD)
-
-        self._activate_packet_filter_if_ready(context, new_pf)
-
-        return new_pf
-
-    def update_packet_filter(self, context, id, packet_filter):
-        """Update packet_filter entry on DB, and recreate it if changed.
-
-        If any rule of the packet_filter was changed, recreate it on OFC.
-        """
-        LOG.debug(_("NECPluginV2.update_packet_filter() called, "
-                    "id=%(id)s packet_filter=%(packet_filter)s ."),
-                  {'id': id, 'packet_filter': packet_filter})
-        with context.session.begin(subtransactions=True):
-            old_pf = super(NECPluginV2, self).get_packet_filter(context, id)
-            new_pf = super(NECPluginV2, self).update_packet_filter(
-                context, id, packet_filter)
-
-        changed = False
-        exclude_items = ["id", "name", "tenant_id", "network_id", "status"]
-        for key in new_pf['packet_filter'].keys():
-            if key not in exclude_items:
-                if old_pf[key] is not new_pf[key]:
-                    changed = True
-                    break
-
-        if changed:
-            self._deactivate_packet_filter(context, old_pf)
-            self._activate_packet_filter_if_ready(context, new_pf)
-
-        return new_pf
-
-    def delete_packet_filter(self, context, id):
-        """Deactivate and delete packet_filter."""
-        LOG.debug(_("NECPluginV2.delete_packet_filter() called, id=%s ."), id)
-        pf = super(NECPluginV2, self).get_packet_filter(context, id)
-        self._deactivate_packet_filter(context, pf)
-
-        super(NECPluginV2, self).delete_packet_filter(context, id)
 
 
 class NECPluginV2AgentNotifierApi(proxy.RpcProxy,

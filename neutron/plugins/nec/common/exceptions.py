@@ -33,7 +33,3 @@ class OFCConsistencyBroken(qexc.NeutronException):
 
 class PortInfoNotFound(qexc.NotFound):
     message = _("PortInfo %(id)s could not be found")
-
-
-class PacketFilterNotFound(qexc.NotFound):
-    message = _("PacketFilter %(id)s could not be found")

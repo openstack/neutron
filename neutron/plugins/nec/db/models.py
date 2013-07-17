@@ -80,26 +80,3 @@ class PortInfo(model_base.BASEV2, models_v2.HasId):
     port_no = sa.Column(sa.Integer, nullable=False)
     vlan_id = sa.Column(sa.Integer, nullable=False)
     mac = sa.Column(sa.String(32), nullable=False)
-
-
-class PacketFilter(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    """Represents a packet filter."""
-    name = sa.Column(sa.String(255))
-    network_id = sa.Column(sa.String(36),
-                           sa.ForeignKey('networks.id', ondelete="CASCADE"),
-                           nullable=False)
-    priority = sa.Column(sa.Integer, nullable=False)
-    action = sa.Column(sa.String(16), nullable=False)
-    # condition
-    in_port = sa.Column(sa.String(36), nullable=False)
-    src_mac = sa.Column(sa.String(32), nullable=False)
-    dst_mac = sa.Column(sa.String(32), nullable=False)
-    eth_type = sa.Column(sa.Integer, nullable=False)
-    src_cidr = sa.Column(sa.String(64), nullable=False)
-    dst_cidr = sa.Column(sa.String(64), nullable=False)
-    protocol = sa.Column(sa.String(16), nullable=False)
-    src_port = sa.Column(sa.Integer, nullable=False)
-    dst_port = sa.Column(sa.Integer, nullable=False)
-    # status
-    admin_state_up = sa.Column(sa.Boolean(), nullable=False)
-    status = sa.Column(sa.String(16), nullable=False)
