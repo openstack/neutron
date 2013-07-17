@@ -26,6 +26,8 @@ from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)
 
+TYPE_GRE = 'gre'
+
 gre_opts = [
     cfg.ListOpt('tunnel_id_ranges',
                 default=[],
@@ -60,11 +62,15 @@ class GreTypeDriver(api.TypeDriver,
                     type_tunnel.TunnelTypeDriver):
 
     def get_type(self):
-        return type_tunnel.TYPE_GRE
+        return TYPE_GRE
 
     def initialize(self):
         self.gre_id_ranges = []
-        self._parse_gre_id_ranges()
+        self._parse_tunnel_ranges(
+            cfg.CONF.ml2_type_gre.tunnel_id_ranges,
+            self.gre_id_ranges,
+            TYPE_GRE
+        )
         self._sync_gre_allocations()
 
     def validate_provider_segment(self, segment):
@@ -109,7 +115,7 @@ class GreTypeDriver(api.TypeDriver,
                 LOG.debug(_("Allocating gre tunnel id  %(gre_id)s"),
                           {'gre_id': alloc.gre_id})
                 alloc.allocated = True
-                return {api.NETWORK_TYPE: type_tunnel.TYPE_GRE,
+                return {api.NETWORK_TYPE: TYPE_GRE,
                         api.PHYSICAL_NETWORK: None,
                         api.SEGMENTATION_ID: alloc.gre_id}
 
@@ -133,21 +139,6 @@ class GreTypeDriver(api.TypeDriver,
                                   gre_id)
             except sa_exc.NoResultFound:
                 LOG.warning(_("gre_id %s not found"), gre_id)
-
-    def _parse_gre_id_ranges(self):
-        for entry in cfg.CONF.ml2_type_gre.tunnel_id_ranges:
-            entry = entry.strip()
-            try:
-                tun_min, tun_max = entry.split(':')
-                tun_min = tun_min.strip()
-                tun_max = tun_max.strip()
-                self.gre_id_ranges.append((int(tun_min), int(tun_max)))
-            except ValueError as ex:
-                LOG.error(_("Invalid tunnel ID range: '%(range)s' - %(e)s. "
-                            "Agent terminated!"),
-                          {'range': cfg.CONF.ml2_type_gre.tunnel_id_ranges,
-                           'e': ex})
-        LOG.info(_("gre ID ranges: %s"), self.gre_id_ranges)
 
     def _sync_gre_allocations(self):
         """Synchronize gre_allocations table with configured tunnel ranges."""

@@ -22,8 +22,6 @@ LOG = log.getLogger(__name__)
 
 TUNNEL = 'tunnel'
 
-TYPE_GRE = 'gre'
-
 
 class TunnelTypeDriver(object):
     """Define stable abstract interface for ML2 type drivers.
@@ -49,6 +47,21 @@ class TunnelTypeDriver(object):
         :returns a list of dict [{id:endpoint_id, ip_address:endpoint_ip},..]
         """
         pass
+
+    def _parse_tunnel_ranges(self, tunnel_ranges, current_range, tunnel_type):
+        for entry in tunnel_ranges:
+            entry = entry.strip()
+            try:
+                tun_min, tun_max = entry.split(':')
+                tun_min = tun_min.strip()
+                tun_max = tun_max.strip()
+                current_range.append((int(tun_min), int(tun_max)))
+            except ValueError as ex:
+                LOG.error(_("Invalid tunnel ID range: '%(range)s' - %(e)s. "
+                            "Agent terminated!"),
+                          {'range': tunnel_ranges, 'e': ex})
+        LOG.info(_("%(type)s ID ranges: %(range)s"),
+                 {'type': tunnel_type, 'range': current_range})
 
 
 class TunnelRpcCallbackMixin(object):
