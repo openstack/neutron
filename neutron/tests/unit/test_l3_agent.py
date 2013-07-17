@@ -533,6 +533,24 @@ class TestBasicRouterOperations(base.BaseTestCase):
         # verify that will set fullsync
         self.assertTrue(FAKE_ID in agent.updated_routers)
 
+    def test_process_router_delete(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ex_gw_port = {'id': _uuid(),
+                      'network_id': _uuid(),
+                      'fixed_ips': [{'ip_address': '19.4.4.4',
+                                     'subnet_id': _uuid()}],
+                      'subnet': {'cidr': '19.4.4.0/24',
+                                 'gateway_ip': '19.4.4.1'}}
+        router = {
+            'id': _uuid(),
+            'enable_snat': True,
+            'routes': [],
+            'gw_port': ex_gw_port}
+        agent._router_added(router['id'], router)
+        agent.router_deleted(None, router['id'])
+        agent._process_router_delete()
+        self.assertFalse(list(agent.removed_routers))
+
     def testDestroyNamespace(self):
 
         class FakeDev(object):
