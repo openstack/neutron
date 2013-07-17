@@ -77,7 +77,6 @@ def modernize_quantum_config(config):
         'router_scheduler_driver',
         'rpc_backend',
         'service_plugins',
-        ('QUOTAS', 'quota_driver'),
         ('SECURITYGROUP', 'firewall_driver'),
     ]
 

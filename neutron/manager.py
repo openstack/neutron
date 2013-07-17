@@ -18,6 +18,7 @@
 
 from oslo.config import cfg
 
+from neutron.common import legacy
 from neutron.common import utils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -115,6 +116,7 @@ class NeutronManager(object):
         except ImportError:
             LOG.exception(_("Error loading plugin"))
             raise Exception(_("Plugin not found. "))
+        legacy.modernize_quantum_config(cfg.CONF)
         self.plugin = plugin_klass()
 
         msg = validate_post_plugin_load()
