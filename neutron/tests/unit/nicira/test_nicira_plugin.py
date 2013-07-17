@@ -39,6 +39,7 @@ from neutron.plugins.nicira import nvplib
 from neutron.tests.unit.nicira import fake_nvpapiclient
 import neutron.tests.unit.nicira.test_networkgw as test_l2_gw
 import neutron.tests.unit.test_db_plugin as test_plugin
+import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
 import neutron.tests.unit.test_extension_portsecurity as psec
 import neutron.tests.unit.test_extension_security_group as ext_sg
 from neutron.tests.unit import test_extensions
@@ -828,6 +829,11 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
             res = req.get_response(self.ext_api)
             queue = self.deserialize('json', res)
             self.assertEqual(queue['qos_queue']['max'], 20)
+
+
+class NiciraExtGwModeTestCase(test_ext_gw_mode.ExtGwModeTestCase,
+                              NiciraPluginV2TestCase):
+    pass
 
 
 class NiciraNeutronNVPOutOfSync(test_l3_plugin.L3NatTestCaseBase,

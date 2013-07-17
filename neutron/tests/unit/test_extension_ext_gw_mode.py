@@ -302,7 +302,7 @@ class ExtGwModeTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
                         test_l3_plugin.L3NatTestCaseMixin):
 
     def setUp(self):
-        # Store l3 resource attribute map as it's will be updated
+        # Store l3 resource attribute map as it will be updated
         self._l3_attribute_map_bk = {}
         for item in l3.RESOURCE_ATTRIBUTE_MAP:
             self._l3_attribute_map_bk[item] = (
