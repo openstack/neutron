@@ -399,7 +399,7 @@ class L3NATAgent(manager.Manager):
         ri.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
         ri.iptables_manager.ipv4['nat'].empty_chain('snat')
         # And add them back if the action if add_rules
-        if action == 'add_rules':
+        if action == 'add_rules' and ex_gw_port:
             # ex_gw_port should not be None in this case
             ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
             for rule in self.external_gateway_nat_rules(ex_gw_ip,
@@ -690,7 +690,7 @@ class L3NATAgent(manager.Manager):
     def _process_router_delete(self):
         current_removed_routers = list(self.removed_routers)
         for router_id in current_removed_routers:
-            self._router_removed(context, router_id)
+            self._router_removed(router_id)
             self.removed_routers.remove(router_id)
 
     def _router_ids(self):
