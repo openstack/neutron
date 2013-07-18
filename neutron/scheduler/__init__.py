@@ -14,23 +14,3 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
-from oslo.config import cfg
-
-
-AGENTS_SCHEDULER_OPTS = [
-    cfg.StrOpt('network_scheduler_driver',
-               default='neutron.scheduler.'
-                       'dhcp_agent_scheduler.ChanceScheduler',
-               help=_('Driver to use for scheduling network to DHCP agent')),
-    cfg.StrOpt('router_scheduler_driver',
-               default='neutron.scheduler.l3_agent_scheduler.ChanceScheduler',
-               help=_('Driver to use for scheduling '
-                      'router to a default L3 agent')),
-    cfg.BoolOpt('network_auto_schedule', default=True,
-                help=_('Allow auto scheduling networks to DHCP agent.')),
-    cfg.BoolOpt('router_auto_schedule', default=True,
-                help=_('Allow auto scheduling routers to L3 agent.')),
-    cfg.IntOpt('dhcp_agents_per_network', default=1,
-               help=_('Number of DHCP agents scheduled to host a network.')),
-]

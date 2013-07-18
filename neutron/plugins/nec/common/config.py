@@ -19,7 +19,6 @@ from oslo.config import cfg
 
 from neutron.agent.common import config
 from neutron.openstack.common import rpc  # noqa
-from neutron import scheduler
 
 
 ovs_opts = [
@@ -56,7 +55,6 @@ cfg.CONF.register_opts(agent_opts, "AGENT")
 cfg.CONF.register_opts(ofc_opts, "OFC")
 config.register_agent_state_opts_helper(cfg.CONF)
 config.register_root_helper(cfg.CONF)
-cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)
 
 # shortcuts
 CONF = cfg.CONF

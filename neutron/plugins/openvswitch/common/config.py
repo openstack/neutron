@@ -18,7 +18,6 @@ from oslo.config import cfg
 
 from neutron.agent.common import config
 from neutron.plugins.openvswitch.common import constants
-from neutron import scheduler
 
 
 DEFAULT_BRIDGE_MAPPINGS = []
@@ -75,4 +74,3 @@ cfg.CONF.register_opts(ovs_opts, "OVS")
 cfg.CONF.register_opts(agent_opts, "AGENT")
 config.register_agent_state_opts_helper(cfg.CONF)
 config.register_root_helper(cfg.CONF)
-cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)

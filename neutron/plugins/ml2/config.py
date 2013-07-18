@@ -15,8 +15,6 @@
 
 from oslo.config import cfg
 
-from neutron import scheduler
-
 
 ml2_opts = [
     cfg.ListOpt('type_drivers',
@@ -36,4 +34,3 @@ ml2_opts = [
 
 
 cfg.CONF.register_opts(ml2_opts, "ml2")
-cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)

@@ -50,7 +50,6 @@ from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
 from neutron.plugins.brocade.db import models as brocade_db
 from neutron.plugins.brocade import vlanbm as vbm
-from neutron import scheduler
 
 
 LOG = logging.getLogger(__name__)
@@ -69,7 +68,6 @@ PHYSICAL_INTERFACE_OPTS = [cfg.StrOpt('physical_interface', default='eth0')
 
 cfg.CONF.register_opts(SWITCH_OPTS, "SWITCH")
 cfg.CONF.register_opts(PHYSICAL_INTERFACE_OPTS, "PHYSICAL_INTERFACE")
-cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)
 
 
 class BridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,

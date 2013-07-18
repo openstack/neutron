@@ -106,6 +106,9 @@ class NeutronManagerTestCase(base.BaseTestCase):
         self.assertIn(constants.DUMMY, svc_plugins.keys())
 
     def test_post_plugin_validation(self):
+        cfg.CONF.import_opt('dhcp_agents_per_network',
+                            'neutron.db.agentschedulers_db')
+
         self.assertIsNone(validate_post_plugin_load())
         cfg.CONF.set_override('dhcp_agents_per_network', 2)
         self.assertIsNone(validate_post_plugin_load())

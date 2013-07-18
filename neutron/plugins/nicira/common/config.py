@@ -16,8 +16,6 @@
 
 from oslo.config import cfg
 
-from neutron import scheduler
-
 nvp_opts = [
     cfg.IntOpt('max_lp_per_bridged_ls', default=64,
                help=_("Maximum number of ports of a logical switch on a "
@@ -97,7 +95,6 @@ cluster_opts = [
 cfg.CONF.register_opts(connection_opts)
 cfg.CONF.register_opts(cluster_opts)
 cfg.CONF.register_opts(nvp_opts, "NVP")
-cfg.CONF.register_opts(scheduler.AGENTS_SCHEDULER_OPTS)
 # NOTE(armando-migliaccio): keep the following code until we support
 # NVP configuration files in older format (Grizzly or older).
 # ### BEGIN
