@@ -76,52 +76,57 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
         notifier_api._drivers = None
         cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
 
+    def _routes_update_prepare(self, router_id, subnet_id,
+                               port_id, routes, skip_add=False):
+        if not skip_add:
+            self._router_interface_action('add', router_id, subnet_id, port_id)
+        self._update('routers', router_id, {'router': {'routes': routes}})
+        return self._show('routers', router_id)
+
+    def _routes_update_cleanup(self, port_id, subnet_id, router_id, routes):
+        self._update('routers', router_id, {'router': {'routes': routes}})
+        self._router_interface_action('remove', router_id, subnet_id, port_id)
+
     def test_route_update_with_one_route(self):
+        routes = [{'destination': '135.207.0.0/16', 'nexthop': '10.0.1.3'}]
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s:
                 with self.port(subnet=s, no_delete=True) as p:
-                    body = self._show('routers', r['router']['id'])
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         None,
-                                                         p['port']['id'])
+                    body = self._routes_update_prepare(r['router']['id'],
+                                                       None, p['port']['id'],
+                                                       routes)
+                    self.assertEqual(body['router']['routes'], routes)
+                    self._routes_update_cleanup(p['port']['id'],
+                                                None, r['router']['id'], [])
 
-                    routes = [{'destination': '135.207.0.0/16',
-                               'nexthop': '10.0.1.3'}]
-
+    def test_route_clear_routes_with_None(self):
+        routes = [{'destination': '135.207.0.0/16',
+                   'nexthop': '10.0.1.3'},
+                  {'destination': '12.0.0.0/8',
+                   'nexthop': '10.0.1.4'},
+                  {'destination': '141.212.0.0/16',
+                   'nexthop': '10.0.1.5'}]
+        with self.router() as r:
+            with self.subnet(cidr='10.0.1.0/24') as s:
+                with self.port(subnet=s, no_delete=True) as p:
+                    self._routes_update_prepare(r['router']['id'],
+                                                None, p['port']['id'], routes)
                     body = self._update('routers', r['router']['id'],
-                                        {'router': {'routes': routes}})
-
-                    body = self._show('routers', r['router']['id'])
-                    self.assertEqual(body['router']['routes'],
-                                     routes)
-                    self._update('routers', r['router']['id'],
-                                 {'router': {'routes': []}})
-                    # clean-up
-                    self._router_interface_action('remove',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
+                                        {'router': {'routes': None}})
+                    self.assertEqual(body['router']['routes'], [])
+                    self._routes_update_cleanup(p['port']['id'],
+                                                None, r['router']['id'], [])
 
     def test_router_interface_in_use_by_route(self):
+        routes = [{'destination': '135.207.0.0/16',
+                   'nexthop': '10.0.1.3'}]
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s:
                 with self.port(subnet=s, no_delete=True) as p:
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         None,
-                                                         p['port']['id'])
-
-                    routes = [{'destination': '135.207.0.0/16',
-                               'nexthop': '10.0.1.3'}]
-
-                    body = self._update('routers', r['router']['id'],
-                                        {'router': {'routes': routes}})
-
-                    body = self._show('routers', r['router']['id'])
-                    self.assertEqual(body['router']['routes'],
-                                     routes)
-
+                    body = self._routes_update_prepare(r['router']['id'],
+                                                       None, p['port']['id'],
+                                                       routes)
+                    self.assertEqual(body['router']['routes'], routes)
                     self._router_interface_action(
                         'remove',
                         r['router']['id'],
@@ -129,95 +134,54 @@ class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
                         p['port']['id'],
                         expected_code=exc.HTTPConflict.code)
 
-                    self._update('routers', r['router']['id'],
-                                 {'router': {'routes': []}})
-                    # clean-up
-                    self._router_interface_action('remove',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
+                    self._routes_update_cleanup(p['port']['id'],
+                                                None, r['router']['id'], [])
 
     def test_route_update_with_multi_routes(self):
+        routes = [{'destination': '135.207.0.0/16',
+                   'nexthop': '10.0.1.3'},
+                  {'destination': '12.0.0.0/8',
+                   'nexthop': '10.0.1.4'},
+                  {'destination': '141.212.0.0/16',
+                   'nexthop': '10.0.1.5'}]
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s:
                 with self.port(subnet=s, no_delete=True) as p:
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         None,
-                                                         p['port']['id'])
-
-                    routes = [{'destination': '135.207.0.0/16',
-                               'nexthop': '10.0.1.3'},
-                              {'destination': '12.0.0.0/8',
-                               'nexthop': '10.0.1.4'},
-                              {'destination': '141.212.0.0/16',
-                               'nexthop': '10.0.1.5'}]
-
-                    body = self._update('routers', r['router']['id'],
-                                        {'router': {'routes': routes}})
-
-                    body = self._show('routers', r['router']['id'])
+                    body = self._routes_update_prepare(r['router']['id'],
+                                                       None, p['port']['id'],
+                                                       routes)
                     self.assertEqual(sorted(body['router']['routes']),
                                      sorted(routes))
-
-                    # clean-up
-                    self._update('routers', r['router']['id'],
-                                 {'router': {'routes': []}})
-                    self._router_interface_action('remove',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
+                    self._routes_update_cleanup(p['port']['id'],
+                                                None, r['router']['id'], [])
 
     def test_router_update_delete_routes(self):
+        routes_orig = [{'destination': '135.207.0.0/16',
+                        'nexthop': '10.0.1.3'},
+                       {'destination': '12.0.0.0/8',
+                        'nexthop': '10.0.1.4'},
+                       {'destination': '141.212.0.0/16',
+                        'nexthop': '10.0.1.5'}]
+        routes_left = [{'destination': '135.207.0.0/16',
+                        'nexthop': '10.0.1.3'},
+                       {'destination': '141.212.0.0/16',
+                        'nexthop': '10.0.1.5'}]
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s:
                 with self.port(subnet=s, no_delete=True) as p:
-                    body = self._router_interface_action('add',
-                                                         r['router']['id'],
-                                                         None,
-                                                         p['port']['id'])
-
-                    routes_orig = [{'destination': '135.207.0.0/16',
-                                    'nexthop': '10.0.1.3'},
-                                   {'destination': '12.0.0.0/8',
-                                    'nexthop': '10.0.1.4'},
-                                   {'destination': '141.212.0.0/16',
-                                    'nexthop': '10.0.1.5'}]
-
-                    body = self._update('routers', r['router']['id'],
-                                        {'router': {'routes':
-                                                    routes_orig}})
-
-                    body = self._show('routers', r['router']['id'])
+                    body = self._routes_update_prepare(r['router']['id'],
+                                                       None, p['port']['id'],
+                                                       routes_orig)
                     self.assertEqual(sorted(body['router']['routes']),
                                      sorted(routes_orig))
-
-                    routes_left = [{'destination': '135.207.0.0/16',
-                                    'nexthop': '10.0.1.3'},
-                                   {'destination': '141.212.0.0/16',
-                                    'nexthop': '10.0.1.5'}]
-
-                    body = self._update('routers', r['router']['id'],
-                                        {'router': {'routes':
-                                                    routes_left}})
-
-                    body = self._show('routers', r['router']['id'])
+                    body = self._routes_update_prepare(r['router']['id'],
+                                                       None, p['port']['id'],
+                                                       routes_left,
+                                                       skip_add=True)
                     self.assertEqual(sorted(body['router']['routes']),
                                      sorted(routes_left))
-
-                    body = self._update('routers', r['router']['id'],
-                                        {'router': {'routes': []}})
-
-                    body = self._show('routers', r['router']['id'])
-                    self.assertEqual(body['router']['routes'], [])
-
-                    # clean-up
-                    self._update('routers', r['router']['id'],
-                                 {'router': {'routes': []}})
-                    self._router_interface_action('remove',
-                                                  r['router']['id'],
-                                                  None,
-                                                  p['port']['id'])
+                    self._routes_update_cleanup(p['port']['id'],
+                                                None, r['router']['id'], [])
 
     def _test_malformed_route(self, routes):
         with self.router() as r:
