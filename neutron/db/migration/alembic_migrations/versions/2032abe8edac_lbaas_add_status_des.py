@@ -18,14 +18,14 @@
 """LBaaS add status description
 
 Revision ID: 2032abe8edac
-Revises: b7a8863760e
+Revises: 477a4488d3f4
 Create Date: 2013-06-24 06:51:47.308545
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '2032abe8edac'
-down_revision = 'b7a8863760e'
+down_revision = '477a4488d3f4'
 
 # Change to ['*'] if this migration applies to all plugins
 
