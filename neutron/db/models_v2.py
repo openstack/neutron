@@ -37,6 +37,13 @@ class HasId(object):
                    default=uuidutils.generate_uuid)
 
 
+class HasStatusDescription(object):
+    """Status with description mixin."""
+
+    status = sa.Column(sa.String(16), nullable=False)
+    status_description = sa.Column(sa.String(255))
+
+
 class IPAvailabilityRange(model_base.BASEV2):
     """Internal representation of available IPs for Neutron subnets.
 
