@@ -504,11 +504,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         """Allocate a specific IP address on the subnet."""
         ip = int(netaddr.IPAddress(ip_address))
         range_qry = context.session.query(
-            models_v2.IPAvailabilityRange,
-            models_v2.IPAllocationPool).join(
+            models_v2.IPAvailabilityRange).join(
                 models_v2.IPAllocationPool).with_lockmode('update')
         results = range_qry.filter_by(subnet_id=subnet_id)
-        for (range, pool) in results:
+        for range in results:
             first = int(netaddr.IPAddress(range['first_ip']))
             last = int(netaddr.IPAddress(range['last_ip']))
             if first <= ip <= last:
@@ -527,7 +526,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     new_last = range['last_ip']
                     range['last_ip'] = str(netaddr.IPAddress(ip_address) - 1)
                     ip_range = models_v2.IPAvailabilityRange(
-                        allocation_pool_id=pool['id'],
+                        allocation_pool_id=range['allocation_pool_id'],
                         first_ip=new_first,
                         last_ip=new_last)
                     context.session.add(ip_range)
