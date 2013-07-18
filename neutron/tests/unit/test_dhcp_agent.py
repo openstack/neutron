@@ -1099,6 +1099,9 @@ class TestDeviceManager(base.BaseTestCase):
         dh._set_default_route.assert_called_once_with(net)
 
     def test_setup(self):
+        cfg.CONF.set_override('enable_metadata_network', False)
+        self._test_setup_helper(False)
+        cfg.CONF.set_override('enable_metadata_network', True)
         self._test_setup_helper(False)
 
     def test_setup_device_exists(self):
@@ -1246,7 +1249,7 @@ class TestDeviceManager(base.BaseTestCase):
 
         dh.update(FakeV4Network())
 
-        self.assertFalse(dh._set_default_route.called)
+        self.assertTrue(dh._set_default_route.called)
 
         # For completeness
         cfg.CONF.set_override('use_namespaces', False)
