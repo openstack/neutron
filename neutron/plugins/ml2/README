@@ -18,12 +18,11 @@ of multiple segments of the same or different types. Type and
 mechanism drivers are loaded as python entrypoints using the stevedore
 library.
 
-Each available network type is managed by an ml2
-TypeDriver. TypeDrivers maintain any needed type-specific network
-state, and perform provider network validation and tenant network
-allocation. The initial ml2 version includes drivers for the local,
-flat, and vlan network types. Additional TypeDrivers for gre and vxlan
-network types are expected before the havana release.
+Each available network type is managed by an ml2 TypeDriver.
+TypeDrivers maintain any needed type-specific network state, and
+perform provider network validation and tenant network allocation. The
+initial ml2 version includes drivers for the local, flat, vlan, gre,
+and vxlan network types.
 
 RPC callback and notification interfaces support interaction with L2,
 DHCP, and L3 agents. This version has been tested with the existing
@@ -42,15 +41,13 @@ network segment to be used.
 The database schema and driver APIs support multi-segment networks,
 but the client API for multi-segment networks is not yet implemented.
 
-A devstack patch supporting use of the ml2 plugin with either the
-openvswitch or linuxbridge L2 agent for the local, flat and vlan
-network types is under review at
-https://review.openstack.org/#/c/27576/. Note that the gre network
-type and the tunnel-related RPCs are not yet implemented, so use the
-vlan network type for multi-node testing. Also note that ml2 does not
-yet work with nova's GenericVIFDriver, so it is necessary to configure
-nova to use a specific driver compatible with the L2 agent deployed on
-each compute node.
+ML2 supports devstack at the moment with either the Open vSwitch or
+LinuxBridge L2 agents for local, flat, vlan, or gre network types.
+Note that ml2 does not yet work with nova's GenericVIFDriver, so it is
+necessary to configure nova to use a specific driver compatible with
+the L2 agent deployed on each compute node. Additionally, support for
+configuring additional ML2 items is a work in progress in devstack.
+This includes configuring VXLAN support for ML2 with the OVS agent.
 
 Note that the ml2 plugin is new and should be conidered experimental
 at this point. It is undergoing rapid development, so driver APIs and
@@ -67,16 +64,21 @@ hyperv plugins:
   binding:vif_type value is returned for nova's GenericVIFDriver based
   on the binding:host_id value and information from the agents_db
 
-- Implement TypeDriver for GRE networks
-
-- Implement GRE tunnel endpoint management RPCs
-
-
 Additional follow-on tasks expected for the havana release:
 
-- Extend MechanismDriver API to support integration with external
-  devices such as SDN controllers and top-of-rack switches
-
-- Implement TypeDriver for VXLAN networks
-
 - Extend providernet extension API to support multi-segment networks
+
+The following MechanismDrivers are actively under development for the
+Havana release:
+
+- Arista Driver:
+  https://blueprints.launchpad.net/quantum/+spec/sukhdev-8
+
+- Cisco Nexus Driver:
+  https://blueprints.launchpad.net/quantum/+spec/ml2-md-cisco-nexus
+
+- OpenDaylight Driver:
+  https://blueprints.launchpad.net/quantum/+spec/ml2-opendaylight-mechanism-driver
+
+- Tail-f NCS Driver:
+  https://blueprints.launchpad.net/quantum/+spec/tailf-ncs
