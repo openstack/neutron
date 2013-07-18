@@ -625,6 +625,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                     mock.call().netns.execute([
                         'neutron-ns-metadata-proxy',
                         mock.ANY,
+                        mock.ANY,
                         '--router_id=forzanapoli',
                         mock.ANY,
                         mock.ANY,

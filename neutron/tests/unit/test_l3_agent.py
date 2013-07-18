@@ -692,6 +692,7 @@ class TestL3AgentEventHandler(base.BaseTestCase):
                     mock.call().netns.execute([
                         'neutron-ns-metadata-proxy',
                         mock.ANY,
+                        mock.ANY,
                         '--router_id=%s' % router_id,
                         mock.ANY,
                         '--metadata_port=%s' % metadata_port,

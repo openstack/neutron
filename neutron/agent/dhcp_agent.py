@@ -69,6 +69,10 @@ class DhcpAgent(manager.Manager):
                            "enable_isolated_metadata = True")),
         cfg.IntOpt('num_sync_threads', default=4,
                    help=_('Number of threads to use during sync process.')),
+        cfg.StrOpt('metadata_proxy_socket',
+                   default='$state_path/metadata_proxy',
+                   help=_('Location of Metadata Proxy UNIX domain '
+                          'socket')),
     ]
 
     def __init__(self, host=None):
@@ -326,8 +330,10 @@ class DhcpAgent(manager.Manager):
                                         router_ports[0].device_id)
 
         def callback(pid_file):
+            metadata_proxy_socket = cfg.CONF.metadata_proxy_socket
             proxy_cmd = ['neutron-ns-metadata-proxy',
                          '--pid_file=%s' % pid_file,
+                         '--metadata_proxy_socket=%s' % metadata_proxy_socket,
                          neutron_lookup_param,
                          '--state_path=%s' % self.conf.state_path,
                          '--metadata_port=%d' % METADATA_PORT]
