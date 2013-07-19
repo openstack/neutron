@@ -144,7 +144,9 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     functionality using NVP.
     """
 
-    supported_extension_aliases = ["ext_gw_mode",
+    supported_extension_aliases = ["agent",
+                                   "dhcp_agent_scheduler",
+                                   "ext_gw_mode",
                                    "extraroute",
                                    "mac-learning",
                                    "network-gateway",
