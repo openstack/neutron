@@ -28,7 +28,8 @@ SG_RPC_VERSION = "1.1"
 security_group_opts = [
     cfg.StrOpt(
         'firewall_driver',
-        default='neutron.agent.firewall.NoopFirewallDriver')
+        default='neutron.agent.firewall.NoopFirewallDriver',
+        help=_('Driver for Security Groups Firewall'))
 ]
 cfg.CONF.register_opts(security_group_opts, 'SECURITYGROUP')
 

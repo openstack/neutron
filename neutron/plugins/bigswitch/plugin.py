@@ -136,7 +136,9 @@ for i in portbindings.VIF_TYPES:
     nova_opts.append(opt)
 
 # Add the vif types for reference later
-nova_opts.append(cfg.ListOpt('vif_types', default=portbindings.VIF_TYPES))
+nova_opts.append(cfg.ListOpt('vif_types',
+                             default=portbindings.VIF_TYPES,
+                             help=_('List of allowed vif_type values.')))
 
 cfg.CONF.register_opts(nova_opts, "NOVA")
 

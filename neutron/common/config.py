@@ -86,7 +86,10 @@ core_opts = [
 ]
 
 core_cli_opts = [
-    cfg.StrOpt('state_path', default='/var/lib/neutron'),
+    cfg.StrOpt('state_path',
+               default='/var/lib/neutron',
+               help=_("Where to store Neutron state files. "
+                      "This directory must be writable by the agent.")),
 ]
 
 # Register the configuration options
