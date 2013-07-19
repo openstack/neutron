@@ -307,8 +307,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                            'cidr': cidr,
                            'ip_version': 4,
                            'tenant_id': self._tenant_id}}
-        for arg in ('allocation_pools',
-                    'ip_version', 'tenant_id',
+        for arg in ('ip_version', 'tenant_id',
                     'enable_dhcp', 'allocation_pools',
                     'dns_nameservers', 'host_routes',
                     'shared'):
