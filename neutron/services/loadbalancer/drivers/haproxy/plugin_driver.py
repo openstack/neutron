@@ -357,5 +357,8 @@ class HaproxyOnHostPluginDriver(abstract_driver.LoadBalancerAbstractDriver):
     def create_health_monitor(self, context, health_monitor):
         pass
 
+    def delete_health_monitor(self, context, health_monitor):
+        self.plugin._delete_db_health_monitor(context, health_monitor["id"])
+
     def stats(self, context, pool_id):
         pass
