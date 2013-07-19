@@ -567,7 +567,7 @@ def update_explicit_routing_lrouter(cluster, router_id,
     if next_hop:
         update_default_gw_explicit_routing_lrouter(cluster,
                                                    router_id, next_hop)
-    if routes:
+    if routes is not None:
         return update_explicit_routes_lrouter(cluster, router_id, routes)
 
 
