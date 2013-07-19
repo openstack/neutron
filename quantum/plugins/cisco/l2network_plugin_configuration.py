@@ -23,42 +23,19 @@ from quantum.plugins.cisco.common import cisco_configparser as confp
 
 CONF_FILE = find_config_file({'plugin': 'cisco'}, "l2network_plugin.ini")
 CONF_PARSER_OBJ = confp.CiscoConfigParser(CONF_FILE)
-
-
 # Read the conf for the l2network_plugin
 SECTION_CONF = CONF_PARSER_OBJ['VLANS']
 VLAN_NAME_PREFIX = SECTION_CONF['vlan_name_prefix']
-VLAN_START = SECTION_CONF['vlan_start']
-VLAN_END = SECTION_CONF['vlan_end']
-
-SECTION_CONF = CONF_PARSER_OBJ['PORTS']
-MAX_PORTS = SECTION_CONF['max_ports']
-
-SECTION_CONF = CONF_PARSER_OBJ['NETWORKS']
-MAX_NETWORKS = SECTION_CONF['max_networks']
-
 SECTION_CONF = CONF_PARSER_OBJ['MODEL']
 MODEL_CLASS = SECTION_CONF['model_class']
 
-if 'TEST' in CONF_PARSER_OBJ.keys():
-    TEST = CONF_PARSER_OBJ['TEST']
-
 CONF_FILE = find_config_file({'plugin': 'cisco'}, "cisco_plugins.ini")
-
-SECTION_CONF = CONF_PARSER_OBJ['SEGMENTATION']
-MANAGER_CLASS = SECTION_CONF['manager_class']
-
-
 CONF_PARSER_OBJ = confp.CiscoConfigParser(CONF_FILE)
-
 # Read the config for the device plugins
 PLUGINS = CONF_PARSER_OBJ.walk(CONF_PARSER_OBJ.dummy)
 
 CONF_FILE = find_config_file({'plugin': 'cisco'}, "db_conn.ini")
-
 CONF_PARSER_OBJ = confp.CiscoConfigParser(CONF_FILE)
-
-
 # Read DB config for the Quantum DB
 SECTION_CONF = CONF_PARSER_OBJ['DATABASE']
 DB_NAME = SECTION_CONF['name']
