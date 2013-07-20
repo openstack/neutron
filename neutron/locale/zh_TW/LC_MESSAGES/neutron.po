@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-19 19:54+0000\n"
+"POT-Creation-Date: 2013-07-20 19:55+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -683,7 +683,7 @@ msgid "Security group member updated on remote: %s"
 msgstr "已在遠端 %s 上更新安全群組成員"
 
 #: neutron/agent/securitygroups_rpc.py:89
-#: neutron/agent/securitygroups_rpc.py:137
+#: neutron/agent/securitygroups_rpc.py:138
 msgid "Provider rule updated"
 msgstr "已更新提供者規則"
 
@@ -707,16 +707,20 @@ msgstr "安全群組規則已更新 %r"
 msgid "Security group member updated %r"
 msgstr "安全群組成員已更新 %r"
 
-#: neutron/agent/securitygroups_rpc.py:143
+#: neutron/agent/securitygroups_rpc.py:144
 #, python-format
 msgid "Remove device filter for %r"
 msgstr "移除 %r 的裝置過濾器"
 
-#: neutron/agent/securitygroups_rpc.py:152
+#: neutron/agent/securitygroups_rpc.py:153
 msgid "Refresh firewall rules"
 msgstr "重新整理防火牆規則"
 
 #: neutron/agent/securitygroups_rpc.py:160
+msgid "No ports here to refresh firewall"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:166
 #, python-format
 msgid "Update port filter for %s"
 msgstr "更新 %s 的埠過濾器"
@@ -8824,9 +8828,4 @@ msgstr "找不到 lswitch：%s"
 #, python-format
 msgid "lrouter:%s not found"
 msgstr "找不到 lrouter：%s"
-
-#~ msgid ""
-#~ "NoopLbaaSDriver method %(method_name)scalled with"
-#~ " arguments %(args)s %(kwargs)s "
-#~ msgstr ""
 
