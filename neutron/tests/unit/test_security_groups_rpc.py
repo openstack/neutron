@@ -465,7 +465,7 @@ class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.security_groups_rule_updated(['fake_sgid1', 'fake_sgid3'])
         self.agent.refresh_firewall.assert_has_calls(
-            [call.refresh_firewall()])
+            [call.refresh_firewall([self.fake_device])])
 
     def test_security_groups_rule_not_updated(self):
         self.agent.refresh_firewall = mock.Mock()
@@ -478,7 +478,7 @@ class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.security_groups_member_updated(['fake_sgid2', 'fake_sgid3'])
         self.agent.refresh_firewall.assert_has_calls(
-            [call.refresh_firewall()])
+            [call.refresh_firewall([self.fake_device])])
 
     def test_security_groups_member_not_updated(self):
         self.agent.refresh_firewall = mock.Mock()
@@ -500,6 +500,19 @@ class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
                  call.defer_apply(),
                  call.update_port_filter(self.fake_device)]
         self.firewall.assert_has_calls(calls)
+
+    def test_refresh_firewall_devices(self):
+        self.agent.prepare_devices_filter(['fake_port_id'])
+        self.agent.refresh_firewall([self.fake_device])
+        calls = [call.defer_apply(),
+                 call.prepare_port_filter(self.fake_device),
+                 call.defer_apply(),
+                 call.update_port_filter(self.fake_device)]
+        self.firewall.assert_has_calls(calls)
+
+    def test_refresh_firewall_none(self):
+        self.agent.refresh_firewall([])
+        self.firewall.assert_has_calls([])
 
 
 class FakeSGRpcApi(agent_rpc.PluginApi,
