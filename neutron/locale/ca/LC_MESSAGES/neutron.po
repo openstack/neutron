@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-20 19:55+0000\n"
+"POT-Creation-Date: 2013-07-21 19:54+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan "
@@ -662,64 +662,68 @@ msgstr ""
 msgid "OVS cleanup completed successfully"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:44
+#: neutron/agent/securitygroups_rpc.py:32
+msgid "Driver for Security Groups Firewall"
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:45
 msgid "Disabled security-group extension."
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:51
+#: neutron/agent/securitygroups_rpc.py:52
 #, python-format
 msgid "Get security group rules for devices via rpc %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:74
+#: neutron/agent/securitygroups_rpc.py:75
 #, python-format
 msgid "Security group rule updated on remote: %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:84
+#: neutron/agent/securitygroups_rpc.py:85
 #, python-format
 msgid "Security group member updated on remote: %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:89
-#: neutron/agent/securitygroups_rpc.py:138
+#: neutron/agent/securitygroups_rpc.py:90
+#: neutron/agent/securitygroups_rpc.py:139
 msgid "Provider rule updated"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:100
+#: neutron/agent/securitygroups_rpc.py:101
 #, python-format
 msgid "Init firewall settings (driver=%s)"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:106
+#: neutron/agent/securitygroups_rpc.py:107
 #, python-format
 msgid "Preparing filters for devices %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:114
+#: neutron/agent/securitygroups_rpc.py:115
 #, python-format
 msgid "Security group rule updated %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:121
+#: neutron/agent/securitygroups_rpc.py:122
 #, python-format
 msgid "Security group member updated %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:144
+#: neutron/agent/securitygroups_rpc.py:145
 #, python-format
 msgid "Remove device filter for %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:153
+#: neutron/agent/securitygroups_rpc.py:154
 msgid "Refresh firewall rules"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:160
+#: neutron/agent/securitygroups_rpc.py:161
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:166
+#: neutron/agent/securitygroups_rpc.py:167
 #, python-format
 msgid "Update port filter for %s"
 msgstr ""
@@ -1608,21 +1612,27 @@ msgstr ""
 msgid "Ensure that configured gateway is on subnet"
 msgstr ""
 
-#: neutron/common/config.py:114
+#: neutron/common/config.py:91
+msgid ""
+"Where to store Neutron state files. This directory must be writable by "
+"the agent."
+msgstr ""
+
+#: neutron/common/config.py:117
 #, python-format
 msgid "Base MAC: %s"
 msgstr ""
 
-#: neutron/common/config.py:125
+#: neutron/common/config.py:128
 msgid "Logging enabled!"
 msgstr ""
 
-#: neutron/common/config.py:138
+#: neutron/common/config.py:141
 #, python-format
 msgid "Config paste file: %s"
 msgstr ""
 
-#: neutron/common/config.py:143
+#: neutron/common/config.py:146
 #, python-format
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr ""
@@ -3696,216 +3706,220 @@ msgstr ""
 msgid "Nova compute nodes to manually set VIF type to %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:168
+#: neutron/plugins/bigswitch/plugin.py:141
+msgid "List of allowed vif_type values."
+msgstr ""
+
+#: neutron/plugins/bigswitch/plugin.py:170
 msgid "Error in REST call to remote network controller"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:204
+#: neutron/plugins/bigswitch/plugin.py:206
 #, python-format
 msgid ""
 "ServerProxy: server=%(server)s, port=%(port)d, ssl=%(ssl)r, "
 "action=%(action)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:208
+#: neutron/plugins/bigswitch/plugin.py:210
 #, python-format
 msgid "ServerProxy: resource=%(resource)s, data=%(data)r, headers=%(headers)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:217
+#: neutron/plugins/bigswitch/plugin.py:219
 msgid "ServerProxy: Could not establish HTTPS connection"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:224
+#: neutron/plugins/bigswitch/plugin.py:226
 msgid "ServerProxy: Could not establish HTTP connection"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:241
+#: neutron/plugins/bigswitch/plugin.py:243
 #, python-format
 msgid "ServerProxy: %(action)s failure, %(e)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:245
+#: neutron/plugins/bigswitch/plugin.py:247
 #, python-format
 msgid ""
 "ServerProxy: status=%(status)d, reason=%(reason)r, ret=%(ret)s, "
 "data=%(data)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:295
+#: neutron/plugins/bigswitch/plugin.py:297
 #, python-format
 msgid "ServerProxy: %(action)s failure for servers: %(server)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:303
+#: neutron/plugins/bigswitch/plugin.py:305
 #, python-format
 msgid "ServerProxy: %(action)s failure for all servers: %(server)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:337
+#: neutron/plugins/bigswitch/plugin.py:339
 #, python-format
 msgid "NeutronRestProxy: Starting plugin. Version=%s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:379
+#: neutron/plugins/bigswitch/plugin.py:381
 msgid "NeutronRestProxyV2: initialization done"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:405
+#: neutron/plugins/bigswitch/plugin.py:407
 msgid "NeutronRestProxyV2: create_network() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:430
+#: neutron/plugins/bigswitch/plugin.py:432
 #, python-format
 msgid "NeutronRestProxyV2:Unable to create remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:462
+#: neutron/plugins/bigswitch/plugin.py:464
 msgid "NeutronRestProxyV2.update_network() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:479
-#: neutron/plugins/bigswitch/plugin.py:527
-#: neutron/plugins/bigswitch/plugin.py:1281
+#: neutron/plugins/bigswitch/plugin.py:481
+#: neutron/plugins/bigswitch/plugin.py:529
+#: neutron/plugins/bigswitch/plugin.py:1283
 #, python-format
 msgid "NeutronRestProxyV2: Unable to update remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:500
+#: neutron/plugins/bigswitch/plugin.py:502
 msgid "NeutronRestProxyV2: delete_network() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:557
+#: neutron/plugins/bigswitch/plugin.py:559
 msgid "NeutronRestProxyV2: create_port() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:592
-#: neutron/plugins/bigswitch/plugin.py:683
+#: neutron/plugins/bigswitch/plugin.py:594
+#: neutron/plugins/bigswitch/plugin.py:685
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:647
+#: neutron/plugins/bigswitch/plugin.py:649
 msgid "NeutronRestProxyV2: update_port() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:704
+#: neutron/plugins/bigswitch/plugin.py:706
 msgid "NeutronRestProxyV2: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:738
-#: neutron/plugins/bigswitch/plugin.py:796
+#: neutron/plugins/bigswitch/plugin.py:740
+#: neutron/plugins/bigswitch/plugin.py:798
 #, python-format
 msgid "NeutronRestProxyV2: Unable to update remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:755
+#: neutron/plugins/bigswitch/plugin.py:757
 msgid "NeutronRestProxyV2: _plug_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:773
+#: neutron/plugins/bigswitch/plugin.py:775
 #, python-format
 msgid "NeutronRestProxyV2:Unable to update remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:787
+#: neutron/plugins/bigswitch/plugin.py:789
 msgid "NeutronRestProxyV2: _unplug_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:801
+#: neutron/plugins/bigswitch/plugin.py:803
 msgid "NeutronRestProxyV2: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:822
+#: neutron/plugins/bigswitch/plugin.py:824
 msgid "NeutronRestProxyV2: update_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:845
+#: neutron/plugins/bigswitch/plugin.py:847
 msgid "NeutronRestProxyV2: delete_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:886
+#: neutron/plugins/bigswitch/plugin.py:888
 msgid "NeutronRestProxyV2: create_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:911
+#: neutron/plugins/bigswitch/plugin.py:913
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:922
+#: neutron/plugins/bigswitch/plugin.py:924
 msgid "NeutronRestProxyV2.update_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:944
+#: neutron/plugins/bigswitch/plugin.py:946
 #, python-format
 msgid "NeutronRestProxyV2: Unable to update remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:956
+#: neutron/plugins/bigswitch/plugin.py:958
 msgid "NeutronRestProxyV2: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:987
+#: neutron/plugins/bigswitch/plugin.py:989
 #, python-format
 msgid "NeutronRestProxyV2: Unable to delete remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:993
+#: neutron/plugins/bigswitch/plugin.py:995
 msgid "NeutronRestProxyV2: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1021
+#: neutron/plugins/bigswitch/plugin.py:1023
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create interface: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1032
+#: neutron/plugins/bigswitch/plugin.py:1034
 msgid "NeutronRestProxyV2: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1065
+#: neutron/plugins/bigswitch/plugin.py:1067
 #, python-format
 msgid "NeutronRestProxyV2:Unable to delete remote intf: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1073
+#: neutron/plugins/bigswitch/plugin.py:1075
 msgid "NeutronRestProxyV2: create_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1086
+#: neutron/plugins/bigswitch/plugin.py:1088
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote floatin IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1096
+#: neutron/plugins/bigswitch/plugin.py:1098
 msgid "NeutronRestProxyV2: update_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1119
+#: neutron/plugins/bigswitch/plugin.py:1121
 msgid "NeutronRestProxyV2: delete_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1202
+#: neutron/plugins/bigswitch/plugin.py:1204
 #, python-format
 msgid "NeutronRestProxy: Unable to update remote topology: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1298
+#: neutron/plugins/bigswitch/plugin.py:1300
 #, python-format
 msgid ""
 "Setting admin_state_up=False is not supported in this plugin version. "
 "Ignoring setting for resource: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1304
+#: neutron/plugins/bigswitch/plugin.py:1306
 #, python-format
 msgid ""
 "Operational status is internally set by the plugin. Ignoring setting "
 "status=%s."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1331
+#: neutron/plugins/bigswitch/plugin.py:1333
 #, python-format
 msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs. "
 msgstr ""
