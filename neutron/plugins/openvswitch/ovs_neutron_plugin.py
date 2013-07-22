@@ -309,8 +309,12 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.topic = topics.PLUGIN
         self.conn = rpc.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
-        self.dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-        self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
+        self.agent_notifiers[q_const.AGENT_TYPE_DHCP] = (
+            dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        )
+        self.agent_notifiers[q_const.AGENT_TYPE_L3] = (
+            l3_rpc_agent_api.L3AgentNotify
+        )
         self.callbacks = OVSRpcCallbacks(self.notifier, self.tunnel_type)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,

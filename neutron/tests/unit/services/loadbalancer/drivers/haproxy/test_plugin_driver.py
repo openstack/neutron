@@ -53,13 +53,30 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
         self.callbacks = plugin_driver.LoadBalancerCallbacks(
             self.plugin_instance
         )
+        get_lbaas_agents_patcher = mock.patch(
+            'neutron.services.loadbalancer.agent_scheduler'
+            '.LbaasAgentSchedulerDbMixin.get_lbaas_agents')
+        get_lbaas_agents_patcher.start()
+
+        # mocking plugin_driver create_pool() as it does nothing more than
+        # pool scheduling which is beyond the scope of this test case
+        mock.patch('neutron.services.loadbalancer.drivers.haproxy'
+                   '.plugin_driver.HaproxyOnHostPluginDriver'
+                   '.create_pool').start()
+
+        self.addCleanup(mock.patch.stopall)
 
     def test_get_ready_devices(self):
         with self.vip() as vip:
-            ready = self.callbacks.get_ready_devices(
-                context.get_admin_context(),
-            )
-            self.assertEqual(ready, [vip['vip']['pool_id']])
+            with mock.patch('neutron.services.loadbalancer.agent_scheduler'
+                            '.LbaasAgentSchedulerDbMixin.'
+                            'list_pools_on_lbaas_agent') as mock_agent_pools:
+                mock_agent_pools.return_value = {
+                    'pools': [{'id': vip['vip']['pool_id']}]}
+                ready = self.callbacks.get_ready_devices(
+                    context.get_admin_context(),
+                )
+                self.assertEqual(ready, [vip['vip']['pool_id']])
 
     def test_get_ready_devices_multiple_vips_and_pools(self):
         ctx = context.get_admin_context()
@@ -100,11 +117,17 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
 
         self.assertEqual(ctx.session.query(ldb.Pool).count(), 3)
         self.assertEqual(ctx.session.query(ldb.Vip).count(), 2)
-        ready = self.callbacks.get_ready_devices(ctx)
-        self.assertEqual(len(ready), 2)
-        self.assertIn(pools[0].id, ready)
-        self.assertIn(pools[1].id, ready)
-        self.assertNotIn(pools[2].id, ready)
+        with mock.patch('neutron.services.loadbalancer.agent_scheduler'
+                        '.LbaasAgentSchedulerDbMixin'
+                        '.list_pools_on_lbaas_agent') as mock_agent_pools:
+            mock_agent_pools.return_value = {'pools': [{'id': pools[0].id},
+                                                       {'id': pools[1].id},
+                                                       {'id': pools[2].id}]}
+            ready = self.callbacks.get_ready_devices(ctx)
+            self.assertEqual(len(ready), 2)
+            self.assertIn(pools[0].id, ready)
+            self.assertIn(pools[1].id, ready)
+            self.assertNotIn(pools[2].id, ready)
         # cleanup
         ctx.session.query(ldb.Pool).delete()
         ctx.session.query(ldb.Vip).delete()
@@ -119,11 +142,15 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                 vip['vip']['id'],
                 {'vip': {'status': constants.INACTIVE}}
             )
-
-            ready = self.callbacks.get_ready_devices(
-                context.get_admin_context(),
-            )
-            self.assertFalse(ready)
+            with mock.patch('neutron.services.loadbalancer.agent_scheduler'
+                            '.LbaasAgentSchedulerDbMixin.'
+                            'list_pools_on_lbaas_agent') as mock_agent_pools:
+                mock_agent_pools.return_value = {
+                    'pools': [{'id': vip['vip']['pool_id']}]}
+                ready = self.callbacks.get_ready_devices(
+                    context.get_admin_context(),
+                )
+                self.assertFalse(ready)
 
     def test_get_ready_devices_inactive_pool(self):
         with self.vip() as vip:
@@ -135,11 +162,15 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                 vip['vip']['pool_id'],
                 {'pool': {'status': constants.INACTIVE}}
             )
-
-            ready = self.callbacks.get_ready_devices(
-                context.get_admin_context(),
-            )
-            self.assertFalse(ready)
+            with mock.patch('neutron.services.loadbalancer.agent_scheduler'
+                            '.LbaasAgentSchedulerDbMixin.'
+                            'list_pools_on_lbaas_agent') as mock_agent_pools:
+                mock_agent_pools.return_value = {
+                    'pools': [{'id': vip['vip']['pool_id']}]}
+                ready = self.callbacks.get_ready_devices(
+                    context.get_admin_context(),
+                )
+                self.assertFalse(ready)
 
     def test_get_logical_device_inactive(self):
         with self.pool() as pool:
@@ -235,26 +266,26 @@ class TestLoadBalancerAgentApi(base.BaseTestCase):
         super(TestLoadBalancerAgentApi, self).setUp()
         self.addCleanup(mock.patch.stopall)
 
-        self.api = plugin_driver.LoadBalancerAgentApi('topic', 'host')
+        self.api = plugin_driver.LoadBalancerAgentApi('topic')
         self.mock_cast = mock.patch.object(self.api, 'cast').start()
         self.mock_msg = mock.patch.object(self.api, 'make_msg').start()
 
     def test_init(self):
         self.assertEqual(self.api.topic, 'topic')
-        self.assertEqual(self.api.host, 'host')
 
     def _call_test_helper(self, method_name):
-        rv = getattr(self.api, method_name)(mock.sentinel.context, 'the_id')
+        rv = getattr(self.api, method_name)(mock.sentinel.context, 'test',
+                                            'host')
         self.assertEqual(rv, self.mock_cast.return_value)
         self.mock_cast.assert_called_once_with(
             mock.sentinel.context,
             self.mock_msg.return_value,
-            topic='topic'
+            topic='topic.host'
         )
 
         self.mock_msg.assert_called_once_with(
             method_name,
-            pool_id='the_id',
+            pool_id='test',
             host='host'
         )
 
@@ -267,6 +298,21 @@ class TestLoadBalancerAgentApi(base.BaseTestCase):
     def test_modify_pool(self):
         self._call_test_helper('modify_pool')
 
+    def test_agent_updated(self):
+        rv = self.api.agent_updated(mock.sentinel.context, True, 'host')
+        self.assertEqual(rv, self.mock_cast.return_value)
+        self.mock_cast.assert_called_once_with(
+            mock.sentinel.context,
+            self.mock_msg.return_value,
+            topic='topic.host',
+            version='1.1'
+        )
+
+        self.mock_msg.assert_called_once_with(
+            'agent_updated',
+            payload={'admin_state_up': True}
+        )
+
 
 class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
     def setUp(self):
@@ -276,6 +322,12 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
         super(TestLoadBalancerPluginNotificationWrapper, self).setUp()
         self.mock_api = api_cls.return_value
 
+        # mocking plugin_driver create_pool() as it does nothing more than
+        # pool scheduling which is beyond the scope of this test case
+        mock.patch('neutron.services.loadbalancer.drivers.haproxy'
+                   '.plugin_driver.HaproxyOnHostPluginDriver'
+                   '.create_pool').start()
+
         self.addCleanup(mock.patch.stopall)
 
     def test_create_vip(self):
@@ -284,7 +336,8 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                 with self.vip(pool=pool, subnet=subnet) as vip:
                     self.mock_api.reload_pool.assert_called_once_with(
                         mock.ANY,
-                        vip['vip']['pool_id']
+                        vip['vip']['pool_id'],
+                        'host'
                     )
 
     def test_update_vip(self):
@@ -302,7 +355,8 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
 
                     self.mock_api.reload_pool.assert_called_once_with(
                         mock.ANY,
-                        vip['vip']['pool_id']
+                        vip['vip']['pool_id'],
+                        'host'
                     )
 
                     self.assertEqual(
@@ -319,7 +373,8 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                     self.plugin_instance.delete_vip(ctx, vip['vip']['id'])
                     self.mock_api.destroy_pool.assert_called_once_with(
                         mock.ANY,
-                        vip['vip']['pool_id']
+                        vip['vip']['pool_id'],
+                        'host'
                     )
 
     def test_create_pool(self):
@@ -334,7 +389,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
             ctx = context.get_admin_context()
             self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
             self.mock_api.destroy_pool.assert_called_once_with(
-                mock.ANY, pool['pool']['id'])
+                mock.ANY, pool['pool']['id'], 'host')
             self.assertFalse(self.mock_api.reload_pool.called)
             self.assertFalse(self.mock_api.modify_pool.called)
 
@@ -352,7 +407,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                 ctx = context.get_admin_context()
                 self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
                 self.mock_api.reload_pool.assert_called_once_with(
-                    mock.ANY, pool['pool']['id'])
+                    mock.ANY, pool['pool']['id'], 'host')
                 self.assertFalse(self.mock_api.destroy_pool.called)
                 self.assertFalse(self.mock_api.modify_pool.called)
 
@@ -363,14 +418,14 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
             res = req.get_response(self.ext_api)
             self.assertEqual(res.status_int, 204)
             self.mock_api.destroy_pool.assert_called_once_with(
-                mock.ANY, pool['pool']['id'])
+                mock.ANY, pool['pool']['id'], 'host')
 
     def test_create_member(self):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
             with self.member(pool_id=pool_id):
                 self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id)
+                    mock.ANY, pool_id, 'host')
 
     def test_update_member(self):
         with self.pool() as pool:
@@ -381,7 +436,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                 self.plugin_instance.update_member(
                     ctx, member['member']['id'], member)
                 self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id)
+                    mock.ANY, pool_id, 'host')
 
     def test_update_member_new_pool(self):
         with self.pool() as pool1:
@@ -397,8 +452,8 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                                                        member)
                     self.assertEqual(2, self.mock_api.modify_pool.call_count)
                     self.mock_api.modify_pool.assert_has_calls(
-                        [mock.call(mock.ANY, pool1_id),
-                         mock.call(mock.ANY, pool2_id)])
+                        [mock.call(mock.ANY, pool1_id, 'host'),
+                         mock.call(mock.ANY, pool2_id, 'host')])
 
     def test_delete_member(self):
         with self.pool() as pool:
@@ -411,7 +466,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                 res = req.get_response(self.ext_api)
                 self.assertEqual(res.status_int, 204)
                 self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id)
+                    mock.ANY, pool_id, 'host')
 
     def test_create_pool_health_monitor(self):
         with self.pool() as pool:
@@ -422,7 +477,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                                                                 hm,
                                                                 pool_id)
                 self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id)
+                    mock.ANY, pool_id, 'host')
 
     def test_delete_pool_health_monitor(self):
         with self.pool() as pool:
@@ -436,7 +491,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                 self.plugin_instance.delete_pool_health_monitor(
                     ctx, hm['health_monitor']['id'], pool_id)
                 self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id)
+                    mock.ANY, pool_id, 'host')
 
     def test_update_health_monitor_associated_with_pool(self):
         with self.health_monitor(type='HTTP') as monitor:
@@ -457,7 +512,8 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                 self.assertEqual(res.status_int, 201)
                 self.mock_api.modify_pool.assert_called_once_with(
                     mock.ANY,
-                    pool['pool']['id']
+                    pool['pool']['id'],
+                    'host'
                 )
 
                 self.mock_api.reset_mock()
@@ -471,5 +527,6 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                 req.get_response(self.ext_api)
                 self.mock_api.modify_pool.assert_called_once_with(
                     mock.ANY,
-                    pool['pool']['id']
+                    pool['pool']['id'],
+                    'host'
                 )

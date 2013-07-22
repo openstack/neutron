@@ -177,6 +177,12 @@ class NeutronManager(object):
 
             self.service_plugins[plugin_inst.get_plugin_type()] = plugin_inst
 
+            # search for possible agent notifiers declared in service plugin
+            # (needed by agent management extension)
+            if (hasattr(self.plugin, 'agent_notifiers') and
+                    hasattr(plugin_inst, 'agent_notifiers')):
+                self.plugin.agent_notifiers.update(plugin_inst.agent_notifiers)
+
             LOG.debug(_("Successfully loaded %(type)s plugin. "
                         "Description: %(desc)s"),
                       {"type": plugin_inst.get_plugin_type(),

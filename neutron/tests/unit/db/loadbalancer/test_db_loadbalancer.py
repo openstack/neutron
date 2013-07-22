@@ -16,14 +16,17 @@
 import contextlib
 import logging
 import os
-import testtools
 
+import mock
+from oslo.config import cfg
+import testtools
 import webob.exc
 
 from neutron.api.extensions import ExtensionMiddleware
 from neutron.api.extensions import PluginAwareExtensionManager
 from neutron.common import config
 from neutron import context
+import neutron.db.l3_db  # noqa
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 import neutron.extensions
 from neutron.extensions import loadbalancer
@@ -46,33 +49,18 @@ ETCDIR = os.path.join(ROOTDIR, 'etc')
 
 extensions_path = ':'.join(neutron.extensions.__path__)
 
+_subnet_id = "0c798ed8-33ba-11e2-8b28-000c291c4d14"
+
 
 def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-class LoadBalancerPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
+class LoadBalancerTestMixin(object):
     resource_prefix_map = dict(
         (k, constants.COMMON_PREFIXES[constants.LOADBALANCER])
         for k in loadbalancer.RESOURCE_ATTRIBUTE_MAP.keys()
     )
-
-    def setUp(self, core_plugin=None, lb_plugin=None):
-        service_plugins = {'lb_plugin_name': DB_LB_PLUGIN_KLASS}
-
-        super(LoadBalancerPluginDbTestCase, self).setUp(
-            service_plugins=service_plugins
-        )
-
-        self._subnet_id = "0c798ed8-33ba-11e2-8b28-000c291c4d14"
-
-        self.plugin = loadbalancer_plugin.LoadBalancerPlugin()
-        ext_mgr = PluginAwareExtensionManager(
-            extensions_path,
-            {constants.LOADBALANCER: self.plugin}
-        )
-        app = config.load_paste_app('extensions_test_app')
-        self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
     def _create_vip(self, fmt, name, pool_id, protocol, protocol_port,
                     admin_state_up, expected_res_status=None, **kwargs):
@@ -97,7 +85,7 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def _create_pool(self, fmt, name, lb_method, protocol, admin_state_up,
                      expected_res_status=None, **kwargs):
         data = {'pool': {'name': name,
-                         'subnet_id': self._subnet_id,
+                         'subnet_id': _subnet_id,
                          'lb_method': lb_method,
                          'protocol': protocol,
                          'admin_state_up': admin_state_up,
@@ -150,12 +138,6 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual(res.status_int, expected_res_status)
 
         return res
-
-    def _api_for_resource(self, resource):
-        if resource in ['networks', 'subnets', 'ports']:
-            return self.api
-        else:
-            return self.ext_api
 
     @contextlib.contextmanager
     def vip(self, fmt=None, name='vip1', pool=None, subnet=None,
@@ -270,7 +252,43 @@ class LoadBalancerPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                 self._delete('health_monitors', the_health_monitor['id'])
 
 
+class LoadBalancerPluginDbTestCase(LoadBalancerTestMixin,
+                                   test_db_plugin.NeutronDbPluginV2TestCase):
+    def setUp(self, core_plugin=None, lb_plugin=None):
+        service_plugins = {'lb_plugin_name': DB_LB_PLUGIN_KLASS}
+        super(LoadBalancerPluginDbTestCase, self).setUp(
+            service_plugins=service_plugins
+        )
+
+        self._subnet_id = _subnet_id
+
+        self.plugin = loadbalancer_plugin.LoadBalancerPlugin()
+
+        get_lbaas_agent_patcher = mock.patch(
+            'neutron.services.loadbalancer.agent_scheduler'
+            '.LbaasAgentSchedulerDbMixin.get_lbaas_agent_hosting_pool')
+        mock_lbaas_agent = mock.MagicMock()
+        get_lbaas_agent_patcher.start().return_value = mock_lbaas_agent
+        mock_lbaas_agent.__getitem__.return_value = {'host': 'host'}
+        self.addCleanup(mock.patch.stopall)
+
+        ext_mgr = PluginAwareExtensionManager(
+            extensions_path,
+            {constants.LOADBALANCER: self.plugin}
+        )
+        app = config.load_paste_app('extensions_test_app')
+        self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
+
+
 class TestLoadBalancer(LoadBalancerPluginDbTestCase):
+    def setUp(self):
+        cfg.CONF.set_override('driver_fqn',
+                              'neutron.services.loadbalancer.drivers.noop'
+                              '.noop_driver.NoopLbaaSDriver',
+                              group='LBAAS')
+        self.addCleanup(cfg.CONF.reset)
+        super(TestLoadBalancer, self).setUp()
+
     def test_create_vip(self, **extras):
         expected = {
             'name': 'vip1',

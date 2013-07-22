@@ -67,6 +67,7 @@ AGENT_TYPE_OVS = 'Open vSwitch agent'
 AGENT_TYPE_LINUXBRIDGE = 'Linux bridge agent'
 AGENT_TYPE_NEC = 'NEC plugin agent'
 AGENT_TYPE_L3 = 'L3 agent'
+AGENT_TYPE_LOADBALANCER = 'Loadbalancer agent'
 L2_AGENT_TOPIC = 'N/A'
 
 PAGINATION_INFINITE = 'infinite'
@@ -76,3 +77,4 @@ SORT_DIRECTION_DESC = 'desc'
 
 L3_AGENT_SCHEDULER_EXT_ALIAS = 'l3_agent_scheduler'
 DHCP_AGENT_SCHEDULER_EXT_ALIAS = 'dhcp_agent_scheduler'
+LBAAS_AGENT_SCHEDULER_EXT_ALIAS = 'lbaas_agent_scheduler'
