@@ -445,7 +445,7 @@ class TestOVSBridge(RyuAgentTestCase):
         ])
         self.assertEqual(mock_ofport.call_count, 0)
         self.assertEqual(mock_vif.call_count, 0)
-        self.assertEqual(vifport, None)
+        self.assertIsNone(vifport)
 
     def test_get_external_port_tunnel(self):
         with nested(
@@ -464,7 +464,7 @@ class TestOVSBridge(RyuAgentTestCase):
         ])
         self.assertEqual(mock_ofport.call_count, 0)
         self.assertEqual(mock_vif.call_count, 0)
-        self.assertEqual(vifport, None)
+        self.assertIsNone(vifport)
 
     def test_get_external_ports(self):
         with nested(
@@ -488,37 +488,59 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
 
         self.assertEqual(addr, '1.2.3.4')
 
+    def test_get_ip_from_nic(self):
+        mock_device = mock.Mock()
+        mock_device.addr.list = mock.Mock(
+            return_value=[{'ip_version': 6, 'cidr': '::ffff:1.2.3.4'},
+                          {'ip_version': 4, 'cidr': '1.2.3.4/8'}])
+        mock_ip_wrapper = mock.Mock()
+        mock_ip_wrapper.device = mock.Mock(return_value=mock_device)
+        with mock.patch(self._AGENT_NAME + '.ip_lib.IPWrapper',
+                        return_value=mock_ip_wrapper):
+            addr = self.mod_agent._get_ip_from_nic('eth0')
+
+        self.assertEqual(addr, '1.2.3.4')
+
+    def test_get_ip_from_nic_empty(self):
+        mock_device = mock.Mock()
+        mock_device.addr.list = mock.Mock(return_value=[])
+        mock_ip_wrapper = mock.Mock()
+        mock_ip_wrapper.device = mock.Mock(return_value=mock_device)
+        with mock.patch(self._AGENT_NAME + '.ip_lib.IPWrapper',
+                        return_value=mock_ip_wrapper):
+            addr = self.mod_agent._get_ip_from_nic('eth0')
+
+        self.assertIsNone(addr)
+
     def test_get_ip_ip(self):
         cfg_attrs = {'CONF.OVS.cfg_ip': '1.2.3.4',
                      'CONF.OVS.cfg_iface': 'eth0'}
-        netifs_attrs = {'AF_INET': 0,
-                        'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
-            mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
+            mock.patch(self._AGENT_NAME + '._get_ip_from_nic',
+                       return_value='10.0.0.1'),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
-        ) as (_cfg, mock_netifs, mock_myip):
+        ) as (_cfg, mock_nicip, mock_myip):
             ip = self.mod_agent._get_ip('cfg_ip', 'cfg_iface')
 
-        self.assertEqual(mock_netifs.ifaddresses.call_count, 0)
+        self.assertEqual(mock_nicip.call_count, 0)
         self.assertEqual(mock_myip.call_count, 0)
         self.assertEqual(ip, '1.2.3.4')
 
-    def test_get_ip_iface(self):
+    def test_get_ip_nic(self):
         cfg_attrs = {'CONF.OVS.cfg_ip': None,
                      'CONF.OVS.cfg_iface': 'eth0'}
-        netifs_attrs = {'AF_INET': 0,
-                        'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
-            mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
+            mock.patch(self._AGENT_NAME + '._get_ip_from_nic',
+                       return_value='10.0.0.1'),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
-        ) as (_cfg, mock_netifs, mock_myip):
+        ) as (_cfg, mock_nicip, mock_myip):
             ip = self.mod_agent._get_ip('cfg_ip', 'cfg_iface')
 
-        mock_netifs.ifaddresses.assert_has_calls([
+        mock_nicip.assert_has_calls([
             mock.call('eth0')
         ])
         self.assertEqual(mock_myip.call_count, 0)
@@ -527,17 +549,36 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
     def test_get_ip_myip(self):
         cfg_attrs = {'CONF.OVS.cfg_ip': None,
                      'CONF.OVS.cfg_iface': None}
-        netifs_attrs = {'AF_INET': 0,
-                        'ifaddresses.return_value': [[{'addr': '10.0.0.1'}]]}
         with nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
-            mock.patch(self._AGENT_NAME + '.netifaces', **netifs_attrs),
+            mock.patch(self._AGENT_NAME + '._get_ip_from_nic',
+                       return_value='10.0.0.1'),
             mock.patch(self._AGENT_NAME + '._get_my_ip',
                        return_value='172.16.0.1')
-        ) as (_cfg, mock_netifs, mock_myip):
+        ) as (_cfg, mock_nicip, mock_myip):
             ip = self.mod_agent._get_ip('cfg_ip', 'cfg_iface')
 
-        self.assertEqual(mock_netifs.ifaddresses.call_count, 0)
+        self.assertEqual(mock_nicip.call_count, 0)
+        mock_myip.assert_has_calls([
+            mock.call()
+        ])
+        self.assertEqual(ip, '172.16.0.1')
+
+    def test_get_ip_nic_myip(self):
+        cfg_attrs = {'CONF.OVS.cfg_ip': None,
+                     'CONF.OVS.cfg_iface': 'eth0'}
+        with nested(
+            mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
+            mock.patch(self._AGENT_NAME + '._get_ip_from_nic',
+                       return_value=None),
+            mock.patch(self._AGENT_NAME + '._get_my_ip',
+                       return_value='172.16.0.1')
+        ) as (_cfg, mock_nicip, mock_myip):
+            ip = self.mod_agent._get_ip('cfg_ip', 'cfg_iface')
+
+        mock_nicip.assert_has_calls([
+            mock.call('eth0')
+        ])
         mock_myip.assert_has_calls([
             mock.call()
         ])
