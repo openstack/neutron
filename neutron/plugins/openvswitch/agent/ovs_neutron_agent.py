@@ -782,6 +782,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                     details['physical_network'],
                                     details['segmentation_id'],
                                     details['admin_state_up'])
+
+                # update plugin about port status
+                self.plugin_rpc.update_device_up(self.context,
+                                                 device,
+                                                 self.agent_id)
             else:
                 LOG.debug(_("Device %s not defined on plugin"), device)
                 if (port and int(port.ofport) != -1):
@@ -801,6 +806,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                           {'device': device, 'e': e})
                 resync = True
                 continue
+
+            # update plugin about port status
+            self.plugin_rpc.update_device_up(self.context,
+                                             device,
+                                             self.agent_id)
         return resync
 
     def treat_devices_removed(self, devices):

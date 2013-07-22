@@ -15,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import itertools
+
 from neutron.common import topics
 
 from neutron.openstack.common import log as logging
@@ -31,16 +33,25 @@ def create_consumers(dispatcher, prefix, topic_details):
 
     :param dispatcher: The dispatcher to process the incoming messages.
     :param prefix: Common prefix for the plugin/agent message queues.
-    :param topic_details: A list of topics. Each topic has a name and a
-                          operation.
+    :param topic_details: A list of topics. Each topic has a name, an
+                          operation, and an optional host param keying the
+                          subscription to topic.host for plugin calls.
 
     :returns: A common Connection.
     """
 
     connection = rpc.create_connection(new=True)
-    for topic, operation in topic_details:
+    for details in topic_details:
+        topic, operation, node_name = itertools.islice(
+            itertools.chain(details, [None]), 3)
+
         topic_name = topics.get_topic_name(prefix, topic, operation)
         connection.create_consumer(topic_name, dispatcher, fanout=True)
+        if node_name:
+            node_topic_name = '%s.%s' % (topic_name, node_name)
+            connection.create_consumer(node_topic_name,
+                                       dispatcher,
+                                       fanout=False)
     connection.consume_in_thread()
     return connection
 

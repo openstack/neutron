@@ -1,0 +1,198 @@
+# Copyright (c) 2013 OpenStack Foundation.
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+# @author: Sylvain Afchain, eNovance SAS
+# @author: Francois Eleouet, Orange
+# @author: Mathieu Rohon, Orange
+
+from oslo.config import cfg
+
+from neutron.common import constants as const
+from neutron import context as n_context
+from neutron.db import api as db_api
+from neutron.openstack.common import log as logging
+from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers.l2pop import config  # noqa
+from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
+from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
+
+LOG = logging.getLogger(__name__)
+
+
+class L2populationMechanismDriver(api.MechanismDriver,
+                                  l2pop_db.L2populationDbMixin):
+
+    def initialize(self):
+        LOG.debug(_("Experimental L2 population driver"))
+
+    def _get_port_fdb_entries(self, port):
+        return [[port['mac_address'],
+                 ip['ip_address']] for ip in port['fixed_ips']]
+
+    def delete_port_precommit(self, context):
+        self.remove_fdb_entries = self._update_port_down(context)
+
+    def delete_port_postcommit(self, context):
+        self._notify_remove_fdb_entries(context,
+                                        self.remove_fdb_entries)
+
+    def _notify_remove_fdb_entries(self, context, fdb_entries):
+        rpc_ctx = n_context.get_admin_context_without_session()
+        l2pop_rpc.L2populationAgentNotify.remove_fdb_entries(
+            rpc_ctx, fdb_entries)
+
+    def update_port_postcommit(self, context):
+        port = context.current
+        orig = context.original
+
+        if port['status'] == orig['status']:
+            return
+
+        if port['status'] == const.PORT_STATUS_ACTIVE:
+            self._update_port_up(context)
+        elif port['status'] == const.PORT_STATUS_DOWN:
+            fdb_entries = self._update_port_down(context)
+            self._notify_remove_fdb_entries(context, fdb_entries)
+
+    def _update_port_up(self, context):
+        port_context = context.current
+        network_id = port_context['network_id']
+        agent_host = port_context['binding:host_id']
+        if not agent_host:
+            return
+
+        session = db_api.get_session()
+        agent = self.get_agent_by_host(session, agent_host)
+        if not agent:
+            return
+
+        agent_ip = self.get_agent_ip(agent)
+        if not agent_ip:
+            LOG.warning(_("Unable to retrieve the tunelling ip of agent %s"),
+                        agent_host)
+            return
+
+        segment = context.bound_segment
+        if not segment:
+            LOG.warning(_("Port %(port)s updated by agent %(agent)s "
+                          "isn't bound to any segment"),
+                        {'port': port_context['id'], 'agent': agent.host})
+            return
+
+        tunnel_types = self.get_agent_tunnel_types(agent)
+        if segment['network_type'] not in tunnel_types:
+            return
+
+        agent_ports = self.get_agent_network_port_count(session, agent_host,
+                                                        network_id)
+
+        rpc_ctx = n_context.get_admin_context_without_session()
+
+        other_fdb_entries = {network_id:
+                             {'segment_id': segment['segmentation_id'],
+                              'network_type': segment['network_type'],
+                              'ports': {agent_ip: []}}}
+
+        if agent_ports == 1 or (
+                self.get_agent_uptime(agent) < cfg.CONF.l2pop.agent_boot_time):
+            # First port plugged on current agent in this network,
+            # we have to provide it with the whole list of fdb entries
+            agent_fdb_entries = {network_id:
+                                 {'segment_id': segment['segmentation_id'],
+                                  'network_type': segment['network_type'],
+                                  'ports': {}}}
+            ports = agent_fdb_entries[network_id]['ports']
+
+            network_ports = self.get_network_ports(session, network_id)
+            for network_port in network_ports:
+                binding, agent = network_port
+                if agent.host == agent_host:
+                    continue
+
+                ip = self.get_agent_ip(agent)
+                if not ip:
+                    LOG.debug(_("Unable to retrieve the agent ip, check "
+                                "the agent %(agent_host)s configuration."),
+                              {'agent_host': agent.host})
+                    continue
+
+                agent_ports = ports.get(ip, [const.FLOODING_ENTRY])
+                agent_ports += self._get_port_fdb_entries(binding.port)
+                ports[ip] = agent_ports
+
+            # And notify other agents to add flooding entry
+            other_fdb_entries[network_id]['ports'][agent_ip].append(
+                const.FLOODING_ENTRY)
+
+            if ports.keys():
+                l2pop_rpc.L2populationAgentNotify.add_fdb_entries(
+                    rpc_ctx, agent_fdb_entries, agent_host)
+
+        # Notify other agents to add fdb rule for current port
+        fdb_entries = self._get_port_fdb_entries(port_context)
+        other_fdb_entries[network_id]['ports'][agent_ip] += fdb_entries
+
+        l2pop_rpc.L2populationAgentNotify.add_fdb_entries(rpc_ctx,
+                                                          other_fdb_entries)
+
+    def _update_port_down(self, context):
+        port_context = context.current
+        network_id = port_context['network_id']
+
+        agent_host = port_context['binding:host_id']
+        if not agent_host:
+            return
+
+        session = db_api.get_session()
+        agent = self.get_agent_by_host(session, agent_host)
+        if not agent:
+            return
+
+        agent_ip = self.get_agent_ip(agent)
+        if not agent_ip:
+            LOG.warning(_("Unable to retrieve the agent ip, check the agent "
+                          "configuration."))
+            return
+
+        segment = context.bound_segment
+        if not segment:
+            LOG.warning(_("Port %(port)s updated by agent %(agent)s "
+                          "isn't bound to any segment"),
+                        {'port': port_context['id'], 'agent': agent})
+            return
+
+        tunnel_types = self.get_agent_tunnel_types(agent)
+        if segment['network_type'] not in tunnel_types:
+            return
+
+        agent_ports = self.get_agent_network_port_count(session, agent_host,
+                                                        network_id)
+
+        other_fdb_entries = {network_id:
+                             {'segment_id': segment['segmentation_id'],
+                              'network_type': segment['network_type'],
+                              'ports': {agent_ip: []}}}
+
+        if agent_ports == 1:
+            # Agent is removing its last port in this network,
+            # other agents needs to be notified to delete their flooding entry.
+            other_fdb_entries[network_id]['ports'][agent_ip].append(
+                const.FLOODING_ENTRY)
+
+        # Notify other agents to remove fdb rule for current port
+        fdb_entries = self._get_port_fdb_entries(port_context)
+        other_fdb_entries[network_id]['ports'][agent_ip] += fdb_entries
+
+        return other_fdb_entries

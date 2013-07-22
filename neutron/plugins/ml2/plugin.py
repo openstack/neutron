@@ -519,8 +519,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             network = self.get_network(context, port['network_id'])
             mech_context = driver_context.PortContext(self, context, port,
                                                       network)
-            self._delete_port_binding(mech_context)
             self.mechanism_manager.delete_port_precommit(mech_context)
+            self._delete_port_binding(mech_context)
             self._delete_port_security_group_bindings(context, id)
             super(Ml2Plugin, self).delete_port(context, id)
 
@@ -532,3 +532,30 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # fact that an error occurred.
             pass
         self.notify_security_groups_member_updated(context, port)
+
+    def update_port_status(self, context, port_id, status):
+        updated = False
+        session = context.session
+        with session.begin(subtransactions=True):
+            port = db.get_port(session, port_id)
+            if not port:
+                LOG.warning(_("Port %(port)s updated up by agent not found"),
+                            {'port': port_id})
+                return False
+
+            if port.status != status:
+                original_port = self._make_port_dict(port)
+                port.status = status
+                updated_port = self._make_port_dict(port)
+                network = self.get_network(context,
+                                           original_port['network_id'])
+                mech_context = driver_context.PortContext(
+                    self, context, updated_port, network,
+                    original_port=original_port)
+                self.mechanism_manager.update_port_precommit(mech_context)
+                updated = True
+
+        if updated:
+            self.mechanism_manager.update_port_postcommit(mech_context)
+
+        return True
