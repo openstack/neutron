@@ -619,8 +619,8 @@ def delete_port(cluster, switch, port):
         do_request(HTTP_DELETE, uri, cluster=cluster)
     except exception.NotFound:
         LOG.exception(_("Port or Network not found"))
-        raise exception.PortNotFound(net_id=switch,
-                                     port_id=port)
+        raise exception.PortNotFoundOnNetwork(
+            net_id=switch, port_id=port)
     except NvpApiClient.NvpApiException:
         raise exception.NeutronException()
 
@@ -662,7 +662,8 @@ def get_port(cluster, network, port, relations=None):
         return do_request(HTTP_GET, uri, cluster=cluster)
     except exception.NotFound as e:
         LOG.error(_("Port or Network not found, Error: %s"), str(e))
-        raise exception.PortNotFound(port_id=port, net_id=network)
+        raise exception.PortNotFoundOnNetwork(
+            port_id=port, net_id=network)
 
 
 def _configure_extensions(lport_obj, mac_address, fixed_ips,
@@ -716,7 +717,8 @@ def update_port(cluster, lswitch_uuid, lport_uuid, neutron_port_id, tenant_id,
         return result
     except exception.NotFound as e:
         LOG.error(_("Port or Network not found, Error: %s"), str(e))
-        raise exception.PortNotFound(port_id=lport_uuid, net_id=lswitch_uuid)
+        raise exception.PortNotFoundOnNetwork(
+            port_id=lport_uuid, net_id=lswitch_uuid)
 
 
 def create_lport(cluster, lswitch_uuid, tenant_id, neutron_port_id,
@@ -878,7 +880,8 @@ def get_port_status(cluster, lswitch_id, port_id):
                        (lswitch_id, port_id), cluster=cluster)
     except exception.NotFound as e:
         LOG.error(_("Port not found, Error: %s"), str(e))
-        raise exception.PortNotFound(port_id=port_id, net_id=lswitch_id)
+        raise exception.PortNotFoundOnNetwork(
+            port_id=port_id, net_id=lswitch_id)
     if r['link_status_up'] is True:
         return constants.PORT_STATUS_ACTIVE
     else:
