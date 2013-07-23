@@ -92,6 +92,12 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                   {'module': __name__,
                    'name': self.__class__.__name__})
 
+        # Check whether we have a valid Nexus driver loaded
+        self.config_nexus = False
+        nexus_driver = cfg.CONF.CISCO.nexus_driver
+        if nexus_driver.endswith('CiscoNEXUSDriver'):
+            self.config_nexus = True
+
     def __getattribute__(self, name):
         """Delegate calls to OVS sub-plugin.
 
@@ -252,6 +258,9 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
 
     def _invoke_nexus_for_net_create(self, context, tenant_id, net_id,
                                      instance_id):
+        if not self.config_nexus:
+            return False
+
         net_dict = self.get_network(context, net_id)
         net_name = net_dict['name']
 
@@ -367,11 +376,12 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         """
         LOG.debug(_("delete_port() called"))
         port = self.get_port(context, id)
-        vlan_id = self._get_segmentation_id(port['network_id'])
-        n_args = [port['device_id'], vlan_id]
-        self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                       self._func_name(),
-                                       n_args)
+        if self.config_nexus:
+            vlan_id = self._get_segmentation_id(port['network_id'])
+            n_args = [port['device_id'], vlan_id]
+            self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                           self._func_name(),
+                                           n_args)
         try:
             args = [context, id]
             ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
