@@ -21,31 +21,11 @@ from sqlalchemy.orm import exc
 from neutron.db import api as db
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
-from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import network_models_v2
 from neutron.plugins.openvswitch import ovs_models_v2
 
 
 LOG = logging.getLogger(__name__)
-
-
-def create_vlanids():
-    """Prepopulates the vlan_bindings table."""
-    LOG.debug(_("create_vlanids() called"))
-    session = db.get_session()
-    try:
-        vlanid = session.query(network_models_v2.VlanID).one()
-    except exc.MultipleResultsFound:
-        pass
-    except exc.NoResultFound:
-        start = int(config.CISCO.vlan_start)
-        end = int(config.CISCO.vlan_end)
-        while start <= end:
-            vlanid = network_models_v2.VlanID(start)
-            session.add(vlanid)
-            start += 1
-        session.flush()
-    return
 
 
 def get_all_vlanids():
