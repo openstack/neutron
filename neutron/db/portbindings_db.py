@@ -23,11 +23,8 @@ from neutron.api.v2 import attributes
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import portbindings_base
 from neutron.extensions import portbindings
-from neutron.openstack.common import log as logging
-
-
-LOG = logging.getLogger(__name__)
 
 
 class PortBindingPort(model_base.BASEV2):
@@ -42,7 +39,7 @@ class PortBindingPort(model_base.BASEV2):
                             cascade='delete'))
 
 
-class PortBindingMixin(object):
+class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
     extra_binding_dict = None
 
     def _port_model_hook(self, context, original_model, query):
@@ -77,7 +74,7 @@ class PortBindingMixin(object):
         host = port_data.get(portbindings.HOST_ID)
         host_set = attributes.is_attr_set(host)
         if not host_set:
-            _extend_port_dict_binding_host(self, port, None)
+            self._extend_port_dict_binding_host(port, None)
             return
         with context.session.begin(subtransactions=True):
             bind_port = context.session.query(
@@ -87,7 +84,7 @@ class PortBindingMixin(object):
                                                     host=host))
             else:
                 bind_port.host = host
-        _extend_port_dict_binding_host(self, port, host)
+        self._extend_port_dict_binding_host(port, host)
 
     def get_port_host(self, context, port_id):
         with context.session.begin(subtransactions=True):
@@ -95,21 +92,22 @@ class PortBindingMixin(object):
                 PortBindingPort).filter_by(port_id=port_id).first()
             return bind_port and bind_port.host or None
 
+    def _extend_port_dict_binding_host(self, port_res, host):
+        super(PortBindingMixin, self).extend_port_dict_binding(
+            port_res, None)
+        port_res[portbindings.HOST_ID] = host
 
-def _extend_port_dict_binding_host(plugin, port_res, host):
-    port_res[portbindings.HOST_ID] = host
-    if plugin.extra_binding_dict:
-        port_res.update(plugin.extra_binding_dict)
-    return port_res
+    def extend_port_dict_binding(self, port_res, port_db):
+        host = (port_db.portbinding and port_db.portbinding.host or None)
+        self._extend_port_dict_binding_host(port_res, host)
 
 
 def _extend_port_dict_binding(plugin, port_res, port_db):
     if not isinstance(plugin, PortBindingMixin):
         return
-    host = (port_db.portbinding and port_db.portbinding.host or None)
-    return _extend_port_dict_binding_host(
-        plugin, port_res, host)
+    plugin.extend_port_dict_binding(port_res, port_db)
 
-    # Register dict extend functions for ports
+
+# Register dict extend functions for ports
 db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
     attributes.PORTS, [_extend_port_dict_binding])

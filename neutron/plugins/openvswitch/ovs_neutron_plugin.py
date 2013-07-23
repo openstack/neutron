@@ -263,7 +263,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         return self._aliases
 
     def __init__(self, configfile=None):
-        self.extra_binding_dict = {
+        self.base_binding_dict = {
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
             portbindings.CAPABILITIES: {
                 portbindings.CAP_PORT_FILTER:

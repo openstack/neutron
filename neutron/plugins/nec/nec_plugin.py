@@ -30,6 +30,7 @@ from neutron.db import dhcp_rpc_base
 from neutron.db import extraroute_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_rpc_base
+from neutron.db import portbindings_base
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
@@ -68,7 +69,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   sg_db_rpc.SecurityGroupServerRpcMixin,
                   agentschedulers_db.L3AgentSchedulerDbMixin,
                   agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                  packet_filter.PacketFilterMixin):
+                  packet_filter.PacketFilterMixin,
+                  portbindings_base.PortBindingBaseMixin):
     """NECPluginV2 controls an OpenFlow Controller.
 
     The Neutron NECPluginV2 maps L2 logical networks to L2 virtualized networks
@@ -98,9 +100,11 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         return self._aliases
 
     def __init__(self):
+
         ndb.initialize()
         self.ofc = ofc_manager.OFCManager()
-
+        self.base_binding_dict = self._get_base_binding_dict()
+        portbindings_base.register_port_dict_function()
         # Set the plugin default extension path
         # if no api_extensions_path is specified.
         if not config.CONF.api_extensions_path:
@@ -347,27 +351,32 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 reason = _("delete_ofc_tenant() failed due to %s") % exc
                 LOG.warn(reason)
 
-    def _extend_port_dict_binding(self, context, port):
-        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_OVS
-        port[portbindings.CAPABILITIES] = {
-            portbindings.CAP_PORT_FILTER:
-            'security-group' in self.supported_extension_aliases}
-        return port
+    def _get_base_binding_dict(self):
+        binding = {
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
+            portbindings.CAPABILITIES: {
+                portbindings.CAP_PORT_FILTER:
+                'security-group' in self.supported_extension_aliases}}
+        return binding
 
     def create_port(self, context, port):
         """Create a new port entry on DB, then try to activate it."""
         LOG.debug(_("NECPluginV2.create_port() called, port=%s ."), port)
+        port_data = port['port']
         with context.session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
             port = super(NECPluginV2, self).create_port(context, port)
+            self._process_portbindings_create_and_update(context,
+                                                         port_data,
+                                                         port)
             self._process_port_create_security_group(
                 context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
         self._update_resource_status(context, "port", port['id'],
                                      OperationalStatus.BUILD)
         self.activate_port_if_ready(context, port)
-        return self._extend_port_dict_binding(context, port)
+        return port
 
     def update_port(self, context, id, port):
         """Update port, and handle packetfilters associated with the port.
@@ -382,6 +391,9 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             old_port = super(NECPluginV2, self).get_port(context, id)
             new_port = super(NECPluginV2, self).update_port(context, id, port)
+            self._process_portbindings_create_and_update(context,
+                                                         port['port'],
+                                                         new_port)
             need_port_update_notify = self.update_security_group_on_port(
                 context, id, port, old_port, new_port)
 
@@ -397,7 +409,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             else:
                 self.deactivate_port(context, old_port)
 
-        return self._extend_port_dict_binding(context, new_port)
+        return new_port
 
     def delete_port(self, context, id, l3_port_check=True):
         """Delete port and packet_filters associated with the port."""
@@ -425,21 +437,6 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._delete_port_security_group_bindings(context, id)
             super(NECPluginV2, self).delete_port(context, id)
         self.notify_security_groups_member_updated(context, port)
-
-    def get_port(self, context, id, fields=None):
-        with context.session.begin(subtransactions=True):
-            port = super(NECPluginV2, self).get_port(context, id, fields)
-            self._extend_port_dict_binding(context, port)
-        return self._fields(port, fields)
-
-    def get_ports(self, context, filters=None, fields=None):
-        with context.session.begin(subtransactions=True):
-            ports = super(NECPluginV2, self).get_ports(context, filters,
-                                                       fields)
-            # TODO(amotoki) filter by security group
-            for port in ports:
-                self._extend_port_dict_binding(context, port)
-        return [self._fields(port, fields) for port in ports]
 
 
 class NECPluginV2AgentNotifierApi(proxy.RpcProxy,
