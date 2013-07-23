@@ -203,16 +203,10 @@ class VirtualPhysicalSwitchModelV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
 
     def _get_instance_host(self, tenant_id, instance_id):
         keystone = cred._creds_dictionary['keystone']
-        kc = keystone_client.Client(username=keystone['username'],
-                                    password=keystone['password'],
-                                    tenant_id=tenant_id,
-                                    auth_url=keystone['auth_url'])
-        tenant = kc.tenants.get(tenant_id)
-        tenant_name = tenant.name
 
         nc = nova_client.Client(keystone['username'],
                                 keystone['password'],
-                                tenant_name,
+                                keystone['tenant'],
                                 keystone['auth_url'],
                                 no_cache=True)
         serv = nc.servers.get(instance_id)
