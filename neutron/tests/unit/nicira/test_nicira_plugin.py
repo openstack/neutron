@@ -31,6 +31,7 @@ from neutron.extensions import securitygroup as secgrp
 from neutron import manager
 from neutron.openstack.common import uuidutils
 import neutron.plugins.nicira as nvp_plugin
+from neutron.plugins.nicira.dbexts import nicira_qos_db as qos_db
 from neutron.plugins.nicira.extensions import nvp_networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
 from neutron.plugins.nicira import NeutronPlugin
@@ -665,6 +666,15 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
             self.assertEqual(q['qos_queue']['max'], 44)
             self.assertEqual(q['qos_queue']['qos_marking'], 'untrusted')
             self.assertFalse(q['qos_queue']['default'])
+
+    def test_create_trusted_qos_queue(self):
+        with mock.patch.object(qos_db.LOG, 'info') as log:
+            with mock.patch.object(nvplib, 'do_request',
+                                   return_value={"uuid": "fake_queue"}):
+                with self.qos_queue(name='fake_lqueue', min=34, max=44,
+                                    qos_marking='trusted', default=False) as q:
+                    self.assertEqual(q['qos_queue']['dscp'], None)
+                    self.assertTrue(log.called)
 
     def test_create_qos_queue_name_exceeds_40_chars(self):
         name = 'this_is_a_queue_whose_name_is_longer_than_40_chars'
