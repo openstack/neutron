@@ -302,8 +302,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         if tunnel_ip == self.local_ip:
             return
         tun_name = '%s-%s' % (tunnel_type, tunnel_id)
-        self.tun_br.add_tunnel_port(tun_name, tunnel_ip, tunnel_type,
-                                    self.vxlan_udp_port)
+        self.tun_br.add_tunnel_port(tun_name, tunnel_ip, self.local_ip,
+                                    tunnel_type, self.vxlan_udp_port)
 
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
@@ -713,6 +713,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                         tun_name = '%s-%s' % (tunnel_type, tunnel_id)
                         self.tun_br.add_tunnel_port(tun_name,
                                                     tunnel['ip_address'],
+                                                    self.local_ip,
                                                     tunnel_type,
                                                     self.vxlan_udp_port)
         except Exception as e:

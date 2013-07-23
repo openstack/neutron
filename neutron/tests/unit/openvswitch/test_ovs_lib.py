@@ -185,7 +185,8 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_add_tunnel_port(self):
         pname = "tap99"
-        ip = "9.9.9.9"
+        local_ip = "1.1.1.1"
+        remote_ip = "9.9.9.9"
         ofport = "6"
 
         utils.execute(["ovs-vsctl", self.TO, "add-port",
@@ -193,7 +194,10 @@ class OVS_Lib_Test(base.BaseTestCase):
         utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
                        pname, "type=gre"], root_helper=self.root_helper)
         utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
-                       pname, "options:remote_ip=" + ip],
+                       pname, "options:remote_ip=" + remote_ip],
+                      root_helper=self.root_helper)
+        utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
+                       pname, "options:local_ip=" + local_ip],
                       root_helper=self.root_helper)
         utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
                        pname, "options:in_key=flow"],
@@ -206,7 +210,9 @@ class OVS_Lib_Test(base.BaseTestCase):
                       root_helper=self.root_helper).AndReturn(ofport)
         self.mox.ReplayAll()
 
-        self.assertEqual(self.br.add_tunnel_port(pname, ip), ofport)
+        self.assertEqual(
+            self.br.add_tunnel_port(pname, remote_ip, local_ip),
+            ofport)
         self.mox.VerifyAll()
 
     def test_add_patch_port(self):

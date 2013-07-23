@@ -165,7 +165,7 @@ class OVSBridge:
         flow_str = ",".join(flow_expr_arr)
         self.run_ofctl("del-flows", [flow_str])
 
-    def add_tunnel_port(self, port_name, remote_ip,
+    def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=constants.TYPE_GRE,
                         vxlan_udp_port=constants.VXLAN_UDP_PORT):
         self.run_vsctl(["add-port", self.br_name, port_name])
@@ -178,6 +178,8 @@ class OVSBridge:
                                       vxlan_udp_port)
         self.set_db_attribute("Interface", port_name, "options:remote_ip",
                               remote_ip)
+        self.set_db_attribute("Interface", port_name, "options:local_ip",
+                              local_ip)
         self.set_db_attribute("Interface", port_name, "options:in_key", "flow")
         self.set_db_attribute("Interface", port_name, "options:out_key",
                               "flow")
