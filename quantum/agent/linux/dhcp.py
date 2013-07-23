@@ -357,8 +357,8 @@ class Dnsmasq(DhcpLocalProcess):
 
         for port in self.network.ports:
             for alloc in port.fixed_ips:
-                name = '%s.%s' % (r.sub('-', alloc.ip_address),
-                                  self.conf.dhcp_domain)
+                name = 'host-%s.%s' % (r.sub('-', alloc.ip_address),
+                                       self.conf.dhcp_domain)
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, alloc.ip_address))
 

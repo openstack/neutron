@@ -540,12 +540,14 @@ tag:tag0,option:router""".lstrip()
 
     def test_reload_allocations(self):
         exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
-        exp_host_data = """
-00:00:80:aa:bb:cc,192-168-0-2.openstacklocal,192.168.0.2
-00:00:f3:aa:bb:cc,fdca-3ba5-a17a-4ba3--2.openstacklocal,fdca:3ba5:a17a:4ba3::2
-00:00:0f:aa:bb:cc,192-168-0-3.openstacklocal,192.168.0.3
-00:00:0f:aa:bb:cc,fdca-3ba5-a17a-4ba3--3.openstacklocal,fdca:3ba5:a17a:4ba3::3
-""".lstrip()
+        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
+                         '192.168.0.2\n'
+                         '00:00:f3:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--2.'
+                         'openstacklocal,fdca:3ba5:a17a:4ba3::2\n'
+                         '00:00:0f:aa:bb:cc,host-192-168-0-3.openstacklocal,'
+                         '192.168.0.3\n'
+                         '00:00:0f:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--3.'
+                         'openstacklocal,fdca:3ba5:a17a:4ba3::3\n').lstrip()
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
         exp_opt_data = "tag:tag0,option:router,192.168.0.1"
         fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
@@ -585,12 +587,15 @@ tag:tag1,option:classless-static-route,%s,%s""".lstrip() % (fake_v6,
 
     def test_reload_allocations_stale_pid(self):
         exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
-        exp_host_data = """
-00:00:80:aa:bb:cc,192-168-0-2.openstacklocal,192.168.0.2
-00:00:f3:aa:bb:cc,fdca-3ba5-a17a-4ba3--2.openstacklocal,fdca:3ba5:a17a:4ba3::2
-00:00:0f:aa:bb:cc,192-168-0-3.openstacklocal,192.168.0.3
-00:00:0f:aa:bb:cc,fdca-3ba5-a17a-4ba3--3.openstacklocal,fdca:3ba5:a17a:4ba3::3
-""".lstrip()
+        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
+                         '192.168.0.2\n'
+                         '00:00:f3:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--2.'
+                         'openstacklocal,fdca:3ba5:a17a:4ba3::2\n'
+                         '00:00:0f:aa:bb:cc,host-192-168-0-3.openstacklocal,'
+                         '192.168.0.3\n'
+                         '00:00:0f:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--3.'
+                         'openstacklocal,fdca:3ba5:a17a:4ba3::3\n').lstrip()
+        exp_host_data.replace('\n', '')
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
         exp_opt_data = "tag:tag0,option:router,192.168.0.1"
         fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
