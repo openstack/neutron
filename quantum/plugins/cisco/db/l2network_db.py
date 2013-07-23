@@ -34,25 +34,6 @@ def initialize():
     db.configure_db()
 
 
-def create_vlanids():
-    """Prepopulates the vlan_bindings table"""
-    LOG.debug(_("create_vlanids() called"))
-    session = db.get_session()
-    try:
-        vlanid = session.query(l2network_models.VlanID).one()
-    except exc.MultipleResultsFound:
-        pass
-    except exc.NoResultFound:
-        start = int(conf.VLAN_START)
-        end = int(conf.VLAN_END)
-        while start <= end:
-            vlanid = l2network_models.VlanID(start)
-            session.add(vlanid)
-            start += 1
-        session.flush()
-    return
-
-
 def get_all_vlanids():
     """Gets all the vlanids"""
     LOG.debug(_("get_all_vlanids() called"))

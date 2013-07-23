@@ -31,25 +31,6 @@ from quantum.plugins.openvswitch import ovs_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def create_vlanids():
-    """Prepopulates the vlan_bindings table"""
-    LOG.debug(_("create_vlanids() called"))
-    session = db.get_session()
-    try:
-        vlanid = session.query(network_models_v2.VlanID).one()
-    except exc.MultipleResultsFound:
-        pass
-    except exc.NoResultFound:
-        start = int(conf.VLAN_START)
-        end = int(conf.VLAN_END)
-        while start <= end:
-            vlanid = network_models_v2.VlanID(start)
-            session.add(vlanid)
-            start += 1
-        session.flush()
-    return
-
-
 def get_all_vlanids():
     """Gets all the vlanids"""
     LOG.debug(_("get_all_vlanids() called"))

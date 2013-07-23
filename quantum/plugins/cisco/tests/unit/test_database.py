@@ -474,18 +474,6 @@ class L2networkDBTest(base.BaseTestCase):
         self.teardown_vlanbinding()
         self.teardown_network()
 
-    def testm_test_vlanids(self):
-        """test vlanid methods"""
-        l2network_db.create_vlanids()
-        vlanids = l2network_db.get_all_vlanids()
-        self.assertTrue(len(vlanids) > 0)
-        vlanid = l2network_db.reserve_vlanid()
-        used = l2network_db.is_vlanid_used(vlanid)
-        self.assertTrue(used)
-        used = l2network_db.release_vlanid(vlanid)
-        self.assertFalse(used)
-        #counting on default teardown here to clear db
-
     def teardown_network(self):
         """tearDown Network table"""
         LOG.debug("Tearing Down Network")
