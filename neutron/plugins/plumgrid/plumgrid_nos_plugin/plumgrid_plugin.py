@@ -46,7 +46,7 @@ nos_server_opts = [
                help=_("PLUMgrid NOS admin password")),
     cfg.IntOpt('servertimeout', default=5,
                help=_("PLUMgrid NOS server timeout")),
-    cfg.IntOpt('topologyname', default='t1',
+    cfg.StrOpt('topologyname', default='t1',
                help=_("PLUMgrid NOS topology name")), ]
 
 
