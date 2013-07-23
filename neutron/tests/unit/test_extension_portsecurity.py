@@ -23,7 +23,6 @@ from neutron.db import securitygroups_db
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import securitygroup as ext_sg
 from neutron.manager import NeutronManager
-from neutron import policy
 from neutron.tests.unit import test_db_plugin
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.test_extension_portsecurity.'
@@ -53,11 +52,6 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     """
 
     supported_extension_aliases = ["security-group", "port-security"]
-    port_security_enabled_create = "create_port:port_security_enabled"
-    port_security_enabled_update = "update_port:port_security_enabled"
-
-    def _enforce_set_auth(self, context, resource, action):
-        return policy.enforce(context, action, resource)
 
     def create_network(self, context, network):
         tenant_id = self._get_tenant_id_for_create(context, network['network'])
@@ -90,9 +84,6 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._fields(net, fields)
 
     def create_port(self, context, port):
-        if attr.is_attr_set(port['port'][psec.PORTSECURITY]):
-            self._enforce_set_auth(context, port,
-                                   self.port_security_enabled_create)
         p = port['port']
         with context.session.begin(subtransactions=True):
             p[ext_sg.SECURITYGROUPS] = self._get_security_groups_on_port(
@@ -123,8 +114,6 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return port['port']
 
     def update_port(self, context, id, port):
-        self._enforce_set_auth(context, port,
-                               self.port_security_enabled_update)
         delete_security_groups = self._check_update_deletes_security_groups(
             port)
         has_security_groups = self._check_update_has_security_groups(port)
