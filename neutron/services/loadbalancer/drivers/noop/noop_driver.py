@@ -90,6 +90,10 @@ class NoopLbaaSDriver(abstract_driver.LoadBalancerAbstractDriver):
         pass
 
     @log.log
+    def delete_health_monitor(self, context, health_monitor):
+        self.plugin._delete_db_health_monitor(context, health_monitor["id"])
+
+    @log.log
     def create_pool_health_monitor(self, context,
                                    health_monitor, pool_id):
         pass

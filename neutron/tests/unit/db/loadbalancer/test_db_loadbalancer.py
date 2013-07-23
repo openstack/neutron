@@ -859,10 +859,18 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
 
     def test_delete_healthmonitor(self):
         with self.health_monitor(no_delete=True) as monitor:
+            ctx = context.get_admin_context()
+            qry = ctx.session.query(ldb.HealthMonitor)
+            qry = qry.filter_by(id=monitor['health_monitor']['id'])
+            self.assertIsNotNone(qry.first())
+
             req = self.new_delete_request('health_monitors',
                                           monitor['health_monitor']['id'])
             res = req.get_response(self.ext_api)
             self.assertEqual(res.status_int, 204)
+            qry = ctx.session.query(ldb.HealthMonitor)
+            qry = qry.filter_by(id=monitor['health_monitor']['id'])
+            self.assertIsNone(qry.first())
 
     def test_delete_healthmonitor_cascade_deletion_of_associations(self):
         with self.health_monitor(type='HTTP', no_delete=True) as monitor:
