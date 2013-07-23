@@ -1751,32 +1751,10 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             else:
                 raise l3.RouterInterfaceNotFoundForSubnet(router_id=router_id,
                                                           subnet_id=subnet_id)
-        results = nvplib.query_lswitch_lports(
-            self.cluster, '*', relations="LogicalPortAttachment",
-            filters={'tag': port_id, 'tag_scope': 'q_port_id'})
-        lrouter_port_id = None
-        if results:
-            lport = results[0]
-            attachment_data = lport['_relations'].get('LogicalPortAttachment')
-            lrouter_port_id = (attachment_data and
-                               attachment_data.get('peer_port_uuid'))
-        else:
-            LOG.warning(_("The port %(port_id)s, connected to the router "
-                          "%(router_id)s was not found on the NVP backend"),
-                        {'port_id': port_id, 'router_id': router_id})
         # Finally remove the data from the Neutron DB
         # This will also destroy the port on the logical switch
         info = super(NvpPluginV2, self).remove_router_interface(
             context, router_id, interface_info)
-        # Destroy router port (no need to unplug the attachment)
-        # FIXME(salvatore-orlando): In case of failures in the Neutron plugin
-        # this migth leave a dangling port. We perform the operation here
-        # to leverage validation performed in the base class
-        if not lrouter_port_id:
-            LOG.warning(_("Unable to find NVP logical router port for "
-                          "Neutron port id:%s. Was this port ever paired "
-                          "with a logical router?"), port_id)
-            return info
 
         # Ensure the connection to the 'metadata access network'
         # is removed  (with the network) if this the last subnet
@@ -1798,12 +1776,10 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self.cluster, router_id, "NoSourceNatRule",
                 max_num_expected=1, min_num_expected=0,
                 destination_ip_addresses=subnet['cidr'])
-            nvplib.delete_router_lport(self.cluster,
-                                       router_id, lrouter_port_id)
         except NvpApiClient.ResourceNotFound:
             raise nvp_exc.NvpPluginException(
-                err_msg=(_("Logical router port resource %s not found "
-                           "on NVP platform"), lrouter_port_id))
+                err_msg=(_("Logical router resource %s not found "
+                           "on NVP platform") % router_id))
         except NvpApiClient.NvpApiException:
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Unable to update logical router"
