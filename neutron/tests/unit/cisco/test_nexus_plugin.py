@@ -15,23 +15,32 @@
 
 import mock
 
+from oslo.config import cfg
+
 from neutron.db import api as db
+from neutron.extensions import providernet as provider
 from neutron.openstack.common import importutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as cisco_exc
+from neutron.plugins.cisco.db import network_db_v2 as cdb
 from neutron.plugins.cisco.nexus import cisco_nexus_plugin_v2
 from neutron.tests import base
 
 
 NEXUS_IP_ADDRESS = '1.1.1.1'
-NEXUS_USERNAME = 'username'
-NEXUS_PASSWORD = 'password'
-HOSTNAME = 'testhost'
-INSTANCE = 'testvm'
-NEXUS_PORTS = '1/10'
+HOSTNAME1 = 'testhost1'
+HOSTNAME2 = 'testhost2'
+INSTANCE1 = 'testvm1'
+INSTANCE2 = 'testvm2'
+NEXUS_PORT1 = '1/10'
+NEXUS_PORT2 = '1/20'
 NEXUS_SSH_PORT = '22'
 NEXUS_DRIVER = ('neutron.plugins.cisco.nexus.'
                 'cisco_nexus_network_driver_v2.CiscoNEXUSDriver')
+NET_ATTRS = [const.NET_ID,
+             const.NET_NAME,
+             const.NET_VLAN_NAME,
+             const.NET_VLAN_ID]
 
 
 class TestCiscoNexusPlugin(base.BaseTestCase):
@@ -44,28 +53,56 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         self.net_id = 7
         self.vlan_name = "q-" + str(self.net_id) + "vlan"
         self.vlan_id = 267
+        self.second_tenant_id = "test_tenant_2"
         self.second_net_name = "test_network_cisco2"
         self.second_net_id = 5
         self.second_vlan_name = "q-" + str(self.second_net_id) + "vlan"
         self.second_vlan_id = 265
-        self._nexus_switches = {
-            (NEXUS_IP_ADDRESS, HOSTNAME): NEXUS_PORTS,
-            (NEXUS_IP_ADDRESS, 'ssh_port'): NEXUS_SSH_PORT,
+        self.attachment1 = {
+            const.TENANT_ID: self.tenant_id,
+            const.INSTANCE_ID: INSTANCE1,
+            const.HOST_NAME: HOSTNAME1,
         }
-        self._hostname = HOSTNAME
+        self.attachment2 = {
+            const.TENANT_ID: self.second_tenant_id,
+            const.INSTANCE_ID: INSTANCE2,
+            const.HOST_NAME: HOSTNAME2,
+        }
+        self.network1 = {
+            const.NET_ID: self.net_id,
+            const.NET_NAME: self.net_name,
+            const.NET_VLAN_NAME: self.vlan_name,
+            const.NET_VLAN_ID: self.vlan_id,
+        }
+        self.network2 = {
+            const.NET_ID: self.second_net_id,
+            const.NET_NAME: self.second_net_name,
+            const.NET_VLAN_NAME: self.second_vlan_name,
+            const.NET_VLAN_ID: self.second_vlan_id,
+        }
+        self.providernet = {
+            const.NET_ID: 9,
+            const.NET_NAME: 'pnet1',
+            const.NET_VLAN_NAME: 'p-300',
+            const.NET_VLAN_ID: 300,
+            provider.NETWORK_TYPE: 'vlan',
+            provider.PHYSICAL_NETWORK: self.net_name + '200:299',
+            provider.SEGMENTATION_ID: 300,
+        }
 
         def new_nexus_init(self):
             self._client = importutils.import_object(NEXUS_DRIVER)
-            self._nexus_ip = NEXUS_IP_ADDRESS
-            self._nexus_username = NEXUS_USERNAME
-            self._nexus_password = NEXUS_PASSWORD
-            self._nexus_ports = NEXUS_PORTS
-            self._nexus_ssh_port = NEXUS_SSH_PORT
-            self.credentials = {
-                self._nexus_ip: {
-                    'username': self._nexus_username,
-                    'password': self._nexus_password
-                }
+            self._client.nexus_switches = {
+                (NEXUS_IP_ADDRESS, HOSTNAME1): NEXUS_PORT1,
+                (NEXUS_IP_ADDRESS, 'ssh_port'): NEXUS_SSH_PORT,
+                (NEXUS_IP_ADDRESS, HOSTNAME2): NEXUS_PORT2,
+                (NEXUS_IP_ADDRESS, 'ssh_port'): NEXUS_SSH_PORT,
+            }
+            self._client.credentials = {
+                NEXUS_IP_ADDRESS: {
+                    'username': 'admin',
+                    'password': 'pass1234'
+                },
             }
             db.configure_db()
 
@@ -78,51 +115,69 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         with mock.patch.object(cisco_nexus_plugin_v2.NexusPlugin,
                                '__init__', new=new_nexus_init):
             self._cisco_nexus_plugin = cisco_nexus_plugin_v2.NexusPlugin()
-            self._cisco_nexus_plugin._nexus_switches = self._nexus_switches
 
         self.addCleanup(self.patch_obj.stop)
 
     def test_create_networks(self):
         """Tests creation of two new Virtual Networks."""
-        tenant_id = self.tenant_id
-        net_name = self.net_name
-        net_id = self.net_id
-        vlan_name = self.vlan_name
-        vlan_id = self.vlan_id
-        second_net_name = self.second_net_name
-        second_net_id = self.second_net_id
-        second_vlan_name = self.second_vlan_name
-        second_vlan_id = self.second_vlan_id
+        new_net_dict = self._cisco_nexus_plugin.create_network(
+            self.network1, self.attachment1)
+        for attr in NET_ATTRS:
+            self.assertEqual(new_net_dict[attr], self.network1[attr])
 
         new_net_dict = self._cisco_nexus_plugin.create_network(
-            tenant_id, net_name, net_id,
-            vlan_name, vlan_id, self._hostname, INSTANCE)
-        self.assertEqual(new_net_dict[const.NET_ID], net_id)
-        self.assertEqual(new_net_dict[const.NET_NAME], self.net_name)
-        self.assertEqual(new_net_dict[const.NET_VLAN_NAME], self.vlan_name)
-        self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.vlan_id)
+            self.network2, self.attachment1)
+        for attr in NET_ATTRS:
+            self.assertEqual(new_net_dict[attr], self.network2[attr])
 
-        new_net_dict = self._cisco_nexus_plugin.create_network(
-            tenant_id, second_net_name, second_net_id,
-            second_vlan_name, second_vlan_id, self._hostname,
-            INSTANCE)
+    def test_create_providernet(self):
+        with mock.patch.object(cdb, 'is_provider_vlan',
+                               return_value=True) as mock_db:
+            new_net_dict = self._cisco_nexus_plugin.create_network(
+                self.providernet, self.attachment1)
+            mock_db.assert_called_once()
+            for attr in NET_ATTRS:
+                self.assertEqual(new_net_dict[attr], self.providernet[attr])
 
-        self.assertEqual(new_net_dict[const.NET_ID], second_net_id)
-        self.assertEqual(new_net_dict[const.NET_NAME], self.second_net_name)
-        self.assertEqual(new_net_dict[const.NET_VLAN_NAME],
-                         self.second_vlan_name)
-        self.assertEqual(new_net_dict[const.NET_VLAN_ID], self.second_vlan_id)
+    def test_create_provider_vlan_network_cfg_auto_man(self):
+        cfg.CONF.set_override('provider_vlan_auto_create', True, 'CISCO')
+        cfg.CONF.set_override('provider_vlan_auto_trunk', False, 'CISCO')
+        self.addCleanup(cfg.CONF.reset)
+        with mock.patch.object(cdb, 'is_provider_vlan', return_value=True):
+            new_net_dict = self._cisco_nexus_plugin.create_network(
+                self.providernet, self.attachment1)
+            for attr in NET_ATTRS:
+                self.assertEqual(new_net_dict[attr], self.providernet[attr])
+
+    def test_create_provider_vlan_network_cfg_man_auto(self):
+        cfg.CONF.set_override('provider_vlan_auto_create', False, 'CISCO')
+        cfg.CONF.set_override('provider_vlan_auto_trunk', True, 'CISCO')
+        self.addCleanup(cfg.CONF.reset)
+        with mock.patch.object(cdb, 'is_provider_vlan', return_value=True):
+            new_net_dict = self._cisco_nexus_plugin.create_network(
+                self.providernet, self.attachment1)
+            for attr in NET_ATTRS:
+                self.assertEqual(new_net_dict[attr], self.providernet[attr])
+
+    def test_create_provider_vlan_network_cfg_man_man(self):
+        cfg.CONF.set_override('provider_vlan_auto_create', False, 'CISCO')
+        cfg.CONF.set_override('provider_vlan_auto_trunk', False, 'CISCO')
+        self.addCleanup(cfg.CONF.reset)
+        with mock.patch.object(cdb, 'is_provider_vlan', return_value=True):
+            new_net_dict = self._cisco_nexus_plugin.create_network(
+                self.providernet, self.attachment1)
+            for attr in NET_ATTRS:
+                self.assertEqual(new_net_dict[attr], self.providernet[attr])
 
     def test_nexus_delete_port(self):
         """Test deletion of a vlan."""
         self._cisco_nexus_plugin.create_network(
-            self.tenant_id, self.net_name, self.net_id, self.vlan_name,
-            self.vlan_id, self._hostname, INSTANCE)
+            self.network1, self.attachment1)
 
         expected_instance_id = self._cisco_nexus_plugin.delete_port(
-            INSTANCE, self.vlan_id)
+            INSTANCE1, self.vlan_id)
 
-        self.assertEqual(expected_instance_id, INSTANCE)
+        self.assertEqual(expected_instance_id, INSTANCE1)
 
     def test_nexus_add_remove_router_interface(self):
         """Tests addition of a router interface."""

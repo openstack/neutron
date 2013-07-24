@@ -29,7 +29,7 @@ from neutron.db import models_v2
 from neutron.openstack.common import importutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as cexc
-from neutron.plugins.cisco.common import config  # noqa
+from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import network_db_v2 as cdb
 
 LOG = logging.getLogger(__name__)

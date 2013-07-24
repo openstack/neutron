@@ -16,7 +16,7 @@
 #
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
 
 from neutron.db import model_base
 from neutron.openstack.common import uuidutils
@@ -82,3 +82,15 @@ class Credential(model_base.BASEV2):
                                                   self.credential_name,
                                                   self.user_name,
                                                   self.password)
+
+
+class ProviderNetwork(model_base.BASEV2):
+    """Represents networks that were created as provider networks."""
+
+    __tablename__ = 'cisco_provider_networks'
+
+    network_id = Column(String(36),
+                        ForeignKey('networks.id', ondelete="CASCADE"),
+                        primary_key=True)
+    network_type = Column(String(255), nullable=False)
+    segmentation_id = Column(Integer, nullable=False)

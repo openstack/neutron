@@ -34,6 +34,14 @@ cisco_plugins_opts = [
 cisco_opts = [
     cfg.StrOpt('vlan_name_prefix', default='q-',
                help=_("VLAN Name prefix")),
+    cfg.StrOpt('provider_vlan_name_prefix', default='p-',
+               help=_("VLAN Name prefix for provider vlans")),
+    cfg.BoolOpt('provider_vlan_auto_create', default=True,
+                help='Provider VLANs are automatically created as needed '
+                'on the Nexus switch'),
+    cfg.BoolOpt('provider_vlan_auto_trunk', default=True,
+                help='Provider VLANs are automatically trunked as needed '
+                'on the ports of the Nexus switch'),
     cfg.BoolOpt('svi_round_robin', default=False,
                 help=_("Distribute SVI interfaces over all switches")),
     cfg.StrOpt('model_class',

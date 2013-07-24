@@ -18,6 +18,7 @@ import inspect
 import logging
 import mock
 
+from oslo.config import cfg
 import webob.exc as wexc
 
 from neutron.api.v2 import base
@@ -25,6 +26,7 @@ from neutron.common import exceptions as q_exc
 from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import l3_db
+from neutron.extensions import providernet as provider
 from neutron.manager import NeutronManager
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
@@ -519,6 +521,16 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                           test_db_plugin.TestNetworksV2):
 
+    def setUp(self):
+        self.physnet = 'testphys1'
+        self.vlan_range = '100:199'
+        phys_vrange = ':'.join([self.physnet, self.vlan_range])
+        cfg.CONF.set_override('tenant_network_type', 'vlan', 'OVS')
+        cfg.CONF.set_override('network_vlan_ranges', [phys_vrange], 'OVS')
+        self.addCleanup(cfg.CONF.reset)
+
+        super(TestCiscoNetworksV2, self).setUp()
+
     def test_create_networks_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
 
@@ -565,6 +577,24 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                 res,
                 'networks',
                 wexc.HTTPInternalServerError.code)
+
+    def test_create_provider_vlan_network(self):
+        provider_attrs = {provider.NETWORK_TYPE: 'vlan',
+                          provider.PHYSICAL_NETWORK: self.physnet,
+                          provider.SEGMENTATION_ID: '1234'}
+        arg_list = tuple(provider_attrs.keys())
+        res = self._create_network(self.fmt, 'pvnet1', True,
+                                   arg_list=arg_list, **provider_attrs)
+        net = self.deserialize(self.fmt, res)
+        expected = [('name', 'pvnet1'),
+                    ('admin_state_up', True),
+                    ('status', 'ACTIVE'),
+                    ('shared', False),
+                    (provider.NETWORK_TYPE, 'vlan'),
+                    (provider.PHYSICAL_NETWORK, self.physnet),
+                    (provider.SEGMENTATION_ID, 1234)]
+        for k, v in expected:
+            self.assertEqual(net['network'][k], v)
 
 
 class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,

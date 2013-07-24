@@ -26,7 +26,9 @@ import sys
 from novaclient.v1_1 import client as nova_client
 from oslo.config import cfg
 
+from neutron.api.v2 import attributes
 from neutron.db import api as db_api
+from neutron.extensions import providernet as provider
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import importutils
 from neutron.plugins.cisco.common import cisco_constants as const
@@ -49,7 +51,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
     """
     MANAGE_STATE = True
     __native_bulk_support = True
-    supported_extension_aliases = []
+    supported_extension_aliases = ["provider"]
     _plugins = {}
     _methods_to_delegate = ['create_network_bulk',
                             'get_network', 'get_networks',
@@ -202,6 +204,15 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
 
         return host
 
+    def _get_provider_vlan_id(self, network):
+        if (all(attributes.is_attr_set(network.get(attr))
+                for attr in (provider.NETWORK_TYPE,
+                             provider.PHYSICAL_NETWORK,
+                             provider.SEGMENTATION_ID))
+            and
+                network[provider.NETWORK_TYPE] == const.NETWORK_TYPE_VLAN):
+            return network[provider.SEGMENTATION_ID]
+
     def create_network(self, context, network):
         """Create network.
 
@@ -209,10 +220,21 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         plugins.
         """
         LOG.debug(_("create_network() called"))
+        provider_vlan_id = self._get_provider_vlan_id(network[const.NETWORK])
         args = [context, network]
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
                                                     args)
+        # The vswitch plugin did all the verification. If it's a provider
+        # vlan network, save it for the nexus plugin to use later.
+        if provider_vlan_id:
+            network_id = ovs_output[0][const.NET_ID]
+            cdb.add_provider_network(network_id,
+                                     const.NETWORK_TYPE_VLAN,
+                                     provider_vlan_id)
+            LOG.debug(_("provider network added to DB: %(network_id)s, "
+                        "%(vlan_id)s"), {'network_id': network_id,
+                                         'vlan_id': provider_vlan_id})
         return ovs_output[0]
 
     def update_network(self, context, id, network):
@@ -230,6 +252,13 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         provider attribute, so it is not supported by this method.
         """
         LOG.debug(_("update_network() called"))
+
+        # We can only support updating of provider attributes if all the
+        # configured sub-plugins support it. Currently we have no method
+        # in place for checking whether a sub-plugin supports it,
+        # so assume not.
+        provider._raise_if_updates_provider_attributes(network['network'])
+
         args = [context, id, network]
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
@@ -246,6 +275,8 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
                                                     args)
+        if cdb.remove_provider_network(id):
+            LOG.debug(_("provider network removed from DB: %s"), id)
         return ovs_output[0]
 
     def get_network(self, context, id, fields=None):
@@ -261,22 +292,20 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         if not self.config_nexus:
             return False
 
-        net_dict = self.get_network(context, net_id)
-        net_name = net_dict['name']
-
+        network = self.get_network(context, net_id)
         vlan_id = self._get_segmentation_id(net_id)
-        host = self._get_instance_host(tenant_id, instance_id)
-
-        # Trunk segmentation id for only this host
         vlan_name = conf.CISCO.vlan_name_prefix + str(vlan_id)
-        n_args = [tenant_id, net_name, net_id,
-                  vlan_name, vlan_id, host, instance_id]
-        nexus_output = self._invoke_plugin_per_device(
+        network[const.NET_VLAN_ID] = vlan_id
+        network[const.NET_VLAN_NAME] = vlan_name
+        attachment = {
+            const.TENANT_ID: tenant_id,
+            const.INSTANCE_ID: instance_id,
+            const.HOST_NAME: self._get_instance_host(tenant_id, instance_id),
+        }
+        self._invoke_plugin_per_device(
             const.NEXUS_PLUGIN,
             'create_network',
-            n_args)
-
-        return nexus_output
+            [network, attachment])
 
     @staticmethod
     def _should_call_create_net(device_owner, instance_id):

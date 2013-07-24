@@ -79,6 +79,11 @@ class CredentialAlreadyExists(exceptions.NeutronException):
                 "for tenant %(tenant_id)s")
 
 
+class ProviderNetworkExists(exceptions.NeutronException):
+    """Provider network already exists."""
+    message = _("Provider network %s already exists")
+
+
 class NexusComputeHostNotConfigured(exceptions.NeutronException):
     """Connection to compute host is not configured."""
     message = _("Connection to %(host)s is not configured.")

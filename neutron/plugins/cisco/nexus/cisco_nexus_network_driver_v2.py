@@ -26,8 +26,10 @@ import logging
 from ncclient import manager
 
 from neutron.openstack.common import excutils
+from neutron.plugins.cisco.common import cisco_constants as const
+from neutron.plugins.cisco.common import cisco_credentials_v2 as cred
 from neutron.plugins.cisco.common import cisco_exceptions as cexc
-from neutron.plugins.cisco.db import network_db_v2 as cdb
+from neutron.plugins.cisco.common import config as conf
 from neutron.plugins.cisco.db import nexus_db_v2
 from neutron.plugins.cisco.nexus import cisco_nexus_snippets as snipp
 
@@ -37,13 +39,15 @@ LOG = logging.getLogger(__name__)
 class CiscoNEXUSDriver():
     """Nexus Driver Main Class."""
     def __init__(self):
+        self.nexus_switches = conf.get_nexus_dictionary()
+        self.credentials = {}
         self.connections = {}
 
-    def _edit_config(self, mgr, target='running', config='',
+    def _edit_config(self, nexus_host, target='running', config='',
                      allowed_exc_strs=None):
         """Modify switch config for a target config type.
 
-        :param mgr: NetConf client manager
+        :param nexus_host: IP address of switch to configure
         :param target: Target config type
         :param config: Configuration string in XML format
         :param allowed_exc_strs: Exceptions which have any of these strings
@@ -55,6 +59,7 @@ class CiscoNEXUSDriver():
         """
         if not allowed_exc_strs:
             allowed_exc_strs = []
+        mgr = self.nxos_connect(nexus_host)
         try:
             mgr.edit_config(target, config=config)
         except Exception as e:
@@ -66,12 +71,31 @@ class CiscoNEXUSDriver():
                 # the original ncclient exception.
                 raise cexc.NexusConfigFailed(config=config, exc=e)
 
-    def nxos_connect(self, nexus_host, nexus_ssh_port, nexus_user,
-                     nexus_password):
+    def get_credential(self, nexus_ip):
+        if nexus_ip not in self.credentials:
+            nexus_username = cred.Store.get_username(nexus_ip)
+            nexus_password = cred.Store.get_password(nexus_ip)
+            self.credentials[nexus_ip] = {
+                const.USERNAME: nexus_username,
+                const.PASSWORD: nexus_password
+            }
+        return self.credentials[nexus_ip]
+
+    def get_switch_and_port_id(self, host_name):
+        for switch_ip, attr in self.nexus_switches:
+            if str(attr) == host_name:
+                return switch_ip, self.nexus_switches[switch_ip, attr]
+        return None, None
+
+    def nxos_connect(self, nexus_host):
         """Make SSH connection to the Nexus Switch."""
         if getattr(self.connections.get(nexus_host), 'connected', None):
             return self.connections[nexus_host]
 
+        nexus_ssh_port = int(self.nexus_switches[nexus_host, 'ssh_port'])
+        nexus_creds = self.get_credential(nexus_host)
+        nexus_user = nexus_creds[const.USERNAME]
+        nexus_password = nexus_creds[const.PASSWORD]
         try:
             man = manager.connect(host=nexus_host,
                                   port=nexus_ssh_port,
@@ -93,11 +117,11 @@ class CiscoNEXUSDriver():
         conf_xml_snippet = snipp.EXEC_CONF_SNIPPET % (cutomized_config)
         return conf_xml_snippet
 
-    def enable_vlan(self, mgr, vlanid, vlanname):
+    def create_vlan(self, nexus_host, vlanid, vlanname):
         """Create a VLAN on Nexus Switch given the VLAN ID and Name."""
         confstr = self.create_xml_snippet(
             snipp.CMD_VLAN_CONF_SNIPPET % (vlanid, vlanname))
-        self._edit_config(mgr, target='running', config=confstr)
+        self._edit_config(nexus_host, target='running', config=confstr)
 
         # Enable VLAN active and no-shutdown states. Some versions of
         # Nexus switch do not allow state changes for the extended VLAN
@@ -109,143 +133,77 @@ class CiscoNEXUSDriver():
             try:
                 confstr = self.create_xml_snippet(snippet % vlanid)
                 self._edit_config(
-                    mgr,
+                    nexus_host,
                     target='running',
                     config=confstr,
                     allowed_exc_strs=["Can't modify state for extended",
                                       "Command is only allowed on VLAN"])
             except cexc.NexusConfigFailed:
                 with excutils.save_and_reraise_exception():
-                    self.disable_vlan(mgr, vlanid)
+                    self.delete_vlan(nexus_host, vlanid)
 
-    def disable_vlan(self, mgr, vlanid):
+    def delete_vlan(self, nexus_host, vlanid):
         """Delete a VLAN on Nexus Switch given the VLAN ID."""
         confstr = snipp.CMD_NO_VLAN_CONF_SNIPPET % vlanid
         confstr = self.create_xml_snippet(confstr)
-        self._edit_config(mgr, target='running', config=confstr)
+        self._edit_config(nexus_host, target='running', config=confstr)
 
-    def enable_port_trunk(self, mgr, interface):
+    def enable_port_trunk(self, nexus_host, interface):
         """Enable trunk mode an interface on Nexus Switch."""
         confstr = snipp.CMD_PORT_TRUNK % (interface)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        self._edit_config(mgr, target='running', config=confstr)
+        self._edit_config(nexus_host, target='running', config=confstr)
 
-    def disable_switch_port(self, mgr, interface):
+    def disable_switch_port(self, nexus_host, interface):
         """Disable trunk mode an interface on Nexus Switch."""
         confstr = snipp.CMD_NO_SWITCHPORT % (interface)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        self._edit_config(mgr, target='running', config=confstr)
+        self._edit_config(nexus_host, target='running', config=confstr)
 
-    def enable_vlan_on_trunk_int(self, mgr, nexus_switch, interface, vlanid):
-        """Enable vlan in trunk interface.
-
-        Enables trunk mode vlan access an interface on Nexus Switch given
-        VLANID.
-        """
+    def enable_vlan_on_trunk_int(self, nexus_host, vlanid, interface):
+        """Enable a VLAN on a trunk interface."""
         # If one or more VLANs are already configured on this interface,
         # include the 'add' keyword.
-        if nexus_db_v2.get_port_switch_bindings(interface, nexus_switch):
+        if nexus_db_v2.get_port_switch_bindings(interface, nexus_host):
             snippet = snipp.CMD_INT_VLAN_ADD_SNIPPET
         else:
             snippet = snipp.CMD_INT_VLAN_SNIPPET
         confstr = snippet % (interface, vlanid)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        self._edit_config(mgr, target='running', config=confstr)
+        self._edit_config(nexus_host, target='running', config=confstr)
 
-    def disable_vlan_on_trunk_int(self, mgr, interface, vlanid):
-        """Disable VLAN.
-
-        Disables trunk mode vlan access an interface on Nexus Switch given
-        VLANID.
-        """
+    def disable_vlan_on_trunk_int(self, nexus_host, vlanid, interface):
+        """Disable a VLAN on a trunk interface."""
         confstr = snipp.CMD_NO_VLAN_INT_SNIPPET % (interface, vlanid)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        self._edit_config(mgr, target='running', config=confstr)
+        self._edit_config(nexus_host, target='running', config=confstr)
 
-    def create_vlan(self, vlan_name, vlan_id, nexus_host, nexus_user,
-                    nexus_password, nexus_ports,
-                    nexus_ssh_port, vlan_ids=None):
-        """Create VLAN and enablt in on the interface.
+    def create_and_trunk_vlan(self, nexus_host, vlan_id, vlan_name,
+                              nexus_port):
+        """Create VLAN and trunk it on the specified ports."""
+        self.create_vlan(nexus_host, vlan_id, vlan_name)
+        LOG.debug(_("NexusDriver created VLAN: %s"), vlan_id)
+        if nexus_port:
+            self.enable_vlan_on_trunk_int(nexus_host, vlan_id, nexus_port)
 
-        Creates a VLAN and Enable on trunk mode an interface on Nexus Switch
-        given the VLAN ID and Name and Interface Number.
-        """
-        man = self.nxos_connect(nexus_host, int(nexus_ssh_port),
-                                nexus_user, nexus_password)
-        self.enable_vlan(man, vlan_id, vlan_name)
-        if vlan_ids is '':
-            vlan_ids = self.build_vlans_cmd()
-        LOG.debug(_("NexusDriver VLAN IDs: %s"), vlan_ids)
-        for ports in nexus_ports:
-            self.enable_vlan_on_trunk_int(man, nexus_host, ports, vlan_ids)
+    def delete_and_untrunk_vlan(self, nexus_host, vlan_id, nexus_port):
+        """Delete VLAN and untrunk it from the specified ports."""
+        self.delete_vlan(nexus_host, vlan_id)
+        if nexus_port:
+            self.disable_vlan_on_trunk_int(nexus_host, vlan_id, nexus_port)
 
-    def delete_vlan(self, vlan_id, nexus_host, nexus_user, nexus_password,
-                    nexus_ports, nexus_ssh_port):
-        """Delete vlan.
-
-        Delete a VLAN and Disables trunk mode an interface on Nexus Switch
-        given the VLAN ID and Interface Number.
-        """
-        man = self.nxos_connect(nexus_host, int(nexus_ssh_port),
-                                nexus_user, nexus_password)
-        self.disable_vlan(man, vlan_id)
-        for ports in nexus_ports:
-            self.disable_vlan_on_trunk_int(man, ports, vlan_id)
-
-    def build_vlans_cmd(self):
-        """Builds a string with all the VLANs on the same Switch."""
-        assigned_vlan = cdb.get_all_vlanids_used()
-        vlans = ''
-        for vlanid in assigned_vlan:
-            vlans = str(vlanid["vlan_id"]) + ',' + vlans
-        if vlans == '':
-            vlans = 'none'
-        return vlans.strip(',')
-
-    def add_vlan_int(self, vlan_id, nexus_host, nexus_user, nexus_password,
-                     nexus_ports, nexus_ssh_port, vlan_ids=None):
-        """Add vlan.
-
-        Adds a vlan from interfaces on the Nexus switch given the VLAN ID.
-        """
-        man = self.nxos_connect(nexus_host, int(nexus_ssh_port),
-                                nexus_user, nexus_password)
-        if not vlan_ids:
-            vlan_ids = self.build_vlans_cmd()
-        for ports in nexus_ports:
-            self.enable_vlan_on_trunk_int(man, nexus_host, ports, vlan_ids)
-
-    def remove_vlan_int(self, vlan_id, nexus_host, nexus_user, nexus_password,
-                        nexus_ports, nexus_ssh_port):
-        """Remove vlan.
-
-        Removes a vlan from interfaces on the Nexus switch given the VLAN ID.
-        """
-        man = self.nxos_connect(nexus_host, int(nexus_ssh_port),
-                                nexus_user, nexus_password)
-        for ports in nexus_ports:
-            self.disable_vlan_on_trunk_int(man, ports, vlan_id)
-
-    def create_vlan_svi(self, vlan_id, nexus_host, nexus_user, nexus_password,
-                        nexus_ssh_port, gateway_ip):
-        man = self.nxos_connect(nexus_host, int(nexus_ssh_port),
-                                nexus_user, nexus_password)
-
+    def create_vlan_svi(self, nexus_host, vlan_id, gateway_ip):
         confstr = snipp.CMD_VLAN_SVI_SNIPPET % (vlan_id, gateway_ip)
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        man.edit_config(target='running', config=confstr)
+        self._edit_config(nexus_host, target='running', config=confstr)
 
-    def delete_vlan_svi(self, vlan_id, nexus_host, nexus_user, nexus_password,
-                        nexus_ssh_port):
-        man = self.nxos_connect(nexus_host, int(nexus_ssh_port),
-                                nexus_user, nexus_password)
-
+    def delete_vlan_svi(self, nexus_host, vlan_id):
         confstr = snipp.CMD_NO_VLAN_SVI_SNIPPET % vlan_id
         confstr = self.create_xml_snippet(confstr)
         LOG.debug(_("NexusDriver: %s"), confstr)
-        man.edit_config(target='running', config=confstr)
+        self._edit_config(nexus_host, target='running', config=confstr)
