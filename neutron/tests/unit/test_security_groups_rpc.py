@@ -1110,11 +1110,6 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
     def setUp(self):
         super(TestSecurityGroupAgentWithIptables, self).setUp()
         self.mox = mox.Mox()
-        agent_opts = [
-            cfg.StrOpt('root_helper', default='sudo'),
-        ]
-
-        cfg.CONF.register_opts(agent_opts, "AGENT")
         cfg.CONF.set_override(
             'firewall_driver',
             self.FIREWALL_DRIVER,
