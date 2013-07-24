@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-22 19:54+0000\n"
+"POT-Creation-Date: 2013-07-23 19:54+0000\n"
 "PO-Revision-Date: 2013-06-28 06:06+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Polish (Poland) "
@@ -982,7 +982,7 @@ msgid "Unable to find table %s"
 msgstr ""
 
 #: neutron/agent/linux/ovs_lib.py:71 neutron/agent/linux/ovs_lib.py:100
-#: neutron/agent/linux/ovs_lib.py:230
+#: neutron/agent/linux/ovs_lib.py:232
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
 msgstr ""
@@ -995,31 +995,31 @@ msgstr ""
 msgid "Must specify one or more actions"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:293
+#: neutron/agent/linux/ovs_lib.py:295
 #, python-format
 msgid "Unable to parse regex results. Exception: %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:311
+#: neutron/agent/linux/ovs_lib.py:313
 #, python-format
 msgid "Unable to determine mac address for %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:320
+#: neutron/agent/linux/ovs_lib.py:322
 #, python-format
 msgid "Interface %s not found."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:329
+#: neutron/agent/linux/ovs_lib.py:331
 #, python-format
 msgid "Unable to retrieve bridges. Exception: %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:340
+#: neutron/agent/linux/ovs_lib.py:342
 msgid "Unable to retrieve OVS userspace version."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:352
+#: neutron/agent/linux/ovs_lib.py:354
 msgid "Unable to retrieve OVS kernel module version."
 msgstr ""
 
@@ -4044,12 +4044,12 @@ msgid "Plugin initialization complete"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:134
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:205
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:211
 msgid "create_network() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:151
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:226
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:232
 msgid "update_network() called"
 msgstr ""
 
@@ -4066,17 +4066,17 @@ msgid "get_networks() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:197
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:282
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:291
 msgid "create_port() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:207
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:368
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:377
 msgid "delete_port() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:226
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:327
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:336
 msgid "update_port() called"
 msgstr ""
 
@@ -4094,7 +4094,7 @@ msgid "delete_subnet() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:278
-#: neutron/plugins/cisco/db/network_db_v2.py:128
+#: neutron/plugins/cisco/db/network_db_v2.py:108
 msgid "get_all_qoss() called"
 msgstr ""
 
@@ -4294,75 +4294,47 @@ msgid "Nexus Switch to use"
 msgstr ""
 
 #: neutron/plugins/cisco/common/config.py:36
-msgid "VLAN start value"
-msgstr ""
-
-#: neutron/plugins/cisco/common/config.py:38
-msgid "VLAN end value"
-msgstr ""
-
-#: neutron/plugins/cisco/common/config.py:40
 msgid "VLAN Name prefix"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:42
-msgid "Maximum Port value"
-msgstr ""
-
-#: neutron/plugins/cisco/common/config.py:44
-msgid "Maximum Port Profile value"
-msgstr ""
-
-#: neutron/plugins/cisco/common/config.py:46
-msgid "Maximum Network value"
-msgstr ""
-
-#: neutron/plugins/cisco/common/config.py:48
+#: neutron/plugins/cisco/common/config.py:38
 msgid "Distribute SVI interfaces over all switches"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:52
+#: neutron/plugins/cisco/common/config.py:42
 msgid "Model Class"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:56
-msgid "Manager Class"
-msgstr ""
-
-#: neutron/plugins/cisco/common/config.py:60
+#: neutron/plugins/cisco/common/config.py:46
 msgid "Nexus Driver Name"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:34
-msgid "create_vlanids() called"
-msgstr ""
-
-#: neutron/plugins/cisco/db/network_db_v2.py:53
-#: neutron/plugins/cisco/db/network_db_v2.py:120
+#: neutron/plugins/cisco/db/network_db_v2.py:33
+#: neutron/plugins/cisco/db/network_db_v2.py:100
 msgid "get_all_vlanids() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:60
+#: neutron/plugins/cisco/db/network_db_v2.py:40
 msgid "is_vlanid_used() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:72
+#: neutron/plugins/cisco/db/network_db_v2.py:52
 msgid "release_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:87
+#: neutron/plugins/cisco/db/network_db_v2.py:67
 msgid "delete_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:101
+#: neutron/plugins/cisco/db/network_db_v2.py:81
 msgid "reserve_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:136
+#: neutron/plugins/cisco/db/network_db_v2.py:116
 msgid "get_qos() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:150
+#: neutron/plugins/cisco/db/network_db_v2.py:130
 msgid "add_qos() called"
 msgstr ""
 
@@ -4419,31 +4391,31 @@ msgstr ""
 msgid "%(module)s.%(name)s init done"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:131
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:137
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:132
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:138
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:349
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:358
 #, python-format
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:403
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:413
 msgid "Nexus plugin loaded, creating SVI on switch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:424
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:451
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:434
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:461
 msgid "No Nexus plugin, sending to vswitch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:439
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:449
 msgid "Nexus plugin loaded, deleting SVI from switch"
 msgstr ""
 
@@ -4772,14 +4744,14 @@ msgstr ""
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:310
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:640
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:352
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:733
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:734
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:318
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:652
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:359
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:746
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:747
 msgid "Agent loop has new devices!"
 msgstr ""
 
@@ -4796,7 +4768,7 @@ msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:345
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:691
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:867
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:868
 msgid "Agent initialized successfully, now running... "
 msgstr ""
 
@@ -5127,7 +5099,7 @@ msgid "Error in agent loop. Devices info: %s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:666
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:761
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:762
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:269
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
@@ -6436,9 +6408,9 @@ msgid "eSwitch Agent Started!"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:364
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:752
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:753
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:263
-#: neutron/tests/unit/openvswitch/test_ovs_tunnel.py:381
+#: neutron/tests/unit/openvswitch/test_ovs_tunnel.py:382
 msgid "Error in agent event loop"
 msgstr ""
 
@@ -8198,62 +8170,62 @@ msgstr ""
 msgid "No VIF port for port %s defined on agent."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:719
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:720
 #, python-format
 msgid "Unable to sync tunnel IP %(local_ip)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:739
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:740
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:771
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:772
 msgid "Checking OVS version for VXLAN support"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:779
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:780
 #, python-format
 msgid ""
 "Failed userspace version check for Open vSwitch with VXLAN support. To "
 "use VXLAN tunnels with OVS, please ensure the OVS version is %s or newer!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:790
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:791
 #, python-format
 msgid ""
 "Failed kernel version check for Open vSwitch with VXLAN support. To use "
 "VXLAN tunnels with OVS, please ensure the OVS version is %s or newer!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:797
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:798
 #, python-format
 msgid ""
 "Cannot determine kernel Open vSwitch version, please ensure your Open "
 "vSwitch kernel module is at least version %s to support VXLAN tunnels."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:802
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:803
 #, python-format
 msgid ""
 "Unable to determine Open vSwitch version. Please ensure that its version "
 "is %s or newer to use VXLAN tunnels with OVS."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:817
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:818
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:836
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:837
 #, python-format
 msgid "Invalid tunnel type specificed: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:839
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:840
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:855
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:856
 #, python-format
 msgid "%s Agent terminated!"
 msgstr ""
@@ -8804,4 +8776,25 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
+
+#~ msgid "VLAN start value"
+#~ msgstr ""
+
+#~ msgid "VLAN end value"
+#~ msgstr ""
+
+#~ msgid "Maximum Port value"
+#~ msgstr ""
+
+#~ msgid "Maximum Port Profile value"
+#~ msgstr ""
+
+#~ msgid "Maximum Network value"
+#~ msgstr ""
+
+#~ msgid "Manager Class"
+#~ msgstr ""
+
+#~ msgid "create_vlanids() called"
+#~ msgstr ""
 
