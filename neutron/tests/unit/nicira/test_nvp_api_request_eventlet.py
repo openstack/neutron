@@ -22,11 +22,10 @@ from eventlet.green import urllib2
 from mock import Mock
 from mock import patch
 
-from neutron.plugins.nicira.api_client import (
-    client_eventlet as nace,
-    request_eventlet as nare,
-)
+from neutron.plugins.nicira.api_client import client_eventlet as nace
+from neutron.plugins.nicira.api_client import request_eventlet as nare
 from neutron.tests import base
+from neutron.tests.unit.nicira import CLIENT_NAME
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -212,8 +211,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
         self.assertTrue(retval is None)
 
     def test_redirect_params_setup_https_with_cooki(self):
-        with patch('neutron.plugins.nicira.api_client.'
-                   'client_eventlet.NvpApiClientEventlet') as mock:
+        with patch(CLIENT_NAME) as mock:
             api_client = mock.return_value
             self.req._api_client = api_client
             myconn = Mock()
@@ -224,8 +222,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             self.assertTrue(api_client.acquire_redirect_connection.called)
 
     def test_redirect_params_setup_htttps_and_query(self):
-        with patch('neutron.plugins.nicira.api_client.'
-                   'client_eventlet.NvpApiClientEventlet') as mock:
+        with patch(CLIENT_NAME) as mock:
             api_client = mock.return_value
             self.req._api_client = api_client
             myconn = Mock()
@@ -236,8 +233,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             self.assertTrue(api_client.acquire_redirect_connection.called)
 
     def test_redirect_params_setup_https_connection_no_cookie(self):
-        with patch('neutron.plugins.nicira.api_client.'
-                   'client_eventlet.NvpApiClientEventlet') as mock:
+        with patch(CLIENT_NAME) as mock:
             api_client = mock.return_value
             self.req._api_client = api_client
             myconn = Mock()
@@ -248,8 +244,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             self.assertTrue(api_client.acquire_redirect_connection.called)
 
     def test_redirect_params_setup_https_and_query_no_cookie(self):
-        with patch('neutron.plugins.nicira.api_client.'
-                   'client_eventlet.NvpApiClientEventlet') as mock:
+        with patch(CLIENT_NAME) as mock:
             api_client = mock.return_value
             self.req._api_client = api_client
             myconn = Mock()
@@ -259,8 +254,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             self.assertTrue(api_client.acquire_redirect_connection.called)
 
     def test_redirect_params_path_only_with_query(self):
-        with patch('neutron.plugins.nicira.api_client.'
-                   'client_eventlet.NvpApiClientEventlet') as mock:
+        with patch(CLIENT_NAME) as mock:
             api_client = mock.return_value
             api_client.wait_for_login.return_value = None
             api_client.auth_cookie = None

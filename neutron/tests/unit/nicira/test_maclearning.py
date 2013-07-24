@@ -17,7 +17,6 @@
 
 import contextlib
 import mock
-import os
 
 from oslo.config import cfg
 
@@ -25,20 +24,14 @@ from neutron.api.v2 import attributes
 from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.extensions import agent
-from neutron.openstack.common import log as logging
-import neutron.plugins.nicira as nvp_plugin
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.tests.unit.nicira import fake_nvpapiclient
+from neutron.tests.unit.nicira import get_fake_conf
+from neutron.tests.unit.nicira import NVPAPI_NAME
+from neutron.tests.unit.nicira import NVPEXT_PATH
+from neutron.tests.unit.nicira import PLUGIN_NAME
+from neutron.tests.unit.nicira import STUBS_PATH
 from neutron.tests.unit import test_db_plugin
-
-
-LOG = logging.getLogger(__name__)
-NVP_MODULE_PATH = nvp_plugin.__name__
-NVP_FAKE_RESPS_PATH = os.path.join(os.path.dirname(__file__), 'etc')
-NVP_INI_CONFIG_PATH = os.path.join(os.path.dirname(__file__),
-                                   'etc/nvp.ini.full.test')
-NVP_EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__),
-                                   '../../../plugins/nicira/extensions')
 
 
 class MacLearningExtensionManager(object):
@@ -64,11 +57,9 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         self.adminContext = context.get_admin_context()
-        test_config['config_files'] = [NVP_INI_CONFIG_PATH]
-        test_config['plugin_name_v2'] = (
-            'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2')
-        cfg.CONF.set_override('api_extensions_path',
-                              NVP_EXTENSIONS_PATH)
+        test_config['config_files'] = [get_fake_conf('nvp.ini.full.test')]
+        test_config['plugin_name_v2'] = PLUGIN_NAME
+        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
         # Save the original RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
@@ -76,9 +67,8 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         ext_mgr = MacLearningExtensionManager()
         test_config['extension_manager'] = ext_mgr
         # mock nvp api client
-        self.fc = fake_nvpapiclient.FakeClient(NVP_FAKE_RESPS_PATH)
-        self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
-                                      % NVP_MODULE_PATH, autospec=True)
+        self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
+        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
 
         def _fake_request(*args, **kwargs):
