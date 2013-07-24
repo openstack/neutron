@@ -1254,7 +1254,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
         self.mox.VerifyAll()
 
-    def test_security_group_rule_udpated(self):
+    def test_security_group_rule_updated(self):
         self.rpc.security_group_rules_for_devices.return_value = self.devices2
         self._replay_iptables(IPTABLES_FILTER_2, IPTABLES_FILTER_V6_2)
         self._replay_iptables(IPTABLES_FILTER_2_3, IPTABLES_FILTER_V6_2)
