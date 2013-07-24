@@ -69,7 +69,6 @@
     "update_agent": "rule:admin_only",
     "delete_agent": "rule:admin_only",
     "get_agent": "rule:admin_only",
-    "get_agents": "rule:admin_only",
 
     "create_dhcp-network": "rule:admin_only",
     "delete_dhcp-network": "rule:admin_only",
