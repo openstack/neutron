@@ -132,12 +132,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 raise l3agentscheduler.InvalidL3Agent(id=id)
             query = context.session.query(RouterL3AgentBinding)
             try:
-                binding = query.filter(
-                    RouterL3AgentBinding.l3_agent_id == agent_db.id,
-                    RouterL3AgentBinding.router_id == router_id).one()
-                if binding:
-                    raise l3agentscheduler.RouterHostedByL3Agent(
-                        router_id=router_id, agent_id=id)
+                binding = query.filter_by(router_id=router_id).one()
+
+                raise l3agentscheduler.RouterHostedByL3Agent(
+                    router_id=router_id,
+                    agent_id=binding.l3_agent_id)
             except exc.NoResultFound:
                 pass
 
@@ -229,7 +228,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             l3_agents = [l3_agent for l3_agent in
                          l3_agents if not
                          agents_db.AgentDbMixin.is_agent_down(
-                         l3_agent['heartbeat_timestamp'])]
+                             l3_agent['heartbeat_timestamp'])]
         return l3_agents
 
     def _get_l3_bindings_hosting_routers(self, context, router_ids):
