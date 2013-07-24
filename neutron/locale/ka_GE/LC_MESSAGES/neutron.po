@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-23 19:54+0000\n"
+"POT-Creation-Date: 2013-07-24 19:54+0000\n"
 "PO-Revision-Date: 2013-04-19 14:53+0000\n"
 "Last-Translator: Nika Chkhikvishvili <frrrredo@gmail.com>\n"
 "Language-Team: ka_GE <LL@li.org>\n"
@@ -785,56 +785,56 @@ msgstr ""
 msgid "Use another DNS server before any in /etc/resolv.conf."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:139
+#: neutron/agent/linux/dhcp.py:140
 #, python-format
 msgid "DHCP for %(net_id)s pid %(pid)d is stale, ignoring command"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:142
+#: neutron/agent/linux/dhcp.py:143
 #, python-format
 msgid "No DHCP started for %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:164 neutron/agent/linux/external_process.py:84
+#: neutron/agent/linux/dhcp.py:165 neutron/agent/linux/external_process.py:84
 #, python-format
 msgid "Error while reading %s"
 msgstr "შეცდომა %s წაკითხვისას"
 
-#: neutron/agent/linux/dhcp.py:171 neutron/agent/linux/external_process.py:92
+#: neutron/agent/linux/dhcp.py:172 neutron/agent/linux/external_process.py:92
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:173 neutron/agent/linux/external_process.py:90
+#: neutron/agent/linux/dhcp.py:174 neutron/agent/linux/external_process.py:90
 #, python-format
 msgid "Unable to access %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:233
+#: neutron/agent/linux/dhcp.py:234
 #, python-format
 msgid ""
 "FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
 " Please ensure that its version is %s or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:238
+#: neutron/agent/linux/dhcp.py:239
 #, python-format
 msgid ""
 "Unable to determine dnsmasq version. Please ensure that its version is %s"
 " or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:326
+#: neutron/agent/linux/dhcp.py:327
 #, python-format
 msgid "Killing dhcpmasq for network since all subnets have turned off DHCP: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:336
+#: neutron/agent/linux/dhcp.py:337
 #, python-format
 msgid "Pid %d is stale, relaunching dnsmasq"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:337
+#: neutron/agent/linux/dhcp.py:338
 #, python-format
 msgid "Reloading allocations for network: %s"
 msgstr ""
@@ -5099,7 +5099,7 @@ msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:666
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:762
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:269
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:281
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
 msgstr ""
@@ -6409,7 +6409,7 @@ msgstr "L3 აგენტი ჩაირთულია"
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:364
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:753
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:263
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:275
 #: neutron/tests/unit/openvswitch/test_ovs_tunnel.py:382
 msgid "Error in agent event loop"
 msgstr ""
@@ -8446,53 +8446,58 @@ msgstr ""
 msgid "Invalid configuration. check ryu.ini"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:150
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:96
+#, python-format
+msgid "Could not get IPv4 address from %(nic)s: %(cfg)s"
+msgstr ""
+
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:162
 #, python-format
 msgid "External port %s"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:158
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:170
 msgid "Get Ryu rest API address"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:208
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:220
 msgid "Ryu rest API port isn't specified"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:209
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:221
 #, python-format
 msgid "Going to ofp controller mode %s"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:226
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:238
 msgid "port update received"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:259
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:271
 msgid "Agent loop has new device"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:286
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:298
 #, python-format
 msgid "tunnel_ip %s"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:288
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:300
 #, python-format
 msgid "ovsdb_port %s"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:290
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:302
 #, python-format
 msgid "ovsdb_ip %s"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:296
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:308
 #, python-format
 msgid "Initialization failed: %s"
 msgstr ""
 
-#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:299
+#: neutron/plugins/ryu/agent/ryu_neutron_agent.py:311
 msgid ""
 "Ryu initialization on the node is done. Agent initialized successfully, "
 "now running..."
@@ -8776,25 +8781,4 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
-
-#~ msgid "VLAN start value"
-#~ msgstr ""
-
-#~ msgid "VLAN end value"
-#~ msgstr ""
-
-#~ msgid "Maximum Port value"
-#~ msgstr ""
-
-#~ msgid "Maximum Port Profile value"
-#~ msgstr ""
-
-#~ msgid "Maximum Network value"
-#~ msgstr ""
-
-#~ msgid "Manager Class"
-#~ msgstr ""
-
-#~ msgid "create_vlanids() called"
-#~ msgstr ""
 
