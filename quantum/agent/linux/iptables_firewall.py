@@ -47,6 +47,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # list of port which has security group
         self.filtered_ports = {}
         self._add_fallback_chain_v4v6()
+        self._defer_apply = False
+        self._pre_defer_filtered_ports = None
 
     @property
     def ports(self):
@@ -83,17 +85,25 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.apply()
 
     def _setup_chains(self):
-        """Setup ingress and egress chain for a port. """
+        """Setup ingress and egress chain for a port."""
+        if not self._defer_apply:
+            self._setup_chains_apply(self.filtered_ports)
+
+    def _setup_chains_apply(self, ports):
         self._add_chain_by_name_v4v6(SG_CHAIN)
-        for port in self.filtered_ports.values():
+        for port in ports.values():
             self._setup_chain(port, INGRESS_DIRECTION)
             self._setup_chain(port, EGRESS_DIRECTION)
             self.iptables.ipv4['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
             self.iptables.ipv6['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
 
     def _remove_chains(self):
-        """Remove ingress and egress chain for a port"""
-        for port in self.filtered_ports.values():
+        """Remove ingress and egress chain for a port."""
+        if not self._defer_apply:
+            self._remove_chains_apply(self.filtered_ports)
+
+    def _remove_chains_apply(self, ports):
+        for port in ports.values():
             self._remove_chain(port, INGRESS_DIRECTION)
             self._remove_chain(port, EGRESS_DIRECTION)
             self._remove_chain(port, IP_SPOOF_FILTER)
@@ -298,10 +308,18 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device'][3:]))
 
     def filter_defer_apply_on(self):
-        self.iptables.defer_apply_on()
+        if not self._defer_apply:
+            self.iptables.defer_apply_on()
+            self._pre_defer_filtered_ports = dict(self.filtered_ports)
+            self._defer_apply = True
 
     def filter_defer_apply_off(self):
-        self.iptables.defer_apply_off()
+        if self._defer_apply:
+            self._defer_apply = False
+            self._remove_chains_apply(self._pre_defer_filtered_ports)
+            self._pre_defer_filtered_ports = None
+            self._setup_chains_apply(self.filtered_ports)
+            self.iptables.defer_apply_off()
 
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
