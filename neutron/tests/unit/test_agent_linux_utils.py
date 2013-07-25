@@ -29,38 +29,54 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         self.test_file = self.useFixture(
             fixtures.TempDir()).join("test_execute.tmp")
         open(self.test_file, 'w').close()
+        instance = mock.patch("subprocess.Popen.communicate")
+        self.mock_popen = instance.start()
+        self.addCleanup(self.mock_popen.stop)
 
     def test_without_helper(self):
+        expected = "%s\n" % self.test_file
+        self.mock_popen.return_value = [expected, ""]
         result = utils.execute(["ls", self.test_file])
-        self.assertEqual(result, "%s\n" % self.test_file)
+        self.assertEqual(result, expected)
 
     def test_with_helper(self):
+        expected = "ls %s\n" % self.test_file
+        self.mock_popen.return_value = [expected, ""]
         result = utils.execute(["ls", self.test_file],
                                self.root_helper)
-        self.assertEqual(result, "ls %s\n" % self.test_file)
+        self.assertEqual(result, expected)
 
-    def test_stderr(self):
-        stdout, stderr = utils.execute(["ls", self.test_file],
-                                       return_stderr=True)
-        self.assertEqual(stdout, "%s\n" % self.test_file)
-        self.assertEqual(stderr, "")
+    def test_stderr_true(self):
+        expected = "%s\n" % self.test_file
+        self.mock_popen.return_value = [expected, ""]
+        out = utils.execute(["ls", self.test_file], return_stderr=True)
+        self.assertIsInstance(out, tuple)
+        self.assertEqual(out, (expected, ""))
 
     def test_check_exit_code(self):
+        self.mock_popen.return_value = ["", ""]
         stdout = utils.execute(["ls", self.test_file[:-1]],
                                check_exit_code=False)
         self.assertEqual(stdout, "")
+
+    def test_execute_raises(self):
+        self.mock_popen.side_effect = RuntimeError
         self.assertRaises(RuntimeError, utils.execute,
                           ["ls", self.test_file[:-1]])
 
     def test_process_input(self):
+        expected = "%s\n" % self.test_file[:-1]
+        self.mock_popen.return_value = [expected, ""]
         result = utils.execute(["cat"], process_input="%s\n" %
                                self.test_file[:-1])
-        self.assertEqual(result, "%s\n" % self.test_file[:-1])
+        self.assertEqual(result, expected)
 
     def test_with_addl_env(self):
+        expected = "%s\n" % self.test_file
+        self.mock_popen.return_value = [expected, ""]
         result = utils.execute(["ls", self.test_file],
                                addl_env={'foo': 'bar'})
-        self.assertEqual(result, "%s\n" % self.test_file)
+        self.assertEqual(result, expected)
 
 
 class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
