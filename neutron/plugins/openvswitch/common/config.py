@@ -67,6 +67,8 @@ agent_opts = [
                        "(gre and/or vxlan)")),
     cfg.IntOpt('vxlan_udp_port', default=constants.VXLAN_UDP_PORT,
                help=_("The UDP port to use for VXLAN tunnels.")),
+    cfg.IntOpt('veth_mtu', default=None,
+               help=_("MTU size of veth interfaces")),
 ]
 
 

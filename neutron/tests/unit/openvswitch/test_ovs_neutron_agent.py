@@ -311,10 +311,11 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(self.agent.int_br, "delete_port"),
             mock.patch.object(ip_lib.IPWrapper, "add_veth"),
             mock.patch.object(ip_lib.IpLinkCommand, "delete"),
-            mock.patch.object(ip_lib.IpLinkCommand, "set_up")
+            mock.patch.object(ip_lib.IpLinkCommand, "set_up"),
+            mock.patch.object(ip_lib.IpLinkCommand, "set_mtu")
         ) as (devex_fn, sysexit_fn, remflows_fn, ovs_addfl_fn,
               ovs_addport_fn, ovs_delport_fn, br_addport_fn,
-              br_delport_fn, addveth_fn, linkdel_fn, linkset_fn):
+              br_delport_fn, addveth_fn, linkdel_fn, linkset_fn, linkmtu_fn):
             devex_fn.return_value = True
             addveth_fn.return_value = (ip_lib.IPDevice("int-br-eth1"),
                                        ip_lib.IPDevice("phy-br-eth1"))

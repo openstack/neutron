@@ -150,7 +150,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,
-                 polling_interval, tunnel_types=None):
+                 polling_interval, tunnel_types=None,
+                 veth_mtu=None):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -162,7 +163,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         :param tunnel_types: A list of tunnel types to enable support for in
                the agent. If set, will automatically set enable_tunneling to
                True.
+        :param veth_mtu: MTU size for veth interfaces.
         '''
+        self.veth_mtu = veth_mtu
         self.root_helper = root_helper
         self.available_local_vlans = set(xrange(q_const.MIN_VLAN_TAG,
                                                 q_const.MAX_VLAN_TAG))
@@ -615,6 +618,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             int_veth.link.set_up()
             phys_veth.link.set_up()
 
+            if self.veth_mtu:
+                # set up mtu size for veth interfaces
+                int_veth.link.set_mtu(self.veth_mtu)
+                phys_veth.link.set_mtu(self.veth_mtu)
+
     def update_ports(self, registered_ports):
         ports = self.int_br.get_vif_port_set()
         if ports == registered_ports:
@@ -825,6 +833,7 @@ def create_agent_config_map(config):
         root_helper=config.AGENT.root_helper,
         polling_interval=config.AGENT.polling_interval,
         tunnel_types=config.AGENT.tunnel_types,
+        veth_mtu=config.AGENT.veth_mtu,
     )
 
     # If enable_tunneling is TRUE, set tunnel_type to default to GRE
