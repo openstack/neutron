@@ -84,7 +84,7 @@ class RestConnection(object):
                 except ValueError:
                     err_message = _("PLUMgrid HTTP Connection Failed: ")
                     LOG.Exception(err_message)
-                    raise plum_excep.PLUMgridException(err_message)
+                    raise plum_excep.PLUMgridException(err_msg=err_message)
 
             ret = (resp.status, resp.reason, resp_str)
         except urllib2.HTTPError:

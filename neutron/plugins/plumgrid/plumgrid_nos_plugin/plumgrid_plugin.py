@@ -118,7 +118,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2):
             except Exception:
                 err_message = _("PLUMgrid NOS communication failed")
                 LOG.Exception(err_message)
-                raise plum_excep.PLUMgridException(err_message)
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # return created network
         return net
@@ -150,7 +150,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2):
             except Exception:
                 err_message = _("PLUMgrid NOS communication failed")
                 LOG.Exception(err_message)
-                raise plum_excep.PLUMgridException(err_message)
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # return updated network
         return new_network
@@ -174,7 +174,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2):
             except Exception:
                 err_message = _("PLUMgrid NOS communication failed")
                 LOG.Exception(err_message)
-                raise plum_excep.PLUMgridException(err_message)
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def create_port(self, context, port):
         """Create port core Neutron API."""
@@ -233,7 +233,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2):
             except Exception:
                 err_message = _("PLUMgrid NOS communication failed: ")
                 LOG.Exception(err_message)
-                raise plum_excep.PLUMgridException(err_message)
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return subnet
 
@@ -256,7 +256,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2):
             except Exception:
                 err_message = _("PLUMgrid NOS communication failed: ")
                 LOG.Exception(err_message)
-                raise plum_excep.PLUMgridException(err_message)
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return del_subnet
 
@@ -288,7 +288,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2):
             except Exception:
                 err_message = _("PLUMgrid NOS communication failed: ")
                 LOG.Exception(err_message)
-                raise plum_excep.PLUMgridException(err_message)
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return new_subnet
 
@@ -321,5 +321,5 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2):
         except Exception:
             err_message = _("Network Admin State Validation Falied: ")
             LOG.Exception(err_message)
-            raise plum_excep.PLUMgridException(err_message)
+            raise plum_excep.PLUMgridException(err_msg=err_message)
         return network
