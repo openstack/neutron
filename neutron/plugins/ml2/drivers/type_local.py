@@ -47,8 +47,6 @@ class LocalTypeDriver(api.TypeDriver):
                 msg = _("%s prohibited for local provider network") % key
                 raise exc.InvalidInput(error_message=msg)
 
-        return segment
-
     def reserve_provider_segment(self, session, segment):
         # No resources to reserve
         pass

@@ -82,7 +82,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         network_type = segment[api.NETWORK_TYPE]
         driver = self.drivers.get(network_type)
         if driver:
-            return driver.obj.validate_provider_segment(segment)
+            driver.obj.validate_provider_segment(segment)
         else:
             msg = _("network_type value '%s' not supported") % network_type
             raise exc.InvalidInput(error_message=msg)

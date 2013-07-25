@@ -58,8 +58,7 @@ class GreEndpoints(model_base.BASEV2):
         return "<GreTunnelEndpoint(%s)>" % self.ip_address
 
 
-class GreTypeDriver(api.TypeDriver,
-                    type_tunnel.TunnelTypeDriver):
+class GreTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def get_type(self):
         return TYPE_GRE
@@ -72,18 +71,6 @@ class GreTypeDriver(api.TypeDriver,
             TYPE_GRE
         )
         self._sync_gre_allocations()
-
-    def validate_provider_segment(self, segment):
-        physical_network = segment.get(api.PHYSICAL_NETWORK)
-        if physical_network:
-            msg = _("provider:physical_network specified for GRE "
-                    "network")
-            raise exc.InvalidInput(error_message=msg)
-
-        segmentation_id = segment.get(api.SEGMENTATION_ID)
-        if not segmentation_id:
-            msg = _("segmentation_id required for GRE provider network")
-            raise exc.InvalidInput(error_message=msg)
 
     def reserve_provider_segment(self, session, segment):
         segmentation_id = segment.get(api.SEGMENTATION_ID)

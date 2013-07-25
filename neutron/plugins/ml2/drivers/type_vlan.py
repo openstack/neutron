@@ -107,7 +107,7 @@ class VlanTypeDriver(api.TypeDriver):
 
             # process vlan ranges for each configured physical network
             for (physical_network,
-                 vlan_ranges) in self.network_vlan_ranges.iteritems():
+                 vlan_ranges) in self.network_vlan_ranges.items():
                 # determine current configured allocatable vlans for
                 # this physical network
                 vlan_ids = set()
@@ -181,14 +181,12 @@ class VlanTypeDriver(api.TypeDriver):
                     'max': q_const.MAX_VLAN_TAG})
             raise exc.InvalidInput(error_message=msg)
 
-        for key, value in segment.iteritems():
+        for key, value in segment.items():
             if value and key not in [api.NETWORK_TYPE,
                                      api.PHYSICAL_NETWORK,
                                      api.SEGMENTATION_ID]:
                 msg = _("%s prohibited for VLAN provider network") % key
                 raise exc.InvalidInput(error_message=msg)
-
-        return segment
 
     def reserve_provider_segment(self, session, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
