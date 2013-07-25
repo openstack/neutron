@@ -27,7 +27,6 @@ class RouterServiceTypeBinding(model_base.BASEV2):
                           sa.ForeignKey('routers.id', ondelete="CASCADE"),
                           primary_key=True)
     service_type_id = sa.Column(sa.String(36),
-                                sa.ForeignKey('servicetypes.id'),
                                 nullable=False)
 
 

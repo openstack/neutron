@@ -189,8 +189,7 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
 
         self._tenant_id = "8c70909f-b081-452d-872b-df48e6c355d1"
 
-        res = self._do_request('GET', _get_path('service-types'))
-        self._service_type_id = res['service_types'][0]['id']
+        self._service_type_id = _uuid()
 
         self._setup_core_resources()
 
