@@ -77,14 +77,11 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.plugin_api = mock.Mock()
         l3pluginApi_cls.return_value = self.plugin_api
 
-    def tearDown(self):
-        self.device_exists_p.stop()
-        self.l3pluginApi_cls_p.stop()
-        self.ip_cls_p.stop()
-        self.dvr_cls_p.stop()
-        self.utils_exec_p.stop()
-        self.external_process_p.stop()
-        super(TestBasicRouterOperations, self).tearDown()
+        self.looping_call_p = mock.patch(
+            'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
+        self.looping_call_p.start()
+
+        self.addCleanup(mock.patch.stopall)
 
     def testRouterInfoCreate(self):
         id = _uuid()
