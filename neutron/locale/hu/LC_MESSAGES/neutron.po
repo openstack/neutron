@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-24 19:54+0000\n"
+"POT-Creation-Date: 2013-07-25 19:54+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian "
@@ -2350,7 +2350,7 @@ msgid ""
 "assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:600 neutron/plugins/nicira/NeutronPlugin.py:1864
+#: neutron/db/l3_db.py:600 neutron/plugins/nicira/NeutronPlugin.py:1878
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
@@ -4043,12 +4043,12 @@ msgid "Plugin initialization complete"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:134
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:211
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:222
 msgid "create_network() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:151
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:232
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:254
 msgid "update_network() called"
 msgstr ""
 
@@ -4065,17 +4065,17 @@ msgid "get_networks() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:197
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:291
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:320
 msgid "create_port() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:207
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:377
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:406
 msgid "delete_port() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:226
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:336
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:365
 msgid "update_port() called"
 msgstr ""
 
@@ -4093,7 +4093,7 @@ msgid "delete_subnet() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:278
-#: neutron/plugins/cisco/db/network_db_v2.py:108
+#: neutron/plugins/cisco/db/network_db_v2.py:109
 msgid "get_all_qoss() called"
 msgstr ""
 
@@ -4199,48 +4199,53 @@ msgstr ""
 
 #: neutron/plugins/cisco/common/cisco_exceptions.py:84
 #, python-format
-msgid "Connection to %(host)s is not configured."
+msgid "Provider network %s already exists"
 msgstr ""
 
 #: neutron/plugins/cisco/common/cisco_exceptions.py:89
 #, python-format
-msgid "Unable to connect to Nexus %(nexus_host)s. Reason: %(exc)s."
+msgid "Connection to %(host)s is not configured."
 msgstr ""
 
 #: neutron/plugins/cisco/common/cisco_exceptions.py:94
 #, python-format
-msgid "Failed to configure Nexus: %(config)s. Reason: %(exc)s."
+msgid "Unable to connect to Nexus %(nexus_host)s. Reason: %(exc)s."
 msgstr ""
 
 #: neutron/plugins/cisco/common/cisco_exceptions.py:99
 #, python-format
+msgid "Failed to configure Nexus: %(config)s. Reason: %(exc)s."
+msgstr ""
+
+#: neutron/plugins/cisco/common/cisco_exceptions.py:104
+#, python-format
 msgid "Nexus Port Binding (%(filters)s) is not present"
 msgstr ""
 
-#: neutron/plugins/cisco/common/cisco_exceptions.py:108
-msgid "No usable Nexus switch found to create SVI interface"
-msgstr ""
-
 #: neutron/plugins/cisco/common/cisco_exceptions.py:113
-#, python-format
-msgid "PortVnic Binding %(port_id)s already exists"
+msgid "No usable Nexus switch found to create SVI interface"
 msgstr ""
 
 #: neutron/plugins/cisco/common/cisco_exceptions.py:118
 #, python-format
-msgid "PortVnic Binding %(port_id)s is not present"
+msgid "PortVnic Binding %(port_id)s already exists"
 msgstr ""
 
 #: neutron/plugins/cisco/common/cisco_exceptions.py:123
-msgid "No subnet_id specified for router gateway"
+#, python-format
+msgid "PortVnic Binding %(port_id)s is not present"
 msgstr ""
 
 #: neutron/plugins/cisco/common/cisco_exceptions.py:128
+msgid "No subnet_id specified for router gateway"
+msgstr ""
+
+#: neutron/plugins/cisco/common/cisco_exceptions.py:133
 #, python-format
 msgid "Subnet %(subnet_id)s has an interface on %(router_id)s"
 msgstr ""
 
-#: neutron/plugins/cisco/common/cisco_exceptions.py:133
+#: neutron/plugins/cisco/common/cisco_exceptions.py:138
 msgid "Nexus hardware router gateway only uses Subnet Ids"
 msgstr ""
 
@@ -4297,43 +4302,47 @@ msgid "VLAN Name prefix"
 msgstr ""
 
 #: neutron/plugins/cisco/common/config.py:38
-msgid "Distribute SVI interfaces over all switches"
-msgstr ""
-
-#: neutron/plugins/cisco/common/config.py:42
-msgid "Model Class"
+msgid "VLAN Name prefix for provider vlans"
 msgstr ""
 
 #: neutron/plugins/cisco/common/config.py:46
+msgid "Distribute SVI interfaces over all switches"
+msgstr ""
+
+#: neutron/plugins/cisco/common/config.py:50
+msgid "Model Class"
+msgstr ""
+
+#: neutron/plugins/cisco/common/config.py:54
 msgid "Nexus Driver Name"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:33
-#: neutron/plugins/cisco/db/network_db_v2.py:100
+#: neutron/plugins/cisco/db/network_db_v2.py:34
+#: neutron/plugins/cisco/db/network_db_v2.py:101
 msgid "get_all_vlanids() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:40
+#: neutron/plugins/cisco/db/network_db_v2.py:41
 msgid "is_vlanid_used() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:52
+#: neutron/plugins/cisco/db/network_db_v2.py:53
 msgid "release_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:67
+#: neutron/plugins/cisco/db/network_db_v2.py:68
 msgid "delete_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:81
+#: neutron/plugins/cisco/db/network_db_v2.py:82
 msgid "reserve_vlanid() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:116
+#: neutron/plugins/cisco/db/network_db_v2.py:117
 msgid "get_qos() called"
 msgstr ""
 
-#: neutron/plugins/cisco/db/network_db_v2.py:130
+#: neutron/plugins/cisco/db/network_db_v2.py:131
 msgid "add_qos() called"
 msgstr ""
 
@@ -4380,57 +4389,67 @@ msgstr ""
 msgid "get_nexussvi_bindings() called"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:73
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:75
 #, python-format
 msgid "Loaded device plugin %s\n"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:91
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:93
 #, python-format
 msgid "%(module)s.%(name)s init done"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:137
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:139
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:138
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:140
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:358
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:235
+#, python-format
+msgid "provider network added to DB: %(network_id)s, %(vlan_id)s"
+msgstr ""
+
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:279
+#, python-format
+msgid "provider network removed from DB: %s"
+msgstr ""
+
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:387
 #, python-format
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:413
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:442
 msgid "Nexus plugin loaded, creating SVI on switch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:434
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:461
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:463
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:490
 msgid "No Nexus plugin, sending to vswitch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:449
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:478
 msgid "Nexus plugin loaded, deleting SVI from switch"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:131
-#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:138
 #: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:155
-#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:166
-#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:240
-#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:250
+#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:162
+#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:175
+#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:182
+#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:202
+#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:208
 #, python-format
 msgid "NexusDriver: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:182
+#: neutron/plugins/cisco/nexus/cisco_nexus_network_driver_v2.py:189
 #, python-format
-msgid "NexusDriver VLAN IDs: %s"
+msgid "NexusDriver created VLAN: %s"
 msgstr ""
 
 #: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:50
@@ -4438,63 +4457,59 @@ msgstr ""
 msgid "Loaded driver %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:70
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:58
 msgid "NexusPlugin:get_all_networks() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:80
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:73
 msgid "NexusPlugin:create_network() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:208
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:191
 msgid "Grabbing a switch to create SVI"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:210
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:194
 msgid "Using round robin to create SVI"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:229
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:213
 msgid "No round robin or zero weights, using first switch"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:240
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:224
 msgid "NexusPlugin:delete_network() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:244
-msgid "NexusPlugin:get_network_details() called"
-msgstr ""
-
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:250
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:228
 msgid "NexusPlugin:update_network() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:258
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:236
 msgid "NexusPlugin:get_all_ports() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:266
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:244
 msgid "NexusPlugin:create_port() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:274
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:252
 msgid "NexusPlugin:delete_port() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:322
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:304
 msgid "NexusPlugin:update_port() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:330
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:312
 msgid "NexusPlugin:get_port_details() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:339
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:321
 msgid "NexusPlugin:plug_interface() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:347
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:329
 msgid "NexusPlugin:unplug_interface() called"
 msgstr ""
 
@@ -5634,7 +5649,7 @@ msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr ""
 
 #: neutron/plugins/midonet/plugin.py:193
-#: neutron/plugins/nicira/NeutronPlugin.py:1063
+#: neutron/plugins/nicira/NeutronPlugin.py:1073
 msgid "admin_state_up=False networks are not supported."
 msgstr ""
 
@@ -6862,407 +6877,407 @@ msgstr ""
 msgid "Number of packet_filters allowed per tenant, -1 for unlimited"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:238
+#: neutron/plugins/nicira/NeutronPlugin.py:248
 #, python-format
 msgid "Unable to process default l2 gw service:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:273
+#: neutron/plugins/nicira/NeutronPlugin.py:283
 #, python-format
 msgid "Created NVP router port:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:275
+#: neutron/plugins/nicira/NeutronPlugin.py:285
 #, python-format
 msgid "Unable to create port on NVP logical router %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:278
+#: neutron/plugins/nicira/NeutronPlugin.py:288
 #, python-format
 msgid ""
 "Unable to create logical router port for neutron port id %(port_id)s on "
 "router %(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:353
+#: neutron/plugins/nicira/NeutronPlugin.py:363
 #, python-format
 msgid "Attached %(att)s to NVP router port %(port)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:359
+#: neutron/plugins/nicira/NeutronPlugin.py:369
 #, python-format
 msgid ""
 "Unable to plug attachment in NVP logical router port %(r_port_id)s, "
 "associated with Neutron %(q_port_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:365
+#: neutron/plugins/nicira/NeutronPlugin.py:375
 #, python-format
 msgid ""
 "Unable to plug attachment in router port %(r_port_id)s for neutron port "
 "id %(q_port_id)s on router %(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:410
+#: neutron/plugins/nicira/NeutronPlugin.py:420
 msgid "An exception occured while selecting logical switch for the port"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:436
-#: neutron/plugins/nicira/NeutronPlugin.py:471
-#: neutron/plugins/nicira/NeutronPlugin.py:639
+#: neutron/plugins/nicira/NeutronPlugin.py:446
+#: neutron/plugins/nicira/NeutronPlugin.py:481
+#: neutron/plugins/nicira/NeutronPlugin.py:649
 #, python-format
 msgid ""
 "NVP plugin does not support regular VIF ports on external networks. Port "
 "%s will be down."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:456
-#: neutron/plugins/nicira/NeutronPlugin.py:536
-#: neutron/plugins/nicira/NeutronPlugin.py:658
+#: neutron/plugins/nicira/NeutronPlugin.py:466
+#: neutron/plugins/nicira/NeutronPlugin.py:546
+#: neutron/plugins/nicira/NeutronPlugin.py:668
 #, python-format
 msgid ""
 "_nvp_create_port completed for port %(name)s on network %(network_id)s. "
 "The new port id is %(id)s."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:460
+#: neutron/plugins/nicira/NeutronPlugin.py:470
 #, python-format
 msgid "An exception occured while plugging the interface into network:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:478
+#: neutron/plugins/nicira/NeutronPlugin.py:488
 #, python-format
 msgid "Port '%s' was already deleted on NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:487
+#: neutron/plugins/nicira/NeutronPlugin.py:497
 #, python-format
 msgid "_nvp_delete_port completed for port %(port_id)s on network %(net_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:493
+#: neutron/plugins/nicira/NeutronPlugin.py:503
 #, python-format
 msgid "port %s not found in NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:512
-#: neutron/plugins/nicira/NeutronPlugin.py:915
+#: neutron/plugins/nicira/NeutronPlugin.py:522
+#: neutron/plugins/nicira/NeutronPlugin.py:925
 #, python-format
 msgid ""
 "Ignoring exception as this means the peer for port '%s' has already been "
 "deleted."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:524
+#: neutron/plugins/nicira/NeutronPlugin.py:534
 #, python-format
 msgid ""
 "It is not allowed to create router interface ports on external networks "
 "as '%s'"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:543
+#: neutron/plugins/nicira/NeutronPlugin.py:553
 #, python-format
 msgid ""
 "device_id field must be populated in order to create an external gateway "
 "port for network %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:551
+#: neutron/plugins/nicira/NeutronPlugin.py:561
 #, python-format
 msgid "The gateway port for the router %s was not found on the NVP backend"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:588
+#: neutron/plugins/nicira/NeutronPlugin.py:598
 #, python-format
 msgid ""
 "_nvp_create_ext_gw_port completed on external network %(ext_net_id)s, "
 "attached to router:%(router_id)s. NVP port id is %(nvp_port_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:620
+#: neutron/plugins/nicira/NeutronPlugin.py:630
 #, python-format
 msgid "Logical router resource %s not found on NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:624
-#: neutron/plugins/nicira/NeutronPlugin.py:1809
+#: neutron/plugins/nicira/NeutronPlugin.py:634
+#: neutron/plugins/nicira/NeutronPlugin.py:1823
 msgid "Unable to update logical routeron NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:626
+#: neutron/plugins/nicira/NeutronPlugin.py:636
 #, python-format
 msgid ""
 "_nvp_delete_ext_gw_port completed on external network %(ext_net_id)s, "
 "attached to router:%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:696
+#: neutron/plugins/nicira/NeutronPlugin.py:706
 #, python-format
 msgid "Unable to find NVP uuid for Neutron port %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:725
+#: neutron/plugins/nicira/NeutronPlugin.py:735
 #, python-format
 msgid "%s required"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:729
+#: neutron/plugins/nicira/NeutronPlugin.py:739
 msgid "Segmentation ID cannot be specified with flat network type"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:733
+#: neutron/plugins/nicira/NeutronPlugin.py:743
 msgid "Segmentation ID must be specified with vlan network type"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:737
-#: neutron/plugins/nicira/NeutronPlugin.py:752
+#: neutron/plugins/nicira/NeutronPlugin.py:747
+#: neutron/plugins/nicira/NeutronPlugin.py:762
 #, python-format
 msgid "%(segmentation_id)s out of range (%(min_id)s through %(max_id)s)"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:758
+#: neutron/plugins/nicira/NeutronPlugin.py:768
 #, python-format
 msgid "%(net_type_param)s %(net_type_value)s not supported"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:789
+#: neutron/plugins/nicira/NeutronPlugin.py:799
 #, python-format
 msgid "No switch has available ports (%d checked)"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:811
+#: neutron/plugins/nicira/NeutronPlugin.py:821
 #, python-format
 msgid "Maximum number of logical ports reached for logical network %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:839
+#: neutron/plugins/nicira/NeutronPlugin.py:849
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not yet supported by this plugin. "
 "Ignoring setting for network %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:897
+#: neutron/plugins/nicira/NeutronPlugin.py:907
 #, python-format
 msgid "A nvp lport identifier was not found for neutron port '%s'"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:925
+#: neutron/plugins/nicira/NeutronPlugin.py:935
 #, python-format
 msgid "delete_network completed for tenant: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:928
+#: neutron/plugins/nicira/NeutronPlugin.py:938
 #, python-format
 msgid "Did not found lswitch %s in NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:954
+#: neutron/plugins/nicira/NeutronPlugin.py:964
 #, python-format
 msgid ""
 "Current network status:%(nvp_net_status)s; Status in Neutron "
 "DB:%(neutron_status)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:964
-#: neutron/plugins/nicira/NeutronPlugin.py:1012
+#: neutron/plugins/nicira/NeutronPlugin.py:974
+#: neutron/plugins/nicira/NeutronPlugin.py:1022
 msgid "Unable to get logical switches"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1026
+#: neutron/plugins/nicira/NeutronPlugin.py:1036
 #, python-format
 msgid "Logical Switch %s found in neutron database but not in NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1041
+#: neutron/plugins/nicira/NeutronPlugin.py:1051
 #, python-format
 msgid ""
 "Found %s logical switches not bound to Neutron networks. Neutron and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1045
+#: neutron/plugins/nicira/NeutronPlugin.py:1055
 #, python-format
 msgid "get_networks() completed for tenant %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1131
+#: neutron/plugins/nicira/NeutronPlugin.py:1140
 #, python-format
 msgid "Lswitch %s not found in NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1140
+#: neutron/plugins/nicira/NeutronPlugin.py:1149
 msgid "Unable to get ports"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1167
+#: neutron/plugins/nicira/NeutronPlugin.py:1176
 #, python-format
 msgid "Neutron logical port %s was not found on NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1174
+#: neutron/plugins/nicira/NeutronPlugin.py:1183
 #, python-format
 msgid ""
 "Found %s logical ports not bound to Neutron ports. Neutron and NVP are "
 "potentially out of sync"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1240
+#: neutron/plugins/nicira/NeutronPlugin.py:1249
 #, python-format
 msgid "Network %s was not found in NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1248
+#: neutron/plugins/nicira/NeutronPlugin.py:1257
 msgid "Unable to create port or set port attachment in NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1252
+#: neutron/plugins/nicira/NeutronPlugin.py:1261
 #, python-format
 msgid "create_port completed on NVP for tenant %(tenant_id)s: (%(id)s)"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1327
+#: neutron/plugins/nicira/NeutronPlugin.py:1338
 #, python-format
 msgid "Update port request: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1353
+#: neutron/plugins/nicira/NeutronPlugin.py:1364
 #, python-format
 msgid "Unable to update port id: %s."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1477
-#: neutron/plugins/nicira/NeutronPlugin.py:1521
+#: neutron/plugins/nicira/NeutronPlugin.py:1491
+#: neutron/plugins/nicira/NeutronPlugin.py:1535
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1490
+#: neutron/plugins/nicira/NeutronPlugin.py:1504
 msgid "Unable to create logical router on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1530
+#: neutron/plugins/nicira/NeutronPlugin.py:1544
 msgid ""
 "'routes' cannot contain route '0.0.0.0/0', this must be updated through "
 "the default gateway attribute"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1546
+#: neutron/plugins/nicira/NeutronPlugin.py:1560
 #, python-format
 msgid "Logical router %s not found on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1550
+#: neutron/plugins/nicira/NeutronPlugin.py:1564
 msgid "Unable to update logical router on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1552
+#: neutron/plugins/nicira/NeutronPlugin.py:1566
 msgid ""
 "Request cannot contain 'routes' with the NVP platform currently in "
 "execution. Please, try without specifying the static routes."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1585
+#: neutron/plugins/nicira/NeutronPlugin.py:1599
 #, python-format
 msgid "Logical router '%s' not found on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1589
+#: neutron/plugins/nicira/NeutronPlugin.py:1603
 msgid "Unable to delete logical routeron NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1609
+#: neutron/plugins/nicira/NeutronPlugin.py:1623
 #, python-format
 msgid ""
 "Current router status:%(router_status)s;Status in Neutron "
 "DB:%(db_router_status)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1636
+#: neutron/plugins/nicira/NeutronPlugin.py:1650
 msgid "Unable to get logical routers from NVP controller"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1658
+#: neutron/plugins/nicira/NeutronPlugin.py:1672
 #, python-format
 msgid ""
 "Found %s logical routers not bound to Neutron routers. Neutron and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1684
+#: neutron/plugins/nicira/NeutronPlugin.py:1698
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1719
+#: neutron/plugins/nicira/NeutronPlugin.py:1733
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1764
+#: neutron/plugins/nicira/NeutronPlugin.py:1778
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1776
+#: neutron/plugins/nicira/NeutronPlugin.py:1790
 #, python-format
 msgid ""
 "Unable to find NVP logical router port for Neutron port id:%s. Was this "
 "port ever paired with a logical router?"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1805
+#: neutron/plugins/nicira/NeutronPlugin.py:1819
 #, python-format
 msgid "Logical router port resource %s not found on NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1831
+#: neutron/plugins/nicira/NeutronPlugin.py:1845
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1837
+#: neutron/plugins/nicira/NeutronPlugin.py:1851
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1903
+#: neutron/plugins/nicira/NeutronPlugin.py:1917
 #, python-format
 msgid "Address list for NVP logical router port:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1927
+#: neutron/plugins/nicira/NeutronPlugin.py:1941
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1970
+#: neutron/plugins/nicira/NeutronPlugin.py:1984
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1973
+#: neutron/plugins/nicira/NeutronPlugin.py:1987
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1999
+#: neutron/plugins/nicira/NeutronPlugin.py:2013
 #, python-format
 msgid ""
 "Create_l2_gw_service did not return an uuid for the newly created "
 "resource:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2021
+#: neutron/plugins/nicira/NeutronPlugin.py:2035
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
@@ -8780,4 +8795,10 @@ msgstr ""
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
+
+#~ msgid "NexusDriver VLAN IDs: %s"
+#~ msgstr ""
+
+#~ msgid "NexusPlugin:get_network_details() called"
+#~ msgstr ""
 
