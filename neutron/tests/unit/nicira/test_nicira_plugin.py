@@ -25,6 +25,7 @@ from neutron.common import constants
 import neutron.common.test_lib as test_lib
 from neutron import context
 from neutron.extensions import l3
+from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as secgrp
 from neutron import manager
@@ -36,6 +37,7 @@ from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.plugins.nicira import nvplib
+from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.nicira import fake_nvpapiclient
 import neutron.tests.unit.nicira.test_networkgw as test_l2_gw
 import neutron.tests.unit.test_db_plugin as test_plugin
@@ -105,7 +107,12 @@ class TestNiciraV2HTTPResponse(test_plugin.TestV2HTTPResponse,
     pass
 
 
-class TestNiciraPortsV2(test_plugin.TestPortsV2, NiciraPluginV2TestCase):
+class TestNiciraPortsV2(test_plugin.TestPortsV2,
+                        NiciraPluginV2TestCase,
+                        test_bindings.PortBindingsTestCase):
+
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    HAS_PORT_FILTER = True
 
     def test_exhaust_ports_overlay_network(self):
         cfg.CONF.set_override('max_lp_per_overlay_ls', 1, group='NVP')

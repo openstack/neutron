@@ -32,6 +32,7 @@ down_revision = 'grizzly'
 migration_for_plugins = [
     'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
     'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
+    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
 ]
 
 from alembic import op

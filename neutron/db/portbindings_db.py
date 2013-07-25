@@ -70,6 +70,10 @@ class PortBindingMixin(object):
 
     def _process_portbindings_create_and_update(self, context, port_data,
                                                 port):
+        binding_profile = port.get(portbindings.PROFILE)
+        binding_profile_set = attributes.is_attr_set(binding_profile)
+        if not binding_profile_set and binding_profile is not None:
+            del port[portbindings.PROFILE]
         host = port_data.get(portbindings.HOST_ID)
         host_set = attributes.is_attr_set(host)
         if not host_set:
