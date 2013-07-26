@@ -103,6 +103,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
                        'OVSNeutronAgent.setup_integration_br',
                        return_value=mock.Mock()),
+            mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
+                       'OVSNeutronAgent.setup_ancillary_bridges',
+                       return_value=[]),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
                        return_value='00:00:00:00:00:01')):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**kwargs)
@@ -395,3 +398,57 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         self._check_ovs_vxlan_version('1.10', '1.9',
                                       constants.MINIMUM_OVS_VXLAN_VERSION,
                                       expecting_ok=False)
+
+
+class AncillaryBridgesTest(base.BaseTestCase):
+
+    def setUp(self):
+        super(AncillaryBridgesTest, self).setUp()
+        self.addCleanup(cfg.CONF.reset)
+        self.addCleanup(mock.patch.stopall)
+        notifier_p = mock.patch(NOTIFIER)
+        notifier_cls = notifier_p.start()
+        self.notifier = mock.Mock()
+        notifier_cls.return_value = self.notifier
+        # Avoid rpc initialization for unit tests
+        cfg.CONF.set_override('rpc_backend',
+                              'neutron.openstack.common.rpc.impl_fake')
+        cfg.CONF.set_override('report_interval', 0, 'AGENT')
+        self.kwargs = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
+
+    def _test_ancillary_bridges(self, bridges, ancillary):
+        device_ids = ancillary[:]
+
+        def pullup_side_effect(self, *args):
+            result = device_ids.pop(0)
+            return result
+
+        with contextlib.nested(
+            mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
+                       'OVSNeutronAgent.setup_integration_br',
+                       return_value=mock.Mock()),
+            mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                       return_value='00:00:00:00:00:01'),
+            mock.patch('neutron.agent.linux.ovs_lib.get_bridges',
+                       return_value=bridges),
+            mock.patch(
+                'neutron.agent.linux.ovs_lib.get_bridge_external_bridge_id',
+                side_effect=pullup_side_effect)):
+            self.agent = ovs_neutron_agent.OVSNeutronAgent(**self.kwargs)
+            self.assertEqual(len(ancillary), len(self.agent.ancillary_brs))
+            if ancillary:
+                bridges = [br.br_name for br in self.agent.ancillary_brs]
+                for br in ancillary:
+                    self.assertIn(br, bridges)
+
+    def test_ancillary_bridges_single(self):
+        bridges = ['br-int', 'br-ex']
+        self._test_ancillary_bridges(bridges, ['br-ex'])
+
+    def test_ancillary_bridges_none(self):
+        bridges = ['br-int']
+        self._test_ancillary_bridges(bridges, [])
+
+    def test_ancillary_bridges_multiple(self):
+        bridges = ['br-int', 'br-ex1', 'br-ex2']
+        self._test_ancillary_bridges(bridges, ['br-ex1', 'br-ex2'])

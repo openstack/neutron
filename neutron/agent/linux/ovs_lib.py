@@ -352,3 +352,13 @@ def get_installed_ovs_klm_version():
                 return ver[0]
     except Exception:
         LOG.exception(_("Unable to retrieve OVS kernel module version."))
+
+
+def get_bridge_external_bridge_id(root_helper, bridge):
+    args = ["ovs-vsctl", "--timeout=2", "br-get-external-id",
+            bridge, "bridge-id"]
+    try:
+        return utils.execute(args, root_helper=root_helper).strip()
+    except Exception:
+        LOG.exception(_("Bridge %s not found."), bridge)
+        return None
