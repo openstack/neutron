@@ -40,6 +40,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'routers': {
         'routes': {'allow_post': False, 'allow_put': True,
                    'validate': {'type:hostroutes': None},
+                   'convert_to': attr.convert_none_to_empty_list,
                    'is_visible': True, 'default': attr.ATTR_NOT_SPECIFIED},
     }
 }
