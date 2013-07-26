@@ -18,14 +18,14 @@
 """Add portbindings db
 
 Revision ID: 176a85fc7d79
-Revises: grizzly
+Revises: f489cf14a79c
 Create Date: 2013-03-21 14:59:53.052600
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '176a85fc7d79'
-down_revision = 'grizzly'
+down_revision = 'f489cf14a79c'
 
 # Change to ['*'] if this migration applies to all plugins
 
