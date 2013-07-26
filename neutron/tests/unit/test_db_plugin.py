@@ -1706,6 +1706,28 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
                 self.assertEqual(q.count(), 1)
 
+    def test_recycle_ip_address_without_allocation_pool(self):
+        plugin = NeutronManager.get_plugin()
+        allocation_pools = [{"start": '10.0.0.10',
+                             "end": '10.0.0.50'}]
+        with self.subnet(cidr='10.0.0.0/24',
+                         allocation_pools=allocation_pools) as subnet:
+            network_id = subnet['subnet']['network_id']
+            subnet_id = subnet['subnet']['id']
+            fixed_ips = [{"subnet_id": subnet_id,
+                          "ip_address": '10.0.0.100'}]
+            with self.port(subnet=subnet, fixed_ips=fixed_ips) as port:
+                update_context = context.Context('', port['port']['tenant_id'])
+                ip_address = port['port']['fixed_ips'][0]['ip_address']
+                plugin._recycle_ip(update_context,
+                                   network_id,
+                                   subnet_id,
+                                   ip_address)
+
+                q = update_context.session.query(models_v2.IPAllocation)
+                q = q.filter_by(subnet_id=subnet_id)
+                self.assertEqual(q.count(), 0)
+
     def test_recycle_held_ip_address(self):
         plugin = NeutronManager.get_plugin()
         with self.subnet() as subnet:
