@@ -96,8 +96,6 @@ class FlatTypeDriver(api.TypeDriver):
                 msg = _("%s prohibited for flat provider network") % key
                 raise exc.InvalidInput(error_message=msg)
 
-        return segment
-
     def reserve_provider_segment(self, session, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
         with session.begin(subtransactions=True):

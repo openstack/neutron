@@ -17,13 +17,14 @@ from abc import ABCMeta, abstractmethod
 from neutron.common import exceptions as exc
 from neutron.common import topics
 from neutron.openstack.common import log
+from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
 
 TUNNEL = 'tunnel'
 
 
-class TunnelTypeDriver(object):
+class TunnelTypeDriver(api.TypeDriver):
     """Define stable abstract interface for ML2 type drivers.
 
     tunnel type networks rely on tunnel endpoints. This class defines abstract
@@ -62,6 +63,26 @@ class TunnelTypeDriver(object):
                           {'range': tunnel_ranges, 'e': ex})
         LOG.info(_("%(type)s ID ranges: %(range)s"),
                  {'type': tunnel_type, 'range': current_range})
+
+    def validate_provider_segment(self, segment):
+        physical_network = segment.get(api.PHYSICAL_NETWORK)
+        if physical_network:
+            msg = _("provider:physical_network specified for %s "
+                    "network") % segment.get(api.NETWORK_TYPE)
+            raise exc.InvalidInput(error_message=msg)
+
+        segmentation_id = segment.get(api.SEGMENTATION_ID)
+        if not segmentation_id:
+            msg = _("segmentation_id required for %s provider "
+                    "network") % segment.get(api.NETWORK_TYPE)
+            raise exc.InvalidInput(error_message=msg)
+
+        for key, value in segment.items():
+            if value and key not in [api.NETWORK_TYPE,
+                                     api.SEGMENTATION_ID]:
+                msg = (_("%(key)s prohibited for %(tunnel)s provider network"),
+                       {'key': key, 'tunnel': segment.get(api.NETWORK_TYPE)})
+                raise exc.InvalidInput(error_message=msg)
 
 
 class TunnelRpcCallbackMixin(object):

@@ -65,8 +65,7 @@ class VxlanEndpoints(model_base.BASEV2):
         return "<VxlanTunnelEndpoint(%s)>" % self.ip_address
 
 
-class VxlanTypeDriver(api.TypeDriver,
-                      type_tunnel.TunnelTypeDriver):
+class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def get_type(self):
         return TYPE_VXLAN
@@ -79,18 +78,6 @@ class VxlanTypeDriver(api.TypeDriver,
             TYPE_VXLAN
         )
         self._sync_vxlan_allocations()
-
-    def validate_provider_segment(self, segment):
-        physical_network = segment.get(api.PHYSICAL_NETWORK)
-        if physical_network:
-            msg = _("provider:physical_network specified for VXLAN "
-                    "network")
-            raise exc.InvalidInput(error_message=msg)
-
-        segmentation_id = segment.get(api.SEGMENTATION_ID)
-        if segmentation_id is None:
-            msg = _("segmentation_id required for VXLAN provider network")
-            raise exc.InvalidInput(error_message=msg)
 
     def reserve_provider_segment(self, session, segment):
         segmentation_id = segment.get(api.SEGMENTATION_ID)
