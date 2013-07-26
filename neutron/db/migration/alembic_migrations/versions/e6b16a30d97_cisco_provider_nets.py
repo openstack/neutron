@@ -18,14 +18,14 @@
 """Add cisco_provider_networks table
 
 Revision ID: e6b16a30d97
-Revises: 2032abe8edac
+Revises: 557edfc53098
 Create Date: 2013-07-18 21:46:12.792504
 
 """
 
 # revision identifiers, used by Alembic.
 revision = 'e6b16a30d97'
-down_revision = '2032abe8edac'
+down_revision = '557edfc53098'
 
 # Change to ['*'] if this migration applies to all plugins
 
