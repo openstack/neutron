@@ -6,7 +6,7 @@ neutron-server
 Neutron Server
 --------------
 
-:Author: openstack@lists.launchpad.net
+:Author: openstack@lists.openstack.org
 :Date:   2012-04-05
 :Copyright: OpenStack Foundation
 :Version: 2012.1
