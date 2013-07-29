@@ -56,10 +56,6 @@ class QueueInvalidBandwidth(qexception.InvalidInput):
                 " integer.")
 
 
-class MissingDSCPForTrusted(qexception.InvalidInput):
-    message = _("No DSCP field needed when QoS workload marked trusted")
-
-
 class QueueNotFound(qexception.NotFound):
     message = _("Queue %(id)s does not exist")
 
@@ -91,7 +87,19 @@ def convert_to_unsigned_int_or_none_max_63(val):
         raise QueueInvalidDscp(data=val)
     return val
 
-# Attribute Map
+# As per NVP API, if a queue is trusted, DSCP must be omitted; if a queue is
+# untrusted, DSCP must be specified. Whichever default values we choose for
+# the tuple (qos_marking, dscp), there will be at least one combination of a
+# request with conflicting values: for instance, with the following default:
+#
+# qos_marking = 'untrusted', dscp = '0'
+#
+# requests with qos_marking = 'trusted' and a default dscp will fail. Since
+# it is convoluted to ask the admin to specify a None value for dscp when
+# qos_marking is 'trusted', it is best to ignore the dscp value, regardless
+# of whether it has been specified or not. This preserves the chosen default
+# and keeps backward compatibility with the API. A warning will be logged, as
+# the server is overriding a potentially conflicting request from the admin
 RESOURCE_ATTRIBUTE_MAP = {
     'qos_queues': {
         'id': {'allow_post': False, 'allow_put': False,

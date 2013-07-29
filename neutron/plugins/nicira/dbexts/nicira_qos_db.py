@@ -22,9 +22,13 @@ from sqlalchemy.orm import exc
 from neutron.api.v2 import attributes as attr
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
 from neutron.plugins.nicira import nvplib
+
+
+LOG = log.getLogger(__name__)
 
 
 class QoSQueue(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -267,9 +271,10 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
                     raise ext_qos.DefaultQueueAlreadyExists()
             else:
                 raise ext_qos.DefaultQueueCreateNotAdmin()
-        if (qos_queue.get('qos_marking') == 'trusted' and
-            not qos_queue.get('dscp')):
-            raise ext_qos.MissingDSCPForTrusted()
+        if qos_queue.get('qos_marking') == 'trusted':
+            dscp = qos_queue.pop('dscp')
+            LOG.info(_("DSCP value (%s) will be ignored with 'trusted' "
+                     "marking"), dscp)
         max = qos_queue.get('max')
         min = qos_queue.get('min')
         # Max can be None
