@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-25 19:54+0000\n"
+"POT-Creation-Date: 2013-07-29 19:55+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.6\n"
+"Generated-By: Babel 1.3\n"
 
 #: quantum/auth.py:26 quantum/api/__init__.py:29
 msgid ""
@@ -507,7 +507,7 @@ msgstr ""
 #: neutron/agent/dhcp_agent.py:854 neutron/agent/l3_agent.py:810
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:228
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:184
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:216
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:221
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
@@ -650,7 +650,7 @@ msgstr ""
 
 #: neutron/agent/ovs_cleanup_util.py:73
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:428
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:251
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:256
 #, python-format
 msgid "Delete %s"
 msgstr "刪除 %s"
@@ -1021,6 +1021,11 @@ msgstr ""
 
 #: neutron/agent/linux/ovs_lib.py:354
 msgid "Unable to retrieve OVS kernel module version."
+msgstr ""
+
+#: neutron/agent/linux/ovs_lib.py:363
+#, python-format
+msgid "Bridge %s not found."
 msgstr ""
 
 #: neutron/agent/linux/utils.py:42
@@ -2038,11 +2043,6 @@ msgid ""
 "(%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr "保留所配置的 IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 
-#: neutron/db/db_base_plugin_v2.py:365
-#, python-format
-msgid "No allocation pool found for ip address:%s"
-msgstr "找不到 IP 位址的配置儲存區：%s"
-
 #: neutron/db/db_base_plugin_v2.py:378
 #, python-format
 msgid "Recycle %s"
@@ -2400,64 +2400,6 @@ msgstr "外部網路 ID 已傳回至 L3 代理程式：%s"
 #, python-format
 msgid "Resource type '%(resource_type)s' is longer than %(maxlen)d characters"
 msgstr "資源類型 '%(resource_type)s' 的長度超過 %(maxlen)d 個字元"
-
-#: neutron/db/servicetype_db.py:40
-msgid "Textual description for the default service type"
-msgstr "預設服務類型的文字說明"
-
-#: neutron/db/servicetype_db.py:42
-msgid ""
-"Defines a provider for an advanced service using the format: "
-"<service>:<plugin>[:<driver>]"
-msgstr "使用下列格式來定義進階服務的提供者：<service>:<plugin>[:<driver>]"
-
-#: neutron/db/servicetype_db.py:62
-#, python-format
-msgid ""
-"Default service type - no driver for service %(service_class)s and plugin"
-" %(plugin)s"
-msgstr "預設服務類型 - 服務 %(service_class)s 及外掛程式 %(plugin)s 沒有驅動程式"
-
-#: neutron/db/servicetype_db.py:73
-msgid ""
-"No default service definition in configuration file. Please add service "
-"definitions using the service_definition variable in the "
-"[default_servicetype] section"
-msgstr ""
-
-#: neutron/db/servicetype_db.py:79
-#, python-format
-msgid "Service type %(service_type_id)s could not be found "
-msgstr "找不到服務類型 %(service_type_id)s"
-
-#: neutron/db/servicetype_db.py:83
-#, python-format
-msgid ""
-"There are still active instances of service type '%(service_type_id)s'. "
-"Therefore it cannot be removed."
-msgstr "服務類型 '%(service_type_id)s' 仍有作用中的實例。因此無法移除。"
-
-#: neutron/db/servicetype_db.py:150
-#, python-format
-msgid ""
-"Default service type record updated in Neutron database. identifier is "
-"'%s'"
-msgstr ""
-
-#: neutron/db/servicetype_db.py:218
-#, python-format
-msgid "Multiple default service type instances found.Will use instance '%s'"
-msgstr "找到多個預設服務類型實例。將使用實例 '%s'"
-
-#: neutron/db/servicetype_db.py:264
-#, python-format
-msgid "Created service type object:%s"
-msgstr "已建立服務類型物件：%s"
-
-#: neutron/db/servicetype_db.py:311
-#, python-format
-msgid "Number of instances for service type '%s' is already 0."
-msgstr "服務類型 '%s' 的實例數已經是 0。"
 
 #: neutron/db/sqlalchemyutils.py:74
 #, python-format
@@ -2902,79 +2844,12 @@ msgstr "每個 Tenant 所容許的安全群組數目，-1 表示無限制"
 msgid "Number of security rules allowed per tenant, -1 for unlimited"
 msgstr "每個 Tenant 所容許的安全規則數目，-1 表示無限制"
 
-#: neutron/extensions/servicetype.py:82
-#, python-format
-msgid "The service type '%s' does not exist"
-msgstr "服務類型 '%s' 不存在"
-
-#: neutron/extensions/servicetype.py:89
-msgid ""
-"No service type definition was provided. At least a service type "
-"definition must be provided"
-msgstr "未提供服務類型定義。必須至少提供一個服務類型定義"
-
-#: neutron/extensions/servicetype.py:101
-#, python-format
-msgid "Required attributes missing in service definition: %s"
-msgstr "服務定義中遺漏了必要屬性：%s"
-
-#: neutron/extensions/servicetype.py:103 neutron/extensions/servicetype.py:110
-#: neutron/extensions/servicetype.py:117 neutron/extensions/servicetype.py:126
-#: neutron/extensions/servicetype.py:131 neutron/extensions/servicetype.py:148
-#: neutron/extensions/servicetype.py:156
-#, python-format
-msgid "%(f_name)s: %(msg)s"
-msgstr "%(f_name)s：%(msg)s"
-
-#: neutron/extensions/servicetype.py:108
-#, python-format
-msgid "Service name '%s' unspecified or invalid"
-msgstr "服務名稱 '%s' 未指定或無效"
-
-#: neutron/extensions/servicetype.py:115
-#, python-format
-msgid "Plugin name not specified in service definition %s"
-msgstr "服務定義 %s 中未指定外掛程式名稱"
-
-#: neutron/extensions/servicetype.py:125
-#, python-format
-msgid "No plugin for service '%s'"
-msgstr "服務 '%s' 沒有外掛程式"
-
-#: neutron/extensions/servicetype.py:130
-#, python-format
-msgid "Plugin name '%s' is not correct "
-msgstr "外掛程式名稱 '%s' 不正確"
-
-#: neutron/extensions/servicetype.py:146
-#, python-format
-msgid "Unparseable attributes found in service definition %s"
-msgstr "在服務定義 %s 中發現無法剖析的屬性"
-
-#: neutron/extensions/servicetype.py:152
-#, python-format
-msgid "Exception while parsing service definition:%s"
-msgstr "剖析服務定義時發生異常狀況：%s"
-
-#: neutron/extensions/servicetype.py:154
-#, python-format
-msgid "Was expecting a dict for service definition, found the following: %s"
-msgstr "需要服務定義的字典，但發現下列項目：%s"
-
-#: neutron/extensions/servicetype.py:160
-#: neutron/plugins/nicira/extensions/nvp_networkgw.py:86
-#, python-format
-msgid "%s: provided data are not iterable"
-msgstr "%s：提供的資料無法反覆運算"
-
-#: neutron/extensions/servicetype.py:171
+#: neutron/extensions/servicetype.py:54
 msgid "Neutron Service Type Management"
 msgstr ""
 
-#: neutron/extensions/servicetype.py:179
-msgid ""
-"API for retrieving and managing service types for Neutron advanced "
-"services"
+#: neutron/extensions/servicetype.py:62
+msgid "API for retrieving service providers for Neutron advanced services"
 msgstr ""
 
 #: neutron/openstack/common/exception.py:104
@@ -4561,7 +4436,7 @@ msgstr "正在保留儲存區中的平面實體網路 %(physical_network)s"
 
 #: neutron/plugins/hyperv/db.py:79
 #: neutron/plugins/linuxbridge/db/l2network_db_v2.py:140
-#: neutron/plugins/ml2/drivers/type_vlan.py:206
+#: neutron/plugins/ml2/drivers/type_vlan.py:204
 #: neutron/plugins/openvswitch/ovs_db_v2.py:159
 #, python-format
 msgid ""
@@ -4698,7 +4573,7 @@ msgstr "收到 port_delete"
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:130
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:432
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:168
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:260
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:265
 msgid "port_update received"
 msgstr "收到 port_update"
 
@@ -4781,14 +4656,14 @@ msgstr ""
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:310
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:640
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:352
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:734
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:830
 msgid "Agent out of sync with plugin!"
 msgstr "代理程式與外掛程式不同步！"
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:318
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:652
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:359
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:747
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:844
 msgid "Agent loop has new devices!"
 msgstr "代理程式迴圈具有新裝置！"
 
@@ -4805,7 +4680,7 @@ msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:345
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:691
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:868
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:974
 msgid "Agent initialized successfully, now running... "
 msgstr "已順利地起始設定代理程式，現正在執行中..."
 
@@ -5058,12 +4933,12 @@ msgstr "已完成刪除子介面 %s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:425
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:159
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:249
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:254
 msgid "network_delete received"
 msgstr "收到 network_delete"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:473
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:285
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:290
 #, python-format
 msgid "RPC timeout while updating port %s"
 msgstr ""
@@ -5079,19 +4954,20 @@ msgid "RPC agent_id: %s"
 msgstr "RPC agent_id：%s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:575
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:643
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:692
 #, python-format
 msgid "Port %s added"
 msgstr "已新增埠 %s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:581
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:649
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:698
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:727
 #, python-format
 msgid "Unable to get port details for %(device)s: %(e)s"
 msgstr "無法取得 %(device)s 的埠詳細資料：%(e)s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:587
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:656
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:705
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "已更新埠 %(device)s。詳細資料：%(details)s"
@@ -5099,27 +4975,31 @@ msgstr "已更新埠 %(device)s。詳細資料：%(details)s"
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:608
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:628
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:339
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:665
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:688
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:714
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:752
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:773
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr "外掛程式上未定義裝置 %s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:615
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:674
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:738
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:759
 #, python-format
 msgid "Attachment %s removed"
 msgstr "已移除連接裝置 %s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:621
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:680
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:744
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:765
 #, python-format
 msgid "port_removed failed for %(device)s: %(e)s"
 msgstr "對 %(device)s 執行 port_removed 作業失敗：%(e)s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:625
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:336
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:685
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:749
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:770
 #, python-format
 msgid "Port %s updated."
 msgstr "已更新埠 %s。"
@@ -5138,7 +5018,7 @@ msgid "Error in agent loop. Devices info: %s"
 msgstr "代理程式迴圈發生錯誤。裝置資訊：%s"
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:666
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:762
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:867
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:281
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
@@ -5170,7 +5050,7 @@ msgid "Enable server RPC compatibility with old agents"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/db/l2network_db_v2.py:146
-#: neutron/plugins/ml2/drivers/type_vlan.py:212
+#: neutron/plugins/ml2/drivers/type_vlan.py:210
 #: neutron/plugins/openvswitch/ovs_db_v2.py:165
 #, python-format
 msgid ""
@@ -5179,7 +5059,7 @@ msgid ""
 msgstr "正在保留儲存區外部實體網路 %(physical_network)s 上的特定 VLAN %(vlan_id)s"
 
 #: neutron/plugins/linuxbridge/db/l2network_db_v2.py:170
-#: neutron/plugins/ml2/drivers/type_vlan.py:261
+#: neutron/plugins/ml2/drivers/type_vlan.py:259
 #: neutron/plugins/openvswitch/ovs_db_v2.py:195
 #, python-format
 msgid ""
@@ -5188,7 +5068,7 @@ msgid ""
 msgstr "正在將實體網路 %(physical_network)s 上的 VLAN %(vlan_id)s 釋放到儲存區"
 
 #: neutron/plugins/linuxbridge/db/l2network_db_v2.py:175
-#: neutron/plugins/ml2/drivers/type_vlan.py:256
+#: neutron/plugins/ml2/drivers/type_vlan.py:254
 #: neutron/plugins/openvswitch/ovs_db_v2.py:190
 #, python-format
 msgid ""
@@ -5970,7 +5850,7 @@ msgid "Initializing driver for type '%s'"
 msgstr ""
 
 #: neutron/plugins/ml2/managers.py:87
-#: neutron/plugins/ml2/drivers/type_tunnel.py:95
+#: neutron/plugins/ml2/drivers/type_tunnel.py:116
 #, fuzzy, python-format
 msgid "network_type value '%s' not supported"
 msgstr "不支援網路類型 %s"
@@ -6010,28 +5890,28 @@ msgstr ""
 msgid "Modular L2 Plugin initialization complete"
 msgstr "已完成外掛程式起始設定"
 
-#: neutron/plugins/ml2/plugin.py:138
+#: neutron/plugins/ml2/plugin.py:140
 msgid "network_type required if other provider attributes specified"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:152
+#: neutron/plugins/ml2/plugin.py:154
 #, fuzzy, python-format
 msgid "Network %s has no segments"
 msgstr "代理程式上未使用網路 %s。"
 
-#: neutron/plugins/ml2/plugin.py:184
+#: neutron/plugins/ml2/plugin.py:186
 #, fuzzy
 msgid ""
 "In _notify_port_updated() for port %(port_id), network %(network_id) has "
 "no segments"
 msgstr "對網路 %(net_id)s 上埠 %(port_id)s 執行的 _nvp_delete_port 已完成"
 
-#: neutron/plugins/ml2/plugin.py:227
+#: neutron/plugins/ml2/plugin.py:229
 #, python-format
 msgid "mechanism_manager.create_network failed, deleting network '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:330
+#: neutron/plugins/ml2/plugin.py:332
 #, python-format
 msgid "mechanism_manager.create_port failed, deleting port '%s'"
 msgstr ""
@@ -6118,17 +5998,17 @@ msgstr "未提供 physical_network"
 msgid "%s prohibited for flat provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:112
+#: neutron/plugins/ml2/drivers/type_flat.py:110
 #, fuzzy, python-format
 msgid "Reserving flat network on physical network %s"
 msgstr "實體網路 %s 沒有對映"
 
-#: neutron/plugins/ml2/drivers/type_flat.py:130
+#: neutron/plugins/ml2/drivers/type_flat.py:128
 #, fuzzy, python-format
 msgid "Releasing flat network on physical network %s"
 msgstr "實體網路 %s 沒有對映"
 
-#: neutron/plugins/ml2/drivers/type_flat.py:133
+#: neutron/plugins/ml2/drivers/type_flat.py:131
 #, fuzzy, python-format
 msgid "No flat network found on physical network %s"
 msgstr "實體網路 %s 沒有對映"
@@ -6139,66 +6019,58 @@ msgid ""
 "GRE tunnel IDs that are available for tenant network allocation"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:79
-msgid "provider:physical_network specified for GRE network"
-msgstr ""
-
 #: neutron/plugins/ml2/drivers/type_gre.py:85
-msgid "segmentation_id required for GRE provider network"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/type_gre.py:98
 #, python-format
 msgid "Reserving specific gre tunnel %s from pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:102
+#: neutron/plugins/ml2/drivers/type_gre.py:89
 #, python-format
 msgid "Reserving specific gre tunnel %s outside pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:115
+#: neutron/plugins/ml2/drivers/type_gre.py:102
 #, python-format
 msgid "Allocating gre tunnel id  %(gre_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:133
+#: neutron/plugins/ml2/drivers/type_gre.py:120
 #, python-format
 msgid "Releasing gre tunnel %s to pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:138
+#: neutron/plugins/ml2/drivers/type_gre.py:125
 #, python-format
 msgid "Releasing gre tunnel %s outside pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:141
+#: neutron/plugins/ml2/drivers/type_gre.py:128
 #, python-format
 msgid "gre_id %s not found"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:151
+#: neutron/plugins/ml2/drivers/type_gre.py:138
 #, python-format
 msgid "Skipping unreasonable gre ID range %(tun_min)s:%(tun_max)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:169
-#: neutron/plugins/ml2/drivers/type_vxlan.py:177
+#: neutron/plugins/ml2/drivers/type_gre.py:156
+#: neutron/plugins/ml2/drivers/type_vxlan.py:164
 #: neutron/plugins/openvswitch/ovs_db_v2.py:233
 #, python-format
 msgid "Removing tunnel %s from pool"
 msgstr "正在將通道 %s 從儲存區中移除"
 
-#: neutron/plugins/ml2/drivers/type_gre.py:184
+#: neutron/plugins/ml2/drivers/type_gre.py:171
 msgid "get_gre_endpoints() called"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:193
+#: neutron/plugins/ml2/drivers/type_gre.py:180
 #, python-format
 msgid "add_gre_endpoint() called for ip %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_gre.py:199
+#: neutron/plugins/ml2/drivers/type_gre.py:186
 #, python-format
 msgid "Gre endpoint with ip %s already exists"
 msgstr ""
@@ -6213,14 +6085,30 @@ msgstr "已完成外掛程式起始設定"
 msgid "%s prohibited for local provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:60
+#: neutron/plugins/ml2/drivers/type_tunnel.py:61
 #, python-format
 msgid "Invalid tunnel ID range: '%(range)s' - %(e)s. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_tunnel.py:63
+#: neutron/plugins/ml2/drivers/type_tunnel.py:64
 #, python-format
 msgid "%(type)s ID ranges: %(range)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_tunnel.py:70
+#: neutron/plugins/openvswitch/ovs_neutron_plugin.py:401
+#, python-format
+msgid "provider:physical_network specified for %s network"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_tunnel.py:76
+#, python-format
+msgid "segmentation_id required for %s provider network"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_tunnel.py:83
+#, python-format
+msgid "%(key)s prohibited for %(tunnel)s provider network"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_vlan.py:37
@@ -6266,14 +6154,14 @@ msgstr "'%(data)s' 不在 %(min_value)s 到 %(max_value)s 的範圍內"
 msgid "%s prohibited for VLAN provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:228
+#: neutron/plugins/ml2/drivers/type_vlan.py:226
 #, fuzzy, python-format
 msgid ""
 "Allocating vlan %(vlan_id)s on physical network %(physical_network)s from"
 " pool"
 msgstr "正在將實體網路 %(physical_network)s 上的 VLAN %(vlan_id)s 從儲存區中移除"
 
-#: neutron/plugins/ml2/drivers/type_vlan.py:266
+#: neutron/plugins/ml2/drivers/type_vlan.py:264
 #, fuzzy, python-format
 msgid "No vlan_id %(vlan_id)s found on physical network %(physical_network)s"
 msgstr "正在釋放實體網路 %(physical_network)s 上的 VLAN %(vlan_id)s"
@@ -6288,54 +6176,46 @@ msgstr ""
 msgid "Multicast group for VXLAN. If unset, disables VXLAN multicast mode."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:86
-msgid "provider:physical_network specified for VXLAN network"
-msgstr ""
-
 #: neutron/plugins/ml2/drivers/type_vxlan.py:92
-msgid "segmentation_id required for VXLAN provider network"
-msgstr ""
-
-#: neutron/plugins/ml2/drivers/type_vxlan.py:105
 #, python-format
 msgid "Reserving specific vxlan tunnel %s from pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:109
+#: neutron/plugins/ml2/drivers/type_vxlan.py:96
 #, python-format
 msgid "Reserving specific vxlan tunnel %s outside pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:122
+#: neutron/plugins/ml2/drivers/type_vxlan.py:109
 #, python-format
 msgid "Allocating vxlan tunnel vni %(vxlan_vni)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:140
+#: neutron/plugins/ml2/drivers/type_vxlan.py:127
 #, python-format
 msgid "Releasing vxlan tunnel %s to pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:145
+#: neutron/plugins/ml2/drivers/type_vxlan.py:132
 #, python-format
 msgid "Releasing vxlan tunnel %s outside pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:148
+#: neutron/plugins/ml2/drivers/type_vxlan.py:135
 #, python-format
 msgid "vxlan_vni %s not found"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:159
+#: neutron/plugins/ml2/drivers/type_vxlan.py:146
 #, python-format
 msgid "Skipping unreasonable VXLAN VNI range %(tun_min)s:%(tun_max)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:194
+#: neutron/plugins/ml2/drivers/type_vxlan.py:181
 msgid "get_vxlan_endpoints() called"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:204
+#: neutron/plugins/ml2/drivers/type_vxlan.py:191
 #, python-format
 msgid "add_vxlan_endpoint() called for ip %s"
 msgstr ""
@@ -6486,9 +6366,9 @@ msgid "eSwitch Agent Started!"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:364
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:753
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:858
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:275
-#: neutron/tests/unit/openvswitch/test_ovs_tunnel.py:382
+#: neutron/tests/unit/openvswitch/test_ovs_tunnel.py:403
 msgid "Error in agent event loop"
 msgstr "代理程式事件迴圈發生錯誤"
 
@@ -8028,9 +7908,19 @@ msgid ""
 "'%(network_gateway_id)s'"
 msgstr "正在切斷網路 '%(network_id)s' 與閘道 '%(network_gateway_id)s' 的連線"
 
+#: neutron/plugins/nicira/dbexts/nicira_qos_db.py:276
+#, python-format
+msgid "DSCP value (%s) will be ignored with 'trusted' marking"
+msgstr ""
+
 #: neutron/plugins/nicira/extensions/nvp_networkgw.py:66
 msgid "Cannot create a gateway with an empty device list"
 msgstr "無法使用空的裝置清單來建立閘道"
+
+#: neutron/plugins/nicira/extensions/nvp_networkgw.py:86
+#, python-format
+msgid "%s: provided data are not iterable"
+msgstr "%s：提供的資料無法反覆運算"
 
 #: neutron/plugins/nicira/extensions/nvp_networkgw.py:92
 msgid "number of network gateways allowed per tenant, -1 for unlimited"
@@ -8059,23 +7949,19 @@ msgid "Invalid bandwidth rate, %(data)s must be a non negative integer."
 msgstr "無效的頻寬速率，%(data)s 必須為非負整數。"
 
 #: neutron/plugins/nicira/extensions/nvp_qos.py:60
-msgid "No DSCP field needed when QoS workload marked trusted"
-msgstr "如果服務品質工作量已標示為受信任，則不需要 DSCP 欄位"
-
-#: neutron/plugins/nicira/extensions/nvp_qos.py:64
 #, python-format
 msgid "Queue %(id)s does not exist"
 msgstr "佇列 %(id)s 不存在"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:68
+#: neutron/plugins/nicira/extensions/nvp_qos.py:64
 msgid "Unable to delete queue attached to port."
 msgstr "無法刪除埠所連接的佇列。"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:72
+#: neutron/plugins/nicira/extensions/nvp_qos.py:68
 msgid "Port is not associated with lqueue"
 msgstr "埠未與 lqueue 產生關聯"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:83
+#: neutron/plugins/nicira/extensions/nvp_qos.py:79
 #, python-format
 msgid "'%s' must be a non negative integer."
 msgstr "'%s' 必須為非負整數。"
@@ -8145,47 +8031,42 @@ msgstr "通道 ID 範圍：%s"
 msgid "%s networks are not enabled"
 msgstr ""
 
-#: neutron/plugins/openvswitch/ovs_neutron_plugin.py:401
-#, python-format
-msgid "provider:physical_network specified for %s network"
-msgstr ""
-
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:257
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:262
 #, python-format
 msgid "Network %s not used on agent."
 msgstr "代理程式上未使用網路 %s。"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:288
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:293
 msgid "tunnel_update received"
 msgstr "收到 tunnel_update"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:297
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:302
 msgid "No tunnel_type specified, cannot create tunnels"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:300
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:305
 #, python-format
 msgid "tunnel_type %s not supported by agent"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:328
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:333
 #, python-format
 msgid "No local VLAN available for net-id=%s"
 msgstr "net-id = %s 沒有可用的本端 VLAN"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:331
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:336
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr "正在將 %(vlan_id)s 指派為 net-id = %(net_uuid)s 的本端 VLAN"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:353
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:358
 #, python-format
 msgid ""
 "Cannot provision %(network_type)s network for net-id=%(net_uuid)s - "
 "tunneling disabled"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:372
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:377
 #, python-format
 msgid ""
 "Cannot provision flat network for net-id=%(net_uuid)s - no bridge for "
@@ -8194,7 +8075,7 @@ msgstr ""
 "無法將平面網路供應給 net-id = %(net_uuid)s - physical_network %(physical_network)s "
 "沒有橋接器"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:392
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:397
 #, python-format
 msgid ""
 "Cannot provision VLAN network for net-id=%(net_uuid)s - no bridge for "
@@ -8203,115 +8084,125 @@ msgstr ""
 "無法將 VLAN 網路供應給 net-id = %(net_uuid)s - physical_network "
 "%(physical_network)s 沒有橋接器"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:401
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:406
 #, python-format
 msgid ""
 "Cannot provision unknown network type %(network_type)s for net-"
 "id=%(net_uuid)s"
 msgstr "無法將不明的網路類型 %(network_type)s 供應給 net-id=%(net_uuid)s"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:413
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:418
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr "正在從 net-id = %(net_uuid)s 收回 VLAN = %(vlan_id)s"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:447
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:452
 #, python-format
 msgid ""
 "Cannot reclaim unknown network type %(network_type)s for net-"
 "id=%(net_uuid)s"
 msgstr "無法收回 net-id = %(net_uuid)s 的不明網路類型 %(network_type)s"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:498
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:503
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr "port_unbound() net_uuid %s 不在 local_vlan_map 中"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:511
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:516
 #, python-format
 msgid "port_unbound: vif_id %s not in local_vlan_map"
 msgstr "port_unbound：vif_id %s 不在 local_vlan_map 中"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:556
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:568
+#, python-format
+msgid "Adding %s to list of bridges."
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:587
 msgid ""
 "Failed to create OVS patch port. Cannot have tunneling enabled on this "
 "agent, since this version of OVS does not support tunnels or patch ports."
 " Agent terminated!"
 msgstr "無法建立 OVS 修補程式埠。無法在此代理程式上啟用通道作業，因為此 OVS 版本不支援通道或修補程式埠。已終止代理程式！"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:577
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:608
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr "正在將實體網路 %(physical_network)s 對映到橋接器 %(bridge)s"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:583
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:614
 #, python-format
 msgid ""
 "Bridge %(bridge)s for physical network %(physical_network)s does not "
 "exist. Agent terminated!"
 msgstr "實體網路 %(physical_network)s 的橋接器 %(bridge)s 不存在。已終止代理程式！"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:637
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:686
 #, python-format
 msgid "No VIF port for port %s defined on agent."
 msgstr "未在代理程式上給埠 %s 定義 VIF 埠。"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:720
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:722
+#, python-format
+msgid "Ancillary Port %s added"
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:815
 #, python-format
 msgid "Unable to sync tunnel IP %(local_ip)s: %(e)s"
 msgstr "無法同步通道 IP %(local_ip)s：%(e)s"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:740
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:837
 msgid "Agent tunnel out of sync with plugin!"
 msgstr "代理程式通道與外掛程式不同步！"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:772
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:877
 msgid "Checking OVS version for VXLAN support"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:780
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:885
 #, python-format
 msgid ""
 "Failed userspace version check for Open vSwitch with VXLAN support. To "
 "use VXLAN tunnels with OVS, please ensure the OVS version is %s or newer!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:791
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:896
 #, python-format
 msgid ""
 "Failed kernel version check for Open vSwitch with VXLAN support. To use "
 "VXLAN tunnels with OVS, please ensure the OVS version is %s or newer!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:798
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:903
 #, python-format
 msgid ""
 "Cannot determine kernel Open vSwitch version, please ensure your Open "
 "vSwitch kernel module is at least version %s to support VXLAN tunnels."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:803
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:908
 #, python-format
 msgid ""
 "Unable to determine Open vSwitch version. Please ensure that its version "
 "is %s or newer to use VXLAN tunnels with OVS."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:818
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:923
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "剖析 bridge_mappings 時失敗：%s。"
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:837
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:943
 #, python-format
 msgid "Invalid tunnel type specificed: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:840
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:946
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:856
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:962
 #, python-format
 msgid "%s Agent terminated!"
 msgstr "%s 已終止代理程式！"
@@ -8358,6 +8249,10 @@ msgstr ""
 
 #: neutron/plugins/openvswitch/common/config.py:69
 msgid "The UDP port to use for VXLAN tunnels."
+msgstr ""
+
+#: neutron/plugins/openvswitch/common/config.py:71
+msgid "MTU size of veth interfaces"
 msgstr ""
 
 #: neutron/plugins/plumgrid/common/exceptions.py:26
@@ -8725,6 +8620,51 @@ msgstr ""
 msgid "ERROR: %s"
 msgstr "錯誤：%s"
 
+#: neutron/services/provider_configuration.py:28
+msgid ""
+"Defines providers for advanced services using the format: "
+"<service_type>:<name>:<driver>[:default]"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:55
+msgid "Invalid service provider format"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:63
+#, python-format
+msgid "Invalid provider format. Last part should be 'default' or empty: %s"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:69
+#, python-format
+msgid "Service type '%(svc_type)s' is not allowed, allowed types: %(allowed)s"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:83
+#, python-format
+msgid "Service provider could not be found for service type %(service_type)s"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:88
+#, python-format
+msgid "Service type %(service_type)s does not have a default service provider"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:101
+#, python-format
+msgid "Driver %s is not unique across providers"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:111
+#, python-format
+msgid "Multiple default providers for service %s"
+msgstr ""
+
+#: neutron/services/provider_configuration.py:122
+#, python-format
+msgid "Multiple providers specified for service %s"
+msgstr ""
+
 #: neutron/services/loadbalancer/agent_scheduler.py:94
 #, python-format
 msgid "Pool %(pool_id)s has already been hosted by lbaas agent %(agent_id)s"
@@ -8875,4 +8815,108 @@ msgstr "找不到 lrouter：%s"
 
 #~ msgid "NexusPlugin:get_network_details() called"
 #~ msgstr "已呼叫 NexusPlugin:get_network_details()"
+
+#~ msgid "No allocation pool found for ip address:%s"
+#~ msgstr "找不到 IP 位址的配置儲存區：%s"
+
+#~ msgid "Textual description for the default service type"
+#~ msgstr "預設服務類型的文字說明"
+
+#~ msgid ""
+#~ "Defines a provider for an advanced "
+#~ "service using the format: "
+#~ "<service>:<plugin>[:<driver>]"
+#~ msgstr "使用下列格式來定義進階服務的提供者：<service>:<plugin>[:<driver>]"
+
+#~ msgid ""
+#~ "Default service type - no driver "
+#~ "for service %(service_class)s and plugin "
+#~ "%(plugin)s"
+#~ msgstr "預設服務類型 - 服務 %(service_class)s 及外掛程式 %(plugin)s 沒有驅動程式"
+
+#~ msgid ""
+#~ "No default service definition in "
+#~ "configuration file. Please add service "
+#~ "definitions using the service_definition "
+#~ "variable in the [default_servicetype] section"
+#~ msgstr ""
+
+#~ msgid "Service type %(service_type_id)s could not be found "
+#~ msgstr "找不到服務類型 %(service_type_id)s"
+
+#~ msgid ""
+#~ "There are still active instances of "
+#~ "service type '%(service_type_id)s'. Therefore "
+#~ "it cannot be removed."
+#~ msgstr "服務類型 '%(service_type_id)s' 仍有作用中的實例。因此無法移除。"
+
+#~ msgid ""
+#~ "Default service type record updated in"
+#~ " Neutron database. identifier is '%s'"
+#~ msgstr ""
+
+#~ msgid "Multiple default service type instances found.Will use instance '%s'"
+#~ msgstr "找到多個預設服務類型實例。將使用實例 '%s'"
+
+#~ msgid "Created service type object:%s"
+#~ msgstr "已建立服務類型物件：%s"
+
+#~ msgid "Number of instances for service type '%s' is already 0."
+#~ msgstr "服務類型 '%s' 的實例數已經是 0。"
+
+#~ msgid "The service type '%s' does not exist"
+#~ msgstr "服務類型 '%s' 不存在"
+
+#~ msgid ""
+#~ "No service type definition was provided."
+#~ " At least a service type definition"
+#~ " must be provided"
+#~ msgstr "未提供服務類型定義。必須至少提供一個服務類型定義"
+
+#~ msgid "Required attributes missing in service definition: %s"
+#~ msgstr "服務定義中遺漏了必要屬性：%s"
+
+#~ msgid "%(f_name)s: %(msg)s"
+#~ msgstr "%(f_name)s：%(msg)s"
+
+#~ msgid "Service name '%s' unspecified or invalid"
+#~ msgstr "服務名稱 '%s' 未指定或無效"
+
+#~ msgid "Plugin name not specified in service definition %s"
+#~ msgstr "服務定義 %s 中未指定外掛程式名稱"
+
+#~ msgid "No plugin for service '%s'"
+#~ msgstr "服務 '%s' 沒有外掛程式"
+
+#~ msgid "Plugin name '%s' is not correct "
+#~ msgstr "外掛程式名稱 '%s' 不正確"
+
+#~ msgid "Unparseable attributes found in service definition %s"
+#~ msgstr "在服務定義 %s 中發現無法剖析的屬性"
+
+#~ msgid "Exception while parsing service definition:%s"
+#~ msgstr "剖析服務定義時發生異常狀況：%s"
+
+#~ msgid "Was expecting a dict for service definition, found the following: %s"
+#~ msgstr "需要服務定義的字典，但發現下列項目：%s"
+
+#~ msgid ""
+#~ "API for retrieving and managing service"
+#~ " types for Neutron advanced services"
+#~ msgstr ""
+
+#~ msgid "provider:physical_network specified for GRE network"
+#~ msgstr ""
+
+#~ msgid "segmentation_id required for GRE provider network"
+#~ msgstr ""
+
+#~ msgid "provider:physical_network specified for VXLAN network"
+#~ msgstr ""
+
+#~ msgid "segmentation_id required for VXLAN provider network"
+#~ msgstr ""
+
+#~ msgid "No DSCP field needed when QoS workload marked trusted"
+#~ msgstr "如果服務品質工作量已標示為受信任，則不需要 DSCP 欄位"
 
