@@ -47,7 +47,7 @@ class CommandFilter(object):
 
     def match(self, userargs):
         """Only check that the first argument (command) matches exec_path."""
-        return os.path.basename(self.exec_path) == userargs[0]
+        return userargs and os.path.basename(self.exec_path) == userargs[0]
 
     def get_command(self, userargs, exec_dirs=[]):
         """Returns command to execute (with sudo -u if run_as != root)."""
@@ -67,7 +67,7 @@ class RegExpFilter(CommandFilter):
 
     def match(self, userargs):
         # Early skip if command or number of args don't match
-        if (len(self.args) != len(userargs)):
+        if (not userargs or len(self.args) != len(userargs)):
             # DENY: argument numbers don't match
             return False
         # Compare each arg (anchoring pattern explicitly at end of string)
@@ -101,6 +101,9 @@ class PathFilter(CommandFilter):
     """
 
     def match(self, userargs):
+        if not userargs or len(userargs) < 2:
+            return False
+
         command, arguments = userargs[0], userargs[1:]
 
         equal_args_num = len(self.args) == len(arguments)
@@ -132,36 +135,6 @@ class PathFilter(CommandFilter):
                                                    exec_dirs)
 
 
-class DnsmasqFilter(CommandFilter):
-    """Specific filter for the dnsmasq call (which includes env)."""
-
-    CONFIG_FILE_ARG = 'CONFIG_FILE'
-
-    def match(self, userargs):
-        if (userargs[0] == 'env' and
-                userargs[1].startswith(self.CONFIG_FILE_ARG) and
-                userargs[2].startswith('NETWORK_ID=') and
-                userargs[3] == 'dnsmasq'):
-            return True
-        return False
-
-    def get_command(self, userargs, exec_dirs=[]):
-        to_exec = self.get_exec(exec_dirs=exec_dirs) or self.exec_path
-        dnsmasq_pos = userargs.index('dnsmasq')
-        return [to_exec] + userargs[dnsmasq_pos + 1:]
-
-    def get_environment(self, userargs):
-        env = os.environ.copy()
-        env[self.CONFIG_FILE_ARG] = userargs[1].split('=')[-1]
-        env['NETWORK_ID'] = userargs[2].split('=')[-1]
-        return env
-
-
-class DeprecatedDnsmasqFilter(DnsmasqFilter):
-    """Variant of dnsmasq filter to support old-style FLAGFILE."""
-    CONFIG_FILE_ARG = 'FLAGFILE'
-
-
 class KillFilter(CommandFilter):
     """Specific filter for the kill calls.
 
@@ -178,7 +151,7 @@ class KillFilter(CommandFilter):
         super(KillFilter, self).__init__("/bin/kill", *args)
 
     def match(self, userargs):
-        if userargs[0] != "kill":
+        if not userargs or userargs[0] != "kill":
             return False
         args = list(userargs)
         if len(args) == 3:
@@ -217,7 +190,8 @@ class KillFilter(CommandFilter):
 
         return (os.path.isabs(command) and
                 kill_command == os.path.basename(command) and
-                os.path.dirname(command) in os.environ['PATH'].split(':'))
+                os.path.dirname(command) in os.environ.get('PATH', ''
+                                                           ).split(':'))
 
 
 class ReadFileFilter(CommandFilter):
@@ -228,13 +202,7 @@ class ReadFileFilter(CommandFilter):
         super(ReadFileFilter, self).__init__("/bin/cat", "root", *args)
 
     def match(self, userargs):
-        if userargs[0] != 'cat':
-            return False
-        if userargs[1] != self.file_path:
-            return False
-        if len(userargs) != 2:
-            return False
-        return True
+        return (userargs == ['cat', self.file_path])
 
 
 class IpFilter(CommandFilter):
