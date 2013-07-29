@@ -18,7 +18,7 @@
 # @author: Arvind Somya, Cisco Systems, Inc. (asomya@cisco.com)
 #
 
-from sqlalchemy.orm import exc
+import sqlalchemy.orm.exc as sa_exc
 
 import neutron.db.api as db
 from neutron.openstack.common import log as logging
@@ -29,48 +29,29 @@ from neutron.plugins.cisco.db import nexus_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def get_all_nexusport_bindings():
-    """Lists all the nexusport bindings."""
-    LOG.debug(_("get_all_nexusport_bindings() called"))
-    session = db.get_session()
-    return session.query(nexus_models_v2.NexusPortBinding).all()
-
-
 def get_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Lists a nexusport binding."""
     LOG.debug(_("get_nexusport_binding() called"))
-    session = db.get_session()
-
-    filters = dict(port_id=port_id, vlan_id=vlan_id, switch_ip=switch_ip,
-                   instance_id=instance_id)
-    bindings = (session.query(nexus_models_v2.NexusPortBinding).
-                filter_by(**filters).all())
-    if not bindings:
-        raise c_exc.NexusPortBindingNotFound(**filters)
-
-    return bindings
+    return _lookup_all_nexus_bindings(port_id=port_id,
+                                      vlan_id=vlan_id,
+                                      switch_ip=switch_ip,
+                                      instance_id=instance_id)
 
 
 def get_nexusvlan_binding(vlan_id, switch_ip):
     """Lists a vlan and switch binding."""
     LOG.debug(_("get_nexusvlan_binding() called"))
-    session = db.get_session()
-
-    filters = dict(vlan_id=vlan_id, switch_ip=switch_ip)
-    bindings = (session.query(nexus_models_v2.NexusPortBinding).
-                filter_by(**filters).all())
-    if not bindings:
-        raise c_exc.NexusPortBindingNotFound(**filters)
-
-    return bindings
+    return _lookup_all_nexus_bindings(vlan_id=vlan_id, switch_ip=switch_ip)
 
 
 def add_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Adds a nexusport binding."""
     LOG.debug(_("add_nexusport_binding() called"))
     session = db.get_session()
-    binding = nexus_models_v2.NexusPortBinding(
-        port_id, vlan_id, switch_ip, instance_id)
+    binding = nexus_models_v2.NexusPortBinding(port_id=port_id,
+                                               vlan_id=vlan_id,
+                                               switch_ip=switch_ip,
+                                               instance_id=instance_id)
     session.add(binding)
     session.flush()
     return binding
@@ -80,11 +61,11 @@ def remove_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
     """Removes a nexusport binding."""
     LOG.debug(_("remove_nexusport_binding() called"))
     session = db.get_session()
-    binding = (session.query(nexus_models_v2.NexusPortBinding).
-               filter_by(vlan_id=vlan_id).filter_by(switch_ip=switch_ip).
-               filter_by(port_id=port_id).
-               filter_by(instance_id=instance_id).all())
-
+    binding = _lookup_all_nexus_bindings(session=session,
+                                         vlan_id=vlan_id,
+                                         switch_ip=switch_ip,
+                                         port_id=port_id,
+                                         instance_id=instance_id)
     for bind in binding:
         session.delete(bind)
     session.flush()
@@ -93,46 +74,31 @@ def remove_nexusport_binding(port_id, vlan_id, switch_ip, instance_id):
 
 def update_nexusport_binding(port_id, new_vlan_id):
     """Updates nexusport binding."""
+    if not new_vlan_id:
+        LOG.warning(_("update_nexusport_binding called with no vlan"))
+        return
     LOG.debug(_("update_nexusport_binding called"))
     session = db.get_session()
-    try:
-        binding = (session.query(nexus_models_v2.NexusPortBinding).
-                   filter_by(port_id=port_id).one())
-        if new_vlan_id:
-            binding["vlan_id"] = new_vlan_id
-        session.merge(binding)
-        session.flush()
-        return binding
-    except exc.NoResultFound:
-        raise c_exc.NexusPortBindingNotFound(port_id=port_id)
+    binding = _lookup_one_nexus_binding(session=session, port_id=port_id)
+    binding.vlan_id = new_vlan_id
+    session.merge(binding)
+    session.flush()
+    return binding
 
 
 def get_nexusvm_binding(vlan_id, instance_id):
     """Lists nexusvm bindings."""
     LOG.debug(_("get_nexusvm_binding() called"))
-    session = db.get_session()
-
-    filters = dict(instance_id=instance_id, vlan_id=vlan_id)
-    binding = (session.query(nexus_models_v2.NexusPortBinding).
-               filter_by(**filters).first())
-    if not binding:
-        raise c_exc.NexusPortBindingNotFound(**filters)
-
-    return binding
+    return _lookup_first_nexus_binding(instance_id=instance_id,
+                                       vlan_id=vlan_id)
 
 
 def get_port_vlan_switch_binding(port_id, vlan_id, switch_ip):
     """Lists nexusvm bindings."""
     LOG.debug(_("get_port_vlan_switch_binding() called"))
-    session = db.get_session()
-
-    filters = dict(port_id=port_id, switch_ip=switch_ip, vlan_id=vlan_id)
-    bindings = (session.query(nexus_models_v2.NexusPortBinding).
-                filter_by(**filters).all())
-    if not bindings:
-        raise c_exc.NexusPortBindingNotFound(**filters)
-
-    return bindings
+    return _lookup_all_nexus_bindings(port_id=port_id,
+                                      switch_ip=switch_ip,
+                                      vlan_id=vlan_id)
 
 
 def get_port_switch_bindings(port_id, switch_ip):
@@ -140,25 +106,48 @@ def get_port_switch_bindings(port_id, switch_ip):
     LOG.debug(_("get_port_switch_bindings() called, "
                 "port:'%(port_id)s', switch:'%(switch_ip)s'"),
               {'port_id': port_id, 'switch_ip': switch_ip})
-    session = db.get_session()
     try:
-        binding = (session.query(nexus_models_v2.NexusPortBinding).
-                   filter_by(port_id=port_id).
-                   filter_by(switch_ip=switch_ip).all())
-        return binding
-    except exc.NoResultFound:
-        return
+        return _lookup_all_nexus_bindings(port_id=port_id,
+                                          switch_ip=switch_ip)
+    except c_exc.NexusPortBindingNotFound:
+        pass
 
 
 def get_nexussvi_bindings():
     """Lists nexus svi bindings."""
     LOG.debug(_("get_nexussvi_bindings() called"))
-    session = db.get_session()
+    return _lookup_all_nexus_bindings(port_id='router')
 
-    filters = {'port_id': 'router'}
-    bindings = (session.query(nexus_models_v2.NexusPortBinding).
-                filter_by(**filters).all())
-    if not bindings:
-        raise c_exc.NexusPortBindingNotFound(**filters)
 
-    return bindings
+def _lookup_nexus_bindings(query_type, session=None, **bfilter):
+    """Look up 'query_type' Nexus bindings matching the filter.
+
+    :param query_type: 'all', 'one' or 'first'
+    :param session: db session
+    :param bfilter: filter for bindings query
+    :return: bindings if query gave a result, else
+             raise NexusPortBindingNotFound.
+    """
+    if session is None:
+        session = db.get_session()
+    query_method = getattr(session.query(
+        nexus_models_v2.NexusPortBinding).filter_by(**bfilter), query_type)
+    try:
+        bindings = query_method()
+        if bindings:
+            return bindings
+    except sa_exc.NoResultFound:
+        pass
+    raise c_exc.NexusPortBindingNotFound(**bfilter)
+
+
+def _lookup_all_nexus_bindings(session=None, **bfilter):
+    return _lookup_nexus_bindings('all', session, **bfilter)
+
+
+def _lookup_one_nexus_binding(session=None, **bfilter):
+    return _lookup_nexus_bindings('one', session, **bfilter)
+
+
+def _lookup_first_nexus_binding(session=None, **bfilter):
+    return _lookup_nexus_bindings('first', session, **bfilter)

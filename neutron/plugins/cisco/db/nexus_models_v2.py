@@ -15,7 +15,7 @@
 #    under the License.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-from sqlalchemy import Column, Integer, String
+import sqlalchemy as sa
 
 from neutron.db import model_base
 
@@ -23,25 +23,21 @@ from neutron.db import model_base
 class NexusPortBinding(model_base.BASEV2):
     """Represents a binding of VM's to nexus ports."""
 
-    __tablename__ = "nexusport_bindings"
+    __tablename__ = "cisco_nexusport_bindings"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    port_id = Column(String(255))
-    vlan_id = Column(Integer, nullable=False)
-    switch_ip = Column(String(255))
-    instance_id = Column(String(255))
-
-    def __init__(self, port_id, vlan_id, switch_ip, instance_id):
-        self.port_id = port_id
-        self.vlan_id = vlan_id
-        self.switch_ip = switch_ip
-        self.instance_id = instance_id
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    port_id = sa.Column(sa.String(255))
+    vlan_id = sa.Column(sa.Integer, nullable=False)
+    switch_ip = sa.Column(sa.String(255))
+    instance_id = sa.Column(sa.String(255))
 
     def __repr__(self):
-        return "<NexusPortBinding (%s,%d, %s, %s)>" % \
-            (self.port_id, self.vlan_id, self.switch_ip, self.instance_id)
+        """Just the binding, without the id key."""
+        return ("<NexusPortBinding(%s,%s,%s,%s)>" %
+                (self.port_id, self.vlan_id, self.switch_ip, self.instance_id))
 
     def __eq__(self, other):
+        """Compare only the binding, without the id key."""
         return (
             self.port_id == other.port_id and
             self.vlan_id == other.vlan_id and
