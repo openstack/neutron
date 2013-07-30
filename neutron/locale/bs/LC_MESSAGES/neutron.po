@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-29 19:55+0000\n"
+"POT-Creation-Date: 2013-07-30 19:54+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Bosnian "
@@ -2401,6 +2401,94 @@ msgid ""
 "sort '%(resource)s'"
 msgstr ""
 
+#: neutron/db/firewall/firewall_db.py:231
+#: neutron/services/firewall/fwaas_plugin.py:202
+msgid "create_firewall() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:247
+#: neutron/services/firewall/fwaas_plugin.py:211
+msgid "update_firewall() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:257
+#: neutron/services/firewall/fwaas_plugin.py:226
+msgid "delete_firewall() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:267
+msgid "get_firewall() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:272
+msgid "get_firewalls() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:278
+msgid "get_firewalls_count() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:283
+msgid "create_firewall_policy() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:299
+#: neutron/services/firewall/fwaas_plugin.py:235
+msgid "update_firewall_policy() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:311
+msgid "delete_firewall_policy() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:323
+msgid "get_firewall_policy() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:328
+msgid "get_firewall_policies() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:334
+msgid "get_firewall_policies_count() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:339
+msgid "create_firewall_rule() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:367
+#: neutron/services/firewall/fwaas_plugin.py:243
+msgid "update_firewall_rule() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:391
+#: neutron/services/firewall/fwaas_plugin.py:253
+msgid "delete_firewall_rule() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:399
+msgid "get_firewall_rule() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:404
+msgid "get_firewall_rules() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:410
+msgid "get_firewall_rules_count() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:419
+#: neutron/services/firewall/fwaas_plugin.py:272
+msgid "insert_rule() called"
+msgstr ""
+
+#: neutron/db/firewall/firewall_db.py:459
+#: neutron/services/firewall/fwaas_plugin.py:280
+msgid "remove_rule() called"
+msgstr ""
+
 #: neutron/db/loadbalancer/loadbalancer_db.py:68
 #, python-format
 msgid "The %(key)s field can not have negative value. Current value is %(value)d."
@@ -2548,6 +2636,101 @@ msgstr ""
 msgid ""
 "Unable to complete operation for %(router_id)s. The number of routes "
 "exceeds the maximum %(quota)s."
+msgstr ""
+
+#: neutron/extensions/firewall.py:39
+#, python-format
+msgid "Firewall %(firewall_id)s could not be found."
+msgstr ""
+
+#: neutron/extensions/firewall.py:43
+#, python-format
+msgid "Firewall %(firewall_id)s is still active."
+msgstr ""
+
+#: neutron/extensions/firewall.py:47
+#, python-format
+msgid ""
+"Operation cannot be performed since associated Firewall %(firewall_id)s "
+"is in %(pending_state)s."
+msgstr ""
+
+#: neutron/extensions/firewall.py:52
+#, python-format
+msgid "Firewall Policy %(firewall_policy_id)s could not be found."
+msgstr ""
+
+#: neutron/extensions/firewall.py:56
+#, python-format
+msgid "Firewall Policy %(firewall_policy_id)s is being used."
+msgstr ""
+
+#: neutron/extensions/firewall.py:60
+#, python-format
+msgid "Firewall Rule %(firewall_rule_id)s could not be found."
+msgstr ""
+
+#: neutron/extensions/firewall.py:64
+#, python-format
+msgid "Firewall Rule %(firewall_rule_id)s is being used."
+msgstr ""
+
+#: neutron/extensions/firewall.py:68
+#, python-format
+msgid ""
+"Firewall Rule %(firewall_rule_id)s is not associated  with Firewall "
+"Policy %(firewall_policy_id)s."
+msgstr ""
+
+#: neutron/extensions/firewall.py:73
+#, python-format
+msgid ""
+"Firewall Rule protocol %(protocol)s is not supported. Only protocol "
+"values %(values)s and their integer representation (0 to 255) are "
+"supported."
+msgstr ""
+
+#: neutron/extensions/firewall.py:79
+#, python-format
+msgid ""
+"Firewall rule action %(action)s is not supported. Only action values "
+"%(values)s are supported."
+msgstr ""
+
+#: neutron/extensions/firewall.py:84
+#, python-format
+msgid "Invalid value for port %(port)s."
+msgstr ""
+
+#: neutron/extensions/firewall.py:88
+msgid "Missing rule info argument for insert/remove rule opertaion."
+msgstr ""
+
+#: neutron/extensions/firewall.py:138
+#, python-format
+msgid "Port '%s' is not a valid number"
+msgstr ""
+
+#: neutron/extensions/firewall.py:142
+#, python-format
+msgid "Invalid port '%s'"
+msgstr ""
+
+#: neutron/extensions/firewall.py:156
+#, python-format
+msgid "%(msg_ip)s and %(msg_subnet)s"
+msgstr ""
+
+#: neutron/extensions/firewall.py:276
+msgid "Number of firewalls allowed per tenant, -1 for unlimited"
+msgstr ""
+
+#: neutron/extensions/firewall.py:280
+msgid "Number of firewall policies allowed per tenant, -1 for unlimited"
+msgstr ""
+
+#: neutron/extensions/firewall.py:284
+msgid "Number of firewall rules allowed per tenant, -1 for unlimited"
 msgstr ""
 
 #: neutron/extensions/l3.py:35
@@ -8592,6 +8775,27 @@ msgstr ""
 msgid "Multiple providers specified for service %s"
 msgstr ""
 
+#: neutron/services/firewall/fwaas_plugin.py:47
+msgid "set_firewall_status() called"
+msgstr ""
+
+#: neutron/services/firewall/fwaas_plugin.py:59
+msgid "firewall_deleted() called"
+msgstr ""
+
+#: neutron/services/firewall/fwaas_plugin.py:67
+#, python-format
+msgid "Firewall %s unexpectedly deleted by agent."
+msgstr ""
+
+#: neutron/services/firewall/fwaas_plugin.py:73
+msgid "get_firewalls_for_tenant() called"
+msgstr ""
+
+#: neutron/services/firewall/fwaas_plugin.py:82
+msgid "get_firewalls_for_tenant_without_rules() called"
+msgstr ""
+
 #: neutron/services/loadbalancer/agent_scheduler.py:94
 #, python-format
 msgid "Pool %(pool_id)s has already been hosted by lbaas agent %(agent_id)s"
@@ -8750,36 +8954,9 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid ""
-#~ "Defines a provider for an advanced "
-#~ "service using the format: "
-#~ "<service>:<plugin>[:<driver>]"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Default service type - no driver "
-#~ "for service %(service_class)s and plugin "
-#~ "%(plugin)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "No default service definition in "
-#~ "configuration file. Please add service "
-#~ "definitions using the service_definition "
-#~ "variable in the [default_servicetype] section"
 #~ msgstr ""
 
 #~ msgid "Service type %(service_type_id)s could not be found "
-#~ msgstr ""
-
-#~ msgid ""
-#~ "There are still active instances of "
-#~ "service type '%(service_type_id)s'. Therefore "
-#~ "it cannot be removed."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Default service type record updated in"
-#~ " Neutron database. identifier is '%s'"
 #~ msgstr ""
 
 #~ msgid "Multiple default service type instances found.Will use instance '%s'"
@@ -8792,12 +8969,6 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "The service type '%s' does not exist"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "No service type definition was provided."
-#~ " At least a service type definition"
-#~ " must be provided"
 #~ msgstr ""
 
 #~ msgid "Required attributes missing in service definition: %s"
@@ -8825,11 +8996,6 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Was expecting a dict for service definition, found the following: %s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "API for retrieving and managing service"
-#~ " types for Neutron advanced services"
 #~ msgstr ""
 
 #~ msgid "provider:physical_network specified for GRE network"
