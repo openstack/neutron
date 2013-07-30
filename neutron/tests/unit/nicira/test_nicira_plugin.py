@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import contextlib
-import os
 
 import mock
 import netaddr
@@ -30,7 +29,6 @@ from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as secgrp
 from neutron import manager
 from neutron.openstack.common import uuidutils
-import neutron.plugins.nicira as nvp_plugin
 from neutron.plugins.nicira.dbexts import nicira_qos_db as qos_db
 from neutron.plugins.nicira.extensions import nvp_networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
@@ -40,6 +38,11 @@ from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.plugins.nicira import nvplib
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.nicira import fake_nvpapiclient
+from neutron.tests.unit.nicira import get_fake_conf
+from neutron.tests.unit.nicira import NVPAPI_NAME
+from neutron.tests.unit.nicira import NVPEXT_PATH
+from neutron.tests.unit.nicira import PLUGIN_NAME
+from neutron.tests.unit.nicira import STUBS_PATH
 import neutron.tests.unit.nicira.test_networkgw as test_l2_gw
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
@@ -49,13 +52,8 @@ from neutron.tests.unit import test_extensions
 import neutron.tests.unit.test_l3_plugin as test_l3_plugin
 from neutron.tests.unit import testlib_api
 
-NICIRA_PKG_PATH = nvp_plugin.__name__
-NICIRA_EXT_PATH = "../../plugins/nicira/extensions"
-
 
 class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
-
-    _plugin_name = ('%s.NeutronPlugin.NvpPluginV2' % NICIRA_PKG_PATH)
 
     def _create_network(self, fmt, name, admin_state_up,
                         arg_list=None, providernet_args=None, **kwargs):
@@ -78,13 +76,10 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         return network_req.get_response(self.api)
 
     def setUp(self):
-        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
-        test_lib.test_config['config_files'] = [os.path.join(etc_path,
-                                                             'nvp.ini.test')]
+        test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
         # mock nvp api client
-        self.fc = fake_nvpapiclient.FakeClient(etc_path)
-        self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
-                                      % NICIRA_PKG_PATH, autospec=True)
+        self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
+        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
 
         def _fake_request(*args, **kwargs):
@@ -93,7 +88,7 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Emulate tests against NVP 2.x
         instance.return_value.get_nvp_version.return_value = NVPVersion("2.9")
         instance.return_value.request.side_effect = _fake_request
-        super(NiciraPluginV2TestCase, self).setUp(self._plugin_name)
+        super(NiciraPluginV2TestCase, self).setUp(PLUGIN_NAME)
         cfg.CONF.set_override('metadata_mode', None, 'NVP')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.mock_nvpapi.stop)
@@ -254,16 +249,11 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
 
 class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
 
-    _plugin_name = ('%s.NeutronPlugin.NvpPluginV2' % NICIRA_PKG_PATH)
-
     def setUp(self):
-        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
-        test_lib.test_config['config_files'] = [os.path.join(etc_path,
-                                                             'nvp.ini.test')]
+        test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
         # mock nvp api client
-        fc = fake_nvpapiclient.FakeClient(etc_path)
-        self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
-                                      % NICIRA_PKG_PATH, autospec=True)
+        fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
+        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
         instance.return_value.login.return_value = "the_cookie"
 
@@ -271,7 +261,7 @@ class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
             return fc.fake_request(*args, **kwargs)
 
         instance.return_value.request.side_effect = _fake_request
-        super(NiciraPortSecurityTestCase, self).setUp(self._plugin_name)
+        super(NiciraPortSecurityTestCase, self).setUp(PLUGIN_NAME)
         self.addCleanup(self.mock_nvpapi.stop)
 
 
@@ -282,16 +272,11 @@ class TestNiciraPortSecurity(psec.TestPortSecurity,
 
 class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
 
-    _plugin_name = ('%s.NeutronPlugin.NvpPluginV2' % NICIRA_PKG_PATH)
-
     def setUp(self):
-        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
-        test_lib.test_config['config_files'] = [os.path.join(etc_path,
-                                                             'nvp.ini.test')]
+        test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
         # mock nvp api client
-        fc = fake_nvpapiclient.FakeClient(etc_path)
-        self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
-                                      % NICIRA_PKG_PATH, autospec=True)
+        fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
+        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
         instance.return_value.login.return_value = "the_cookie"
 
@@ -299,7 +284,7 @@ class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
             return fc.fake_request(*args, **kwargs)
 
         instance.return_value.request.side_effect = _fake_request
-        super(NiciraSecurityGroupsTestCase, self).setUp(self._plugin_name)
+        super(NiciraSecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
 
     def tearDown(self):
         super(NiciraSecurityGroupsTestCase, self).tearDown()
@@ -615,9 +600,7 @@ class NvpQoSTestExtensionManager(object):
 class TestNiciraQoSQueue(NiciraPluginV2TestCase):
 
     def setUp(self, plugin=None):
-        ext_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                NICIRA_EXT_PATH)
-        cfg.CONF.set_override('api_extensions_path', ext_path)
+        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
         super(TestNiciraQoSQueue, self).setUp()
         ext_mgr = NvpQoSTestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
@@ -1039,9 +1022,7 @@ class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
                                NiciraPluginV2TestCase):
 
     def setUp(self):
-        ext_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                NICIRA_EXT_PATH)
-        cfg.CONF.set_override('api_extensions_path', ext_path)
+        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
         super(TestNiciraNetworkGateway, self).setUp()
 
     def test_create_network_gateway_name_exceeds_40_chars(self):

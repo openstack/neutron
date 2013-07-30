@@ -14,20 +14,14 @@
 #    under the License.
 
 import mock
-import os
 
 from neutron.common.test_lib import test_config
-import neutron.plugins.nicira as nvp_plugin
 from neutron.tests.unit.nicira import fake_nvpapiclient
+from neutron.tests.unit.nicira import get_fake_conf
+from neutron.tests.unit.nicira import NVPAPI_NAME
+from neutron.tests.unit.nicira import PLUGIN_NAME
+from neutron.tests.unit.nicira import STUBS_PATH
 from neutron.tests.unit.openvswitch import test_agent_scheduler as test_base
-
-
-NVP_MODULE_PATH = nvp_plugin.__name__
-NVP_INI_CONFIG_PATH = os.path.join(os.path.dirname(__file__),
-                                   'etc/nvp.ini.full.test')
-NVP_STUBS_PATH = os.path.join(os.path.dirname(__file__), 'etc')
-
-PLUGIN_NAME = '%s.NeutronPlugin.NvpPluginV2' % nvp_plugin.__name__
 
 
 class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
@@ -35,12 +29,11 @@ class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
 
     def setUp(self):
         test_config['plugin_name_v2'] = PLUGIN_NAME
-        test_config['config_files'] = [NVP_INI_CONFIG_PATH]
+        test_config['config_files'] = [get_fake_conf('nvp.ini.full.test')]
 
         # mock nvp api client
-        self.fc = fake_nvpapiclient.FakeClient(NVP_STUBS_PATH)
-        self.mock_nvpapi = mock.patch('%s.NvpApiClient.NVPApiHelper'
-                                      % NVP_MODULE_PATH, autospec=True)
+        self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
+        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
 
         def _fake_request(*args, **kwargs):
