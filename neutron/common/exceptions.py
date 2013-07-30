@@ -19,12 +19,10 @@
 Neutron base exception handling.
 """
 
-from neutron.openstack.common.exception import Error
-from neutron.openstack.common.exception import InvalidContentType  # noqa
-from neutron.openstack.common.exception import OpenstackException
+_FATAL_EXCEPTION_FORMAT_ERRORS = False
 
 
-class NeutronException(OpenstackException):
+class NeutronException(Exception):
     """Base Neutron Exception.
 
     To correctly use this class, inherit from it and define
@@ -32,6 +30,16 @@ class NeutronException(OpenstackException):
     with the keyword arguments provided to the constructor.
     """
     message = _("An unknown exception occurred.")
+
+    def __init__(self, **kwargs):
+        try:
+            super(NeutronException, self).__init__(self.message % kwargs)
+        except Exception:
+            if _FATAL_EXCEPTION_FORMAT_ERRORS:
+                raise
+            else:
+                # at least get the core message out if something happened
+                super(NeutronException, self).__init__(self.message)
 
 
 class BadRequest(NeutronException):
@@ -185,8 +193,10 @@ class MalformedRequestBody(BadRequest):
     message = _("Malformed request body: %(reason)s")
 
 
-class Invalid(Error):
-    pass
+class Invalid(NeutronException):
+    def __init__(self, message=None):
+        self.message = message
+        super(Invalid, self).__init__()
 
 
 class InvalidInput(BadRequest):
@@ -205,10 +215,6 @@ class OverlappingAllocationPools(Conflict):
 class OutOfBoundsAllocationPool(BadRequest):
     message = _("The allocation pool %(pool)s spans "
                 "beyond the subnet cidr %(subnet_cidr)s.")
-
-
-class NotImplementedError(Error):
-    pass
 
 
 class MacAddressGenerationFailure(ServiceUnavailable):
@@ -255,6 +261,10 @@ class InvalidSharedSetting(Conflict):
 
 class InvalidExtensionEnv(BadRequest):
     message = _("Invalid extension environment: %(reason)s")
+
+
+class InvalidContentType(NeutronException):
+    message = "Invalid content type %(content_type)s"
 
 
 class ExternalIpAddressExhausted(BadRequest):
