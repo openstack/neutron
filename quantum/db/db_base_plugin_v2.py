@@ -1166,7 +1166,7 @@ class QuantumDbPluginV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         s['cidr'] = db_subnet.cidr
         self._validate_subnet(s)
 
-        if 'gateway_ip' in s:
+        if 'gateway_ip' in s and s['gateway_ip'] is not None:
             allocation_pools = [{'start': p['first_ip'], 'end': p['last_ip']}
                                 for p in db_subnet.allocation_pools]
             self._validate_gw_out_of_pools(s["gateway_ip"], allocation_pools)
