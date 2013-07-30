@@ -435,6 +435,22 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                    port_data[ext_qos.QUEUE],
                                    port_data.get(mac_ext.MAC_LEARNING))
 
+    def _handle_create_port_exception(self, context, port_id,
+                                      ls_uuid, lp_uuid):
+        with excutils.save_and_reraise_exception():
+            # rollback nvp logical port only if it was successfully
+            # created on NVP. Should this command fail the original
+            # exception will be raised.
+            if lp_uuid:
+                # Remove orphaned port from NVP
+                nvplib.delete_port(self.cluster, ls_uuid, lp_uuid)
+            # rollback the neutron-nvp port mapping
+            nicira_db.delete_neutron_nvp_port_mapping(context.session,
+                                                      port_id)
+            msg = (_("An exception occured while creating the "
+                     "quantum port %s on the NVP plaform") % port_id)
+            LOG.exception(msg)
+
     def _nvp_create_port(self, context, port_data):
         """Driver for creating a logical switch port on NVP platform."""
         # FIXME(salvatore-orlando): On the NVP platform we do not really have
@@ -448,6 +464,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       port_data['network_id'])
             # No need to actually update the DB state - the default is down
             return port_data
+        lport = None
+        selected_lswitch = None
         try:
             selected_lswitch = self._nvp_find_lswitch_for_port(context,
                                                                port_data)
@@ -466,11 +484,11 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.debug(_("_nvp_create_port completed for port %(name)s "
                         "on network %(network_id)s. The new port id is "
                         "%(id)s."), port_data)
-        except NvpApiClient.NvpApiException:
-            msg = (_("An exception occured while plugging the interface "
-                     "into network:%s") % port_data['network_id'])
-            LOG.exception(msg)
-            raise q_exc.NeutronException(message=msg)
+        except (NvpApiClient.NvpApiException, q_exc.NeutronException):
+            self._handle_create_port_exception(
+                context, port_data['id'],
+                selected_lswitch and selected_lswitch['uuid'],
+                lport and lport['uuid'])
 
     def _nvp_delete_port(self, context, port_data):
         # FIXME(salvatore-orlando): On the NVP platform we do not really have
@@ -515,7 +533,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                             lrouter_id,
                                             port_data['network_id'],
                                             nvp_port_id)
-        except (NvpApiClient.NvpApiException, NvpApiClient.ResourceNotFound):
+        except NvpApiClient.NvpApiException:
             # Do not raise because the issue might as well be that the
             # router has already been deleted, so there would be nothing
             # to do here
@@ -534,18 +552,26 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 err_msg=(_("It is not allowed to create router interface "
                            "ports on external networks as '%s'") %
                          port_data['network_id']))
-        selected_lswitch = self._nvp_find_lswitch_for_port(context,
-                                                           port_data)
-        # Do not apply port security here!
-        lport = self._nvp_create_port_helper(self.cluster,
-                                             selected_lswitch['uuid'],
-                                             port_data,
-                                             False)
-        nicira_db.add_neutron_nvp_port_mapping(
-            context.session, port_data['id'], lport['uuid'])
-        LOG.debug(_("_nvp_create_port completed for port %(name)s on "
-                    "network %(network_id)s. The new port id is %(id)s."),
-                  port_data)
+        lport = None
+        selected_lswitch = None
+        try:
+            selected_lswitch = self._nvp_find_lswitch_for_port(
+                context, port_data)
+            # Do not apply port security here!
+            lport = self._nvp_create_port_helper(
+                self.cluster, selected_lswitch['uuid'],
+                port_data, False)
+            nicira_db.add_neutron_nvp_port_mapping(
+                context.session, port_data['id'], lport['uuid'])
+            LOG.debug(_("_nvp_create_router_port completed for port "
+                        "%(name)s on network %(network_id)s. The new "
+                        "port id is %(id)s."),
+                      port_data)
+        except (NvpApiClient.NvpApiException, q_exc.NeutronException):
+            self._handle_create_port_exception(
+                context, port_data['id'],
+                selected_lswitch and selected_lswitch['uuid'],
+                lport and lport['uuid'])
 
     def _find_router_gw_port(self, context, port_data):
         router_id = port_data['device_id']
@@ -651,21 +677,30 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       port_data['network_id'])
             # No need to actually update the DB state - the default is down
             return port_data
-        selected_lswitch = self._nvp_find_lswitch_for_port(context,
-                                                           port_data)
-        lport = self._nvp_create_port_helper(self.cluster,
-                                             selected_lswitch['uuid'],
-                                             port_data,
-                                             True)
-        nicira_db.add_neutron_nvp_port_mapping(
-            context.session, port_data['id'], lport['uuid'])
-        nvplib.plug_l2_gw_service(
-            self.cluster,
-            port_data['network_id'],
-            lport['uuid'],
-            port_data['device_id'],
-            int(port_data.get('gw:segmentation_id') or 0))
-        LOG.debug(_("_nvp_create_port completed for port %(name)s "
+        lport = None
+        try:
+            selected_lswitch = self._nvp_find_lswitch_for_port(
+                context, port_data)
+            lport = self._nvp_create_port_helper(
+                self.cluster,
+                selected_lswitch['uuid'],
+                port_data,
+                True)
+            nicira_db.add_neutron_nvp_port_mapping(
+                context.session, port_data['id'], lport['uuid'])
+            nvplib.plug_l2_gw_service(
+                self.cluster,
+                port_data['network_id'],
+                lport['uuid'],
+                port_data['device_id'],
+                int(port_data.get('gw:segmentation_id') or 0))
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                if lport:
+                    nvplib.delete_port(self.cluster,
+                                       selected_lswitch['uuid'],
+                                       lport['uuid'])
+        LOG.debug(_("_nvp_create_l2_gw_port completed for port %(name)s "
                     "on network %(network_id)s. The new port id "
                     "is %(id)s."), port_data)
 
@@ -1205,6 +1240,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             # First we allocate port in neutron database
             neutron_db = super(NvpPluginV2, self).create_port(context, port)
+            neutron_port_id = neutron_db['id']
             # Update fields obtained from neutron db (eg: MAC address)
             port["port"].update(neutron_db)
             # metadata_dhcp_host_route
@@ -1236,27 +1272,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self._create_mac_learning_state(context, port_data)
             elif mac_ext.MAC_LEARNING in port_data:
                 port_data.pop(mac_ext.MAC_LEARNING)
-            # provider networking extension checks
-            # Fetch the network and network binding from neutron db
-            try:
-                port_data = port['port'].copy()
-                port_create_func = self._port_drivers['create'].get(
-                    port_data['device_owner'],
-                    self._port_drivers['create']['default'])
-
-                port_create_func(context, port_data)
-            except q_exc.NotFound:
-                LOG.warning(_("Network %s was not found in NVP."),
-                            port_data['network_id'])
-                port_data['status'] = constants.PORT_STATUS_ERROR
-            except Exception:
-                with excutils.save_and_reraise_exception():
-                    # FIXME (arosen) or the plugin_interface call failed in
-                    # which case we need to garbage collect the left over
-                    # port in nvp.
-                    err_msg = _("Unable to create port or set port "
-                                "attachment in NVP.")
-                    LOG.error(err_msg)
 
             LOG.debug(_("create_port completed on NVP for tenant "
                         "%(tenant_id)s: (%(id)s)"), port_data)
@@ -1267,6 +1282,32 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._extend_port_qos_queue(context, port_data)
             self._process_portbindings_create_and_update(context,
                                                          port, port_data)
+        # DB Operation is complete, perform NVP operation
+        try:
+            port_data = port['port'].copy()
+            port_create_func = self._port_drivers['create'].get(
+                port_data['device_owner'],
+                self._port_drivers['create']['default'])
+            port_create_func(context, port_data)
+        except q_exc.NotFound:
+            LOG.warning(_("Logical switch for network %s was not "
+                          "found in NVP."), port_data['network_id'])
+            # Put port in error on quantum DB
+            with context.session.begin(subtransactions=True):
+                port = self._get_port(context, neutron_port_id)
+                port_data['status'] = constants.PORT_STATUS_ERROR
+                port['status'] = port_data['status']
+                context.session.add(port)
+        except Exception:
+            # Port must be removed from Quantum DB
+            with excutils.save_and_reraise_exception():
+                LOG.error(_("Unable to create port or set port "
+                            "attachment in NVP."))
+                with context.session.begin(subtransactions=True):
+                    self._delete_port(context, neutron_port_id)
+
+        # Port has been created both on DB and NVP - proceed with
+        # scheduling network and notifying DHCP agent
         net = self.get_network(context, port_data['network_id'])
         self.schedule_network(context, net)
         if notify_dhcp_agent:
