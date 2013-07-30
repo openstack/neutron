@@ -63,7 +63,7 @@ def downgrade(active_plugin=None, options=None):
         sa.Column('name', sa.String(255)),
         sa.Column('description', sa.String(255)),
         sa.Column('default', sa.Boolean(), nullable=False, default=False),
-        sa.Column('num_instances', sa.Column(sa.Integer(), default=0)),
+        sa.Column('num_instances', sa.Integer, default=0),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_table(
