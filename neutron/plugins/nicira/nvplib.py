@@ -503,8 +503,8 @@ def update_explicit_routes_lrouter(cluster, router_id, routes):
                 added_routes.append(uuid)
     except NvpApiClient.NvpApiException:
         LOG.exception(_('Cannot update NVP routes %(routes)s for'
-                      'router %(router_id)s') % {'routes': routes,
-                                                 'router_id': router_id})
+                        ' router %(router_id)s') % {'routes': routes,
+                                                    'router_id': router_id})
         # Roll back to keep NVP in consistent state
         with excutils.save_and_reraise_exception():
             if nvp_routes:
@@ -746,7 +746,7 @@ def create_lport(cluster, lswitch_uuid, tenant_id, neutron_port_id,
     result = do_request(HTTP_POST, path, json.dumps(lport_obj),
                         cluster=cluster)
 
-    LOG.debug(_("Created logical port %(result)s on logical swtich %(uuid)s"),
+    LOG.debug(_("Created logical port %(result)s on logical switch %(uuid)s"),
               {'result': result['uuid'], 'uuid': lswitch_uuid})
     return result
 

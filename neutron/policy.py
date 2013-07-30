@@ -214,7 +214,7 @@ class OwnerCheck(policy.Check):
                                            match)[0]
         except IndexError:
             err_reason = (_("Unable to identify a target field from:%s."
-                            "match should be in the form %%(<field_name>)s"),
+                            "match should be in the form %%(<field_name>)s") %
                           match)
             LOG.exception(err_reason)
             raise exceptions.PolicyInitError(

@@ -274,8 +274,8 @@ class MidoClient:
         :returns: newly created router
         """
         LOG.debug(_("MidoClient.create_tenant_router called: "
-                    "tenant_id=%(tenant_id)s, name=%(name)s"
-                    "metadata_router=%(metadata_router)s"),
+                    "tenant_id=%(tenant_id)s, name=%(name)s,"
+                    " metadata_router=%(metadata_router)s"),
                   {'tenant_id': tenant_id, 'name': name,
                    'metadata_router': metadata_router})
         router = self.create_router(tenant_id, name)
