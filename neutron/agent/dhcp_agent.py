@@ -706,26 +706,14 @@ class DeviceManager(object):
                                      self.root_helper)
             device.route.pullup_route(interface_name)
 
-        if self.conf.enable_metadata_network:
-            meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_IP)
-            metadata_subnets = [s for s in network.subnets if
-                                netaddr.IPNetwork(s.cidr) in meta_cidr]
-            if metadata_subnets:
-                # Add a gateway so that packets can be routed back to VMs
-                device = ip_lib.IPDevice(interface_name,
-                                         self.root_helper,
-                                         namespace)
-                # Only 1 subnet on metadata access network
-                gateway_ip = metadata_subnets[0].gateway_ip
-                device.route.add_gateway(gateway_ip)
-        elif self.conf.use_namespaces:
+        if self.conf.use_namespaces:
             self._set_default_route(network)
 
         return interface_name
 
     def update(self, network):
         """Update device settings for the network's DHCP on this host."""
-        if self.conf.use_namespaces and not self.conf.enable_metadata_network:
+        if self.conf.use_namespaces:
             self._set_default_route(network)
 
     def destroy(self, network, device_name):
