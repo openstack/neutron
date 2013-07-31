@@ -1085,6 +1085,10 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                            self.serialize(data),
                            extra_environ=env,
                            expect_errors=expect_errors)
+        #  Ensure id attribute is included in fields returned by GET call
+        #  in update procedure.
+        self.assertEqual(1, instance.get_network.call_count)
+        self.assertIn('id', instance.get_network.call_args[1]['fields'])
         self.assertEqual(res.status_int, expected_code)
 
     def test_update_noauth(self):
