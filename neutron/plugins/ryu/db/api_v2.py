@@ -212,4 +212,4 @@ def set_port_status(session, port_id, status):
         session.merge(port)
         session.flush()
     except orm_exc.NoResultFound:
-        raise q_exc.PortNotFound(port_id=port_id, net_id=None)
+        raise q_exc.PortNotFound(port_id=port_id)

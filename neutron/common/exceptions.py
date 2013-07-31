@@ -71,6 +71,10 @@ class SubnetNotFound(NotFound):
 
 
 class PortNotFound(NotFound):
+    message = _("Port %(port_id)s could not be found")
+
+
+class PortNotFoundOnNetwork(NotFound):
     message = _("Port %(port_id)s could not be found "
                 "on network %(net_id)s")
 

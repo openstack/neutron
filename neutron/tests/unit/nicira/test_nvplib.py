@@ -1265,7 +1265,7 @@ class TestNvplibLogicalPorts(NvplibTestCase):
         self.assertEqual(constants.PORT_STATUS_ACTIVE, status)
 
     def test_get_port_status_non_existent_raises(self):
-        self.assertRaises(exceptions.PortNotFound,
+        self.assertRaises(exceptions.PortNotFoundOnNetwork,
                           nvplib.get_port_status,
                           self.fake_cluster,
                           'boo', 'boo')
@@ -1286,7 +1286,7 @@ class TestNvplibLogicalPorts(NvplibTestCase):
         self.assertIn('vm_id', port_tags)
 
     def test_update_non_existent_port_raises(self):
-        self.assertRaises(exceptions.PortNotFound,
+        self.assertRaises(exceptions.PortNotFoundOnNetwork,
                           nvplib.update_port, self.fake_cluster,
                           'boo', 'boo', 'boo', 'boo', 'boo', 'boo', False)
 
@@ -1294,13 +1294,13 @@ class TestNvplibLogicalPorts(NvplibTestCase):
         lswitch, lport = self._create_switch_and_port()
         nvplib.delete_port(self.fake_cluster,
                            lswitch['uuid'], lport['uuid'])
-        self.assertRaises(exceptions.PortNotFound,
+        self.assertRaises(exceptions.PortNotFoundOnNetwork,
                           nvplib.get_port, self.fake_cluster,
                           lswitch['uuid'], lport['uuid'])
 
     def test_delete_non_existent_port_raises(self):
         lswitch = self._create_switch_and_port()[0]
-        self.assertRaises(exceptions.PortNotFound,
+        self.assertRaises(exceptions.PortNotFoundOnNetwork,
                           nvplib.delete_port, self.fake_cluster,
                           lswitch['uuid'], 'bad_port_uuid')
 
