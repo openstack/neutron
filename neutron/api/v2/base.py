@@ -548,7 +548,6 @@ class Controller(object):
             raise webob.exc.HTTPBadRequest(msg)
 
         Controller._populate_tenant_id(context, res_dict, is_create)
-
         Controller._verify_attributes(res_dict, attr_info)
 
         if is_create:  # POST

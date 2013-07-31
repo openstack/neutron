@@ -993,7 +993,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     'status': constants.NET_STATUS_ACTIVE}
             network = models_v2.Network(**args)
             context.session.add(network)
-        return self._make_network_dict(network)
+        return self._make_network_dict(network, process_extensions=False)
 
     def update_network(self, context, id, network):
         n = network['network']
