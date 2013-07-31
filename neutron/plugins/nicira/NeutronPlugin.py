@@ -172,8 +172,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self._port_drivers = {
             'create': {l3_db.DEVICE_OWNER_ROUTER_GW:
                        self._nvp_create_ext_gw_port,
-                       l3_db.DEVICE_OWNER_ROUTER_INTF:
-                       self._nvp_create_port,
                        l3_db.DEVICE_OWNER_FLOATINGIP:
                        self._nvp_create_fip_port,
                        l3_db.DEVICE_OWNER_ROUTER_INTF:
@@ -552,17 +550,26 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 err_msg=(_("It is not allowed to create router interface "
                            "ports on external networks as '%s'") %
                          port_data['network_id']))
-        lport = None
+        ls_port = None
         selected_lswitch = None
         try:
             selected_lswitch = self._nvp_find_lswitch_for_port(
                 context, port_data)
             # Do not apply port security here!
-            lport = self._nvp_create_port_helper(
+            ls_port = self._nvp_create_port_helper(
                 self.cluster, selected_lswitch['uuid'],
                 port_data, False)
+            # Assuming subnet being attached is on first fixed ip
+            # element in port data
+            subnet_id = port_data['fixed_ips'][0]['subnet_id']
+            router_id = port_data['device_id']
+            # Create peer port on logical router
+            self._create_and_attach_router_port(
+                self.cluster, context, router_id, port_data,
+                "PatchAttachment", ls_port['uuid'],
+                subnet_ids=[subnet_id])
             nicira_db.add_neutron_nvp_port_mapping(
-                context.session, port_data['id'], lport['uuid'])
+                context.session, port_data['id'], ls_port['uuid'])
             LOG.debug(_("_nvp_create_router_port completed for port "
                         "%(name)s on network %(network_id)s. The new "
                         "port id is %(id)s."),
@@ -571,7 +578,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._handle_create_port_exception(
                 context, port_data['id'],
                 selected_lswitch and selected_lswitch['uuid'],
-                lport and lport['uuid'])
+                ls_port and ls_port['uuid'])
 
     def _find_router_gw_port(self, context, port_data):
         router_id = port_data['device_id']
@@ -1718,35 +1725,35 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 for router in routers]
 
     def add_router_interface(self, context, router_id, interface_info):
+        # When adding interface by port_id we need to create the
+        # peer port on the nvp logical router in this routine
+        port_id = interface_info.get('port_id')
         router_iface_info = super(NvpPluginV2, self).add_router_interface(
             context, router_id, interface_info)
-        # If the above operation succeded interface_info contains a reference
-        # to a logical switch port
-        port_id = router_iface_info['port_id']
+        # router_iface_info will always have a subnet_id attribute
         subnet_id = router_iface_info['subnet_id']
-        # Add port to the logical router as well
-        # The owner of the router port is always the same as the owner of the
-        # router. Use tenant_id from the port instead of fetching more records
-        # from the Neutron database
-        # Find the NVP port corresponding to neutron port_id
-        results = nvplib.query_lswitch_lports(
-            self.cluster, '*',
-            filters={'tag': port_id, 'tag_scope': 'q_port_id'})
-        if results:
-            ls_port = results[0]
-        else:
-            raise nvp_exc.NvpPluginException(
-                err_msg=(_("The port %(port_id)s, connected to the router "
-                           "%(router_id)s was not found on the NVP "
-                           "backend.") % {'port_id': port_id,
-                                          'router_id': router_id}))
+        if port_id:
+            port_data = self._get_port(context, port_id)
+            nvp_port_id = self._nvp_get_port_id(
+                context, self.cluster, port_data)
+            # Fetch lswitch port from NVP in order to retrieve LS uuid
+            # this is necessary as in the case of bridged networks
+            # ls_uuid may be different from network id
+            # TODO(salv-orlando): avoid this NVP round trip by storing
+            # lswitch uuid together with lport uuid mapping.
+            nvp_port = nvplib.query_lswitch_lports(
+                self.cluster, '*',
+                filters={'uuid': nvp_port_id},
+                relations='LogicalSwitchConfig')[0]
 
-        port = self._get_port(context, port_id)
-        # Create logical router port and patch attachment
-        self._create_and_attach_router_port(
-            self.cluster, context, router_id, port,
-            "PatchAttachment", ls_port['uuid'],
-            subnet_ids=[subnet_id])
+            ls_uuid = nvp_port['_relations']['LogicalSwitchConfig']['uuid']
+            # Unplug current attachment from lswitch port
+            nvplib.plug_interface(self.cluster, ls_uuid,
+                                  nvp_port_id, "NoAttachment")
+            # Create logical router port and plug patch attachment
+            self._create_and_attach_router_port(
+                self.cluster, context, router_id, port_data,
+                "PatchAttachment", nvp_port_id, subnet_ids=[subnet_id])
         subnet = self._get_subnet(context, subnet_id)
         # If there is an external gateway we need to configure the SNAT rule.
         # Fetch router from DB

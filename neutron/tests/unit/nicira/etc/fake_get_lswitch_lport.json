@@ -5,7 +5,9 @@
        "admin_status_enabled": true,
        "fabric_status_up": false,
        "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s/status",
-       "_schema": "/ws.v1/schema/LogicalSwitchPortStatus"}
+       "_schema": "/ws.v1/schema/LogicalSwitchPortStatus"},
+    "LogicalSwitchConfig":
+      {"uuid": "%(ls_uuid)s"}
    },
  "tags":
    [{"scope": "q_port_id", "tag": "%(neutron_port_id)s"},
