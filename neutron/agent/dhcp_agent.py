@@ -156,7 +156,12 @@ class DhcpAgent(manager.Manager):
             active_networks = self.plugin_rpc.get_active_networks_info()
             active_network_ids = set(network.id for network in active_networks)
             for deleted_id in known_network_ids - active_network_ids:
-                self.disable_dhcp_helper(deleted_id)
+                try:
+                    self.disable_dhcp_helper(deleted_id)
+                except Exception:
+                    self.needs_resync = True
+                    LOG.exception(_('Unable to sync network state on deleted '
+                                    'network %s') % deleted_id)
 
             for network in active_networks:
                 pool.spawn_n(self.configure_dhcp_for_network, network)
