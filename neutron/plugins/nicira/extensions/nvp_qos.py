@@ -44,7 +44,7 @@ class DefaultQueueAlreadyExists(qexception.InUse):
 
 class QueueInvalidDscp(qexception.InvalidInput):
     message = _("Invalid value for dscp %(data)s must be integer value"
-                "between 0 and 63.")
+                " between 0 and 63.")
 
 
 class QueueMinGreaterMax(qexception.InvalidInput):
