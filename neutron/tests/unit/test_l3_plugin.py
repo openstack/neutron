@@ -665,7 +665,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                     if n['event_type'].startswith('router.interface.'):
                         payload = n['payload']['router.interface']
                         self.assertIn('id', payload)
-                        self.assertEquals(payload['id'], r['router']['id'])
+                        self.assertEqual(payload['id'], r['router']['id'])
                         self.assertIn('tenant_id', payload)
                         stid = s['subnet']['tenant_id']
                         # tolerate subnet tenant deliberately to '' in the

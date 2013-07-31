@@ -369,7 +369,7 @@ class TestDhcpAgent(base.BaseTestCase):
             cfg.CONF.root_helper
         )
 
-        self.assertEquals(set(networks), set(dhcp.cache.get_network_ids()))
+        self.assertEqual(set(networks), set(dhcp.cache.get_network_ids()))
 
 
 class TestLogArgs(base.BaseTestCase):

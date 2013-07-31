@@ -107,7 +107,7 @@ class TestWSGIServer(base.BaseTestCase):
         server.start(hello_world, 0, host="127.0.0.1")
 
         response = urllib2.urlopen('http://127.0.0.1:%d/' % server.port)
-        self.assertEquals(greetings, response.read())
+        self.assertEqual(greetings, response.read())
 
         server.stop()
 
@@ -1088,7 +1088,7 @@ class TestWSGIServerWithSSL(base.BaseTestCase):
         server.start(hello_world, 0, host="127.0.0.1")
 
         response = urllib2.urlopen('https://127.0.0.1:%d/' % server.port)
-        self.assertEquals(greetings, response.read())
+        self.assertEqual(greetings, response.read())
 
         server.stop()
 
@@ -1109,6 +1109,6 @@ class TestWSGIServerWithSSL(base.BaseTestCase):
         server.start(hello_world, 0, host="::1")
 
         response = urllib2.urlopen('https://[::1]:%d/' % server.port)
-        self.assertEquals(greetings, response.read())
+        self.assertEqual(greetings, response.read())
 
         server.stop()

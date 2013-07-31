@@ -170,7 +170,7 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
            in as expected_kvs dictionary
         """
         for k, v in expected_kvs.iteritems():
-            self.assertEquals(security_group_rule[k], v)
+            self.assertEqual(security_group_rule[k], v)
 
 
 class SecurityGroupsTestCaseXML(SecurityGroupsTestCase):
@@ -257,10 +257,10 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         # Verify that default egress rules have been created
 
         sg_rules = security_group['security_group']['security_group_rules']
-        self.assertEquals(len(sg_rules), 2)
+        self.assertEqual(len(sg_rules), 2)
 
         v4_rules = filter(lambda x: x['ethertype'] == 'IPv4', sg_rules)
-        self.assertEquals(len(v4_rules), 1)
+        self.assertEqual(len(v4_rules), 1)
         v4_rule = v4_rules[0]
         expected = {'direction': 'egress',
                     'ethertype': 'IPv4',
@@ -272,7 +272,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self._assert_sg_rule_has_kvs(v4_rule, expected)
 
         v6_rules = filter(lambda x: x['ethertype'] == 'IPv6', sg_rules)
-        self.assertEquals(len(v6_rules), 1)
+        self.assertEqual(len(v6_rules), 1)
         v6_rule = v6_rules[0]
         expected = {'direction': 'egress',
                     'ethertype': 'IPv6',

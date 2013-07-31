@@ -233,10 +233,10 @@ class TunnelAllocationsTest(base.BaseTestCase):
     def test_add_tunnel_endpoints(self):
         tun_1 = ovs_db_v2.add_tunnel_endpoint('192.168.0.1')
         tun_2 = ovs_db_v2.add_tunnel_endpoint('192.168.0.2')
-        self.assertEquals(1, tun_1.id)
-        self.assertEquals('192.168.0.1', tun_1.ip_address)
-        self.assertEquals(2, tun_2.id)
-        self.assertEquals('192.168.0.2', tun_2.ip_address)
+        self.assertEqual(1, tun_1.id)
+        self.assertEqual('192.168.0.1', tun_1.ip_address)
+        self.assertEqual(2, tun_2.id)
+        self.assertEqual('192.168.0.2', tun_2.ip_address)
 
     def test_specific_tunnel_inside_pool(self):
         tunnel_id = TUN_MIN + 5
