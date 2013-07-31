@@ -350,4 +350,4 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
         with self.firewall(no_delete=True) as fw:
             fw_id = fw['firewall']['id']
             fw_rules = self.plugin._make_firewall_dict_with_rules(ctx, fw_id)
-            self.assertEquals(fw_rules['firewall_rule_list'], [])
+            self.assertEqual(fw_rules['firewall_rule_list'], [])

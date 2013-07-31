@@ -370,7 +370,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                                         root_helper='sudo')
                     version_ok = True
                 except SystemExit as e:
-                    self.assertEquals(e.code, 1)
+                    self.assertEqual(e.code, 1)
                     version_ok = False
             self.assertEqual(version_ok, expecting_ok)
 

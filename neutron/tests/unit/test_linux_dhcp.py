@@ -790,8 +790,8 @@ tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
                 result = dhcp.Dnsmasq.existing_dhcp_networks(self.conf, 'sudo')
 
                 mock_listdir.assert_called_once_with(path)
-                self.assertEquals(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
-                                  result)
+                self.assertEqual(['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'],
+                                 result)
 
     def _check_version(self, cmd_out, expected_value):
         with mock.patch('neutron.agent.linux.utils.execute') as cmd:

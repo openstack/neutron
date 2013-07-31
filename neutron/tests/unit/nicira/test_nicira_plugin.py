@@ -589,14 +589,14 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                            device_owner='network:dhcp'):
                 subnets = self._list('subnets')['subnets']
                 self.assertEqual(len(subnets), 1)
-                self.assertEquals(subnets[0]['host_routes'][0]['nexthop'],
-                                  '10.0.0.2')
-                self.assertEquals(subnets[0]['host_routes'][0]['destination'],
-                                  '169.254.169.254/32')
+                self.assertEqual(subnets[0]['host_routes'][0]['nexthop'],
+                                 '10.0.0.2')
+                self.assertEqual(subnets[0]['host_routes'][0]['destination'],
+                                 '169.254.169.254/32')
 
             subnets = self._list('subnets')['subnets']
             # Test that route is deleted after dhcp port is removed
-            self.assertEquals(len(subnets[0]['host_routes']), 0)
+            self.assertEqual(len(subnets[0]['host_routes']), 0)
 
     def test_floatingip_disassociate(self):
         with self.port() as p:

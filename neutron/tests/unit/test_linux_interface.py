@@ -386,14 +386,14 @@ class TestMetaInterfaceDriver(TestBase):
                                                             namespace=None)
         expected = [mock.call('tap0', 'sudo', None)]
         self.ip_dev.assert_has_calls(expected)
-        self.assertEquals('fake1', plugin_tag0)
+        self.assertEqual('fake1', plugin_tag0)
         namespace = '01234567-1234-1234-99'
         expected = [mock.call('tap1', 'sudo', '01234567-1234-1234-99')]
         plugin_tag1 = meta_interface._get_device_plugin_tag(
             'tap1',
             namespace=namespace)
         self.ip_dev.assert_has_calls(expected)
-        self.assertEquals('fake1', plugin_tag1)
+        self.assertEqual('fake1', plugin_tag1)
 
 
 class TestIVSInterfaceDriver(TestBase):

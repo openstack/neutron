@@ -3040,10 +3040,10 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             req = self.new_update_request('subnets', data,
                                           res['subnet']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertEquals(sorted(res['subnet']['host_routes']),
-                              sorted(host_routes))
-            self.assertEquals(sorted(res['subnet']['dns_nameservers']),
-                              sorted(dns_nameservers))
+            self.assertEqual(sorted(res['subnet']['host_routes']),
+                             sorted(host_routes))
+            self.assertEqual(sorted(res['subnet']['dns_nameservers']),
+                             sorted(dns_nameservers))
 
     def test_update_subnet_shared_returns_400(self):
         with self.network(shared=True) as network:
