@@ -18,6 +18,7 @@
 import webob.dec
 
 from neutron.api.views import versions as versions_view
+from neutron.openstack.common import gettextutils
 from neutron.openstack.common import log as logging
 from neutron import wsgi
 
@@ -42,7 +43,10 @@ class Versions(object):
         ]
 
         if req.path != '/':
-            return webob.exc.HTTPNotFound()
+            language = req.best_match_language()
+            msg = _('Unknown API version specified')
+            msg = gettextutils.get_localized_message(msg, language)
+            return webob.exc.HTTPNotFound(explanation=msg)
 
         builder = versions_view.get_view_builder(req)
         versions = [builder.build(version) for version in version_objs]

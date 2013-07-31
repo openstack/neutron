@@ -66,7 +66,8 @@ class QuotaSetsController(wsgi.Controller):
             request.context, QUOTAS.resources, tenant_id)
 
     def create(self, request, body=None):
-        raise webob.exc.HTTPNotImplemented()
+        msg = _('POST requests are not supported on this resource.')
+        raise webob.exc.HTTPNotImplemented(msg)
 
     def index(self, request):
         context = request.context

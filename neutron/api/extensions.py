@@ -249,10 +249,12 @@ class ExtensionController(wsgi.Controller):
         return dict(extension=self._translate(ext))
 
     def delete(self, request, id):
-        raise webob.exc.HTTPNotFound()
+        msg = _('Resource not found.')
+        raise webob.exc.HTTPNotFound(msg)
 
     def create(self, request):
-        raise webob.exc.HTTPNotFound()
+        msg = _('Resource not found.')
+        raise webob.exc.HTTPNotFound(msg)
 
 
 class ExtensionMiddleware(wsgi.Middleware):
