@@ -218,6 +218,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if port_status is not port['status']:
             self._update_resource_status(context, "port", port['id'],
                                          port_status)
+            port['status'] = port_status
 
         # deactivate packet_filters after the port has deleted from OFC.
         if self.packet_filter_enabled:
@@ -226,6 +227,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             pfs = self.get_packet_filters(context, filters=filters)
             for pf in pfs:
                 self.deactivate_packet_filter(context, pf)
+
+        return port
 
     # Quantm Plugin Basic methods
 
@@ -309,15 +312,25 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_("NECPluginV2.delete_network() called, id=%s ."), id)
         net = super(NECPluginV2, self).get_network(context, id)
         tenant_id = net['tenant_id']
+        ports = self.get_ports(context, filters={'network_id': [id]})
+
+        # check if there are any tenant owned ports in-use
+        only_auto_del = all(p['device_owner'] in
+                            db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS
+                            for p in ports)
+        if not only_auto_del:
+            raise q_exc.NetworkInUse(net_id=id)
 
         # Make sure auto-delete ports on OFC are deleted.
-        filter = {'network_id': [id],
-                  'device_owner': db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS}
-        auto_delete_ports = self.get_ports(context, filters=filter)
-        for port in auto_delete_ports:
-            LOG.debug(_('delete_network(): deleting auto-delete port'
-                        ' from OFC: %s'), port)
-            self.deactivate_port(context, port)
+        _error_ports = []
+        for port in ports:
+            port = self.deactivate_port(context, port)
+            if port['status'] == OperationalStatus.ERROR:
+                _error_ports.append(port['id'])
+        if _error_ports:
+            reason = (_("Failed to delete port(s)=%s from OFC.") %
+                      ','.join(_error_ports))
+            raise nexc.OFCException(reason=reason)
 
         # delete all packet_filters of the network
         if self.packet_filter_enabled:
@@ -326,16 +339,17 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             for pf in pfs:
                 self.delete_packet_filter(context, pf['id'])
 
-        super(NECPluginV2, self).delete_network(context, id)
         try:
             # 'net' parameter is required to lookup old OFC mapping
             self.ofc.delete_ofc_network(context, id, net)
         except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
             reason = _("delete_network() failed due to %s") % exc
-            # NOTE: The OFC configuration of this network could be remained
-            #       as an orphan resource. But, it does NOT harm any other
-            #       resources, so this plugin just warns.
-            LOG.warn(reason)
+            LOG.error(reason)
+            self._update_resource_status(context, "network", net['id'],
+                                         OperationalStatus.ERROR)
+            raise
+
+        super(NECPluginV2, self).delete_network(context, id)
 
         # delete unnessary ofc_tenant
         filters = dict(tenant_id=[tenant_id])
@@ -407,7 +421,10 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Thus we need to call self.get_port() instead of super().get_port()
         port = self.get_port(context, id)
 
-        self.deactivate_port(context, port)
+        port = self.deactivate_port(context, port)
+        if port['status'] == OperationalStatus.ERROR:
+            reason = _("Failed to delete port=%s from OFC.") % id
+            raise nexc.OFCException(reason=reason)
 
         # delete all packet_filters of the port
         if self.packet_filter_enabled:
