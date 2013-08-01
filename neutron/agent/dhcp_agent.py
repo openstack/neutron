@@ -391,7 +391,7 @@ class DhcpPluginApi(proxy.RpcProxy):
                                    topic=self.topic))
 
     def get_dhcp_port(self, network_id, device_id):
-        """Make a remote process call to create the dhcp port."""
+        """Make a remote process call to get the dhcp port."""
         return DictModel(self.call(self.context,
                                    self.make_msg('get_dhcp_port',
                                    network_id=network_id,
