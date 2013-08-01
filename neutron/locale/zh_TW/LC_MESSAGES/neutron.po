@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-31 19:55+0000\n"
+"POT-Creation-Date: 2013-08-01 19:54+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -1502,32 +1502,32 @@ msgstr "不支援主體作業"
 msgid "Resources required"
 msgstr "需要資源"
 
-#: neutron/api/v2/base.py:559
+#: neutron/api/v2/base.py:558
 #, python-format
 msgid "Failed to parse request. Required attribute '%s' not specified"
 msgstr "無法剖析要求。未指定必要屬性 '%s'"
 
-#: neutron/api/v2/base.py:566
+#: neutron/api/v2/base.py:565
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "POST 中不接受屬性 '%s'"
 
-#: neutron/api/v2/base.py:571
+#: neutron/api/v2/base.py:570
 #, python-format
 msgid "Cannot update read-only attribute %s"
 msgstr "無法更新唯讀屬性 %s"
 
-#: neutron/api/v2/base.py:589
+#: neutron/api/v2/base.py:588
 #, python-format
 msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr "%(attr)s 的輸入無效。原因：%(reason)s。"
 
-#: neutron/api/v2/base.py:598
+#: neutron/api/v2/base.py:597
 #, python-format
 msgid "Unrecognized attribute(s) '%s'"
 msgstr "無法辨識屬性 '%s'"
 
-#: neutron/api/v2/base.py:616
+#: neutron/api/v2/base.py:615
 #, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr "Tenant %(tenant_id)s 不可在此網路上建立 %(resource)s"
@@ -2371,7 +2371,7 @@ msgid ""
 "assigning a floating IP"
 msgstr "埠 %s 具有多個固定 IP。指派浮動 IP 時必須提供特定 IP"
 
-#: neutron/db/l3_db.py:600 neutron/plugins/nicira/NeutronPlugin.py:1926
+#: neutron/db/l3_db.py:600 neutron/plugins/nicira/NeutronPlugin.py:1914
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "如果未指定 port_id，則無法指定 fixed_ip_address"
 
@@ -4220,7 +4220,7 @@ msgid "create_subnet() called"
 msgstr "已呼叫 create_subnet()"
 
 #: neutron/plugins/cisco/network_plugin.py:249
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:266
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:339
 msgid "update_subnet() called"
 msgstr "已呼叫 update_subnet()"
 
@@ -5804,7 +5804,7 @@ msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr "已呼叫 MidonetPluginV2.update_network：ID = %(id)r，網路 = %(network)r"
 
 #: neutron/plugins/midonet/plugin.py:193
-#: neutron/plugins/nicira/NeutronPlugin.py:1115
+#: neutron/plugins/nicira/NeutronPlugin.py:1111
 msgid "admin_state_up=False networks are not supported."
 msgstr "不支援 admin_state_up = False 網路。"
 
@@ -7194,7 +7194,7 @@ msgid "Logical router resource %s not found on NVP platform"
 msgstr "在 NVP 平台上找不到邏輯路由器資源 %s"
 
 #: neutron/plugins/nicira/NeutronPlugin.py:667
-#: neutron/plugins/nicira/NeutronPlugin.py:1871
+#: neutron/plugins/nicira/NeutronPlugin.py:1859
 msgid "Unable to update logical routeron NVP Platform"
 msgstr "無法在 NVP 平台上更新邏輯路由器"
 
@@ -7281,197 +7281,197 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/nicira/NeutronPlugin.py:1016
-#: neutron/plugins/nicira/NeutronPlugin.py:1064
+#: neutron/plugins/nicira/NeutronPlugin.py:1062
 msgid "Unable to get logical switches"
 msgstr "無法取得邏輯交換器"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1078
+#: neutron/plugins/nicira/NeutronPlugin.py:1075
 #, python-format
 msgid "Logical Switch %s found in neutron database but not in NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1093
+#: neutron/plugins/nicira/NeutronPlugin.py:1090
 #, python-format
 msgid ""
 "Found %s logical switches not bound to Neutron networks. Neutron and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1097
+#: neutron/plugins/nicira/NeutronPlugin.py:1094
 #, python-format
 msgid "get_networks() completed for tenant %s"
 msgstr "已對 Tenant %s 完成 get_networks()"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1182
+#: neutron/plugins/nicira/NeutronPlugin.py:1176
 #, python-format
 msgid "Lswitch %s not found in NVP"
 msgstr "在 NVP 中找不到 lswitch %s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1191
+#: neutron/plugins/nicira/NeutronPlugin.py:1185
 msgid "Unable to get ports"
 msgstr "無法取得埠"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1218
+#: neutron/plugins/nicira/NeutronPlugin.py:1212
 #, python-format
 msgid "Neutron logical port %s was not found on NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1225
+#: neutron/plugins/nicira/NeutronPlugin.py:1219
 #, python-format
 msgid ""
 "Found %s logical ports not bound to Neutron ports. Neutron and NVP are "
 "potentially out of sync"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1283
+#: neutron/plugins/nicira/NeutronPlugin.py:1278
 #, python-format
 msgid "create_port completed on NVP for tenant %(tenant_id)s: (%(id)s)"
 msgstr "已對 Tenant %(tenant_id)s 的 NVP 完成 create_port：(%(id)s)"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1300
+#: neutron/plugins/nicira/NeutronPlugin.py:1294
 #, python-format
 msgid "Logical switch for network %s was not found in NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1311
+#: neutron/plugins/nicira/NeutronPlugin.py:1305
 msgid "Unable to create port or set port attachment in NVP."
 msgstr "無法在 NVP 中建立埠或設定埠連接裝置。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1386
+#: neutron/plugins/nicira/NeutronPlugin.py:1375
 #, python-format
 msgid "Update port request: %s"
 msgstr "更新埠要求：%s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1412
+#: neutron/plugins/nicira/NeutronPlugin.py:1401
 #, python-format
 msgid "Unable to update port id: %s."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1539
-#: neutron/plugins/nicira/NeutronPlugin.py:1583
+#: neutron/plugins/nicira/NeutronPlugin.py:1527
+#: neutron/plugins/nicira/NeutronPlugin.py:1571
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr "網路 '%s' 不是有效的外部網路"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1552
+#: neutron/plugins/nicira/NeutronPlugin.py:1540
 msgid "Unable to create logical router on NVP Platform"
 msgstr "無法在 NVP 平台上建立邏輯路由器"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1592
+#: neutron/plugins/nicira/NeutronPlugin.py:1580
 msgid ""
 "'routes' cannot contain route '0.0.0.0/0', this must be updated through "
 "the default gateway attribute"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1608
+#: neutron/plugins/nicira/NeutronPlugin.py:1596
 #, python-format
 msgid "Logical router %s not found on NVP Platform"
 msgstr "在 NVP 平台上找不到邏輯路由器 %s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1612
+#: neutron/plugins/nicira/NeutronPlugin.py:1600
 msgid "Unable to update logical router on NVP Platform"
 msgstr "無法在 NVP 平台上更新邏輯路由器"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1614
+#: neutron/plugins/nicira/NeutronPlugin.py:1602
 msgid ""
 "Request cannot contain 'routes' with the NVP platform currently in "
 "execution. Please, try without specifying the static routes."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1647
+#: neutron/plugins/nicira/NeutronPlugin.py:1635
 #, python-format
 msgid "Logical router '%s' not found on NVP Platform"
 msgstr "在 NVP 平台上找不到邏輯路由器 '%s'"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1651
+#: neutron/plugins/nicira/NeutronPlugin.py:1639
 msgid "Unable to delete logical routeron NVP Platform"
 msgstr "無法在 NVP 平台上刪除邏輯路由器"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1671
+#: neutron/plugins/nicira/NeutronPlugin.py:1659
 #, python-format
 msgid ""
 "Current router status:%(router_status)s;Status in Neutron "
 "DB:%(db_router_status)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1698
+#: neutron/plugins/nicira/NeutronPlugin.py:1686
 msgid "Unable to get logical routers from NVP controller"
 msgstr "無法從 NVP 控制器取得邏輯路由器"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1720
+#: neutron/plugins/nicira/NeutronPlugin.py:1708
 #, python-format
 msgid ""
 "Found %s logical routers not bound to Neutron routers. Neutron and NVP "
 "are potentially out of sync"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1781
+#: neutron/plugins/nicira/NeutronPlugin.py:1769
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr "已對子網路 %(subnet_id)s 及路由器 %(router_id)s 完成 Add_router_interface"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1826
+#: neutron/plugins/nicira/NeutronPlugin.py:1814
 #, python-format
 msgid ""
 "The port %(port_id)s, connected to the router %(router_id)s was not found"
 " on the NVP backend"
 msgstr "在 NVP 後端找不到路由器 %(router_id)s 所連接的埠 %(port_id)s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1838
+#: neutron/plugins/nicira/NeutronPlugin.py:1826
 #, python-format
 msgid ""
 "Unable to find NVP logical router port for Neutron port id:%s. Was this "
 "port ever paired with a logical router?"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1867
+#: neutron/plugins/nicira/NeutronPlugin.py:1855
 #, python-format
 msgid "Logical router port resource %s not found on NVP platform"
 msgstr "在 NVP 平台上找不到邏輯路由器埠資源 %s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1893
+#: neutron/plugins/nicira/NeutronPlugin.py:1881
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr "在 NVP 平台上移除浮動 IP 的 NAT 規則時發生錯誤：%s。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1899
+#: neutron/plugins/nicira/NeutronPlugin.py:1887
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr "在 NVP 平台上找到的相符 NAT 規則數目不正確"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1965
+#: neutron/plugins/nicira/NeutronPlugin.py:1953
 #, python-format
 msgid "Address list for NVP logical router port:%s"
 msgstr "NVP 邏輯路由器埠的位址清單：%s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1989
+#: neutron/plugins/nicira/NeutronPlugin.py:1977
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr "在 NVP 平台上給浮動 IP %(floating_ip)s（已對映到內部 IP %(internal_ip)s）建立 NAT 規則時發生錯誤"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2032
+#: neutron/plugins/nicira/NeutronPlugin.py:2020
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr "埠 '%s' 未與浮動 IP 產生關聯"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2035
+#: neutron/plugins/nicira/NeutronPlugin.py:2023
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2061
+#: neutron/plugins/nicira/NeutronPlugin.py:2049
 #, python-format
 msgid ""
 "Create_l2_gw_service did not return an uuid for the newly created "
 "resource:%s"
 msgstr "Create_l2_gw_service 未傳回所新建資源的 UUID：%s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2083
+#: neutron/plugins/nicira/NeutronPlugin.py:2071
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
@@ -8508,161 +8508,151 @@ msgstr "PLUMgrid 外掛程式發生非預期的錯誤：%(err_msg)s"
 
 #: neutron/plugins/plumgrid/common/exceptions.py:31
 #, python-format
-msgid "Connection failed with PLUMgrid NOS: %(err_msg)s"
-msgstr "與 PLUMgrid NOS 連線失敗：%(err_msg)s"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_nos_snippets.py:34
-msgid "NeutronPluginPLUMgrid Status: NOS Body Data Creation"
+msgid "Connection failed with PLUMgrid Director: %(err_msg)s"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:40
-msgid "PLUMgrid NOS server to connect to"
-msgstr "要連接的 PLUMgrid NOS 伺服器"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:42
-msgid "PLUMgrid NOS server port to connect to"
-msgstr "要連接的 PLUMgrid NOS 伺服器埠"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:44
-msgid "PLUMgrid NOS admin username"
-msgstr "PLUMgrid NOS 管理者使用者名稱"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:46
-msgid "PLUMgrid NOS admin password"
-msgstr "PLUMgrid NOS 管理者密碼"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:48
-msgid "PLUMgrid NOS server timeout"
-msgstr "PLUMgrid NOS 伺服器逾時"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:50
-msgid "PLUMgrid NOS topology name"
-msgstr "PLUMgrid NOS 拓蹼名稱"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:59
-msgid "NeutronPluginPLUMgrid Status: Starting Plugin"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:45
+msgid "PLUMgrid Director server to connect to"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:74
-msgid "NeutronPluginPLUMgrid Status: Aborting Plugin"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:47
+msgid "PLUMgrid Director server port to connect to"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:82
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:49
+msgid "PLUMgrid Director admin username"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:51
+msgid "PLUMgrid Director admin password"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:53
+msgid "PLUMgrid Director server timeout"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:68
+msgid "Neutron PLUMgrid Director: Starting Plugin"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:75
+msgid "Neutron PLUMgrid Director: Neutron server with PLUMgrid Plugin has started"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:85
 #, python-format
-msgid "NeutronPluginPLUMgrid NOS: %s"
+msgid "Neutron PLUMgrid Director: %s"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:84
-msgid "NeutronPluginPLUMgrid Status: NOS value is missing in config file"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:95
+msgid "Neutron PLUMgrid Director: create_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:87
-msgid ""
-"NeutronPluginPLUMgrid Status: Neutron server with PLUMgrid Plugin has "
-"started"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:109
+msgid "PLUMgrid Library: create_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:93
-msgid "NeutronPluginPLUMgrid Status: create_network() called"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:125
+msgid "Neutron PLUMgrid Director: update_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:105
-#, python-format
-msgid "NeutronPluginPLUMgrid Status: %(tenant_id)s, %(network)s, %(network_id)s"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:136
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:162
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:351
+msgid "PLUMgrid Library: update_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:119
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:151
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:175
-msgid "PLUMgrid NOS communication failed"
-msgstr "PLUMgrid NOS 通訊失敗"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:129
-msgid "NeutronPluginPLUMgridV2.update_network() called"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:152
+msgid "Neutron PLUMgrid Director: delete_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:160
-msgid "NeutronPluginPLUMgrid Status: delete_network() called"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:175
+msgid "Neutron PLUMgrid Director: create_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:181
-msgid "NeutronPluginPLUMgrid Status: create_port() called"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:194
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:222
+msgid "PLUMgrid Library: create_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:193
-msgid "NeutronPluginPLUMgrid Status: update_port() called"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:210
+msgid "Neutron PLUMgrid Director: update_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:205
-msgid "NeutronPluginPLUMgrid Status: delete_port() called"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:239
+msgid "Neutron PLUMgrid Director: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:216
-msgid "NeutronPluginPLUMgrid Status: create_subnet() called"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:253
+msgid "PLUMgrid Library: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:234
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:257
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:289
-msgid "PLUMgrid NOS communication failed: "
-msgstr "PLUMgrid NOS 通訊失敗："
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:243
-msgid "NeutronPluginPLUMgrid Status: delete_subnet() called"
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:283
+msgid "Neutron PLUMgrid Director: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:318
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:307
+msgid "PLUMgrid Library: create_subnet() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:318
+msgid "Neutron PLUMgrid Director: delete_subnet() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:330
+msgid "PLUMgrid Library: delete_subnet() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:364
+msgid "Neutron PLUMgrid Director: create_router() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:376
+msgid "PLUMgrid Library: create_router() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:387
+msgid "Neutron PLUMgrid Director: update_router() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:393
+msgid "PLUMgrid Library: update_router() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:403
+msgid "Neutron PLUMgrid Director: delete_router() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:413
+msgid "PLUMgrid Library: delete_router() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:422
+msgid "Neutron PLUMgrid Director: add_router_interface() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:442
+msgid "PLUMgrid Library: add_router_interface() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:454
+msgid "Neutron PLUMgrid Director: remove_router_interface() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:476
+msgid "PLUMgrid Library: remove_router_interface() called"
+msgstr ""
+
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:510
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not supported yet by this plugin. "
 "Ignoring setting for network %s"
 msgstr "此外掛程式尚不支援 admin_state_up = False 的網路。正在忽略對網路 %s 的設定"
 
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/plumgrid_plugin.py:322
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:514
 msgid "Network Admin State Validation Falied: "
 msgstr "網路管理狀態驗證失敗："
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:40
-msgid "NeutronPluginPLUMgrid Status: REST Connection Started"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:53
-#, python-format
-msgid "PLUMgrid_NOS_Server: %(server)s %(port)s %(action)s"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:59
-msgid "PLUMgrid_NOS_Server: Could not establish HTTP connection"
-msgstr "PLUMgrid_NOS_Server：無法建立 HTTP 連線"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:64
-#, python-format
-msgid "PLUMgrid_NOS_Server Sending Data: %(nos_url)s %(body_data)s %(headers)s"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:75
-#, python-format
-msgid "PLUMgrid_NOS_Server Connection Data: %(resp)s, %(resp_str)s"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:81
-#, python-format
-msgid "PLUMgrid_NOS_Server Connection RESP: %s"
-msgstr "PLUMgrid_NOS_Server 連線 RESP：%s"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:85
-msgid "PLUMgrid HTTP Connection Failed: "
-msgstr "PLUMgrid HTTP 連線失敗："
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:91
-#, python-format
-msgid "PLUMgrid_NOS_Server: %(action)s failure, %(e)r"
-msgstr "PLUMgrid_NOS_Server：%(action)s 失敗，%(e)r"
-
-#: neutron/plugins/plumgrid/plumgrid_nos_plugin/rest_connection.py:94
-#, python-format
-msgid "PLUMgrid_NOS_Server: status=%(status)d, reason=%(reason)r, ret=%(ret)s"
-msgstr "PLUMgrid_NOS_Server：狀態 = %(status)d，原因 = %(reason)r，ret = %(ret)s"
 
 #: neutron/plugins/ryu/ryu_neutron_plugin.py:59
 #, python-format
@@ -9090,7 +9080,7 @@ msgstr "找不到 lrouter：%s"
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr ""
+#~ msgstr "在 NVP 後端找不到路由器 %(router_id)s 所連接的埠 %(port_id)s。"
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -9149,14 +9139,6 @@ msgstr "找不到 lrouter：%s"
 #~ msgid "No DSCP field needed when QoS workload marked trusted"
 #~ msgstr "如果服務品質工作量已標示為受信任，則不需要 DSCP 欄位"
 
-#~ msgid ""
-#~ "MidoClient.create_tenant_router called: "
-#~ "tenant_id=%(tenant_id)s, "
-#~ "name=%(name)smetadata_router=%(metadata_router)s"
-#~ msgstr ""
-#~ "已呼叫 ChainManager.create_router_chains：tenant_id = "
-#~ "%(tenant_id)s router_id = %(router_id)s"
-
 #~ msgid "delete_network(): deleting auto-delete port from OFC: %s"
 #~ msgstr ""
 
@@ -9166,12 +9148,6 @@ msgstr "找不到 lrouter：%s"
 #~ msgid "Network %s was not found in NVP."
 #~ msgstr ""
 
-#~ msgid ""
-#~ "The port %(port_id)s, connected to the"
-#~ " router %(router_id)s was not found "
-#~ "on the NVP backend."
-#~ msgstr "在 NVP 後端找不到路由器 %(router_id)s 所連接的埠 %(port_id)s。"
-
 #~ msgid "Cannot update NVP routes %(routes)s forrouter %(router_id)s"
 #~ msgstr ""
 
@@ -9180,4 +9156,107 @@ msgstr "找不到 lrouter：%s"
 
 #~ msgid "Invalid value for dscp %(data)s must be integer valuebetween 0 and 63."
 #~ msgstr ""
+
+#~ msgid "Connection failed with PLUMgrid NOS: %(err_msg)s"
+#~ msgstr "與 PLUMgrid NOS 連線失敗：%(err_msg)s"
+
+#~ msgid "NeutronPluginPLUMgrid Status: NOS Body Data Creation"
+#~ msgstr ""
+
+#~ msgid "PLUMgrid NOS server to connect to"
+#~ msgstr "要連接的 PLUMgrid NOS 伺服器"
+
+#~ msgid "PLUMgrid NOS server port to connect to"
+#~ msgstr "要連接的 PLUMgrid NOS 伺服器埠"
+
+#~ msgid "PLUMgrid NOS admin username"
+#~ msgstr "PLUMgrid NOS 管理者使用者名稱"
+
+#~ msgid "PLUMgrid NOS admin password"
+#~ msgstr "PLUMgrid NOS 管理者密碼"
+
+#~ msgid "PLUMgrid NOS server timeout"
+#~ msgstr "PLUMgrid NOS 伺服器逾時"
+
+#~ msgid "PLUMgrid NOS topology name"
+#~ msgstr "PLUMgrid NOS 拓蹼名稱"
+
+#~ msgid "NeutronPluginPLUMgrid Status: Starting Plugin"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: Aborting Plugin"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid NOS: %s"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: NOS value is missing in config file"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "NeutronPluginPLUMgrid Status: Neutron server "
+#~ "with PLUMgrid Plugin has started"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: create_network() called"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "NeutronPluginPLUMgrid Status: %(tenant_id)s, "
+#~ "%(network)s, %(network_id)s"
+#~ msgstr ""
+
+#~ msgid "PLUMgrid NOS communication failed"
+#~ msgstr "PLUMgrid NOS 通訊失敗"
+
+#~ msgid "NeutronPluginPLUMgridV2.update_network() called"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: delete_network() called"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: create_port() called"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: update_port() called"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: delete_port() called"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: create_subnet() called"
+#~ msgstr ""
+
+#~ msgid "PLUMgrid NOS communication failed: "
+#~ msgstr "PLUMgrid NOS 通訊失敗："
+
+#~ msgid "NeutronPluginPLUMgrid Status: delete_subnet() called"
+#~ msgstr ""
+
+#~ msgid "NeutronPluginPLUMgrid Status: REST Connection Started"
+#~ msgstr ""
+
+#~ msgid "PLUMgrid_NOS_Server: %(server)s %(port)s %(action)s"
+#~ msgstr ""
+
+#~ msgid "PLUMgrid_NOS_Server: Could not establish HTTP connection"
+#~ msgstr "PLUMgrid_NOS_Server：無法建立 HTTP 連線"
+
+#~ msgid "PLUMgrid_NOS_Server Sending Data: %(nos_url)s %(body_data)s %(headers)s"
+#~ msgstr ""
+
+#~ msgid "PLUMgrid_NOS_Server Connection Data: %(resp)s, %(resp_str)s"
+#~ msgstr ""
+
+#~ msgid "PLUMgrid_NOS_Server Connection RESP: %s"
+#~ msgstr "PLUMgrid_NOS_Server 連線 RESP：%s"
+
+#~ msgid "PLUMgrid HTTP Connection Failed: "
+#~ msgstr "PLUMgrid HTTP 連線失敗："
+
+#~ msgid "PLUMgrid_NOS_Server: %(action)s failure, %(e)r"
+#~ msgstr "PLUMgrid_NOS_Server：%(action)s 失敗，%(e)r"
+
+#~ msgid "PLUMgrid_NOS_Server: status=%(status)d, reason=%(reason)r, ret=%(ret)s"
+#~ msgstr "PLUMgrid_NOS_Server：狀態 = %(status)d，原因 = %(reason)r，ret = %(ret)s"
 
