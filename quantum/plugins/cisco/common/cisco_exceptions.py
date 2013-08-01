@@ -88,6 +88,11 @@ class CredentialAlreadyExists(exceptions.QuantumException):
                 "for tenant %(tenant_id)s")
 
 
+class NexusConfigFailed(exceptions.QuantumException):
+    """Failed to configure Nexus switch."""
+    message = _("Failed to configure Nexus: %(config)s. Reason: %(exc)s.")
+
+
 class NexusPortBindingNotFound(exceptions.QuantumException):
     """NexusPort Binding is not present"""
     message = _("Nexus Port Binding %(port_id)s is not present")
