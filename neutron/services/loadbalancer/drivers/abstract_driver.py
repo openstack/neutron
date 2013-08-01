@@ -131,6 +131,12 @@ class LoadBalancerAbstractDriver(object):
     def create_pool_health_monitor(self, context,
                                    health_monitor,
                                    pool_id):
+        """Driver may call the code below in order to update the status.
+        self.plugin.update_pool_health_monitor(context,
+                                               health_monitor["id"],
+                                               pool_id,
+                                               constants.ACTIVE)
+        """
         pass
 
     @abc.abstractmethod

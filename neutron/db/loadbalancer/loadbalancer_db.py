@@ -152,7 +152,8 @@ class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
     )
 
 
-class PoolMonitorAssociation(model_base.BASEV2):
+class PoolMonitorAssociation(model_base.BASEV2,
+                             models_v2.HasStatusDescription):
     """Many-to-many association between pool and healthMonitor classes."""
 
     pool_id = sa.Column(sa.String(36),
@@ -568,7 +569,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
             pool = self._get_resource(context, Pool, pool_id)
 
             assoc = PoolMonitorAssociation(pool_id=pool_id,
-                                           monitor_id=monitor_id)
+                                           monitor_id=monitor_id,
+                                           status=constants.PENDING_CREATE)
             pool.monitors.append(assoc)
             monitors = [monitor['monitor_id'] for monitor in pool['monitors']]
 
@@ -577,19 +579,25 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
     def delete_pool_health_monitor(self, context, id, pool_id):
         with context.session.begin(subtransactions=True):
+            assoc = self.get_pool_health_monitor(context, id, pool_id)
             pool = self._get_resource(context, Pool, pool_id)
-            try:
-                monitor_qry = context.session.query(PoolMonitorAssociation)
-                monitor = monitor_qry.filter_by(monitor_id=id,
-                                                pool_id=pool_id).one()
-                pool.monitors.remove(monitor)
-            except exc.NoResultFound:
-                raise loadbalancer.HealthMonitorNotFound(monitor_id=id)
+            pool.monitors.remove(assoc)
 
     def get_pool_health_monitor(self, context, id, pool_id, fields=None):
-        # TODO(markmcclain) look into why pool_id is ignored
-        healthmonitor = self._get_resource(context, HealthMonitor, id)
-        return self._make_health_monitor_dict(healthmonitor, fields)
+        try:
+            assoc_qry = context.session.query(PoolMonitorAssociation)
+            return assoc_qry.filter_by(monitor_id=id, pool_id=pool_id).one()
+        except exc.NoResultFound:
+            raise loadbalancer.PoolMonitorAssociationNotFound(
+                monitor_id=id, pool_id=pool_id)
+
+    def update_pool_health_monitor(self, context, id, pool_id,
+                                   status, status_description=None):
+        with context.session.begin(subtransactions=True):
+            assoc = self.get_pool_health_monitor(context, id, pool_id)
+            self.assert_modification_allowed(assoc)
+            assoc.status = status
+            assoc.status_description = status_description
 
     ########################################################
     # Member DB access
@@ -674,6 +682,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         v = health_monitor['health_monitor']
         tenant_id = self._get_tenant_id_for_create(context, v)
         with context.session.begin(subtransactions=True):
+            # setting ACTIVE status sinse healthmon is shared DB object
             monitor_db = HealthMonitor(id=uuidutils.generate_uuid(),
                                        tenant_id=tenant_id,
                                        type=v['type'],
@@ -684,7 +693,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                                        url_path=v['url_path'],
                                        expected_codes=v['expected_codes'],
                                        admin_state_up=v['admin_state_up'],
-                                       status=constants.PENDING_CREATE)
+                                       status=constants.ACTIVE)
             context.session.add(monitor_db)
         return self._make_health_monitor_dict(monitor_db)
 
