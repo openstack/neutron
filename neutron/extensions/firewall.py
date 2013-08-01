@@ -86,7 +86,7 @@ class FirewallInvalidPortValue(qexception.InvalidInput):
 
 class FirewallRuleInfoMissing(qexception.InvalidInput):
     message = _("Missing rule info argument for insert/remove "
-                "rule opertaion.")
+                "rule operation.")
 
 
 fw_valid_protocol_values = [None, constants.TCP, constants.UDP, constants.ICMP]
