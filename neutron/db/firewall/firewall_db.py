@@ -211,13 +211,10 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
     def _get_min_max_ports_from_range(self, port_range):
         if not port_range:
             return [None, None]
-        ports = port_range.split(':')
-        ports[0] = int(ports[0])
-        if len(ports) < 2:
-            ports.append(ports[0])
-        else:
-            ports[1] = int(ports[1])
-        return ports
+        min_port, sep, max_port = port_range.partition(":")
+        if not max_port:
+            max_port = min_port
+        return [int(min_port), int(max_port)]
 
     def _get_port_range_from_min_max_ports(self, min_port, max_port):
         if not min_port:
@@ -225,7 +222,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         if min_port == max_port:
             return str(min_port)
         else:
-            return str(min_port) + ':' + str(max_port)
+            return '%d:%d' % (min_port, max_port)
 
     def create_firewall(self, context, firewall):
         LOG.debug(_("create_firewall() called"))
