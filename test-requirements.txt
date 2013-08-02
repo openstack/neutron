@@ -1,4 +1,3 @@
-Babel>=0.9.6
 cliff
 # Packages for the Cisco Plugin
 ###############################

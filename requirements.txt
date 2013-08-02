@@ -2,6 +2,7 @@ alembic>=0.4.1
 amqplib>=0.6.1
 anyjson>=0.2.4
 argparse
+Babel>=0.9.6
 d2to1>=0.2.10,<0.3
 eventlet>=0.9.17
 greenlet>=0.3.2
