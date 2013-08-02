@@ -320,6 +320,29 @@ def _validate_uuid_list(data, valid_values=None):
         return msg
 
 
+def _validate_dict_item(key, key_validator, data):
+    # Find conversion function, if any, and apply it
+    conv_func = key_validator.get('convert_to')
+    if conv_func:
+        data[key] = conv_func(data.get(key))
+    # Find validator function
+    # TODO(salv-orlando): Structure of dict attributes should be improved
+    # to avoid iterating over items
+    val_func = val_params = None
+    for (k, v) in key_validator.iteritems():
+        if k.startswith('type:'):
+            # ask forgiveness, not permission
+            try:
+                val_func = validators[k]
+            except KeyError:
+                return _("Validator '%s' does not exist.") % k
+            val_params = v
+            break
+    # Process validation
+    if val_func:
+        return val_func(data.get(key), val_params)
+
+
 def _validate_dict(data, key_specs=None):
     if not isinstance(data, dict):
         msg = _("'%s' is not a dictionary") % data
@@ -339,25 +362,14 @@ def _validate_dict(data, key_specs=None):
             LOG.debug(msg)
             return msg
 
-    # Perform validation of all values according to the specifications.
+    # Perform validation and conversion of all values
+    # according to the specifications.
     for key, key_validator in [(k, v) for k, v in key_specs.iteritems()
                                if k in data]:
-
-        for val_name in [n for n in key_validator.iterkeys()
-                         if n.startswith('type:')]:
-            # Check whether specified validator exists.
-            if val_name not in validators:
-                msg = _("Validator '%s' does not exist.") % val_name
-                LOG.debug(msg)
-                return msg
-
-            val_func = validators[val_name]
-            val_params = key_validator[val_name]
-
-            msg = val_func(data.get(key), val_params)
-            if msg:
-                LOG.debug(msg)
-                return msg
+        msg = _validate_dict_item(key, key_validator, data)
+        if msg:
+            LOG.debug(msg)
+            return msg
 
 
 def _validate_dict_or_none(data, key_specs=None):
