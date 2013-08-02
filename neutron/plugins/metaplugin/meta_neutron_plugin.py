@@ -73,8 +73,8 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                        in cfg.CONF.META.plugin_list.split(',')]
         for flavor, plugin_provider in plugin_list:
             self.plugins[flavor] = self._load_plugin(plugin_provider)
-            # Needed to clear _ENGINE for each plugin
-            db._ENGINE = None
+            # Needed to clear _DB_ENGINE for each plugin
+            db._DB_ENGINE = None
 
         self.l3_plugins = {}
         l3_plugin_list = [plugin_set.split(':')
@@ -86,7 +86,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             else:
                 # For l3 only plugin
                 self.l3_plugins[flavor] = self._load_plugin(plugin_provider)
-                db._ENGINE = None
+                db._DB_ENGINE = None
 
         self.default_flavor = cfg.CONF.META.default_flavor
         if self.default_flavor not in self.plugins:
