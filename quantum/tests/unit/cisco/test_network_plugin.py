@@ -17,12 +17,16 @@ import contextlib
 import logging
 import mock
 
-from quantum.common import config
+import webob.exc as wexc
+
+from quantum.api.v2 import base
+from quantum.common import exceptions as q_exc
 from quantum import context
 from quantum.db import api as db
 from quantum.manager import QuantumManager
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2
+from quantum.plugins.cisco.common import cisco_exceptions
 from quantum.plugins.cisco.db import network_db_v2
 from quantum.plugins.cisco.db import network_models_v2
 from quantum.plugins.cisco import l2network_plugin_configuration
@@ -138,6 +142,26 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         super(TestCiscoPortsV2, self).setUp()
 
     @contextlib.contextmanager
+    def _patch_ncclient(self, attr, value):
+        """Configure an attribute on the mock ncclient module.
+
+        This method can be used to inject errors by setting a side effect
+        or a return value for an ncclient method.
+
+        :param attr: ncclient attribute (typically method) to be configured.
+        :param value: Value to be configured on the attribute.
+
+        """
+        # Configure attribute.
+        config = {attr: value}
+        self.mock_ncclient.configure_mock(**config)
+        # Continue testing
+        yield
+        # Unconfigure attribute
+        config = {attr: None}
+        self.mock_ncclient.configure_mock(**config)
+
+    @contextlib.contextmanager
     def _create_port_res(self, name='myname', cidr='1.0.0.0/24',
                          device_id=DEVICE_ID_1, do_delete=True):
         """Create a network, subnet, and port and yield the result.
@@ -152,8 +176,9 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                           end of testing
 
         """
-        with self.network(name=name) as network:
-            with self.subnet(network=network, cidr=cidr) as subnet:
+        with self.network(name=name, do_delete=do_delete) as network:
+            with self.subnet(network=network, cidr=cidr,
+                             do_delete=do_delete) as subnet:
                 net_id = subnet['subnet']['network_id']
                 res = self._create_port(self.fmt, net_id, device_id=device_id)
                 port = self.deserialize(self.fmt, res)
@@ -162,6 +187,23 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 finally:
                     if do_delete:
                         self._delete('ports', port['port']['id'])
+
+    def _assertExpectedHTTP(self, status, exc):
+        """Confirm that an HTTP status corresponds to an expected exception.
+
+        Confirm that an HTTP status which has been returned for an
+        quantum API request matches the HTTP status corresponding
+        to an expected exception.
+
+        :param status: HTTP status
+        :param exc: Expected exception
+
+        """
+        if exc in base.FAULT_MAP:
+            expected_http = base.FAULT_MAP[exc].code
+        else:
+            expected_http = wexc.HTTPInternalServerError.code
+        self.assertEqual(status, expected_http)
 
     def _is_in_last_nexus_cfg(self, words):
         last_cfg = (CiscoNetworkPluginV2TestCase.mock_ncclient.manager.
@@ -195,8 +237,11 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                                                  net['network']['id'],
                                                  'test',
                                                  True)
-                    # We expect a 500 as we injected a fault in the plugin
-                    self._validate_behavior_on_bulk_failure(res, 'ports', 500)
+                    # Expect an internal server error as we injected a fault
+                    self._validate_behavior_on_bulk_failure(
+                        res,
+                        'ports',
+                        wexc.HTTPInternalServerError.code)
 
     def test_create_ports_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -215,8 +260,11 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 patched_plugin.side_effect = side_effect
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                              'test', True, context=ctx)
-                # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'ports', 500)
+                # We expect an internal server error as we injected a fault
+                self._validate_behavior_on_bulk_failure(
+                    res,
+                    'ports',
+                    wexc.HTTPInternalServerError.code)
 
     def test_nexus_enable_vlan_cmd(self):
         """Verify the syntax of the command to enable a vlan on an intf."""
@@ -230,6 +278,59 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                                        device_id=DEVICE_ID_2):
                 self.assertTrue(
                     self._is_in_last_nexus_cfg(['allowed', 'vlan', 'add']))
+
+    def test_nexus_extended_vlan_range_failure(self):
+        """Test that extended VLAN range config errors are ignored.
+
+        Some versions of Nexus switch do not allow state changes for
+        the extended VLAN range (1006-4094), but these errors can be
+        ignored (default values are appropriate). Test that such errors
+        are ignored by the Nexus plugin.
+
+        """
+        def mock_edit_config_a(target, config):
+            if all(word in config for word in ['state', 'active']):
+                raise Exception("Can't modify state for extended")
+
+        with self._patch_ncclient(
+            'manager.connect.return_value.edit_config.side_effect',
+            mock_edit_config_a):
+            with self._create_port_res() as res:
+                self.assertEqual(res.status_int, wexc.HTTPCreated.code)
+
+        def mock_edit_config_b(target, config):
+            if all(word in config for word in ['no', 'shutdown']):
+                raise Exception("Command is only allowed on VLAN")
+
+        with self._patch_ncclient(
+            'manager.connect.return_value.edit_config.side_effect',
+            mock_edit_config_b):
+            with self._create_port_res() as res:
+                self.assertEqual(res.status_int, wexc.HTTPCreated.code)
+
+    def test_nexus_vlan_config_rollback(self):
+        """Test rollback following Nexus VLAN state config failure.
+
+        Test that the Cisco Nexus plugin correctly deletes the VLAN
+        on the Nexus switch when the 'state active' command fails (for
+        a reason other than state configuration change is rejected
+        for the extended VLAN range).
+
+        """
+        def mock_edit_config(target, config):
+            if all(word in config for word in ['state', 'active']):
+                raise ValueError
+        with self._patch_ncclient(
+            'manager.connect.return_value.edit_config.side_effect',
+            mock_edit_config):
+            with self._create_port_res(do_delete=False) as res:
+                # Confirm that the last configuration sent to the Nexus
+                # switch was deletion of the VLAN.
+                self.assertTrue(
+                    self._is_in_last_nexus_cfg(['<no>', '<vlan>'])
+                )
+                self._assertExpectedHTTP(res.status_int,
+                                         cisco_exceptions.NexusConfigFailed)
 
 
 class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
@@ -256,8 +357,11 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                 patched_plugin.side_effect = side_effect
                 res = self._create_network_bulk(self.fmt, 2, 'test', True)
                 LOG.debug("response is %s" % res)
-                # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'networks', 500)
+                # We expect an internal server error as we injected a fault
+                self._validate_behavior_on_bulk_failure(
+                    res,
+                    'networks',
+                    wexc.HTTPInternalServerError.code)
 
     def test_create_networks_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -273,8 +377,11 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
 
             patched_plugin.side_effect = side_effect
             res = self._create_network_bulk(self.fmt, 2, 'test', True)
-            # We expect a 500 as we injected a fault in the plugin
-            self._validate_behavior_on_bulk_failure(res, 'networks', 500)
+            # We expect an internal server error as we injected a fault
+            self._validate_behavior_on_bulk_failure(
+                res,
+                'networks',
+                wexc.HTTPInternalServerError.code)
 
 
 class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
@@ -305,8 +412,11 @@ class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
                     res = self._create_subnet_bulk(self.fmt, 2,
                                                    net['network']['id'],
                                                    'test')
-                # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'subnets', 500)
+                # We expect an internal server error as we injected a fault
+                self._validate_behavior_on_bulk_failure(
+                    res,
+                    'subnets',
+                    wexc.HTTPInternalServerError.code)
 
     def test_create_subnets_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -325,8 +435,11 @@ class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
                                                net['network']['id'],
                                                'test')
 
-                # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'subnets', 500)
+                # We expect an internal server error as we injected a fault
+                self._validate_behavior_on_bulk_failure(
+                    res,
+                    'subnets',
+                    wexc.HTTPInternalServerError.code)
 
 
 class TestCiscoPortsV2XML(TestCiscoPortsV2):
