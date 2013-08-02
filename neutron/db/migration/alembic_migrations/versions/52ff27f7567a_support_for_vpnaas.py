@@ -166,7 +166,7 @@ def upgrade(active_plugin=None, options=None):
                   sa.String(length=36),
                   nullable=False),
         sa.ForeignKeyConstraint(['ipsec_site_connection_id'],
-                                ['ipsecsiteonnections.id'],
+                                ['ipsec_site_connections.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('cidr', 'ipsec_site_connection_id')
     )
