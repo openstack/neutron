@@ -18,14 +18,14 @@
 """Pool Monitor status field
 
 Revision ID: 11c6e18605c8
-Revises: 39cf3f799352
+Revises: 52ff27f7567a
 Create Date: 2013-07-10 06:07:20.878520
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '11c6e18605c8'
-down_revision = '39cf3f799352'
+down_revision = '52ff27f7567a'
 
 # Change to ['*'] if this migration applies to all plugins
 
