@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-01 19:54+0000\n"
+"POT-Creation-Date: 2013-08-02 19:55+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -2423,90 +2423,90 @@ msgid ""
 "sort '%(resource)s'"
 msgstr "屬性 '%(attr)s' 是對其他資源的參照，無法由排序 '%(resource)s' 使用"
 
-#: neutron/db/firewall/firewall_db.py:231
+#: neutron/db/firewall/firewall_db.py:228
 #: neutron/services/firewall/fwaas_plugin.py:202
 msgid "create_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:247
+#: neutron/db/firewall/firewall_db.py:244
 #: neutron/services/firewall/fwaas_plugin.py:211
 msgid "update_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:257
+#: neutron/db/firewall/firewall_db.py:254
 #: neutron/services/firewall/fwaas_plugin.py:226
 msgid "delete_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:267
+#: neutron/db/firewall/firewall_db.py:264
 msgid "get_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:272
+#: neutron/db/firewall/firewall_db.py:269
 msgid "get_firewalls() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:278
+#: neutron/db/firewall/firewall_db.py:275
 msgid "get_firewalls_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:283
+#: neutron/db/firewall/firewall_db.py:280
 msgid "create_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:299
+#: neutron/db/firewall/firewall_db.py:296
 #: neutron/services/firewall/fwaas_plugin.py:235
 msgid "update_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:311
+#: neutron/db/firewall/firewall_db.py:308
 msgid "delete_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:323
+#: neutron/db/firewall/firewall_db.py:320
 msgid "get_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:328
+#: neutron/db/firewall/firewall_db.py:325
 msgid "get_firewall_policies() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:334
+#: neutron/db/firewall/firewall_db.py:331
 msgid "get_firewall_policies_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:339
+#: neutron/db/firewall/firewall_db.py:336
 msgid "create_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:367
+#: neutron/db/firewall/firewall_db.py:364
 #: neutron/services/firewall/fwaas_plugin.py:243
 msgid "update_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:391
+#: neutron/db/firewall/firewall_db.py:388
 #: neutron/services/firewall/fwaas_plugin.py:253
 msgid "delete_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:399
+#: neutron/db/firewall/firewall_db.py:396
 msgid "get_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:404
+#: neutron/db/firewall/firewall_db.py:401
 msgid "get_firewall_rules() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:410
+#: neutron/db/firewall/firewall_db.py:407
 msgid "get_firewall_rules_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:419
+#: neutron/db/firewall/firewall_db.py:416
 #: neutron/services/firewall/fwaas_plugin.py:272
 msgid "insert_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:459
+#: neutron/db/firewall/firewall_db.py:456
 #: neutron/services/firewall/fwaas_plugin.py:280
 msgid "remove_rule() called"
 msgstr ""
@@ -2516,11 +2516,11 @@ msgstr ""
 msgid "The %(key)s field can not have negative value. Current value is %(value)d."
 msgstr ""
 
-#: neutron/db/loadbalancer/loadbalancer_db.py:250
+#: neutron/db/loadbalancer/loadbalancer_db.py:251
 msgid "'cookie_name' should be specified for this type of session persistence."
 msgstr "應該給這種類型的階段作業持續性指定 'cookie_name'。"
 
-#: neutron/db/loadbalancer/loadbalancer_db.py:254
+#: neutron/db/loadbalancer/loadbalancer_db.py:255
 msgid "'cookie_name' is not allowed for this type of session persistence"
 msgstr "這種類型的階段作業持續性不接受 'cookie_name'"
 
@@ -2725,7 +2725,7 @@ msgid "Invalid value for port %(port)s."
 msgstr ""
 
 #: neutron/extensions/firewall.py:88
-msgid "Missing rule info argument for insert/remove rule opertaion."
+msgid "Missing rule info argument for insert/remove rule operation."
 msgstr ""
 
 #: neutron/extensions/firewall.py:138
@@ -2902,20 +2902,25 @@ msgstr "找不到 Health_monitor %(monitor_id)s"
 
 #: neutron/extensions/loadbalancer.py:53
 #, python-format
+msgid "Monitor %(monitor_id)s is not associated with Pool %(pool_id)s"
+msgstr ""
+
+#: neutron/extensions/loadbalancer.py:58
+#, python-format
 msgid "Invalid state %(state)s of Loadbalancer resource %(id)s"
 msgstr "負載平衡器資源 %(id)s 的狀態 %(state)s 無效"
 
-#: neutron/extensions/loadbalancer.py:57
+#: neutron/extensions/loadbalancer.py:62
 #, python-format
 msgid "Pool %(pool_id)s is still in use"
 msgstr "儲存區 %(pool_id)s 仍在使用中"
 
-#: neutron/extensions/loadbalancer.py:61
+#: neutron/extensions/loadbalancer.py:66
 #, python-format
 msgid "Statistics of Pool %(pool_id)s could not be found"
 msgstr "找不到儲存區 %(pool_id)s 的統計資料"
 
-#: neutron/extensions/loadbalancer.py:65
+#: neutron/extensions/loadbalancer.py:70
 #, python-format
 msgid "Protocol %(vip_proto)s does not match pool protocol %(pool_proto)s"
 msgstr "通訊協定 %(vip_proto)s 與儲存區通訊協定 %(pool_proto)s 不符"
@@ -9080,7 +9085,7 @@ msgstr "找不到 lrouter：%s"
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr "在 NVP 後端找不到路由器 %(router_id)s 所連接的埠 %(port_id)s。"
+#~ msgstr ""
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -9193,17 +9198,7 @@ msgstr "找不到 lrouter：%s"
 #~ msgid "NeutronPluginPLUMgrid Status: NOS value is missing in config file"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "NeutronPluginPLUMgrid Status: Neutron server "
-#~ "with PLUMgrid Plugin has started"
-#~ msgstr ""
-
 #~ msgid "NeutronPluginPLUMgrid Status: create_network() called"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "NeutronPluginPLUMgrid Status: %(tenant_id)s, "
-#~ "%(network)s, %(network_id)s"
 #~ msgstr ""
 
 #~ msgid "PLUMgrid NOS communication failed"
@@ -9259,4 +9254,7 @@ msgstr "找不到 lrouter：%s"
 
 #~ msgid "PLUMgrid_NOS_Server: status=%(status)d, reason=%(reason)r, ret=%(ret)s"
 #~ msgstr "PLUMgrid_NOS_Server：狀態 = %(status)d，原因 = %(reason)r，ret = %(ret)s"
+
+#~ msgid "Missing rule info argument for insert/remove rule opertaion."
+#~ msgstr ""
 
