@@ -22,7 +22,7 @@ import netaddr
 from oslo.config import cfg
 
 from neutron.agent.common import config
-from neutron.agent.dhcp_agent import DictModel
+from neutron.agent.linux.dhcp import DictModel
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.openstack.common import log as logging

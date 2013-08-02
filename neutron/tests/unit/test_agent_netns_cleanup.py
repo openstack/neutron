@@ -22,12 +22,6 @@ from neutron.agent import netns_cleanup_util as util
 from neutron.tests import base
 
 
-class TestNullDelegate(base.BaseTestCase):
-    def test_getattribute(self):
-        null_delegate = util.NullDelegate()
-        self.assertIsNone(null_delegate.test())
-
-
 class TestNetnsCleanup(base.BaseTestCase):
     def setUp(self):
         super(TestNetnsCleanup, self).setUp()
