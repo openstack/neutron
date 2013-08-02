@@ -24,6 +24,4 @@ stevedore>=0.9
 -f http://tarballs.openstack.org/oslo.config/oslo.config-1.2.0a3.tar.gz#egg=oslo.config-1.2.0a3
 oslo.config>=1.2.0a3
 
-# Cisco plugin dependencies
 python-novaclient
-# End Cisco dependencies
