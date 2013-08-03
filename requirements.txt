@@ -1,27 +1,27 @@
-d2to1>=0.2.10,<0.3
-pbr>=0.5.16,<0.6
-Paste
-PasteDeploy>=1.5.0
-Routes>=1.12.3
+alembic>=0.4.1
 amqplib>=0.6.1
 anyjson>=0.2.4
 argparse
+d2to1>=0.2.10,<0.3
 eventlet>=0.9.17
 greenlet>=0.3.2
 httplib2
 iso8601>=0.1.4
 kombu>=1.0.4
 netaddr
-python-neutronclient>=2.2.3,<3.0.0
-pyudev
-sqlalchemy>=0.7.8,<=0.7.99
-WebOb>=1.2
-python-keystoneclient>=0.2.0
-alembic>=0.4.1
-six
-stevedore>=0.9
 
 -f http://tarballs.openstack.org/oslo.config/oslo.config-1.2.0a3.tar.gz#egg=oslo.config-1.2.0a3
 oslo.config>=1.2.0a3
 
+Paste
+PasteDeploy>=1.5.0
+pbr>=0.5.16,<0.6
+python-keystoneclient>=0.2.0
+python-neutronclient>=2.2.3,<3.0.0
 python-novaclient
+pyudev
+Routes>=1.12.3
+six
+sqlalchemy>=0.7.8,<=0.7.99
+stevedore>=0.9
+WebOb>=1.2
