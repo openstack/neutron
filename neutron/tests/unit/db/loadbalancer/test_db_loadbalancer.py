@@ -831,8 +831,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 ('delay', 30),
                 ('timeout', 10),
                 ('max_retries', 3),
-                ('admin_state_up', True),
-                ('status', 'ACTIVE')]
+                ('admin_state_up', True)]
         with self.health_monitor() as monitor:
             for k, v in keys:
                 self.assertEqual(monitor['health_monitor'][k], v)
@@ -843,8 +842,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 ('delay', 20),
                 ('timeout', 20),
                 ('max_retries', 2),
-                ('admin_state_up', False),
-                ('status', 'PENDING_UPDATE')]
+                ('admin_state_up', False)]
         with self.health_monitor() as monitor:
             data = {'health_monitor': {'delay': 20,
                                        'timeout': 20,
@@ -915,8 +913,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     ('delay', 30),
                     ('timeout', 10),
                     ('max_retries', 3),
-                    ('admin_state_up', True),
-                    ('status', 'ACTIVE')]
+                    ('admin_state_up', True)]
             req = self.new_show_request('health_monitors',
                                         monitor['health_monitor']['id'],
                                         fmt=self.fmt)

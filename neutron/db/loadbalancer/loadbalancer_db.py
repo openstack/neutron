@@ -130,8 +130,7 @@ class Pool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
     vip = orm.relationship(Vip, backref='pool')
 
 
-class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
-                    models_v2.HasStatusDescription):
+class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 neutron loadbalancer healthmonitor."""
 
     type = sa.Column(sa.Enum("PING", "TCP", "HTTP", "HTTPS",
@@ -667,9 +666,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                'delay': health_monitor['delay'],
                'timeout': health_monitor['timeout'],
                'max_retries': health_monitor['max_retries'],
-               'admin_state_up': health_monitor['admin_state_up'],
-               'status': health_monitor['status'],
-               'status_description': health_monitor['status_description']}
+               'admin_state_up': health_monitor['admin_state_up']}
         # no point to add the values below to
         # the result if the 'type' is not HTTP/S
         if res['type'] in ['HTTP', 'HTTPS']:
@@ -692,8 +689,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                                        http_method=v['http_method'],
                                        url_path=v['url_path'],
                                        expected_codes=v['expected_codes'],
-                                       admin_state_up=v['admin_state_up'],
-                                       status=constants.ACTIVE)
+                                       admin_state_up=v['admin_state_up'])
             context.session.add(monitor_db)
         return self._make_health_monitor_dict(monitor_db)
 
