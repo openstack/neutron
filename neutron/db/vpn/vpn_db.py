@@ -358,7 +358,7 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
         ike = ikepolicy['ikepolicy']
         tenant_id = self._get_tenant_id_for_create(context, ike)
         lifetime_info = ike.get('lifetime', [])
-        lifetime_units = lifetime_info.get('unit', 'seconds')
+        lifetime_units = lifetime_info.get('units', 'seconds')
         lifetime_value = lifetime_info.get('value', 3600)
 
         with context.session.begin(subtransactions=True):
