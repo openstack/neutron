@@ -20,7 +20,6 @@ from oslo.config import cfg
 from neutron.common import constants as n_consts
 from neutron.common import exceptions as n_exc
 from neutron import context
-from neutron.db import api as db
 from neutron.plugins.vmware.api_client import exception
 from neutron.plugins.vmware.common import exceptions as p_exc
 from neutron.plugins.vmware.dbexts import lsn_db
@@ -30,6 +29,7 @@ from neutron.plugins.vmware.dhcp_meta import migration as mig_man
 from neutron.plugins.vmware.dhcp_meta import nsx
 from neutron.plugins.vmware.dhcp_meta import rpc
 from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 class DhcpMetadataBuilderTestCase(base.BaseTestCase):
@@ -704,7 +704,7 @@ class LsnManagerTestCase(base.BaseTestCase):
                           mock.ANY, mock.ANY, mock.ANY, mock.ANY)
 
 
-class PersistentLsnManagerTestCase(base.BaseTestCase):
+class PersistentLsnManagerTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(PersistentLsnManagerTestCase, self).setUp()
@@ -715,7 +715,6 @@ class PersistentLsnManagerTestCase(base.BaseTestCase):
         self.mac = 'aa:bb:cc:dd:ee:ff'
         self.lsn_port_id = 'foo_lsn_port_id'
         self.tenant_id = 'foo_tenant_id'
-        db.configure_db()
         nsx.register_dhcp_opts(cfg)
         nsx.register_metadata_opts(cfg)
         lsn_man.register_lsn_opts(cfg)
@@ -723,7 +722,6 @@ class PersistentLsnManagerTestCase(base.BaseTestCase):
         self.context = context.get_admin_context()
         self.mock_lsn_api_p = mock.patch.object(lsn_man, 'lsn_api')
         self.mock_lsn_api = self.mock_lsn_api_p.start()
-        self.addCleanup(db.clear_db)
 
     def test_lsn_get(self):
         lsn_db.lsn_add(self.context, self.net_id, self.lsn_id)

@@ -22,10 +22,10 @@ from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import config as cisco_config
 from neutron.plugins.cisco.models import virt_phy_sw_v2
 from neutron.plugins.cisco.nexus import cisco_nexus_plugin_v2
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class TestCiscoPluginModel(base.BaseTestCase):
+class TestCiscoPluginModel(testlib_api.SqlTestCase):
 
     def setUp(self):
         # Point config file to: neutron/tests/etc/neutron.conf.test

@@ -16,22 +16,16 @@
 import collections
 import testtools
 
-from neutron.db import api as db
 from neutron.plugins.ml2.drivers.cisco.nexus import exceptions
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class CiscoNexusDbTest(base.BaseTestCase):
+class CiscoNexusDbTest(testlib_api.SqlTestCase):
 
     """Unit tests for Cisco mechanism driver's Nexus port binding database."""
 
     NpbObj = collections.namedtuple('NpbObj', 'port vlan switch instance')
-
-    def setUp(self):
-        super(CiscoNexusDbTest, self).setUp()
-        db.configure_db()
-        self.addCleanup(db.clear_db)
 
     def _npb_test_obj(self, pnum, vnum, switch='10.9.8.7', instance=None):
         """Creates a Nexus port binding test object from a pair of numbers."""

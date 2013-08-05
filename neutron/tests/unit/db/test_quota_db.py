@@ -17,10 +17,9 @@
 
 from neutron.common import exceptions
 from neutron import context
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import quota_db
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 class FakePlugin(base_plugin.NeutronDbPluginV2, quota_db.DbQuotaDriver):
@@ -42,12 +41,11 @@ PROJECT = 'prj_test'
 RESOURCE = 'res_test'
 
 
-class TestDbQuotaDriver(base.BaseTestCase):
+class TestDbQuotaDriver(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestDbQuotaDriver, self).setUp()
         self.plugin = FakePlugin()
         self.context = context.get_admin_context()
-        self.addCleanup(db.clear_db)
 
     def test_create_quota_limit(self):
         defaults = {RESOURCE: TestResource(RESOURCE, 4)}

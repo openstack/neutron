@@ -213,7 +213,6 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         attributes.RESOURCE_ATTRIBUTE_MAP["ports"].update(
             n1kv.EXTENDED_ATTRIBUTES_2_0["ports"])
         self.addCleanup(self.restore_resource_attribute_map)
-        self.addCleanup(db.clear_db)
         super(N1kvPluginTestCase, self).setUp(self._plugin_name,
                                               ext_mgr=ext_mgr)
         # Create some of the database entries that we require.

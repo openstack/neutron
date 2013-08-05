@@ -16,7 +16,6 @@ import mock
 # from oslo.config import cfg
 
 from neutron import context as n_ctx
-from neutron.db import api as dbapi
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 # from neutron.services.vpn import plugin as vpn_plugin
@@ -24,6 +23,7 @@ from neutron.services.vpn.service_drivers import cisco_csr_db as csr_db
 from neutron.services.vpn.service_drivers import cisco_ipsec as ipsec_driver
 from neutron.services.vpn.service_drivers import cisco_validator as validator
 from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 _uuid = uuidutils.generate_uuid
 
@@ -328,14 +328,12 @@ class TestCiscoIPsecDriverMapping(base.BaseTestCase):
                                             tenant_id='1000')
 
 
-class TestCiscoIPsecDriver(base.BaseTestCase):
+class TestCiscoIPsecDriver(testlib_api.SqlTestCase):
 
     """Test that various incoming requests are sent to device driver."""
 
     def setUp(self):
         super(TestCiscoIPsecDriver, self).setUp()
-        dbapi.configure_db()
-        self.addCleanup(dbapi.clear_db)
         mock.patch('neutron.common.rpc.create_connection').start()
 
         l3_agent = mock.Mock()

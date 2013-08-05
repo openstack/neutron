@@ -24,6 +24,7 @@ from neutron.plugins.ml2.drivers import mechanism_odl
 from neutron.plugins.ml2 import plugin
 from neutron.tests import base
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import testlib_api
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
@@ -70,7 +71,7 @@ class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.assertFalse(self.mech.check_segment(self.segment))
 
 
-class OpenDayLightMechanismConfigTests(base.BaseTestCase):
+class OpenDayLightMechanismConfigTests(testlib_api.SqlTestCase):
 
     def _set_config(self, url='http://127.0.0.1:9999', username='someuser',
                     password='somepass'):

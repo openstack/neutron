@@ -15,11 +15,9 @@
 #
 # @author: Arvind Somya (asomya@cisco.com), Cisco Systems Inc.
 
-from neutron.db import api as qdbapi
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
 from neutron.db import l3_gwmode_db
-from neutron.db import model_base
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -41,7 +39,6 @@ class ApicL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self):
         super(ApicL3ServicePlugin, self).__init__()
-        qdbapi.register_models(base=model_base.BASEV2)
         self.manager = apic_manager.APICManager()
 
     @staticmethod

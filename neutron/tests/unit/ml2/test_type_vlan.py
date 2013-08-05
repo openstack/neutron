@@ -21,7 +21,7 @@ import neutron.db.api as db
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_vlan
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 PROVIDER_NET = 'phys_net1'
 TENANT_NET = 'phys_net2'
@@ -37,16 +37,14 @@ UPDATED_VLAN_RANGES = {
 }
 
 
-class VlanTypeTest(base.BaseTestCase):
+class VlanTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(VlanTypeTest, self).setUp()
-        db.configure_db()
         self.driver = type_vlan.VlanTypeDriver()
         self.driver.network_vlan_ranges = NETWORK_VLAN_RANGES
         self.driver._sync_vlan_allocations()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def _get_allocation(self, session, segment):
         return session.query(type_vlan.VlanAllocation).filter_by(

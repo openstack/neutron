@@ -19,8 +19,8 @@ from testtools import matchers
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db
 from neutron.plugins.mlnx.db import mlnx_db_v2 as mlnx_db
-from neutron.tests import base
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import testlib_api
 
 PHYS_NET = 'physnet1'
 PHYS_NET_2 = 'physnet2'
@@ -33,13 +33,11 @@ UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
 TEST_NETWORK_ID = 'abcdefghijklmnopqrstuvwxyz'
 
 
-class SegmentationIdAllocationTest(base.BaseTestCase):
+class SegmentationIdAllocationTest(testlib_api.SqlTestCase):
     def setUp(self):
         super(SegmentationIdAllocationTest, self).setUp()
-        db.configure_db()
         mlnx_db.sync_network_states(VLAN_RANGES)
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_sync_segmentationIdAllocation(self):
         self.assertIsNone(mlnx_db.get_network_state(PHYS_NET,
@@ -159,7 +157,6 @@ class SegmentationIdAllocationTest(base.BaseTestCase):
 class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
         super(NetworkBindingsTest, self).setUp()
-        db.configure_db()
         self.session = db.get_session()
 
     def test_add_network_binding(self):

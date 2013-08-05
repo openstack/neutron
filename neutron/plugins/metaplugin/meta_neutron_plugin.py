@@ -18,7 +18,6 @@ from oslo.config import cfg
 from neutron.common import exceptions as exc
 from neutron.common import topics
 from neutron import context as neutron_context
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import extraroute_db
@@ -84,9 +83,6 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 return False
 
         cfg._is_opt_registered = _is_opt_registered
-
-        # Keep existing tables if multiple plugin use same table name.
-        db.model_base.NeutronBase.__table_args__ = {'keep_existing': True}
 
         self.plugins = {}
 

@@ -16,7 +16,6 @@
 import sqlalchemy as sa
 
 from neutron.db import api as db
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
@@ -42,10 +41,6 @@ resource_map = {'ofc_tenant': nmodels.OFCTenantMapping,
 
 def _get_resource_model(resource):
     return resource_map[resource]
-
-
-def clear_db(base=model_base.BASEV2):
-    db.clear_db(base)
 
 
 def get_ofc_item(session, resource, neutron_id):

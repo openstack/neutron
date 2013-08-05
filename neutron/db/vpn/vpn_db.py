@@ -21,7 +21,6 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron.common import constants as n_constants
-from neutron.db import api as qdbapi
 from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_agentschedulers_db as l3_agent_db
 from neutron.db import l3_db
@@ -161,10 +160,6 @@ class VPNService(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
     """VPN plugin database class using SQLAlchemy models."""
-
-    def __init__(self):
-        """Do the initialization for the vpn service plugin here."""
-        qdbapi.register_models()
 
     def _get_validator(self):
         """Obtain validator to use for attribute validation.

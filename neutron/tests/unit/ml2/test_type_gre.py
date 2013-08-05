@@ -22,7 +22,7 @@ from neutron.common import exceptions as exc
 import neutron.db.api as db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_gre
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 TUNNEL_IP_ONE = "10.10.10.10"
 TUNNEL_IP_TWO = "10.10.10.20"
@@ -32,16 +32,14 @@ TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
 UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
 
 
-class GreTypeTest(base.BaseTestCase):
+class GreTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(GreTypeTest, self).setUp()
-        db.configure_db()
         self.driver = type_gre.GreTypeDriver()
         self.driver.gre_id_ranges = TUNNEL_RANGES
         self.driver._sync_gre_allocations()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_validate_provider_segment(self):
         segment = {api.NETWORK_TYPE: 'gre',
@@ -233,7 +231,7 @@ class GreTypeTest(base.BaseTestCase):
         log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
 
 
-class GreTypeMultiRangeTest(base.BaseTestCase):
+class GreTypeMultiRangeTest(testlib_api.SqlTestCase):
 
     TUN_MIN0 = 100
     TUN_MAX0 = 101
@@ -243,12 +241,10 @@ class GreTypeMultiRangeTest(base.BaseTestCase):
 
     def setUp(self):
         super(GreTypeMultiRangeTest, self).setUp()
-        db.configure_db()
         self.driver = type_gre.GreTypeDriver()
         self.driver.gre_id_ranges = self.TUNNEL_MULTI_RANGES
         self.driver._sync_gre_allocations()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_release_segment(self):
         segments = [self.driver.allocate_tenant_segment(self.session)

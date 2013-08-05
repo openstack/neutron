@@ -56,7 +56,6 @@ def get_conf(x):
 
 class EmbraneLbaas(abstract_driver.LoadBalancerAbstractDriver):
     def __init__(self, plugin):
-        edb.initialize()
         config_esm_mgmt = get_conf('esm_mgmt')
         config_admin_username = get_conf('admin_username')
         config_admin_password = get_conf('admin_password')

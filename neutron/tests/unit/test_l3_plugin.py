@@ -26,7 +26,6 @@ from neutron.api.v2 import attributes
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron import context
-from neutron.db import api as qdbapi
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
@@ -35,7 +34,6 @@ from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_rpc_base
-from neutron.db import model_base
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -293,9 +291,6 @@ class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
                              l3_db.L3_NAT_db_mixin):
 
     supported_extension_aliases = ["router"]
-
-    def __init__(self):
-        qdbapi.register_models(base=model_base.BASEV2)
 
     def get_plugin_type(self):
         return service_constants.L3_ROUTER_NAT

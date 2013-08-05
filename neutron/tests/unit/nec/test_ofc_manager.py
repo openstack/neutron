@@ -16,13 +16,11 @@
 import mock
 
 from neutron import context
-from neutron.db import api as db
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.db import api as ndb
-from neutron.plugins.nec.db import models as nmodels  # noqa
 from neutron.plugins.nec import ofc_manager
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 class FakePortInfo(object):
@@ -38,15 +36,13 @@ class FakePortInfo(object):
             raise AttributeError(name)
 
 
-class OFCManagerTestBase(base.BaseTestCase):
+class OFCManagerTestBase(testlib_api.SqlTestCase):
     """Class conisting of OFCManager unit tests."""
 
     def setUp(self):
         super(OFCManagerTestBase, self).setUp()
-        db.configure_db()
         driver = "neutron.tests.unit.nec.stub_ofc_driver.StubOFCDriver"
         config.CONF.set_override('driver', driver, 'OFC')
-        self.addCleanup(ndb.clear_db)
         self.plugin = mock.Mock()
         self.plugin.get_packet_filters_for_port.return_value = None
         self.ofc = ofc_manager.OFCManager(self.plugin)

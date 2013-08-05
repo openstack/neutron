@@ -17,10 +17,9 @@ import mock
 from oslo.config import cfg
 
 from neutron import context
-from neutron.db import api as db
 from neutron.db import dvr_mac_db
 from neutron.extensions import dvr
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 class DVRDbMixinImpl(dvr_mac_db.DVRDbMixin):
@@ -29,13 +28,11 @@ class DVRDbMixinImpl(dvr_mac_db.DVRDbMixin):
         self.notifier = notifier
 
 
-class DvrDbMixinTestCase(base.BaseTestCase):
+class DvrDbMixinTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(DvrDbMixinTestCase, self).setUp()
-        db.configure_db()
         self.ctx = context.get_admin_context()
-        self.addCleanup(db.clear_db)
         self.mixin = DVRDbMixinImpl(mock.Mock())
 
     def _create_dvr_mac_entry(self, host, mac_address):

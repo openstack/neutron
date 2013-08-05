@@ -25,8 +25,8 @@ from neutron.common import exceptions as n_exc
 from neutron.db import api as db
 from neutron.plugins.openvswitch import ovs_db_v2
 from neutron.plugins.openvswitch import ovs_models_v2 as ovs_models
-from neutron.tests import base
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import testlib_api
 
 PHYS_NET = 'physnet1'
 PHYS_NET_2 = 'physnet2'
@@ -44,13 +44,11 @@ PLUGIN_NAME = ('neutron.plugins.openvswitch.'
                'ovs_neutron_plugin.OVSNeutronPluginV2')
 
 
-class VlanAllocationsTest(base.BaseTestCase):
+class VlanAllocationsTest(testlib_api.SqlTestCase):
     def setUp(self):
         super(VlanAllocationsTest, self).setUp()
-        db.configure_db()
         ovs_db_v2.sync_vlan_allocations(VLAN_RANGES)
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_sync_vlan_allocations(self):
         self.assertIsNone(ovs_db_v2.get_vlan_allocation(PHYS_NET,
@@ -188,13 +186,11 @@ class VlanAllocationsTest(base.BaseTestCase):
         ovs_db_v2.sync_vlan_allocations({})
 
 
-class TunnelAllocationsTest(base.BaseTestCase):
+class TunnelAllocationsTest(testlib_api.SqlTestCase):
     def setUp(self):
         super(TunnelAllocationsTest, self).setUp()
-        db.configure_db()
         ovs_db_v2.sync_tunnel_allocations(TUNNEL_RANGES)
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_sync_tunnel_allocations(self):
         self.assertIsNone(ovs_db_v2.get_tunnel_allocation(TUN_MIN - 1))
@@ -301,7 +297,6 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('network_vlan_ranges', ['physnet1:1000:2999'],
                               group='OVS')
         super(NetworkBindingsTest, self).setUp(plugin=PLUGIN_NAME)
-        db.configure_db()
         self.session = db.get_session()
 
     def test_add_network_binding(self):

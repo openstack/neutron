@@ -18,7 +18,6 @@
 from neutron.api.v2 import attributes as attrs
 from neutron.common import exceptions as n_exc
 from neutron import context
-from neutron.db import api as qdbapi
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import loadbalancer
@@ -52,7 +51,6 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
     def __init__(self):
         """Initialization for the loadbalancer service plugin."""
 
-        qdbapi.register_models()
         self.service_type_manager = st_db.ServiceTypeManager.get_instance()
         self._load_drivers()
 

@@ -22,10 +22,10 @@ from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import nexus_db_v2 as nxdb
 from neutron.plugins.cisco.nexus import cisco_nexus_plugin_v2
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class CiscoNexusDbTest(base.BaseTestCase):
+class CiscoNexusDbTest(testlib_api.SqlTestCase):
 
     """Unit tests for cisco.db.nexus_models_v2.NexusPortBinding model."""
 
@@ -33,9 +33,7 @@ class CiscoNexusDbTest(base.BaseTestCase):
 
     def setUp(self):
         super(CiscoNexusDbTest, self).setUp()
-        db.configure_db()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def _npb_test_obj(self, pnum, vnum, switch=None, instance=None):
         """Create a Nexus port binding test object from a pair of numbers."""

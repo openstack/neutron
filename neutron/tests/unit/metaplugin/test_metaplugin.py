@@ -20,13 +20,12 @@ import testtools
 from neutron.common import exceptions as exc
 from neutron.common import topics
 from neutron import context
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron.extensions import flavor as ext_flavor
 from neutron.openstack.common import uuidutils
 from neutron.plugins.metaplugin import meta_neutron_plugin
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 CONF_FILE = ""
 META_PATH = "neutron.plugins.metaplugin"
@@ -57,8 +56,6 @@ def setup_metaplugin_conf(has_l3=True):
     cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
     #TODO(nati) remove this after subnet quota change is merged
     cfg.CONF.set_override('max_dns_nameservers', 10)
-    cfg.CONF.set_override('rpc_backend',
-                          'neutron.openstack.common.rpc.impl_fake')
 
 
 # Hooks registered by metaplugin must not exist for other plugins UT.
@@ -70,20 +67,16 @@ def unregister_meta_hooks():
         models_v2.Port, 'metaplugin_port', None, None, None)
 
 
-class MetaNeutronPluginV2Test(base.BaseTestCase):
+class MetaNeutronPluginV2Test(testlib_api.SqlTestCase):
     """Class conisting of MetaNeutronPluginV2 unit tests."""
 
     has_l3 = True
 
     def setUp(self):
         super(MetaNeutronPluginV2Test, self).setUp()
-        db._ENGINE = None
-        db._MAKER = None
         self.fake_tenant_id = uuidutils.generate_uuid()
         self.context = context.get_admin_context()
 
-        db.configure_db()
-        self.addCleanup(db.clear_db)
         self.addCleanup(unregister_meta_hooks)
 
         setup_metaplugin_conf(self.has_l3)
@@ -365,15 +358,11 @@ class MetaNeutronPluginV2TestWithoutL3(MetaNeutronPluginV2Test):
         self.skipTest("Test case without router")
 
 
-class MetaNeutronPluginV2TestRpcFlavor(base.BaseTestCase):
+class MetaNeutronPluginV2TestRpcFlavor(testlib_api.SqlTestCase):
     """Tests for rpc_flavor."""
 
     def setUp(self):
         super(MetaNeutronPluginV2TestRpcFlavor, self).setUp()
-        db._ENGINE = None
-        db._MAKER = None
-        db.configure_db()
-        self.addCleanup(db.clear_db)
         self.addCleanup(unregister_meta_hooks)
 
     def test_rpc_flavor(self):

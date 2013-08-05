@@ -21,16 +21,14 @@ Test vlans alloc/dealloc.
 from neutron.db import api as db
 from neutron.openstack.common import context
 from neutron.plugins.brocade import vlanbm as vlan_bitmap
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class TestVlanBitmap(base.BaseTestCase):
+class TestVlanBitmap(testlib_api.SqlTestCase):
     """exercise Vlan bitmap ."""
 
     def setUp(self):
         super(TestVlanBitmap, self).setUp()
-        db.configure_db()
-        self.addCleanup(db.clear_db)
         self.context = context.get_admin_context()
         self.context.session = db.get_session()
 

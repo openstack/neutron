@@ -18,22 +18,19 @@ import mock
 from sqlalchemy.orm import query
 
 from neutron import context
-from neutron.db import api as db_api
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import models as ml2_models
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class Ml2DBTestCase(base.BaseTestCase):
+class Ml2DBTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(Ml2DBTestCase, self).setUp()
-        db_api.configure_db()
         self.ctx = context.get_admin_context()
-        self.addCleanup(db_api.clear_db)
 
     def _setup_neutron_network(self, network_id, port_ids):
         with self.ctx.session.begin(subtransactions=True):

@@ -16,20 +16,17 @@
 from oslo.db import exception as d_exc
 
 from neutron import context
-from neutron.db import api as db
 from neutron.db import models_v2
 from neutron.plugins.vmware.dbexts import db as nsx_db
 from neutron.plugins.vmware.dbexts import models
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class NsxDBTestCase(base.BaseTestCase):
+class NsxDBTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(NsxDBTestCase, self).setUp()
-        db.configure_db()
         self.ctx = context.get_admin_context()
-        self.addCleanup(db.clear_db)
 
     def _setup_neutron_network_and_port(self, network_id, port_id):
         with self.ctx.session.begin(subtransactions=True):

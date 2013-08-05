@@ -25,7 +25,7 @@ from neutron.db import api as db
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_vxlan
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 TUNNEL_IP_ONE = "10.10.10.10"
@@ -40,10 +40,9 @@ VXLAN_UDP_PORT_ONE = 9999
 VXLAN_UDP_PORT_TWO = 8888
 
 
-class VxlanTypeTest(base.BaseTestCase):
+class VxlanTypeTest(testlib_api.SqlTestCase):
     def setUp(self):
         super(VxlanTypeTest, self).setUp()
-        db.configure_db()
         cfg.CONF.set_override('vni_ranges', [TUNNEL_RANGES],
                               group='ml2_type_vxlan')
         cfg.CONF.set_override('vxlan_group', MULTICAST_GROUP,
@@ -52,7 +51,6 @@ class VxlanTypeTest(base.BaseTestCase):
         self.driver.vxlan_vni_ranges = TUNNEL_RANGES
         self.driver._sync_vxlan_allocations()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_vxlan_tunnel_type(self):
         self.assertEqual(self.driver.get_type(), p_const.TYPE_VXLAN)
@@ -254,7 +252,7 @@ class VxlanTypeTest(base.BaseTestCase):
             log_warn.assert_called_once_with(mock.ANY, TUNNEL_IP_ONE)
 
 
-class VxlanTypeMultiRangeTest(base.BaseTestCase):
+class VxlanTypeMultiRangeTest(testlib_api.SqlTestCase):
 
     TUN_MIN0 = 100
     TUN_MAX0 = 101
@@ -264,12 +262,10 @@ class VxlanTypeMultiRangeTest(base.BaseTestCase):
 
     def setUp(self):
         super(VxlanTypeMultiRangeTest, self).setUp()
-        db.configure_db()
         self.driver = type_vxlan.VxlanTypeDriver()
         self.driver.vxlan_vni_ranges = self.TUNNEL_MULTI_RANGES
         self.driver._sync_vxlan_allocations()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_release_segment(self):
         segments = [self.driver.allocate_tenant_segment(self.session)

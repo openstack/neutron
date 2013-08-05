@@ -27,8 +27,6 @@ from neutron.openstack.common import importutils
 
 MYSQL_ENGINE = None
 
-DATABASE_QUOTA_DRIVER = 'neutron.extensions._quotav2_driver.DbQuotaDriver'
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -118,11 +116,7 @@ def run_migrations_online():
 
 
 def build_options():
-    return {'folsom_quota_db_enabled': is_db_quota_enabled()}
-
-
-def is_db_quota_enabled():
-    return neutron_config.QUOTAS.quota_driver == DATABASE_QUOTA_DRIVER
+    return
 
 
 if context.is_offline_mode():

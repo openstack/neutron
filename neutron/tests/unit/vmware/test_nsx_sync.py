@@ -37,6 +37,7 @@ from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware import plugin
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
+from neutron.tests.unit import testlib_api
 from neutron.tests.unit import vmware
 from neutron.tests.unit.vmware.apiclient import fake
 
@@ -259,7 +260,7 @@ class SyncLoopingCallTestCase(base.BaseTestCase):
             self.assertTrue(synchronizer._synchronize_state.call_count)
 
 
-class SyncTestCase(base.BaseTestCase):
+class SyncTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         # mock api client

@@ -20,10 +20,10 @@ from oslo.config import cfg
 from neutron.plugins.mlnx.common import config  # noqa
 from neutron.plugins.mlnx.common import constants
 from neutron.plugins.mlnx import mlnx_plugin
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class TestMlnxPluginConfig(base.BaseTestCase):
+class TestMlnxPluginConfig(testlib_api.SqlTestCase):
     expected_vlan_mappings = {'physnet1': [(1, 1000)],
                               'physnet2': [(1, 1000)]}
     expected_network_types = {'physnet1': constants.TYPE_ETH,

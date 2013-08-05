@@ -27,9 +27,9 @@ from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
 from neutron.openstack.common import uuidutils
-from neutron.tests import base
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_l3_plugin
+from neutron.tests.unit import testlib_api
 
 _uuid = uuidutils.generate_uuid
 FAKE_GW_PORT_ID = _uuid()
@@ -74,7 +74,7 @@ class TestDbSepPlugin(test_l3_plugin.TestL3NatServicePlugin,
     supported_extension_aliases = ["router", "ext-gw-mode"]
 
 
-class TestL3GwModeMixin(base.BaseTestCase):
+class TestL3GwModeMixin(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(TestL3GwModeMixin, self).setUp()
@@ -84,7 +84,6 @@ class TestL3GwModeMixin(base.BaseTestCase):
         # Patch the context
         ctx_patcher = mock.patch('neutron.context', autospec=True)
         mock_context = ctx_patcher.start()
-        self.addCleanup(db_api.clear_db)
         self.context = mock_context.get_admin_context()
         # This ensure also calls to elevated work in unit tests
         self.context.elevated.return_value = self.context

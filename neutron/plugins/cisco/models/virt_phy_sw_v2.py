@@ -21,7 +21,6 @@ import inspect
 import sys
 
 from neutron.api.v2 import attributes
-from neutron.db import api as db_api
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import neutron_plugin_base_v2
@@ -78,11 +77,6 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             self.supported_extension_aliases.extend(
                 self._plugins[const.VSWITCH_PLUGIN].
                 supported_extension_aliases)
-        # At this point, all the database models should have been loaded. It's
-        # possible that configure_db() may have been called by one of the
-        # plugins loaded in above. Otherwise, this call is to make sure that
-        # the database is initialized
-        db_api.configure_db()
 
         # Initialize credential store after database initialization
         cred.Store.initialize()

@@ -18,12 +18,11 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
-from neutron.tests import base
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import testlib_api
 
 
-class TestNetworks(base.BaseTestCase):
+class TestNetworks(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestNetworks, self).setUp()
         self._tenant_id = 'test-tenant'

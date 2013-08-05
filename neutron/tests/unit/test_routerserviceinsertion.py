@@ -21,7 +21,6 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import router
 from neutron.common import config
 from neutron import context as q_context
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.db.loadbalancer import loadbalancer_db as lb_db
@@ -31,7 +30,6 @@ from neutron.db import servicetype_db as st_db
 from neutron.extensions import routedserviceinsertion as rsi
 from neutron.extensions import routerservicetype as rst
 from neutron.plugins.common import constants
-from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import testlib_api
 from neutron import wsgi
@@ -152,7 +150,7 @@ class RouterServiceInsertionTestPlugin(
         pass
 
 
-class RouterServiceInsertionTestCase(base.BaseTestCase):
+class RouterServiceInsertionTestCase(testlib_api.SqlTestCase):
     def setUp(self):
         super(RouterServiceInsertionTestCase, self).setUp()
         plugin = (
@@ -192,7 +190,6 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
 
     def tearDown(self):
         self.api = None
-        db.clear_db()
         super(RouterServiceInsertionTestCase, self).tearDown()
 
     def _setup_core_resources(self):

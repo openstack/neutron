@@ -23,7 +23,6 @@ from neutron.common import constants
 from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
-from neutron.db import api as db_api
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
@@ -130,8 +129,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                   'get_agent_uptime')
         uptime_patch = mock.patch(uptime, return_value=190)
         uptime_patch.start()
-
-        self.addCleanup(db_api.clear_db)
 
     def tearDown(self):
         l2_consts.SUPPORTED_AGENT_TYPES = self.orig_supported_agents

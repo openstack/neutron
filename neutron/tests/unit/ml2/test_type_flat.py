@@ -18,23 +18,21 @@ import neutron.db.api as db
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_flat
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 from oslo.config import cfg
 
 
 FLAT_NETWORKS = ['flat_net1', 'flat_net2']
 
 
-class FlatTypeTest(base.BaseTestCase):
+class FlatTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(FlatTypeTest, self).setUp()
-        db.configure_db()
         cfg.CONF.set_override('flat_networks', FLAT_NETWORKS,
                               group='ml2_type_flat')
         self.driver = type_flat.FlatTypeDriver()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def _get_allocation(self, session, segment):
         return session.query(type_flat.FlatAllocation).filter_by(

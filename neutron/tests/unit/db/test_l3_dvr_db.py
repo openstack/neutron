@@ -18,19 +18,16 @@ import mock
 
 from neutron.common import constants as l3_const
 from neutron import context
-from neutron.db import api as db
 from neutron.db import l3_dvr_db
 from neutron import manager
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class L3DvrTestCase(base.BaseTestCase):
+class L3DvrTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(L3DvrTestCase, self).setUp()
-        db.configure_db()
         self.ctx = context.get_admin_context()
-        self.addCleanup(db.clear_db)
         self.mixin = l3_dvr_db.L3_NAT_with_dvr_db_mixin()
 
     def _create_router(self, router):

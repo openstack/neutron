@@ -17,23 +17,21 @@ import collections
 import mock
 import testtools
 
-from neutron.db import api as db
 from neutron.plugins.cisco.common import cisco_constants
 from neutron.plugins.cisco.common import cisco_credentials_v2
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.common import config as config
 from neutron.plugins.cisco.db import network_db_v2 as cdb
 from neutron.plugins.cisco import network_plugin
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class CiscoNetworkDbTest(base.BaseTestCase):
+class CiscoNetworkDbTest(testlib_api.SqlTestCase):
 
     """Base class for Cisco network database unit tests."""
 
     def setUp(self):
         super(CiscoNetworkDbTest, self).setUp()
-        db.configure_db()
 
         # The Cisco network plugin includes a thin layer of QoS and
         # credential API methods which indirectly call Cisco QoS and
@@ -46,8 +44,6 @@ class CiscoNetworkDbTest(base.BaseTestCase):
         with mock.patch.object(network_plugin.PluginV2,
                                '__init__', new=new_network_plugin_init):
             self._network_plugin = network_plugin.PluginV2()
-
-        self.addCleanup(db.clear_db)
 
 
 class CiscoNetworkQosDbTest(CiscoNetworkDbTest):
@@ -290,14 +286,9 @@ class CiscoNetworkCredentialDbTest(CiscoNetworkDbTest):
                           cdb.get_credential, cred_n1kv_2_id)
 
 
-class CiscoCredentialStoreTest(base.BaseTestCase):
+class CiscoCredentialStoreTest(testlib_api.SqlTestCase):
 
     """Cisco Credential Store unit tests."""
-
-    def setUp(self):
-        super(CiscoCredentialStoreTest, self).setUp()
-        db.configure_db()
-        self.addCleanup(db.clear_db)
 
     def test_cred_store_init_duplicate_creds_ignored(self):
         """Check that with multi store instances, dup creds are ignored."""

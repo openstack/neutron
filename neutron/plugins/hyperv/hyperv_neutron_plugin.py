@@ -157,7 +157,6 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
 
     def __init__(self, configfile=None):
         self._db = hyperv_db.HyperVPluginDB()
-        self._db.initialize()
         self.base_binding_dict = {
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_HYPERV}
         portbindings_base.register_port_dict_function()

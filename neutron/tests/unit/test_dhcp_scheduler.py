@@ -20,22 +20,19 @@ from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.db import api as db
 from neutron.db import models_v2
 from neutron.openstack.common import timeutils
 from neutron.scheduler import dhcp_agent_scheduler
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
-class DhcpSchedulerTestCase(base.BaseTestCase):
+class DhcpSchedulerTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(DhcpSchedulerTestCase, self).setUp()
-        db.configure_db()
         self.ctx = context.get_admin_context()
         self.network_id = 'foo_network_id'
         self._save_networks([self.network_id])
-        self.addCleanup(db.clear_db)
 
     def _get_agents(self, hosts):
         return [

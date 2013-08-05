@@ -15,14 +15,6 @@
 
 from oslo.config import cfg
 from oslo.db.sqlalchemy import session
-import sqlalchemy as sql
-
-from neutron.db import model_base
-from neutron.openstack.common import log as logging
-
-LOG = logging.getLogger(__name__)
-
-BASE = model_base.BASEV2
 
 _FACADE = None
 
@@ -36,19 +28,6 @@ def _create_facade_lazily():
     return _FACADE
 
 
-def configure_db():
-    """Configure database.
-
-    Establish the database, create an engine if needed, and register
-    the models.
-    """
-    register_models()
-
-
-def clear_db(base=BASE):
-    unregister_models(base)
-
-
 def get_engine():
     """Helper method to grab engine."""
     facade = _create_facade_lazily()
@@ -60,25 +39,3 @@ def get_session(autocommit=True, expire_on_commit=False):
     facade = _create_facade_lazily()
     return facade.get_session(autocommit=autocommit,
                               expire_on_commit=expire_on_commit)
-
-
-def register_models(base=BASE):
-    """Register Models and create properties."""
-    try:
-        facade = _create_facade_lazily()
-        engine = facade.get_engine()
-        base.metadata.create_all(engine)
-    except sql.exc.OperationalError as e:
-        LOG.info(_("Database registration exception: %s"), e)
-        return False
-    return True
-
-
-def unregister_models(base=BASE):
-    """Unregister Models, useful clearing out data before testing."""
-    try:
-        facade = _create_facade_lazily()
-        engine = facade.get_engine()
-        base.metadata.drop_all(engine)
-    except Exception:
-        LOG.exception(_("Database exception"))

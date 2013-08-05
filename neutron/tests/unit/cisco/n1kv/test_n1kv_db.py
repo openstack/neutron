@@ -28,8 +28,8 @@ from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import n1kv_db_v2
 from neutron.plugins.cisco.db import n1kv_models_v2
-from neutron.tests import base
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import testlib_api
 
 
 PHYS_NET = 'physnet1'
@@ -91,15 +91,13 @@ def _create_test_policy_profile_if_not_there(session,
     return _profile
 
 
-class VlanAllocationsTest(base.BaseTestCase):
+class VlanAllocationsTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(VlanAllocationsTest, self).setUp()
-        db.configure_db()
         self.session = db.get_session()
         self.net_p = _create_test_network_profile_if_not_there(self.session)
         n1kv_db_v2.sync_vlan_allocations(self.session, self.net_p)
-        self.addCleanup(db.clear_db)
 
     def test_sync_vlan_allocations_outside_segment_range(self):
         self.assertRaises(c_exc.VlanIDNotFound,
@@ -205,17 +203,15 @@ class VlanAllocationsTest(base.BaseTestCase):
                           vlan_id)
 
 
-class VxlanAllocationsTest(base.BaseTestCase,
+class VxlanAllocationsTest(testlib_api.SqlTestCase,
                            n1kv_db_v2.NetworkProfile_db_mixin):
 
     def setUp(self):
         super(VxlanAllocationsTest, self).setUp()
-        db.configure_db()
         self.session = db.get_session()
         self.net_p = _create_test_network_profile_if_not_there(
             self.session, TEST_NETWORK_PROFILE_VXLAN)
         n1kv_db_v2.sync_vxlan_allocations(self.session, self.net_p)
-        self.addCleanup(db.clear_db)
 
     def test_sync_vxlan_allocations_outside_segment_range(self):
         self.assertRaises(c_exc.VxlanIDNotFound,
@@ -296,9 +292,7 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         super(NetworkBindingsTest, self).setUp()
-        db.configure_db()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_add_network_binding(self):
         with self.network() as network:
@@ -547,14 +541,12 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
                 self.assertEqual(t_members, [])
 
 
-class NetworkProfileTests(base.BaseTestCase,
+class NetworkProfileTests(testlib_api.SqlTestCase,
                           n1kv_db_v2.NetworkProfile_db_mixin):
 
     def setUp(self):
         super(NetworkProfileTests, self).setUp()
-        db.configure_db()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_create_network_profile(self):
         _db_profile = n1kv_db_v2.create_network_profile(self.session,
@@ -731,13 +723,11 @@ class NetworkProfileTests(base.BaseTestCase,
         self.assertEqual(len(test_profiles), len(list(profiles)))
 
 
-class PolicyProfileTests(base.BaseTestCase):
+class PolicyProfileTests(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(PolicyProfileTests, self).setUp()
-        db.configure_db()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_create_policy_profile(self):
         _db_profile = n1kv_db_v2.create_policy_profile(TEST_POLICY_PROFILE)
@@ -775,15 +765,13 @@ class PolicyProfileTests(base.BaseTestCase):
         self.assertEqual(profile.name, got_profile.name)
 
 
-class ProfileBindingTests(base.BaseTestCase,
+class ProfileBindingTests(testlib_api.SqlTestCase,
                           n1kv_db_v2.NetworkProfile_db_mixin,
                           common_db_mixin.CommonDbMixin):
 
     def setUp(self):
         super(ProfileBindingTests, self).setUp()
-        db.configure_db()
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def _create_test_binding_if_not_there(self, tenant_id, profile_id,
                                           profile_type):

@@ -83,7 +83,7 @@ def upgrade(active_plugins=None, options=None):
         common_ext_ops.upgrade_l3()
 
     if migration.should_run(active_plugins, FOLSOM_QUOTA):
-        common_ext_ops.upgrade_quota(options)
+        common_ext_ops.upgrade_quota()
 
     if PLUGINS['lbr'] in active_plugins:
         upgrade_linuxbridge()
@@ -484,7 +484,7 @@ def downgrade(active_plugins=None, options=None):
         downgrade_linuxbridge()
 
     if migration.should_run(active_plugins, FOLSOM_QUOTA):
-        common_ext_ops.downgrade_quota(options)
+        common_ext_ops.downgrade_quota()
 
     if migration.should_run(active_plugins, L3_CAPABLE):
         common_ext_ops.downgrade_l3()

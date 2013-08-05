@@ -24,7 +24,6 @@ from neutron.api import extensions
 from neutron.common import config
 from neutron.common import exceptions as n_exc
 from neutron import context
-import neutron.db.l3_db  # noqa
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as sdb
 import neutron.extensions

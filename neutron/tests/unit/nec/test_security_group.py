@@ -20,7 +20,6 @@ import mock
 from neutron.api.v2 import attributes
 from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
-from neutron.plugins.nec.db import api as ndb  # noqa
 from neutron.tests.unit.nec import test_nec_plugin
 from neutron.tests.unit import test_extension_security_group as test_sg
 from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc

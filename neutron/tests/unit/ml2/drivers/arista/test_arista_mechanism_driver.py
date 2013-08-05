@@ -17,12 +17,12 @@ import mock
 from oslo.config import cfg
 
 from neutron.common import constants as n_const
-import neutron.db.api as ndb
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.arista import db
 from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
 from neutron.plugins.ml2.drivers.arista import mechanism_arista as arista
 from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 def setup_arista_wrapper_config(value=''):
@@ -36,17 +36,12 @@ def setup_valid_config():
     setup_arista_wrapper_config('value')
 
 
-class AristaProvisionedVlansStorageTestCase(base.BaseTestCase):
+class AristaProvisionedVlansStorageTestCase(testlib_api.SqlTestCase):
     """Test storing and retriving functionality of Arista mechanism driver.
 
     Tests all methods of this class by invoking them separately as well
     as a group.
     """
-
-    def setUp(self):
-        super(AristaProvisionedVlansStorageTestCase, self).setUp()
-        ndb.configure_db()
-        self.addCleanup(ndb.clear_db)
 
     def test_tenant_is_remembered(self):
         tenant_id = 'test'
@@ -539,7 +534,7 @@ class NegativeRPCWrapperTestCase(base.BaseTestCase):
         self.assertRaises(arista_exc.AristaRpcError, drv.get_tenants)
 
 
-class RealNetStorageAristaDriverTestCase(base.BaseTestCase):
+class RealNetStorageAristaDriverTestCase(testlib_api.SqlTestCase):
     """Main test cases for Arista Mechanism driver.
 
     Tests all mechanism driver APIs supported by Arista Driver. It invokes
@@ -549,7 +544,6 @@ class RealNetStorageAristaDriverTestCase(base.BaseTestCase):
     def setUp(self):
         super(RealNetStorageAristaDriverTestCase, self).setUp()
         self.fake_rpc = mock.MagicMock()
-        ndb.configure_db()
         self.drv = arista.AristaDriver(self.fake_rpc)
 
     def tearDown(self):

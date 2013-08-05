@@ -19,7 +19,6 @@ import operator
 from neutron.db import api as db
 from neutron.plugins.ryu.common import config  # noqa
 from neutron.plugins.ryu.db import api_v2 as db_api_v2
-from neutron.plugins.ryu.db import models_v2 as ryu_models_v2  # noqa
 from neutron.tests.unit import test_db_plugin as test_plugin
 
 

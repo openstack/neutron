@@ -18,22 +18,20 @@ from oslo.db import exception as exc
 
 from neutron import context
 from neutron.db import agents_db
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2 as base_plugin
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 class FakePlugin(base_plugin.NeutronDbPluginV2, agents_db.AgentDbMixin):
     """A fake plugin class containing all DB methods."""
 
 
-class TestAgentsDbMixin(base.BaseTestCase):
+class TestAgentsDbMixin(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestAgentsDbMixin, self).setUp()
 
         self.context = context.get_admin_context()
         self.plugin = FakePlugin()
-        self.addCleanup(db.clear_db)
 
         self.agent_status = {
             'agent_type': 'Open vSwitch agent',

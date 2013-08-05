@@ -28,8 +28,6 @@ LOG = logging.getLogger(__name__)
 
 
 class HyperVPluginDB(object):
-    def initialize(self):
-        db_api.configure_db()
 
     def reserve_vlan(self, session):
         with session.begin(subtransactions=True):

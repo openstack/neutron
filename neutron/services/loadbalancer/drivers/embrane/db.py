@@ -15,13 +15,8 @@
 #
 # @author:  Ivar Lazzaro, Embrane, Inc. ivar@embrane.com
 
-import neutron.db.api as db
 from neutron.db import models_v2 as nmodel
 from neutron.services.loadbalancer.drivers.embrane import models
-
-
-def initialize():
-    db.configure_db()
 
 
 def add_pool_port(context, pool_id, port_id):

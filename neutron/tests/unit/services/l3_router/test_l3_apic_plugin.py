@@ -18,7 +18,7 @@
 import mock
 
 from neutron.services.l3_router import l3_apic
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 TENANT = 'tenant1'
 TENANT_CONTRACT = 'abcd'
@@ -55,7 +55,7 @@ class FakePort(object):
         self.subnet_id = SUBNET
 
 
-class TestCiscoApicL3Plugin(base.BaseTestCase):
+class TestCiscoApicL3Plugin(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(TestCiscoApicL3Plugin, self).setUp()

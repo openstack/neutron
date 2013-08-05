@@ -27,7 +27,6 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron import context as ctx
-from neutron.db import api as db
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.db import sqlalchemyutils
@@ -70,7 +69,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     __native_sorting_support = True
 
     def __init__(self):
-        db.configure_db()
         if cfg.CONF.notify_nova_on_port_status_changes:
             from neutron.notifiers import nova
             # NOTE(arosen) These event listeners are here to hook into when

@@ -32,7 +32,6 @@ from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
 from neutron import context
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron import manager
@@ -88,12 +87,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if not plugin:
             plugin = DB_PLUGIN_KLASS
 
-        # Create the default configurations
-        args = ['--config-file', base.etcdir('neutron.conf.test')]
-        # If test_config specifies some config-file, use it, as well
-        for config_file in test_lib.test_config.get('config_files', []):
-            args.extend(['--config-file', config_file])
-        self.config_parse(args=args)
         # Update the plugin
         self.setup_coreplugin(plugin)
         cfg.CONF.set_override(
@@ -149,12 +142,17 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self._skip_native_pagination = None
         self._skip_native_sortin = None
         self.ext_api = None
-        # NOTE(jkoelker) for a 'pluggable' framework, Neutron sure
-        #                doesn't like when the plugin changes ;)
-        db.clear_db()
         # Restore the original attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
         super(NeutronDbPluginV2TestCase, self).tearDown()
+
+    def setup_config(self):
+        # Create the default configurations
+        args = ['--config-file', base.etcdir('neutron.conf.test')]
+        # If test_config specifies some config-file, use it, as well
+        for config_file in test_lib.test_config.get('config_files', []):
+            args.extend(['--config-file', config_file])
+        self.config_parse(args=args)
 
     def _req(self, method, resource, data=None, fmt=None, id=None, params=None,
              action=None, subresource=None, sub_id=None, context=None):
@@ -3938,7 +3936,7 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
                           ['b', '192.168.1.112', '192.168.1.120']], actual)
 
 
-class NeutronDbPluginV2AsMixinTestCase(base.BaseTestCase):
+class NeutronDbPluginV2AsMixinTestCase(testlib_api.SqlTestCase):
     """Tests for NeutronDbPluginV2 as Mixin.
 
     While NeutronDbPluginV2TestCase checks NeutronDbPlugin and all plugins as
@@ -3957,7 +3955,6 @@ class NeutronDbPluginV2AsMixinTestCase(base.BaseTestCase):
                                      'admin_state_up': True,
                                      'tenant_id': 'test-tenant',
                                      'shared': False}}
-        self.addCleanup(db.clear_db)
 
     def test_create_network_with_default_status(self):
         net = self.plugin.create_network(self.context, self.net_data)

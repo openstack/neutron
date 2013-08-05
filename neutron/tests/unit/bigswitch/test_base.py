@@ -20,15 +20,9 @@ import mock
 from oslo.config import cfg
 
 import neutron.common.test_lib as test_lib
-from neutron.db import api as db
 from neutron.plugins.bigswitch import config
 from neutron.tests.unit.bigswitch import fake_server
 
-# REVISIT(kevinbenton): This needs to be imported here to create the
-# portbindings table since it's not imported until function call time
-# in the porttracker_db module, which will cause unit test failures when
-# the unit tests are being run by testtools
-from neutron.db import portbindings_db  # noqa
 
 RESTPROXY_PKG_PATH = 'neutron.plugins.bigswitch.plugin'
 NOTIFIER = 'neutron.plugins.bigswitch.plugin.AgentNotifierApi'
@@ -62,7 +56,6 @@ class BigSwitchTestBase(object):
         self.spawn_p = mock.patch(SPAWN, new=lambda *args, **kwargs: None)
         # prevent the consistency watchdog from starting
         self.watch_p = mock.patch(CWATCH, new=lambda *args, **kwargs: None)
-        self.addCleanup(db.clear_db)
         self.plugin_notifier_p.start()
         self.spawn_p.start()
         self.watch_p.start()

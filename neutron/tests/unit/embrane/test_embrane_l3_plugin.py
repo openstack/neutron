@@ -17,7 +17,6 @@
 
 from oslo.config import cfg
 
-from neutron.db import api as db
 from neutron.plugins.embrane.common import config  # noqa
 from neutron.tests.unit import test_extension_extraroute as extraroute_test
 from neutron.tests.unit import test_l3_plugin as router_test
@@ -31,7 +30,6 @@ class TestEmbraneL3NatDBTestCase(router_test.L3NatDBIntTestCase):
 
     def setUp(self):
         cfg.CONF.set_override('admin_password', "admin123", 'heleos')
-        self.addCleanup(db.clear_db)
         super(TestEmbraneL3NatDBTestCase, self).setUp()
 
 

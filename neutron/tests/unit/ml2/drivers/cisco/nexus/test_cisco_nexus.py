@@ -18,7 +18,6 @@ import mock
 import testtools
 
 from neutron.common import constants as n_const
-from neutron.db import api as db
 from neutron.extensions import portbindings
 from neutron.openstack.common import importutils
 from neutron.plugins.ml2 import driver_api as api
@@ -27,7 +26,7 @@ from neutron.plugins.ml2.drivers.cisco.nexus import exceptions
 from neutron.plugins.ml2.drivers.cisco.nexus import mech_cisco_nexus
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_network_driver
-from neutron.tests import base
+from neutron.tests.unit import testlib_api
 
 
 NEXUS_IP_ADDRESS = '1.1.1.1'
@@ -93,7 +92,7 @@ class FakePortContext(object):
         return self._segment
 
 
-class TestCiscoNexusDevice(base.BaseTestCase):
+class TestCiscoNexusDevice(testlib_api.SqlTestCase):
 
     """Unit tests for Cisco ML2 Nexus device driver."""
 
@@ -151,14 +150,10 @@ class TestCiscoNexusDevice(base.BaseTestCase):
             mech_instance.driver.nexus_switches = (
                 mech_instance._nexus_switches)
 
-            db.configure_db()
-
         mock.patch.object(mech_cisco_nexus.CiscoNexusMechanismDriver,
                           '__init__', new=new_nexus_init).start()
         self._cisco_mech_driver = (mech_cisco_nexus.
                                    CiscoNexusMechanismDriver())
-
-        self.addCleanup(db.clear_db)
 
     def _create_delete_port(self, port_config):
         """Tests creation and deletion of a virtual port."""

@@ -21,8 +21,8 @@ from testtools import matchers
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db
 from neutron.plugins.linuxbridge.db import l2network_db_v2 as lb_db
-from neutron.tests import base
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import testlib_api
 
 PHYS_NET = 'physnet1'
 PHYS_NET_2 = 'physnet2'
@@ -36,13 +36,11 @@ PLUGIN_NAME = ('neutron.plugins.linuxbridge.'
                'lb_neutron_plugin.LinuxBridgePluginV2')
 
 
-class NetworkStatesTest(base.BaseTestCase):
+class NetworkStatesTest(testlib_api.SqlTestCase):
     def setUp(self):
         super(NetworkStatesTest, self).setUp()
-        db.configure_db()
         lb_db.sync_network_states(VLAN_RANGES)
         self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def test_sync_network_states(self):
         self.assertIsNone(lb_db.get_network_state(PHYS_NET,
@@ -155,7 +153,6 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('network_vlan_ranges', ['physnet1:1000:2999'],
                               group='VLANS')
         super(NetworkBindingsTest, self).setUp(plugin=PLUGIN_NAME)
-        db.configure_db()
         self.session = db.get_session()
 
     def test_add_network_binding(self):

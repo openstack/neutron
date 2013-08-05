@@ -28,11 +28,9 @@ from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base as api_base
 from neutron.common import exceptions as exc
 from neutron import context as neutron_context
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_db
-from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
@@ -219,7 +217,6 @@ class ContrailPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
         cfg.CONF.keystone_authtoken = KeyStoneInfo()
         mock.patch('requests.post').start().side_effect = FAKE_SERVER.request
-        db.configure_db()
         super(ContrailPluginTestCase, self).setUp(self._plugin_name)
 
 

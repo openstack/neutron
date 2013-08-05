@@ -35,9 +35,9 @@ from neutron.extensions import l3 as ext_l3
 from neutron import manager
 from neutron.openstack.common import timeutils
 from neutron.scheduler import l3_agent_scheduler
-from neutron.tests import base
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_l3_plugin
+from neutron.tests.unit import testlib_api
 
 HOST = 'my_l3_host'
 FIRST_L3_AGENT = {
@@ -351,7 +351,7 @@ class L3DvrScheduler(l3_db.L3_NAT_db_mixin,
     pass
 
 
-class L3DvrSchedulerTestCase(base.BaseTestCase):
+class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'

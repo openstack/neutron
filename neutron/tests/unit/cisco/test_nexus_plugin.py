@@ -18,7 +18,6 @@ import mock
 
 from oslo.config import cfg
 
-from neutron.db import api as db
 from neutron.extensions import providernet as provider
 from neutron.openstack.common import importutils
 from neutron.plugins.cisco.common import cisco_constants as const
@@ -26,8 +25,7 @@ from neutron.plugins.cisco.common import cisco_exceptions as cisco_exc
 from neutron.plugins.cisco.common import config as cisco_config
 from neutron.plugins.cisco.db import network_db_v2 as cdb
 from neutron.plugins.cisco.nexus import cisco_nexus_plugin_v2
-from neutron.tests import base
-
+from neutron.tests.unit import testlib_api
 
 NEXUS_IP_ADDRESS = '1.1.1.1'
 HOSTNAME1 = 'testhost1'
@@ -50,7 +48,7 @@ NET_ATTRS = [const.NET_ID,
              const.NET_VLAN_ID]
 
 
-class TestCiscoNexusPlugin(base.BaseTestCase):
+class TestCiscoNexusPlugin(testlib_api.SqlTestCase):
 
     def setUp(self):
         """Set up function."""
@@ -144,9 +142,7 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
                     'password': 'password'
                 },
             }
-            db.configure_db()
 
-        self.addCleanup(db.clear_db)
         # Use a mock netconf client
         self.mock_ncclient = mock.Mock()
 
