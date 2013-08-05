@@ -283,6 +283,29 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             self.assertEqual(2, self.ofc.create_ofc_port.call_count)
             self.assertEqual(1, self.ofc.delete_ofc_port.call_count)
 
+    def test_portinfo_readd(self):
+        with self.port() as port:
+            port_id = port['port']['id']
+            self.plugin.get_port(self.context, port_id)
+
+            portinfo = {'id': port_id, 'port_no': 123}
+            self.rpcapi_update_ports(added=[portinfo])
+
+            sport = self.plugin.get_port(self.context, port_id)
+            self.assertEqual(sport['status'], 'ACTIVE')
+            self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
+            self.assertEqual(self.ofc.delete_ofc_port.call_count, 0)
+            self.assertIsNotNone(self._get_portinfo(port_id))
+
+            portinfo = {'id': port_id, 'port_no': 123}
+            self.rpcapi_update_ports(added=[portinfo])
+
+            sport = self.plugin.get_port(self.context, port_id)
+            self.assertEqual(sport['status'], 'ACTIVE')
+            self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
+            self.assertEqual(self.ofc.delete_ofc_port.call_count, 0)
+            self.assertIsNotNone(self._get_portinfo(port_id))
+
 
 class TestNecPluginDbTest(NecPluginV2TestCase):
 

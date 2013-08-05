@@ -537,6 +537,11 @@ class NECPluginV2RPCCallbacks(object):
             id = p['id']
             portinfo = ndb.get_portinfo(session, id)
             if portinfo:
+                if (portinfo.datapath_id == datapath_id and
+                    portinfo.port_no == p['port_no']):
+                    LOG.debug(_("update_ports(): ignore unchanged portinfo in "
+                                "port_added message (port_id=%s)."), id)
+                    continue
                 ndb.del_portinfo(session, id)
             ndb.add_portinfo(session, id, datapath_id, p['port_no'],
                              mac=p.get('mac', ''))
