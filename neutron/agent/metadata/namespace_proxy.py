@@ -70,7 +70,7 @@ class NetworkMetadataProxyHandler(object):
             msg = _('network_id and router_id are None. One must be provided.')
             raise ValueError(msg)
 
-    @webob.dec.wsgify(RequestClass=wsgi.Request)
+    @webob.dec.wsgify(RequestClass=webob.Request)
     def __call__(self, req):
         LOG.debug(_("Request: %s"), req)
         try:
