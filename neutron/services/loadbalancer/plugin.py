@@ -206,8 +206,10 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb,
             health_monitor,
             pool_id
         )
+        monitor_id = health_monitor['health_monitor']['id']
+        hm = self.get_health_monitor(context, monitor_id)
         self.driver.create_pool_health_monitor(
-            context, health_monitor, pool_id)
+            context, hm, pool_id)
         return retval
 
     def delete_pool_health_monitor(self, context, id, pool_id):
