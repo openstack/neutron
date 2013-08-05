@@ -465,3 +465,19 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
 
         self._show('packet_filters', pf_id,
                    expected_code=webob.exc.HTTPNotFound.code)
+
+    def test_no_pf_activation_while_port_operations(self):
+        with self.packet_filter_on_port() as pf:
+            in_port_id = pf['packet_filter']['in_port']
+            self.assertEqual(self.ofc.create_ofc_packet_filter.call_count, 1)
+            self.assertEqual(self.ofc.delete_ofc_packet_filter.call_count, 0)
+
+            data = {'port': {'admin_state_up': False}}
+            self._update('ports', in_port_id, data)
+            self.assertEqual(self.ofc.create_ofc_packet_filter.call_count, 1)
+            self.assertEqual(self.ofc.delete_ofc_packet_filter.call_count, 0)
+
+            data = {'port': {'admin_state_up': True}}
+            self._update('ports', in_port_id, data)
+            self.assertEqual(self.ofc.create_ofc_packet_filter.call_count, 1)
+            self.assertEqual(self.ofc.delete_ofc_packet_filter.call_count, 0)

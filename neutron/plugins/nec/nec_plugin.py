@@ -41,7 +41,6 @@ from neutron.openstack.common.rpc import proxy
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
-from neutron.plugins.nec.db import packetfilter as pf_db
 from neutron.plugins.nec import ofc_manager
 from neutron.plugins.nec import packet_filter
 
@@ -176,16 +175,6 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         "no portinfo for this port."))
             port_status = OperationalStatus.DOWN
 
-        # activate packet_filters before creating port on OFC.
-        if self.packet_filter_enabled:
-            if port_status is OperationalStatus.ACTIVE:
-                filters = dict(in_port=[port['id']],
-                               status=[pf_db.PF_STATUS_DOWN],
-                               admin_state_up=[True])
-                pfs = self.get_packet_filters(context, filters=filters)
-                for pf in pfs:
-                    self.activate_packet_filter_if_ready(context, pf)
-
         if port_status in [OperationalStatus.ACTIVE]:
             if self.ofc.exists_ofc_port(context, port['id']):
                 LOG.debug(_("activate_port_if_ready(): skip, "
@@ -223,14 +212,6 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._update_resource_status(context, "port", port['id'],
                                          port_status)
             port['status'] = port_status
-
-        # deactivate packet_filters after the port has deleted from OFC.
-        if self.packet_filter_enabled:
-            filters = dict(in_port=[port['id']],
-                           status=[pf_db.PF_STATUS_ACTIVE])
-            pfs = self.get_packet_filters(context, filters=filters)
-            for pf in pfs:
-                self.deactivate_packet_filter(context, pf)
 
         return port
 
@@ -542,8 +523,13 @@ class NECPluginV2RPCCallbacks(object):
                              mac=p.get('mac', ''))
             port = self._get_port(rpc_context, id)
             if port:
+                # NOTE: Make sure that packet filters on this port exist while
+                # the port is active to avoid unexpected packet transfer.
                 if portinfo:
                     self.plugin.deactivate_port(rpc_context, port)
+                    self.plugin.deactivate_packet_filters_by_port(rpc_context,
+                                                                  id)
+                self.plugin.activate_packet_filters_by_port(rpc_context, id)
                 self.plugin.activate_port_if_ready(rpc_context, port)
         for id in kwargs.get('port_removed', []):
             portinfo = ndb.get_portinfo(session, id)
@@ -564,6 +550,7 @@ class NECPluginV2RPCCallbacks(object):
             port = self._get_port(rpc_context, id)
             if port:
                 self.plugin.deactivate_port(rpc_context, port)
+                self.plugin.deactivate_packet_filters_by_port(rpc_context, id)
 
     def _get_port(self, context, port_id):
         try:
