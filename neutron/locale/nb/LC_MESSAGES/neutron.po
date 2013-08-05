@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-02 19:55+0000\n"
+"POT-Creation-Date: 2013-08-05 19:55+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Norwegian Bokmål "
@@ -2503,11 +2503,11 @@ msgstr ""
 msgid "The %(key)s field can not have negative value. Current value is %(value)d."
 msgstr ""
 
-#: neutron/db/loadbalancer/loadbalancer_db.py:251
+#: neutron/db/loadbalancer/loadbalancer_db.py:250
 msgid "'cookie_name' should be specified for this type of session persistence."
 msgstr ""
 
-#: neutron/db/loadbalancer/loadbalancer_db.py:255
+#: neutron/db/loadbalancer/loadbalancer_db.py:254
 msgid "'cookie_name' is not allowed for this type of session persistence"
 msgstr ""
 
