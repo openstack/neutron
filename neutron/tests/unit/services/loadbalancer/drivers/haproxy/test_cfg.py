@@ -111,8 +111,7 @@ class TestHaproxyCfg(base.BaseTestCase):
                                     'address': '10.0.0.3',
                                     'protocol_port': 80,
                                     'weight': 1}],
-                       'healthmonitors': [{'status': 'ACTIVE',
-                                           'admin_state_up': True,
+                       'healthmonitors': [{'admin_state_up': True,
                                            'delay': 3,
                                            'max_retries': 4,
                                            'timeout': 2,
@@ -130,8 +129,7 @@ class TestHaproxyCfg(base.BaseTestCase):
         self.assertEqual(expected_opts, list(opts))
 
     def test_get_server_health_option(self):
-        test_config = {'healthmonitors': [{'status': 'ERROR',
-                                           'admin_state_up': False,
+        test_config = {'healthmonitors': [{'admin_state_up': False,
                                            'delay': 3,
                                            'max_retries': 4,
                                            'timeout': 2,
@@ -141,7 +139,6 @@ class TestHaproxyCfg(base.BaseTestCase):
                                            'expected_codes': '200'}]}
         self.assertEqual(('', []), cfg._get_server_health_option(test_config))
 
-        test_config['healthmonitors'][0]['status'] = 'ACTIVE'
         self.assertEqual(('', []), cfg._get_server_health_option(test_config))
 
         test_config['healthmonitors'][0]['admin_state_up'] = True

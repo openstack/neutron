@@ -151,7 +151,6 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb,
         self.driver.delete_member(context, m)
 
     def create_health_monitor(self, context, health_monitor):
-        # no PENDING_CREATE status sinse healthmon is shared DB object
         hm = super(LoadBalancerPlugin, self).create_health_monitor(
             context,
             health_monitor
@@ -160,10 +159,6 @@ class LoadBalancerPlugin(loadbalancer_db.LoadBalancerPluginDb,
         return hm
 
     def update_health_monitor(self, context, id, health_monitor):
-        if 'status' not in health_monitor['health_monitor']:
-            health_monitor['health_monitor']['status'] = (
-                constants.PENDING_UPDATE
-            )
         old_hm = self.get_health_monitor(context, id)
         hm = super(LoadBalancerPlugin, self).update_health_monitor(
             context,
