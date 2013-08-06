@@ -242,8 +242,8 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
             ).filter_by(monitor_id=hm['id']).join(ldb.Pool)
             for assoc in qry:
                 driver = self._get_driver_for_pool(context, assoc['pool_id'])
-                driver.update_health_monitor(context, old_hm,
-                                             hm, assoc['pool_id'])
+                driver.update_pool_health_monitor(context, old_hm,
+                                                  hm, assoc['pool_id'])
         return hm
 
     def _delete_db_pool_health_monitor(self, context, hm_id, pool_id):

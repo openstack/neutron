@@ -22,7 +22,12 @@ from neutron.openstack.common.rpc import proxy
 class LbaasAgentApi(proxy.RpcProxy):
     """Agent side of the Agent to Plugin RPC API."""
 
-    API_VERSION = '1.0'
+    API_VERSION = '2.0'
+    # history
+    #   1.0 Initial version
+    #   2.0 Generic API for agent based drivers
+    #       - get_logical_device() handling changed on plugin side;
+    #       - pool_deployed() and update_status() methods added;
 
     def __init__(self, topic, context, host):
         super(LbaasAgentApi, self).__init__(topic, self.API_VERSION)
@@ -36,21 +41,35 @@ class LbaasAgentApi(proxy.RpcProxy):
             topic=self.topic
         )
 
+    def pool_destroyed(self, pool_id):
+        return self.call(
+            self.context,
+            self.make_msg('pool_destroyed', pool_id=pool_id),
+            topic=self.topic
+        )
+
+    def pool_deployed(self, pool_id):
+        return self.call(
+            self.context,
+            self.make_msg('pool_deployed', pool_id=pool_id),
+            topic=self.topic
+        )
+
     def get_logical_device(self, pool_id):
         return self.call(
             self.context,
             self.make_msg(
                 'get_logical_device',
-                pool_id=pool_id,
-                host=self.host
+                pool_id=pool_id
             ),
             topic=self.topic
         )
 
-    def pool_destroyed(self, pool_id):
+    def update_status(self, obj_type, obj_id, status):
         return self.call(
             self.context,
-            self.make_msg('pool_destroyed', pool_id=pool_id, host=self.host),
+            self.make_msg('update_status', obj_type=obj_type, obj_id=obj_id,
+                          status=status),
             topic=self.topic
         )
 

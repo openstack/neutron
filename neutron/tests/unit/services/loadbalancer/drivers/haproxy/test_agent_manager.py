@@ -20,117 +20,11 @@ import contextlib
 
 import mock
 
+from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers.haproxy import (
     agent_manager as manager
 )
 from neutron.tests import base
-
-
-class TestLogicalDeviceCache(base.BaseTestCase):
-    def setUp(self):
-        super(TestLogicalDeviceCache, self).setUp()
-        self.cache = manager.LogicalDeviceCache()
-
-    def test_put(self):
-        fake_device = {
-            'vip': {'port_id': 'port_id'},
-            'pool': {'id': 'pool_id'}
-        }
-        self.cache.put(fake_device)
-
-        self.assertEqual(len(self.cache.devices), 1)
-        self.assertEqual(len(self.cache.port_lookup), 1)
-        self.assertEqual(len(self.cache.pool_lookup), 1)
-
-    def test_double_put(self):
-        fake_device = {
-            'vip': {'port_id': 'port_id'},
-            'pool': {'id': 'pool_id'}
-        }
-        self.cache.put(fake_device)
-        self.cache.put(fake_device)
-
-        self.assertEqual(len(self.cache.devices), 1)
-        self.assertEqual(len(self.cache.port_lookup), 1)
-        self.assertEqual(len(self.cache.pool_lookup), 1)
-
-    def test_remove_in_cache(self):
-        fake_device = {
-            'vip': {'port_id': 'port_id'},
-            'pool': {'id': 'pool_id'}
-        }
-        self.cache.put(fake_device)
-
-        self.assertEqual(len(self.cache.devices), 1)
-
-        self.cache.remove(fake_device)
-
-        self.assertFalse(len(self.cache.devices))
-        self.assertFalse(self.cache.port_lookup)
-        self.assertFalse(self.cache.pool_lookup)
-
-    def test_remove_in_cache_same_object(self):
-        fake_device = {
-            'vip': {'port_id': 'port_id'},
-            'pool': {'id': 'pool_id'}
-        }
-        self.cache.put(fake_device)
-
-        self.assertEqual(len(self.cache.devices), 1)
-
-        self.cache.remove(set(self.cache.devices).pop())
-
-        self.assertFalse(len(self.cache.devices))
-        self.assertFalse(self.cache.port_lookup)
-        self.assertFalse(self.cache.pool_lookup)
-
-    def test_remove_by_pool_id(self):
-        fake_device = {
-            'vip': {'port_id': 'port_id'},
-            'pool': {'id': 'pool_id'}
-        }
-        self.cache.put(fake_device)
-
-        self.assertEqual(len(self.cache.devices), 1)
-
-        self.cache.remove_by_pool_id('pool_id')
-
-        self.assertFalse(len(self.cache.devices))
-        self.assertFalse(self.cache.port_lookup)
-        self.assertFalse(self.cache.pool_lookup)
-
-    def test_get_by_pool_id(self):
-        fake_device = {
-            'vip': {'port_id': 'port_id'},
-            'pool': {'id': 'pool_id'}
-        }
-        self.cache.put(fake_device)
-
-        dev = self.cache.get_by_pool_id('pool_id')
-
-        self.assertEqual(dev.pool_id, 'pool_id')
-        self.assertEqual(dev.port_id, 'port_id')
-
-    def test_get_by_port_id(self):
-        fake_device = {
-            'vip': {'port_id': 'port_id'},
-            'pool': {'id': 'pool_id'}
-        }
-        self.cache.put(fake_device)
-
-        dev = self.cache.get_by_port_id('port_id')
-
-        self.assertEqual(dev.pool_id, 'pool_id')
-        self.assertEqual(dev.port_id, 'port_id')
-
-    def test_get_pool_ids(self):
-        fake_device = {
-            'vip': {'port_id': 'port_id'},
-            'pool': {'id': 'pool_id'}
-        }
-        self.cache.put(fake_device)
-
-        self.assertEqual(self.cache.get_pool_ids(), ['pool_id'])
 
 
 class TestManager(base.BaseTestCase):
@@ -139,10 +33,7 @@ class TestManager(base.BaseTestCase):
         self.addCleanup(mock.patch.stopall)
 
         mock_conf = mock.Mock()
-        mock_conf.interface_driver = 'intdriver'
-        mock_conf.device_driver = 'devdriver'
-        mock_conf.AGENT.root_helper = 'sudo'
-        mock_conf.loadbalancer_state_path = '/the/path'
+        mock_conf.device_driver = ['devdriver']
 
         self.mock_importer = mock.patch.object(manager, 'importutils').start()
 
@@ -154,6 +45,9 @@ class TestManager(base.BaseTestCase):
         self.mgr = manager.LbaasAgentManager(mock_conf)
         self.rpc_mock = rpc_mock_cls.return_value
         self.log = mock.patch.object(manager, 'LOG').start()
+        self.driver_mock = mock.Mock()
+        self.mgr.device_drivers = {'devdriver': self.driver_mock}
+        self.mgr.instance_mapping = {'1': 'devdriver', '2': 'devdriver'}
         self.mgr.needs_resync = False
 
     def test_initialize_service_hook(self):
@@ -174,64 +68,51 @@ class TestManager(base.BaseTestCase):
             self.assertFalse(sync.called)
 
     def test_collect_stats(self):
-        with mock.patch.object(self.mgr, 'cache') as cache:
-            cache.get_pool_ids.return_value = ['1', '2']
-            self.mgr.collect_stats(mock.Mock())
-            self.rpc_mock.update_pool_stats.assert_has_calls([
-                mock.call('1', mock.ANY),
-                mock.call('2', mock.ANY)
-            ])
+        self.mgr.collect_stats(mock.Mock())
+        self.rpc_mock.update_pool_stats.assert_has_calls([
+            mock.call('1', mock.ANY),
+            mock.call('2', mock.ANY)
+        ])
 
     def test_collect_stats_exception(self):
-        with mock.patch.object(self.mgr, 'cache') as cache:
-            cache.get_pool_ids.return_value = ['1', '2']
-            with mock.patch.object(self.mgr, 'driver') as driver:
-                driver.get_stats.side_effect = Exception
+        self.driver_mock.get_stats.side_effect = Exception
 
-                self.mgr.collect_stats(mock.Mock())
+        self.mgr.collect_stats(mock.Mock())
 
-                self.assertFalse(self.rpc_mock.called)
-                self.assertTrue(self.mgr.needs_resync)
-                self.assertTrue(self.log.exception.called)
+        self.assertFalse(self.rpc_mock.called)
+        self.assertTrue(self.mgr.needs_resync)
+        self.assertTrue(self.log.exception.called)
 
-    def test_vip_plug_callback(self):
-        self.mgr._vip_plug_callback('plug', {'id': 'id'})
-        self.rpc_mock.plug_vip_port.assert_called_once_with('id')
-
-    def test_vip_unplug_callback(self):
-        self.mgr._vip_plug_callback('unplug', {'id': 'id'})
-        self.rpc_mock.unplug_vip_port.assert_called_once_with('id')
-
-    def _sync_state_helper(self, cache, ready, refreshed, destroyed):
+    def _sync_state_helper(self, ready, reloaded, destroyed):
         with contextlib.nested(
-            mock.patch.object(self.mgr, 'cache'),
-            mock.patch.object(self.mgr, 'refresh_device'),
-            mock.patch.object(self.mgr, 'destroy_device')
-        ) as (mock_cache, refresh, destroy):
+            mock.patch.object(self.mgr, '_reload_pool'),
+            mock.patch.object(self.mgr, '_destroy_pool')
+        ) as (reload, destroy):
 
-            mock_cache.get_pool_ids.return_value = cache
             self.rpc_mock.get_ready_devices.return_value = ready
 
             self.mgr.sync_state()
 
-            self.assertEqual(len(refreshed), len(refresh.mock_calls))
+            self.assertEqual(len(reloaded), len(reload.mock_calls))
             self.assertEqual(len(destroyed), len(destroy.mock_calls))
 
-            refresh.assert_has_calls([mock.call(i) for i in refreshed])
+            reload.assert_has_calls([mock.call(i) for i in reloaded])
             destroy.assert_has_calls([mock.call(i) for i in destroyed])
             self.assertFalse(self.mgr.needs_resync)
 
     def test_sync_state_all_known(self):
-        self._sync_state_helper(['1', '2'], ['1', '2'], ['1', '2'], [])
+        self._sync_state_helper(['1', '2'], ['1', '2'], [])
 
     def test_sync_state_all_unknown(self):
-        self._sync_state_helper([], ['1', '2'], ['1', '2'], [])
+        self.mgr.instance_mapping = {}
+        self._sync_state_helper(['1', '2'], ['1', '2'], [])
 
     def test_sync_state_destroy_all(self):
-        self._sync_state_helper(['1', '2'], [], [], ['1', '2'])
+        self._sync_state_helper([], [], ['1', '2'])
 
     def test_sync_state_both(self):
-        self._sync_state_helper(['1'], ['2'], ['2'], ['1'])
+        self.mgr.instance_mapping = {'1': 'devdriver'}
+        self._sync_state_helper(['2'], ['2'], ['1'])
 
     def test_sync_state_exception(self):
         self.rpc_mock.get_ready_devices.side_effect = Exception
@@ -241,127 +122,251 @@ class TestManager(base.BaseTestCase):
         self.assertTrue(self.log.exception.called)
         self.assertTrue(self.mgr.needs_resync)
 
-    def test_refresh_device_exists(self):
-        config = self.rpc_mock.get_logical_device.return_value
+    def test_reload_pool(self):
+        config = {'driver': 'devdriver'}
+        self.rpc_mock.get_logical_device.return_value = config
+        pool_id = 'new_id'
+        self.assertNotIn(pool_id, self.mgr.instance_mapping)
 
-        with mock.patch.object(self.mgr, 'driver') as driver:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                driver.exists.return_value = True
+        self.mgr._reload_pool(pool_id)
 
-                self.mgr.refresh_device(config)
+        self.driver_mock.deploy_instance.assert_called_once_with(config)
+        self.assertIn(pool_id, self.mgr.instance_mapping)
+        self.rpc_mock.pool_deployed.assert_called_once_with(pool_id)
 
-                driver.exists.assert_called_once_with(config)
-                driver.update.assert_called_once_with(config)
-                cache.put.assert_called_once_with(config)
-                self.assertFalse(self.mgr.needs_resync)
+    def test_reload_pool_driver_not_found(self):
+        config = {'driver': 'unknown_driver'}
+        self.rpc_mock.get_logical_device.return_value = config
+        pool_id = 'new_id'
+        self.assertNotIn(pool_id, self.mgr.instance_mapping)
 
-    def test_refresh_device_new(self):
-        config = self.rpc_mock.get_logical_device.return_value
+        self.mgr._reload_pool(pool_id)
 
-        with mock.patch.object(self.mgr, 'driver') as driver:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                driver.exists.return_value = False
+        self.assertTrue(self.log.error.called)
+        self.assertFalse(self.driver_mock.deploy_instance.called)
+        self.assertNotIn(pool_id, self.mgr.instance_mapping)
+        self.assertFalse(self.rpc_mock.pool_deployed.called)
 
-                self.mgr.refresh_device(config)
+    def test_reload_pool_exception_on_driver(self):
+        config = {'driver': 'devdriver'}
+        self.rpc_mock.get_logical_device.return_value = config
+        self.driver_mock.deploy_instance.side_effect = Exception
+        pool_id = 'new_id'
+        self.assertNotIn(pool_id, self.mgr.instance_mapping)
 
-                driver.exists.assert_called_once_with(config)
-                driver.create.assert_called_once_with(config)
-                cache.put.assert_called_once_with(config)
-                self.assertFalse(self.mgr.needs_resync)
+        self.mgr._reload_pool(pool_id)
 
-    def test_refresh_device_exception(self):
-        config = self.rpc_mock.get_logical_device.return_value
+        self.driver_mock.deploy_instance.assert_called_once_with(config)
+        self.assertNotIn(pool_id, self.mgr.instance_mapping)
+        self.assertFalse(self.rpc_mock.pool_deployed.called)
+        self.assertTrue(self.log.exception.called)
+        self.assertTrue(self.mgr.needs_resync)
 
-        with mock.patch.object(self.mgr, 'driver') as driver:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                driver.exists.side_effect = Exception
-                self.mgr.refresh_device(config)
+    def test_destroy_pool(self):
+        pool_id = '1'
+        self.assertIn(pool_id, self.mgr.instance_mapping)
 
-                driver.exists.assert_called_once_with(config)
-                self.assertTrue(self.mgr.needs_resync)
-                self.assertTrue(self.log.exception.called)
-                self.assertFalse(cache.put.called)
+        self.mgr._destroy_pool(pool_id)
 
-    def test_destroy_device_known(self):
-        with mock.patch.object(self.mgr, 'driver') as driver:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                cache.get_by_pool_id.return_value = True
+        self.driver_mock.undeploy_instance.assert_called_once_with(pool_id)
+        self.assertNotIn(pool_id, self.mgr.instance_mapping)
+        self.rpc_mock.pool_destroyed.assert_called_once_with(pool_id)
+        self.assertFalse(self.mgr.needs_resync)
 
-                self.mgr.destroy_device('pool_id')
-                cache.get_by_pool_id.assert_called_once_with('pool_id')
-                driver.destroy.assert_called_once_with('pool_id')
-                self.rpc_mock.pool_destroyed.assert_called_once_with(
-                    'pool_id'
-                )
-                cache.remove.assert_called_once_with(True)
-                self.assertFalse(self.mgr.needs_resync)
+    def test_destroy_pool_exception_on_driver(self):
+        pool_id = '1'
+        self.assertIn(pool_id, self.mgr.instance_mapping)
+        self.driver_mock.undeploy_instance.side_effect = Exception
 
-    def test_destroy_device_unknown(self):
-        with mock.patch.object(self.mgr, 'driver') as driver:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                cache.get_by_pool_id.return_value = None
+        self.mgr._destroy_pool(pool_id)
 
-                self.mgr.destroy_device('pool_id')
-                cache.get_by_pool_id.assert_called_once_with('pool_id')
-                self.assertFalse(driver.destroy.called)
+        self.driver_mock.undeploy_instance.assert_called_once_with(pool_id)
+        self.assertIn(pool_id, self.mgr.instance_mapping)
+        self.assertFalse(self.rpc_mock.pool_destroyed.called)
+        self.assertTrue(self.log.exception.called)
+        self.assertTrue(self.mgr.needs_resync)
 
-    def test_destroy_device_exception(self):
-        with mock.patch.object(self.mgr, 'driver') as driver:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                cache.get_by_pool_id.return_value = True
-                driver.destroy.side_effect = Exception
-
-                self.mgr.destroy_device('pool_id')
-                cache.get_by_pool_id.assert_called_once_with('pool_id')
-
-                self.assertTrue(self.log.exception.called)
-                self.assertTrue(self.mgr.needs_resync)
+    def test_get_driver_unknown_device(self):
+        self.assertRaises(manager.DeviceNotFoundOnAgent,
+                          self.mgr._get_driver, 'unknown')
 
     def test_remove_orphans(self):
-        with mock.patch.object(self.mgr, 'driver') as driver:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                cache.get_pool_ids.return_value = ['1', '2']
-                self.mgr.remove_orphans()
+        self.mgr.remove_orphans()
+        self.driver_mock.remove_orphans.assert_called_once_with(['1', '2'])
 
-                driver.remove_orphans.assert_called_once_with(['1', '2'])
+    def test_create_vip(self):
+        vip = {'id': 'id1', 'pool_id': '1'}
+        self.mgr.create_vip(mock.Mock(), vip)
+        self.driver_mock.create_vip.assert_called_once_with(vip)
+        self.rpc_mock.update_status.assert_called_once_with('vip', vip['id'],
+                                                            constants.ACTIVE)
 
-    def test_reload_pool(self):
-        with mock.patch.object(self.mgr, 'refresh_device') as refresh:
-            self.mgr.reload_pool(mock.Mock(), pool_id='pool_id')
-            refresh.assert_called_once_with('pool_id')
+    def test_create_vip_failed(self):
+        vip = {'id': 'id1', 'pool_id': '1'}
+        self.driver_mock.create_vip.side_effect = Exception
+        self.mgr.create_vip(mock.Mock(), vip)
+        self.driver_mock.create_vip.assert_called_once_with(vip)
+        self.rpc_mock.update_status.assert_called_once_with('vip', vip['id'],
+                                                            constants.ERROR)
 
-    def test_modify_pool_known(self):
-        with mock.patch.object(self.mgr, 'refresh_device') as refresh:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                cache.get_by_pool_id.return_value = True
+    def test_update_vip(self):
+        old_vip = {'id': 'id1'}
+        vip = {'id': 'id1', 'pool_id': '1'}
+        self.mgr.update_vip(mock.Mock(), old_vip, vip)
+        self.driver_mock.update_vip.assert_called_once_with(old_vip, vip)
+        self.rpc_mock.update_status.assert_called_once_with('vip', vip['id'],
+                                                            constants.ACTIVE)
 
-                self.mgr.reload_pool(mock.Mock(), pool_id='pool_id')
+    def test_update_vip_failed(self):
+        old_vip = {'id': 'id1'}
+        vip = {'id': 'id1', 'pool_id': '1'}
+        self.driver_mock.update_vip.side_effect = Exception
+        self.mgr.update_vip(mock.Mock(), old_vip, vip)
+        self.driver_mock.update_vip.assert_called_once_with(old_vip, vip)
+        self.rpc_mock.update_status.assert_called_once_with('vip', vip['id'],
+                                                            constants.ERROR)
 
-                refresh.assert_called_once_with('pool_id')
+    def test_delete_vip(self):
+        vip = {'id': 'id1', 'pool_id': '1'}
+        self.mgr.delete_vip(mock.Mock(), vip)
+        self.driver_mock.delete_vip.assert_called_once_with(vip)
 
-    def test_modify_pool_unknown(self):
-        with mock.patch.object(self.mgr, 'refresh_device') as refresh:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                cache.get_by_pool_id.return_value = False
+    def test_create_pool(self):
+        pool = {'id': 'id1'}
+        self.assertNotIn(pool['id'], self.mgr.instance_mapping)
+        self.mgr.create_pool(mock.Mock(), pool, 'devdriver')
+        self.driver_mock.create_pool.assert_called_once_with(pool)
+        self.rpc_mock.update_status.assert_called_once_with('pool', pool['id'],
+                                                            constants.ACTIVE)
+        self.assertIn(pool['id'], self.mgr.instance_mapping)
 
-                self.mgr.modify_pool(mock.Mock(), pool_id='pool_id')
+    def test_create_pool_failed(self):
+        pool = {'id': 'id1'}
+        self.assertNotIn(pool['id'], self.mgr.instance_mapping)
+        self.driver_mock.create_pool.side_effect = Exception
+        self.mgr.create_pool(mock.Mock(), pool, 'devdriver')
+        self.driver_mock.create_pool.assert_called_once_with(pool)
+        self.rpc_mock.update_status.assert_called_once_with('pool', pool['id'],
+                                                            constants.ERROR)
+        self.assertNotIn(pool['id'], self.mgr.instance_mapping)
 
-                self.assertFalse(refresh.called)
+    def test_update_pool(self):
+        old_pool = {'id': '1'}
+        pool = {'id': '1'}
+        self.mgr.update_pool(mock.Mock(), old_pool, pool)
+        self.driver_mock.update_pool.assert_called_once_with(old_pool, pool)
+        self.rpc_mock.update_status.assert_called_once_with('pool', pool['id'],
+                                                            constants.ACTIVE)
 
-    def test_destroy_pool_known(self):
-        with mock.patch.object(self.mgr, 'destroy_device') as destroy:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                cache.get_by_pool_id.return_value = True
+    def test_update_pool_failed(self):
+        old_pool = {'id': '1'}
+        pool = {'id': '1'}
+        self.driver_mock.update_pool.side_effect = Exception
+        self.mgr.update_pool(mock.Mock(), old_pool, pool)
+        self.driver_mock.update_pool.assert_called_once_with(old_pool, pool)
+        self.rpc_mock.update_status.assert_called_once_with('pool', pool['id'],
+                                                            constants.ERROR)
 
-                self.mgr.destroy_pool(mock.Mock(), pool_id='pool_id')
+    def test_delete_pool(self):
+        pool = {'id': '1'}
+        self.assertIn(pool['id'], self.mgr.instance_mapping)
+        self.mgr.delete_pool(mock.Mock(), pool)
+        self.driver_mock.delete_pool.assert_called_once_with(pool)
+        self.assertNotIn(pool['id'], self.mgr.instance_mapping)
 
-                destroy.assert_called_once_with('pool_id')
+    def test_create_member(self):
+        member = {'id': 'id1', 'pool_id': '1'}
+        self.mgr.create_member(mock.Mock(), member)
+        self.driver_mock.create_member.assert_called_once_with(member)
+        self.rpc_mock.update_status.assert_called_once_with('member',
+                                                            member['id'],
+                                                            constants.ACTIVE)
 
-    def test_destroy_pool_unknown(self):
-        with mock.patch.object(self.mgr, 'destroy_device') as destroy:
-            with mock.patch.object(self.mgr, 'cache') as cache:
-                cache.get_by_pool_id.return_value = False
+    def test_create_member_failed(self):
+        member = {'id': 'id1', 'pool_id': '1'}
+        self.driver_mock.create_member.side_effect = Exception
+        self.mgr.create_member(mock.Mock(), member)
+        self.driver_mock.create_member.assert_called_once_with(member)
+        self.rpc_mock.update_status.assert_called_once_with('member',
+                                                            member['id'],
+                                                            constants.ERROR)
 
-                self.mgr.destroy_pool(mock.Mock(), pool_id='pool_id')
+    def test_update_member(self):
+        old_member = {'id': 'id1'}
+        member = {'id': 'id1', 'pool_id': '1'}
+        self.mgr.update_member(mock.Mock(), old_member, member)
+        self.driver_mock.update_member.assert_called_once_with(old_member,
+                                                               member)
+        self.rpc_mock.update_status.assert_called_once_with('member',
+                                                            member['id'],
+                                                            constants.ACTIVE)
 
-                self.assertFalse(destroy.called)
+    def test_update_member_failed(self):
+        old_member = {'id': 'id1'}
+        member = {'id': 'id1', 'pool_id': '1'}
+        self.driver_mock.update_member.side_effect = Exception
+        self.mgr.update_member(mock.Mock(), old_member, member)
+        self.driver_mock.update_member.assert_called_once_with(old_member,
+                                                               member)
+        self.rpc_mock.update_status.assert_called_once_with('member',
+                                                            member['id'],
+                                                            constants.ERROR)
+
+    def test_delete_member(self):
+        member = {'id': 'id1', 'pool_id': '1'}
+        self.mgr.delete_member(mock.Mock(), member)
+        self.driver_mock.delete_member.assert_called_once_with(member)
+
+    def test_create_monitor(self):
+        monitor = {'id': 'id1'}
+        assoc_id = {'monitor_id': monitor['id'], 'pool_id': '1'}
+        self.mgr.create_pool_health_monitor(mock.Mock(), monitor, '1')
+        self.driver_mock.create_pool_health_monitor.assert_called_once_with(
+            monitor, '1')
+        self.rpc_mock.update_status.assert_called_once_with('health_monitor',
+                                                            assoc_id,
+                                                            constants.ACTIVE)
+
+    def test_create_monitor_failed(self):
+        monitor = {'id': 'id1'}
+        assoc_id = {'monitor_id': monitor['id'], 'pool_id': '1'}
+        self.driver_mock.create_pool_health_monitor.side_effect = Exception
+        self.mgr.create_pool_health_monitor(mock.Mock(), monitor, '1')
+        self.driver_mock.create_pool_health_monitor.assert_called_once_with(
+            monitor, '1')
+        self.rpc_mock.update_status.assert_called_once_with('health_monitor',
+                                                            assoc_id,
+                                                            constants.ERROR)
+
+    def test_update_monitor(self):
+        monitor = {'id': 'id1'}
+        assoc_id = {'monitor_id': monitor['id'], 'pool_id': '1'}
+        self.mgr.update_pool_health_monitor(mock.Mock(), monitor, monitor, '1')
+        self.driver_mock.update_pool_health_monitor.assert_called_once_with(
+            monitor, monitor, '1')
+        self.rpc_mock.update_status.assert_called_once_with('health_monitor',
+                                                            assoc_id,
+                                                            constants.ACTIVE)
+
+    def test_update_monitor_failed(self):
+        monitor = {'id': 'id1'}
+        assoc_id = {'monitor_id': monitor['id'], 'pool_id': '1'}
+        self.driver_mock.update_pool_health_monitor.side_effect = Exception
+        self.mgr.update_pool_health_monitor(mock.Mock(), monitor, monitor, '1')
+        self.driver_mock.update_pool_health_monitor.assert_called_once_with(
+            monitor, monitor, '1')
+        self.rpc_mock.update_status.assert_called_once_with('health_monitor',
+                                                            assoc_id,
+                                                            constants.ERROR)
+
+    def test_delete_monitor(self):
+        monitor = {'id': 'id1'}
+        self.mgr.delete_pool_health_monitor(mock.Mock(), monitor, '1')
+        self.driver_mock.delete_pool_health_monitor.assert_called_once_with(
+            monitor, '1')
+
+    def test_agent_disabled(self):
+        payload = {'admin_state_up': False}
+        self.mgr.agent_updated(mock.Mock(), payload)
+        self.driver_mock.undeploy_instance.assert_has_calls(
+            [mock.call('1'), mock.call('2')])
