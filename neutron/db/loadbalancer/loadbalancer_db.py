@@ -565,6 +565,13 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
     def create_pool_health_monitor(self, context, health_monitor, pool_id):
         monitor_id = health_monitor['health_monitor']['id']
         with context.session.begin(subtransactions=True):
+            assoc_qry = context.session.query(PoolMonitorAssociation)
+            assoc = assoc_qry.filter_by(pool_id=pool_id,
+                                        monitor_id=monitor_id).first()
+            if assoc:
+                raise loadbalancer.PoolMonitorAssociationExists(
+                    monitor_id=monitor_id, pool_id=pool_id)
+
             pool = self._get_resource(context, Pool, pool_id)
 
             assoc = PoolMonitorAssociation(pool_id=pool_id,
