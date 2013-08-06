@@ -190,6 +190,16 @@ class TestBigSwitchVIFOverride(test_plugin.TestPortsV2,
         with self.port(**kwargs) as port:
             self.assertEqual(port['port']['binding:vif_type'], self.VIF_TYPE)
 
+    def test_port_move(self):
+        kwargs = {'name': 'name', 'binding:host_id': 'ivshost',
+                  'device_id': 'override_dev'}
+        with self.port(**kwargs) as port:
+            data = {'port': {'binding:host_id': 'someotherhost',
+                             'device_id': 'override_dev'}}
+            req = self.new_update_request('ports', data, port['port']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(res['port']['binding:vif_type'], self.VIF_TYPE)
+
     def _make_port(self, fmt, net_id, expected_res_status=None, **kwargs):
         res = self._create_port(fmt, net_id, expected_res_status,
                                 ('binding:host_id', ), **kwargs)

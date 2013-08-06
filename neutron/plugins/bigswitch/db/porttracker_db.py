@@ -47,4 +47,4 @@ def put_port_hostid(context, port_id, host_id):
         return
     with context.session.begin(subtransactions=True):
         location = PortLocation(port_id=port_id, host_id=host_id)
-        context.session.add(location)
+        context.session.merge(location)
