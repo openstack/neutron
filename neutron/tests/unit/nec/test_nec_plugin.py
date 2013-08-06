@@ -78,12 +78,8 @@ class NecPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.addCleanup(mock.patch.stopall)
 
         self._set_nec_ini()
+        self.addCleanup(self._clean_nec_ini)
         super(NecPluginV2TestCase, self).setUp(self._plugin_name)
-        # NOTE: `test_config' is global, and most tests don't set
-        # test_config['config_files'] but read this in setUp().
-        # So clean test_config['config_files'] ASAP, to avoid side effects
-        # on other tests which are running at the same time.
-        self._clean_nec_ini()
 
         self.plugin = manager.NeutronManager.get_plugin()
         self.plugin.ofc = fake_ofc_manager.patch_ofc_manager()
