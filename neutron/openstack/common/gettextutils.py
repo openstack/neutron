@@ -137,7 +137,7 @@ class Message(UserString.UserString, object):
         # look for %(blah) fields in string;
         # ignore %% and deal with the
         # case where % is first character on the line
-        keys = re.findall('(?:[^%]|^)%\((\w*)\)[a-z]', full_msg)
+        keys = re.findall('(?:[^%]|^)?%\((\w*)\)[a-z]', full_msg)
 
         # if we don't find any %(blah) blocks but have a %s
         if not keys and re.findall('(?:[^%]|^)%[a-z]', full_msg):
