@@ -33,6 +33,7 @@ from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.hyperv.agent import utils
+from neutron.plugins.hyperv.agent import utilsfactory
 from neutron.plugins.hyperv.common import constants
 
 LOG = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ class HyperVNeutronAgent(object):
     RPC_API_VERSION = '1.0'
 
     def __init__(self):
-        self._utils = utils.HyperVUtils()
+        self._utils = utilsfactory.get_hypervutils()
         self._polling_interval = CONF.AGENT.polling_interval
         self._load_physical_network_mappings()
         self._network_vswitch_map = {}
