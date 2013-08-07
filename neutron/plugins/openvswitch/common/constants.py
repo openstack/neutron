@@ -38,3 +38,13 @@ MINIMUM_OVS_VXLAN_VERSION = "1.10"
 
 # The different types of tunnels
 TUNNEL_NETWORK_TYPES = [TYPE_GRE, TYPE_VXLAN]
+
+# Various tables for tunneling flows
+PATCH_LV_TO_TUN = 1
+GRE_TUN_TO_LV = 2
+VXLAN_TUN_TO_LV = 3
+LEARN_FROM_TUN = 10
+UCAST_TO_TUN = 20
+FLOOD_TO_TUN = 21
+# Map tunnel types to tables number
+TUN_TABLE = {TYPE_GRE: GRE_TUN_TO_LV, TYPE_VXLAN: VXLAN_TUN_TO_LV}
