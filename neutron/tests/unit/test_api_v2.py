@@ -1325,7 +1325,7 @@ class QuotaTest(APIv2TestBase):
 
         instance = self.plugin.return_value
         instance.get_networks_count.side_effect = (
-            q_exc.NotImplementedError())
+            NotImplementedError())
         instance.get_networks.return_value = ["foo"]
         res = self.api.post_json(
             _get_path('networks'), initial_input, expect_errors=True)

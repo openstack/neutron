@@ -23,8 +23,6 @@ methods that needs to be implemented by a v2 Neutron Plug-in.
 
 from abc import ABCMeta, abstractmethod
 
-from neutron.common import exceptions
-
 
 class NeutronPluginBaseV2(object):
 
@@ -119,7 +117,7 @@ class NeutronPluginBaseV2(object):
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        raise exceptions.NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def delete_subnet(self, context, id):
@@ -220,7 +218,7 @@ class NeutronPluginBaseV2(object):
         NOTE: this method is optional, as it was not part of the originally
               defined plugin API.
         """
-        raise exceptions.NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def delete_network(self, context, id):
@@ -316,7 +314,7 @@ class NeutronPluginBaseV2(object):
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        raise exceptions.NotImplementedError()
+        raise NotImplementedError
 
     @abstractmethod
     def delete_port(self, context, id):
