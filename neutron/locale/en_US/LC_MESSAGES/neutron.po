@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-06 06:13+0000\n"
+"POT-Creation-Date: 2013-08-07 06:14+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (United States) "
@@ -6778,14 +6778,21 @@ msgstr ""
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:551
+#: neutron/plugins/nec/nec_plugin.py:542
+#, python-format
+msgid ""
+"update_ports(): ignore unchanged portinfo in port_added message "
+"(port_id=%s)."
+msgstr ""
+
+#: neutron/plugins/nec/nec_plugin.py:556
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message due to portinfo for "
 "port_id=%s was not registered"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:556
+#: neutron/plugins/nec/nec_plugin.py:561
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message received from different host "
