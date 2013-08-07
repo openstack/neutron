@@ -90,7 +90,7 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Emulate tests against NVP 2.x
         instance.return_value.get_nvp_version.return_value = NVPVersion("2.9")
         instance.return_value.request.side_effect = _fake_request
-        super(NiciraPluginV2TestCase, self).setUp(PLUGIN_NAME)
+        super(NiciraPluginV2TestCase, self).setUp(plugin=PLUGIN_NAME)
         cfg.CONF.set_override('metadata_mode', None, 'NVP')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.mock_nvpapi.stop)
@@ -861,8 +861,8 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
             self.assertEqual(queue['qos_queue']['max'], 20)
 
 
-class NiciraExtGwModeTestCase(test_ext_gw_mode.ExtGwModeTestCase,
-                              NiciraPluginV2TestCase):
+class NiciraExtGwModeTestCase(NiciraPluginV2TestCase,
+                              test_ext_gw_mode.ExtGwModeTestCase):
     pass
 
 

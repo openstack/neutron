@@ -26,7 +26,6 @@ from oslo.config import cfg
 from webob import exc
 
 from neutron.common import constants
-from neutron.common.test_lib import test_config
 from neutron.db import api as db_api
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
@@ -301,18 +300,18 @@ class TestL3GwModeMixin(base.BaseTestCase):
 class ExtGwModeTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
                         test_l3_plugin.L3NatTestCaseMixin):
 
-    def setUp(self):
+    def setUp(self, plugin=None):
         # Store l3 resource attribute map as it will be updated
         self._l3_attribute_map_bk = {}
         for item in l3.RESOURCE_ATTRIBUTE_MAP:
             self._l3_attribute_map_bk[item] = (
                 l3.RESOURCE_ATTRIBUTE_MAP[item].copy())
-        test_config['plugin_name_v2'] = (
+        plugin = plugin or (
             'neutron.tests.unit.test_extension_ext_gw_mode.TestDbPlugin')
-        test_config['extension_manager'] = TestExtensionManager()
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        super(ExtGwModeTestCase, self).setUp()
+        super(ExtGwModeTestCase, self).setUp(plugin=plugin,
+                                             ext_mgr=TestExtensionManager())
         self.addCleanup(self.restore_l3_attribute_map)
 
     def restore_l3_attribute_map(self):
