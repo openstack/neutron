@@ -40,15 +40,15 @@ ${imports if imports else ""}
 from neutron.db import migration
 
 
-def upgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def upgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     ${upgrades if upgrades else "pass"}
 
 
-def downgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def downgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     ${downgrades if downgrades else "pass"}

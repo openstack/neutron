@@ -29,7 +29,9 @@ down_revision = '52c5e4a18807'
 
 # Change to ['*'] if this migration applies to all plugins
 
-migration_for_plugins = ['*']
+migration_for_plugins = [
+    'neutron.services.loadbalancer.plugin.LoadBalancerPlugin',
+]
 
 from alembic import op
 import sqlalchemy as sa
@@ -38,8 +40,8 @@ import sqlalchemy as sa
 from neutron.db import migration
 
 
-def upgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def upgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
     op.create_table(
         'providerresourceassociations',
@@ -53,8 +55,8 @@ def upgrade(active_plugin=None, options=None):
     op.drop_table('servicetypes')
 
 
-def downgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def downgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
     op.create_table(
         'servicetypes',

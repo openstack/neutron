@@ -28,11 +28,11 @@ from neutron.tests import base
 
 class TestDbMigration(base.BaseTestCase):
     def test_should_run_plugin_in_list(self):
-        self.assertTrue(migration.should_run('foo', ['foo', 'bar']))
-        self.assertFalse(migration.should_run('foo', ['bar']))
+        self.assertTrue(migration.should_run(['foo'], ['foo', 'bar']))
+        self.assertFalse(migration.should_run(['foo'], ['bar']))
 
     def test_should_run_plugin_wildcard(self):
-        self.assertTrue(migration.should_run('foo', ['*']))
+        self.assertTrue(migration.should_run(['foo'], ['*']))
 
 
 class TestCli(base.BaseTestCase):

@@ -40,15 +40,15 @@ import sqlalchemy as sa
 from neutron.db import migration
 
 
-def upgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def upgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.drop_table('ovs_tunnel_ips')
 
 
-def downgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def downgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.create_table(

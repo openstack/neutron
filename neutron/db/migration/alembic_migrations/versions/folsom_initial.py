@@ -64,29 +64,29 @@ from neutron.db.migration.alembic_migrations import common_ext_ops
 # NOTE: This is a special migration that creates a Folsom compatible database.
 
 
-def upgrade(active_plugin=None, options=None):
+def upgrade(active_plugins=None, options=None):
     # general model
     upgrade_base()
 
-    if active_plugin in L3_CAPABLE:
+    if set(active_plugins) & set(L3_CAPABLE):
         common_ext_ops.upgrade_l3()
 
-    if active_plugin in FOLSOM_QUOTA:
+    if set(active_plugins) & set(FOLSOM_QUOTA):
         common_ext_ops.upgrade_quota(options)
 
-    if active_plugin == PLUGINS['lbr']:
+    if PLUGINS['lbr'] in active_plugins:
         upgrade_linuxbridge()
-    elif active_plugin == PLUGINS['ovs']:
+    elif PLUGINS['ovs'] in active_plugins:
         upgrade_ovs()
-    elif active_plugin == PLUGINS['cisco']:
+    elif PLUGINS['cisco'] in active_plugins:
         upgrade_cisco()
         # Cisco plugin imports OVS models too
         upgrade_ovs()
-    elif active_plugin == PLUGINS['meta']:
+    elif PLUGINS['meta'] in active_plugins:
         upgrade_meta()
-    elif active_plugin == PLUGINS['nec']:
+    elif PLUGINS['nec'] in active_plugins:
         upgrade_nec()
-    elif active_plugin == PLUGINS['ryu']:
+    elif PLUGINS['ryu'] in active_plugins:
         upgrade_ryu()
 
 
@@ -428,26 +428,26 @@ def upgrade_cisco():
     )
 
 
-def downgrade(active_plugin=None, options=None):
-    if active_plugin == PLUGINS['lbr']:
+def downgrade(active_plugins=None, options=None):
+    if PLUGINS['lbr'] in active_plugins:
         downgrade_linuxbridge()
-    elif active_plugin == PLUGINS['ovs']:
+    elif PLUGINS['ovs'] in active_plugins:
         downgrade_ovs()
-    elif active_plugin == PLUGINS['cisco']:
+    elif PLUGINS['cisco'] in active_plugins:
         # Cisco plugin imports OVS models too
         downgrade_ovs()
         downgrade_cisco()
-    elif active_plugin == PLUGINS['meta']:
+    elif PLUGINS['meta'] in active_plugins:
         downgrade_meta()
-    elif active_plugin == PLUGINS['nec']:
+    elif PLUGINS['nec'] in active_plugins:
         downgrade_nec()
-    elif active_plugin == PLUGINS['ryu']:
+    elif PLUGINS['ryu'] in active_plugins:
         downgrade_ryu()
 
-    if active_plugin in FOLSOM_QUOTA:
+    if set(active_plugins) & set(FOLSOM_QUOTA):
         common_ext_ops.downgrade_quota(options)
 
-    if active_plugin in L3_CAPABLE:
+    if set(active_plugins) & set(L3_CAPABLE):
         common_ext_ops.downgrade_l3()
 
     downgrade_base()

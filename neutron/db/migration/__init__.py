@@ -17,8 +17,8 @@
 # @author: Mark McClain, DreamHost
 
 
-def should_run(active_plugin, migrate_plugins):
+def should_run(active_plugins, migrate_plugins):
     if '*' in migrate_plugins:
         return True
     else:
-        return active_plugin in migrate_plugins
+        return set(active_plugins) & set(migrate_plugins)
