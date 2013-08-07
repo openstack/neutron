@@ -15,7 +15,7 @@
 #    under the License.
 #
 
-"""Support routring table configration on Router
+"""Support routing table configuration on Router
 
 Revision ID: 1c33fa3cd1a1
 Revises: 45680af419f9
