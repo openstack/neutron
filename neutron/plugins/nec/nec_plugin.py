@@ -234,8 +234,6 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         return port
 
-    # Quantm Plugin Basic methods
-
     def create_network(self, context, network):
         """Create a new network entry on DB, and create it on OFC."""
         LOG.debug(_("NECPluginV2.create_network() called, "
