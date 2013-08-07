@@ -32,7 +32,9 @@ from neutron.db import extraroute_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_rpc_base
 from neutron.db import models_v2
+from neutron.db import portbindings_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
+from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
@@ -88,10 +90,12 @@ class AgentNotifierApi(proxy.RpcProxy,
 class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                          extraroute_db.ExtraRoute_db_mixin,
                          l3_gwmode_db.L3_NAT_db_mixin,
-                         sg_db_rpc.SecurityGroupServerRpcMixin):
+                         sg_db_rpc.SecurityGroupServerRpcMixin,
+                         portbindings_base.PortBindingBaseMixin):
 
     _supported_extension_aliases = ["router", "ext-gw-mode",
-                                    "extraroute", "security-group"]
+                                    "extraroute", "security-group",
+                                    "binding"]
 
     @property
     def supported_extension_aliases(self):
@@ -102,6 +106,12 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         return self._aliases
 
     def __init__(self, configfile=None):
+        self.base_binding_dict = {
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
+            portbindings.CAPABILITIES: {
+                portbindings.CAP_PORT_FILTER:
+                'security-group' in self.supported_extension_aliases}}
+        portbindings_base.register_port_dict_function()
         db.configure_db()
         self.tunnel_key = db_api_v2.TunnelKey(
             cfg.CONF.OVS.tunnel_key_min, cfg.CONF.OVS.tunnel_key_max)
@@ -185,10 +195,14 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_port(self, context, port):
         session = context.session
+        port_data = port['port']
         with session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
             port = super(RyuNeutronPluginV2, self).create_port(context, port)
+            self._process_portbindings_create_and_update(context,
+                                                         port_data,
+                                                         port)
             self._process_port_create_security_group(
                 context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
@@ -219,6 +233,9 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 context, id)
             updated_port = super(RyuNeutronPluginV2, self).update_port(
                 context, id, port)
+            self._process_portbindings_create_and_update(context,
+                                                         port['port'],
+                                                         updated_port)
             need_port_update_notify = self.update_security_group_on_port(
                 context, id, port, original_port, updated_port)
 
@@ -234,15 +251,3 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if deleted:
             db_api_v2.set_port_status(session, id, q_const.PORT_STATUS_DOWN)
         return updated_port
-
-    def get_port(self, context, id, fields=None):
-        with context.session.begin(subtransactions=True):
-            port = super(RyuNeutronPluginV2, self).get_port(context, id,
-                                                            fields)
-        return self._fields(port, fields)
-
-    def get_ports(self, context, filters=None, fields=None):
-        with context.session.begin(subtransactions=True):
-            ports = super(RyuNeutronPluginV2, self).get_ports(
-                context, filters, fields)
-        return [self._fields(port, fields) for port in ports]

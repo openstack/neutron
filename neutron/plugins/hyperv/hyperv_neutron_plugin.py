@@ -23,6 +23,7 @@ from neutron.common import exceptions as q_exc
 from neutron.common import topics
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_gwmode_db
+from neutron.db import portbindings_base
 from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
@@ -141,7 +142,8 @@ class VlanNetworkProvider(BaseNetworkProvider):
 
 
 class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                          l3_gwmode_db.L3_NAT_db_mixin):
+                          l3_gwmode_db.L3_NAT_db_mixin,
+                          portbindings_base.PortBindingBaseMixin):
 
     # This attribute specifies whether the plugin supports or not
     # bulk operations. Name mangling is used in order to ensure it
@@ -153,7 +155,9 @@ class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def __init__(self, configfile=None):
         self._db = hyperv_db.HyperVPluginDB()
         self._db.initialize()
-
+        self.base_binding_dict = {
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_HYPERV}
+        portbindings_base.register_port_dict_function()
         self._set_tenant_network_type()
 
         self._parse_network_vlan_ranges()
@@ -287,29 +291,22 @@ class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return [self._fields(net, fields) for net in nets]
 
-    def _extend_port_dict_binding(self, context, port):
-        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_HYPERV
-        return port
-
     def create_port(self, context, port):
+        port_data = port['port']
         port = super(HyperVNeutronPlugin, self).create_port(context, port)
-        return self._extend_port_dict_binding(context, port)
-
-    def get_port(self, context, id, fields=None):
-        port = super(HyperVNeutronPlugin, self).get_port(context, id, fields)
-        return self._fields(self._extend_port_dict_binding(context, port),
-                            fields)
-
-    def get_ports(self, context, filters=None, fields=None):
-        ports = super(HyperVNeutronPlugin, self).get_ports(
-            context, filters, fields)
-        return [self._fields(self._extend_port_dict_binding(context, port),
-                             fields) for port in ports]
+        self._process_portbindings_create_and_update(context,
+                                                     port_data,
+                                                     port)
+        return port
 
     def update_port(self, context, id, port):
         original_port = super(HyperVNeutronPlugin, self).get_port(
             context, id)
+        port_data = port['port']
         port = super(HyperVNeutronPlugin, self).update_port(context, id, port)
+        self._process_portbindings_create_and_update(context,
+                                                     port_data,
+                                                     port)
         if original_port['admin_state_up'] != port['admin_state_up']:
             binding = self._db.get_network_binding(
                 None, port['network_id'])
@@ -317,7 +314,7 @@ class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                       binding.network_type,
                                       binding.segmentation_id,
                                       binding.physical_network)
-        return self._extend_port_dict_binding(context, port)
+        return port
 
     def delete_port(self, context, id, l3_port_check=True):
         # if needed, check to see if this is a port owned by

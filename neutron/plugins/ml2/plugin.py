@@ -172,7 +172,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _extend_port_dict_binding(self, context, port):
         # TODO(rkukura): Implement based on host_id, agents, and
         # MechanismDrivers. Also set CAPABILITIES. Use
-        # extra_binding_dict if applicable, or maybe a new hook so
+        # base_binding_dict if applicable, or maybe a new hook so
         # base handles field processing and get_port and get_ports
         # don't need to be overridden.
         port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_UNBOUND

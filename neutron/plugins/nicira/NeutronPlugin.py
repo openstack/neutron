@@ -198,7 +198,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                           self.nvp_opts.concurrent_connections,
                                           self.nvp_opts.nvp_gen_timeout)
 
-        self.extra_binding_dict = {
+        self.base_binding_dict = {
             pbin.VIF_TYPE: pbin.VIF_TYPE_OVS,
             pbin.CAPABILITIES: {
                 pbin.CAP_PORT_FILTER:
