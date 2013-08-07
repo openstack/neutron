@@ -51,11 +51,11 @@ def upgrade(active_plugin=None, options=None):
     op.create_table(
         'tunnelkeys',
         sa.Column('network_id', sa.String(length=36), nullable=False),
-        sa.Column('last_key', sa.Integer(), autoincrement=False,
+        sa.Column('tunnel_key', sa.Integer(), autoincrement=False,
                   nullable=False),
         sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
                                 ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('last_key')
+        sa.PrimaryKeyConstraint('tunnel_key')
     )
 
     op.create_table(
