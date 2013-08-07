@@ -177,7 +177,7 @@ class NexusPlugin(L2DevicePluginBase):
         """Remove VLAN SVI from the Nexus Switch."""
         # Grab switch_ip from database
         switch_ip = nxos_db.get_nexusvm_binding(vlan_id,
-                                                router_id)['switch_ip']
+                                                router_id).switch_ip
 
         # Delete the SVI interface from the switch
         self._client.delete_vlan_svi(switch_ip, vlan_id)
@@ -263,37 +263,37 @@ class NexusPlugin(L2DevicePluginBase):
             auto_untrunk = conf.CISCO.provider_vlan_auto_trunk
             LOG.debug("delete_network(): provider vlan %s" % vlan_id)
 
-        switch_ip = row['switch_ip']
+        switch_ip = row.switch_ip
         nexus_port = None
-        if row['port_id'] != 'router':
-            nexus_port = row['port_id']
+        if row.port_id != 'router':
+            nexus_port = row.port_id
 
-        nxos_db.remove_nexusport_binding(row['port_id'], row['vlan_id'],
-                                         row['switch_ip'],
-                                         row['instance_id'])
+        nxos_db.remove_nexusport_binding(row.port_id, row.vlan_id,
+                                         row.switch_ip,
+                                         row.instance_id)
         # Check for any other bindings with the same vlan_id and switch_ip
         try:
-            nxos_db.get_nexusvlan_binding(row['vlan_id'], row['switch_ip'])
+            nxos_db.get_nexusvlan_binding(row.vlan_id, row.switch_ip)
         except cisco_exc.NexusPortBindingNotFound:
             try:
                 # Delete this vlan from this switch
                 if nexus_port and auto_untrunk:
                     self._client.disable_vlan_on_trunk_int(
-                        switch_ip, row['vlan_id'], nexus_port)
+                        switch_ip, row.vlan_id, nexus_port)
                 if auto_delete:
-                    self._client.delete_vlan(switch_ip, row['vlan_id'])
+                    self._client.delete_vlan(switch_ip, row.vlan_id)
             except Exception:
                 # The delete vlan operation on the Nexus failed,
                 # so this delete_port request has failed. For
                 # consistency, roll back the Nexus database to what
                 # it was before this request.
                 with excutils.save_and_reraise_exception():
-                    nxos_db.add_nexusport_binding(row['port_id'],
-                                                  row['vlan_id'],
-                                                  row['switch_ip'],
-                                                  row['instance_id'])
+                    nxos_db.add_nexusport_binding(row.port_id,
+                                                  row.vlan_id,
+                                                  row.switch_ip,
+                                                  row.instance_id)
 
-        return row['instance_id']
+        return row.instance_id
 
     def update_port(self, tenant_id, net_id, port_id, port_state, **kwargs):
         """Update port.

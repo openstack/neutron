@@ -20,88 +20,17 @@ from sqlalchemy.orm import exc
 
 from neutron.db import api as db
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import uuidutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_models_v2
+# Do NOT remove this import. It is required for all the models to be seen
+# by db.initalize() when called from VirtualPhysicalSwitchModelV2.__init__.
+from neutron.plugins.cisco.db import nexus_models_v2  # noqa
 from neutron.plugins.openvswitch import ovs_models_v2
 
 
 LOG = logging.getLogger(__name__)
-
-
-def get_all_vlanids():
-    """Gets all the vlanids."""
-    LOG.debug(_("get_all_vlanids() called"))
-    session = db.get_session()
-    return session.query(network_models_v2.VlanID).all()
-
-
-def is_vlanid_used(vlan_id):
-    """Checks if a vlanid is in use."""
-    LOG.debug(_("is_vlanid_used() called"))
-    session = db.get_session()
-    try:
-        vlanid = (session.query(network_models_v2.VlanID).
-                  filter_by(vlan_id=vlan_id).one())
-        return vlanid["vlan_used"]
-    except exc.NoResultFound:
-        raise c_exc.VlanIDNotFound(vlan_id=vlan_id)
-
-
-def release_vlanid(vlan_id):
-    """Sets the vlanid state to be unused."""
-    LOG.debug(_("release_vlanid() called"))
-    session = db.get_session()
-    try:
-        vlanid = (session.query(network_models_v2.VlanID).
-                  filter_by(vlan_id=vlan_id).one())
-        vlanid["vlan_used"] = False
-        session.merge(vlanid)
-        session.flush()
-        return vlanid["vlan_used"]
-    except exc.NoResultFound:
-        raise c_exc.VlanIDNotFound(vlan_id=vlan_id)
-
-
-def delete_vlanid(vlan_id):
-    """Deletes a vlanid entry from db."""
-    LOG.debug(_("delete_vlanid() called"))
-    session = db.get_session()
-    try:
-        vlanid = (session.query(network_models_v2.VlanID).
-                  filter_by(vlan_id=vlan_id).one())
-        session.delete(vlanid)
-        session.flush()
-        return vlanid
-    except exc.NoResultFound:
-        pass
-
-
-def reserve_vlanid():
-    """Reserves the first unused vlanid."""
-    LOG.debug(_("reserve_vlanid() called"))
-    session = db.get_session()
-    try:
-        rvlan = (session.query(network_models_v2.VlanID).
-                 filter_by(vlan_used=False).first())
-        if not rvlan:
-            raise exc.NoResultFound
-        rvlanid = (session.query(network_models_v2.VlanID).
-                   filter_by(vlan_id=rvlan["vlan_id"]).one())
-        rvlanid["vlan_used"] = True
-        session.merge(rvlanid)
-        session.flush()
-        return rvlan["vlan_id"]
-    except exc.NoResultFound:
-        raise c_exc.VlanIDNotAvailable()
-
-
-def get_all_vlanids_used():
-    """Gets all the vlanids used."""
-    LOG.debug(_("get_all_vlanids() called"))
-    session = db.get_session()
-    return (session.query(network_models_v2.VlanID).
-            filter_by(vlan_used=True).all())
 
 
 def get_all_qoss(tenant_id):
@@ -137,7 +66,10 @@ def add_qos(tenant_id, qos_name, qos_desc):
         raise c_exc.QosNameAlreadyExists(qos_name=qos_name,
                                          tenant_id=tenant_id)
     except exc.NoResultFound:
-        qos = network_models_v2.QoS(tenant_id, qos_name, qos_desc)
+        qos = network_models_v2.QoS(qos_id=uuidutils.generate_uuid(),
+                                    tenant_id=tenant_id,
+                                    qos_name=qos_name,
+                                    qos_desc=qos_desc)
         session.add(qos)
         session.flush()
         return qos
@@ -217,8 +149,12 @@ def add_credential(tenant_id, credential_name, user_name, password):
         raise c_exc.CredentialAlreadyExists(credential_name=credential_name,
                                             tenant_id=tenant_id)
     except exc.NoResultFound:
-        cred = network_models_v2.Credential(tenant_id, credential_name,
-                                            user_name, password)
+        cred = network_models_v2.Credential(
+            credential_id=uuidutils.generate_uuid(),
+            tenant_id=tenant_id,
+            credential_name=credential_name,
+            user_name=user_name,
+            password=password)
         session.add(cred)
         session.flush()
         return cred
