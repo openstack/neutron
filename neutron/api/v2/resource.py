@@ -23,6 +23,7 @@ import webob.exc
 
 from neutron.api.v2 import attributes
 from neutron.common import exceptions
+from neutron.openstack.common import gettextutils
 from neutron.openstack.common import log as logging
 from neutron import wsgi
 
@@ -70,6 +71,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
         action = args.pop('action', None)
         content_type = format_types.get(fmt,
                                         request.best_match_content_type())
+        language = request.best_match_language()
         deserializer = deserializers.get(content_type)
         serializer = serializers.get(content_type)
 
@@ -83,6 +85,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
         except (exceptions.NeutronException,
                 netaddr.AddrFormatError) as e:
             LOG.exception(_('%s failed'), action)
+            e = translate(e, language)
             body = serializer.serialize({'NeutronError': e})
             kwargs = {'body': body, 'content_type': content_type}
             for fault in faults:
@@ -91,10 +94,12 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             raise webob.exc.HTTPInternalServerError(**kwargs)
         except webob.exc.HTTPException as e:
             LOG.exception(_('%s failed'), action)
+            translate(e, language)
             e.body = serializer.serialize({'NeutronError': e})
             e.content_type = content_type
             raise
         except NotImplementedError as e:
+            e = translate(e, language)
             # NOTE(armando-migliaccio): from a client standpoint
             # it makes sense to receive these errors, because
             # extensions may or may not be implemented by
@@ -111,6 +116,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             # Do not expose details of 500 error to clients.
             msg = _('Request Failed: internal server error while '
                     'processing your request.')
+            msg = translate(msg, language)
             body = serializer.serialize({'NeutronError': msg})
             kwargs = {'body': body, 'content_type': content_type}
             raise webob.exc.HTTPInternalServerError(**kwargs)
@@ -126,3 +132,24 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
                               content_type=content_type,
                               body=body)
     return resource
+
+
+def translate(translatable, locale):
+    """Translates the object to the given locale.
+
+    If the object is an exception its translatable elements are translated
+    in place, if the object is a translatable string it is translated and
+    returned. Otherwise, the object is returned as-is.
+
+    :param translatable: the object to be translated
+    :param locale: the locale to translate to
+    :returns: the translated object, or the object as-is if it
+              was not translated
+    """
+    localize = gettextutils.get_localized_message
+    if isinstance(translatable, Exception):
+        translatable.message = localize(translatable.message, locale)
+        if isinstance(translatable, webob.exc.HTTPError):
+            translatable.detail = localize(translatable.detail, locale)
+        return translatable
+    return localize(translatable, locale)

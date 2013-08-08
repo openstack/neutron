@@ -37,6 +37,7 @@ import webob.exc
 from neutron.common import constants
 from neutron.common import exceptions as exception
 from neutron import context
+from neutron.openstack.common import gettextutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 
@@ -298,6 +299,12 @@ class Request(webob.Request):
         if _type in allowed_types:
             return _type
         return None
+
+    def best_match_language(self):
+        """Determine language for returned response."""
+        all_languages = gettextutils.get_available_languages('neutron')
+        return self.accept_language.best_match(all_languages,
+                                               default_match='en_US')
 
     @property
     def context(self):
