@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-07 19:56+0000\n"
+"POT-Creation-Date: 2013-08-08 06:14+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Norwegian Bokmål "
@@ -229,145 +229,145 @@ msgstr ""
 msgid "Exception occurs when waiting for timer"
 msgstr ""
 
-#: neutron/wsgi.py:46
+#: neutron/wsgi.py:47
 msgid "Number of backlog requests to configure the socket with"
 msgstr ""
 
-#: neutron/wsgi.py:50
+#: neutron/wsgi.py:51
 msgid ""
 "Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
 "supported on OS X."
 msgstr ""
 
-#: neutron/wsgi.py:54
+#: neutron/wsgi.py:55
 msgid "Number of seconds to keep retrying to listen"
 msgstr ""
 
-#: neutron/wsgi.py:57
+#: neutron/wsgi.py:58
 msgid "Enable SSL on the API server"
 msgstr ""
 
-#: neutron/wsgi.py:60
+#: neutron/wsgi.py:61
 msgid "CA certificate file to use to verify connecting clients"
 msgstr ""
 
-#: neutron/wsgi.py:64
+#: neutron/wsgi.py:65
 msgid "Certificate file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:68
+#: neutron/wsgi.py:69
 msgid "Private key file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:104
+#: neutron/wsgi.py:105
 #, python-format
 msgid "Unable to listen on %(host)s:%(port)s"
 msgstr ""
 
-#: neutron/wsgi.py:110
+#: neutron/wsgi.py:111
 #, python-format
 msgid "Unable to find ssl_cert_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:114
+#: neutron/wsgi.py:115
 #, python-format
 msgid "Unable to find ssl_key_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:119
+#: neutron/wsgi.py:120
 #, python-format
 msgid "Unable to find ssl_ca_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:151
+#: neutron/wsgi.py:152
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: neutron/wsgi.py:295
+#: neutron/wsgi.py:296
 msgid "Missing Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:470
+#: neutron/wsgi.py:477
 #, python-format
 msgid "Data %(data)s type is %(type)s"
 msgstr ""
 
-#: neutron/wsgi.py:553
+#: neutron/wsgi.py:560
 msgid "Cannot understand JSON"
 msgstr ""
 
-#: neutron/wsgi.py:566 neutron/wsgi.py:569
+#: neutron/wsgi.py:573 neutron/wsgi.py:576
 msgid "Inline DTD forbidden"
 msgstr ""
 
-#: neutron/wsgi.py:645
+#: neutron/wsgi.py:652
 msgid "Cannot understand XML"
 msgstr ""
 
-#: neutron/wsgi.py:756
+#: neutron/wsgi.py:763
 msgid "Unrecognized Content-Type provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:760
+#: neutron/wsgi.py:767
 msgid "No Content-Type provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:764
+#: neutron/wsgi.py:771
 msgid "Empty body provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:770
+#: neutron/wsgi.py:777
 msgid "Unable to deserialize body as provided Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:866
+#: neutron/wsgi.py:873
 msgid "You must implement __call__"
-msgstr ""
-
-#: neutron/wsgi.py:1003
-#, python-format
-msgid "%(method)s %(url)s"
-msgstr ""
-
-#: neutron/wsgi.py:1009
-msgid "Unsupported Content-Type"
 msgstr ""
 
 #: neutron/wsgi.py:1010
 #, python-format
+msgid "%(method)s %(url)s"
+msgstr ""
+
+#: neutron/wsgi.py:1016
+msgid "Unsupported Content-Type"
+msgstr ""
+
+#: neutron/wsgi.py:1017
+#, python-format
 msgid "InvalidContentType: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1014
+#: neutron/wsgi.py:1021
 msgid "Malformed request body"
-msgstr ""
-
-#: neutron/wsgi.py:1015
-#, python-format
-msgid "MalformedRequestBody: %s"
 msgstr ""
 
 #: neutron/wsgi.py:1022
 #, python-format
+msgid "MalformedRequestBody: %s"
+msgstr ""
+
+#: neutron/wsgi.py:1029
+#, python-format
 msgid "HTTP exception thrown: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1027
+#: neutron/wsgi.py:1034
 msgid "Internal error"
 msgstr ""
 
-#: neutron/wsgi.py:1042 neutron/wsgi.py:1144
+#: neutron/wsgi.py:1049 neutron/wsgi.py:1151
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr ""
 
-#: neutron/wsgi.py:1045
+#: neutron/wsgi.py:1052
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr ""
 
-#: neutron/wsgi.py:1221
+#: neutron/wsgi.py:1228
 msgid "Could not deserialize data"
 msgstr ""
 
@@ -1525,15 +1525,15 @@ msgstr ""
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 
-#: neutron/api/v2/resource.py:85 neutron/api/v2/resource.py:93
-#: neutron/api/v2/resource.py:110
+#: neutron/api/v2/resource.py:87 neutron/api/v2/resource.py:96
+#: neutron/api/v2/resource.py:115
 #, python-format
 msgid "%s failed"
 msgstr ""
 
-#: neutron/api/v2/resource.py:112
-#: neutron/tests/unit/test_api_v2_resource.py:191
-#: neutron/tests/unit/test_api_v2_resource.py:207
+#: neutron/api/v2/resource.py:117
+#: neutron/tests/unit/test_api_v2_resource.py:255
+#: neutron/tests/unit/test_api_v2_resource.py:271
 msgid "Request Failed: internal server error while processing your request."
 msgstr ""
 
@@ -8760,13 +8760,13 @@ msgstr ""
 msgid "Router %(router_id)s is scheduled to L3 agent %(agent_id)s"
 msgstr ""
 
-#: neutron/server/__init__.py:37
+#: neutron/server/__init__.py:40
 msgid ""
 "ERROR: Unable to find configuration file via the default search paths "
 "(~/.neutron/, ~/, /etc/neutron/, /etc/) and the '--config-file' option!"
 msgstr ""
 
-#: neutron/server/__init__.py:44
+#: neutron/server/__init__.py:47
 #, python-format
 msgid "ERROR: %s"
 msgstr ""
@@ -8948,6 +8948,11 @@ msgstr ""
 msgid ""
 "Unable to find port %s to unplug.  This can occur when the Vip has been "
 "deleted first."
+msgstr ""
+
+#: neutron/tests/unit/test_api_v2_resource.py:161
+#: neutron/tests/unit/test_api_v2_resource.py:224
+msgid "Unmapped error"
 msgstr ""
 
 #: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:162
