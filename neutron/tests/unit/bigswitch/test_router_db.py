@@ -112,7 +112,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
         cfg.CONF.reset()
         test_l3_plugin.L3NatDBTestCase.setUp = origSetUp
 
-    def test_router_remove_router_interface_wrong_subnet_returns_409(self):
+    def test_router_remove_router_interface_wrong_subnet_returns_400(self):
         with self.router() as r:
             with self.subnet() as s:
                 with self.subnet(cidr='10.0.10.0/24') as s1:
@@ -125,7 +125,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                                                       r['router']['id'],
                                                       s['subnet']['id'],
                                                       p['port']['id'],
-                                                      exc.HTTPConflict.code)
+                                                      exc.HTTPBadRequest.code)
                         #remove properly to clean-up
                         self._router_interface_action('remove',
                                                       r['router']['id'],
@@ -213,7 +213,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                     subnet['subnet']['network_id'],
                     expected_code=exc.HTTPConflict.code)
 
-    def test_router_remove_interface_wrong_subnet_returns_409(self):
+    def test_router_remove_interface_wrong_subnet_returns_400(self):
         with self.router() as r:
             with self.subnet(cidr='10.0.10.0/24') as s:
                 with self.port(no_delete=True) as p:
@@ -225,7 +225,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
                                                   r['router']['id'],
                                                   s['subnet']['id'],
                                                   p['port']['id'],
-                                                  exc.HTTPConflict.code)
+                                                  exc.HTTPBadRequest.code)
                     #remove properly to clean-up
                     self._router_interface_action('remove',
                                                   r['router']['id'],

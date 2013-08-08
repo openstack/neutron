@@ -989,7 +989,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                               s['subnet']['id'],
                                               None)
 
-    def test_router_remove_interface_wrong_subnet_returns_409(self):
+    def test_router_remove_interface_wrong_subnet_returns_400(self):
         with self.router() as r:
             with self.subnet() as s:
                 with self.port(no_delete=True) as p:
@@ -1001,7 +1001,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                                   r['router']['id'],
                                                   s['subnet']['id'],
                                                   p['port']['id'],
-                                                  exc.HTTPConflict.code)
+                                                  exc.HTTPBadRequest.code)
                     #remove properly to clean-up
                     self._router_interface_action('remove',
                                                   r['router']['id'],

@@ -514,9 +514,9 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
         self.test_router_remove_interface_inuse_returns_409()
         self._nvp_metadata_teardown()
 
-    def test_router_remove_iface_wrong_sub_returns_409_with_metadata(self):
+    def test_router_remove_iface_wrong_sub_returns_400_with_metadata(self):
         self._nvp_metadata_setup()
-        self.test_router_remove_interface_wrong_subnet_returns_409()
+        self.test_router_remove_interface_wrong_subnet_returns_400()
         self._nvp_metadata_teardown()
 
     def test_router_delete_with_metadata_access(self):
