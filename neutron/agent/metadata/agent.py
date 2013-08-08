@@ -86,7 +86,7 @@ class MetadataProxyHandler(object):
         )
         return qclient
 
-    @webob.dec.wsgify(RequestClass=wsgi.Request)
+    @webob.dec.wsgify(RequestClass=webob.Request)
     def __call__(self, req):
         try:
             LOG.debug(_("Request: %s"), req)
