@@ -36,9 +36,9 @@ def upgrade(active_plugin=None, options=None):
     op.create_table(
         'poolloadbalanceragentbindings',
         sa.Column('pool_id', sa.String(length=36), nullable=False),
-        sa.Column('loadbalancer_agent_id', sa.String(length=36),
+        sa.Column('agent_id', sa.String(length=36),
                   nullable=False),
-        sa.ForeignKeyConstraint(['loadbalancer_agent_id'], ['agents.id'],
+        sa.ForeignKeyConstraint(['agent_id'], ['agents.id'],
                                 ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['pool_id'], ['pools.id'],
                                 ondelete='CASCADE'),
