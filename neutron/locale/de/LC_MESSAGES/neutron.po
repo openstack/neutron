@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-08 06:14+0000\n"
+"POT-Creation-Date: 2013-08-08 19:55+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -7026,100 +7026,100 @@ msgstr ""
 msgid "Set_port_status as %s called"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:167
+#: neutron/plugins/nec/nec_plugin.py:166
 msgid "activate_port_if_ready(): skip, port.admin_state_up is False."
 msgstr ""
 "'activate_port_if_ready()': überspringen, 'port.admin_state_up' ist "
 "'False'."
 
-#: neutron/plugins/nec/nec_plugin.py:171
+#: neutron/plugins/nec/nec_plugin.py:170
 msgid "activate_port_if_ready(): skip, network.admin_state_up is False."
 msgstr ""
 "'activate_port_if_ready()': überspringen, 'network.admin_state_up' ist "
 "'False'."
 
-#: neutron/plugins/nec/nec_plugin.py:175
+#: neutron/plugins/nec/nec_plugin.py:174
 msgid "activate_port_if_ready(): skip, no portinfo for this port."
 msgstr ""
 "'activate_port_if_ready()': überspringen, keine Portinformationen für "
 "diesen Port."
 
-#: neutron/plugins/nec/nec_plugin.py:191
+#: neutron/plugins/nec/nec_plugin.py:180
 msgid "activate_port_if_ready(): skip, ofc_port already exists."
 msgstr ""
 "'activate_port_if_ready()': überspringen, 'ofc_port' ist bereits "
 "vorhanden."
 
-#: neutron/plugins/nec/nec_plugin.py:197
+#: neutron/plugins/nec/nec_plugin.py:186
 #, python-format
 msgid "create_ofc_port() failed due to %s"
 msgstr "'create_ofc_port()' fehlgeschlagen. Grund: %s"
 
-#: neutron/plugins/nec/nec_plugin.py:215
+#: neutron/plugins/nec/nec_plugin.py:204
 #, python-format
 msgid "delete_ofc_port() failed due to %s"
 msgstr "'delete_ofc_port()' fehlgeschlagen. Grund: %s"
 
-#: neutron/plugins/nec/nec_plugin.py:219
+#: neutron/plugins/nec/nec_plugin.py:208
 msgid "deactivate_port(): skip, ofc_port does not exist."
 msgstr "'deactivate_port()': überspringen, 'ofc_port' ist nicht vorhanden."
 
-#: neutron/plugins/nec/nec_plugin.py:239
+#: neutron/plugins/nec/nec_plugin.py:220
 #, python-format
 msgid "NECPluginV2.create_network() called, network=%s ."
 msgstr "Aufruf von 'NECPluginV2.create_network()', network=%s ."
 
-#: neutron/plugins/nec/nec_plugin.py:258
+#: neutron/plugins/nec/nec_plugin.py:239
 #, python-format
 msgid "create_network() failed due to %s"
 msgstr "'create_network()' fehlgeschlagen. Grund: %s"
 
-#: neutron/plugins/nec/nec_plugin.py:274
+#: neutron/plugins/nec/nec_plugin.py:255
 #, python-format
 msgid "NECPluginV2.update_network() called, id=%(id)s network=%(network)s ."
 msgstr "Aufruf von 'NECPluginV2.update_network()', id=%(id)s network=%(network)s ."
 
-#: neutron/plugins/nec/nec_plugin.py:314
+#: neutron/plugins/nec/nec_plugin.py:295
 #, python-format
 msgid "NECPluginV2.delete_network() called, id=%s ."
 msgstr "Aufruf von 'NECPluginV2.delete_network()', id=%s ."
 
-#: neutron/plugins/nec/nec_plugin.py:333
+#: neutron/plugins/nec/nec_plugin.py:314
 #, python-format
 msgid "Failed to delete port(s)=%s from OFC."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:348
+#: neutron/plugins/nec/nec_plugin.py:329
 #, python-format
 msgid "delete_network() failed due to %s"
 msgstr "'delete_network()' fehlgeschlagen. Grund: %s"
 
-#: neutron/plugins/nec/nec_plugin.py:363
+#: neutron/plugins/nec/nec_plugin.py:344
 #, python-format
 msgid "delete_ofc_tenant() failed due to %s"
 msgstr "'delete_ofc_tenant()' fehlgeschlagen. Grund: %s"
 
-#: neutron/plugins/nec/nec_plugin.py:376
+#: neutron/plugins/nec/nec_plugin.py:357
 #, python-format
 msgid "NECPluginV2.create_port() called, port=%s ."
 msgstr "Aufruf von 'NECPluginV2.create_port()', port=%s ."
 
-#: neutron/plugins/nec/nec_plugin.py:399
+#: neutron/plugins/nec/nec_plugin.py:380
 #, python-format
 msgid "NECPluginV2.update_port() called, id=%(id)s port=%(port)s ."
 msgstr "Aufruf von 'NECPluginV2.update_port()', id=%(id)s port=%(port)s ."
 
-#: neutron/plugins/nec/nec_plugin.py:428
+#: neutron/plugins/nec/nec_plugin.py:409
 #, python-format
 msgid "NECPluginV2.delete_port() called, id=%s ."
 msgstr "Aufruf von 'NECPluginV2.delete_port()', id=%s ."
 
-#: neutron/plugins/nec/nec_plugin.py:436
+#: neutron/plugins/nec/nec_plugin.py:417
 #, python-format
 msgid "Failed to delete port=%s from OFC."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:496
+#: neutron/plugins/nec/nec_plugin.py:477
 #, python-format
 msgid ""
 "NECPluginV2RPCCallbacks.get_port_from_device() called, device=%(device)s "
@@ -7128,26 +7128,26 @@ msgstr ""
 "Aufruf von 'NECPluginV2RPCCallbacks.get_port_from_device()', "
 "device=%(device)s => %(ret)s."
 
-#: neutron/plugins/nec/nec_plugin.py:527
+#: neutron/plugins/nec/nec_plugin.py:508
 #, python-format
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
 msgstr "Aufruf von 'NECPluginV2RPCCallbacks.update_ports()', kwargs=%s ."
 
-#: neutron/plugins/nec/nec_plugin.py:537
+#: neutron/plugins/nec/nec_plugin.py:518
 #, python-format
 msgid ""
 "update_ports(): ignore unchanged portinfo in port_added message "
 "(port_id=%s)."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:551
+#: neutron/plugins/nec/nec_plugin.py:537
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message due to portinfo for "
 "port_id=%s was not registered"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:556
+#: neutron/plugins/nec/nec_plugin.py:542
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message received from different host "
