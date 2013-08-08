@@ -27,7 +27,7 @@ Create Date: 2012-12-03 09:14:50.579765
 PLUGINS = {
     'bigswitch': 'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2',
     'cisco': 'neutron.plugins.cisco.network_plugin.PluginV2',
-    'lbr': 'neutron.plugins.linuxbridge.lb_neutronplugin.LinuxBridgePluginV2',
+    'lbr': 'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
     'meta': 'neutron.plugins.metaplugin.meta_neutron_plugin.MetaPluginV2',
     'ml2': 'neutron.plugins.ml2.ml2_plugin.Ml2Plugin',
     'nec': 'neutron.plugins.nec.nec_plugin.NECPluginV2',
