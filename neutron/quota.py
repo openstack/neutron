@@ -143,11 +143,13 @@ class ConfDriver(object):
 
     @staticmethod
     def delete_tenant_quota(context, tenant_id):
-        raise webob.exc.HTTPForbidden()
+        msg = _('Access to this resource was denied.')
+        raise webob.exc.HTTPForbidden(msg)
 
     @staticmethod
     def update_quota_limit(context, tenant_id, resource, limit):
-        raise webob.exc.HTTPForbidden()
+        msg = _('Access to this resource was denied.')
+        raise webob.exc.HTTPForbidden(msg)
 
 
 class BaseResource(object):

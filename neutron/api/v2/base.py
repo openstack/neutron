@@ -170,7 +170,8 @@ class Controller(object):
                 try:
                     resource = self._item(request, id, True)
                 except exceptions.PolicyNotAuthorized:
-                    raise webob.exc.HTTPNotFound()
+                    msg = _('The resource could not be found.')
+                    raise webob.exc.HTTPNotFound(msg)
                 body = kwargs.pop('body', None)
                 # Explicit comparison with None to distinguish from {}
                 if body is not None:
@@ -291,7 +292,8 @@ class Controller(object):
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
-            raise webob.exc.HTTPNotFound()
+            msg = _('The resource could not be found.')
+            raise webob.exc.HTTPNotFound(msg)
 
     def _emulate_bulk_create(self, obj_creator, request, body, parent_id=None):
         objs = []
@@ -423,7 +425,8 @@ class Controller(object):
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
-            raise webob.exc.HTTPNotFound()
+            msg = _('The resource could not be found.')
+            raise webob.exc.HTTPNotFound(msg)
 
         obj_deleter = getattr(self._plugin, action)
         obj_deleter(request.context, id, **kwargs)
@@ -473,7 +476,8 @@ class Controller(object):
         except exceptions.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
             # doesn't exist
-            raise webob.exc.HTTPNotFound()
+            msg = _('The resource could not be found.')
+            raise webob.exc.HTTPNotFound(msg)
 
         obj_updater = getattr(self._plugin, action)
         kwargs = {self._resource: body}
