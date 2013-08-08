@@ -48,12 +48,6 @@ class NvpNoMorePortsException(NvpPluginException):
                 "Maximum number of ports reached")
 
 
-class NvpPortAlreadyAttached(q_exc.Conflict):
-    message = _("Unable to plug an interface into the port %(port_id)s "
-                "for network %(net_id)s. This interface is already plugged "
-                "into port %(att_port_id)s")
-
-
 class NvpNatRuleMismatch(NvpPluginException):
     message = _("While retrieving NAT rules, %(actual_rules)s were found "
                 "whereas rules in the (%(min_rules)s,%(max_rules)s) interval "
