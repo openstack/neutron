@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-07 19:56+0000\n"
+"POT-Creation-Date: 2013-08-08 06:14+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -229,145 +229,145 @@ msgstr "計時器停止時發生異常狀況"
 msgid "Exception occurs when waiting for timer"
 msgstr "等待計時器時發生異常狀況"
 
-#: neutron/wsgi.py:46
+#: neutron/wsgi.py:47
 msgid "Number of backlog requests to configure the socket with"
 msgstr ""
 
-#: neutron/wsgi.py:50
+#: neutron/wsgi.py:51
 msgid ""
 "Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
 "supported on OS X."
 msgstr ""
 
-#: neutron/wsgi.py:54
+#: neutron/wsgi.py:55
 msgid "Number of seconds to keep retrying to listen"
 msgstr ""
 
-#: neutron/wsgi.py:57
+#: neutron/wsgi.py:58
 msgid "Enable SSL on the API server"
 msgstr ""
 
-#: neutron/wsgi.py:60
+#: neutron/wsgi.py:61
 msgid "CA certificate file to use to verify connecting clients"
 msgstr ""
 
-#: neutron/wsgi.py:64
+#: neutron/wsgi.py:65
 msgid "Certificate file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:68
+#: neutron/wsgi.py:69
 msgid "Private key file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:104
+#: neutron/wsgi.py:105
 #, python-format
 msgid "Unable to listen on %(host)s:%(port)s"
 msgstr "無法在 %(host)s:%(port)s 上進行接聽"
 
-#: neutron/wsgi.py:110
+#: neutron/wsgi.py:111
 #, python-format
 msgid "Unable to find ssl_cert_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:114
+#: neutron/wsgi.py:115
 #, python-format
 msgid "Unable to find ssl_key_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:119
+#: neutron/wsgi.py:120
 #, python-format
 msgid "Unable to find ssl_ca_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:151
+#: neutron/wsgi.py:152
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: neutron/wsgi.py:295
+#: neutron/wsgi.py:296
 msgid "Missing Content-Type"
 msgstr "遺漏了內容類型"
 
-#: neutron/wsgi.py:470
+#: neutron/wsgi.py:477
 #, python-format
 msgid "Data %(data)s type is %(type)s"
 msgstr "資料 %(data)s 類型為 %(type)s"
 
-#: neutron/wsgi.py:553
+#: neutron/wsgi.py:560
 msgid "Cannot understand JSON"
 msgstr "無法理解 JSON"
 
-#: neutron/wsgi.py:566 neutron/wsgi.py:569
+#: neutron/wsgi.py:573 neutron/wsgi.py:576
 msgid "Inline DTD forbidden"
 msgstr "已禁止行內 DTD"
 
-#: neutron/wsgi.py:645
+#: neutron/wsgi.py:652
 msgid "Cannot understand XML"
 msgstr "無法理解 XML"
 
-#: neutron/wsgi.py:756
+#: neutron/wsgi.py:763
 msgid "Unrecognized Content-Type provided in request"
 msgstr "無法辨識要求中所提供的內容類型"
 
-#: neutron/wsgi.py:760
+#: neutron/wsgi.py:767
 msgid "No Content-Type provided in request"
 msgstr "要求中未提供內容類型"
 
-#: neutron/wsgi.py:764
+#: neutron/wsgi.py:771
 msgid "Empty body provided in request"
 msgstr "要求中所提供主體是空的"
 
-#: neutron/wsgi.py:770
+#: neutron/wsgi.py:777
 msgid "Unable to deserialize body as provided Content-Type"
 msgstr "無法將主體解除序列化為提供的內容類型"
 
-#: neutron/wsgi.py:866
+#: neutron/wsgi.py:873
 msgid "You must implement __call__"
 msgstr "必須實作 __call__"
 
-#: neutron/wsgi.py:1003
+#: neutron/wsgi.py:1010
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
-#: neutron/wsgi.py:1009
+#: neutron/wsgi.py:1016
 msgid "Unsupported Content-Type"
 msgstr "不支援的內容類型"
 
-#: neutron/wsgi.py:1010
+#: neutron/wsgi.py:1017
 #, python-format
 msgid "InvalidContentType: %s"
 msgstr "InvalidContentType：%s"
 
-#: neutron/wsgi.py:1014
+#: neutron/wsgi.py:1021
 msgid "Malformed request body"
 msgstr "要求內文的格式不正確"
 
-#: neutron/wsgi.py:1015
+#: neutron/wsgi.py:1022
 #, python-format
 msgid "MalformedRequestBody: %s"
 msgstr "MalformedRequestBody：%s"
 
-#: neutron/wsgi.py:1022
+#: neutron/wsgi.py:1029
 #, python-format
 msgid "HTTP exception thrown: %s"
 msgstr "已擲出 HTTP 異常狀況：%s"
 
-#: neutron/wsgi.py:1027
+#: neutron/wsgi.py:1034
 msgid "Internal error"
 msgstr "內部錯誤"
 
-#: neutron/wsgi.py:1042 neutron/wsgi.py:1144
+#: neutron/wsgi.py:1049 neutron/wsgi.py:1151
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr "%(url)s 傳回了 HTTP %(status)d"
 
-#: neutron/wsgi.py:1045
+#: neutron/wsgi.py:1052
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s 傳回了錯誤：%(exception)s"
 
-#: neutron/wsgi.py:1221
+#: neutron/wsgi.py:1228
 msgid "Could not deserialize data"
 msgstr "無法解除序列化資料"
 
@@ -1532,15 +1532,15 @@ msgstr "無法辨識屬性 '%s'"
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr "Tenant %(tenant_id)s 不可在此網路上建立 %(resource)s"
 
-#: neutron/api/v2/resource.py:85 neutron/api/v2/resource.py:93
-#: neutron/api/v2/resource.py:110
+#: neutron/api/v2/resource.py:87 neutron/api/v2/resource.py:96
+#: neutron/api/v2/resource.py:115
 #, python-format
 msgid "%s failed"
 msgstr "%s 失敗"
 
-#: neutron/api/v2/resource.py:112
-#: neutron/tests/unit/test_api_v2_resource.py:191
-#: neutron/tests/unit/test_api_v2_resource.py:207
+#: neutron/api/v2/resource.py:117
+#: neutron/tests/unit/test_api_v2_resource.py:255
+#: neutron/tests/unit/test_api_v2_resource.py:271
 msgid "Request Failed: internal server error while processing your request."
 msgstr "要求失敗：處理要求時發生內部伺服器錯誤。"
 
@@ -8832,13 +8832,13 @@ msgstr "不存在可以管理路由器 %s 的 L3 代理程式"
 msgid "Router %(router_id)s is scheduled to L3 agent %(agent_id)s"
 msgstr "路由器 %(router_id)s 已排程到 L3 代理程式 %(agent_id)s"
 
-#: neutron/server/__init__.py:37
+#: neutron/server/__init__.py:40
 msgid ""
 "ERROR: Unable to find configuration file via the default search paths "
 "(~/.neutron/, ~/, /etc/neutron/, /etc/) and the '--config-file' option!"
 msgstr ""
 
-#: neutron/server/__init__.py:44
+#: neutron/server/__init__.py:47
 #, python-format
 msgid "ERROR: %s"
 msgstr "錯誤：%s"
@@ -9021,6 +9021,11 @@ msgid ""
 "Unable to find port %s to unplug.  This can occur when the Vip has been "
 "deleted first."
 msgstr "找不到要拔除的埠 %s。如果先刪除 VIP，則可能會發生此情況。"
+
+#: neutron/tests/unit/test_api_v2_resource.py:161
+#: neutron/tests/unit/test_api_v2_resource.py:224
+msgid "Unmapped error"
+msgstr ""
 
 #: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:162
 #: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:186
