@@ -168,3 +168,22 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
             packet_filter.update({'status': pf_status})
 
         return packet_filter
+
+    def activate_packet_filters_by_port(self, context, port_id):
+        if not self.packet_filter_enabled:
+            return
+
+        filters = {'in_port': [port_id], 'admin_state_up': [True],
+                   'status': [pf_db.PF_STATUS_DOWN]}
+        pfs = self.get_packet_filters(context, filters=filters)
+        for pf in pfs:
+            self.activate_packet_filter_if_ready(context, pf)
+
+    def deactivate_packet_filters_by_port(self, context, port_id):
+        if not self.packet_filter_enabled:
+            return
+
+        filters = {'in_port': [port_id], 'status': [pf_db.PF_STATUS_ACTIVE]}
+        pfs = self.get_packet_filters(context, filters=filters)
+        for pf in pfs:
+            self.deactivate_packet_filter(context, pf)
