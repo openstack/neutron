@@ -7,10 +7,6 @@ discover
 fixtures>=0.3.12
 mock>=1.0
 mox>=0.5.3
-nose
-nosehtmloutput>=0.0.3
-nosexcover
-openstack.nose_plugin>=0.7
 python-subunit
 sphinx>=1.1.2
 testrepository>=0.0.17
