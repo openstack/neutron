@@ -1193,6 +1193,23 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                    health_mon2['health_monitor']['id']]},
                                  res)
 
+    def test_driver_call_create_pool_health_monitor(self):
+        with mock.patch.object(self.plugin.driver,
+                               'create_pool_health_monitor') as driver_call:
+            with contextlib.nested(
+                self.pool(),
+                self.health_monitor()
+            ) as (pool, hm):
+                data = {"health_monitor": {
+                        "id": hm['health_monitor']['id'],
+                        'tenant_id': self._tenant_id}}
+                self.plugin.create_pool_health_monitor(
+                    context.get_admin_context(),
+                    data, pool['pool']['id']
+                )
+                driver_call.assert_called_once_with(
+                    mock.ANY, hm['health_monitor'], pool['pool']['id'])
+
     def test_create_pool_healthmon_invalid_pool_id(self):
         with self.health_monitor() as healthmon:
             self.assertRaises(loadbalancer.PoolNotFound,
