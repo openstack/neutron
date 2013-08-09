@@ -61,9 +61,9 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
     db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
         models_v2.Port,
         "portbindings_port",
-        _port_model_hook,
+        '_port_model_hook',
         None,
-        _port_result_filter_hook)
+        '_port_result_filter_hook')
 
     def _process_portbindings_create_and_update(self, context, port_data,
                                                 port):

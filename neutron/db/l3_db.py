@@ -120,9 +120,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
     db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
         models_v2.Network,
         "external_net",
-        _network_model_hook,
-        _network_filter_hook,
-        _network_result_filter_hook)
+        '_network_model_hook',
+        '_network_filter_hook',
+        '_network_result_filter_hook')
 
     def _get_router(self, context, id):
         try:
