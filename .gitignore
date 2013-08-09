@@ -12,6 +12,7 @@ doc/build
 neutron.egg-info/
 neutron/vcsversion.py
 neutron/versioninfo
+pbr*.egg/
 quantum.egg-info/
 quantum/vcsversion.py
 quantum/versioninfo
