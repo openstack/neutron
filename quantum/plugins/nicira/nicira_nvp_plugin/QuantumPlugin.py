@@ -103,28 +103,16 @@ def parse_config():
         LOG.warning(_("The metadata_dhcp_host_route is now obsolete, and "
                       "will have no effect. Instead, please set the "
                       "enable_isolated_metadata option in dhcp_agent.ini"))
-    nvp_conf = config.ClusterConfigOptions(cfg.CONF)
-    cluster_names = config.register_cluster_groups(nvp_conf)
-    nvp_conf.log_opt_values(LOG, logging.DEBUG)
-
+    config.register_cluster_groups(cfg.CONF)
     clusters_options = []
-    for cluster_name in cluster_names:
-        clusters_options.append(
-            {'name': cluster_name,
-             'default_tz_uuid':
-             nvp_conf[cluster_name].default_tz_uuid,
-             'nvp_cluster_uuid':
-             nvp_conf[cluster_name].nvp_cluster_uuid,
-             'nova_zone_id':
-             nvp_conf[cluster_name].nova_zone_id,
-             'nvp_controller_connection':
-             nvp_conf[cluster_name].nvp_controller_connection,
-             'default_l3_gw_service_uuid':
-             nvp_conf[cluster_name].default_l3_gw_service_uuid,
-             'default_l2_gw_service_uuid':
-             nvp_conf[cluster_name].default_l2_gw_service_uuid,
-             'default_interface_name':
-             nvp_conf[cluster_name].default_interface_name})
+    for arg in cfg.CONF:
+        if arg.startswith("CLUSTER:"):
+            cluster_section = cfg.CONF.get(arg)
+            section_dict = {}
+            for option in cluster_section:
+                section_dict[option] = cluster_section.get(option)
+            section_dict['name'] = arg.split(':')[1]
+            clusters_options.append(section_dict)
     LOG.debug(_("Cluster options:%s"), clusters_options)
 
     # If no api_extensions_path is provided set the following
