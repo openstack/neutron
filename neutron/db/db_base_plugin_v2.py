@@ -990,7 +990,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     'name': n['name'],
                     'admin_state_up': n['admin_state_up'],
                     'shared': n['shared'],
-                    'status': constants.NET_STATUS_ACTIVE}
+                    'status': n.get('status', constants.NET_STATUS_ACTIVE)}
             network = models_v2.Network(**args)
             context.session.add(network)
         return self._make_network_dict(network, process_extensions=False)

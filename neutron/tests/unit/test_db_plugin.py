@@ -40,6 +40,7 @@ from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron.manager import NeutronManager
+from neutron.openstack.common import importutils
 from neutron.openstack.common import timeutils
 from neutron.tests import base
 from neutron.tests.unit import test_extensions
@@ -119,7 +120,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override('allow_pagination', True)
         cfg.CONF.set_override('allow_sorting', True)
         self.api = APIRouter()
-        # Set the defualt port status
+        # Set the defualt status
+        self.net_create_status = 'ACTIVE'
         self.port_create_status = 'ACTIVE'
 
         def _is_native_bulk_supported():
@@ -1820,7 +1822,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_create_network(self):
         name = 'net1'
         keys = [('subnets', []), ('name', name), ('admin_state_up', True),
-                ('status', 'ACTIVE'), ('shared', False)]
+                ('status', self.net_create_status), ('shared', False)]
         with self.network(name=name) as net:
             for k, v in keys:
                 self.assertEqual(net['network'][k], v)
@@ -1828,7 +1830,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_create_public_network(self):
         name = 'public_net'
         keys = [('subnets', []), ('name', name), ('admin_state_up', True),
-                ('status', 'ACTIVE'), ('shared', True)]
+                ('status', self.net_create_status), ('shared', True)]
         with self.network(name=name, shared=True) as net:
             for k, v in keys:
                 self.assertEqual(net['network'][k], v)
@@ -3558,6 +3560,42 @@ class DbModelTestCase(base.BaseTestCase):
                         "admin_state_up=True, shared=None}>")
         final_exp = exp_start_with + exp_middle + exp_end_with
         self.assertEqual(actual_repr_output, final_exp)
+
+
+class NeutronDbPluginV2AsMixinTestCase(base.BaseTestCase):
+    """Tests for NeutronDbPluginV2 as Mixin.
+
+    While NeutronDbPluginV2TestCase checks NeutronDbPlugin and all plugins as
+    a complete plugin, this test case verifies abilities of NeutronDbPlugin
+    which are provided to other plugins (e.g. DB operations). This test case
+    may include tests only for NeutronDbPlugin, so this should not be used in
+    unit tests for other plugins.
+    """
+
+    def setUp(self):
+        super(NeutronDbPluginV2AsMixinTestCase, self).setUp()
+        self.plugin = importutils.import_object(DB_PLUGIN_KLASS)
+        self.context = context.get_admin_context()
+        self.net_data = {'network': {'id': 'fake-id',
+                                     'name': 'net1',
+                                     'admin_state_up': True,
+                                     'tenant_id': 'test-tenant',
+                                     'shared': False}}
+        self.addCleanup(db.clear_db)
+
+    def test_create_network_with_default_status(self):
+        net = self.plugin.create_network(self.context, self.net_data)
+        default_net_create_status = 'ACTIVE'
+        expected = [('id', 'fake-id'), ('name', 'net1'),
+                    ('admin_state_up', True), ('tenant_id', 'test-tenant'),
+                    ('shared', False), ('status', default_net_create_status)]
+        for k, v in expected:
+            self.assertEqual(net[k], v)
+
+    def test_create_network_with_status_BUILD(self):
+        self.net_data['network']['status'] = 'BUILD'
+        net = self.plugin.create_network(self.context, self.net_data)
+        self.assertEqual(net['status'], 'BUILD')
 
 
 class TestBasicGetXML(TestBasicGet):
