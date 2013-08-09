@@ -33,6 +33,8 @@ PLUGINS = {
     'nec': 'neutron.plugins.nec.nec_plugin.NECPluginV2',
     'nvp': 'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
     'ovs': 'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
+    'plumgrid': 'neutron.plugins.plumgrid.plumgrid_plugin.plumgrid_plugin.'
+                'NeutronPluginPLUMgridV2',
     'ryu': 'neutron.plugins.ryu.ryu_neutron_plugin.RyuNeutronPluginV2',
 }
 
@@ -43,6 +45,7 @@ L3_CAPABLE = [
     PLUGINS['nec'],
     PLUGINS['ovs'],
     PLUGINS['ryu'],
+    PLUGINS['plumgrid'],
 ]
 
 FOLSOM_QUOTA = [
