@@ -46,8 +46,8 @@ import sqlalchemy as sa
 from neutron.db import migration
 
 
-def upgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def upgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.add_column('routers', sa.Column('enable_snat', sa.Boolean(),
@@ -56,8 +56,8 @@ def upgrade(active_plugin=None, options=None):
     op.execute("UPDATE routers SET enable_snat=True")
 
 
-def downgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def downgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.drop_column('routers', 'enable_snat')

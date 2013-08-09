@@ -29,7 +29,9 @@ down_revision = 'e6b16a30d97'
 
 # Change to ['*'] if this migration applies to all plugins
 
-migration_for_plugins = ['*']
+migration_for_plugins = [
+    'neutron.services.firewall.fwaas_plugin.FirewallPlugin',
+]
 
 from alembic import op
 import sqlalchemy as sa
@@ -37,8 +39,8 @@ import sqlalchemy as sa
 from neutron.db import migration
 
 
-def downgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def downgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.drop_table('firewall_rules')
@@ -46,8 +48,8 @@ def downgrade(active_plugin=None, options=None):
     op.drop_table('firewall_policies')
 
 
-def upgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def upgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.create_table(

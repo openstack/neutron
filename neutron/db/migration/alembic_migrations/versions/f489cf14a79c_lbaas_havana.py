@@ -27,7 +27,9 @@ Create Date: 2013-02-04 16:32:32.048731
 revision = 'f489cf14a79c'
 down_revision = 'grizzly'
 
-migration_for_plugins = ['*']
+migration_for_plugins = [
+    'neutron.services.loadbalancer.plugin.LoadBalancerPlugin',
+]
 
 from alembic import op
 import sqlalchemy as sa
@@ -35,8 +37,8 @@ import sqlalchemy as sa
 from neutron.db import migration
 
 
-def upgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def upgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.create_table(
@@ -147,8 +149,8 @@ def upgrade(active_plugin=None, options=None):
     )
 
 
-def downgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def downgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.drop_table(u'poolstatisticss')

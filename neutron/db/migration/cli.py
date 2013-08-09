@@ -30,6 +30,9 @@ _core_opts = [
     cfg.StrOpt('core_plugin',
                default='',
                help=_('Neutron plugin provider module')),
+    cfg.ListOpt('service_plugins',
+                default=[],
+                help=_("The service plugins Neutron will use")),
 ]
 
 _quota_opts = [

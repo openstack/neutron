@@ -32,11 +32,11 @@ down_revision = '1341ed32cc1e'
 migration_for_plugins = ['*']
 
 
-def upgrade(active_plugin=None, options=None):
+def upgrade(active_plugins=None, options=None):
     """A no-op migration for marking the Grizzly release."""
     pass
 
 
-def downgrade(active_plugin=None, options=None):
+def downgrade(active_plugins=None, options=None):
     """A no-op migration for marking the Grizzly release."""
     pass

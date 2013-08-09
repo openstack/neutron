@@ -40,13 +40,13 @@ from neutron.db import migration
 from neutron.db.migration.alembic_migrations import common_ext_ops
 
 
-def upgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def upgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
     common_ext_ops.upgrade_l3()
 
 
-def downgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def downgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
     common_ext_ops.downgrade_l3()

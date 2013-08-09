@@ -40,8 +40,8 @@ import sqlalchemy as sa
 from neutron.db import migration
 
 
-def upgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def upgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
     op.create_table('networkgateways',
                     sa.Column('id', sa.String(length=36), nullable=False),
@@ -88,8 +88,8 @@ def upgrade(active_plugin=None, options=None):
                                         'segmentation_id'))
 
 
-def downgrade(active_plugin=None, options=None):
-    if not migration.should_run(active_plugin, migration_for_plugins):
+def downgrade(active_plugins=None, options=None):
+    if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.drop_table('networkconnections')
