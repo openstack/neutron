@@ -59,7 +59,7 @@ class NotAuthorized(NeutronException):
 
 
 class ServiceUnavailable(NeutronException):
-    message = _("The service is unailable")
+    message = _("The service is unavailable")
 
 
 class AdminRequired(NotAuthorized):

@@ -1318,7 +1318,7 @@ class TestNvplibLogicalPorts(NvplibTestCase):
             self.assertIn(res_port['uuid'], switch_port_uuids)
 
 
-class TestNvplibClusterVersion(NvplibTestCase):
+class TestNvplibClusterManagement(NvplibTestCase):
 
     def test_get_cluster_version(self):
 
@@ -1330,7 +1330,6 @@ class TestNvplibClusterVersion(NvplibTestCase):
                 return {'result_count': 1,
                         'results': [{'uuid': 'xyz'}]}
 
-        # mock do_request
         with mock.patch.object(nvplib, 'do_request', new=fakedorequest):
             version = nvplib.get_cluster_version('whatever')
             self.assertEqual(version, '3.0')
@@ -1341,10 +1340,16 @@ class TestNvplibClusterVersion(NvplibTestCase):
             if 'node' in uri:
                 return {'result_count': 0}
 
-        # mock do_request
         with mock.patch.object(nvplib, 'do_request', new=fakedorequest):
             version = nvplib.get_cluster_version('whatever')
             self.assertIsNone(version)
+
+    def test_cluster_in_readonly_mode(self):
+        with mock.patch.object(self.fake_cluster.api_client,
+                               'request',
+                               side_effect=NvpApiClient.ReadOnlyMode):
+            self.assertRaises(nvp_exc.MaintenanceInProgress,
+                              nvplib.do_request, cluster=self.fake_cluster)
 
 
 def _nicira_method(method_name, module_name='nvplib'):

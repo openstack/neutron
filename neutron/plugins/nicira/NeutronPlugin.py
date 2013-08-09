@@ -757,7 +757,9 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         base.FAULT_MAP.update({nvp_exc.NvpInvalidNovaZone:
                                webob.exc.HTTPBadRequest,
                                nvp_exc.NvpNoMorePortsException:
-                               webob.exc.HTTPBadRequest})
+                               webob.exc.HTTPBadRequest,
+                               nvp_exc.MaintenanceInProgress:
+                               webob.exc.HTTPServiceUnavailable})
 
     def _handle_provider_create(self, context, attrs):
         # NOTE(salvatore-orlando): This method has been borrowed from
