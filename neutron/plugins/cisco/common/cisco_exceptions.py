@@ -212,3 +212,8 @@ class ProfileTenantBindingNotFound(exceptions.NotFound):
     """Profile to Tenant binding for given profile ID cannot be found."""
     message = _("Profile-Tenant binding for profile %(profile_id)s could "
                 "not be found.")
+
+
+class NoClusterFound(exceptions.NotFound):
+    """No service cluster found to perform multi-segment bridging."""
+    message = _("No service cluster found to perform multi-segment bridging.")

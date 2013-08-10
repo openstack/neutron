@@ -16,6 +16,7 @@
 #
 # @author: Abhishek Raut, Cisco Systems, Inc.
 # @author: Sergey Sudakovich, Cisco Systems, Inc.
+# @author: Rudrajit Tapadar, Cisco Systems, Inc.
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
@@ -33,6 +34,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'is_visible': True, 'default': ''},
         'segment_type': {'allow_post': True, 'allow_put': True,
                          'is_visible': True, 'default': ''},
+        'sub_type': {'allow_post': True, 'allow_put': True,
+                     'is_visible': True,
+                     'default': attributes.ATTR_NOT_SPECIFIED},
         'segment_range': {'allow_post': True, 'allow_put': True,
                           'is_visible': True, 'default': ''},
         'multicast_ip_range': {'allow_post': True, 'allow_put': True,
@@ -82,7 +86,7 @@ class Network_profile(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        """Returns Ext Resources."""
+        """Returns Extended Resources."""
         exts = []
         plugin = manager.NeutronManager.get_plugin()
         for resource_name in ['network_profile', 'network_profile_binding']:

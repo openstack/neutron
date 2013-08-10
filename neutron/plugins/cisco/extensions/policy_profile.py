@@ -69,7 +69,7 @@ class Policy_profile(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        """Returns Ext Resources."""
+        """Returns Extended Resources."""
         exts = []
         plugin = manager.NeutronManager.get_plugin()
         for resource_name in ['policy_profile', 'policy_profile_binding']:

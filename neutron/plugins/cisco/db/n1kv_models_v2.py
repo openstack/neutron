@@ -15,6 +15,7 @@
 #    under the License.
 #
 # @author: Abhishek Raut, Cisco Systems Inc.
+# @author: Rudrajit Tapadar, Cisco Systems Inc.
 
 import sqlalchemy as sa
 
@@ -95,7 +96,8 @@ class NetworkProfile(model_base.BASEV2, models_v2.HasId):
     """
     Nexus1000V Network Profiles
 
-        segment_type - VLAN, VXLAN
+        segment_type - VLAN, VXLAN, TRUNK, MULTI_SEGMENT
+        sub_type - TRUNK_VLAN, TRUNK_VXLAN
         segment_range - '<integer>-<integer>'
         multicast_ip_index - <integer>
         multicast_ip_range - '<ip>-<ip>'
@@ -106,8 +108,12 @@ class NetworkProfile(model_base.BASEV2, models_v2.HasId):
     name = sa.Column(sa.String(255))
     segment_type = sa.Column(sa.Enum(cisco_constants.NETWORK_TYPE_VLAN,
                                      cisco_constants.NETWORK_TYPE_VXLAN,
+                                     cisco_constants.NETWORK_TYPE_TRUNK,
+                                     cisco_constants.
+                                     NETWORK_TYPE_MULTI_SEGMENT,
                                      name='segment_type'),
                              nullable=False)
+    sub_type = sa.Column(sa.String(255))
     segment_range = sa.Column(sa.String(255))
     multicast_ip_index = sa.Column(sa.Integer, default=0)
     multicast_ip_range = sa.Column(sa.String(255))
@@ -142,3 +148,30 @@ class ProfileBinding(model_base.BASEV2):
                           primary_key=True,
                           default=cisco_constants.TENANT_ID_NOT_SET)
     profile_id = sa.Column(sa.String(36), primary_key=True)
+
+
+class N1kvTrunkSegmentBinding(model_base.BASEV2):
+
+    """Represents binding of segments in trunk networks."""
+    __tablename__ = 'cisco_n1kv_trunk_segments'
+
+    trunk_segment_id = sa.Column(sa.String(36),
+                                 sa.ForeignKey('networks.id',
+                                 ondelete="CASCADE"),
+                                 primary_key=True)
+    segment_id = sa.Column(sa.String(36), nullable=False, primary_key=True)
+    dot1qtag = sa.Column(sa.String(36), nullable=False, primary_key=True)
+
+
+class N1kvMultiSegmentNetworkBinding(model_base.BASEV2):
+
+    """Represents binding of segments in multi-segment networks."""
+    __tablename__ = 'cisco_n1kv_multi_segments'
+
+    multi_segment_id = sa.Column(sa.String(36),
+                                 sa.ForeignKey('networks.id',
+                                 ondelete="CASCADE"),
+                                 primary_key=True)
+    segment1_id = sa.Column(sa.String(36), nullable=False, primary_key=True)
+    segment2_id = sa.Column(sa.String(36), nullable=False, primary_key=True)
+    encap_profile_name = sa.Column(sa.String(36))

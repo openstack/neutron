@@ -15,6 +15,7 @@
 #    under the License.
 #
 # @author: Abhishek Raut, Cisco Systems, Inc.
+# @author: Rudrajit Tapadar, Cisco Systems, Inc.
 
 import base64
 import httplib2
@@ -117,7 +118,9 @@ class Client(object):
             "networks": "network",
             "ports": "port",
             "set": "instance",
-            "subnets": "subnet"
+            "subnets": "subnet",
+            "mappings": "mapping",
+            "segments": "segment"
         }
     }
 
@@ -138,6 +141,9 @@ class Client(object):
     logical_networks_path = "/logical-network"
     logical_network_path = "/logical-network/%s"
     events_path = "/kvm/events"
+    clusters_path = "/cluster"
+    encap_profiles_path = "/encapsulation-profile"
+    encap_profile_path = "/encapsulation-profile/%s"
 
     def __init__(self, **kwargs):
         """Initialize a new client for the plugin."""
@@ -171,7 +177,7 @@ class Client(object):
 
         :param network: network dict
         """
-        body = {'name': network['name'] + '_bd',
+        body = {'name': network['name'] + c_const.BRIDGE_DOMAIN_SUFFIX,
                 'segmentId': network[providernet.SEGMENTATION_ID],
                 'groupIp': network[n1kv_profile.MULTICAST_IP], }
         return self._post(self.bridge_domains_path,
@@ -199,7 +205,20 @@ class Client(object):
         if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VLAN:
             body['vlan'] = network[providernet.SEGMENTATION_ID]
         elif network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VXLAN:
-            body['bridgeDomain'] = network['name'] + '_bd'
+            body['bridgeDomain'] = (network['name'] +
+                                    c_const.BRIDGE_DOMAIN_SUFFIX)
+        if network_profile['segment_type'] == c_const.NETWORK_TYPE_TRUNK:
+            body['mode'] = c_const.NETWORK_TYPE_TRUNK
+            body['segmentType'] = network_profile['sub_type']
+            if network_profile['sub_type'] == c_const.NETWORK_TYPE_VLAN:
+                body['addSegments'] = network['add_segment_list']
+                body['delSegments'] = network['del_segment_list']
+            else:
+                body['encapProfile'] = (network['name'] +
+                                        c_const.ENCAPSULATION_PROFILE_SUFFIX)
+        else:
+            body['mode'] = 'access'
+            body['segmentType'] = network_profile['segment_type']
         return self._post(self.network_segments_path,
                           body=body)
 
@@ -498,3 +517,37 @@ class Client(object):
         auth = base64.encodestring("%s:%s" % (username, password))
         header = {"Authorization": "Basic %s" % auth}
         return header
+
+    def get_clusters(self):
+        """Fetches a list of all vxlan gateway clusters."""
+        return self._get(self.clusters_path)
+
+    def create_encapsulation_profile(self, encap):
+        """
+        Create an encapsulation profile on VSM.
+
+        :param encap: encapsulation dict
+        """
+        body = {'name': encap['name'],
+                'addMappings': encap['add_segment_list'],
+                'delMappings': encap['del_segment_list']}
+        return self._post(self.encap_profiles_path,
+                          body=body)
+
+    def update_encapsulation_profile(self, context, profile_name, body):
+        """
+        Adds a vlan to bridge-domain mapping to an encapsulation profile.
+
+        :param profile_name: Name of the encapsulation profile
+        :param body: mapping dictionary
+        """
+        return self._post(self.encap_profile_path
+                          % (profile_name), body=body)
+
+    def delete_encapsulation_profile(self, name):
+        """
+        Delete an encapsulation profile on VSM.
+
+        :param name: name of the encapsulation profile to be deleted
+        """
+        return self._delete(self.encap_profile_path % (name))

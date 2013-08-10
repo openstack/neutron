@@ -77,6 +77,12 @@ NETWORK_TYPE_VLAN = 'vlan'
 NETWORK_TYPE_VXLAN = 'vxlan'
 NETWORK_TYPE_LOCAL = 'local'
 NETWORK_TYPE_NONE = 'none'
+NETWORK_TYPE_TRUNK = 'trunk'
+NETWORK_TYPE_MULTI_SEGMENT = 'multi-segment'
+
+# Values for network sub_type
+NETWORK_SUBTYPE_TRUNK_VLAN = NETWORK_TYPE_VLAN
+NETWORK_SUBTYPE_TRUNK_VXLAN = NETWORK_TYPE_VXLAN
 
 # Prefix for VM Network name
 VM_NETWORK_NAME_PREFIX = 'vmn_'
@@ -88,3 +94,14 @@ NAME = 'name'
 ID = 'id'
 POLICY = 'policy'
 TENANT_ID_NOT_SET = 'TENANT_ID_NOT_SET'
+ENCAPSULATIONS = 'encapsulations'
+STATE = 'state'
+ONLINE = 'online'
+MAPPINGS = 'mappings'
+MAPPING = 'mapping'
+SEGMENTS = 'segments'
+SEGMENT = 'segment'
+BRIDGE_DOMAIN_SUFFIX = '_bd'
+ENCAPSULATION_PROFILE_SUFFIX = '_profile'
+
+UUID_LENGTH = 36
