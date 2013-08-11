@@ -24,6 +24,7 @@ import eventlet
 from oslo.config import cfg
 
 from neutron.agent import rpc as agent_rpc
+from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as logging_config
 from neutron.common import constants as q_constants
 from neutron.common import topics
@@ -31,6 +32,7 @@ from neutron.common import utils as q_utils
 from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
+from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.mlnx.agent import utils
 from neutron.plugins.mlnx.common import config  # noqa
@@ -100,8 +102,9 @@ class EswitchManager(object):
         net_map = self.network_map[network_id]
         net_map['ports'].append({'port_id': port_id, 'port_mac': port_mac})
 
-        if network_type == constants.TYPE_VLAN:
-            LOG.info(_('Binding VLAN ID %(seg_id)s'
+        if network_type in (constants.TYPE_VLAN,
+                            constants.TYPE_IB):
+            LOG.info(_('Binding Segmentation ID %(seg_id)s'
                        'to eSwitch for vNIC mac_address %(mac)s'),
                      {'seg_id': seg_id,
                       'mac': port_mac})
@@ -109,8 +112,6 @@ class EswitchManager(object):
                                         seg_id,
                                         port_mac)
             self.utils.port_up(physical_network, port_mac)
-        elif network_type == constants.TYPE_IB:
-            LOG.debug(_('Network Type IB currently not supported'))
         else:
             LOG.error(_('Unsupported network type %s'), network_type)
 
@@ -131,7 +132,7 @@ class EswitchManager(object):
         if network_type == constants.TYPE_VLAN:
             LOG.debug(_("creating VLAN Network"))
         elif network_type == constants.TYPE_IB:
-            LOG.debug(_("currently IB network provisioning is not supported"))
+            LOG.debug(_("creating IB Network"))
         else:
             LOG.error(_("Unknown network type %(network_type) "
                         "for network %(network_id)"),
@@ -146,14 +147,18 @@ class EswitchManager(object):
         self.network_map[network_id] = data
 
 
-class MlnxEswitchRpcCallbacks():
+class MlnxEswitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    # history
+    #   1.1 Support Security Group RPC
+    RPC_API_VERSION = '1.1'
 
-    def __init__(self, context, eswitch):
+    def __init__(self, context, agent):
         self.context = context
-        self.eswitch = eswitch
+        self.agent = agent
+        self.eswitch = agent.eswitch
+        self.sg_agent = agent
 
     def network_delete(self, context, **kwargs):
         LOG.debug(_("network_delete received"))
@@ -167,22 +172,39 @@ class MlnxEswitchRpcCallbacks():
     def port_update(self, context, **kwargs):
         LOG.debug(_("port_update received"))
         port = kwargs.get('port')
-        vlan_id = kwargs.get('vlan_id')
-        physical_network = kwargs.get('physical_network')
         net_type = kwargs.get('network_type')
+        segmentation_id = kwargs.get('segmentation_id')
+        if not segmentation_id:
+            # compatibility with pre-Havana RPC vlan_id encoding
+            segmentation_id = kwargs.get('vlan_id')
+        physical_network = kwargs.get('physical_network')
         net_id = port['network_id']
         if self.eswitch.vnic_port_exists(port['mac_address']):
-            if port['admin_state_up']:
-                self.eswitch.port_up(net_id,
-                                     net_type,
-                                     physical_network,
-                                     vlan_id,
-                                     port['id'],
-                                     port['mac_address'])
-            else:
-                self.eswitch.port_down(net_id,
-                                       physical_network,
-                                       port['mac_address'])
+            if 'security_groups' in port:
+                self.sg_agent.refresh_firewall()
+            try:
+                if port['admin_state_up']:
+                    self.eswitch.port_up(net_id,
+                                         net_type,
+                                         physical_network,
+                                         segmentation_id,
+                                         port['id'],
+                                         port['mac_address'])
+                    # update plugin about port status
+                    self.agent.plugin_rpc.update_device_up(self.context,
+                                                           port['mac_address'],
+                                                           self.agent.agent_id)
+                else:
+                    self.eswitch.port_down(net_id,
+                                           physical_network,
+                                           port['mac_address'])
+                    # update plugin about port status
+                    self.agent.plugin_rpc.update_device_down(
+                        self.context,
+                        port['mac_address'],
+                        self.agent.agent_id)
+            except rpc_common.Timeout:
+                LOG.error(_("RPC timeout while updating port %s"), port['id'])
         else:
             LOG.debug(_("No port %s defined on agent."), port['id'])
 
@@ -196,9 +218,14 @@ class MlnxEswitchRpcCallbacks():
         return dispatcher.RpcDispatcher([self])
 
 
-class MlnxEswitchNeutronAgent(object):
+class MlnxEswitchPluginApi(agent_rpc.PluginApi,
+                           sg_rpc.SecurityGroupServerRpcApiMixin):
+    pass
+
+
+class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
     # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    #RPC_API_VERSION = '1.0'
 
     def __init__(self, interface_mapping):
         self._polling_interval = cfg.CONF.AGENT.polling_interval
@@ -208,9 +235,10 @@ class MlnxEswitchNeutronAgent(object):
             'host': cfg.CONF.host,
             'topic': q_constants.L2_AGENT_TOPIC,
             'configurations': interface_mapping,
-            'agent_type': 'eSwitch agent',
+            'agent_type': q_constants.AGENT_TYPE_MLNX,
             'start_flag': True}
         self._setup_rpc()
+        self.init_firewall()
 
     def _setup_eswitches(self, interface_mapping):
         daemon = cfg.CONF.ESWITCH.daemon_endpoint
@@ -229,17 +257,21 @@ class MlnxEswitchNeutronAgent(object):
 
     def _setup_rpc(self):
         self.agent_id = 'mlnx-agent.%s' % socket.gethostname()
+        LOG.info(_("RPC agent_id: %s"), self.agent_id)
+
         self.topic = topics.AGENT
-        self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+        self.plugin_rpc = MlnxEswitchPluginApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
         # RPC network init
         self.context = context.get_admin_context_without_session()
         # Handle updates from service
-        self.callbacks = MlnxEswitchRpcCallbacks(self.context, self.eswitch)
+        self.callbacks = MlnxEswitchRpcCallbacks(self.context,
+                                                 self)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
-                     [topics.NETWORK, topics.DELETE]]
+                     [topics.NETWORK, topics.DELETE],
+                     [topics.SECURITY_GROUP, topics.UPDATE]]
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
@@ -262,10 +294,10 @@ class MlnxEswitchNeutronAgent(object):
     def process_network_ports(self, port_info):
         resync_a = False
         resync_b = False
-        if 'added' in port_info:
+        if port_info.get('added'):
             LOG.debug(_("ports added!"))
             resync_a = self.treat_devices_added(port_info['added'])
-        if 'removed' in port_info:
+        if port_info.get('removed'):
             LOG.debug(_("ports removed!"))
             resync_b = self.treat_devices_removed(port_info['removed'])
         # If one of the above opertaions fails => resync with plugin
@@ -334,9 +366,9 @@ class MlnxEswitchNeutronAgent(object):
                 continue
             if dev_details['exists']:
                 LOG.info(_("Port %s updated."), device)
-                self.eswitch.port_release(device)
             else:
                 LOG.debug(_("Device %s not defined on plugin"), device)
+            self.eswitch.port_release(device)
         return resync
 
     def daemon_loop(self):
@@ -356,7 +388,7 @@ class MlnxEswitchNeutronAgent(object):
                 port_info = self.update_ports(ports)
                 # notify plugin about port deltas
                 if port_info:
-                    LOG.debug(_("Agent loop has new devices!"))
+                    LOG.debug(_("Agent loop process devices!"))
                     # If treat devices fails - must resync with plugin
                     sync = self.process_network_ports(port_info)
                     ports = port_info['current']

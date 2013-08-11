@@ -16,6 +16,8 @@
 from neutron.plugins.mlnx.common import constants
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
+
 
 PLUGIN_NAME = ('neutron.plugins.mlnx.mlnx_plugin.MellanoxEswitchPlugin')
 
@@ -25,6 +27,7 @@ class MlnxPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         super(MlnxPluginV2TestCase, self).setUp(self._plugin_name)
+        self.port_create_status = 'DOWN'
 
 
 class TestMlnxBasicGet(test_plugin.TestBasicGet, MlnxPluginV2TestCase):
@@ -49,3 +52,14 @@ class TestMlnxPortBinding(MlnxPluginV2TestCase,
                           test_bindings.PortBindingsTestCase):
     VIF_TYPE = constants.VIF_TYPE_DIRECT
     HAS_PORT_FILTER = False
+
+
+class TestMlnxPortBindingNoSG(TestMlnxPortBinding):
+    HAS_PORT_FILTER = False
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
+
+
+class TestMlnxPortBindingHost(
+    MlnxPluginV2TestCase,
+    test_bindings.PortBindingsHostTestCaseMixin):
+    pass

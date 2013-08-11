@@ -14,7 +14,9 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from oslo.config import cfg
 
+from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import topics
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.rpc import proxy
@@ -22,17 +24,21 @@ from neutron.openstack.common.rpc import proxy
 LOG = logging.getLogger(__name__)
 
 
-class AgentNotifierApi(proxy.RpcProxy):
+class AgentNotifierApi(proxy.RpcProxy,
+                       sg_rpc.SecurityGroupAgentRpcApiMixin):
     """Agent side of the Embedded Switch RPC API.
 
        API version history:
        1.0 - Initial version.
+       1.1 - Added get_active_networks_info, create_dhcp_port,
+              and update_dhcp_port methods.
     """
-    BASE_RPC_API_VERSION = '1.0'
+    BASE_RPC_API_VERSION = '1.1'
 
     def __init__(self, topic):
         super(AgentNotifierApi, self).__init__(
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        self.topic = topic
         self.topic_network_delete = topics.get_topic_name(topic,
                                                           topics.NETWORK,
                                                           topics.DELETE)
@@ -50,10 +56,12 @@ class AgentNotifierApi(proxy.RpcProxy):
     def port_update(self, context, port, physical_network,
                     network_type, vlan_id):
         LOG.debug(_("Sending update port message"))
-        self.fanout_cast(context,
-                         self.make_msg('port_update',
-                                       port=port,
-                                       physical_network=physical_network,
-                                       network_type=network_type,
-                                       vlan_id=vlan_id),
+        kwargs = {'port': port,
+                  'network_type': network_type,
+                  'physical_network': physical_network,
+                  'segmentation_id': vlan_id}
+        if cfg.CONF.AGENT.rpc_support_old_agents:
+            kwargs['vlan_id'] = vlan_id
+        msg = self.make_msg('port_update', **kwargs)
+        self.fanout_cast(context, msg,
                          topic=self.topic_port_update)
