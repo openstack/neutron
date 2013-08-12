@@ -30,7 +30,6 @@ cisco_plugins_opts = [
                help=_("Nexus Switch to use")),
 ]
 
-
 cisco_opts = [
     cfg.StrOpt('vlan_name_prefix', default='q-',
                help=_("VLAN Name prefix")),
@@ -54,38 +53,64 @@ cisco_opts = [
                help=_("Nexus Driver Name")),
 ]
 
+cisco_n1k_opts = [
+    cfg.StrOpt('integration_bridge', default='br-int',
+               help=_("N1K Integration Bridge")),
+    cfg.BoolOpt('enable_tunneling', default=True,
+                help=_("N1K Enable Tunneling")),
+    cfg.StrOpt('tunnel_bridge', default='br-tun',
+               help=_("N1K Tunnel Bridge")),
+    cfg.StrOpt('local_ip', default='10.0.0.3',
+               help=_("N1K Local IP")),
+    cfg.StrOpt('tenant_network_type', default='local',
+               help=_("N1K Tenant Network Type")),
+    cfg.StrOpt('bridge_mappings', default='',
+               help=_("N1K Bridge Mappings")),
+    cfg.StrOpt('vxlan_id_ranges', default='5000:10000',
+               help=_("N1K VXLAN ID Ranges")),
+    cfg.StrOpt('network_vlan_ranges', default='vlan:1:4095',
+               help=_("N1K Network VLAN Ranges")),
+    cfg.StrOpt('default_policy_profile', default='service_profile',
+               help=_("N1K default policy profile")),
+    cfg.StrOpt('poll_duration', default='10',
+               help=_("N1K Policy profile polling duration in seconds")),
+]
+
 cfg.CONF.register_opts(cisco_opts, "CISCO")
+cfg.CONF.register_opts(cisco_n1k_opts, "CISCO_N1K")
 cfg.CONF.register_opts(cisco_plugins_opts, "CISCO_PLUGINS")
 config.register_root_helper(cfg.CONF)
 
 # shortcuts
 CONF = cfg.CONF
 CISCO = cfg.CONF.CISCO
+CISCO_N1K = cfg.CONF.CISCO_N1K
 CISCO_PLUGINS = cfg.CONF.CISCO_PLUGINS
 
 #
-# When populated the nexus_dictionary format is:
-# {('<nexus ipaddr>', '<key>'): '<value>', ...}
+# device_dictionary - Contains all external device configuration.
+#
+# When populated the device dictionary format is:
+# {('<device ID>', '<device ipaddr>', '<keyword>'): '<value>', ...}
 #
 # Example:
-# {('1.1.1.1', 'username'): 'admin',
-#  ('1.1.1.1', 'password'): 'mySecretPassword',
-#  ('1.1.1.1', 'ssh_port'): 22,
-#  ('1.1.1.1', 'compute1'): '1/1', ...}
+# {('NEXUS_SWITCH', '1.1.1.1', 'username'): 'admin',
+#  ('NEXUS_SWITCH', '1.1.1.1', 'password'): 'mySecretPassword',
+#  ('NEXUS_SWITCH', '1.1.1.1', 'compute1'): '1/1', ...}
 #
-nexus_dictionary = {}
+device_dictionary = {}
 
 
 class CiscoConfigOptions():
     """Cisco Configuration Options Class."""
 
     def __init__(self):
-        self._create_nexus_dictionary()
+        self._create_device_dictionary()
 
-    def _create_nexus_dictionary(self):
-        """Create the Nexus dictionary.
-
-        Reads data from cisco_plugins.ini NEXUS_SWITCH section(s).
+    def _create_device_dictionary(self):
+        """
+        Create the device dictionary from the cisco_plugins.ini
+        device supported sections. Ex. NEXUS_SWITCH, N1KV.
         """
 
         multi_parser = cfg.MultiConfigParser()
@@ -96,11 +121,11 @@ class CiscoConfigOptions():
 
         for parsed_file in multi_parser.parsed:
             for parsed_item in parsed_file.keys():
-                nexus_name, sep, nexus_ip = parsed_item.partition(':')
-                if nexus_name.lower() == "nexus_switch":
-                    for nexus_key, value in parsed_file[parsed_item].items():
-                        nexus_dictionary[nexus_ip, nexus_key] = value[0]
+                dev_id, sep, dev_ip = parsed_item.partition(':')
+                if dev_id.lower() in ['nexus_switch', 'n1kv']:
+                    for dev_key, value in parsed_file[parsed_item].items():
+                        device_dictionary[dev_id, dev_ip, dev_key] = value[0]
 
 
-def get_nexus_dictionary():
-    return nexus_dictionary
+def get_device_dictionary():
+    return device_dictionary

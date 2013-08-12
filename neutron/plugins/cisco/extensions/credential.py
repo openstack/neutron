@@ -1,7 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2011 Cisco Systems, Inc.
-# All rights reserved.
+# Copyright 2013 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -16,145 +15,68 @@
 #    under the License.
 #
 # @author: Ying Liu, Cisco Systems, Inc.
-#
+# @author: Abhishek Raut, Cisco Systems, Inc
 
-from webob import exc
-
-from neutron.api import api_common as common
 from neutron.api import extensions
-from neutron.manager import NeutronManager
-from neutron.plugins.cisco.common import cisco_exceptions as exception
-from neutron.plugins.cisco.common import cisco_faults as faults
-from neutron.plugins.cisco.extensions import (_credential_view as
-                                              credential_view)
-from neutron import wsgi
+from neutron.api.v2 import attributes
+from neutron.api.v2 import base
+from neutron import manager
+
+
+# Attribute Map
+RESOURCE_ATTRIBUTE_MAP = {
+    'credentials': {
+        'credential_id': {'allow_post': False, 'allow_put': False,
+                          'validate': {'type:regex': attributes.UUID_PATTERN},
+                          'is_visible': True},
+        'credential_name': {'allow_post': True, 'allow_put': True,
+                            'is_visible': True, 'default': ''},
+        'type': {'allow_post': True, 'allow_put': True,
+                 'is_visible': True, 'default': ''},
+        'user_name': {'allow_post': True, 'allow_put': True,
+                      'is_visible': True, 'default': ''},
+        'password': {'allow_post': True, 'allow_put': True,
+                     'is_visible': True, 'default': ''},
+    },
+}
 
 
 class Credential(extensions.ExtensionDescriptor):
-    """Extension class Credential."""
 
     @classmethod
     def get_name(cls):
-        """Returns Ext Resource Name."""
+        """Returns Extended Resource Name."""
         return "Cisco Credential"
 
     @classmethod
     def get_alias(cls):
-        """Returns Ext Resource Alias."""
-        return "Cisco Credential"
+        """Returns Extended Resource Alias."""
+        return "credential"
 
     @classmethod
     def get_description(cls):
-        """Returns Ext Resource Description."""
+        """Returns Extended Resource Description."""
         return "Credential include username and password"
 
     @classmethod
     def get_namespace(cls):
-        """Returns Ext Resource Namespace."""
-        return "http://docs.ciscocloud.com/api/ext/credential/v1.0"
+        """Returns Extended Resource Namespace."""
+        return "http://docs.ciscocloud.com/api/ext/credential/v2.0"
 
     @classmethod
     def get_updated(cls):
-        """Returns Ext Resource Update Time."""
+        """Returns Extended Resource Update Time."""
         return "2011-07-25T13:25:27-06:00"
 
     @classmethod
     def get_resources(cls):
-        """Returns Ext Resources."""
-        parent_resource = dict(member_name="tenant",
-                               collection_name="extensions/csco/tenants")
-        controller = CredentialController(NeutronManager.get_plugin())
-        return [extensions.ResourceExtension('credentials', controller,
-                                             parent=parent_resource)]
-
-
-class CredentialController(common.NeutronController, wsgi.Controller):
-    """Credential API controller based on NeutronController."""
-
-    _credential_ops_param_list = [
-        {'param-name': 'credential_name', 'required': True},
-        {'param-name': 'user_name', 'required': True},
-        {'param-name': 'password', 'required': True},
-    ]
-
-    _serialization_metadata = {
-        "application/xml": {
-            "attributes": {
-                "credential": ["id", "name"],
-            },
-        },
-    }
-
-    def __init__(self, plugin):
-        self._resource_name = 'credential'
-        self._plugin = plugin
-
-    def index(self, request, tenant_id):
-        """Returns a list of credential ids."""
-        return self._items(request, tenant_id, is_detail=False)
-
-    def _items(self, request, tenant_id, is_detail):
-        """Returns a list of credentials."""
-        credentials = self._plugin.get_all_credentials(tenant_id)
-        builder = credential_view.get_view_builder(request)
-        result = [builder.build(credential, is_detail)['credential']
-                  for credential in credentials]
-        return dict(credentials=result)
-
-    # pylint: disable-msg=E1101,W0613
-    def show(self, request, tenant_id, id):
-        """Returns credential details for the given credential id."""
-        try:
-            credential = self._plugin.get_credential_details(tenant_id, id)
-            builder = credential_view.get_view_builder(request)
-            #build response with details
-            result = builder.build(credential, True)
-            return dict(credentials=result)
-        except exception.CredentialNotFound as exp:
-            return faults.Fault(faults.CredentialNotFound(exp))
-
-    def create(self, request, tenant_id):
-        """Creates a new credential for a given tenant."""
-        try:
-            body = self._deserialize(request.body, request.get_content_type())
-            req_body = self._prepare_request_body(
-                body, self._credential_ops_param_list)
-            req_params = req_body[self._resource_name]
-
-        except exc.HTTPError as exp:
-            return faults.Fault(exp)
-        credential = self._plugin.create_credential(
-            tenant_id,
-            req_params['credential_name'],
-            req_params['user_name'],
-            req_params['password'])
-        builder = credential_view.get_view_builder(request)
-        result = builder.build(credential)
-        return dict(credentials=result)
-
-    def update(self, request, tenant_id, id):
-        """Updates the name for the credential with the given id."""
-        try:
-            body = self._deserialize(request.body, request.get_content_type())
-            req_body = self._prepare_request_body(
-                body, self._credential_ops_param_list)
-            req_params = req_body[self._resource_name]
-        except exc.HTTPError as exp:
-            return faults.Fault(exp)
-        try:
-            credential = self._plugin.rename_credential(
-                tenant_id, id, req_params['credential_name'])
-
-            builder = credential_view.get_view_builder(request)
-            result = builder.build(credential, True)
-            return dict(credentials=result)
-        except exception.CredentialNotFound as exp:
-            return faults.Fault(faults.CredentialNotFound(exp))
-
-    def delete(self, request, tenant_id, id):
-        """Destroys the credential with the given id."""
-        try:
-            self._plugin.delete_credential(tenant_id, id)
-            return exc.HTTPOk()
-        except exception.CredentialNotFound as exp:
-            return faults.Fault(faults.CredentialNotFound(exp))
+        """Returns Extended Resources."""
+        resource_name = "credential"
+        collection_name = resource_name + "s"
+        plugin = manager.NeutronManager.get_plugin()
+        params = RESOURCE_ATTRIBUTE_MAP.get(collection_name, dict())
+        controller = base.create_resource(collection_name,
+                                          resource_name,
+                                          plugin, params)
+        return [extensions.ResourceExtension(collection_name,
+                                             controller)]

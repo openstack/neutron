@@ -46,10 +46,9 @@ def get_qos(tenant_id, qos_id):
     LOG.debug(_("get_qos() called"))
     session = db.get_session()
     try:
-        qos = (session.query(network_models_v2.QoS).
-               filter_by(tenant_id=tenant_id).
-               filter_by(qos_id=qos_id).one())
-        return qos
+        return (session.query(network_models_v2.QoS).
+                filter_by(tenant_id=tenant_id).
+                filter_by(qos_id=qos_id).one())
     except exc.NoResultFound:
         raise c_exc.QosNotFound(qos_id=qos_id,
                                 tenant_id=tenant_id)
@@ -106,66 +105,56 @@ def update_qos(tenant_id, qos_id, new_qos_name=None):
                                 tenant_id=tenant_id)
 
 
-def get_all_credentials(tenant_id):
+def get_all_credentials():
     """Lists all the creds for a tenant."""
     session = db.get_session()
-    return (session.query(network_models_v2.Credential).
-            filter_by(tenant_id=tenant_id).all())
+    return (session.query(network_models_v2.Credential).all())
 
 
-def get_credential(tenant_id, credential_id):
-    """Lists the creds for given a cred_id and tenant_id."""
+def get_credential(credential_id):
+    """Lists the creds for given a cred_id."""
     session = db.get_session()
     try:
-        cred = (session.query(network_models_v2.Credential).
-                filter_by(tenant_id=tenant_id).
+        return (session.query(network_models_v2.Credential).
                 filter_by(credential_id=credential_id).one())
-        return cred
     except exc.NoResultFound:
-        raise c_exc.CredentialNotFound(credential_id=credential_id,
-                                       tenant_id=tenant_id)
+        raise c_exc.CredentialNotFound(credential_id=credential_id)
 
 
-def get_credential_name(tenant_id, credential_name):
-    """Lists the creds for given a cred_name and tenant_id."""
+def get_credential_name(credential_name):
+    """Lists the creds for given a cred_name."""
+    session = db.get_session()
+    try:
+        return (session.query(network_models_v2.Credential).
+                filter_by(credential_name=credential_name).one())
+    except exc.NoResultFound:
+        raise c_exc.CredentialNameNotFound(credential_name=credential_name)
+
+
+def add_credential(credential_name, user_name, password, type):
+    """Create a credential."""
     session = db.get_session()
     try:
         cred = (session.query(network_models_v2.Credential).
-                filter_by(tenant_id=tenant_id).
                 filter_by(credential_name=credential_name).one())
-        return cred
-    except exc.NoResultFound:
-        raise c_exc.CredentialNameNotFound(credential_name=credential_name,
-                                           tenant_id=tenant_id)
-
-
-def add_credential(tenant_id, credential_name, user_name, password):
-    """Adds a qos to tenant association."""
-    session = db.get_session()
-    try:
-        cred = (session.query(network_models_v2.Credential).
-                filter_by(tenant_id=tenant_id).
-                filter_by(credential_name=credential_name).one())
-        raise c_exc.CredentialAlreadyExists(credential_name=credential_name,
-                                            tenant_id=tenant_id)
+        raise c_exc.CredentialAlreadyExists(credential_name=credential_name)
     except exc.NoResultFound:
         cred = network_models_v2.Credential(
             credential_id=uuidutils.generate_uuid(),
-            tenant_id=tenant_id,
             credential_name=credential_name,
             user_name=user_name,
-            password=password)
+            password=password,
+            type=type)
         session.add(cred)
         session.flush()
         return cred
 
 
-def remove_credential(tenant_id, credential_id):
-    """Removes a credential from a  tenant."""
+def remove_credential(credential_id):
+    """Removes a credential."""
     session = db.get_session()
     try:
         cred = (session.query(network_models_v2.Credential).
-                filter_by(tenant_id=tenant_id).
                 filter_by(credential_id=credential_id).one())
         session.delete(cred)
         session.flush()
@@ -174,13 +163,12 @@ def remove_credential(tenant_id, credential_id):
         pass
 
 
-def update_credential(tenant_id, credential_id,
+def update_credential(credential_id,
                       new_user_name=None, new_password=None):
     """Updates a credential for a tenant."""
     session = db.get_session()
     try:
         cred = (session.query(network_models_v2.Credential).
-                filter_by(tenant_id=tenant_id).
                 filter_by(credential_id=credential_id).one())
         if new_user_name:
             cred["user_name"] = new_user_name
@@ -190,8 +178,13 @@ def update_credential(tenant_id, credential_id,
         session.flush()
         return cred
     except exc.NoResultFound:
-        raise c_exc.CredentialNotFound(credential_id=credential_id,
-                                       tenant_id=tenant_id)
+        raise c_exc.CredentialNotFound(credential_id=credential_id)
+
+
+def get_all_n1kv_credentials():
+    session = db.get_session()
+    return (session.query(network_models_v2.Credential).
+            filter_by(type='n1kv'))
 
 
 def add_provider_network(network_id, network_type, segmentation_id):
@@ -248,3 +241,50 @@ def get_ovs_vlans():
     bindings = (session.query(ovs_models_v2.VlanAllocation.vlan_id).
                 filter_by(allocated=True))
     return [binding.vlan_id for binding in bindings]
+
+
+class Credential_db_mixin(object):
+
+    """Mixin class for Cisco Credentials as a resource."""
+
+    def _make_credential_dict(self, credential, fields=None):
+        res = {'credential_id': credential['credential_id'],
+               'credential_name': credential['credential_name'],
+               'user_name': credential['user_name'],
+               'password': credential['password'],
+               'type': credential['type']}
+        return self._fields(res, fields)
+
+    def create_credential(self, context, credential):
+        """Create a credential."""
+        c = credential['credential']
+        cred = add_credential(c['credential_name'],
+                              c['user_name'],
+                              c['password'],
+                              c['type'])
+        return self._make_credential_dict(cred)
+
+    def get_credentials(self, context, filters=None, fields=None):
+        """Retrieve a list of credentials."""
+        return self._get_collection(context,
+                                    network_models_v2.Credential,
+                                    self._make_credential_dict,
+                                    filters=filters,
+                                    fields=fields)
+
+    def get_credential(self, context, id, fields=None):
+        """Retireve the requested credential based on its id."""
+        credential = get_credential(id)
+        return self._make_credential_dict(credential, fields)
+
+    def update_credential(self, context, id, credential):
+        """Update a credential based on its id."""
+        c = credential['credential']
+        cred = update_credential(id,
+                                 c['user_name'],
+                                 c['password'])
+        return self._make_credential_dict(cred)
+
+    def delete_credential(self, context, id):
+        """Delete a credential based on its id."""
+        return remove_credential(id)

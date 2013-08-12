@@ -39,7 +39,10 @@ LOG = logging.getLogger(__name__)
 class CiscoNEXUSDriver():
     """Nexus Driver Main Class."""
     def __init__(self):
-        self.nexus_switches = conf.get_nexus_dictionary()
+        cisco_switches = conf.get_device_dictionary()
+        self.nexus_switches = dict(((key[1], key[2]), val)
+                                   for key, val in cisco_switches.items()
+                                   if key[0] == 'NEXUS_SWITCH')
         self.credentials = {}
         self.connections = {}
 
