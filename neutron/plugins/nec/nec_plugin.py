@@ -19,7 +19,7 @@
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
-from neutron.common import constants as q_const
+from neutron.common import constants as const
 from neutron.common import exceptions as q_exc
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
@@ -38,6 +38,7 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
+from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
@@ -45,21 +46,6 @@ from neutron.plugins.nec import ofc_manager
 from neutron.plugins.nec import packet_filter
 
 LOG = logging.getLogger(__name__)
-
-
-class OperationalStatus:
-    """Enumeration for operational status.
-
-       ACTIVE: The resource is available.
-       DOWN: The resource is not operational.  This might indicate
-             admin_state_up=False, or lack of OpenFlow info for the port.
-       BUILD: The plugin is creating the resource.
-       ERROR: Some error occured.
-    """
-    ACTIVE = "ACTIVE"
-    DOWN = "DOWN"
-    BUILD = "BUILD"
-    ERROR = "ERROR"
 
 
 class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
@@ -123,10 +109,10 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.topic = topics.PLUGIN
         self.conn = rpc.create_connection(new=True)
         self.notifier = NECPluginV2AgentNotifierApi(topics.AGENT)
-        self.agent_notifiers[q_const.AGENT_TYPE_DHCP] = (
+        self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
-        self.agent_notifiers[q_const.AGENT_TYPE_L3] = (
+        self.agent_notifiers[const.AGENT_TYPE_L3] = (
             l3_rpc_agent_api.L3AgentNotify
         )
 
@@ -151,7 +137,6 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def activate_port_if_ready(self, context, port, network=None):
         """Activate port by creating port on OFC if ready.
 
-        Activate port and packet_filters associated with the port.
         Conditions to activate port on OFC are:
             * port admin_state is UP
             * network admin_state is UP
@@ -161,52 +146,29 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             network = super(NECPluginV2, self).get_network(context,
                                                            port['network_id'])
 
-        port_status = OperationalStatus.ACTIVE
         if not port['admin_state_up']:
             LOG.debug(_("activate_port_if_ready(): skip, "
                         "port.admin_state_up is False."))
-            port_status = OperationalStatus.DOWN
+            return port
         elif not network['admin_state_up']:
             LOG.debug(_("activate_port_if_ready(): skip, "
                         "network.admin_state_up is False."))
-            port_status = OperationalStatus.DOWN
+            return port
         elif not ndb.get_portinfo(context.session, port['id']):
             LOG.debug(_("activate_port_if_ready(): skip, "
                         "no portinfo for this port."))
-            port_status = OperationalStatus.DOWN
+            return port
+        elif self.ofc.exists_ofc_port(context, port['id']):
+            LOG.debug(_("activate_port_if_ready(): skip, "
+                        "ofc_port already exists."))
+            return port
 
-        if port_status in [OperationalStatus.ACTIVE]:
-            if self.ofc.exists_ofc_port(context, port['id']):
-                LOG.debug(_("activate_port_if_ready(): skip, "
-                            "ofc_port already exists."))
-            else:
-                try:
-                    self.ofc.create_ofc_port(context, port['id'], port)
-                except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                    reason = _("create_ofc_port() failed due to %s") % exc
-                    LOG.error(reason)
-                    port_status = OperationalStatus.ERROR
-
-        if port_status is not port['status']:
-            self._update_resource_status(context, "port", port['id'],
-                                         port_status)
-
-    def deactivate_port(self, context, port):
-        """Deactivate port by deleting port from OFC if exists.
-
-        Deactivate port and packet_filters associated with the port.
-        """
-        port_status = OperationalStatus.DOWN
-        if self.ofc.exists_ofc_port(context, port['id']):
-            try:
-                self.ofc.delete_ofc_port(context, port['id'], port)
-            except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                reason = _("delete_ofc_port() failed due to %s") % exc
-                LOG.error(reason)
-                port_status = OperationalStatus.ERROR
-        else:
-            LOG.debug(_("deactivate_port(): skip, ofc_port does not "
-                        "exist."))
+        try:
+            self.ofc.create_ofc_port(context, port['id'], port)
+            port_status = const.PORT_STATUS_ACTIVE
+        except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+            LOG.error(_("create_ofc_port() failed due to %s"), exc)
+            port_status = const.PORT_STATUS_ERROR
 
         if port_status is not port['status']:
             self._update_resource_status(context, "port", port['id'],
@@ -215,34 +177,62 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         return port
 
+    def deactivate_port(self, context, port):
+        """Deactivate port by deleting port from OFC if exists."""
+        if not self.ofc.exists_ofc_port(context, port['id']):
+            LOG.debug(_("deactivate_port(): skip, ofc_port does not "
+                        "exist."))
+            return port
+
+        try:
+            self.ofc.delete_ofc_port(context, port['id'], port)
+            port_status = const.PORT_STATUS_DOWN
+        except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+            LOG.error(_("delete_ofc_port() failed due to %s"), exc)
+            port_status = const.PORT_STATUS_ERROR
+
+        if port_status is not port['status']:
+            self._update_resource_status(context, "port", port['id'],
+                                         port_status)
+            port['status'] = port_status
+
+        return port
+
+    def _net_status(self, network):
+        # NOTE: NEC Plugin accept admin_state_up. When it's False, this plugin
+        # deactivate all ports on the network to drop all packet and show
+        # status='DOWN' to users. But the network is kept defined on OFC.
+        if network['network']['admin_state_up']:
+            return const.NET_STATUS_ACTIVE
+        else:
+            return const.NET_STATUS_DOWN
+
     def create_network(self, context, network):
         """Create a new network entry on DB, and create it on OFC."""
         LOG.debug(_("NECPluginV2.create_network() called, "
                     "network=%s ."), network)
+        tenant_id = self._get_tenant_id_for_create(context, network['network'])
+        net_name = network['network']['name']
+        net_id = uuidutils.generate_uuid()
+
         #set up default security groups
-        tenant_id = self._get_tenant_id_for_create(
-            context, network['network'])
         self._ensure_default_security_group(context, tenant_id)
+
+        network['network']['id'] = net_id
+        network['network']['status'] = self._net_status(network)
+
+        try:
+            if not self.ofc.exists_ofc_tenant(context, tenant_id):
+                self.ofc.create_ofc_tenant(context, tenant_id)
+            self.ofc.create_ofc_network(context, tenant_id, net_id, net_name)
+        except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+            LOG.error(_("failed to create network id=%(id)s on "
+                        "OFC: %(exc)s"), {'id': net_id, 'exc': exc})
+            network['network']['status'] = const.NET_STATUS_ERROR
 
         with context.session.begin(subtransactions=True):
             new_net = super(NECPluginV2, self).create_network(context, network)
             self._process_l3_create(context, new_net, network['network'])
-            self._update_resource_status(context, "network", new_net['id'],
-                                         OperationalStatus.BUILD)
-
-        try:
-            if not self.ofc.exists_ofc_tenant(context, new_net['tenant_id']):
-                self.ofc.create_ofc_tenant(context, new_net['tenant_id'])
-            self.ofc.create_ofc_network(context, new_net['tenant_id'],
-                                        new_net['id'], new_net['name'])
-        except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-            reason = _("create_network() failed due to %s") % exc
-            LOG.error(reason)
-            self._update_resource_status(context, "network", new_net['id'],
-                                         OperationalStatus.ERROR)
-        else:
-            self._update_resource_status(context, "network", new_net['id'],
-                                         OperationalStatus.ACTIVE)
 
         return new_net
 
@@ -255,6 +245,10 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_("NECPluginV2.update_network() called, "
                     "id=%(id)s network=%(network)s ."),
                   {'id': id, 'network': network})
+
+        if 'admin_state_up' in network['network']:
+            network['network']['status'] = self._net_status(network)
+
         session = context.session
         with session.begin(subtransactions=True):
             old_net = super(NECPluginV2, self).get_network(context, id)
@@ -264,19 +258,15 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         changed = (old_net['admin_state_up'] is not new_net['admin_state_up'])
         if changed and not new_net['admin_state_up']:
-            self._update_resource_status(context, "network", id,
-                                         OperationalStatus.DOWN)
             # disable all active ports of the network
-            filters = dict(network_id=[id], status=[OperationalStatus.ACTIVE])
+            filters = dict(network_id=[id], status=[const.PORT_STATUS_ACTIVE])
             ports = super(NECPluginV2, self).get_ports(context,
                                                        filters=filters)
             for port in ports:
                 self.deactivate_port(context, port)
         elif changed and new_net['admin_state_up']:
-            self._update_resource_status(context, "network", id,
-                                         OperationalStatus.ACTIVE)
             # enable ports of the network
-            filters = dict(network_id=[id], status=[OperationalStatus.DOWN],
+            filters = dict(network_id=[id], status=[const.PORT_STATUS_DOWN],
                            admin_state_up=[True])
             ports = super(NECPluginV2, self).get_ports(context,
                                                        filters=filters)
@@ -308,7 +298,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         _error_ports = []
         for port in ports:
             port = self.deactivate_port(context, port)
-            if port['status'] == OperationalStatus.ERROR:
+            if port['status'] == const.PORT_STATUS_ERROR:
                 _error_ports.append(port['id'])
         if _error_ports:
             reason = (_("Failed to delete port(s)=%s from OFC.") %
@@ -329,7 +319,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             reason = _("delete_network() failed due to %s") % exc
             LOG.error(reason)
             self._update_resource_status(context, "network", net['id'],
-                                         OperationalStatus.ERROR)
+                                         const.NET_STATUS_ERROR)
             raise
 
         super(NECPluginV2, self).delete_network(context, id)
@@ -355,6 +345,9 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def create_port(self, context, port):
         """Create a new port entry on DB, then try to activate it."""
         LOG.debug(_("NECPluginV2.create_port() called, port=%s ."), port)
+
+        port['port']['status'] = const.PORT_STATUS_DOWN
+
         port_data = port['port']
         with context.session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
@@ -366,10 +359,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_port_create_security_group(
                 context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
-        self._update_resource_status(context, "port", port['id'],
-                                     OperationalStatus.BUILD)
-        self.activate_port_if_ready(context, port)
-        return port
+
+        return self.activate_port_if_ready(context, port)
 
     def update_port(self, context, id, port):
         """Update port, and handle packetfilters associated with the port.
@@ -398,9 +389,9 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         changed = (old_port['admin_state_up'] != new_port['admin_state_up'])
         if changed:
             if new_port['admin_state_up']:
-                self.activate_port_if_ready(context, new_port)
+                new_port = self.activate_port_if_ready(context, new_port)
             else:
-                self.deactivate_port(context, old_port)
+                new_port = self.deactivate_port(context, new_port)
 
         return new_port
 
@@ -413,7 +404,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         port = self.get_port(context, id)
 
         port = self.deactivate_port(context, port)
-        if port['status'] == OperationalStatus.ERROR:
+        if port['status'] == const.PORT_STATUS_ERROR:
             reason = _("Failed to delete port=%s from OFC.") % id
             raise nexc.OFCException(reason=reason)
 
