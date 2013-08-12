@@ -89,6 +89,15 @@ class FirewallRuleInfoMissing(qexception.InvalidInput):
                 "rule operation.")
 
 
+class FirewallInternalDriverError(qexception.NeutronException):
+    """Fwaas exception for all driver errors.
+
+    On any failure or exception in the driver, driver should log it and
+    raise this exception to the agent
+    """
+    message = _("%(driver)s: Internal driver error.")
+
+
 fw_valid_protocol_values = [None, constants.TCP, constants.UDP, constants.ICMP]
 fw_valid_action_values = [constants.FWAAS_ALLOW, constants.FWAAS_DENY]
 
