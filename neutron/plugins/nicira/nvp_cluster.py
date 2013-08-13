@@ -101,7 +101,7 @@ class NVPCluster(object):
             if handler_func:
                 handler_func()
         else:
-            LOG.info(_("Attribute:%s is empty or null"), attribute)
+            LOG.debug(_("Attribute:%s is empty or null"), attribute)
 
     def _process_nvp_controllers(self):
         # If this raises something is not right, so let it bubble up
