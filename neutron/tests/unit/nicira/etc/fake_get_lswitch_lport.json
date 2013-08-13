@@ -7,7 +7,13 @@
        "_href": "/ws.v1/lswitch/%(ls_uuid)s/lport/%(uuid)s/status",
        "_schema": "/ws.v1/schema/LogicalSwitchPortStatus"},
     "LogicalSwitchConfig":
-      {"uuid": "%(ls_uuid)s"}
+      {"uuid": "%(ls_uuid)s"},
+    "LogicalPortAttachment":
+      {
+       "type": "%(att_type)s",
+       %(att_info_json)s
+       "schema": "/ws.v1/schema/%(att_type)s"
+      }
    },
  "tags":
    [{"scope": "q_port_id", "tag": "%(neutron_port_id)s"},

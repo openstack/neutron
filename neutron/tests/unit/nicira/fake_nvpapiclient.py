@@ -194,6 +194,8 @@ class FakeClient:
         fake_lport['neutron_port_id'] = self._get_tag(fake_lport,
                                                       'q_port_id')
         fake_lport['neutron_device_id'] = self._get_tag(fake_lport, 'vm_id')
+        fake_lport['att_type'] = "NoAttachment"
+        fake_lport['att_info_json'] = ''
         self._fake_lswitch_lport_dict[fake_lport['uuid']] = fake_lport
 
         fake_lswitch = self._fake_lswitch_dict[ls_uuid]
@@ -543,6 +545,13 @@ class FakeClient:
                         relations_2 = {}
                     relations_2['LogicalPortAttachment'] = body_2
                     resource_2['_relations'] = relations_2
+                    resource['peer_port_uuid'] = body_2['peer_port_uuid']
+                    resource['att_info_json'] = (
+                        "\"peer_port_uuid\": \"%s\"," %
+                        resource_2['uuid'])
+                    resource_2['att_info_json'] = (
+                        "\"peer_port_uuid\": \"%s\"," %
+                        body_2['peer_port_uuid'])
                 elif body_2['type'] == "L3GatewayAttachment":
                     resource['attachment_gwsvc_uuid'] = (
                         body_2['l3_gateway_service_uuid'])
@@ -550,6 +559,10 @@ class FakeClient:
                 elif body_2['type'] == "L2GatewayAttachment":
                     resource['attachment_gwsvc_uuid'] = (
                         body_2['l2_gateway_service_uuid'])
+                elif body_2['type'] == "VifAttachment":
+                    resource['vif_uuid'] = body_2['vif_uuid']
+                    resource['att_info_json'] = (
+                        "\"vif_uuid\": \"%s\"," % body_2['vif_uuid'])
 
             if not is_attachment:
                 response = response_template % resource
