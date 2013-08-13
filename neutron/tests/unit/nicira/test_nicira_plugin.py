@@ -105,8 +105,8 @@ class TestNiciraV2HTTPResponse(test_plugin.TestV2HTTPResponse,
     pass
 
 
-class TestNiciraPortsV2(test_plugin.TestPortsV2,
-                        NiciraPluginV2TestCase,
+class TestNiciraPortsV2(NiciraPluginV2TestCase,
+                        test_plugin.TestPortsV2,
                         test_bindings.PortBindingsTestCase):
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
@@ -282,21 +282,22 @@ class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
     def setUp(self):
         test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
         # mock nvp api client
-        fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
+        self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
         self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
         instance.return_value.login.return_value = "the_cookie"
 
         def _fake_request(*args, **kwargs):
-            return fc.fake_request(*args, **kwargs)
+            return self.fc.fake_request(*args, **kwargs)
 
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPortSecurityTestCase, self).setUp(PLUGIN_NAME)
+        self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.mock_nvpapi.stop)
 
 
-class TestNiciraPortSecurity(psec.TestPortSecurity,
-                             NiciraPortSecurityTestCase):
+class TestNiciraPortSecurity(NiciraPortSecurityTestCase,
+                             psec.TestPortSecurity):
         pass
 
 
