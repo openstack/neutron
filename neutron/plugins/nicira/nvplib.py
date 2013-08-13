@@ -866,9 +866,8 @@ def plug_router_port_attachment(cluster, router_id, port_id,
         if attachment_vlan:
             attach_obj['vlan_id'] = attachment_vlan
     else:
-        # TODO(salv-orlando): avoid raising generic exception
-        raise Exception(_("Invalid NVP attachment type '%s'"),
-                        nvp_attachment_type)
+        raise nvp_exc.NvpInvalidAttachmentType(
+            attachment_type=nvp_attachment_type)
     return do_request(HTTP_PUT, uri, json.dumps(attach_obj), cluster=cluster)
 
 
