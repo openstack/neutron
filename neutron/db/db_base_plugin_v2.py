@@ -100,11 +100,16 @@ class CommonDbMixin(object):
         for _name, hooks in self._model_query_hooks.get(model,
                                                         {}).iteritems():
             query_hook = hooks.get('query')
-            filter_hook = hooks.get('filter')
+            if isinstance(query_hook, basestring):
+                query_hook = getattr(self, query_hook, None)
             if query_hook:
-                query = query_hook(self, context, model, query)
+                query = query_hook(context, model, query)
+
+            filter_hook = hooks.get('filter')
+            if isinstance(filter_hook, basestring):
+                filter_hook = getattr(self, filter_hook, None)
             if filter_hook:
-                query_filter = filter_hook(self, context, model, query_filter)
+                query_filter = filter_hook(context, model, query_filter)
 
         # NOTE(salvatore-orlando): 'if query_filter' will try to evaluate the
         # condition, raising an exception
@@ -142,8 +147,11 @@ class CommonDbMixin(object):
             for _name, hooks in self._model_query_hooks.get(model,
                                                             {}).iteritems():
                 result_filter = hooks.get('result_filters', None)
+                if isinstance(result_filter, basestring):
+                    result_filter = getattr(self, result_filter, None)
+
                 if result_filter:
-                    query = result_filter(self, query, filters)
+                    query = result_filter(query, filters)
         return query
 
     def _get_collection_query(self, context, model, filters=None,
