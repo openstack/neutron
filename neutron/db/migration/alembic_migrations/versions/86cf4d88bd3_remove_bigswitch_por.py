@@ -15,29 +15,27 @@
 #    under the License.
 #
 
-"""Add portbindings db
+"""remove bigswitch port tracking table
 
-Revision ID: 176a85fc7d79
-Revises: f489cf14a79c
-Create Date: 2013-03-21 14:59:53.052600
+Revision ID: 86cf4d88bd3
+Revises: 569e98a8132b
+Create Date: 2013-08-13 21:59:04.373496
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '176a85fc7d79'
-down_revision = 'f489cf14a79c'
+revision = '86cf4d88bd3'
+down_revision = '569e98a8132b'
 
 # Change to ['*'] if this migration applies to all plugins
 
 migration_for_plugins = [
-    'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
-    'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
-    'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2',
-    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
+    'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2'
 ]
 
 from alembic import op
 import sqlalchemy as sa
+
 
 from neutron.db import migration
 
@@ -46,16 +44,16 @@ def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.create_table(
-        'portbindingports',
-        sa.Column('port_id', sa.String(length=36), nullable=False),
-        sa.Column('host', sa.String(length=255), nullable=False),
-        sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('port_id')
-    )
+    op.drop_table('portlocations')
 
 
 def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
-    op.drop_table('portbindingports')
+
+    op.create_table('portlocations',
+                    sa.Column('port_id', sa.String(length=255),
+                              primary_key=True, nullable=False),
+                    sa.Column('host_id',
+                              sa.String(length=255), nullable=False)
+                    )
