@@ -902,7 +902,7 @@ class TestNvplibLogicalRouters(NvplibTestCase):
         lrouter_port = nvplib.create_router_lport(
             self.fake_cluster, lrouter['uuid'], 'pippo', 'neutron_port_id',
             'name', True, ['192.168.0.1'])
-        self.assertRaises(Exception,
+        self.assertRaises(nvp_exc.NvpInvalidAttachmentType,
                           nvplib.plug_router_port_attachment,
                           self.fake_cluster, lrouter['uuid'],
                           lrouter_port['uuid'], 'gw_att', 'BadType')
@@ -965,7 +965,7 @@ class TestNvplibLogicalRouters(NvplibTestCase):
         with mock.patch.object(self.fake_cluster.api_client,
                                'get_nvp_version',
                                new=lambda: '2.0'):
-            self.assertRaises(Exception,
+            self.assertRaises(AttributeError,
                               nvplib.create_lrouter_snat_rule,
                               self.fake_cluster, lrouter['uuid'],
                               '10.0.0.2', '10.0.0.2', order=200,

@@ -52,3 +52,7 @@ class NvpNatRuleMismatch(NvpPluginException):
     message = _("While retrieving NAT rules, %(actual_rules)s were found "
                 "whereas rules in the (%(min_rules)s,%(max_rules)s) interval "
                 "were expected")
+
+
+class NvpInvalidAttachmentType(NvpPluginException):
+    message = _("Invalid NVP attachment type '%(attachment_type)s'")
