@@ -90,6 +90,10 @@ class DhcpBase(object):
         """Boolean representing the running state of the DHCP server."""
 
     @abc.abstractmethod
+    def release_lease(self, mac_address, removed_ips):
+        """Release a DHCP lease."""
+
+    @abc.abstractmethod
     def reload_allocations(self):
         """Force the DHCP server to reload the assignment database."""
 
@@ -261,8 +265,6 @@ class Dnsmasq(DhcpLocalProcess):
         """Spawns a Dnsmasq process for the network."""
         env = {
             self.NEUTRON_NETWORK_ID_KEY: self.network.id,
-            self.NEUTRON_RELAY_SOCKET_PATH_KEY:
-            self.conf.dhcp_lease_relay_socket
         }
 
         cmd = [
@@ -279,7 +281,6 @@ class Dnsmasq(DhcpLocalProcess):
             #'--dhcp-lease-max=%s' % ?,
             '--dhcp-hostsfile=%s' % self._output_hosts_file(),
             '--dhcp-optsfile=%s' % self._output_opts_file(),
-            '--dhcp-script=%s' % self._lease_relay_script_path(),
             '--leasefile-ro',
         ]
 
@@ -317,6 +318,16 @@ class Dnsmasq(DhcpLocalProcess):
             # For normal sudo prepend the env vars before command
             cmd = ['%s=%s' % pair for pair in env.items()] + cmd
             utils.execute(cmd, self.root_helper)
+
+    def release_lease(self, mac_address, removed_ips):
+        """Release a DHCP lease."""
+        for ip in removed_ips or []:
+            cmd = ['dhcp_release', self.interface_name, ip, mac_address]
+            if self.namespace:
+                ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
+                ip_wrapper.netns.execute(cmd)
+            else:
+                utils.execute(cmd, self.root_helper)
 
     def reload_allocations(self):
         """Rebuild the dnsmasq config and signal the dnsmasq to reload."""
@@ -427,10 +438,6 @@ class Dnsmasq(DhcpLocalProcess):
                 retval[subnet_lookup[ip_net]] = addr['cidr'].split('/')[0]
 
         return retval
-
-    def _lease_relay_script_path(self):
-        return os.path.join(os.path.dirname(sys.argv[0]),
-                            'neutron-dhcp-agent-dnsmasq-lease-update')
 
     def _format_option(self, index, option, *args):
         """Format DHCP option by option name or code."""

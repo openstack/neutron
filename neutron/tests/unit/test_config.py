@@ -41,6 +41,6 @@ class ConfigurationTest(base.BaseTestCase):
                                     '..', '..', '..')
         absolute_dir = os.path.abspath(relative_dir)
         self.assertEqual(absolute_dir, cfg.CONF.state_path)
-        self.assertEqual(120, cfg.CONF.dhcp_lease_duration)
+        self.assertEqual(86400, cfg.CONF.dhcp_lease_duration)
         self.assertFalse(cfg.CONF.allow_overlapping_ips)
         self.assertEqual('neutron', cfg.CONF.control_exchange)

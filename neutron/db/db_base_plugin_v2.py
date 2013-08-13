@@ -294,54 +294,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         return False
 
     @staticmethod
-    def _hold_ip(context, network_id, subnet_id, port_id, ip_address):
-        alloc_qry = context.session.query(
-            models_v2.IPAllocation).with_lockmode('update')
-        allocated = alloc_qry.filter_by(network_id=network_id,
-                                        port_id=port_id,
-                                        ip_address=ip_address,
-                                        subnet_id=subnet_id).one()
-
-        if not allocated:
-            return
-        if allocated.expiration < timeutils.utcnow():
-            # immediately delete expired allocations
-            NeutronDbPluginV2._recycle_ip(
-                context, network_id, subnet_id, ip_address)
-        else:
-            LOG.debug(_("Hold allocated IP %(ip_address)s "
-                        "(%(network_id)s/%(subnet_id)s/%(port_id)s)"),
-                      {'ip_address': ip_address,
-                       'network_id': network_id,
-                       'subnet_id': subnet_id,
-                       'port_id': port_id})
-            allocated.port_id = None
-
-    @staticmethod
-    def _recycle_expired_ip_allocations(context, network_id):
-        """Return held ip allocations with expired leases back to the pool."""
-        if network_id in getattr(context, '_recycled_networks', set()):
-            return
-
-        expired_qry = context.session.query(
-            models_v2.IPAllocation).with_lockmode('update')
-        expired_qry = expired_qry.filter_by(network_id=network_id,
-                                            port_id=None)
-        expired_qry = expired_qry.filter(
-            models_v2.IPAllocation.expiration <= timeutils.utcnow())
-
-        for expired in expired_qry:
-            NeutronDbPluginV2._recycle_ip(context,
-                                          network_id,
-                                          expired['subnet_id'],
-                                          expired['ip_address'])
-
-        if hasattr(context, '_recycled_networks'):
-            context._recycled_networks.add(network_id)
-        else:
-            context._recycled_networks = set([network_id])
-
-    @staticmethod
     def _recycle_ip(context, network_id, subnet_id, ip_address):
         """Return an IP address to the pool of free IP's on the network
         subnet.
@@ -423,11 +375,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                       {'first_ip': ip_address, 'last_ip': ip_address})
         NeutronDbPluginV2._delete_ip_allocation(context, network_id, subnet_id,
                                                 ip_address)
-
-    @staticmethod
-    def _default_allocation_expiration():
-        return (timeutils.utcnow() +
-                datetime.timedelta(seconds=cfg.CONF.dhcp_lease_duration))
 
     def update_fixed_ip_lease_expiration(self, context, network_id,
                                          ip_address, lease_remaining):
@@ -690,11 +637,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         to_add = self._test_fixed_ips_for_port(context, network_id, new_ips)
         for ip in original_ips:
             LOG.debug(_("Port update. Hold %s"), ip)
-            NeutronDbPluginV2._hold_ip(context,
-                                       network_id,
-                                       ip['subnet_id'],
-                                       port_id,
-                                       ip['ip_address'])
+            NeutronDbPluginV2._recycle_ip(context,
+                                          network_id,
+                                          ip['subnet_id'],
+                                          ip['ip_address'])
 
         if to_add:
             LOG.debug(_("Port update. Adding %s"), to_add)
@@ -1321,7 +1267,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         tenant_id = self._get_tenant_id_for_create(context, p)
 
         with context.session.begin(subtransactions=True):
-            self._recycle_expired_ip_allocations(context, network_id)
             network = self._get_network(context, network_id)
 
             # Ensure that a MAC address is defined and it is unique on the
@@ -1372,7 +1317,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                         port_id=port_id,
                         ip_address=ip_address,
                         subnet_id=subnet_id,
-                        expiration=self._default_allocation_expiration()
                     )
                     context.session.add(allocated)
 
@@ -1387,8 +1331,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             # Check if the IPs need to be updated
             if 'fixed_ips' in p:
                 changed_ips = True
-                self._recycle_expired_ip_allocations(context,
-                                                     port['network_id'])
                 original = self._make_port_dict(port, process_extensions=False)
                 added_ips, prev_ips = self._update_ips_for_port(
                     context, port["network_id"], id, original["fixed_ips"],
@@ -1398,8 +1340,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 for ip in added_ips:
                     allocated = models_v2.IPAllocation(
                         network_id=port['network_id'], port_id=port.id,
-                        ip_address=ip['ip_address'], subnet_id=ip['subnet_id'],
-                        expiration=self._default_allocation_expiration())
+                        ip_address=ip['ip_address'], subnet_id=ip['subnet_id'])
                     context.session.add(allocated)
             # Remove all attributes in p which are not in the port DB model
             # and then update the port
@@ -1428,11 +1369,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             if NeutronDbPluginV2._check_ip_in_allocation_pool(
                 context, a['subnet_id'], subnet['gateway_ip'],
                 a['ip_address']):
-                NeutronDbPluginV2._hold_ip(context,
-                                           a['network_id'],
-                                           a['subnet_id'],
-                                           id,
-                                           a['ip_address'])
+                NeutronDbPluginV2._recycle_ip(context,
+                                              a['network_id'],
+                                              a['subnet_id'],
+                                              a['ip_address'])
             else:
                 # IPs out of allocation pool will not be recycled, but
                 # we do need to delete the allocation from the DB
