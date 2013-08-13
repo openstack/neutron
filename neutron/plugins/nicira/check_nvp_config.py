@@ -65,8 +65,6 @@ def main(argv):
            cfg.CONF.NVP.concurrent_connections)
     print "\tmax_lp_per_bridged_ls: %s" % cfg.CONF.NVP.max_lp_per_bridged_ls
     print "\tmax_lp_per_overlay_ls: %s" % cfg.CONF.NVP.max_lp_per_overlay_ls
-    print ("\tenable_metadata_access_network: %s" %
-           cfg.CONF.NVP.enable_metadata_access_network)
     print "------------------------  Cluster Options ------------------------"
     print "\trequested_timeout: %s" % cfg.CONF.req_timeout
     print "\tretries: %s" % cfg.CONF.retries

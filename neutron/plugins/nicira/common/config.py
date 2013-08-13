@@ -36,9 +36,6 @@ nvp_opts = [
                       "This option is only useful if running on a host that "
                       "does not support namespaces otherwise access_network "
                       "should be used.")),
-    cfg.BoolOpt('enable_metadata_access_network', default=True,
-                help=_("Enables dedicated connection to the metadata proxy "
-                       "for metadata server access via Neutron router")),
     cfg.StrOpt('default_transport_type', default='stt',
                help=_("The default network tranport type to use (stt, gre, "
                       "bridge, ipsec_gre, or ipsec_stt)")),
