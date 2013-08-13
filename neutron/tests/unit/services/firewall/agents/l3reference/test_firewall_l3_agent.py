@@ -90,7 +90,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
                 mock_driver.return_value)
 
     def test_invoke_driver_for_plugin_api(self):
-        fake_firewall = {'id': 0, 'tenant_id': 001}
+        fake_firewall = {'id': 0, 'tenant_id': 1}
         self.api.plugin_rpc = mock.Mock()
         with contextlib.nested(
             mock.patch.object(self.api.plugin_rpc, 'get_routers'),
