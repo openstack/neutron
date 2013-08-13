@@ -31,7 +31,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 
 
 class Maclearning(object):
-    """Extension class supporting port security."""
+    """Extension class supporting port mac learning."""
 
     @classmethod
     def get_name(cls):
