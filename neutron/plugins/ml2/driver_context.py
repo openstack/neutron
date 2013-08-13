@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 
 
@@ -29,11 +30,12 @@ class MechanismDriverContext(object):
 class NetworkContext(MechanismDriverContext, api.NetworkContext):
 
     def __init__(self, plugin, plugin_context, network,
-                 segments=None, original_network=None):
+                 original_network=None):
         super(NetworkContext, self).__init__(plugin, plugin_context)
         self._network = network
         self._original_network = original_network
-        self._segments = segments
+        self._segments = db.get_network_segments(plugin_context.session,
+                                                 network['id'])
 
     @property
     def current(self):
@@ -45,9 +47,6 @@ class NetworkContext(MechanismDriverContext, api.NetworkContext):
 
     @property
     def network_segments(self):
-        if not self._segments:
-            self._segments = self._plugin.get_network_segments(
-                self._plugin_context, self._network['id'])
         return self._segments
 
 
@@ -69,12 +68,15 @@ class SubnetContext(MechanismDriverContext, api.SubnetContext):
 
 class PortContext(MechanismDriverContext, api.PortContext):
 
-    def __init__(self, plugin, plugin_context, port,
+    def __init__(self, plugin, plugin_context, port, network,
                  original_port=None):
         super(PortContext, self).__init__(plugin, plugin_context)
         self._port = port
         self._original_port = original_port
-        self._network_context = None
+        self._network_context = NetworkContext(plugin, plugin_context,
+                                               network)
+        self._binding = db.ensure_port_binding(plugin_context.session,
+                                               port['id'])
 
     @property
     def current(self):
@@ -86,11 +88,27 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     @property
     def network(self):
-        """Return the NetworkContext associated with this port."""
-        if not self._network_context:
-            network = self._plugin.get_network(self._plugin_context,
-                                               self._port["network_id"])
-            self._network_context = NetworkContext(self._plugin,
-                                                   self._plugin_context,
-                                                   network)
         return self._network_context
+
+    @property
+    def bound_segment(self):
+        id = self._binding.segment
+        if id:
+            for segment in self._network_context.network_segments:
+                if segment[api.ID] == id:
+                    return segment
+
+    def host_agents(self, agent_type):
+        return self._plugin.get_agents(self._plugin_context,
+                                       filters={'agent_type': [agent_type],
+                                                'host': [self._binding.host]})
+
+    def set_binding(self, segment_id, vif_type, cap_port_filter):
+        # REVISIT(rkukura): Pass extensible list of capabilities? Move
+        # vif_type and capabilities to methods on the bound mechanism
+        # driver?
+
+        # TODO(rkukura) Verify binding allowed, segment in network
+        self._binding.segment = segment_id
+        self._binding.vif_type = vif_type
+        self._binding.cap_port_filter = cap_port_filter

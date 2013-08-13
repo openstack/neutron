@@ -497,7 +497,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
             'binary': 'neutron-linuxbridge-agent',
             'host': cfg.CONF.host,
             'topic': constants.L2_AGENT_TOPIC,
-            'configurations': interface_mappings,
+            'configurations': {'interface_mappings': interface_mappings},
             'agent_type': constants.AGENT_TYPE_LINUXBRIDGE,
             'start_flag': True}
 

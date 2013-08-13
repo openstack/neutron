@@ -97,6 +97,7 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                               "%(agent_id)s not found in database"),
                             {'device': device, 'agent_id': agent_id})
                 return {'device': device}
+
             segments = db.get_network_segments(session, port.network_id)
             if not segments:
                 LOG.warning(_("Device %(device)s requested by agent "
@@ -106,8 +107,29 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                              'agent_id': agent_id,
                              'network_id': port.network_id})
                 return {'device': device}
-            #TODO(rkukura): Use/create port binding
-            segment = segments[0]
+
+            binding = db.ensure_port_binding(session, port.id)
+            if not binding.segment:
+                LOG.warning(_("Device %(device)s requested by agent "
+                              "%(agent_id)s on network %(network_id)s not "
+                              "bound, vif_type: %(vif_type)s"),
+                            {'device': device,
+                             'agent_id': agent_id,
+                             'network_id': port.network_id,
+                             'vif_type': binding.vif_type})
+                return {'device': device}
+
+            segment = self._find_segment(segments, binding.segment)
+            if not segment:
+                LOG.warning(_("Device %(device)s requested by agent "
+                              "%(agent_id)s on network %(network_id)s "
+                              "invalid segment, vif_type: %(vif_type)s"),
+                            {'device': device,
+                             'agent_id': agent_id,
+                             'network_id': port.network_id,
+                             'vif_type': binding.vif_type})
+                return {'device': device}
+
             new_status = (q_const.PORT_STATUS_ACTIVE if port.admin_state_up
                           else q_const.PORT_STATUS_DOWN)
             if port.status != new_status:
@@ -121,6 +143,11 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                      'physical_network': segment[api.PHYSICAL_NETWORK]}
             LOG.debug(_("Returning: %s"), entry)
             return entry
+
+    def _find_segment(self, segments, segment_id):
+        for segment in segments:
+            if segment[api.ID] == segment_id:
+                return segment
 
     def update_device_down(self, rpc_context, **kwargs):
         """Device no longer exists on agent."""

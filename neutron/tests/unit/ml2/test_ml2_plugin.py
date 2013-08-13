@@ -13,10 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.extensions import portbindings
 from neutron.plugins.ml2 import config as config
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_extension_ext_gw_mode
+from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -61,10 +63,22 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertEqual(self.port_create_status, 'DOWN')
 
 
-# TODO(rkukura) add TestMl2PortBinding
+class TestMl2PortBinding(Ml2PluginV2TestCase,
+                         test_bindings.PortBindingsTestCase):
+    # Test case does not set binding:host_id, so ml2 does not attempt
+    # to bind port
+    VIF_TYPE = portbindings.VIF_TYPE_UNBOUND
+    HAS_PORT_FILTER = False
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_HYBRID_DRIVER
+
+    def setUp(self, firewall_driver=None):
+        test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
+        super(TestMl2PortBinding, self).setUp()
 
 
-# TODO(rkukura) add TestMl2PortBindingNoSG
+class TestMl2PortBindingNoSG(TestMl2PortBinding):
+    HAS_PORT_FILTER = False
+    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
 
 class TestMl2PortBindingHost(Ml2PluginV2TestCase,

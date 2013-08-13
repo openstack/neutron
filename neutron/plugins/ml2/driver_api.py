@@ -20,6 +20,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 # neutron.extensions.providernet so that drivers don't need to change
 # if/when providernet moves to the core API.
 #
+ID = 'id'
 NETWORK_TYPE = 'network_type'
 PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
@@ -230,6 +231,34 @@ class PortContext(object):
     @abstractproperty
     def network(self):
         """Return the NetworkContext associated with this port."""
+        pass
+
+    @abstractproperty
+    def bound_segment(self):
+        """Return the currently bound segment dictionary."""
+        pass
+
+    @abstractmethod
+    def host_agents(self, agent_type):
+        """Get agents of the specified type on port's host.
+
+        :param agent_type: Agent type identifier
+        :returns: List of agents_db.Agent records
+        """
+        pass
+
+    @abstractmethod
+    def set_binding(self, segment_id, vif_type, cap_port_filter):
+        """Set the binding for the port.
+
+        :param segment_id: Network segment bound for the port.
+        :param vif_type: The VIF type for the bound port.
+        :param cap_port_filter: True if the bound port filters.
+
+        Called by MechanismDriver.bind_port to indicate success and
+        specify binding details to use for port. The segment_id must
+        identify an item in network.network_segments.
+        """
         pass
 
 
@@ -528,5 +557,41 @@ class MechanismDriver(object):
         drastically affect performance.  Runtime errors are not
         expected, and will not prevent the resource from being
         deleted.
+        """
+        pass
+
+    def bind_port(self, context):
+        """Attempt to bind a port.
+
+        :param context: PortContext instance describing the port
+
+        Called inside transaction context on session, prior to
+        create_network_precommit or update_network_precommit, to
+        attempt to establish a port binding. If the driver is able to
+        bind the port, it calls context.set_binding with the binding
+        details.
+        """
+        pass
+
+    def validate_port_binding(self, context):
+        """Check whether existing port binding is still valid.
+
+        :param context: PortContext instance describing the port
+        :returns: True if binding is valid, otherwise False
+
+        Called inside transaction context on session to validate that
+        the MechanismDriver's existing binding for the port is still
+        valid.
+        """
+        return False
+
+    def unbind_port(self, context):
+        """Undo existing port binding.
+
+        :param context: PortContext instance describing the port
+
+        Called inside transaction context on session to notify the
+        MechanismDriver that its existing binding for the port is no
+        longer valid.
         """
         pass

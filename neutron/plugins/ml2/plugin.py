@@ -26,7 +26,7 @@ from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
 from neutron.db import l3_gwmode_db
-from neutron.db import portbindings_db
+from neutron.db import models_v2
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
@@ -41,6 +41,7 @@ from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import managers
+from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import rpc
 
 LOG = log.getLogger(__name__)
@@ -55,8 +56,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 l3_gwmode_db.L3_NAT_db_mixin,
                 sg_db_rpc.SecurityGroupServerRpcMixin,
                 agentschedulers_db.L3AgentSchedulerDbMixin,
-                agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                portbindings_db.PortBindingMixin):
+                agentschedulers_db.DhcpAgentSchedulerDbMixin):
     """Implement the Neutron L2 abstractions using modules.
 
     Ml2Plugin is a Neutron plugin based on separately extensible sets
@@ -151,7 +151,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _extend_network_dict_provider(self, context, network):
         id = network['id']
-        segments = self.get_network_segments(context, id)
+        segments = db.get_network_segments(context.session, id)
         if not segments:
             LOG.error(_("Network %s has no segments"), id)
             network[provider.NETWORK_TYPE] = None
@@ -171,28 +171,88 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # TODO(rkukura): Implement filtering.
         return nets
 
-    def _extend_port_dict_binding(self, context, port):
-        # TODO(rkukura): Implement based on host_id, agents, and
-        # MechanismDrivers. Also set CAPABILITIES. Use
-        # base_binding_dict if applicable, or maybe a new hook so
-        # base handles field processing and get_port and get_ports
-        # don't need to be overridden.
-        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_UNBOUND
+    def _process_port_binding(self, mech_context, attrs):
+        binding = mech_context._binding
+        port = mech_context.current
+        self._update_port_dict_binding(port, binding)
 
-    def _notify_port_updated(self, context, port):
-        session = context.session
-        with session.begin(subtransactions=True):
-            network_id = port['network_id']
-            segments = self.get_network_segments(context, network_id)
-            if not segments:
-                LOG.warning(_("In _notify_port_updated() for port %(port_id), "
-                              "network %(network_id) has no segments"),
-                            {'port_id': port['id'],
-                             'network_id': network_id})
-                return
-            # TODO(rkukura): Use port binding to select segment.
-            segment = segments[0]
-        self.notifier.port_update(context, port,
+        host = attrs and attrs.get(portbindings.HOST_ID)
+        host_set = attributes.is_attr_set(host)
+
+        if binding.vif_type != portbindings.VIF_TYPE_UNBOUND:
+            if (not host_set and binding.segment and
+                self.mechanism_manager.validate_port_binding(mech_context)):
+                return False
+            self.mechanism_manager.unbind_port(mech_context)
+            self._update_port_dict_binding(port, binding)
+
+        if host_set:
+            binding.host = host
+            port[portbindings.HOST_ID] = host
+
+        if binding.host:
+            self.mechanism_manager.bind_port(mech_context)
+            self._update_port_dict_binding(port, binding)
+
+        return True
+
+    def _update_port_dict_binding(self, port, binding):
+        port[portbindings.HOST_ID] = binding.host
+        port[portbindings.VIF_TYPE] = binding.vif_type
+        port[portbindings.CAPABILITIES] = {
+            portbindings.CAP_PORT_FILTER: binding.cap_port_filter}
+
+    def _delete_port_binding(self, mech_context):
+        binding = mech_context._binding
+        port = mech_context.current
+        self._update_port_dict_binding(port, binding)
+        self.mechanism_manager.unbind_port(mech_context)
+        self._update_port_dict_binding(port, binding)
+
+    def _extend_port_dict_binding(self, port_res, port_db):
+        # None when called during unit tests for other plugins.
+        if port_db.port_binding:
+            self._update_port_dict_binding(port_res, port_db.port_binding)
+
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        attributes.PORTS, [_extend_port_dict_binding])
+
+    # Note - The following hook methods have "ml2" in their names so
+    # that they are not called twice during unit tests due to global
+    # registration of hooks in portbindings_db.py used by other
+    # plugins.
+
+    def _ml2_port_model_hook(self, context, original_model, query):
+        query = query.outerjoin(models.PortBinding,
+                                (original_model.id ==
+                                 models.PortBinding.port_id))
+        return query
+
+    def _ml2_port_result_filter_hook(self, query, filters):
+        values = filters and filters.get(portbindings.HOST_ID, [])
+        if not values:
+            return query
+        return query.filter(models.PortBinding.host.in_(values))
+
+    db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+        models_v2.Port,
+        "ml2_port_bindings",
+        '_ml2_port_model_hook',
+        None,
+        '_ml2_port_result_filter_hook')
+
+    def _notify_port_updated(self, mech_context):
+        port = mech_context._port
+        segment = mech_context.bound_segment
+        if not segment:
+            # REVISIT(rkukura): This should notify agent to unplug port
+            network = mech_context.network.current
+            LOG.warning(_("In _notify_port_updated(), no bound segment for "
+                          "port %(port_id)s on network %(network_id)s"),
+                        {'port_id': port['id'],
+                         'network_id': network['id']})
+            return
+        self.notifier.port_update(mech_context._plugin_context, port,
                                   segment[api.NETWORK_TYPE],
                                   segment[api.SEGMENTATION_ID],
                                   segment[api.PHYSICAL_NETWORK])
@@ -218,10 +278,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # to TypeManager.
             db.add_network_segment(session, id, segment)
             self._extend_network_dict_provider(context, result)
-            mech_context = driver_context.NetworkContext(self,
-                                                         context,
-                                                         result,
-                                                         segments=[segment])
+            mech_context = driver_context.NetworkContext(self, context,
+                                                         result)
             self.mechanism_manager.create_network_precommit(mech_context)
 
         try:
@@ -280,24 +338,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return [self._fields(net, fields) for net in nets]
 
-    def get_network_segments(self, context, id):
-        session = context.session
-        with session.begin(subtransactions=True):
-            segments = db.get_network_segments(session, id)
-        return segments
-
     def delete_network(self, context, id):
         session = context.session
         with session.begin(subtransactions=True):
             network = self.get_network(context, id)
-            segments = self.get_network_segments(context, id)
-            mech_context = driver_context.NetworkContext(self,
-                                                         context,
-                                                         network,
-                                                         segments=segments)
+            mech_context = driver_context.NetworkContext(self, context,
+                                                         network)
             self.mechanism_manager.delete_network_precommit(mech_context)
             super(Ml2Plugin, self).delete_network(context, id)
-            for segment in segments:
+            for segment in mech_context.network_segments:
                 self.type_manager.release_segment(session, segment)
             # The segment records are deleted via cascade from the
             # network record, so explicit removal is not necessary.
@@ -368,11 +417,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
             result = super(Ml2Plugin, self).create_port(context, port)
-            self._process_portbindings_create_and_update(context, attrs,
-                                                         result)
             self._process_port_create_security_group(context, result, sgids)
-            self._extend_port_dict_binding(context, result)
-            mech_context = driver_context.PortContext(self, context, result)
+            network = self.get_network(context, result['network_id'])
+            mech_context = driver_context.PortContext(self, context, result,
+                                                      network)
+            self._process_port_binding(mech_context, attrs)
             self.mechanism_manager.create_port_precommit(mech_context)
 
         try:
@@ -396,13 +445,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                               port)
             need_port_update_notify = self.update_security_group_on_port(
                 context, id, port, original_port, updated_port)
-            self._process_portbindings_create_and_update(context,
-                                                         attrs,
-                                                         updated_port)
-            self._extend_port_dict_binding(context, updated_port)
+            network = self.get_network(context, original_port['network_id'])
             mech_context = driver_context.PortContext(
-                self, context, updated_port,
+                self, context, updated_port, network,
                 original_port=original_port)
+            need_port_update_notify |= self._process_port_binding(
+                mech_context, attrs)
             self.mechanism_manager.update_port_precommit(mech_context)
 
         # TODO(apech) - handle errors raised by update_port, potentially
@@ -418,30 +466,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             need_port_update_notify = True
 
         if need_port_update_notify:
-            self._notify_port_updated(context, updated_port)
+            self._notify_port_updated(mech_context)
 
         return updated_port
-
-    def get_port(self, context, id, fields=None):
-        session = context.session
-        with session.begin(subtransactions=True):
-            port = super(Ml2Plugin, self).get_port(context, id, fields)
-            self._extend_port_dict_binding(context, port)
-
-        return self._fields(port, fields)
-
-    def get_ports(self, context, filters=None, fields=None,
-                  sorts=None, limit=None, marker=None, page_reverse=False):
-        session = context.session
-        with session.begin(subtransactions=True):
-            ports = super(Ml2Plugin,
-                          self).get_ports(context, filters, fields, sorts,
-                                          limit, marker, page_reverse)
-            # TODO(nati): filter by security group
-            for port in ports:
-                self._extend_port_dict_binding(context, port)
-
-        return [self._fields(port, fields) for port in ports]
 
     def delete_port(self, context, id, l3_port_check=True):
         if l3_port_check:
@@ -451,7 +478,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             self.disassociate_floatingips(context, id)
             port = self.get_port(context, id)
-            mech_context = driver_context.PortContext(self, context, port)
+            network = self.get_network(context, port['network_id'])
+            mech_context = driver_context.PortContext(self, context, port,
+                                                      network)
+            self._delete_port_binding(mech_context)
             self.mechanism_manager.delete_port_precommit(mech_context)
             self._delete_port_security_group_bindings(context, id)
             super(Ml2Plugin, self).delete_port(context, id)
