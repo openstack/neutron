@@ -16,6 +16,19 @@
 
 from oslo.config import cfg
 
+
+class AgentModes:
+    AGENT = 'agent'
+    # TODO(armando-migliaccio): support to be added, maybe we could add a
+    # mixed mode to support no-downtime migrations?
+    AGENTLESS = 'agentless'
+
+
+class MetadataModes:
+    DIRECT = 'access_network'
+    INDIRECT = 'dhcp_host_route'
+
+
 nvp_opts = [
     cfg.IntOpt('max_lp_per_bridged_ls', default=64,
                help=_("Maximum number of ports of a logical switch on a "
@@ -28,7 +41,7 @@ nvp_opts = [
     cfg.IntOpt('nvp_gen_timeout', default=-1,
                help=_("Number of seconds a generation id should be valid for "
                       "(default -1 meaning do not time out)")),
-    cfg.StrOpt('metadata_mode', default='access_network',
+    cfg.StrOpt('metadata_mode', default=MetadataModes.DIRECT,
                help=_("If set to access_network this enables a dedicated "
                       "connection to the metadata proxy for metadata server "
                       "access via Neutron router. If set to dhcp_host_route "
@@ -39,6 +52,8 @@ nvp_opts = [
     cfg.StrOpt('default_transport_type', default='stt',
                help=_("The default network tranport type to use (stt, gre, "
                       "bridge, ipsec_gre, or ipsec_stt)")),
+    cfg.StrOpt('agent_mode', default=AgentModes.AGENT,
+               help=_("The mode used to implement DHCP/metadata services.")),
 ]
 
 connection_opts = [
