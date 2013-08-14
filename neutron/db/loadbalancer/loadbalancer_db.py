@@ -32,6 +32,7 @@ from neutron.openstack.common.db import exception
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
+from neutron.services.loadbalancer import constants as lb_const
 
 
 LOG = logging.getLogger(__name__)
@@ -178,7 +179,8 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                       status_description=None):
         with context.session.begin(subtransactions=True):
             v_db = self._get_resource(context, model, id)
-            v_db.status = status
+            if v_db.status != status:
+                v_db.status = status
             # update status_description in two cases:
             # - new value is passed
             # - old value is not None (needs to be updated anyway)
@@ -468,10 +470,16 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
     def update_pool_stats(self, context, pool_id, data=None):
         """Update a pool with new stats structure."""
+        data = data or {}
         with context.session.begin(subtransactions=True):
             pool_db = self._get_resource(context, Pool, pool_id)
             self.assert_modification_allowed(pool_db)
             pool_db.stats = self._create_pool_stats(context, pool_id, data)
+
+            for member, stats in data.get('members', {}).items():
+                stats_status = stats.get(lb_const.STATS_STATUS)
+                if stats_status:
+                    self.update_status(context, Member, member, stats_status)
 
     def _create_pool_stats(self, context, pool_id, data=None):
         # This is internal method to add pool statistics. It won't
@@ -480,10 +488,10 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
             data = {}
         stats_db = PoolStatistics(
             pool_id=pool_id,
-            bytes_in=data.get("bytes_in", 0),
-            bytes_out=data.get("bytes_out", 0),
-            active_connections=data.get("active_connections", 0),
-            total_connections=data.get("total_connections", 0)
+            bytes_in=data.get(lb_const.STATS_IN_BYTES, 0),
+            bytes_out=data.get(lb_const.STATS_OUT_BYTES, 0),
+            active_connections=data.get(lb_const.STATS_ACTIVE_CONNECTIONS, 0),
+            total_connections=data.get(lb_const.STATS_TOTAL_CONNECTIONS, 0)
         )
         return stats_db
 
@@ -555,10 +563,10 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
             pool = self._get_resource(context, Pool, pool_id)
             stats = pool['stats']
 
-        res = {'bytes_in': stats['bytes_in'],
-               'bytes_out': stats['bytes_out'],
-               'active_connections': stats['active_connections'],
-               'total_connections': stats['total_connections']}
+        res = {lb_const.STATS_IN_BYTES: stats['bytes_in'],
+               lb_const.STATS_OUT_BYTES: stats['bytes_out'],
+               lb_const.STATS_ACTIVE_CONNECTIONS: stats['active_connections'],
+               lb_const.STATS_TOTAL_CONNECTIONS: stats['total_connections']}
         return {'stats': res}
 
     def create_pool_health_monitor(self, context, health_monitor, pool_id):

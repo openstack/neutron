@@ -25,6 +25,8 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.openstack.common import log as logging
+from neutron.plugins.common import constants
+from neutron.services.loadbalancer import constants as lb_const
 from neutron.services.loadbalancer.drivers.haproxy import cfg as hacfg
 
 LOG = logging.getLogger(__name__)
@@ -105,39 +107,72 @@ class HaproxyNSDriver(object):
 
     def get_stats(self, pool_id):
         socket_path = self._get_state_file_path(pool_id, 'sock')
+        TYPE_BACKEND_REQUEST = 2
+        TYPE_SERVER_REQUEST = 4
         if os.path.exists(socket_path):
-            try:
-                s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                s.connect(socket_path)
-                s.send('show stat -1 2 -1\n')
-                raw_stats = ''
-                chunk_size = 1024
-                while True:
-                    chunk = s.recv(chunk_size)
-                    raw_stats += chunk
-                    if len(chunk) < chunk_size:
-                        break
-
-                return self._parse_stats(raw_stats)
-            except socket.error as e:
-                LOG.warn(_('Error while connecting to stats socket: %s') % e)
-                return {}
+            parsed_stats = self._get_stats_from_socket(
+                socket_path,
+                entity_type=TYPE_BACKEND_REQUEST | TYPE_SERVER_REQUEST)
+            pool_stats = self._get_backend_stats(parsed_stats)
+            pool_stats['members'] = self._get_servers_stats(parsed_stats)
+            return pool_stats
         else:
             LOG.warn(_('Stats socket not found for pool %s') % pool_id)
+            return {}
+
+    def _get_backend_stats(self, parsed_stats):
+        TYPE_BACKEND_RESPONSE = '1'
+        for stats in parsed_stats:
+            if stats['type'] == TYPE_BACKEND_RESPONSE:
+                unified_stats = dict((k, stats.get(v, ''))
+                                     for k, v in hacfg.STATS_MAP.items())
+                return unified_stats
+
+        return {}
+
+    def _get_servers_stats(self, parsed_stats):
+        TYPE_SERVER_RESPONSE = '2'
+        res = {}
+        for stats in parsed_stats:
+            if stats['type'] == TYPE_SERVER_RESPONSE:
+                res[stats['svname']] = {
+                    lb_const.STATS_STATUS: (constants.INACTIVE
+                                            if stats['status'] == 'DOWN'
+                                            else constants.ACTIVE),
+                    lb_const.STATS_HEALTH: stats['check_status'],
+                    lb_const.STATS_FAILED_CHECKS: stats['chkfail']
+                }
+        return res
+
+    def _get_stats_from_socket(self, socket_path, entity_type):
+        try:
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.connect(socket_path)
+            s.send('show stat -1 %s -1\n' % entity_type)
+            raw_stats = ''
+            chunk_size = 1024
+            while True:
+                chunk = s.recv(chunk_size)
+                raw_stats += chunk
+                if len(chunk) < chunk_size:
+                    break
+
+            return self._parse_stats(raw_stats)
+        except socket.error as e:
+            LOG.warn(_('Error while connecting to stats socket: %s'), e)
             return {}
 
     def _parse_stats(self, raw_stats):
         stat_lines = raw_stats.splitlines()
         if len(stat_lines) < 2:
-            return {}
-        stat_names = [line.strip('# ') for line in stat_lines[0].split(',')]
-        stat_values = [line.strip() for line in stat_lines[1].split(',')]
-        stats = dict(zip(stat_names, stat_values))
-        unified_stats = {}
-        for stat in hacfg.STATS_MAP:
-            unified_stats[stat] = stats.get(hacfg.STATS_MAP[stat], '')
+            return []
+        stat_names = [name.strip('# ') for name in stat_lines[0].split(',')]
+        res_stats = []
+        for raw_values in stat_lines[1:]:
+            stat_values = [value.strip() for value in raw_values.split(',')]
+            res_stats.append(dict(zip(stat_names, stat_values)))
 
-        return unified_stats
+        return res_stats
 
     def remove_orphans(self, known_pool_ids):
         raise NotImplementedError()

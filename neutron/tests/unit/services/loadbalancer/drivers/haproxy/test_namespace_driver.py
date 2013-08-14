@@ -141,7 +141,15 @@ class TestHaproxyNSDriver(base.BaseTestCase):
                      'req_rate,req_rate_max,req_tot,cli_abrt,srv_abrt,\n'
                      '8e271901-69ed-403e-a59b-f53cf77ef208,BACKEND,1,2,3,4,0,'
                      '10,7764,2365,0,0,,0,0,0,0,UP,1,1,0,,0,103780,0,,1,2,0,,0'
-                     ',,1,0,,0,,,,0,0,0,0,0,0,,,,,0,0,\n\n')
+                     ',,1,0,,0,,,,0,0,0,0,0,0,,,,,0,0,\n'
+                     'a557019b-dc07-4688-9af4-f5cf02bb6d4b,'
+                     '32a6c2a3-420a-44c3-955d-86bd2fc6871e,0,0,0,1,,7,1120,'
+                     '224,,0,,0,0,0,0,UP,1,1,0,0,1,2623,303,,1,2,1,,7,,2,0,,'
+                     '1,L7OK,200,98,0,7,0,0,0,0,0,,,,0,0,\n'
+                     'a557019b-dc07-4688-9af4-f5cf02bb6d4b,'
+                     'd9aea044-8867-4e80-9875-16fb808fa0f9,0,0,0,2,,12,0,0,,'
+                     '0,,0,0,8,4,DOWN,1,1,0,9,2,308,675,,1,2,2,,4,,2,0,,2,'
+                     'L4CON,,2999,0,0,0,0,0,0,0,,,,0,0,\n')
         raw_stats_empty = ('# pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,'
                            'bout,dreq,dresp,ereq,econ,eresp,wretr,wredis,'
                            'status,weight,act,bck,chkfail,chkdown,lastchg,'
@@ -161,20 +169,33 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             socket.return_value = socket
             socket.recv.return_value = raw_stats
 
-            exp_stats = {'CONNECTION_ERRORS': '0',
-                         'CURRENT_CONNECTIONS': '1',
-                         'CURRENT_SESSIONS': '3',
-                         'IN_BYTES': '7764',
-                         'MAX_CONNECTIONS': '2',
-                         'MAX_SESSIONS': '4',
-                         'OUT_BYTES': '2365',
-                         'RESPONSE_ERRORS': '0',
-                         'TOTAL_SESSIONS': '10'}
+            exp_stats = {'connection_errors': '0',
+                         'active_connections': '1',
+                         'current_sessions': '3',
+                         'bytes_in': '7764',
+                         'max_connections': '2',
+                         'max_sessions': '4',
+                         'bytes_out': '2365',
+                         'response_errors': '0',
+                         'total_sessions': '10',
+                         'members': {
+                             '32a6c2a3-420a-44c3-955d-86bd2fc6871e': {
+                                 'status': 'ACTIVE',
+                                 'health': 'L7OK',
+                                 'failed_checks': '0'
+                             },
+                             'd9aea044-8867-4e80-9875-16fb808fa0f9': {
+                                 'status': 'INACTIVE',
+                                 'health': 'L4CON',
+                                 'failed_checks': '9'
+                             }
+                         }
+                         }
             stats = self.driver.get_stats('pool_id')
             self.assertEqual(exp_stats, stats)
 
             socket.recv.return_value = raw_stats_empty
-            self.assertEqual({}, self.driver.get_stats('pool_id'))
+            self.assertEqual({'members': {}}, self.driver.get_stats('pool_id'))
 
             path_exists.return_value = False
             socket.reset_mock()
