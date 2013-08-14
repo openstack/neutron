@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-13 06:13+0000\n"
+"POT-Creation-Date: 2013-08-14 06:14+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -385,29 +385,29 @@ msgstr ""
 msgid "Could not deserialize data"
 msgstr "無法解除序列化資料"
 
-#: neutron/agent/dhcp_agent.py:58
+#: neutron/agent/dhcp_agent.py:56
 msgid "Interval to resync."
 msgstr "重新同步的間隔。"
 
-#: neutron/agent/dhcp_agent.py:61 neutron/agent/netns_cleanup_util.py:68
+#: neutron/agent/dhcp_agent.py:59 neutron/agent/netns_cleanup_util.py:68
 msgid "The driver used to manage the DHCP server."
 msgstr "用於管理 DHCP 伺服器的驅動程式。"
 
-#: neutron/agent/dhcp_agent.py:63 neutron/agent/l3_agent.py:171
+#: neutron/agent/dhcp_agent.py:61 neutron/agent/l3_agent.py:170
 msgid "Allow overlapping IP."
 msgstr "容許重疊的 IP。"
 
-#: neutron/agent/dhcp_agent.py:65
+#: neutron/agent/dhcp_agent.py:63
 msgid "Support Metadata requests on isolated networks."
 msgstr "支援已隔離網路上的 meta 資料要求。"
 
-#: neutron/agent/dhcp_agent.py:67
+#: neutron/agent/dhcp_agent.py:65
 msgid ""
 "Allows for serving metadata requests from a dedicated network. Requires "
 "enable_isolated_metadata = True"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:71
+#: neutron/agent/dhcp_agent.py:69
 msgid "Number of threads to use during sync process."
 msgstr ""
 
@@ -418,231 +418,200 @@ msgid ""
 "networks"
 msgstr "'%s' DHCP-driver 不支援擷取現有網路清單"
 
-#: neutron/agent/dhcp_agent.py:111 neutron/agent/dhcp_agent.py:858
+#: neutron/agent/dhcp_agent.py:111 neutron/agent/dhcp_agent.py:801
 msgid "DHCP agent started"
 msgstr "已啟動 DHCP 代理程式"
 
-#: neutron/agent/dhcp_agent.py:139
+#: neutron/agent/dhcp_agent.py:138
 #, python-format
 msgid "Unable to %s dhcp."
 msgstr "無法 %s DHCP。"
 
-#: neutron/agent/dhcp_agent.py:147
-msgid "Unable to update lease"
-msgstr "無法更新租賃"
-
-#: neutron/agent/dhcp_agent.py:151
+#: neutron/agent/dhcp_agent.py:142
 msgid "Synchronizing state"
 msgstr "正在同步化狀態"
 
-#: neutron/agent/dhcp_agent.py:163
+#: neutron/agent/dhcp_agent.py:154
 #, python-format
 msgid "Unable to sync network state on deleted network %s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:171
+#: neutron/agent/dhcp_agent.py:162
 msgid "Unable to sync network state."
 msgstr "無法同步網路狀態。"
 
-#: neutron/agent/dhcp_agent.py:191 neutron/agent/dhcp_agent.py:231
+#: neutron/agent/dhcp_agent.py:182 neutron/agent/dhcp_agent.py:222
 #, python-format
 msgid "Network %s RPC info call failed."
 msgstr "呼叫網路 %s RPC 資訊失敗。"
 
-#: neutron/agent/dhcp_agent.py:323
+#: neutron/agent/dhcp_agent.py:337
 #, python-format
 msgid ""
 "%(port_num)d router ports found on the metadata access network. Only the "
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr "在 meta 資料存取網路上找到 %(port_num)d 個路由器埠。將僅考量路由器 %(router_id)s 的埠 %(port_id)s"
 
-#: neutron/agent/dhcp_agent.py:533 neutron/agent/l3_agent.py:159
+#: neutron/agent/dhcp_agent.py:537 neutron/agent/l3_agent.py:158
 #: neutron/debug/debug_agent.py:45
 msgid "The driver used to manage the virtual interface."
 msgstr "用於管理虛擬介面的驅動程式。"
 
-#: neutron/agent/dhcp_agent.py:541
+#: neutron/agent/dhcp_agent.py:545
 msgid "You must specify an interface driver"
 msgstr "必須指定介面驅動程式"
 
-#: neutron/agent/dhcp_agent.py:547 neutron/agent/l3_agent.py:202
+#: neutron/agent/dhcp_agent.py:551 neutron/agent/l3_agent.py:201
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr "匯入介面驅動程式 '%s' 時發生錯誤"
 
-#: neutron/agent/dhcp_agent.py:595
+#: neutron/agent/dhcp_agent.py:599
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:605
+#: neutron/agent/dhcp_agent.py:609
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:646
+#: neutron/agent/dhcp_agent.py:650
 #, python-format
 msgid "DHCP port %(device_id)s on network %(network_id)s does not yet exist."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:687 neutron/debug/debug_agent.py:75
+#: neutron/agent/dhcp_agent.py:691 neutron/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr "正在重複使用現有裝置：%s。"
 
-#: neutron/agent/dhcp_agent.py:762
-msgid "Location to DHCP lease relay UNIX domain socket"
-msgstr "DHCP 租賃中繼 UNIX 網域 Socket 的位置"
-
-#: neutron/agent/dhcp_agent.py:792
-#, python-format
-msgid "Network ID %s is not a valid UUID"
-msgstr "網路 ID %s 不是有效的 UUID"
-
-#: neutron/agent/dhcp_agent.py:798
-msgid "Unable to parse lease relay msg to dict."
-msgstr "無法將租賃中繼訊息剖析為字典。"
-
-#: neutron/agent/dhcp_agent.py:799
-#, python-format
-msgid "Exception value: %s"
-msgstr "異常狀況值：%s"
-
-#: neutron/agent/dhcp_agent.py:800
-#, python-format
-msgid "Message representation: %s"
-msgstr "訊息表示法：%s"
-
-#: neutron/agent/dhcp_agent.py:802
-msgid "Unable update lease. Exception"
-msgstr "無法更新租賃。異常狀況"
-
-#: neutron/agent/dhcp_agent.py:841 neutron/agent/l3_agent.py:808
+#: neutron/agent/dhcp_agent.py:784 neutron/agent/l3_agent.py:781
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:847 neutron/agent/l3_agent.py:813
+#: neutron/agent/dhcp_agent.py:790 neutron/agent/l3_agent.py:786
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:228
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:184
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:221
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
-#: neutron/agent/dhcp_agent.py:855 neutron/agent/l3_agent.py:818
+#: neutron/agent/dhcp_agent.py:798 neutron/agent/l3_agent.py:791
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:281
 #, python-format
 msgid "agent_updated by server side %s!"
 msgstr "agent_updated 是由伺服器端 %s 執行！"
 
-#: neutron/agent/l3_agent.py:156 neutron/debug/debug_agent.py:48
+#: neutron/agent/l3_agent.py:155 neutron/debug/debug_agent.py:48
 msgid "Name of bridge used for external network traffic."
 msgstr "用於外部網路資料流量的橋接器名稱。"
 
-#: neutron/agent/l3_agent.py:163
+#: neutron/agent/l3_agent.py:162
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:167
+#: neutron/agent/l3_agent.py:166
 msgid ""
 "Send this many gratuitous ARPs for HA setup, set it below or equal to 0 "
 "to disable this feature."
 msgstr "給這個項目傳送了用於高可用性設定的許多無償 ARP，請將其設為小於或等於 0 以停用此功能。"
 
-#: neutron/agent/l3_agent.py:173
+#: neutron/agent/l3_agent.py:172
 #, fuzzy
 msgid ""
 "If namespaces is disabled, the l3 agent can only configure a router that "
 "has the matching router ID."
 msgstr "如果名稱空間已停用，則 L3 代理程式只能配置一個具有相符路由器 ID 的路由器。"
 
-#: neutron/agent/l3_agent.py:178
+#: neutron/agent/l3_agent.py:177
 msgid "Agent should implement routers with no gateway"
 msgstr "代理程式應該實作不含閘道的路由器"
 
-#: neutron/agent/l3_agent.py:180
+#: neutron/agent/l3_agent.py:179
 msgid "UUID of external network for routers implemented by the agents."
 msgstr "代理程式所實作路由器的外部網路 UUID。"
 
-#: neutron/agent/l3_agent.py:183
+#: neutron/agent/l3_agent.py:182
 msgid "Allow running metadata proxy."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:195
+#: neutron/agent/l3_agent.py:194
 msgid "An interface driver must be specified"
 msgstr "必須指定介面驅動程式"
 
-#: neutron/agent/l3_agent.py:237
+#: neutron/agent/l3_agent.py:236
 #, python-format
 msgid "Failed deleting namespace '%s'"
 msgstr "刪除名稱空間 '%s' 時失敗"
 
-#: neutron/agent/l3_agent.py:266
+#: neutron/agent/l3_agent.py:265
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:335
+#: neutron/agent/l3_agent.py:334
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr "路由器埠 %s 沒有 IP 位址"
 
-#: neutron/agent/l3_agent.py:337 neutron/db/l3_db.py:924
+#: neutron/agent/l3_agent.py:336 neutron/db/l3_db.py:924
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "正在忽略路由器埠 %s 上的多個 IP"
 
-#: neutron/agent/l3_agent.py:471
+#: neutron/agent/l3_agent.py:472
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr "傳送無償 ARP 時失敗：%s"
 
-#: neutron/agent/l3_agent.py:608
+#: neutron/agent/l3_agent.py:581
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:613
+#: neutron/agent/l3_agent.py:586
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:621
+#: neutron/agent/l3_agent.py:594
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:625
+#: neutron/agent/l3_agent.py:598
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:632
+#: neutron/agent/l3_agent.py:605
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr "外部網路橋接器 '%s' 不存在"
 
-#: neutron/agent/l3_agent.py:688 neutron/agent/l3_agent.py:719
+#: neutron/agent/l3_agent.py:661 neutron/agent/l3_agent.py:692
 msgid "Failed synchronizing routers"
 msgstr "同步路由器時失敗"
 
-#: neutron/agent/l3_agent.py:715
+#: neutron/agent/l3_agent.py:688
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:723
+#: neutron/agent/l3_agent.py:696
 msgid "L3 agent started"
 msgstr "已啟動 L3 代理程式"
 
-#: neutron/agent/l3_agent.py:743
+#: neutron/agent/l3_agent.py:716
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr "所新增的路徑項目是 '%s'"
 
-#: neutron/agent/l3_agent.py:751
+#: neutron/agent/l3_agent.py:724
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr "所移除的路徑項目是 '%s'"
@@ -805,56 +774,56 @@ msgstr "使用此檔案來置換預設 dnsmasq 設定"
 msgid "Use another DNS server before any in /etc/resolv.conf."
 msgstr "在 /etc/resolv.conf 中任何 DNS 伺服器之前使用另一個 DNS 伺服器。"
 
-#: neutron/agent/linux/dhcp.py:140
+#: neutron/agent/linux/dhcp.py:144
 #, python-format
 msgid "DHCP for %(net_id)s pid %(pid)d is stale, ignoring command"
 msgstr "%(net_id)s pid %(pid)d 的 DHCP 已過時，正在忽略指令"
 
-#: neutron/agent/linux/dhcp.py:143
+#: neutron/agent/linux/dhcp.py:147
 #, python-format
 msgid "No DHCP started for %s"
 msgstr "未給 %s 啟動 DHCP"
 
-#: neutron/agent/linux/dhcp.py:165 neutron/agent/linux/external_process.py:84
+#: neutron/agent/linux/dhcp.py:169 neutron/agent/linux/external_process.py:84
 #, python-format
 msgid "Error while reading %s"
 msgstr "讀取 %s 時發生錯誤"
 
-#: neutron/agent/linux/dhcp.py:172 neutron/agent/linux/external_process.py:92
+#: neutron/agent/linux/dhcp.py:176 neutron/agent/linux/external_process.py:92
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr "無法轉換 %s 中的值"
 
-#: neutron/agent/linux/dhcp.py:174 neutron/agent/linux/external_process.py:90
+#: neutron/agent/linux/dhcp.py:178 neutron/agent/linux/external_process.py:90
 #, python-format
 msgid "Unable to access %s"
 msgstr "無法存取 %s"
 
-#: neutron/agent/linux/dhcp.py:234
+#: neutron/agent/linux/dhcp.py:238
 #, python-format
 msgid ""
 "FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
 " Please ensure that its version is %s or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:239
+#: neutron/agent/linux/dhcp.py:243
 #, python-format
 msgid ""
 "Unable to determine dnsmasq version. Please ensure that its version is %s"
 " or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:327
+#: neutron/agent/linux/dhcp.py:338
 #, python-format
 msgid "Killing dhcpmasq for network since all subnets have turned off DHCP: %s"
 msgstr "由於所有子網路都已關閉 DHCP，所以正在結束網路的 dhcpmasq：%s"
 
-#: neutron/agent/linux/dhcp.py:337
+#: neutron/agent/linux/dhcp.py:348
 #, python-format
 msgid "Pid %d is stale, relaunching dnsmasq"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:338
+#: neutron/agent/linux/dhcp.py:349
 #, python-format
 msgid "Reloading allocations for network: %s"
 msgstr "正在重新載入網路的配置：%s"
@@ -2039,204 +2008,197 @@ msgstr "資料庫登錄異常狀況：%s"
 msgid "Database exception"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:126
+#: neutron/db/db_base_plugin_v2.py:131
 msgid "Cannot create resource for another tenant"
 msgstr "無法給另一個 Tenant 建立資源"
 
-#: neutron/db/db_base_plugin_v2.py:272
+#: neutron/db/db_base_plugin_v2.py:280
 #, python-format
 msgid "Generated mac for network %(network_id)s is %(mac_address)s"
 msgstr "給網路 %(network_id)s 產生的 MAC 位址是 %(mac_address)s"
 
-#: neutron/db/db_base_plugin_v2.py:278
+#: neutron/db/db_base_plugin_v2.py:286
 #, python-format
 msgid "Generated mac %(mac_address)s exists. Remaining attempts %(max_retries)s."
 msgstr "產生的 MAC 位址 %(mac_address)s 已存在。還可以嘗試 %(max_retries)s 次。"
 
-#: neutron/db/db_base_plugin_v2.py:282
+#: neutron/db/db_base_plugin_v2.py:290
 #, python-format
 msgid "Unable to generate mac address after %s attempts"
 msgstr "嘗試 %s 次之後仍無法產生 MAC 位址"
 
-#: neutron/db/db_base_plugin_v2.py:312
-#, python-format
-msgid ""
-"Hold allocated IP %(ip_address)s "
-"(%(network_id)s/%(subnet_id)s/%(port_id)s)"
-msgstr "保留所配置的 IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
-
-#: neutron/db/db_base_plugin_v2.py:376
+#: neutron/db/db_base_plugin_v2.py:336
 #, python-format
 msgid "Recycle %s"
 msgstr "回收 %s"
 
-#: neutron/db/db_base_plugin_v2.py:380
+#: neutron/db/db_base_plugin_v2.py:340
 #, python-format
 msgid "Recycle: first match for %(first_ip)s-%(last_ip)s"
 msgstr "回收：%(first_ip)s-%(last_ip)s 的第一個相符項"
 
-#: neutron/db/db_base_plugin_v2.py:387
+#: neutron/db/db_base_plugin_v2.py:347
 #, python-format
 msgid "Recycle: last match for %(first_ip)s-%(last_ip)s"
 msgstr "回收：%(first_ip)s-%(last_ip)s 的最後一個相符項"
 
-#: neutron/db/db_base_plugin_v2.py:399
+#: neutron/db/db_base_plugin_v2.py:359
 #, python-format
 msgid "Recycle: merged %(first_ip1)s-%(last_ip1)s and %(first_ip2)s-%(last_ip2)s"
 msgstr "回收：已合併 %(first_ip1)s-%(last_ip1)s 及 %(first_ip2)s-%(last_ip2)s"
 
-#: neutron/db/db_base_plugin_v2.py:408
+#: neutron/db/db_base_plugin_v2.py:368
 #, python-format
 msgid "Recycle: updated first %(first_ip)s-%(last_ip)s"
 msgstr "回收：已更新第一個 %(first_ip)s-%(last_ip)s"
 
-#: neutron/db/db_base_plugin_v2.py:413
+#: neutron/db/db_base_plugin_v2.py:373
 #, python-format
 msgid "Recycle: updated last %(first_ip)s-%(last_ip)s"
 msgstr "回收：已更新最後一個 %(first_ip)s-%(last_ip)s"
 
-#: neutron/db/db_base_plugin_v2.py:422
+#: neutron/db/db_base_plugin_v2.py:382
 #, python-format
 msgid "Recycle: created new %(first_ip)s-%(last_ip)s"
 msgstr "回收：已建立新的 %(first_ip)s-%(last_ip)s"
 
-#: neutron/db/db_base_plugin_v2.py:446
+#: neutron/db/db_base_plugin_v2.py:401
 #, python-format
 msgid ""
 "No fixed IP found that matches the network %(network_id)s and ip address "
 "%(ip_address)s."
 msgstr "找不到與網路 %(network_id)s 及 IP 位址 %(ip_address)s 相符的固定 IP。"
 
-#: neutron/db/db_base_plugin_v2.py:455
+#: neutron/db/db_base_plugin_v2.py:410
 #, python-format
 msgid "Delete allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 msgstr "刪除所配置的 IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 
-#: neutron/db/db_base_plugin_v2.py:479
+#: neutron/db/db_base_plugin_v2.py:434
 #, python-format
 msgid "All IP's from subnet %(subnet_id)s (%(cidr)s) allocated"
 msgstr "子網路 %(subnet_id)s (%(cidr)s) 的所有 IP 都已配置"
 
-#: neutron/db/db_base_plugin_v2.py:484
+#: neutron/db/db_base_plugin_v2.py:439
 #, python-format
 msgid "Allocated IP - %(ip_address)s from %(first_ip)s to %(last_ip)s"
 msgstr "已配置 IP - %(ip_address)s（從 %(first_ip)s 到 %(last_ip)s）"
 
-#: neutron/db/db_base_plugin_v2.py:491
+#: neutron/db/db_base_plugin_v2.py:446
 msgid "No more free IP's in slice. Deleting allocation pool."
 msgstr "截塊中沒有更多的可用 IP。正在刪除配置儲存區。"
 
-#: neutron/db/db_base_plugin_v2.py:597
+#: neutron/db/db_base_plugin_v2.py:552
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr "IP 配置需要 subnet_id 或 ip_address"
 
-#: neutron/db/db_base_plugin_v2.py:609
+#: neutron/db/db_base_plugin_v2.py:564
 #, python-format
 msgid "IP address %s is not a valid IP for the defined networks subnets"
 msgstr "IP 位址 %s 不是所定義網路子網路的有效 IP"
 
-#: neutron/db/db_base_plugin_v2.py:615
+#: neutron/db/db_base_plugin_v2.py:570
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr "無法在網路 %(network_id)s 上建立埠，因為 fixed_ips 包含無效的子網路 %(subnet_id)s"
 
-#: neutron/db/db_base_plugin_v2.py:635
+#: neutron/db/db_base_plugin_v2.py:590
 #, python-format
 msgid "IP address %s is not a valid IP for the defined subnet"
 msgstr "IP 位址 %s 不是所定義子網路的有效 IP"
 
-#: neutron/db/db_base_plugin_v2.py:644 neutron/db/db_base_plugin_v2.py:677
+#: neutron/db/db_base_plugin_v2.py:599 neutron/db/db_base_plugin_v2.py:632
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr "已超出每個埠的固定 IP 數目上限"
 
-#: neutron/db/db_base_plugin_v2.py:692
+#: neutron/db/db_base_plugin_v2.py:647
 #, python-format
 msgid "Port update. Hold %s"
 msgstr "埠更新。保留 %s"
 
-#: neutron/db/db_base_plugin_v2.py:700
+#: neutron/db/db_base_plugin_v2.py:654
 #, python-format
 msgid "Port update. Adding %s"
 msgstr "埠更新。正在新增 %s"
 
-#: neutron/db/db_base_plugin_v2.py:755
+#: neutron/db/db_base_plugin_v2.py:709
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr "所要求的網路 %(network_id)s 子網路 (CIDR %(cidr)s) 與另一個子網路重疊"
 
-#: neutron/db/db_base_plugin_v2.py:760
+#: neutron/db/db_base_plugin_v2.py:714
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr "驗證 CIDR %(new_cidr)s 失敗 - 與子網路 %(subnet_id)s (CIDR %(cidr)s) 重疊"
 
-#: neutron/db/db_base_plugin_v2.py:780
+#: neutron/db/db_base_plugin_v2.py:734
 msgid "Performing IP validity checks on allocation pools"
 msgstr "正在對配置儲存區執行 IP 驗證檢查"
 
-#: neutron/db/db_base_plugin_v2.py:787
+#: neutron/db/db_base_plugin_v2.py:741
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr "在儲存區中發現無效的 IP 位址：%(start)s - %(end)s："
 
-#: neutron/db/db_base_plugin_v2.py:794
+#: neutron/db/db_base_plugin_v2.py:748
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr "指定的 IP 位址與子網路 IP 版本不符"
 
-#: neutron/db/db_base_plugin_v2.py:798
+#: neutron/db/db_base_plugin_v2.py:752
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "起始 IP (%(start)s) 大於結尾 IP (%(end)s)"
 
-#: neutron/db/db_base_plugin_v2.py:803
+#: neutron/db/db_base_plugin_v2.py:757
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr "找到的儲存區大於子網路 CIDR：%(start)s - %(end)s"
 
-#: neutron/db/db_base_plugin_v2.py:816
+#: neutron/db/db_base_plugin_v2.py:770
 msgid "Checking for overlaps among allocation pools and gateway ip"
 msgstr "正在檢查配置儲存區及閘道 IP 之間是否有重疊"
 
-#: neutron/db/db_base_plugin_v2.py:827
+#: neutron/db/db_base_plugin_v2.py:781
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr "發現重疊的範圍：%(l_range)s 及 %(r_range)s"
 
-#: neutron/db/db_base_plugin_v2.py:840 neutron/db/db_base_plugin_v2.py:844
+#: neutron/db/db_base_plugin_v2.py:794 neutron/db/db_base_plugin_v2.py:798
 #, python-format
 msgid "Invalid route: %s"
 msgstr "無效的路徑：%s"
 
-#: neutron/db/db_base_plugin_v2.py:966
+#: neutron/db/db_base_plugin_v2.py:920
 #, python-format
 msgid "An exception occured while creating the %(resource)s:%(item)s"
 msgstr "建立 %(resource)s:%(item)s 時發生異常狀況"
 
-#: neutron/db/db_base_plugin_v2.py:1065
+#: neutron/db/db_base_plugin_v2.py:1019
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s '%(addr)s' 與 ip_version '%(ip_version)s' 不符"
 
-#: neutron/db/db_base_plugin_v2.py:1089
+#: neutron/db/db_base_plugin_v2.py:1043
 msgid "Gateway is not valid on subnet"
 msgstr "閘道在子網路上無效"
 
-#: neutron/db/db_base_plugin_v2.py:1102
+#: neutron/db/db_base_plugin_v2.py:1056
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr "剖析 DNS 位址 %s 時發生錯誤"
 
-#: neutron/db/db_base_plugin_v2.py:1364
+#: neutron/db/db_base_plugin_v2.py:1317
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr "已配置 IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 
-#: neutron/db/db_base_plugin_v2.py:1444
+#: neutron/db/db_base_plugin_v2.py:1392
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr "%(address)s (%(subnet_id)s) 未回收"
@@ -2280,17 +2242,15 @@ msgstr "%(host)s 提出 %(subnet_id)s 要求來移除 DHCP 埠 fixed_ip"
 
 #: neutron/db/dhcp_rpc_base.py:217
 #, python-format
-msgid ""
-"Updating lease expiration for %(ip_address)s on network %(network_id)s "
-"from %(host)s."
-msgstr "正在從 %(host)s 更新網路 %(network_id)s 上 %(ip_address)s 的租賃有效期限。"
+msgid "Updating lease expiration is now deprecated. Issued  from host %(host)s."
+msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:231
+#: neutron/db/dhcp_rpc_base.py:224
 #, python-format
 msgid "Create dhcp port %(port)s from %(host)s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:247
+#: neutron/db/dhcp_rpc_base.py:240
 #, python-format
 msgid "Update dhcp port %(port)s from %(host)s."
 msgstr ""
@@ -8122,59 +8082,54 @@ msgid ""
 "%(lrouter_uuid)s"
 msgstr "刪除邏輯路由器 %(lrouter_uuid)s 上的邏輯路由器埠 %(lport_uuid)s"
 
-#: neutron/plugins/nicira/nvplib.py:870
-#, python-format
-msgid "Invalid NVP attachment type '%s'"
-msgstr "無效的 NVP 連接裝置類型 '%s'"
-
-#: neutron/plugins/nicira/nvplib.py:882
+#: neutron/plugins/nicira/nvplib.py:881
 #, python-format
 msgid "Port not found, Error: %s"
 msgstr "找不到埠，錯誤：%s"
 
-#: neutron/plugins/nicira/nvplib.py:1002
+#: neutron/plugins/nicira/nvplib.py:1001
 #, python-format
 msgid "Created Security Profile: %s"
 msgstr "已建立安全設定檔：%s"
 
-#: neutron/plugins/nicira/nvplib.py:1028
+#: neutron/plugins/nicira/nvplib.py:1027
 #, python-format
 msgid "Updated Security Profile: %s"
 msgstr "已更新安全設定檔：%s"
 
-#: neutron/plugins/nicira/nvplib.py:1047
+#: neutron/plugins/nicira/nvplib.py:1046
 #, python-format
 msgid "Invalid keys for NAT match: %s"
 msgstr "NAT 相符項的索引鍵無效：%s"
 
-#: neutron/plugins/nicira/nvplib.py:1053
+#: neutron/plugins/nicira/nvplib.py:1052
 #, python-format
 msgid "Creating NAT rule: %s"
 msgstr "正在建立 NAT 規則：%s"
 
-#: neutron/plugins/nicira/nvplib.py:1067
+#: neutron/plugins/nicira/nvplib.py:1066
 msgid ""
 "No SNAT rules cannot be applied as they are not available in this version"
 " of the NVP platform"
 msgstr "無法套用 SNAT 規則，因為這些規則在此版本的 NVP 平台中無法使用"
 
-#: neutron/plugins/nicira/nvplib.py:1202
+#: neutron/plugins/nicira/nvplib.py:1201
 #, python-format
 msgid "Router Port %(lport_id)s not found on router %(lrouter_id)s"
 msgstr "在路由器 %(lrouter_id)s 上找不到路由器埠 %(lport_id)s"
 
-#: neutron/plugins/nicira/nvplib.py:1207
+#: neutron/plugins/nicira/nvplib.py:1206
 #, python-format
 msgid ""
 "An exception occurred while updating IP addresses on a router logical "
 "port:%s"
 msgstr "更新路由器邏輯埠上的 IP 位址時發生異常狀況：%s"
 
-#: neutron/plugins/nicira/nvplib.py:1248
+#: neutron/plugins/nicira/nvplib.py:1247
 msgid "Failed to create logical queue"
 msgstr "無法建立邏輯佇列"
 
-#: neutron/plugins/nicira/nvplib.py:1259
+#: neutron/plugins/nicira/nvplib.py:1258
 msgid "Failed to delete logical queue"
 msgstr "無法刪除邏輯佇列"
 
@@ -8378,76 +8333,70 @@ msgstr ""
 
 #: neutron/plugins/nicira/common/config.py:40
 msgid ""
-"Enables dedicated connection to the metadata proxy for metadata server "
-"access via Neutron router"
-msgstr ""
-
-#: neutron/plugins/nicira/common/config.py:43
-msgid ""
 "The default network tranport type to use (stt, gre, bridge, ipsec_gre, or"
 " ipsec_stt)"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:50
+#: neutron/plugins/nicira/common/config.py:47
 msgid "User name for NVP controllers in this cluster"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:54
+#: neutron/plugins/nicira/common/config.py:51
 msgid "Password for NVP controllers in this cluster"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:57
+#: neutron/plugins/nicira/common/config.py:54
 msgid "Total time limit for a cluster request"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:60
+#: neutron/plugins/nicira/common/config.py:57
 msgid "Time before aborting a request"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:63
+#: neutron/plugins/nicira/common/config.py:60
 msgid "Number of time a request should be retried"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:66
+#: neutron/plugins/nicira/common/config.py:63
 msgid "Number of times a redirect should be followed"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:68
+#: neutron/plugins/nicira/common/config.py:65
 msgid "Lists the NVP controllers in this cluster"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:73
+#: neutron/plugins/nicira/common/config.py:70
 msgid ""
 "This is uuid of the default NVP Transport zone that will be used for "
 "creating tunneled isolated \"Neutron\" networks. It needs to be created "
 "in NVP before starting Neutron with the nvp plugin."
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:78
+#: neutron/plugins/nicira/common/config.py:75
 msgid ""
 "Optional paramter identifying the UUID of the cluster in NVP.  This can "
 "be retrieved from NVP management console \"admin\" section."
 msgstr "選用參數，用以識別 NVP 中叢集的 UUID。這可以從 NVP 管理主控台 \"admin\" 部分擷取。"
 
-#: neutron/plugins/nicira/common/config.py:82
+#: neutron/plugins/nicira/common/config.py:79
 msgid ""
 "Unique identifier of the NVP L3 Gateway service which will be used for "
 "implementing routers and floating IPs"
 msgstr "「NVP L3 閘道」服務的唯一 ID，此服務將用於實作路由器及浮動 IP"
 
-#: neutron/plugins/nicira/common/config.py:86
+#: neutron/plugins/nicira/common/config.py:83
 msgid ""
 "Unique identifier of the NVP L2 Gateway service which will be used by "
 "default for network gateways"
 msgstr "「NVP L2 閘道」服務的唯一 ID，依預設，此服務將由網路閘道使用"
 
-#: neutron/plugins/nicira/common/config.py:89
+#: neutron/plugins/nicira/common/config.py:86
 msgid ""
 "Name of the interface on a L2 Gateway transport nodewhich should be used "
 "by default when setting up a network connection"
 msgstr "「L2 閘道」傳輸節點上介面的名稱，依預設，在設定網路連線時應該使用此節點。"
 
-#: neutron/plugins/nicira/common/config.py:102
+#: neutron/plugins/nicira/common/config.py:99
 msgid ""
 "Describes a connection to a single controller. A different connection for"
 " each controller in the cluster can be specified; there must be at least "
@@ -8494,6 +8443,11 @@ msgid ""
 "While retrieving NAT rules, %(actual_rules)s were found whereas rules in "
 "the (%(min_rules)s,%(max_rules)s) interval were expected"
 msgstr "擷取 NAT 規則時，找到 %(actual_rules)s，但需要間隔為 (%(min_rules)s,%(max_rules)s) 的規則"
+
+#: neutron/plugins/nicira/common/exceptions.py:58
+#, python-format
+msgid "Invalid NVP attachment type '%(attachment_type)s'"
+msgstr ""
 
 #: neutron/plugins/nicira/common/metadata_access.py:112
 msgid "Metadata access network is disabled"
@@ -9659,7 +9613,7 @@ msgstr "找不到 lrouter：%s"
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr "無法將介面插入網路 %(net_id)s 的埠 %(port_id)s。此介面已插入埠 %(att_port_id)s"
+#~ msgstr "找不到 Tenant %(tenant_id)s 的認證 %(credential_name)s"
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -9856,27 +9810,11 @@ msgstr "找不到 lrouter：%s"
 #~ msgid "get_all_nexusport_bindings() called"
 #~ msgstr "已呼叫 get_all_nexusport_bindings()"
 
-#~ msgid ""
-#~ "%(class_name)s method %(method_name)scalled with "
-#~ "arguments %(args)s %(kwargs)s "
-#~ msgstr ""
-
 #~ msgid "create_credential() called"
 #~ msgstr "已呼叫 create_credential()"
 
 #~ msgid "delete_credential() called"
 #~ msgstr "已呼叫 delete_credential()"
-
-#~ msgid ""
-#~ "Unable to complete operation. No more"
-#~ " dynamic nics are available in the"
-#~ " system."
-#~ msgstr "無法完成作業。系統中沒有更多的可用動態 NIC。"
-
-#~ msgid ""
-#~ "NetworkVlanBinding for %(vlan_id)s and network"
-#~ " %(network_id)s already exists"
-#~ msgstr "%(vlan_id)s 及網路 %(network_id)s 的 NetworkVlanBinding 已存在"
 
 #~ msgid "Vlan ID %(vlan_id)s not found"
 #~ msgstr "找不到 VLAN ID %(vlan_id)s"
@@ -9886,21 +9824,6 @@ msgstr "找不到 lrouter：%s"
 
 #~ msgid "QoS level %(qos_id)s could not be found for tenant %(tenant_id)s"
 #~ msgstr "找不到 Tenant %(tenant_id)s 的服務品質層次 %(qos_id)s"
-
-#~ msgid ""
-#~ "QoS level with name %(qos_name)s already"
-#~ " exists for tenant %(tenant_id)s"
-#~ msgstr "Tenant %(tenant_id)s 已存在名稱為 %(qos_name)s 的服務品質層次"
-
-#~ msgid ""
-#~ "Credential %(credential_id)s could not be "
-#~ "found for tenant %(tenant_id)s"
-#~ msgstr "找不到 Tenant %(tenant_id)s 的認證 %(credential_id)s"
-
-#~ msgid ""
-#~ "Credential %(credential_name)s could not be"
-#~ " found for tenant %(tenant_id)s"
-#~ msgstr "找不到 Tenant %(tenant_id)s 的認證 %(credential_name)s"
 
 #~ msgid "Credential %(credential_name)s already exists for tenant %(tenant_id)s"
 #~ msgstr ""
@@ -9928,4 +9851,44 @@ msgstr "找不到 lrouter：%s"
 
 #~ msgid "create_network() failed due to %s"
 #~ msgstr "create_network() 由於 %s 而失敗"
+
+#~ msgid "Unable to update lease"
+#~ msgstr "無法更新租賃"
+
+#~ msgid "Location to DHCP lease relay UNIX domain socket"
+#~ msgstr "DHCP 租賃中繼 UNIX 網域 Socket 的位置"
+
+#~ msgid "Network ID %s is not a valid UUID"
+#~ msgstr "網路 ID %s 不是有效的 UUID"
+
+#~ msgid "Unable to parse lease relay msg to dict."
+#~ msgstr "無法將租賃中繼訊息剖析為字典。"
+
+#~ msgid "Exception value: %s"
+#~ msgstr "異常狀況值：%s"
+
+#~ msgid "Message representation: %s"
+#~ msgstr "訊息表示法：%s"
+
+#~ msgid "Unable update lease. Exception"
+#~ msgstr "無法更新租賃。異常狀況"
+
+#~ msgid ""
+#~ "Hold allocated IP %(ip_address)s "
+#~ "(%(network_id)s/%(subnet_id)s/%(port_id)s)"
+#~ msgstr "保留所配置的 IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
+
+#~ msgid ""
+#~ "Updating lease expiration for %(ip_address)s"
+#~ " on network %(network_id)s from %(host)s."
+#~ msgstr "正在從 %(host)s 更新網路 %(network_id)s 上 %(ip_address)s 的租賃有效期限。"
+
+#~ msgid "Invalid NVP attachment type '%s'"
+#~ msgstr "無效的 NVP 連接裝置類型 '%s'"
+
+#~ msgid ""
+#~ "Enables dedicated connection to the "
+#~ "metadata proxy for metadata server "
+#~ "access via Neutron router"
+#~ msgstr ""
 
