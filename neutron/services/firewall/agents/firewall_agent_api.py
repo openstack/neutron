@@ -29,7 +29,7 @@ LOG = logging.getLogger(__name__)
 FWaaSOpts = [
     cfg.StrOpt(
         'driver',
-        default=('neutron.services.firewall.agents.firewall_agent_api.'
+        default=('neutron.services.firewall.drivers.fwaas_base.'
                  'NoopFwaasDriver'),
         help=_("Name of the FWaaS Driver")),
     cfg.BoolOpt(
@@ -83,26 +83,4 @@ class FWaaSAgentRpcCallbackMixin(object):
 
     def delete_firewall(self, context, firewall, host):
         """Handle RPC cast from plugin to delete a firewall."""
-        pass
-
-
-class NoopFwaasDriver(object):
-    """Noop Fwaas Driver.
-
-    Firewall driver which does nothing.
-    This driver is for disabling the firewall functionality.
-    Put in temporarily until Driver changes are integrated when
-    this will come in from there.
-    """
-
-    def create_firewall(self, apply_list, firewall):
-        pass
-
-    def delete_firewall(self, apply_list, firewall):
-        pass
-
-    def update_firewall(self, apply_list, firewall):
-        pass
-
-    def apply_default_policy(self, apply_list):
         pass
