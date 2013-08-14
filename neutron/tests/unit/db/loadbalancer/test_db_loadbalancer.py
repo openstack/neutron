@@ -1237,7 +1237,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             updated_pool = self.plugin.get_pool(context.get_admin_context(),
                                                 pool['pool']['id'])
             self.assertEqual(updated_pool['status'], 'ACTIVE')
-            self.assertFalse(pool['pool']['status_description'])
+            self.assertFalse(updated_pool['status_description'])
 
     def test_update_pool_health_monitor(self):
         with self.pool() as pool:
