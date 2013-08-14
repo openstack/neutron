@@ -62,11 +62,13 @@ class IptablesRule(object):
 
     """
 
-    def __init__(self, chain, rule, wrap=True, top=False):
+    def __init__(self, chain, rule, wrap=True, top=False,
+                 binary_name=binary_name):
         self.chain = get_chain_name(chain, wrap)
         self.rule = rule
         self.wrap = wrap
         self.top = top
+        self.wrap_name = binary_name[:16]
 
     def __eq__(self, other):
         return ((self.chain == other.chain) and
@@ -79,7 +81,7 @@ class IptablesRule(object):
 
     def __str__(self):
         if self.wrap:
-            chain = '%s-%s' % (binary_name, self.chain)
+            chain = '%s-%s' % (self.wrap_name, self.chain)
         else:
             chain = self.chain
         return '-A %s %s' % (chain, self.rule)
@@ -88,12 +90,13 @@ class IptablesRule(object):
 class IptablesTable(object):
     """An iptables table."""
 
-    def __init__(self):
+    def __init__(self, binary_name=binary_name):
         self.rules = []
         self.remove_rules = []
         self.chains = set()
         self.unwrapped_chains = set()
         self.remove_chains = set()
+        self.wrap_name = binary_name[:16]
 
     def add_chain(self, name, wrap=True):
         """Adds a named chain to the table.
@@ -168,7 +171,7 @@ class IptablesTable(object):
             self.remove_rules += [r for r in self.rules
                                   if jump_snippet in r.rule]
         else:
-            jump_snippet = '-j %s-%s' % (binary_name, name)
+            jump_snippet = '-j %s-%s' % (self.wrap_name, name)
 
         # finally, remove rules from list that have a matching jump chain
         self.rules = [r for r in self.rules
@@ -192,11 +195,11 @@ class IptablesTable(object):
         if '$' in rule:
             rule = ' '.join(map(self._wrap_target_chain, rule.split(' ')))
 
-        self.rules.append(IptablesRule(chain, rule, wrap, top))
+        self.rules.append(IptablesRule(chain, rule, wrap, top, self.wrap_name))
 
     def _wrap_target_chain(self, s):
         if s.startswith('$'):
-            return ('%s-%s' % (binary_name, s[1:]))
+            return ('%s-%s' % (self.wrap_name, s[1:]))
         return s
 
     def remove_rule(self, chain, rule, wrap=True, top=False):
@@ -209,9 +212,11 @@ class IptablesTable(object):
         """
         chain = get_chain_name(chain, wrap)
         try:
-            self.rules.remove(IptablesRule(chain, rule, wrap, top))
+            self.rules.remove(IptablesRule(chain, rule, wrap, top,
+                                           self.wrap_name))
             if not wrap:
-                self.remove_rules.append(IptablesRule(chain, rule, wrap, top))
+                self.remove_rules.append(IptablesRule(chain, rule, wrap, top,
+                                                      self.wrap_name))
         except ValueError:
             LOG.warn(_('Tried to remove rule that was not there:'
                        ' %(chain)r %(rule)r %(wrap)r %(top)r'),
@@ -251,7 +256,8 @@ class IptablesManager(object):
     """
 
     def __init__(self, _execute=None, state_less=False,
-                 root_helper=None, use_ipv6=False, namespace=None):
+                 root_helper=None, use_ipv6=False, namespace=None,
+                 binary_name=binary_name):
         if _execute:
             self.execute = _execute
         else:
@@ -261,9 +267,10 @@ class IptablesManager(object):
         self.root_helper = root_helper
         self.namespace = namespace
         self.iptables_apply_deferred = False
+        self.wrap_name = binary_name[:16]
 
-        self.ipv4 = {'filter': IptablesTable()}
-        self.ipv6 = {'filter': IptablesTable()}
+        self.ipv4 = {'filter': IptablesTable(binary_name=self.wrap_name)}
+        self.ipv6 = {'filter': IptablesTable(binary_name=self.wrap_name)}
 
         # Add a neutron-filter-top chain. It's intended to be shared
         # among the various nova components. It sits at the very top
@@ -284,7 +291,8 @@ class IptablesManager(object):
                           6: {'filter': ['INPUT', 'OUTPUT', 'FORWARD']}}
 
         if not state_less:
-            self.ipv4.update({'nat': IptablesTable()})
+            self.ipv4.update(
+                {'nat': IptablesTable(binary_name=self.wrap_name)})
             builtin_chains[4].update({'nat': ['PREROUTING',
                                       'OUTPUT', 'POSTROUTING']})
 
@@ -298,7 +306,7 @@ class IptablesManager(object):
                 for chain in chains:
                     tables[table].add_chain(chain)
                     tables[table].add_rule(chain, '-j $%s' %
-                                          (chain), wrap=False)
+                                           (chain), wrap=False)
 
         if not state_less:
             # Add a neutron-postrouting-bottom chain. It's intended to be
@@ -412,13 +420,13 @@ class IptablesManager(object):
         # Fill new_filter with any chains or rules without our name in them.
         old_filter, new_filter = [], []
         for line in current_lines:
-            (old_filter if binary_name in line else
+            (old_filter if self.wrap_name in line else
              new_filter).append(line.strip())
 
         rules_index = self._find_rules_index(new_filter)
 
         all_chains = [':%s' % name for name in unwrapped_chains]
-        all_chains += [':%s-%s' % (binary_name, name) for name in chains]
+        all_chains += [':%s-%s' % (self.wrap_name, name) for name in chains]
 
         # Iterate through all the chains, trying to find an existing
         # match.
