@@ -537,6 +537,20 @@ class TestAttributes(base.BaseTestCase):
         msg = attributes._validate_dict(dictionary, constraints)
         self.assertIsNotNone(msg)
 
+    def test_validate_dict_convert_boolean(self):
+        dictionary, constraints = self._construct_dict_and_constraints()
+
+        constraints['key_bool'] = {
+            'type:boolean': None,
+            'required': False,
+            'convert_to': attributes.convert_to_boolean}
+        dictionary['key_bool'] = 'true'
+        msg = attributes._validate_dict(dictionary, constraints)
+        self.assertIsNone(msg)
+        # Explicitly comparing with literal 'True' as assertTrue
+        # succeeds also for 'true'
+        self.assertIs(True, dictionary['key_bool'])
+
     def test_subdictionary(self):
         dictionary, constraints = self._construct_dict_and_constraints()
 

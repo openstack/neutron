@@ -19,6 +19,7 @@
 #
 
 from neutron.api import extensions
+from neutron.api.v2 import attributes as attrs
 from neutron.common import exceptions as qexception
 from neutron.extensions import l3
 
@@ -37,7 +38,8 @@ EXTENDED_ATTRIBUTES_2_0 = {
                  'validate':
                  {'type:dict_or_nodata':
                   {'network_id': {'type:uuid': None, 'required': True},
-                   'enable_snat': {'type:boolean': None, 'required': False}}
+                   'enable_snat': {'type:boolean': None, 'required': False,
+                                   'convert_to': attrs.convert_to_boolean}}
                   }}}}
 
 
