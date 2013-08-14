@@ -145,9 +145,8 @@ class HealthMonitor(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
 
     pools = orm.relationship(
-        "PoolMonitorAssociation",
-        backref="healthmonitor",
-        cascade="all"
+        "PoolMonitorAssociation", backref="healthmonitor",
+        cascade="all", lazy="joined"
     )
 
 
@@ -679,7 +678,10 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         if res['type'] in ['HTTP', 'HTTPS']:
             for attr in ['url_path', 'http_method', 'expected_codes']:
                 res[attr] = health_monitor[attr]
-
+        res['pools'] = [{'pool_id': p['pool_id'],
+                         'status': p['status'],
+                         'status_description': p['status_description']}
+                        for p in health_monitor.pools]
         return self._fields(res, fields)
 
     def create_health_monitor(self, context, health_monitor):
