@@ -211,7 +211,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     _dict_extend_functions = {}
 
     def __init__(self):
-        # NOTE(jkoelker) This is an incomlete implementation. Subclasses
+        # NOTE(jkoelker) This is an incomplete implementation. Subclasses
         #                must override __init__ and setup the database
         #                and not call into this class's __init__.
         #                This connection is setup as memory for the tests.

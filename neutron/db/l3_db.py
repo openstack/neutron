@@ -75,7 +75,7 @@ class ExternalNetwork(model_base.BASEV2):
 class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a floating IP address.
 
-    This IP address may or many not be allocated to a tenant, and may or
+    This IP address may or may not be allocated to a tenant, and may or
     may not be associated with an internal port/ip address/router.
     """
 
@@ -302,8 +302,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         try:
             rport_qry = context.session.query(models_v2.Port)
             rports = rport_qry.filter_by(device_id=router_id)
-            # its possible these ports on on the same network, but
-            # different subnet
+            # It's possible these ports are on the same network, but
+            # different subnets.
             new_ipnet = netaddr.IPNetwork(subnet_cidr)
             for p in rports:
                 for ip in p['fixed_ips']:
