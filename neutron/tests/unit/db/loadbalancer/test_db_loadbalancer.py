@@ -1210,6 +1210,24 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 driver_call.assert_called_once_with(
                     mock.ANY, hm['health_monitor'], pool['pool']['id'])
 
+    def test_create_pool_health_monitor_already_associated(self):
+        with contextlib.nested(
+            self.pool(name="pool"),
+            self.health_monitor(),
+        ) as (pool, hm):
+            res = self.plugin.create_pool_health_monitor(
+                context.get_admin_context(),
+                hm, pool['pool']['id']
+            )
+            self.assertEqual({'health_monitor':
+                              [hm['health_monitor']['id']]},
+                             res)
+            self.assertRaises(loadbalancer.PoolMonitorAssociationExists,
+                              self.plugin.create_pool_health_monitor,
+                              context.get_admin_context(),
+                              hm,
+                              pool['pool']['id'])
+
     def test_create_pool_healthmon_invalid_pool_id(self):
         with self.health_monitor() as healthmon:
             self.assertRaises(loadbalancer.PoolNotFound,

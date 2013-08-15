@@ -54,6 +54,11 @@ class PoolMonitorAssociationNotFound(qexception.NotFound):
                 "with Pool %(pool_id)s")
 
 
+class PoolMonitorAssociationExists(qexception.Conflict):
+    message = _('health_monitor %(monitor_id)s is already associated '
+                'with pool %(pool_id)s')
+
+
 class StateInvalid(qexception.NeutronException):
     message = _("Invalid state %(state)s of Loadbalancer resource %(id)s")
 
