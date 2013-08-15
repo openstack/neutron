@@ -1,6 +1,5 @@
 hacking>=0.5.6,<0.7
 
-Babel>=0.9.6
 cliff>=1.4
 coverage>=3.6
 discover
