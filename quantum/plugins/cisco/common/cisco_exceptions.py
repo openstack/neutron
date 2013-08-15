@@ -155,3 +155,8 @@ class InvalidDetach(exceptions.QuantumException):
     message = _("Unable to unplug the attachment %(att_id)s from port "
                 "%(port_id)s for network %(net_id)s. The attachment "
                 "%(att_id)s does not exist.")
+
+
+class NexusConnectFailed(exceptions.QuantumException):
+    """Failed to connect to Nexus switch."""
+    message = _("Unable to connect to Nexus %(nexus_host)s. Reason: %(exc)s.")
