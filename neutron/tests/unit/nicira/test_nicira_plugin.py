@@ -553,7 +553,59 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                                               None)
         self._nvp_metadata_teardown()
 
-    def test_metadatata_network_removed_with_router_interface_remove(self):
+    def test_metadata_network_create_rollback_on_create_subnet_failure(self):
+        self._nvp_metadata_setup()
+        with self.router() as r:
+            with self.subnet() as s:
+                # Raise a NeutronException (eg: NotFound)
+                with mock.patch.object(NeutronPlugin.NvpPluginV2,
+                                       'create_subnet',
+                                       side_effect=ntn_exc.NotFound):
+                    self._router_interface_action(
+                        'add', r['router']['id'], s['subnet']['id'], None)
+                # Ensure metadata network was removed
+                nets = self._list('networks')['networks']
+                self.assertEqual(len(nets), 1)
+                # Needed to avoid 409
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None)
+        self._nvp_metadata_teardown()
+
+    def test_metadata_network_create_rollback_on_add_rtr_iface_failure(self):
+        self._nvp_metadata_setup()
+        with self.router() as r:
+            with self.subnet() as s:
+                # Raise a NeutronException when adding metadata subnet
+                # to router
+                # save function being mocked
+                real_func = NeutronPlugin.NvpPluginV2.add_router_interface
+                plugin_instance = manager.NeutronManager.get_plugin()
+
+                def side_effect(*args):
+                    if args[-1]['subnet_id'] == s['subnet']['id']:
+                        # do the real thing
+                        return real_func(plugin_instance, *args)
+                    # otherwise raise
+                    raise NvpApiClient.NvpApiException()
+
+                with mock.patch.object(NeutronPlugin.NvpPluginV2,
+                                       'add_router_interface',
+                                       side_effect=side_effect):
+                    self._router_interface_action(
+                        'add', r['router']['id'], s['subnet']['id'], None)
+                # Ensure metadata network was removed
+                nets = self._list('networks')['networks']
+                self.assertEqual(len(nets), 1)
+                # Needed to avoid 409
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None)
+        self._nvp_metadata_teardown()
+
+    def test_metadata_network_removed_with_router_interface_remove(self):
         self._nvp_metadata_setup()
         with self.router() as r:
             with self.subnet() as s:
@@ -580,6 +632,45 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                            webob.exc.HTTPNotFound.code)
                 self._show('subnets', meta_sub_id,
                            webob.exc.HTTPNotFound.code)
+        self._nvp_metadata_teardown()
+
+    def test_metadata_network_remove_rollback_on_failure(self):
+        self._nvp_metadata_setup()
+        with self.router() as r:
+            with self.subnet() as s:
+                self._router_interface_action('add', r['router']['id'],
+                                              s['subnet']['id'], None)
+                networks = self._list('networks')['networks']
+                for network in networks:
+                    if network['id'] != s['subnet']['network_id']:
+                        meta_net_id = network['id']
+                ports = self._list(
+                    'ports',
+                    query_params='network_id=%s' % meta_net_id)['ports']
+                meta_port_id = ports[0]['id']
+                # Raise a NeutronException when removing
+                # metadata subnet from router
+                # save function being mocked
+                real_func = NeutronPlugin.NvpPluginV2.remove_router_interface
+                plugin_instance = manager.NeutronManager.get_plugin()
+
+                def side_effect(*args):
+                    if args[-1].get('subnet_id') == s['subnet']['id']:
+                        # do the real thing
+                        return real_func(plugin_instance, *args)
+                    # otherwise raise
+                    raise NvpApiClient.NvpApiException()
+
+                with mock.patch.object(NeutronPlugin.NvpPluginV2,
+                                       'remove_router_interface',
+                                       side_effect=side_effect):
+                    self._router_interface_action('remove', r['router']['id'],
+                                                  s['subnet']['id'], None)
+                # Metadata network and subnet should still be there
+                self._show('networks', meta_net_id,
+                           webob.exc.HTTPOk.code)
+                self._show('ports', meta_port_id,
+                           webob.exc.HTTPOk.code)
         self._nvp_metadata_teardown()
 
     def test_metadata_dhcp_host_route(self):
