@@ -138,9 +138,12 @@ class TestDhcpAgent(base.BaseTestCase):
         self.driver.existing_dhcp_networks.return_value = []
         self.driver_cls = self.driver_cls_p.start()
         self.driver_cls.return_value = self.driver
+        self.mock_makedirs_p = mock.patch("os.makedirs")
+        self.mock_makedirs = self.mock_makedirs_p.start()
 
     def tearDown(self):
         self.driver_cls_p.stop()
+        self.mock_makedirs_p.stop()
         cfg.CONF.reset()
         super(TestDhcpAgent, self).tearDown()
 
@@ -407,6 +410,11 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         cache_cls = self.cache_p.start()
         self.cache = mock.Mock()
         cache_cls.return_value = self.cache
+        self.mock_makedirs_p = mock.patch("os.makedirs")
+        self.mock_makedirs = self.mock_makedirs_p.start()
+        self.mock_init_p = mock.patch('neutron.agent.dhcp_agent.'
+                                      'DhcpAgent._populate_networks_cache')
+        self.mock_init = self.mock_init_p.start()
 
         with mock.patch.object(dhcp.Dnsmasq,
                                'check_version') as check_v:
@@ -425,6 +433,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver_p.stop()
         self.cache_p.stop()
         self.plugin_p.stop()
+        self.mock_makedirs_p.stop()
+        self.mock_init_p.stop()
         cfg.CONF.reset()
         super(TestDhcpAgentEventHandler, self).tearDown()
 
