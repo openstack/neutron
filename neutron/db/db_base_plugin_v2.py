@@ -182,6 +182,11 @@ class CommonDbMixin(object):
     def _get_collection_count(self, context, model, filters=None):
         return self._get_collection_query(context, model, filters).count()
 
+    def _get_marker_obj(self, context, resource, limit, marker):
+        if limit and marker:
+            return getattr(self, '_get_%s' % resource)(context, marker)
+        return None
+
 
 class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                         CommonDbMixin):
@@ -922,11 +927,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                           {'resource': resource, 'item': item})
                 context.session.rollback()
         return objects
-
-    def _get_marker_obj(self, context, resource, limit, marker):
-        if limit and marker:
-            return getattr(self, '_get_%s' % resource)(context, marker)
-        return None
 
     def create_network_bulk(self, context, networks):
         return self._create_bulk('network', context, networks)
