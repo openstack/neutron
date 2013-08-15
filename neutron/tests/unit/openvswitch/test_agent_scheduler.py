@@ -825,10 +825,11 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
         self.assertEqual(0, len(l3agents))
 
     def test_router_sync_data(self):
-        with contextlib.nested(self.subnet(),
-                               self.subnet(cidr='10.0.2.0/24'),
-                               self.subnet(cidr='10.0.3.0/24')) as (
-                                   s1, s2, s3):
+        with contextlib.nested(
+            self.subnet(),
+            self.subnet(cidr='10.0.2.0/24'),
+            self.subnet(cidr='10.0.3.0/24')
+        ) as (s1, s2, s3):
             self._register_agent_states()
             self._set_net_external(s1['subnet']['network_id'])
             data = {'router': {'tenant_id': uuidutils.generate_uuid()}}
@@ -907,6 +908,30 @@ class OvsAgentSchedulerTestCase(test_l3_plugin.L3NatTestCaseMixin,
                     hosta_id)['routers'])
         self.assertEqual(0, num_before_add)
         self.assertEqual(1, num_after_add)
+
+    def test_router_add_to_l3_agent_two_times(self):
+        with self.router() as router1:
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
+                                          L3_HOSTA)
+            self._add_router_to_l3_agent(hosta_id,
+                                         router1['router']['id'])
+            self._add_router_to_l3_agent(hosta_id,
+                                         router1['router']['id'],
+                                         expected_code=exc.HTTPConflict.code)
+
+    def test_router_add_to_two_l3_agents(self):
+        with self.router() as router1:
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_L3,
+                                          L3_HOSTA)
+            hostb_id = self._get_agent_id(constants.AGENT_TYPE_L3,
+                                          L3_HOSTB)
+            self._add_router_to_l3_agent(hosta_id,
+                                         router1['router']['id'])
+            self._add_router_to_l3_agent(hostb_id,
+                                         router1['router']['id'],
+                                         expected_code=exc.HTTPConflict.code)
 
     def test_router_policy(self):
         with self.router() as router1:
