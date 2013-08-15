@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-14 06:14+0000\n"
+"POT-Creation-Date: 2013-08-15 06:14+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Russian "
@@ -943,28 +943,28 @@ msgstr ""
 msgid "Attempted to remove port filter which is not filtered %r"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:148
+#: neutron/agent/linux/iptables_manager.py:151
 #, python-format
 msgid "Attempted to remove chain %s which does not exist"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:190
+#: neutron/agent/linux/iptables_manager.py:193
 #, python-format
 msgid "Unknown chain: %r"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:216
+#: neutron/agent/linux/iptables_manager.py:221
 #, python-format
 msgid ""
 "Tried to remove rule that was not there: %(chain)r %(rule)r %(wrap)r "
 "%(top)r"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:366
+#: neutron/agent/linux/iptables_manager.py:374
 msgid "IPTablesManager.apply completed with success"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:376
+#: neutron/agent/linux/iptables_manager.py:384
 #, python-format
 msgid "Unable to find table %s"
 msgstr ""
@@ -1397,38 +1397,38 @@ msgstr ""
 msgid "'%s' is not a valid UUID"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:325
-#, python-format
-msgid "'%s' is not a dictionary"
-msgstr ""
-
-#: neutron/api/v2/attributes.py:350
+#: neutron/api/v2/attributes.py:338
 #, python-format
 msgid "Validator '%s' does not exist."
 msgstr ""
 
-#: neutron/api/v2/attributes.py:382
+#: neutron/api/v2/attributes.py:348
+#, python-format
+msgid "'%s' is not a dictionary"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:394
 #, python-format
 msgid "'%s' is not an integer"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:387
+#: neutron/api/v2/attributes.py:399
 #, python-format
 msgid "'%s' should be non-negative"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:406
+#: neutron/api/v2/attributes.py:418
 #, python-format
 msgid "'%s' cannot be converted to boolean"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:414
+#: neutron/api/v2/attributes.py:426
 #: neutron/plugins/nec/extensions/packetfilter.py:48
 #, python-format
 msgid "'%s' is not a integer"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:427
+#: neutron/api/v2/attributes.py:439
 #, python-format
 msgid "'%s' is not of the form <key>=[value]"
 msgstr ""
@@ -2799,7 +2799,7 @@ msgstr ""
 msgid "Number of floating IPs allowed per tenant, -1 for unlimited"
 msgstr ""
 
-#: neutron/extensions/l3_ext_gw_mode.py:27
+#: neutron/extensions/l3_ext_gw_mode.py:28
 #, python-format
 msgid ""
 "DNat is disabled for the router %(router_id)s. Floating IPs cannot be "
@@ -9381,6 +9381,50 @@ msgstr ""
 msgid "Failed fwaas process services sync"
 msgstr ""
 
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:50
+msgid "Initializing fwaas iptables driver"
+msgstr ""
+
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:53
+#, python-format
+msgid "Creating firewall %(fw_id)s for tenant %(tid)s)"
+msgstr ""
+
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:62
+#, python-format
+msgid "Failed to create firewall: %s"
+msgstr ""
+
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:66
+#, python-format
+msgid "Deleting firewall %(fw_id)s for tenant %(tid)s)"
+msgstr ""
+
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:77
+#, python-format
+msgid "Failed to delete firewall: %s"
+msgstr ""
+
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:81
+#, python-format
+msgid "Updating firewall %(fw_id)s for tenant %(tid)s)"
+msgstr ""
+
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:90
+#, python-format
+msgid "Failed to update firewall: %s"
+msgstr ""
+
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:94
+#, python-format
+msgid "Applying firewall %(fw_id)s for tenant %(tid)s)"
+msgstr ""
+
+#: neutron/services/firewall/drivers/linux/iptables_fwaas.py:113
+#, python-format
+msgid "Failed to apply default policy on firewall: %s"
+msgstr ""
+
 #: neutron/services/loadbalancer/agent_scheduler.py:94
 #, python-format
 msgid "Pool %(pool_id)s has already been hosted by lbaas agent %(agent_id)s"
@@ -9804,22 +9848,6 @@ msgstr ""
 #~ msgid "Unable update lease. Exception"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Hold allocated IP %(ip_address)s "
-#~ "(%(network_id)s/%(subnet_id)s/%(port_id)s)"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Updating lease expiration for %(ip_address)s"
-#~ " on network %(network_id)s from %(host)s."
-#~ msgstr ""
-
 #~ msgid "Invalid NVP attachment type '%s'"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Enables dedicated connection to the "
-#~ "metadata proxy for metadata server "
-#~ "access via Neutron router"
 #~ msgstr ""
 
