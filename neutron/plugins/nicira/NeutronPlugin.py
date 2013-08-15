@@ -1848,8 +1848,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self.cluster, router_id, "NoSourceNatRule",
                 max_num_expected=1, min_num_expected=0,
                 destination_ip_addresses=subnet['cidr'])
-            nvplib.delete_router_lport(self.cluster,
-                                       router_id, lrouter_port_id)
         except NvpApiClient.ResourceNotFound:
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Logical router port resource %s not found "
