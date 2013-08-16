@@ -34,6 +34,7 @@ from neutron.common import exceptions as q_exc
 from neutron.common import utils
 from neutron import context as q_context
 from neutron.db import agentschedulers_db
+from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
@@ -44,6 +45,7 @@ from neutron.db import portbindings_db
 from neutron.db import portsecurity_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
+from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import extraroute
 from neutron.extensions import l3
 from neutron.extensions import multiprovidernet as mpnet
@@ -110,7 +112,8 @@ def create_nvp_cluster(cluster_opts, concurrent_connections,
     return cluster
 
 
-class NvpPluginV2(agentschedulers_db.DhcpAgentSchedulerDbMixin,
+class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
+                  agentschedulers_db.DhcpAgentSchedulerDbMixin,
                   db_base_plugin_v2.NeutronDbPluginV2,
                   dhcpmeta_modes.DhcpMetadataAccess,
                   dist_rtr.DistributedRouter_mixin,
@@ -130,6 +133,7 @@ class NvpPluginV2(agentschedulers_db.DhcpAgentSchedulerDbMixin,
     """
 
     supported_extension_aliases = ["agent",
+                                   "allowed-address-pairs",
                                    "binding",
                                    "dhcp_agent_scheduler",
                                    "dist-router",
@@ -421,7 +425,8 @@ class NvpPluginV2(agentschedulers_db.DhcpAgentSchedulerDbMixin,
                                    port_data[psec.PORTSECURITY],
                                    port_data[ext_sg.SECURITYGROUPS],
                                    port_data[ext_qos.QUEUE],
-                                   port_data.get(mac_ext.MAC_LEARNING))
+                                   port_data.get(mac_ext.MAC_LEARNING),
+                                   port_data.get(addr_pair.ADDRESS_PAIRS))
 
     def _handle_create_port_exception(self, context, port_id,
                                       ls_uuid, lp_uuid):
@@ -1128,6 +1133,18 @@ class NvpPluginV2(agentschedulers_db.DhcpAgentSchedulerDbMixin,
             port_data[psec.PORTSECURITY] = port_security
             self._process_port_port_security_create(
                 context, port_data, neutron_db)
+            # allowed address pair checks
+            if attr.is_attr_set(port_data.get(addr_pair.ADDRESS_PAIRS)):
+                if not port_security:
+                    raise addr_pair.AddressPairAndPortSecurityRequired()
+                else:
+                    self._process_create_allowed_address_pairs(
+                        context, neutron_db,
+                        port_data[addr_pair.ADDRESS_PAIRS])
+            else:
+                # remove ATTR_NOT_SPECIFIED
+                port_data[addr_pair.ADDRESS_PAIRS] = None
+
             # security group extension checks
             if port_security and has_ip:
                 self._ensure_default_security_group_on_port(context, port)
@@ -1185,6 +1202,9 @@ class NvpPluginV2(agentschedulers_db.DhcpAgentSchedulerDbMixin,
         delete_security_groups = self._check_update_deletes_security_groups(
             port)
         has_security_groups = self._check_update_has_security_groups(port)
+        delete_addr_pairs = self._check_update_deletes_allowed_address_pairs(
+            port)
+        has_addr_pairs = self._check_update_has_allowed_address_pairs(port)
 
         with context.session.begin(subtransactions=True):
             ret_port = super(NvpPluginV2, self).update_port(
@@ -1198,7 +1218,28 @@ class NvpPluginV2(agentschedulers_db.DhcpAgentSchedulerDbMixin,
             ret_port.update(port['port'])
             tenant_id = self._get_tenant_id_for_create(context, ret_port)
 
+            # populate port_security setting
+            if psec.PORTSECURITY not in port['port']:
+                ret_port[psec.PORTSECURITY] = self._get_port_security_binding(
+                    context, id)
             has_ip = self._ip_on_port(ret_port)
+            # validate port security and allowed address pairs
+            if not ret_port[psec.PORTSECURITY]:
+                #  has address pairs in request
+                if has_addr_pairs:
+                    raise addr_pair.AddressPairAndPortSecurityRequired()
+                elif not delete_addr_pairs:
+                    # check if address pairs are in db
+                    ret_port[addr_pair.ADDRESS_PAIRS] = (
+                        self.get_allowed_address_pairs(context, id))
+                    if ret_port[addr_pair.ADDRESS_PAIRS]:
+                        raise addr_pair.AddressPairAndPortSecurityRequired()
+
+            if (delete_addr_pairs or has_addr_pairs):
+                # delete address pairs and read them in
+                self._delete_allowed_address_pairs(context, id)
+                self._process_create_allowed_address_pairs(
+                    context, ret_port, ret_port[addr_pair.ADDRESS_PAIRS])
             # checks if security groups were updated adding/modifying
             # security groups, port security is set and port has ip
             if not (has_ip and ret_port[psec.PORTSECURITY]):
@@ -1251,7 +1292,8 @@ class NvpPluginV2(agentschedulers_db.DhcpAgentSchedulerDbMixin,
                                        ret_port[psec.PORTSECURITY],
                                        ret_port[ext_sg.SECURITYGROUPS],
                                        ret_port[ext_qos.QUEUE],
-                                       ret_port.get(mac_ext.MAC_LEARNING))
+                                       ret_port.get(mac_ext.MAC_LEARNING),
+                                       ret_port.get(addr_pair.ADDRESS_PAIRS))
 
                     # Update the port status from nvp. If we fail here hide it
                     # since the port was successfully updated but we were not

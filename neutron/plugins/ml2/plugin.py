@@ -23,12 +23,14 @@ from neutron.common import constants as const
 from neutron.common import exceptions as exc
 from neutron.common import topics
 from neutron.db import agentschedulers_db
+from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
 from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
+from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
@@ -57,7 +59,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 l3_gwmode_db.L3_NAT_db_mixin,
                 sg_db_rpc.SecurityGroupServerRpcMixin,
                 agentschedulers_db.L3AgentSchedulerDbMixin,
-                agentschedulers_db.DhcpAgentSchedulerDbMixin):
+                agentschedulers_db.DhcpAgentSchedulerDbMixin,
+                addr_pair_db.AllowedAddressPairsMixin):
     """Implement the Neutron L2 abstractions using modules.
 
     Ml2Plugin is a Neutron plugin based on separately extensible sets
@@ -79,7 +82,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "binding", "quotas", "security-group",
                                     "agent", "l3_agent_scheduler",
                                     "dhcp_agent_scheduler", "ext-gw-mode",
-                                    "multi-provider"]
+                                    "multi-provider", "allowed-address-pairs"]
 
     @property
     def supported_extension_aliases(self):
@@ -452,6 +455,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.PortContext(self, context, result,
                                                       network)
             self._process_port_binding(mech_context, attrs)
+            result[addr_pair.ADDRESS_PAIRS] = (
+                self._process_create_allowed_address_pairs(
+                    context, result,
+                    attrs.get(addr_pair.ADDRESS_PAIRS)))
             self.mechanism_manager.create_port_precommit(mech_context)
 
         try:
@@ -473,7 +480,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             original_port = super(Ml2Plugin, self).get_port(context, id)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
                                                               port)
-            need_port_update_notify = self.update_security_group_on_port(
+            if addr_pair.ADDRESS_PAIRS in port['port']:
+                self._delete_allowed_address_pairs(context, id)
+                self._process_create_allowed_address_pairs(
+                    context, updated_port,
+                    port['port'][addr_pair.ADDRESS_PAIRS])
+                need_port_update_notify = True
+            need_port_update_notify |= self.update_security_group_on_port(
                 context, id, port, original_port, updated_port)
             network = self.get_network(context, original_port['network_id'])
             mech_context = driver_context.PortContext(

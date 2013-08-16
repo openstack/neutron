@@ -174,12 +174,20 @@ class SecurityGroupServerRpcCallbackMixin(object):
         sg_binding_sgid = sg_db.SecurityGroupPortBinding.security_group_id
 
         query = context.session.query(sg_binding_sgid,
+                                      models_v2.Port,
                                       models_v2.IPAllocation.ip_address)
         query = query.join(models_v2.IPAllocation,
                            ip_port == sg_binding_port)
+        query = query.join(models_v2.Port,
+                           ip_port == models_v2.Port.id)
         query = query.filter(sg_binding_sgid.in_(remote_group_ids))
-        for security_group_id, ip_address in query:
+        for security_group_id, port, ip_address in query:
             ips_by_group[security_group_id].append(ip_address)
+            # if there are allowed_address_pairs add them
+            if getattr(port, 'allowed_address_pairs', None):
+                for address_pair in port.allowed_address_pairs:
+                    ips_by_group[security_group_id].append(
+                        address_pair['ip_address'])
         return ips_by_group
 
     def _select_remote_group_ids(self, ports):
@@ -231,12 +239,12 @@ class SecurityGroupServerRpcCallbackMixin(object):
                     if ip in port.get('fixed_ips', []):
                         continue
                     ip_rule = base_rule.copy()
-                    version = netaddr.IPAddress(ip).version
+                    version = netaddr.IPNetwork(ip).version
                     ethertype = 'IPv%s' % version
                     if base_rule['ethertype'] != ethertype:
                         continue
-                    ip_rule[direction_ip_prefix] = "%s/%s" % (
-                        ip, IP_MASK[ethertype])
+                    ip_rule[direction_ip_prefix] = str(
+                        netaddr.IPNetwork(ip).cidr)
                     updated_rule.append(ip_rule)
             port['security_group_rules'] = updated_rule
         return ports
