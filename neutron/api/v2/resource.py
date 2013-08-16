@@ -147,9 +147,12 @@ def translate(translatable, locale):
               was not translated
     """
     localize = gettextutils.get_localized_message
-    if isinstance(translatable, Exception):
+    if isinstance(translatable, exceptions.NeutronException):
+        translatable.msg = localize(translatable.msg, locale)
+    elif isinstance(translatable, webob.exc.HTTPError):
+        translatable.detail = localize(translatable.detail, locale)
+    elif isinstance(translatable, Exception):
         translatable.message = localize(translatable.message, locale)
-        if isinstance(translatable, webob.exc.HTTPError):
-            translatable.detail = localize(translatable.detail, locale)
-        return translatable
-    return localize(translatable, locale)
+    else:
+        return localize(translatable, locale)
+    return translatable
