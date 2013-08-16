@@ -1539,9 +1539,23 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             raise nvp_exc.NvpPluginException(
                 err_msg=_("Unable to create logical router on NVP Platform"))
         # Create the port here - and update it later if we have gw_info
-        self._create_and_attach_router_port(
-            self.cluster, context, lrouter['uuid'], {'fake_ext_gw': True},
-            "L3GatewayAttachment", self.cluster.default_l3_gw_service_uuid)
+        try:
+            self._create_and_attach_router_port(
+                self.cluster, context, lrouter['uuid'], {'fake_ext_gw': True},
+                "L3GatewayAttachment",
+                self.cluster.default_l3_gw_service_uuid)
+        except nvp_exc.NvpPluginException:
+            LOG.exception(_("Unable to create L3GW port on logical router  "
+                            "%(router_uuid)s. Verify Default Layer-3 Gateway "
+                            "service %(def_l3_gw_svc)s id is correct") %
+                          {'router_uuid': lrouter['uuid'],
+                           'def_l3_gw_svc':
+                           self.cluster.default_l3_gw_service_uuid})
+            # Try and remove logical router from NVP
+            nvplib.delete_lrouter(self.cluster, lrouter['uuid'])
+            # Return user a 500 with an apter message
+            raise nvp_exc.NvpPluginException(
+                err_msg=_("Unable to create router %s") % r['name'])
 
         with context.session.begin(subtransactions=True):
             router_db = l3_db.Router(id=lrouter['uuid'],
