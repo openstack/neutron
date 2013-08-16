@@ -147,7 +147,7 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
         if status in self.error_codes:
             LOG.error(_("Received error code: %s"), status)
             LOG.error(_("Server Error Message: %s"), response.body)
-            self.error_codes[status](self)
+            self.error_codes[status](self, response)
 
         # Continue processing for non-error condition.
         if (status != httplib.OK and status != httplib.CREATED
@@ -174,19 +174,22 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
                           'Plugin might not work as expected.'))
         return self._nvp_version
 
-    def fourZeroFour(self):
+    def fourZeroFour(self, response=None):
         raise ResourceNotFound()
 
-    def fourZeroNine(self):
+    def fourZeroNine(self, response=None):
         raise Conflict()
 
-    def fiveZeroThree(self):
+    def fiveZeroThree(self, response=None):
         raise ServiceUnavailable()
 
-    def fourZeroThree(self):
-        raise Forbidden()
+    def fourZeroThree(self, response=None):
+        if 'read-only' in response.body:
+            raise ReadOnlyMode()
+        else:
+            raise Forbidden()
 
-    def zero(self):
+    def zero(self, response=None):
         raise NvpApiException()
 
     # TODO(del): ensure error_codes are handled/raised appropriately
@@ -245,6 +248,10 @@ class ServiceUnavailable(NvpApiException):
 class Forbidden(NvpApiException):
     message = _("The request is forbidden from accessing the "
                 "referenced resource.")
+
+
+class ReadOnlyMode(Forbidden):
+    message = _("Create/Update actions are forbidden when in read-only mode.")
 
 
 class RequestTimeout(NvpApiException):

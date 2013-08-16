@@ -30,6 +30,7 @@ from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as secgrp
 from neutron import manager
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira.dbexts import nicira_qos_db as qos_db
 from neutron.plugins.nicira.extensions import nvp_networkgw
@@ -192,6 +193,22 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
                                   webob.exc.HTTPInternalServerError.code)
                 self._verify_no_orphan_left(net_id)
 
+    def test_create_port_maintenance_returns_503(self):
+        with self.network() as net:
+            with mock.patch.object(nvplib, 'do_request',
+                                   side_effect=nvp_exc.MaintenanceInProgress):
+                data = {'port': {'network_id': net['network']['id'],
+                                 'admin_state_up': False,
+                                 'fixed_ips': [],
+                                 'tenant_id': self._tenant_id}}
+                plugin = manager.NeutronManager.get_plugin()
+                with mock.patch.object(plugin, 'get_network',
+                                       return_value=net['network']):
+                    port_req = self.new_create_request('ports', data, self.fmt)
+                    res = port_req.get_response(self.api)
+                    self.assertEqual(webob.exc.HTTPServiceUnavailable.code,
+                                     res.status_int)
+
 
 class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
                            NiciraPluginV2TestCase):
@@ -275,6 +292,17 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
         with self.network(name=name) as net:
             # Assert neutron name is not truncated
             self.assertEqual(net['network']['name'], name)
+
+    def test_create_network_maintenance_returns_503(self):
+        data = {'network': {'name': 'foo',
+                            'admin_state_up': True,
+                            'tenant_id': self._tenant_id}}
+        with mock.patch.object(nvplib, 'do_request',
+                               side_effect=nvp_exc.MaintenanceInProgress):
+            net_req = self.new_create_request('networks', data, self.fmt)
+            res = net_req.get_response(self.api)
+            self.assertEqual(webob.exc.HTTPServiceUnavailable.code,
+                             res.status_int)
 
 
 class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
@@ -705,6 +733,23 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                 body = self._show('floatingips', fip['floatingip']['id'])
                 self.assertIsNone(body['floatingip']['port_id'])
                 self.assertIsNone(body['floatingip']['fixed_ip_address'])
+
+    def test_create_router_maintenance_returns_503(self):
+        with self._create_l3_ext_network() as net:
+            with self.subnet(network=net) as s:
+                with mock.patch.object(
+                    nvplib,
+                    'do_request',
+                    side_effect=nvp_exc.MaintenanceInProgress):
+                    data = {'router': {'tenant_id': 'whatever'}}
+                    data['router']['name'] = 'router1'
+                    data['router']['external_gateway_info'] = {
+                        'network_id': s['subnet']['network_id']}
+                    router_req = self.new_create_request(
+                        'routers', data, self.fmt)
+                    res = router_req.get_response(self.ext_api)
+                    self.assertEqual(webob.exc.HTTPServiceUnavailable.code,
+                                     res.status_int)
 
 
 class NvpQoSTestExtensionManager(object):

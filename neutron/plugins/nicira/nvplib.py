@@ -950,6 +950,8 @@ def do_request(*args, **kwargs):
             return json.loads(res)
     except NvpApiClient.ResourceNotFound:
         raise exception.NotFound()
+    except NvpApiClient.ReadOnlyMode:
+        raise nvp_exc.MaintenanceInProgress()
 
 
 def mk_body(**kwargs):

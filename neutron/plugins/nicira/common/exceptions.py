@@ -56,3 +56,9 @@ class NvpNatRuleMismatch(NvpPluginException):
 
 class NvpInvalidAttachmentType(NvpPluginException):
     message = _("Invalid NVP attachment type '%(attachment_type)s'")
+
+
+class MaintenanceInProgress(NvpPluginException):
+    message = _("The networking backend is currently in maintenance mode and "
+                "therefore unable to accept requests which modify its state. "
+                "Please try later.")
