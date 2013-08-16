@@ -149,7 +149,7 @@ class MidoClient:
         :param net_len: network IP address length
         :returns: newly created dhcp
         """
-        LOG.debug(_("MidoClient.create_dhcp called: bridge=%s(bridge)s, "
+        LOG.debug(_("MidoClient.create_dhcp called: bridge=%(bridge)s, "
                     "net_addr=%(net_addr)s, net_len=%(net_len)s, "
                     "gateway_ip=%(gateway_ip)s"),
                   {'bridge': bridge, 'net_addr': net_addr, 'net_len': net_len,
@@ -166,7 +166,7 @@ class MidoClient:
         :param ip: IP address
         :param mac: MAC address
         """
-        LOG.debug(_("MidoClient.create_dhcp_hosts called: bridge=%s(bridge), "
+        LOG.debug(_("MidoClient.create_dhcp_hosts called: bridge=%(bridge)s, "
                     "ip=%(ip)s, mac=%(mac)s"), {'bridge': bridge, 'ip': ip,
                                                 'mac': mac})
         dhcp_subnets = bridge.get_dhcp_subnets()
@@ -184,7 +184,7 @@ class MidoClient:
         :param mac: MAC address
         """
         LOG.debug(_("MidoClient.delete_dhcp_hosts called: "
-                    "bridge_id=%s(bridge_id), ip=%(ip)s, mac=%(mac)s"),
+                    "bridge_id=%(bridge_id)s, ip=%(ip)s, mac=%(mac)s"),
                   {'bridge_id': bridge_id, 'ip': ip, 'mac': mac})
         bridge = self.get_bridge(bridge_id)
         dhcp_subnets = bridge.get_dhcp_subnets()
@@ -199,7 +199,7 @@ class MidoClient:
 
         :param bridge: bridge to remove DHCP from
         """
-        LOG.debug(_("MidoClient.delete_dhcp called: bridge=%s(bridge), "),
+        LOG.debug(_("MidoClient.delete_dhcp called: bridge=%(bridge)s, "),
                   {'bridge': bridge})
         dhcp = bridge.get_dhcp_subnets()
         if not dhcp:
@@ -488,7 +488,7 @@ class MidoClient:
         """
         LOG.debug(_("MidoClient.set_router_external_gateway called: "
                     "id=%(id)s, provider_router=%(provider_router)s, "
-                    "snat_ip=%s(snat_ip)s)"),
+                    "snat_ip=%(snat_ip)s)"),
                   {'id': id, 'provider_router': provider_router,
                    'snat_ip': snat_ip})
         tenant_router = self.get_router(id)
@@ -905,7 +905,7 @@ class MidoClient:
         # handle source
         if remote_ip_prefix is not None:
             nw_src_address, nw_src_length = remote_ip_prefix.split('/')
-        elif not remote_group_id is None:  # security group as a srouce
+        elif remote_group_id is not None:  # security group as a source
             source_pg = self.pg_manager.get_for_sg(tenant_id, remote_group_id)
             port_group_id = source_pg.get_id()
         else:
