@@ -55,9 +55,9 @@ def upgrade(active_plugins=None, options=None):
     op.create_table(
         'ml2_vxlan_endpoints',
         sa.Column('ip_address', sa.String(length=64)),
-        sa.Column('udp_port', sa.Integer(), nullable=False),
-        sa.PrimaryKeyConstraint('ip_address'),
-        sa.PrimaryKeyConstraint('udp_port')
+        sa.Column('udp_port', sa.Integer(), nullable=False,
+                  autoincrement=False),
+        sa.PrimaryKeyConstraint('ip_address', 'udp_port')
     )
 
 
