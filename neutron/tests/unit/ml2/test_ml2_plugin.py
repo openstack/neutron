@@ -16,6 +16,7 @@
 from neutron.plugins.ml2 import config as config
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import test_extension_ext_gw_mode
 
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -68,4 +69,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
 class TestMl2PortBindingHost(Ml2PluginV2TestCase,
                              test_bindings.PortBindingsHostTestCaseMixin):
+    pass
+
+
+class TestMl2ExtGwModeSupport(Ml2PluginV2TestCase,
+                              test_extension_ext_gw_mode.ExtGwModeTestCase):
     pass

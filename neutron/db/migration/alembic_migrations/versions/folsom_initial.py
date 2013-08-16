@@ -29,7 +29,7 @@ PLUGINS = {
     'cisco': 'neutron.plugins.cisco.network_plugin.PluginV2',
     'lbr': 'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
     'meta': 'neutron.plugins.metaplugin.meta_neutron_plugin.MetaPluginV2',
-    'ml2': 'neutron.plugins.ml2.ml2_plugin.Ml2Plugin',
+    'ml2': 'neutron.plugins.ml2.plugin.Ml2Plugin',
     'nec': 'neutron.plugins.nec.nec_plugin.NECPluginV2',
     'nvp': 'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
     'ovs': 'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
