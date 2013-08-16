@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-15 06:14+0000\n"
+"POT-Creation-Date: 2013-08-16 06:13+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian "
@@ -1270,6 +1270,18 @@ msgid ""
 "%(router_id)s"
 msgstr ""
 
+#: neutron/api/rpc/agentnotifiers/metering_rpc_agent_api.py:47
+#, python-format
+msgid "Notify metering agent at %(topic)s.%(host)s the message %(method)s"
+msgstr ""
+
+#: neutron/api/rpc/agentnotifiers/metering_rpc_agent_api.py:62
+#, python-format
+msgid ""
+"Fanout notify metering agent at %(topic)s the message %(method)s on "
+"router %(router_id)s"
+msgstr ""
+
 #: neutron/api/v2/attributes.py:43
 #, python-format
 msgid ""
@@ -1988,7 +2000,7 @@ msgstr ""
 msgid "Number of DHCP agents scheduled to host a network."
 msgstr ""
 
-#: neutron/db/agentschedulers_db.py:426
+#: neutron/db/agentschedulers_db.py:425
 #, python-format
 msgid "Fail scheduling network %s"
 msgstr ""
@@ -2006,169 +2018,169 @@ msgstr ""
 msgid "Cannot create resource for another tenant"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:280
+#: neutron/db/db_base_plugin_v2.py:285
 #, python-format
 msgid "Generated mac for network %(network_id)s is %(mac_address)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:286
+#: neutron/db/db_base_plugin_v2.py:291
 #, python-format
 msgid "Generated mac %(mac_address)s exists. Remaining attempts %(max_retries)s."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:290
+#: neutron/db/db_base_plugin_v2.py:295
 #, python-format
 msgid "Unable to generate mac address after %s attempts"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:336
+#: neutron/db/db_base_plugin_v2.py:341
 #, python-format
 msgid "Recycle %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:340
+#: neutron/db/db_base_plugin_v2.py:345
 #, python-format
 msgid "Recycle: first match for %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:347
+#: neutron/db/db_base_plugin_v2.py:352
 #, python-format
 msgid "Recycle: last match for %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:359
+#: neutron/db/db_base_plugin_v2.py:364
 #, python-format
 msgid "Recycle: merged %(first_ip1)s-%(last_ip1)s and %(first_ip2)s-%(last_ip2)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:368
+#: neutron/db/db_base_plugin_v2.py:373
 #, python-format
 msgid "Recycle: updated first %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:373
+#: neutron/db/db_base_plugin_v2.py:378
 #, python-format
 msgid "Recycle: updated last %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:382
+#: neutron/db/db_base_plugin_v2.py:387
 #, python-format
 msgid "Recycle: created new %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:401
+#: neutron/db/db_base_plugin_v2.py:406
 #, python-format
 msgid ""
 "No fixed IP found that matches the network %(network_id)s and ip address "
 "%(ip_address)s."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:410
+#: neutron/db/db_base_plugin_v2.py:415
 #, python-format
 msgid "Delete allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:434
+#: neutron/db/db_base_plugin_v2.py:439
 #, python-format
 msgid "All IP's from subnet %(subnet_id)s (%(cidr)s) allocated"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:439
+#: neutron/db/db_base_plugin_v2.py:444
 #, python-format
 msgid "Allocated IP - %(ip_address)s from %(first_ip)s to %(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:446
+#: neutron/db/db_base_plugin_v2.py:451
 msgid "No more free IP's in slice. Deleting allocation pool."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:552
+#: neutron/db/db_base_plugin_v2.py:557
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:564
+#: neutron/db/db_base_plugin_v2.py:569
 #, python-format
 msgid "IP address %s is not a valid IP for the defined networks subnets"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:570
+#: neutron/db/db_base_plugin_v2.py:575
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:590
+#: neutron/db/db_base_plugin_v2.py:595
 #, python-format
 msgid "IP address %s is not a valid IP for the defined subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:599 neutron/db/db_base_plugin_v2.py:632
+#: neutron/db/db_base_plugin_v2.py:604 neutron/db/db_base_plugin_v2.py:637
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:647
+#: neutron/db/db_base_plugin_v2.py:652
 #, python-format
 msgid "Port update. Hold %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:654
+#: neutron/db/db_base_plugin_v2.py:659
 #, python-format
 msgid "Port update. Adding %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:709
+#: neutron/db/db_base_plugin_v2.py:714
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:714
+#: neutron/db/db_base_plugin_v2.py:719
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:734
+#: neutron/db/db_base_plugin_v2.py:739
 msgid "Performing IP validity checks on allocation pools"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:741
+#: neutron/db/db_base_plugin_v2.py:746
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:748
+#: neutron/db/db_base_plugin_v2.py:753
 msgid "Specified IP addresses do not match the subnet IP version"
-msgstr ""
-
-#: neutron/db/db_base_plugin_v2.py:752
-#, python-format
-msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 
 #: neutron/db/db_base_plugin_v2.py:757
 #, python-format
+msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
+msgstr ""
+
+#: neutron/db/db_base_plugin_v2.py:762
+#, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:770
+#: neutron/db/db_base_plugin_v2.py:775
 msgid "Checking for overlaps among allocation pools and gateway ip"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:781
+#: neutron/db/db_base_plugin_v2.py:786
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:794 neutron/db/db_base_plugin_v2.py:798
+#: neutron/db/db_base_plugin_v2.py:799 neutron/db/db_base_plugin_v2.py:803
 #, python-format
 msgid "Invalid route: %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:920
+#: neutron/db/db_base_plugin_v2.py:925
 #, python-format
 msgid "An exception occured while creating the %(resource)s:%(item)s"
 msgstr ""
@@ -2335,7 +2347,7 @@ msgid ""
 "assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:600 neutron/plugins/nicira/NeutronPlugin.py:1914
+#: neutron/db/l3_db.py:600 neutron/plugins/nicira/NeutronPlugin.py:1890
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
@@ -2870,22 +2882,48 @@ msgstr ""
 
 #: neutron/extensions/loadbalancer.py:58
 #, python-format
+msgid "health_monitor %(monitor_id)s is already associated with pool %(pool_id)s"
+msgstr ""
+
+#: neutron/extensions/loadbalancer.py:63
+#, python-format
 msgid "Invalid state %(state)s of Loadbalancer resource %(id)s"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:62
+#: neutron/extensions/loadbalancer.py:67
 #, python-format
 msgid "Pool %(pool_id)s is still in use"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:66
+#: neutron/extensions/loadbalancer.py:71
 #, python-format
 msgid "Statistics of Pool %(pool_id)s could not be found"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:70
+#: neutron/extensions/loadbalancer.py:75
 #, python-format
 msgid "Protocol %(vip_proto)s does not match pool protocol %(pool_proto)s"
+msgstr ""
+
+#: neutron/extensions/metering.py:32
+#, python-format
+msgid "Metering label %(label_id)s does not exist"
+msgstr ""
+
+#: neutron/extensions/metering.py:36
+msgid "Duplicate Metering Rule in POST."
+msgstr ""
+
+#: neutron/extensions/metering.py:40
+#, python-format
+msgid "Metering label rule %(rule_id)s does not exist"
+msgstr ""
+
+#: neutron/extensions/metering.py:44
+#, python-format
+msgid ""
+"Metering label rule with remote_ip_prefix %(remote_ip_prefix)s overlaps "
+"another"
 msgstr ""
 
 #: neutron/extensions/portsecurity.py:25
@@ -7567,12 +7605,13 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/nicira/NeutronPlugin.py:663
+#: neutron/plugins/nicira/NeutronPlugin.py:1831
 #, python-format
 msgid "Logical router resource %s not found on NVP platform"
 msgstr ""
 
 #: neutron/plugins/nicira/NeutronPlugin.py:667
-#: neutron/plugins/nicira/NeutronPlugin.py:1859
+#: neutron/plugins/nicira/NeutronPlugin.py:1835
 msgid "Unable to update logical routeron NVP Platform"
 msgstr ""
 
@@ -7790,66 +7829,47 @@ msgid ""
 "router:%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1814
-#, python-format
-msgid ""
-"The port %(port_id)s, connected to the router %(router_id)s was not found"
-" on the NVP backend"
-msgstr ""
-
-#: neutron/plugins/nicira/NeutronPlugin.py:1826
-#, python-format
-msgid ""
-"Unable to find NVP logical router port for Neutron port id:%s. Was this "
-"port ever paired with a logical router?"
-msgstr ""
-
-#: neutron/plugins/nicira/NeutronPlugin.py:1855
-#, python-format
-msgid "Logical router port resource %s not found on NVP platform"
-msgstr ""
-
-#: neutron/plugins/nicira/NeutronPlugin.py:1881
+#: neutron/plugins/nicira/NeutronPlugin.py:1857
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1887
+#: neutron/plugins/nicira/NeutronPlugin.py:1863
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1953
+#: neutron/plugins/nicira/NeutronPlugin.py:1929
 #, python-format
 msgid "Address list for NVP logical router port:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1977
+#: neutron/plugins/nicira/NeutronPlugin.py:1953
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2020
+#: neutron/plugins/nicira/NeutronPlugin.py:1996
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2023
+#: neutron/plugins/nicira/NeutronPlugin.py:1999
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2049
+#: neutron/plugins/nicira/NeutronPlugin.py:2025
 #, python-format
 msgid ""
 "Create_l2_gw_service did not return an uuid for the newly created "
 "resource:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2071
+#: neutron/plugins/nicira/NeutronPlugin.py:2047
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
@@ -8386,24 +8406,24 @@ msgstr ""
 msgid "Invalid NVP attachment type '%(attachment_type)s'"
 msgstr ""
 
-#: neutron/plugins/nicira/common/metadata_access.py:112
+#: neutron/plugins/nicira/common/metadata_access.py:135
 msgid "Metadata access network is disabled"
 msgstr ""
 
-#: neutron/plugins/nicira/common/metadata_access.py:115
+#: neutron/plugins/nicira/common/metadata_access.py:138
 msgid ""
 "Overlapping IPs must be enabled in order to setup the metadata access "
 "network"
 msgstr ""
 
-#: neutron/plugins/nicira/common/metadata_access.py:141
+#: neutron/plugins/nicira/common/metadata_access.py:161
 #, python-format
 msgid ""
 "No router interface found for router '%s'. No metadata access network "
 "should be created or destroyed"
 msgstr ""
 
-#: neutron/plugins/nicira/common/metadata_access.py:149
+#: neutron/plugins/nicira/common/metadata_access.py:169
 #, python-format
 msgid ""
 "An error occurred while operating on the metadata access network for "
@@ -9565,12 +9585,12 @@ msgid ""
 "%(original)s) on network %(network)s"
 msgstr ""
 
-#: neutron/tests/unit/nicira/fake_nvpapiclient.py:375
+#: neutron/tests/unit/nicira/fake_nvpapiclient.py:377
 #, python-format
 msgid "lswitch:%s not found"
 msgstr ""
 
-#: neutron/tests/unit/nicira/fake_nvpapiclient.py:384
+#: neutron/tests/unit/nicira/fake_nvpapiclient.py:386
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
@@ -9849,5 +9869,21 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Invalid NVP attachment type '%s'"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The port %(port_id)s, connected to the"
+#~ " router %(router_id)s was not found "
+#~ "on the NVP backend"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Unable to find NVP logical router "
+#~ "port for Neutron port id:%s. Was "
+#~ "this port ever paired with a "
+#~ "logical router?"
+#~ msgstr ""
+
+#~ msgid "Logical router port resource %s not found on NVP platform"
 #~ msgstr ""
 
