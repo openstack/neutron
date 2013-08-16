@@ -376,7 +376,7 @@ class TestNvplibExplicitLRouters(NvplibTestCase):
 
         router = {'display_name': router_name,
                   'uuid': router_id,
-                  'tags': [{'scope': 'quantum', 'tag': '2013.1'},
+                  'tags': [{'scope': 'quantum', 'tag': nvplib.NEUTRON_VERSION},
                            {'scope': 'os_tid', 'tag': '%s' % tenant_id}],
                   'distributed': False,
                   'routing_config': {'type': 'RoutingTableRoutingConfig',
@@ -416,7 +416,8 @@ class TestNvplibExplicitLRouters(NvplibTestCase):
                          'type': 'RouterNextHop'},
                     'type': 'SingleDefaultRouteImplicitRoutingConfig'},
                     'tags': [{'scope': 'os_tid', 'tag': 'fake_tenant_id'},
-                             {'scope': 'quantum', 'tag': '2013.1'}],
+                             {'scope': 'quantum',
+                              'tag': nvplib.NEUTRON_VERSION}],
                     'type': 'LogicalRouterConfig'}
         self.assertEqual(expected, body)
 
@@ -429,7 +430,8 @@ class TestNvplibExplicitLRouters(NvplibTestCase):
         expected = {'display_name': 'fake_router_name',
                     'routing_config': {'type': 'RoutingTableRoutingConfig'},
                     'tags': [{'scope': 'os_tid', 'tag': 'fake_tenant_id'},
-                             {'scope': 'quantum', 'tag': '2013.1'}],
+                             {'scope': 'quantum',
+                              'tag': nvplib.NEUTRON_VERSION}],
                     'type': 'LogicalRouterConfig'}
         self.assertEqual(expected, body)
 
