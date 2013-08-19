@@ -15,36 +15,29 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sqlalchemy as sa
-
 from neutron.api.v2 import attributes
-from neutron.db import model_base
+from neutron.db import portbindings_db
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
-class PortLocation(model_base.BASEV2):
-    port_id = sa.Column(sa.String(255), primary_key=True)
-    host_id = sa.Column(sa.String(255), nullable=False)
-
-
 def get_port_hostid(context, port_id):
     with context.session.begin(subtransactions=True):
-        query = context.session.query(PortLocation)
+        query = context.session.query(portbindings_db.PortBindingPort)
         res = query.filter_by(port_id=port_id).first()
     if not res:
         return False
-    return res.host_id
+    return res.host
 
 
-def put_port_hostid(context, port_id, host_id):
-    if not attributes.is_attr_set(host_id):
+def put_port_hostid(context, port_id, host):
+    if not attributes.is_attr_set(host):
         LOG.warning(_("No host_id in port request to track port location."))
         return
     if port_id == '':
-        LOG.warning(_("Received an empty port ID for host '%s'"), host_id)
+        LOG.warning(_("Received an empty port ID for host '%s'"), host)
         return
     with context.session.begin(subtransactions=True):
-        location = PortLocation(port_id=port_id, host_id=host_id)
+        location = portbindings_db.PortBindingPort(port_id=port_id, host=host)
         context.session.merge(location)
