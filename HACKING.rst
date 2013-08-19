@@ -75,8 +75,8 @@ Example::
   from neutron.api import ports
   from neutron.db import models
   from neutron.extensions import multiport
-  from neutron.openstack.common import log as logging
   import neutron.manager
+  from neutron.openstack.common import log as logging
   from neutron import service
 
 
