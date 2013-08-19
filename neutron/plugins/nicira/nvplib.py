@@ -35,6 +35,7 @@ from neutron.openstack.common import log
 from neutron.plugins.nicira.common import (
     exceptions as nvp_exc)
 from neutron.plugins.nicira import NvpApiClient
+from neutron.version import version_info
 
 
 LOG = log.getLogger(__name__)
@@ -55,7 +56,7 @@ LROUTERNAT_RESOURCE = "nat/lrouter"
 LQUEUE_RESOURCE = "lqueue"
 GWSERVICE_RESOURCE = "gateway-service"
 # Current neutron version
-NEUTRON_VERSION = "2013.1"
+NEUTRON_VERSION = version_info.release_string()
 # Other constants for NVP resource
 MAX_DISPLAY_NAME_LEN = 40
 # Constants for NAT rules
