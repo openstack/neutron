@@ -352,7 +352,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
             else:
                 self.assertIn(r.rule, expected_rules)
 
-    def _prepare_router_data(self, enable_snat=True, num_internal_ports=1):
+    def _prepare_router_data(self, enable_snat=None, num_internal_ports=1):
         router_id = _uuid()
         ex_gw_port = {'id': _uuid(),
                       'network_id': _uuid(),
@@ -374,9 +374,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         router = {
             'id': router_id,
             l3_constants.INTERFACE_KEY: int_ports,
-            'enable_snat': enable_snat,
             'routes': [],
             'gw_port': ex_gw_port}
+        if enable_snat is not None:
+            router['enable_snat'] = enable_snat
         return router
 
     def testProcessRouter(self):
@@ -409,7 +410,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_process_router_snat_disabled(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = self._prepare_router_data()
+        router = self._prepare_router_data(enable_snat=True)
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
         # Process with NAT
@@ -432,10 +433,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         router = self._prepare_router_data(enable_snat=False)
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
-        # Process with NAT
+        # Process without NAT
         agent.process_router(ri)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
-        # Reprocess without NAT
+        # Reprocess with NAT
         router['enable_snat'] = True
         # Reassign the router object to RouterInfo
         ri.router = router

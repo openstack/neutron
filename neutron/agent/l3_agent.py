@@ -116,15 +116,15 @@ class RouterInfo(object):
         self._router = value
         if not self._router:
             return
+        # enable_snat by default if it wasn't specified by plugin
+        self._snat_enabled = self._router.get('enable_snat', True)
         # Set a SNAT action for the router
         if self._router.get('gw_port'):
-            self._snat_action = (
-                'add_rules' if self._router.get('enable_snat')
-                else 'remove_rules')
+            self._snat_action = ('add_rules' if self._snat_enabled
+                                 else 'remove_rules')
         elif self.ex_gw_port:
             # Gateway port was removed, remove rules
             self._snat_action = 'remove_rules'
-        self._snat_enabled = self._router.get('enable_snat')
 
     def ns_name(self):
         if self.use_namespaces:
