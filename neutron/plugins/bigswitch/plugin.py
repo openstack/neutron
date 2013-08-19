@@ -63,7 +63,9 @@ from neutron import context as qcontext
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
+from neutron.db import extradhcpopt_db
 from neutron.db import l3_db
+from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
@@ -332,9 +334,11 @@ class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
 
 class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
-                         routerrule_db.RouterRule_db_mixin):
+                         routerrule_db.RouterRule_db_mixin,
+                         extradhcpopt_db.ExtraDhcpOptMixin):
 
-    supported_extension_aliases = ["router", "binding", "router_rules"]
+    supported_extension_aliases = ["router", "binding", "router_rules",
+                                   "extra_dhcp_opt"]
 
     def __init__(self, server_timeout=None):
         LOG.info(_('NeutronRestProxy: Starting plugin. Version=%s'),
@@ -561,11 +565,13 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         # Update DB
         port["port"]["admin_state_up"] = False
+        dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
         new_port = super(NeutronRestProxyV2, self).create_port(context, port)
         if (portbindings.HOST_ID in port['port']
             and 'id' in new_port):
             porttracker_db.put_port_hostid(context, new_port['id'],
                                            port['port'][portbindings.HOST_ID])
+        self._process_port_create_extra_dhcp_opts(context, new_port, dhcp_opts)
         new_port = self._extend_port_dict_binding(context, new_port)
         net = super(NeutronRestProxyV2,
                     self).get_network(context, new_port["network_id"])
@@ -658,6 +664,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Update DB
         new_port = super(NeutronRestProxyV2, self).update_port(context,
                                                                port_id, port)
+        self._update_extra_dhcp_opts_on_port(context, port_id, port, new_port)
         if (portbindings.HOST_ID in port['port']
             and 'id' in new_port):
             porttracker_db.put_port_hostid(context, new_port['id'],
