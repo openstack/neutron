@@ -39,6 +39,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                      'default': attributes.ATTR_NOT_SPECIFIED},
         'segment_range': {'allow_post': True, 'allow_put': True,
                           'is_visible': True, 'default': ''},
+        'sub_type': {'allow_post': True, 'allow_put': True,
+                     'is_visible': True, 'default': ''},
         'multicast_ip_range': {'allow_post': True, 'allow_put': True,
                                'is_visible': True, 'default': '0.0.0.0'},
         'multicast_ip_index': {'allow_post': False, 'allow_put': False,

@@ -96,8 +96,8 @@ class NetworkProfile(model_base.BASEV2, models_v2.HasId):
     """
     Nexus1000V Network Profiles
 
-        segment_type - VLAN, VXLAN, TRUNK, MULTI_SEGMENT
-        sub_type - TRUNK_VLAN, TRUNK_VXLAN
+        segment_type - VLAN, OVERLAY, TRUNK, MULTI_SEGMENT
+        sub_type - TRUNK_VLAN, TRUNK_VXLAN, native_vxlan, enhanced_vxlan
         segment_range - '<integer>-<integer>'
         multicast_ip_index - <integer>
         multicast_ip_range - '<ip>-<ip>'
@@ -107,7 +107,7 @@ class NetworkProfile(model_base.BASEV2, models_v2.HasId):
 
     name = sa.Column(sa.String(255))
     segment_type = sa.Column(sa.Enum(cisco_constants.NETWORK_TYPE_VLAN,
-                                     cisco_constants.NETWORK_TYPE_VXLAN,
+                                     cisco_constants.NETWORK_TYPE_OVERLAY,
                                      cisco_constants.NETWORK_TYPE_TRUNK,
                                      cisco_constants.
                                      NETWORK_TYPE_MULTI_SEGMENT,

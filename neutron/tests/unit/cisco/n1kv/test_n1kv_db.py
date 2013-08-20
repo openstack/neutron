@@ -60,7 +60,8 @@ TEST_NETWORK_PROFILE_2 = {'name': 'test_profile_2',
                           'physical_network': 'physnet1',
                           'segment_range': SEGMENT_RANGE}
 TEST_NETWORK_PROFILE_VXLAN = {'name': 'test_profile',
-                              'segment_type': 'vxlan',
+                              'segment_type': 'overlay',
+                              'sub_type': 'native_vxlan',
                               'segment_range': '5000-5009',
                               'multicast_ip_range': '239.0.0.70-239.0.0.80'}
 TEST_POLICY_PROFILE = {'id': '4a417990-76fb-11e2-bcfd-0800200c9a66',
@@ -72,7 +73,7 @@ TEST_NETWORK_PROFILE_VLAN_TRUNK = {'name': 'test_profile',
                                    'sub_type': 'vlan'}
 TEST_NETWORK_PROFILE_VXLAN_TRUNK = {'name': 'test_profile',
                                     'segment_type': 'trunk',
-                                    'sub_type': 'vxlan'}
+                                    'sub_type': 'overlay'}
 
 
 def _create_test_network_profile_if_not_there(session,
@@ -600,7 +601,7 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
                 p_v = _create_test_network_profile_if_not_there(
                     self.session, TEST_NETWORK_PROFILE_VXLAN_TRUNK)
                 n1kv_db_v2.add_network_binding(
-                    self.session, TEST_NETWORK_ID2, 'vxlan',
+                    self.session, TEST_NETWORK_ID2, 'overlay',
                     None, 5100, '224.10.10.10', p_v.id, None)
                 p = _create_test_network_profile_if_not_there(
                     self.session,
