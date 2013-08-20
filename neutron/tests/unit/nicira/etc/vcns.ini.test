@@ -1,0 +1,9 @@
+[vcns]
+manager_uri = https://fake-host
+user = fake-user
+passwordd = fake-password
+datacenter_moid = fake-moid
+resource_pool_id = fake-resgroup
+datastore_id = fake-datastore
+external_network = fake-ext-net
+task_status_check_interval = 100
