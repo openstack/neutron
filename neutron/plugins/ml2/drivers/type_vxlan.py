@@ -59,7 +59,8 @@ class VxlanEndpoints(model_base.BASEV2):
     __tablename__ = 'ml2_vxlan_endpoints'
 
     ip_address = sa.Column(sa.String(64), primary_key=True)
-    udp_port = sa.Column(sa.Integer, primary_key=True, nullable=False)
+    udp_port = sa.Column(sa.Integer, primary_key=True, nullable=False,
+                         autoincrement=False)
 
     def __repr__(self):
         return "<VxlanTunnelEndpoint(%s)>" % self.ip_address
