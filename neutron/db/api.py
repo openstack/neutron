@@ -25,7 +25,6 @@ from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
-_DB_ENGINE = None
 BASE = model_base.BASEV2
 
 
@@ -35,17 +34,13 @@ def configure_db():
     Establish the database, create an engine if needed, and register
     the models.
     """
-    global _DB_ENGINE
-    if not _DB_ENGINE:
-        _DB_ENGINE = session.get_engine(sqlite_fk=True)
-        register_models()
+    session.get_engine(sqlite_fk=True)
+    register_models()
 
 
 def clear_db(base=BASE):
-    global _DB_ENGINE
     unregister_models(base)
     session.cleanup()
-    _DB_ENGINE = None
 
 
 def get_session(autocommit=True, expire_on_commit=False):
