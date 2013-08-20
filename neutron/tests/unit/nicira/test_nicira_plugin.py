@@ -359,6 +359,21 @@ class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
             # Assert Neutron name is not truncated
             self.assertEqual(sg['security_group']['name'], name)
 
+    def test_create_security_group_rule_bad_input(self):
+        name = 'foo security group'
+        description = 'foo description'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            protocol = 200
+            min_range = 32
+            max_range = 4343
+            rule = self._build_security_group_rule(
+                security_group_id, 'ingress', protocol,
+                min_range, max_range)
+            res = self._create_security_group_rule(self.fmt, rule)
+            self.deserialize(self.fmt, res)
+            self.assertEqual(res.status_int, 400)
+
 
 class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
                               NiciraPluginV2TestCase):

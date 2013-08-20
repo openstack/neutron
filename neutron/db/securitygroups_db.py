@@ -32,7 +32,8 @@ from neutron.openstack.common import uuidutils
 
 IP_PROTOCOL_MAP = {'tcp': constants.TCP_PROTOCOL,
                    'udp': constants.UDP_PROTOCOL,
-                   'icmp': constants.ICMP_PROTOCOL}
+                   'icmp': constants.ICMP_PROTOCOL,
+                   'icmpv6': constants.ICMPv6_PROTOCOL}
 
 
 class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
