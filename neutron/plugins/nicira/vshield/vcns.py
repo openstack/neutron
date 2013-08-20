@@ -32,6 +32,13 @@ URI_PREFIX = "/api/4.0/edges"
 FIREWALL_SERVICE = "firewall/config"
 FIREWALL_RULE_RESOURCE = "rules"
 
+#LbaaS Constants
+LOADBALANCER_SERVICE = "loadbalancer/config"
+VIP_RESOURCE = "virtualservers"
+POOL_RESOURCE = "pools"
+MONITOR_RESOURCE = "monitors"
+APP_PROFILE_RESOURCE = "applicationprofiles"
+
 
 class Vcns(object):
 
@@ -111,6 +118,14 @@ class Vcns(object):
         uri = "/api/ws.v1/lswitch/%s" % lswitch_id
         return self.do_request(HTTP_DELETE, uri)
 
+    def get_loadbalancer_config(self, edge_id):
+        uri = self._build_uri_path(edge_id, LOADBALANCER_SERVICE)
+        return self.do_request(HTTP_GET, uri, decode=True)
+
+    def enable_service_loadbalancer(self, edge_id, config):
+        uri = self._build_uri_path(edge_id, LOADBALANCER_SERVICE)
+        return self.do_request(HTTP_PUT, uri, config)
+
     def update_firewall(self, edge_id, fw_req):
         uri = self._build_uri_path(
             edge_id, FIREWALL_SERVICE)
@@ -158,6 +173,96 @@ class Vcns(object):
             FIREWALL_RULE_RESOURCE,
             vcns_rule_id)
         return self.do_request(HTTP_GET, uri, decode=True)
+
+    #
+    #Edge LBAAS call helper
+    #
+    def create_vip(self, edge_id, vip_new):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            VIP_RESOURCE)
+        return self.do_request(HTTP_POST, uri, vip_new)
+
+    def get_vip(self, edge_id, vip_vseid):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            VIP_RESOURCE, vip_vseid)
+        return self.do_request(HTTP_GET, uri, decode=True)
+
+    def update_vip(self, edge_id, vip_vseid, vip_new):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            VIP_RESOURCE, vip_vseid)
+        return self.do_request(HTTP_PUT, uri, vip_new)
+
+    def delete_vip(self, edge_id, vip_vseid):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            VIP_RESOURCE, vip_vseid)
+        return self.do_request(HTTP_DELETE, uri)
+
+    def create_pool(self, edge_id, pool_new):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            POOL_RESOURCE)
+        return self.do_request(HTTP_POST, uri, pool_new)
+
+    def get_pool(self, edge_id, pool_vseid):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            POOL_RESOURCE, pool_vseid)
+        return self.do_request(HTTP_GET, uri, decode=True)
+
+    def update_pool(self, edge_id, pool_vseid, pool_new):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            POOL_RESOURCE, pool_vseid)
+        return self.do_request(HTTP_PUT, uri, pool_new)
+
+    def delete_pool(self, edge_id, pool_vseid):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            POOL_RESOURCE, pool_vseid)
+        return self.do_request(HTTP_DELETE, uri)
+
+    def create_health_monitor(self, edge_id, monitor_new):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            MONITOR_RESOURCE)
+        return self.do_request(HTTP_POST, uri, monitor_new)
+
+    def get_health_monitor(self, edge_id, monitor_vseid):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            MONITOR_RESOURCE, monitor_vseid)
+        return self.do_request(HTTP_GET, uri, decode=True)
+
+    def update_health_monitor(self, edge_id, monitor_vseid, monitor_new):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            MONITOR_RESOURCE,
+            monitor_vseid)
+        return self.do_request(HTTP_PUT, uri, monitor_new)
+
+    def delete_health_monitor(self, edge_id, monitor_vseid):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            MONITOR_RESOURCE,
+            monitor_vseid)
+        return self.do_request(HTTP_DELETE, uri)
+
+    def create_app_profile(self, edge_id, app_profile):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            APP_PROFILE_RESOURCE)
+        return self.do_request(HTTP_POST, uri, app_profile)
+
+    def delete_app_profile(self, edge_id, app_profileid):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            APP_PROFILE_RESOURCE,
+            app_profileid)
+        return self.do_request(HTTP_DELETE, uri)
 
     def _build_uri_path(self, edge_id,
                         service,

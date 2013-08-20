@@ -17,6 +17,7 @@
 # @author: Kaiwei Fan, VMware, Inc.
 # @author: Bo Link, VMware, Inc.
 
+from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.nicira.vshield.common import (
@@ -117,6 +118,14 @@ class EdgeApplianceDriver(object):
         else:
             status_level = RouterStatus.ROUTER_STATUS_ERROR
         return status_level
+
+    def _enable_loadbalancer(self, edge):
+        if not edge.get('featureConfigs') or (
+            not edge['featureConfigs'].get('features')):
+            edge['featureConfigs'] = {'features': []}
+        edge['featureConfigs']['features'].append(
+            {'featureType': 'loadbalancer_4.0',
+             'enabled': True})
 
     def get_edge_status(self, edge_id):
         try:
@@ -295,7 +304,7 @@ class EdgeApplianceDriver(object):
             raise e
 
     def deploy_edge(self, router_id, name, internal_network, jobdata=None,
-                    wait_for_exec=False):
+                    wait_for_exec=False, loadbalancer_enable=True):
         task_name = 'deploying-%s' % name
         edge_name = name
         edge = self._assemble_edge(
@@ -318,6 +327,8 @@ class EdgeApplianceDriver(object):
             vcns_const.INTEGRATION_SUBNET_NETMASK,
             type="internal")
         edge['vnics']['vnics'].append(vnic_inside)
+        if loadbalancer_enable:
+            self._enable_loadbalancer(edge)
         userdata = {
             'request': edge,
             'router_name': name,
@@ -628,3 +639,24 @@ class EdgeApplianceDriver(object):
 
     def delete_lswitch(self, lswitch_id):
         self.vcns.delete_lswitch(lswitch_id)
+
+    def get_loadbalancer_config(self, edge_id):
+        try:
+            header, response = self.vcns.get_loadbalancer_config(
+                edge_id)
+        except exceptions.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to get service config"))
+        return response
+
+    def enable_service_loadbalancer(self, edge_id):
+        config = self.get_loadbalancer_config(
+            edge_id)
+        if not config['enabled']:
+            config['enabled'] = True
+        try:
+            self.vcns.enable_service_loadbalancer(edge_id, config)
+        except exceptions.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to enable loadbalancer "
+                                "service config"))

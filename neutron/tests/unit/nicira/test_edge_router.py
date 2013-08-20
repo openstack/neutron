@@ -31,6 +31,7 @@ from neutron.tests.unit.nicira import SERVICE_PLUGIN_NAME
 from neutron.tests.unit.nicira import test_nicira_plugin
 from neutron.tests.unit.nicira import VCNS_NAME
 from neutron.tests.unit.nicira.vshield import fake_vcns
+from neutron.tests.unit import test_l3_plugin
 
 _uuid = uuidutils.generate_uuid
 
@@ -67,7 +68,8 @@ class NvpRouterTestCase(test_nicira_plugin.TestNiciraL3NatTestCase):
                                              service_plugins=service_plugins)
 
 
-class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest):
+class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
+                        test_l3_plugin.L3NatTestCaseMixin):
 
     def vcns_patch(self):
         instance = self.mock_vcns.start()
@@ -94,6 +96,10 @@ class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest):
             self.fc2.create_lswitch)
         instance.return_value.delete_lswitch.side_effect = (
             self.fc2.delete_lswitch)
+        instance.return_value.get_loadbalancer_config.side_effect = (
+            self.fc2.get_loadbalancer_config)
+        instance.return_value.enable_service_loadbalancer.side_effect = (
+            self.fc2.enable_service_loadbalancer)
 
     def setUp(self, ext_mgr=None, service_plugins=None):
         cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
@@ -113,7 +119,7 @@ class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest):
 
         self.fc2.set_fake_nvpapi(self.fc)
         self.addCleanup(self.fc2.reset_all)
-        self.addCleanup(self.mock_vcns.stop)
+        self.addCleanup(mock.patch.stopall)
 
     def tearDown(self):
         plugin = NeutronManager.get_plugin()

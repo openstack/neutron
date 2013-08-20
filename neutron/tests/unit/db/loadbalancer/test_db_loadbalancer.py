@@ -64,6 +64,10 @@ class LoadBalancerTestMixin(object):
         for k in loadbalancer.RESOURCE_ATTRIBUTE_MAP.keys()
     )
 
+    def _get_vip_optional_args(self):
+        return ('description', 'subnet_id', 'address',
+                'session_persistence', 'connection_limit')
+
     def _create_vip(self, fmt, name, pool_id, protocol, protocol_port,
                     admin_state_up, expected_res_status=None, **kwargs):
         data = {'vip': {'name': name,
@@ -72,8 +76,8 @@ class LoadBalancerTestMixin(object):
                         'protocol_port': protocol_port,
                         'admin_state_up': admin_state_up,
                         'tenant_id': self._tenant_id}}
-        for arg in ('description', 'subnet_id', 'address',
-                    'session_persistence', 'connection_limit'):
+        args = self._get_vip_optional_args()
+        for arg in args:
             if arg in kwargs and kwargs[arg] is not None:
                 data['vip'][arg] = kwargs[arg]
 
@@ -255,7 +259,8 @@ class LoadBalancerTestMixin(object):
 
 class LoadBalancerPluginDbTestCase(LoadBalancerTestMixin,
                                    test_db_plugin.NeutronDbPluginV2TestCase):
-    def setUp(self, core_plugin=None, lb_plugin=None, lbaas_provider=None):
+    def setUp(self, core_plugin=None, lb_plugin=None, lbaas_provider=None,
+              ext_mgr=None):
         service_plugins = {'lb_plugin_name': DB_LB_PLUGIN_KLASS}
         if not lbaas_provider:
             lbaas_provider = (
@@ -269,12 +274,18 @@ class LoadBalancerPluginDbTestCase(LoadBalancerTestMixin,
         sdb.ServiceTypeManager._instance = None
 
         super(LoadBalancerPluginDbTestCase, self).setUp(
+            ext_mgr=ext_mgr,
             service_plugins=service_plugins
         )
 
-        self._subnet_id = _subnet_id
-
-        self.plugin = loadbalancer_plugin.LoadBalancerPlugin()
+        if not ext_mgr:
+            self.plugin = loadbalancer_plugin.LoadBalancerPlugin()
+            ext_mgr = PluginAwareExtensionManager(
+                extensions_path,
+                {constants.LOADBALANCER: self.plugin}
+            )
+            app = config.load_paste_app('extensions_test_app')
+            self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
         get_lbaas_agent_patcher = mock.patch(
             'neutron.services.loadbalancer.agent_scheduler'
@@ -285,12 +296,7 @@ class LoadBalancerPluginDbTestCase(LoadBalancerTestMixin,
         self.addCleanup(mock.patch.stopall)
         self.addCleanup(cfg.CONF.reset)
 
-        ext_mgr = PluginAwareExtensionManager(
-            extensions_path,
-            {constants.LOADBALANCER: self.plugin}
-        )
-        app = config.load_paste_app('extensions_test_app')
-        self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
+        self._subnet_id = _subnet_id
 
 
 class TestLoadBalancer(LoadBalancerPluginDbTestCase):

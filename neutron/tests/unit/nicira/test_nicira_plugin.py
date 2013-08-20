@@ -124,8 +124,7 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
                                                   ext_mgr=ext_mgr)
         cfg.CONF.set_override('metadata_mode', None, 'NVP')
         self.addCleanup(self.fc.reset_all)
-        self.addCleanup(self.mock_nvpapi.stop)
-        self.addCleanup(patch_sync.stop)
+        self.addCleanup(mock.patch.stopall)
 
 
 class TestNiciraBasicGet(test_plugin.TestBasicGet, NiciraPluginV2TestCase):

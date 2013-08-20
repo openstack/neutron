@@ -51,3 +51,41 @@ class VcnsEdgeFirewallRuleBinding(model_base.BASEV2):
                         primary_key=True)
     edge_id = sa.Column(sa.String(36), primary_key=True)
     rule_vseid = sa.Column(sa.String(36))
+
+
+class VcnsEdgePoolBinding(model_base.BASEV2):
+    """Represents the mapping between neutron pool and Edge pool."""
+
+    __tablename__ = 'vcns_edge_pool_bindings'
+
+    pool_id = sa.Column(sa.String(36),
+                        sa.ForeignKey("pools.id", ondelete="CASCADE"),
+                        primary_key=True)
+    edge_id = sa.Column(sa.String(36), primary_key=True)
+    pool_vseid = sa.Column(sa.String(36))
+
+
+class VcnsEdgeVipBinding(model_base.BASEV2):
+    """Represents the mapping between neutron vip and Edge vip."""
+
+    __tablename__ = 'vcns_edge_vip_bindings'
+
+    vip_id = sa.Column(sa.String(36),
+                       sa.ForeignKey("vips.id", ondelete="CASCADE"),
+                       primary_key=True)
+    edge_id = sa.Column(sa.String(36))
+    vip_vseid = sa.Column(sa.String(36))
+    app_profileid = sa.Column(sa.String(36))
+
+
+class VcnsEdgeMonitorBinding(model_base.BASEV2):
+    """Represents the mapping between neutron monitor and Edge monitor."""
+
+    __tablename__ = 'vcns_edge_monitor_bindings'
+
+    monitor_id = sa.Column(sa.String(36),
+                           sa.ForeignKey("healthmonitors.id",
+                                         ondelete="CASCADE"),
+                           primary_key=True)
+    edge_id = sa.Column(sa.String(36), primary_key=True)
+    monitor_vseid = sa.Column(sa.String(36))
