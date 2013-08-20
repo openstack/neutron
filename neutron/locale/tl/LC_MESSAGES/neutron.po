@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-19 06:14+0000\n"
+"POT-Creation-Date: 2013-08-20 06:17+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Tagalog "
@@ -4071,11 +4071,11 @@ msgstr ""
 msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs. "
 msgstr ""
 
-#: neutron/plugins/bigswitch/db/porttracker_db.py:43
+#: neutron/plugins/bigswitch/db/porttracker_db.py:36
 msgid "No host_id in port request to track port location."
 msgstr ""
 
-#: neutron/plugins/bigswitch/db/porttracker_db.py:46
+#: neutron/plugins/bigswitch/db/porttracker_db.py:39
 #, python-format
 msgid "Received an empty port ID for host '%s'"
 msgstr ""
@@ -6713,7 +6713,7 @@ msgid "Skipping unreasonable gre ID range %(tun_min)s:%(tun_max)s"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/type_gre.py:156
-#: neutron/plugins/ml2/drivers/type_vxlan.py:164
+#: neutron/plugins/ml2/drivers/type_vxlan.py:165
 #: neutron/plugins/openvswitch/ovs_db_v2.py:233
 #, python-format
 msgid "Removing tunnel %s from pool"
@@ -6829,46 +6829,46 @@ msgstr ""
 msgid "Multicast group for VXLAN. If unset, disables VXLAN multicast mode."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:92
+#: neutron/plugins/ml2/drivers/type_vxlan.py:93
 #, python-format
 msgid "Reserving specific vxlan tunnel %s from pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:96
+#: neutron/plugins/ml2/drivers/type_vxlan.py:97
 #, python-format
 msgid "Reserving specific vxlan tunnel %s outside pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:109
+#: neutron/plugins/ml2/drivers/type_vxlan.py:110
 #, python-format
 msgid "Allocating vxlan tunnel vni %(vxlan_vni)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:127
+#: neutron/plugins/ml2/drivers/type_vxlan.py:128
 #, python-format
 msgid "Releasing vxlan tunnel %s to pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:132
+#: neutron/plugins/ml2/drivers/type_vxlan.py:133
 #, python-format
 msgid "Releasing vxlan tunnel %s outside pool"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:135
+#: neutron/plugins/ml2/drivers/type_vxlan.py:136
 #, python-format
 msgid "vxlan_vni %s not found"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:146
+#: neutron/plugins/ml2/drivers/type_vxlan.py:147
 #, python-format
 msgid "Skipping unreasonable VXLAN VNI range %(tun_min)s:%(tun_max)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:181
+#: neutron/plugins/ml2/drivers/type_vxlan.py:182
 msgid "get_vxlan_endpoints() called"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_vxlan.py:191
+#: neutron/plugins/ml2/drivers/type_vxlan.py:192
 #, python-format
 msgid "add_vxlan_endpoint() called for ip %s"
 msgstr ""
@@ -7969,139 +7969,139 @@ msgstr ""
 msgid "Attribute:%s is empty or null"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:92
+#: neutron/plugins/nicira/nvplib.py:93
 #, python-format
 msgid "NVP version %(ver)s does not support method %(fun)s."
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:148
+#: neutron/plugins/nicira/nvplib.py:149
 #, python-format
 msgid "Specified name:'%s' exceeds maximum length. It will be truncated on NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:168
+#: neutron/plugins/nicira/nvplib.py:169
 #, python-format
 msgid "NVP controller cluster version: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:251
+#: neutron/plugins/nicira/nvplib.py:252
 #, python-format
 msgid "Created logical switch: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:267 neutron/plugins/nicira/nvplib.py:594
+#: neutron/plugins/nicira/nvplib.py:268 neutron/plugins/nicira/nvplib.py:595
 #, python-format
 msgid "Network not found, Error: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:505
+#: neutron/plugins/nicira/nvplib.py:506
 #, python-format
 msgid "Cannot update NVP routes %(routes)s for router %(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:621
+#: neutron/plugins/nicira/nvplib.py:622
 msgid "Port or Network not found"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:639
+#: neutron/plugins/nicira/nvplib.py:640
 #, python-format
 msgid ""
 "Looking for port with q_port_id tag '%(neutron_port_id)s' on: "
 "'%(lswitch_uuid)s'"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:647
+#: neutron/plugins/nicira/nvplib.py:648
 #, python-format
 msgid ""
 "Found '%(num_ports)d' ports with q_port_id tag: '%(neutron_port_id)s'. "
 "Only 1 was expected."
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:656
+#: neutron/plugins/nicira/nvplib.py:657
 #, python-format
 msgid "get_port() %(network)s %(port)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:664 neutron/plugins/nicira/nvplib.py:719
+#: neutron/plugins/nicira/nvplib.py:665 neutron/plugins/nicira/nvplib.py:720
 #, python-format
 msgid "Port or Network not found, Error: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:714
+#: neutron/plugins/nicira/nvplib.py:715
 #, python-format
 msgid "Updated logical port %(result)s on logical switch %(uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:751
+#: neutron/plugins/nicira/nvplib.py:752
 #, python-format
 msgid "Created logical port %(result)s on logical switch %(uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:775
+#: neutron/plugins/nicira/nvplib.py:776
 #, python-format
 msgid "Created logical port %(lport_uuid)s on logical router %(lrouter_uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:805
+#: neutron/plugins/nicira/nvplib.py:806
 #, python-format
 msgid "Updated logical port %(lport_uuid)s on logical router %(lrouter_uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:815
+#: neutron/plugins/nicira/nvplib.py:816
 #, python-format
 msgid ""
 "Delete logical router port %(lport_uuid)s on logical router "
 "%(lrouter_uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:881
+#: neutron/plugins/nicira/nvplib.py:882
 #, python-format
 msgid "Port not found, Error: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1003
+#: neutron/plugins/nicira/nvplib.py:1004
 #, python-format
 msgid "Created Security Profile: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1029
+#: neutron/plugins/nicira/nvplib.py:1030
 #, python-format
 msgid "Updated Security Profile: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1048
+#: neutron/plugins/nicira/nvplib.py:1049
 #, python-format
 msgid "Invalid keys for NAT match: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1054
+#: neutron/plugins/nicira/nvplib.py:1055
 #, python-format
 msgid "Creating NAT rule: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1068
+#: neutron/plugins/nicira/nvplib.py:1069
 msgid ""
 "No SNAT rules cannot be applied as they are not available in this version"
 " of the NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1203
+#: neutron/plugins/nicira/nvplib.py:1204
 #, python-format
 msgid "Router Port %(lport_id)s not found on router %(lrouter_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1208
+#: neutron/plugins/nicira/nvplib.py:1209
 #, python-format
 msgid ""
 "An exception occurred while updating IP addresses on a router logical "
 "port:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1249
+#: neutron/plugins/nicira/nvplib.py:1250
 msgid "Failed to create logical queue"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1260
+#: neutron/plugins/nicira/nvplib.py:1261
 msgid "Failed to delete logical queue"
 msgstr ""
 
