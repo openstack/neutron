@@ -15,26 +15,24 @@
 #    under the License.
 # @author: Ryota MIBU
 
+import contextlib
 import random
 
 from neutron.common import constants as q_const
-from neutron.db import api as db_api
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec.db import models as nmodels  # noqa
-from neutron.tests import base
+from neutron.tests.unit.nec import test_nec_plugin
 
 
-class NECPluginV2DBTestBase(base.BaseTestCase):
+class NECPluginV2DBTestBase(test_nec_plugin.NecPluginV2TestCase):
     """Class conisting of NECPluginV2 DB unit tests."""
 
     def setUp(self):
         """Setup for tests."""
         super(NECPluginV2DBTestBase, self).setUp()
-        ndb.initialize()
-        self.session = db_api.get_session()
-        self.addCleanup(ndb.clear_db)
+        self.session = self.context.session
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test."""
@@ -43,15 +41,18 @@ class NECPluginV2DBTestBase(base.BaseTestCase):
         none = uuidutils.generate_uuid()
         return ofc_id, neutron_id, none
 
-    def get_portinfo_random_params(self):
-        """create random parameters for portinfo test."""
-        port_id = uuidutils.generate_uuid()
-        datapath_id = hex(random.randint(0, 0xffffffff))
-        port_no = random.randint(1, 100)
-        vlan_id = random.randint(q_const.MIN_VLAN_TAG, q_const.MAX_VLAN_TAG)
-        mac = ':'.join(["%02x" % random.randint(0, 0xff) for x in range(6)])
-        none = uuidutils.generate_uuid()
-        return port_id, datapath_id, port_no, vlan_id, mac, none
+    @contextlib.contextmanager
+    def portinfo_random_params(self):
+        with self.port() as port:
+            params = {'port_id': port['port']['id'],
+                      'datapath_id': hex(random.randint(0, 0xffffffff)),
+                      'port_no': random.randint(1, 100),
+                      'vlan_id': random.randint(q_const.MIN_VLAN_TAG,
+                                                q_const.MAX_VLAN_TAG),
+                      'mac': ':'.join(["%02x" % random.randint(0, 0xff)
+                                       for x in range(6)])
+                      }
+            yield params
 
 
 class NECPluginV2DBTest(NECPluginV2DBTestBase):
@@ -122,46 +123,51 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase):
                                         'ofc_tenant', o)
         self.assertEqual(None, tenant_none)
 
+    def _compare_portinfo(self, portinfo, expected):
+        self.assertEqual(portinfo.id, expected['port_id'])
+        self.assertEqual(portinfo.datapath_id, expected['datapath_id'])
+        self.assertEqual(portinfo.port_no, expected['port_no'])
+        self.assertEqual(portinfo.vlan_id, expected['vlan_id'])
+        self.assertEqual(portinfo.mac, expected['mac'])
+
+    def _add_portinfo(self, session, params):
+        return ndb.add_portinfo(session, params['port_id'],
+                                params['datapath_id'], params['port_no'],
+                                params['vlan_id'], params['mac'])
+
     def testd_add_portinfo(self):
         """test add portinfo."""
-        i, d, p, v, m, n = self.get_portinfo_random_params()
-        portinfo = ndb.add_portinfo(self.session, i, d, p, v, m)
-        self.assertEqual(portinfo.id, i)
-        self.assertEqual(portinfo.datapath_id, d)
-        self.assertEqual(portinfo.port_no, p)
-        self.assertEqual(portinfo.vlan_id, v)
-        self.assertEqual(portinfo.mac, m)
+        with self.portinfo_random_params() as params:
+            portinfo = self._add_portinfo(self.session, params)
+            self._compare_portinfo(portinfo, params)
 
-        exception_raised = False
-        try:
-            ndb.add_portinfo(self.session, i, d, p, v, m)
-        except nexc.NECDBException:
-            exception_raised = True
-        self.assertTrue(exception_raised)
+            exception_raised = False
+            try:
+                self._add_portinfo(self.session, params)
+            except nexc.NECDBException:
+                exception_raised = True
+            self.assertTrue(exception_raised)
 
     def teste_get_portinfo(self):
         """test get portinfo."""
-        i, d, p, v, m, n = self.get_portinfo_random_params()
-        ndb.add_portinfo(self.session, i, d, p, v, m)
-        portinfo = ndb.get_portinfo(self.session, i)
-        self.assertEqual(portinfo.id, i)
-        self.assertEqual(portinfo.datapath_id, d)
-        self.assertEqual(portinfo.port_no, p)
-        self.assertEqual(portinfo.vlan_id, v)
-        self.assertEqual(portinfo.mac, m)
+        with self.portinfo_random_params() as params:
+            self._add_portinfo(self.session, params)
+            portinfo = ndb.get_portinfo(self.session, params['port_id'])
+            self._compare_portinfo(portinfo, params)
 
-        portinfo_none = ndb.get_portinfo(self.session, n)
-        self.assertEqual(None, portinfo_none)
+            nonexist_id = uuidutils.generate_uuid()
+            portinfo_none = ndb.get_portinfo(self.session, nonexist_id)
+            self.assertEqual(None, portinfo_none)
 
     def testf_del_portinfo(self):
         """test delete portinfo."""
-        i, d, p, v, m, n = self.get_portinfo_random_params()
-        ndb.add_portinfo(self.session, i, d, p, v, m)
-        portinfo = ndb.get_portinfo(self.session, i)
-        self.assertEqual(portinfo.id, i)
-        ndb.del_portinfo(self.session, i)
-        portinfo_none = ndb.get_portinfo(self.session, i)
-        self.assertEqual(None, portinfo_none)
+        with self.portinfo_random_params() as params:
+            self._add_portinfo(self.session, params)
+            portinfo = ndb.get_portinfo(self.session, params['port_id'])
+            self.assertEqual(portinfo.id, params['port_id'])
+            ndb.del_portinfo(self.session, params['port_id'])
+            portinfo_none = ndb.get_portinfo(self.session, params['port_id'])
+            self.assertEqual(None, portinfo_none)
 
 
 class NECPluginV2DBOldMappingTest(NECPluginV2DBTestBase):

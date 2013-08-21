@@ -19,6 +19,7 @@
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
+from neutron.api.v2 import attributes as attrs
 from neutron.common import constants as const
 from neutron.common import exceptions as q_exc
 from neutron.common import rpc as q_rpc
@@ -31,6 +32,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_rpc_base
 from neutron.db import portbindings_base
+from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
@@ -55,7 +57,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   agentschedulers_db.L3AgentSchedulerDbMixin,
                   agentschedulers_db.DhcpAgentSchedulerDbMixin,
                   packet_filter.PacketFilterMixin,
-                  portbindings_base.PortBindingBaseMixin):
+                  portbindings_db.PortBindingMixin):
     """NECPluginV2 controls an OpenFlow Controller.
 
     The Neutron NECPluginV2 maps L2 logical networks to L2 virtualized networks
@@ -342,6 +344,111 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 'security-group' in self.supported_extension_aliases}}
         return binding
 
+    def _extend_port_dict_binding_portinfo(self, port_res, portinfo):
+        if portinfo:
+            port_res[portbindings.PROFILE] = {
+                'portinfo:datapath_id': portinfo['datapath_id'],
+                'portinfo:port_no': portinfo['port_no'],
+            }
+        elif portbindings.PROFILE in port_res:
+            del port_res[portbindings.PROFILE]
+
+    def _validate_portinfo(self, profile):
+        key_specs = {
+            'portinfo:datapath_id': {'type:string': None, 'required': True},
+            'portinfo:port_no': {'type:non_negative': None, 'required': True,
+                                 'convert_to': attrs.convert_to_int}
+        }
+        msg = attrs._validate_dict_or_empty(profile, key_specs=key_specs)
+        if msg:
+            raise q_exc.InvalidInput(error_message=msg)
+
+        datapath_id = profile.get('portinfo:datapath_id')
+        port_no = profile.get('portinfo:port_no')
+        try:
+            dpid = int(datapath_id, 16)
+        except ValueError:
+            raise nexc.ProfilePortInfoInvalidDataPathId()
+        if dpid > 0xffffffffffffffffL:
+            raise nexc.ProfilePortInfoInvalidDataPathId()
+        # Make sure dpid is a hex string beginning with 0x.
+        dpid = hex(dpid)
+
+        if int(port_no) > 65535:
+            raise nexc.ProfilePortInfoInvalidPortNo()
+
+        return {'datapath_id': dpid, 'port_no': port_no}
+
+    def _process_portbindings_portinfo_create(self, context, port_data, port):
+        """Add portinfo according to bindings:profile in create_port().
+
+        :param context: neutron api request context
+        :param port_data: port attributes passed in PUT request
+        :param port: port attributes to be returned
+        """
+        profile = port_data.get(portbindings.PROFILE)
+        # If portbindings.PROFILE is None, unspecified or an empty dict
+        # it is regarded that portbinding.PROFILE is not set.
+        profile_set = attrs.is_attr_set(profile) and profile
+        if profile_set:
+            portinfo = self._validate_portinfo(profile)
+            portinfo['mac'] = port['mac_address']
+            ndb.add_portinfo(context.session, port['id'], **portinfo)
+        else:
+            portinfo = None
+        self._extend_port_dict_binding_portinfo(port, portinfo)
+
+    def _process_portbindings_portinfo_update(self, context, port_data, port):
+        """Update portinfo according to bindings:profile in update_port().
+
+        :param context: neutron api request context
+        :param port_data: port attributes passed in PUT request
+        :param port: port attributes to be returned
+        :returns: 'ADD', 'MOD', 'DEL' or None
+        """
+        if portbindings.PROFILE not in port_data:
+            return
+        profile = port_data.get(portbindings.PROFILE)
+        # If binding:profile is None or an empty dict,
+        # it means binding:.profile needs to be cleared.
+        # TODO(amotoki): Allow Make None in binding:profile in
+        # the API layer. See LP bug #1220011.
+        profile_set = attrs.is_attr_set(profile) and profile
+        cur_portinfo = ndb.get_portinfo(context.session, port['id'])
+        if profile_set:
+            portinfo = self._validate_portinfo(profile)
+            portinfo_changed = 'ADD'
+            if cur_portinfo:
+                if (portinfo['datapath_id'] == cur_portinfo.datapath_id and
+                    portinfo['port_no'] == cur_portinfo.port_no):
+                    return
+                ndb.del_portinfo(context.session, port['id'])
+                portinfo_changed = 'MOD'
+            portinfo['mac'] = port['mac_address']
+            ndb.add_portinfo(context.session, port['id'], **portinfo)
+        elif cur_portinfo:
+            portinfo_changed = 'DEL'
+            portinfo = None
+            ndb.del_portinfo(context.session, port['id'])
+        self._extend_port_dict_binding_portinfo(port, portinfo)
+        return portinfo_changed
+
+    def extend_port_dict_binding(self, port_res, port_db):
+        super(NECPluginV2, self).extend_port_dict_binding(port_res, port_db)
+        self._extend_port_dict_binding_portinfo(port_res, port_db.portinfo)
+
+    def _process_portbindings_create(self, context, port_data, port):
+        super(NECPluginV2, self)._process_portbindings_create_and_update(
+            context, port_data, port)
+        self._process_portbindings_portinfo_create(context, port_data, port)
+
+    def _process_portbindings_update(self, context, port_data, port):
+        super(NECPluginV2, self)._process_portbindings_create_and_update(
+            context, port_data, port)
+        portinfo_changed = self._process_portbindings_portinfo_update(
+            context, port_data, port)
+        return portinfo_changed
+
     def create_port(self, context, port):
         """Create a new port entry on DB, then try to activate it."""
         LOG.debug(_("NECPluginV2.create_port() called, port=%s ."), port)
@@ -353,14 +460,49 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
             port = super(NECPluginV2, self).create_port(context, port)
-            self._process_portbindings_create_and_update(context,
-                                                         port_data,
-                                                         port)
+            self._process_portbindings_create(context, port_data, port)
             self._process_port_create_security_group(
                 context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
 
         return self.activate_port_if_ready(context, port)
+
+    def _update_ofc_port_if_required(self, context, old_port, new_port,
+                                     portinfo_changed):
+        def get_ofport_exist(port):
+            return (port['admin_state_up'] and
+                    bool(port.get(portbindings.PROFILE)))
+
+        # Determine it is required to update OFC port
+        need_add = False
+        need_del = False
+        need_packet_filter_update = False
+
+        old_ofport_exist = get_ofport_exist(old_port)
+        new_ofport_exist = get_ofport_exist(new_port)
+
+        if old_port['admin_state_up'] != new_port['admin_state_up']:
+            if new_port['admin_state_up']:
+                need_add |= new_ofport_exist
+            else:
+                need_del |= old_ofport_exist
+
+        if portinfo_changed:
+            if portinfo_changed in ['DEL', 'MOD']:
+                need_del |= old_ofport_exist
+            if portinfo_changed in ['ADD', 'MOD']:
+                need_add |= new_ofport_exist
+            need_packet_filter_update |= True
+
+        # Update OFC port if required
+        if need_del:
+            self.deactivate_port(context, new_port)
+            if need_packet_filter_update:
+                self.deactivate_packet_filters_by_port(context, id)
+        if need_add:
+            if need_packet_filter_update:
+                self.activate_packet_filters_by_port(context, id)
+            self.activate_port_if_ready(context, new_port)
 
     def update_port(self, context, id, port):
         """Update port, and handle packetfilters associated with the port.
@@ -375,9 +517,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             old_port = super(NECPluginV2, self).get_port(context, id)
             new_port = super(NECPluginV2, self).update_port(context, id, port)
-            self._process_portbindings_create_and_update(context,
-                                                         port['port'],
-                                                         new_port)
+            portinfo_changed = self._process_portbindings_update(
+                context, port['port'], new_port)
             need_port_update_notify = self.update_security_group_on_port(
                 context, id, port, old_port, new_port)
 
@@ -386,13 +527,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if need_port_update_notify:
             self.notifier.port_update(context, new_port)
 
-        changed = (old_port['admin_state_up'] != new_port['admin_state_up'])
-        if changed:
-            if new_port['admin_state_up']:
-                new_port = self.activate_port_if_ready(context, new_port)
-            else:
-                new_port = self.deactivate_port(context, new_port)
-
+        self._update_ofc_port_if_required(context, old_port, new_port,
+                                          portinfo_changed)
         return new_port
 
     def delete_port(self, context, id, l3_port_check=True):
@@ -510,10 +646,10 @@ class NECPluginV2RPCCallbacks(object):
                                 "port_added message (port_id=%s)."), id)
                     continue
                 ndb.del_portinfo(session, id)
-            ndb.add_portinfo(session, id, datapath_id, p['port_no'],
-                             mac=p.get('mac', ''))
             port = self._get_port(rpc_context, id)
             if port:
+                ndb.add_portinfo(session, id, datapath_id, p['port_no'],
+                                 mac=p.get('mac', ''))
                 # NOTE: Make sure that packet filters on this port exist while
                 # the port is active to avoid unexpected packet transfer.
                 if portinfo:
