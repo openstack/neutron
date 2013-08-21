@@ -49,6 +49,8 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('network_id', sa.String(length=36), nullable=False),
         sa.Column('network_type', sa.String(length=255), nullable=False),
         sa.Column('segmentation_id', sa.Integer(), nullable=False),
+        sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
+                                ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('network_id')
     )
 
