@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2012 New Dream Network, LLC (DreamHost)
+# Copyright (c) 2013 OpenStack Foundation.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,12 +14,3 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
-import os
-import sys
-sys.path.insert(0, os.getcwd())
-
-from neutron.db.migration.cli import main
-
-
-main()
