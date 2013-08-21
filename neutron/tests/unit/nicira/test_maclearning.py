@@ -91,15 +91,18 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def test_create_with_mac_learning(self):
         with self.port(arg_list=('mac_learning_enabled',),
                        mac_learning_enabled=True) as port:
+            # Validate create operation response
+            self.assertEqual(True, port['port']['mac_learning_enabled'])
+            # Verify that db operation successfully set mac learning state
             req = self.new_show_request('ports', port['port']['id'], self.fmt)
             sport = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertTrue(sport['port']['mac_learning_enabled'])
+            self.assertEqual(True, sport['port']['mac_learning_enabled'])
 
-    def test_create_port_without_mac_learning(self):
+    def test_create_and_show_port_without_mac_learning(self):
         with self.port() as port:
             req = self.new_show_request('ports', port['port']['id'], self.fmt)
             sport = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertNotIn('mac_learning', sport['port'])
+            self.assertNotIn('mac_learning_enabled', sport['port'])
 
     def test_update_port_with_mac_learning(self):
         with self.port(arg_list=('mac_learning_enabled',),
@@ -107,7 +110,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             data = {'port': {'mac_learning_enabled': True}}
             req = self.new_update_request('ports', data, port['port']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertTrue(res['port']['mac_learning_enabled'])
+            self.assertEqual(True, res['port']['mac_learning_enabled'])
 
     def test_update_preexisting_port_with_mac_learning(self):
         with self.port() as port:
@@ -116,8 +119,13 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             self.assertNotIn('mac_learning_enabled', sport['port'])
             data = {'port': {'mac_learning_enabled': True}}
             req = self.new_update_request('ports', data, port['port']['id'])
+            # Validate update operation response
             res = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertTrue(res['port']['mac_learning_enabled'])
+            self.assertEqual(True, res['port']['mac_learning_enabled'])
+            # Verify that db operation successfully updated mac learning state
+            req = self.new_show_request('ports', port['port']['id'], self.fmt)
+            sport = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(True, sport['port']['mac_learning_enabled'])
 
     def test_list_ports(self):
         # for this test we need to enable overlapping ips
@@ -129,4 +137,10 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                self.port(arg_list=('mac_learning_enabled',),
                                          mac_learning_enabled=True)):
             for port in self._list('ports')['ports']:
-                self.assertTrue(port['mac_learning_enabled'])
+                self.assertEqual(True, port['mac_learning_enabled'])
+
+    def test_show_port(self):
+        with self.port(arg_list=('mac_learning_enabled',),
+                       mac_learning_enabled=True) as p:
+            port_res = self._show('ports', p['port']['id'])['port']
+            self.assertEqual(True, port_res['mac_learning_enabled'])

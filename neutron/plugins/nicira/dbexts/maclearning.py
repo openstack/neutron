@@ -16,9 +16,13 @@
 #
 
 import sqlalchemy as sa
+from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
+from neutron.api.v2 import attributes
+from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
+from neutron.db import models_v2
 from neutron.openstack.common import log as logging
 from neutron.plugins.nicira.extensions import maclearning as mac
 
@@ -32,6 +36,13 @@ class MacLearningState(model_base.BASEV2):
                         primary_key=True)
     mac_learning_enabled = sa.Column(sa.Boolean(), nullable=False)
 
+    # Add a relationship to the Port model using the backref attribute.
+    # This will instruct SQLAlchemy to eagerly load this association.
+    port = orm.relationship(
+        models_v2.Port,
+        backref=orm.backref("mac_learning_state", lazy='joined',
+                            uselist=False, cascade='delete'))
+
 
 class MacLearningDbMixin(object):
     """Mixin class for mac learning."""
@@ -41,18 +52,14 @@ class MacLearningDbMixin(object):
                mac.MAC_LEARNING: port[mac.MAC_LEARNING]}
         return self._fields(res, fields)
 
-    def _get_mac_learning_state(self, context, port_id):
-        try:
-            query = self._model_query(context, MacLearningState)
-            state = query.filter(MacLearningState.port_id == port_id).one()
-        except exc.NoResultFound:
-            return None
-        return state[mac.MAC_LEARNING]
+    def _extend_port_mac_learning_state(self, port_res, port_db):
+        state = port_db.mac_learning_state
+        if state and state.mac_learning_enabled:
+            port_res[mac.MAC_LEARNING] = state.mac_learning_enabled
 
-    def _extend_port_mac_learning_state(self, context, port):
-        state = self._get_mac_learning_state(context, port['id'])
-        if state:
-            port[mac.MAC_LEARNING] = state
+    # Register dict extend functions for ports
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        attributes.PORTS, [_extend_port_mac_learning_state])
 
     def _update_mac_learning_state(self, context, port_id, enabled):
         try:
