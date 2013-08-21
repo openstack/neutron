@@ -25,6 +25,7 @@ from neutron.common import topics
 from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
+from neutron.db import l3_gwmode_db
 from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
@@ -51,6 +52,7 @@ TYPE_MULTI_SEGMENT = 'multi-segment'
 
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 extraroute_db.ExtraRoute_db_mixin,
+                l3_gwmode_db.L3_NAT_db_mixin,
                 sg_db_rpc.SecurityGroupServerRpcMixin,
                 agentschedulers_db.L3AgentSchedulerDbMixin,
                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
@@ -75,7 +77,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     _supported_extension_aliases = ["provider", "router", "extraroute",
                                     "binding", "quotas", "security-group",
                                     "agent", "l3_agent_scheduler",
-                                    "dhcp_agent_scheduler"]
+                                    "dhcp_agent_scheduler", "ext-gw-mode"]
 
     @property
     def supported_extension_aliases(self):

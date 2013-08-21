@@ -33,6 +33,7 @@ migration_for_plugins = [
     'neutron.plugins.hyperv.hyperv_neutron_plugin.HyperVNeutronPlugin',
     'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
     'neutron.plugins.metaplugin.meta_neutron_plugin.MetaPluginV2',
+    'neutron.plugins.ml2.plugin.Ml2Plugin',
     'neutron.plugins.nec.nec_plugin.NECPluginV2',
     'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
     'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
