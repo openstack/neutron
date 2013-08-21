@@ -49,7 +49,6 @@ from neutron.plugins.cisco.db import n1kv_db_v2
 from neutron.plugins.cisco.db import network_db_v2
 from neutron.plugins.cisco.extensions import n1kv_profile
 from neutron.plugins.cisco.n1kv import n1kv_client
-from neutron import policy
 
 
 LOG = logging.getLogger(__name__)
@@ -270,16 +269,6 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if physical_network not in self.network_vlan_ranges:
             self.network_vlan_ranges[physical_network] = []
 
-    def _check_provider_view_auth(self, context, network):
-        return policy.check(context,
-                            "extension:provider_network:view",
-                            network)
-
-    def _enforce_provider_set_auth(self, context, network):
-        return policy.enforce(context,
-                              "extension:provider_network:set",
-                              network)
-
     def _extend_network_dict_provider(self, context, network):
         """Add extended network parameters."""
         binding = n1kv_db_v2.get_network_binding(context.session,
@@ -305,9 +294,6 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
             return (None, None, None)
-
-        # Authorize before exposing plugin details to client
-        self._enforce_provider_set_auth(context, attrs)
 
         if not network_type_set:
             msg = _("provider:network_type required")
@@ -365,9 +351,6 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
             return
-
-        # Authorize before exposing plugin details to client
-        self._enforce_provider_set_auth(context, attrs)
 
         # TBD : Need to handle provider network updates
         msg = _("plugin does not support updating provider attributes")
