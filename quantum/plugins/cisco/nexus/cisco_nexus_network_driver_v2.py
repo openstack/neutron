@@ -40,7 +40,7 @@ class CiscoNEXUSDriver():
     Nexus Driver Main Class
     """
     def __init__(self):
-        pass
+        self.connections = {}
 
     def _edit_config(self, mgr, target='running', config='',
                      allowed_exc_strs=None):
@@ -71,12 +71,23 @@ class CiscoNEXUSDriver():
 
     def nxos_connect(self, nexus_host, nexus_ssh_port, nexus_user,
                      nexus_password):
-        """
-        Makes the SSH connection to the Nexus Switch
-        """
-        man = manager.connect(host=nexus_host, port=nexus_ssh_port,
-                              username=nexus_user, password=nexus_password)
-        return man
+        """Make SSH connection to the Nexus Switch."""
+        if getattr(self.connections.get(nexus_host), 'connected', None):
+            return self.connections[nexus_host]
+
+        try:
+            man = manager.connect(host=nexus_host,
+                                  port=nexus_ssh_port,
+                                  username=nexus_user,
+                                  password=nexus_password)
+            self.connections[nexus_host] = man
+        except Exception as e:
+            # Raise a Quantum exception. Include a description of
+            # the original ncclient exception.
+            raise cisco_exceptions.NexusConnectFailed(nexus_host=nexus_host,
+                                                      exc=e)
+
+        return self.connections[nexus_host]
 
     def create_xml_snippet(self, cutomized_config):
         """
