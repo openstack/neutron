@@ -430,7 +430,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    port_data['fixed_ips'],
                                    port_data[psec.PORTSECURITY],
                                    port_data[ext_sg.SECURITYGROUPS],
-                                   port_data[ext_qos.QUEUE],
+                                   port_data.get(ext_qos.QUEUE),
                                    port_data.get(mac_ext.MAC_LEARNING),
                                    port_data.get(addr_pair.ADDRESS_PAIRS))
 
@@ -991,12 +991,12 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # DB Operations for setting the network as external
             self._process_l3_create(context, new_net, net_data)
             # Process QoS queue extension
-            if network['network'].get(ext_qos.QUEUE):
-                new_net[ext_qos.QUEUE] = network['network'][ext_qos.QUEUE]
+            net_queue_id = net_data.get(ext_qos.QUEUE)
+            if net_queue_id:
                 # Raises if not found
-                self.get_qos_queue(context, new_net[ext_qos.QUEUE])
-                self._process_network_queue_mapping(context, new_net)
-                self._extend_network_qos_queue(context, new_net)
+                self.get_qos_queue(context, net_queue_id)
+                self._process_network_queue_mapping(
+                    context, new_net, net_queue_id)
 
             if (net_data.get(mpnet.SEGMENTS) and
                 isinstance(provider_type, bool)):
@@ -1078,7 +1078,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # to add provider networks fields
             net_result = self._make_network_dict(network)
             self._extend_network_dict_provider(context, net_result)
-            self._extend_network_qos_queue(context, net_result)
         return self._fields(net_result, fields)
 
     def get_networks(self, context, filters=None, fields=None):
@@ -1087,7 +1086,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             networks = super(NvpPluginV2, self).get_networks(context, filters)
             for net in networks:
                 self._extend_network_dict_provider(context, net)
-                self._extend_network_qos_queue(context, net)
         return [self._fields(network, fields) for network in networks]
 
     def update_network(self, context, id, network):
@@ -1102,22 +1100,13 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             if psec.PORTSECURITY in network['network']:
                 self._process_network_port_security_update(
                     context, network['network'], net)
-            if network['network'].get(ext_qos.QUEUE):
-                net[ext_qos.QUEUE] = network['network'][ext_qos.QUEUE]
+            net_queue_id = network['network'].get(ext_qos.QUEUE)
+            if net_queue_id:
                 self._delete_network_queue_mapping(context, id)
-                self._process_network_queue_mapping(context, net)
+                self._process_network_queue_mapping(context, net, net_queue_id)
             self._process_l3_update(context, net, network['network'])
             self._extend_network_dict_provider(context, net)
-            self._extend_network_qos_queue(context, net)
         return net
-
-    def get_ports(self, context, filters=None, fields=None):
-        filters = filters or {}
-        with context.session.begin(subtransactions=True):
-            ports = super(NvpPluginV2, self).get_ports(context, filters)
-            for port in ports:
-                self._extend_port_qos_queue(context, port)
-        return [self._fields(port, fields) for port in ports]
 
     def create_port(self, context, port):
         # If PORTSECURITY is not the default value ATTR_NOT_SPECIFIED
@@ -1161,9 +1150,10 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._process_port_create_security_group(
                 context, port_data, port_data[ext_sg.SECURITYGROUPS])
             # QoS extension checks
-            port_data[ext_qos.QUEUE] = self._check_for_queue_and_create(
+            port_queue_id = self._check_for_queue_and_create(
                 context, port_data)
-            self._process_port_queue_mapping(context, port_data)
+            self._process_port_queue_mapping(
+                context, port_data, port_queue_id)
             if (isinstance(port_data.get(mac_ext.MAC_LEARNING), bool)):
                 self._create_mac_learning_state(context, port_data)
             elif mac_ext.MAC_LEARNING in port_data:
@@ -1172,9 +1162,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             LOG.debug(_("create_port completed on NVP for tenant "
                         "%(tenant_id)s: (%(id)s)"), port_data)
 
-            # remove since it will be added in extend based on policy
-            del port_data[ext_qos.QUEUE]
-            self._extend_port_qos_queue(context, port_data)
             self._process_portbindings_create_and_update(context,
                                                          port, port_data)
         # DB Operation is complete, perform NVP operation
@@ -1272,7 +1259,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 self._process_port_port_security_update(
                     context, port['port'], ret_port)
 
-            ret_port[ext_qos.QUEUE] = self._check_for_queue_and_create(
+            port_queue_id = self._check_for_queue_and_create(
                 context, ret_port)
             # Populate the mac learning attribute
             new_mac_learning_state = port['port'].get(mac_ext.MAC_LEARNING)
@@ -1282,7 +1269,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                 new_mac_learning_state)
                 ret_port[mac_ext.MAC_LEARNING] = new_mac_learning_state
             self._delete_port_queue_mapping(context, ret_port['id'])
-            self._process_port_queue_mapping(context, ret_port)
+            self._process_port_queue_mapping(context, ret_port,
+                                             port_queue_id)
             LOG.warn(_("Update port request: %s"), port)
             nvp_port_id = self._nvp_get_port_id(
                 context, self.cluster, ret_port)
@@ -1317,9 +1305,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             else:
                 ret_port['status'] = constants.PORT_STATUS_ERROR
 
-            # remove since it will be added in extend based on policy
-            del ret_port[ext_qos.QUEUE]
-            self._extend_port_qos_queue(context, ret_port)
             self._process_portbindings_create_and_update(context,
                                                          port['port'],
                                                          port)
@@ -1371,11 +1356,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 db_port = self._get_port(context, id)
                 self._synchronizer.synchronize_port(
                     context, db_port)
-                port = self._make_port_dict(db_port, fields)
+                return self._make_port_dict(db_port, fields)
             else:
-                port = super(NvpPluginV2, self).get_port(context, id, fields)
-            self._extend_port_qos_queue(context, port)
-        return port
+                return super(NvpPluginV2, self).get_port(context, id, fields)
 
     def get_router(self, context, id, fields=None):
         if fields and 'status' in fields:

@@ -17,9 +17,11 @@
 # @author: Aaron Rosen, Nicira, Inc
 
 import sqlalchemy as sa
+from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes as attr
+from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import log
@@ -49,6 +51,13 @@ class PortQueueMapping(model_base.BASEV2):
     queue_id = sa.Column(sa.String(36), sa.ForeignKey("qosqueues.id"),
                          primary_key=True)
 
+    # Add a relationship to the Port model adding a backref which will
+    # allow SQLAlchemy for eagerly load the queue binding
+    port = orm.relationship(
+        models_v2.Port,
+        backref=orm.backref("qos_queue", uselist=False,
+                            cascade='delete', lazy='joined'))
+
 
 class NetworkQueueMapping(model_base.BASEV2):
     network_id = sa.Column(sa.String(36),
@@ -57,6 +66,13 @@ class NetworkQueueMapping(model_base.BASEV2):
 
     queue_id = sa.Column(sa.String(36), sa.ForeignKey("qosqueues.id",
                                                       ondelete="CASCADE"))
+
+    # Add a relationship to the Network model adding a backref which will
+    # allow SQLAlcremy for eagerly load the queue binding
+    network = orm.relationship(
+        models_v2.Network,
+        backref=orm.backref("qos_queue", uselist=False,
+                            cascade='delete', lazy='joined'))
 
 
 class NVPQoSDbMixin(ext_qos.QueuePluginBase):
@@ -96,13 +112,13 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
         with context.session.begin(subtransactions=True):
             context.session.delete(qos_queue)
 
-    def _process_port_queue_mapping(self, context, p):
-        if not p.get(ext_qos.QUEUE):
+    def _process_port_queue_mapping(self, context, port_data, queue_id):
+        port_data[ext_qos.QUEUE] = queue_id
+        if not queue_id:
             return
         with context.session.begin(subtransactions=True):
-            db = PortQueueMapping(port_id=p['id'],
-                                  queue_id=p.get(ext_qos.QUEUE))
-            context.session.add(db)
+            context.session.add(PortQueueMapping(port_id=port_data['id'],
+                                queue_id=queue_id))
 
     def _get_port_queue_bindings(self, context, filters=None, fields=None):
         return self._get_collection(context, PortQueueMapping,
@@ -121,13 +137,14 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
         with context.session.begin(subtransactions=True):
             context.session.delete(binding)
 
-    def _process_network_queue_mapping(self, context, network):
-        if not network.get(ext_qos.QUEUE):
+    def _process_network_queue_mapping(self, context, net_data, queue_id):
+        net_data[ext_qos.QUEUE] = queue_id
+        if not queue_id:
             return
         with context.session.begin(subtransactions=True):
-            db = NetworkQueueMapping(network_id=network['id'],
-                                     queue_id=network.get(ext_qos.QUEUE))
-            context.session.add(db)
+            context.session.add(
+                NetworkQueueMapping(network_id=net_data['id'],
+                                    queue_id=queue_id))
 
     def _get_network_queue_bindings(self, context, filters=None, fields=None):
         return self._get_collection(context, NetworkQueueMapping,
@@ -141,25 +158,23 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
             if binding:
                 context.session.delete(binding)
 
-    def _extend_port_qos_queue(self, context, port):
-        filters = {'port_id': [port['id']]}
-        fields = ['queue_id']
-        port[ext_qos.QUEUE] = None
-        queue_id = self._get_port_queue_bindings(
-            context, filters, fields)
-        if queue_id:
-            port[ext_qos.QUEUE] = queue_id[0]['queue_id']
-        return port
+    def _extend_dict_qos_queue(self, obj_res, obj_db):
+        queue_mapping = obj_db['qos_queue']
+        if queue_mapping:
+            obj_res[ext_qos.QUEUE] = queue_mapping.get('queue_id')
+        return obj_res
 
-    def _extend_network_qos_queue(self, context, network):
-        filters = {'network_id': [network['id']]}
-        fields = ['queue_id']
-        network[ext_qos.QUEUE] = None
-        queue_id = self._get_network_queue_bindings(
-            context, filters, fields)
-        if queue_id:
-            network[ext_qos.QUEUE] = queue_id[0]['queue_id']
-        return network
+    def _extend_port_dict_qos_queue(self, port_res, port_db):
+        self._extend_dict_qos_queue(port_res, port_db)
+
+    def _extend_network_dict_qos_queue(self, network_res, network_db):
+        self._extend_dict_qos_queue(network_res, network_db)
+
+    # Register dict extend functions for networks and ports
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        attr.NETWORKS, ['_extend_network_dict_qos_queue'])
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        attr.PORTS, ['_extend_port_dict_qos_queue'])
 
     def _make_qos_queue_dict(self, queue, fields=None):
         res = {'id': queue['id'],
@@ -215,7 +230,6 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
         filters = {'network_id': [port['network_id']]}
         network_queue_id = self._get_network_queue_bindings(
             context, filters, ['queue_id'])
-
         if network_queue_id:
             # get networks that queue is assocated with
             filters = {'queue_id': [network_queue_id[0]['queue_id']]}
