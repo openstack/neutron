@@ -482,7 +482,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _do_side_effect(self, patched_plugin, orig, *args, **kwargs):
         """Invoked by test cases for injecting failures in plugin."""
         def second_call(*args, **kwargs):
-            raise q_exc.NeutronException
+            raise q_exc.NeutronException()
         patched_plugin.side_effect = second_call
         return orig(*args, **kwargs)
 
@@ -3432,6 +3432,34 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 204)
+
+    def _helper_test_validate_subnet(self, option, exception):
+        cfg.CONF.set_override(option, 0)
+        with self.network() as network:
+            subnet = {'network_id': network['network']['id'],
+                      'cidr': '10.0.2.0/24',
+                      'ip_version': 4,
+                      'tenant_id': network['network']['tenant_id'],
+                      'gateway_ip': '10.0.2.1',
+                      'dns_nameservers': ['8.8.8.8'],
+                      'host_routes': [{'destination': '135.207.0.0/16',
+                                       'nexthop': '1.2.3.4'}]}
+            plugin = NeutronManager.get_plugin()
+            e = self.assertRaises(exception,
+                                  plugin._validate_subnet, subnet)
+            self.assertThat(
+                str(e),
+                matchers.Not(matchers.Contains('built-in function id')))
+
+    def test_validate_subnet_dns_nameservers_exhausted(self):
+        self._helper_test_validate_subnet(
+            'max_dns_nameservers',
+            q_exc.DNSNameServersExhausted)
+
+    def test_validate_subnet_host_routes_exhausted(self):
+        self._helper_test_validate_subnet(
+            'max_subnet_host_routes',
+            q_exc.HostRoutesExhausted)
 
 
 class DbModelTestCase(base.BaseTestCase):

@@ -1046,7 +1046,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         if attributes.is_attr_set(s.get('dns_nameservers')):
             if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
                 raise q_exc.DNSNameServersExhausted(
-                    subnet_id=id,
+                    subnet_id=s.get('id', _('new subnet')),
                     quota=cfg.CONF.max_dns_nameservers)
             for dns in s['dns_nameservers']:
                 try:
@@ -1060,7 +1060,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         if attributes.is_attr_set(s.get('host_routes')):
             if len(s['host_routes']) > cfg.CONF.max_subnet_host_routes:
                 raise q_exc.HostRoutesExhausted(
-                    subnet_id=id,
+                    subnet_id=s.get('id', _('new subnet')),
                     quota=cfg.CONF.max_subnet_host_routes)
             # check if the routes are all valid
             for rt in s['host_routes']:
@@ -1154,6 +1154,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         # and 'allocation_pools' fields.
         s['ip_version'] = db_subnet.ip_version
         s['cidr'] = db_subnet.cidr
+        s['id'] = db_subnet.id
         self._validate_subnet(s)
 
         if 'gateway_ip' in s and s['gateway_ip'] is not None:
