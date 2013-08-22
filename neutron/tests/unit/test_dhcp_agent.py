@@ -348,9 +348,13 @@ class TestLogArgs(base.BaseTestCase):
         conf_dict = {'debug': True,
                      'verbose': False,
                      'log_dir': None,
-                     'log_file': None}
+                     'log_file': None,
+                     'use_syslog': True,
+                     'syslog_log_facility': 'LOG_USER'}
         conf = dhcp_agent.DictModel(conf_dict)
-        expected_args = ['--debug', '--use-syslog']
+        expected_args = ['--debug',
+                         '--use-syslog',
+                         '--syslog-log-facility=LOG_USER']
         args = config.get_log_args(conf, 'log_file_name')
         self.assertEqual(expected_args, args)
 
@@ -358,9 +362,12 @@ class TestLogArgs(base.BaseTestCase):
         conf_dict = {'debug': True,
                      'verbose': True,
                      'log_dir': '/etc/tests',
-                     'log_file': None}
+                     'log_file': None,
+                     'use_syslog': False,
+                     'syslog_log_facility': 'LOG_USER'}
         conf = dhcp_agent.DictModel(conf_dict)
-        expected_args = ['--debug', '--verbose',
+        expected_args = ['--debug',
+                         '--verbose',
                          '--log-file=log_file_name',
                          '--log-dir=/etc/tests']
         args = config.get_log_args(conf, 'log_file_name')
@@ -370,7 +377,9 @@ class TestLogArgs(base.BaseTestCase):
         conf_dict = {'debug': True,
                      'verbose': False,
                      'log_dir': '/etc/tests',
-                     'log_file': 'tests/filelog'}
+                     'log_file': 'tests/filelog',
+                     'use_syslog': False,
+                     'syslog_log_facility': 'LOG_USER'}
         conf = dhcp_agent.DictModel(conf_dict)
         expected_args = ['--debug',
                          '--log-file=log_file_name',
@@ -382,11 +391,28 @@ class TestLogArgs(base.BaseTestCase):
         conf_dict = {'debug': True,
                      'verbose': False,
                      'log_file': 'tests/filelog',
-                     'log_dir': None}
+                     'log_dir': None,
+                     'use_syslog': False,
+                     'syslog_log_facility': 'LOG_USER'}
         conf = dhcp_agent.DictModel(conf_dict)
         expected_args = ['--debug',
                          '--log-file=log_file_name',
                          '--log-dir=tests']
+        args = config.get_log_args(conf, 'log_file_name')
+        self.assertEqual(expected_args, args)
+
+    def test_log_args_with_filelog_and_syslog(self):
+        conf_dict = {'debug': True,
+                     'verbose': True,
+                     'log_file': 'tests/filelog',
+                     'log_dir': '/etc/tests',
+                     'use_syslog': True,
+                     'syslog_log_facility': 'LOG_USER'}
+        conf = dhcp_agent.DictModel(conf_dict)
+        expected_args = ['--debug',
+                         '--verbose',
+                         '--log-file=log_file_name',
+                         '--log-dir=/etc/tests/tests']
         args = config.get_log_args(conf, 'log_file_name')
         self.assertEqual(expected_args, args)
 

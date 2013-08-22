@@ -56,7 +56,11 @@ def get_log_args(conf, log_file_name):
         if log_dir:
             cmd_args.append('--log-dir=%s' % log_dir)
     else:
-        cmd_args.append('--use-syslog')
+        if conf.use_syslog:
+            cmd_args.append('--use-syslog')
+            if conf.syslog_log_facility:
+                cmd_args.append(
+                    '--syslog-log-facility=%s' % conf.syslog_log_facility)
     return cmd_args
 
 
