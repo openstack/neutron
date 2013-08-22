@@ -312,9 +312,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         subnet.
         """
         # Grab all allocation pools for the subnet
-        pool_qry = context.session.query(
-            models_v2.IPAllocationPool).with_lockmode('update')
-        allocation_pools = pool_qry.filter_by(subnet_id=subnet_id)
+        allocation_pools = (context.session.query(
+            models_v2.IPAllocationPool).filter_by(subnet_id=subnet_id).
+            options(orm.joinedload('available_ranges', innerjoin=True)).
+            with_lockmode('update'))
+
         # Find the allocation pool for the IP to recycle
         pool_id = None
         for allocation_pool in allocation_pools:
