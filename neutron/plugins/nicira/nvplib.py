@@ -78,6 +78,21 @@ taken_context_ids = []
 _lqueue_cache = {}
 
 
+def device_id_to_vm_id(device_id, obfuscate=False):
+    # device_id can be longer than 40 characters, for example
+    # a device_id for a dhcp port is like the following:
+    #
+    # dhcp83b5fdeb-e3b4-5e18-ac5f-55161...80747326-47d7-46c2-a87a-cf6d5194877c
+    #
+    # To fit it into an NVP tag we need to hash it, however device_id
+    # used for ports associated to VM's are small enough so let's skip the
+    # hashing
+    if len(device_id) > MAX_DISPLAY_NAME_LEN or obfuscate:
+        return hashlib.sha1(device_id).hexdigest()
+    else:
+        return device_id
+
+
 def version_dependent(wrapped_func):
     func_name = wrapped_func.__name__
 
@@ -653,6 +668,71 @@ def delete_port(cluster, switch, port):
         raise exception.NeutronException()
 
 
+def get_ports(cluster, networks=None, devices=None, tenants=None):
+    vm_filter_obsolete = ""
+    vm_filter = ""
+    tenant_filter = ""
+    # This is used when calling delete_network. Neutron checks to see if
+    # the network has any ports.
+    if networks:
+        # FIXME (Aaron) If we get more than one network_id this won't work
+        lswitch = networks[0]
+    else:
+        lswitch = "*"
+    if devices:
+        for device_id in devices:
+            vm_filter_obsolete = '&'.join(
+                ["tag_scope=vm_id",
+                 "tag=%s" % device_id_to_vm_id(device_id, obfuscate=True),
+                 vm_filter_obsolete])
+            vm_filter = '&'.join(
+                ["tag_scope=vm_id",
+                 "tag=%s" % device_id_to_vm_id(device_id),
+                 vm_filter])
+    if tenants:
+        for tenant in tenants:
+            tenant_filter = '&'.join(
+                ["tag_scope=os_tid",
+                 "tag=%s" % tenant,
+                 tenant_filter])
+
+    nvp_lports = {}
+    lport_fields_str = ("tags,admin_status_enabled,display_name,"
+                        "fabric_status_up")
+    try:
+        lport_query_path_obsolete = (
+            "/ws.v1/lswitch/%s/lport?fields=%s&%s%stag_scope=q_port_id"
+            "&relations=LogicalPortStatus" %
+            (lswitch, lport_fields_str, vm_filter_obsolete, tenant_filter))
+        lport_query_path = (
+            "/ws.v1/lswitch/%s/lport?fields=%s&%s%stag_scope=q_port_id"
+            "&relations=LogicalPortStatus" %
+            (lswitch, lport_fields_str, vm_filter, tenant_filter))
+        try:
+            # NOTE(armando-migliaccio): by querying with obsolete tag first
+            # current deployments won't take the performance hit of a double
+            # call. In release L-** or M-**, we might want to swap the calls
+            # as it's likely that ports with the new tag would outnumber the
+            # ones with the old tag
+            ports = get_all_query_pages(lport_query_path_obsolete, cluster)
+            if not ports:
+                ports = get_all_query_pages(lport_query_path, cluster)
+        except exception.NotFound:
+            LOG.warn(_("Lswitch %s not found in NVP"), lswitch)
+            ports = None
+
+        if ports:
+            for port in ports:
+                for tag in port["tags"]:
+                    if tag["scope"] == "q_port_id":
+                        nvp_lports[tag["tag"]] = port
+    except Exception:
+        err_msg = _("Unable to get ports")
+        LOG.exception(err_msg)
+        raise nvp_exc.NvpPluginException(err_msg=err_msg)
+    return nvp_lports
+
+
 def get_port_by_neutron_tag(cluster, lswitch_uuid, neutron_port_id):
     """Get port by neutron tag.
 
@@ -726,14 +806,12 @@ def update_port(cluster, lswitch_uuid, lport_uuid, neutron_port_id, tenant_id,
                 mac_address=None, fixed_ips=None, port_security_enabled=None,
                 security_profiles=None, queue_id=None,
                 mac_learning_enabled=None, allowed_address_pairs=None):
-    # device_id can be longer than 40 so we rehash it
-    hashed_device_id = hashlib.sha1(device_id).hexdigest()
     lport_obj = dict(
         admin_status_enabled=admin_status_enabled,
         display_name=_check_and_truncate_name(display_name),
         tags=[dict(scope='os_tid', tag=tenant_id),
               dict(scope='q_port_id', tag=neutron_port_id),
-              dict(scope='vm_id', tag=hashed_device_id),
+              dict(scope='vm_id', tag=device_id_to_vm_id(device_id)),
               dict(scope='quantum', tag=NEUTRON_VERSION)])
 
     _configure_extensions(lport_obj, mac_address, fixed_ips,
@@ -761,15 +839,13 @@ def create_lport(cluster, lswitch_uuid, tenant_id, neutron_port_id,
                  security_profiles=None, queue_id=None,
                  mac_learning_enabled=None, allowed_address_pairs=None):
     """Creates a logical port on the assigned logical switch."""
-    # device_id can be longer than 40 so we rehash it
-    hashed_device_id = hashlib.sha1(device_id).hexdigest()
     display_name = _check_and_truncate_name(display_name)
     lport_obj = dict(
         admin_status_enabled=admin_status_enabled,
         display_name=display_name,
         tags=[dict(scope='os_tid', tag=tenant_id),
               dict(scope='q_port_id', tag=neutron_port_id),
-              dict(scope='vm_id', tag=hashed_device_id),
+              dict(scope='vm_id', tag=device_id_to_vm_id(device_id)),
               dict(scope='quantum', tag=NEUTRON_VERSION)],
     )
 
