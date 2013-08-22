@@ -69,6 +69,9 @@ agent_opts = [
                help=_("The UDP port to use for VXLAN tunnels.")),
     cfg.IntOpt('veth_mtu', default=None,
                help=_("MTU size of veth interfaces")),
+    cfg.BoolOpt('l2_population', default=False,
+                help=_("Use ml2 l2population mechanism driver to learn "
+                       "remote mac and IPs and improve tunnel scalability")),
 ]
 
 

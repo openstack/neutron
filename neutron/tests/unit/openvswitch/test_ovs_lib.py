@@ -158,8 +158,8 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_count_flows(self):
         utils.execute(["ovs-ofctl", "dump-flows", self.BR_NAME],
-                      root_helper=self.root_helper).AndReturn('ignore'
-                                                              '\nflow-1\n')
+                      root_helper=self.root_helper,
+                      process_input=None).AndReturn('ignore\nflow-1\n')
         self.mox.ReplayAll()
 
         # counts the number of flows as total lines of output - 2
@@ -183,13 +183,37 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.delete_flows(dl_vlan=vid)
         self.mox.VerifyAll()
 
+    def test_defer_apply_flows(self):
+        self.mox.StubOutWithMock(self.br, 'add_or_mod_flow_str')
+        self.br.add_or_mod_flow_str(
+            flow='added_flow_1').AndReturn('added_flow_1')
+        self.br.add_or_mod_flow_str(
+            flow='added_flow_2').AndReturn('added_flow_2')
+
+        self.mox.StubOutWithMock(self.br, '_build_flow_expr_arr')
+        self.br._build_flow_expr_arr(delete=True,
+                                     flow='deleted_flow_1'
+                                     ).AndReturn(['deleted_flow_1'])
+        self.mox.StubOutWithMock(self.br, 'run_ofctl')
+        self.br.run_ofctl('add-flows', ['-'], 'added_flow_1\nadded_flow_2\n')
+        self.br.run_ofctl('del-flows', ['-'], 'deleted_flow_1\n')
+        self.mox.ReplayAll()
+
+        self.br.defer_apply_on()
+        self.br.add_flow(flow='added_flow_1')
+        self.br.defer_apply_on()
+        self.br.add_flow(flow='added_flow_2')
+        self.br.delete_flows(flow='deleted_flow_1')
+        self.br.defer_apply_off()
+        self.mox.VerifyAll()
+
     def test_add_tunnel_port(self):
         pname = "tap99"
         local_ip = "1.1.1.1"
         remote_ip = "9.9.9.9"
         ofport = "6"
 
-        utils.execute(["ovs-vsctl", self.TO, "add-port",
+        utils.execute(["ovs-vsctl", self.TO, "--may-exist", "add-port",
                        self.BR_NAME, pname], root_helper=self.root_helper)
         utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
                        pname, "type=gre"], root_helper=self.root_helper)

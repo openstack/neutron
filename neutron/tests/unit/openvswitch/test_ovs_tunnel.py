@@ -44,10 +44,7 @@ LVM_FLAT = ovs_neutron_agent.LocalVLANMapping(
 LVM_VLAN = ovs_neutron_agent.LocalVLANMapping(
     LV_ID, 'vlan', 'net1', LS_ID, VIF_PORTS)
 
-GRE_OFPORTS = set(['11', '12'])
-VXLAN_OFPORTS = set(['13', '14'])
-TUN_OFPORTS = {constants.TYPE_GRE: GRE_OFPORTS,
-               constants.TYPE_VXLAN: VXLAN_OFPORTS}
+TUN_OFPORTS = {constants.TYPE_GRE: {'ip1': '11', 'ip2': '12'}}
 
 BCAST_MAC = "01:00:00:00:00:00/01:00:00:00:00:00"
 UCAST_MAC = "00:00:00:00:00:00/01:00:00:00:00:00"
@@ -198,12 +195,13 @@ class TunnelTest(base.BaseTestCase):
         self.mox.VerifyAll()
 
     def testProvisionLocalVlan(self):
+        ofports = ','.join(TUN_OFPORTS[constants.TYPE_GRE].values())
         self.mock_tun_bridge.mod_flow(table=constants.FLOOD_TO_TUN,
                                       priority=1,
                                       dl_vlan=LV_ID,
                                       actions="strip_vlan,"
                                       "set_tunnel:%s,output:%s" %
-                                      (LS_ID, ','.join(GRE_OFPORTS)))
+                                      (LS_ID, ofports))
 
         self.mock_tun_bridge.add_flow(table=constants.TUN_TABLE['gre'],
                                       priority=1,
@@ -302,7 +300,7 @@ class TunnelTest(base.BaseTestCase):
                                               self.VETH_MTU)
         a.available_local_vlans = set()
         a.local_vlan_map[NET_UUID] = LVM
-        a.reclaim_local_vlan(NET_UUID, LVM)
+        a.reclaim_local_vlan(NET_UUID)
         self.assertTrue(LVM.vlan in a.available_local_vlans)
         self.mox.VerifyAll()
 
@@ -325,7 +323,7 @@ class TunnelTest(base.BaseTestCase):
 
         a.available_local_vlans = set()
         a.local_vlan_map[NET_UUID] = LVM_FLAT
-        a.reclaim_local_vlan(NET_UUID, LVM_FLAT)
+        a.reclaim_local_vlan(NET_UUID)
         self.assertTrue(LVM_FLAT.vlan in a.available_local_vlans)
         self.mox.VerifyAll()
 
@@ -348,7 +346,7 @@ class TunnelTest(base.BaseTestCase):
 
         a.available_local_vlans = set()
         a.local_vlan_map[NET_UUID] = LVM_VLAN
-        a.reclaim_local_vlan(NET_UUID, LVM_VLAN)
+        a.reclaim_local_vlan(NET_UUID)
         self.assertTrue(LVM_VLAN.vlan in a.available_local_vlans)
         self.mox.VerifyAll()
 
@@ -370,7 +368,7 @@ class TunnelTest(base.BaseTestCase):
     def testPortUnbound(self):
         self.mox.StubOutWithMock(
             ovs_neutron_agent.OVSNeutronAgent, 'reclaim_local_vlan')
-        ovs_neutron_agent.OVSNeutronAgent.reclaim_local_vlan(NET_UUID, LVM)
+        ovs_neutron_agent.OVSNeutronAgent.reclaim_local_vlan(NET_UUID)
 
         self.mox.ReplayAll()
 
