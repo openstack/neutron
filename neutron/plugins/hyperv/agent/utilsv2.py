@@ -26,9 +26,17 @@ class HyperVUtilsV2(utils.HyperVUtils):
     _ETHERNET_SWITCH_PORT = 'Msvm_EthernetSwitchPort'
     _PORT_ALLOC_SET_DATA = 'Msvm_EthernetPortAllocationSettingData'
     _PORT_VLAN_SET_DATA = 'Msvm_EthernetSwitchPortVlanSettingData'
+    _PORT_ALLOC_ACL_SET_DATA = 'Msvm_EthernetSwitchPortAclSettingData'
     _LAN_ENDPOINT = 'Msvm_LANEndpoint'
     _STATE_DISABLED = 3
     _OPERATION_MODE_ACCESS = 1
+
+    _ACL_DIR_IN = 1
+    _ACL_DIR_OUT = 2
+    _ACL_TYPE_IPV4 = 2
+    _ACL_TYPE_IPV6 = 3
+    _ACL_ACTION_METER = 3
+    _ACL_APPLICABILITY_LOCAL = 1
 
     _wmi_namespace = '//./root/virtualization/v2'
 
@@ -159,3 +167,26 @@ class HyperVUtilsV2(utils.HyperVUtils):
     def _get_first_item(self, obj):
         if obj:
             return obj[0]
+
+    def enable_port_metrics_collection(self, switch_port_name):
+        port, found = self._get_switch_port_allocation(switch_port_name, False)
+        if not found:
+            return
+
+        # Add the ACLs only if they don't already exist
+        acls = port.associators(wmi_result_class=self._PORT_ALLOC_ACL_SET_DATA)
+        for acl_type in [self._ACL_TYPE_IPV4, self._ACL_TYPE_IPV6]:
+            for acl_dir in [self._ACL_DIR_IN, self._ACL_DIR_OUT]:
+                acls = [v for v in acls
+                        if v.Action == self._ACL_ACTION_METER and
+                        v.Applicability == self._ACL_APPLICABILITY_LOCAL and
+                        v.Direction == acl_dir and
+                        v.AclType == acl_type]
+                if not acls:
+                    acl = self._get_default_setting_data(
+                        self._PORT_ALLOC_ACL_SET_DATA)
+                    acl.AclType = acl_type
+                    acl.Direction = acl_dir
+                    acl.Action = self._ACL_ACTION_METER
+                    acl.Applicability = self._ACL_APPLICABILITY_LOCAL
+                    self._add_virt_feature(port, acl)

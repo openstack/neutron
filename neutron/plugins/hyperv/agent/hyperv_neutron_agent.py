@@ -52,6 +52,13 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
+    cfg.BoolOpt('enable_metrics_collection',
+                default=False,
+                help=_('Enables metrics collections for switch ports by using '
+                       'Hyper-V\'s metric APIs. Collected data can by '
+                       'retrieved by other apps and services, e.g.: '
+                       'Ceilometer. Requires Hyper-V / Windows Server 2012 '
+                       'and above'))
 ]
 
 
@@ -209,6 +216,9 @@ class HyperVNeutronAgent(object):
             pass
         else:
             LOG.error(_('Unsupported network type %s'), network_type)
+
+        if CONF.AGENT.enable_metrics_collection:
+            self._utils.enable_port_metrics_collection(port_id)
 
     def _port_unbound(self, port_id):
         (net_uuid, map) = self._get_network_vswitch_map_by_port_id(port_id)

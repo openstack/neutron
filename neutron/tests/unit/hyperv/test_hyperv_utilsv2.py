@@ -213,3 +213,18 @@ class TestHyperVUtilsV2(base.BaseTestCase):
                                                 True)
 
         self.assertEqual(ret_val, (mock_data, False))
+
+    def test_enable_port_metrics_collection(self):
+        mock_port = mock.MagicMock()
+        self._utils._get_switch_port_allocation = mock.MagicMock(return_value=(
+            mock_port, True))
+
+        mock_acl = mock.MagicMock()
+        self._utils._get_default_setting_data = mock.MagicMock(
+            return_value=mock_acl)
+        self._utils._add_virt_feature = mock.MagicMock()
+
+        self._utils.enable_port_metrics_collection(self._FAKE_PORT_NAME)
+
+        self.assertEqual(4, len(self._utils._add_virt_feature.mock_calls))
+        self._utils._add_virt_feature.assert_called_with(mock_port, mock_acl)

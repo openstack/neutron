@@ -243,3 +243,7 @@ class HyperVUtils(object):
         for switch_port in switch_ports:
             if (switch_port.ElementName == port_id):
                 return switch_port
+
+    def enable_port_metrics_collection(self, switch_port_name):
+        raise NotImplementedError(_("Metrics collection is not supported on "
+                                    "this version of Hyper-V"))
