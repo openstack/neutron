@@ -453,7 +453,7 @@ class FakeClient:
         relations = urlparse.parse_qs(parsedurl.query).get('relations')
         response_file = self.FAKE_GET_RESPONSES.get(res_type)
         if not response_file:
-            raise Exception("resource not found")
+            raise NvpApiClient.NvpApiException()
         if 'lport' in res_type or 'nat' in res_type:
             if len(uuids) > 1:
                 return self._show(res_type, response_file, uuids[0],
