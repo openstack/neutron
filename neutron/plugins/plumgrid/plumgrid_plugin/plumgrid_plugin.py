@@ -34,7 +34,6 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.plumgrid.common import exceptions as plum_excep
 from neutron.plugins.plumgrid.plumgrid_plugin.plugin_ver import VERSION
-from neutron import policy
 
 LOG = logging.getLogger(__name__)
 PLUM_DRIVER = 'neutron.plugins.plumgrid.drivers.plumlib.Plumlib'
@@ -492,15 +491,11 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return VERSION
 
     def _port_viftype_binding(self, context, port):
-        if self._check_view_auth(context, port, self.binding_view):
-            port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_IOVISOR
-            port[portbindings.CAPABILITIES] = {
-                portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases}
+        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_IOVISOR
+        port[portbindings.CAPABILITIES] = {
+            portbindings.CAP_PORT_FILTER:
+            'security-group' in self.supported_extension_aliases}
         return port
-
-    def _check_view_auth(self, context, resource, action):
-        return policy.check(context, action, resource)
 
     def _network_admin_state(self, network):
         try:
