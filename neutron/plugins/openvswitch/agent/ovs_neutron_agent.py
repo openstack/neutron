@@ -198,6 +198,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             'start_flag': True}
         self.setup_rpc()
 
+        # Keep track of int_br's device count for use by _report_state()
+        self.int_br_device_count = 0
+
         # Security group agent supprot
         self.sg_agent = OVSSecurityGroupAgent(self.context,
                                               self.plugin_rpc,
@@ -211,9 +214,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def _report_state(self):
         try:
             # How many devices are likely used by a VM
-            ports = self.int_br.get_vif_port_set()
-            num_devices = len(ports)
-            self.agent_state.get('configurations')['devices'] = num_devices
+            self.agent_state.get('configurations')['devices'] = (
+                self.int_br_device_count)
             self.state_rpc.report_state(self.context,
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
@@ -655,6 +657,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         ports = self.int_br.get_vif_port_set()
         if ports == registered_ports:
             return
+        self.int_br_device_count = len(ports)
         added = ports - registered_ports
         removed = registered_ports - ports
         return {'current': ports,
