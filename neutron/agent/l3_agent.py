@@ -181,6 +181,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                           "by the agents.")),
         cfg.BoolOpt('enable_metadata_proxy', default=True,
                     help=_("Allow running metadata proxy.")),
+        cfg.StrOpt('metadata_proxy_socket',
+                   default='$state_path/metadata_proxy',
+                   help=_('Location of Metadata Proxy UNIX domain '
+                          'socket')),
     ]
 
     def __init__(self, host, conf=None):
@@ -304,8 +308,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
     def _spawn_metadata_proxy(self, router_info):
         def callback(pid_file):
+            metadata_proxy_socket = cfg.CONF.metadata_proxy_socket
             proxy_cmd = ['neutron-ns-metadata-proxy',
                          '--pid_file=%s' % pid_file,
+                         '--metadata_proxy_socket=%s' % metadata_proxy_socket,
                          '--router_id=%s' % router_info.router_id,
                          '--state_path=%s' % self.conf.state_path,
                          '--metadata_port=%s' % self.conf.metadata_port]
