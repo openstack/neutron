@@ -86,11 +86,12 @@ def update_nexusport_binding(port_id, new_vlan_id):
     return binding
 
 
-def get_nexusvm_binding(vlan_id, instance_id):
+def get_nexusvm_bindings(vlan_id, instance_id):
     """Lists nexusvm bindings."""
     LOG.debug(_("get_nexusvm_binding() called"))
-    return _lookup_first_nexus_binding(instance_id=instance_id,
-                                       vlan_id=vlan_id)
+
+    return _lookup_all_nexus_bindings(vlan_id=vlan_id,
+                                      instance_id=instance_id)
 
 
 def get_port_vlan_switch_binding(port_id, vlan_id, switch_ip):

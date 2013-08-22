@@ -53,7 +53,7 @@ class CiscoNEXUSFakeDriver():
         """Disable trunk mode an interface on Nexus Switch."""
         pass
 
-    def enable_vlan_on_trunk_int(self, mgr, interface, vlanid):
+    def enable_vlan_on_trunk_int(self, mgr, etype, interface, vlanid):
         """Enable vlan on trunk interface.
 
         Enable trunk mode vlan access an interface on Nexus Switch given

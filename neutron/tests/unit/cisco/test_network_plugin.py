@@ -184,7 +184,9 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self.network(name=name) as network:
             with self.subnet(network=network, cidr=cidr) as subnet:
                 net_id = subnet['subnet']['network_id']
-                res = self._create_port(self.fmt, net_id)
+                res = self._create_port(self.fmt, net_id,
+                                        device_id='testdev',
+                                        device_owner='testowner')
                 port = self.deserialize(self.fmt, res)
                 try:
                     yield res

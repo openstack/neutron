@@ -115,13 +115,13 @@ class CiscoNexusDbTest(base.BaseTestCase):
         npb22 = self._npb_test_obj(20, 200)
         self._add_to_db([npb11, npb21, npb22])
 
-        npb = nxdb.get_nexusvm_binding(npb21.vlan, npb21.instance)
+        npb = nxdb.get_nexusvm_bindings(npb21.vlan, npb21.instance)[0]
         self._assert_equal(npb, npb21)
-        npb = nxdb.get_nexusvm_binding(npb22.vlan, npb22.instance)
+        npb = nxdb.get_nexusvm_bindings(npb22.vlan, npb22.instance)[0]
         self._assert_equal(npb, npb22)
 
         with testtools.ExpectedException(c_exc.NexusPortBindingNotFound):
-            nxdb.get_nexusvm_binding(npb21.vlan, "dummyInstance")
+            nxdb.get_nexusvm_bindings(npb21.vlan, "dummyInstance")
 
     def test_nexusportvlanswitchbinding_get(self):
         npb11 = self._npb_test_obj(10, 100)
