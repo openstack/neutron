@@ -28,6 +28,10 @@ HTTP_DELETE = "DELETE"
 HTTP_PUT = "PUT"
 URI_PREFIX = "/api/4.0/edges"
 
+#FwaaS constants
+FIREWALL_SERVICE = "firewall/config"
+FIREWALL_RULE_RESOURCE = "rules"
+
 
 class Vcns(object):
 
@@ -106,3 +110,69 @@ class Vcns(object):
     def delete_lswitch(self, lswitch_id):
         uri = "/api/ws.v1/lswitch/%s" % lswitch_id
         return self.do_request(HTTP_DELETE, uri)
+
+    def update_firewall(self, edge_id, fw_req):
+        uri = self._build_uri_path(
+            edge_id, FIREWALL_SERVICE)
+        return self.do_request(HTTP_PUT, uri, fw_req)
+
+    def delete_firewall(self, edge_id):
+        uri = self._build_uri_path(
+            edge_id, FIREWALL_SERVICE, None)
+        return self.do_request(HTTP_DELETE, uri)
+
+    def update_firewall_rule(self, edge_id, vcns_rule_id, fwr_req):
+        uri = self._build_uri_path(
+            edge_id, FIREWALL_SERVICE,
+            FIREWALL_RULE_RESOURCE,
+            vcns_rule_id)
+        return self.do_request(HTTP_PUT, uri, fwr_req)
+
+    def delete_firewall_rule(self, edge_id, vcns_rule_id):
+        uri = self._build_uri_path(
+            edge_id, FIREWALL_SERVICE,
+            FIREWALL_RULE_RESOURCE,
+            vcns_rule_id)
+        return self.do_request(HTTP_DELETE, uri)
+
+    def add_firewall_rule_above(self, edge_id, ref_vcns_rule_id, fwr_req):
+        uri = self._build_uri_path(
+            edge_id, FIREWALL_SERVICE,
+            FIREWALL_RULE_RESOURCE)
+        uri += "?aboveRuleId=" + ref_vcns_rule_id
+        return self.do_request(HTTP_POST, uri, fwr_req)
+
+    def add_firewall_rule(self, edge_id, fwr_req):
+        uri = self._build_uri_path(
+            edge_id, FIREWALL_SERVICE,
+            FIREWALL_RULE_RESOURCE)
+        return self.do_request(HTTP_POST, uri, fwr_req)
+
+    def get_firewall(self, edge_id):
+        uri = self._build_uri_path(edge_id, FIREWALL_SERVICE)
+        return self.do_request(HTTP_GET, uri, decode=True)
+
+    def get_firewall_rule(self, edge_id, vcns_rule_id):
+        uri = self._build_uri_path(
+            edge_id, FIREWALL_SERVICE,
+            FIREWALL_RULE_RESOURCE,
+            vcns_rule_id)
+        return self.do_request(HTTP_GET, uri, decode=True)
+
+    def _build_uri_path(self, edge_id,
+                        service,
+                        resource=None,
+                        resource_id=None,
+                        parent_resource_id=None,
+                        fields=None,
+                        relations=None,
+                        filters=None,
+                        types=None,
+                        is_attachment=False):
+        uri_prefix = "%s/%s/%s" % (URI_PREFIX, edge_id, service)
+        if resource:
+            res_path = resource + (resource_id and "/%s" % resource_id or '')
+            uri_path = "%s/%s" % (uri_prefix, res_path)
+        else:
+            uri_path = uri_prefix
+        return uri_path

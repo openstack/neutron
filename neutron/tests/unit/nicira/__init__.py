@@ -22,13 +22,18 @@ from neutron.plugins.nicira import extensions
 import neutron.plugins.nicira.NeutronPlugin as plugin
 import neutron.plugins.nicira.NeutronServicePlugin as service_plugin
 import neutron.plugins.nicira.NvpApiClient as nvpapi
+from neutron.plugins.nicira.vshield.common import (
+    VcnsApiClient as vcnsapi)
 from neutron.plugins.nicira.vshield import vcns
+import neutron.plugins.nicira.vshield.vcns_driver as vcnsdriver
 
 nvp_plugin = plugin.NvpPluginV2
 nvp_service_plugin = service_plugin.NvpAdvancedPlugin
 api_helper = nvpapi.NVPApiHelper
 nvp_client = client.NvpApiClientEventlet
 vcns_class = vcns.Vcns
+vcns_driver = vcnsdriver.VcnsDriver
+vcns_api_helper = vcnsapi.VcnsApiHelper
 
 STUBS_PATH = os.path.join(os.path.dirname(__file__), 'etc')
 NVPEXT_PATH = os.path.dirname(extensions.__file__)
@@ -38,6 +43,9 @@ SERVICE_PLUGIN_NAME = '%s.%s' % (nvp_service_plugin.__module__,
                                  nvp_service_plugin.__name__)
 CLIENT_NAME = '%s.%s' % (nvp_client.__module__, nvp_client.__name__)
 VCNS_NAME = '%s.%s' % (vcns_class.__module__, vcns_class.__name__)
+VCNS_DRIVER_NAME = '%s.%s' % (vcns_driver.__module__, vcns_driver.__name__)
+VCNSAPI_NAME = '%s.%s' % (vcns_api_helper.__module__,
+                          vcns_api_helper.__name__)
 
 
 def get_fake_conf(filename):

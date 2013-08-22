@@ -34,6 +34,12 @@ EXTENDED_ATTRIBUTES_2_0 = {
                     'validate': {'type:uuid_or_none': None},
                     'default': None, 'is_visible': True},
     },
+
+    'firewalls': {
+        ROUTER_ID: {'allow_post': True, 'allow_put': False,
+                    'validate': {'type:uuid_or_none': None},
+                    'default': None, 'is_visible': True},
+    }
 }
 
 

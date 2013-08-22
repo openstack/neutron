@@ -61,15 +61,17 @@ class ServiceRouterTestExtensionManager(object):
 
 class NvpRouterTestCase(test_nicira_plugin.TestNiciraL3NatTestCase):
 
-    def setUp(self, plugin=None, ext_mgr=None):
+    def setUp(self, plugin=None, ext_mgr=None, service_plugins=None):
         plugin = plugin or SERVICE_PLUGIN_NAME
-        super(NvpRouterTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super(NvpRouterTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
+                                             service_plugins=service_plugins)
 
 
-class ServiceRouterTestCase(NvpRouterTestCase):
+class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest):
 
     def vcns_patch(self):
         instance = self.mock_vcns.start()
+        self.vcns_instance = instance
         instance.return_value.deploy_edge.side_effect = self.fc2.deploy_edge
         instance.return_value.get_edge_id.side_effect = self.fc2.get_edge_id
         instance.return_value.get_edge_deploy_status.side_effect = (
@@ -93,7 +95,7 @@ class ServiceRouterTestCase(NvpRouterTestCase):
         instance.return_value.delete_lswitch.side_effect = (
             self.fc2.delete_lswitch)
 
-    def setUp(self):
+    def setUp(self, ext_mgr=None, service_plugins=None):
         cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
         cfg.CONF.set_override('task_status_check_interval', 100, group="vcns")
 
@@ -103,8 +105,11 @@ class ServiceRouterTestCase(NvpRouterTestCase):
         self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)
         self.vcns_patch()
 
-        super(ServiceRouterTestCase, self).setUp(
-            ext_mgr=ServiceRouterTestExtensionManager())
+        ext_mgr = ext_mgr or ServiceRouterTestExtensionManager()
+        super(ServiceRouterTest, self).setUp(
+            plugin=SERVICE_PLUGIN_NAME,
+            service_plugins=service_plugins,
+            ext_mgr=ext_mgr)
 
         self.fc2.set_fake_nvpapi(self.fc)
         self.addCleanup(self.fc2.reset_all)
@@ -122,7 +127,7 @@ class ServiceRouterTestCase(NvpRouterTestCase):
             raise Exception(_("Tasks not completed"))
         manager.stop()
 
-        super(ServiceRouterTestCase, self).tearDown()
+        super(ServiceRouterTest, self).tearDown()
 
     def _create_router(self, fmt, tenant_id, name=None,
                        admin_state_up=None, set_context=False,
@@ -144,6 +149,9 @@ class ServiceRouterTestCase(NvpRouterTestCase):
                 '', tenant_id)
 
         return router_req.get_response(self.ext_api)
+
+
+class ServiceRouterTestCase(ServiceRouterTest, NvpRouterTestCase):
 
     def test_router_create(self):
         name = 'router1'

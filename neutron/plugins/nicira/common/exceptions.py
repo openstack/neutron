@@ -62,3 +62,17 @@ class MaintenanceInProgress(NvpPluginException):
     message = _("The networking backend is currently in maintenance mode and "
                 "therefore unable to accept requests which modify its state. "
                 "Please try later.")
+
+
+class NvpServicePluginException(q_exc.NeutronException):
+    """NVP Service Plugin exceptions."""
+    message = _("An unexpected error happened "
+                "in the NVP Service Plugin:%(err_msg)s")
+
+
+class NvpServiceOverQuota(q_exc.Conflict):
+    message = _("Quota exceeded for Vcns resource: %(overs)s: %(err_msg)s")
+
+
+class NvpVcnsDriverException(NvpServicePluginException):
+    message = _("Error happened in NVP VCNS Driver: %(err_msg)s")

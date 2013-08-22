@@ -36,3 +36,18 @@ class VcnsRouterBinding(model_base.BASEV2, models_v2.HasStatusDescription):
                         nullable=True)
     lswitch_id = sa.Column(sa.String(36),
                            nullable=False)
+
+
+#
+# VCNS Edge FW mapping tables
+#
+class VcnsEdgeFirewallRuleBinding(model_base.BASEV2):
+    """1:1 mapping between firewall rule and edge firewall rule_id."""
+
+    __tablename__ = 'vcns_firewall_rule_bindings'
+
+    rule_id = sa.Column(sa.String(36),
+                        sa.ForeignKey("firewall_rules.id"),
+                        primary_key=True)
+    edge_id = sa.Column(sa.String(36), primary_key=True)
+    rule_vseid = sa.Column(sa.String(36))
