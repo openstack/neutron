@@ -116,6 +116,7 @@ class NexusPlugin(L2DevicePluginBase):
                                                 _nexus_username,
                                                 _nexus_password)
                 self._client.enable_vlan_on_trunk_int(man,
+                                                      _nexus_ip,
                                                       port_id,
                                                       vlan_id)
 
