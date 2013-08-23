@@ -1,0 +1,205 @@
+# Copyright (c) 2013 OpenStack Foundation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import copy
+
+from eventlet import greenthread
+import mock
+from oslo.config import cfg
+
+from neutron.api.v2 import attributes
+from neutron import context
+from neutron.extensions import l3
+from neutron.manager import NeutronManager
+from neutron.openstack.common import uuidutils
+from neutron.tests.unit.nicira import NVPEXT_PATH
+from neutron.tests.unit.nicira import SERVICE_PLUGIN_NAME
+from neutron.tests.unit.nicira import test_nicira_plugin
+from neutron.tests.unit.nicira import VCNS_NAME
+from neutron.tests.unit.nicira.vshield import fake_vcns
+
+_uuid = uuidutils.generate_uuid
+
+
+class ServiceRouterTestExtensionManager(object):
+
+    def get_resources(self):
+        # If l3 resources have been loaded and updated by main API
+        # router, update the map in the l3 extension so it will load
+        # the same attributes as the API router
+        l3_attr_map = copy.deepcopy(l3.RESOURCE_ATTRIBUTE_MAP)
+        for res in l3.RESOURCE_ATTRIBUTE_MAP.keys():
+            attr_info = attributes.RESOURCE_ATTRIBUTE_MAP.get(res)
+            if attr_info:
+                l3.RESOURCE_ATTRIBUTE_MAP[res] = attr_info
+        resources = l3.L3.get_resources()
+        # restore the original resources once the controllers are created
+        l3.RESOURCE_ATTRIBUTE_MAP = l3_attr_map
+
+        return resources
+
+    def get_actions(self):
+        return []
+
+    def get_request_extensions(self):
+        return []
+
+
+class NvpRouterTestCase(test_nicira_plugin.TestNiciraL3NatTestCase):
+
+    def setUp(self, plugin=None, ext_mgr=None):
+        plugin = plugin or SERVICE_PLUGIN_NAME
+        super(NvpRouterTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+
+
+class ServiceRouterTestCase(NvpRouterTestCase):
+
+    def vcns_patch(self):
+        instance = self.mock_vcns.start()
+        instance.return_value.deploy_edge.side_effect = self.fc2.deploy_edge
+        instance.return_value.get_edge_id.side_effect = self.fc2.get_edge_id
+        instance.return_value.get_edge_deploy_status.side_effect = (
+            self.fc2.get_edge_deploy_status)
+        instance.return_value.delete_edge.side_effect = self.fc2.delete_edge
+        instance.return_value.update_interface.side_effect = (
+            self.fc2.update_interface)
+        instance.return_value.get_nat_config.side_effect = (
+            self.fc2.get_nat_config)
+        instance.return_value.update_nat_config.side_effect = (
+            self.fc2.update_nat_config)
+        instance.return_value.delete_nat_rule.side_effect = (
+            self.fc2.delete_nat_rule)
+        instance.return_value.get_edge_status.side_effect = (
+            self.fc2.get_edge_status)
+        instance.return_value.get_edges.side_effect = self.fc2.get_edges
+        instance.return_value.update_routes.side_effect = (
+            self.fc2.update_routes)
+        instance.return_value.create_lswitch.side_effect = (
+            self.fc2.create_lswitch)
+        instance.return_value.delete_lswitch.side_effect = (
+            self.fc2.delete_lswitch)
+
+    def setUp(self):
+        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
+        cfg.CONF.set_override('task_status_check_interval', 100, group="vcns")
+
+        # vcns does not support duplicated router name, ignore router name
+        # validation for unit-test cases
+        self.fc2 = fake_vcns.FakeVcns(unique_router_name=False)
+        self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)
+        self.vcns_patch()
+
+        super(ServiceRouterTestCase, self).setUp(
+            ext_mgr=ServiceRouterTestExtensionManager())
+
+        self.fc2.set_fake_nvpapi(self.fc)
+        self.addCleanup(self.fc2.reset_all)
+        self.addCleanup(self.mock_vcns.stop)
+
+    def tearDown(self):
+        plugin = NeutronManager.get_plugin()
+        manager = plugin.vcns_driver.task_manager
+        for i in range(20):
+            if not manager.has_pending_task():
+                break
+            greenthread.sleep(0.1)
+        if manager.has_pending_task():
+            manager.show_pending_tasks()
+            raise Exception(_("Tasks not completed"))
+        manager.stop()
+
+        super(ServiceRouterTestCase, self).tearDown()
+
+    def _create_router(self, fmt, tenant_id, name=None,
+                       admin_state_up=None, set_context=False,
+                       arg_list=None, **kwargs):
+        data = {'router': {'tenant_id': tenant_id}}
+        if name:
+            data['router']['name'] = name
+        if admin_state_up:
+            data['router']['admin_state_up'] = admin_state_up
+        for arg in (('admin_state_up', 'tenant_id') + (arg_list or ())):
+            # Arg must be present and not empty
+            if arg in kwargs and kwargs[arg]:
+                data['router'][arg] = kwargs[arg]
+        data['router']['service_router'] = True
+        router_req = self.new_create_request('routers', data, fmt)
+        if set_context and tenant_id:
+            # create a specific auth context for this request
+            router_req.environ['neutron.context'] = context.Context(
+                '', tenant_id)
+
+        return router_req.get_response(self.ext_api)
+
+    def test_router_create(self):
+        name = 'router1'
+        tenant_id = _uuid()
+        expected_value = [('name', name), ('tenant_id', tenant_id),
+                          ('admin_state_up', True),
+                          ('external_gateway_info', None),
+                          ('service_router', True)]
+        with self.router(name='router1', admin_state_up=True,
+                         tenant_id=tenant_id) as router:
+            expected_value_1 = expected_value + [('status', 'PENDING_CREATE')]
+            for k, v in expected_value_1:
+                self.assertEqual(router['router'][k], v)
+
+            # wait ~1 seconds for router status update
+            for i in range(2):
+                greenthread.sleep(0.5)
+                res = self._show('routers', router['router']['id'])
+                if res['router']['status'] == 'ACTIVE':
+                    break
+            expected_value_2 = expected_value + [('status', 'ACTIVE')]
+            for k, v in expected_value_2:
+                self.assertEqual(res['router'][k], v)
+
+            # check an integration lswitch is created
+            lswitch_name = "%s-ls" % name
+            for lswitch_id, lswitch in self.fc2._lswitches.iteritems():
+                if lswitch['display_name'] == lswitch_name:
+                    break
+            else:
+                self.fail("Integration lswitch not found")
+
+        # check an integration lswitch is deleted
+        lswitch_name = "%s-ls" % name
+        for lswitch_id, lswitch in self.fc2._lswitches.iteritems():
+            if lswitch['display_name'] == lswitch_name:
+                self.fail("Integration switch is not deleted")
+
+    def test_router_show(self):
+        name = 'router1'
+        tenant_id = _uuid()
+        expected_value = [('name', name), ('tenant_id', tenant_id),
+                          ('admin_state_up', True),
+                          ('status', 'PENDING_CREATE'),
+                          ('external_gateway_info', None),
+                          ('service_router', True)]
+        with self.router(name='router1', admin_state_up=True,
+                         tenant_id=tenant_id) as router:
+            res = self._show('routers', router['router']['id'])
+            for k, v in expected_value:
+                self.assertEqual(res['router'][k], v)
+
+    def _test_router_create_with_gwinfo_and_l3_ext_net(self, vlan_id=None):
+        super(ServiceRouterTestCase,
+              self)._test_router_create_with_gwinfo_and_l3_ext_net(
+                  vlan_id, validate_ext_gw=False)
+
+    def _test_router_update_gateway_on_l3_ext_net(self, vlan_id=None):
+        super(ServiceRouterTestCase,
+              self)._test_router_update_gateway_on_l3_ext_net(
+                  vlan_id, validate_ext_gw=False)

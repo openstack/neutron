@@ -89,6 +89,7 @@ class NSXRouterExtAttributes(model_base.BASEV2):
                        ForeignKey('routers.id', ondelete="CASCADE"),
                        primary_key=True)
     distributed = Column(Boolean, default=False, nullable=False)
+    service_router = Column(Boolean, default=False, nullable=False)
     # Add a relationship to the Router model in order to instruct
     # SQLAlchemy to eagerly load this association
     router = orm.relationship(
