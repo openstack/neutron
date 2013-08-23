@@ -281,12 +281,7 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
     def get_qos_details(self, tenant_id, qos_id):
         """Get QoS Details."""
         LOG.debug(_("get_qos_details() called"))
-        try:
-            qos_level = cdb.get_qos(tenant_id, qos_id)
-        except Exception:
-            raise cexc.QosNotFound(tenant_id=tenant_id,
-                                   qos_id=qos_id)
-        return qos_level
+        return cdb.get_qos(tenant_id, qos_id)
 
     def create_qos(self, tenant_id, qos_name, qos_desc):
         """Create a QoS level."""
@@ -297,23 +292,12 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
     def delete_qos(self, tenant_id, qos_id):
         """Delete a QoS level."""
         LOG.debug(_("delete_qos() called"))
-        try:
-            cdb.get_qos(tenant_id, qos_id)
-        except Exception:
-            raise cexc.QosNotFound(tenant_id=tenant_id,
-                                   qos_id=qos_id)
         return cdb.remove_qos(tenant_id, qos_id)
 
     def rename_qos(self, tenant_id, qos_id, new_name):
         """Rename QoS level."""
         LOG.debug(_("rename_qos() called"))
-        try:
-            cdb.get_qos(tenant_id, qos_id)
-        except Exception:
-            raise cexc.QosNotFound(tenant_id=tenant_id,
-                                   qos_id=qos_id)
-        qos = cdb.update_qos(tenant_id, qos_id, new_name)
-        return qos
+        return cdb.update_qos(tenant_id, qos_id, new_name)
 
     def get_all_credentials(self):
         """Get all credentials."""

@@ -71,7 +71,7 @@ class CiscoNEXUSDriver():
                     break
             else:
                 # Raise a Neutron exception. Include a description of
-                # the original ncclient exception.
+                # the original ncclient exception. No need to preserve T/B
                 raise cexc.NexusConfigFailed(config=config, exc=e)
 
     def get_credential(self, nexus_ip):
@@ -107,7 +107,7 @@ class CiscoNEXUSDriver():
             self.connections[nexus_host] = man
         except Exception as e:
             # Raise a Neutron exception. Include a description of
-            # the original ncclient exception.
+            # the original ncclient exception.  No need to preserve T/B.
             raise cexc.NexusConnectFailed(nexus_host=nexus_host, exc=e)
 
         return self.connections[nexus_host]
