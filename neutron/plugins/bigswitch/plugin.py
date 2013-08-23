@@ -295,10 +295,11 @@ class ServerPool(object):
                 return ret
             else:
                 LOG.error(_('ServerProxy: %(action)s failure for servers: '
-                            '%(server)r'),
+                            '%(server)r Response: %(response)s'),
                           {'action': action,
                            'server': (active_server.server,
-                                      active_server.port)})
+                                      active_server.port),
+                           'response': ret[3]})
                 active_server.failed = True
 
         # All servers failed, reset server list and try again next time
@@ -565,6 +566,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             and 'id' in new_port):
             porttracker_db.put_port_hostid(context, new_port['id'],
                                            port['port'][portbindings.HOST_ID])
+        new_port = self._extend_port_dict_binding(context, new_port)
         net = super(NeutronRestProxyV2,
                     self).get_network(context, new_port["network_id"])
 
@@ -660,6 +662,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             and 'id' in new_port):
             porttracker_db.put_port_hostid(context, new_port['id'],
                                            port['port'][portbindings.HOST_ID])
+        new_port = self._extend_port_dict_binding(context, new_port)
         # update on networl ctrl
         try:
             resource = PORTS_PATH % (orig_port["tenant_id"],
@@ -690,7 +693,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             raise
 
         # return new_port
-        return self._extend_port_dict_binding(context, new_port)
+        return new_port
 
     def delete_port(self, context, port_id, l3_port_check=True):
         """Delete a port.
