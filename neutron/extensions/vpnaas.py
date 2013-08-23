@@ -82,6 +82,8 @@ vpn_supported_auth_mode = ['psk']
 vpn_supported_auth_algorithms = ['sha1']
 vpn_supported_phase1_negotiation_mode = ['main']
 
+vpn_lifetime_limits = (60, attr.UNLIMITED)
+positive_int = (0, attr.UNLIMITED)
 
 RESOURCE_ATTRIBUTE_MAP = {
 
@@ -144,7 +146,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'is_visible': True},
         'mtu': {'allow_post': True, 'allow_put': True,
                 'default': '1500',
-                'validate': {'type:non_negative': None},
+                'validate': {'type:range': positive_int},
                 'convert_to': attr.convert_to_int,
                 'is_visible': True},
         'initiator': {'allow_post': True, 'allow_put': True,
@@ -168,10 +170,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                             'type:values': vpn_dpd_supported_actions,
                         },
                         'interval': {
-                            'type:non_negative': None
+                            'type:range': positive_int
                         },
                         'timeout': {
-                            'type:non_negative': None
+                            'type:range': positive_int
                         }}}},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
@@ -245,7 +247,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                                  'type:values': vpn_supported_lifetime_units,
                              },
                              'value': {
-                                 'type:non_negative': None}}},
+                                 'type:range': vpn_lifetime_limits
+                             }}},
                      'is_visible': True},
         'pfs': {'allow_post': True, 'allow_put': True,
                 'default': 'group5',
@@ -294,7 +297,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                                  'type:values': vpn_supported_lifetime_units,
                              },
                              'value': {
-                                 'type:non_negative': None,
+                                 'type:range': vpn_lifetime_limits,
                              }}},
                      'is_visible': True},
         'ike_version': {'allow_post': True, 'allow_put': True,

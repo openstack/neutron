@@ -30,6 +30,9 @@ ATTR_NOT_SPECIFIED = object()
 # Defining a constant to avoid repeating string literal in several modules
 SHARED = 'shared'
 
+# Used by range check to indicate no limit for a bound.
+UNLIMITED = None
+
 
 def _verify_dict_keys(expected_keys, target_dict, strict=True):
     """Allows to verify keys in a dictionary.
@@ -94,13 +97,30 @@ def _validate_boolean(data, valid_values=None):
 
 
 def _validate_range(data, valid_values=None):
+    """Check that integer value is within a range provided.
+
+    Test is inclusive. Allows either limit to be ignored, to allow
+    checking ranges where only the lower or upper limit matter.
+    It is expected that the limits provided are valid integers or
+    the value None.
+    """
+
     min_value = valid_values[0]
     max_value = valid_values[1]
-    if not min_value <= data <= max_value:
-        msg = _("'%(data)s' is not in range %(min_value)s through "
-                "%(max_value)s") % {'data': data,
-                                    'min_value': min_value,
-                                    'max_value': max_value}
+    try:
+        data = int(data)
+    except (ValueError, TypeError):
+        msg = _("'%s' is not an integer") % data
+        LOG.debug(msg)
+        return msg
+    if min_value is not UNLIMITED and data < min_value:
+        msg = _("'%(data)s' is too small - must be at least "
+                "'%(limit)d'") % {'data': data, 'limit': min_value}
+        LOG.debug(msg)
+        return msg
+    if max_value is not UNLIMITED and data > max_value:
+        msg = _("'%(data)s' is too large - must be no larger than "
+                "'%(limit)d'") % {'data': data, 'limit': max_value}
         LOG.debug(msg)
         return msg
 
