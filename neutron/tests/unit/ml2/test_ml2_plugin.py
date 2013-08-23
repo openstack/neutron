@@ -13,8 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
-from neutron.plugins.ml2 import config as config
+from neutron.extensions import providernet as pnet
+from neutron.plugins.ml2 import config
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_extension_ext_gw_mode
@@ -34,7 +36,12 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         # driver apis.
         config.cfg.CONF.set_override('mechanism_drivers',
                                      ['logger', 'test'],
-                                     'ml2')
+                                     group='ml2')
+        self.physnet = 'physnet1'
+        self.vlan_range = '1:100'
+        self.phys_vrange = ':'.join([self.physnet, self.vlan_range])
+        config.cfg.CONF.set_override('network_vlan_ranges', [self.phys_vrange],
+                                     group='ml2_type_vlan')
         self.addCleanup(config.cfg.CONF.reset)
         super(Ml2PluginV2TestCase, self).setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
@@ -89,3 +96,102 @@ class TestMl2PortBindingHost(Ml2PluginV2TestCase,
 class TestMl2ExtGwModeSupport(Ml2PluginV2TestCase,
                               test_extension_ext_gw_mode.ExtGwModeTestCase):
     pass
+
+
+class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
+
+    def setUp(self, plugin=None):
+        super(TestMultiSegmentNetworks, self).setUp()
+
+    def test_create_network_provider(self):
+        data = {'network': {'name': 'net1',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: 'physnet1',
+                            pnet.SEGMENTATION_ID: 1,
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        self.assertEqual(network['network'][pnet.NETWORK_TYPE], 'vlan')
+        self.assertEqual(network['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
+        self.assertEqual(network['network'][pnet.SEGMENTATION_ID], 1)
+        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+
+    def test_create_network_single_multiprovider(self):
+        data = {'network': {'name': 'net1',
+                            mpnet.SEGMENTS:
+                            [{pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1',
+                              pnet.SEGMENTATION_ID: 1}],
+                            'tenant_id': 'tenant_one'}}
+        net_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt, net_req.get_response(self.api))
+        self.assertEqual(network['network'][pnet.NETWORK_TYPE], 'vlan')
+        self.assertEqual(network['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
+        self.assertEqual(network['network'][pnet.SEGMENTATION_ID], 1)
+        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+
+        # Tests get_network()
+        net_req = self.new_show_request('networks', network['network']['id'])
+        network = self.deserialize(self.fmt, net_req.get_response(self.api))
+        self.assertEqual(network['network'][pnet.NETWORK_TYPE], 'vlan')
+        self.assertEqual(network['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
+        self.assertEqual(network['network'][pnet.SEGMENTATION_ID], 1)
+        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+
+    def test_create_network_multiprovider(self):
+        data = {'network': {'name': 'net1',
+                            mpnet.SEGMENTS:
+                            [{pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1',
+                              pnet.SEGMENTATION_ID: 1},
+                            {pnet.NETWORK_TYPE: 'vlan',
+                             pnet.PHYSICAL_NETWORK: 'physnet1',
+                             pnet.SEGMENTATION_ID: 2}],
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        tz = network['network'][mpnet.SEGMENTS]
+        for tz in data['network'][mpnet.SEGMENTS]:
+            for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
+                          pnet.SEGMENTATION_ID]:
+                self.assertEqual(tz.get(field), tz.get(field))
+
+        # Tests get_network()
+        net_req = self.new_show_request('networks', network['network']['id'])
+        network = self.deserialize(self.fmt, net_req.get_response(self.api))
+        tz = network['network'][mpnet.SEGMENTS]
+        for tz in data['network'][mpnet.SEGMENTS]:
+            for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
+                          pnet.SEGMENTATION_ID]:
+                self.assertEqual(tz.get(field), tz.get(field))
+
+    def test_create_network_with_provider_and_multiprovider_fail(self):
+        data = {'network': {'name': 'net1',
+                            mpnet.SEGMENTS:
+                            [{pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1',
+                              pnet.SEGMENTATION_ID: 1}],
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: 'physnet1',
+                            pnet.SEGMENTATION_ID: 1,
+                            'tenant_id': 'tenant_one'}}
+
+        network_req = self.new_create_request('networks', data)
+        res = network_req.get_response(self.api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_create_network_duplicate_segments(self):
+        data = {'network': {'name': 'net1',
+                            mpnet.SEGMENTS:
+                            [{pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1',
+                              pnet.SEGMENTATION_ID: 1},
+                            {pnet.NETWORK_TYPE: 'vlan',
+                             pnet.PHYSICAL_NETWORK: 'physnet1',
+                             pnet.SEGMENTATION_ID: 1}],
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        res = network_req.get_response(self.api)
+        self.assertEqual(res.status_int, 400)
