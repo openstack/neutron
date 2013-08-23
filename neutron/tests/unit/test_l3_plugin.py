@@ -28,7 +28,6 @@ from webob import exc
 import webtest
 
 from neutron.api import extensions
-from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import config
 from neutron.common import constants as l3_constants
@@ -321,13 +320,15 @@ class L3NatTestCaseMixin(object):
         return router_req.get_response(self.ext_api)
 
     def _make_router(self, fmt, tenant_id, name=None, admin_state_up=None,
-                     external_gateway_info=None, set_context=False):
-        arg_list = (external_gateway_info and
-                    ('external_gateway_info', ) or None)
+                     external_gateway_info=None, set_context=False,
+                     arg_list=None, **kwargs):
+        if external_gateway_info:
+            arg_list = ('external_gateway_info', ) + (arg_list or ())
         res = self._create_router(fmt, tenant_id, name,
                                   admin_state_up, set_context,
                                   arg_list=arg_list,
-                                  external_gateway_info=external_gateway_info)
+                                  external_gateway_info=external_gateway_info,
+                                  **kwargs)
         return self.deserialize(fmt, res)
 
     def _add_external_gateway_to_router(self, router_id, network_id,
@@ -367,10 +368,11 @@ class L3NatTestCaseMixin(object):
     @contextlib.contextmanager
     def router(self, name='router1', admin_state_up=True,
                fmt=None, tenant_id=_uuid(),
-               external_gateway_info=None, set_context=False):
+               external_gateway_info=None, set_context=False,
+               **kwargs):
         router = self._make_router(fmt or self.fmt, tenant_id, name,
                                    admin_state_up, external_gateway_info,
-                                   set_context)
+                                   set_context, **kwargs)
         try:
             yield router
         finally:
@@ -1673,18 +1675,19 @@ class L3AgentDbTestCase(L3NatTestCaseBase):
     def _test_notify_op_agent(self, target_func, *args):
         l3_rpc_agent_api_str = (
             'neutron.api.rpc.agentnotifiers.l3_rpc_agent_api.L3AgentNotifyAPI')
-        oldNotify = l3_rpc_agent_api.L3AgentNotify
+        plugin = NeutronManager.get_plugin()
+        oldNotify = plugin.l3_rpc_notifier
         try:
             with mock.patch(l3_rpc_agent_api_str) as notifyApi:
-                l3_rpc_agent_api.L3AgentNotify = notifyApi
+                plugin.l3_rpc_notifier = notifyApi
                 kargs = [item for item in args]
                 kargs.append(notifyApi)
                 target_func(*kargs)
         except Exception:
-            l3_rpc_agent_api.L3AgentNotify = oldNotify
+            plugin.l3_rpc_notifier = oldNotify
             raise
         else:
-            l3_rpc_agent_api.L3AgentNotify = oldNotify
+            plugin.l3_rpc_notifier = oldNotify
 
     def _test_router_gateway_op_agent(self, notifyApi):
         with self.router() as r:

@@ -33,6 +33,8 @@ from neutron.tests.unit import test_db_plugin as test_plugin
 
 
 PLUGIN_NAME = 'neutron.plugins.nec.nec_plugin.NECPluginV2'
+OFC_MANAGER = 'neutron.plugins.nec.nec_plugin.ofc_manager.OFCManager'
+NOTIFIER = 'neutron.plugins.nec.nec_plugin.NECPluginV2AgentNotifierApi'
 NEC_PLUGIN_INI = """
 [DEFAULT]
 api_extensions_path = neutron/plugins/nec/extensions
@@ -42,9 +44,7 @@ enable_packet_filter = False
 """
 
 
-class NecPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
-
-    _plugin_name = PLUGIN_NAME
+class NecPluginV2TestCaseBase(object):
     _nec_ini = NEC_PLUGIN_INI
 
     def _set_nec_ini(self):
@@ -63,6 +63,34 @@ class NecPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         test_config['config_files'].remove(self.nec_ini_file)
         os.remove(self.nec_ini_file)
         self.nec_ini_file = None
+
+    def patch_remote_calls(self, use_stop=False):
+        self.plugin_notifier_p = mock.patch(NOTIFIER)
+        self.ofc_manager_p = mock.patch(OFC_MANAGER)
+        self.plugin_notifier_p.start()
+        self.ofc_manager_p.start()
+        # When using mock.patch.stopall, we need to ensure
+        # stop is not used anywhere in a single test.
+        # In Neutron several tests use stop for each patched object,
+        # so we need to take care of both cases.
+        if use_stop:
+            self.addCleanup(self.plugin_notifier_p.stop)
+            self.addCleanup(self.ofc_manager_p.stop)
+
+    def setup_nec_plugin_base(self, use_stop_all=True,
+                              use_stop_each=False):
+        # If use_stop_each is set, use_stop_all cannot be set.
+        if use_stop_all and not use_stop_each:
+            self.addCleanup(mock.patch.stopall)
+        self._set_nec_ini()
+        self.addCleanup(self._clean_nec_ini)
+        self.patch_remote_calls(use_stop_each)
+
+
+class NecPluginV2TestCase(NecPluginV2TestCaseBase,
+                          test_plugin.NeutronDbPluginV2TestCase):
+
+    _plugin_name = PLUGIN_NAME
 
     def rpcapi_update_ports(self, agent_id='nec-q-agent.fake',
                             datapath_id="0xabc", added=[], removed=[]):
@@ -348,6 +376,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
             mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
                                          net['name']),
             mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.delete_ofc_tenant(ctx, self._tenant_id)
         ]
         self.ofc.assert_has_calls(expected)
@@ -365,6 +394,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
             mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
                                          net['name']),
             mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.delete_ofc_tenant(ctx, self._tenant_id)
         ]
         self.ofc.assert_has_calls(expected)
@@ -389,6 +419,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
                                          nets[1]['name']),
             mock.call.delete_ofc_network(ctx, nets[1]['id'], mock.ANY),
             mock.call.delete_ofc_network(ctx, nets[0]['id'], mock.ANY),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.delete_ofc_tenant(ctx, self._tenant_id)
         ]
         self.ofc.assert_has_calls(expected)
@@ -451,6 +482,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
             mock.call.create_ofc_network(ctx, self._tenant_id, net['id'],
                                          net['name']),
             mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.delete_ofc_tenant(ctx, self._tenant_id)
         ]
         self.ofc.assert_has_calls(expected)
@@ -478,6 +510,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
 
             mock.call.exists_ofc_port(ctx, p1['id']),
             mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.delete_ofc_tenant(ctx, self._tenant_id)
         ]
         self.ofc.assert_has_calls(expected)
@@ -520,6 +553,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
             mock.call.exists_ofc_port(ctx, p1['id']),
             mock.call.delete_ofc_port(ctx, p1['id'], mock.ANY),
             mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.delete_ofc_tenant(ctx, self._tenant_id)
         ]
         self.ofc.assert_has_calls(expected)
@@ -550,6 +584,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
             mock.call.exists_ofc_port(ctx, p['id']),
             mock.call.delete_ofc_port(ctx, p['id'], mock.ANY),
             mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.delete_ofc_tenant(ctx, self._tenant_id)
         ]
         self.ofc.assert_has_calls(expected)
@@ -686,6 +721,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
 
             mock.call.exists_ofc_port(ctx, p1['id']),
             mock.call.delete_ofc_network(ctx, net['id'], mock.ANY),
+            mock.call.exists_ofc_tenant(ctx, self._tenant_id),
             mock.call.delete_ofc_tenant(ctx, self._tenant_id)
         ]
         self.ofc.assert_has_calls(expected)
