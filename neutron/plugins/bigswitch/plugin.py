@@ -68,6 +68,7 @@ from neutron.db import l3_db
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import l3
 from neutron.extensions import portbindings
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.plugins.bigswitch.db import porttracker_db
@@ -302,6 +303,10 @@ class ServerPool(object):
                            'server': (active_server.server,
                                       active_server.port),
                            'response': ret[3]})
+                LOG.error(_("ServerProxy: Error details: status=%(status)d, "
+                            "reason=%(reason)r, ret=%(ret)s, data=%(data)r"),
+                          {'status': ret[0], 'reason': ret[1], 'ret': ret[2],
+                           'data': ret[3]})
                 active_server.failed = True
 
         # All servers failed, reset server list and try again next time
@@ -312,17 +317,106 @@ class ServerPool(object):
                                     s.port) for s in self.servers)})
         return (0, None, None, None)
 
-    def get(self, resource, data='', headers=None, ignore_codes=[]):
-        return self.rest_call('GET', resource, data, headers, ignore_codes)
+    def rest_action(self, action, resource, data='', errstr='%s',
+                    ignore_codes=[], headers=None):
+        """
+        Wrapper for rest_call that verifies success and raises a
+        RemoteRestError on failure with a provided error string
+        By default, 404 errors on DELETE calls are ignored because
+        they already do not exist on the backend.
+        """
+        if not ignore_codes and action == 'DELETE':
+            ignore_codes = [404]
+        resp = self.rest_call(action, resource, data, headers, ignore_codes)
+        if self.server_failure(resp, ignore_codes):
+            LOG.error(_("NeutronRestProxyV2: ") + errstr, resp[2])
+            raise RemoteRestError(resp[2])
+        if resp[0] in ignore_codes:
+            LOG.warning(_("NeutronRestProxyV2: Received and ignored error "
+                          "code %(code)d on %(action)s action to resource "
+                          "%(resource)s"),
+                        {'code': resp[2], 'action': action,
+                         'resource': resource})
+        return resp
 
-    def put(self, resource, data, headers=None, ignore_codes=[]):
-        return self.rest_call('PUT', resource, data, headers, ignore_codes)
+    def rest_create_router(self, tenant_id, router):
+        resource = ROUTER_RESOURCE_PATH % tenant_id
+        data = {"router": router}
+        errstr = _("Unable to create remote router: %s")
+        self.rest_action('POST', resource, data, errstr)
 
-    def post(self, resource, data, headers=None, ignore_codes=[]):
-        return self.rest_call('POST', resource, data, headers, ignore_codes)
+    def rest_update_router(self, tenant_id, router, router_id):
+        resource = ROUTERS_PATH % (tenant_id, router_id)
+        data = {"router": router}
+        errstr = _("Unable to update remote router: %s")
+        self.rest_action('PUT', resource, data, errstr)
 
-    def delete(self, resource, data='', headers=None, ignore_codes=[]):
-        return self.rest_call('DELETE', resource, data, headers, ignore_codes)
+    def rest_delete_router(self, tenant_id, router_id):
+        resource = ROUTERS_PATH % (tenant_id, router_id)
+        errstr = _("Unable to delete remote router: %s")
+        self.rest_action('DELETE', resource, errstr=errstr)
+
+    def rest_add_router_interface(self, tenant_id, router_id, intf_details):
+        resource = ROUTER_INTF_OP_PATH % (tenant_id, router_id)
+        data = {"interface": intf_details}
+        errstr = _("Unable to add router interface: %s")
+        self.rest_action('POST', resource, data, errstr)
+
+    def rest_remove_router_interface(self, tenant_id, router_id, interface_id):
+        resource = ROUTER_INTF_PATH % (tenant_id, router_id, interface_id)
+        errstr = _("Unable to delete remote intf: %s")
+        self.rest_action('DELETE', resource, errstr=errstr)
+
+    def rest_create_network(self, tenant_id, network):
+        resource = NET_RESOURCE_PATH % tenant_id
+        data = {"network": network}
+        errstr = _("Unable to create remote network: %s")
+        self.rest_action('POST', resource, data, errstr)
+
+    def rest_update_network(self, tenant_id, net_id, network):
+        resource = NETWORKS_PATH % (tenant_id, net_id)
+        data = {"network": network}
+        errstr = _("Unable to update remote network: %s")
+        self.rest_action('PUT', resource, data, errstr)
+
+    def rest_delete_network(self, tenant_id, net_id):
+        resource = NETWORKS_PATH % (tenant_id, net_id)
+        errstr = _("Unable to update remote network: %s")
+        self.rest_action('DELETE', resource, errstr=errstr)
+
+    def rest_create_port(self, net, port):
+        resource = PORT_RESOURCE_PATH % (net["tenant_id"], net["id"])
+        data = {"port": port}
+        errstr = _("Unable to create remote port: %s")
+        self.rest_action('POST', resource, data, errstr)
+
+    def rest_update_port(self, tenant_id, network_id, port, port_id):
+        resource = PORTS_PATH % (tenant_id, network_id, port_id)
+        data = {"port": port}
+        errstr = _("Unable to update remote port: %s")
+        self.rest_action('PUT', resource, data, errstr)
+
+    def rest_delete_port(self, tenant_id, network_id, port_id):
+        resource = PORTS_PATH % (tenant_id, network_id, port_id)
+        errstr = _("Unable to delete remote port: %s")
+        self.rest_action('DELETE', resource, errstr=errstr)
+
+    def rest_plug_interface(self, tenant_id, net_id, port,
+                            remote_interface_id):
+        if port["mac_address"] is not None:
+            resource = ATTACHMENT_PATH % (tenant_id, net_id, port["id"])
+            data = {"attachment":
+                    {"id": remote_interface_id,
+                     "mac": port["mac_address"],
+                     }
+                    }
+            errstr = _("Unable to plug in interface: %s")
+            self.rest_action('PUT', resource, data, errstr)
+
+    def rest_unplug_interface(self, tenant_id, net_id, port_id):
+        resource = ATTACHMENT_PATH % (tenant_id, net_id, port_id)
+        errstr = _("Unable to unplug interface: %s")
+        self.rest_action('DELETE', resource, errstr=errstr)
 
 
 class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
@@ -413,32 +507,20 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         self._warn_on_state_status(network['network'])
 
-        # Validate args
-        tenant_id = self._get_tenant_id_for_create(context, network["network"])
+        with context.session.begin(subtransactions=True):
+            # Validate args
+            tenant_id = self._get_tenant_id_for_create(context,
+                                                       network["network"])
 
-        session = context.session
-        with session.begin(subtransactions=True):
             # create network in DB
             new_net = super(NeutronRestProxyV2, self).create_network(context,
                                                                      network)
             self._process_l3_create(context, new_net, network['network'])
+            mapped_network = self._get_mapped_network_with_subnets(new_net,
+                                                                   context)
 
-        # create network on the network controller
-        try:
-            resource = NET_RESOURCE_PATH % tenant_id
-            mapped_network = self._get_mapped_network_with_subnets(new_net)
-            data = {
-                "network": mapped_network
-            }
-            ret = self.servers.post(resource, data)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2:Unable to create remote "
-                        "network: %s"), e.message)
-            super(NeutronRestProxyV2, self).delete_network(context,
-                                                           new_net['id'])
-            raise
+            # create network on the network controller
+            self.servers.rest_create_network(tenant_id, mapped_network)
 
         # return created network
         return new_net
@@ -472,25 +554,12 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         session = context.session
         with session.begin(subtransactions=True):
-            orig_net = super(NeutronRestProxyV2, self).get_network(context,
-                                                                   net_id)
-            new_net = super(NeutronRestProxyV2, self).update_network(context,
-                                                                     net_id,
-                                                                     network)
+            new_net = super(NeutronRestProxyV2, self).update_network(
+                context, net_id, network)
             self._process_l3_update(context, new_net, network['network'])
 
-        # update network on network controller
-        try:
-            self._send_update_network(new_net)
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to update remote "
-                        "network: %s"), e.message)
-            # reset network to original state
-            super(NeutronRestProxyV2, self).update_network(context, id,
-                                                           orig_net)
-            raise
-
-        # return updated network
+            # update network on network controller
+            self._send_update_network(new_net, context)
         return new_net
 
     def delete_network(self, context, net_id):
@@ -520,20 +589,11 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         if not only_auto_del:
             raise exceptions.NetworkInUse(net_id=net_id)
-
-        # delete from network ctrl. Remote error on delete is ignored
-        try:
-            resource = NETWORKS_PATH % (tenant_id, net_id)
-            ret = self.servers.delete(resource)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
+        with context.session.begin(subtransactions=True):
             ret_val = super(NeutronRestProxyV2, self).delete_network(context,
                                                                      net_id)
+            self.servers.rest_delete_network(tenant_id, net_id)
             return ret_val
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to update remote "
-                        "network: %s"), e.message)
-            raise
 
     def create_port(self, context, port):
         """Create a port, which is a connection point of a device
@@ -563,48 +623,46 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         LOG.debug(_("NeutronRestProxyV2: create_port() called"))
 
-        # Update DB
-        port["port"]["admin_state_up"] = False
-        dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
-        new_port = super(NeutronRestProxyV2, self).create_port(context, port)
-        if (portbindings.HOST_ID in port['port']
-            and 'id' in new_port):
-            porttracker_db.put_port_hostid(context, new_port['id'],
-                                           port['port'][portbindings.HOST_ID])
-        self._process_port_create_extra_dhcp_opts(context, new_port, dhcp_opts)
-        new_port = self._extend_port_dict_binding(context, new_port)
-        net = super(NeutronRestProxyV2,
-                    self).get_network(context, new_port["network_id"])
+        # Update DB in new session so exceptions rollback changes
+        with context.session.begin(subtransactions=True):
+            port["port"]["admin_state_up"] = False
+            dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
+            new_port = super(NeutronRestProxyV2, self).create_port(context,
+                                                                   port)
+            if (portbindings.HOST_ID in port['port']
+                and 'id' in new_port):
+                host_id = port['port'][portbindings.HOST_ID]
+                porttracker_db.put_port_hostid(context, new_port['id'],
+                                               host_id)
+            self._process_port_create_extra_dhcp_opts(context, new_port,
+                                                      dhcp_opts)
+            new_port = self._extend_port_dict_binding(context, new_port)
+            net = super(NeutronRestProxyV2,
+                        self).get_network(context, new_port["network_id"])
 
-        if self.add_meta_server_route:
-            if new_port['device_owner'] == 'network:dhcp':
-                destination = METADATA_SERVER_IP + '/32'
-                self._add_host_route(context, destination, new_port)
+            if self.add_meta_server_route:
+                if new_port['device_owner'] == 'network:dhcp':
+                    destination = METADATA_SERVER_IP + '/32'
+                    self._add_host_route(context, destination, new_port)
 
-        # create on networl ctrl
-        try:
-            resource = PORT_RESOURCE_PATH % (net["tenant_id"], net["id"])
+            # create on network ctrl
             mapped_port = self._map_state_and_status(new_port)
-            data = {
-                "port": mapped_port
-            }
-            ret = self.servers.post(resource, data)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
+            self.servers.rest_create_port(net, mapped_port)
 
-            # connect device to network, if present
-            device_id = port["port"].get("device_id")
-            if device_id:
-                self._plug_interface(context,
-                                     net["tenant_id"], net["id"],
-                                     new_port["id"], device_id)
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to create remote port: "
-                        "%s"), e.message)
-            super(NeutronRestProxyV2, self).delete_port(context,
-                                                        new_port["id"])
-            raise
-
+        # connect device to network, if present
+        device_id = port["port"].get("device_id")
+        if device_id:
+            try:
+                self.servers.rest_plug_interface(net["tenant_id"], net["id"],
+                                                 new_port, device_id)
+            except RemoteRestError:
+                with excutils.save_and_reraise_exception():
+                    port_update = {"port": {"status": "ERROR"}}
+                    super(NeutronRestProxyV2, self).update_port(
+                        context,
+                        new_port["id"],
+                        port_update
+                    )
         # Set port state up and return that port
         port_update = {"port": {"admin_state_up": True}}
         new_port = super(NeutronRestProxyV2, self).update_port(context,
@@ -660,44 +718,45 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         # Validate Args
         orig_port = super(NeutronRestProxyV2, self).get_port(context, port_id)
+        with context.session.begin(subtransactions=True):
+            # Update DB
+            new_port = super(NeutronRestProxyV2,
+                             self).update_port(context, port_id, port)
+            self._update_extra_dhcp_opts_on_port(context, port_id, port,
+                                                 new_port)
+            if (portbindings.HOST_ID in port['port']
+                and 'id' in new_port):
+                host_id = port['port'][portbindings.HOST_ID]
+                porttracker_db.put_port_hostid(context, new_port['id'],
+                                               host_id)
+            new_port = self._extend_port_dict_binding(context, new_port)
 
-        # Update DB
-        new_port = super(NeutronRestProxyV2, self).update_port(context,
-                                                               port_id, port)
-        self._update_extra_dhcp_opts_on_port(context, port_id, port, new_port)
-        if (portbindings.HOST_ID in port['port']
-            and 'id' in new_port):
-            porttracker_db.put_port_hostid(context, new_port['id'],
-                                           port['port'][portbindings.HOST_ID])
-        new_port = self._extend_port_dict_binding(context, new_port)
-        # update on networl ctrl
-        try:
-            resource = PORTS_PATH % (orig_port["tenant_id"],
-                                     orig_port["network_id"], port_id)
+            # update on networl ctrl
             mapped_port = self._map_state_and_status(new_port)
-            data = {"port": mapped_port}
-            ret = self.servers.put(resource, data)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
+            self.servers.rest_update_port(orig_port["tenant_id"],
+                                          orig_port["network_id"],
+                                          mapped_port, port_id)
 
-            if new_port.get("device_id") != orig_port.get("device_id"):
-                if orig_port.get("device_id"):
-                    self._unplug_interface(context, orig_port["tenant_id"],
-                                           orig_port["network_id"],
-                                           orig_port["id"])
+        if (new_port.get("device_id") != orig_port.get("device_id") and
+            orig_port.get("device_id")):
+            try:
+                self.servers.rest_unplug_interface(orig_port["tenant_id"],
+                                                   orig_port["network_id"],
+                                                   orig_port["id"])
                 device_id = new_port.get("device_id")
                 if device_id:
-                    self._plug_interface(context, new_port["tenant_id"],
-                                         new_port["network_id"],
-                                         new_port["id"], device_id)
+                    self.rest_plug_interface(new_port["tenant_id"],
+                                             new_port["network_id"],
+                                             new_port, device_id)
 
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to create remote port: "
-                        "%s"), e.message)
-            # reset port to original state
-            super(NeutronRestProxyV2, self).update_port(context, port_id,
-                                                        orig_port)
-            raise
+            except RemoteRestError:
+                with excutils.save_and_reraise_exception():
+                    port_update = {"port": {"status": "ERROR"}}
+                    super(NeutronRestProxyV2, self).update_port(
+                        context,
+                        new_port["id"],
+                        port_update
+                    )
 
         # return new_port
         return new_port
@@ -719,115 +778,57 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         # and l3-router.  If so, we should prevent deletion.
         if l3_port_check:
             self.prevent_l3_port_deletion(context, port_id)
-        self.disassociate_floatingips(context, port_id)
+        with context.session.begin(subtransactions=True):
+            self.disassociate_floatingips(context, port_id)
+            self._unplug_port(context, port_id)
+        # Separate transaction for delete in case unplug passes
+        # but delete fails on controller
+        with context.session.begin(subtransactions=True):
+            super(NeutronRestProxyV2, self).delete_port(context, port_id)
 
-        super(NeutronRestProxyV2, self).delete_port(context, port_id)
-
-    def _delete_port(self, context, port_id):
-        # Delete from DB
+    def _unplug_port(self, context, port_id):
         port = super(NeutronRestProxyV2, self).get_port(context, port_id)
         tenant_id = port['tenant_id']
+        net_id = port['network_id']
         if tenant_id == '':
-            net = super(NeutronRestProxyV2,
-                        self).get_network(context, port['network_id'])
+            net = super(NeutronRestProxyV2, self).get_network(context, net_id)
             tenant_id = net['tenant_id']
+        if port.get("device_id"):
+            self.servers.rest_unplug_interface(tenant_id, net_id, port_id)
+            # Port should transition to error state now that it's unplugged
+            # but not yet deleted
+            port_update = {"port": {"status": "ERROR"}}
+            super(NeutronRestProxyV2, self).update_port(context,
+                                                        port_id,
+                                                        port_update)
 
-        # delete from network ctrl. Remote error on delete is ignored
-        try:
-            resource = PORTS_PATH % (tenant_id, port["network_id"],
-                                     port_id)
-            ret = self.servers.delete(resource)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-
-            if port.get("device_id"):
-                self._unplug_interface(context, tenant_id,
-                                       port["network_id"], port["id"])
-            ret_val = super(NeutronRestProxyV2, self)._delete_port(context,
-                                                                   port_id)
-            return ret_val
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to update remote port: "
-                        "%s"), e.message)
-            raise
-
-    def _plug_interface(self, context, tenant_id, net_id, port_id,
-                        remote_interface_id):
-        """Plug remote interface to the network.
-
-        Attaches a remote interface to the specified port on the specified
-        Virtual Network.
-
-        :returns: None
-
-        :raises: exceptions.NetworkNotFound
-        :raises: exceptions.PortNotFound
-        :raises: RemoteRestError
-        """
-        LOG.debug(_("NeutronRestProxyV2: _plug_interface() called"))
-
-        # update attachment on network controller
-        try:
-            port = super(NeutronRestProxyV2, self).get_port(context, port_id)
-            mac = port["mac_address"]
-
-            if mac is not None:
-                resource = ATTACHMENT_PATH % (tenant_id, net_id, port_id)
-                data = {"attachment":
-                        {"id": remote_interface_id,
-                         "mac": mac,
-                         }
-                        }
-                ret = self.servers.put(resource, data)
-                if not self.servers.action_success(ret):
-                    raise RemoteRestError(ret[2])
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2:Unable to update remote network: "
-                        "%s"), e.message)
-            raise
-
-    def _unplug_interface(self, context, tenant_id, net_id, port_id):
-        """Detach interface from the network controller.
-
-        Detaches a remote interface from the specified port on the network
-        controller.
-
-        :returns: None
-
-        :raises: RemoteRestError
-        """
-        LOG.debug(_("NeutronRestProxyV2: _unplug_interface() called"))
-
-        # delete from network ctrl. Remote error on delete is ignored
-        try:
-            resource = ATTACHMENT_PATH % (tenant_id, net_id, port_id)
-            ret = self.servers.delete(resource, ignore_codes=[404])
-            if self.servers.server_failure(ret, ignore_codes=[404]):
-                raise RemoteRestError(ret[2])
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to update remote port: "
-                        "%s"), e.message)
-            raise
+    def _delete_port(self, context, port_id):
+        port = super(NeutronRestProxyV2, self).get_port(context, port_id)
+        tenant_id = port['tenant_id']
+        net_id = port['network_id']
+        if tenant_id == '':
+            net = super(NeutronRestProxyV2, self).get_network(context, net_id)
+            tenant_id = net['tenant_id']
+        # Delete from DB
+        ret_val = super(NeutronRestProxyV2,
+                        self)._delete_port(context, port_id)
+        self.servers.rest_delete_port(tenant_id, net_id, port_id)
+        return ret_val
 
     def create_subnet(self, context, subnet):
         LOG.debug(_("NeutronRestProxyV2: create_subnet() called"))
 
         self._warn_on_state_status(subnet['subnet'])
 
-        # create subnet in DB
-        new_subnet = super(NeutronRestProxyV2, self).create_subnet(context,
-                                                                   subnet)
-        net_id = new_subnet['network_id']
-        orig_net = super(NeutronRestProxyV2, self).get_network(context,
-                                                               net_id)
-        # update network on network controller
-        try:
+        with context.session.begin(subtransactions=True):
+            # create subnet in DB
+            new_subnet = super(NeutronRestProxyV2,
+                               self).create_subnet(context, subnet)
+            net_id = new_subnet['network_id']
+            orig_net = super(NeutronRestProxyV2,
+                             self).get_network(context, net_id)
+            # update network on network controller
             self._send_update_network(orig_net)
-        except RemoteRestError:
-            # rollback creation of subnet
-            super(NeutronRestProxyV2, self).delete_subnet(context,
-                                                          subnet['id'])
-            raise
         return new_subnet
 
     def update_subnet(self, context, id, subnet):
@@ -835,38 +836,28 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         self._warn_on_state_status(subnet['subnet'])
 
-        orig_subnet = super(NeutronRestProxyV2, self)._get_subnet(context, id)
-
-        # update subnet in DB
-        new_subnet = super(NeutronRestProxyV2, self).update_subnet(context, id,
-                                                                   subnet)
-        net_id = new_subnet['network_id']
-        orig_net = super(NeutronRestProxyV2, self).get_network(context,
-                                                               net_id)
-        # update network on network controller
-        try:
+        with context.session.begin(subtransactions=True):
+            # update subnet in DB
+            new_subnet = super(NeutronRestProxyV2,
+                               self).update_subnet(context, id, subnet)
+            net_id = new_subnet['network_id']
+            orig_net = super(NeutronRestProxyV2,
+                             self).get_network(context, net_id)
+            # update network on network controller
             self._send_update_network(orig_net)
-        except RemoteRestError:
-            # rollback updation of subnet
-            super(NeutronRestProxyV2, self).update_subnet(context, id,
-                                                          orig_subnet)
-            raise
-        return new_subnet
+            return new_subnet
 
     def delete_subnet(self, context, id):
         LOG.debug(_("NeutronRestProxyV2: delete_subnet() called"))
         orig_subnet = super(NeutronRestProxyV2, self).get_subnet(context, id)
         net_id = orig_subnet['network_id']
-        # delete subnet in DB
-        super(NeutronRestProxyV2, self).delete_subnet(context, id)
-        orig_net = super(NeutronRestProxyV2, self).get_network(context,
-                                                               net_id)
-        # update network on network controller
-        try:
+        with context.session.begin(subtransactions=True):
+            # delete subnet in DB
+            super(NeutronRestProxyV2, self).delete_subnet(context, id)
+            orig_net = super(NeutronRestProxyV2, self).get_network(context,
+                                                                   net_id)
+            # update network on network controller - exception will rollback
             self._send_update_network(orig_net)
-        except RemoteRestError:
-            # TODO(Sumit): rollback deletion of subnet
-            raise
 
     def _get_tenant_default_router_rules(self, tenant):
         rules = cfg.CONF.ROUTER.tenant_default_router_rule
@@ -905,29 +896,15 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         rules = self._get_tenant_default_router_rules(tenant_id)
         router['router']['router_rules'] = rules
 
-        # create router in DB
-        new_router = super(NeutronRestProxyV2, self).create_router(context,
-                                                                   router)
-
-        # create router on the network controller
-        try:
-            resource = ROUTER_RESOURCE_PATH % tenant_id
+        with context.session.begin(subtransactions=True):
+            # create router in DB
+            new_router = super(NeutronRestProxyV2, self).create_router(context,
+                                                                       router)
             mapped_router = self._map_state_and_status(new_router)
-            data = {
-                "router": mapped_router
-            }
-            ret = self.servers.post(resource, data)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to create remote router: "
-                        "%s"), e.message)
-            super(NeutronRestProxyV2, self).delete_router(context,
-                                                          new_router['id'])
-            raise
+            self.servers.rest_create_router(tenant_id, mapped_router)
 
-        # return created router
-        return new_router
+            # return created router
+            return new_router
 
     def update_router(self, context, router_id, router):
 
@@ -938,31 +915,16 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         orig_router = super(NeutronRestProxyV2, self).get_router(context,
                                                                  router_id)
         tenant_id = orig_router["tenant_id"]
-        new_router = super(NeutronRestProxyV2, self).update_router(context,
-                                                                   router_id,
-                                                                   router)
+        with context.session.begin(subtransactions=True):
+            new_router = super(NeutronRestProxyV2,
+                               self).update_router(context, router_id, router)
+            router = self._map_state_and_status(new_router)
 
-        # update router on network controller
-        try:
-            resource = ROUTERS_PATH % (tenant_id, router_id)
-            mapped_router = self._map_state_and_status(new_router)
-            data = {
-                "router": mapped_router
-            }
-            ret = self.servers.put(resource, data)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to update remote router: "
-                        "%s"), e.message)
-            # reset router to original state
-            super(NeutronRestProxyV2, self).update_router(context,
-                                                          router_id,
-                                                          orig_router)
-            raise
+            # update router on network controller
+            self.servers.rest_update_router(tenant_id, router, router_id)
 
-        # return updated router
-        return new_router
+            # return updated router
+            return new_router
 
     def delete_router(self, context, router_id):
         LOG.debug(_("NeutronRestProxyV2: delete_router() called"))
@@ -985,20 +947,12 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
                                          filters=device_filter)
             if ports:
                 raise l3.RouterInUse(router_id=router_id)
+            ret_val = super(NeutronRestProxyV2,
+                            self).delete_router(context, router_id)
 
-        # delete from network ctrl. Remote error on delete is ignored
-        try:
-            resource = ROUTERS_PATH % (tenant_id, router_id)
-            ret = self.servers.delete(resource)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-            ret_val = super(NeutronRestProxyV2, self).delete_router(context,
-                                                                    router_id)
+            # delete from network ctrl
+            self.servers.rest_delete_router(tenant_id, router_id)
             return ret_val
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to delete remote router: "
-                        "%s"), e.message)
-            raise
 
     def add_router_interface(self, context, router_id, interface_info):
 
@@ -1008,36 +962,25 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         router = self._get_router(context, router_id)
         tenant_id = router['tenant_id']
 
-        # create interface in DB
-        new_interface_info = super(NeutronRestProxyV2,
-                                   self).add_router_interface(context,
-                                                              router_id,
-                                                              interface_info)
-        port = self._get_port(context, new_interface_info['port_id'])
-        net_id = port['network_id']
-        subnet_id = new_interface_info['subnet_id']
-        # we will use the port's network id as interface's id
-        interface_id = net_id
-        intf_details = self._get_router_intf_details(context,
-                                                     interface_id,
-                                                     subnet_id)
+        with context.session.begin(subtransactions=True):
+            # create interface in DB
+            new_intf_info = super(NeutronRestProxyV2,
+                                  self).add_router_interface(context,
+                                                             router_id,
+                                                             interface_info)
+            port = self._get_port(context, new_intf_info['port_id'])
+            net_id = port['network_id']
+            subnet_id = new_intf_info['subnet_id']
+            # we will use the port's network id as interface's id
+            interface_id = net_id
+            intf_details = self._get_router_intf_details(context,
+                                                         interface_id,
+                                                         subnet_id)
 
-        # create interface on the network controller
-        try:
-            resource = ROUTER_INTF_OP_PATH % (tenant_id, router_id)
-            data = {"interface": intf_details}
-            ret = self.servers.post(resource, data)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to create interface: "
-                        "%s"), e.message)
-            super(NeutronRestProxyV2,
-                  self).remove_router_interface(context, router_id,
-                                                interface_info)
-            raise
-
-        return new_interface_info
+            # create interface on the network controller
+            self.servers.rest_add_router_interface(tenant_id, router_id,
+                                                   intf_details)
+            return new_intf_info
 
     def remove_router_interface(self, context, router_id, interface_info):
 
@@ -1061,89 +1004,69 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             msg = "Either subnet_id or port_id must be specified"
             raise exceptions.BadRequest(resource='router', msg=msg)
 
-        # remove router in DB
-        del_intf_info = super(NeutronRestProxyV2,
-                              self).remove_router_interface(context,
-                                                            router_id,
-                                                            interface_info)
+        with context.session.begin(subtransactions=True):
+            # remove router in DB
+            del_ret = super(NeutronRestProxyV2,
+                            self).remove_router_interface(context,
+                                                          router_id,
+                                                          interface_info)
 
-        # create router on the network controller
-        try:
-            resource = ROUTER_INTF_PATH % (tenant_id, router_id, interface_id)
-            ret = self.servers.delete(resource)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2:Unable to delete remote intf: "
-                        "%s"), e.message)
-            raise
-
-        # return new interface
-        return del_intf_info
+            # create router on the network controller
+            self.servers.rest_remove_router_interface(tenant_id, router_id,
+                                                      interface_id)
+            return del_ret
 
     def create_floatingip(self, context, floatingip):
         LOG.debug(_("NeutronRestProxyV2: create_floatingip() called"))
 
-        # create floatingip in DB
-        new_fl_ip = super(NeutronRestProxyV2,
-                          self).create_floatingip(context, floatingip)
+        with context.session.begin(subtransactions=True):
+            # create floatingip in DB
+            new_fl_ip = super(NeutronRestProxyV2,
+                              self).create_floatingip(context, floatingip)
 
-        net_id = new_fl_ip['floating_network_id']
-        orig_net = super(NeutronRestProxyV2, self).get_network(context,
-                                                               net_id)
-        # create floatingip on the network controller
-        try:
-            self._send_update_network(orig_net)
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to create remote "
-                        "floatin IP: %s"), e.message)
-            super(NeutronRestProxyV2, self).delete_floatingip(context,
-                                                              floatingip)
-            raise
-
-        # return created floating IP
-        return new_fl_ip
+            net_id = new_fl_ip['floating_network_id']
+            orig_net = super(NeutronRestProxyV2, self).get_network(context,
+                                                                   net_id)
+            # create floatingip on the network controller
+            try:
+                self._send_update_network(orig_net)
+            except RemoteRestError as e:
+                with excutils.save_and_reraise_exception():
+                    LOG.error(
+                        _("NeutronRestProxyV2: Unable to create remote "
+                          "floating IP: %s"), e)
+            # return created floating IP
+            return new_fl_ip
 
     def update_floatingip(self, context, id, floatingip):
         LOG.debug(_("NeutronRestProxyV2: update_floatingip() called"))
 
-        orig_fl_ip = super(NeutronRestProxyV2, self).get_floatingip(context,
-                                                                    id)
+        with context.session.begin(subtransactions=True):
+            # update floatingip in DB
+            new_fl_ip = super(NeutronRestProxyV2,
+                              self).update_floatingip(context, id, floatingip)
 
-        # update floatingip in DB
-        new_fl_ip = super(NeutronRestProxyV2,
-                          self).update_floatingip(context, id, floatingip)
-
-        net_id = new_fl_ip['floating_network_id']
-        orig_net = super(NeutronRestProxyV2, self).get_network(context,
-                                                               net_id)
-        # update network on network controller
-        try:
+            net_id = new_fl_ip['floating_network_id']
+            orig_net = super(NeutronRestProxyV2, self).get_network(context,
+                                                                   net_id)
+            # update network on network controller
             self._send_update_network(orig_net)
-        except RemoteRestError:
-            # rollback updation of subnet
-            super(NeutronRestProxyV2, self).update_floatingip(context, id,
-                                                              orig_fl_ip)
-            raise
-        return new_fl_ip
+            return new_fl_ip
 
     def delete_floatingip(self, context, id):
         LOG.debug(_("NeutronRestProxyV2: delete_floatingip() called"))
 
         orig_fl_ip = super(NeutronRestProxyV2, self).get_floatingip(context,
                                                                     id)
-        # delete floating IP in DB
-        net_id = orig_fl_ip['floating_network_id']
-        super(NeutronRestProxyV2, self).delete_floatingip(context, id)
+        with context.session.begin(subtransactions=True):
+            # delete floating IP in DB
+            net_id = orig_fl_ip['floating_network_id']
+            super(NeutronRestProxyV2, self).delete_floatingip(context, id)
 
-        orig_net = super(NeutronRestProxyV2, self).get_network(context,
-                                                               net_id)
-        # update network on network controller
-        try:
+            orig_net = super(NeutronRestProxyV2, self).get_network(context,
+                                                                   net_id)
+            # update network on network controller
             self._send_update_network(orig_net)
-        except RemoteRestError:
-            # TODO(Sumit): rollback deletion of floating IP
-            raise
 
     def _send_all_data(self):
         """Pushes all data to network ctrl (networks/ports, ports/attachments).
@@ -1200,20 +1123,13 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             routers.append(mapped_router)
 
-        try:
-            resource = '/topology'
-            data = {
-                'networks': networks,
-                'routers': routers,
-            }
-            ret = self.servers.put(resource, data)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-            return ret
-        except RemoteRestError as e:
-            LOG.error(_('NeutronRestProxy: Unable to update remote '
-                        'topology: %s'), e.message)
-            raise
+        resource = '/topology'
+        data = {
+            'networks': networks,
+            'routers': routers,
+        }
+        errstr = _("Unable to update remote topology: %s")
+        return self.servers.rest_action('PUT', resource, data, errstr)
 
     def _add_host_route(self, context, destination, port):
         subnet = {}
@@ -1232,22 +1148,26 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.debug("destination:%s nexthop:%s" % (destination,
                                                      nexthop))
 
-    def _get_network_with_floatingips(self, network):
-        admin_context = qcontext.get_admin_context()
+    def _get_network_with_floatingips(self, network, context=None):
+        if context is None:
+            context = qcontext.get_admin_context()
 
         net_id = network['id']
         net_filter = {'floating_network_id': [net_id]}
         fl_ips = super(NeutronRestProxyV2,
-                       self).get_floatingips(admin_context,
+                       self).get_floatingips(context,
                                              filters=net_filter) or []
         network['floatingips'] = fl_ips
 
         return network
 
-    def _get_all_subnets_json_for_network(self, net_id):
-        admin_context = qcontext.get_admin_context()
-        subnets = self._get_subnets_by_network(admin_context,
-                                               net_id)
+    def _get_all_subnets_json_for_network(self, net_id, context=None):
+        if context is None:
+            context = qcontext.get_admin_context()
+        # start a sub-transaction to avoid breaking parent transactions
+        with context.session.begin(subtransactions=True):
+            subnets = self._get_subnets_by_network(context,
+                                                   net_id)
         subnets_details = []
         if subnets:
             for subnet in subnets:
@@ -1257,10 +1177,13 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         return subnets_details
 
-    def _get_mapped_network_with_subnets(self, network):
-        admin_context = qcontext.get_admin_context()
+    def _get_mapped_network_with_subnets(self, network, context=None):
+        # if context is not provided, admin context is used
+        if context is None:
+            context = qcontext.get_admin_context()
         network = self._map_state_and_status(network)
-        subnets = self._get_all_subnets_json_for_network(network['id'])
+        subnets = self._get_all_subnets_json_for_network(network['id'],
+                                                         context)
         network['subnets'] = subnets
         for subnet in (subnets or []):
             if subnet['gateway_ip']:
@@ -1269,30 +1192,20 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
                 break
         else:
             network['gateway'] = ''
-
-        network[l3.EXTERNAL] = self._network_is_external(admin_context,
+        network[l3.EXTERNAL] = self._network_is_external(context,
                                                          network['id'])
 
         return network
 
-    def _send_update_network(self, network):
+    def _send_update_network(self, network, context=None):
         net_id = network['id']
         tenant_id = network['tenant_id']
         # update network on network controller
-        try:
-            resource = NETWORKS_PATH % (tenant_id, net_id)
-            mapped_network = self._get_mapped_network_with_subnets(network)
-            net_fl_ips = self._get_network_with_floatingips(mapped_network)
-            data = {
-                "network": net_fl_ips,
-            }
-            ret = self.servers.put(resource, data)
-            if not self.servers.action_success(ret):
-                raise RemoteRestError(ret[2])
-        except RemoteRestError as e:
-            LOG.error(_("NeutronRestProxyV2: Unable to update remote "
-                        "network: %s"), e.message)
-            raise
+        mapped_network = self._get_mapped_network_with_subnets(network,
+                                                               context)
+        net_fl_ips = self._get_network_with_floatingips(mapped_network,
+                                                        context)
+        self.servers.rest_update_network(tenant_id, net_id, net_fl_ips)
 
     def _map_state_and_status(self, resource):
         resource = copy.copy(resource)
