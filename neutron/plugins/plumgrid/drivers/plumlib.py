@@ -37,10 +37,13 @@ class Plumlib(object):
     def __init__(self):
         LOG.info('Python PLUMgrid Library Started ')
 
-    def director_conn(self, director_plumgrid, director_port, timeout):
+    def director_conn(self, director_plumgrid, director_port, timeout,
+                      director_admin, director_password):
         self.plumlib = plumlib.Plumlib(director_plumgrid,
                                        director_port,
-                                       timeout)
+                                       timeout,
+                                       director_admin,
+                                       director_password)
 
     def create_network(self, tenant_id, net_db):
         self.plumlib.create_network(tenant_id, net_db)

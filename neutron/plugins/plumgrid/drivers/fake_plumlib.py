@@ -32,7 +32,8 @@ class Plumlib():
         LOG.info('Python PLUMgrid Fake Library Started ')
         pass
 
-    def director_conn(self, director_plumgrid, director_port, timeout):
+    def director_conn(self, director_plumgrid, director_port, timeout,
+                      director_admin, director_password):
         LOG.info('Fake Director: %s', director_plumgrid + ':' + director_port)
         pass
 

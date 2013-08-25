@@ -32,6 +32,8 @@ from neutron.tests.unit import test_db_plugin as test_plugin
 PLUM_DRIVER = ('neutron.plugins.plumgrid.drivers.fake_plumlib.Plumlib')
 FAKE_DIRECTOR = '1.1.1.1'
 FAKE_PORT = '1234'
+FAKE_USERNAME = 'fake_admin'
+FAKE_PASSWORD = 'fake_password'
 FAKE_TIMEOUT = '0'
 
 
@@ -43,10 +45,14 @@ class PLUMgridPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         def mocked_plumlib_init(self):
             director_plumgrid = FAKE_DIRECTOR
             director_port = FAKE_PORT
+            director_username = FAKE_USERNAME
+            director_password = FAKE_PASSWORD
             timeout = FAKE_TIMEOUT
             self._plumlib = importutils.import_object(PLUM_DRIVER)
             self._plumlib.director_conn(director_plumgrid,
-                                        director_port, timeout)
+                                        director_port, timeout,
+                                        director_username,
+                                        director_password)
 
         with mock.patch.object(plumgrid_plugin.NeutronPluginPLUMgridV2,
                                'plumgrid_init', new=mocked_plumlib_init):
