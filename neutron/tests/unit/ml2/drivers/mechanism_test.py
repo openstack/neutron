@@ -25,12 +25,14 @@ class TestMechanismDriver(api.MechanismDriver):
 
     def _check_network_context(self, context, original_expected):
         assert(isinstance(context, driver_context.NetworkContext))
-        assert(context.current())
+        assert(isinstance(context.current, dict))
+        assert(context.current['id'] is not None)
         if original_expected:
-            assert(context.original())
+            assert(isinstance(context.original, dict))
+            assert(context.current['id'] == context.original['id'])
         else:
-            assert(not context.original())
-        assert(context.network_segments())
+            assert(not context.original)
+        assert(context.network_segments)
 
     def create_network_precommit(self, context):
         self._check_network_context(context, False)
@@ -50,15 +52,45 @@ class TestMechanismDriver(api.MechanismDriver):
     def delete_network_postcommit(self, context):
         self._check_network_context(context, False)
 
+    def _check_subnet_context(self, context, original_expected):
+        assert(isinstance(context, driver_context.SubnetContext))
+        assert(isinstance(context.current, dict))
+        assert(context.current['id'] is not None)
+        if original_expected:
+            assert(isinstance(context.original, dict))
+            assert(context.current['id'] == context.original['id'])
+        else:
+            assert(not context.original)
+
+    def create_subnet_precommit(self, context):
+        self._check_subnet_context(context, False)
+
+    def create_subnet_postcommit(self, context):
+        self._check_subnet_context(context, False)
+
+    def update_subnet_precommit(self, context):
+        self._check_subnet_context(context, True)
+
+    def update_subnet_postcommit(self, context):
+        self._check_subnet_context(context, True)
+
+    def delete_subnet_precommit(self, context):
+        self._check_subnet_context(context, False)
+
+    def delete_subnet_postcommit(self, context):
+        self._check_subnet_context(context, False)
+
     def _check_port_context(self, context, original_expected):
         assert(isinstance(context, driver_context.PortContext))
-        assert(context.current())
+        assert(isinstance(context.current, dict))
+        assert(context.current['id'] is not None)
         if original_expected:
-            assert(context.original())
+            assert(isinstance(context.original, dict))
+            assert(context.current['id'] == context.original['id'])
         else:
-            assert(not context.original())
-        network_context = context.network()
-        assert(network_context)
+            assert(not context.original)
+        network_context = context.network
+        assert(isinstance(network_context, driver_context.NetworkContext))
         self._check_network_context(network_context, False)
 
     def create_port_precommit(self, context):
