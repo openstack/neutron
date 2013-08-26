@@ -130,11 +130,11 @@ class NvpMetadataAccess(object):
                 if ports:
                     if (do_create and
                         not self._find_metadata_port(ctx_elevated, ports)):
-                        self._create_metadata_access_network(context,
+                        self._create_metadata_access_network(ctx_elevated,
                                                              router_id)
                     elif len(ports) == 1:
                         # The only port left is the metadata port
-                        self._destroy_metadata_access_network(context,
+                        self._destroy_metadata_access_network(ctx_elevated,
                                                               router_id,
                                                               ports)
                 else:
