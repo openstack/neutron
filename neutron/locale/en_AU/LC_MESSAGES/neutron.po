@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-25 06:14+0000\n"
+"POT-Creation-Date: 2013-08-26 06:19+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (Australia) "
@@ -500,7 +500,7 @@ msgstr ""
 #: neutron/agent/dhcp_agent.py:796 neutron/agent/l3_agent.py:819
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:228
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:184
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:221
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:223
 msgid "Failed reporting state!"
 msgstr ""
 
@@ -642,7 +642,7 @@ msgstr ""
 
 #: neutron/agent/ovs_cleanup_util.py:73
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:428
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:256
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:258
 #, python-format
 msgid "Delete %s"
 msgstr ""
@@ -974,7 +974,7 @@ msgid "Unable to find table %s"
 msgstr ""
 
 #: neutron/agent/linux/ovs_lib.py:71 neutron/agent/linux/ovs_lib.py:100
-#: neutron/agent/linux/ovs_lib.py:232
+#: neutron/agent/linux/ovs_lib.py:242
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
 msgstr ""
@@ -983,39 +983,39 @@ msgstr ""
 msgid "Cannot match priority on flow deletion"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:151
+#: neutron/agent/linux/ovs_lib.py:153
 msgid "Must specify one or more actions"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:295
+#: neutron/agent/linux/ovs_lib.py:305
 #, python-format
 msgid "Unable to parse regex results. Exception: %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:313
+#: neutron/agent/linux/ovs_lib.py:323
 #, python-format
 msgid "Unable to determine mac address for %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:322
+#: neutron/agent/linux/ovs_lib.py:332
 #, python-format
 msgid "Interface %s not found."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:331
+#: neutron/agent/linux/ovs_lib.py:341
 #, python-format
 msgid "Unable to retrieve bridges. Exception: %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:342
+#: neutron/agent/linux/ovs_lib.py:352
 msgid "Unable to retrieve OVS userspace version."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:354
+#: neutron/agent/linux/ovs_lib.py:364
 msgid "Unable to retrieve OVS kernel module version."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:363
+#: neutron/agent/linux/ovs_lib.py:373
 #, python-format
 msgid "Bridge %s not found."
 msgstr ""
@@ -5306,7 +5306,7 @@ msgstr ""
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:130
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:432
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:168
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:265
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:267
 msgid "port_update received"
 msgstr ""
 
@@ -5389,14 +5389,14 @@ msgstr ""
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:310
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:640
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:352
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:830
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:896
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:318
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:652
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:359
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:844
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:910
 msgid "Agent loop has new devices!"
 msgstr ""
 
@@ -5413,7 +5413,7 @@ msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:345
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:691
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:974
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1040
 msgid "Agent initialized successfully, now running... "
 msgstr ""
 
@@ -5638,12 +5638,12 @@ msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:425
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:159
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:254
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:256
 msgid "network_delete received"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:473
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:290
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:292
 #, python-format
 msgid "RPC timeout while updating port %s"
 msgstr ""
@@ -5659,20 +5659,20 @@ msgid "RPC agent_id: %s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:575
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:692
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:760
 #, python-format
 msgid "Port %s added"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:581
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:698
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:727
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:766
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:795
 #, python-format
 msgid "Unable to get port details for %(device)s: %(e)s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:587
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:705
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:773
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr ""
@@ -5680,31 +5680,31 @@ msgstr ""
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:608
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:628
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:339
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:714
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:752
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:773
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:782
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:820
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:841
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:615
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:738
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:759
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:806
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:827
 #, python-format
 msgid "Attachment %s removed"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:621
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:744
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:765
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:812
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:833
 #, python-format
 msgid "port_removed failed for %(device)s: %(e)s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:625
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:336
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:749
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:770
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:817
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:838
 #, python-format
 msgid "Port %s updated."
 msgstr ""
@@ -5723,7 +5723,7 @@ msgid "Error in agent loop. Devices info: %s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:666
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:867
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:933
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:281
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
@@ -7027,9 +7027,9 @@ msgid "eSwitch Agent Started!"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:364
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:858
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:924
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:275
-#: neutron/tests/unit/openvswitch/test_ovs_tunnel.py:403
+#: neutron/tests/unit/openvswitch/test_ovs_tunnel.py:439
 msgid "Error in agent event loop"
 msgstr ""
 
@@ -8696,174 +8696,174 @@ msgstr ""
 msgid "%s networks are not enabled"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:262
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:264
 #, python-format
 msgid "Network %s not used on agent."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:293
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:295
 msgid "tunnel_update received"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:302
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:304
 msgid "No tunnel_type specified, cannot create tunnels"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:305
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:307
 #, python-format
 msgid "tunnel_type %s not supported by agent"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:333
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:334
 #, python-format
 msgid "No local VLAN available for net-id=%s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:336
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:337
 #, python-format
 msgid "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:358
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:361
 #, python-format
 msgid ""
 "Cannot provision %(network_type)s network for net-id=%(net_uuid)s - "
 "tunneling disabled"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:377
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:380
 #, python-format
 msgid ""
 "Cannot provision flat network for net-id=%(net_uuid)s - no bridge for "
 "physical_network %(physical_network)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:397
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:400
 #, python-format
 msgid ""
 "Cannot provision VLAN network for net-id=%(net_uuid)s - no bridge for "
 "physical_network %(physical_network)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:406
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:409
 #, python-format
 msgid ""
 "Cannot provision unknown network type %(network_type)s for net-"
 "id=%(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:418
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:421
 #, python-format
 msgid "Reclaiming vlan = %(vlan_id)s from net-id = %(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:452
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:457
 #, python-format
 msgid ""
 "Cannot reclaim unknown network type %(network_type)s for net-"
 "id=%(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:503
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:500
 #, python-format
 msgid "port_unbound() net_uuid %s not in local_vlan_map"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:516
-#, python-format
-msgid "port_unbound: vif_id %s not in local_vlan_map"
-msgstr ""
-
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:568
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:556
 #, python-format
 msgid "Adding %s to list of bridges."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:587
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:575
 msgid ""
 "Failed to create OVS patch port. Cannot have tunneling enabled on this "
 "agent, since this version of OVS does not support tunnels or patch ports."
 " Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:608
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:647
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:614
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:653
 #, python-format
 msgid ""
 "Bridge %(bridge)s for physical network %(physical_network)s does not "
 "exist. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:686
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:725
 #, python-format
 msgid "No VIF port for port %s defined on agent."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:722
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:734
+#, python-format
+msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
+msgstr ""
+
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:790
 #, python-format
 msgid "Ancillary Port %s added"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:815
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:881
 #, python-format
 msgid "Unable to sync tunnel IP %(local_ip)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:837
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:903
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:877
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:943
 msgid "Checking OVS version for VXLAN support"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:885
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:951
 #, python-format
 msgid ""
 "Failed userspace version check for Open vSwitch with VXLAN support. To "
 "use VXLAN tunnels with OVS, please ensure the OVS version is %s or newer!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:896
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:962
 #, python-format
 msgid ""
 "Failed kernel version check for Open vSwitch with VXLAN support. To use "
 "VXLAN tunnels with OVS, please ensure the OVS version is %s or newer!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:903
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:969
 #, python-format
 msgid ""
 "Cannot determine kernel Open vSwitch version, please ensure your Open "
 "vSwitch kernel module is at least version %s to support VXLAN tunnels."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:908
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:974
 #, python-format
 msgid ""
 "Unable to determine Open vSwitch version. Please ensure that its version "
 "is %s or newer to use VXLAN tunnels with OVS."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:923
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:989
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:943
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1009
 #, python-format
 msgid "Invalid tunnel type specificed: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:946
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1012
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:962
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1028
 #, python-format
 msgid "%s Agent terminated!"
 msgstr ""
@@ -9912,5 +9912,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "MidoClient.delete_dhcp called: bridge=%s(bridge), "
+#~ msgstr ""
+
+#~ msgid "port_unbound: vif_id %s not in local_vlan_map"
 #~ msgstr ""
 
