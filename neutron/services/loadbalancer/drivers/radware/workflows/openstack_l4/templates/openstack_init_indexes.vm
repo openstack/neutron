@@ -1,0 +1,38 @@
+
+#property("summary", "Init Indexes - date: [2013-05-08]")
+
+#param("vip", "ip", "in", "prompt = IP address for the virtual service")
+#param("virtSvcPort", "int", "in", "prompt = Virtual service tcp port")
+
+## The index of the real server group
+#param("groupId", "int", "out")
+
+## The index of the virtual server
+#param("virtId", "int", "out")
+
+## If values are new or were pre-exsiting
+#param("newValues", "bool", "out")
+
+#set($newValues=true)
+#set($virt = $adc.newBean("/c/slb/virt"))
+#set($virt.ipAddress = $vip)
+#set($virts = $adc.findAll($virt))
+#foreach($virt in $virts)
+    #set($groupId = 0)
+    #set($virtId = $virt.index)
+    #set($virse=$adc.newBean("/c/slb/virt/service"))
+    #set($virse.VirtualServerIndex=$virtId)
+    #set($virse.VirtPort=$virtSvcPort)
+    ##consider to also set $virse.Index=0 and do $adc.Read
+    #set($service=$adc.findFirst($virse))
+    #if($adc.isNotNull($service))
+        #set($newValues = false)
+        #set($virtId = $service.VirtualServerIndex)
+        #set($groupId = $service.RealGroup)
+        #break
+    #end
+#end
+#if($newValues)
+    #set($virtId = $adc.getFreeIndexWithDefault("/c/slb/virt", 1))
+    #set($groupId = $adc.getFreeIndexWithDefault("/c/slb/group", 1))
+#end
