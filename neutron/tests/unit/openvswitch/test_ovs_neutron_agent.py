@@ -331,17 +331,13 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                              "int_ofport")
 
     def test_port_unbound(self):
-        with contextlib.nested(
-            mock.patch.object(self.agent.tun_br, "delete_flows"),
-            mock.patch.object(self.agent, "reclaim_local_vlan")
-        ) as (delfl_fn, reclvl_fn):
+        with mock.patch.object(self.agent, "reclaim_local_vlan") as reclvl_fn:
             self.agent.enable_tunneling = True
             lvm = mock.Mock()
             lvm.network_type = "gre"
             lvm.vif_ports = {"vif1": mock.Mock()}
             self.agent.local_vlan_map["netuid12345"] = lvm
             self.agent.port_unbound("vif1", "netuid12345")
-            self.assertTrue(delfl_fn.called)
             self.assertTrue(reclvl_fn.called)
             reclvl_fn.called = False
 

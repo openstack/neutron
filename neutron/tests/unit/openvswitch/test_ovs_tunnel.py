@@ -37,13 +37,20 @@ VIF_MAC = '3c:09:24:1e:78:23'
 OFPORT_NUM = 1
 VIF_PORT = ovs_lib.VifPort('port', OFPORT_NUM,
                            VIF_ID, VIF_MAC, 'switch')
-VIF_PORTS = {LV_ID: VIF_PORT}
+VIF_PORTS = {VIF_ID: VIF_PORT}
 LVM = ovs_neutron_agent.LocalVLANMapping(LV_ID, 'gre', None, LS_ID, VIF_PORTS)
 LVM_FLAT = ovs_neutron_agent.LocalVLANMapping(
     LV_ID, 'flat', 'net1', LS_ID, VIF_PORTS)
 LVM_VLAN = ovs_neutron_agent.LocalVLANMapping(
     LV_ID, 'vlan', 'net1', LS_ID, VIF_PORTS)
+
+GRE_OFPORTS = set(['11', '12'])
+VXLAN_OFPORTS = set(['13', '14'])
+TUN_OFPORTS = {constants.TYPE_GRE: GRE_OFPORTS,
+               constants.TYPE_VXLAN: VXLAN_OFPORTS}
+
 BCAST_MAC = "01:00:00:00:00:00/01:00:00:00:00:00"
+UCAST_MAC = "00:00:00:00:00:00/01:00:00:00:00:00"
 
 
 class DummyPort:
@@ -108,8 +115,45 @@ class TunnelTest(base.BaseTestCase):
             'patch-tun', 'patch-int').AndReturn(self.TUN_OFPORT)
         self.mock_tun_bridge.add_patch_port(
             'patch-int', 'patch-tun').AndReturn(self.INT_OFPORT)
+
         self.mock_tun_bridge.remove_all_flows()
-        self.mock_tun_bridge.add_flow(priority=1, actions='drop')
+        self.mock_tun_bridge.add_flow(priority=1,
+                                      in_port=self.INT_OFPORT,
+                                      actions="resubmit(,%s)" %
+                                      constants.PATCH_LV_TO_TUN)
+        self.mock_tun_bridge.add_flow(priority=0, actions='drop')
+        self.mock_tun_bridge.add_flow(table=constants.PATCH_LV_TO_TUN,
+                                      dl_dst=UCAST_MAC,
+                                      actions="resubmit(,%s)" %
+                                      constants.UCAST_TO_TUN)
+        self.mock_tun_bridge.add_flow(table=constants.PATCH_LV_TO_TUN,
+                                      dl_dst=BCAST_MAC,
+                                      actions="resubmit(,%s)" %
+                                      constants.FLOOD_TO_TUN)
+        for tunnel_type in constants.TUNNEL_NETWORK_TYPES:
+            self.mock_tun_bridge.add_flow(
+                table=constants.TUN_TABLE[tunnel_type],
+                priority=0,
+                actions="drop")
+        learned_flow = ("table=%s,"
+                        "priority=1,"
+                        "hard_timeout=300,"
+                        "NXM_OF_VLAN_TCI[0..11],"
+                        "load:0->NXM_OF_VLAN_TCI[],"
+                        "load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],"
+                        "output:NXM_OF_IN_PORT[]" %
+                        constants.UCAST_TO_TUN)
+        self.mock_tun_bridge.add_flow(table=constants.LEARN_FROM_TUN,
+                                      priority=1,
+                                      actions="learn(%s),output:%s" %
+                                      (learned_flow, self.INT_OFPORT))
+        self.mock_tun_bridge.add_flow(table=constants.UCAST_TO_TUN,
+                                      priority=0,
+                                      actions="resubmit(,%s)" %
+                                      constants.FLOOD_TO_TUN)
+        self.mock_tun_bridge.add_flow(table=constants.FLOOD_TO_TUN,
+                                      priority=0,
+                                      actions="drop")
 
         self.mox.StubOutWithMock(ip_lib, 'device_exists')
         ip_lib.device_exists('tunnel_bridge_mapping', 'sudo').AndReturn(True)
@@ -153,14 +197,18 @@ class TunnelTest(base.BaseTestCase):
         self.mox.VerifyAll()
 
     def testProvisionLocalVlan(self):
-        action_string = 'set_tunnel:%s,normal' % LS_ID
-        self.mock_tun_bridge.add_flow(priority=4, in_port=self.INT_OFPORT,
-                                      dl_vlan=LV_ID, actions=action_string)
+        self.mock_tun_bridge.mod_flow(table=constants.FLOOD_TO_TUN,
+                                      priority=1,
+                                      dl_vlan=LV_ID,
+                                      actions="strip_vlan,"
+                                      "set_tunnel:%s,output:%s" %
+                                      (LS_ID, ','.join(GRE_OFPORTS)))
 
-        action_string = 'mod_vlan_vid:%s,output:%s' % (LV_ID, self.INT_OFPORT)
-        self.mock_tun_bridge.add_flow(priority=3, tun_id=LS_ID,
-                                      dl_dst=BCAST_MAC, actions=action_string)
-
+        self.mock_tun_bridge.add_flow(table=constants.TUN_TABLE['gre'],
+                                      priority=1,
+                                      tun_id=LS_ID,
+                                      actions="mod_vlan_vid:%s,resubmit(,%s)" %
+                                      (LV_ID, constants.LEARN_FROM_TUN))
         self.mox.ReplayAll()
 
         a = ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
@@ -169,6 +217,7 @@ class TunnelTest(base.BaseTestCase):
                                               'sudo', 2, ['gre'],
                                               self.VETH_MTU)
         a.available_local_vlans = set([LV_ID])
+        a.tun_br_ofports = TUN_OFPORTS
         a.provision_local_vlan(NET_UUID, constants.TYPE_GRE, None, LS_ID)
         self.mox.VerifyAll()
 
@@ -240,8 +289,8 @@ class TunnelTest(base.BaseTestCase):
         self.mox.VerifyAll()
 
     def testReclaimLocalVlan(self):
-        self.mock_tun_bridge.delete_flows(tun_id=LVM.segmentation_id)
-
+        self.mock_tun_bridge.delete_flows(
+            table=constants.TUN_TABLE['gre'], tun_id=LS_ID)
         self.mock_tun_bridge.delete_flows(dl_vlan=LVM.vlan)
 
         self.mox.ReplayAll()
@@ -307,11 +356,6 @@ class TunnelTest(base.BaseTestCase):
                                               'tag', str(LVM.vlan))
         self.mock_int_bridge.delete_flows(in_port=VIF_PORT.ofport)
 
-        action_string = 'mod_vlan_vid:%s,normal' % LV_ID
-        self.mock_tun_bridge.add_flow(priority=3, tun_id=LS_ID,
-                                      dl_dst=VIF_PORT.vif_mac,
-                                      actions=action_string)
-
         self.mox.ReplayAll()
         a = ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
@@ -323,15 +367,10 @@ class TunnelTest(base.BaseTestCase):
         self.mox.VerifyAll()
 
     def testPortUnbound(self):
-        self.mock_int_bridge.set_db_attribute('Port', VIF_PORT.port_name,
-                                              'tag', str(LVM.vlan))
-        self.mock_int_bridge.delete_flows(in_port=VIF_PORT.ofport)
+        self.mox.StubOutWithMock(
+            ovs_neutron_agent.OVSNeutronAgent, 'reclaim_local_vlan')
+        ovs_neutron_agent.OVSNeutronAgent.reclaim_local_vlan(NET_UUID, LVM)
 
-        action_string = 'mod_vlan_vid:%s,normal' % LV_ID
-        self.mock_tun_bridge.add_flow(priority=3, tun_id=LS_ID,
-                                      dl_dst=VIF_PORT.vif_mac,
-                                      actions=action_string)
-        self.mock_tun_bridge.delete_flows(dl_dst=VIF_MAC, tun_id=LS_ID)
         self.mox.ReplayAll()
 
         a = ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
@@ -339,9 +378,6 @@ class TunnelTest(base.BaseTestCase):
                                               '10.0.0.1', self.NET_MAPPING,
                                               'sudo', 2, ['gre'],
                                               self.VETH_MTU)
-        a.local_vlan_map[NET_UUID] = LVM
-        a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID)
-        a.available_local_vlans = set([LV_ID])
         a.local_vlan_map[NET_UUID] = LVM
         a.port_unbound(VIF_ID, NET_UUID)
         self.mox.VerifyAll()

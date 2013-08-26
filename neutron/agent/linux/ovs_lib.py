@@ -126,6 +126,8 @@ class OVSBridge:
         elif 'priority' in kwargs:
             raise Exception(_("Cannot match priority on flow deletion"))
 
+        table = ('table' in kwargs and ",table=%s" %
+                 kwargs['table'] or '')
         in_port = ('in_port' in kwargs and ",in_port=%s" %
                    kwargs['in_port'] or '')
         dl_type = ('dl_type' in kwargs and ",dl_type=%s" %
@@ -139,14 +141,14 @@ class OVSBridge:
         tun_id = 'tun_id' in kwargs and ",tun_id=%s" % kwargs['tun_id'] or ''
         proto = 'proto' in kwargs and ",%s" % kwargs['proto'] or ''
         ip = ('nw_src' in kwargs or 'nw_dst' in kwargs) and ',ip' or ''
-        match = (in_port + dl_type + dl_vlan + dl_src + dl_dst +
+        match = (table + in_port + dl_type + dl_vlan + dl_src + dl_dst +
                 (ip or proto) + nw_src + nw_dst + tun_id)
         if match:
             match = match[1:]  # strip leading comma
             flow_expr_arr.append(match)
         return flow_expr_arr
 
-    def add_flow(self, **kwargs):
+    def add_or_mod_flow_str(self, **kwargs):
         if "actions" not in kwargs:
             raise Exception(_("Must specify one or more actions"))
         if "priority" not in kwargs:
@@ -155,7 +157,15 @@ class OVSBridge:
         flow_expr_arr = self._build_flow_expr_arr(**kwargs)
         flow_expr_arr.append("actions=%s" % (kwargs["actions"]))
         flow_str = ",".join(flow_expr_arr)
+        return flow_str
+
+    def add_flow(self, **kwargs):
+        flow_str = self.add_or_mod_flow_str(**kwargs)
         self.run_ofctl("add-flow", [flow_str])
+
+    def mod_flow(self, **kwargs):
+        flow_str = self.add_or_mod_flow_str(**kwargs)
+        self.run_ofctl("mod-flows", [flow_str])
 
     def delete_flows(self, **kwargs):
         kwargs['delete'] = True
