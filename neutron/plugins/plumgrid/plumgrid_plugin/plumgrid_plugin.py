@@ -78,12 +78,15 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         """PLUMgrid initialization."""
         director_plumgrid = cfg.CONF.PLUMgridDirector.director_server
         director_port = cfg.CONF.PLUMgridDirector.director_server_port
+        director_admin = cfg.CONF.PLUMgridDirector.username
+        director_password = cfg.CONF.PLUMgridDirector.password
         timeout = cfg.CONF.PLUMgridDirector.servertimeout
 
         # PLUMgrid Director info validation
         LOG.info(_('Neutron PLUMgrid Director: %s'), director_plumgrid)
         self._plumlib = importutils.import_object(PLUM_DRIVER)
-        self._plumlib.director_conn(director_plumgrid, director_port, timeout)
+        self._plumlib.director_conn(director_plumgrid, director_port, timeout,
+                                    director_admin, director_password)
 
     def create_network(self, context, network):
         """Create Neutron network.
