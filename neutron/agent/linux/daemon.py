@@ -21,14 +21,13 @@ import fcntl
 import os
 import sys
 
-from neutron.agent.linux import utils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
 class Pidfile(object):
-    def __init__(self, pidfile, procname, uuid=None, root_helper='sudo'):
+    def __init__(self, pidfile, procname, uuid=None):
         try:
             self.fd = os.open(pidfile, os.O_CREAT | os.O_RDWR)
         except IOError:
@@ -37,7 +36,6 @@ class Pidfile(object):
         self.pidfile = pidfile
         self.procname = procname
         self.uuid = uuid
-        self.root_helper = root_helper
         if not not fcntl.flock(self.fd, fcntl.LOCK_EX):
             raise IOError(_('Unable to lock pid file'))
 
@@ -66,12 +64,13 @@ class Pidfile(object):
         if not pid:
             return False
 
-        cmd = ['cat', '/proc/%s/cmdline' % pid]
+        cmdline = '/proc/%s/cmdline' % pid
         try:
-            exec_out = utils.execute(cmd, self.root_helper)
+            with open(cmdline, "r") as f:
+                exec_out = f.readline()
             return self.procname in exec_out and (not self.uuid or
                                                   self.uuid in exec_out)
-        except RuntimeError:
+        except IOError:
             return False
 
 
@@ -81,13 +80,12 @@ class Daemon(object):
     Usage: subclass the Daemon class and override the run() method
     """
     def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null',
-                 stderr='/dev/null', procname='python', uuid=None,
-                 root_helper='sudo'):
+                 stderr='/dev/null', procname='python', uuid=None):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
         self.procname = procname
-        self.pidfile = Pidfile(pidfile, procname, uuid, root_helper)
+        self.pidfile = Pidfile(pidfile, procname, uuid)
 
     def _fork(self):
         try:

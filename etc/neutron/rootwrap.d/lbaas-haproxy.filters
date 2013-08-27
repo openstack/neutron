@@ -14,9 +14,6 @@ haproxy: CommandFilter, haproxy, root
 # lbaas-agent uses kill as well, that's handled by the generic KillFilter
 kill_haproxy_usr: KillFilter, root, /usr/sbin/haproxy, -9, -HUP
 
-# lbaas-agent uses cat
-cat: RegExpFilter, cat, root, cat, /proc/\d+/cmdline
-
 ovs-vsctl: CommandFilter, ovs-vsctl, root
 
 # ip_lib

@@ -363,14 +363,18 @@ class TestDhcpBase(TestBase):
 
 class TestDhcpLocalProcess(TestBase):
     def test_active(self):
-        dummy_cmd_line = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-        self.execute.return_value = (dummy_cmd_line, '')
-        with mock.patch.object(LocalChild, 'pid') as pid:
-            pid.__get__ = mock.Mock(return_value=4)
-            lp = LocalChild(self.conf, FakeV4Network())
-            self.assertTrue(lp.active)
-            self.execute.assert_called_once_with(['cat', '/proc/4/cmdline'],
-                                                 'sudo')
+        with mock.patch('__builtin__.open') as mock_open:
+            mock_open.return_value.__enter__ = lambda s: s
+            mock_open.return_value.__exit__ = mock.Mock()
+            mock_open.return_value.readline.return_value = \
+                'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+
+            with mock.patch.object(LocalChild, 'pid') as pid:
+                pid.__get__ = mock.Mock(return_value=4)
+                lp = LocalChild(self.conf, FakeV4Network())
+                self.assertTrue(lp.active)
+
+            mock_open.assert_called_once_with('/proc/4/cmdline', 'r')
 
     def test_active_none(self):
         dummy_cmd_line = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
@@ -381,14 +385,18 @@ class TestDhcpLocalProcess(TestBase):
             self.assertFalse(lp.active)
 
     def test_active_cmd_mismatch(self):
-        dummy_cmd_line = 'bbbbbbbb-bbbb-bbbb-aaaa-aaaaaaaaaaaa'
-        self.execute.return_value = (dummy_cmd_line, '')
-        with mock.patch.object(LocalChild, 'pid') as pid:
-            pid.__get__ = mock.Mock(return_value=4)
-            lp = LocalChild(self.conf, FakeV4Network())
-            self.assertFalse(lp.active)
-            self.execute.assert_called_once_with(['cat', '/proc/4/cmdline'],
-                                                 'sudo')
+        with mock.patch('__builtin__.open') as mock_open:
+            mock_open.return_value.__enter__ = lambda s: s
+            mock_open.return_value.__exit__ = mock.Mock()
+            mock_open.return_value.readline.return_value = \
+                'bbbbbbbb-bbbb-bbbb-aaaa-aaaaaaaaaaaa'
+
+            with mock.patch.object(LocalChild, 'pid') as pid:
+                pid.__get__ = mock.Mock(return_value=4)
+                lp = LocalChild(self.conf, FakeV4Network())
+                self.assertFalse(lp.active)
+
+            mock_open.assert_called_once_with('/proc/4/cmdline', 'r')
 
     def test_get_conf_file_name(self):
         tpl = '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/dev'
@@ -873,24 +881,28 @@ tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
                                   fake_v6_cidr, fake_v6,
                                   fake_v6_cidr, fake_v6)
 
-        exp_args = ['cat', '/proc/5/cmdline']
+        with mock.patch('__builtin__.open') as mock_open:
+            mock_open.return_value.__enter__ = lambda s: s
+            mock_open.return_value.__exit__ = mock.Mock()
+            mock_open.return_value.readline.return_value = None
 
-        with mock.patch('os.path.isdir') as isdir:
-            isdir.return_value = True
-            with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
-                pid.__get__ = mock.Mock(return_value=5)
-                dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
-                                  version=float(2.59))
+            with mock.patch('os.path.isdir') as isdir:
+                isdir.return_value = True
+                with mock.patch.object(dhcp.Dnsmasq, 'pid') as pid:
+                    pid.__get__ = mock.Mock(return_value=5)
+                    dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
+                                      version=float(2.59))
 
-                method_name = '_make_subnet_interface_ip_map'
-                with mock.patch.object(dhcp.Dnsmasq, method_name) as ip_map:
-                    ip_map.return_value = {}
-                    dm.reload_allocations()
-                    self.assertTrue(ip_map.called)
+                    method_name = '_make_subnet_interface_ip_map'
+                    with mock.patch.object(dhcp.Dnsmasq, method_name) as ipmap:
+                        ipmap.return_value = {}
+                        dm.reload_allocations()
+                        self.assertTrue(ipmap.called)
 
-        self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
-                                    mock.call(exp_opt_name, exp_opt_data)])
-        self.execute.assert_called_once_with(exp_args, 'sudo')
+            self.safe.assert_has_calls([mock.call(exp_host_name,
+                                                  exp_host_data),
+                                        mock.call(exp_opt_name, exp_opt_data)])
+            mock_open.assert_called_once_with('/proc/5/cmdline', 'r')
 
     def test_make_subnet_interface_ip_map(self):
         with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ip_dev:
