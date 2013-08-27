@@ -100,8 +100,7 @@ class RequestTestCase(base.BaseTestCase):
         self.assertTrue(self.req.context.is_admin)
 
     def test_best_match_language(self):
-        # Here we test that we are actually invoking language negotiation
-        # by webop and also that the default locale always available is en-US
+        # Test that we are actually invoking language negotiation by webop
         request = wsgi.Request.blank('/')
         gettextutils.get_available_languages = mock.MagicMock()
         gettextutils.get_available_languages.return_value = ['known-language',
@@ -109,9 +108,18 @@ class RequestTestCase(base.BaseTestCase):
         request.headers['Accept-Language'] = 'known-language'
         language = request.best_match_language()
         self.assertEqual(language, 'known-language')
+
+        # If the Accept-Leader is an unknown language, missing or empty,
+        # the best match locale should be None
         request.headers['Accept-Language'] = 'unknown-language'
         language = request.best_match_language()
-        self.assertEqual(language, 'en_US')
+        self.assertEqual(language, None)
+        request.headers['Accept-Language'] = ''
+        language = request.best_match_language()
+        self.assertEqual(language, None)
+        request.headers.pop('Accept-Language')
+        language = request.best_match_language()
+        self.assertEqual(language, None)
 
 
 class ResourceTestCase(base.BaseTestCase):
