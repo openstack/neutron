@@ -24,6 +24,10 @@ class NvpPluginException(q_exc.QuantumException):
     message = _("An unexpected error occurred in the NVP Plugin:%(err_msg)s")
 
 
+class NvpInvalidVersion(NvpPluginException):
+    message = _("Unable to fulfill request with version %(version)s.")
+
+
 class NvpInvalidConnection(NvpPluginException):
     message = _("Invalid NVP connection parameters: %(conn_params)s")
 

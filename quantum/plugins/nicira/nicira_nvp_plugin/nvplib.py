@@ -90,16 +90,18 @@ _net_type_cache = {}  # cache of {net_id: network_type}
 _lqueue_cache = {}
 
 
-def version_dependent(func):
-    func_name = func.__name__
+def version_dependent(wrapped_func):
+    func_name = wrapped_func.__name__
 
     def dispatch_version_dependent_function(cluster, *args, **kwargs):
-        nvp_ver = cluster.api_client.get_nvp_version()
-        if nvp_ver:
-            ver_major = int(nvp_ver.split('.')[0])
-            real_func = NVPLIB_FUNC_DICT[func_name][ver_major]
+        # Call the wrapper function, in case we need to
+        # run validation checks regarding versions. It
+        # should return the NVP version
+        v = (wrapped_func(cluster, *args, **kwargs) or
+             cluster.api_client.get_nvp_version())
+        func = get_function_by_version(func_name, v)
         func_kwargs = kwargs
-        arg_spec = inspect.getargspec(real_func)
+        arg_spec = inspect.getargspec(func)
         if not arg_spec.keywords and not arg_spec.varargs:
             # drop args unknown to function from func_args
             arg_set = set(func_kwargs.keys())
@@ -107,7 +109,7 @@ def version_dependent(func):
                 del func_kwargs[arg]
         # NOTE(salvatore-orlando): shall we fail here if a required
         # argument is not passed, or let the called function raise?
-        real_func(cluster, *args, **func_kwargs)
+        return func(cluster, *args, **func_kwargs)
 
     return dispatch_version_dependent_function
 
@@ -1345,15 +1347,37 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         raise nvp_exc.NvpPluginException(err_msg=msg)
 
 
-# TODO(salvatore-orlando): Also handle changes in minor versions
+DEFAULT = -1
 NVPLIB_FUNC_DICT = {
-    'create_lrouter_dnat_rule': {2: create_lrouter_dnat_rule_v2,
-                                 3: create_lrouter_dnat_rule_v3},
-    'create_lrouter_snat_rule': {2: create_lrouter_snat_rule_v2,
-                                 3: create_lrouter_snat_rule_v3},
-    'create_lrouter_nosnat_rule': {2: create_lrouter_nosnat_rule_v2,
-                                   3: create_lrouter_nosnat_rule_v3}
+    'create_lrouter_dnat_rule': {
+        2: {DEFAULT: create_lrouter_dnat_rule_v2, },
+        3: {DEFAULT: create_lrouter_dnat_rule_v3, }, },
+    'create_lrouter_snat_rule': {
+        2: {DEFAULT: create_lrouter_snat_rule_v2, },
+        3: {DEFAULT: create_lrouter_snat_rule_v3, }, },
+    'create_lrouter_nosnat_rule': {
+        2: {DEFAULT: create_lrouter_nosnat_rule_v2, },
+        3: {DEFAULT: create_lrouter_nosnat_rule_v3, }, },
 }
+
+
+def get_function_by_version(func_name, nvp_ver):
+    if nvp_ver:
+        if nvp_ver.major not in NVPLIB_FUNC_DICT[func_name]:
+            major = max(NVPLIB_FUNC_DICT[func_name].keys())
+            minor = max(NVPLIB_FUNC_DICT[func_name][major].keys())
+            if major > nvp_ver.major:
+                raise NotImplementedError(_("Operation may not be supported"))
+        else:
+            major = nvp_ver.major
+            minor = nvp_ver.minor
+            if nvp_ver.minor not in NVPLIB_FUNC_DICT[func_name][major]:
+                minor = DEFAULT
+        return NVPLIB_FUNC_DICT[func_name][major][minor]
+    else:
+        msg = _('NVP version is not set. Unable to complete request '
+                'correctly. Check log for NVP communication errors.')
+        raise NvpApiClient.ServiceUnavailable(message=msg)
 
 
 # -----------------------------------------------------------------------------

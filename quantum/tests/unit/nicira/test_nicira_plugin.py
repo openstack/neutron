@@ -33,6 +33,7 @@ import quantum.plugins.nicira.nicira_nvp_plugin as nvp_plugin
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import nvp_networkgw
 from quantum.plugins.nicira.nicira_nvp_plugin.extensions import (nvp_qos
                                                                  as ext_qos)
+from quantum.plugins.nicira.nicira_nvp_plugin.NvpApiClient import NVPVersion
 from quantum.plugins.nicira.nicira_nvp_plugin import nvplib
 from quantum.plugins.nicira.nicira_nvp_plugin import QuantumPlugin
 from quantum.tests.unit.nicira import fake_nvpapiclient
@@ -85,7 +86,7 @@ class NiciraPluginV2TestCase(test_plugin.QuantumDbPluginV2TestCase):
             return self.fc.fake_request(*args, **kwargs)
 
         # Emulate tests against NVP 2.x
-        instance.return_value.get_nvp_version.return_value = "2.999"
+        instance.return_value.get_nvp_version.return_value = NVPVersion("2.9")
         instance.return_value.request.side_effect = _fake_request
         super(NiciraPluginV2TestCase, self).setUp(self._plugin_name)
         cfg.CONF.set_override('enable_metadata_access_network', False, 'NVP')

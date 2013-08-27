@@ -204,3 +204,40 @@ class TestNvpLibLogicalPorts(NvplibTestCase):
                                                lswitch['uuid'],
                                                quantum_port_id)
         self.assertIsNone(lport)
+
+
+class TestNvplibVersioning(base.BaseTestCase):
+
+    def test_function_handling_missing_minor(self):
+        version = NvpApiClient.NVPVersion('2.0')
+        func_name = 'create_lrouter_dnat_rule'
+        function = nvplib.get_function_by_version(func_name, version)
+        self.assertEqual(nvplib.create_lrouter_dnat_rule_v2,
+                         function)
+
+    def test_function_handling_with_both_major_and_minor(self):
+        version = NvpApiClient.NVPVersion('3.2')
+        func_name = 'create_lrouter_dnat_rule'
+        function = nvplib.get_function_by_version(func_name, version)
+        self.assertEqual(nvplib.create_lrouter_dnat_rule_v3,
+                         function)
+
+    def test_function_handling_with_newer_major(self):
+        version = NvpApiClient.NVPVersion('5.2')
+        func_name = 'create_lrouter_dnat_rule'
+        function = nvplib.get_function_by_version(func_name, version)
+        self.assertEqual(nvplib.create_lrouter_dnat_rule_v3,
+                         function)
+
+    def test_function_handling_with_obsolete_major(self):
+        version = NvpApiClient.NVPVersion('1.2')
+        func_name = 'create_lrouter_dnat_rule'
+        self.assertRaises(NotImplementedError,
+                          nvplib.get_function_by_version,
+                          func_name, version)
+
+    def test_function_handling_with_unknown_version(self):
+        func_name = 'create_lrouter_dnat_rule'
+        self.assertRaises(NvpApiClient.ServiceUnavailable,
+                          nvplib.get_function_by_version,
+                          func_name, None)
