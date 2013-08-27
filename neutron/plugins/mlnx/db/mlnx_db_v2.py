@@ -65,7 +65,7 @@ def _remove_unconfigured_vlans(session, allocations):
     for entries in allocations.itervalues():
         for entry in entries:
             if not entry.allocated:
-                LOG.debug(_("removing vlan %(seg_id)s on physical "
+                LOG.debug(_("Removing vlan %(seg_id)s on physical "
                             "network %(net)s from pool"),
                           {'seg_id': entry.segmentation_id,
                            'net': entry.physical_network})

@@ -258,7 +258,7 @@ class InvalidExtensionEnv(BadRequest):
 
 
 class InvalidContentType(NeutronException):
-    message = "Invalid content type %(content_type)s"
+    message = _("Invalid content type %(content_type)s")
 
 
 class ExternalIpAddressExhausted(BadRequest):

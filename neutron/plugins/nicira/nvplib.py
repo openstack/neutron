@@ -530,9 +530,9 @@ def update_explicit_routes_lrouter(cluster, router_id, routes):
                                                      router_id, route)
                 added_routes.append(uuid)
     except NvpApiClient.NvpApiException:
-        LOG.exception(_('Cannot update NVP routes %(routes)s for'
-                        ' router %(router_id)s') % {'routes': routes,
-                                                    'router_id': router_id})
+        LOG.exception(_('Cannot update NVP routes %(routes)s for '
+                        'router %(router_id)s'),
+                      {'routes': routes, 'router_id': router_id})
         # Roll back to keep NVP in consistent state
         with excutils.save_and_reraise_exception():
             if nvp_routes:
@@ -665,7 +665,7 @@ def get_port_by_neutron_tag(cluster, lswitch_uuid, neutron_port_id):
                           filters={'tag': neutron_port_id,
                                    'tag_scope': 'q_port_id'})
     LOG.debug(_("Looking for port with q_port_id tag '%(neutron_port_id)s' "
-                "on: '%(lswitch_uuid)s'") %
+                "on: '%(lswitch_uuid)s'"),
               {'neutron_port_id': neutron_port_id,
                'lswitch_uuid': lswitch_uuid})
     res = do_request(HTTP_GET, uri, cluster=cluster)
@@ -674,7 +674,7 @@ def get_port_by_neutron_tag(cluster, lswitch_uuid, neutron_port_id):
         if num_results > 1:
             LOG.warn(_("Found '%(num_ports)d' ports with "
                        "q_port_id tag: '%(neutron_port_id)s'. "
-                       "Only 1 was expected.") %
+                       "Only 1 was expected."),
                      {'num_ports': num_results,
                       'neutron_port_id': neutron_port_id})
         return res["results"][0]
@@ -963,10 +963,11 @@ def format_exception(etype, e, exception_locals):
     :param execption_locals: calling context local variable dict.
     :returns: a formatted string.
     """
-    msg = ["Error. %s exception: %s." % (etype, e)]
+    msg = [_("Error. %(type)s exception: %(exc)s.") %
+           {'type': etype, 'exc': e}]
     l = dict((k, v) for k, v in exception_locals.iteritems()
              if k != 'request')
-    msg.append("locals=[%s]" % str(l))
+    msg.append(_("locals=[%s]") % str(l))
     return ' '.join(msg)
 
 
@@ -1326,8 +1327,8 @@ def config_helper(http_method, http_uri, cluster):
                           http_uri,
                           cluster=cluster)
     except Exception as e:
-        msg = ("Error '%s' when connecting to controller(s): %s."
-               % (str(e), ', '.join(cluster.nvp_controllers)))
+        msg = (_("Error '%(err)s' when connecting to controller(s): %(ctl)s.")
+               % {'err': str(e), 'ctl': ', '.join(cluster.nvp_controllers)})
         raise Exception(msg)
 
 

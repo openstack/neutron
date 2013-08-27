@@ -35,7 +35,7 @@ class Plumlib(object):
     """
 
     def __init__(self):
-        LOG.info('Python PLUMgrid Library Started ')
+        LOG.info(_('Python PLUMgrid Library Started '))
 
     def director_conn(self, director_plumgrid, director_port, timeout,
                       director_admin, director_password):

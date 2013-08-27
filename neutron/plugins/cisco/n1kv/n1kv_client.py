@@ -253,7 +253,7 @@ class Client(object):
 
         :param network_profile: network profile dict
         """
-        LOG.debug(_("logical network"))
+        LOG.debug(_("Logical network"))
         body = {'name': network_profile['name']}
         return self._post(self.logical_networks_path,
                           body=body)
@@ -459,7 +459,7 @@ class Client(object):
         elif type(data) is dict:
             return wsgi.Serializer().serialize(data, self._set_content_type())
         else:
-            raise Exception("unable to serialize object of type = '%s'" %
+            raise Exception(_("Unable to serialize object of type = '%s'") %
                             type(data))
 
     def _deserialize(self, data, status_code):

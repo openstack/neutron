@@ -397,4 +397,5 @@ def add_tunnel_endpoint(ip, max_retries=10):
                         'transaction had been commited (%s attempts left)'),
                       max_retries - (i + 1))
 
-    raise q_exc.NeutronException(message='Unable to generate a new tunnel id')
+    raise q_exc.NeutronException(
+        message=_('Unable to generate a new tunnel id'))

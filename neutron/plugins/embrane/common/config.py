@@ -42,7 +42,7 @@ heleos_opts = [
     cfg.StrOpt('resource_pool_id', default='default',
                help=_('Shared resource pool id')),
     cfg.BoolOpt('async_requests', default=True,
-                help=_('define if the requests have '
+                help=_('Define if the requests have '
                        'run asynchronously or not')),
 ]
 

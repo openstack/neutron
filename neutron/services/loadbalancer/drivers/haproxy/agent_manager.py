@@ -178,7 +178,7 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
         except Exception:
-            LOG.exception("Failed reporting state!")
+            LOG.exception(_("Failed reporting state!"))
 
     def initialize_service_hook(self, started_by):
         self.sync_state()

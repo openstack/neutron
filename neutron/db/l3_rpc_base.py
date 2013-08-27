@@ -59,8 +59,8 @@ class L3RpcCallbackMixin(object):
 
     def _ensure_host_set_on_ports(self, context, plugin, host, routers):
         for router in routers:
-            LOG.debug("checking router: %s for host: %s" %
-                      (router['id'], host))
+            LOG.debug(_("Checking router: %(id)s for host: %(host)s"),
+                      {'id': router['id'], 'host': host})
             self._ensure_host_set_on_port(context, plugin, host,
                                           router.get('gw_port'))
             for interface in router.get(constants.INTERFACE_KEY, []):

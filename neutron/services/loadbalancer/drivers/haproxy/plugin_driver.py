@@ -82,7 +82,7 @@ class LoadBalancerCallbacks(object):
             if not agents:
                 return []
             elif len(agents) > 1:
-                LOG.warning(_('Multiple lbaas agents found on host %s') % host)
+                LOG.warning(_('Multiple lbaas agents found on host %s'), host)
 
             pools = self.plugin.list_pools_on_lbaas_agent(context,
                                                           agents[0].id)

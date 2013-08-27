@@ -130,9 +130,9 @@ class EswitchManager(object):
                           physical_network, segmentation_id):
         LOG.info(_("Provisioning network %s"), network_id)
         if network_type == constants.TYPE_VLAN:
-            LOG.debug(_("creating VLAN Network"))
+            LOG.debug(_("Creating VLAN Network"))
         elif network_type == constants.TYPE_IB:
-            LOG.debug(_("creating IB Network"))
+            LOG.debug(_("Creating IB Network"))
         else:
             LOG.error(_("Unknown network type %(network_type)s "
                         "for network %(network_id)s"),
@@ -295,10 +295,10 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         resync_a = False
         resync_b = False
         if port_info.get('added'):
-            LOG.debug(_("ports added!"))
+            LOG.debug(_("Ports added!"))
             resync_a = self.treat_devices_added(port_info['added'])
         if port_info.get('removed'):
-            LOG.debug(_("ports removed!"))
+            LOG.debug(_("Ports removed!"))
             resync_b = self.treat_devices_removed(port_info['removed'])
         # If one of the above opertaions fails => resync with plugin
         return (resync_a | resync_b)

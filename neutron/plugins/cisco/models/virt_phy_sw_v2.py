@@ -233,9 +233,9 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             cdb.add_provider_network(network_id,
                                      const.NETWORK_TYPE_VLAN,
                                      provider_vlan_id)
-            LOG.debug(_("provider network added to DB: %(network_id)s, "
-                        "%(vlan_id)s"), {'network_id': network_id,
-                                         'vlan_id': provider_vlan_id})
+            LOG.debug(_("Provider network added to DB: %(network_id)s, "
+                        "%(vlan_id)s"),
+                      {'network_id': network_id, 'vlan_id': provider_vlan_id})
         return ovs_output[0]
 
     def update_network(self, context, id, network):
@@ -277,7 +277,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                                                     self._func_name(),
                                                     args)
         if cdb.remove_provider_network(id):
-            LOG.debug(_("provider network removed from DB: %s"), id)
+            LOG.debug(_("Provider network removed from DB: %s"), id)
         return ovs_output[0]
 
     def get_network(self, context, id, fields=None):

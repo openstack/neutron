@@ -95,7 +95,7 @@ class MlnxRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                 db.set_port_status(port['id'], new_status)
         else:
             entry = {'device': device}
-            LOG.debug("%s can not be found in database", device)
+            LOG.debug(_("%s can not be found in database"), device)
         return entry
 
     def update_device_down(self, rpc_context, **kwargs):

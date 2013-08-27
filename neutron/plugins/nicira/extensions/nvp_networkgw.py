@@ -79,8 +79,8 @@ def _validate_device_list(data, valid_values=None):
                 return err_msg
             unexpected_keys = [key for key in device if key not in key_specs]
             if unexpected_keys:
-                err_msg = ("Unexpected keys found in device description:%s",
-                           ",".join(unexpected_keys))
+                err_msg = (_("Unexpected keys found in device description:%s")
+                           % ",".join(unexpected_keys))
                 return err_msg
     except TypeError:
         return (_("%s: provided data are not iterable") %
@@ -89,7 +89,7 @@ def _validate_device_list(data, valid_values=None):
 nw_gw_quota_opts = [
     cfg.IntOpt('quota_network_gateway',
                default=5,
-               help=_('number of network gateways allowed per tenant, '
+               help=_('Number of network gateways allowed per tenant, '
                       '-1 for unlimited'))
 ]
 

@@ -38,9 +38,9 @@ service_opts = [
                help=_('Seconds between running periodic tasks')),
     cfg.IntOpt('periodic_fuzzy_delay',
                default=5,
-               help=_('range of seconds to randomly delay when starting the'
-                      ' periodic task scheduler to reduce stampeding.'
-                      ' (Disable by setting to 0)')),
+               help=_('Range of seconds to randomly delay when starting the '
+                      'periodic task scheduler to reduce stampeding. '
+                      '(Disable by setting to 0)')),
 ]
 CONF = cfg.CONF
 CONF.register_opts(service_opts)

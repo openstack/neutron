@@ -27,7 +27,7 @@ from neutron.plugins.ml2.drivers.mech_arista import exceptions as arista_exc
 
 LOG = logging.getLogger(__name__)
 
-EOS_UNREACHABLE_MSG = 'Unable to reach EOS'
+EOS_UNREACHABLE_MSG = _('Unable to reach EOS')
 
 
 class AristaRPCWrapper(object):
@@ -235,9 +235,10 @@ class AristaRPCWrapper(object):
             ret = ret[len(command_start):-len(command_end)]
         except Exception as error:
             host = cfg.CONF.ml2_arista.eapi_host
-            msg = ('Error %s while trying to execute commands %s on EOS %s' %
-                   (error, full_command, host))
-            LOG.exception(_("%s"), msg)
+            msg = (_('Error %(err)s while trying to execute '
+                     'commands %(cmd)s on EOS %(host)s') %
+                   {'err': error, 'cmd': full_command, 'host': host})
+            LOG.exception(msg)
             raise arista_exc.AristaRpcError(msg=msg)
 
         return ret
@@ -275,7 +276,7 @@ class SyncService(object):
     def synchronize(self):
         """Sends data to EOS which differs from neutron DB."""
 
-        LOG.info('Syncing Neutron  <-> EOS')
+        LOG.info(_('Syncing Neutron <-> EOS'))
         try:
             eos_tenants = self._rpc.get_tenants()
         except arista_exc.AristaRpcError:
