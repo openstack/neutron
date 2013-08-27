@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-26 06:19+0000\n"
+"POT-Creation-Date: 2013-08-27 06:12+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Russian "
@@ -293,96 +293,96 @@ msgstr ""
 msgid "Missing Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:477
+#: neutron/wsgi.py:482
 #, python-format
 msgid "Data %(data)s type is %(type)s"
 msgstr ""
 
-#: neutron/wsgi.py:560
+#: neutron/wsgi.py:565
 msgid "Cannot understand JSON"
 msgstr ""
 
-#: neutron/wsgi.py:573 neutron/wsgi.py:576
+#: neutron/wsgi.py:578 neutron/wsgi.py:581
 msgid "Inline DTD forbidden"
 msgstr ""
 
-#: neutron/wsgi.py:652
+#: neutron/wsgi.py:657
 msgid "Cannot understand XML"
 msgstr ""
 
-#: neutron/wsgi.py:763
+#: neutron/wsgi.py:768
 msgid "Unrecognized Content-Type provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:767
+#: neutron/wsgi.py:772
 msgid "No Content-Type provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:771
+#: neutron/wsgi.py:776
 msgid "Empty body provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:777
+#: neutron/wsgi.py:782
 msgid "Unable to deserialize body as provided Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:873
+#: neutron/wsgi.py:878
 msgid "You must implement __call__"
 msgstr ""
 
-#: neutron/wsgi.py:966 neutron/api/v2/base.py:173 neutron/api/v2/base.py:295
+#: neutron/wsgi.py:971 neutron/api/v2/base.py:173 neutron/api/v2/base.py:295
 #: neutron/api/v2/base.py:428 neutron/api/v2/base.py:479
 msgid "The resource could not be found."
 msgstr ""
 
-#: neutron/wsgi.py:1013
+#: neutron/wsgi.py:1018
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr ""
 
-#: neutron/wsgi.py:1019
-msgid "Unsupported Content-Type"
-msgstr ""
-
-#: neutron/wsgi.py:1020
-#, python-format
-msgid "InvalidContentType: %s"
-msgstr ""
-
 #: neutron/wsgi.py:1024
-msgid "Malformed request body"
+msgid "Unsupported Content-Type"
 msgstr ""
 
 #: neutron/wsgi.py:1025
 #, python-format
+msgid "InvalidContentType: %s"
+msgstr ""
+
+#: neutron/wsgi.py:1029
+msgid "Malformed request body"
+msgstr ""
+
+#: neutron/wsgi.py:1030
+#, python-format
 msgid "MalformedRequestBody: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1032
+#: neutron/wsgi.py:1037
 #, python-format
 msgid "HTTP exception thrown: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1037
+#: neutron/wsgi.py:1042
 msgid "Internal error"
 msgstr ""
 
-#: neutron/wsgi.py:1052 neutron/wsgi.py:1154
+#: neutron/wsgi.py:1057 neutron/wsgi.py:1159
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr ""
 
-#: neutron/wsgi.py:1055
+#: neutron/wsgi.py:1060
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr ""
 
-#: neutron/wsgi.py:1173
+#: neutron/wsgi.py:1178
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr ""
 
-#: neutron/wsgi.py:1232
+#: neutron/wsgi.py:1237
 msgid "Could not deserialize data"
 msgstr ""
 
@@ -1537,8 +1537,8 @@ msgid "%s failed"
 msgstr ""
 
 #: neutron/api/v2/resource.py:117
-#: neutron/tests/unit/test_api_v2_resource.py:255
-#: neutron/tests/unit/test_api_v2_resource.py:271
+#: neutron/tests/unit/test_api_v2_resource.py:263
+#: neutron/tests/unit/test_api_v2_resource.py:279
 msgid "Request Failed: internal server error while processing your request."
 msgstr ""
 
@@ -1653,7 +1653,7 @@ msgstr ""
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:32 neutron/plugins/nicira/NvpApiClient.py:216
+#: neutron/common/exceptions.py:32 neutron/plugins/nicira/NvpApiClient.py:217
 msgid "An unknown exception occurred."
 msgstr ""
 
@@ -2034,182 +2034,182 @@ msgstr ""
 msgid "Unable to generate mac address after %s attempts"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:341
+#: neutron/db/db_base_plugin_v2.py:343
 #, python-format
 msgid "Recycle %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:345
+#: neutron/db/db_base_plugin_v2.py:347
 #, python-format
 msgid "Recycle: first match for %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:352
+#: neutron/db/db_base_plugin_v2.py:354
 #, python-format
 msgid "Recycle: last match for %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:364
+#: neutron/db/db_base_plugin_v2.py:366
 #, python-format
 msgid "Recycle: merged %(first_ip1)s-%(last_ip1)s and %(first_ip2)s-%(last_ip2)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:373
+#: neutron/db/db_base_plugin_v2.py:375
 #, python-format
 msgid "Recycle: updated first %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:378
+#: neutron/db/db_base_plugin_v2.py:380
 #, python-format
 msgid "Recycle: updated last %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:387
+#: neutron/db/db_base_plugin_v2.py:389
 #, python-format
 msgid "Recycle: created new %(first_ip)s-%(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:406
+#: neutron/db/db_base_plugin_v2.py:408
 #, python-format
 msgid ""
 "No fixed IP found that matches the network %(network_id)s and ip address "
 "%(ip_address)s."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:415
+#: neutron/db/db_base_plugin_v2.py:417
 #, python-format
 msgid "Delete allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:439
+#: neutron/db/db_base_plugin_v2.py:441
 #, python-format
 msgid "All IP's from subnet %(subnet_id)s (%(cidr)s) allocated"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:444
+#: neutron/db/db_base_plugin_v2.py:446
 #, python-format
 msgid "Allocated IP - %(ip_address)s from %(first_ip)s to %(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:451
+#: neutron/db/db_base_plugin_v2.py:453
 msgid "No more free IP's in slice. Deleting allocation pool."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:557
+#: neutron/db/db_base_plugin_v2.py:559
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:569
+#: neutron/db/db_base_plugin_v2.py:571
 #, python-format
 msgid "IP address %s is not a valid IP for the defined networks subnets"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:575
+#: neutron/db/db_base_plugin_v2.py:577
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:595
+#: neutron/db/db_base_plugin_v2.py:597
 #, python-format
 msgid "IP address %s is not a valid IP for the defined subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:604 neutron/db/db_base_plugin_v2.py:637
+#: neutron/db/db_base_plugin_v2.py:606 neutron/db/db_base_plugin_v2.py:639
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:652
+#: neutron/db/db_base_plugin_v2.py:654
 #, python-format
 msgid "Port update. Hold %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:659
+#: neutron/db/db_base_plugin_v2.py:661
 #, python-format
 msgid "Port update. Adding %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:714
+#: neutron/db/db_base_plugin_v2.py:716
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:719
+#: neutron/db/db_base_plugin_v2.py:721
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:739
+#: neutron/db/db_base_plugin_v2.py:741
 msgid "Performing IP validity checks on allocation pools"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:746
+#: neutron/db/db_base_plugin_v2.py:748
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:753
+#: neutron/db/db_base_plugin_v2.py:755
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:757
+#: neutron/db/db_base_plugin_v2.py:759
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:762
+#: neutron/db/db_base_plugin_v2.py:764
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:775
+#: neutron/db/db_base_plugin_v2.py:777
 msgid "Checking for overlaps among allocation pools and gateway ip"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:786
+#: neutron/db/db_base_plugin_v2.py:788
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:799 neutron/db/db_base_plugin_v2.py:803
+#: neutron/db/db_base_plugin_v2.py:801 neutron/db/db_base_plugin_v2.py:805
 #, python-format
 msgid "Invalid route: %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:925
+#: neutron/db/db_base_plugin_v2.py:927
 #, python-format
 msgid "An exception occured while creating the %(resource)s:%(item)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1019
+#: neutron/db/db_base_plugin_v2.py:1021
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1043
+#: neutron/db/db_base_plugin_v2.py:1045
 msgid "Gateway is not valid on subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1049 neutron/db/db_base_plugin_v2.py:1063
+#: neutron/db/db_base_plugin_v2.py:1051 neutron/db/db_base_plugin_v2.py:1065
 msgid "new subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1056
+#: neutron/db/db_base_plugin_v2.py:1058
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1318
+#: neutron/db/db_base_plugin_v2.py:1320
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1393
+#: neutron/db/db_base_plugin_v2.py:1395
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
@@ -7936,33 +7936,33 @@ msgstr ""
 msgid "Unable to determine NVP version. Plugin might not work as expected."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:231
+#: neutron/plugins/nicira/NvpApiClient.py:232
 msgid "Server denied session's authentication credentials."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:235
+#: neutron/plugins/nicira/NvpApiClient.py:236
 msgid "An entity referenced in the request was not found."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:239
+#: neutron/plugins/nicira/NvpApiClient.py:240
 msgid "Request conflicts with configuration on a different entity."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:244
+#: neutron/plugins/nicira/NvpApiClient.py:245
 msgid ""
 "Request could not completed because the associated resource could not be "
 "reached."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:249
+#: neutron/plugins/nicira/NvpApiClient.py:250
 msgid "The request is forbidden from accessing the referenced resource."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:254
+#: neutron/plugins/nicira/NvpApiClient.py:255
 msgid "Create/Update actions are forbidden when in read-only mode."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:258
+#: neutron/plugins/nicira/NvpApiClient.py:259
 msgid "The request has timed out."
 msgstr ""
 
@@ -9593,8 +9593,8 @@ msgid ""
 "deleted first."
 msgstr ""
 
-#: neutron/tests/unit/test_api_v2_resource.py:161
-#: neutron/tests/unit/test_api_v2_resource.py:224
+#: neutron/tests/unit/test_api_v2_resource.py:169
+#: neutron/tests/unit/test_api_v2_resource.py:232
 msgid "Unmapped error"
 msgstr ""
 
