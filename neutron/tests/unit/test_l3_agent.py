@@ -511,25 +511,25 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.router_deleted(None, FAKE_ID)
         # verify that will set fullsync
-        self.assertTrue(FAKE_ID in agent.removed_routers)
+        self.assertIn(FAKE_ID, agent.removed_routers)
 
     def test_routers_updated(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.routers_updated(None, [FAKE_ID])
         # verify that will set fullsync
-        self.assertTrue(FAKE_ID in agent.updated_routers)
+        self.assertIn(FAKE_ID, agent.updated_routers)
 
     def test_removed_from_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.router_removed_from_agent(None, {'router_id': FAKE_ID})
         # verify that will set fullsync
-        self.assertTrue(FAKE_ID in agent.removed_routers)
+        self.assertIn(FAKE_ID, agent.removed_routers)
 
     def test_added_to_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.router_added_to_agent(None, [FAKE_ID])
         # verify that will set fullsync
-        self.assertTrue(FAKE_ID in agent.updated_routers)
+        self.assertIn(FAKE_ID, agent.updated_routers)
 
     def test_process_router_delete(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
