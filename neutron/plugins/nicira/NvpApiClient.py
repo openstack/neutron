@@ -202,6 +202,7 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
                    307: zero,
                    400: zero,
                    500: zero,
+                   501: zero,
                    503: zero}
 
 

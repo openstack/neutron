@@ -1379,6 +1379,14 @@ class TestNvplibClusterManagement(NvplibTestCase):
             self.assertRaises(nvp_exc.MaintenanceInProgress,
                               nvplib.do_request, cluster=self.fake_cluster)
 
+    def test_cluster_method_not_implemetned(self):
+        self.assertRaises(NvpApiClient.NvpApiException,
+                          nvplib.do_request,
+                          nvplib.HTTP_GET,
+                          nvplib._build_uri_path('MY_FAKE_RESOURCE',
+                                                 resource_id='foo'),
+                          cluster=self.fake_cluster)
+
 
 def _nicira_method(method_name, module_name='nvplib'):
     return '%s.%s.%s' % ('neutron.plugins.nicira', module_name, method_name)
