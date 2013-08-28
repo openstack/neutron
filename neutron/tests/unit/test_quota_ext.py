@@ -71,7 +71,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()
         self.plugin.return_value.supported_extension_aliases = ['quotas']
-        # QUOTAS will regester the items in conf when starting
+        # QUOTAS will register the items in conf when starting
         # extra1 here is added later, so have to do it manually
         quota.QUOTAS.register_resource_by_name('extra1')
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
