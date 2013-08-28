@@ -1228,8 +1228,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             neutron_lports = super(NvpPluginV2, self).get_ports(
                 context, filters)
-            for neutron_lport in neutron_lports:
-                self._extend_port_mac_learning_state(context, neutron_lport)
         if (filters.get('network_id') and len(filters.get('network_id')) and
             self._network_is_external(context, filters['network_id'][0])):
             # Do not perform check on NVP platform
@@ -1422,6 +1420,9 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             ret_port = super(NvpPluginV2, self).update_port(
                 context, id, port)
+            # Save current mac learning state to check whether it's
+            # being updated or not
+            old_mac_learning_state = ret_port.get(mac_ext.MAC_LEARNING)
             # copy values over - except fixed_ips as
             # they've alreaby been processed
             port['port'].pop('fixed_ips', None)
@@ -1459,15 +1460,11 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 context, ret_port)
             # Populate the mac learning attribute
             new_mac_learning_state = port['port'].get(mac_ext.MAC_LEARNING)
-            old_mac_learning_state = self._get_mac_learning_state(context, id)
             if (new_mac_learning_state is not None and
                 old_mac_learning_state != new_mac_learning_state):
                 self._update_mac_learning_state(context, id,
                                                 new_mac_learning_state)
                 ret_port[mac_ext.MAC_LEARNING] = new_mac_learning_state
-            elif (new_mac_learning_state is None and
-                  old_mac_learning_state is not None):
-                ret_port[mac_ext.MAC_LEARNING] = old_mac_learning_state
             self._delete_port_queue_mapping(context, ret_port['id'])
             self._process_port_queue_mapping(context, ret_port)
             LOG.warn(_("Update port request: %s"), port)
@@ -1561,7 +1558,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             neutron_db_port = super(NvpPluginV2, self).get_port(context,
                                                                 id, fields)
             self._extend_port_qos_queue(context, neutron_db_port)
-            self._extend_port_mac_learning_state(context, neutron_db_port)
 
             if self._network_is_external(context,
                                          neutron_db_port['network_id']):
