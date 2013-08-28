@@ -222,18 +222,16 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 self.assertTrue(device_removed.called)
 
     def test_report_state(self):
-        with contextlib.nested(
-            mock.patch.object(self.agent.int_br, "get_vif_port_set"),
-            mock.patch.object(self.agent.state_rpc, "report_state")
-        ) as (get_vif_fn, report_st):
-            get_vif_fn.return_value = ["vif123", "vif234"]
+        with mock.patch.object(self.agent.state_rpc,
+                               "report_state") as report_st:
+            self.agent.int_br_device_count = 5
             self.agent._report_state()
-            self.assertTrue(get_vif_fn.called)
             report_st.assert_called_with(self.agent.context,
                                          self.agent.agent_state)
             self.assertNotIn("start_flag", self.agent.agent_state)
             self.assertEqual(
-                self.agent.agent_state["configurations"]["devices"], 2
+                self.agent.agent_state["configurations"]["devices"],
+                self.agent.int_br_device_count
             )
 
     def test_network_delete(self):
