@@ -24,6 +24,7 @@ import mock
 from oslo.config import cfg
 
 from neutron.plugins.hyperv.agent import hyperv_neutron_agent
+from neutron.plugins.hyperv.agent import utilsfactory
 from neutron.tests import base
 
 
@@ -35,11 +36,13 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
         # Avoid rpc initialization for unit tests
         cfg.CONF.set_override('rpc_backend',
                               'neutron.openstack.common.rpc.impl_fake')
+
+        utilsfactory._get_windows_version = mock.MagicMock(
+            return_value='6.2.0')
         self.agent = hyperv_neutron_agent.HyperVNeutronAgent()
         self.agent.plugin_rpc = mock.Mock()
         self.agent.context = mock.Mock()
         self.agent.agent_id = mock.Mock()
-        self.agent._utils = mock.Mock()
 
     def test_port_bound(self):
         port = mock.Mock()
