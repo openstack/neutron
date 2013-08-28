@@ -405,6 +405,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # each router's SNAT rules will be in their own namespace
         ri.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
         ri.iptables_manager.ipv4['nat'].empty_chain('snat')
+
+        # Add back the jump to float-snat
+        ri.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
+
         # And add them back if the action if add_rules
         if action == 'add_rules' and ex_gw_port:
             # ex_gw_port should not be None in this case
