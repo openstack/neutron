@@ -84,18 +84,7 @@ def version_dependent(wrapped_func):
         # should return the NVP version
         v = (wrapped_func(cluster, *args, **kwargs) or
              cluster.api_client.get_nvp_version())
-        if v:
-            func = (NVPLIB_FUNC_DICT[func_name][v.major].get(v.minor) or
-                    NVPLIB_FUNC_DICT[func_name][v.major]['default'])
-            if func is None:
-                LOG.error(_('NVP version %(ver)s does not support method '
-                          '%(fun)s.') % {'ver': v, 'fun': func_name})
-                raise NotImplementedError()
-        else:
-            raise NvpApiClient.ServiceUnavailable('NVP version is not set. '
-                                                  'Unable to complete request'
-                                                  'correctly. Check log for '
-                                                  'NVP communication errors.')
+        func = get_function_by_version(func_name, v)
         func_kwargs = kwargs
         arg_spec = inspect.getargspec(func)
         if not arg_spec.keywords and not arg_spec.varargs:
@@ -1197,28 +1186,48 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         raise nvp_exc.NvpPluginException(err_msg=msg)
 
 
+DEFAULT = -1
 NVPLIB_FUNC_DICT = {
     'create_lrouter': {
-        2: {'default': create_implicit_routing_lrouter, },
-        3: {'default': create_implicit_routing_lrouter,
+        2: {DEFAULT: create_implicit_routing_lrouter, },
+        3: {DEFAULT: create_implicit_routing_lrouter,
             2: create_explicit_routing_lrouter, }, },
     'update_lrouter': {
-        2: {'default': update_implicit_routing_lrouter, },
-        3: {'default': update_implicit_routing_lrouter,
+        2: {DEFAULT: update_implicit_routing_lrouter, },
+        3: {DEFAULT: update_implicit_routing_lrouter,
             2: update_explicit_routing_lrouter, }, },
     'create_lrouter_dnat_rule': {
-        2: {'default': create_lrouter_dnat_rule_v2, },
-        3: {'default': create_lrouter_dnat_rule_v3, }, },
+        2: {DEFAULT: create_lrouter_dnat_rule_v2, },
+        3: {DEFAULT: create_lrouter_dnat_rule_v3, }, },
     'create_lrouter_snat_rule': {
-        2: {'default': create_lrouter_snat_rule_v2, },
-        3: {'default': create_lrouter_snat_rule_v3, }, },
+        2: {DEFAULT: create_lrouter_snat_rule_v2, },
+        3: {DEFAULT: create_lrouter_snat_rule_v3, }, },
     'create_lrouter_nosnat_rule': {
-        2: {'default': create_lrouter_nosnat_rule_v2, },
-        3: {'default': create_lrouter_nosnat_rule_v3, }, },
+        2: {DEFAULT: create_lrouter_nosnat_rule_v2, },
+        3: {DEFAULT: create_lrouter_nosnat_rule_v3, }, },
     'get_default_route_explicit_routing_lrouter': {
-        3: {2: get_default_route_explicit_routing_lrouter_v32,
-            3: get_default_route_explicit_routing_lrouter_v33, }, },
+        3: {DEFAULT: get_default_route_explicit_routing_lrouter_v32,
+            2: get_default_route_explicit_routing_lrouter_v32, }, },
 }
+
+
+def get_function_by_version(func_name, nvp_ver):
+    if nvp_ver:
+        if nvp_ver.major not in NVPLIB_FUNC_DICT[func_name]:
+            major = max(NVPLIB_FUNC_DICT[func_name].keys())
+            minor = max(NVPLIB_FUNC_DICT[func_name][major].keys())
+            if major > nvp_ver.major:
+                raise NotImplementedError(_("Operation may not be supported"))
+        else:
+            major = nvp_ver.major
+            minor = nvp_ver.minor
+            if nvp_ver.minor not in NVPLIB_FUNC_DICT[func_name][major]:
+                minor = DEFAULT
+        return NVPLIB_FUNC_DICT[func_name][major][minor]
+    else:
+        msg = _('NVP version is not set. Unable to complete request '
+                'correctly. Check log for NVP communication errors.')
+        raise NvpApiClient.ServiceUnavailable(message=msg)
 
 
 # -----------------------------------------------------------------------------

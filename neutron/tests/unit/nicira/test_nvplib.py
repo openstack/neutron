@@ -1388,5 +1388,37 @@ class TestNvplibClusterManagement(NvplibTestCase):
                           cluster=self.fake_cluster)
 
 
+class TestNvplibVersioning(base.BaseTestCase):
+
+    def test_function_handling_missing_minor(self):
+        version = NvpApiClient.NVPVersion('2.0')
+        function = nvplib.get_function_by_version('create_lrouter', version)
+        self.assertEqual(nvplib.create_implicit_routing_lrouter,
+                         function)
+
+    def test_function_handling_with_both_major_and_minor(self):
+        version = NvpApiClient.NVPVersion('3.2')
+        function = nvplib.get_function_by_version('create_lrouter', version)
+        self.assertEqual(nvplib.create_explicit_routing_lrouter,
+                         function)
+
+    def test_function_handling_with_newer_major(self):
+        version = NvpApiClient.NVPVersion('5.2')
+        function = nvplib.get_function_by_version('create_lrouter', version)
+        self.assertEqual(nvplib.create_explicit_routing_lrouter,
+                         function)
+
+    def test_function_handling_with_obsolete_major(self):
+        version = NvpApiClient.NVPVersion('1.2')
+        self.assertRaises(NotImplementedError,
+                          nvplib.get_function_by_version,
+                          'create_lrouter', version)
+
+    def test_function_handling_with_unknown_version(self):
+        self.assertRaises(NvpApiClient.ServiceUnavailable,
+                          nvplib.get_function_by_version,
+                          'create_lrouter', None)
+
+
 def _nicira_method(method_name, module_name='nvplib'):
     return '%s.%s.%s' % ('neutron.plugins.nicira', module_name, method_name)
