@@ -30,6 +30,8 @@ class TestNeutronContext(base.BaseTestCase):
         self.db_api_session = self._db_api_session_patcher.start()
         self.addCleanup(self._db_api_session_patcher.stop)
 
+    # TODO(salv-orlando): Remove camelcase for test names in this module
+
     def testNeutronContextCreate(self):
         cxt = context.Context('user_id', 'tenant_id')
         self.assertEqual('user_id', cxt.user_id)
@@ -62,3 +64,11 @@ class TestNeutronContext(base.BaseTestCase):
         else:
             self.assertFalse(True, 'without_session admin context'
                                    'should has no session property!')
+
+    def test_neutron_context_with_load_roles_true(self):
+        ctx = context.get_admin_context()
+        self.assertIn('admin', ctx.roles)
+
+    def test_neutron_context_with_load_roles_false(self):
+        ctx = context.get_admin_context(load_admin_roles=False)
+        self.assertFalse(ctx.roles)
