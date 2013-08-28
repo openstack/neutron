@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-27 06:12+0000\n"
+"POT-Creation-Date: 2013-08-28 06:12+0000\n"
 "PO-Revision-Date: 2013-05-16 09:23+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Danish "
@@ -4233,7 +4233,7 @@ msgid "create_subnet() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:248
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:338
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:341
 msgid "update_subnet() called"
 msgstr ""
 
@@ -6584,7 +6584,12 @@ msgstr ""
 msgid "mechanism_manager.create_network failed, deleting network '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:334
+#: neutron/plugins/ml2/plugin.py:325
+#, python-format
+msgid "mechanism_manager.create_subnet failed, deleting subnet '%s'"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:382
 #, python-format
 msgid "mechanism_manager.create_port failed, deleting port '%s'"
 msgstr ""
@@ -7982,139 +7987,144 @@ msgstr ""
 msgid "Attribute:%s is empty or null"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:91
-#, python-format
-msgid "NVP version %(ver)s does not support method %(fun)s."
-msgstr ""
-
-#: neutron/plugins/nicira/nvplib.py:147
+#: neutron/plugins/nicira/nvplib.py:136
 #, python-format
 msgid "Specified name:'%s' exceeds maximum length. It will be truncated on NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:167
+#: neutron/plugins/nicira/nvplib.py:156
 #, python-format
 msgid "NVP controller cluster version: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:237
+#: neutron/plugins/nicira/nvplib.py:226
 #, python-format
 msgid "Created logical switch: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:253 neutron/plugins/nicira/nvplib.py:580
+#: neutron/plugins/nicira/nvplib.py:242 neutron/plugins/nicira/nvplib.py:569
 #, python-format
 msgid "Network not found, Error: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:491
+#: neutron/plugins/nicira/nvplib.py:480
 #, python-format
 msgid "Cannot update NVP routes %(routes)s for router %(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:607
+#: neutron/plugins/nicira/nvplib.py:596
 msgid "Port or Network not found"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:625
+#: neutron/plugins/nicira/nvplib.py:614
 #, python-format
 msgid ""
 "Looking for port with q_port_id tag '%(neutron_port_id)s' on: "
 "'%(lswitch_uuid)s'"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:633
+#: neutron/plugins/nicira/nvplib.py:622
 #, python-format
 msgid ""
 "Found '%(num_ports)d' ports with q_port_id tag: '%(neutron_port_id)s'. "
 "Only 1 was expected."
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:642
+#: neutron/plugins/nicira/nvplib.py:631
 #, python-format
 msgid "get_port() %(network)s %(port)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:650 neutron/plugins/nicira/nvplib.py:705
+#: neutron/plugins/nicira/nvplib.py:639 neutron/plugins/nicira/nvplib.py:694
 #, python-format
 msgid "Port or Network not found, Error: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:700
+#: neutron/plugins/nicira/nvplib.py:689
 #, python-format
 msgid "Updated logical port %(result)s on logical switch %(uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:737
+#: neutron/plugins/nicira/nvplib.py:726
 #, python-format
 msgid "Created logical port %(result)s on logical switch %(uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:761
+#: neutron/plugins/nicira/nvplib.py:750
 #, python-format
 msgid "Created logical port %(lport_uuid)s on logical router %(lrouter_uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:791
+#: neutron/plugins/nicira/nvplib.py:780
 #, python-format
 msgid "Updated logical port %(lport_uuid)s on logical router %(lrouter_uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:801
+#: neutron/plugins/nicira/nvplib.py:790
 #, python-format
 msgid ""
 "Delete logical router port %(lport_uuid)s on logical router "
 "%(lrouter_uuid)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:867
+#: neutron/plugins/nicira/nvplib.py:856
 #, python-format
 msgid "Port not found, Error: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:989
+#: neutron/plugins/nicira/nvplib.py:978
 #, python-format
 msgid "Created Security Profile: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1015
+#: neutron/plugins/nicira/nvplib.py:1004
 #, python-format
 msgid "Updated Security Profile: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1034
+#: neutron/plugins/nicira/nvplib.py:1023
 #, python-format
 msgid "Invalid keys for NAT match: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1040
+#: neutron/plugins/nicira/nvplib.py:1029
 #, python-format
 msgid "Creating NAT rule: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1054
+#: neutron/plugins/nicira/nvplib.py:1043
 msgid ""
 "No SNAT rules cannot be applied as they are not available in this version"
 " of the NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1189
+#: neutron/plugins/nicira/nvplib.py:1178
 #, python-format
 msgid "Router Port %(lport_id)s not found on router %(lrouter_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1194
+#: neutron/plugins/nicira/nvplib.py:1183
 #, python-format
 msgid ""
 "An exception occurred while updating IP addresses on a router logical "
 "port:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1235
+#: neutron/plugins/nicira/nvplib.py:1220
+msgid "Operation may not be supported"
+msgstr ""
+
+#: neutron/plugins/nicira/nvplib.py:1228
+msgid ""
+"NVP version is not set. Unable to complete request correctly. Check log "
+"for NVP communication errors."
+msgstr ""
+
+#: neutron/plugins/nicira/nvplib.py:1244
 msgid "Failed to create logical queue"
 msgstr ""
 
-#: neutron/plugins/nicira/nvplib.py:1246
+#: neutron/plugins/nicira/nvplib.py:1255
 msgid "Failed to delete logical queue"
 msgstr ""
 
@@ -8954,118 +8964,118 @@ msgstr ""
 msgid "Neutron PLUMgrid Director: Neutron server with PLUMgrid Plugin has started"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:84
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:86
 #, python-format
 msgid "Neutron PLUMgrid Director: %s"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:94
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:97
 msgid "Neutron PLUMgrid Director: create_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:108
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:111
 msgid "PLUMgrid Library: create_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:124
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:127
 msgid "Neutron PLUMgrid Director: update_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:135
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:161
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:350
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:138
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:164
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:353
 msgid "PLUMgrid Library: update_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:151
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:154
 msgid "Neutron PLUMgrid Director: delete_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:174
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:177
 msgid "Neutron PLUMgrid Director: create_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:193
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:221
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:196
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:224
 msgid "PLUMgrid Library: create_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:209
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:212
 msgid "Neutron PLUMgrid Director: update_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:238
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:241
 msgid "Neutron PLUMgrid Director: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:252
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:255
 msgid "PLUMgrid Library: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:282
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:285
 msgid "Neutron PLUMgrid Director: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:306
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:309
 msgid "PLUMgrid Library: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:317
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:320
 msgid "Neutron PLUMgrid Director: delete_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:329
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:332
 msgid "PLUMgrid Library: delete_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:363
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:366
 msgid "Neutron PLUMgrid Director: create_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:375
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:378
 msgid "PLUMgrid Library: create_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:386
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:389
 msgid "Neutron PLUMgrid Director: update_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:392
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:395
 msgid "PLUMgrid Library: update_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:402
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:405
 msgid "Neutron PLUMgrid Director: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:412
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:415
 msgid "PLUMgrid Library: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:421
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:424
 msgid "Neutron PLUMgrid Director: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:441
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:444
 msgid "PLUMgrid Library: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:453
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:456
 msgid "Neutron PLUMgrid Director: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:475
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:478
 msgid "PLUMgrid Library: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:505
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:508
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not supported yet by this plugin. "
 "Ignoring setting for network %s"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:509
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:512
 msgid "Network Admin State Validation Falied: "
 msgstr ""
 
@@ -9612,7 +9622,14 @@ msgid ""
 "%(original)s) and network segments %(segments)s"
 msgstr ""
 
-#: neutron/tests/unit/ml2/drivers/mechanism_logger.py:60
+#: neutron/tests/unit/ml2/drivers/mechanism_logger.py:59
+#, python-format
+msgid ""
+"%(method)s called with subnet settings %(current)s (original settings "
+"%(original)s)"
+msgstr ""
+
+#: neutron/tests/unit/ml2/drivers/mechanism_logger.py:85
 #, python-format
 msgid ""
 "%(method)s called with port settings %(current)s (original settings "
@@ -9915,5 +9932,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "port_unbound: vif_id %s not in local_vlan_map"
+#~ msgstr ""
+
+#~ msgid "NVP version %(ver)s does not support method %(fun)s."
 #~ msgstr ""
 
