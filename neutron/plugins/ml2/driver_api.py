@@ -164,6 +164,38 @@ class NetworkContext(object):
         pass
 
 
+class SubnetContext(object):
+    """Context passed to MechanismDrivers for changes to subnet resources.
+
+    A SubnetContext instance wraps a subnet resource. It provides
+    helper methods for accessing other relevant information. Results
+    from expensive operations are cached so that other
+    MechanismDrivers can freely access the same information.
+    """
+
+    __metaclass__ = ABCMeta
+
+    @abstractproperty
+    def current(self):
+        """Return the current state of the subnet.
+
+        Return the current state of the subnet, as defined by
+        NeutronPluginBaseV2.create_subnet and all extensions in the
+        ml2 plugin.
+        """
+        pass
+
+    @abstractproperty
+    def original(self):
+        """Return the original state of the subnet.
+
+        Return the original state of the subnet, prior to a call to
+        update_subnet. Method is only valid within calls to
+        update_subnet_precommit and update_subnet_postcommit.
+        """
+        pass
+
+
 class PortContext(object):
     """Context passed to MechanismDrivers for changes to port resources.
 
@@ -221,8 +253,6 @@ class MechanismDriver(object):
     update network/port case, all data validation must be done within
     methods that are part of the database transaction.
     """
-
-    # TODO(apech): add calls for subnets
 
     __metaclass__ = ABCMeta
 
@@ -317,6 +347,96 @@ class MechanismDriver(object):
 
         :param context: NetworkContext instance describing the current
         state of the network, prior to the call to delete it.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Runtime errors are not
+        expected, and will not prevent the resource from being
+        deleted.
+        """
+        pass
+
+    def create_subnet_precommit(self, context):
+        """Allocate resources for a new subnet.
+
+        :param context: SubnetContext instance describing the new
+        subnet.
+
+        Create a new subnet, allocating resources as necessary in the
+        database. Called inside transaction context on session. Call
+        cannot block.  Raising an exception will result in a rollback
+        of the current transaction.
+        """
+        pass
+
+    def create_subnet_postcommit(self, context):
+        """Create a subnet.
+
+        :param context: SubnetContext instance describing the new
+        subnet.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Raising an exception will
+        cause the deletion of the resource.
+        """
+        pass
+
+    def update_subnet_precommit(self, context):
+        """Update resources of a subnet.
+
+        :param context: SubnetContext instance describing the new
+        state of the subnet, as well as the original state prior
+        to the update_subnet call.
+
+        Update values of a subnet, updating the associated resources
+        in the database. Called inside transaction context on session.
+        Raising an exception will result in rollback of the
+        transaction.
+
+        update_subnet_precommit is called for all changes to the
+        subnet state. It is up to the mechanism driver to ignore
+        state or state changes that it does not know or care about.
+        """
+        pass
+
+    def update_subnet_postcommit(self, context):
+        """Update a subnet.
+
+        :param context: SubnetContext instance describing the new
+        state of the subnet, as well as the original state prior
+        to the update_subnet call.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Raising an exception will
+        cause the deletion of the resource.
+
+        update_subnet_postcommit is called for all changes to the
+        subnet state.  It is up to the mechanism driver to ignore
+        state or state changes that it does not know or care about.
+        """
+        pass
+
+    def delete_subnet_precommit(self, context):
+        """Delete resources for a subnet.
+
+        :param context: SubnetContext instance describing the current
+        state of the subnet, prior to the call to delete it.
+
+        Delete subnet resources previously allocated by this
+        mechanism driver for a subnet. Called inside transaction
+        context on session. Runtime errors are not expected, but
+        raising an exception will result in rollback of the
+        transaction.
+        """
+        pass
+
+    def delete_subnet_postcommit(self, context):
+        """Delete a subnet.
+
+        :param context: SubnetContext instance describing the current
+        state of the subnet, prior to the call to delete it.
 
         Called after the transaction commits. Call can block, though
         will block the entire process so care should be taken to not

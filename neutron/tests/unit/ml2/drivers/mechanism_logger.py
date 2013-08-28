@@ -33,9 +33,9 @@ class LoggerMechanismDriver(api.MechanismDriver):
                    "(original settings %(original)s) and "
                    "network segments %(segments)s"),
                  {'method': method_name,
-                  'current': context.current(),
-                  'original': context.original(),
-                  'segments': context.network_segments()})
+                  'current': context.current,
+                  'original': context.original,
+                  'segments': context.network_segments})
 
     def create_network_precommit(self, context):
         self._log_network_call("create_network_precommit", context)
@@ -55,14 +55,39 @@ class LoggerMechanismDriver(api.MechanismDriver):
     def delete_network_postcommit(self, context):
         self._log_network_call("delete_network_postcommit", context)
 
+    def _log_subnet_call(self, method_name, context):
+        LOG.info(_("%(method)s called with subnet settings %(current)s "
+                   "(original settings %(original)s)"),
+                 {'method': method_name,
+                  'current': context.current,
+                  'original': context.original})
+
+    def create_subnet_precommit(self, context):
+        self._log_subnet_call("create_subnet_precommit", context)
+
+    def create_subnet_postcommit(self, context):
+        self._log_subnet_call("create_subnet_postcommit", context)
+
+    def update_subnet_precommit(self, context):
+        self._log_subnet_call("update_subnet_precommit", context)
+
+    def update_subnet_postcommit(self, context):
+        self._log_subnet_call("update_subnet_postcommit", context)
+
+    def delete_subnet_precommit(self, context):
+        self._log_subnet_call("delete_subnet_precommit", context)
+
+    def delete_subnet_postcommit(self, context):
+        self._log_subnet_call("delete_subnet_postcommit", context)
+
     def _log_port_call(self, method_name, context):
-        network_context = context.network()
+        network_context = context.network
         LOG.info(_("%(method)s called with port settings %(current)s "
                    "(original settings %(original)s) on network %(network)s"),
                  {'method': method_name,
-                  'current': context.current(),
-                  'original': context.original(),
-                  'network': network_context.current()})
+                  'current': context.current,
+                  'original': context.original,
+                  'network': network_context.current})
 
     def create_port_precommit(self, context):
         self._log_port_call("create_port_precommit", context)

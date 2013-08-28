@@ -311,6 +311,54 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             pass
         self.notifier.network_delete(context, id)
 
+    def create_subnet(self, context, subnet):
+        session = context.session
+        with session.begin(subtransactions=True):
+            result = super(Ml2Plugin, self).create_subnet(context, subnet)
+            mech_context = driver_context.SubnetContext(self, context, result)
+            self.mechanism_manager.create_subnet_precommit(mech_context)
+
+        try:
+            self.mechanism_manager.create_subnet_postcommit(mech_context)
+        except ml2_exc.MechanismDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_("mechanism_manager.create_subnet failed, "
+                            "deleting subnet '%s'"), result['id'])
+                self.delete_subnet(context, result['id'])
+        return result
+
+    def update_subnet(self, context, id, subnet):
+        session = context.session
+        with session.begin(subtransactions=True):
+            original_subnet = super(Ml2Plugin, self).get_subnet(context, id)
+            updated_subnet = super(Ml2Plugin, self).update_subnet(
+                context, id, subnet)
+            mech_context = driver_context.SubnetContext(
+                self, context, updated_subnet, original_subnet=original_subnet)
+            self.mechanism_manager.update_subnet_precommit(mech_context)
+
+        # TODO(apech) - handle errors raised by update_subnet, potentially
+        # by re-calling update_subnet with the previous attributes. For
+        # now the error is propogated to the caller, which is expected to
+        # either undo/retry the operation or delete the resource.
+        self.mechanism_manager.update_subnet_postcommit(mech_context)
+        return updated_subnet
+
+    def delete_subnet(self, context, id):
+        session = context.session
+        with session.begin(subtransactions=True):
+            subnet = self.get_subnet(context, id)
+            mech_context = driver_context.SubnetContext(self, context, subnet)
+            self.mechanism_manager.delete_subnet_precommit(mech_context)
+            super(Ml2Plugin, self).delete_subnet(context, id)
+        try:
+            self.mechanism_manager.delete_subnet_postcommit(mech_context)
+        except ml2_exc.MechanismDriverError:
+            # TODO(apech) - One or more mechanism driver failed to
+            # delete the subnet.  Ideally we'd notify the caller of
+            # the fact that an error occurred.
+            pass
+
     def create_port(self, context, port):
         attrs = port['port']
         attrs['status'] = const.PORT_STATUS_DOWN

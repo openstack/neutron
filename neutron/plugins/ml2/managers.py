@@ -270,6 +270,92 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         self._call_on_drivers("delete_network_postcommit", context,
                               continue_on_failure=True)
 
+    def create_subnet_precommit(self, context):
+        """Notify all mechanism drivers of a subnet creation.
+
+        :raises: neutron.plugins.ml2.common.MechanismDriverError
+        if any mechanism driver create_subnet_precommit call fails.
+
+        Called within the database transaction. If a mechanism driver
+        raises an exception, then a MechanismDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all mechanism drivers are called in this case.
+        """
+        self._call_on_drivers("create_subnet_precommit", context)
+
+    def create_subnet_postcommit(self, context):
+        """Notify all mechanism drivers of subnet creation.
+
+        :raises: neutron.plugins.ml2.common.MechanismDriverError
+        if any mechanism driver create_subnet_postcommit call fails.
+
+        Called after the database transaction. If a mechanism driver
+        raises an exception, then a MechanismDriverError is propagated
+        to the caller, where the subnet will be deleted, triggering
+        any required cleanup. There is no guarantee that all mechanism
+        drivers are called in this case.
+        """
+        self._call_on_drivers("create_subnet_postcommit", context)
+
+    def update_subnet_precommit(self, context):
+        """Notify all mechanism drivers of a subnet update.
+
+        :raises: neutron.plugins.ml2.common.MechanismDriverError
+        if any mechanism driver update_subnet_precommit call fails.
+
+        Called within the database transaction. If a mechanism driver
+        raises an exception, then a MechanismDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all mechanism drivers are called in this case.
+        """
+        self._call_on_drivers("update_subnet_precommit", context)
+
+    def update_subnet_postcommit(self, context):
+        """Notify all mechanism drivers of a subnet update.
+
+        :raises: neutron.plugins.ml2.common.MechanismDriverError
+        if any mechanism driver update_subnet_postcommit call fails.
+
+        Called after the database transaction. If a mechanism driver
+        raises an exception, then a MechanismDriverError is propagated
+        to the caller, where an error is returned to the user. The
+        user is expected to take the appropriate action, whether by
+        retrying the call or deleting the subnet. There is no
+        guarantee that all mechanism drivers are called in this case.
+        """
+        self._call_on_drivers("update_subnet_postcommit", context)
+
+    def delete_subnet_precommit(self, context):
+        """Notify all mechanism drivers of a subnet deletion.
+
+        :raises: neutron.plugins.ml2.common.MechanismDriverError
+        if any mechanism driver delete_subnet_precommit call fails.
+
+        Called within the database transaction. If a mechanism driver
+        raises an exception, then a MechanismDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all mechanism drivers are called in this case.
+        """
+        self._call_on_drivers("delete_subnet_precommit", context)
+
+    def delete_subnet_postcommit(self, context):
+        """Notify all mechanism drivers of a subnet deletion.
+
+        :raises: neutron.plugins.ml2.common.MechanismDriverError
+        if any mechanism driver delete_subnet_postcommit call fails.
+
+        Called after the database transaction. If any mechanism driver
+        raises an error, then the error is logged but we continue to
+        call every other mechanism driver. A MechanismDriverError is
+        then reraised at the end to notify the caller of a failure. In
+        general we expect the caller to ignore the error, as the
+        subnet resource has already been deleted from the database
+        and it doesn't make sense to undo the action by recreating the
+        subnet.
+        """
+        self._call_on_drivers("delete_subnet_postcommit", context,
+                              continue_on_failure=True)
+
     def create_port_precommit(self, context):
         """Notify all mechanism drivers of a port creation.
 

@@ -35,17 +35,36 @@ class NetworkContext(MechanismDriverContext, api.NetworkContext):
         self._original_network = original_network
         self._segments = segments
 
+    @property
     def current(self):
         return self._network
 
+    @property
     def original(self):
         return self._original_network
 
+    @property
     def network_segments(self):
         if not self._segments:
             self._segments = self._plugin.get_network_segments(
                 self._plugin_context, self._network['id'])
         return self._segments
+
+
+class SubnetContext(MechanismDriverContext, api.SubnetContext):
+
+    def __init__(self, plugin, plugin_context, subnet, original_subnet=None):
+        super(SubnetContext, self).__init__(plugin, plugin_context)
+        self._subnet = subnet
+        self._original_subnet = original_subnet
+
+    @property
+    def current(self):
+        return self._subnet
+
+    @property
+    def original(self):
+        return self._original_subnet
 
 
 class PortContext(MechanismDriverContext, api.PortContext):
@@ -57,12 +76,15 @@ class PortContext(MechanismDriverContext, api.PortContext):
         self._original_port = original_port
         self._network_context = None
 
+    @property
     def current(self):
         return self._port
 
+    @property
     def original(self):
         return self._original_port
 
+    @property
     def network(self):
         """Return the NetworkContext associated with this port."""
         if not self._network_context:
