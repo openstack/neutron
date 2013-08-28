@@ -65,16 +65,34 @@ class HTTPResponseMock():
         return "{'status': '200 OK'}"
 
 
+class HTTPResponseMock500():
+    status = 500
+    reason = 'Internal Server Error'
+
+    def __init__(self, sock, debuglevel=0, strict=0, method=None,
+                 buffering=False, errmsg='500 Internal Server Error'):
+        self.errmsg = errmsg
+
+    def read(self):
+        return "{'status': '%s'}" % self.errmsg
+
+
 class HTTPConnectionMock():
 
     def __init__(self, server, port, timeout):
-        pass
+        self.response = None
 
     def request(self, action, uri, body, headers):
+        self.response = HTTPResponseMock(None)
+        # Port creations/updates must contain binding information
+        if ('port' in uri and 'attachment' not in uri
+            and 'binding' not in body and action in ('POST', 'PUT')):
+            errmsg = "Port binding info missing in port request '%s'" % body
+            self.response = HTTPResponseMock500(None, errmsg=errmsg)
         return
 
     def getresponse(self):
-        return HTTPResponseMock(None)
+        return self.response
 
     def close(self):
         pass
