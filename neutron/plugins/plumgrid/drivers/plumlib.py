@@ -86,3 +86,12 @@ class Plumlib(object):
 
     def remove_router_interface(self, tenant_id, net_id, router_id):
         self.plumlib.remove_router_interface(tenant_id, net_id, router_id)
+
+    def create_floatingip(self, net_db, floating_ip):
+        self.plumlib.create_floatingip(net_db, floating_ip)
+
+    def update_floatingip(self, net_db, floating_ip):
+        self.plumlib.update_floatingip(net_db, floating_ip, id)
+
+    def delete_floatingip(self, net_db, floating_ip_org, id):
+        self.plumlib.delete_floatingip(net_db, floating_ip_org, id)
