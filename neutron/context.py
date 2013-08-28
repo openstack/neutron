@@ -38,7 +38,7 @@ class ContextBase(common_context.RequestContext):
     """
 
     def __init__(self, user_id, tenant_id, is_admin=None, read_deleted="no",
-                 roles=None, timestamp=None, **kwargs):
+                 roles=None, timestamp=None, load_admin_roles=True, **kwargs):
         """Object initialization.
 
         :param read_deleted: 'no' indicates deleted records are hidden, 'yes'
@@ -58,11 +58,8 @@ class ContextBase(common_context.RequestContext):
         self.roles = roles or []
         if self.is_admin is None:
             self.is_admin = policy.check_is_admin(self)
-        elif self.is_admin:
+        elif self.is_admin and load_admin_roles:
             # Ensure context is populated with admin roles
-            # TODO(salvatore-orlando): It should not be necessary
-            # to populate roles in artificially-generated contexts
-            # address in bp/make-authz-orthogonal
             admin_roles = policy.get_admin_roles()
             if admin_roles:
                 self.roles = list(set(self.roles) | set(admin_roles))
@@ -137,11 +134,12 @@ class Context(ContextBase):
         return self._session
 
 
-def get_admin_context(read_deleted="no"):
+def get_admin_context(read_deleted="no", load_admin_roles=True):
     return Context(user_id=None,
                    tenant_id=None,
                    is_admin=True,
-                   read_deleted=read_deleted)
+                   read_deleted=read_deleted,
+                   load_admin_roles=load_admin_roles)
 
 
 def get_admin_context_without_session(read_deleted="no"):
