@@ -16,8 +16,8 @@
 # @author: Aaron Rosen, Nicira Networks, Inc.
 # @author: Bob Kukura, Red Hat, Inc.
 
+from sqlalchemy import func
 from sqlalchemy.orm import exc
-from sqlalchemy.sql import func
 
 from neutron.common import exceptions as q_exc
 import neutron.db.api as db
@@ -25,6 +25,7 @@ from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
+from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log as logging
 from neutron.plugins.openvswitch.common import constants
 from neutron.plugins.openvswitch import ovs_models_v2
@@ -367,14 +368,33 @@ def _generate_tunnel_id(session):
     return max_tunnel_id + 1
 
 
-def add_tunnel_endpoint(ip):
-    session = db.get_session()
-    try:
-        tunnel = (session.query(ovs_models_v2.TunnelEndpoint).
-                  filter_by(ip_address=ip).with_lockmode('update').one())
-    except exc.NoResultFound:
-        tunnel_id = _generate_tunnel_id(session)
-        tunnel = ovs_models_v2.TunnelEndpoint(ip, tunnel_id)
-        session.add(tunnel)
-        session.flush()
-    return tunnel
+def add_tunnel_endpoint(ip, max_retries=10):
+    """Return the endpoint of the given IP address or generate a new one."""
+
+    # NOTE(rpodolyaka): generation of a new tunnel endpoint must be put into a
+    #                   repeatedly executed transactional block to ensure it
+    #                   doesn't conflict with any other concurrently executed
+    #                   DB transactions in spite of the specified transactions
+    #                   isolation level value
+    for i in xrange(max_retries):
+        LOG.debug(_('Adding a tunnel endpoint for %s'), ip)
+        try:
+            session = db.get_session()
+            with session.begin(subtransactions=True):
+                tunnel = (session.query(ovs_models_v2.TunnelEndpoint).
+                          filter_by(ip_address=ip).with_lockmode('update').
+                          first())
+
+                if tunnel is None:
+                    tunnel_id = _generate_tunnel_id(session)
+                    tunnel = ovs_models_v2.TunnelEndpoint(ip, tunnel_id)
+                    session.add(tunnel)
+
+                return tunnel
+        except db_exc.DBDuplicateEntry:
+            # a concurrent transaction has been commited, try again
+            LOG.debug(_('Adding a tunnel endpoint failed due to a concurrent'
+                        'transaction had been commited (%s attempts left)'),
+                      max_retries - (i + 1))
+
+    raise q_exc.NeutronException(message='Unable to generate a new tunnel id')
