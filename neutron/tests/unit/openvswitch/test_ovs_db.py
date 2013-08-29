@@ -1,3 +1,5 @@
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
+#
 # Copyright (c) 2012 OpenStack Foundation.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -278,8 +280,8 @@ class TunnelAllocationsTest(base.BaseTestCase):
         self.session.flush()
 
         tunnel = ovs_db_v2.add_tunnel_endpoint(addr)
-        self.assertEquals(tunnel.id, 1)
-        self.assertEquals(tunnel.ip_address, addr)
+        self.assertEqual(tunnel.id, 1)
+        self.assertEqual(tunnel.ip_address, addr)
 
     def test_add_tunnel_endpoint_handle_duplicate_error(self):
         with mock.patch.object(session.Session, 'query') as query_mock:
@@ -288,7 +290,7 @@ class TunnelAllocationsTest(base.BaseTestCase):
 
             with testtools.ExpectedException(q_exc.NeutronException):
                 ovs_db_v2.add_tunnel_endpoint('10.0.0.1', 5)
-            self.assertEquals(query_mock.call_count, 5)
+            self.assertEqual(query_mock.call_count, 5)
 
 
 class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
