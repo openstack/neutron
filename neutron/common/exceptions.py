@@ -280,6 +280,11 @@ class GatewayConflictWithAllocationPools(InUse):
                 "allocation pool %(pool)s")
 
 
+class GatewayIpInUse(InUse):
+    message = _("Current gateway ip %(ip_address)s already in use "
+                "by port %(port_id)s. Unable to update.")
+
+
 class NetworkVlanRangeError(NeutronException):
     message = _("Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'")
 

@@ -1022,7 +1022,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     "the ip_version '%(ip_version)s'") % data
             raise q_exc.InvalidInput(error_message=msg)
 
-    def _validate_subnet(self, s):
+    def _validate_subnet(self, context, s, cur_subnet=None):
         """Validate a subnet spec."""
 
         # This method will validate attributes which may change during
@@ -1044,6 +1044,20 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                                        s['gateway_ip'])):
                 error_message = _("Gateway is not valid on subnet")
                 raise q_exc.InvalidInput(error_message=error_message)
+            # Ensure the gateway IP is not assigned to any port
+            # skip this check in case of create (s parameter won't have id)
+            # NOTE(salv-orlando): There is slight chance of a race, when
+            # a subnet-update and a router-interface-add operation are
+            # executed concurrently
+            if cur_subnet:
+                alloc_qry = context.session.query(models_v2.IPAllocation)
+                allocated = alloc_qry.filter_by(
+                    ip_address=cur_subnet['gateway_ip'],
+                    subnet_id=cur_subnet['id']).first()
+                if allocated and allocated['port_id']:
+                    raise q_exc.GatewayIpInUse(
+                        ip_address=cur_subnet['gateway_ip'],
+                        port_id=allocated['port_id'])
 
         if attributes.is_attr_set(s.get('dns_nameservers')):
             if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
@@ -1094,7 +1108,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 self._validate_gw_out_of_pools(s['gateway_ip'],
                                                s['allocation_pools'])
 
-        self._validate_subnet(s)
+        self._validate_subnet(context, s)
 
         tenant_id = self._get_tenant_id_for_create(context, s)
         with context.session.begin(subtransactions=True):
@@ -1157,7 +1171,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         s['ip_version'] = db_subnet.ip_version
         s['cidr'] = db_subnet.cidr
         s['id'] = db_subnet.id
-        self._validate_subnet(s)
+        self._validate_subnet(context, s, cur_subnet=db_subnet)
 
         if 'gateway_ip' in s and s['gateway_ip'] is not None:
             allocation_pools = [{'start': p['first_ip'], 'end': p['last_ip']}

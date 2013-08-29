@@ -2966,6 +2966,23 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 res = req.get_response(self.api)
                 self.assertEqual(res.status_int, 400)
 
+    def test_update_subnet_gw_ip_in_use_returns_409(self):
+        with self.network() as network:
+            with self.subnet(
+                network=network,
+                allocation_pools=[{'start': '10.0.0.100',
+                                   'end': '10.0.0.253'}]) as subnet:
+                subnet_data = subnet['subnet']
+                with self.port(
+                    subnet=subnet,
+                    fixed_ips=[{'subnet_id': subnet_data['id'],
+                                'ip_address': subnet_data['gateway_ip']}]):
+                    data = {'subnet': {'gateway_ip': '10.0.0.99'}}
+                    req = self.new_update_request('subnets', data,
+                                                  subnet_data['id'])
+                    res = req.get_response(self.api)
+                    self.assertEqual(res.status_int, 409)
+
     def test_update_subnet_inconsistent_ipv4_gatewayv6(self):
         with self.network() as network:
             with self.subnet(network=network) as subnet:
@@ -3446,7 +3463,10 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                        'nexthop': '1.2.3.4'}]}
             plugin = NeutronManager.get_plugin()
             e = self.assertRaises(exception,
-                                  plugin._validate_subnet, subnet)
+                                  plugin._validate_subnet,
+                                  context.get_admin_context(
+                                      load_admin_roles=False),
+                                  subnet)
             self.assertThat(
                 str(e),
                 matchers.Not(matchers.Contains('built-in function id')))
