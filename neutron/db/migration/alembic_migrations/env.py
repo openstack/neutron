@@ -40,7 +40,8 @@ plugin_class_path = neutron_config.core_plugin
 active_plugins = [plugin_class_path]
 active_plugins += neutron_config.service_plugins
 
-plugin_klass = importutils.import_class(plugin_class_path)
+for class_path in active_plugins:
+    importutils.import_class(class_path)
 
 # set the target for 'autogenerate' support
 target_metadata = model_base.BASEV2.metadata
