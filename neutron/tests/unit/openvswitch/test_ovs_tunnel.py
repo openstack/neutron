@@ -89,6 +89,7 @@ class TunnelTest(base.BaseTestCase):
 
         self.mox.StubOutClassWithMocks(ovs_lib, 'OVSBridge')
         self.mock_int_bridge = ovs_lib.OVSBridge(self.INT_BRIDGE, 'sudo')
+        self.mock_int_bridge.get_local_port_mac().AndReturn('000000000001')
         self.mock_int_bridge.delete_port('patch-tun')
         self.mock_int_bridge.remove_all_flows()
         self.mock_int_bridge.add_flow(priority=1, actions='normal')
@@ -168,7 +169,6 @@ class TunnelTest(base.BaseTestCase):
             'int-tunnel_bridge_mapping',
             'phy-tunnel_bridge_mapping').AndReturn([self.inta, self.intb])
 
-        self.mock_int_bridge.get_local_port_mac().AndReturn('000000000001')
         self.mox.StubOutWithMock(ovs_lib, 'get_bridges')
         ovs_lib.get_bridges('sudo').AndReturn([self.INT_BRIDGE,
                                                self.TUN_BRIDGE,

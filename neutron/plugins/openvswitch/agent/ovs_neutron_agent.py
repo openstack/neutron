@@ -169,7 +169,19 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.root_helper = root_helper
         self.available_local_vlans = set(xrange(q_const.MIN_VLAN_TAG,
                                                 q_const.MAX_VLAN_TAG))
-        self.int_br = self.setup_integration_br(integ_br)
+        self.tunnel_types = tunnel_types or []
+        self.agent_state = {
+            'binary': 'neutron-openvswitch-agent',
+            'host': cfg.CONF.host,
+            'topic': q_const.L2_AGENT_TOPIC,
+            'configurations': bridge_mappings,
+            'agent_type': q_const.AGENT_TYPE_OVS,
+            'tunnel_types': self.tunnel_types,
+            'start_flag': True}
+
+        self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
+        self.setup_rpc()
+        self.setup_integration_br()
         self.setup_physical_bridges(bridge_mappings)
         self.local_vlan_map = {}
         self.tun_br_ofports = {constants.TYPE_GRE: set(),
@@ -183,22 +195,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             self.enable_tunneling = False
         self.local_ip = local_ip
         self.tunnel_count = 0
-        self.tunnel_types = tunnel_types or []
         self.vxlan_udp_port = cfg.CONF.AGENT.vxlan_udp_port
         self._check_ovs_version()
         if self.enable_tunneling:
             self.setup_tunnel_br(tun_br)
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(integ_br, tun_br)
-        self.agent_state = {
-            'binary': 'neutron-openvswitch-agent',
-            'host': cfg.CONF.host,
-            'topic': q_const.L2_AGENT_TOPIC,
-            'configurations': bridge_mappings,
-            'agent_type': q_const.AGENT_TYPE_OVS,
-            'tunnel_types': self.tunnel_types,
-            'start_flag': True}
-        self.setup_rpc()
 
         # Keep track of int_br's device count for use by _report_state()
         self.int_br_device_count = 0
@@ -518,7 +520,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                      DEAD_VLAN_TAG)
         self.int_br.add_flow(priority=2, in_port=port.ofport, actions="drop")
 
-    def setup_integration_br(self, bridge_name):
+    def setup_integration_br(self):
         '''Setup the integration bridge.
 
         Create patch ports and remove all existing flows.
@@ -526,12 +528,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         :param bridge_name: the name of the integration bridge.
         :returns: the integration bridge
         '''
-        int_br = ovs_lib.OVSBridge(bridge_name, self.root_helper)
-        int_br.delete_port(cfg.CONF.OVS.int_peer_patch_port)
-        int_br.remove_all_flows()
+        self.int_br.delete_port(cfg.CONF.OVS.int_peer_patch_port)
+        self.int_br.remove_all_flows()
         # switch all traffic using L2 learning
-        int_br.add_flow(priority=1, actions="normal")
-        return int_br
+        self.int_br.add_flow(priority=1, actions="normal")
 
     def setup_ancillary_bridges(self, integ_br, tun_br):
         '''Setup ancillary bridges - for example br-ex.'''
