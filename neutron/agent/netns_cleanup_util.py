@@ -21,7 +21,6 @@ import eventlet
 from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
-from neutron.agent import dhcp_agent
 from neutron.agent import l3_agent
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
@@ -33,15 +32,8 @@ from neutron.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
-NS_MANGLING_PATTERN = ('(%s|%s)' % (dhcp_agent.NS_PREFIX, l3_agent.NS_PREFIX) +
+NS_MANGLING_PATTERN = ('(%s|%s)' % (dhcp.NS_PREFIX, l3_agent.NS_PREFIX) +
                        attributes.UUID_PATTERN)
-
-
-class NullDelegate(object):
-    def __getattribute__(self, name):
-        def noop(*args, **kwargs):
-            pass
-        return noop
 
 
 class FakeNetwork(object):
@@ -79,15 +71,13 @@ def setup_conf():
 def kill_dhcp(conf, namespace):
     """Disable DHCP for a network if DHCP is still active."""
     root_helper = agent_config.get_root_helper(conf)
-    network_id = namespace.replace(dhcp_agent.NS_PREFIX, '')
+    network_id = namespace.replace(dhcp.NS_PREFIX, '')
 
-    null_delegate = NullDelegate()
     dhcp_driver = importutils.import_object(
         conf.dhcp_driver,
         conf,
         FakeNetwork(network_id),
-        root_helper,
-        null_delegate)
+        root_helper)
 
     if dhcp_driver.active:
         dhcp_driver.disable()

@@ -18,7 +18,7 @@
 import mock
 
 from neutron.agent.common import config
-from neutron.agent.dhcp_agent import DeviceManager
+from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
@@ -330,7 +330,7 @@ class TestBridgeInterfaceDriver(TestBase):
 class TestMetaInterfaceDriver(TestBase):
     def setUp(self):
         super(TestMetaInterfaceDriver, self).setUp()
-        self.conf.register_opts(DeviceManager.OPTS)
+        self.conf.register_opts(dhcp.OPTS)
         self.client_cls_p = mock.patch('neutronclient.v2_0.client.Client')
         client_cls = self.client_cls_p.start()
         self.addCleanup(self.client_cls_p.stop)
