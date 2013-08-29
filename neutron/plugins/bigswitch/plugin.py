@@ -333,7 +333,7 @@ class ServerPool(object):
             raise RemoteRestError(resp[2])
         if resp[0] in ignore_codes:
             LOG.warning(_("NeutronRestProxyV2: Received and ignored error "
-                          "code %(code)d on %(action)s action to resource "
+                          "code %(code)s on %(action)s action to resource "
                           "%(resource)s"),
                         {'code': resp[2], 'action': action,
                          'resource': resource})
