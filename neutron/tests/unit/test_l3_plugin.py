@@ -141,7 +141,7 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
                                                   router=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
         res = self.deserialize(res)
-        self.assertTrue('router' in res)
+        self.assertIn('router', res)
         router = res['router']
         self.assertEqual(router['id'], router_id)
         self.assertEqual(router['status'], "ACTIVE")
@@ -165,7 +165,7 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
                                                 page_reverse=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
-        self.assertTrue('routers' in res)
+        self.assertIn('routers', res)
         self.assertEqual(1, len(res['routers']))
         self.assertEqual(router_id, res['routers'][0]['id'])
 
@@ -187,7 +187,7 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
                                                   router=update_data)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
-        self.assertTrue('router' in res)
+        self.assertIn('router', res)
         router = res['router']
         self.assertEqual(router['id'], router_id)
         self.assertEqual(router['status'], "ACTIVE")
@@ -209,7 +209,7 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
                                                fields=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
-        self.assertTrue('router' in res)
+        self.assertIn('router', res)
         router = res['router']
         self.assertEqual(router['id'], router_id)
         self.assertEqual(router['status'], "ACTIVE")
@@ -245,7 +245,7 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
                                                          interface_data)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
-        self.assertTrue('port_id' in res)
+        self.assertIn('port_id', res)
         self.assertEqual(res['port_id'], port_id)
         self.assertEqual(res['subnet_id'], subnet_id)
 
@@ -643,7 +643,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                                      r['router']['id'],
                                                      s['subnet']['id'],
                                                      None)
-                self.assertTrue('port_id' in body)
+                self.assertIn('port_id', body)
 
                 # fetch port and confirm device_id
                 r_port_id = body['port_id']
@@ -670,8 +670,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                         stid = s['subnet']['tenant_id']
                         # tolerate subnet tenant deliberately to '' in the
                         # nicira metadata access case
-                        self.assertTrue(payload['tenant_id'] == stid or
-                                        payload['tenant_id'] == '')
+                        self.assertIn(payload['tenant_id'], [stid, ''])
 
     def test_router_add_interface_subnet_with_bad_tenant_returns_404(self):
         with mock.patch('neutron.context.Context.to_dict') as tdict:
@@ -695,7 +694,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                                              r['router']['id'],
                                                              s['subnet']['id'],
                                                              None)
-                        self.assertTrue('port_id' in body)
+                        self.assertIn('port_id', body)
                         tdict.return_value = tenant_context
                         self._router_interface_action('remove',
                                                       r['router']['id'],
@@ -728,14 +727,14 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                             r['router']['id'],
                             s2['subnet']['id'],
                             None)
-                        self.assertTrue('port_id' in body)
+                        self.assertIn('port_id', body)
                         ctx.return_value = tenant_context
                         self._router_interface_action(
                             'add',
                             r['router']['id'],
                             s1['subnet']['id'],
                             None)
-                        self.assertTrue('port_id' in body)
+                        self.assertIn('port_id', body)
                         self._router_interface_action(
                             'remove',
                             r['router']['id'],
@@ -755,7 +754,7 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                                                      r['router']['id'],
                                                      None,
                                                      p['port']['id'])
-                self.assertTrue('port_id' in body)
+                self.assertIn('port_id', body)
                 self.assertEqual(body['port_id'], p['port']['id'])
 
                 # fetch port and confirm device_id
@@ -1245,8 +1244,8 @@ class L3NatDBTestCase(L3NatTestCaseBase):
                              fip['floatingip']['id'])
             self.assertEqual(body['floatingip']['port_id'],
                              fip['floatingip']['port_id'])
-            self.assertTrue(body['floatingip']['fixed_ip_address'] is not None)
-            self.assertTrue(body['floatingip']['router_id'] is not None)
+            self.assertIsNotNone(body['floatingip']['fixed_ip_address'])
+            self.assertIsNotNone(body['floatingip']['router_id'])
 
     def test_floatingip_port_delete(self):
         with self.subnet() as private_sub:
@@ -1668,8 +1667,8 @@ class L3AgentDbTestCase(L3NatTestCaseBase):
                              fip['floatingip']['id'])
             self.assertEqual(floatingips[0]['port_id'],
                              fip['floatingip']['port_id'])
-            self.assertTrue(floatingips[0]['fixed_ip_address'] is not None)
-            self.assertTrue(floatingips[0]['router_id'] is not None)
+            self.assertIsNotNone(floatingips[0]['fixed_ip_address'])
+            self.assertIsNotNone(floatingips[0]['router_id'])
 
     def _test_notify_op_agent(self, target_func, *args):
         l3_rpc_agent_api_str = (
