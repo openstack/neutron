@@ -40,7 +40,8 @@ eswitch_opts = [
                 help=_("List of <physical_network>:<physical_interface>")),
     cfg.StrOpt('vnic_type',
                default=constants.VIF_TYPE_DIRECT,
-               help=_("type of VM network interface: direct or hosdev")),
+               help=_("type of VM network interface: mlnx_direct or "
+                      "hostdev")),
     cfg.StrOpt('daemon_endpoint',
                default='tcp://127.0.0.1:5001',
                help=_('eswitch daemon end point')),
@@ -53,6 +54,8 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
+    cfg.BoolOpt('rpc_support_old_agents', default=True,
+                help=_("Enable server RPC compatibility with old agents")),
 ]
 
 

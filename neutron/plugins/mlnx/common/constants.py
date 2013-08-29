@@ -25,7 +25,7 @@ TYPE_VLAN = 'vlan'
 TYPE_IB = 'ib'
 TYPE_NONE = 'none'
 
-VIF_TYPE_DIRECT = 'direct'
+VIF_TYPE_DIRECT = 'mlnx_direct'
 VIF_TYPE_HOSTDEV = 'hostdev'
 
 VNIC_TYPE = 'vnic_type'

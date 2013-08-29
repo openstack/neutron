@@ -20,6 +20,8 @@ from sqlalchemy.orm import exc
 from neutron.common import exceptions as q_exc
 import neutron.db.api as db
 from neutron.db import models_v2
+from neutron.db import securitygroups_db as sg_db
+from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.mlnx.common import config  # noqa
 from neutron.plugins.mlnx.db import mlnx_models_v2
@@ -115,6 +117,7 @@ def reserve_network(session):
     with session.begin(subtransactions=True):
         entry = (session.query(mlnx_models_v2.SegmentationIdAllocation).
                  filter_by(allocated=False).
+                 with_lockmode('update').
                  first())
         if not entry:
             raise q_exc.NoNetworkAvailable()
@@ -133,6 +136,7 @@ def reserve_specific_network(session, physical_network, segmentation_id):
             entry = (session.query(mlnx_models_v2.SegmentationIdAllocation).
                      filter_by(physical_network=physical_network,
                      segmentation_id=segmentation_id).
+                     with_lockmode('update').
                      one())
             if entry.allocated:
                 raise q_exc.VlanIdInUse(vlan_id=segmentation_id,
@@ -194,9 +198,8 @@ def add_network_binding(session, network_id, network_type,
 
 
 def get_network_binding(session, network_id):
-    qry = session.query(mlnx_models_v2.NetworkBinding)
-    qry = qry.filter_by(network_id=network_id)
-    return qry.first()
+    return (session.query(mlnx_models_v2.NetworkBinding).
+            filter_by(network_id=network_id).first())
 
 
 def add_port_profile_binding(session, port_id, vnic_type):
@@ -206,18 +209,35 @@ def add_port_profile_binding(session, port_id, vnic_type):
 
 
 def get_port_profile_binding(session, port_id):
-    qry = session.query(mlnx_models_v2.PortProfileBinding)
-    return qry.filter_by(port_id=port_id).first()
+    return (session.query(mlnx_models_v2.PortProfileBinding).
+            filter_by(port_id=port_id).first())
 
 
 def get_port_from_device(device):
     """Get port from database."""
     LOG.debug(_("get_port_from_device() called"))
     session = db.get_session()
-    ports = session.query(models_v2.Port).all()
-    for port in ports:
-        if port['id'].startswith(device):
-            return port
+    sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
+
+    query = session.query(models_v2.Port,
+                          sg_db.SecurityGroupPortBinding.security_group_id)
+    query = query.outerjoin(sg_db.SecurityGroupPortBinding,
+                            models_v2.Port.id == sg_binding_port)
+    query = query.filter(models_v2.Port.id.startswith(device))
+    port_and_sgs = query.all()
+    if not port_and_sgs:
+        return
+    port = port_and_sgs[0][0]
+    plugin = manager.NeutronManager.get_plugin()
+    port_dict = plugin._make_port_dict(port)
+    port_dict['security_groups'] = [
+        sg_id for port_in_db, sg_id in port_and_sgs if sg_id
+    ]
+    port_dict['security_group_rules'] = []
+    port_dict['security_group_source_groups'] = []
+    port_dict['fixed_ips'] = [ip['ip_address']
+                              for ip in port['fixed_ips']]
+    return port_dict
 
 
 def get_port_from_device_mac(device_mac):
