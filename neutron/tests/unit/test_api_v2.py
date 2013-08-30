@@ -71,24 +71,24 @@ class ResourceIndexTestCase(base.BaseTestCase):
         index = webtest.TestApp(router.Index({'foo': 'bar'}))
         res = index.get('')
 
-        self.assertTrue('resources' in res.json)
-        self.assertTrue(len(res.json['resources']) == 1)
+        self.assertIn('resources', res.json)
+        self.assertEqual(len(res.json['resources']), 1)
 
         resource = res.json['resources'][0]
-        self.assertTrue('collection' in resource)
-        self.assertTrue(resource['collection'] == 'bar')
+        self.assertIn('collection', resource)
+        self.assertEqual(resource['collection'], 'bar')
 
-        self.assertTrue('name' in resource)
-        self.assertTrue(resource['name'] == 'foo')
+        self.assertIn('name', resource)
+        self.assertEqual(resource['name'], 'foo')
 
-        self.assertTrue('links' in resource)
-        self.assertTrue(len(resource['links']) == 1)
+        self.assertIn('links', resource)
+        self.assertEqual(len(resource['links']), 1)
 
         link = resource['links'][0]
-        self.assertTrue('href' in link)
-        self.assertTrue(link['href'] == 'http://localhost/bar')
-        self.assertTrue('rel' in link)
-        self.assertTrue(link['rel'] == 'self')
+        self.assertIn('href', link)
+        self.assertEqual(link['href'], 'http://localhost/bar')
+        self.assertIn('rel', link)
+        self.assertEqual(link['rel'], 'self')
 
 
 class APIv2TestBase(base.BaseTestCase):
@@ -540,7 +540,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         res = self.api.get(_get_path('networks',
                                      fmt=self.fmt), extra_environ=env)
         res = self.deserialize(res)
-        self.assertTrue('networks' in res)
+        self.assertIn('networks', res)
         if not req_tenant_id or req_tenant_id == real_tenant_id:
             # expect full list returned
             self.assertEqual(len(res['networks']), 1)
@@ -759,7 +759,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                             content_type='application/' + self.fmt)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
         res = self.deserialize(res)
-        self.assertTrue('network' in res)
+        self.assertIn('network', res)
         net = res['network']
         self.assertEqual(net['id'], net_id)
         self.assertEqual(net['status'], "ACTIVE")
@@ -972,7 +972,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         net = res['network']
         self.assertEqual(net['id'], net_id)
         self.assertEqual(net['status'], "ACTIVE")
-        self.assertFalse('v2attrs:something' in net)
+        self.assertNotIn('v2attrs:something', net)
 
     def test_fields(self):
         return_value = {'name': 'net1', 'admin_state_up': True,
@@ -1228,9 +1228,9 @@ class V2Views(base.BaseTestCase):
         attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[collection]
         controller = v2_base.Controller(None, collection, resource, attr_info)
         res = controller._view(context.get_admin_context(), data)
-        self.assertTrue('fake' not in res)
+        self.assertNotIn('fake', res)
         for key in keys:
-            self.assertTrue(key in res)
+            self.assertIn(key, res)
 
     def test_network(self):
         keys = ('id', 'name', 'subnets', 'admin_state_up', 'status',
@@ -1314,8 +1314,8 @@ class QuotaTest(APIv2TestBase):
             _get_path('networks'), initial_input, expect_errors=True)
         instance.get_networks_count.assert_called_with(mock.ANY,
                                                        filters=mock.ANY)
-        self.assertTrue("Quota exceeded for resources" in
-                        res.json['NeutronError'])
+        self.assertIn("Quota exceeded for resources",
+                      res.json['NeutronError'])
 
     def test_create_network_quota_no_counts(self):
         cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
@@ -1331,8 +1331,8 @@ class QuotaTest(APIv2TestBase):
             _get_path('networks'), initial_input, expect_errors=True)
         instance.get_networks_count.assert_called_with(mock.ANY,
                                                        filters=mock.ANY)
-        self.assertTrue("Quota exceeded for resources" in
-                        res.json['NeutronError'])
+        self.assertIn("Quota exceeded for resources",
+                      res.json['NeutronError'])
 
     def test_create_network_quota_without_limit(self):
         cfg.CONF.set_override('quota_network', -1, group='QUOTAS')
@@ -1407,12 +1407,12 @@ class ExtensionTestCase(base.BaseTestCase):
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
-        self.assertTrue('network' in res.json)
+        self.assertIn('network', res.json)
         net = res.json['network']
         self.assertEqual(net['id'], net_id)
         self.assertEqual(net['status'], "ACTIVE")
         self.assertEqual(net['v2attrs:something'], "123")
-        self.assertFalse('v2attrs:something_else' in net)
+        self.assertNotIn('v2attrs:something_else', net)
 
 
 class TestSubresourcePlugin():
