@@ -610,6 +610,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                         "priority=1,"
                         "hard_timeout=300,"
                         "NXM_OF_VLAN_TCI[0..11],"
+                        "NXM_OF_ETH_DST[]=NXM_OF_ETH_SRC[],"
                         "load:0->NXM_OF_VLAN_TCI[],"
                         "load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],"
                         "output:NXM_OF_IN_PORT[]" %
