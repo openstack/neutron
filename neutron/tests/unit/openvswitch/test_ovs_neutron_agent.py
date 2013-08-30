@@ -106,6 +106,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
                        'OVSNeutronAgent.setup_ancillary_bridges',
                        return_value=[]),
+            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                       'get_local_port_mac',
+                       return_value='00:00:00:00:00:01'),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
                        return_value='00:00:00:00:00:01')):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**kwargs)
@@ -116,9 +119,12 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         port = mock.Mock()
         port.ofport = ofport
         net_uuid = 'my-net-uuid'
-        with mock.patch.object(self.agent.int_br,
-                               'delete_flows') as delete_flows_func:
-            self.agent.port_bound(port, net_uuid, 'local', None, None)
+        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                        'set_db_attribute',
+                        return_value=True):
+            with mock.patch.object(self.agent.int_br,
+                                   'delete_flows') as delete_flows_func:
+                self.agent.port_bound(port, net_uuid, 'local', None, None)
         self.assertEqual(delete_flows_func.called, ofport != -1)
 
     def test_port_bound_deletes_flows_for_valid_ofport(self):
@@ -128,9 +134,12 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         self._mock_port_bound(ofport=-1)
 
     def test_port_dead(self):
-        with mock.patch.object(self.agent.int_br,
-                               'add_flow') as add_flow_func:
-            self.agent.port_dead(mock.Mock())
+        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                        'set_db_attribute',
+                        return_value=True):
+            with mock.patch.object(self.agent.int_br,
+                                   'add_flow') as add_flow_func:
+                self.agent.port_dead(mock.Mock())
         self.assertTrue(add_flow_func.called)
 
     def mock_update_ports(self, vif_port_set=None, registered_ports=None):
@@ -422,6 +431,9 @@ class AncillaryBridgesTest(base.BaseTestCase):
                        'OVSNeutronAgent.setup_integration_br',
                        return_value=mock.Mock()),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                       return_value='00:00:00:00:00:01'),
+            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                       'get_local_port_mac',
                        return_value='00:00:00:00:00:01'),
             mock.patch('neutron.agent.linux.ovs_lib.get_bridges',
                        return_value=bridges),
