@@ -180,7 +180,7 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
     def __init__(self, request, client_address, server):
         if client_address == '':
             client_address = ('<local>', 0)
-        # base class is old-style, no super does not work properly
+        # base class is old-style, so super does not work properly
         eventlet.wsgi.HttpProtocol.__init__(self, request, client_address,
                                             server)
 
