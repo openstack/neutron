@@ -1,5 +1,6 @@
 {
   "display_name": "%(display_name)s",
+  %(distributed_json)s
   "uuid": "%(uuid)s",
   "tags": [
     {

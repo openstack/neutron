@@ -168,6 +168,14 @@ class FakeClient:
             'default_route_next_hop')
         fake_lrouter['default_next_hop'] = default_nexthop.get(
             'gateway_ip_address', '0.0.0.0')
+        # NOTE(salv-orlando): We won't make the Fake NVP API client
+        # aware of NVP version. The long term plan is to replace it
+        # with behavioral mocking of NVP API requests
+        if 'distributed' not in fake_lrouter:
+            fake_lrouter['distributed'] = False
+        distributed_json = ('"distributed": %s,' %
+                            str(fake_lrouter['distributed']).lower())
+        fake_lrouter['distributed_json'] = distributed_json
         return fake_lrouter
 
     def _add_lrouter(self, body):

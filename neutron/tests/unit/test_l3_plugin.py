@@ -481,14 +481,14 @@ class L3NatTestCaseMixin(object):
 class L3NatTestCaseBase(L3NatTestCaseMixin,
                         test_db_plugin.NeutronDbPluginV2TestCase):
 
-    def setUp(self):
+    def setUp(self, plugin=None, ext_mgr=None):
         test_config['plugin_name_v2'] = (
             'neutron.tests.unit.test_l3_plugin.TestL3NatPlugin')
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        ext_mgr = L3TestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        super(L3NatTestCaseBase, self).setUp()
+        ext_mgr = ext_mgr or L3TestExtensionManager()
+        super(L3NatTestCaseBase, self).setUp(
+            plugin=plugin, ext_mgr=ext_mgr)
 
         # Set to None to reload the drivers
         notifier_api._drivers = None

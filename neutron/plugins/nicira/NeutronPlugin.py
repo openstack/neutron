@@ -64,6 +64,7 @@ from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import metadata_access as nvp_meta
 from neutron.plugins.nicira.common import securitygroups as nvp_sec
+from neutron.plugins.nicira.dbexts import distributedrouter as dist_rtr
 from neutron.plugins.nicira.dbexts import maclearning as mac_db
 from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira.dbexts import nicira_networkgw_db as networkgw_db
@@ -134,6 +135,7 @@ class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
 class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   extraroute_db.ExtraRoute_db_mixin,
                   l3_gwmode_db.L3_NAT_db_mixin,
+                  dist_rtr.DistributedRouter_mixin,
                   portbindings_db.PortBindingMixin,
                   portsecurity_db.PortSecurityDbMixin,
                   securitygroups_db.SecurityGroupDbMixin,
@@ -152,6 +154,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = ["agent",
                                    "binding",
                                    "dhcp_agent_scheduler",
+                                   "dist-router",
                                    "ext-gw-mode",
                                    "extraroute",
                                    "mac-learning",
@@ -162,7 +165,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                    "provider",
                                    "quotas",
                                    "router",
-                                   "security-group", ]
+                                   "security-group"]
 
     __native_bulk_support = True
 
@@ -171,6 +174,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self):
 
+        # TODO(salv-orlando): Replace These dicts with
+        # collections.defaultdict for better handling of default values
         # Routines for managing logical ports in NVP
         self._port_drivers = {
             'create': {l3_db.DEVICE_OWNER_ROUTER_GW:
@@ -1624,11 +1629,16 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     if ext_net.subnets:
                         ext_subnet = ext_net.subnets[0]
                         nexthop = ext_subnet.gateway_ip
-            lrouter = nvplib.create_lrouter(self.cluster, tenant_id,
-                                            router['router']['name'],
-                                            nexthop)
+            distributed = r.get('distributed')
+            lrouter = nvplib.create_lrouter(
+                self.cluster, tenant_id, router['router']['name'], nexthop,
+                distributed=attr.is_attr_set(distributed) and distributed)
             # Use NVP identfier for Neutron resource
-            router['router']['id'] = lrouter['uuid']
+            r['id'] = lrouter['uuid']
+            # Update 'distributed' with value returned from NVP
+            # This will be useful for setting the value if the API request
+            # did not specify any value for the 'distributed' attribute
+            r['distributed'] = lrouter['distributed']
         except NvpApiClient.NvpApiException:
             raise nvp_exc.NvpPluginException(
                 err_msg=_("Unable to create logical router on NVP Platform"))
@@ -1652,15 +1662,20 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 err_msg=_("Unable to create router %s") % r['name'])
 
         with context.session.begin(subtransactions=True):
-            router_db = l3_db.Router(id=lrouter['uuid'],
-                                     tenant_id=tenant_id,
-                                     name=r['name'],
-                                     admin_state_up=r['admin_state_up'],
-                                     status="ACTIVE")
-            context.session.add(router_db)
+            # Transaction nesting is needed to avoid foreign key violations
+            # when processing the service provider binding
+            with context.session.begin(subtransactions=True):
+                router_db = l3_db.Router(id=lrouter['uuid'],
+                                         tenant_id=tenant_id,
+                                         name=r['name'],
+                                         admin_state_up=r['admin_state_up'],
+                                         status="ACTIVE")
+                self._process_distributed_router_create(context, router_db, r)
+                context.session.add(router_db)
             if has_gw_info:
                 self._update_router_gw_info(context, router_db['id'], gw_info)
-        return self._make_router_dict(router_db)
+        router = self._make_router_dict(router_db)
+        return router
 
     def update_router(self, context, router_id, router):
         # Either nexthop is updated or should be kept as it was before
@@ -1816,9 +1831,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.warning(_("Found %s logical routers not bound "
                           "to Neutron routers. Neutron and NVP are "
                           "potentially out of sync"), len(nvp_lrouters))
-
-        return [self._make_router_dict(router, fields)
-                for router in routers]
+        return [self._make_router_dict(router, fields) for router in routers]
 
     def add_router_interface(self, context, router_id, interface_info):
         # When adding interface by port_id we need to create the

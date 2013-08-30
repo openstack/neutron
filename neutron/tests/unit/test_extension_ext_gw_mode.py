@@ -300,7 +300,7 @@ class TestL3GwModeMixin(base.BaseTestCase):
 class ExtGwModeTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
                         test_l3_plugin.L3NatTestCaseMixin):
 
-    def setUp(self, plugin=None):
+    def setUp(self, plugin=None, ext_mgr=None):
         # Store l3 resource attribute map as it will be updated
         self._l3_attribute_map_bk = {}
         for item in l3.RESOURCE_ATTRIBUTE_MAP:
@@ -310,8 +310,9 @@ class ExtGwModeTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
             'neutron.tests.unit.test_extension_ext_gw_mode.TestDbPlugin')
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
+        ext_mgr = ext_mgr or TestExtensionManager()
         super(ExtGwModeTestCase, self).setUp(plugin=plugin,
-                                             ext_mgr=TestExtensionManager())
+                                             ext_mgr=ext_mgr)
         self.addCleanup(self.restore_l3_attribute_map)
 
     def restore_l3_attribute_map(self):
