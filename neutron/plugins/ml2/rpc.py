@@ -100,7 +100,7 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
             segments = db.get_network_segments(session, port.network_id)
             if not segments:
                 LOG.warning(_("Device %(device)s requested by agent "
-                              "%(agent_id)s has network %(network_id) with "
+                              "%(agent_id)s has network %(network_id)s with "
                               "no segments"),
                             {'device': device,
                              'agent_id': agent_id,
