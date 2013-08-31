@@ -886,7 +886,7 @@ def get_network_profile(db_session, id):
         return db_session.query(
             n1kv_models_v2.NetworkProfile).filter_by(id=id).one()
     except exc.NoResultFound:
-        raise c_exc.NetworkProfileIdNotFound(profile_id=id)
+        raise c_exc.NetworkProfileNotFound(profile=id)
 
 
 def _get_network_profiles(**kwargs):
@@ -1197,7 +1197,7 @@ class NetworkProfile_db_mixin(object):
         try:
             get_network_profile(context.session, id)
             return True
-        except c_exc.NetworkProfileIdNotFound(profile_id=id):
+        except c_exc.NetworkProfileNotFound(profile=id):
             return False
 
     def _get_segment_range(self, data):
@@ -1309,6 +1309,21 @@ class NetworkProfile_db_mixin(object):
                     msg = _("segment range overlaps with another profile")
                     LOG.exception(msg)
                     raise q_exc.InvalidInput(error_message=msg)
+
+    def _get_network_profile_by_name(self, db_session, name):
+        """
+        Retrieve network profile based on name.
+
+        :param db_session: database session
+        :param name: string representing the name for the network profile
+        :returns: network profile object
+        """
+        with db_session.begin(subtransactions=True):
+            try:
+                return (db_session.query(n1kv_models_v2.NetworkProfile).
+                        filter_by(name=name).one())
+            except exc.NoResultFound:
+                raise c_exc.NetworkProfileNotFound(profile=name)
 
 
 class PolicyProfile_db_mixin(object):
@@ -1460,7 +1475,7 @@ class PolicyProfile_db_mixin(object):
         db_session = db.get_session()
         with db_session.begin(subtransactions=True):
             return (db_session.query(n1kv_models_v2.PolicyProfile).
-                    filter_by(name=name).first())
+                    filter_by(name=name).one())
 
     def _remove_all_fake_policy_profiles(self):
         """

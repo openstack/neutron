@@ -204,6 +204,7 @@ class Client(object):
         """
         body = {'name': network['name'],
                 'id': network['id'],
+                'mode': 'access',
                 'networkSegmentPool': network_profile['name'], }
         if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VLAN:
             body['vlan'] = network[providernet.SEGMENTATION_ID]
