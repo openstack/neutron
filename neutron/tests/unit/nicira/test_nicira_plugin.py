@@ -480,9 +480,10 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
     def test_router_create_with_gwinfo_and_l3_ext_net_with_vlan(self):
         self._test_router_create_with_gwinfo_and_l3_ext_net(444)
 
-    def _test_router_create_with_distributed(self, dist_input, dist_expected):
+    def _test_router_create_with_distributed(self, dist_input, dist_expected,
+                                             version='3.1', return_code=201):
         self.mock_instance.return_value.get_nvp_version.return_value = (
-            NvpApiClient.NVPVersion('3.1'))
+            NvpApiClient.NVPVersion(version))
 
         data = {'tenant_id': 'whatever'}
         data['name'] = 'router1'
@@ -491,12 +492,15 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
             'routers', {'router': data}, self.fmt)
         try:
             res = router_req.get_response(self.ext_api)
-            router = self.deserialize(self.fmt, res)
-            self.assertIn('distributed', router['router'])
-            self.assertEqual(dist_expected,
-                             router['router']['distributed'])
+            self.assertEqual(return_code, res.status_int)
+            if res.status_int == 201:
+                router = self.deserialize(self.fmt, res)
+                self.assertIn('distributed', router['router'])
+                self.assertEqual(dist_expected,
+                                 router['router']['distributed'])
         finally:
-            self._delete('routers', router['router']['id'])
+            if res.status_int == 201:
+                self._delete('routers', router['router']['id'])
 
     def test_router_create_distributed(self):
         self._test_router_create_with_distributed(True, True)
@@ -506,6 +510,9 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
 
     def test_router_create_distributed_unspecified(self):
         self._test_router_create_with_distributed(None, False)
+
+    def test_router_create_distributed_returns_400(self):
+        self._test_router_create_with_distributed(True, None, '3.0', 400)
 
     def test_router_create_nvp_error_returns_500(self, vlan_id=None):
         with mock.patch.object(nvplib,

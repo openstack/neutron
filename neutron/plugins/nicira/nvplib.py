@@ -360,7 +360,11 @@ def create_explicit_routing_lrouter(cluster, tenant_id,
 
 @version_dependent
 def create_lrouter(cluster, *args, **kwargs):
-    pass
+    if kwargs.get('distributed', None):
+        v = cluster.api_client.get_nvp_version()
+        if (v.major < 3) or (v.major >= 3 and v.minor < 1):
+            raise nvp_exc.NvpInvalidVersion(version=v)
+        return v
 
 
 def delete_lrouter(cluster, lrouter_id):

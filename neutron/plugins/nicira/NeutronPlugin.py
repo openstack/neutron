@@ -1639,6 +1639,12 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # This will be useful for setting the value if the API request
             # did not specify any value for the 'distributed' attribute
             r['distributed'] = lrouter['distributed']
+        except nvp_exc.NvpInvalidVersion:
+            msg = _("Cannot create a distributed router with the NVP "
+                    "platform currently in execution. Please, try "
+                    "without specifying the 'distributed' attribute.")
+            LOG.exception(msg)
+            raise q_exc.BadRequest(resource='router', msg=msg)
         except NvpApiClient.NvpApiException:
             raise nvp_exc.NvpPluginException(
                 err_msg=_("Unable to create logical router on NVP Platform"))
