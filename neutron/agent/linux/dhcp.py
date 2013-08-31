@@ -397,8 +397,17 @@ class Dnsmasq(DhcpLocalProcess):
             for alloc in port.fixed_ips:
                 name = 'host-%s.%s' % (r.sub('-', alloc.ip_address),
                                        self.conf.dhcp_domain)
-                buf.write('%s,%s,%s\n' %
-                          (port.mac_address, name, alloc.ip_address))
+                set_tag = ''
+                if port.extra_dhcp_opts:
+                    if self.version >= self.MINIMUM_VERSION:
+                        set_tag = 'set:'
+
+                    buf.write('%s,%s,%s,%s%s\n' %
+                              (port.mac_address, name, alloc.ip_address,
+                               set_tag, port.id))
+                else:
+                    buf.write('%s,%s,%s\n' %
+                              (port.mac_address, name, alloc.ip_address))
 
         name = self.get_conf_file_name('host')
         utils.replace_file(name, buf.getvalue())
@@ -453,6 +462,12 @@ class Dnsmasq(DhcpLocalProcess):
                 else:
                     options.append(self._format_option(i, 'router'))
 
+        for port in self.network.ports:
+            if port.extra_dhcp_opts:
+                options.extend(
+                    self._format_option(port.id, opt.opt_name, opt.opt_value)
+                    for opt in port.extra_dhcp_opts)
+
         name = self.get_conf_file_name('opts')
         utils.replace_file(name, '\n'.join(options))
         return name
@@ -479,17 +494,22 @@ class Dnsmasq(DhcpLocalProcess):
 
         return retval
 
-    def _format_option(self, index, option, *args):
+    def _format_option(self, tag, option, *args):
         """Format DHCP option by option name or code."""
         if self.version >= self.MINIMUM_VERSION:
             set_tag = 'tag:'
         else:
             set_tag = ''
+
         option = str(option)
+
+        if isinstance(tag, int):
+            tag = self._TAG_PREFIX % tag
+
         if not option.isdigit():
             option = 'option:%s' % option
-        return ','.join((set_tag + self._TAG_PREFIX % index,
-                         option) + args)
+
+        return ','.join((set_tag + tag, '%s' % option) + args)
 
     @classmethod
     def lease_update(cls):
