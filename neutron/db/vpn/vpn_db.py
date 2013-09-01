@@ -229,9 +229,7 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
         ipsec_sitecon['dpd_interval'] = dpd.get('interval', 30)
         ipsec_sitecon['dpd_timeout'] = dpd.get('timeout', 120)
         tenant_id = self._get_tenant_id_for_create(context, ipsec_sitecon)
-        if ipsec_sitecon['dpd_timeout'] < ipsec_sitecon['dpd_interval']:
-            raise vpnaas.IPsecSiteConnectionDpdIntervalValueError(
-                attribute_a='dpd_timeout')
+        self._check_dpd(ipsec_sitecon)
         with context.session.begin(subtransactions=True):
             #Check permissions
             self._get_resource(context,
@@ -273,31 +271,40 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
                 context.session.add(peer_cidr_db)
         return self._make_ipsec_site_connection_dict(ipsec_site_conn_db)
 
+    def _check_dpd(self, ipsec_sitecon):
+        if ipsec_sitecon['dpd_timeout'] <= ipsec_sitecon['dpd_interval']:
+            raise vpnaas.IPsecSiteConnectionDpdIntervalValueError(
+                attr='dpd_timeout')
+
     def update_ipsec_site_connection(
             self, context,
             ipsec_site_conn_id, ipsec_site_connection):
-        ipsec_sitecon = ipsec_site_connection['ipsec_site_connection']
-        dpd = ipsec_sitecon.get('dpd', {})
-        if dpd.get('action'):
-            ipsec_sitecon['dpd_action'] = dpd.get('action')
-        if dpd.get('interval'):
-            ipsec_sitecon['dpd_interval'] = dpd.get('interval')
-        if dpd.get('timeout'):
-            ipsec_sitecon['dpd_timeout'] = dpd.get('timeout')
+        conn = ipsec_site_connection['ipsec_site_connection']
         changed_peer_cidrs = False
         with context.session.begin(subtransactions=True):
             ipsec_site_conn_db = self._get_resource(
                 context,
                 IPsecSiteConnection,
                 ipsec_site_conn_id)
+            dpd = conn.get('dpd', {})
+            if dpd.get('action'):
+                conn['dpd_action'] = dpd.get('action')
+            if dpd.get('interval') or dpd.get('timeout'):
+                conn['dpd_interval'] = dpd.get(
+                    'interval', ipsec_site_conn_db.dpd_interval)
+                conn['dpd_timeout'] = dpd.get(
+                    'timeout', ipsec_site_conn_db.dpd_timeout)
+                self._check_dpd(conn)
+
             self.assert_update_allowed(ipsec_site_conn_db)
-            if "peer_cidrs" in ipsec_sitecon:
+
+            if "peer_cidrs" in conn:
                 changed_peer_cidrs = True
                 old_peer_cidr_list = ipsec_site_conn_db['peer_cidrs']
                 old_peer_cidr_dict = dict(
                     (peer_cidr['cidr'], peer_cidr)
                     for peer_cidr in old_peer_cidr_list)
-                new_peer_cidr_set = set(ipsec_sitecon["peer_cidrs"])
+                new_peer_cidr_set = set(conn["peer_cidrs"])
                 old_peer_cidr_set = set(old_peer_cidr_dict)
 
                 new_peer_cidrs = list(new_peer_cidr_set)
@@ -308,9 +315,9 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
                         cidr=peer_cidr,
                         ipsec_site_connection_id=ipsec_site_conn_id)
                     context.session.add(pcidr)
-                del ipsec_sitecon["peer_cidrs"]
-            if ipsec_sitecon:
-                ipsec_site_conn_db.update(ipsec_sitecon)
+                del conn["peer_cidrs"]
+            if conn:
+                ipsec_site_conn_db.update(conn)
         result = self._make_ipsec_site_connection_dict(ipsec_site_conn_db)
         if changed_peer_cidrs:
             result['peer_cidrs'] = new_peer_cidrs

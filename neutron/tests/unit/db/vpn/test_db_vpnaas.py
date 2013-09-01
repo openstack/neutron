@@ -956,6 +956,11 @@ class TestVpnaas(VPNPluginDbTestCase):
             name=name,
             dpd_interval=30,
             dpd_timeout=20, expected_status_int=400)
+        self._create_ipsec_site_connection(
+            fmt=self.fmt,
+            name=name,
+            dpd_interval=100,
+            dpd_timeout=100, expected_status_int=400)
 
     def test_create_ipsec_site_connection(self, **extras):
         """Test case to create an ipsec_site_connection."""
@@ -1040,6 +1045,35 @@ class TestVpnaas(VPNPluginDbTestCase):
             self.assertEqual(res.status_int, 204)
 
     def test_update_ipsec_site_connection(self):
+        dpd = {'action': 'hold',
+               'interval': 40,
+               'timeout': 120}
+        self._test_update_ipsec_site_connection(
+            update={'dpd': dpd}
+        )
+
+    def test_update_ipsec_site_connection_with_invalid_dpd(self):
+        dpd1 = {'action': 'hold',
+                'interval': 100,
+                'timeout': 100}
+        self._test_update_ipsec_site_connection(
+            update={'dpd': dpd1},
+            expected_status_int=400)
+        dpd2 = {'action': 'hold',
+                'interval': 100,
+                'timeout': 60}
+        self._test_update_ipsec_site_connection(
+            update={'dpd': dpd2},
+            expected_status_int=400)
+        dpd3 = {'action': 'hold',
+                'interval': -50,
+                'timeout': -100}
+        self._test_update_ipsec_site_connection(
+            update={'dpd': dpd3},
+            expected_status_int=400)
+
+    def _test_update_ipsec_site_connection(
+        self, update=None, expected_status_int=200):
         """Test case to update a ipsec_site_connection."""
         name = 'new_ipsec_site_connection'
         ikename = 'ikepolicy1'
@@ -1095,7 +1129,9 @@ class TestVpnaas(VPNPluginDbTestCase):
                     keys['admin_state_up'],
                     description=description
                 ) as ipsec_site_connection:
-                    data = {'ipsec_site_connection': {'name': name}}
+                    if not update:
+                        update = {'name': name}
+                    data = {'ipsec_site_connection': update}
                     self._set_active(
                         vpn_db.IPsecSiteConnection,
                         ipsec_site_connection['ipsec_site_connection']['id'])
@@ -1104,12 +1140,16 @@ class TestVpnaas(VPNPluginDbTestCase):
                         data,
                         ipsec_site_connection['ipsec_site_connection']['id']
                     )
-                    res = self.deserialize(
-                        self.fmt,
-                        req.get_response(self.ext_api)
-                    )
-                    for k, v in keys.items():
-                        self.assertEqual(res['ipsec_site_connection'][k], v)
+                    res = req.get_response(self.ext_api)
+                    self.assertEqual(expected_status_int, res.status_int)
+                    if expected_status_int == 200:
+                        res_dict = self.deserialize(
+                            self.fmt,
+                            res
+                        )
+                        for k, v in update.items():
+                            self.assertEqual(
+                                res_dict['ipsec_site_connection'][k], v)
 
     def test_update_ipsec_site_connection_with_invalid_state(self):
         """Test case to update an ipsec_site_connection in invalid state."""

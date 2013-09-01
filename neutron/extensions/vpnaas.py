@@ -40,7 +40,8 @@ class IPsecSiteConnectionNotFound(qexception.NotFound):
 
 
 class IPsecSiteConnectionDpdIntervalValueError(qexception.InvalidInput):
-    message = _("ipsec_site_connection %(attribute_a)s less than dpd_interval")
+    message = _("ipsec_site_connection %(attr)s is "
+                "equal to or less than dpd_interval")
 
 
 class IKEPolicyNotFound(qexception.NotFound):
