@@ -125,10 +125,31 @@ class TestAttributes(base.BaseTestCase):
         self.assertIsNone(msg)
 
         msg = attributes._validate_range(0, [1, 9])
-        self.assertEqual(msg, "'0' is not in range 1 through 9")
+        self.assertEqual(msg, "'0' is too small - must be at least '1'")
 
         msg = attributes._validate_range(10, (1, 9))
-        self.assertEqual(msg, "'10' is not in range 1 through 9")
+        self.assertEqual(msg,
+                         "'10' is too large - must be no larger than '9'")
+
+        msg = attributes._validate_range("bogus", (1, 9))
+        self.assertEqual(msg, "'bogus' is not an integer")
+
+        msg = attributes._validate_range(10, (attributes.UNLIMITED,
+                                              attributes.UNLIMITED))
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(10, (1, attributes.UNLIMITED))
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(1, (attributes.UNLIMITED, 9))
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_range(-1, (0, attributes.UNLIMITED))
+        self.assertEqual(msg, "'-1' is too small - must be at least '0'")
+
+        msg = attributes._validate_range(10, (attributes.UNLIMITED, 9))
+        self.assertEqual(msg,
+                         "'10' is too large - must be no larger than '9'")
 
     def test_validate_mac_address(self):
         mac_addr = "ff:16:3e:4f:00:00"
