@@ -31,6 +31,7 @@ from neutron.manager import NeutronManager
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common.notifier import test_notifier
 from neutron.plugins.bigswitch.extensions import routerrule
+from neutron.tests.unit import test_extension_extradhcpopts as test_extradhcp
 from neutron.tests.unit import test_l3_plugin
 
 
@@ -110,6 +111,17 @@ class RouterRulesTestExtensionManager(object):
 
     def get_request_extensions(self):
         return []
+
+
+class DHCPOptsTestCase(test_extradhcp.TestExtraDhcpOpt):
+
+    def setUp(self, plugin=None):
+        self.httpPatch = patch('httplib.HTTPConnection', create=True,
+                               new=HTTPConnectionMock)
+        self.httpPatch.start()
+        self.addCleanup(self.httpPatch.stop)
+        p_path = 'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2'
+        super(test_extradhcp.ExtraDhcpOptDBTestCase, self).setUp(plugin=p_path)
 
 
 class RouterDBTestCase(test_l3_plugin.L3NatDBTestCase):
