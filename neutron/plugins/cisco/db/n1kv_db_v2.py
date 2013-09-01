@@ -269,7 +269,8 @@ def reserve_vlan(db_session, network_profile):
             physical_network = alloc.physical_network
             alloc.allocated = True
             return (physical_network, segment_type, segment_id, "0.0.0.0")
-        raise q_exc.NoNetworkAvailable()
+        raise c_exc.NoMoreNetworkSegments(
+            network_profile_name=network_profile.name)
 
 
 def reserve_vxlan(db_session, network_profile):
@@ -297,7 +298,8 @@ def reserve_vxlan(db_session, network_profile):
             alloc.allocated = True
             return (physical_network, segment_type,
                     segment_id, get_multicast_ip(network_profile))
-        raise q_exc.NoNetworkAvailable()
+        raise c_exc.NoMoreNetworkSegments(
+            network_profile_name=network_profile.name)
 
 
 def alloc_network(db_session, network_profile_id):
@@ -310,14 +312,10 @@ def alloc_network(db_session, network_profile_id):
     with db_session.begin(subtransactions=True):
         network_profile = get_network_profile(db_session,
                                               network_profile_id)
-        try:
-            if network_profile.segment_type == c_const.NETWORK_TYPE_VLAN:
-                return reserve_vlan(db_session, network_profile)
-            else:
-                return reserve_vxlan(db_session, network_profile)
-        except q_exc.NoNetworkAvailable:
-            raise c_exc.NoMoreNetworkSegments(
-                network_profile_name=network_profile.name)
+        if network_profile.segment_type == c_const.NETWORK_TYPE_VLAN:
+            return reserve_vlan(db_session, network_profile)
+        else:
+            return reserve_vxlan(db_session, network_profile)
 
 
 def reserve_specific_vlan(db_session, physical_network, vlan_id):
@@ -908,10 +906,7 @@ class NetworkProfile_db_mixin(object):
                         profile dictionary. Only these fields will be returned
         :returns: network profile dictionary
         """
-        try:
-            profile = get_network_profile(context.session, id)
-        except exc.NoResultFound:
-            raise c_exc.NetworkProfileIdNotFound(profile_id=id)
+        profile = get_network_profile(context.session, id)
         return self._make_network_profile_dict(profile, fields)
 
     def get_network_profiles(self, context, filters=None, fields=None):
@@ -1087,10 +1082,7 @@ class PolicyProfile_db_mixin(object):
                         profile dictionary. Only these fields will be returned
         :returns: policy profile dictionary
         """
-        try:
-            profile = get_policy_profile(context.session, id)
-        except exc.NoResultFound:
-            raise c_exc.PolicyProfileIdNotFound(profile_id=id)
+        profile = get_policy_profile(context.session, id)
         return self._make_policy_profile_dict(profile, fields)
 
     def get_policy_profiles(self, context, filters=None, fields=None):
