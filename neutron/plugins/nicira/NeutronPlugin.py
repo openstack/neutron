@@ -2251,6 +2251,21 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             return super(NvpPluginV2, self).delete_security_group(
                 context, security_group_id)
 
+    def _validate_security_group_rules(self, context, rules):
+        for rule in rules['security_group_rules']:
+            r = rule.get('security_group_rule')
+            port_based_proto = (self._get_ip_proto_number(r['protocol'])
+                                in securitygroups_db.IP_PROTOCOL_MAP.values())
+            if (not port_based_proto and
+                (r['port_range_min'] is not None or
+                r['port_range_max'] is not None)):
+                msg = (_("Port values not valid for "
+                         "protocol: %s") % r['protocol'])
+                raise q_exc.BadRequest(resource='security_group_rule',
+                                       msg=msg)
+        return super(NvpPluginV2, self)._validate_security_group_rules(context,
+                                                                       rules)
+
     def create_security_group_rule(self, context, security_group_rule):
         """Create a single security group rule."""
         bulk_rule = {'security_group_rules': [security_group_rule]}

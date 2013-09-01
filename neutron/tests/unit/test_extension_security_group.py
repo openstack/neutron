@@ -71,20 +71,24 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                 context.Context('', kwargs['tenant_id']))
         return security_group_req.get_response(self.ext_api)
 
-    def _build_security_group_rule(self, security_group_id, direction,
-                                   protocol, port_range_min, port_range_max,
+    def _build_security_group_rule(self, security_group_id, direction, proto,
+                                   port_range_min=None, port_range_max=None,
                                    remote_ip_prefix=None, remote_group_id=None,
                                    tenant_id='test_tenant',
                                    ethertype='IPv4'):
 
         data = {'security_group_rule': {'security_group_id': security_group_id,
                                         'direction': direction,
-                                        'protocol': protocol,
+                                        'protocol': proto,
                                         'ethertype': ethertype,
-                                        'port_range_min': port_range_min,
-                                        'port_range_max': port_range_max,
                                         'tenant_id': tenant_id,
                                         'ethertype': ethertype}}
+        if port_range_min:
+            data['security_group_rule']['port_range_min'] = port_range_min
+
+        if port_range_max:
+            data['security_group_rule']['port_range_max'] = port_range_max
+
         if remote_ip_prefix:
             data['security_group_rule']['remote_ip_prefix'] = remote_ip_prefix
 
@@ -408,6 +412,18 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
+    def test_create_security_group_rule_tcp_protocol_as_number(self):
+        name = 'webservers'
+        description = 'my webservers'
+        with self.security_group(name, description) as sg:
+            security_group_id = sg['security_group']['id']
+            protocol = 6  # TCP
+            rule = self._build_security_group_rule(
+                security_group_id, 'ingress', protocol, '22', '22')
+            res = self._create_security_group_rule(self.fmt, rule)
+            self.deserialize(self.fmt, res)
+            self.assertEqual(res.status_int, 201)
+
     def test_create_security_group_rule_protocol_as_number(self):
         name = 'webservers'
         description = 'my webservers'
@@ -415,8 +431,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             security_group_id = sg['security_group']['id']
             protocol = 2
             rule = self._build_security_group_rule(
-                security_group_id, 'ingress', protocol, '22', '22',
-                None, None)
+                security_group_id, 'ingress', protocol)
             res = self._create_security_group_rule(self.fmt, rule)
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 201)
