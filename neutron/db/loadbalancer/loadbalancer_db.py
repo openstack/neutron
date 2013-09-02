@@ -479,6 +479,11 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         # Get the associated health_monitors
         res['health_monitors'] = [
             monitor['monitor_id'] for monitor in pool['monitors']]
+        res['health_monitors_status'] = [
+            {'monitor_id': monitor['monitor_id'],
+             'status': monitor['status'],
+             'status_description': monitor['status_description']}
+            for monitor in pool['monitors']]
         return self._fields(res, fields)
 
     def update_pool_stats(self, context, pool_id, data=None):

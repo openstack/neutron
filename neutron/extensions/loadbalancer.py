@@ -175,6 +175,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                             'validate': {'type:uuid_list': None},
                             'convert_to': attr.convert_to_list,
                             'is_visible': True},
+        'health_monitors_status': {'allow_post': False, 'allow_put': False,
+                                   'is_visible': True},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
                            'convert_to': attr.convert_to_boolean,
@@ -308,6 +310,7 @@ class Loadbalancer(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
+        my_plurals.append(('health_monitors_status', 'health_monitor_status'))
         attr.PLURALS.update(dict(my_plurals))
         resources = []
         plugin = manager.NeutronManager.get_service_plugins()[

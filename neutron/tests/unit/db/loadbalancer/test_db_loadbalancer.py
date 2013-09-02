@@ -1109,6 +1109,16 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                   res['pool']['health_monitors'])
                     self.assertIn(monitor2['health_monitor']['id'],
                                   res['pool']['health_monitors'])
+                    expected = [
+                        {'monitor_id': monitor1['health_monitor']['id'],
+                         'status': 'PENDING_CREATE',
+                         'status_description': None},
+                        {'monitor_id': monitor2['health_monitor']['id'],
+                         'status': 'PENDING_CREATE',
+                         'status_description': None}]
+                    self.assertEqual(
+                        sorted(expected),
+                        sorted(res['pool']['health_monitors_status']))
 
     def test_delete_healthmonitor_of_pool(self):
         with self.health_monitor(type="TCP") as monitor1:
@@ -1161,6 +1171,13 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                      res['pool']['health_monitors'])
                     self.assertIn(monitor2['health_monitor']['id'],
                                   res['pool']['health_monitors'])
+                    expected = [
+                        {'monitor_id': monitor2['health_monitor']['id'],
+                         'status': 'PENDING_CREATE',
+                         'status_description': None}
+                    ]
+                    self.assertEqual(expected,
+                                     res['pool']['health_monitors_status'])
 
     def test_create_loadbalancer(self):
         vip_name = "vip3"
@@ -1221,6 +1238,13 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                               pool_updated['pool']['members'])
                 self.assertIn(health_monitor['health_monitor']['id'],
                               pool_updated['pool']['health_monitors'])
+                expected = [
+                    {'monitor_id': health_monitor['health_monitor']['id'],
+                     'status': 'PENDING_CREATE',
+                     'status_description': None}
+                ]
+                self.assertEqual(
+                    expected, pool_updated['pool']['health_monitors_status'])
 
                 req = self.new_show_request('vips',
                                             vip_id,
