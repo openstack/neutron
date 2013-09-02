@@ -17,6 +17,7 @@
 #
 # @author: Swaminathan Vasudevan, Hewlett-Packard.
 
+import netaddr
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -36,6 +37,8 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 
 LOG = logging.getLogger(__name__)
+
+IP_MIN_MTU = {4: 68, 6: 1280}
 
 
 class IPsecPeerCidr(model_base.BASEV2):
@@ -241,6 +244,9 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
             self._get_resource(context,
                                IPsecPolicy,
                                ipsec_sitecon['ipsecpolicy_id'])
+            self._check_mtu(context,
+                            ipsec_sitecon['mtu'],
+                            ipsec_sitecon['vpnservice_id'])
             ipsec_site_conn_db = IPsecSiteConnection(
                 id=uuidutils.generate_uuid(),
                 tenant_id=tenant_id,
@@ -276,6 +282,13 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
             raise vpnaas.IPsecSiteConnectionDpdIntervalValueError(
                 attr='dpd_timeout')
 
+    def _check_mtu(self, context, mtu, vpnservice_id):
+        vpn_service_db = self._get_vpnservice(context, vpnservice_id)
+        subnet = vpn_service_db.subnet['cidr']
+        version = netaddr.IPNetwork(subnet).version
+        if mtu < IP_MIN_MTU[version]:
+            raise vpnaas.IPsecSiteConnectionMtuError(mtu=mtu, version=version)
+
     def update_ipsec_site_connection(
             self, context,
             ipsec_site_conn_id, ipsec_site_connection):
@@ -295,6 +308,11 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
                 conn['dpd_timeout'] = dpd.get(
                     'timeout', ipsec_site_conn_db.dpd_timeout)
                 self._check_dpd(conn)
+
+            if 'mtu' in conn:
+                self._check_mtu(context,
+                                conn['mtu'],
+                                ipsec_site_conn_db.vpnservice_id)
 
             self.assert_update_allowed(ipsec_site_conn_db)
 
