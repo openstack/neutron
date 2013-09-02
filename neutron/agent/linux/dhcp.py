@@ -398,7 +398,7 @@ class Dnsmasq(DhcpLocalProcess):
                 name = 'host-%s.%s' % (r.sub('-', alloc.ip_address),
                                        self.conf.dhcp_domain)
                 set_tag = ''
-                if port.extra_dhcp_opts:
+                if getattr(port, 'extra_dhcp_opts', False):
                     if self.version >= self.MINIMUM_VERSION:
                         set_tag = 'set:'
 
@@ -463,7 +463,7 @@ class Dnsmasq(DhcpLocalProcess):
                     options.append(self._format_option(i, 'router'))
 
         for port in self.network.ports:
-            if port.extra_dhcp_opts:
+            if getattr(port, 'extra_dhcp_opts', False):
                 options.extend(
                     self._format_option(port.id, opt.opt_name, opt.opt_value)
                     for opt in port.extra_dhcp_opts)
