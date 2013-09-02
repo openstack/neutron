@@ -34,6 +34,7 @@ from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import dispatcher
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.hyperv.agent import utils
 from neutron.plugins.hyperv.agent import utilsfactory
 from neutron.plugins.hyperv.common import constants
@@ -173,7 +174,7 @@ class HyperVNeutronAgent(object):
         return dispatcher.RpcDispatcher([self])
 
     def _get_vswitch_name(self, network_type, physical_network):
-        if network_type != constants.TYPE_LOCAL:
+        if network_type != p_const.TYPE_LOCAL:
             vswitch_name = self._get_vswitch_for_physical_network(
                 physical_network)
         else:
@@ -188,10 +189,10 @@ class HyperVNeutronAgent(object):
 
         vswitch_name = self._get_vswitch_name(network_type, physical_network)
 
-        if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
+        if network_type in [p_const.TYPE_VLAN, p_const.TYPE_FLAT]:
             #Nothing to do
             pass
-        elif network_type == constants.TYPE_LOCAL:
+        elif network_type == p_const.TYPE_LOCAL:
             #TODO(alexpilotti): Check that the switch type is private
             #or create it if not existing
             pass
@@ -229,17 +230,17 @@ class HyperVNeutronAgent(object):
 
         self._utils.connect_vnic_to_vswitch(map['vswitch_name'], port_id)
 
-        if network_type == constants.TYPE_VLAN:
+        if network_type == p_const.TYPE_VLAN:
             LOG.info(_('Binding VLAN ID %(segmentation_id)s '
                        'to switch port %(port_id)s'),
                      dict(segmentation_id=segmentation_id, port_id=port_id))
             self._utils.set_vswitch_port_vlan_id(
                 segmentation_id,
                 port_id)
-        elif network_type == constants.TYPE_FLAT:
+        elif network_type == p_const.TYPE_FLAT:
             #Nothing to do
             pass
-        elif network_type == constants.TYPE_LOCAL:
+        elif network_type == p_const.TYPE_LOCAL:
             #Nothing to do
             pass
         else:

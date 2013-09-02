@@ -300,11 +300,11 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self._parse_network_vlan_ranges()
         ovs_db_v2.sync_vlan_allocations(self.network_vlan_ranges)
         self.tenant_network_type = cfg.CONF.OVS.tenant_network_type
-        if self.tenant_network_type not in [constants.TYPE_LOCAL,
-                                            constants.TYPE_VLAN,
-                                            constants.TYPE_GRE,
-                                            constants.TYPE_VXLAN,
-                                            constants.TYPE_NONE]:
+        if self.tenant_network_type not in [svc_constants.TYPE_LOCAL,
+                                            svc_constants.TYPE_VLAN,
+                                            svc_constants.TYPE_GRE,
+                                            svc_constants.TYPE_VXLAN,
+                                            svc_constants.TYPE_NONE]:
             LOG.error(_("Invalid tenant_network_type: %s. "
                       "Server terminated!"),
                       self.tenant_network_type)
@@ -312,7 +312,8 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.enable_tunneling = cfg.CONF.OVS.enable_tunneling
         self.tunnel_type = None
         if self.enable_tunneling:
-            self.tunnel_type = cfg.CONF.OVS.tunnel_type or constants.TYPE_GRE
+            self.tunnel_type = (cfg.CONF.OVS.tunnel_type or
+                                svc_constants.TYPE_GRE)
         elif cfg.CONF.OVS.tunnel_type:
             self.tunnel_type = cfg.CONF.OVS.tunnel_type
             self.enable_tunneling = True
@@ -380,13 +381,13 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if binding.network_type in constants.TUNNEL_NETWORK_TYPES:
             network[provider.PHYSICAL_NETWORK] = None
             network[provider.SEGMENTATION_ID] = binding.segmentation_id
-        elif binding.network_type == constants.TYPE_FLAT:
+        elif binding.network_type == svc_constants.TYPE_FLAT:
             network[provider.PHYSICAL_NETWORK] = binding.physical_network
             network[provider.SEGMENTATION_ID] = None
-        elif binding.network_type == constants.TYPE_VLAN:
+        elif binding.network_type == svc_constants.TYPE_VLAN:
             network[provider.PHYSICAL_NETWORK] = binding.physical_network
             network[provider.SEGMENTATION_ID] = binding.segmentation_id
-        elif binding.network_type == constants.TYPE_LOCAL:
+        elif binding.network_type == svc_constants.TYPE_LOCAL:
             network[provider.PHYSICAL_NETWORK] = None
             network[provider.SEGMENTATION_ID] = None
 
@@ -406,13 +407,13 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if not network_type_set:
             msg = _("provider:network_type required")
             raise q_exc.InvalidInput(error_message=msg)
-        elif network_type == constants.TYPE_FLAT:
+        elif network_type == svc_constants.TYPE_FLAT:
             if segmentation_id_set:
                 msg = _("provider:segmentation_id specified for flat network")
                 raise q_exc.InvalidInput(error_message=msg)
             else:
                 segmentation_id = constants.FLAT_VLAN_ID
-        elif network_type == constants.TYPE_VLAN:
+        elif network_type == svc_constants.TYPE_VLAN:
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
                 raise q_exc.InvalidInput(error_message=msg)
@@ -435,7 +436,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
                 raise q_exc.InvalidInput(error_message=msg)
-        elif network_type == constants.TYPE_LOCAL:
+        elif network_type == svc_constants.TYPE_LOCAL:
             if physical_network_set:
                 msg = _("provider:physical_network specified for local "
                         "network")
@@ -452,7 +453,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             msg = _("provider:network_type %s not supported") % network_type
             raise q_exc.InvalidInput(error_message=msg)
 
-        if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
+        if network_type in [svc_constants.TYPE_VLAN, svc_constants.TYPE_FLAT]:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
                     msg = _("Unknown provider:physical_network "
@@ -481,9 +482,9 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if not network_type:
                 # tenant network
                 network_type = self.tenant_network_type
-                if network_type == constants.TYPE_NONE:
+                if network_type == svc_constants.TYPE_NONE:
                     raise q_exc.TenantNetworksDisabled()
-                elif network_type == constants.TYPE_VLAN:
+                elif network_type == svc_constants.TYPE_VLAN:
                     (physical_network,
                      segmentation_id) = ovs_db_v2.reserve_vlan(session)
                 elif network_type in constants.TUNNEL_NETWORK_TYPES:
@@ -491,7 +492,8 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 # no reservation needed for TYPE_LOCAL
             else:
                 # provider network
-                if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
+                if network_type in [svc_constants.TYPE_VLAN,
+                                    svc_constants.TYPE_FLAT]:
                     ovs_db_v2.reserve_specific_vlan(session, physical_network,
                                                     segmentation_id)
                 elif network_type in constants.TUNNEL_NETWORK_TYPES:
@@ -527,8 +529,8 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if binding.network_type in constants.TUNNEL_NETWORK_TYPES:
                 ovs_db_v2.release_tunnel(session, binding.segmentation_id,
                                          self.tunnel_id_ranges)
-            elif binding.network_type in [constants.TYPE_VLAN,
-                                          constants.TYPE_FLAT]:
+            elif binding.network_type in [svc_constants.TYPE_VLAN,
+                                          svc_constants.TYPE_FLAT]:
                 ovs_db_v2.release_vlan(session, binding.physical_network,
                                        binding.segmentation_id,
                                        self.network_vlan_ranges)

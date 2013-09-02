@@ -46,6 +46,7 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common.rpc import dispatcher
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.linuxbridge.common import config  # noqa
 from neutron.plugins.linuxbridge.common import constants as lconst
 
@@ -343,7 +344,7 @@ class LinuxBridgeManager:
                                   network_type,
                                   physical_network,
                                   segmentation_id):
-        if network_type == lconst.TYPE_VXLAN:
+        if network_type == p_const.TYPE_VXLAN:
             if self.vxlan_mode == lconst.VXLAN_NONE:
                 LOG.error(_("Unable to add vxlan interface for network %s"),
                           network_id)
@@ -355,9 +356,9 @@ class LinuxBridgeManager:
             LOG.error(_("No mapping for physical network %s"),
                       physical_network)
             return
-        if network_type == lconst.TYPE_FLAT:
+        if network_type == p_const.TYPE_FLAT:
             return self.ensure_flat_bridge(network_id, physical_interface)
-        elif network_type == lconst.TYPE_VLAN:
+        elif network_type == p_const.TYPE_VLAN:
             return self.ensure_vlan_bridge(network_id, physical_interface,
                                            segmentation_id)
         else:
@@ -378,7 +379,7 @@ class LinuxBridgeManager:
             return False
 
         bridge_name = self.get_bridge_name(network_id)
-        if network_type == lconst.TYPE_LOCAL:
+        if network_type == p_const.TYPE_LOCAL:
             self.ensure_local_bridge(network_id)
         elif not self.ensure_physical_in_bridge(network_id,
                                                 network_type,
@@ -687,7 +688,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if not segment:
                 return
 
-            if segment.network_type != lconst.TYPE_VXLAN:
+            if segment.network_type != p_const.TYPE_VXLAN:
                 return
 
             interface = self.agent.br_mgr.get_vxlan_device_name(
@@ -709,7 +710,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if not segment:
                 return
 
-            if segment.network_type != lconst.TYPE_VXLAN:
+            if segment.network_type != p_const.TYPE_VXLAN:
                 return
 
             interface = self.agent.br_mgr.get_vxlan_device_name(
@@ -731,7 +732,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if not segment:
                 return
 
-            if segment.network_type != lconst.TYPE_VXLAN:
+            if segment.network_type != p_const.TYPE_VXLAN:
                 return
 
             interface = self.agent.br_mgr.get_vxlan_device_name(
@@ -782,7 +783,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
         configurations = {'interface_mappings': interface_mappings}
         if self.br_mgr.vxlan_mode is not lconst.VXLAN_NONE:
             configurations['tunneling_ip'] = self.br_mgr.local_ip
-            configurations['tunnel_types'] = [lconst.TYPE_VXLAN]
+            configurations['tunnel_types'] = [p_const.TYPE_VXLAN]
             configurations['l2_population'] = cfg.CONF.VXLAN.l2_population
         self.agent_state = {
             'binary': 'neutron-linuxbridge-agent',

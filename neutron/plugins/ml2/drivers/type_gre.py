@@ -21,12 +21,11 @@ from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.openstack.common import log
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)
-
-TYPE_GRE = 'gre'
 
 gre_opts = [
     cfg.ListOpt('tunnel_id_ranges',
@@ -61,14 +60,14 @@ class GreEndpoints(model_base.BASEV2):
 class GreTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def get_type(self):
-        return TYPE_GRE
+        return p_const.TYPE_GRE
 
     def initialize(self):
         self.gre_id_ranges = []
         self._parse_tunnel_ranges(
             cfg.CONF.ml2_type_gre.tunnel_id_ranges,
             self.gre_id_ranges,
-            TYPE_GRE
+            p_const.TYPE_GRE
         )
         self._sync_gre_allocations()
 
@@ -102,7 +101,7 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
                 LOG.debug(_("Allocating gre tunnel id  %(gre_id)s"),
                           {'gre_id': alloc.gre_id})
                 alloc.allocated = True
-                return {api.NETWORK_TYPE: TYPE_GRE,
+                return {api.NETWORK_TYPE: p_const.TYPE_GRE,
                         api.PHYSICAL_NETWORK: None,
                         api.SEGMENTATION_ID: alloc.gre_id}
 

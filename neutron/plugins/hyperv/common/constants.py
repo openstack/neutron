@@ -21,10 +21,3 @@ TUNNEL = 'tunnel'
 
 # Special vlan_id value in ovs_vlan_allocations table indicating flat network
 FLAT_VLAN_ID = -1
-
-# Values for network_type
-TYPE_LOCAL = 'local'
-TYPE_FLAT = 'flat'
-TYPE_VLAN = 'vlan'
-TYPE_NVGRE = 'gre'
-TYPE_NONE = 'none'

@@ -66,3 +66,11 @@ FWAAS_DENY = "deny"
 TCP = "tcp"
 UDP = "udp"
 ICMP = "icmp"
+
+# Network Type constants
+TYPE_FLAT = 'flat'
+TYPE_GRE = 'gre'
+TYPE_LOCAL = 'local'
+TYPE_VXLAN = 'vxlan'
+TYPE_VLAN = 'vlan'
+TYPE_NONE = 'none'

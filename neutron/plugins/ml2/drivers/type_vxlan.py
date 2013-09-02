@@ -22,12 +22,12 @@ from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.openstack.common import log
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)
 
-TYPE_VXLAN = 'vxlan'
 VXLAN_UDP_PORT = 4789
 MAX_VXLAN_VNI = 16777215
 
@@ -69,14 +69,14 @@ class VxlanEndpoints(model_base.BASEV2):
 class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def get_type(self):
-        return TYPE_VXLAN
+        return p_const.TYPE_VXLAN
 
     def initialize(self):
         self.vxlan_vni_ranges = []
         self._parse_tunnel_ranges(
             cfg.CONF.ml2_type_vxlan.vni_ranges,
             self.vxlan_vni_ranges,
-            TYPE_VXLAN
+            p_const.TYPE_VXLAN
         )
         self._sync_vxlan_allocations()
 
@@ -110,7 +110,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
                 LOG.debug(_("Allocating vxlan tunnel vni %(vxlan_vni)s"),
                           {'vxlan_vni': alloc.vxlan_vni})
                 alloc.allocated = True
-                return {api.NETWORK_TYPE: TYPE_VXLAN,
+                return {api.NETWORK_TYPE: p_const.TYPE_VXLAN,
                         api.PHYSICAL_NETWORK: None,
                         api.SEGMENTATION_ID: alloc.vxlan_vni}
 

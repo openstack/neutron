@@ -24,6 +24,8 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
+from neutron.plugins.common import constants as p_const
+#  TODO(JLH) Should we remove the explicit include of the ovs plugin here
 from neutron.plugins.openvswitch.common import constants
 
 LOG = logging.getLogger(__name__)
@@ -245,13 +247,13 @@ class OVSBridge(BaseOVS):
         self.deferred_flows = {'add': '', 'mod': '', 'del': ''}
 
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
-                        tunnel_type=constants.TYPE_GRE,
+                        tunnel_type=p_const.TYPE_GRE,
                         vxlan_udp_port=constants.VXLAN_UDP_PORT):
         vsctl_command = ["--", "--may-exist", "add-port", self.br_name,
                          port_name]
         vsctl_command.extend(["--", "set", "Interface", port_name,
                               "type=%s" % tunnel_type])
-        if tunnel_type == constants.TYPE_VXLAN:
+        if tunnel_type == p_const.TYPE_VXLAN:
             # Only set the VXLAN UDP port if it's not the default
             if vxlan_udp_port != constants.VXLAN_UDP_PORT:
                 vsctl_command.append("options:dst_port=%s" % vxlan_udp_port)
