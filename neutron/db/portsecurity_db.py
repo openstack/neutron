@@ -177,6 +177,6 @@ class PortSecurityDbMixin(object):
 
     # Register dict extend functions for ports and networks
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        attrs.NETWORKS, [_extend_port_security_dict])
+        attrs.NETWORKS, ['_extend_port_security_dict'])
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        attrs.PORTS, [_extend_port_security_dict])
+        attrs.PORTS, ['_extend_port_security_dict'])

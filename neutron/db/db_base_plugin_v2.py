@@ -154,6 +154,19 @@ class CommonDbMixin(object):
                     query = result_filter(query, filters)
         return query
 
+    def _apply_dict_extend_functions(self, resource_type,
+                                     response, db_object):
+        for func in self._dict_extend_functions.get(
+            resource_type, []):
+            args = (response, db_object)
+            if isinstance(func, basestring):
+                func = getattr(self, func, None)
+            else:
+                # must call unbound method - use self as 1st argument
+                args = (self,) + args
+            if func:
+                func(*args)
+
     def _get_collection_query(self, context, model, filters=None,
                               sorts=None, limit=None, marker_obj=None,
                               page_reverse=False):
@@ -865,9 +878,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                            for subnet in network['subnets']]}
         # Call auxiliary extend functions, if any
         if process_extensions:
-            for func in self._dict_extend_functions.get(attributes.NETWORKS,
-                                                        []):
-                func(self, res, network)
+            self._apply_dict_extend_functions(
+                attributes.NETWORKS, res, network)
         return self._fields(res, fields)
 
     def _make_subnet_dict(self, subnet, fields=None):
@@ -907,9 +919,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                "device_owner": port["device_owner"]}
         # Call auxiliary extend functions, if any
         if process_extensions:
-            for func in self._dict_extend_functions.get(attributes.PORTS,
-                                                        []):
-                func(self, res, port)
+            self._apply_dict_extend_functions(
+                attributes.PORTS, res, port)
         return self._fields(res, fields)
 
     def _create_bulk(self, resource, context, request_items):

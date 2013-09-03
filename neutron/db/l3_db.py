@@ -143,9 +143,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         if router['gw_port_id']:
             nw_id = router.gw_port['network_id']
             res[EXTERNAL_GW_INFO] = {'network_id': nw_id}
+        # NOTE(salv-orlando): The following assumes this mixin is used in a
+        # class inheriting from CommonDbMixin, which is true for all existing
+        # plugins.
         if process_extensions:
-            for func in self._dict_extend_functions.get(l3.ROUTERS, []):
-                func(self, res, router)
+            self._apply_dict_extend_functions(
+                l3.ROUTERS, res, router)
         return self._fields(res, fields)
 
     def create_router(self, context, router):
@@ -792,7 +795,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
     # Register dict extend functions for networks
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        attributes.NETWORKS, [_extend_network_dict_l3])
+        attributes.NETWORKS, ['_extend_network_dict_l3'])
 
     def _process_l3_create(self, context, net_data, req_data):
         external = req_data.get(l3.EXTERNAL)
