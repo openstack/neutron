@@ -24,6 +24,7 @@ from neutron.api import api_common
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import resource as wsgi_resource
+from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.notifier import api as notifier_api
@@ -68,7 +69,12 @@ class Controller(object):
         self._policy_attrs = [name for (name, info) in self._attr_info.items()
                               if info.get('required_by_policy')]
         self._publisher_id = notifier_api.publisher_id('network')
-        self._dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        # use plugin's dhcp notifier, if this is already instantiated
+        agent_notifiers = getattr(plugin, 'agent_notifiers', {})
+        self._dhcp_agent_notifier = (
+            agent_notifiers.get(const.AGENT_TYPE_DHCP) or
+            dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        )
         self._member_actions = member_actions
         self._primary_key = self._get_primary_key()
         if self._allow_pagination and self._native_pagination:

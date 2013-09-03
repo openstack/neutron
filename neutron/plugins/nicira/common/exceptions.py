@@ -80,3 +80,30 @@ class NvpServiceOverQuota(q_exc.Conflict):
 
 class NvpVcnsDriverException(NvpServicePluginException):
     message = _("Error happened in NVP VCNS Driver: %(err_msg)s")
+
+
+class ServiceClusterUnavailable(NvpPluginException):
+    message = _("Service cluster: '%(cluster_id)s' is unavailable. Please, "
+                "check NVP setup and/or configuration")
+
+
+class PortConfigurationError(NvpPluginException):
+    message = _("An error occurred while connecting LSN %(lsn_id)s "
+                "and network %(net_id)s via port %(port_id)s")
+
+    def __init__(self, **kwargs):
+        super(PortConfigurationError, self).__init__(**kwargs)
+        self.port_id = kwargs.get('port_id')
+
+
+class LsnNotFound(q_exc.NotFound):
+    message = _('Unable to find LSN for %(entity)s %(entity_id)s')
+
+
+class LsnPortNotFound(q_exc.NotFound):
+    message = (_('Unable to find port for LSN %(lsn_id)s '
+                 'and %(entity)s %(entity_id)s'))
+
+
+class LsnConfigurationConflict(NvpPluginException):
+    message = _("Configuration conflict on Logical Service Node %(lsn_id)s")

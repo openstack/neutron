@@ -27,7 +27,9 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions
 from neutron.plugins.nicira.common import sync
+from neutron.plugins.nicira.nsxlib import lsn as lsnlib
 from neutron.plugins.nicira import nvp_cluster
+from neutron.plugins.nicira import NvpApiClient as nvp_client
 from neutron.tests.unit.nicira import get_fake_conf
 from neutron.tests.unit.nicira import PLUGIN_NAME
 
@@ -149,17 +151,49 @@ class ConfigurationTest(testtools.TestCase):
         self.assertIn('extensions', cfg.CONF.api_extensions_path)
 
     def test_agentless_extensions(self):
-        self.skipTest('Enable once agentless support is added')
         q_config.parse(['--config-file', NVP_BASE_CONF_PATH,
                         '--config-file', NVP_INI_AGENTLESS_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         self.assertEqual(config.AgentModes.AGENTLESS,
                          cfg.CONF.NVP.agent_mode)
-        plugin = NeutronManager().get_plugin()
-        self.assertNotIn('agent',
-                         plugin.supported_extension_aliases)
-        self.assertNotIn('dhcp_agent_scheduler',
-                         plugin.supported_extension_aliases)
+        # The version returned from NVP does not really matter here
+        with mock.patch.object(nvp_client.NVPApiHelper,
+                               'get_nvp_version',
+                               return_value=nvp_client.NVPVersion("9.9")):
+            with mock.patch.object(lsnlib,
+                                   'service_cluster_exists',
+                                   return_value=True):
+                plugin = NeutronManager().get_plugin()
+                self.assertNotIn('agent',
+                                 plugin.supported_extension_aliases)
+                self.assertNotIn('dhcp_agent_scheduler',
+                                 plugin.supported_extension_aliases)
+
+    def test_agentless_extensions_version_fail(self):
+        q_config.parse(['--config-file', NVP_BASE_CONF_PATH,
+                        '--config-file', NVP_INI_AGENTLESS_PATH])
+        cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
+        self.assertEqual(config.AgentModes.AGENTLESS,
+                         cfg.CONF.NVP.agent_mode)
+        with mock.patch.object(nvp_client.NVPApiHelper,
+                               'get_nvp_version',
+                               return_value=nvp_client.NVPVersion("3.2")):
+            self.assertRaises(exceptions.NvpPluginException, NeutronManager)
+
+    def test_agentless_extensions_unmet_deps_fail(self):
+        q_config.parse(['--config-file', NVP_BASE_CONF_PATH,
+                        '--config-file', NVP_INI_AGENTLESS_PATH])
+        cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
+        self.assertEqual(config.AgentModes.AGENTLESS,
+                         cfg.CONF.NVP.agent_mode)
+        with mock.patch.object(nvp_client.NVPApiHelper,
+                               'get_nvp_version',
+                               return_value=nvp_client.NVPVersion("3.2")):
+            with mock.patch.object(lsnlib,
+                                   'service_cluster_exists',
+                                   return_value=False):
+                self.assertRaises(exceptions.NvpPluginException,
+                                  NeutronManager)
 
     def test_agent_extensions(self):
         q_config.parse(['--config-file', NVP_BASE_CONF_PATH,
