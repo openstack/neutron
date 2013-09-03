@@ -33,3 +33,14 @@ class OFCConsistencyBroken(qexc.NeutronException):
 
 class PortInfoNotFound(qexc.NotFound):
     message = _("PortInfo %(id)s could not be found")
+
+
+class ProfilePortInfoInvalidDataPathId(qexc.InvalidInput):
+    message = _('Invalid input for operation: '
+                'portinfo:datapath_id should be a hex string '
+                'with at most 8 bytes')
+
+
+class ProfilePortInfoInvalidPortNo(qexc.InvalidInput):
+    message = _('Invalid input for operation: '
+                'portinfo:port_no should be [0:65535]')

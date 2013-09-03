@@ -24,15 +24,12 @@ from neutron.common.test_lib import test_config
 from neutron.common import topics
 from neutron import context
 from neutron.db import db_base_plugin_v2
-from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec import nec_plugin
-from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.nec import fake_ofc_manager
 from neutron.tests.unit import test_db_plugin as test_plugin
-from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
 PLUGIN_NAME = 'neutron.plugins.nec.nec_plugin.NECPluginV2'
@@ -101,29 +98,11 @@ class TestNecV2HTTPResponse(test_plugin.TestV2HTTPResponse,
 
 
 class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase):
-
-    VIF_TYPE = portbindings.VIF_TYPE_OVS
-    HAS_PORT_FILTER = True
+    pass
 
 
 class TestNecNetworksV2(test_plugin.TestNetworksV2, NecPluginV2TestCase):
     pass
-
-
-class TestNecPortBinding(test_bindings.PortBindingsTestCase,
-                         NecPluginV2TestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_OVS
-    HAS_PORT_FILTER = True
-    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_HYBRID_DRIVER
-
-    def setUp(self):
-        test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
-        super(TestNecPortBinding, self).setUp()
-
-
-class TestNecPortBindingNoSG(TestNecPortBinding):
-    HAS_PORT_FILTER = False
-    FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
 
 class TestNecPortsV2Callback(NecPluginV2TestCase):
@@ -177,10 +156,10 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
                 self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
                 self.assertIsNone(self._get_portinfo(port_id))
 
-        # The port is expected to delete when exiting with-clause.
+        # The port and portinfo is expected to delete when exiting with-clause.
+        self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
+        self.assertIsNone(self._get_portinfo(port_id))
         if not portinfo_delete_first:
-            self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
-            self.assertIsNotNone(self._get_portinfo(port_id))
             self.rpcapi_update_ports(removed=[port_id])
 
         # Ensure port deletion is called once.
@@ -198,8 +177,8 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
     def test_portinfo_added_unknown_port(self):
         portinfo = {'id': 'dummy-p1', 'port_no': 123}
         self.rpcapi_update_ports(added=[portinfo])
-        self.assertIsNotNone(ndb.get_portinfo(self.context.session,
-                                              'dummy-p1'))
+        self.assertIsNone(ndb.get_portinfo(self.context.session,
+                                           'dummy-p1'))
         self.assertEqual(self.ofc.exists_ofc_port.call_count, 0)
         self.assertEqual(self.ofc.create_ofc_port.call_count, 0)
 
@@ -234,8 +213,7 @@ class TestNecPortsV2Callback(NecPluginV2TestCase):
             # No OFC operations are expected.
             self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
-            self.assertEqual(ndb.get_portinfo(self.context.session,
-                                              port_id).port_no, 456)
+            self.assertIsNone(ndb.get_portinfo(self.context.session, port_id))
 
     def test_portinfo_change(self):
         self._test_portinfo_change()
