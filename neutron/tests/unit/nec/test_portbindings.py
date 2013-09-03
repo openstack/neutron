@@ -149,15 +149,54 @@ class TestNecPortBindingPortInfo(test_nec_plugin.NecPluginV2TestCase):
             self.assertEqual(self.ofc.create_ofc_port.call_count, 2)
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
 
-            # delete portinfo
+            # delete portinfo with an empty dict
             profile_arg = {portbindings.PROFILE: {}}
             port = self._update('ports', port_id, {'port': profile_arg},
                                 neutron_context=ctx)['port']
             self.assertEqual(self.ofc.create_ofc_port.call_count, 2)
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 2)
 
+    def test_port_update_portinfo_detail_clear_with_none(self):
+        with self.port() as port:
+            self.assertEqual(self.ofc.create_ofc_port.call_count, 0)
+            self.assertEqual(self.ofc.delete_ofc_port.call_count, 0)
+            port_id = port['port']['id']
+            ctx = context.get_admin_context()
+
+            # add portinfo
+            profile_arg = {portbindings.PROFILE: self._get_portinfo()}
+            port = self._update('ports', port_id, {'port': profile_arg},
+                                neutron_context=ctx)['port']
+            self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
+            self.assertEqual(self.ofc.delete_ofc_port.call_count, 0)
+
+            # delete portinfo with None
+            profile_arg = {portbindings.PROFILE: None}
+            port = self._update('ports', port_id, {'port': profile_arg},
+                                neutron_context=ctx)['port']
+            self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
+            self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
+
     def test_port_create_portinfo_with_empty_dict(self):
         profile_arg = {portbindings.PROFILE: {}}
+        with self.port(arg_list=(portbindings.PROFILE,),
+                       **profile_arg) as port:
+            port_id = port['port']['id']
+
+            # Check a response of create_port
+            self._check_response_portbinding_no_profile(port['port'])
+            self.assertEqual(self.ofc.create_ofc_port.call_count, 0)
+            # add portinfo
+            ctx = context.get_admin_context()
+            profile_arg = {portbindings.PROFILE: self._get_portinfo()}
+            port = self._update('ports', port_id, {'port': profile_arg},
+                                neutron_context=ctx)['port']
+            self._check_response_portbinding_profile(port)
+            self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
+            self.assertEqual(self.ofc.delete_ofc_port.call_count, 0)
+
+    def test_port_create_portinfo_with_none(self):
+        profile_arg = {portbindings.PROFILE: None}
         with self.port(arg_list=(portbindings.PROFILE,),
                        **profile_arg) as port:
             port_id = port['port']['id']
