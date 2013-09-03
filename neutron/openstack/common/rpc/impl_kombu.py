@@ -82,9 +82,6 @@ kombu_opts = [
                default=0,
                help='maximum retries with trying to connect to RabbitMQ '
                     '(the default of 0 implies an infinite retry count)'),
-    cfg.BoolOpt('rabbit_durable_queues',
-                default=False,
-                help='use durable queues in RabbitMQ'),
     cfg.BoolOpt('rabbit_ha_queues',
                 default=False,
                 help='use H/A queues in RabbitMQ (x-ha-policy: all).'
@@ -233,9 +230,9 @@ class TopicConsumer(ConsumerBase):
         Other kombu options may be passed as keyword arguments
         """
         # Default options
-        options = {'durable': conf.rabbit_durable_queues,
+        options = {'durable': conf.amqp_durable_queues,
                    'queue_arguments': _get_queue_arguments(conf),
-                   'auto_delete': False,
+                   'auto_delete': conf.amqp_auto_delete,
                    'exclusive': False}
         options.update(kwargs)
         exchange_name = exchange_name or rpc_amqp.get_control_exchange(conf)
@@ -339,8 +336,8 @@ class TopicPublisher(Publisher):
 
         Kombu options may be passed as keyword args to override defaults
         """
-        options = {'durable': conf.rabbit_durable_queues,
-                   'auto_delete': False,
+        options = {'durable': conf.amqp_durable_queues,
+                   'auto_delete': conf.amqp_auto_delete,
                    'exclusive': False}
         options.update(kwargs)
         exchange_name = rpc_amqp.get_control_exchange(conf)
@@ -370,7 +367,7 @@ class NotifyPublisher(TopicPublisher):
     """Publisher class for 'notify'."""
 
     def __init__(self, conf, channel, topic, **kwargs):
-        self.durable = kwargs.pop('durable', conf.rabbit_durable_queues)
+        self.durable = kwargs.pop('durable', conf.amqp_durable_queues)
         self.queue_arguments = _get_queue_arguments(conf)
         super(NotifyPublisher, self).__init__(conf, channel, topic, **kwargs)
 
