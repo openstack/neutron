@@ -128,4 +128,4 @@ class ExtraDhcpOptMixin(object):
         return res
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        attributes.PORTS, [_extend_port_dict_extra_dhcp_opt])
+        attributes.PORTS, ['_extend_port_dict_extra_dhcp_opt'])

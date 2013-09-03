@@ -59,7 +59,7 @@ class MacLearningDbMixin(object):
 
     # Register dict extend functions for ports
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        attributes.PORTS, [_extend_port_mac_learning_state])
+        attributes.PORTS, ['_extend_port_mac_learning_state'])
 
     def _update_mac_learning_state(self, context, port_id, enabled):
         try:

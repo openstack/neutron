@@ -444,7 +444,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     # Register dict extend functions for ports
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        attr.PORTS, [_extend_port_dict_security_group])
+        attr.PORTS, ['_extend_port_dict_security_group'])
 
     def _process_port_create_security_group(self, context, port,
                                             security_group_ids):

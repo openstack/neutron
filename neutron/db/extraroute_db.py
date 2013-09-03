@@ -63,7 +63,7 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
                                 ))
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        l3.ROUTERS, [_extend_router_dict_extraroute])
+        l3.ROUTERS, ['_extend_router_dict_extraroute'])
 
     def update_router(self, context, id, router):
         r = router['router']

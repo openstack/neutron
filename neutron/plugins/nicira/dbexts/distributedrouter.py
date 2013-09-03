@@ -66,4 +66,4 @@ class DistributedRouter_mixin(object):
 
     # Register dict extend functions for ports
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        l3.ROUTERS, [_extend_router_dict_distributed])
+        l3.ROUTERS, ['_extend_router_dict_distributed'])
