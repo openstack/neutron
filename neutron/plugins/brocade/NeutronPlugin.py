@@ -59,13 +59,19 @@ PLUGIN_VERSION = 0.88
 AGENT_OWNER_PREFIX = "network:"
 NOS_DRIVER = 'neutron.plugins.brocade.nos.nosdriver.NOSdriver'
 
-SWITCH_OPTS = [cfg.StrOpt('address', default=''),
-               cfg.StrOpt('username', default=''),
-               cfg.StrOpt('password', default='', secret=True),
-               cfg.StrOpt('ostype', default='NOS')
+SWITCH_OPTS = [cfg.StrOpt('address', default='',
+                          help=_('The address of the host to SSH to')),
+               cfg.StrOpt('username', default='',
+                          help=_('The SSH username to use')),
+               cfg.StrOpt('password', default='', secret=True,
+                          help=_('The SSH password to use')),
+               cfg.StrOpt('ostype', default='NOS',
+                          help=_('Currently unused'))
                ]
 
-PHYSICAL_INTERFACE_OPTS = [cfg.StrOpt('physical_interface', default='eth0')
+PHYSICAL_INTERFACE_OPTS = [cfg.StrOpt('physical_interface', default='eth0',
+                           help=_('The network interface to use when creating'
+                                  'a port'))
                            ]
 
 cfg.CONF.register_opts(SWITCH_OPTS, "SWITCH")
