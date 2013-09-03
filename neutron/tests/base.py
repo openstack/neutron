@@ -42,7 +42,15 @@ class BaseTestCase(testtools.TestCase):
             _level = logging.DEBUG
         else:
             _level = logging.INFO
-        self.useFixture(fixtures.FakeLogger(format=LOG_FORMAT, level=_level))
+        capture_logs = os.environ.get('OS_LOG_CAPTURE') in TRUE_STRING
+        if not capture_logs:
+            logging.basicConfig(format=LOG_FORMAT, level=_level)
+        self.log_fixture = self.useFixture(
+            fixtures.FakeLogger(
+                format=LOG_FORMAT,
+                level=_level,
+                nuke_handlers=capture_logs,
+            ))
 
         test_timeout = int(os.environ.get('OS_TEST_TIMEOUT', 0))
         if test_timeout == -1:
