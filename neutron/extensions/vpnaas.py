@@ -44,6 +44,11 @@ class IPsecSiteConnectionDpdIntervalValueError(qexception.InvalidInput):
                 "equal to or less than dpd_interval")
 
 
+class IPsecSiteConnectionMtuError(qexception.InvalidInput):
+    message = _("ipsec_site_connection MTU %(mtu)d is too small "
+                "for ipv%(version)s")
+
+
 class IKEPolicyNotFound(qexception.NotFound):
     message = _("IKEPolicy %(ikepolicy_id)s could not be found")
 
