@@ -56,6 +56,10 @@ def get_protocol_value(protocol):
     """Convert string representation of protocol to the numerical."""
     if protocol is None:
         return None
+
+    if isinstance(protocol, int):
+        return protocol
+
     mapping = {
         'tcp': constants.TCP_PROTOCOL,
         'udp': constants.UDP_PROTOCOL,

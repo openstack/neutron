@@ -27,6 +27,7 @@ import sys
 import neutron.common.test_lib as test_lib
 import neutron.tests.unit.midonet.mock_lib as mock_lib
 import neutron.tests.unit.test_db_plugin as test_plugin
+import neutron.tests.unit.test_extension_security_group as sg
 
 
 MIDOKURA_PKG_PATH = "neutron.plugins.midonet.plugin"
@@ -59,6 +60,30 @@ class MidonetPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
 class TestMidonetNetworksV2(test_plugin.TestNetworksV2,
                             MidonetPluginV2TestCase):
+
+    pass
+
+
+class TestMidonetSecurityGroupsTestCase(sg.SecurityGroupDBTestCase):
+
+    _plugin_name = ('%s.MidonetPluginV2' % MIDOKURA_PKG_PATH)
+
+    def setUp(self):
+        self.mock_api = mock.patch(
+            'neutron.plugins.midonet.midonet_lib.MidoClient')
+        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
+        test_lib.test_config['config_files'] = [os.path.join(
+            etc_path, 'midonet.ini.test')]
+
+        self.instance = self.mock_api.start()
+        mock_cfg = mock_lib.MidonetLibMockConfig(self.instance.return_value)
+        mock_cfg.setup()
+        super(TestMidonetSecurityGroupsTestCase, self).setUp(self._plugin_name)
+
+
+class TestMidonetSecurityGroup(sg.TestSecurityGroups,
+                               TestMidonetSecurityGroupsTestCase):
+
     pass
 
 
@@ -120,4 +145,4 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
     # tests that attempt to create them.
 
     def test_overlapping_subnets(self):
-            pass
+        pass

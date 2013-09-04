@@ -26,7 +26,6 @@ sys.modules["midonetclient"] = mock.Mock()
 from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.openstack.common import uuidutils
 import neutron.plugins.midonet.agent.midonet_driver as driver
 from neutron.tests import base
@@ -43,10 +42,7 @@ class MidoInterfaceDriverTestCase(base.BaseTestCase):
         self.ip = self.ip_p.start()
         self.device_exists_p = mock.patch.object(ip_lib, 'device_exists')
         self.device_exists = self.device_exists_p.start()
-
-        self.api_p = mock.patch.object(sys.modules["midonetclient"].api,
-                                       'MidonetApi')
-        self.api = self.api_p.start()
+        self.device_exists.return_value = False
         self.addCleanup(mock.patch.stopall)
         midonet_opts = [
             cfg.StrOpt('midonet_uri',
@@ -64,6 +60,12 @@ class MidoInterfaceDriverTestCase(base.BaseTestCase):
         ]
         self.conf.register_opts(midonet_opts, "MIDONET")
         self.driver = driver.MidonetInterfaceDriver(self.conf)
+        self.root_dev = mock.Mock()
+        self.ns_dev = mock.Mock()
+        self.ip().add_veth = mock.Mock(return_value=(
+            self.root_dev, self.ns_dev))
+        self.driver._get_host_uuid = mock.Mock(
+            return_value=uuidutils.generate_uuid())
         self.network_id = uuidutils.generate_uuid()
         self.port_id = uuidutils.generate_uuid()
         self.device_name = "tap0"
@@ -73,20 +75,10 @@ class MidoInterfaceDriverTestCase(base.BaseTestCase):
         super(MidoInterfaceDriverTestCase, self).setUp()
 
     def test_plug(self):
-        def device_exists(dev, root_helper=None, namespace=None):
-            return False
-
-        self.device_exists.side_effect = device_exists
-        root_dev = mock.Mock()
-        ns_dev = mock.Mock()
-        self.ip().add_veth = mock.Mock(return_value=(root_dev, ns_dev))
-        self.driver._get_host_uuid = mock.Mock(
-            return_value=uuidutils.generate_uuid())
-        with mock.patch.object(utils, 'execute'):
-            self.driver.plug(
-                self.network_id, self.port_id,
-                self.device_name, self.mac_address,
-                self.bridge, self.namespace)
+        self.driver.plug(
+            self.network_id, self.port_id,
+            self.device_name, self.mac_address,
+            self.bridge, self.namespace)
 
         expected = [mock.call(), mock.call('sudo'),
                     mock.call().add_veth(self.device_name,
@@ -95,19 +87,15 @@ class MidoInterfaceDriverTestCase(base.BaseTestCase):
                     mock.call().ensure_namespace(self.namespace),
                     mock.call().ensure_namespace().add_device_to_namespace(
                         mock.ANY)]
-        ns_dev.assert_has_calls(
+        self.ns_dev.assert_has_calls(
             [mock.call.link.set_address(self.mac_address)])
 
-        root_dev.assert_has_calls([mock.call.link.set_up()])
-        ns_dev.assert_has_calls([mock.call.link.set_up()])
+        self.root_dev.assert_has_calls([mock.call.link.set_up()])
+        self.ns_dev.assert_has_calls([mock.call.link.set_up()])
         self.ip.assert_has_calls(expected, True)
-        host = mock.Mock()
-        self.api().get_host = mock.Mock(return_value=host)
-        self.api.assert_has_calls([mock.call().add_host_interface_port])
 
     def test_unplug(self):
-        with mock.patch.object(utils, 'execute'):
-            self.driver.unplug(self.device_name, self.bridge, self.namespace)
+        self.driver.unplug(self.device_name, self.bridge, self.namespace)
 
         self.ip_dev.assert_has_calls([
             mock.call(self.device_name, self.driver.root_helper,

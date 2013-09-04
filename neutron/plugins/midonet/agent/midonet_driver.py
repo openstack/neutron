@@ -120,10 +120,11 @@ class MidonetInterfaceDriver(interface.LinuxInterfaceDriver):
                           host_uuid)
                 raise e
             try:
-                self.mido_api.host.add_host_interface_port(
+                self.mido_api.add_host_interface_port(
                     host, vport_id, host_dev_name)
-            except w_exc.HTTPError as e:
-                LOG.warn(_('Faild binding vport=%(vport) to device=%(device)'),
+            except w_exc.HTTPError:
+                LOG.warn(_(
+                         'Faild binding vport=%(vport)s to device=%(device)s'),
                          {"vport": vport_id, "device": host_dev_name})
         else:
             LOG.warn(_("Device %s already exists"), device_name)
