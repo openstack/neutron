@@ -96,8 +96,14 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         # Avoid rpc initialization for unit tests
         cfg.CONF.set_override('rpc_backend',
                               'neutron.openstack.common.rpc.impl_fake')
-        cfg.CONF.set_override('report_interval', 0, 'AGENT')
         kwargs = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
+
+        class MockFixedIntervalLoopingCall(object):
+            def __init__(self, f):
+                self.f = f
+
+            def start(self, interval=0):
+                self.f()
 
         with contextlib.nested(
             mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
@@ -110,7 +116,10 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        'get_local_port_mac',
                        return_value='00:00:00:00:00:01'),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
-                       return_value='00:00:00:00:00:01')):
+                       return_value='00:00:00:00:00:01'),
+            mock.patch('neutron.openstack.common.loopingcall.'
+                       'FixedIntervalLoopingCall',
+                       new=MockFixedIntervalLoopingCall)):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**kwargs)
             self.agent.tun_br = mock.Mock()
         self.agent.sg_agent = mock.Mock()

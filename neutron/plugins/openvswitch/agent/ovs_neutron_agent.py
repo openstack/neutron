@@ -179,6 +179,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             'agent_type': q_const.AGENT_TYPE_OVS,
             'start_flag': True}
 
+        # Keep track of int_br's device count for use by _report_state()
+        self.int_br_device_count = 0
+
         self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
         self.setup_rpc()
         self.setup_integration_br()
@@ -202,9 +205,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(integ_br, tun_br)
 
-        # Keep track of int_br's device count for use by _report_state()
-        self.int_br_device_count = 0
-
         # Security group agent supprot
         self.sg_agent = OVSSecurityGroupAgent(self.context,
                                               self.plugin_rpc,
@@ -216,10 +216,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                               self.root_helper)
 
     def _report_state(self):
+        # How many devices are likely used by a VM
+        self.agent_state.get('configurations')['devices'] = (
+            self.int_br_device_count)
         try:
-            # How many devices are likely used by a VM
-            self.agent_state.get('configurations')['devices'] = (
-                self.int_br_device_count)
             self.state_rpc.report_state(self.context,
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
