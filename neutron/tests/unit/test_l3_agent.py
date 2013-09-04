@@ -496,6 +496,23 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertEqual(len(nat_rules_delta), 1)
         self._verify_snat_rules(nat_rules_delta, router, negate=True)
 
+    def test_handle_router_snat_rules_add_back_jump(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = mock.MagicMock()
+        port = {'fixed_ips': [{'ip_address': '192.168.1.4'}]}
+
+        agent._handle_router_snat_rules(ri, port, [], "iface", "add_rules")
+
+        nat = ri.iptables_manager.ipv4['nat']
+        nat.empty_chain.assert_any_call('snat')
+        nat.add_rule.assert_any_call('snat', '-j $float-snat')
+        for call in nat.mock_calls:
+            name, args, kwargs = call
+            if name == 'add_rule':
+                self.assertEquals(args, ('snat', '-j $float-snat'))
+                self.assertEquals(kwargs, {})
+                break
+
     def testRoutersWithAdminStateDown(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_external_network_id.return_value = None
