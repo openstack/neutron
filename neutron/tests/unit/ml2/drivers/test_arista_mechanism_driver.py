@@ -45,6 +45,7 @@ class AristaProvisionedVlansStorageTestCase(base.BaseTestCase):
     def setUp(self):
         super(AristaProvisionedVlansStorageTestCase, self).setUp()
         ndb.configure_db()
+        self.addCleanup(ndb.clear_db)
 
     def test_tenant_is_remembered(self):
         tenant_id = 'test'
