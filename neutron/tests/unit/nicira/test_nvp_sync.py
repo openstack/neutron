@@ -248,6 +248,8 @@ class SyncLoopingCallTestCase(base.BaseTestCase):
             synchronizer = sync.NvpSynchronizer(None, None,
                                                 100, 0, 0)
             time.sleep(0.04999)
+            # stop looping call before asserting
+            synchronizer._sync_looping_call.stop()
             self.assertEqual(
                 5, synchronizer._synchronize_state.call_count)
 

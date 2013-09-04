@@ -75,6 +75,10 @@ class TestVPNAgent(base.BaseTestCase):
         self.plugin_api = mock.Mock()
         l3pluginApi_cls.return_value = self.plugin_api
 
+        looping_call_p = mock.patch(
+            'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
+        looping_call_p.start()
+
         self.fake_host = 'fake_host'
         self.agent = agent.VPNAgent(self.fake_host)
 

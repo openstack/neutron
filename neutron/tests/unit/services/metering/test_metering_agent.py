@@ -63,6 +63,10 @@ class TestMeteringOperations(base.BaseTestCase):
         self.driver_patch = mock.patch(self.noop_driver, autospec=True)
         self.driver_patch.start()
 
+        loopingcall_patch = mock.patch(
+            'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
+        loopingcall_patch.start()
+
         self.agent = metering_agent.MeteringAgent('my agent', cfg.CONF)
         self.driver = self.agent.metering_driver
 

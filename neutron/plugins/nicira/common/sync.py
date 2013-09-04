@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 Nicira, Inc.
 # All Rights Reserved
 #
@@ -182,6 +180,7 @@ def _start_loopingcall(min_chunk_size, state_sync_interval, func):
         func, sp=SyncParameters(min_chunk_size))
     state_synchronizer.start(
         periodic_interval_max=state_sync_interval)
+    return state_synchronizer
 
 
 class NvpSynchronizer():
@@ -219,8 +218,10 @@ class NvpSynchronizer():
             raise nvp_exc.NvpPluginException(err_msg=err_msg)
         # Backoff time in case of failures while fetching sync data
         self._sync_backoff = 1
-        _start_loopingcall(min_chunk_size, state_sync_interval,
-                           self._synchronize_state)
+        # Store the looping call in an instance variable to allow unit tests
+        # for controlling its lifecycle
+        self._sync_looping_call = _start_loopingcall(
+            min_chunk_size, state_sync_interval, self._synchronize_state)
 
     def _get_tag_dict(self, tags):
         return dict((tag.get('scope'), tag['tag']) for tag in tags)
