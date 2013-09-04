@@ -33,6 +33,8 @@ class PFCDriverBase(ofc_driver_base.OFCDriverBase):
     The class implements the API for PFC V4.0 or later.
     """
 
+    router_supported = False
+
     def __init__(self, conf_ofc):
         self.client = ofc_client.OFCClient(host=conf_ofc.host,
                                            port=conf_ofc.port,
@@ -72,6 +74,10 @@ class PFCDriverBase(ofc_driver_base.OFCDriverBase):
         Currently, PFC Description must be less than 128.
         """
         return self._generate_pfc_str(desc)[:127]
+
+    def _extract_ofc_network_id(self, ofc_network_id):
+        # ofc_network_id : /tenants/<tenant-id>/networks/<network-id>
+        return ofc_network_id.split('/')[4]
 
     def create_tenant(self, description, tenant_id=None):
         ofc_tenant_id = self._generate_pfc_id(tenant_id)
@@ -136,6 +142,66 @@ class PFCDriverBase(ofc_driver_base.OFCDriverBase):
         return '%(network)s/ports/%(port)s' % params
 
 
+class PFCRouterDriverMixin(object):
+
+    router_supported = True
+    router_nat_supported = False
+
+    def create_router(self, ofc_tenant_id, router_id, description):
+        path = '%s/routers' % ofc_tenant_id
+        res = self.client.post(path, body=None)
+        ofc_router_id = res['id']
+        return path + '/' + ofc_router_id
+
+    def delete_router(self, ofc_router_id):
+        return self.client.delete(ofc_router_id)
+
+    def add_router_interface(self, ofc_router_id, ofc_net_id,
+                             ip_address=None, mac_address=None):
+        # ip_address : <ip_address>/<netmask> (e.g., 10.0.0.0/24)
+        path = '%s/interfaces' % ofc_router_id
+        body = {'net_id': self._extract_ofc_network_id(ofc_net_id)}
+        if ip_address:
+            body['ip_address'] = ip_address
+        if mac_address:
+            body['mac_address'] = mac_address
+        res = self.client.post(path, body=body)
+        return path + '/' + res['id']
+
+    def update_router_interface(self, ofc_router_inf_id,
+                                ip_address=None, mac_address=None):
+        # ip_address : <ip_address>/<netmask> (e.g., 10.0.0.0/24)
+        if not ip_address and not mac_address:
+            return
+        body = {}
+        if ip_address:
+            body['ip_address'] = ip_address
+        if mac_address:
+            body['mac_address'] = mac_address
+        return self.client.put(ofc_router_inf_id, body=body)
+
+    def delete_router_interface(self, ofc_router_inf_id):
+        return self.client.delete(ofc_router_inf_id)
+
+    def list_router_routes(self, ofc_router_id):
+        path = '%s/routes' % ofc_router_id
+        ret = self.client.get(path)
+        # Prepend ofc_router_id to route_id
+        for r in ret['routes']:
+            r['id'] = ofc_router_id + '/routes/' + r['id']
+        return ret['routes']
+
+    def add_router_route(self, ofc_router_id, destination, nexthop):
+        path = '%s/routes' % ofc_router_id
+        body = {'destination': destination,
+                'nexthop': nexthop}
+        ret = self.client.post(path, body=body)
+        return path + '/' + ret['id']
+
+    def delete_router_route(self, ofc_router_route_id):
+        return self.client.delete(ofc_router_route_id)
+
+
 class PFCV3Driver(PFCDriverBase):
 
     def create_tenant(self, description, tenant_id):
@@ -147,4 +213,8 @@ class PFCV3Driver(PFCDriverBase):
 
 
 class PFCV4Driver(PFCDriverBase):
+    pass
+
+
+class PFCV5Driver(PFCRouterDriverMixin, PFCDriverBase):
     pass

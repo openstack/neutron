@@ -19,6 +19,7 @@ import random
 import string
 
 import mox
+import netaddr
 
 from neutron import context
 from neutron.openstack.common import uuidutils
@@ -200,6 +201,167 @@ class PFCV3DriverTest(PFCDriverTestBase):
 
 class PFCV4DriverTest(PFCDriverTestBase):
     driver = 'pfc_v4'
+
+
+class PFCV5DriverTest(PFCDriverTestBase):
+    driver = 'pfc_v5'
+
+    def test_create_router(self):
+        t = uuidutils.generate_uuid()
+        r = uuidutils.generate_uuid()
+        description = 'dummy_router_desc'
+
+        tenant_path = "/tenants/%s" % _ofc(t)
+        post_path = "%s/routers" % tenant_path
+        router = {'id': _ofc(r)}
+        ofc.OFCClient.do_request("POST", post_path,
+                                 body=None).AndReturn(router)
+        self.mox.ReplayAll()
+
+        ret = self.driver.create_router(tenant_path, description, r)
+        self.mox.VerifyAll()
+        router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
+        self.assertEqual(ret, router_path)
+
+    def test_delete_router(self):
+        t = uuidutils.generate_uuid()
+        r = uuidutils.generate_uuid()
+
+        router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
+        ofc.OFCClient.do_request("DELETE", router_path)
+        self.mox.ReplayAll()
+
+        self.driver.delete_router(router_path)
+        self.mox.VerifyAll()
+
+    def test_add_router_interface(self):
+        t = uuidutils.generate_uuid()
+        r = uuidutils.generate_uuid()
+        n = uuidutils.generate_uuid()
+        p = uuidutils.generate_uuid()
+
+        router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
+        infs_path = router_path + "/interfaces"
+        net_path = "/tenants/%s/networks/%s" % (_ofc(t), _ofc(n))
+        ip_address = '10.1.1.1/24'
+        mac_address = '11:22:33:44:55:66'
+        body = {'net_id': _ofc(n),
+                'ip_address': ip_address,
+                'mac_address': mac_address}
+        inf = {'id': _ofc(p)}
+        ofc.OFCClient.do_request("POST", infs_path,
+                                 body=body).AndReturn(inf)
+        self.mox.ReplayAll()
+
+        ret = self.driver.add_router_interface(router_path, net_path,
+                                               ip_address, mac_address)
+        self.mox.VerifyAll()
+        inf_path = "%s/interfaces/%s" % (router_path, _ofc(p))
+        self.assertEqual(ret, inf_path)
+
+    def test_update_router_interface(self):
+        t = uuidutils.generate_uuid()
+        r = uuidutils.generate_uuid()
+        p = uuidutils.generate_uuid()
+
+        router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
+        inf_path = "%s/interfaces/%s" % (router_path, _ofc(p))
+        ip_address = '10.1.1.1/24'
+        mac_address = '11:22:33:44:55:66'
+
+        body = {'ip_address': ip_address,
+                'mac_address': mac_address}
+        ofc.OFCClient.do_request("PUT", inf_path, body=body)
+
+        body = {'ip_address': ip_address}
+        ofc.OFCClient.do_request("PUT", inf_path, body=body)
+
+        body = {'mac_address': mac_address}
+        ofc.OFCClient.do_request("PUT", inf_path, body=body)
+
+        self.mox.ReplayAll()
+
+        self.driver.update_router_interface(inf_path, ip_address, mac_address)
+        self.driver.update_router_interface(inf_path, ip_address=ip_address)
+        self.driver.update_router_interface(inf_path, mac_address=mac_address)
+        self.mox.VerifyAll()
+
+    def test_delete_router_interface(self):
+        t = uuidutils.generate_uuid()
+        r = uuidutils.generate_uuid()
+        p = uuidutils.generate_uuid()
+
+        router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
+        inf_path = "%s/interfaces/%s" % (router_path, _ofc(p))
+        ofc.OFCClient.do_request("DELETE", inf_path)
+        self.mox.ReplayAll()
+
+        self.driver.delete_router_interface(inf_path)
+        self.mox.VerifyAll()
+
+    def _get_route_id(self, dest, nexthop):
+        dest = netaddr.IPNetwork(dest)
+        return '-'.join([str(dest.network), nexthop, str(dest.netmask)])
+
+    def test_add_router_route(self):
+        t = uuidutils.generate_uuid()
+        r = uuidutils.generate_uuid()
+
+        router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
+        routes_path = router_path + "/routes"
+        dest = '10.1.1.0/24'
+        nexthop = '192.168.100.10'
+        body = {'destination': dest, 'nexthop': nexthop}
+        route_id = self._get_route_id(dest, nexthop)
+        ofc.OFCClient.do_request("POST", routes_path,
+                                 body=body).AndReturn({'id': route_id})
+        self.mox.ReplayAll()
+
+        ret = self.driver.add_router_route(router_path, '10.1.1.0/24',
+                                           '192.168.100.10')
+        self.mox.VerifyAll()
+        route_path = routes_path + '/' + route_id
+        self.assertEqual(ret, route_path)
+
+    def test_delete_router_route(self):
+        t = uuidutils.generate_uuid()
+        r = uuidutils.generate_uuid()
+
+        router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
+        routes_path = router_path + "/routes"
+
+        route_id = self._get_route_id('10.1.1.0/24', '192.168.100.10')
+        route_path = routes_path + '/' + route_id
+        ofc.OFCClient.do_request("DELETE", route_path)
+        self.mox.ReplayAll()
+
+        self.driver.delete_router_route(route_path)
+        self.mox.VerifyAll()
+
+    def test_list_router_routes(self):
+        t = uuidutils.generate_uuid()
+        r = uuidutils.generate_uuid()
+
+        router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
+        routes_path = router_path + "/routes"
+
+        routes = [('10.1.1.0/24', '192.168.100.10'),
+                  ('10.2.2.0/20', '192.168.100.20')]
+        data = {'routes': [{'id': self._get_route_id(route[0], route[1]),
+                            'destination': route[0], 'nexthop': route[1]}
+                           for route in routes]}
+        ofc.OFCClient.do_request("GET", routes_path).AndReturn(data)
+        self.mox.ReplayAll()
+
+        ret = self.driver.list_router_routes(router_path)
+        self.mox.VerifyAll()
+
+        expected = [{'id': (routes_path + "/" +
+                            self._get_route_id(route[0], route[1])),
+                     'destination': route[0], 'nexthop': route[1]}
+                    for route in routes]
+        self.assertEqual(len(routes), len(ret))
+        self.assertEqual(data['routes'], expected)
 
 
 class PFCDriverStringTest(base.BaseTestCase):

@@ -18,7 +18,6 @@
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
-from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes as attrs
 from neutron.common import constants as const
 from neutron.common import exceptions as q_exc
@@ -28,8 +27,6 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
-from neutron.db import extraroute_db
-from neutron.db import l3_gwmode_db
 from neutron.db import l3_rpc_base
 from neutron.db import portbindings_base
 from neutron.db import portbindings_db
@@ -44,6 +41,8 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
+from neutron.plugins.nec.db import router as rdb
+from neutron.plugins.nec import nec_router
 from neutron.plugins.nec import ofc_manager
 from neutron.plugins.nec import packet_filter
 
@@ -51,11 +50,10 @@ LOG = logging.getLogger(__name__)
 
 
 class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
-                  extraroute_db.ExtraRoute_db_mixin,
-                  l3_gwmode_db.L3_NAT_db_mixin,
+                  nec_router.RouterMixin,
                   sg_db_rpc.SecurityGroupServerRpcMixin,
-                  agentschedulers_db.L3AgentSchedulerDbMixin,
                   agentschedulers_db.DhcpAgentSchedulerDbMixin,
+                  nec_router.L3AgentSchedulerDbMixin,
                   packet_filter.PacketFilterMixin,
                   portbindings_db.PortBindingMixin):
     """NECPluginV2 controls an OpenFlow Controller.
@@ -70,12 +68,18 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     The port binding extension enables an external application relay
     information to and from the plugin.
     """
-    _supported_extension_aliases = ["router", "ext-gw-mode", "quotas",
-                                    "binding", "security-group",
-                                    "extraroute", "agent",
-                                    "l3_agent_scheduler",
+    _supported_extension_aliases = ["agent",
+                                    "binding",
                                     "dhcp_agent_scheduler",
-                                    "packet-filter"]
+                                    "ext-gw-mode",
+                                    "extraroute",
+                                    "l3_agent_scheduler",
+                                    "packet-filter",
+                                    "quotas",
+                                    "router",
+                                    "router_provider",
+                                    "security-group",
+                                    ]
 
     @property
     def supported_extension_aliases(self):
@@ -99,6 +103,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                      'neutron/plugins/nec/extensions')
 
         self.setup_rpc()
+        self.l3_rpc_notifier = nec_router.L3AgentNotifyAPI()
 
         self.network_scheduler = importutils.import_object(
             config.CONF.network_scheduler_driver
@@ -106,6 +111,20 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.router_scheduler = importutils.import_object(
             config.CONF.router_scheduler_driver
         )
+
+        nec_router.load_driver(self, self.ofc)
+        self.port_handlers = {
+            'create': {
+                const.DEVICE_OWNER_ROUTER_GW: self.create_router_port,
+                const.DEVICE_OWNER_ROUTER_INTF: self.create_router_port,
+                'default': self.activate_port_if_ready,
+            },
+            'delete': {
+                const.DEVICE_OWNER_ROUTER_GW: self.delete_router_port,
+                const.DEVICE_OWNER_ROUTER_INTF: self.delete_router_port,
+                'default': self.deactivate_port,
+            }
+        }
 
     def setup_rpc(self):
         self.topic = topics.PLUGIN
@@ -115,13 +134,14 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
         self.agent_notifiers[const.AGENT_TYPE_L3] = (
-            l3_rpc_agent_api.L3AgentNotify
+            nec_router.L3AgentNotifyAPI()
         )
 
         # NOTE: callback_sg is referred to from the sg unit test.
         self.callback_sg = SecurityGroupServerRpcCallback()
         callbacks = [NECPluginV2RPCCallbacks(self),
-                     DhcpRpcCallback(), L3RpcCallback(),
+                     DhcpRpcCallback(),
+                     L3RpcCallback(),
                      self.callback_sg,
                      agents_db.AgentExtRpcCallback()]
         self.dispatcher = q_rpc.PluginRpcDispatcher(callbacks)
@@ -131,10 +151,35 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _update_resource_status(self, context, resource, id, status):
         """Update status of specified resource."""
-        request = {}
-        request[resource] = dict(status=status)
-        obj_updater = getattr(super(NECPluginV2, self), "update_%s" % resource)
-        obj_updater(context, id, request)
+        request = {'status': status}
+        obj_getter = getattr(self, '_get_%s' % resource)
+        with context.session.begin(subtransactions=True):
+            obj_db = obj_getter(context, id)
+            obj_db.update(request)
+
+    def _check_ofc_tenant_in_use(self, context, tenant_id):
+        """Check if the specified tenant is used."""
+        # All networks are created on OFC
+        filters = {'tenant_id': [tenant_id]}
+        if self.get_networks_count(context, filters=filters):
+            return True
+        if rdb.get_router_count_by_provider(context.session,
+                                            nec_router.PROVIDER_OPENFLOW,
+                                            tenant_id):
+            return True
+        return False
+
+    def _cleanup_ofc_tenant(self, context, tenant_id):
+        if not self._check_ofc_tenant_in_use(context, tenant_id):
+            try:
+                if self.ofc.exists_ofc_tenant(context, tenant_id):
+                    self.ofc.delete_ofc_tenant(context, tenant_id)
+                else:
+                    LOG.debug(_('_cleanup_ofc_tenant: No OFC tenant for %s'),
+                              tenant_id)
+            except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+                reason = _("delete_ofc_tenant() failed due to %s") % exc
+                LOG.warn(reason)
 
     def activate_port_if_ready(self, context, port, network=None):
         """Activate port by creating port on OFC if ready.
@@ -315,7 +360,6 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self.delete_packet_filter(context, pf['id'])
 
         try:
-            # 'net' parameter is required to lookup old OFC mapping
             self.ofc.delete_ofc_network(context, id, net)
         except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
             reason = _("delete_network() failed due to %s") % exc
@@ -326,15 +370,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         super(NECPluginV2, self).delete_network(context, id)
 
-        # delete unnessary ofc_tenant
-        filters = dict(tenant_id=[tenant_id])
-        nets = super(NECPluginV2, self).get_networks(context, filters=filters)
-        if not nets:
-            try:
-                self.ofc.delete_ofc_tenant(context, tenant_id)
-            except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-                reason = _("delete_ofc_tenant() failed due to %s") % exc
-                LOG.warn(reason)
+        self._cleanup_ofc_tenant(context, tenant_id)
 
     def _get_base_binding_dict(self):
         binding = {
@@ -449,6 +485,14 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             context, port_data, port)
         return portinfo_changed
 
+    def _get_port_handler(self, operation, device_owner):
+        handlers = self.port_handlers[operation]
+        handler = handlers.get(device_owner)
+        if handler:
+            return handler
+        else:
+            return handlers['default']
+
     def create_port(self, context, port):
         """Create a new port entry on DB, then try to activate it."""
         LOG.debug(_("NECPluginV2.create_port() called, port=%s ."), port)
@@ -465,7 +509,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 context, port, sgids)
         self.notify_security_groups_member_updated(context, port)
 
-        return self.activate_port_if_ready(context, port)
+        handler = self._get_port_handler('create', port['device_owner'])
+        return handler(context, port)
 
     def _update_ofc_port_if_required(self, context, old_port, new_port,
                                      portinfo_changed):
@@ -539,7 +584,9 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Thus we need to call self.get_port() instead of super().get_port()
         port = self.get_port(context, id)
 
-        port = self.deactivate_port(context, port)
+        handler = self._get_port_handler('delete', port['device_owner'])
+        port = handler(context, port)
+        # port = self.deactivate_port(context, port)
         if port['status'] == const.PORT_STATUS_ERROR:
             reason = _("Failed to delete port=%s from OFC.") % id
             raise nexc.OFCException(reason=reason)

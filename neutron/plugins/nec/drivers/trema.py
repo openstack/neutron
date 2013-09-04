@@ -27,6 +27,8 @@ class TremaDriverBase(ofc_driver_base.OFCDriverBase):
     networks_path = "/networks"
     network_path = "/networks/%s"
 
+    router_supported = False
+
     def __init__(self, conf_ofc):
         # Trema sliceable REST API does not support HTTPS
         self.client = ofc_client.OFCClient(host=conf_ofc.host,
@@ -74,7 +76,7 @@ class TremaDriverBase(ofc_driver_base.OFCDriverBase):
         return self.network_path % ofc_network_id
 
 
-class TremaFilterDriver(object):
+class TremaFilterDriverMixin(object):
     """Trema (Sliceable Switch) PacketFilter Driver Mixin."""
     filters_path = "/filters"
     filter_path = "/filters/%s"
@@ -173,7 +175,7 @@ class TremaFilterDriver(object):
         return self.filter_path % ofc_filter_id
 
 
-class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriver):
+class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriverMixin):
     """Trema (Sliceable Switch) Driver for port base binding.
 
     TremaPortBaseDriver uses port base binding.
@@ -211,7 +213,7 @@ class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriver):
                                  'port': ofc_port_id}
 
 
-class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriver):
+class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriverMixin):
     """Trema (Sliceable Switch) Driver for port-mac base binding.
 
     TremaPortBaseDriver uses port-mac base binding.

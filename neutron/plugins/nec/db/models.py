@@ -47,6 +47,10 @@ class OFCPortMapping(model_base.BASEV2, NeutronId, OFCId):
     """Represents a Port on OpenFlow Network/Controller."""
 
 
+class OFCRouterMapping(model_base.BASEV2, NeutronId, OFCId):
+    """Represents a router on OpenFlow Network/Controller."""
+
+
 class OFCFilterMapping(model_base.BASEV2, NeutronId, OFCId):
     """Represents a Filter on OpenFlow Network/Controller."""
 

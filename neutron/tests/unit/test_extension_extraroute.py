@@ -59,10 +59,11 @@ class TestExtraRoutePlugin(test_l3.TestL3NatPlugin,
 
 class ExtraRouteDBTestCase(test_l3.L3NatDBTestCase):
 
-    def setUp(self):
-        test_config['plugin_name_v2'] = (
-            'neutron.tests.unit.'
-            'test_extension_extraroute.TestExtraRoutePlugin')
+    def setUp(self, plugin=None):
+        if not plugin:
+            plugin = ('neutron.tests.unit.test_extension_extraroute.'
+                      'TestExtraRoutePlugin')
+        test_config['plugin_name_v2'] = plugin
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)

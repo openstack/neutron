@@ -46,12 +46,26 @@ class OFCClient(object):
         self.cert_file = cert_file
         self.connection = None
 
-    def get_connection_type(self):
-        """Returns the proper connection type."""
+    def get_connection(self):
+        """Returns the proper connection."""
         if self.use_ssl:
-            return httplib.HTTPSConnection
+            connection_type = httplib.HTTPSConnection
         else:
-            return httplib.HTTPConnection
+            connection_type = httplib.HTTPConnection
+
+        # Open connection and send request, handling SSL certs
+        certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
+        certs = dict((x, certs[x]) for x in certs if certs[x] is not None)
+        if self.use_ssl and len(certs):
+            conn = connection_type(self.host, self.port, **certs)
+        else:
+            conn = connection_type(self.host, self.port)
+        return conn
+
+    def _format_error_message(self, status, detail):
+        detail = ' ' + detail if detail else ''
+        return (_("Operation on OFC failed: %(status)s%(msg)s") %
+                {'status': status, 'msg': detail})
 
     def do_request(self, method, action, body=None):
         LOG.debug(_("Client request: %(host)s:%(port)s "
@@ -61,32 +75,40 @@ class OFCClient(object):
         if type(body) is dict:
             body = json.dumps(body)
         try:
-            connection_type = self.get_connection_type()
+            conn = self.get_connection()
             headers = {"Content-Type": "application/json"}
-            # Open connection and send request, handling SSL certs
-            certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
-            certs = dict((x, certs[x]) for x in certs if certs[x] is not None)
-            if self.use_ssl and len(certs):
-                conn = connection_type(self.host, self.port, **certs)
-            else:
-                conn = connection_type(self.host, self.port)
             conn.request(method, action, body, headers)
             res = conn.getresponse()
             data = res.read()
             LOG.debug(_("OFC returns [%(status)s:%(data)s]"),
                       {'status': res.status,
                        'data': data})
+
+            # Try to decode JSON data if possible.
+            try:
+                data = json.loads(data)
+            except (ValueError, TypeError):
+                pass
+
             if res.status in (httplib.OK,
                               httplib.CREATED,
                               httplib.ACCEPTED,
                               httplib.NO_CONTENT):
-                if data and len(data) > 1:
-                    return json.loads(data)
+                return data
             else:
-                reason = _("An operation on OFC is failed.")
-                raise nexc.OFCException(reason=reason)
+                LOG.warning(_("Operation on OFC failed: "
+                              "status=%(status), detail=%(detail)"),
+                            {'status': res.status, 'detail': data})
+                params = {'reason': _("Operation on OFC failed"),
+                          'status': res.status}
+                if isinstance(data, dict):
+                    params['err_code'] = data.get('err_code')
+                    params['err_msg'] = data.get('err_msg')
+                else:
+                    params['err_msg'] = data
+                raise nexc.OFCException(**params)
         except (socket.error, IOError) as e:
-            reason = _("Failed to connect OFC : %s") % str(e)
+            reason = _("Failed to connect OFC : %s") % e
             LOG.error(reason)
             raise nexc.OFCException(reason=reason)
 
