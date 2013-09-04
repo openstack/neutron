@@ -23,7 +23,7 @@ from webob import exc
 import webtest
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes
+from neutron.api.v2 import attributes as attr
 from neutron.common import config
 from neutron.extensions import loadbalancer
 from neutron import manager
@@ -45,7 +45,7 @@ class LoadBalancerTestExtensionManager(object):
         # This is done here as the setup process won't
         # initialize the main API router which extends
         # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
+        attr.RESOURCE_ATTRIBUTE_MAP.update(
             loadbalancer.RESOURCE_ATTRIBUTE_MAP)
         return loadbalancer.Loadbalancer.get_resources()
 
@@ -203,6 +203,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
                          'admin_state_up': True,
                          'tenant_id': _uuid()}}
         return_value = copy.copy(data['pool'])
+        return_value['provider'] = 'lbaas'
         return_value.update({'status': "ACTIVE", 'id': pool_id})
 
         instance = self.plugin.return_value
@@ -210,6 +211,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
         res = self.api.post(_get_path('lb/pools', fmt=self.fmt),
                             self.serialize(data),
                             content_type='application/%s' % self.fmt)
+        data['pool']['provider'] = attr.ATTR_NOT_SPECIFIED
         instance.create_pool.assert_called_with(mock.ANY,
                                                 pool=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)

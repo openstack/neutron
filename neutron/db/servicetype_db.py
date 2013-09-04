@@ -77,9 +77,10 @@ class ServiceTypeManager(object):
     def add_resource_association(self, context, service_type, provider_name,
                                  resource_id):
         r = self.conf.get_service_providers(
-            filters={'service_type': service_type, 'name': provider_name})
+            filters={'service_type': [service_type], 'name': [provider_name]})
         if not r:
-            raise pconf.ServiceProviderNotFound(service_type=service_type)
+            raise pconf.ServiceProviderNotFound(provider=provider_name,
+                                                service_type=service_type)
 
         with context.session.begin(subtransactions=True):
             # we don't actually need service type for association.
@@ -88,3 +89,12 @@ class ServiceTypeManager(object):
             assoc = ProviderResourceAssociation(provider_name=provider_name,
                                                 resource_id=resource_id)
             context.session.add(assoc)
+
+    def del_resource_associations(self, context, resource_ids):
+        if not resource_ids:
+            return
+        with context.session.begin(subtransactions=True):
+            (context.session.query(ProviderResourceAssociation).
+             filter(
+                 ProviderResourceAssociation.resource_id.in_(resource_ids)).
+             delete(synchronize_session='fetch'))

@@ -105,21 +105,10 @@ class LoadBalancerAbstractDriver(object):
         pass
 
     @abc.abstractmethod
-    def create_health_monitor(self, context, health_monitor):
-        pass
-
-    @abc.abstractmethod
     def update_health_monitor(self, context,
                               old_health_monitor,
                               health_monitor,
                               pool_id):
-        pass
-
-    @abc.abstractmethod
-    def delete_health_monitor(self, context, health_monitor):
-        """Driver may call the code below in order to delete the monitor.
-        self.plugin._delete_db_health_monitor(context, health_monitor["id"])
-        """
         pass
 
     @abc.abstractmethod
