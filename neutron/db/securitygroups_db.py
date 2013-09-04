@@ -30,10 +30,10 @@ from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import uuidutils
 
 
-IP_PROTOCOL_MAP = {'tcp': constants.TCP_PROTOCOL,
-                   'udp': constants.UDP_PROTOCOL,
-                   'icmp': constants.ICMP_PROTOCOL,
-                   'icmpv6': constants.ICMPv6_PROTOCOL}
+IP_PROTOCOL_MAP = {constants.PROTO_NAME_TCP: constants.PROTO_NUM_TCP,
+                   constants.PROTO_NAME_UDP: constants.PROTO_NUM_UDP,
+                   constants.PROTO_NAME_ICMP: constants.PROTO_NUM_ICMP,
+                   constants.PROTO_NAME_ICMP_V6: constants.PROTO_NUM_ICMP_V6}
 
 
 class SecurityGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -304,13 +304,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if not rule['protocol']:
             raise ext_sg.SecurityGroupProtocolRequiredWithPorts()
         ip_proto = self._get_ip_proto_number(rule['protocol'])
-        if ip_proto in [constants.TCP_PROTOCOL, constants.UDP_PROTOCOL]:
+        if ip_proto in [constants.PROTO_NUM_TCP, constants.PROTO_NUM_UDP]:
             if (rule['port_range_min'] is not None and
                 rule['port_range_min'] <= rule['port_range_max']):
                 pass
             else:
                 raise ext_sg.SecurityGroupInvalidPortRange()
-        elif ip_proto == constants.ICMP_PROTOCOL:
+        elif ip_proto == constants.PROTO_NUM_ICMP:
             for attr, field in [('port_range_min', 'type'),
                                 ('port_range_max', 'code')]:
                 if rule[attr] > 255:

@@ -1073,7 +1073,7 @@ def create_security_profile(cluster, tenant_id, security_profile):
     # Allow all dhcp responses and all ingress traffic
     hidden_rules = {'logical_port_egress_rules':
                     [{'ethertype': 'IPv4',
-                      'protocol': constants.UDP_PROTOCOL,
+                      'protocol': constants.PROTO_NUM_UDP,
                       'port_range_min': constants.DHCP_RESPONSE_PORT,
                       'port_range_max': constants.DHCP_RESPONSE_PORT,
                       'ip_prefix': '0.0.0.0/0'}],
@@ -1111,7 +1111,7 @@ def update_security_group_rules(cluster, spid, rules):
 
     # Allow all dhcp responses in
     rules['logical_port_egress_rules'].append(
-        {'ethertype': 'IPv4', 'protocol': constants.UDP_PROTOCOL,
+        {'ethertype': 'IPv4', 'protocol': constants.PROTO_NUM_UDP,
          'port_range_min': constants.DHCP_RESPONSE_PORT,
          'port_range_max': constants.DHCP_RESPONSE_PORT,
          'ip_prefix': '0.0.0.0/0'})

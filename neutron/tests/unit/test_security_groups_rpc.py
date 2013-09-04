@@ -21,11 +21,13 @@ import mock
 from mock import call
 import mox
 from oslo.config import cfg
+import webob.exc
 
 from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import iptables_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.common import constants as const
 from neutron import context
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
@@ -54,7 +56,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
         self.rpc = FakeSGCallback()
 
     def test_security_group_rules_for_devices_ipv4_ingress(self):
-        fake_prefix = test_fw.FAKE_PREFIX['IPv4']
+        fake_prefix = test_fw.FAKE_PREFIX[const.IPv4]
         with self.network() as n:
             with nested(self.subnet(n),
                         self.security_group()) as (subnet_v4,
@@ -62,18 +64,18 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
-                    'ingress', 'tcp', '22',
+                    'ingress', const.PROTO_NAME_TCP, '22',
                     '22')
                 rule2 = self._build_security_group_rule(
                     sg1_id,
-                    'ingress', 'tcp', '23',
+                    'ingress', const.PROTO_NAME_TCP, '23',
                     '23', fake_prefix)
                 rules = {
                     'security_group_rules': [rule1['security_group_rule'],
                                              rule2['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -86,17 +88,19 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                expected = [{'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg1_id},
-                            {'direction': 'egress', 'ethertype': 'IPv6',
+                            {'direction': 'egress', 'ethertype': const.IPv6,
                              'security_group_id': sg1_id},
                             {'direction': 'ingress',
-                             'protocol': 'tcp', 'ethertype': 'IPv4',
+                             'protocol': const.PROTO_NAME_TCP,
+                             'ethertype': const.IPv4,
                              'port_range_max': 22,
                              'security_group_id': sg1_id,
                              'port_range_min': 22},
-                            {'direction': 'ingress', 'protocol': 'tcp',
-                             'ethertype': 'IPv4',
+                            {'direction': 'ingress',
+                             'protocol': const.PROTO_NAME_TCP,
+                             'ethertype': const.IPv4,
                              'port_range_max': 23, 'security_group_id': sg1_id,
                              'port_range_min': 23,
                              'source_ip_prefix': fake_prefix},
@@ -169,7 +173,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv4_egress(self):
-        fake_prefix = test_fw.FAKE_PREFIX['IPv4']
+        fake_prefix = test_fw.FAKE_PREFIX[const.IPv4]
         with self.network() as n:
             with nested(self.subnet(n),
                         self.security_group()) as (subnet_v4,
@@ -177,18 +181,18 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
-                    'egress', 'tcp', '22',
+                    'egress', const.PROTO_NAME_TCP, '22',
                     '22')
                 rule2 = self._build_security_group_rule(
                     sg1_id,
-                    'egress', 'udp', '23',
+                    'egress', const.PROTO_NAME_UDP, '23',
                     '23', fake_prefix)
                 rules = {
                     'security_group_rules': [rule1['security_group_rule'],
                                              rule2['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -201,17 +205,19 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                expected = [{'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg1_id},
-                            {'direction': 'egress', 'ethertype': 'IPv6',
+                            {'direction': 'egress', 'ethertype': const.IPv6,
                              'security_group_id': sg1_id},
                             {'direction': 'egress',
-                             'protocol': 'tcp', 'ethertype': 'IPv4',
+                             'protocol': const.PROTO_NAME_TCP,
+                             'ethertype': const.IPv4,
                              'port_range_max': 22,
                              'security_group_id': sg1_id,
                              'port_range_min': 22},
-                            {'direction': 'egress', 'protocol': 'udp',
-                             'ethertype': 'IPv4',
+                            {'direction': 'egress',
+                             'protocol': const.PROTO_NAME_UDP,
+                             'ethertype': const.IPv4,
                              'port_range_max': 23, 'security_group_id': sg1_id,
                              'port_range_min': 23,
                              'dest_ip_prefix': fake_prefix},
@@ -232,13 +238,13 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 sg2_id = sg2['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
-                    'ingress', 'tcp', '24',
+                    'ingress', const.PROTO_NAME_TCP, '24',
                     '25', remote_group_id=sg2['security_group']['id'])
                 rules = {
                     'security_group_rules': [rule1['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -258,17 +264,18 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                expected = [{'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg1_id},
-                            {'direction': 'egress', 'ethertype': 'IPv6',
+                            {'direction': 'egress', 'ethertype': const.IPv6,
                              'security_group_id': sg1_id},
-                            {'direction': 'egress', 'ethertype': 'IPv4',
+                            {'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg2_id},
-                            {'direction': 'egress', 'ethertype': 'IPv6',
+                            {'direction': 'egress', 'ethertype': const.IPv6,
                              'security_group_id': sg2_id},
                             {'direction': u'ingress',
                              'source_ip_prefix': u'10.0.0.3/32',
-                             'protocol': u'tcp', 'ethertype': u'IPv4',
+                             'protocol': const.PROTO_NAME_TCP,
+                             'ethertype': const.IPv4,
                              'port_range_max': 25, 'port_range_min': 24,
                              'remote_group_id': sg2_id,
                              'security_group_id': sg1_id},
@@ -279,7 +286,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', port_id2)
 
     def test_security_group_rules_for_devices_ipv6_ingress(self):
-        fake_prefix = test_fw.FAKE_PREFIX['IPv6']
+        fake_prefix = test_fw.FAKE_PREFIX[const.IPv6]
         with self.network() as n:
             with nested(self.subnet(n,
                                     cidr=fake_prefix,
@@ -289,20 +296,20 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
-                    'ingress', 'tcp', '22',
+                    'ingress', const.PROTO_NAME_TCP, '22',
                     '22',
-                    ethertype='IPv6')
+                    ethertype=const.IPv6)
                 rule2 = self._build_security_group_rule(
                     sg1_id,
-                    'ingress', 'udp', '23',
+                    'ingress', const.PROTO_NAME_UDP, '23',
                     '23', fake_prefix,
-                    ethertype='IPv6')
+                    ethertype=const.IPv6)
                 rules = {
                     'security_group_rules': [rule1['security_group_rule'],
                                              rule2['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -316,17 +323,19 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                expected = [{'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg1_id},
-                            {'direction': 'egress', 'ethertype': 'IPv6',
+                            {'direction': 'egress', 'ethertype': const.IPv6,
                              'security_group_id': sg1_id},
                             {'direction': 'ingress',
-                             'protocol': 'tcp', 'ethertype': 'IPv6',
+                             'protocol': const.PROTO_NAME_TCP,
+                             'ethertype': const.IPv6,
                              'port_range_max': 22,
                              'security_group_id': sg1_id,
                              'port_range_min': 22},
-                            {'direction': 'ingress', 'protocol': 'udp',
-                             'ethertype': 'IPv6',
+                            {'direction': 'ingress',
+                             'protocol': const.PROTO_NAME_UDP,
+                             'ethertype': const.IPv6,
                              'port_range_max': 23, 'security_group_id': sg1_id,
                              'port_range_min': 23,
                              'source_ip_prefix': fake_prefix},
@@ -336,7 +345,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv6_egress(self):
-        fake_prefix = test_fw.FAKE_PREFIX['IPv6']
+        fake_prefix = test_fw.FAKE_PREFIX[const.IPv6]
         with self.network() as n:
             with nested(self.subnet(n,
                                     cidr=fake_prefix,
@@ -346,20 +355,20 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
-                    'egress', 'tcp', '22',
+                    'egress', const.PROTO_NAME_TCP, '22',
                     '22',
-                    ethertype='IPv6')
+                    ethertype=const.IPv6)
                 rule2 = self._build_security_group_rule(
                     sg1_id,
-                    'egress', 'udp', '23',
+                    'egress', const.PROTO_NAME_UDP, '23',
                     '23', fake_prefix,
-                    ethertype='IPv6')
+                    ethertype=const.IPv6)
                 rules = {
                     'security_group_rules': [rule1['security_group_rule'],
                                              rule2['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -374,18 +383,21 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                expected = [{'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg1_id},
-                            {'direction': 'egress', 'ethertype': 'IPv6',
+                            {'direction': 'egress', 'ethertype': const.IPv6,
                              'security_group_id': sg1_id},
                             {'direction': 'egress',
-                             'protocol': 'tcp', 'ethertype': 'IPv6',
+                             'protocol': const.PROTO_NAME_TCP,
+                             'ethertype': const.IPv6,
                              'port_range_max': 22,
                              'security_group_id': sg1_id,
                              'port_range_min': 22},
-                            {'direction': 'egress', 'protocol': 'udp',
-                             'ethertype': 'IPv6',
-                             'port_range_max': 23, 'security_group_id': sg1_id,
+                            {'direction': 'egress',
+                             'protocol': const.PROTO_NAME_UDP,
+                             'ethertype': const.IPv6,
+                             'port_range_max': 23,
+                             'security_group_id': sg1_id,
                              'port_range_min': 23,
                              'dest_ip_prefix': fake_prefix},
                             ]
@@ -394,7 +406,7 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv6_source_group(self):
-        fake_prefix = test_fw.FAKE_PREFIX['IPv6']
+        fake_prefix = test_fw.FAKE_PREFIX[const.IPv6]
         with self.network() as n:
             with nested(self.subnet(n,
                                     cidr=fake_prefix,
@@ -407,15 +419,15 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 sg2_id = sg2['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
-                    'ingress', 'tcp', '24',
+                    'ingress', const.PROTO_NAME_TCP, '24',
                     '25',
-                    ethertype='IPv6',
+                    ethertype=const.IPv6,
                     remote_group_id=sg2['security_group']['id'])
                 rules = {
                     'security_group_rules': [rule1['security_group_rule']]}
                 res = self._create_security_group_rule(self.fmt, rules)
                 self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
                 res1 = self._create_port(
                     self.fmt, n['network']['id'],
@@ -438,17 +450,18 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 ports_rpc = self.rpc.security_group_rules_for_devices(
                     ctx, devices=devices)
                 port_rpc = ports_rpc[port_id1]
-                expected = [{'direction': 'egress', 'ethertype': 'IPv4',
+                expected = [{'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg1_id},
-                            {'direction': 'egress', 'ethertype': 'IPv6',
+                            {'direction': 'egress', 'ethertype': const.IPv6,
                              'security_group_id': sg1_id},
-                            {'direction': 'egress', 'ethertype': 'IPv4',
+                            {'direction': 'egress', 'ethertype': const.IPv4,
                              'security_group_id': sg2_id},
-                            {'direction': 'egress', 'ethertype': 'IPv6',
+                            {'direction': 'egress', 'ethertype': const.IPv6,
                              'security_group_id': sg2_id},
                             {'direction': 'ingress',
                              'source_ip_prefix': 'fe80::3/128',
-                             'protocol': 'tcp', 'ethertype': 'IPv6',
+                             'protocol': const.PROTO_NAME_TCP,
+                             'ethertype': const.IPv6,
                              'port_range_max': 25, 'port_range_min': 24,
                              'remote_group_id': sg2_id,
                              'security_group_id': sg1_id},
@@ -1220,36 +1233,36 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         self.rpc = mock.Mock()
         self.agent.plugin_rpc = self.rpc
         rule1 = [{'direction': 'ingress',
-                  'protocol': 'udp',
-                  'ethertype': 'IPv4',
+                  'protocol': const.PROTO_NAME_UDP,
+                  'ethertype': const.IPv4,
                   'source_ip_prefix': '10.0.0.2',
                   'source_port_range_min': 67,
                   'source_port_range_max': 67,
                   'port_range_min': 68,
                   'port_range_max': 68},
                  {'direction': 'ingress',
-                  'protocol': 'tcp',
-                  'ethertype': 'IPv4',
+                  'protocol': const.PROTO_NAME_TCP,
+                  'ethertype': const.IPv4,
                   'port_range_min': 22,
                   'port_range_max': 22},
                  {'direction': 'egress',
-                  'ethertype': 'IPv4'}]
+                  'ethertype': const.IPv4}]
         rule2 = rule1[:]
         rule2 += [{'direction': 'ingress',
                   'source_ip_prefix': '10.0.0.4',
-                  'ethertype': 'IPv4'}]
+                  'ethertype': const.IPv4}]
         rule3 = rule2[:]
         rule3 += [{'direction': 'ingress',
-                  'protocol': 'icmp',
-                  'ethertype': 'IPv4'}]
+                  'protocol': const.PROTO_NAME_ICMP,
+                  'ethertype': const.IPv4}]
         rule4 = rule1[:]
         rule4 += [{'direction': 'ingress',
                   'source_ip_prefix': '10.0.0.3',
-                  'ethertype': 'IPv4'}]
+                  'ethertype': const.IPv4}]
         rule5 = rule4[:]
         rule5 += [{'direction': 'ingress',
-                  'protocol': 'icmp',
-                  'ethertype': 'IPv4'}]
+                  'protocol': const.PROTO_NAME_ICMP,
+                  'ethertype': const.IPv4}]
         self.devices1 = {'tap_port1': self._device('tap_port1',
                                                    '10.0.0.3',
                                                    '12:34:56:78:9a:bc',
@@ -1360,7 +1373,7 @@ class SGNotificationTestMixin():
                 security_group_id = sg['security_group']['id']
                 direction = "ingress"
                 remote_group_id = sg2['security_group']['id']
-                protocol = 'tcp'
+                protocol = const.PROTO_NAME_TCP
                 port_range_min = 88
                 port_range_max = 88
                 with self.security_group_rule(security_group_id, direction,

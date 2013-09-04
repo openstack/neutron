@@ -61,8 +61,8 @@ def get_protocol_value(protocol):
         return protocol
 
     mapping = {
-        'tcp': constants.TCP_PROTOCOL,
-        'udp': constants.UDP_PROTOCOL,
-        'icmp': constants.ICMP_PROTOCOL
+        constants.PROTO_NAME_TCP: constants.PROTO_NUM_TCP,
+        constants.PROTO_NAME_UDP: constants.PROTO_NUM_UDP,
+        constants.PROTO_NAME_ICMP: constants.PROTO_NUM_ICMP
     }
     return mapping.get(protocol.lower())

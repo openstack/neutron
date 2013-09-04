@@ -23,6 +23,7 @@ from oslo.config import cfg
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
+from neutron.common import constants as const
 from neutron.common import exceptions as qexception
 from neutron import manager
 from neutron.openstack.common import uuidutils
@@ -158,7 +159,8 @@ def _validate_name_not_default(data, valid_values=None):
 
 attr.validators['type:name_not_default'] = _validate_name_not_default
 
-sg_supported_protocols = [None, 'tcp', 'udp', 'icmp']
+sg_supported_protocols = [None, const.PROTO_NAME_TCP,
+                          const.PROTO_NAME_UDP, const.PROTO_NAME_ICMP]
 sg_supported_ethertypes = ['IPv4', 'IPv6']
 
 # Attribute Map
