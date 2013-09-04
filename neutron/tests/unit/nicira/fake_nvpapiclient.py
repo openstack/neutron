@@ -106,17 +106,6 @@ class FakeClient:
         LROUTER_LPORT_RESOURCE: ['LogicalPortAttachment'],
     }
 
-    _fake_lswitch_dict = {}
-    _fake_lrouter_dict = {}
-    _fake_lswitch_lport_dict = {}
-    _fake_lrouter_lport_dict = {}
-    _fake_lrouter_nat_dict = {}
-    _fake_lswitch_lportstatus_dict = {}
-    _fake_lrouter_lportstatus_dict = {}
-    _fake_securityprofile_dict = {}
-    _fake_lqueue_dict = {}
-    _fake_gatewayservice_dict = {}
-
     _validators = {
         LSWITCH_RESOURCE: _validate_resource,
         LSWITCH_LPORT_RESOURCE: _validate_resource,
@@ -128,6 +117,16 @@ class FakeClient:
 
     def __init__(self, fake_files_path):
         self.fake_files_path = fake_files_path
+        self._fake_lswitch_dict = {}
+        self._fake_lrouter_dict = {}
+        self._fake_lswitch_lport_dict = {}
+        self._fake_lrouter_lport_dict = {}
+        self._fake_lrouter_nat_dict = {}
+        self._fake_lswitch_lportstatus_dict = {}
+        self._fake_lrouter_lportstatus_dict = {}
+        self._fake_securityprofile_dict = {}
+        self._fake_lqueue_dict = {}
+        self._fake_gatewayservice_dict = {}
 
     def _get_tag(self, resource, scope):
         tags = [tag['tag'] for tag in resource['tags']
@@ -136,7 +135,7 @@ class FakeClient:
 
     def _get_filters(self, querystring):
         if not querystring:
-            return (None, None)
+            return (None, None, None)
         params = urlparse.parse_qs(querystring)
         tag_filter = None
         attr_filter = None
@@ -145,7 +144,15 @@ class FakeClient:
                           'tag': params['tag'][0]}
         elif 'uuid' in params:
             attr_filter = {'uuid': params['uuid'][0]}
-        return (tag_filter, attr_filter)
+        # Handle page_length
+        # TODO(salv-orlando): Handle page cursor too
+        page_len = params.get('_page_length')
+        if page_len:
+            page_len = int(page_len[0])
+        else:
+            # Explicitly set it to None (avoid 0 or empty list)
+            page_len = None
+        return (tag_filter, attr_filter, page_len)
 
     def _add_lswitch(self, body):
         fake_lswitch = json.loads(body)
@@ -157,6 +164,8 @@ class FakeClient:
         fake_lswitch['zone_uuid'] = zone_uuid
         fake_lswitch['tenant_id'] = self._get_tag(fake_lswitch, 'os_tid')
         fake_lswitch['lport_count'] = 0
+        # set status value
+        fake_lswitch['status'] = 'true'
         return fake_lswitch
 
     def _build_lrouter(self, body, uuid=None):
@@ -183,6 +192,8 @@ class FakeClient:
                                            uuidutils.generate_uuid())
         self._fake_lrouter_dict[fake_lrouter['uuid']] = fake_lrouter
         fake_lrouter['lport_count'] = 0
+        # set status value
+        fake_lrouter['status'] = 'true'
         return fake_lrouter
 
     def _add_lqueue(self, body):
@@ -213,6 +224,8 @@ class FakeClient:
         fake_lport_status['ls_uuid'] = fake_lswitch['uuid']
         fake_lport_status['ls_name'] = fake_lswitch['display_name']
         fake_lport_status['ls_zone_uuid'] = fake_lswitch['zone_uuid']
+        # set status value
+        fake_lport['status'] = 'true'
         self._fake_lswitch_lportstatus_dict[new_uuid] = fake_lport_status
         return fake_lport
 
@@ -356,7 +369,7 @@ class FakeClient:
 
     def _list(self, resource_type, response_file,
               parent_uuid=None, query=None, relations=None):
-        (tag_filter, attr_filter) = self._get_filters(query)
+        (tag_filter, attr_filter, page_len) = self._get_filters(query)
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
             res_dict = getattr(self, '_fake_%s_dict' % resource_type)
@@ -425,8 +438,20 @@ class FakeClient:
                      if (parent_func(res_uuid) and
                          _tag_match(res_uuid) and
                          _attr_match(res_uuid))]
-            return json.dumps({'results': items,
-                               'result_count': len(items)})
+            # Rather inefficient, but hey this is just a mock!
+            next_cursor = None
+            total_items = len(items)
+            if page_len:
+                try:
+                    next_cursor = items[page_len]['uuid']
+                except IndexError:
+                    next_cursor = None
+                items = items[:page_len]
+            response_dict = {'results': items,
+                             'result_count': total_items}
+            if next_cursor:
+                response_dict['page_cursor'] = next_cursor
+            return json.dumps(response_dict)
 
     def _show(self, resource_type, response_file,
               uuid1, uuid2=None, relations=None):

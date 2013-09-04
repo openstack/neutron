@@ -2,7 +2,7 @@
  "_href": "/ws.v1/lswitch/%(uuid)s",
  "_schema": "/ws.v1/schema/LogicalSwitchConfig",
  "_relations": {"LogicalSwitchStatus":
-     {"fabric_status": true,
+     {"fabric_status": %(status)s,
       "type": "LogicalSwitchStatus",
       "lport_count": %(lport_count)d,
       "_href": "/ws.v1/lswitch/%(uuid)s/status",

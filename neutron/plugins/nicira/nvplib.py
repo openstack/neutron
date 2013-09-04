@@ -66,7 +66,10 @@ SNAT_KEYS = ["to_src_port_min", "to_src_port_max", "to_src_ip_min",
              "to_src_ip_max"]
 
 DNAT_KEYS = ["to_dst_port", "to_dst_ip_min", "to_dst_ip_max"]
-
+# Maximum page size for a single request
+# NOTE(salv-orlando): This might become a version-dependent map should the
+# limit be raised in future versions
+MAX_PAGE_SIZE = 5000
 
 # TODO(bgh): it would be more efficient to use a bitmap
 taken_context_ids = []
@@ -157,21 +160,34 @@ def get_cluster_version(cluster):
     return version
 
 
+def get_single_query_page(path, cluster, page_cursor=None,
+                          page_length=1000, neutron_only=True):
+    params = []
+    if page_cursor:
+        params.append("_page_cursor=%s" % page_cursor)
+    params.append("_page_length=%s" % page_length)
+    # NOTE(salv-orlando): On the NVP backend the 'Quantum' tag is still
+    # used for marking Neutron entities in order to preserve compatibility
+    if neutron_only:
+        params.append("tag_scope=quantum")
+    query_params = "&".join(params)
+    path = "%s%s%s" % (path, "&" if (path.find("?") != -1) else "?",
+                       query_params)
+    body = do_request(HTTP_GET, path, cluster=cluster)
+    # Result_count won't be returned if _page_cursor is supplied
+    return body['results'], body.get('page_cursor'), body.get('result_count')
+
+
 def get_all_query_pages(path, c):
     need_more_results = True
     result_list = []
     page_cursor = None
-    query_marker = "&" if (path.find("?") != -1) else "?"
     while need_more_results:
-        page_cursor_str = (
-            "_page_cursor=%s" % page_cursor if page_cursor else "")
-        body = do_request(HTTP_GET,
-                          "%s%s%s" % (path, query_marker, page_cursor_str),
-                          cluster=c)
-        page_cursor = body.get('page_cursor')
+        results, page_cursor = get_single_query_page(
+            path, c, page_cursor)[:2]
         if not page_cursor:
             need_more_results = False
-        result_list.extend(body['results'])
+        result_list.extend(results)
     return result_list
 
 
