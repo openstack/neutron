@@ -18,6 +18,7 @@ from sqlalchemy.orm import exc
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
@@ -52,10 +53,27 @@ def get_network_segments(session, network_id):
     with session.begin(subtransactions=True):
         records = (session.query(models.NetworkSegment).
                    filter_by(network_id=network_id))
-        return [{api.NETWORK_TYPE: record.network_type,
+        return [{api.ID: record.id,
+                 api.NETWORK_TYPE: record.network_type,
                  api.PHYSICAL_NETWORK: record.physical_network,
                  api.SEGMENTATION_ID: record.segmentation_id}
                 for record in records]
+
+
+def ensure_port_binding(session, port_id):
+    with session.begin(subtransactions=True):
+        try:
+            record = (session.query(models.PortBinding).
+                      filter_by(port_id=port_id).
+                      one())
+        except exc.NoResultFound:
+            record = models.PortBinding(
+                port_id=port_id,
+                host='',
+                vif_type=portbindings.VIF_TYPE_UNBOUND,
+                cap_port_filter=False)
+            session.add(record)
+        return record
 
 
 def get_port(session, port_id):

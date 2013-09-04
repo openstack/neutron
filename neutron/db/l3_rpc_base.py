@@ -18,6 +18,7 @@ from oslo.config import cfg
 from neutron.common import constants
 from neutron.common import utils
 from neutron import context as neutron_context
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
@@ -49,9 +50,30 @@ class L3RpcCallbackMixin(object):
                 context, host, router_ids)
         else:
             routers = plugin.get_sync_data(context, router_ids)
+        if utils.is_extension_supported(
+            plugin, constants.PORT_BINDING_EXT_ALIAS):
+            self._ensure_host_set_on_ports(context, plugin, host, routers)
         LOG.debug(_("Routers returned to l3 agent:\n %s"),
                   jsonutils.dumps(routers, indent=5))
         return routers
+
+    def _ensure_host_set_on_ports(self, context, plugin, host, routers):
+        for router in routers:
+            LOG.debug("checking router: %s for host: %s" %
+                      (router['id'], host))
+            self._ensure_host_set_on_port(context, plugin, host,
+                                          router.get('gw_port'))
+            for interface in router.get(constants.INTERFACE_KEY, []):
+                self._ensure_host_set_on_port(context, plugin, host,
+                                              interface)
+
+    def _ensure_host_set_on_port(self, context, plugin, host, port):
+        if (port and
+            (port.get(portbindings.HOST_ID) != host or
+             port.get(portbindings.VIF_TYPE) ==
+             portbindings.VIF_TYPE_BINDING_FAILED)):
+            plugin.update_port(context, port['id'],
+                               {'port': {portbindings.HOST_ID: host}})
 
     def get_external_network_id(self, context, **kwargs):
         """Get one external network id for l3 agent.

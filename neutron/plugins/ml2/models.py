@@ -14,6 +14,7 @@
 #    under the License.
 
 import sqlalchemy as sa
+from sqlalchemy import orm
 
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -35,3 +36,34 @@ class NetworkSegment(model_base.BASEV2, models_v2.HasId):
     network_type = sa.Column(sa.String(32), nullable=False)
     physical_network = sa.Column(sa.String(64))
     segmentation_id = sa.Column(sa.Integer)
+
+
+class PortBinding(model_base.BASEV2):
+    """Represent binding-related state of a port.
+
+    A port binding stores the port attributes required for the
+    portbindings extension, as well as internal ml2 state such as
+    which MechanismDriver and which segment are used by the port
+    binding.
+    """
+
+    __tablename__ = 'ml2_port_bindings'
+
+    port_id = sa.Column(sa.String(36),
+                        sa.ForeignKey('ports.id', ondelete="CASCADE"),
+                        primary_key=True)
+    host = sa.Column(sa.String(255), nullable=False)
+    vif_type = sa.Column(sa.String(64), nullable=False)
+    cap_port_filter = sa.Column(sa.Boolean, nullable=False)
+    driver = sa.Column(sa.String(64))
+    segment = sa.Column(sa.String(36),
+                        sa.ForeignKey('ml2_network_segments.id',
+                                      ondelete="SET NULL"))
+
+    # Add a relationship to the Port model in order to instruct SQLAlchemy to
+    # eagerly load port bindings
+    port = orm.relationship(
+        models_v2.Port,
+        backref=orm.backref("port_binding",
+                            lazy='joined', uselist=False,
+                            cascade='delete'))

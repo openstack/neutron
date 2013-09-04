@@ -87,6 +87,7 @@ class LoggerMechanismDriver(api.MechanismDriver):
                  {'method': method_name,
                   'current': context.current,
                   'original': context.original,
+                  'segment': context.bound_segment,
                   'network': network_context.current})
 
     def create_port_precommit(self, context):
@@ -106,3 +107,12 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     def delete_port_postcommit(self, context):
         self._log_port_call("delete_port_postcommit", context)
+
+    def bind_port(self, context):
+        self._log_port_call("bind_port", context)
+
+    def validate_port_binding(self, context):
+        self._log_port_call("validate_port_binding", context)
+
+    def unbind_port(self, context):
+        self._log_port_call("unbind_port", context)

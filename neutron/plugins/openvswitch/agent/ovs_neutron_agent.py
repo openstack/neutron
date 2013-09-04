@@ -174,9 +174,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             'binary': 'neutron-openvswitch-agent',
             'host': cfg.CONF.host,
             'topic': q_const.L2_AGENT_TOPIC,
-            'configurations': bridge_mappings,
+            'configurations': {'bridge_mappings': bridge_mappings,
+                               'tunnel_types': self.tunnel_types},
             'agent_type': q_const.AGENT_TYPE_OVS,
-            'tunnel_types': self.tunnel_types,
             'start_flag': True}
 
         self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
