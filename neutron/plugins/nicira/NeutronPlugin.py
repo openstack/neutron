@@ -28,20 +28,15 @@ from oslo.config import cfg
 from sqlalchemy.orm import exc as sa_exc
 import webob.exc
 
-from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import constants
 from neutron.common import exceptions as q_exc
-from neutron.common import rpc as q_rpc
-from neutron.common import topics
 from neutron.common import utils
 from neutron import context as q_context
-from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
-from neutron.db import dhcp_rpc_base
 from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
@@ -58,17 +53,15 @@ from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
-from neutron.openstack.common import importutils
-from neutron.openstack.common import rpc
-from neutron.plugins.nicira.common import config  # noqa
+from neutron.plugins.nicira.common import config
 from neutron.plugins.nicira.common import exceptions as nvp_exc
-from neutron.plugins.nicira.common import metadata_access as nvp_meta
 from neutron.plugins.nicira.common import securitygroups as nvp_sec
 from neutron.plugins.nicira.dbexts import distributedrouter as dist_rtr
 from neutron.plugins.nicira.dbexts import maclearning as mac_db
 from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira.dbexts import nicira_networkgw_db as networkgw_db
 from neutron.plugins.nicira.dbexts import nicira_qos_db as qos_db
+from neutron.plugins.nicira import dhcpmeta_modes
 from neutron.plugins.nicira.extensions import maclearning as mac_ext
 from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
@@ -117,34 +110,19 @@ def create_nvp_cluster(cluster_opts, concurrent_connections,
     return cluster
 
 
-class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
-
-    # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.1'
-
-    def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
-
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        '''
-        return q_rpc.PluginRpcDispatcher([self,
-                                          agents_db.AgentExtRpcCallback()])
-
-
-class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
+class NvpPluginV2(agentschedulers_db.DhcpAgentSchedulerDbMixin,
+                  db_base_plugin_v2.NeutronDbPluginV2,
+                  dhcpmeta_modes.DhcpMetadataAccess,
+                  dist_rtr.DistributedRouter_mixin,
                   extraroute_db.ExtraRoute_db_mixin,
                   l3_gwmode_db.L3_NAT_db_mixin,
-                  dist_rtr.DistributedRouter_mixin,
-                  portbindings_db.PortBindingMixin,
-                  portsecurity_db.PortSecurityDbMixin,
-                  securitygroups_db.SecurityGroupDbMixin,
                   mac_db.MacLearningDbMixin,
                   networkgw_db.NetworkGatewayMixin,
-                  qos_db.NVPQoSDbMixin,
                   nvp_sec.NVPSecurityGroups,
-                  nvp_meta.NvpMetadataAccess,
-                  agentschedulers_db.DhcpAgentSchedulerDbMixin):
+                  portbindings_db.PortBindingMixin,
+                  portsecurity_db.PortSecurityDbMixin,
+                  qos_db.NVPQoSDbMixin,
+                  securitygroups_db.SecurityGroupDbMixin):
     """L2 Virtual network plugin.
 
     NvpPluginV2 is a Neutron plugin that provides L2 Virtual Network
@@ -213,13 +191,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 'security-group' in self.supported_extension_aliases}}
 
         db.configure_db()
-        # Extend the fault map
         self._extend_fault_map()
-        # Set up RPC interface for DHCP agent
-        self.setup_rpc()
-        self.network_scheduler = importutils.import_object(
-            cfg.CONF.network_scheduler_driver
-        )
+        self.setup_dhcpmeta_access()
         # Set this flag to false as the default gateway has not
         # been yet updated from the config file
         self._is_default_net_gw_in_sync = False
@@ -888,18 +861,6 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         "logical network %s"), network.id)
             raise nvp_exc.NvpNoMorePortsException(network=network.id)
 
-    def setup_rpc(self):
-        # RPC support for dhcp
-        self.topic = topics.PLUGIN
-        self.conn = rpc.create_connection(new=True)
-        self.dispatcher = NVPRpcCallbacks().create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher,
-                                  fanout=False)
-        self.agent_notifiers[constants.AGENT_TYPE_DHCP] = (
-            dhcp_rpc_agent_api.DhcpAgentNotifyAPI())
-        # Consume from all consumers in a thread
-        self.conn.consume_in_thread()
-
     def _convert_to_nvp_transport_zones(self, cluster, network=None,
                                         bindings=None):
         nvp_transport_zones_config = []
@@ -1033,7 +994,8 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self._extend_network_dict_provider(context, new_net,
                                                    provider_type,
                                                    net_bindings)
-        self.schedule_network(context, new_net)
+        self.handle_network_dhcp_access(context, new_net,
+                                        action='create_network')
         return new_net
 
     def delete_network(self, context, id):
@@ -1081,6 +1043,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                           context.tenant_id)
             except q_exc.NotFound:
                 LOG.warning(_("Did not found lswitch %s in NVP"), id)
+        self.handle_network_dhcp_access(context, id, action='delete_network')
 
     def get_network(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
@@ -1338,20 +1301,13 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # ATTR_NOT_SPECIFIED is for the case where a port is created on a
         # shared network that is not owned by the tenant.
         port_data = port['port']
-        notify_dhcp_agent = False
         with context.session.begin(subtransactions=True):
             # First we allocate port in neutron database
             neutron_db = super(NvpPluginV2, self).create_port(context, port)
             neutron_port_id = neutron_db['id']
             # Update fields obtained from neutron db (eg: MAC address)
             port["port"].update(neutron_db)
-            # metadata_dhcp_host_route
-            if (cfg.CONF.NVP.metadata_mode == "dhcp_host_route" and
-                neutron_db.get('device_owner') == constants.DEVICE_OWNER_DHCP):
-                if (neutron_db.get('fixed_ips') and
-                    len(neutron_db['fixed_ips'])):
-                    notify_dhcp_agent = self._ensure_metadata_host_route(
-                        context, neutron_db['fixed_ips'][0])
+            self.handle_port_metadata_access(context, neutron_db)
             # port security extension checks
             (port_security, has_ip) = self._determine_port_security_and_has_ip(
                 context, port_data)
@@ -1408,13 +1364,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 with context.session.begin(subtransactions=True):
                     self._delete_port(context, neutron_port_id)
 
-        # Port has been created both on DB and NVP - proceed with
-        # scheduling network and notifying DHCP agent
-        net = self.get_network(context, port_data['network_id'])
-        self.schedule_network(context, net)
-        if notify_dhcp_agent:
-            self._send_subnet_update_end(
-                context, neutron_db['fixed_ips'][0]['subnet_id'])
+        self.handle_port_dhcp_access(context, port_data, action='create_port')
         return port_data
 
     def update_port(self, context, id, port):
@@ -1540,23 +1490,17 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         port_delete_func(context, neutron_db_port)
         self.disassociate_floatingips(context, id)
-        notify_dhcp_agent = False
         with context.session.begin(subtransactions=True):
             queue = self._get_port_queue_bindings(context, {'port_id': [id]})
             # metadata_dhcp_host_route
-            port_device_owner = neutron_db_port['device_owner']
-            if (cfg.CONF.NVP.metadata_mode == "dhcp_host_route" and
-                port_device_owner == constants.DEVICE_OWNER_DHCP):
-                    notify_dhcp_agent = self._ensure_metadata_host_route(
-                        context, neutron_db_port['fixed_ips'][0],
-                        is_delete=True)
+            self.handle_port_metadata_access(
+                context, neutron_db_port, is_delete=True)
             super(NvpPluginV2, self).delete_port(context, id)
             # Delete qos queue if possible
             if queue:
                 self.delete_qos_queue(context, queue[0]['queue_id'], False)
-        if notify_dhcp_agent:
-            self._send_subnet_update_end(
-                context, neutron_db_port['fixed_ips'][0]['subnet_id'])
+        self.handle_port_dhcp_access(
+            context, neutron_db_port, action='delete_port')
 
     def get_port(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
@@ -1744,14 +1688,15 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 nvplib.update_explicit_routes_lrouter(
                     self.cluster, router_id, previous_routes)
 
-    def delete_router(self, context, id):
+    def delete_router(self, context, router_id):
         with context.session.begin(subtransactions=True):
             # Ensure metadata access network is detached and destroyed
             # This will also destroy relevant objects on NVP platform.
             # NOTE(salvatore-orlando): A failure in this operation will
             # cause the router delete operation to fail too.
-            self._handle_metadata_access_network(context, id, do_create=False)
-            super(NvpPluginV2, self).delete_router(context, id)
+            self.handle_router_metadata_access(
+                context, router_id, do_create=False)
+            super(NvpPluginV2, self).delete_router(context, router_id)
             # If removal is successful in Neutron it should be so on
             # the NVP platform too - otherwise the transaction should
             # be automatically aborted
@@ -1759,14 +1704,14 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # allow an extra field for storing the cluster information
             # together with the resource
             try:
-                nvplib.delete_lrouter(self.cluster, id)
+                nvplib.delete_lrouter(self.cluster, router_id)
             except q_exc.NotFound:
                 LOG.warning(_("Logical router '%s' not found "
-                              "on NVP Platform") % id)
+                              "on NVP Platform") % router_id)
             except NvpApiClient.NvpApiException:
                 raise nvp_exc.NvpPluginException(
-                    err_msg=(_("Unable to delete logical router"
-                               "on NVP Platform")))
+                    err_msg=(_("Unable to delete logical router '%s'"
+                               "on NVP Platform") % router_id))
 
     def get_router(self, context, id, fields=None):
         router = self._get_router(context, id)
@@ -1892,7 +1837,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Ensure the NVP logical router has a connection to a 'metadata access'
         # network (with a proxy listening on its DHCP port), by creating it
         # if needed.
-        self._handle_metadata_access_network(context, router_id)
+        self.handle_router_metadata_access(context, router_id)
         LOG.debug(_("Add_router_interface completed for subnet:%(subnet_id)s "
                     "and router:%(router_id)s"),
                   {'subnet_id': subnet_id, 'router_id': router_id})
@@ -1936,7 +1881,7 @@ class NvpPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Ensure the connection to the 'metadata access network'
         # is removed  (with the network) if this the last subnet
         # on the router
-        self._handle_metadata_access_network(context, router_id)
+        self.handle_router_metadata_access(context, router_id)
         try:
             if not subnet:
                 subnet = self._get_subnet(context, subnet_id)

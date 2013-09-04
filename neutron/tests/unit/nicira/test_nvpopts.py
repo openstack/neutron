@@ -32,6 +32,7 @@ NVP_BASE_CONF_PATH = get_fake_conf('neutron.conf.test')
 NVP_INI_PATH = get_fake_conf('nvp.ini.basic.test')
 NVP_INI_FULL_PATH = get_fake_conf('nvp.ini.full.test')
 NVP_INI_DEPR_PATH = get_fake_conf('nvp.ini.grizzly.test')
+NVP_INI_AGENTLESS_PATH = get_fake_conf('nvp.ini.agentless.test')
 
 
 class NVPClusterTest(testtools.TestCase):
@@ -139,6 +140,31 @@ class ConfigurationTest(testtools.TestCase):
         # Load the configuration, and initialize the plugin
         NeutronManager().get_plugin()
         self.assertIn('extensions', cfg.CONF.api_extensions_path)
+
+    def test_agentless_extensions(self):
+        self.skipTest('Enable once agentless support is added')
+        q_config.parse(['--config-file', NVP_BASE_CONF_PATH,
+                        '--config-file', NVP_INI_AGENTLESS_PATH])
+        cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
+        self.assertEqual(config.AgentModes.AGENTLESS,
+                         cfg.CONF.NVP.agent_mode)
+        plugin = NeutronManager().get_plugin()
+        self.assertNotIn('agent',
+                         plugin.supported_extension_aliases)
+        self.assertNotIn('dhcp_agent_scheduler',
+                         plugin.supported_extension_aliases)
+
+    def test_agent_extensions(self):
+        q_config.parse(['--config-file', NVP_BASE_CONF_PATH,
+                        '--config-file', NVP_INI_FULL_PATH])
+        cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
+        self.assertEqual(config.AgentModes.AGENT,
+                         cfg.CONF.NVP.agent_mode)
+        plugin = NeutronManager().get_plugin()
+        self.assertIn('agent',
+                      plugin.supported_extension_aliases)
+        self.assertIn('dhcp_agent_scheduler',
+                      plugin.supported_extension_aliases)
 
 
 class OldConfigurationTest(testtools.TestCase):
