@@ -1018,7 +1018,8 @@ class OvsDhcpAgentNotifierTestCase(OvsAgentSchedulerTestCaseBase):
                     payload={'admin_state_up': False}),
                 topic='dhcp_agent.' + DHCP_HOSTA)
 
-    def _network_port_create(self, hosts):
+    def _network_port_create(
+        self, hosts, gateway=attributes.ATTR_NOT_SPECIFIED, owner=None):
         for host in hosts:
             self._register_one_agent_state(
                 {'binary': 'neutron-dhcp-agent',
@@ -1030,9 +1031,17 @@ class OvsDhcpAgentNotifierTestCase(OvsAgentSchedulerTestCaseBase):
         with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
             with self.network(do_delete=False) as net1:
                 with self.subnet(network=net1,
+                                 gateway_ip=gateway,
                                  do_delete=False) as subnet1:
-                    with self.port(subnet=subnet1, no_delete=True) as port:
-                        return [mock_dhcp, net1, subnet1, port]
+                    if owner:
+                        with self.port(subnet=subnet1,
+                                       no_delete=True,
+                                       device_owner=owner) as port:
+                            return [mock_dhcp, net1, subnet1, port]
+                    else:
+                        with self.port(subnet=subnet1,
+                                       no_delete=True) as port:
+                            return [mock_dhcp, net1, subnet1, port]
 
     def _notification_mocks(self, hosts, mock_dhcp, net, subnet, port):
         host_calls = {}

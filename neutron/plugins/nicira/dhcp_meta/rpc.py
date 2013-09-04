@@ -77,11 +77,7 @@ def handle_port_dhcp_access(plugin, context, port_data, action):
     if active_port:
         subnet_id = port_data['fixed_ips'][0]['subnet_id']
         subnet = plugin.get_subnet(context, subnet_id)
-        if (cfg.CONF.dhcp_agent_notification and subnet.get('gateway_ip')
-            or action == 'delete_port'):
-            dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-            dhcp_notifier.notify(
-                context, {'subnet': subnet}, 'subnet.update.end')
+        _notify_rpc_agent(context, {'subnet': subnet}, 'subnet.update.end')
 
 
 def handle_port_metadata_access(context, port, is_delete=False):
@@ -207,12 +203,8 @@ def _create_metadata_access_network(plugin, context, router_id):
         # as it will be removed with the network
         plugin.delete_network(context, meta_net['id'])
 
-    if cfg.CONF.dhcp_agent_notification:
-        # We need to send a notification to the dhcp agent in
-        # order to start the metadata agent proxy
-        dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-        dhcp_notifier.notify(context, {'network': meta_net},
-                             'network.create.end')
+    # Tell to start the metadata agent proxy
+    _notify_rpc_agent(context, {'network': meta_net}, 'network.create.end')
 
 
 def _destroy_metadata_access_network(plugin, context, router_id, ports):
@@ -235,11 +227,12 @@ def _destroy_metadata_access_network(plugin, context, router_id, ports):
         # must re-add the router interface
         plugin.add_router_interface(context, router_id,
                                     {'subnet_id': meta_sub_id})
+     # Tell to stop the metadata agent proxy
+    _notify_rpc_agent(
+        context, {'network': {'id': meta_net_id}}, 'network.delete.end')
 
+
+def _notify_rpc_agent(context, payload, event):
     if cfg.CONF.dhcp_agent_notification:
-        # We need to send a notification to the dhcp agent in
-        # order to stop the metadata agent proxy
         dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-        dhcp_notifier.notify(context,
-                             {'network': {'id': meta_net_id}},
-                             'network.delete.end')
+        dhcp_notifier.notify(context, payload, event)
