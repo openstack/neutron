@@ -23,7 +23,8 @@ class MetaPluginV2DBTestCase(test_plugin.NeutronDbPluginV2TestCase):
     _plugin_name = ('neutron.plugins.metaplugin.'
                     'meta_neutron_plugin.MetaPluginV2')
 
-    def setUp(self, plugin=None, ext_mgr=None):
+    def setUp(self, plugin=None, ext_mgr=None,
+              service_plugins=None):
         # NOTE(salv-orlando): The plugin keyword argument is ignored,
         # as this class will always invoke super with self._plugin_name.
         # These keyword parameters ensure setUp methods always have the
@@ -31,7 +32,8 @@ class MetaPluginV2DBTestCase(test_plugin.NeutronDbPluginV2TestCase):
         setup_metaplugin_conf()
         ext_mgr = ext_mgr or test_l3_plugin.L3TestExtensionManager()
         super(MetaPluginV2DBTestCase, self).setUp(
-            plugin=self._plugin_name, ext_mgr=ext_mgr)
+            plugin=self._plugin_name, ext_mgr=ext_mgr,
+            service_plugins=service_plugins)
 
 
 class TestMetaBasicGet(test_plugin.TestBasicGet,

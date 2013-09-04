@@ -20,6 +20,7 @@ Common utilities and helper functions for Openstack Networking Plugins.
 
 from neutron.common import exceptions as q_exc
 from neutron.common import utils
+from neutron.plugins.common import constants
 
 
 def verify_vlan_range(vlan_range):
@@ -60,3 +61,9 @@ def parse_network_vlan_ranges(network_vlan_ranges_cfg_entries):
         else:
             networks.setdefault(network, [])
     return networks
+
+
+def in_pending_status(status):
+    return status in (constants.PENDING_CREATE,
+                      constants.PENDING_UPDATE,
+                      constants.PENDING_DELETE)
