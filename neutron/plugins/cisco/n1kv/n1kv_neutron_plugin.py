@@ -667,16 +667,16 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                               port['id'])
         port[n1kv_profile.PROFILE_ID] = binding.profile_id
 
-    def _process_network_profile(self, context, attrs):
+    def _process_network_profile(self, context, network):
         """Validate network profile exists."""
-        profile_id = attrs.get(n1kv_profile.PROFILE_ID)
+        profile_id = network.get(n1kv_profile.PROFILE_ID)
         profile_id_set = attributes.is_attr_set(profile_id)
         if not profile_id_set:
-            raise cisco_exceptions.NetworkProfileIdNotFound(
-                profile_id=profile_id)
-        if not self.network_profile_exists(context, profile_id):
-            raise cisco_exceptions.NetworkProfileIdNotFound(
-                profile_id=profile_id)
+            profile_name = c_conf.CISCO_N1K.default_network_profile
+            net_p = self._get_network_profile_by_name(context.session,
+                                                      profile_name)
+            profile_id = net_p['id']
+            network['n1kv:profile_id'] = profile_id
         return profile_id
 
     def _process_policy_profile(self, context, attrs):
@@ -1218,7 +1218,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         if ('device_id' in port['port'] and port['port']['device_owner'] in
             ['network:dhcp', 'network:router_interface']):
-            p_profile_name = c_conf.CISCO_N1K.default_policy_profile
+            p_profile_name = c_conf.CISCO_N1K.network_node_policy_profile
             p_profile = self._get_policy_profile_by_name(p_profile_name)
             if p_profile:
                 port['port']['n1kv:profile_id'] = p_profile['id']
@@ -1227,6 +1227,13 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if n1kv_profile.PROFILE_ID in port['port']:
             profile_id = port['port'].get(n1kv_profile.PROFILE_ID)
             profile_id_set = attributes.is_attr_set(profile_id)
+
+        if not profile_id_set:
+            p_profile_name = c_conf.CISCO_N1K.default_policy_profile
+            p_profile = self._get_policy_profile_by_name(p_profile_name)
+            if p_profile:
+                port['port']['n1kv:profile_id'] = p_profile['id']
+                profile_id_set = True
 
         if profile_id_set:
             profile_id = self._process_policy_profile(context,

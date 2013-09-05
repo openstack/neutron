@@ -164,9 +164,9 @@ class NetworkProfileAlreadyExists(exceptions.NeutronException):
                 "already exists.")
 
 
-class NetworkProfileIdNotFound(exceptions.NotFound):
-    """Network Profile with the given UUID cannot be found."""
-    message = _("Network Profile %(profile_id)s could not be found.")
+class NetworkProfileNotFound(exceptions.NotFound):
+    """Network Profile with the given UUID/name cannot be found."""
+    message = _("Network Profile %(profile)s could not be found.")
 
 
 class NoMoreNetworkSegments(exceptions.NoNetworkAvailable):

@@ -70,8 +70,12 @@ cisco_n1k_opts = [
                help=_("N1K VXLAN ID Ranges")),
     cfg.StrOpt('network_vlan_ranges', default='vlan:1:4095',
                help=_("N1K Network VLAN Ranges")),
+    cfg.StrOpt('default_network_profile', default='default_network_profile',
+               help=_("N1K default network profile")),
     cfg.StrOpt('default_policy_profile', default='service_profile',
                help=_("N1K default policy profile")),
+    cfg.StrOpt('network_node_policy_profile', default='dhcp_pp',
+               help=_("N1K policy profile for network node")),
     cfg.StrOpt('poll_duration', default='10',
                help=_("N1K Policy profile polling duration in seconds")),
 ]
