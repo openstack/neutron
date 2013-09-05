@@ -120,12 +120,43 @@ cluster_opts = [
                       "network connection")),
 ]
 
+DEFAULT_STATUS_CHECK_INTERVAL = 2000
+
+vcns_opts = [
+    cfg.StrOpt('user',
+               default='admin',
+               help=_('User name for vsm')),
+    cfg.StrOpt('password',
+               default='default',
+               secret=True,
+               help=_('Password for vsm')),
+    cfg.StrOpt('manager_uri',
+               help=_('uri for vsm')),
+    cfg.StrOpt('datacenter_moid',
+               help=_('Optional parameter identifying the ID of datacenter '
+                      'to deploy NSX Edges')),
+    cfg.StrOpt('deployment_container_id',
+               help=_('Optional parameter identifying the ID of datastore to '
+                      'deploy NSX Edges')),
+    cfg.StrOpt('resource_pool_id',
+               help=_('Optional parameter identifying the ID of resource to '
+                      'deploy NSX Edges')),
+    cfg.StrOpt('datastore_id',
+               help=_('Optional parameter identifying the ID of datastore to '
+                      'deploy NSX Edges')),
+    cfg.StrOpt('external_network',
+               help=_('Network ID for physical network connectivity')),
+    cfg.IntOpt('task_status_check_interval',
+               default=DEFAULT_STATUS_CHECK_INTERVAL,
+               help=_("Task status check interval"))
+]
+
 # Register the configuration options
 cfg.CONF.register_opts(connection_opts)
 cfg.CONF.register_opts(cluster_opts)
 cfg.CONF.register_opts(nvp_opts, "NVP")
 cfg.CONF.register_opts(sync_opts, "NVP_SYNC")
-
+cfg.CONF.register_opts(vcns_opts, group="vcns")
 # NOTE(armando-migliaccio): keep the following code until we support
 # NVP configuration files in older format (Grizzly or older).
 # ### BEGIN

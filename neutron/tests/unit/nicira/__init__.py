@@ -18,19 +18,22 @@
 import os
 
 import neutron.plugins.nicira.api_client.client_eventlet as client
+from neutron.plugins.nicira import extensions
 import neutron.plugins.nicira.NeutronPlugin as plugin
 import neutron.plugins.nicira.NvpApiClient as nvpapi
+from neutron.plugins.nicira.vshield import vcns
 
 nvp_plugin = plugin.NvpPluginV2
 api_helper = nvpapi.NVPApiHelper
 nvp_client = client.NvpApiClientEventlet
+vcns_class = vcns.Vcns
 
 STUBS_PATH = os.path.join(os.path.dirname(__file__), 'etc')
-NVPEXT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                           "../../plugins/nicira/extensions")
+NVPEXT_PATH = os.path.dirname(extensions.__file__)
 NVPAPI_NAME = '%s.%s' % (api_helper.__module__, api_helper.__name__)
 PLUGIN_NAME = '%s.%s' % (nvp_plugin.__module__, nvp_plugin.__name__)
 CLIENT_NAME = '%s.%s' % (nvp_client.__module__, nvp_client.__name__)
+VCNS_NAME = '%s.%s' % (vcns_class.__module__, vcns_class.__name__)
 
 
 def get_fake_conf(filename):
