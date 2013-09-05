@@ -222,9 +222,12 @@ class TestBigSwitchVIFOverride(test_plugin.TestPortsV2,
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['port']['binding:vif_type'], self.VIF_TYPE)
 
-    def _make_port(self, fmt, net_id, expected_res_status=None, **kwargs):
+    def _make_port(self, fmt, net_id, expected_res_status=None, arg_list=None,
+                   **kwargs):
+        arg_list = arg_list or ()
+        arg_list += ('binding:host_id', )
         res = self._create_port(fmt, net_id, expected_res_status,
-                                ('binding:host_id', ), **kwargs)
+                                arg_list, **kwargs)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= 400:

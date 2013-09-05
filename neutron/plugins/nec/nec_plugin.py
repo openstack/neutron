@@ -466,6 +466,9 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             portinfo_changed = 'DEL'
             portinfo = None
             ndb.del_portinfo(context.session, port['id'])
+        else:
+            portinfo = None
+            portinfo_changed = None
         self._extend_port_dict_binding_portinfo(port, portinfo)
         return portinfo_changed
 

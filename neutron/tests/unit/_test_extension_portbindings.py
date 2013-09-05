@@ -48,6 +48,12 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         self.assertFalse(portbindings.VIF_TYPE in port)
         self.assertFalse(portbindings.CAPABILITIES in port)
 
+    def _get_non_admin_context(self):
+        return context.Context(user_id=None,
+                               tenant_id=self._tenant_id,
+                               is_admin=False,
+                               read_deleted="no")
+
     def test_port_vif_details(self):
         with self.port(name='name') as port:
             port_id = port['port']['id']
@@ -58,10 +64,7 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             port = self._show('ports', port_id, neutron_context=ctx)['port']
             self._check_response_portbindings(port)
             # By default user is admin - now test non admin user
-            ctx = context.Context(user_id=None,
-                                  tenant_id=self._tenant_id,
-                                  is_admin=False,
-                                  read_deleted="no")
+            ctx = self._get_non_admin_context()
             non_admin_port = self._show(
                 'ports', port_id, neutron_context=ctx)['port']
             self._check_response_no_portbindings(non_admin_port)
@@ -76,14 +79,80 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             for port in ports:
                 self._check_response_portbindings(port)
             # By default user is admin - now test non admin user
-            ctx = context.Context(user_id=None,
-                                  tenant_id=self._tenant_id,
-                                  is_admin=False,
-                                  read_deleted="no")
+            ctx = self._get_non_admin_context()
             ports = self._list('ports', neutron_context=ctx)['ports']
             self.assertEqual(len(ports), 2)
             for non_admin_port in ports:
                 self._check_response_no_portbindings(non_admin_port)
+
+    def _check_default_port_binding_profile(self, port):
+        # For plugins which does not use binding:profile attr
+        # we just check an operation for the port succeed.
+        self.assertIn('id', port)
+
+    def _test_create_port_binding_profile(self, profile):
+        profile_arg = {portbindings.PROFILE: profile}
+        with self.port(arg_list=(portbindings.PROFILE,),
+                       **profile_arg) as port:
+            self._check_default_port_binding_profile(port['port'])
+
+    def test_create_port_binding_profile_none(self):
+        self._test_create_port_binding_profile(None)
+
+    def test_create_port_binding_profile_with_empty_dict(self):
+        self._test_create_port_binding_profile({})
+
+    def _test_update_port_binding_profile(self, profile):
+        profile_arg = {portbindings.PROFILE: profile}
+        with self.port() as port:
+            # print "(1) %s" % port
+            self._check_default_port_binding_profile(port['port'])
+            port_id = port['port']['id']
+            ctx = context.get_admin_context()
+            port = self._update('ports', port_id, {'port': profile_arg},
+                                neutron_context=ctx)['port']
+            self._check_default_port_binding_profile(port)
+
+    def test_update_port_binding_profile_none(self):
+        self._test_update_port_binding_profile(None)
+
+    def test_update_port_binding_profile_with_empty_dict(self):
+        self._test_update_port_binding_profile({})
+
+    def test_port_create_portinfo_non_admin(self):
+        profile_arg = {portbindings.PROFILE: {'dummy': 'dummy'}}
+        with self.network(set_context=True, tenant_id='test') as net1:
+            with self.subnet(network=net1) as subnet1:
+                # succeed without binding:profile
+                with self.port(subnet=subnet1,
+                               set_context=True, tenant_id='test'):
+                    pass
+                # fail with binding:profile
+                try:
+                    with self.port(subnet=subnet1,
+                                   expected_res_status=403,
+                                   arg_list=(portbindings.PROFILE,),
+                                   set_context=True, tenant_id='test',
+                                   **profile_arg):
+                        pass
+                except exc.HTTPClientError:
+                    pass
+
+    def test_port_update_portinfo_non_admin(self):
+        profile_arg = {portbindings.PROFILE: {'dummy': 'dummy'}}
+        with self.network() as net1:
+            with self.subnet(network=net1) as subnet1:
+                with self.port(subnet=subnet1) as port:
+                    # By default user is admin - now test non admin user
+                    # Note that 404 is returned when prohibit by policy.
+                    # See comment for PolicyNotAuthorized except clause
+                    # in update() in neutron.api.v2.base.Controller.
+                    port_id = port['port']['id']
+                    ctx = self._get_non_admin_context()
+                    port = self._update('ports', port_id,
+                                        {'port': profile_arg},
+                                        expected_code=404,
+                                        neutron_context=ctx)
 
 
 class PortBindingsHostTestCaseMixin(object):
