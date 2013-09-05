@@ -123,7 +123,7 @@ class HaproxyNSDriver(object):
     def _get_backend_stats(self, parsed_stats):
         TYPE_BACKEND_RESPONSE = '1'
         for stats in parsed_stats:
-            if stats['type'] == TYPE_BACKEND_RESPONSE:
+            if stats.get('type') == TYPE_BACKEND_RESPONSE:
                 unified_stats = dict((k, stats.get(v, ''))
                                      for k, v in hacfg.STATS_MAP.items())
                 return unified_stats
@@ -134,7 +134,7 @@ class HaproxyNSDriver(object):
         TYPE_SERVER_RESPONSE = '2'
         res = {}
         for stats in parsed_stats:
-            if stats['type'] == TYPE_SERVER_RESPONSE:
+            if stats.get('type') == TYPE_SERVER_RESPONSE:
                 res[stats['svname']] = {
                     lb_const.STATS_STATUS: (constants.INACTIVE
                                             if stats['status'] == 'DOWN'
@@ -169,6 +169,8 @@ class HaproxyNSDriver(object):
         stat_names = [name.strip('# ') for name in stat_lines[0].split(',')]
         res_stats = []
         for raw_values in stat_lines[1:]:
+            if not raw_values:
+                continue
             stat_values = [value.strip() for value in raw_values.split(',')]
             res_stats.append(dict(zip(stat_names, stat_values)))
 
