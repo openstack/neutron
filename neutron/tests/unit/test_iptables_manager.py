@@ -464,6 +464,95 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables.ipv4['filter'].remove_rule('nonexistent', '-j DROP')
         self.mox.VerifyAll()
 
+    def test_get_traffic_counters_chain_notexists(self):
+        iptables_dump = (
+            'Chain OUTPUT (policy ACCEPT 400 packets, 65901 bytes)\n'
+            '    pkts      bytes target     prot opt in     out     source'
+            '               destination         \n'
+            '     400   65901 chain1     all  --  *      *       0.0.0.0/0'
+            '            0.0.0.0/0           \n'
+            '     400   65901 chain2     all  --  *      *       0.0.0.0/0'
+            '            0.0.0.0/0           \n')
+
+        self.iptables.execute(['iptables', '-t', 'filter', '-L', 'OUTPUT',
+                               '-n', '-v', '-x'],
+                              root_helper=self.root_helper
+                              ).AndReturn(iptables_dump)
+        self.iptables.execute(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
+                               '-v', '-x'],
+                              root_helper=self.root_helper
+                              ).AndReturn('')
+        self.iptables.execute(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
+                               '-n', '-v', '-x'],
+                              root_helper=self.root_helper
+                              ).AndReturn(iptables_dump)
+
+        self.mox.ReplayAll()
+        acc = self.iptables.get_traffic_counters('chain1')
+        self.assertIsNone(acc)
+
+    def test_get_traffic_counters(self):
+        iptables_dump = (
+            'Chain OUTPUT (policy ACCEPT 400 packets, 65901 bytes)\n'
+            '    pkts      bytes target     prot opt in     out     source'
+            '               destination         \n'
+            '     400   65901 chain1     all  --  *      *       0.0.0.0/0'
+            '            0.0.0.0/0           \n'
+            '     400   65901 chain2     all  --  *      *       0.0.0.0/0'
+            '            0.0.0.0/0           \n')
+
+        self.iptables.execute(['iptables', '-t', 'filter', '-L', 'OUTPUT',
+                               '-n', '-v', '-x'],
+                              root_helper=self.root_helper
+                              ).AndReturn(iptables_dump)
+        self.iptables.execute(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
+                               '-v', '-x'],
+                              root_helper=self.root_helper
+                              ).AndReturn('')
+
+        self.iptables.execute(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
+                               '-n', '-v', '-x'],
+                              root_helper=self.root_helper
+                              ).AndReturn(iptables_dump)
+
+        self.mox.ReplayAll()
+        acc = self.iptables.get_traffic_counters('OUTPUT')
+        self.assertEquals(acc['pkts'], 1600)
+        self.assertEquals(acc['bytes'], 263604)
+
+        self.mox.VerifyAll()
+
+    def test_get_traffic_counters_with_zero(self):
+        iptables_dump = (
+            'Chain OUTPUT (policy ACCEPT 400 packets, 65901 bytes)\n'
+            '    pkts      bytes target     prot opt in     out     source'
+            '               destination         \n'
+            '     400   65901 chain1     all  --  *      *       0.0.0.0/0'
+            '            0.0.0.0/0           \n'
+            '     400   65901 chain2     all  --  *      *       0.0.0.0/0'
+            '            0.0.0.0/0           \n')
+
+        self.iptables.execute(['iptables', '-t', 'filter', '-L', 'OUTPUT',
+                               '-n', '-v', '-x', '-Z'],
+                              root_helper=self.root_helper
+                              ).AndReturn(iptables_dump)
+        self.iptables.execute(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
+                               '-v', '-x', '-Z'],
+                              root_helper=self.root_helper
+                              ).AndReturn('')
+
+        self.iptables.execute(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
+                               '-n', '-v', '-x', '-Z'],
+                              root_helper=self.root_helper
+                              ).AndReturn(iptables_dump)
+
+        self.mox.ReplayAll()
+        acc = self.iptables.get_traffic_counters('OUTPUT', zero=True)
+        self.assertEquals(acc['pkts'], 1600)
+        self.assertEquals(acc['bytes'], 263604)
+
+        self.mox.VerifyAll()
+
 
 class IptablesManagerStateLessTestCase(base.BaseTestCase):
 
