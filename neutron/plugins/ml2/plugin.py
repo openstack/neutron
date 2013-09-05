@@ -29,6 +29,7 @@ from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
+from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.openstack.common import excutils
@@ -77,7 +78,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     _supported_extension_aliases = ["provider", "router", "extraroute",
                                     "binding", "quotas", "security-group",
                                     "agent", "l3_agent_scheduler",
-                                    "dhcp_agent_scheduler", "ext-gw-mode"]
+                                    "dhcp_agent_scheduler", "ext-gw-mode",
+                                    "multi-provider"]
 
     @property
     def supported_extension_aliases(self):
@@ -123,25 +125,48 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                   fanout=False)
         self.conn.consume_in_thread()
 
-    def _process_provider_create(self, context, attrs):
-        network_type = self._get_attribute(attrs, provider.NETWORK_TYPE)
-        physical_network = self._get_attribute(attrs,
+    def _process_provider_segment(self, segment):
+        network_type = self._get_attribute(segment, provider.NETWORK_TYPE)
+        physical_network = self._get_attribute(segment,
                                                provider.PHYSICAL_NETWORK)
-        segmentation_id = self._get_attribute(attrs, provider.SEGMENTATION_ID)
+        segmentation_id = self._get_attribute(segment,
+                                              provider.SEGMENTATION_ID)
 
         if attributes.is_attr_set(network_type):
             segment = {api.NETWORK_TYPE: network_type,
                        api.PHYSICAL_NETWORK: physical_network,
                        api.SEGMENTATION_ID: segmentation_id}
             self.type_manager.validate_provider_segment(segment)
-
             return segment
 
-        if (attributes.is_attr_set(attrs.get(provider.PHYSICAL_NETWORK)) or
-            attributes.is_attr_set(attrs.get(provider.SEGMENTATION_ID))):
-            msg = _("network_type required if other provider attributes "
-                    "specified")
-            raise exc.InvalidInput(error_message=msg)
+        msg = _("network_type required")
+        raise exc.InvalidInput(error_message=msg)
+
+    def _process_provider_create(self, network):
+        segments = []
+
+        if any(attributes.is_attr_set(network.get(f))
+               for f in (provider.NETWORK_TYPE, provider.PHYSICAL_NETWORK,
+                         provider.SEGMENTATION_ID)):
+            # Verify that multiprovider and provider attributes are not set
+            # at the same time.
+            if attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
+                raise mpnet.SegmentsSetInConjunctionWithProviders()
+
+            network_type = self._get_attribute(network, provider.NETWORK_TYPE)
+            physical_network = self._get_attribute(network,
+                                                   provider.PHYSICAL_NETWORK)
+            segmentation_id = self._get_attribute(network,
+                                                  provider.SEGMENTATION_ID)
+            segments = [{provider.NETWORK_TYPE: network_type,
+                         provider.PHYSICAL_NETWORK: physical_network,
+                         provider.SEGMENTATION_ID: segmentation_id}]
+        elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
+            segments = network[mpnet.SEGMENTS]
+        else:
+            return
+
+        return [self._process_provider_segment(s) for s in segments]
 
     def _get_attribute(self, attrs, key):
         value = attrs.get(key)
@@ -158,9 +183,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             network[provider.PHYSICAL_NETWORK] = None
             network[provider.SEGMENTATION_ID] = None
         elif len(segments) > 1:
-            network[provider.NETWORK_TYPE] = TYPE_MULTI_SEGMENT
-            network[provider.PHYSICAL_NETWORK] = None
-            network[provider.SEGMENTATION_ID] = None
+            network[mpnet.SEGMENTS] = [
+                {provider.NETWORK_TYPE: segment[api.NETWORK_TYPE],
+                 provider.PHYSICAL_NETWORK: segment[api.PHYSICAL_NETWORK],
+                 provider.SEGMENTATION_ID: segment[api.SEGMENTATION_ID]}
+                for segment in segments]
         else:
             segment = segments[0]
             network[provider.NETWORK_TYPE] = segment[api.NETWORK_TYPE]
@@ -260,23 +287,26 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     # TODO(apech): Need to override bulk operations
 
     def create_network(self, context, network):
-        attrs = network['network']
-        segment = self._process_provider_create(context, attrs)
-        tenant_id = self._get_tenant_id_for_create(context, attrs)
+        net_data = network['network']
+        segments = self._process_provider_create(net_data)
+        tenant_id = self._get_tenant_id_for_create(context, net_data)
 
         session = context.session
         with session.begin(subtransactions=True):
             self._ensure_default_security_group(context, tenant_id)
-            if segment:
-                self.type_manager.reserve_provider_segment(session, segment)
-            else:
-                segment = self.type_manager.allocate_tenant_segment(session)
             result = super(Ml2Plugin, self).create_network(context, network)
-            id = result['id']
-            self._process_l3_create(context, result, attrs)
+            network_id = result['id']
+            self._process_l3_create(context, result, net_data)
             # REVISIT(rkukura): Consider moving all segment management
             # to TypeManager.
-            db.add_network_segment(session, id, segment)
+            if segments:
+                for segment in segments:
+                    self.type_manager.reserve_provider_segment(session,
+                                                               segment)
+                    db.add_network_segment(session, network_id, segment)
+            else:
+                segment = self.type_manager.allocate_tenant_segment(session)
+                db.add_network_segment(session, network_id, segment)
             self._extend_network_dict_provider(context, result)
             mech_context = driver_context.NetworkContext(self, context,
                                                          result)
