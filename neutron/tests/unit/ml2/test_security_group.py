@@ -87,3 +87,15 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
 
 class TestMl2SecurityGroupsXML(TestMl2SecurityGroups):
     fmt = 'xml'
+
+
+class TestMl2SGServerRpcCallBack(
+    Ml2SecurityGroupsTestCase,
+    test_sg_rpc.SGServerRpcCallBackMixinTestCase):
+    pass
+
+
+class TestMl2SGServerRpcCallBackXML(
+    Ml2SecurityGroupsTestCase,
+    test_sg_rpc.SGServerRpcCallBackMixinTestCaseXML):
+    pass

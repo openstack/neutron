@@ -28,10 +28,10 @@ LOG = logging.getLogger(__name__)
 SG_CHAIN = 'sg-chain'
 INGRESS_DIRECTION = 'ingress'
 EGRESS_DIRECTION = 'egress'
-IP_SPOOF_FILTER = 'ip-spoof-filter'
+SPOOF_FILTER = 'spoof-filter'
 CHAIN_NAME_PREFIX = {INGRESS_DIRECTION: 'i',
                      EGRESS_DIRECTION: 'o',
-                     IP_SPOOF_FILTER: 's'}
+                     SPOOF_FILTER: 's'}
 LINUX_DEV_LEN = 14
 
 
@@ -106,7 +106,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         for port in ports.values():
             self._remove_chain(port, INGRESS_DIRECTION)
             self._remove_chain(port, EGRESS_DIRECTION)
-            self._remove_chain(port, IP_SPOOF_FILTER)
+            self._remove_chain(port, SPOOF_FILTER)
         self._remove_chain_by_name_v4v6(SG_CHAIN)
 
     def _setup_chain(self, port, DIRECTION):
@@ -186,34 +186,58 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 if rule['direction'] == direction]
 
     def _arp_spoofing_rule(self, port):
-        return ['-m mac ! --mac-source %s -j DROP' % port['mac_address']]
+        return '-m mac ! --mac-source %s -j DROP' % port['mac_address']
 
-    def _setup_ip_spoof_filter_chain(self, port, table, addresses, rules):
-        if len(addresses) == 1:
-            rules.append('! -s %s -j DROP' % addresses[0])
-        elif addresses:
-            chain_name = self._port_chain_name(port, IP_SPOOF_FILTER)
+    def _setup_spoof_filter_chain(self, port, table, mac_ip_pairs, rules):
+        if mac_ip_pairs:
+            chain_name = self._port_chain_name(port, SPOOF_FILTER)
             table.add_chain(chain_name)
-            for ip in addresses:
-                table.add_rule(chain_name, '-s %s -j RETURN' % ip)
+            for mac, ip in mac_ip_pairs:
+                if ip is None:
+                    # If fixed_ips is [] this rule will be added to the end
+                    # of the list after the allowed_address_pair rules.
+                    table.add_rule(chain_name,
+                                   '-m mac --mac-source %s -j RETURN'
+                                   % mac)
+                else:
+                    table.add_rule(chain_name,
+                                   '-m mac --mac-source %s -s %s -j RETURN'
+                                   % (mac, ip))
             table.add_rule(chain_name, '-j DROP')
             rules.append('-j $%s' % chain_name)
 
-    def _ip_spoofing_rule(self, port, ipv4_rules, ipv6_rules):
+    def _build_ipv4v6_mac_ip_list(self, mac, ip_address, mac_ipv4_pairs,
+                                  mac_ipv6_pairs):
+        if netaddr.IPNetwork(ip_address).version == 4:
+            mac_ipv4_pairs.append((mac, ip_address))
+        else:
+            mac_ipv6_pairs.append((mac, ip_address))
+
+    def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
         #Note(nati) allow dhcp or RA packet
         ipv4_rules += ['-p udp -m udp --sport 68 --dport 67 -j RETURN']
         ipv6_rules += ['-p icmpv6 -j RETURN']
-        ipv4_addresses = []
-        ipv6_addresses = []
+        mac_ipv4_pairs = []
+        mac_ipv6_pairs = []
+
+        if isinstance(port.get('allowed_address_pairs'), list):
+            for address_pair in port['allowed_address_pairs']:
+                self._build_ipv4v6_mac_ip_list(address_pair['mac_address'],
+                                               address_pair['ip_address'],
+                                               mac_ipv4_pairs,
+                                               mac_ipv6_pairs)
+
         for ip in port['fixed_ips']:
-            if netaddr.IPAddress(ip).version == 4:
-                ipv4_addresses.append(ip)
-            else:
-                ipv6_addresses.append(ip)
-        self._setup_ip_spoof_filter_chain(port, self.iptables.ipv4['filter'],
-                                          ipv4_addresses, ipv4_rules)
-        self._setup_ip_spoof_filter_chain(port, self.iptables.ipv6['filter'],
-                                          ipv6_addresses, ipv6_rules)
+            self._build_ipv4v6_mac_ip_list(port['mac_address'], ip,
+                                           mac_ipv4_pairs, mac_ipv6_pairs)
+        if not port['fixed_ips']:
+            mac_ipv4_pairs.append((port['mac_address'], None))
+            mac_ipv6_pairs.append((port['mac_address'], None))
+
+        self._setup_spoof_filter_chain(port, self.iptables.ipv4['filter'],
+                                       mac_ipv4_pairs, ipv4_rules)
+        self._setup_spoof_filter_chain(port, self.iptables.ipv6['filter'],
+                                       mac_ipv6_pairs, ipv6_rules)
 
     def _drop_dhcp_rule(self):
         #Note(nati) Drop dhcp packet from VM
@@ -231,11 +255,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         ipv4_iptables_rule = []
         ipv6_iptables_rule = []
         if direction == EGRESS_DIRECTION:
-            ipv4_iptables_rule += self._arp_spoofing_rule(port)
-            ipv6_iptables_rule += self._arp_spoofing_rule(port)
-            self._ip_spoofing_rule(port,
-                                   ipv4_iptables_rule,
-                                   ipv6_iptables_rule)
+            self._spoofing_rule(port,
+                                ipv4_iptables_rule,
+                                ipv6_iptables_rule)
             ipv4_iptables_rule += self._drop_dhcp_rule()
         ipv4_iptables_rule += self._convert_sgr_to_iptables_rules(
             ipv4_sg_rules)

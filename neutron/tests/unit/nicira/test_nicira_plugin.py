@@ -53,6 +53,7 @@ from neutron.tests.unit.nicira import PLUGIN_NAME
 from neutron.tests.unit.nicira import STUBS_PATH
 import neutron.tests.unit.nicira.test_networkgw as test_l2_gw
 import neutron.tests.unit.test_db_plugin as test_plugin
+import neutron.tests.unit.test_extension_allowedaddresspairs as test_addr_pair
 import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
 import neutron.tests.unit.test_extension_portsecurity as psec
 import neutron.tests.unit.test_extension_security_group as ext_sg
@@ -350,6 +351,11 @@ class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
 class TestNiciraPortSecurity(NiciraPortSecurityTestCase,
                              psec.TestPortSecurity):
         pass
+
+
+class TestNiciraAllowedAddressPairs(test_addr_pair.TestAllowedAddressPairs,
+                                    NiciraPluginV2TestCase):
+    pass
 
 
 class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):

@@ -53,6 +53,18 @@ class OpenvswitchSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk_
 
 
+class TestOpenvswitchSGServerRpcCallBack(
+    OpenvswitchSecurityGroupsTestCase,
+    test_sg_rpc.SGServerRpcCallBackMixinTestCase):
+    pass
+
+
+class TestOpenvswitchSGServerRpcCallBackXML(
+    OpenvswitchSecurityGroupsTestCase,
+    test_sg_rpc.SGServerRpcCallBackMixinTestCaseXML):
+    pass
+
+
 class TestOpenvswitchSecurityGroups(OpenvswitchSecurityGroupsTestCase,
                                     test_sg.TestSecurityGroups,
                                     test_sg_rpc.SGNotificationTestMixin):
