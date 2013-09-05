@@ -18,68 +18,35 @@
 #
 # @author: Tomoe Sugihara, Midokura Japan KK
 # @author: Ryu Ishimoto, Midokura Japan KK
+# @author: Rossella Sblendido, Midokura Japan KK
 
 
+from midonetclient import midoapi_exceptions
 from webob import exc as w_exc
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.openstack.common import log as logging
-
+from neutron.plugins.midonet.common import net_util
 
 LOG = logging.getLogger(__name__)
 
-PREFIX = 'OS_SG_'
-NAME_IDENTIFIABLE_PREFIX_LEN = len(PREFIX) + 36  # 36 = length of uuid
-OS_FLOATING_IP_RULE_KEY = 'OS_FLOATING_IP'
-OS_ROUTER_IN_CHAIN_NAME_FORMAT = 'OS_ROUTER_IN_%s'
-OS_ROUTER_OUT_CHAIN_NAME_FORMAT = 'OS_ROUTER_OUT_%s'
-OS_SG_KEY = 'os_sg_rule_id'
-OS_TENANT_ROUTER_RULE_KEY = 'OS_TENANT_ROUTER_RULE'
-SNAT_RULE = 'SNAT'
-SNAT_RULE_PROPERTY = {OS_TENANT_ROUTER_RULE_KEY: SNAT_RULE}
-SUFFIX_IN = '_IN'
-SUFFIX_OUT = '_OUT'
-
-
-def sg_label(sg_id, sg_name):
-    """Construct the security group ID used as chain identifier in MidoNet."""
-    return PREFIX + str(sg_id) + '_' + sg_name
-
-
-def sg_rule_properties(os_sg_rule_id):
-    return {OS_SG_KEY: str(os_sg_rule_id)}
-
-port_group_name = sg_label
-
-
-def chain_names(sg_id, sg_name):
-    """Get inbound and outbound chain names."""
-    prefix = sg_label(sg_id, sg_name)
-    in_chain_name = prefix + SUFFIX_IN
-    out_chain_name = prefix + SUFFIX_OUT
-    return {'in': in_chain_name, 'out': out_chain_name}
-
-
-def router_chain_names(router_id):
-    in_name = OS_ROUTER_IN_CHAIN_NAME_FORMAT % router_id
-    out_name = OS_ROUTER_OUT_CHAIN_NAME_FORMAT % router_id
-    return {'in': in_name, 'out': out_name}
-
 
 def handle_api_error(fn):
+    """Wrapper for methods that throws custom exceptions."""
     def wrapped(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except w_exc.HTTPException as ex:
+        except (w_exc.HTTPException,
+                midoapi_exceptions.MidoApiConnectionError) as ex:
             raise MidonetApiException(msg=ex)
     return wrapped
 
 
-class MidonetResourceNotFound(q_exc.NotFound):
+class MidonetResourceNotFound(n_exc.NotFound):
     message = _('MidoNet %(resource_type)s %(id)s could not be found')
 
 
-class MidonetApiException(q_exc.NeutronException):
+class MidonetApiException(n_exc.NeutronException):
     message = _("MidoNet API error: %(msg)s")
 
 
@@ -140,58 +107,80 @@ class MidoClient:
             raise MidonetResourceNotFound(resource_type='Bridge', id=id)
 
     @handle_api_error
-    def create_dhcp(self, bridge, gateway_ip, net_addr, net_len):
+    def create_dhcp(self, bridge, gateway_ip, cidr):
         """Create a new DHCP entry
 
         :param bridge: bridge object to add dhcp to
         :param gateway_ip: IP address of gateway
-        :param net_addr: network IP address
-        :param net_len: network IP address length
+        :param cidr: subnet represented as x.x.x.x/y
         :returns: newly created dhcp
         """
         LOG.debug(_("MidoClient.create_dhcp called: bridge=%(bridge)s, "
-                    "net_addr=%(net_addr)s, net_len=%(net_len)s, "
-                    "gateway_ip=%(gateway_ip)s"),
-                  {'bridge': bridge, 'net_addr': net_addr, 'net_len': net_len,
-                   'gateway_ip': gateway_ip})
+                    "cidr=%(cidr)s, gateway_ip=%(gateway_ip)s"),
+                  {'bridge': bridge, 'cidr': cidr, 'gateway_ip': gateway_ip})
+        net_addr, net_len = net_util.net_addr(cidr)
         return bridge.add_dhcp_subnet().default_gateway(
             gateway_ip).subnet_prefix(net_addr).subnet_length(
                 net_len).create()
 
     @handle_api_error
-    def create_dhcp_hosts(self, bridge, ip, mac):
-        """Create DHCP host entries
+    def add_dhcp_host(self, bridge, cidr, ip, mac):
+        """Add DHCP host entry
 
-        :param bridge: bridge of the DHCP
+        :param bridge: bridge the DHCP is configured for
+        :param cidr: subnet represented as x.x.x.x/y
         :param ip: IP address
         :param mac: MAC address
         """
-        LOG.debug(_("MidoClient.create_dhcp_hosts called: bridge=%(bridge)s, "
-                    "ip=%(ip)s, mac=%(mac)s"), {'bridge': bridge, 'ip': ip,
-                                                'mac': mac})
-        dhcp_subnets = bridge.get_dhcp_subnets()
-        if dhcp_subnets:
-            # Add the host to the first subnet as we currently support one
-            # subnet per network.
-            dhcp_subnets[0].add_dhcp_host().ip_addr(ip).mac_addr(mac).create()
+        LOG.debug(_("MidoClient.add_dhcp_host called: bridge=%(bridge)s, "
+                    "cidr=%(cidr)s, ip=%(ip)s, mac=%(mac)s"),
+                  {'bridge': bridge, 'cidr': cidr, 'ip': ip, 'mac': mac})
+        subnet = bridge.get_dhcp_subnet(net_util.subnet_str(cidr))
+        if subnet is None:
+            raise MidonetApiException(msg=_("Tried to add to"
+                                            "non-existent DHCP"))
+
+        subnet.add_dhcp_host().ip_addr(ip).mac_addr(mac).create()
 
     @handle_api_error
-    def delete_dhcp_hosts(self, bridge_id, ip, mac):
-        """Delete DHCP host entries
+    def remove_dhcp_host(self, bridge, cidr, ip, mac):
+        """Remove DHCP host entry
 
-        :param bridge_id: id of the bridge of the DHCP
+        :param bridge: bridge the DHCP is configured for
+        :param cidr: subnet represented as x.x.x.x/y
         :param ip: IP address
         :param mac: MAC address
         """
-        LOG.debug(_("MidoClient.delete_dhcp_hosts called: "
-                    "bridge_id=%(bridge_id)s, ip=%(ip)s, mac=%(mac)s"),
-                  {'bridge_id': bridge_id, 'ip': ip, 'mac': mac})
+        LOG.debug(_("MidoClient.remove_dhcp_host called: bridge=%(bridge)s, "
+                    "cidr=%(cidr)s, ip=%(ip)s, mac=%(mac)s"),
+                  {'bridge': bridge, 'cidr': cidr, 'ip': ip, 'mac': mac})
+        subnet = bridge.get_dhcp_subnet(net_util.subnet_str(cidr))
+        if subnet is None:
+            LOG.warn(_("Tried to delete mapping from non-existent subnet"))
+            return
+
+        for dh in subnet.get_dhcp_hosts():
+            if dh.get_mac_addr() == mac and dh.get_ip_addr() == ip:
+                LOG.debug(_("MidoClient.remove_dhcp_host: Deleting %(dh)r"),
+                          {"dh": dh})
+                dh.delete()
+
+    @handle_api_error
+    def delete_dhcp_host(self, bridge_id, cidr, ip, mac):
+        """Delete DHCP host entry
+
+        :param bridge_id: id of the bridge of the DHCP
+        :param cidr: subnet represented as x.x.x.x/y
+        :param ip: IP address
+        :param mac: MAC address
+        """
+        LOG.debug(_("MidoClient.delete_dhcp_host called: "
+                    "bridge_id=%(bridge_id)s, cidr=%(cidr)s, ip=%(ip)s, "
+                    "mac=%(mac)s"), {'bridge_id': bridge_id,
+                                     'cidr': cidr,
+                                     'ip': ip, 'mac': mac})
         bridge = self.get_bridge(bridge_id)
-        dhcp_subnets = bridge.get_dhcp_subnets()
-        if dhcp_subnets:
-            for dh in dhcp_subnets[0].get_dhcp_hosts():
-                if dh.get_mac_addr() == mac and dh.get_ip_addr() == ip:
-                    dh.delete()
+        self.remove_dhcp_host(bridge, net_util.subnet_str(cidr), ip, mac)
 
     @handle_api_error
     def delete_dhcp(self, bridge):
@@ -207,12 +196,17 @@ class MidoClient:
         dhcp[0].delete()
 
     @handle_api_error
-    def delete_port(self, id):
+    def delete_port(self, id, delete_chains=False):
         """Delete a port
 
         :param id: id of the port
         """
-        LOG.debug(_("MidoClient.delete_port called: id=%(id)s"), {'id': id})
+        LOG.debug(_("MidoClient.delete_port called: id=%(id)s, "
+                    "delete_chains=%(delete_chains)s"),
+                  {'id': id, 'delete_chains': delete_chains})
+        if delete_chains:
+            self.delete_port_chains(id)
+
         self.mido_api.delete_port(id)
 
     @handle_api_error
@@ -229,26 +223,24 @@ class MidoClient:
             raise MidonetResourceNotFound(resource_type='Port', id=id)
 
     @handle_api_error
-    def create_exterior_bridge_port(self, bridge):
-        """Create a new exterior bridge port
+    def add_bridge_port(self, bridge):
+        """Add a port on a bridge
 
-        :param bridge: bridge object to add port to
+        :param bridge: Bridge to add a new port to
         :returns: newly created port
         """
-        LOG.debug(_("MidoClient.create_exterior_bridge_port called: "
+        LOG.debug(_("MidoClient.add_bridge_port called: "
                     "bridge=%(bridge)s"), {'bridge': bridge})
-        return bridge.add_exterior_port().create()
+        return self.mido_api.add_bridge_port(bridge)
 
     @handle_api_error
-    def create_interior_bridge_port(self, bridge):
-        """Create a new interior bridge port
-
-        :param bridge: bridge object to add port to
-        :returns: newly created port
-        """
-        LOG.debug(_("MidoClient.create_interior_bridge_port called: "
-                    "bridge=%(bridge)s"), {'bridge': bridge})
-        return bridge.add_interior_port().create()
+    def add_router_port(self, router, port_address=None,
+                        network_address=None, network_length=None):
+        """Add a new port to an existing router."""
+        return self.mido_api.add_router_port(router,
+                                             port_address=port_address,
+                                             network_address=network_address,
+                                             network_length=network_length)
 
     @handle_api_error
     def create_router(self, tenant_id, name):
@@ -263,40 +255,6 @@ class MidoClient:
                   {'tenant_id': tenant_id, 'name': name})
         return self.mido_api.add_router().name(name).tenant_id(
             tenant_id).create()
-
-    @handle_api_error
-    def create_tenant_router(self, tenant_id, name, metadata_router):
-        """Create a new tenant router
-
-        :param tenant_id: id of tenant creating the router
-        :param name: name of the router
-        :param metadata_router: metadata router
-        :returns: newly created router
-        """
-        LOG.debug(_("MidoClient.create_tenant_router called: "
-                    "tenant_id=%(tenant_id)s, name=%(name)s,"
-                    " metadata_router=%(metadata_router)s"),
-                  {'tenant_id': tenant_id, 'name': name,
-                   'metadata_router': metadata_router})
-        router = self.create_router(tenant_id, name)
-        self.link_router_to_metadata_router(router, metadata_router)
-        return router
-
-    @handle_api_error
-    def delete_tenant_router(self, id, metadata_router):
-        """Delete a tenant router
-
-        :param id: id of router
-        :param metadata_router: metadata router
-        """
-        LOG.debug(_("MidoClient.delete_tenant_router called: "
-                    "id=%(id)s, metadata_router=%(metadata_router)s"),
-                  {'id': id, 'metadata_router': metadata_router})
-        self.unlink_router_from_metadata_router(id, metadata_router)
-        self.destroy_router_chains(id)
-
-        # delete the router
-        self.delete_router(id)
 
     @handle_api_error
     def delete_router(self, id):
@@ -336,640 +294,356 @@ class MidoClient:
             raise MidonetResourceNotFound(resource_type='Router', id=id)
 
     @handle_api_error
-    def link_bridge_port_to_router(self, port_id, router_id, gateway_ip,
-                                   net_addr, net_len, metadata_router):
-        """Link a tenant bridge port to the router
+    def delete_route(self, id):
+        return self.mido_api.delete_route(id)
 
-        :param port_id: port ID
-        :param router_id: router id to link to
-        :param gateway_ip: IP address of gateway
-        :param net_addr: network IP address
-        :param net_len: network IP address length
-        :param metadata_router: metadata router instance
+    @handle_api_error
+    def add_dhcp_route_option(self, bridge, cidr, gw_ip, dst_ip):
+        """Add Option121 route to subnet
+
+        :param bridge: Bridge to add the option route to
+        :param cidr: subnet represented as x.x.x.x/y
+        :param gw_ip: IP address of the next hop
+        :param dst_ip: IP address of the destination, in x.x.x.x/y format
         """
-        LOG.debug(_("MidoClient.link_bridge_port_to_router called: "
-                    "port_id=%(port_id)s, router_id=%(router_id)s, "
-                    "gateway_ip=%(gateway_ip)s net_addr=%(net_addr)s, "
-                    "net_len=%(net_len)s, "
-                    "metadata_router=%(metadata_router)s"),
-                  {'port_id': port_id, 'router_id': router_id,
-                   'gateway_ip': gateway_ip, 'net_addr': net_addr,
-                   'net_len': net_len, 'metadata_router': metadata_router})
-        router = self.get_router(router_id)
+        LOG.debug(_("MidoClient.add_dhcp_route_option called: "
+                    "bridge=%(bridge)s, cidr=%(cidr)s, gw_ip=%(gw_ip)s"
+                    "dst_ip=%(dst_ip)s"),
+                  {"bridge": bridge, "cidr": cidr, "gw_ip": gw_ip,
+                   "dst_ip": dst_ip})
+        subnet = bridge.get_dhcp_subnet(net_util.subnet_str(cidr))
+        if subnet is None:
+            raise MidonetApiException(
+                msg=_("Tried to access non-existent DHCP"))
+        prefix, length = dst_ip.split("/")
+        routes = [{'destinationPrefix': prefix, 'destinationLength': length,
+                   'gatewayAddr': gw_ip}]
+        subnet.opt121_routes(routes).update()
 
-        # create an interior port on the router
-        in_port = router.add_interior_port()
-        router_port = in_port.port_address(gateway_ip).network_address(
-            net_addr).network_length(net_len).create()
+    @handle_api_error
+    def link(self, port, peer_id):
+        """Link a port to a given peerId."""
+        self.mido_api.link(port, peer_id)
 
-        br_port = self.get_port(port_id)
-        router_port.link(br_port.get_id())
+    @handle_api_error
+    def delete_port_routes(self, routes, port_id):
+        """Remove routes whose next hop port is the given port ID."""
+        for route in routes:
+            if route.get_next_hop_port() == port_id:
+                self.mido_api.delete_route(route.get_id())
 
-        # add a route for the subnet in the provider router
-        router.add_route().type('Normal').src_network_addr(
-            '0.0.0.0').src_network_length(0).dst_network_addr(
-                net_addr).dst_network_length(net_len).weight(
-                    100).next_hop_port(router_port.get_id()).create()
+    @handle_api_error
+    def get_router_routes(self, router_id):
+        """Get all routes for the given router."""
+        return self.mido_api.get_router_routes(router_id)
 
-        # add a route for the subnet in metadata router; forward
-        # packets destined to the subnet to the tenant router
-        for pp in metadata_router.get_peer_ports():
-            if pp.get_device_id() == router.get_id():
-                mdr_port_id = pp.get_peer_id()
-                break
+    @handle_api_error
+    def unlink(self, port):
+        """Unlink a port
+
+        :param port: port object
+        """
+        LOG.debug(_("MidoClient.unlink called: port=%(port)s"),
+                  {'port': port})
+        if port.get_peer_id():
+            self.mido_api.unlink(port)
         else:
-            raise Exception(
-                _("Couldn't find a md router port for the router=%r"), router)
-
-        metadata_router.add_route().type('Normal').src_network_addr(
-            '0.0.0.0').src_network_length(0).dst_network_addr(
-                net_addr).dst_network_length(net_len).weight(
-                    100).next_hop_port(mdr_port_id).create()
+            LOG.warn(_("Attempted to unlink a port that was not linked. %s"),
+                     port.get_id())
 
     @handle_api_error
-    def unlink_bridge_port_from_router(self, port_id, net_addr, net_len,
-                                       metadata_router):
-        """Unlink a tenant bridge port from the router
+    def remove_rules_by_property(self, tenant_id, chain_name, key, value):
+        """Remove all the rules that match the provided key and value."""
+        LOG.debug(_("MidoClient.remove_rules_by_property called: "
+                    "tenant_id=%(tenant_id)s, chain_name=%(chain_name)s"
+                    "key=%(key)s, value=%(value)s"),
+                  {'tenant_id': tenant_id, 'chain_name': chain_name,
+                   'key': key, 'value': value})
+        chain = self.get_chain_by_name(tenant_id, chain_name)
+        if chain is None:
+            raise MidonetResourceNotFound(resource_type='Chain',
+                                          id=chain_name)
 
-        :param bridge_id: bridge ID
-        :param net_addr: network IP address
-        :param net_len: network IP address length
-        :param metadata_router: metadata router instance
+        for r in chain.get_rules():
+            if key in r.get_properties():
+                if r.get_properties()[key] == value:
+                    self.mido_api.delete_rule(r.get_id())
+
+    @handle_api_error
+    def add_router_chains(self, router, inbound_chain_name,
+                          outbound_chain_name):
+        """Create chains for a new router.
+
+        Creates inbound and outbound chains for the router with the given
+        names, and the new chains are set on the router.
+
+        :param router: router to set chains for
+        :param inbound_chain_name: Name of the inbound chain
+        :param outbound_chain_name: Name of the outbound chain
         """
-        LOG.debug(_("MidoClient.unlink_bridge_port_from_router called: "
-                    "port_id=%(port_id)s, net_addr=%(net_addr)s, "
-                    "net_len=%(net_len)s, "
-                    "metadata_router=%(metadata_router)s"),
-                  {'port_id': port_id, 'net_addr': net_addr,
-                   'net_len': net_len, 'metadata_router': metadata_router})
-        port = self.get_port(port_id)
-        port.unlink()
-        self.delete_port(port.get_peer_id())
-        self.delete_port(port.get_id())
+        LOG.debug(_("MidoClient.create_router_chains called: "
+                    "router=%(router)s, inbound_chain_name=%(in_chain)s, "
+                    "outbound_chain_name=%(out_chain)s"),
+                  {"router": router, "in_chain": inbound_chain_name,
+                   "out_chain": outbound_chain_name})
+        tenant_id = router.get_tenant_id()
 
-        # delete the route for the subnet in the metadata router
-        for r in metadata_router.get_routes():
-            if (r.get_dst_network_addr() == net_addr and
-                r.get_dst_network_length() == net_len):
-                LOG.debug(_('Deleting route=%r ...'), r)
-                self.mido_api.delete_route(r.get_id())
+        inbound_chain = self.mido_api.add_chain().tenant_id(tenant_id).name(
+            inbound_chain_name,).create()
+        outbound_chain = self.mido_api.add_chain().tenant_id(tenant_id).name(
+            outbound_chain_name).create()
+
+        # set chains to in/out filters
+        router.inbound_filter_id(inbound_chain.get_id()).outbound_filter_id(
+            outbound_chain.get_id()).update()
+        return inbound_chain, outbound_chain
+
+    @handle_api_error
+    def delete_router_chains(self, id):
+        """Deletes chains of a router.
+
+        :param id: router ID to delete chains of
+        """
+        LOG.debug(_("MidoClient.delete_router_chains called: "
+                    "id=%(id)s"), {'id': id})
+        router = self.get_router(id)
+        if (router.get_inbound_filter_id()):
+            self.mido_api.delete_chain(router.get_inbound_filter_id())
+
+        if (router.get_outbound_filter_id()):
+            self.mido_api.delete_chain(router.get_outbound_filter_id())
+
+    @handle_api_error
+    def delete_port_chains(self, id):
+        """Deletes chains of a port.
+
+        :param id: port ID to delete chains of
+        """
+        LOG.debug(_("MidoClient.delete_port_chains called: "
+                    "id=%(id)s"), {'id': id})
+        port = self.get_port(id)
+        if (port.get_inbound_filter_id()):
+            self.mido_api.delete_chain(port.get_inbound_filter_id())
+
+        if (port.get_outbound_filter_id()):
+            self.mido_api.delete_chain(port.get_outbound_filter_id())
+
+    @handle_api_error
+    def get_link_port(self, router, peer_router_id):
+        """Setup a route on the router to the next hop router."""
+        LOG.debug(_("MidoClient.get_link_port called: "
+                    "router=%(router)s, peer_router_id=%(peer_router_id)s"),
+                  {'router': router, 'peer_router_id': peer_router_id})
+        # Find the port linked between the two routers
+        link_port = None
+        for p in router.get_peer_ports():
+            if p.get_device_id() == peer_router_id:
+                link_port = p
                 break
+        return link_port
 
     @handle_api_error
-    def link_bridge_to_provider_router(self, bridge, provider_router,
-                                       gateway_ip, net_addr, net_len):
-        """Link a tenant bridge to the provider router
-
-        :param bridge: tenant bridge
-        :param provider_router: provider router to link to
-        :param gateway_ip: IP address of gateway
-        :param net_addr: network IP address
-        :param net_len: network IP address length
-        """
-        LOG.debug(_("MidoClient.link_bridge_to_provider_router called: "
-                    "bridge=%(bridge)s, provider_router=%(provider_router)s, "
-                    "gateway_ip=%(gateway_ip)s, net_addr=%(net_addr)s, "
-                    "net_len=%(net_len)s"),
-                  {'bridge': bridge, 'provider_router': provider_router,
-                   'gateway_ip': gateway_ip, 'net_addr': net_addr,
-                   'net_len': net_len})
-        # create an interior port on the provider router
-        in_port = provider_router.add_interior_port()
-        pr_port = in_port.port_address(gateway_ip).network_address(
-            net_addr).network_length(net_len).create()
-
-        # create an interior bridge port, then link it to the router.
-        br_port = bridge.add_interior_port().create()
-        pr_port.link(br_port.get_id())
-
-        # add a route for the subnet in the provider router
-        provider_router.add_route().type('Normal').src_network_addr(
-            '0.0.0.0').src_network_length(0).dst_network_addr(
-                net_addr).dst_network_length(net_len).weight(
-                    100).next_hop_port(pr_port.get_id()).create()
+    def add_router_route(self, router, type='Normal',
+                         src_network_addr=None, src_network_length=None,
+                         dst_network_addr=None, dst_network_length=None,
+                         next_hop_port=None, next_hop_gateway=None,
+                         weight=100):
+        """Setup a route on the router."""
+        return self.mido_api.add_router_route(
+            router, type=type, src_network_addr=src_network_addr,
+            src_network_length=src_network_length,
+            dst_network_addr=dst_network_addr,
+            dst_network_length=dst_network_length,
+            next_hop_port=next_hop_port, next_hop_gateway=next_hop_gateway,
+            weight=weight)
 
     @handle_api_error
-    def unlink_bridge_from_provider_router(self, bridge, provider_router):
-        """Unlink a tenant bridge from the provider router
+    def add_static_nat(self, tenant_id, chain_name, from_ip, to_ip, port_id,
+                       nat_type='dnat', **kwargs):
+        """Add a static NAT entry
 
-        :param bridge: tenant bridge
-        :param provider_router: provider router to link to
+        :param tenant_id: owner fo the chain to add a NAT to
+        :param chain_name: name of the chain to add a NAT to
+        :param from_ip: IP to translate from
+        :param from_ip: IP to translate from
+        :param to_ip: IP to translate to
+        :param port_id: port to match on
+        :param nat_type: 'dnat' or 'snat'
         """
-        LOG.debug(_("MidoClient.unlink_bridge_from_provider_router called: "
-                    "bridge=%(bridge)s, provider_router=%(provider_router)s"),
-                  {'bridge': bridge, 'provider_router': provider_router})
-        # Delete routes and unlink the router and the bridge.
-        routes = provider_router.get_routes()
+        LOG.debug(_("MidoClient.add_static_nat called: "
+                    "tenant_id=%(tenant_id)s, chain_name=%(chain_name)s, "
+                    "from_ip=%(from_ip)s, to_ip=%(to_ip)s, "
+                    "port_id=%(port_id)s, nat_type=%(nat_type)s"),
+                  {'tenant_id': tenant_id, 'chain_name': chain_name,
+                   'from_ip': from_ip, 'to_ip': to_ip,
+                   'portid': port_id, 'nat_type': nat_type})
+        if nat_type not in ['dnat', 'snat']:
+            raise ValueError(_("Invalid NAT type passed in %s") % nat_type)
 
-        bridge_ports_to_delete = [
-            p for p in provider_router.get_peer_ports()
-            if p.get_device_id() == bridge.get_id()]
+        chain = self.get_chain_by_name(tenant_id, chain_name)
+        nat_targets = []
+        nat_targets.append(
+            {'addressFrom': to_ip, 'addressTo': to_ip,
+             'portFrom': 0, 'portTo': 0})
 
-        for p in bridge.get_peer_ports():
-            if p.get_device_id() == provider_router.get_id():
-                # delete the routes going to the bridge
-                for r in routes:
-                    if r.get_next_hop_port() == p.get_id():
-                        self.mido_api.delete_route(r.get_id())
-                p.unlink()
-                self.mido_api.delete_port(p.get_id())
+        rule = chain.add_rule().type(nat_type).flow_action('accept').position(
+            1).nat_targets(nat_targets).properties(kwargs)
 
-        # delete bridge port
-        for port in bridge_ports_to_delete:
-            self.mido_api.delete_port(port.get_id())
+        if nat_type == 'dnat':
+            rule = rule.nw_dst_address(from_ip).nw_dst_length(32).in_ports(
+                [port_id])
+        else:
+            rule = rule.nw_src_address(from_ip).nw_src_length(32).out_ports(
+                [port_id])
+
+        return rule.create()
 
     @handle_api_error
-    def set_router_external_gateway(self, id, provider_router, snat_ip):
-        """Set router external gateway
+    def add_dynamic_snat(self, tenant_id, pre_chain_name, post_chain_name,
+                         snat_ip, port_id, **kwargs):
+        """Add SNAT masquerading rule
 
-        :param ID: ID of the tenant router
-        :param provider_router: provider router
-        :param snat_ip: SNAT IP address
+        MidoNet requires two rules on the router, one to do NAT to a range of
+        ports, and another to retrieve back the original IP in the return
+        flow.
         """
-        LOG.debug(_("MidoClient.set_router_external_gateway called: "
-                    "id=%(id)s, provider_router=%(provider_router)s, "
-                    "snat_ip=%(snat_ip)s)"),
-                  {'id': id, 'provider_router': provider_router,
-                   'snat_ip': snat_ip})
-        tenant_router = self.get_router(id)
+        pre_chain = self.get_chain_by_name(tenant_id, pre_chain_name)
+        post_chain = self.get_chain_by_name(tenant_id, post_chain_name)
 
-        # Create a interior port in the provider router
-        in_port = provider_router.add_interior_port()
-        pr_port = in_port.network_address(
-            '169.254.255.0').network_length(30).port_address(
-                '169.254.255.1').create()
-
-        # Create a port in the tenant router
-        tr_port = tenant_router.add_interior_port().network_address(
-            '169.254.255.0').network_length(30).port_address(
-                '169.254.255.2').create()
-
-        # Link them
-        pr_port.link(tr_port.get_id())
-
-        # Add a route for snat_ip to bring it down to tenant
-        provider_router.add_route().type(
-            'Normal').src_network_addr('0.0.0.0').src_network_length(
-                0).dst_network_addr(snat_ip).dst_network_length(
-                    32).weight(100).next_hop_port(
-                        pr_port.get_id()).create()
-
-        # Add default route to uplink in the tenant router
-        tenant_router.add_route().type('Normal').src_network_addr(
-            '0.0.0.0').src_network_length(0).dst_network_addr(
-                '0.0.0.0').dst_network_length(0).weight(
-                    100).next_hop_port(tr_port.get_id()).create()
-
-        # ADD SNAT(masquerade) rules
-        chains = self.get_router_chains(
-            tenant_router.get_tenant_id(), tenant_router.get_id())
-
-        chains['in'].add_rule().nw_dst_address(snat_ip).nw_dst_length(
+        pre_chain.add_rule().nw_dst_address(snat_ip).nw_dst_length(
             32).type('rev_snat').flow_action('accept').in_ports(
-                [tr_port.get_id()]).properties(
-                    SNAT_RULE_PROPERTY).position(1).create()
+                [port_id]).properties(kwargs).position(1).create()
 
         nat_targets = []
         nat_targets.append(
             {'addressFrom': snat_ip, 'addressTo': snat_ip,
              'portFrom': 1, 'portTo': 65535})
 
-        chains['out'].add_rule().type('snat').flow_action(
+        post_chain.add_rule().type('snat').flow_action(
             'accept').nat_targets(nat_targets).out_ports(
-                [tr_port.get_id()]).properties(
-                    SNAT_RULE_PROPERTY).position(1).create()
+                [port_id]).properties(kwargs).position(1).create()
 
     @handle_api_error
-    def clear_router_external_gateway(self, id):
-        """Clear router external gateway
+    def remove_static_route(self, router, ip):
+        """Remove static route for the IP
 
-        :param ID: ID of the tenant router
+        :param router: next hop router to remove the routes to
+        :param ip: IP address of the route to remove
         """
-        LOG.debug(_("MidoClient.clear_router_external_gateway called: "
-                    "id=%(id)s"), {'id': id})
-        tenant_router = self.get_router(id)
-
-        # delete the port that is connected to provider router
-        for p in tenant_router.get_ports():
-            if p.get_port_address() == '169.254.255.2':
-                peer_port_id = p.get_peer_id()
-                p.unlink()
-                self.mido_api.delete_port(peer_port_id)
-                self.mido_api.delete_port(p.get_id())
-
-        # delete default route
-        for r in tenant_router.get_routes():
-            if (r.get_dst_network_addr() == '0.0.0.0' and
-                    r.get_dst_network_length() == 0):
-                self.mido_api.delete_route(r.get_id())
-
-        # delete SNAT(masquerade) rules
-        chains = self.get_router_chains(
-            tenant_router.get_tenant_id(),
-            tenant_router.get_id())
-
-        for r in chains['in'].get_rules():
-            if OS_TENANT_ROUTER_RULE_KEY in r.get_properties():
-                if r.get_properties()[
-                    OS_TENANT_ROUTER_RULE_KEY] == SNAT_RULE:
-                    self.mido_api.delete_rule(r.get_id())
-
-        for r in chains['out'].get_rules():
-            if OS_TENANT_ROUTER_RULE_KEY in r.get_properties():
-                if r.get_properties()[
-                    OS_TENANT_ROUTER_RULE_KEY] == SNAT_RULE:
-                    self.mido_api.delete_rule(r.get_id())
-
-    @handle_api_error
-    def get_router_chains(self, tenant_id, router_id):
-        """Get router chains.
-
-        Returns a dictionary that has in/out chain resources key'ed with 'in'
-        and 'out' respectively, given the tenant_id and the router_id passed
-        in in the arguments.
-        """
-        LOG.debug(_("MidoClient.get_router_chains called: "
-                    "tenant_id=%(tenant_id)s router_id=%(router_id)s"),
-                  {'tenant_id': tenant_id, 'router_id': router_id})
-
-        chain_names = router_chain_names(router_id)
-        chains = {}
-        for c in self.mido_api.get_chains({'tenant_id': tenant_id}):
-            if c.get_name() == chain_names['in']:
-                chains['in'] = c
-            elif c.get_name() == chain_names['out']:
-                chains['out'] = c
-        return chains
-
-    @handle_api_error
-    def create_router_chains(self, router):
-        """Create chains for a new router.
-
-        Creates chains for the router and returns the same dictionary as
-        get_router_chains() returns.
-
-        :param router: router to set chains for
-        """
-        LOG.debug(_("MidoClient.create_router_chains called: "
-                    "router=%(router)s"), {'router': router})
-        chains = {}
-        router_id = router.get_id()
-        tenant_id = router.get_tenant_id()
-        chain_names = router_chain_names(router_id)
-        chains['in'] = self.mido_api.add_chain().tenant_id(tenant_id).name(
-            chain_names['in']).create()
-
-        chains['out'] = self.mido_api.add_chain().tenant_id(tenant_id).name(
-            chain_names['out']).create()
-
-        # set chains to in/out filters
-        router.inbound_filter_id(
-            chains['in'].get_id()).outbound_filter_id(
-                chains['out'].get_id()).update()
-        return chains
-
-    @handle_api_error
-    def destroy_router_chains(self, id):
-        """Deletes chains of a router.
-
-        :param id: router ID to delete chains of
-        """
-        LOG.debug(_("MidoClient.destroy_router_chains called: "
-                    "id=%(id)s"), {'id': id})
-        # delete corresponding chains
-        router = self.get_router(id)
-        chains = self.get_router_chains(router.get_tenant_id(), id)
-        self.mido_api.delete_chain(chains['in'].get_id())
-        self.mido_api.delete_chain(chains['out'].get_id())
-
-    @handle_api_error
-    def link_router_to_metadata_router(self, router, metadata_router):
-        """Link a router to the metadata router
-
-        :param router: router to link
-        :param metadata_router: metadata router
-        """
-        LOG.debug(_("MidoClient.link_router_to_metadata_router called: "
-                    "router=%(router)s, metadata_router=%(metadata_router)s"),
-                  {'router': router, 'metadata_router': metadata_router})
-        # link to metadata router
-        in_port = metadata_router.add_interior_port()
-        mdr_port = in_port.network_address('169.254.255.0').network_length(
-            30).port_address('169.254.255.1').create()
-
-        tr_port = router.add_interior_port().network_address(
-            '169.254.255.0').network_length(30).port_address(
-                '169.254.255.2').create()
-        mdr_port.link(tr_port.get_id())
-
-        # forward metadata traffic to metadata router
-        router.add_route().type('Normal').src_network_addr(
-            '0.0.0.0').src_network_length(0).dst_network_addr(
-                '169.254.169.254').dst_network_length(32).weight(
-                    100).next_hop_port(tr_port.get_id()).create()
-
-    @handle_api_error
-    def unlink_router_from_metadata_router(self, id, metadata_router):
-        """Unlink a router from the metadata router
-
-        :param id: ID of router
-        :param metadata_router: metadata router
-        """
-        LOG.debug(_("MidoClient.unlink_router_from_metadata_router called: "
-                    "id=%(id)s, metadata_router=%(metadata_router)s"),
-                  {'id': id, 'metadata_router': metadata_router})
-        # unlink from metadata router and delete the interior ports
-        # that connect metadata router and this router.
-        for pp in metadata_router.get_peer_ports():
-            if pp.get_device_id() == id:
-                mdr_port = self.get_port(pp.get_peer_id())
-                pp.unlink()
-                self.mido_api.delete_port(pp.get_id())
-                self.mido_api.delete_port(mdr_port.get_id())
-
-    @handle_api_error
-    def setup_floating_ip(self, router_id, provider_router, floating_ip,
-                          fixed_ip, identifier):
-        """Setup MidoNet for floating IP
-
-        :param router_id: router_id
-        :param provider_router: provider router
-        :param floating_ip: floating IP address
-        :param fixed_ip: fixed IP address
-        :param identifier: identifier to use to map to MidoNet
-        """
-        LOG.debug(_("MidoClient.setup_floating_ip called: "
-                    "router_id=%(router_id)s, "
-                    "provider_router=%(provider_router)s"
-                    "floating_ip=%(floating_ip)s, fixed_ip=%(fixed_ip)s"
-                    "identifier=%(identifier)s"),
-                  {'router_id': router_id, 'provider_router': provider_router,
-                   'floating_ip': floating_ip, 'fixed_ip': fixed_ip,
-                   'identifier': identifier})
-        # unlink from metadata router and delete the interior ports
-        router = self.mido_api.get_router(router_id)
-        # find the provider router port that is connected to the tenant
-        # of the floating ip
-        for p in router.get_peer_ports():
-            if p.get_device_id() == provider_router.get_id():
-                pr_port = p
-
-        # get the tenant router port id connected to provider router
-        tr_port_id = pr_port.get_peer_id()
-
-        # add a route for the floating ip to bring it to the tenant
-        provider_router.add_route().type(
-            'Normal').src_network_addr('0.0.0.0').src_network_length(
-                0).dst_network_addr(
-                    floating_ip).dst_network_length(
-                        32).weight(100).next_hop_port(
-                            pr_port.get_id()).create()
-
-        chains = self.get_router_chains(router.get_tenant_id(), router_id)
-
-        # add dnat/snat rule pair for the floating ip
-        nat_targets = []
-        nat_targets.append(
-            {'addressFrom': fixed_ip, 'addressTo': fixed_ip,
-             'portFrom': 0, 'portTo': 0})
-
-        floating_property = {OS_FLOATING_IP_RULE_KEY: identifier}
-        chains['in'].add_rule().nw_dst_address(
-            floating_ip).nw_dst_length(32).type(
-                'dnat').flow_action('accept').nat_targets(
-                    nat_targets).in_ports([tr_port_id]).position(
-                        1).properties(floating_property).create()
-
-        nat_targets = []
-        nat_targets.append(
-            {'addressFrom': floating_ip, 'addressTo': floating_ip,
-             'portFrom': 0, 'portTo': 0})
-
-        chains['out'].add_rule().nw_src_address(
-            fixed_ip).nw_src_length(32).type(
-                'snat').flow_action('accept').nat_targets(
-                    nat_targets).out_ports(
-                        [tr_port_id]).position(1).properties(
-                            floating_property).create()
-
-    @handle_api_error
-    def clear_floating_ip(self, router_id, provider_router, floating_ip,
-                          identifier):
-        """Remove floating IP
-
-        :param router_id: router_id
-        :param provider_router: provider router
-        :param floating_ip: floating IP address
-        :param identifier: identifier to use to map to MidoNet
-        """
-        LOG.debug(_("MidoClient.clear_floating_ip called: "
-                    "router_id=%(router_id)s, "
-                    "provider_router=%(provider_router)s"
-                    "floating_ip=%(floating_ip)s, identifier=%(identifier)s"),
-                  {'router_id': router_id, 'provider_router': provider_router,
-                   'floating_ip': floating_ip, 'identifier': identifier})
-        router = self.mido_api.get_router(router_id)
-
-        # find the provider router port that is connected to the tenant
-        # delete the route for this floating ip
-        for r in provider_router.get_routes():
-            if (r.get_dst_network_addr() == floating_ip and
+        LOG.debug(_("MidoClient.remote_static_route called: "
+                    "router=%(router)s, ip=%(ip)s"),
+                  {'router': router, 'ip': ip})
+        for r in router.get_routes():
+            if (r.get_dst_network_addr() == ip and
                     r.get_dst_network_length() == 32):
                 self.mido_api.delete_route(r.get_id())
 
-        # delete snat/dnat rule pair for this floating ip
-        chains = self.get_router_chains(router.get_tenant_id(), router_id)
-
-        for r in chains['in'].get_rules():
-            if OS_FLOATING_IP_RULE_KEY in r.get_properties():
-                if r.get_properties()[OS_FLOATING_IP_RULE_KEY] == identifier:
-                    LOG.debug(_('deleting rule=%r'), r)
-                    self.mido_api.delete_rule(r.get_id())
-                    break
-
-        for r in chains['out'].get_rules():
-            if OS_FLOATING_IP_RULE_KEY in r.get_properties():
-                if r.get_properties()[OS_FLOATING_IP_RULE_KEY] == identifier:
-                    LOG.debug(_('deleting rule=%r'), r)
-                    self.mido_api.delete_rule(r.get_id())
-                    break
+    @handle_api_error
+    def update_port_chains(self, port, inbound_chain_id, outbound_chain_id):
+        """Bind inbound and outbound chains to the port."""
+        LOG.debug(_("MidoClient.update_port_chains called: port=%(port)s"
+                    "inbound_chain_id=%(inbound_chain_id)s, "
+                    "outbound_chain_id=%(outbound_chain_id)s"),
+                  {"port": port, "inbound_chain_id": inbound_chain_id,
+                   "outbound_chain_id": outbound_chain_id})
+        port.inbound_filter_id(inbound_chain_id).outbound_filter_id(
+            outbound_chain_id).update()
 
     @handle_api_error
-    def create_for_sg(self, tenant_id, sg_id, sg_name):
-        """Create a new chain for security group.
-
-        Creating a security group creates a pair of chains in MidoNet, one for
-        inbound and the other for outbound.
-        """
-        LOG.debug(_("MidoClient.create_for_sg called: "
-                    "tenant_id=%(tenant_id)s sg_id=%(sg_id)s "
-                    "sg_name=%(sg_name)s "),
-                  {'tenant_id': tenant_id, 'sg_id': sg_id, 'sg_name': sg_name})
-
-        cnames = chain_names(sg_id, sg_name)
-        self.mido_api.add_chain().tenant_id(tenant_id).name(
-            cnames['in']).create()
-        self.mido_api.add_chain().tenant_id(tenant_id).name(
-            cnames['out']).create()
-
-        pg_name = port_group_name(sg_id, sg_name)
-        self.mido_api.add_port_group().tenant_id(tenant_id).name(
-            pg_name).create()
+    def create_chain(self, tenant_id, name):
+        """Create a new chain."""
+        LOG.debug(_("MidoClient.create_chain called: tenant_id=%(tenant_id)s "
+                    " name=%(name)s"), {"tenant_id": tenant_id, "name": name})
+        return self.mido_api.add_chain().tenant_id(tenant_id).name(
+            name).create()
 
     @handle_api_error
-    def delete_for_sg(self, tenant_id, sg_id, sg_name):
-        """Delete a chain mapped to a security group.
+    def delete_chain(self, id):
+        """Delete chain matching the ID."""
+        LOG.debug(_("MidoClient.delete_chain called: id=%(id)s"), {"id": id})
+        self.mido_api.delete_chain(id)
 
-        Delete a SG means deleting all the chains (inbound and outbound)
-        associated with the SG in MidoNet.
-        """
-        LOG.debug(_("MidoClient.delete_for_sg called: "
-                    "tenant_id=%(tenant_id)s sg_id=%(sg_id)s "
-                    "sg_name=%(sg_name)s "),
-                  {'tenant_id': tenant_id, 'sg_id': sg_id, 'sg_name': sg_name})
-
-        cnames = chain_names(sg_id, sg_name)
+    @handle_api_error
+    def delete_chains_by_names(self, tenant_id, names):
+        """Delete chains matching the names given for a tenant."""
+        LOG.debug(_("MidoClient.delete_chains_by_names called: "
+                    "tenant_id=%(tenant_id)s names=%(names)s "),
+                  {"tenant_id": tenant_id, "names": names})
         chains = self.mido_api.get_chains({'tenant_id': tenant_id})
         for c in chains:
-            if c.get_name() == cnames['in'] or c.get_name() == cnames['out']:
-                LOG.debug(_('MidoClient.delete_for_sg: deleting chain=%r'),
-                          c.get_id())
+            if c.get_name() in names:
                 self.mido_api.delete_chain(c.get_id())
 
-        pg_name = port_group_name(sg_id, sg_name)
-        pgs = self.mido_api.get_port_groups({'tenant_id': tenant_id})
-        for pg in pgs:
-            if pg.get_name() == pg_name:
-                LOG.debug(_("MidoClient.delete_for_sg: deleting pg=%r"),
-                          pg)
-                self.mido_api.delete_port_group(pg.get_id())
-
     @handle_api_error
-    def get_sg_chains(self, tenant_id, sg_id):
-        """Get a list of chains mapped to a security group."""
-        LOG.debug(_("MidoClient.get_sg_chains called: "
-                    "tenant_id=%(tenant_id)s sg_id=%(sg_id)s"),
-                  {'tenant_id': tenant_id, 'sg_id': sg_id})
-
-        cnames = chain_names(sg_id, sg_name='')
-        chain_name_prefix_for_id = cnames['in'][:NAME_IDENTIFIABLE_PREFIX_LEN]
-        chains = {}
-
+    def get_chain_by_name(self, tenant_id, name):
+        """Get the chain by its name."""
+        LOG.debug(_("MidoClient.get_chain_by_name called: "
+                    "tenant_id=%(tenant_id)s name=%(name)s "),
+                  {"tenant_id": tenant_id, "name": name})
         for c in self.mido_api.get_chains({'tenant_id': tenant_id}):
-            if c.get_name().startswith(chain_name_prefix_for_id):
-                if c.get_name().endswith(SUFFIX_IN):
-                    chains['in'] = c
-                if c.get_name().endswith(SUFFIX_OUT):
-                    chains['out'] = c
-        assert 'in' in chains
-        assert 'out' in chains
-        return chains
-
-    @handle_api_error
-    def get_port_groups_for_sg(self, tenant_id, sg_id):
-        LOG.debug(_("MidoClient.get_port_groups_for_sg called: "
-                    "tenant_id=%(tenant_id)s sg_id=%(sg_id)s"),
-                  {'tenant_id': tenant_id, 'sg_id': sg_id})
-
-        pg_name_prefix = port_group_name(
-            sg_id, sg_name='')[:NAME_IDENTIFIABLE_PREFIX_LEN]
-        port_groups = self.mido_api.get_port_groups({'tenant_id': tenant_id})
-        for pg in port_groups:
-            if pg.get_name().startswith(pg_name_prefix):
-                LOG.debug(_(
-                    "MidoClient.get_port_groups_for_sg exiting: pg=%r"), pg)
-                return pg
+            if c.get_name() == name:
+                return c
         return None
 
     @handle_api_error
-    def create_for_sg_rule(self, rule):
-        LOG.debug(_("MidoClient.create_for_sg_rule called: rule=%r"), rule)
-
-        direction = rule['direction']
-        protocol = rule['protocol']
-        port_range_max = rule['port_range_max']
-        rule_id = rule['id']
-        security_group_id = rule['security_group_id']
-        remote_group_id = rule['remote_group_id']
-        remote_ip_prefix = rule['remote_ip_prefix']  # watch out. not validated
-        tenant_id = rule['tenant_id']
-        port_range_min = rule['port_range_min']
-
-        # construct a corresponding rule
-        tp_src_start = tp_src_end = None
-        tp_dst_start = tp_dst_end = None
-        nw_src_address = None
-        nw_src_length = None
-        port_group_id = None
-
-        # handle source
-        if remote_ip_prefix is not None:
-            nw_src_address, nw_src_length = remote_ip_prefix.split('/')
-        elif remote_group_id is not None:  # security group as a source
-            source_pg = self.pg_manager.get_for_sg(tenant_id, remote_group_id)
-            port_group_id = source_pg.get_id()
-        else:
-            raise Exception(_("Don't know what to do with rule=%r"), rule)
-
-        # dst ports
-        tp_dst_start, tp_dst_end = port_range_min, port_range_max
-
-        # protocol
-        if protocol == 'tcp':
-            nw_proto = 6
-        elif protocol == 'udp':
-            nw_proto = 17
-        elif protocol == 'icmp':
-            nw_proto = 1
-            # extract type and code from reporposed fields
-            icmp_type = rule['from_port']
-            icmp_code = rule['to_port']
-
-            # translate -1(wildcard in OS) to midonet wildcard
-            if icmp_type == -1:
-                icmp_type = None
-            if icmp_code == -1:
-                icmp_code = None
-
-            # set data for midonet rule
-            tp_src_start = tp_src_end = icmp_type
-            tp_dst_start = tp_dst_end = icmp_code
-
-        chains = self.get_sg_chains(tenant_id, security_group_id)
-        chain = None
-        if direction == 'egress':
-            chain = chains['in']
-        elif direction == 'ingress':
-            chain = chains['out']
-        else:
-            raise Exception(_("Don't know what to do with rule=%r"), rule)
-
-        # create an accept rule
-        properties = sg_rule_properties(rule_id)
-        LOG.debug(_("MidoClient.create_for_sg_rule: adding accept rule "
-                    "%(rule_id)s in portgroup %(port_group_id)s"),
-                  {'rule_id': rule_id, 'port_group_id': port_group_id})
-        chain.add_rule().port_group(port_group_id).type('accept').nw_proto(
-            nw_proto).nw_src_address(nw_src_address).nw_src_length(
-                nw_src_length).tp_src_start(tp_src_start).tp_src_end(
-                    tp_src_end).tp_dst_start(tp_dst_start).tp_dst_end(
-                        tp_dst_end).properties(properties).create()
+    def get_port_group_by_name(self, tenant_id, name):
+        """Get the port group by name."""
+        LOG.debug(_("MidoClient.get_port_group_by_name called: "
+                    "tenant_id=%(tenant_id)s name=%(name)s "),
+                  {"tenant_id": tenant_id, "name": name})
+        for p in self.mido_api.get_port_groups({'tenant_id': tenant_id}):
+            if p.get_name() == name:
+                return p
+        return None
 
     @handle_api_error
-    def delete_for_sg_rule(self, rule):
-        LOG.debug(_("MidoClient.delete_for_sg_rule called: rule=%r"), rule)
+    def create_port_group(self, tenant_id, name):
+        """Create a port group
 
-        tenant_id = rule['tenant_id']
-        security_group_id = rule['security_group_id']
-        rule_id = rule['id']
+        Create a new port group for a given name and ID.
+        """
+        LOG.debug(_("MidoClient.create_port_group called: "
+                    "tenant_id=%(tenant_id)s name=%(name)s"),
+                  {"tenant_id": tenant_id, "name": name})
+        return self.mido_api.add_port_group().tenant_id(tenant_id).name(
+            name).create()
 
-        properties = sg_rule_properties(rule_id)
-        # search for the chains to find the rule to delete
-        chains = self.get_sg_chains(tenant_id, security_group_id)
-        for c in chains['in'], chains['out']:
-            rules = c.get_rules()
-            for r in rules:
-                if r.get_properties() == properties:
-                    LOG.debug(_("MidoClient.delete_for_sg_rule: deleting "
-                                "rule %r"), r)
-                    self.mido_api.delete_rule(r.get_id())
+    @handle_api_error
+    def delete_port_group_by_name(self, tenant_id, name):
+        """Delete port group matching the name given for a tenant."""
+        LOG.debug(_("MidoClient.delete_port_group_by_name called: "
+                    "tenant_id=%(tenant_id)s name=%(name)s "),
+                  {"tenant_id": tenant_id, "name": name})
+        pgs = self.mido_api.get_port_groups({'tenant_id': tenant_id})
+        for pg in pgs:
+            if pg.get_name() == name:
+                LOG.debug(_("Deleting pg %(id)s"), {"id": pg.get_id()})
+                self.mido_api.delete_port_group(pg.get_id())
+
+    @handle_api_error
+    def add_port_to_port_group_by_name(self, tenant_id, name, port_id):
+        """Add a port to a port group with the given name."""
+        LOG.debug(_("MidoClient.add_port_to_port_group_by_name called: "
+                    "tenant_id=%(tenant_id)s name=%(name)s "
+                    "port_id=%(port_id)s"),
+                  {"tenant_id": tenant_id, "name": name, "port_id": port_id})
+        pg = self.get_port_group_by_name(tenant_id, name)
+        if pg is None:
+            raise MidonetResourceNotFound(resource_type='PortGroup', id=name)
+
+        pg = pg.add_port_group_port().port_id(port_id).create()
+        return pg
+
+    @handle_api_error
+    def remove_port_from_port_groups(self, port_id):
+        """Remove a port binding from all the port groups."""
+        LOG.debug(_("MidoClient.remove_port_from_port_groups called: "
+                    "port_id=%(port_id)s"), {"port_id": port_id})
+        port = self.get_port(port_id)
+        for pg in port.get_port_groups():
+            pg.delete()
+
+    @handle_api_error
+    def add_chain_rule(self, chain, action='accept', **kwargs):
+        """Create a new accept chain rule."""
+        self.mido_api.add_chain_rule(chain, action, **kwargs)

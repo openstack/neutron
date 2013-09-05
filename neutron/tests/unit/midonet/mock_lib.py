@@ -62,26 +62,6 @@ def get_chain_mock(id=None, tenant_id='test-tenant', name='chain',
     return chain
 
 
-def get_exterior_bridge_port_mock(id=None, bridge_id=None):
-    if id is None:
-        id = str(uuid.uuid4())
-    if bridge_id is None:
-        bridge_id = str(uuid.uuid4())
-
-    return get_bridge_port_mock(id=id, bridge_id=bridge_id,
-                                type='ExteriorBridge')
-
-
-def get_interior_bridge_port_mock(id=None, bridge_id=None):
-    if id is None:
-        id = str(uuid.uuid4())
-    if bridge_id is None:
-        bridge_id = str(uuid.uuid4())
-
-    return get_bridge_port_mock(id=id, bridge_id=bridge_id,
-                                type='InteriorBridge')
-
-
 def get_port_group_mock(id=None, tenant_id='test-tenant', name='pg'):
     if id is None:
         id = str(uuid.uuid4())
@@ -143,22 +123,19 @@ class MidonetLibMockConfig():
     def _create_bridge(self, tenant_id, name):
         return get_bridge_mock(tenant_id=tenant_id, name=name)
 
-    def _create_exterior_bridge_port(self, bridge):
-        return get_exterior_bridge_port_mock(bridge_id=bridge.get_id())
-
-    def _create_interior_bridge_port(self, bridge):
-        return get_interior_bridge_port_mock(bridge_id=bridge.get_id())
-
     def _create_subnet(self, bridge, gateway_ip, subnet_prefix, subnet_len):
         return get_subnet_mock(bridge.get_id(), gateway_ip=gateway_ip,
                                subnet_prefix=subnet_prefix,
                                subnet_len=subnet_len)
 
+    def _add_bridge_port(self, bridge):
+        return get_bridge_port_mock(bridge_id=bridge.get_id())
+
     def _get_bridge(self, id):
         return get_bridge_mock(id=id)
 
     def _get_port(self, id):
-        return get_exterior_bridge_port_mock(id=id)
+        return get_bridge_port_mock(id=id)
 
     def _get_router(self, id):
         return get_router_mock(id=id)
@@ -176,10 +153,8 @@ class MidonetLibMockConfig():
         self.inst.create_subnet.side_effect = self._create_subnet
 
         # Port methods side effects
-        ex_bp = self.inst.create_exterior_bridge_port
-        ex_bp.side_effect = self._create_exterior_bridge_port
-        in_bp = self.inst.create_interior_bridge_port
-        in_bp.side_effect = self._create_interior_bridge_port
+        ex_bp = self.inst.add_bridge_port
+        ex_bp.side_effect = self._add_bridge_port
         self.inst.get_port.side_effect = self._get_port
 
         # Router methods side effects
@@ -205,6 +180,26 @@ class MidoClientMockConfig():
 
     def _get_bridge(self, id):
         return get_bridge_mock(id=id)
+
+    def _get_chain(self, id, query=None):
+        if not self.chains_in:
+            return []
+
+        tenant_id = self._get_query_tenant_id(query)
+        for chain in self.chains_in:
+            chain_id = chain['id']
+            if chain_id is id:
+                rule_mocks = []
+                if 'rules' in chain:
+                    for rule in chain['rules']:
+                        rule_mocks.append(
+                            get_rule_mock(id=rule['id'],
+                                          chain_id=id,
+                                          properties=rule['properties']))
+
+                return get_chain_mock(id=chain_id, name=chain['name'],
+                                      tenant_id=tenant_id, rules=rule_mocks)
+        return None
 
     def _get_chains(self, query=None):
         if not self.chains_in:
@@ -249,5 +244,6 @@ class MidoClientMockConfig():
     def setup(self):
         self.inst.get_bridge.side_effect = self._get_bridge
         self.inst.get_chains.side_effect = self._get_chains
+        self.inst.get_chain.side_effect = self._get_chain
         self.inst.get_port_groups.side_effect = self._get_port_groups
         self.inst.get_router.side_effect = self._get_router
