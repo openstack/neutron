@@ -122,7 +122,6 @@ PACKET_FILTER_ATTR_MAP = {COLLECTION: PACKET_FILTER_ATTR_PARAMS}
 
 
 class Packetfilter(extensions.ExtensionDescriptor):
-
     @classmethod
     def get_name(cls):
         return ALIAS
@@ -156,10 +155,6 @@ class Packetfilter(extensions.ExtensionDescriptor):
         pf_ext = extensions.ResourceExtension(
             COLLECTION, resource, attr_map=PACKET_FILTER_ATTR_PARAMS)
         return [pf_ext]
-
-    def update_attributes_map(self, attributes):
-        super(Packetfilter, self).update_attributes_map(
-            attributes, extension_attrs_map=PACKET_FILTER_ATTR_MAP)
 
     def get_extended_resources(self, version):
         if version == "2.0":

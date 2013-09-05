@@ -204,7 +204,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       securitygroups_db.SecurityGroupDbMixin):
 
     supported_extension_aliases = ['external-net', 'router', 'security-group',
-                                   'agent' 'dhcp_agent_scheduler', 'binding']
+                                   'agent', 'dhcp_agent_scheduler', 'binding']
     __native_bulk_support = False
 
     def __init__(self):

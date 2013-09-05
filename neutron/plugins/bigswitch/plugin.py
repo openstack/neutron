@@ -48,11 +48,11 @@ import base64
 import copy
 import httplib
 import json
-import os
 import socket
 
 from oslo.config import cfg
 
+from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import constants as const
 from neutron.common import exceptions
@@ -77,16 +77,11 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.plugins.bigswitch.db import porttracker_db
+from neutron.plugins.bigswitch import extensions
 from neutron.plugins.bigswitch import routerrule_db
 from neutron.plugins.bigswitch.version import version_string_with_vcs
 
 LOG = logging.getLogger(__name__)
-
-# Include the BigSwitch Extensions path in the api_extensions
-EXTENSIONS_PATH = os.path.join(os.path.dirname(__file__), 'extensions')
-if not cfg.CONF.api_extensions_path:
-    cfg.CONF.set_override('api_extensions_path',
-                          EXTENSIONS_PATH)
 
 restproxy_opts = [
     cfg.StrOpt('servers', default='localhost:8800',
@@ -449,6 +444,9 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         # init DB, proxy's persistent store defaults to in-memory sql-lite DB
         db.configure_db()
+
+        # Include the BigSwitch Extensions path in the api_extensions
+        neutron_extensions.append_api_extensions_path(extensions.__path__)
 
         # 'servers' is the list of network controller REST end-points
         # (used in order specified till one suceeds, and it is sticky

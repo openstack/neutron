@@ -261,6 +261,10 @@ class InvalidExtensionEnv(BadRequest):
     message = _("Invalid extension environment: %(reason)s")
 
 
+class ExtensionsNotFound(NotFound):
+    message = _("Extensions not found: %(extensions)s")
+
+
 class InvalidContentType(NeutronException):
     message = _("Invalid content type %(content_type)s")
 

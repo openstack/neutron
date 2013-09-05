@@ -32,6 +32,7 @@ from neutron.db import db_base_plugin_v2
 from neutron import manager
 from neutron.plugins.nicira.dbexts import nicira_networkgw_db
 from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
+from neutron.plugins.nicira.NeutronPlugin import NVP_EXT_PATH
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
@@ -629,6 +630,10 @@ class TestNetworkGatewayPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     """Simple plugin class for testing db support for network gateway ext."""
 
     supported_extension_aliases = ["network-gateway"]
+
+    def __init__(self, **args):
+        super(TestNetworkGatewayPlugin, self).__init__(**args)
+        extensions.append_api_extensions_path([NVP_EXT_PATH])
 
     def delete_port(self, context, id, nw_gw_port_check=True):
         if nw_gw_port_check:

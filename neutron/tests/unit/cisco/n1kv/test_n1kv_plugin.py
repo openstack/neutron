@@ -18,9 +18,9 @@
 # @author: Abhishek Raut, Cisco Systems Inc.
 
 from mock import patch
-import os
 from oslo.config import cfg
 
+from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes
 from neutron.common.test_lib import test_config
 from neutron import context
@@ -204,8 +204,7 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         n1kv_neutron_plugin.N1kvNeutronPluginV2._setup_vsm = _fake_setup_vsm
 
         test_config['plugin_name_v2'] = self._plugin_name
-        cfg.CONF.set_override('api_extensions_path',
-                              os.path.dirname(extensions.__file__))
+        neutron_extensions.append_api_extensions_path(extensions.__path__)
         self.addCleanup(cfg.CONF.reset)
         ext_mgr = NetworkProfileTestExtensionManager()
         test_config['extension_manager'] = ext_mgr

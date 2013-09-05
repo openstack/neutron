@@ -21,8 +21,6 @@
 
 import eventlet
 
-from oslo.config import cfg as q_conf
-
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
@@ -148,8 +146,6 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     # bulk operations.
     __native_bulk_support = False
     supported_extension_aliases = ["provider", "agent",
-                                   "policy_profile_binding",
-                                   "network_profile_binding",
                                    "n1kv_profile", "network_profile",
                                    "policy_profile", "external-net", "router",
                                    "credential"]
@@ -164,11 +160,6 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         n1kv_db_v2.initialize()
         c_cred.Store.initialize()
         self._initialize_network_ranges()
-        # If no api_extensions_path is provided set the following
-        if not q_conf.CONF.api_extensions_path:
-            q_conf.CONF.set_override(
-                'api_extensions_path',
-                'extensions:neutron/plugins/cisco/extensions')
         self._setup_vsm()
         self._setup_rpc()
 
