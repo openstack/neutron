@@ -159,7 +159,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         n1kv_db_v2.initialize()
         c_cred.Store.initialize()
-        self._initialize_network_vlan_ranges()
+        self._initialize_network_ranges()
         # If no api_extensions_path is provided set the following
         if not q_conf.CONF.api_extensions_path:
             q_conf.CONF.set_override(
@@ -212,56 +212,69 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         tenant-ids.
         """
         LOG.debug(_('_populate_policy_profiles'))
-        n1kvclient = n1kv_client.Client()
-        policy_profiles = n1kvclient.list_port_profiles()
-        LOG.debug(_('_populate_policy_profiles %s'), policy_profiles)
-        if policy_profiles:
-            for profile in policy_profiles['body'][c_const.SET]:
-                if c_const.ID and c_const.NAME in profile:
-                    profile_id = profile[c_const.PROPERTIES][c_const.ID]
-                    profile_name = profile[c_const.PROPERTIES][c_const.NAME]
-                    self._add_policy_profile(profile_name, profile_id)
-        else:
+        try:
+            n1kvclient = n1kv_client.Client()
+            policy_profiles = n1kvclient.list_port_profiles()
+            LOG.debug(_('_populate_policy_profiles %s'), policy_profiles)
+            if policy_profiles:
+                for profile in policy_profiles['body'][c_const.SET]:
+                    if c_const.ID and c_const.NAME in profile:
+                        profile_id = profile[c_const.PROPERTIES][c_const.ID]
+                        profile_name = profile[c_const.
+                                               PROPERTIES][c_const.NAME]
+                        self._add_policy_profile(profile_name, profile_id)
+            self._remove_all_fake_policy_profiles()
+        except (cisco_exceptions.VSMError,
+                cisco_exceptions.VSMConnectionFailed):
             LOG.warning(_('No policy profile populated from VSM'))
-        self._remove_all_fake_policy_profiles()
 
     def _poll_policies(self, event_type=None, epoch=None, tenant_id=None):
         """
         Poll for Policy Profiles from Cisco Nexus1000V for any update/delete.
         """
         LOG.debug(_('_poll_policies'))
-        n1kvclient = n1kv_client.Client()
-        policy_profiles = n1kvclient.list_events(event_type, epoch)
-        if policy_profiles:
-            for profile in policy_profiles['body'][c_const.SET]:
-                if c_const.NAME in profile:
-                    # Extract commands from the events XML.
-                    cmd = profile[c_const.PROPERTIES]['cmd']
-                    cmds = cmd.split(';')
-                    cmdwords = cmds[1].split()
-                    profile_name = profile[c_const.PROPERTIES][c_const.NAME]
-                    # Delete the policy profile from db if it's deleted on VSM
-                    if 'no' in cmdwords[0]:
-                        p = self._get_policy_profile_by_name(profile_name)
-                        if p:
-                            self._delete_policy_profile(p['id'])
-                    # Add policy profile to neutron DB idempotently
-                    elif c_const.ID in profile[c_const.PROPERTIES]:
-                        profile_id = profile[c_const.PROPERTIES][c_const.ID]
-                        self._add_policy_profile(
-                            profile_name, profile_id, tenant_id)
-            # Replace tenant-id for profile bindings with admin's tenant-id
-            self._remove_all_fake_policy_profiles()
+        try:
+            n1kvclient = n1kv_client.Client()
+            policy_profiles = n1kvclient.list_events(event_type, epoch)
+            if policy_profiles:
+                for profile in policy_profiles['body'][c_const.SET]:
+                    if c_const.NAME in profile:
+                        # Extract commands from the events XML.
+                        cmd = profile[c_const.PROPERTIES]['cmd']
+                        cmds = cmd.split(';')
+                        cmdwords = cmds[1].split()
+                        profile_name = profile[c_const.
+                                               PROPERTIES][c_const.NAME]
+                        # Delete the policy profile from db if deleted on VSM
+                        if 'no' in cmdwords[0]:
+                            p = self._get_policy_profile_by_name(profile_name)
+                            if p:
+                                self._delete_policy_profile(p['id'])
+                        # Add policy profile to neutron DB idempotently
+                        elif c_const.ID in profile[c_const.PROPERTIES]:
+                            profile_id = profile[c_const.
+                                                 PROPERTIES][c_const.ID]
+                            self._add_policy_profile(
+                                profile_name, profile_id, tenant_id)
+                # Replace tenant-id for profile bindings with admin's tenant-id
+                self._remove_all_fake_policy_profiles()
+        except (cisco_exceptions.VSMError,
+                cisco_exceptions.VSMConnectionFailed):
+            LOG.warning(_('No policy profile updated from VSM'))
 
-    def _initialize_network_vlan_ranges(self):
+    def _initialize_network_ranges(self):
         self.network_vlan_ranges = {}
+        self.vxlan_id_ranges = []
         network_profiles = n1kv_db_v2._get_network_profiles()
         for network_profile in network_profiles:
+            seg_min, seg_max = self._get_segment_range(
+                network_profile['segment_range'])
             if network_profile['segment_type'] == c_const.NETWORK_TYPE_VLAN:
-                seg_min, seg_max = self._get_segment_range(
-                    network_profile['segment_range'])
                 self._add_network_vlan_range(network_profile[
                     'physical_network'], int(seg_min), int(seg_max))
+            elif network_profile['segment_type'] == (c_const.
+                                                     NETWORK_TYPE_OVERLAY):
+                self.vxlan_id_ranges.append((int(seg_min), int(seg_max)))
 
     def _add_network_vlan_range(self, physical_network, vlan_min, vlan_max):
         self._add_network(physical_network)
@@ -276,7 +289,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         binding = n1kv_db_v2.get_network_binding(context.session,
                                                  network['id'])
         network[providernet.NETWORK_TYPE] = binding.network_type
-        if binding.network_type == c_const.NETWORK_TYPE_VXLAN:
+        if binding.network_type == c_const.NETWORK_TYPE_OVERLAY:
             network[providernet.PHYSICAL_NETWORK] = None
             network[providernet.SEGMENTATION_ID] = binding.segmentation_id
             network[n1kv_profile.MULTICAST_IP] = binding.multicast_ip
@@ -316,9 +329,9 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 msg = _("provider:segmentation_id out of range "
                         "(1 through 4094)")
                 raise q_exc.InvalidInput(error_message=msg)
-        elif network_type == c_const.NETWORK_TYPE_VXLAN:
+        elif network_type == c_const.NETWORK_TYPE_OVERLAY:
             if physical_network_set:
-                msg = _("provider:physical_network specified for VXLAN "
+                msg = _("provider:physical_network specified for Overlay "
                         "network")
                 raise q_exc.InvalidInput(error_message=msg)
             else:
@@ -387,8 +400,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _extend_mapping_dict(self, context, mapping_dict, segment):
         """
-        Extends a mapping dictionary by populating dot1q tag and
-        bridge-domain name.
+        Extend a mapping dictionary with dot1q tag and bridge-domain name.
 
         :param context: neutron api request context
         :param mapping_dict: dictionary to populate values
@@ -536,7 +548,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _parse_multi_segments(self, context, attrs, param):
         """
-        Parse the multi-segment network attributes
+        Parse the multi-segment network attributes.
 
         :param context: neutron api request context
         :param attrs: Attributes of the network
@@ -546,7 +558,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         pair_list = []
         valid_seg_types = [c_const.NETWORK_TYPE_VLAN,
-                           c_const.NETWORK_TYPE_VXLAN]
+                           c_const.NETWORK_TYPE_OVERLAY]
         segments = attrs.get(param)
         if not attributes.is_attr_set(segments):
             return pair_list
@@ -574,7 +586,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def _parse_trunk_segments(self, context, attrs, param, physical_network,
                               sub_type):
         """
-        Parse the trunk network attributes
+        Parse the trunk network attributes.
 
         :param context: neutron api request context
         :param attrs: Attributes of the network
@@ -600,7 +612,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                             "another trunk segment") % segment
                     raise q_exc.InvalidInput(error_message=msg)
                 elif binding.network_type == c_const.NETWORK_TYPE_VLAN:
-                    if sub_type == c_const.NETWORK_TYPE_VXLAN:
+                    if sub_type == c_const.NETWORK_TYPE_OVERLAY:
                         msg = _("Cannot add vlan segment '%s' as a member of "
                                 "a vxlan trunk segment") % segment
                         raise q_exc.InvalidInput(error_message=msg)
@@ -610,7 +622,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         msg = _("Network UUID '%s' belongs to a different "
                                 "physical network") % segment
                         raise q_exc.InvalidInput(error_message=msg)
-                elif binding.network_type == c_const.NETWORK_TYPE_VXLAN:
+                elif binding.network_type == c_const.NETWORK_TYPE_OVERLAY:
                     if sub_type == c_const.NETWORK_TYPE_VLAN:
                         msg = _("Cannot add vxlan segment '%s' as a member of "
                                 "a vlan trunk segment") % segment
@@ -726,7 +738,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         Send create network request to VSM.
 
-        Create a bridge domain for network of type VXLAN.
+        Create a bridge domain for network of type Overlay.
         :param context: neutron api request context
         :param network: network dictionary
         :param segment_pairs: List of segments in UUID pairs
@@ -736,13 +748,13 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         profile = self.get_network_profile(context,
                                            network[n1kv_profile.PROFILE_ID])
         n1kvclient = n1kv_client.Client()
-        if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VXLAN:
-            n1kvclient.create_bridge_domain(network)
+        if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_OVERLAY:
+            n1kvclient.create_bridge_domain(network, profile['sub_type'])
         if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_TRUNK:
             self._populate_member_segments(context, network, segment_pairs,
                                            n1kv_profile.SEGMENT_ADD)
             network['del_segment_list'] = []
-            if profile['sub_type'] == c_const.NETWORK_TYPE_VXLAN:
+            if profile['sub_type'] == c_const.NETWORK_TYPE_OVERLAY:
                 encap_dict = {'name': (network['name'] +
                                        c_const.ENCAPSULATION_PROFILE_SUFFIX),
                               'add_segment_list': (
@@ -788,7 +800,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             body['delSegments'] = network['del_segment_list']
             LOG.debug(_('add_segments=%s'), body['addSegments'])
             LOG.debug(_('del_segments=%s'), body['delSegments'])
-            if profile['sub_type'] == c_const.NETWORK_TYPE_VXLAN:
+            if profile['sub_type'] == c_const.NETWORK_TYPE_OVERLAY:
                 encap_profile = (network['name'] +
                                  c_const.ENCAPSULATION_PROFILE_SUFFIX)
                 encap_dict = {'name': encap_profile,
@@ -806,21 +818,21 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         Send delete network request to VSM.
 
-        Delete bridge domain if network is of type VXLAN.
-        Delete encapsulation profile if network is of type VXLAN Trunk.
+        Delete bridge domain if network is of type Overlay.
+        Delete encapsulation profile if network is of type OVERLAY Trunk.
         :param context: neutron api request context
         :param network: network dictionary
         """
         LOG.debug(_('_send_delete_network_request: %s'), network['id'])
         n1kvclient = n1kv_client.Client()
         session = context.session
-        if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VXLAN:
+        if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_OVERLAY:
             name = network['name'] + c_const.BRIDGE_DOMAIN_SUFFIX
             n1kvclient.delete_bridge_domain(name)
         elif network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_TRUNK:
             profile = self.get_network_profile(
                 context, network[n1kv_profile.PROFILE_ID])
-            if profile['sub_type'] == c_const.NETWORK_TYPE_VXLAN:
+            if profile['sub_type'] == c_const.NETWORK_TYPE_OVERLAY:
                 profile_name = (network['name'] +
                                 c_const.ENCAPSULATION_PROFILE_SUFFIX)
                 n1kvclient.delete_encapsulation_profile(profile_name)
@@ -1126,12 +1138,12 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             binding = n1kv_db_v2.get_network_binding(session, id)
             network = self.get_network(context, id)
             if n1kv_db_v2.is_trunk_member(session, id):
-                msg = _("Cannot delete a network "
-                        "that is a member of a trunk segment")
+                msg = _("Cannot delete network '%s' "
+                        "that is member of a trunk segment") % network['name']
                 raise q_exc.InvalidInput(error_message=msg)
             if n1kv_db_v2.is_multi_segment_member(session, id):
-                msg = _("Cannot delete a network "
-                        "that is a member of a multi-segment network")
+                msg = _("Cannot delete network '%s' that is a member of a "
+                        "multi-segment network") % network['name']
                 raise q_exc.InvalidInput(error_message=msg)
             if self.agent_vsm:
                 try:
@@ -1140,7 +1152,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                        cisco_exceptions.VSMConnectionFailed):
                     LOG.debug(_('Delete failed in VSM'))
             super(N1kvNeutronPluginV2, self).delete_network(context, id)
-            if binding.network_type == c_const.NETWORK_TYPE_VXLAN:
+            if binding.network_type == c_const.NETWORK_TYPE_OVERLAY:
                 n1kv_db_v2.release_vxlan(session, binding.segmentation_id,
                                          self.vxlan_id_ranges)
             elif binding.network_type == c_const.NETWORK_TYPE_VLAN:
@@ -1394,7 +1406,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         Create a network profile.
 
         Create a network profile, which represents a pool of networks
-        belonging to one type (VLAN or VXLAN). On creation of network
+        belonging to one type (VLAN or Overlay). On creation of network
         profile, we retrieve the admin tenant-id which we use to replace
         the previously stored fake tenant-id in tenant-profile bindings.
         :param context: neutron api request context
@@ -1406,7 +1418,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             N1kvNeutronPluginV2, self).create_network_profile(context,
                                                               network_profile)
         if _network_profile['segment_type'] in [c_const.NETWORK_TYPE_VLAN,
-                                                c_const.NETWORK_TYPE_VXLAN]:
+                                                c_const.NETWORK_TYPE_OVERLAY]:
             seg_min, seg_max = self._get_segment_range(
                 _network_profile['segment_range'])
             if _network_profile['segment_type'] == c_const.NETWORK_TYPE_VLAN:
@@ -1454,8 +1466,9 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                          int(seg_max))
             n1kv_db_v2.delete_vlan_allocations(context.session,
                                                self.network_vlan_ranges)
-        elif _network_profile['segment_type'] == c_const.NETWORK_TYPE_VXLAN:
-            self.delete_vxlan_ranges = [(int(seg_min), int(seg_max))]
+        elif _network_profile['segment_type'] == c_const.NETWORK_TYPE_OVERLAY:
+            self.delete_vxlan_ranges = []
+            self.delete_vxlan_ranges.append((int(seg_min), int(seg_max)))
             n1kv_db_v2.delete_vxlan_allocations(context.session,
                                                 self.delete_vxlan_ranges)
         self._send_delete_network_profile_request(_network_profile)

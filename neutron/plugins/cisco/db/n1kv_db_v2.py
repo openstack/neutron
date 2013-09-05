@@ -289,15 +289,15 @@ def add_network_binding(db_session, network_id, network_type,
 
     :param db_session: database session
     :param network_id: UUID representing the network
-    :param network_type: string representing type of network (VLAN, VXLAN,
+    :param network_type: string representing type of network (VLAN, OVERLAY,
                          MULTI_SEGMENT or TRUNK)
     :param physical_network: Only applicable for VLAN networks. It
                              represents a L2 Domain
     :param segmentation_id: integer representing VLAN or VXLAN ID
-    :param multicast_ip: VXLAN technology needs a multicast IP to be associated
-                         with every VXLAN ID to deal with broadcast packets. A
-                         single multicast IP can be shared by multiple VXLAN
-                         IDs.
+    :param multicast_ip: Native VXLAN technology needs a multicast IP to be
+                         associated with every VXLAN ID to deal with broadcast
+                         packets. A single multicast IP can be shared by
+                         multiple VXLAN IDs.
     :param network_profile_id: network profile ID based on which this network
                                is created
     :param add_segments: List of segment UUIDs in pairs to be added to either a
@@ -516,7 +516,7 @@ def reserve_vxlan(db_session, network_profile):
     :param network_profile: network profile object
     """
     seg_min, seg_max = get_segment_range(network_profile)
-    segment_type = c_const.NETWORK_TYPE_VXLAN
+    segment_type = c_const.NETWORK_TYPE_OVERLAY
     physical_network = ""
 
     with db_session.begin(subtransactions=True):
@@ -531,10 +531,13 @@ def reserve_vxlan(db_session, network_profile):
         if alloc:
             segment_id = alloc.vxlan_id
             alloc.allocated = True
-            return (physical_network, segment_type,
-                    segment_id, get_multicast_ip(network_profile))
-        raise c_exc.NoMoreNetworkSegments(
-            network_profile_name=network_profile.name)
+            if network_profile.sub_type == (c_const.
+                                            NETWORK_SUBTYPE_NATIVE_VXLAN):
+                return (physical_network, segment_type,
+                        segment_id, get_multicast_ip(network_profile))
+            else:
+                return (physical_network, segment_type, segment_id, "0.0.0.0")
+        raise q_exc.NoNetworkAvailable()
 
 
 def alloc_network(db_session, network_profile_id):
@@ -549,7 +552,7 @@ def alloc_network(db_session, network_profile_id):
                                               network_profile_id)
         if network_profile.segment_type == c_const.NETWORK_TYPE_VLAN:
             return reserve_vlan(db_session, network_profile)
-        if network_profile.segment_type == c_const.NETWORK_TYPE_VXLAN:
+        if network_profile.segment_type == c_const.NETWORK_TYPE_OVERLAY:
             return reserve_vxlan(db_session, network_profile)
         return (None, network_profile.segment_type, 0, "0.0.0.0")
 
@@ -841,7 +844,7 @@ def create_network_profile(db_session, network_profile):
         if network_profile["segment_type"] == c_const.NETWORK_TYPE_VLAN:
             kwargs["physical_network"] = network_profile["physical_network"]
             kwargs["segment_range"] = network_profile["segment_range"]
-        elif network_profile["segment_type"] == c_const.NETWORK_TYPE_VXLAN:
+        elif network_profile["segment_type"] == c_const.NETWORK_TYPE_OVERLAY:
             kwargs["multicast_ip_index"] = 0
             kwargs["multicast_ip_range"] = network_profile[
                 "multicast_ip_range"]
@@ -1234,10 +1237,10 @@ class NetworkProfile_db_mixin(object):
             raise q_exc.InvalidInput(error_message=msg)
         segment_type = net_p["segment_type"].lower()
         if segment_type not in [c_const.NETWORK_TYPE_VLAN,
-                                c_const.NETWORK_TYPE_VXLAN,
+                                c_const.NETWORK_TYPE_OVERLAY,
                                 c_const.NETWORK_TYPE_TRUNK,
                                 c_const.NETWORK_TYPE_MULTI_SEGMENT]:
-            msg = _("segment_type should either be vlan, vxlan, "
+            msg = _("segment_type should either be vlan, overlay, "
                     "multi-segment or trunk")
             LOG.exception(msg)
             raise q_exc.InvalidInput(error_message=msg)
@@ -1247,22 +1250,26 @@ class NetworkProfile_db_mixin(object):
                         "for network profile")
                 LOG.exception(msg)
                 raise q_exc.InvalidInput(error_message=msg)
-        if segment_type == c_const.NETWORK_TYPE_TRUNK:
+        if segment_type in [c_const.NETWORK_TYPE_TRUNK,
+                            c_const.NETWORK_TYPE_OVERLAY]:
             if "sub_type" not in net_p:
                 msg = _("argument sub_type missing "
-                        "for trunk network profile")
+                        "for network profile")
                 LOG.exception(msg)
                 raise q_exc.InvalidInput(error_message=msg)
         if segment_type in [c_const.NETWORK_TYPE_VLAN,
-                            c_const.NETWORK_TYPE_VXLAN]:
+                            c_const.NETWORK_TYPE_OVERLAY]:
             if "segment_range" not in net_p:
                 msg = _("argument segment_range missing "
                         "for network profile")
                 LOG.exception(msg)
                 raise q_exc.InvalidInput(error_message=msg)
             self._validate_segment_range(net_p)
-        if segment_type != c_const.NETWORK_TYPE_VXLAN:
-            net_p["multicast_ip_range"] = "0.0.0.0"
+        if segment_type == c_const.NETWORK_TYPE_OVERLAY:
+            if net_p['sub_type'] != c_const.NETWORK_SUBTYPE_NATIVE_VXLAN:
+                net_p['multicast_ip_range'] = '0.0.0.0'
+        else:
+            net_p['multicast_ip_range'] = '0.0.0.0'
 
     def _validate_segment_range_uniqueness(self, context, net_p):
         """

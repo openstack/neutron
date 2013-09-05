@@ -150,6 +150,7 @@ class Client(object):
         self.format = 'json'
         self.hosts = self._get_vsm_hosts()
         self.action_prefix = 'http://%s/api/n1k' % self.hosts[0]
+        self.timeout = c_const.DEFAULT_HTTP_TIMEOUT
 
     def list_port_profiles(self):
         """
@@ -171,15 +172,18 @@ class Client(object):
             self.events_path = self.events_path + '?type=' + event_type
         return self._get(self.events_path)
 
-    def create_bridge_domain(self, network):
+    def create_bridge_domain(self, network, overlay_subtype):
         """
         Create a bridge domain on VSM.
 
         :param network: network dict
+        :param overlay_subtype: string representing subtype of overlay network
         """
         body = {'name': network['name'] + c_const.BRIDGE_DOMAIN_SUFFIX,
                 'segmentId': network[providernet.SEGMENTATION_ID],
-                'groupIp': network[n1kv_profile.MULTICAST_IP], }
+                'subType': overlay_subtype}
+        if overlay_subtype == c_const.NETWORK_SUBTYPE_NATIVE_VXLAN:
+            body['groupIp'] = network[n1kv_profile.MULTICAST_IP]
         return self._post(self.bridge_domains_path,
                           body=body)
 
@@ -198,13 +202,12 @@ class Client(object):
         :param network: network dict
         :param network_profile: network profile dict
         """
-        LOG.debug(_("seg id %s\n"), network_profile['name'])
         body = {'name': network['name'],
                 'id': network['id'],
                 'networkSegmentPool': network_profile['name'], }
         if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VLAN:
             body['vlan'] = network[providernet.SEGMENTATION_ID]
-        elif network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_VXLAN:
+        elif network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_OVERLAY:
             body['bridgeDomain'] = (network['name'] +
                                     c_const.BRIDGE_DOMAIN_SUFFIX)
         if network_profile['segment_type'] == c_const.NETWORK_TYPE_TRUNK:
@@ -427,20 +430,22 @@ class Client(object):
         if body:
             body = self._serialize(body)
             LOG.debug(_("req: %s"), body)
-        resp, replybody = httplib2.Http().request(action,
-                                                  method,
-                                                  body=body,
-                                                  headers=headers)
+        try:
+            resp, replybody = (httplib2.Http(timeout=self.timeout).
+                               request(action,
+                                       method,
+                                       body=body,
+                                       headers=headers))
+        except Exception as e:
+            raise c_exc.VSMConnectionFailed(reason=e)
         LOG.debug(_("status_code %s"), resp.status)
         if resp.status == 200:
             if 'application/xml' in resp['content-type']:
                 return self._deserialize(replybody, resp.status)
             elif 'text/plain' in resp['content-type']:
                 LOG.debug(_("VSM: %s"), replybody)
-        elif resp.status == 500:
+        else:
             raise c_exc.VSMError(reason=replybody)
-        elif resp.status == 503:
-            raise c_exc.VSMConnectionFailed
 
     def _serialize(self, data):
         """

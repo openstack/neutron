@@ -31,6 +31,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                           'is_visible': True},
         'credential_name': {'allow_post': True, 'allow_put': True,
                             'is_visible': True, 'default': ''},
+        'tenant_id': {'allow_post': True, 'allow_put': False,
+                      'is_visible': False, 'default': ''},
         'type': {'allow_post': True, 'allow_put': True,
                  'is_visible': True, 'default': ''},
         'user_name': {'allow_post': True, 'allow_put': True,
