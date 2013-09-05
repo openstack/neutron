@@ -1726,6 +1726,16 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 max_num_expected=1,
                 min_num_expected=min_num_rules_expected,
                 source_ip_addresses=internal_ip)
+
+            # Remove No-DNAT rule associated with the single fixed_ip
+            # to floating ip
+            nvplib.delete_nat_rules_by_match(
+                self.cluster, router_id, "NoDestinationNatRule",
+                max_num_expected=1,
+                min_num_expected=min_num_rules_expected,
+                source_ip_addresses=internal_ip,
+                destination_ip_addresses=floating_ip_address)
+
         except NvpApiClient.NvpApiException:
             LOG.exception(_("An error occurred while removing NAT rules "
                             "on the NVP platform for floating ip:%s"),
@@ -1823,6 +1833,14 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         self.cluster, router_id, floating_ip, floating_ip,
                         order=NVP_FLOATINGIP_NAT_RULES_ORDER,
                         match_criteria={'source_ip_addresses': internal_ip})
+                    # Add No-DNAT rule to allow fixed_ip to ping floatingip.
+                    nvplib.create_lrouter_nodnat_rule(
+                        self.cluster, router_id,
+                        order=NVP_FLOATINGIP_NAT_RULES_ORDER - 1,
+                        match_criteria={'source_ip_addresses': internal_ip,
+                                        'destination_ip_addresses':
+                                        floating_ip})
+
                     # Add Floating IP address to router_port
                     nvplib.update_lrouter_port_ips(self.cluster,
                                                    router_id,
