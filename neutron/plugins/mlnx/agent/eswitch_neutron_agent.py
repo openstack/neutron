@@ -134,8 +134,8 @@ class EswitchManager(object):
         elif network_type == constants.TYPE_IB:
             LOG.debug(_("creating IB Network"))
         else:
-            LOG.error(_("Unknown network type %(network_type) "
-                        "for network %(network_id)"),
+            LOG.error(_("Unknown network type %(network_type)s "
+                        "for network %(network_id)s"),
                       {'network_type': network_type,
                        'network_id': network_id})
             return

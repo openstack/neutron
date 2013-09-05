@@ -97,7 +97,7 @@ class OFCClient(object):
                 return data
             else:
                 LOG.warning(_("Operation on OFC failed: "
-                              "status=%(status), detail=%(detail)"),
+                              "status=%(status)s, detail=%(detail)s"),
                             {'status': res.status, 'detail': data})
                 params = {'reason': _("Operation on OFC failed"),
                           'status': res.status}

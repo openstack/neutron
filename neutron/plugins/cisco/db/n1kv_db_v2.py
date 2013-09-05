@@ -994,7 +994,7 @@ def delete_profile_binding(tenant_id, profile_id):
             db_session.delete(binding)
     except c_exc.ProfileTenantBindingNotFound:
         LOG.debug(_("Profile-Tenant binding missing for profile ID "
-                  "%(profile_id)s and tenant ID %(tenant_id)") %
+                  "%(profile_id)s and tenant ID %(tenant_id)s") %
                   {"profile_id": profile_id, "tenant_id": tenant_id})
         return
 
