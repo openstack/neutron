@@ -124,14 +124,12 @@ def handle_router_metadata_access(plugin, context, router_id, do_create=True):
         LOG.warn(_("Overlapping IPs must be enabled in order to setup "
                    "the metadata access network"))
         return
-    # As we'll use a different device_owner for metadata interface
-    # this query will return only 'real' router interfaces
     ctx_elevated = context.elevated()
     device_filter = {'device_id': [router_id],
                      'device_owner': [l3_db.DEVICE_OWNER_ROUTER_INTF]}
     # Retrieve ports calling database plugin
     ports = db_base_plugin_v2.NeutronDbPluginV2.get_ports(
-        plugin, context, filters=device_filter)
+        plugin, ctx_elevated, filters=device_filter)
     try:
         if ports:
             if (do_create and
