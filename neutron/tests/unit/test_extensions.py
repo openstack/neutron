@@ -439,7 +439,7 @@ class ExtensionManagerTest(base.BaseTestCase):
         ext_mgr.add_extension(ext_stubs.StubExtension("valid_extension"))
 
         self.assertTrue('valid_extension' in ext_mgr.extensions)
-        self.assertFalse('invalid_extension' in ext_mgr.extensions)
+        self.assertNotIn('invalid_extension', ext_mgr.extensions)
 
 
 class PluginAwareExtensionManagerTest(base.BaseTestCase):
@@ -454,7 +454,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         ext_mgr.add_extension(ext_stubs.StubExtension("e3"))
 
         self.assertTrue("e1" in ext_mgr.extensions)
-        self.assertFalse("e2" in ext_mgr.extensions)
+        self.assertNotIn("e2", ext_mgr.extensions)
         self.assertTrue("e3" in ext_mgr.extensions)
 
     def test_extensions_are_not_loaded_for_plugins_unaware_of_extensions(self):
@@ -469,7 +469,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(ext_stubs.StubExtension("e1"))
 
-        self.assertFalse("e1" in ext_mgr.extensions)
+        self.assertNotIn("e1", ext_mgr.extensions)
 
     def test_extensions_not_loaded_for_plugin_without_expected_interface(self):
 
@@ -482,7 +482,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         ext_mgr.add_extension(
             ext_stubs.ExtensionExpectingPluginInterface("supported_extension"))
 
-        self.assertFalse("e1" in ext_mgr.extensions)
+        self.assertNotIn("e1", ext_mgr.extensions)
 
     def test_extensions_are_loaded_for_plugin_with_expected_interface(self):
 

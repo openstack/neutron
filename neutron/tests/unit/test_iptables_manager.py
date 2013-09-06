@@ -561,4 +561,4 @@ class IptablesManagerStateLessTestCase(base.BaseTestCase):
         self.iptables = (iptables_manager.IptablesManager(state_less=True))
 
     def test_nat_not_found(self):
-        self.assertFalse('nat' in self.iptables.ipv4)
+        self.assertNotIn('nat', self.iptables.ipv4)
