@@ -509,8 +509,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         for call in nat.mock_calls:
             name, args, kwargs = call
             if name == 'add_rule':
-                self.assertEquals(args, ('snat', '-j $float-snat'))
-                self.assertEquals(kwargs, {})
+                self.assertEqual(args, ('snat', '-j $float-snat'))
+                self.assertEqual(kwargs, {})
                 break
 
     def testRoutersWithAdminStateDown(self):
