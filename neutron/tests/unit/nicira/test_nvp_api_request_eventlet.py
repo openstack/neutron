@@ -58,7 +58,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
 
     def test_construct_eventlet_api_request(self):
         e = nare.NvpApiRequestEventlet(self.client, self.url)
-        self.assertTrue(e is not None)
+        self.assertIsNotNone(e)
 
     def test_apirequest_spawn(self):
         def x(id):
@@ -99,7 +99,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             self.assertTrue(getattr(req, att) is getattr(self.req, att))
 
     def test_request_error(self):
-        self.assertTrue(self.req.request_error is None)
+        self.assertIsNone(self.req.request_error)
 
     def test_run_and_handle_request(self):
         self.req._request_timeout = None
@@ -118,7 +118,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
         self.req._handle_request = new.instancemethod(
             my_handle_request, self.req, nare.NvpApiRequestEventlet)
         self.req.start()
-        self.assertTrue(self.req.join() is None)
+        self.assertIsNone(self.req.join())
 
     def prep_issue_request(self):
         mysock = Mock()
@@ -165,52 +165,52 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
         (mysock, myresponse, myconn) = self.prep_issue_request()
         myconn.sock = None
         self.req.start()
-        self.assertTrue(self.req.join() is None)
+        self.assertIsNone(self.req.join())
         self.assertTrue(self.client.acquire_connection.called)
 
     def test_issue_request_exceed_maximum_retries(self):
         (mysock, myresponse, myconn) = self.prep_issue_request()
         self.req.start()
-        self.assertTrue(self.req.join() is None)
+        self.assertIsNone(self.req.join())
         self.assertTrue(self.client.acquire_connection.called)
 
     def test_issue_request_trigger_non_redirect(self):
         (mysock, myresponse, myconn) = self.prep_issue_request()
         myresponse.status = httplib.OK
         self.req.start()
-        self.assertTrue(self.req.join() is None)
+        self.assertIsNone(self.req.join())
         self.assertTrue(self.client.acquire_connection.called)
 
     def test_issue_request_trigger_internal_server_error(self):
         (mysock, myresponse, myconn) = self.prep_issue_request()
         self.req._redirect_params.return_value = (myconn, None)
         self.req.start()
-        self.assertTrue(self.req.join() is None)
+        self.assertIsNone(self.req.join())
         self.assertTrue(self.client.acquire_connection.called)
 
     def test_redirect_params_break_on_location(self):
         myconn = Mock()
         (conn, retval) = self.req._redirect_params(
             myconn, [('location', None)])
-        self.assertTrue(retval is None)
+        self.assertIsNone(retval)
 
     def test_redirect_params_parse_a_url(self):
         myconn = Mock()
         (conn, retval) = self.req._redirect_params(
             myconn, [('location', '/path/a/b/c')])
-        self.assertTrue(retval is not None)
+        self.assertIsNotNone(retval)
 
     def test_redirect_params_invalid_redirect_location(self):
         myconn = Mock()
         (conn, retval) = self.req._redirect_params(
             myconn, [('location', '+path/a/b/c')])
-        self.assertTrue(retval is None)
+        self.assertIsNone(retval)
 
     def test_redirect_params_invalid_scheme(self):
         myconn = Mock()
         (conn, retval) = self.req._redirect_params(
             myconn, [('location', 'invalidscheme://hostname:1/path')])
-        self.assertTrue(retval is None)
+        self.assertIsNone(retval)
 
     def test_redirect_params_setup_https_with_cooki(self):
         with patch(CLIENT_NAME) as mock:
@@ -220,7 +220,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             (conn, retval) = self.req._redirect_params(
                 myconn, [('location', 'https://host:1/path')])
 
-            self.assertTrue(retval is not None)
+            self.assertIsNotNone(retval)
             self.assertTrue(api_client.acquire_redirect_connection.called)
 
     def test_redirect_params_setup_htttps_and_query(self):
@@ -231,7 +231,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             (conn, retval) = self.req._redirect_params(myconn, [
                 ('location', 'https://host:1/path?q=1')])
 
-            self.assertTrue(retval is not None)
+            self.assertIsNotNone(retval)
             self.assertTrue(api_client.acquire_redirect_connection.called)
 
     def test_redirect_params_setup_https_connection_no_cookie(self):
@@ -242,7 +242,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             (conn, retval) = self.req._redirect_params(myconn, [
                 ('location', 'https://host:1/path')])
 
-            self.assertTrue(retval is not None)
+            self.assertIsNotNone(retval)
             self.assertTrue(api_client.acquire_redirect_connection.called)
 
     def test_redirect_params_setup_https_and_query_no_cookie(self):
@@ -252,7 +252,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             myconn = Mock()
             (conn, retval) = self.req._redirect_params(
                 myconn, [('location', 'https://host:1/path?q=1')])
-            self.assertTrue(retval is not None)
+            self.assertIsNotNone(retval)
             self.assertTrue(api_client.acquire_redirect_connection.called)
 
     def test_redirect_params_path_only_with_query(self):
@@ -264,7 +264,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
             myconn = Mock()
             (conn, retval) = self.req._redirect_params(myconn, [
                 ('location', '/path?q=1')])
-            self.assertTrue(retval is not None)
+            self.assertIsNotNone(retval)
 
     def test_handle_request_auto_login(self):
         self.req._auto_login = True
@@ -294,7 +294,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
     # NvpLoginRequestEventlet tests.
     def test_construct_eventlet_login_request(self):
         r = nare.NvpLoginRequestEventlet(self.client, 'user', 'password')
-        self.assertTrue(r is not None)
+        self.assertIsNotNone(r)
 
     def test_session_cookie_session_cookie_retrieval(self):
         r = nare.NvpLoginRequestEventlet(self.client, 'user', 'password')
@@ -303,7 +303,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
         r.value = Mock()
         r.value.get_header = Mock()
         r.value.get_header.return_value = 'cool'
-        self.assertTrue(r.session_cookie() is not None)
+        self.assertIsNotNone(r.session_cookie())
 
     def test_session_cookie_not_retrieved(self):
         r = nare.NvpLoginRequestEventlet(self.client, 'user', 'password')
@@ -312,17 +312,17 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
         r.value = Mock()
         r.value.get_header = Mock()
         r.value.get_header.return_value = 'cool'
-        self.assertTrue(r.session_cookie() is None)
+        self.assertIsNone(r.session_cookie())
 
     # NvpGetApiProvidersRequestEventlet tests.
     def test_construct_eventlet_get_api_providers_request(self):
         r = nare.NvpGetApiProvidersRequestEventlet(self.client)
-        self.assertTrue(r is not None)
+        self.assertIsNotNone(r)
 
     def test_api_providers_none_api_providers(self):
         r = nare.NvpGetApiProvidersRequestEventlet(self.client)
         r.successful = Mock(return_value=False)
-        self.assertTrue(r.api_providers() is None)
+        self.assertIsNone(r.api_providers())
 
     def test_api_providers_non_none_api_providers(self):
         r = nare.NvpGetApiProvidersRequestEventlet(self.client)
@@ -334,4 +334,4 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
                 "listen_addr": "pssl:1.1.1.1:1" }]}]}"""
         r.successful = Mock(return_value=True)
         LOG.info('%s' % r.api_providers())
-        self.assertTrue(r.api_providers() is not None)
+        self.assertIsNotNone(r.api_providers())
