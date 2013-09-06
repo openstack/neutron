@@ -1086,11 +1086,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def update_network(self, context, id, network):
         pnet._raise_if_updates_provider_attributes(network['network'])
-        if network["network"].get("admin_state_up"):
-            if network['network']["admin_state_up"] is False:
-                raise q_exc.NotImplementedError(_("admin_state_up=False "
-                                                  "networks are not "
-                                                  "supported."))
+        if network["network"].get("admin_state_up") is False:
+            raise NotImplementedError(_("admin_state_up=False networks "
+                                        "are not supported."))
         with context.session.begin(subtransactions=True):
             net = super(NvpPluginV2, self).update_network(context, id, network)
             if psec.PORTSECURITY in network['network']:

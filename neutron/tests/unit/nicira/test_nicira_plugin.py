@@ -324,6 +324,15 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
             self.assertEqual(webob.exc.HTTPServiceUnavailable.code,
                              res.status_int)
 
+    def test_update_network_with_admin_false(self):
+        data = {'network': {'admin_state_up': False}}
+        with self.network() as net:
+            plugin = manager.NeutronManager.get_plugin()
+            self.assertRaises(NotImplementedError,
+                              plugin.update_network,
+                              context.get_admin_context(),
+                              net['network']['id'], data)
+
 
 class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
 
