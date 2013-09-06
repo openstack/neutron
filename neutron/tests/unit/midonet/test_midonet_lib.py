@@ -20,6 +20,8 @@
 # @author: Tomoe Sugihara, Midokura Japan KK
 
 import mock
+import sys
+sys.modules["midonetclient"] = mock.Mock()
 import testtools
 import webob.exc as w_exc
 
