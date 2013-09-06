@@ -517,8 +517,8 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         self.mox.ReplayAll()
         acc = self.iptables.get_traffic_counters('OUTPUT')
-        self.assertEquals(acc['pkts'], 1600)
-        self.assertEquals(acc['bytes'], 263604)
+        self.assertEqual(acc['pkts'], 1600)
+        self.assertEqual(acc['bytes'], 263604)
 
         self.mox.VerifyAll()
 
@@ -548,8 +548,8 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         self.mox.ReplayAll()
         acc = self.iptables.get_traffic_counters('OUTPUT', zero=True)
-        self.assertEquals(acc['pkts'], 1600)
-        self.assertEquals(acc['bytes'], 263604)
+        self.assertEqual(acc['pkts'], 1600)
+        self.assertEqual(acc['bytes'], 263604)
 
         self.mox.VerifyAll()
 
