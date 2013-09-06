@@ -139,7 +139,7 @@ def _check_and_truncate_name(display_name):
         LOG.debug(_("Specified name:'%s' exceeds maximum length. "
                     "It will be truncated on NVP"), display_name)
         return display_name[:MAX_DISPLAY_NAME_LEN]
-    return display_name
+    return display_name or ''
 
 
 def get_cluster_version(cluster):

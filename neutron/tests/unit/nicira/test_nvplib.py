@@ -1442,5 +1442,23 @@ class TestNvplibVersioning(base.BaseTestCase):
                           'create_lrouter', None)
 
 
+class NvplibMiscTestCase(base.BaseTestCase):
+
+    def test_check_and_truncate_name_with_none(self):
+        name = None
+        result = nvplib._check_and_truncate_name(name)
+        self.assertEqual('', result)
+
+    def test_check_and_truncate_name_with_short_name(self):
+        name = 'foo_port_name'
+        result = nvplib._check_and_truncate_name(name)
+        self.assertEqual(name, result)
+
+    def test_check_and_truncate_name_long_name(self):
+        name = 'this_is_a_port_whose_name_is_longer_than_40_chars'
+        result = nvplib._check_and_truncate_name(name)
+        self.assertEqual(len(result), nvplib.MAX_DISPLAY_NAME_LEN)
+
+
 def _nicira_method(method_name, module_name='nvplib'):
     return '%s.%s.%s' % ('neutron.plugins.nicira', module_name, method_name)
