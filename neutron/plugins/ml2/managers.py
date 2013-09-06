@@ -117,7 +117,8 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                  cfg.CONF.ml2.mechanism_drivers)
         super(MechanismManager, self).__init__('neutron.ml2.mechanism_drivers',
                                                cfg.CONF.ml2.mechanism_drivers,
-                                               invoke_on_load=True)
+                                               invoke_on_load=True,
+                                               name_order=True)
         LOG.info(_("Loaded mechanism driver names: %s"), self.names())
         self._register_mechanisms()
 
