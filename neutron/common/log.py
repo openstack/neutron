@@ -25,10 +25,11 @@ def log(method):
     """Decorator helping to log method calls."""
     def wrapper(*args, **kwargs):
         instance = args[0]
-        data = {"class_name": instance.__class__.__name__,
+        data = {"class_name": (instance.__class__.__module__ + '.'
+                               + instance.__class__.__name__),
                 "method_name": method.__name__,
                 "args": args[1:], "kwargs": kwargs}
         LOG.debug(_('%(class_name)s method %(method_name)s'
-                    ' called with arguments %(args)s %(kwargs)s '), data)
+                    ' called with arguments %(args)s %(kwargs)s'), data)
         return method(*args, **kwargs)
     return wrapper
