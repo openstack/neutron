@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-06 06:08+0000\n"
+"POT-Creation-Date: 2013-09-07 06:09+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -6939,54 +6939,54 @@ msgstr "不支援網路類型 %s"
 msgid "Configured mechanism driver names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:121
+#: neutron/plugins/ml2/managers.py:122
 #, fuzzy, python-format
 msgid "Loaded mechanism driver names: %s"
 msgstr "已載入驅動程式 %s"
 
-#: neutron/plugins/ml2/managers.py:133
+#: neutron/plugins/ml2/managers.py:134
 #, python-format
 msgid "Registered mechanism drivers: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:138
+#: neutron/plugins/ml2/managers.py:139
 #, python-format
 msgid "Initializing mechanism driver '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:158
+#: neutron/plugins/ml2/managers.py:159
 #, python-format
 msgid "Mechanism driver '%(name)s' failed in %(method)s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:437
+#: neutron/plugins/ml2/managers.py:438
 #, python-format
 msgid "Attempting to bind port %(port)s on host %(host)s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:445
+#: neutron/plugins/ml2/managers.py:446
 #, python-format
 msgid ""
 "Bound port: %(port)s, host: %(host)s, driver: %(driver)s, vif_type: "
 "%(vif_type)s, cap_port_filter: %(cap_port_filter)s, segment: %(segment)s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:457
+#: neutron/plugins/ml2/managers.py:458
 #, python-format
 msgid "Mechanism driver %s failed in bind_port"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:461
+#: neutron/plugins/ml2/managers.py:462
 #, python-format
 msgid "Failed to bind port %(port)s on host %(host)s"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:481
+#: neutron/plugins/ml2/managers.py:482
 #, python-format
 msgid "Mechanism driver %s failed in validate_port_binding"
 msgstr ""
 
-#: neutron/plugins/ml2/managers.py:501
+#: neutron/plugins/ml2/managers.py:502
 #, python-format
 msgid "Mechanism driver %s failed in unbind_port"
 msgstr ""
@@ -11349,7 +11349,7 @@ msgstr ""
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr ""
+#~ msgstr "已呼叫 MidonetPluginV2.get_security_group_rule：ID = %(id)s 欄位 = %(fields)r"
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -11741,12 +11741,6 @@ msgstr ""
 #~ msgid "Network Profile %(profile_id)s could not be found."
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Profile-Tenant binding missing for "
-#~ "profile ID %(profile_id)s and tenant ID"
-#~ " %(tenant_id)"
-#~ msgstr ""
-
 #~ msgid "segment_type should either be vlan, vxlan, multi-segment or trunk"
 #~ msgstr ""
 
@@ -11765,22 +11759,6 @@ msgstr ""
 #~ msgid "Virtual metadata router ID."
 #~ msgstr "虛擬 meta 資料路由器 ID。"
 
-#~ msgid ""
-#~ "MidoClient.create_dhcp called: bridge=%(bridge)s, "
-#~ "net_addr=%(net_addr)s, net_len=%(net_len)s, "
-#~ "gateway_ip=%(gateway_ip)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "MidoClient.create_dhcp_hosts called: bridge=%(bridge)s,"
-#~ " ip=%(ip)s, mac=%(mac)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "MidoClient.delete_dhcp_hosts called: "
-#~ "bridge_id=%(bridge_id)s, ip=%(ip)s, mac=%(mac)s"
-#~ msgstr ""
-
 #~ msgid "MidoClient.delete_port called: id=%(id)s"
 #~ msgstr "已呼叫 MidonetPluginV2.delete_router：ID = %s"
 
@@ -11790,62 +11768,14 @@ msgstr ""
 #~ msgid "MidoClient.create_interior_bridge_port called: bridge=%(bridge)s"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "MidoClient.create_tenant_router called: "
-#~ "tenant_id=%(tenant_id)s, name=%(name)s, "
-#~ "metadata_router=%(metadata_router)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "MidoClient.delete_tenant_router called: id=%(id)s, "
-#~ "metadata_router=%(metadata_router)s"
-#~ msgstr "已呼叫 MidonetPluginV2.update_router：ID = %(id)s 路由器 = %(router)r"
-
-#~ msgid ""
-#~ "MidoClient.link_bridge_port_to_router called: "
-#~ "port_id=%(port_id)s, router_id=%(router_id)s, "
-#~ "gateway_ip=%(gateway_ip)s net_addr=%(net_addr)s, "
-#~ "net_len=%(net_len)s, metadata_router=%(metadata_router)s"
-#~ msgstr ""
-
 #~ msgid "Couldn't find a md router port for the router=%r"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "MidoClient.unlink_bridge_port_from_router called: "
-#~ "port_id=%(port_id)s, net_addr=%(net_addr)s, "
-#~ "net_len=%(net_len)s, metadata_router=%(metadata_router)s"
 #~ msgstr ""
 
 #~ msgid "Deleting route=%r ..."
 #~ msgstr "正在刪除路徑 = %r..."
 
-#~ msgid ""
-#~ "MidoClient.link_bridge_to_provider_router called: "
-#~ "bridge=%(bridge)s, provider_router=%(provider_router)s, "
-#~ "gateway_ip=%(gateway_ip)s, net_addr=%(net_addr)s, "
-#~ "net_len=%(net_len)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "MidoClient.unlink_bridge_from_provider_router called: "
-#~ "bridge=%(bridge)s, provider_router=%(provider_router)s"
-#~ msgstr "已呼叫 MidonetPluginV2.update_router：ID = %(id)s 路由器 = %(router)r"
-
-#~ msgid ""
-#~ "MidoClient.set_router_external_gateway called: id=%(id)s,"
-#~ " provider_router=%(provider_router)s, snat_ip=%(snat_ip)s)"
-#~ msgstr ""
-
 #~ msgid "MidoClient.clear_router_external_gateway called: id=%(id)s"
 #~ msgstr ""
-
-#~ msgid ""
-#~ "MidoClient.get_router_chains called: "
-#~ "tenant_id=%(tenant_id)s router_id=%(router_id)s"
-#~ msgstr ""
-#~ "已呼叫 ChainManager.get_router_chains：tenant_id = "
-#~ "%(tenant_id)s router_id = %(router_id)s"
 
 #~ msgid "MidoClient.create_router_chains called: router=%(router)s"
 #~ msgstr "已呼叫 MidonetPluginV2.create_router：路由器 = %r"
@@ -11853,68 +11783,14 @@ msgstr ""
 #~ msgid "MidoClient.destroy_router_chains called: id=%(id)s"
 #~ msgstr "已呼叫 MidonetPluginV2.delete_router：ID = %s"
 
-#~ msgid ""
-#~ "MidoClient.link_router_to_metadata_router called: "
-#~ "router=%(router)s, metadata_router=%(metadata_router)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "MidoClient.unlink_router_from_metadata_router called: "
-#~ "id=%(id)s, metadata_router=%(metadata_router)s"
-#~ msgstr "已呼叫 MidonetPluginV2.update_router：ID = %(id)s 路由器 = %(router)r"
-
-#~ msgid ""
-#~ "MidoClient.setup_floating_ip called: "
-#~ "router_id=%(router_id)s, "
-#~ "provider_router=%(provider_router)sfloating_ip=%(floating_ip)s, "
-#~ "fixed_ip=%(fixed_ip)sidentifier=%(identifier)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "MidoClient.clear_floating_ip called: "
-#~ "router_id=%(router_id)s, "
-#~ "provider_router=%(provider_router)sfloating_ip=%(floating_ip)s, "
-#~ "identifier=%(identifier)s"
-#~ msgstr ""
-
 #~ msgid "deleting rule=%r"
 #~ msgstr "正在刪除規則 = %r"
-
-#~ msgid ""
-#~ "MidoClient.create_for_sg called: tenant_id=%(tenant_id)s"
-#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s "
-#~ msgstr ""
-#~ "已呼叫 ChainManager.create_for_sg：tenant_id = "
-#~ "%(tenant_id)s sg_id = %(sg_id)s sg_name "
-#~ "= %(sg_name)s"
-
-#~ msgid ""
-#~ "MidoClient.delete_for_sg called: tenant_id=%(tenant_id)s"
-#~ " sg_id=%(sg_id)s sg_name=%(sg_name)s "
-#~ msgstr ""
-#~ "已呼叫 ChainManager.delete_for_sg：tenant_id = "
-#~ "%(tenant_id)s sg_id = %(sg_id)s sg_name "
-#~ "= %(sg_name)s"
 
 #~ msgid "MidoClient.delete_for_sg: deleting chain=%r"
 #~ msgstr "ChainManager.delete_for_sg：正在刪除鏈 = %r"
 
 #~ msgid "MidoClient.delete_for_sg: deleting pg=%r"
 #~ msgstr "ChainManager.delete_for_sg：正在刪除鏈 = %r"
-
-#~ msgid ""
-#~ "MidoClient.get_sg_chains called: tenant_id=%(tenant_id)s"
-#~ " sg_id=%(sg_id)s"
-#~ msgstr ""
-#~ "已呼叫 ChainManager.get_sg_chains：tenant_id = "
-#~ "%(tenant_id)s sg_id = %(sg_id)s"
-
-#~ msgid ""
-#~ "MidoClient.get_port_groups_for_sg called: "
-#~ "tenant_id=%(tenant_id)s sg_id=%(sg_id)s"
-#~ msgstr ""
-#~ "已呼叫 PortGroupManager.get_for_sg：tenant_id = "
-#~ "%(tenant_id)s sg_id = %(sg_id)s"
 
 #~ msgid "MidoClient.get_port_groups_for_sg exiting: pg=%r"
 #~ msgstr "PortGroupManager.get_for_sg 正在結束：pg = %r"
@@ -11925,39 +11801,17 @@ msgstr ""
 #~ msgid "Don't know what to do with rule=%r"
 #~ msgstr "不知道如何處理規則 = %r"
 
-#~ msgid ""
-#~ "MidoClient.create_for_sg_rule: adding accept rule"
-#~ " %(rule_id)s in portgroup %(port_group_id)s"
-#~ msgstr ""
-
 #~ msgid "MidoClient.delete_for_sg_rule called: rule=%r"
 #~ msgstr "已呼叫 RuleManager.delete_for_sg_rule：規則 = %r"
 
 #~ msgid "MidoClient.delete_for_sg_rule: deleting rule %r"
 #~ msgstr "RuleManager.delete_for_sg_rule：正在刪除規則 %r"
 
-#~ msgid ""
-#~ "No provider router and metadata device"
-#~ " ids found. But skipping because "
-#~ "running in dev env."
-#~ msgstr "找不到提供者路由器 ID 及 meta 資料裝置 ID。但是將跳過，因為正在開發環境中執行。"
-
-#~ msgid ""
-#~ "provider_router_id and metadata_router_id should "
-#~ "be configured in the plugin config "
-#~ "file"
-#~ msgstr "應該在外掛程式配置檔中配置 provider_router_id 及 metadata_router_id"
-
 #~ msgid "MidoNet doesn't support IPv6."
 #~ msgstr "MidoNet 不支援 IPv6。"
 
 #~ msgid "MidoNet doesn't support multiple subnets on the same network."
 #~ msgstr "MidoNet 不支援同一個網路上的多個子網路。"
-
-#~ msgid ""
-#~ "Ignoring admin_state_up=False for network=%r "
-#~ "because it is not yet supported"
-#~ msgstr "正在對網路 =%r 忽略 admin_state_up = False。將置換為 True"
 
 #~ msgid "MidonetPluginV2.create_port exiting: port_db_entry=%r"
 #~ msgstr "MidonetPluginV2.create_port 正在結束：port_db_entry = %r"
@@ -11986,51 +11840,17 @@ msgstr ""
 #~ msgid "MidonetPluginV2.add_router_interface exiting: qport=%r"
 #~ msgstr "MidonetPluginV2.add_router_interface 正在結束：qport = %r"
 
-#~ msgid ""
-#~ "MidonetPluginV2.remove_router_interface called: "
-#~ "router_id=%(router_id)s interface_info=%(interface_info)r"
-#~ msgstr ""
-#~ "已呼叫 MidonetPluginV2.remove_router_interface：router_id ="
-#~ " %(router_id)s interface_info = "
-#~ "%(interface_info)r"
-
 #~ msgid "MidonetPluginV2.remove_router_interface exiting"
 #~ msgstr "MidonetPluginV2.remove_router_interface 正在結束"
 
 #~ msgid "MidonetPluginV2.create_security_group exiting: sg_db_entry=%r"
 #~ msgstr "MidonetPluginV2.create_security_group 正在結束：sg_db_entry = %r"
 
-#~ msgid ""
-#~ "MidonetPluginV2.get_security_groups called: "
-#~ "filters=%(filters)r fields=%(fields)r"
-#~ msgstr ""
-#~ "已呼叫 MidonetPluginV2.get_security_groups：過濾器 = "
-#~ "%(filters)r 欄位 = %(fields)r"
-
-#~ msgid ""
-#~ "MidonetPluginV2.get_security_group called: id=%(id)s "
-#~ "fields=%(fields)r tenant_id=%(tenant_id)s"
-#~ msgstr ""
-#~ "已呼叫 MidonetPluginV2.get_security_group：ID = %(id)s"
-#~ " 欄位 = %(fields)r tenant_id=%(tenant_id)s"
-
 #~ msgid "MidonetPluginV2.create_security_group_rule exiting: rule_db_entry=%r"
 #~ msgstr "MidonetPluginV2.create_security_group_rule 正在結束：rule_db_entry = %r"
 
 #~ msgid "MidonetPluginV2.delete_security_group_rule called: sgrid=%s"
 #~ msgstr "已呼叫 MidonetPluginV2.delete_security_group_rule：sgrid = %s"
-
-#~ msgid ""
-#~ "MidonetPluginV2.get_security_group_rules called: "
-#~ "filters=%(filters)r fields=%(fields)r"
-#~ msgstr ""
-#~ "已呼叫 MidonetPluginV2.get_security_group_rules：過濾器 = "
-#~ "%(filters)r 欄位 = %(fields)r"
-
-#~ msgid ""
-#~ "MidonetPluginV2.get_security_group_rule called: id=%(id)s"
-#~ " fields=%(fields)r"
-#~ msgstr "已呼叫 MidonetPluginV2.get_security_group_rule：ID = %(id)s 欄位 = %(fields)r"
 
 #~ msgid "Unknown network type %(network_type) for network %(network_id)"
 #~ msgstr ""
