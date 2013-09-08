@@ -534,9 +534,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
     def metadata_nat_rules(self):
         rules = []
-        rules.append(('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
-                     '-p tcp -m tcp --dport 80 -j REDIRECT '
-                     '--to-port %s' % self.conf.metadata_port))
+        if self.conf.enable_metadata_proxy:
+            rules.append(('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+                          '-p tcp -m tcp --dport 80 -j REDIRECT '
+                          '--to-port %s' % self.conf.metadata_port))
         return rules
 
     def external_gateway_nat_rules(self, ex_gw_ip, internal_cidrs,
