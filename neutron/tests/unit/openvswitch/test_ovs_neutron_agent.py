@@ -583,6 +583,14 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent.reclaim_local_vlan('net2')
             del_port_fn.assert_called_once_with('gre-ip_agent_2')
 
+    def test_daemon_loop_uses_polling_manager(self):
+        with mock.patch(
+            'neutron.agent.linux.polling.get_polling_manager') as mock_get_pm:
+            with mock.patch.object(self.agent, 'rpc_loop') as mock_loop:
+                self.agent.daemon_loop()
+        mock_get_pm.assert_called_with(False, 'sudo')
+        mock_loop.called_once()
+
 
 class AncillaryBridgesTest(base.BaseTestCase):
 
