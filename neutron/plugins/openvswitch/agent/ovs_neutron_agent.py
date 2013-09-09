@@ -32,6 +32,7 @@ from oslo.config import cfg
 from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
+from neutron.agent.linux import polling
 from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
@@ -156,7 +157,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def __init__(self, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,
                  polling_interval, tunnel_types=None,
-                 veth_mtu=None, l2_population=False):
+                 veth_mtu=None, l2_population=False,
+                 minimize_polling=False):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -169,6 +171,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                the agent. If set, will automatically set enable_tunneling to
                True.
         :param veth_mtu: MTU size for veth interfaces.
+        :param minimize_polling: Optional, whether to minimize polling by
+               monitoring ovsdb for interface changes.
         '''
         self.veth_mtu = veth_mtu
         self.root_helper = root_helper
@@ -199,6 +203,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                constants.TYPE_VXLAN: {}}
 
         self.polling_interval = polling_interval
+        self.minimize_polling = minimize_polling
 
         if tunnel_types:
             self.enable_tunneling = True
@@ -1037,7 +1042,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             resync = True
         return resync
 
-    def rpc_loop(self):
+    def rpc_loop(self, polling_manager=None):
+        if not polling_manager:
+            polling_manager = polling.AlwaysPoll()
+
         sync = True
         ports = set()
         ancillary_ports = set()
@@ -1051,28 +1059,34 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     ports.clear()
                     ancillary_ports.clear()
                     sync = False
+                    polling_manager.force_polling()
 
                 # Notify the plugin of tunnel IP
                 if self.enable_tunneling and tunnel_sync:
                     LOG.info(_("Agent tunnel out of sync with plugin!"))
                     tunnel_sync = self.tunnel_sync()
 
-                port_info = self.update_ports(ports)
+                if polling_manager.is_polling_required:
+                    port_info = self.update_ports(ports)
 
-                # notify plugin about port deltas
-                if port_info:
-                    LOG.debug(_("Agent loop has new devices!"))
-                    # If treat devices fails - must resync with plugin
-                    sync = self.process_network_ports(port_info)
-                    ports = port_info['current']
-
-                # Treat ancillary devices if they exist
-                if self.ancillary_brs:
-                    port_info = self.update_ancillary_ports(ancillary_ports)
+                    # notify plugin about port deltas
                     if port_info:
-                        rc = self.process_ancillary_network_ports(port_info)
-                        ancillary_ports = port_info['current']
-                        sync = sync | rc
+                        LOG.debug(_("Agent loop has new devices!"))
+                        # If treat devices fails - must resync with plugin
+                        sync = self.process_network_ports(port_info)
+                        ports = port_info['current']
+
+                    # Treat ancillary devices if they exist
+                    if self.ancillary_brs:
+                        port_info = self.update_ancillary_ports(
+                            ancillary_ports)
+                        if port_info:
+                            rc = self.process_ancillary_network_ports(
+                                port_info)
+                            ancillary_ports = port_info['current']
+                            sync = sync | rc
+
+                    polling_manager.polling_completed()
 
             except Exception:
                 LOG.exception(_("Error in agent event loop"))
@@ -1090,7 +1104,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                            'elapsed': elapsed})
 
     def daemon_loop(self):
-        self.rpc_loop()
+        with polling.get_polling_manager(self.minimize_polling,
+                                         self.root_helper) as pm:
+            self.rpc_loop(polling_manager=pm)
 
 
 def check_ovs_version(min_required_version, root_helper):
@@ -1149,6 +1165,7 @@ def create_agent_config_map(config):
         bridge_mappings=bridge_mappings,
         root_helper=config.AGENT.root_helper,
         polling_interval=config.AGENT.polling_interval,
+        minimize_polling=config.AGENT.minimize_polling,
         tunnel_types=config.AGENT.tunnel_types,
         veth_mtu=config.AGENT.veth_mtu,
         l2_population=config.AGENT.l2_population,

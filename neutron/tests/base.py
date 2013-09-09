@@ -17,9 +17,11 @@
 
 """Base Test Case for all Unit Tests"""
 
+import contextlib
 import logging
 import os
 
+import eventlet.timeout
 import fixtures
 from oslo.config import cfg
 import stubout
@@ -88,3 +90,10 @@ class BaseTestCase(testtools.TestCase):
         group = kw.pop('group', None)
         for k, v in kw.iteritems():
             CONF.set_override(k, v, group)
+
+    @contextlib.contextmanager
+    def assert_max_execution_time(self, max_execution_time=5):
+        with eventlet.timeout.Timeout(max_execution_time, False):
+            yield
+            return
+        self.fail('Execution of this test timed out')
