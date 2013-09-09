@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-07 06:09+0000\n"
+"POT-Creation-Date: 2013-09-09 06:09+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (United States) "
@@ -9775,29 +9775,29 @@ msgstr ""
 msgid "Task %(task)s encountered exception in %(func)s at state %(state)s"
 msgstr ""
 
-#: neutron/plugins/nicira/vshield/tasks/tasks.py:184
+#: neutron/plugins/nicira/vshield/tasks/tasks.py:183
 #, python-format
 msgid "Start task %s"
 msgstr ""
 
-#: neutron/plugins/nicira/vshield/tasks/tasks.py:190
-#: neutron/plugins/nicira/vshield/tasks/tasks.py:210
-#: neutron/plugins/nicira/vshield/tasks/tasks.py:234
+#: neutron/plugins/nicira/vshield/tasks/tasks.py:189
+#: neutron/plugins/nicira/vshield/tasks/tasks.py:209
+#: neutron/plugins/nicira/vshield/tasks/tasks.py:233
 #, python-format
 msgid "Task %(task)s encountered exception in %(cb)s"
 msgstr ""
 
-#: neutron/plugins/nicira/vshield/tasks/tasks.py:196
-#: neutron/plugins/nicira/vshield/tasks/tasks.py:215
+#: neutron/plugins/nicira/vshield/tasks/tasks.py:195
+#: neutron/plugins/nicira/vshield/tasks/tasks.py:214
 #, python-format
 msgid "Task %(task)s return %(status)s"
 msgstr ""
 
-#: neutron/plugins/nicira/vshield/tasks/tasks.py:308
+#: neutron/plugins/nicira/vshield/tasks/tasks.py:326
 msgid "TaskManager terminated"
 msgstr ""
 
-#: neutron/plugins/nicira/vshield/tasks/tasks.py:367
+#: neutron/plugins/nicira/vshield/tasks/tasks.py:380
 msgid "Exception in _check_pending_tasks"
 msgstr ""
 
