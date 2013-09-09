@@ -548,6 +548,17 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBTestCase,
     def test_router_create_distributed_returns_400(self):
         self._test_router_create_with_distributed(True, None, '3.0', 400)
 
+    def test_router_create_on_obsolete_platform(self):
+
+        def obsolete_response(*args, **kwargs):
+            response = nvplib._create_implicit_routing_lrouter(*args, **kwargs)
+            response.pop('distributed')
+            return response
+
+        with mock.patch.object(
+            nvplib, 'create_lrouter', new=obsolete_response):
+            self._test_router_create_with_distributed(None, False, '2.2')
+
     def test_router_create_nvp_error_returns_500(self, vlan_id=None):
         with mock.patch.object(nvplib,
                                'create_router_lport',

@@ -1420,8 +1420,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             r['id'] = lrouter['uuid']
             # Update 'distributed' with value returned from NVP
             # This will be useful for setting the value if the API request
-            # did not specify any value for the 'distributed' attribute
-            r['distributed'] = lrouter['distributed']
+            # did not specify any value for the 'distributed' attribute.
+            # Platforms older than 3.x do not support the attribute
+            r['distributed'] = lrouter.get('distributed', False)
         except nvp_exc.NvpInvalidVersion:
             msg = _("Cannot create a distributed router with the NVP "
                     "platform currently in execution. Please, try "
