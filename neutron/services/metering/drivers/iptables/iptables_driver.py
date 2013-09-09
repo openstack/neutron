@@ -96,7 +96,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
         if not self.conf.interface_driver:
             raise SystemExit(_('An interface driver must be specified'))
-        LOG.info(_("Loading interface driver %s") % self.conf.interface_driver)
+        LOG.info(_("Loading interface driver %s"), self.conf.interface_driver)
         self.driver = importutils.import_object(self.conf.interface_driver,
                                                 self.conf)
 

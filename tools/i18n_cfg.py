@@ -94,4 +94,4 @@ msg_format_checkers = [
 
 file_black_list = ["./neutron/tests/unit",
                    "./neutron/openstack",
-                   "./quantum/plugins/bigswitch/tests"]
+                   "./neutron/plugins/bigswitch/tests"]

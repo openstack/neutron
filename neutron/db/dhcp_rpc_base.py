@@ -216,7 +216,7 @@ class DhcpRpcCallbackMixin(object):
         host = kwargs.get('host')
 
         LOG.warning(_('Updating lease expiration is now deprecated. Issued  '
-                      'from host %(host)s.') % host)
+                      'from host %s.'), host)
 
     def create_dhcp_port(self, context, **kwargs):
         """Create the dhcp port."""

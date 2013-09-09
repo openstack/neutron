@@ -117,7 +117,7 @@ class HaproxyNSDriver(object):
             pool_stats['members'] = self._get_servers_stats(parsed_stats)
             return pool_stats
         else:
-            LOG.warn(_('Stats socket not found for pool %s') % pool_id)
+            LOG.warn(_('Stats socket not found for pool %s'), pool_id)
             return {}
 
     def _get_backend_stats(self, parsed_stats):

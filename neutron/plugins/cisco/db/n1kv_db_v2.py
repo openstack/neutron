@@ -667,7 +667,7 @@ def delete_vxlan_allocations(db_session, vxlan_id_ranges):
                   filter_by(allocated=False))
         for alloc in allocs:
             if alloc.vxlan_id in vxlan_ids:
-                LOG.debug(_("Removing vxlan %s from pool") %
+                LOG.debug(_("Removing vxlan %s from pool"),
                           alloc.vxlan_id)
                 db_session.delete(alloc)
 
@@ -698,9 +698,9 @@ def reserve_specific_vxlan(db_session, vxlan_id):
                      one())
             if alloc.allocated:
                 raise c_exc.VxlanIdInUse(vxlan_id=vxlan_id)
-            LOG.debug(_("Reserving specific vxlan %s from pool") % vxlan_id)
+            LOG.debug(_("Reserving specific vxlan %s from pool"), vxlan_id)
         except exc.NoResultFound:
-            LOG.debug(_("Reserving specific vxlan %s outside pool") % vxlan_id)
+            LOG.debug(_("Reserving specific vxlan %s outside pool"), vxlan_id)
             alloc = n1kv_models_v2.N1kvVxlanAllocation(vxlan_id=vxlan_id)
             db_session.add(alloc)
         alloc.allocated = True
@@ -946,7 +946,7 @@ def get_policy_profile(db_session, id):
 def create_profile_binding(tenant_id, profile_id, profile_type):
     """Create Network/Policy Profile association with a tenant."""
     if profile_type not in ["network", "policy"]:
-        raise q_exc.NeutronException("Invalid profile type")
+        raise q_exc.NeutronException(_("Invalid profile type"))
 
     if _profile_binding_exists(tenant_id, profile_id, profile_type):
         return get_profile_binding(tenant_id, profile_id)
@@ -994,7 +994,7 @@ def delete_profile_binding(tenant_id, profile_id):
             db_session.delete(binding)
     except c_exc.ProfileTenantBindingNotFound:
         LOG.debug(_("Profile-Tenant binding missing for profile ID "
-                  "%(profile_id)s and tenant ID %(tenant_id)s") %
+                    "%(profile_id)s and tenant ID %(tenant_id)s"),
                   {"profile_id": profile_id, "tenant_id": tenant_id})
         return
 
@@ -1221,7 +1221,7 @@ class NetworkProfile_db_mixin(object):
         :param network_profile: network profile object
         """
         if not re.match(r"(\d+)\-(\d+)", network_profile["segment_range"]):
-            msg = _("invalid segment range. example range: 500-550")
+            msg = _("Invalid segment range. example range: 500-550")
             raise q_exc.InvalidInput(error_message=msg)
 
     def _validate_network_profile(self, net_p):
@@ -1231,7 +1231,7 @@ class NetworkProfile_db_mixin(object):
         :param net_p: network profile object
         """
         if any(net_p[arg] == "" for arg in ["segment_type"]):
-            msg = _("arguments segment_type missing"
+            msg = _("Arguments segment_type missing"
                     " for network profile")
             LOG.exception(msg)
             raise q_exc.InvalidInput(error_message=msg)
@@ -1246,21 +1246,21 @@ class NetworkProfile_db_mixin(object):
             raise q_exc.InvalidInput(error_message=msg)
         if segment_type == c_const.NETWORK_TYPE_VLAN:
             if "physical_network" not in net_p:
-                msg = _("argument physical_network missing "
+                msg = _("Argument physical_network missing "
                         "for network profile")
                 LOG.exception(msg)
                 raise q_exc.InvalidInput(error_message=msg)
         if segment_type in [c_const.NETWORK_TYPE_TRUNK,
                             c_const.NETWORK_TYPE_OVERLAY]:
             if "sub_type" not in net_p:
-                msg = _("argument sub_type missing "
+                msg = _("Argument sub_type missing "
                         "for network profile")
                 LOG.exception(msg)
                 raise q_exc.InvalidInput(error_message=msg)
         if segment_type in [c_const.NETWORK_TYPE_VLAN,
                             c_const.NETWORK_TYPE_OVERLAY]:
             if "segment_range" not in net_p:
-                msg = _("argument segment_range missing "
+                msg = _("Argument segment_range missing "
                         "for network profile")
                 LOG.exception(msg)
                 raise q_exc.InvalidInput(error_message=msg)
@@ -1306,7 +1306,7 @@ class NetworkProfile_db_mixin(object):
                     (profile_seg_min <= seg_max <= profile_seg_max) or
                     ((seg_min <= profile_seg_min) and
                      (seg_max >= profile_seg_max))):
-                    msg = _("segment range overlaps with another profile")
+                    msg = _("Segment range overlaps with another profile")
                     LOG.exception(msg)
                     raise q_exc.InvalidInput(error_message=msg)
 

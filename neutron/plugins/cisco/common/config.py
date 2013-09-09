@@ -36,11 +36,11 @@ cisco_opts = [
     cfg.StrOpt('provider_vlan_name_prefix', default='p-',
                help=_("VLAN Name prefix for provider vlans")),
     cfg.BoolOpt('provider_vlan_auto_create', default=True,
-                help='Provider VLANs are automatically created as needed '
-                'on the Nexus switch'),
+                help=_('Provider VLANs are automatically created as needed '
+                       'on the Nexus switch')),
     cfg.BoolOpt('provider_vlan_auto_trunk', default=True,
-                help='Provider VLANs are automatically trunked as needed '
-                'on the ports of the Nexus switch'),
+                help=_('Provider VLANs are automatically trunked as needed '
+                       'on the ports of the Nexus switch')),
     cfg.BoolOpt('svi_round_robin', default=False,
                 help=_("Distribute SVI interfaces over all switches")),
     cfg.StrOpt('model_class',
@@ -121,7 +121,7 @@ class CiscoConfigOptions():
         read_ok = multi_parser.read(CONF.config_file)
 
         if len(read_ok) != len(CONF.config_file):
-            raise cfg.Error("Some config files were not parsed properly")
+            raise cfg.Error(_("Some config files were not parsed properly"))
 
         for parsed_file in multi_parser.parsed:
             for parsed_item in parsed_file.keys():

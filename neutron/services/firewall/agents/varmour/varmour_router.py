@@ -282,10 +282,10 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
             try:
                 plist = resp['body']['response']
             except ValueError:
-                LOG.warn(_("unable to parse interface mapping."))
+                LOG.warn(_("Unable to parse interface mapping."))
                 return
         else:
-            LOG.warn(_("unable to read interface mapping."))
+            LOG.warn(_("Unable to read interface mapping."))
             return
 
         if ri.ex_gw_port:

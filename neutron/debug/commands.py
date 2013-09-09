@@ -47,7 +47,7 @@ class CreateProbe(ProbeCommand):
         parser.add_argument(
             '--device-owner',
             default='network', choices=['network', 'compute'],
-            help=_('owner type of the device: network/compute'))
+            help=_('Owner type of the device: network/compute'))
         return parser
 
     def run(self, parsed_args):

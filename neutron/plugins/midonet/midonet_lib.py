@@ -192,7 +192,8 @@ class MidoClient:
                   {'bridge': bridge})
         dhcp = bridge.get_dhcp_subnets()
         if not dhcp:
-            raise MidonetApiException(msg="Tried to delete non-existent DHCP")
+            raise MidonetApiException(
+                msg=_("Tried to delete non-existent DHCP"))
         dhcp[0].delete()
 
     @handle_api_error

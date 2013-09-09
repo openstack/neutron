@@ -29,12 +29,13 @@ class Plumlib():
     """
 
     def __init__(self):
-        LOG.info('Python PLUMgrid Fake Library Started ')
+        LOG.info(_('Python PLUMgrid Fake Library Started '))
         pass
 
     def director_conn(self, director_plumgrid, director_port, timeout,
                       director_admin, director_password):
-        LOG.info('Fake Director: %s', director_plumgrid + ':' + director_port)
+        LOG.info(_('Fake Director: %s'),
+                 director_plumgrid + ':' + director_port)
         pass
 
     def create_network(self, tenant_id, net_db):

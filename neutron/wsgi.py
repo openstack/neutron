@@ -102,7 +102,7 @@ class Server(object):
             family = info[0]
             bind_addr = info[-1]
         except Exception:
-            LOG.exception(_("Unable to listen on %(host)s:%(port)s") %
+            LOG.exception(_("Unable to listen on %(host)s:%(port)s"),
                           {'host': host, 'port': port})
             sys.exit(1)
 

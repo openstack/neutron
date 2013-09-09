@@ -273,7 +273,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self.ofc.create_ofc_tenant(context, tenant_id)
             self.ofc.create_ofc_network(context, tenant_id, net_id, net_name)
         except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
-            LOG.error(_("failed to create network id=%(id)s on "
+            LOG.error(_("Failed to create network id=%(id)s on "
                         "OFC: %(exc)s"), {'id': net_id, 'exc': exc})
             network['network']['status'] = const.NET_STATUS_ERROR
 

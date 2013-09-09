@@ -235,7 +235,7 @@ class OVSNeutronOFPRyuAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                           'tcp:%s:%d' % (ovsdb_ip, ovsdb_port))
 
     def port_update(self, context, **kwargs):
-        LOG.debug(_("port update received"))
+        LOG.debug(_("Port update received"))
         port = kwargs.get('port')
         vif_port = self.int_br.get_vif_port_by_id(port['id'])
         if not vif_port:

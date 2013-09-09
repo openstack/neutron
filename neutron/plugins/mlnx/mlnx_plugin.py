@@ -240,7 +240,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                             constants.TYPE_FLAT]:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
-                    msg = _("unknown provider:physical_network "
+                    msg = _("Unknown provider:physical_network "
                             "%s") % physical_network
                     raise q_exc.InvalidInput(error_message=msg)
             elif 'default' in self.network_vlan_ranges:
@@ -277,11 +277,11 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self.base_binding_dict[portbindings.VIF_TYPE] = vnic_type
                     return vnic_type
                 else:
-                    msg = (_("unsupported vnic type %(vnic_type)s "
+                    msg = (_("Unsupported vnic type %(vnic_type)s "
                              "for network type %(net_type)s") %
                            {'vnic_type': vnic_type, 'net_type': net_type})
             else:
-                msg = _("invalid vnic_type on port_create")
+                msg = _("Invalid vnic_type on port_create")
         else:
             msg = _("vnic_type is not defined in port profile")
         raise q_exc.InvalidInput(error_message=msg)
@@ -328,7 +328,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             return net
 
     def update_network(self, context, net_id, network):
-        LOG.debug(_("update network"))
+        LOG.debug(_("Update network"))
         provider._raise_if_updates_provider_attributes(network['network'])
 
         session = context.session
@@ -341,7 +341,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return net
 
     def delete_network(self, context, net_id):
-        LOG.debug(_("delete network"))
+        LOG.debug(_("Delete network"))
         session = context.session
         with session.begin(subtransactions=True):
             binding = db.get_network_binding(session, net_id)

@@ -133,7 +133,7 @@ class EmbranePlugin(object):
                          "device_owner": ["network:router_gateway"]})
                     if len(gw_ports) != 1:
                         raise c_exc.EmbranePluginException(
-                            err_msg=_("there must be only one gateway port "
+                            err_msg=_("There must be only one gateway port "
                                       "per router at once"))
                     gw_port = gw_ports[0]
 
@@ -170,8 +170,8 @@ class EmbranePlugin(object):
                          "device_owner": ["network:router_gateway"]})
                     if len(gw_ports) != 1:
                         raise c_exc.EmbranePluginException(
-                            err_msg=_("there must be only one gateway port"
-                                      " per router at once"))
+                            err_msg=_("There must be only one gateway port "
+                                      "per router at once"))
                     gw_port = gw_ports[0]
 
             utif_info = (self._plugin_support.retrieve_utif_info(context,

@@ -44,7 +44,7 @@ quota_opts = [
                       'minus for unlimited')),
     cfg.IntOpt('quota_port',
                default=50,
-               help=_('number of ports allowed per tenant, minus for '
+               help=_('Number of ports allowed per tenant, minus for '
                       'unlimited')),
     cfg.StrOpt('quota_driver',
                default='neutron.quota.ConfDriver',

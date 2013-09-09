@@ -37,7 +37,7 @@ from neutron.plugins.plumgrid.plumgrid_plugin.plugin_ver import VERSION
 
 LOG = logging.getLogger(__name__)
 PLUM_DRIVER = 'neutron.plugins.plumgrid.drivers.plumlib.Plumlib'
-ERR_MESSAGE = 'PLUMgrid Director communication failed'
+ERR_MESSAGE = _('PLUMgrid Director communication failed')
 
 director_server_opts = [
     cfg.StrOpt('director_server', default='localhost',

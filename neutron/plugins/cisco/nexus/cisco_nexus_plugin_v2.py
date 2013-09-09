@@ -109,19 +109,19 @@ class NexusPlugin(L2DevicePluginBase):
             except cisco_exc.NexusPortBindingNotFound:
                 if auto_create and auto_trunk:
                     # Create vlan and trunk vlan on the port
-                    LOG.debug("Nexus: create & trunk vlan %s" % vlan_name)
+                    LOG.debug(_("Nexus: create & trunk vlan %s"), vlan_name)
                     self._client.create_and_trunk_vlan(
                         switch_ip, vlan_id, vlan_name, etype, port_id)
                     vlan_created = True
                     vlan_trunked = True
                 elif auto_create:
                     # Create vlan but do not trunk it on the port
-                    LOG.debug("Nexus: create vlan %s" % vlan_name)
+                    LOG.debug(_("Nexus: create vlan %s"), vlan_name)
                     self._client.create_vlan(switch_ip, vlan_id, vlan_name)
                     vlan_created = True
                 elif auto_trunk:
                     # Only trunk vlan on the port
-                    LOG.debug("Nexus: trunk vlan %s" % vlan_name)
+                    LOG.debug(_("Nexus: trunk vlan %s"), vlan_name)
                     self._client.enable_vlan_on_trunk_int(
                         switch_ip, vlan_id, etype, port_id)
                     vlan_trunked = True
@@ -134,16 +134,16 @@ class NexusPlugin(L2DevicePluginBase):
                 with excutils.save_and_reraise_exception():
                     # Add binding failed, roll back any vlan creation/enabling
                     if vlan_created and vlan_trunked:
-                        LOG.debug("Nexus: delete & untrunk vlan %s" %
+                        LOG.debug(_("Nexus: delete & untrunk vlan %s"),
                                   vlan_name)
                         self._client.delete_and_untrunk_vlan(switch_ip,
                                                              vlan_id,
                                                              etype, port_id)
                     elif vlan_created:
-                        LOG.debug("Nexus: delete vlan %s" % vlan_name)
+                        LOG.debug(_("Nexus: delete vlan %s"), vlan_name)
                         self._client.delete_vlan(switch_ip, vlan_id)
                     elif vlan_trunked:
-                        LOG.debug("Nexus: untrunk vlan %s" % vlan_name)
+                        LOG.debug(_("Nexus: untrunk vlan %s"), vlan_name)
                         self._client.disable_vlan_on_trunk_int(switch_ip,
                                                                vlan_id,
                                                                etype,
@@ -273,7 +273,7 @@ class NexusPlugin(L2DevicePluginBase):
         if cdb.is_provider_vlan(vlan_id):
             auto_delete = conf.CISCO.provider_vlan_auto_create
             auto_untrunk = conf.CISCO.provider_vlan_auto_trunk
-            LOG.debug("delete_network(): provider vlan %s" % vlan_id)
+            LOG.debug(_("delete_network(): provider vlan %s"), vlan_id)
 
         instance_id = False
         for row in rows:

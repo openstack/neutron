@@ -40,7 +40,7 @@ eswitch_opts = [
                 help=_("List of <physical_network>:<physical_interface>")),
     cfg.StrOpt('vnic_type',
                default=constants.VIF_TYPE_DIRECT,
-               help=_("type of VM network interface: mlnx_direct or "
+               help=_("Type of VM network interface: mlnx_direct or "
                       "hostdev")),
     cfg.StrOpt('daemon_endpoint',
                default='tcp://127.0.0.1:5001',

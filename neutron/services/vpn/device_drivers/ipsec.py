@@ -58,13 +58,13 @@ openswan_opts = [
         default=os.path.join(
             TEMPLATE_PATH,
             'template/openswan/ipsec.conf.template'),
-        help='Template file for ipsec configuration'),
+        help=_('Template file for ipsec configuration')),
     cfg.StrOpt(
         'ipsec_secret_template',
         default=os.path.join(
             TEMPLATE_PATH,
             'template/openswan/ipsec.secret.template'),
-        help='Template file for ipsec secret configuration')
+        help=_('Template file for ipsec secret configuration'))
 ]
 
 cfg.CONF.register_opts(openswan_opts, 'openswan')

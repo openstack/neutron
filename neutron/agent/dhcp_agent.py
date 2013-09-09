@@ -145,7 +145,7 @@ class DhcpAgent(manager.Manager):
                 except Exception:
                     self.needs_resync = True
                     LOG.exception(_('Unable to sync network state on deleted '
-                                    'network %s') % deleted_id)
+                                    'network %s'), deleted_id)
 
             for network in active_networks:
                 pool.spawn_n(self.configure_dhcp_for_network, network)

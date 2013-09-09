@@ -350,7 +350,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if network_type == c_const.NETWORK_TYPE_VLAN:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
-                    msg = (_("unknown provider:physical_network %s"),
+                    msg = (_("Unknown provider:physical_network %s") %
                            physical_network)
                     raise q_exc.InvalidInput(error_message=msg)
             elif 'default' in self.network_vlan_ranges:
@@ -376,7 +376,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             return
 
         # TBD : Need to handle provider network updates
-        msg = _("plugin does not support updating provider attributes")
+        msg = _("Plugin does not support updating provider attributes")
         raise q_exc.InvalidInput(error_message=msg)
 
     def _get_cluster(self, segment1, segment2, clusters):
@@ -992,7 +992,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self._add_dummy_profile_only_if_testing(network)
         profile_id = self._process_network_profile(context, network['network'])
         segment_pairs = None
-        LOG.debug(_('create network: profile_id=%s'), profile_id)
+        LOG.debug(_('Create network: profile_id=%s'), profile_id)
         session = context.session
         with session.begin(subtransactions=True):
             if not network_type:
@@ -1012,7 +1012,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     segment_pairs = (
                         self._parse_multi_segments(context, network['network'],
                                                    n1kv_profile.SEGMENT_ADD))
-                    LOG.debug(_('seg list %s '), segment_pairs)
+                    LOG.debug(_('Seg list %s '), segment_pairs)
                 elif network_type == c_const.NETWORK_TYPE_TRUNK:
                     network_profile = self.get_network_profile(context,
                                                                profile_id)
@@ -1022,7 +1022,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                    physical_network,
                                                    network_profile['sub_type']
                                                    ))
-                    LOG.debug(_('seg list %s '), segment_pairs)
+                    LOG.debug(_('Seg list %s '), segment_pairs)
                 else:
                     if not segmentation_id:
                         raise q_exc.TenantNetworksDisabled()
@@ -1238,7 +1238,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if profile_id_set:
             profile_id = self._process_policy_profile(context,
                                                       port['port'])
-            LOG.debug(_('create port: profile_id=%s'), profile_id)
+            LOG.debug(_('Create port: profile_id=%s'), profile_id)
             session = context.session
             with session.begin(subtransactions=True):
                 pt = super(N1kvNeutronPluginV2, self).create_port(context,

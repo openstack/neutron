@@ -126,7 +126,7 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
             context, router['id'])
         added, removed = utils.diff_list_of_dict(old_routes,
                                                  routes)
-        LOG.debug('Added routes are %s' % added)
+        LOG.debug(_('Added routes are %s'), added)
         for route in added:
             router_routes = RouterRoute(
                 router_id=router['id'],
@@ -134,7 +134,7 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
                 nexthop=route['nexthop'])
             context.session.add(router_routes)
 
-        LOG.debug('Removed routes are %s' % removed)
+        LOG.debug(_('Removed routes are %s'), removed)
         for route in removed:
             del_context = context.session.query(RouterRoute)
             del_context.filter_by(router_id=router['id'],

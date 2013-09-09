@@ -512,7 +512,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
         except Exception:
-            LOG.exception("Failed reporting state!")
+            LOG.exception(_("Failed reporting state!"))
 
     def setup_rpc(self, physical_interfaces):
         if physical_interfaces:
@@ -523,7 +523,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                 mac = utils.get_interface_mac(devices[0].name)
             else:
                 LOG.error(_("Unable to obtain MAC address for unique ID. "
-                          "Agent terminated!"))
+                            "Agent terminated!"))
                 exit(1)
         self.agent_id = '%s%s' % ('lb', (mac.replace(":", "")))
         LOG.info(_("RPC agent_id: %s"), self.agent_id)

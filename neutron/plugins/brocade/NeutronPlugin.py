@@ -290,7 +290,8 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("Returning the allocated vlan (%d) to the pool"),
                           vlan_id)
                 self._vlan_bitmap.release_vlan(int(vlan_id))
-                raise Exception("Brocade plugin raised exception, check logs")
+                raise Exception(_("Brocade plugin raised exception, "
+                                  "check logs"))
 
             brocade_db.create_network(context, net_uuid, vlan_id)
             self._process_l3_create(context, net, network['network'])
@@ -330,7 +331,8 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 # Proper formatting
                 LOG.warning(_("Brocade NOS driver:"))
                 LOG.warning(_("%s"), e)
-                raise Exception("Brocade plugin raised exception, check logs")
+                raise Exception(_("Brocade plugin raised exception, "
+                                  "check logs"))
 
             # now ok to delete the network
             brocade_db.delete_network(context, net_id)
@@ -383,7 +385,8 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 # Proper formatting
                 LOG.warning(_("Brocade NOS driver:"))
                 LOG.warning(_("%s"), e)
-                raise Exception("Brocade plugin raised exception, check logs")
+                raise Exception(_("Brocade plugin raised exception, "
+                                  "check logs"))
 
             # save to brocade persistent db
             brocade_db.create_port(context, port_id, network_id,

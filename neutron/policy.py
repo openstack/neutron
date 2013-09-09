@@ -85,7 +85,7 @@ def get_resource_and_action(action):
 
 def _set_rules(data):
     default_rule = 'default'
-    LOG.debug(_("loading policies from file: %s"), _POLICY_PATH)
+    LOG.debug(_("Loading policies from file: %s"), _POLICY_PATH)
     # Ensure backward compatibility with folsom/grizzly convention
     # for extension rules
     policies = policy.Rules.load_json(data, default_rule)

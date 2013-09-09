@@ -159,7 +159,7 @@ ROUTER_INTF_PATH = "/tenants/%s/routers/%s/interfaces/%s"
 SUCCESS_CODES = range(200, 207)
 FAILURE_CODES = [0, 301, 302, 303, 400, 401, 403, 404, 500, 501, 502, 503,
                  504, 505]
-SYNTAX_ERROR_MESSAGE = 'Syntax error in server config file, aborting plugin'
+SYNTAX_ERROR_MESSAGE = _('Syntax error in server config file, aborting plugin')
 BASE_URI = '/networkService/v1.1'
 ORCHESTRATION_SERVICE_ID = 'Neutron v2.0'
 METADATA_SERVER_IP = '169.254.169.254'
@@ -455,7 +455,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             timeout = server_timeout
 
         # validate config
-        assert servers is not None, 'Servers not defined. Aborting plugin'
+        assert servers is not None, _('Servers not defined. Aborting plugin')
         servers = tuple(s.rsplit(':', 1) for s in servers.split(','))
         servers = tuple((server, int(port)) for server, port in servers)
         assert all(len(s) == 2 for s in servers), SYNTAX_ERROR_MESSAGE
@@ -992,7 +992,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         # we will first get the interface identifier before deleting in the DB
         if not interface_info:
-            msg = "Either subnet_id or port_id must be specified"
+            msg = _("Either subnet_id or port_id must be specified")
             raise exceptions.BadRequest(resource='router', msg=msg)
         if 'port_id' in interface_info:
             port = self._get_port(context, interface_info['port_id'])
@@ -1001,7 +1001,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             subnet = self._get_subnet(context, interface_info['subnet_id'])
             interface_id = subnet['network_id']
         else:
-            msg = "Either subnet_id or port_id must be specified"
+            msg = _("Either subnet_id or port_id must be specified")
             raise exceptions.BadRequest(resource='router', msg=msg)
 
         with context.session.begin(subtransactions=True):
@@ -1144,9 +1144,9 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             payload = {'subnet': updated_subnet}
             self._dhcp_agent_notifier.notify(context, payload,
                                              'subnet.update.end')
-            LOG.debug("Adding host route: ")
-            LOG.debug("destination:%s nexthop:%s" % (destination,
-                                                     nexthop))
+            LOG.debug(_("Adding host route: "))
+            LOG.debug(_("Destination:%(dst)s nexthop:%(next)s"),
+                      {'dst': destination, 'next': nexthop})
 
     def _get_network_with_floatingips(self, network, context=None):
         if context is None:

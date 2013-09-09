@@ -92,7 +92,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
 
     def _load_drivers(self):
         """Loads plugin-driver from configuration."""
-        LOG.info(_("Loading Metering driver %s") % self.conf.driver)
+        LOG.info(_("Loading Metering driver %s"), self.conf.driver)
         if not self.conf.driver:
             raise SystemExit(_('A metering driver must be specified'))
         self.metering_driver = importutils.import_object(
@@ -109,7 +109,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
                     'last_update': info['last_update'],
                     'host': self.host}
 
-            LOG.debug("Send metering report: %s" % data)
+            LOG.debug(_("Send metering report: %s"), data)
             notifier_api.notify(self.context,
                                 notifier_api.publisher_id('metering'),
                                 'l3.meter',

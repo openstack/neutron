@@ -100,7 +100,7 @@ class TunnelRpcCallbackMixin(object):
         tunnel_ip = kwargs.get('tunnel_ip')
         tunnel_type = kwargs.get('tunnel_type')
         if not tunnel_type:
-            msg = "network_type value needed by the ML2 plugin"
+            msg = _("Network_type value needed by the ML2 plugin")
             raise exc.InvalidInput(error_message=msg)
         driver = self.type_manager.drivers.get(tunnel_type)
         if driver:

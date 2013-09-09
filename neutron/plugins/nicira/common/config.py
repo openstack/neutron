@@ -175,7 +175,7 @@ def register_deprecated(conf):
     multi_parser = cfg.MultiConfigParser()
     read_ok = multi_parser.read(conf.config_file)
     if len(read_ok) != len(conf.config_file):
-        raise cfg.Error("Some config files were not parsed properly")
+        raise cfg.Error(_("Some config files were not parsed properly"))
 
     for parsed_file in multi_parser.parsed:
         for section in parsed_file.keys():

@@ -21,5 +21,5 @@ from neutron.plugins.embrane.common import exceptions as embrane_exc
 
 
 class UtifInfoError(embrane_exc.EmbranePluginException):
-    message = _("cannot retrieve utif info for the following reason: "
+    message = _("Cannot retrieve utif info for the following reason: "
                 "%(err_msg)s")

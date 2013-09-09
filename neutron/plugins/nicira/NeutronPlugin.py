@@ -511,7 +511,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                        'net_id': port_data['network_id']})
 
         except q_exc.NotFound:
-            LOG.warning(_("port %s not found in NVP"), port_data['id'])
+            LOG.warning(_("Port %s not found in NVP"), port_data['id'])
 
     def _nvp_delete_router_port(self, context, port_data):
         # Delete logical router port
@@ -1438,9 +1438,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 "L3GatewayAttachment",
                 self.cluster.default_l3_gw_service_uuid)
         except nvp_exc.NvpPluginException:
-            LOG.exception(_("Unable to create L3GW port on logical router  "
+            LOG.exception(_("Unable to create L3GW port on logical router "
                             "%(router_uuid)s. Verify Default Layer-3 Gateway "
-                            "service %(def_l3_gw_svc)s id is correct") %
+                            "service %(def_l3_gw_svc)s id is correct"),
                           {'router_uuid': lrouter['uuid'],
                            'def_l3_gw_svc':
                            self.cluster.default_l3_gw_service_uuid})
@@ -1546,10 +1546,10 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 nvplib.delete_lrouter(self.cluster, router_id)
             except q_exc.NotFound:
                 LOG.warning(_("Logical router '%s' not found "
-                              "on NVP Platform") % router_id)
+                              "on NVP Platform"), router_id)
             except NvpApiClient.NvpApiException:
                 raise nvp_exc.NvpPluginException(
-                    err_msg=(_("Unable to delete logical router '%s'"
+                    err_msg=(_("Unable to delete logical router '%s' "
                                "on NVP Platform") % router_id))
 
     def add_router_interface(self, context, router_id, interface_info):

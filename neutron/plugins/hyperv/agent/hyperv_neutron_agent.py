@@ -258,22 +258,23 @@ class HyperVNeutronAgent(object):
     def _treat_devices_added(self, devices):
         resync = False
         for device in devices:
-            LOG.info(_("Adding port %s") % device)
+            LOG.info(_("Adding port %s"), device)
             try:
                 device_details = self.plugin_rpc.get_device_details(
                     self.context,
                     device,
                     self.agent_id)
             except Exception as e:
-                LOG.debug(_(
-                    "Unable to get port details for device %(device)s: %(e)s"),
-                    dict(device=device, e=e))
+                LOG.debug(
+                    _("Unable to get port details for "
+                      "device %(device)s: %(e)s"),
+                    {'device': device, 'e': e})
                 resync = True
                 continue
             if 'port_id' in device_details:
-                LOG.info(_(
-                    "Port %(device)s updated. Details: %(device_details)s") %
-                    dict(device=device, device_details=device_details))
+                LOG.info(
+                    _("Port %(device)s updated. Details: %(device_details)s"),
+                    {'device': device, 'device_details': device_details})
                 self._treat_vif_port(
                     device_details['port_id'],
                     device_details['network_id'],

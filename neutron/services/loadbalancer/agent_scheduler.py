@@ -99,7 +99,7 @@ class ChanceScheduler(object):
 
             candidates = plugin.get_lbaas_agents(context, active=True)
             if not candidates:
-                LOG.warn(_('No active lbaas agents for pool %s') % pool['id'])
+                LOG.warn(_('No active lbaas agents for pool %s'), pool['id'])
                 return
 
             chosen_agent = random.choice(candidates)

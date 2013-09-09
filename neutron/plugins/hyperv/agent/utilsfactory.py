@@ -31,7 +31,7 @@ if sys.platform == 'win32':
 hyper_opts = [
     cfg.BoolOpt('force_hyperv_utils_v1',
                 default=False,
-                help='Force V1 WMI utility classes'),
+                help=_('Force V1 WMI utility classes')),
 ]
 
 CONF = cfg.CONF
@@ -56,7 +56,7 @@ def _get_class(v1_class, v2_class, force_v1_flag):
         cls = v2_class
     else:
         cls = v1_class
-    LOG.debug("Loading class: %(module_name)s.%(class_name)s",
+    LOG.debug(_("Loading class: %(module_name)s.%(class_name)s"),
               {'module_name': cls.__module__, 'class_name': cls.__name__})
     return cls
 
