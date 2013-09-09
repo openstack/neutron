@@ -17,6 +17,7 @@
 
 import fixtures
 import mock
+import testtools
 
 from neutron.agent.linux import utils
 from neutron.tests import base
@@ -106,3 +107,25 @@ class AgentUtilsReplaceFile(base.BaseTestCase):
                     ntf.assert_has_calls(expected)
                     chmod.assert_called_once_with('/baz', 0o644)
                     rename.assert_called_once_with('/baz', '/foo')
+
+
+class TestFindChildPids(base.BaseTestCase):
+
+    def test_returns_empty_list_for_exit_code_1(self):
+        with mock.patch.object(utils, 'execute',
+                               side_effect=RuntimeError('Exit code: 1')):
+            self.assertEqual(utils.find_child_pids(-1), [])
+
+    def test_returns_empty_list_for_no_output(self):
+        with mock.patch.object(utils, 'execute', return_value=''):
+            self.assertEqual(utils.find_child_pids(-1), [])
+
+    def test_returns_list_of_child_process_ids_for_good_ouput(self):
+        with mock.patch.object(utils, 'execute', return_value=' 123 \n 185\n'):
+            self.assertEqual(utils.find_child_pids(-1), ['123', '185'])
+
+    def test_raises_unknown_exception(self):
+        with testtools.ExpectedException(RuntimeError):
+            with mock.patch.object(utils, 'execute',
+                                   side_effect=RuntimeError()):
+                utils.find_child_pids(-1)

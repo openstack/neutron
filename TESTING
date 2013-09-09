@@ -8,12 +8,18 @@ Overview
     the various pieces of the neutron tree to make sure any new changes
     don't break existing functionality.
 
+    The functional tests are intended to validate actual system
+    interaction.  Mocks should be used sparingly, if at all.  Care
+    should be taken to ensure that existing system resources are not
+    modified and that resources created in tests are properly cleaned
+    up.
+
 Running tests
 
     There are two mechanisms for running tests: run_tests.sh and tox.
-    Before submitting a patch for review you should always ensure all unit
-    test pass; a tox run is triggered by the jenkins gate executed on gerrit
-    for each patch pushed for review.
+    Before submitting a patch for review you should always ensure all
+    test pass; a tox run is triggered by the jenkins gate executed on
+    gerrit for each patch pushed for review.
 
     With both mechanisms you can either run the tests in the standard
     environment or create a virtual environment to run them in.
@@ -41,18 +47,18 @@ Running individual tests
 Adding more tests
 
     Neutron has a fast growing code base and there is plenty of areas that
-    need to be covered by unit tests.
+    need to be covered by unit and functional tests.
 
-    To get a grasp of the areas where unit tests are needed, you can check
+    To get a grasp of the areas where tests are needed, you can check
     current coverage by running:
 
     $ ./run_tests.sh -c
 
 Development process
 
-    It is expected that any new changes that are proposed for merge come with
-    unit tests for that feature or code area. Ideally any bugs fixes that are
-    submitted also have unit tests to prove that they stay fixed!
-    In addition, before proposing for merge, all of the current unit tests
-    should be passing.
+    It is expected that any new changes that are proposed for merge
+    come with tests for that feature or code area. Ideally any bugs
+    fixes that are submitted also have tests to prove that they stay
+    fixed!  In addition, before proposing for merge, all of the
+    current tests should be passing.
 
