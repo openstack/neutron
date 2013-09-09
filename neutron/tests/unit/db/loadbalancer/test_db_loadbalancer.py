@@ -1285,6 +1285,12 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                    health_mon2['health_monitor']['id']]},
                                  res)
 
+                res = self.plugin.get_pool_health_monitor(
+                    context.get_admin_context(),
+                    health_mon2['health_monitor']['id'], pool['pool']['id'])
+                self.assertEqual(res['tenant_id'],
+                                 health_mon1['health_monitor']['tenant_id'])
+
     def test_driver_call_create_pool_health_monitor(self):
         with mock.patch.object(self.plugin.drivers['lbaas'],
                                'create_pool_health_monitor') as driver_call:

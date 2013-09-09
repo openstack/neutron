@@ -608,11 +608,11 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
     def delete_pool_health_monitor(self, context, id, pool_id):
         with context.session.begin(subtransactions=True):
-            assoc = self.get_pool_health_monitor(context, id, pool_id)
+            assoc = self._get_pool_health_monitor(context, id, pool_id)
             pool = self._get_resource(context, Pool, pool_id)
             pool.monitors.remove(assoc)
 
-    def get_pool_health_monitor(self, context, id, pool_id, fields=None):
+    def _get_pool_health_monitor(self, context, id, pool_id):
         try:
             assoc_qry = context.session.query(PoolMonitorAssociation)
             return assoc_qry.filter_by(monitor_id=id, pool_id=pool_id).one()
@@ -620,10 +620,21 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
             raise loadbalancer.PoolMonitorAssociationNotFound(
                 monitor_id=id, pool_id=pool_id)
 
+    def get_pool_health_monitor(self, context, id, pool_id, fields=None):
+        pool_hm = self._get_pool_health_monitor(context, id, pool_id)
+        # need to add tenant_id for admin_or_owner policy check to pass
+        hm = self.get_health_monitor(context, id)
+        res = {'pool_id': pool_id,
+               'monitor_id': id,
+               'status': pool_hm['status'],
+               'status_description': pool_hm['status_description'],
+               'tenant_id': hm['tenant_id']}
+        return self._fields(res, fields)
+
     def update_pool_health_monitor(self, context, id, pool_id,
                                    status, status_description=None):
         with context.session.begin(subtransactions=True):
-            assoc = self.get_pool_health_monitor(context, id, pool_id)
+            assoc = self._get_pool_health_monitor(context, id, pool_id)
             self.assert_modification_allowed(assoc)
             assoc.status = status
             assoc.status_description = status_description
