@@ -72,34 +72,53 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
             self.assertEqual(opt['opt_value'], val)
 
     def test_create_port_with_extradhcpopts(self):
-        opt_dict = [{'opt_name': 'bootfile-name',
+        opt_list = [{'opt_name': 'bootfile-name',
                      'opt_value': 'pxelinux.0'},
                     {'opt_name': 'server-ip-address',
                      'opt_value': '123.123.123.456'},
                     {'opt_name': 'tftp-server',
                      'opt_value': '123.123.123.123'}]
 
-        params = {edo_ext.EXTRADHCPOPTS: opt_dict,
+        params = {edo_ext.EXTRADHCPOPTS: opt_list,
                   'arg_list': (edo_ext.EXTRADHCPOPTS,)}
 
         with self.port(**params) as port:
-            self._check_opts(opt_dict,
+            self._check_opts(opt_list,
+                             port['port'][edo_ext.EXTRADHCPOPTS])
+
+    def test_create_port_with_none_extradhcpopts(self):
+        new_list = [{'opt_name': 'bootfile-name',
+                     'opt_value': None},
+                    {'opt_name': 'server-ip-address',
+                     'opt_value': '123.123.123.456'},
+                    {'opt_name': 'tftp-server',
+                     'opt_value': '123.123.123.123'}]
+        new_dict = [{'opt_name': 'server-ip-address',
+                     'opt_value': '123.123.123.456'},
+                    {'opt_name': 'tftp-server',
+                     'opt_value': '123.123.123.123'}]
+
+        params = {edo_ext.EXTRADHCPOPTS: new_list,
+                  'arg_list': (edo_ext.EXTRADHCPOPTS,)}
+
+        with self.port(**params) as port:
+            self._check_opts(new_dict,
                              port['port'][edo_ext.EXTRADHCPOPTS])
 
     def test_update_port_with_extradhcpopts_with_same(self):
-        opt_dict = [{'opt_name': 'bootfile-name', 'opt_value': 'pxelinux.0'},
+        opt_list = [{'opt_name': 'bootfile-name', 'opt_value': 'pxelinux.0'},
                     {'opt_name': 'tftp-server',
                      'opt_value': '123.123.123.123'},
                     {'opt_name': 'server-ip-address',
                      'opt_value': '123.123.123.456'}]
         upd_opts = [{'opt_name': 'bootfile-name', 'opt_value': 'changeme.0'}]
-        new_opts = opt_dict[:]
+        new_opts = opt_list[:]
         for i in new_opts:
             if i['opt_name'] == upd_opts[0]['opt_name']:
                 i['opt_value'] = upd_opts[0]['opt_value']
                 break
 
-        params = {edo_ext.EXTRADHCPOPTS: opt_dict,
+        params = {edo_ext.EXTRADHCPOPTS: opt_list,
                   'arg_list': (edo_ext.EXTRADHCPOPTS,)}
 
         with self.port(**params) as port:
@@ -112,19 +131,19 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
                              port['port'][edo_ext.EXTRADHCPOPTS])
 
     def test_update_port_with_extradhcpopts(self):
-        opt_dict = [{'opt_name': 'bootfile-name', 'opt_value': 'pxelinux.0'},
+        opt_list = [{'opt_name': 'bootfile-name', 'opt_value': 'pxelinux.0'},
                     {'opt_name': 'tftp-server',
                      'opt_value': '123.123.123.123'},
                     {'opt_name': 'server-ip-address',
                      'opt_value': '123.123.123.456'}]
         upd_opts = [{'opt_name': 'bootfile-name', 'opt_value': 'changeme.0'}]
-        new_opts = copy.deepcopy(opt_dict)
+        new_opts = copy.deepcopy(opt_list)
         for i in new_opts:
             if i['opt_name'] == upd_opts[0]['opt_name']:
                 i['opt_value'] = upd_opts[0]['opt_value']
                 break
 
-        params = {edo_ext.EXTRADHCPOPTS: opt_dict,
+        params = {edo_ext.EXTRADHCPOPTS: opt_list,
                   'arg_list': (edo_ext.EXTRADHCPOPTS,)}
 
         with self.port(**params) as port:
@@ -136,16 +155,16 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
             self._check_opts(new_opts,
                              port['port'][edo_ext.EXTRADHCPOPTS])
 
-    def test_update_port_with_extradhcpopt1(self):
-        opt_dict = [{'opt_name': 'tftp-server',
+    def test_update_port_with_additional_extradhcpopt(self):
+        opt_list = [{'opt_name': 'tftp-server',
                      'opt_value': '123.123.123.123'},
                     {'opt_name': 'server-ip-address',
                      'opt_value': '123.123.123.456'}]
         upd_opts = [{'opt_name': 'bootfile-name', 'opt_value': 'changeme.0'}]
-        new_opts = copy.deepcopy(opt_dict)
+        new_opts = copy.deepcopy(opt_list)
         new_opts.append(upd_opts[0])
 
-        params = {edo_ext.EXTRADHCPOPTS: opt_dict,
+        params = {edo_ext.EXTRADHCPOPTS: opt_list,
                   'arg_list': (edo_ext.EXTRADHCPOPTS,)}
 
         with self.port(**params) as port:
@@ -157,17 +176,53 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
             self._check_opts(new_opts,
                              port['port'][edo_ext.EXTRADHCPOPTS])
 
+    def test_update_port_with_extradhcpopt_delete(self):
+        opt_list = [{'opt_name': 'bootfile-name', 'opt_value': 'pxelinux.0'},
+                    {'opt_name': 'tftp-server',
+                     'opt_value': '123.123.123.123'},
+                    {'opt_name': 'server-ip-address',
+                     'opt_value': '123.123.123.456'}]
+        upd_opts = [{'opt_name': 'bootfile-name', 'opt_value': None}]
+        new_opts = []
+
+        new_opts = [opt for opt in opt_list
+                    if opt['opt_name'] != 'bootfile-name']
+
+        params = {edo_ext.EXTRADHCPOPTS: opt_list,
+                  'arg_list': (edo_ext.EXTRADHCPOPTS,)}
+
+        with self.port(**params) as port:
+            update_port = {'port': {edo_ext.EXTRADHCPOPTS: upd_opts}}
+
+            req = self.new_update_request('ports', update_port,
+                                          port['port']['id'])
+            port = self.deserialize('json', req.get_response(self.api))
+            self._check_opts(new_opts,
+                             port['port'][edo_ext.EXTRADHCPOPTS])
+
+    def test_update_port_without_extradhcpopt_delete(self):
+        upd_opts = [{'opt_name': 'bootfile-name', 'opt_value': None}]
+
+        with self.port() as port:
+            update_port = {'port': {edo_ext.EXTRADHCPOPTS: upd_opts}}
+
+            req = self.new_update_request('ports', update_port,
+                                          port['port']['id'])
+            port = self.deserialize('json', req.get_response(self.api))
+            edo_attr = port['port'].get(edo_ext.EXTRADHCPOPTS)
+            self.assertEqual(edo_attr, [])
+
     def test_update_port_adding_extradhcpopts(self):
-        opt_dict = [{'opt_name': 'bootfile-name', 'opt_value': 'pxelinux.0'},
+        opt_list = [{'opt_name': 'bootfile-name', 'opt_value': 'pxelinux.0'},
                     {'opt_name': 'tftp-server',
                      'opt_value': '123.123.123.123'},
                     {'opt_name': 'server-ip-address',
                      'opt_value': '123.123.123.456'}]
         with self.port() as port:
-            update_port = {'port': {edo_ext.EXTRADHCPOPTS: opt_dict}}
+            update_port = {'port': {edo_ext.EXTRADHCPOPTS: opt_list}}
 
             req = self.new_update_request('ports', update_port,
                                           port['port']['id'])
             port = self.deserialize('json', req.get_response(self.api))
-            self._check_opts(opt_dict,
+            self._check_opts(opt_list,
                              port['port'][edo_ext.EXTRADHCPOPTS])

@@ -55,7 +55,8 @@ EXTENDED_ATTRIBUTES_2_0 = {
              'type:list_of_dict_or_none': {
                  'id': {'type:uuid': None, 'required': False},
                  'opt_name': {'type:string': None, 'required': True},
-                 'opt_value': {'type:string': None, 'required': True}}}}}}
+                 'opt_value': {'type:string_or_none': None,
+                               'required': True}}}}}}
 
 
 class Extra_dhcp_opt(extensions.ExtensionDescriptor):
