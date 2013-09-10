@@ -19,6 +19,7 @@
 import atexit
 import fcntl
 import os
+import signal
 import sys
 
 from neutron.agent.linux import utils
@@ -123,10 +124,14 @@ class Daemon(object):
 
         # write pidfile
         atexit.register(self.delete_pid)
+        signal.signal(signal.SIGTERM, self.handle_sigterm)
         self.pidfile.write(os.getpid())
 
     def delete_pid(self):
         os.remove(str(self.pidfile))
+
+    def handle_sigterm(self, signum, frame):
+        sys.exit(0)
 
     def start(self):
         """Start the daemon."""
