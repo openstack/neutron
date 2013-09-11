@@ -160,13 +160,16 @@ class TestDaemon(base.BaseTestCase):
         d = daemon.Daemon('pidfile')
         with mock.patch.object(d, '_fork') as fork:
             with mock.patch.object(daemon, 'atexit') as atexit:
-                with mock.patch.object(daemon, 'sys') as sys:
-                    sys.stdin.fileno.return_value = 0
-                    sys.stdout.fileno.return_value = 1
-                    sys.stderr.fileno.return_value = 2
-                    d.daemonize()
-                    atexit.register.assert_called_once_with(d.delete_pid)
+                with mock.patch.object(daemon, 'signal') as signal:
+                    signal.SIGTERM = 15
+                    with mock.patch.object(daemon, 'sys') as sys:
+                        sys.stdin.fileno.return_value = 0
+                        sys.stdout.fileno.return_value = 1
+                        sys.stderr.fileno.return_value = 2
+                        d.daemonize()
 
+                    signal.signal.assert_called_once_with(15, d.handle_sigterm)
+                atexit.register.assert_called_once_with(d.delete_pid)
             fork.assert_has_calls([mock.call(), mock.call()])
 
         self.os.assert_has_calls([
@@ -184,6 +187,12 @@ class TestDaemon(base.BaseTestCase):
         d = daemon.Daemon('pidfile')
         d.delete_pid()
         self.os.remove.assert_called_once_with('pidfile')
+
+    def test_handle_sigterm(self):
+        d = daemon.Daemon('pidfile')
+        with mock.patch.object(daemon, 'sys') as sys:
+            d.handle_sigterm(15, 1234)
+            sys.exit.assert_called_once_with(0)
 
     def test_start(self):
         self.pidfile.return_value.is_running.return_value = False
