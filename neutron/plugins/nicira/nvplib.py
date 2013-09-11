@@ -1105,6 +1105,11 @@ def create_lrouter_nosnat_rule_v2(cluster, _router_id, _match_criteria=None):
                "this version of the NVP platform"))
 
 
+def create_lrouter_nodnat_rule_v2(cluster, _router_id, _match_criteria=None):
+    LOG.info(_("No DNAT rules cannot be applied as they are not available in "
+               "this version of the NVP platform"))
+
+
 def create_lrouter_snat_rule_v2(cluster, router_id,
                                 min_src_ip, max_src_ip, match_criteria=None):
 
@@ -1133,6 +1138,18 @@ def create_lrouter_nosnat_rule_v3(cluster, router_id, order=None,
     nat_match_obj = _create_nat_match_obj(**match_criteria)
     nat_rule_obj = {
         "type": "NoSourceNatRule",
+        "match": nat_match_obj
+    }
+    if order:
+        nat_rule_obj['order'] = order
+    return _create_lrouter_nat_rule(cluster, router_id, nat_rule_obj)
+
+
+def create_lrouter_nodnat_rule_v3(cluster, router_id, order=None,
+                                  match_criteria=None):
+    nat_match_obj = _create_nat_match_obj(**match_criteria)
+    nat_rule_obj = {
+        "type": "NoDestinationNatRule",
         "match": nat_match_obj
     }
     if order:
@@ -1177,6 +1194,11 @@ def create_lrouter_snat_rule(cluster, *args, **kwargs):
 
 @version_dependent
 def create_lrouter_nosnat_rule(cluster, *args, **kwargs):
+    pass
+
+
+@version_dependent
+def create_lrouter_nodnat_rule(cluster, *args, **kwargs):
     pass
 
 
@@ -1267,6 +1289,9 @@ NVPLIB_FUNC_DICT = {
     'create_lrouter_nosnat_rule': {
         2: {DEFAULT: create_lrouter_nosnat_rule_v2, },
         3: {DEFAULT: create_lrouter_nosnat_rule_v3, }, },
+    'create_lrouter_nodnat_rule': {
+        2: {DEFAULT: create_lrouter_nodnat_rule_v2, },
+        3: {DEFAULT: create_lrouter_nodnat_rule_v3, }, },
     'get_default_route_explicit_routing_lrouter': {
         3: {DEFAULT: get_default_route_explicit_routing_lrouter_v32,
             2: get_default_route_explicit_routing_lrouter_v32, }, },
