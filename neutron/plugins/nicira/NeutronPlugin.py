@@ -1205,6 +1205,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         return port_data
 
     def update_port(self, context, id, port):
+        changed_fixed_ips = 'fixed_ips' in port['port']
         delete_security_groups = self._check_update_deletes_security_groups(
             port)
         has_security_groups = self._check_update_has_security_groups(port)
@@ -1246,6 +1247,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 self._delete_allowed_address_pairs(context, id)
                 self._process_create_allowed_address_pairs(
                     context, ret_port, ret_port[addr_pair.ADDRESS_PAIRS])
+            elif changed_fixed_ips:
+                self._check_fixed_ips_and_address_pairs_no_overlap(context,
+                                                                   ret_port)
             # checks if security groups were updated adding/modifying
             # security groups, port security is set and port has ip
             if not (has_ip and ret_port[psec.PORTSECURITY]):

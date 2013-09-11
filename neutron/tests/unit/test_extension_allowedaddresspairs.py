@@ -64,6 +64,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
         return port['port']
 
     def update_port(self, context, id, port):
+        changed_fixed_ips = 'fixed_ips' in port['port']
         delete_addr_pairs = self._check_update_deletes_allowed_address_pairs(
             port)
         has_addr_pairs = self._check_update_has_allowed_address_pairs(port)
@@ -81,6 +82,9 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
                 self._process_create_allowed_address_pairs(
                     context, ret_port,
                     ret_port[addr_pair.ADDRESS_PAIRS])
+            elif changed_fixed_ips:
+                self._check_fixed_ips_and_address_pairs_no_overlap(context,
+                                                                   ret_port)
 
         return ret_port
 
@@ -195,6 +199,34 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
             self.assertEqual(port['port'][addr_pair.ADDRESS_PAIRS],
                              address_pairs)
             self._delete('ports', port['port']['id'])
+
+    def test_update_fixed_ip_to_address_pair_ip_fail(self):
+        with self.network() as net:
+            with self.subnet(network=net):
+                address_pairs = [{'ip_address': '10.0.0.65'}]
+                res = self._create_port(self.fmt, net['network']['id'],
+                                        arg_list=(addr_pair.ADDRESS_PAIRS,),
+                                        allowed_address_pairs=address_pairs)
+                port = self.deserialize(self.fmt, res)['port']
+                data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.65'}]}}
+                req = self.new_update_request('ports', data, port['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, 400)
+                self._delete('ports', port['id'])
+
+    def test_update_fixed_ip_to_address_pair_with_mac_fail(self):
+        with self.network() as net:
+            with self.subnet(network=net):
+                res = self._create_port(self.fmt, net['network']['id'])
+                port = self.deserialize(self.fmt, res)['port']
+                address_pairs = [
+                    {'mac_address': port['mac_address'],
+                     'ip_address': port['fixed_ips'][0]['ip_address']}]
+                data = {'port': {addr_pair.ADDRESS_PAIRS: address_pairs}}
+                req = self.new_update_request('ports', data, port['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, 400)
+                self._delete('ports', port['id'])
 
     def test_create_address_gets_port_mac(self):
         with self.network() as net:
