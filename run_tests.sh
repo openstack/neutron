@@ -102,11 +102,6 @@ if [ $no_site_packages -eq 1 ]; then
   installvenvopts="--no-site-packages"
 fi
 
-function init_testr {
-  if [ ! -d .testrepository ]; then
-    ${wrapper} testr init
-  fi
-}
 
 function run_tests {
   # Cleanup *pyc
@@ -213,7 +208,6 @@ if [ $recreate_db -eq 1 ]; then
     rm -f tests.sqlite
 fi
 
-init_testr
 run_tests
 
 # NOTE(sirp): we only want to run pep8 when we're running the full-test suite,
