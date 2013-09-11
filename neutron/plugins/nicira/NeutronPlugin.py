@@ -927,7 +927,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 transport_entry['transport_type'] = transport_type
             transport_entry['zone_uuid'] = (
                 transport_zone[pnet.PHYSICAL_NETWORK] or
-                cluster.deafult_tz_uuid)
+                cluster.default_tz_uuid)
             nvp_transport_zones_config.append(transport_entry)
         return nvp_transport_zones_config
 

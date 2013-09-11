@@ -135,6 +135,33 @@ class TestNiciraV2HTTPResponse(test_plugin.TestV2HTTPResponse,
     pass
 
 
+class TestNiciraProvidernet(NiciraPluginV2TestCase):
+
+    def test_create_provider_network_default_physical_net(self):
+        data = {'network': {'name': 'net1',
+                            'admin_state_up': True,
+                            'tenant_id': 'admin',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.SEGMENTATION_ID: 411}}
+        network_req = self.new_create_request('networks', data, self.fmt)
+        net = self.deserialize(self.fmt, network_req.get_response(self.api))
+        self.assertEqual(net['network'][pnet.NETWORK_TYPE], 'vlan')
+        self.assertEqual(net['network'][pnet.SEGMENTATION_ID], 411)
+
+    def test_create_provider_network(self):
+        data = {'network': {'name': 'net1',
+                            'admin_state_up': True,
+                            'tenant_id': 'admin',
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.SEGMENTATION_ID: 411,
+                            pnet.PHYSICAL_NETWORK: 'physnet1'}}
+        network_req = self.new_create_request('networks', data, self.fmt)
+        net = self.deserialize(self.fmt, network_req.get_response(self.api))
+        self.assertEqual(net['network'][pnet.NETWORK_TYPE], 'vlan')
+        self.assertEqual(net['network'][pnet.SEGMENTATION_ID], 411)
+        self.assertEqual(net['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
+
+
 class TestNiciraPortsV2(NiciraPluginV2TestCase,
                         test_plugin.TestPortsV2,
                         test_bindings.PortBindingsTestCase):
