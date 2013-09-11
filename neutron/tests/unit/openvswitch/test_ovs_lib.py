@@ -91,6 +91,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         ofport = "99"
         vid = 4000
         lsw_id = 18
+        cidr = '192.168.1.0/24'
         utils.execute(["ovs-ofctl", "add-flow", self.BR_NAME,
                        "hard_timeout=0,idle_timeout=0,"
                        "priority=2,dl_src=ca:fe:de:ad:be:ef"
@@ -119,6 +120,10 @@ class OVS_Lib_Test(base.BaseTestCase):
                        "priority=3,tun_id=%s,actions="
                        "mod_vlan_vid:%s,output:%s"
                        % (lsw_id, vid, ofport)], root_helper=self.root_helper)
+        utils.execute(["ovs-ofctl", "add-flow", self.BR_NAME,
+                       "hard_timeout=0,idle_timeout=0,"
+                       "priority=4,arp,nw_src=%s,actions=drop" % cidr],
+                      root_helper=self.root_helper)
         self.mox.ReplayAll()
 
         self.br.add_flow(priority=2, dl_src="ca:fe:de:ad:be:ef",
@@ -133,6 +138,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.add_flow(priority=3, tun_id=lsw_id,
                          actions="mod_vlan_vid:%s,output:%s" %
                          (vid, ofport))
+        self.br.add_flow(priority=4, proto='arp', nw_src=cidr, actions='drop')
         self.mox.VerifyAll()
 
     def test_get_port_ofport(self):
