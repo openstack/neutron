@@ -506,6 +506,7 @@ class EdgeApplianceDriver(object):
         LOG.debug(_("VCNS: start updating nat rules: %s"), rules)
 
         nat = {
+            'featureType': 'nat',
             'rules': {
                 'natRulesDtos': rules
             }
@@ -565,20 +566,18 @@ class EdgeApplianceDriver(object):
         static_routes = []
         for route in routes:
             static_routes.append({
-                "route": {
-                    "description": "",
-                    "vnic": vcns_const.INTERNAL_VNIC_INDEX,
-                    "network": route['cidr'],
-                    "nextHop": route['nexthop']
-                }
+                "description": "",
+                "vnic": vcns_const.INTERNAL_VNIC_INDEX,
+                "network": route['cidr'],
+                "nextHop": route['nexthop']
             })
         request = {
-            "staticRouting": {
-                "staticRoutes": static_routes,
+            "staticRoutes": {
+                "staticRoutes": static_routes
             }
         }
         if gateway:
-            request["staticRouting"]["defaultRoute"] = {
+            request["defaultRoute"] = {
                 "description": "default-gateway",
                 "gatewayAddress": gateway,
                 "vnic": vcns_const.EXTERNAL_VNIC_INDEX

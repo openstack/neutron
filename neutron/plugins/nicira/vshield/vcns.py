@@ -37,9 +37,6 @@ class Vcns(object):
         self.password = password
         self.jsonapi_client = VcnsApiClient.VcnsApiHelper(address, user,
                                                           password, 'json')
-        # TODO(fank): remove this after json syntax is fixed on VSM
-        self.xmlapi_client = VcnsApiClient.VcnsApiHelper(address, user,
-                                                         password, 'xml')
 
     def do_request(self, method, uri, params=None, format='json', **kwargs):
         LOG.debug(_("VcnsApiHelper('%(method)s', '%(uri)s', '%(body)s')"), {
@@ -100,7 +97,7 @@ class Vcns(object):
 
     def update_routes(self, edge_id, routes):
         uri = "%s/%s/routing/config/static" % (URI_PREFIX, edge_id)
-        return self.do_request(HTTP_PUT, uri, routes, format='xml')
+        return self.do_request(HTTP_PUT, uri, routes)
 
     def create_lswitch(self, lsconfig):
         uri = "/api/ws.v1/lswitch"

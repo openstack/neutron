@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2013 Nicira Networks, Inc.  All rights reserved.
+# Copyright 2013 VMware, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,18 +14,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: Salvatore Orlando, Nicira, Inc
-#
 
-from neutron.plugins.nicira.dbexts import nsxrouter
-from neutron.plugins.nicira.extensions import distributedrouter as dist_rtr
+from neutron.plugins.nicira.dbexts import distributedrouter as dist_rtr
+from neutron.plugins.nicira.extensions import servicerouter
 
 
-class DistributedRouter_mixin(nsxrouter.NsxRouterMixin):
-    """Mixin class to enable distributed router support."""
+class ServiceRouter_mixin(dist_rtr.DistributedRouter_mixin):
+    """Mixin class to enable service router support."""
 
     nsx_attributes = (
-        nsxrouter.NsxRouterMixin.nsx_attributes + [{
-            'name': dist_rtr.DISTRIBUTED,
+        dist_rtr.DistributedRouter_mixin.nsx_attributes + [{
+            'name': servicerouter.SERVICE_ROUTER,
             'default': False
         }])
