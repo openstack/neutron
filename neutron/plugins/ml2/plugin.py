@@ -25,10 +25,12 @@ from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
+from neutron.db import extradhcpopt_db
 from neutron.db import models_v2
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
+from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
@@ -58,7 +60,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 external_net_db.External_net_db_mixin,
                 sg_db_rpc.SecurityGroupServerRpcMixin,
                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                addr_pair_db.AllowedAddressPairsMixin):
+                addr_pair_db.AllowedAddressPairsMixin,
+                extradhcpopt_db.ExtraDhcpOptMixin):
 
     """Implement the Neutron L2 abstractions using modules.
 
@@ -80,7 +83,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     _supported_extension_aliases = ["provider", "external-net", "binding",
                                     "quotas", "security-group", "agent",
                                     "dhcp_agent_scheduler",
-                                    "multi-provider", "allowed-address-pairs"]
+                                    "multi-provider", "allowed-address-pairs",
+                                    "extra_dhcp_opt"]
 
     @property
     def supported_extension_aliases(self):
@@ -441,6 +445,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
+            dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
             result = super(Ml2Plugin, self).create_port(context, port)
             self._process_port_create_security_group(context, result, sgids)
             network = self.get_network(context, result['network_id'])
@@ -451,6 +456,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self._process_create_allowed_address_pairs(
                     context, result,
                     attrs.get(addr_pair.ADDRESS_PAIRS)))
+            self._process_port_create_extra_dhcp_opts(context, result,
+                                                      dhcp_opts)
             self.mechanism_manager.create_port_precommit(mech_context)
 
         try:
@@ -481,6 +488,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             need_port_update_notify |= self.update_security_group_on_port(
                 context, id, port, original_port, updated_port)
             network = self.get_network(context, original_port['network_id'])
+            need_port_update_notify |= self._update_extra_dhcp_opts_on_port(
+                context, id, port, updated_port)
             mech_context = driver_context.PortContext(
                 self, context, updated_port, network,
                 original_port=original_port)

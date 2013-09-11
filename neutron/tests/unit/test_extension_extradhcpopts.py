@@ -55,8 +55,9 @@ class ExtraDhcpOptTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 
 class ExtraDhcpOptDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
-    def setUp(self, plugin=None):
-        super(ExtraDhcpOptDBTestCase, self).setUp(plugin=DB_PLUGIN_KLASS)
+
+    def setUp(self, plugin=DB_PLUGIN_KLASS):
+        super(ExtraDhcpOptDBTestCase, self).setUp(plugin=plugin)
 
 
 class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):

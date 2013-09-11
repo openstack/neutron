@@ -19,6 +19,7 @@ from neutron.extensions import providernet as pnet
 from neutron.plugins.ml2 import config
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import test_extension_extradhcpopts as test_dhcpopts
 from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
@@ -194,3 +195,10 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)
         self.assertEqual(res.status_int, 400)
+
+
+class DHCPOptsTestCase(test_dhcpopts.TestExtraDhcpOpt):
+
+    def setUp(self, plugin=None):
+        super(test_dhcpopts.ExtraDhcpOptDBTestCase, self).setUp(
+            plugin=PLUGIN_NAME)
