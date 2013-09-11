@@ -583,6 +583,14 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
                                     self._make_vpnservice_dict,
                                     filters=filters, fields=fields)
 
+    def check_router_in_use(self, context, router_id):
+        vpnservices = self.get_vpnservices(
+            context, filters={'router_id': [router_id]})
+        if vpnservices:
+            raise vpnaas.RouterInUseByVPNService(
+                router_id=router_id,
+                vpnservice_id=vpnservices[0]['id'])
+
 
 class VPNPluginRpcDbMixin():
     def _get_agent_hosting_vpn_services(self, context, host):
