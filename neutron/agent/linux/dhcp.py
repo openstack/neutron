@@ -288,14 +288,9 @@ class Dnsmasq(DhcpLocalProcess):
 
         confs_dir = os.path.abspath(os.path.normpath(conf.dhcp_confs))
 
-        class FakeNetwork:
-            def __init__(self, net_id):
-                self.id = net_id
-
         return [
             c for c in os.listdir(confs_dir)
-            if (uuidutils.is_uuid_like(c) and
-                cls(conf, FakeNetwork(c), root_helper).active)
+            if uuidutils.is_uuid_like(c)
         ]
 
     def spawn_process(self):
