@@ -35,3 +35,8 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual(0,
                          len(cfg.CONF.LINUX_BRIDGE.
                              physical_interface_mappings))
+        self.assertEqual(False, cfg.CONF.VXLAN.enable_vxlan)
+        self.assertEqual(config.DEFAULT_VXLAN_GROUP,
+                         cfg.CONF.VXLAN.vxlan_group)
+        self.assertEqual(0, len(cfg.CONF.VXLAN.local_ip))
+        self.assertEqual(False, cfg.CONF.VXLAN.l2_population)

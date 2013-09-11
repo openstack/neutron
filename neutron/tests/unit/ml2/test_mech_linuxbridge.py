@@ -25,10 +25,14 @@ class LinuxbridgeMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     AGENT_TYPE = constants.AGENT_TYPE_LINUXBRIDGE
 
     GOOD_MAPPINGS = {'fake_physical_network': 'fake_interface'}
-    GOOD_CONFIGS = {'interface_mappings': GOOD_MAPPINGS}
+    GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
+    GOOD_CONFIGS = {'interface_mappings': GOOD_MAPPINGS,
+                    'tunnel_types': GOOD_TUNNEL_TYPES}
 
     BAD_MAPPINGS = {'wrong_physical_network': 'wrong_interface'}
-    BAD_CONFIGS = {'interface_mappings': BAD_MAPPINGS}
+    BAD_TUNNEL_TYPES = ['bad_tunnel_type']
+    BAD_CONFIGS = {'interface_mappings': BAD_MAPPINGS,
+                   'tunnel_types': BAD_TUNNEL_TYPES}
 
     AGENTS = [{'alive': True,
                'configurations': GOOD_CONFIGS}]
@@ -62,4 +66,9 @@ class LinuxbridgeMechanismFlatTestCase(LinuxbridgeMechanismBaseTestCase,
 
 class LinuxbridgeMechanismVlanTestCase(LinuxbridgeMechanismBaseTestCase,
                                        base.AgentMechanismVlanTestCase):
+    pass
+
+
+class LinuxbridgeMechanismGreTestCase(LinuxbridgeMechanismBaseTestCase,
+                                      base.AgentMechanismGreTestCase):
     pass

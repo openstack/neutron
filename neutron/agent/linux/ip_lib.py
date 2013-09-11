@@ -146,6 +146,27 @@ class IPWrapper(SubProcessBase):
         if self.namespace:
             device.link.set_netns(self.namespace)
 
+    def add_vxlan(self, name, vni, group=None, dev=None, ttl=None, tos=None,
+                  local=None, port=None):
+        cmd = ['add', name, 'type', 'vxlan', 'id', vni, 'proxy']
+        if group:
+                cmd.extend(['group', group])
+        if dev:
+                cmd.extend(['dev', dev])
+        if ttl:
+                cmd.extend(['ttl', ttl])
+        if tos:
+                cmd.extend(['tos', tos])
+        if local:
+                cmd.extend(['local', local])
+        # tuple: min,max
+        if port and len(port) == 2:
+                cmd.extend(['port', port[0], port[1]])
+        elif port:
+            raise exceptions.NetworkVxlanPortRangeError(vxlan_range=port)
+        self._as_root('', 'link', cmd)
+        return (IPDevice(name, self.root_helper, self.namespace))
+
     @classmethod
     def get_namespaces(cls, root_helper):
         output = cls._execute('', 'netns', ('list',), root_helper=root_helper)
@@ -449,3 +470,10 @@ def device_exists(device_name, root_helper=None, namespace=None):
     except RuntimeError:
         return False
     return bool(address)
+
+
+def iproute_arg_supported(command, arg, root_helper=None):
+    command += ['help']
+    stdout, stderr = utils.execute(command, root_helper=root_helper,
+                                   check_exit_code=False, return_stderr=True)
+    return any(arg in line for line in stderr.split('\n'))
