@@ -44,6 +44,7 @@ DHCP_RESPONSE_PORT = 68
 
 MIN_VLAN_TAG = 1
 MAX_VLAN_TAG = 4094
+FLOODING_ENTRY = ['00:00:00:00:00:00', '0.0.0.0']
 
 EXT_NS_COMP = '_backward_comp_e_ns'
 EXT_NS = '_extension_ns'

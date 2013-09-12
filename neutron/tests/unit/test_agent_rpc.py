@@ -95,3 +95,19 @@ class AgentRPCMethods(base.BaseTestCase):
         with mock.patch(call_to_patch) as create_connection:
             rpc.create_consumers(dispatcher, 'foo', [('topic', 'op')])
             create_connection.assert_has_calls(expected)
+
+    def test_create_consumers_with_node_name(self):
+        dispatcher = mock.Mock()
+        expected = [
+            mock.call(new=True),
+            mock.call().create_consumer('foo-topic-op', dispatcher,
+                                        fanout=True),
+            mock.call().create_consumer('foo-topic-op.node1', dispatcher,
+                                        fanout=False),
+            mock.call().consume_in_thread()
+        ]
+
+        call_to_patch = 'neutron.openstack.common.rpc.create_connection'
+        with mock.patch(call_to_patch) as create_connection:
+            rpc.create_consumers(dispatcher, 'foo', [('topic', 'op', 'node1')])
+            create_connection.assert_has_calls(expected)

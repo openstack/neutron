@@ -184,8 +184,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                               return_value=details),
             mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
                               return_value=port),
+            mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),
             mock.patch.object(self.agent, func_name)
-        ) as (get_dev_fn, get_vif_func, func):
+        ) as (get_dev_fn, get_vif_func, upd_dev_up, func):
             self.assertFalse(self.agent.treat_devices_added([{}]))
         return func.called
 

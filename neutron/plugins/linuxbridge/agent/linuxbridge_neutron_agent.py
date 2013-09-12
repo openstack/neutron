@@ -601,6 +601,11 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                                               details['physical_network'],
                                               segmentation_id,
                                               details['port_id'])
+
+                    # update plugin about port status
+                    self.plugin_rpc.update_device_up(self.context,
+                                                     device,
+                                                     self.agent_id)
                 else:
                     self.remove_port_binding(details['network_id'],
                                              details['port_id'])

@@ -21,6 +21,7 @@ from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
+from neutron import manager
 from neutron.openstack.common import log
 from neutron.openstack.common.rpc import proxy
 from neutron.plugins.ml2 import db
@@ -128,7 +129,7 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                              'vif_type': binding.vif_type})
                 return {'device': device}
 
-            new_status = (q_const.PORT_STATUS_ACTIVE if port.admin_state_up
+            new_status = (q_const.PORT_STATUS_BUILD if port.admin_state_up
                           else q_const.PORT_STATUS_DOWN)
             if port.status != new_status:
                 port.status = new_status
@@ -157,19 +158,12 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                   {'device': device, 'agent_id': agent_id})
         port_id = self._device_to_port_id(device)
 
-        session = db_api.get_session()
-        with session.begin(subtransactions=True):
-            port = db.get_port(session, port_id)
-            if not port:
-                LOG.warning(_("Device %(device)s updated down by agent "
-                              "%(agent_id)s not found in database"),
-                            {'device': device, 'agent_id': agent_id})
-                return {'device': device,
-                        'exists': False}
-            if port.status != q_const.PORT_STATUS_DOWN:
-                port.status = q_const.PORT_STATUS_DOWN
-            return {'device': device,
-                    'exists': True}
+        plugin = manager.NeutronManager.get_plugin()
+        port_exists = plugin.update_port_status(rpc_context, port_id,
+                                                q_const.PORT_STATUS_DOWN)
+
+        return {'device': device,
+                'exists': port_exists}
 
     def update_device_up(self, rpc_context, **kwargs):
         """Device is up on agent."""
@@ -179,15 +173,9 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                   {'device': device, 'agent_id': agent_id})
         port_id = self._device_to_port_id(device)
 
-        session = db_api.get_session()
-        with session.begin(subtransactions=True):
-            port = db.get_port(session, port_id)
-            if not port:
-                LOG.warning(_("Device %(device)s updated up by agent "
-                              "%(agent_id)s not found in database"),
-                            {'device': device, 'agent_id': agent_id})
-            if port.status != q_const.PORT_STATUS_ACTIVE:
-                port.status = q_const.PORT_STATUS_ACTIVE
+        plugin = manager.NeutronManager.get_plugin()
+        plugin.update_port_status(rpc_context, port_id,
+                                  q_const.PORT_STATUS_ACTIVE)
 
 
 class AgentNotifierApi(proxy.RpcProxy,
