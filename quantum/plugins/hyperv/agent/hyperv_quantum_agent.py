@@ -160,9 +160,10 @@ class HyperVQuantumAgent(object):
             #or create it if not existing
             pass
         else:
-            raise utils.HyperVException(_("Cannot provision unknown network "
-                                          "type %s for network %s"),
-                                        network_type, net_uuid)
+            raise utils.HyperVException(
+                msg=(_("Cannot provision unknown network type %(network_type)s"
+                       " for network %(net_uuid)s") %
+                     dict(network_type=network_type, net_uuid=net_uuid)))
 
         map = {
             'network_type': network_type,
