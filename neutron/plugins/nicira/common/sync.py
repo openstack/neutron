@@ -457,24 +457,22 @@ class NvpSynchronizer():
             # API. In this case the request should be split in multiple
             # requests. This is not ideal, and therefore a log warning will
             # be emitted.
-            requests = range(0, page_size / (nvplib.MAX_PAGE_SIZE + 1) + 1)
-            if len(requests) > 1:
+            num_requests = page_size / (nvplib.MAX_PAGE_SIZE + 1) + 1
+            if num_requests > 1:
                 LOG.warn(_("Requested page size is %(cur_chunk_size)d."
                            "It might be necessary to do %(num_requests)d "
                            "round-trips to NVP for fetching data. Please "
                            "tune sync parameters to ensure chunk size "
                            "is less than %(max_page_size)d"),
                          {'cur_chunk_size': page_size,
-                          'num_requests': len(requests),
+                          'num_requests': num_requests,
                           'max_page_size': nvplib.MAX_PAGE_SIZE})
-            results = []
-            actual_size = 0
-            for _req in requests:
-                req_results, cursor, req_size = nvplib.get_single_query_page(
-                    uri, self._cluster, cursor,
-                    min(page_size, nvplib.MAX_PAGE_SIZE))
-                results.extend(req_results)
-                actual_size = actual_size + req_size
+            # Only the first request might return the total size,
+            # subsequent requests will definetely not
+            results, cursor, total_size = nvplib.get_single_query_page(
+                uri, self._cluster, cursor,
+                min(page_size, nvplib.MAX_PAGE_SIZE))
+            for _req in range(0, num_requests - 1):
                 # If no cursor is returned break the cycle as there is no
                 # actual need to perform multiple requests (all fetched)
                 # This happens when the overall size of resources exceeds
@@ -482,9 +480,13 @@ class NvpSynchronizer():
                 # resource type is below this threshold
                 if not cursor:
                     break
+                req_results, cursor = nvplib.get_single_query_page(
+                    uri, self._cluster, cursor,
+                    min(page_size, nvplib.MAX_PAGE_SIZE))[:2]
+                results.extend(req_results)
             # reset cursor before returning if we queried just to
             # know the number of entities
-            return results, cursor if page_size else 'start', actual_size
+            return results, cursor if page_size else 'start', total_size
         return [], cursor, None
 
     def _fetch_nvp_data_chunk(self, sp):
