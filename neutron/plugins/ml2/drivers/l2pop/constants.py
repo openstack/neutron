@@ -17,4 +17,6 @@
 # @author: Francois Eleouet, Orange
 # @author: Mathieu Rohon, Orange
 
-SUPPORTED_AGENT_TYPES = []
+from neutron.common import constants
+
+SUPPORTED_AGENT_TYPES = [constants.AGENT_TYPE_OVS]

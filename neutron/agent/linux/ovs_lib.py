@@ -49,6 +49,8 @@ class OVSBridge:
         self.br_name = br_name
         self.root_helper = root_helper
         self.re_id = self.re_compile_id()
+        self.defer_apply_flows = False
+        self.deferred_flows = {'add': '', 'mod': '', 'del': ''}
 
     def re_compile_id(self):
         external = 'external_ids\s*'
@@ -92,10 +94,11 @@ class OVSBridge:
         args = ["clear", table_name, record, column]
         self.run_vsctl(args)
 
-    def run_ofctl(self, cmd, args):
+    def run_ofctl(self, cmd, args, process_input=None):
         full_args = ["ovs-ofctl", cmd, self.br_name] + args
         try:
-            return utils.execute(full_args, root_helper=self.root_helper)
+            return utils.execute(full_args, root_helper=self.root_helper,
+                                 process_input=process_input)
         except Exception as e:
             LOG.error(_("Unable to execute %(cmd)s. Exception: %(exception)s"),
                       {'cmd': full_args, 'exception': e})
@@ -161,11 +164,17 @@ class OVSBridge:
 
     def add_flow(self, **kwargs):
         flow_str = self.add_or_mod_flow_str(**kwargs)
-        self.run_ofctl("add-flow", [flow_str])
+        if self.defer_apply_flows:
+            self.deferred_flows['add'] += flow_str + '\n'
+        else:
+            self.run_ofctl("add-flow", [flow_str])
 
     def mod_flow(self, **kwargs):
         flow_str = self.add_or_mod_flow_str(**kwargs)
-        self.run_ofctl("mod-flows", [flow_str])
+        if self.defer_apply_flows:
+            self.deferred_flows['mod'] += flow_str + '\n'
+        else:
+            self.run_ofctl("mod-flows", [flow_str])
 
     def delete_flows(self, **kwargs):
         kwargs['delete'] = True
@@ -173,12 +182,32 @@ class OVSBridge:
         if "actions" in kwargs:
             flow_expr_arr.append("actions=%s" % (kwargs["actions"]))
         flow_str = ",".join(flow_expr_arr)
-        self.run_ofctl("del-flows", [flow_str])
+        if self.defer_apply_flows:
+            self.deferred_flows['del'] += flow_str + '\n'
+        else:
+            self.run_ofctl("del-flows", [flow_str])
+
+    def defer_apply_on(self):
+        LOG.debug(_('defer_apply_on'))
+        self.defer_apply_flows = True
+
+    def defer_apply_off(self):
+        LOG.debug(_('defer_apply_off'))
+        for action, flows in self.deferred_flows.items():
+            if flows:
+                LOG.debug(_('Applying following deferred flows '
+                            'to bridge %s'), self.br_name)
+                for line in flows.splitlines():
+                    LOG.debug(_('%(action)s: %(flow)s'),
+                              {'action': action, 'flow': line})
+                self.run_ofctl('%s-flows' % action, ['-'], flows)
+        self.defer_apply_flows = False
+        self.deferred_flows = {'add': '', 'mod': '', 'del': ''}
 
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=constants.TYPE_GRE,
                         vxlan_udp_port=constants.VXLAN_UDP_PORT):
-        self.run_vsctl(["add-port", self.br_name, port_name])
+        self.run_vsctl(["--may-exist", "add-port", self.br_name, port_name])
         self.set_db_attribute("Interface", port_name, "type", tunnel_type)
         if tunnel_type == constants.TYPE_VXLAN:
             # Only set the VXLAN UDP port if it's not the default
