@@ -71,7 +71,7 @@ class TestLinuxBridgePortBindingNoSG(TestLinuxBridgePortBinding):
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
 
-class TestOpenvswitchPortBindingHost(
+class TestLinuxBridgePortBindingHost(
     LinuxBridgePluginV2TestCase,
     test_bindings.PortBindingsHostTestCaseMixin):
     pass
