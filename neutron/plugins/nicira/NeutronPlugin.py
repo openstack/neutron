@@ -622,11 +622,13 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         ext_network = self.get_network(context, port_data['network_id'])
         if ext_network.get(pnet.NETWORK_TYPE) == NetworkTypes.L3_EXT:
             # Update attachment
+            physical_network = (ext_network[pnet.PHYSICAL_NETWORK] or
+                                self.cluster.default_l3_gw_service_uuid)
             self._update_router_port_attachment(
                 self.cluster, context, router_id, port_data,
                 lr_port['uuid'],
                 "L3GatewayAttachment",
-                ext_network[pnet.PHYSICAL_NETWORK],
+                physical_network,
                 ext_network[pnet.SEGMENTATION_ID])
 
         LOG.debug(_("_nvp_create_ext_gw_port completed on external network "
