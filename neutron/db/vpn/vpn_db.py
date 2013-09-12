@@ -538,9 +538,28 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
                'status': vpnservice['status']}
         return self._fields(res, fields)
 
+    def _check_router(self, context, router_id):
+        l3_plugin = manager.NeutronManager.get_service_plugins().get(
+            constants.L3_ROUTER_NAT)
+        l3_plugin.get_router(context, router_id)
+
+    def _check_subnet_id(self, context, router_id, subnet_id):
+        core_plugin = manager.NeutronManager.get_plugin()
+        ports = core_plugin.get_ports(
+            context,
+            filters={
+                'fixed_ips': {'subnet_id': [subnet_id]},
+                'device_id': [router_id]})
+        if not ports:
+            raise vpnaas.SubnetIsNotConnectedToRouter(
+                subnet_id=subnet_id,
+                router_id=router_id)
+
     def create_vpnservice(self, context, vpnservice):
         vpns = vpnservice['vpnservice']
         tenant_id = self._get_tenant_id_for_create(context, vpns)
+        self._check_router(context, vpns['router_id'])
+        self._check_subnet_id(context, vpns['router_id'], vpns['subnet_id'])
         with context.session.begin(subtransactions=True):
             vpnservice_db = VPNService(id=uuidutils.generate_uuid(),
                                        tenant_id=tenant_id,
