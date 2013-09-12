@@ -74,7 +74,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             plugin_obj = conf.CISCO_PLUGINS[key]
             if plugin_obj is not None:
                 self._plugins[key] = importutils.import_object(plugin_obj)
-                LOG.debug(_("Loaded device plugin %s\n"),
+                LOG.debug(_("Loaded device plugin %s"),
                           conf.CISCO_PLUGINS[key])
 
         if ((const.VSWITCH_PLUGIN in self._plugins) and
@@ -175,20 +175,6 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         if not binding_seg_id:
             raise cexc.NetworkSegmentIDNotFound(net_id=network_id)
         return binding_seg_id.segmentation_id
-
-    def _get_all_segmentation_ids(self):
-        vlan_ids = cdb.get_ovs_vlans()
-        vlanids = ''
-        for v_id in vlan_ids:
-            if int(v_id) > 0:
-                vlanids = str(v_id) + ',' + vlanids
-        return vlanids.strip(',')
-
-    def _validate_vlan_id(self, vlan_id):
-        if vlan_id and int(vlan_id) > 1:
-            return True
-        else:
-            return False
 
     def _get_instance_host(self, tenant_id, instance_id):
         keystone_conf = cfg.CONF.keystone_authtoken
