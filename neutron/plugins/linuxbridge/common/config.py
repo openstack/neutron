@@ -23,6 +23,7 @@ from neutron.agent.common import config
 
 DEFAULT_VLAN_RANGES = []
 DEFAULT_INTERFACE_MAPPINGS = []
+DEFAULT_VXLAN_GROUP = '224.0.0.1'
 
 
 vlan_opts = [
@@ -33,6 +34,25 @@ vlan_opts = [
                 default=DEFAULT_VLAN_RANGES,
                 help=_("List of <physical_network>:<vlan_min>:<vlan_max> "
                        "or <physical_network>")),
+]
+
+vxlan_opts = [
+    cfg.BoolOpt('enable_vxlan', default=False,
+                help=_("Enable VXLAN on the agent. Can be enabled when "
+                       "agent is managed by ml2 plugin using linuxbridge "
+                       "mechanism driver")),
+    cfg.IntOpt('ttl',
+               help=_("TTL for vxlan interface protocol packets.")),
+    cfg.IntOpt('tos',
+               help=_("TOS for vxlan interface protocol packets.")),
+    cfg.StrOpt('vxlan_group', default=DEFAULT_VXLAN_GROUP,
+               help=_("Multicast group for vxlan interface.")),
+    cfg.StrOpt('local_ip', default='',
+               help=_("Local IP address of the VXLAN endpoints.")),
+    cfg.BoolOpt('l2_population', default=False,
+                help=_("Extension to use alongside ml2 plugin's l2population "
+                       "mechanism driver. It enables the plugin to populate "
+                       "VXLAN forwarding table.")),
 ]
 
 bridge_opts = [
@@ -52,6 +72,7 @@ agent_opts = [
 
 
 cfg.CONF.register_opts(vlan_opts, "VLANS")
+cfg.CONF.register_opts(vxlan_opts, "VXLAN")
 cfg.CONF.register_opts(bridge_opts, "LINUX_BRIDGE")
 cfg.CONF.register_opts(agent_opts, "AGENT")
 config.register_agent_state_opts_helper(cfg.CONF)

@@ -40,11 +40,16 @@ class LinuxbridgeMechanismDriver(mech_agent.AgentMechanismDriverBase):
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('interface_mappings', {})
+        tunnel_types = agent['configurations'].get('tunnel_types', [])
         LOG.debug(_("Checking segment: %(segment)s "
-                    "for mappings: %(mappings)s"),
-                  {'segment': segment, 'mappings': mappings})
+                    "for mappings: %(mappings)s "
+                    "with tunnel_types: %(tunnel_types)s"),
+                  {'segment': segment, 'mappings': mappings,
+                   'tunnel_types': tunnel_types})
         network_type = segment[api.NETWORK_TYPE]
         if network_type == 'local':
+            return True
+        elif network_type in tunnel_types:
             return True
         elif network_type in ['flat', 'vlan']:
             return segment[api.PHYSICAL_NETWORK] in mappings

@@ -293,3 +293,7 @@ class NetworkVlanRangeError(NeutronException):
         if isinstance(kwargs['vlan_range'], tuple):
             kwargs['vlan_range'] = "%d:%d" % kwargs['vlan_range']
         super(NetworkVlanRangeError, self).__init__(**kwargs)
+
+
+class NetworkVxlanPortRangeError(object):
+    message = _("Invalid network VXLAN port range: '%(vxlan_range)s'")

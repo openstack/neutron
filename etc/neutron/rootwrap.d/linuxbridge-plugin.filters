@@ -12,6 +12,7 @@
 # unclear whether both variants are necessary, but I'm transliterating
 # from the old mechanism
 brctl: CommandFilter, brctl, root
+bridge: CommandFilter, bridge, root
 
 # ip_lib
 ip: IpFilter, ip, root
