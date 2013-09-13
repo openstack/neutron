@@ -1450,7 +1450,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
         with context.session.begin(subtransactions=True):
             # Transaction nesting is needed to avoid foreign key violations
-            # when processing the service provider binding
+            # when processing the distributed router binding
             with context.session.begin(subtransactions=True):
                 router_db = l3_db.Router(id=lrouter['uuid'],
                                          tenant_id=tenant_id,
