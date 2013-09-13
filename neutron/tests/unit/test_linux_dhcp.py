@@ -142,12 +142,14 @@ class FakeV4Network:
     id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     subnets = [FakeV4Subnet()]
     ports = [FakePort1()]
+    namespace = 'qdhcp-ns'
 
 
 class FakeV6Network:
     id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
     subnets = [FakeV6Subnet()]
     ports = [FakePort2()]
+    namespace = 'qdhcp-ns'
 
 
 class FakeDualNetwork:
@@ -534,9 +536,10 @@ class TestDhcpLocalProcess(TestBase):
 
 
 class TestDnsmasq(TestBase):
-    def _test_spawn(self, extra_options):
+    def _test_spawn(self, extra_options, network=FakeDualNetwork(),
+                    max_leases=16777216):
         def mock_get_conf_file_name(kind, ensure_conf_dir=False):
-            return '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/%s' % kind
+            return '/dhcp/%s/%s' % (network.id, kind)
 
         def fake_argv(index):
             if index == 0:
@@ -550,7 +553,7 @@ class TestDnsmasq(TestBase):
             'exec',
             'qdhcp-ns',
             'env',
-            'NEUTRON_NETWORK_ID=cccccccc-cccc-cccc-cccc-cccccccccccc',
+            'NEUTRON_NETWORK_ID=%s' % network.id,
             'dnsmasq',
             '--no-hosts',
             '--no-resolv',
@@ -558,12 +561,17 @@ class TestDnsmasq(TestBase):
             '--bind-interfaces',
             '--interface=tap0',
             '--except-interface=lo',
-            '--pid-file=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/pid',
-            '--dhcp-hostsfile=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host',
-            '--dhcp-optsfile=/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts',
-            '--leasefile-ro',
-            '--dhcp-range=set:tag0,192.168.0.0,static,86400s',
-            '--dhcp-range=set:tag1,fdca:3ba5:a17a:4ba3::,static,86400s']
+            '--pid-file=/dhcp/%s/pid' % network.id,
+            '--dhcp-hostsfile=/dhcp/%s/host' % network.id,
+            '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
+            '--leasefile-ro']
+
+        expected.extend(
+            '--dhcp-range=set:tag%d,%s,static,86400s' %
+            (i, s.cidr.split('/')[0])
+            for i, s in enumerate(network.subnets)
+        )
+        expected.append('--dhcp-lease-max=%d' % max_leases)
         expected.extend(extra_options)
 
         self.execute.return_value = ('', '')
@@ -576,14 +584,13 @@ class TestDnsmasq(TestBase):
         with mock.patch.multiple(dhcp.Dnsmasq, **attrs_to_mock) as mocks:
             mocks['get_conf_file_name'].side_effect = mock_get_conf_file_name
             mocks['_output_opts_file'].return_value = (
-                '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
+                '/dhcp/%s/opts' % network.id
             )
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
 
             with mock.patch.object(dhcp.sys, 'argv') as argv:
                 argv.__getitem__.side_effect = fake_argv
-                dm = dhcp.Dnsmasq(self.conf, FakeDualNetwork(),
-                                  version=float(2.59))
+                dm = dhcp.Dnsmasq(self.conf, network, version=float(2.59))
                 dm.spawn_process()
                 self.assertTrue(mocks['_output_opts_file'].called)
                 self.execute.assert_called_once_with(expected,
@@ -606,6 +613,12 @@ class TestDnsmasq(TestBase):
         self._test_spawn(['--conf-file=',
                           '--server=8.8.8.8',
                           '--domain=openstacklocal'])
+
+    def test_spawn_max_leases_is_smaller_than_cap(self):
+        self._test_spawn(
+            ['--conf-file=', '--domain=openstacklocal'],
+            network=FakeV4Network(),
+            max_leases=256)
 
     def test_output_opts_file(self):
         fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
