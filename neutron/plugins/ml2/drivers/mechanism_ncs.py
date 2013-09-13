@@ -116,7 +116,7 @@ class NCSMechanismDriver(api.MechanismDriver):
         json = {'openstack': {'network': networks,
                               'subnet': subnets,
                               'port': ports}}
-        self.sendjson('put', self.url, json)
+        self.sendjson('put', '', json)
         self.out_of_sync = False
 
     def sync_object(self, operation, object_type, context):
