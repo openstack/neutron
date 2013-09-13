@@ -145,7 +145,7 @@ class OVSBridge:
         proto = 'proto' in kwargs and ",%s" % kwargs['proto'] or ''
         ip = ('nw_src' in kwargs or 'nw_dst' in kwargs) and ',ip' or ''
         match = (table + in_port + dl_type + dl_vlan + dl_src + dl_dst +
-                (ip or proto) + nw_src + nw_dst + tun_id)
+                (proto or ip) + nw_src + nw_dst + tun_id)
         if match:
             match = match[1:]  # strip leading comma
             flow_expr_arr.append(match)
