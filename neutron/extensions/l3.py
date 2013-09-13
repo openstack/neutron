@@ -271,7 +271,7 @@ class RouterPluginBase(object):
         pass
 
     def get_routers_count(self, context, filters=None):
-        raise qexception.NotImplementedError()
+        raise NotImplementedError()
 
     def get_floatingips_count(self, context, filters=None):
-        raise qexception.NotImplementedError()
+        raise NotImplementedError()
