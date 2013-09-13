@@ -624,16 +624,19 @@ class EdgeApplianceDriver(object):
         self.task_manager.add(task)
         return task
 
-    def create_lswitch(self, name, tz_config):
+    def create_lswitch(self, name, tz_config, tags=None,
+                       port_isolation=False, replication_mode="service"):
         lsconfig = {
             'display_name': utils.check_and_truncate(name),
-            "tags": [],
+            "tags": tags or [],
             "type": "LogicalSwitchConfig",
             "_schema": "/ws.v1/schema/LogicalSwitchConfig",
-            "port_isolation_enabled": False,
-            "replication_mode": "service",
             "transport_zones": tz_config
         }
+        if port_isolation is bool:
+            lsconfig["port_isolation_enabled"] = port_isolation
+        if replication_mode:
+            lsconfig["replication_mode"] = replication_mode
 
         response = self.vcns.create_lswitch(lsconfig)[1]
         return response
