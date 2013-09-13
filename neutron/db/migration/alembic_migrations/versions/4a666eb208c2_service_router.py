@@ -28,8 +28,11 @@ revision = '4a666eb208c2'
 down_revision = '38fc1f6789f8'
 
 # Change to ['*'] if this migration applies to all plugins
+# This migration must apply to both Nicira plugins as it alters a table
+# used by both of them
 
 migration_for_plugins = [
+    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
     'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin'
 ]
 
