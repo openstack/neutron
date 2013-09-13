@@ -770,6 +770,15 @@ class TestVpnaas(VPNPluginDbTestCase):
                                      expected)
                 return vpnservice
 
+    def test_delete_router_in_use_by_vpnservice(self):
+        """Test delete router in use by vpn service."""
+        with self.subnet(cidr='10.2.0.0/24') as subnet:
+            with self.router() as router:
+                with self.vpnservice(subnet=subnet,
+                                     router=router):
+                    self._delete('routers', router['router']['id'],
+                                 expected_code=webob.exc.HTTPConflict.code)
+
     def _set_active(self, model, resource_id):
         service_plugin = manager.NeutronManager.get_service_plugins()[
             constants.VPN]

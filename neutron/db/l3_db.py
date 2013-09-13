@@ -33,6 +33,7 @@ from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants
 
 LOG = logging.getLogger(__name__)
 
@@ -229,6 +230,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                                       filters=device_filter)
             if ports:
                 raise l3.RouterInUse(router_id=id)
+
+            #TODO(nati) Refactor here when we have router insertion model
+            vpnservice = manager.NeutronManager.get_service_plugins().get(
+                constants.VPN)
+            if vpnservice:
+                vpnservice.check_router_in_use(context, id)
 
             # delete any gw port
             device_filter = {'device_id': [id],
