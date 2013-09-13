@@ -169,9 +169,9 @@ class HyperVNeutronAgent(object):
             pass
         else:
             raise utils.HyperVException(
-                _("Cannot provision unknown network type %(network_type)s "
-                  "for network %(net_uuid)s"),
-                dict(network_type=network_type, net_uuid=net_uuid))
+                msg=(_("Cannot provision unknown network type %(network_type)s"
+                       " for network %(net_uuid)s") %
+                     dict(network_type=network_type, net_uuid=net_uuid)))
 
         map = {
             'network_type': network_type,
