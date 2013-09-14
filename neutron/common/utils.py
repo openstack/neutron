@@ -158,7 +158,7 @@ def parse_mappings(mapping_list, unique_values=True):
 
 
 def get_hostname():
-    return socket.getfqdn()
+    return socket.gethostname()
 
 
 def compare_elements(a, b):
