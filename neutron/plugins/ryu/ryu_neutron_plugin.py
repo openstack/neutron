@@ -39,6 +39,7 @@ from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
+from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.ryu.common import config  # noqa
 from neutron.plugins.ryu.db import api_v2 as db_api_v2
 
@@ -133,11 +134,14 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self._create_all_tenant_network()
 
     def _setup_rpc(self):
+        self.service_topics = {svc_constants.CORE: topics.PLUGIN,
+                               svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.conn = rpc.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
         self.callbacks = RyuRpcCallbacks(self.ofp_api_host)
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
-        self.conn.create_consumer(topics.PLUGIN, self.dispatcher, fanout=False)
+        for svc_topic in self.service_topics.values():
+            self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
         self.conn.consume_in_thread()
 
     def _create_all_tenant_network(self):
