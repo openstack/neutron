@@ -399,7 +399,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         # in a uniform way (we do it differently for ports, subnets, and nets
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
-        if res.status_int >= 400:
+        if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
@@ -419,7 +419,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                   shared=shared)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
-        if res.status_int >= 400:
+        if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
@@ -427,7 +427,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         res = self._create_port(fmt, net_id, expected_res_status, **kwargs)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
-        if res.status_int >= 400:
+        if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
@@ -486,17 +486,19 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         patched_plugin.side_effect = second_call
         return orig(*args, **kwargs)
 
-    def _validate_behavior_on_bulk_failure(self, res, collection, errcode=400):
+    def _validate_behavior_on_bulk_failure(
+            self, res, collection,
+            errcode=webob.exc.HTTPClientError.code):
         self.assertEqual(res.status_int, errcode)
         req = self.new_list_request(collection)
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 200)
+        self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
         items = self.deserialize(self.fmt, res)
         self.assertEqual(len(items[collection]), 0)
 
     def _validate_behavior_on_bulk_success(self, res, collection,
                                            names=['test_0', 'test_1']):
-        self.assertEqual(res.status_int, 201)
+        self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
         items = self.deserialize(self.fmt, res)[collection]
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]['name'], 'test_0')
@@ -687,15 +689,15 @@ class TestBasicGet(NeutronDbPluginV2TestCase):
 class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
     def test_create_returns_201(self):
         res = self._create_network(self.fmt, 'net2', True)
-        self.assertEqual(res.status_int, 201)
+        self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
     def test_list_returns_200(self):
         req = self.new_list_request('networks')
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 200)
+        self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
 
     def _check_list_with_fields(self, res, field_name):
-        self.assertEqual(res.status_int, 200)
+        self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
         body = self.deserialize(self.fmt, res)
         # further checks: 1 networks
         self.assertEqual(len(body['networks']), 1)
@@ -745,14 +747,14 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
         with self.network() as net:
             req = self.new_show_request('networks', net['network']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 200)
+            self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
 
     def test_delete_returns_204(self):
         res = self._create_network(self.fmt, 'net1', True)
         net = self.deserialize(self.fmt, res)
         req = self.new_delete_request('networks', net['network']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_update_returns_200(self):
         with self.network() as net:
@@ -760,7 +762,7 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
                                           {'network': {'name': 'steve'}},
                                           net['network']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 200)
+            self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
 
     def test_update_invalid_json_400(self):
         with self.network() as net:
@@ -768,12 +770,12 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
                                           '{{"name": "aaa"}}',
                                           net['network']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_bad_route_404(self):
         req = self.new_list_request('doohickeys')
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 404)
+        self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
 
 
 class TestPortsV2(NeutronDbPluginV2TestCase):
@@ -799,14 +801,14 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
 
             port_req = self.new_create_request('ports', data)
             res = port_req.get_response(self.api)
-            self.assertEqual(res.status_int, 403)
+            self.assertEqual(res.status_int, webob.exc.HTTPForbidden.code)
 
     def test_create_port_public_network(self):
         keys = [('admin_state_up', True), ('status', self.port_create_status)]
         with self.network(shared=True) as network:
             port_res = self._create_port(self.fmt,
                                          network['network']['id'],
-                                         201,
+                                         webob.exc.HTTPCreated.code,
                                          tenant_id='another_tenant',
                                          set_context=True)
             port = self.deserialize(self.fmt, port_res)
@@ -824,7 +826,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                                         'ip_address': '10.0.0.2'}])]
                 port_res = self._create_port(self.fmt,
                                              network['network']['id'],
-                                             201,
+                                             webob.exc.HTTPCreated.code,
                                              tenant_id='another_tenant',
                                              set_context=True)
                 port = self.deserialize(self.fmt, port_res)
@@ -867,10 +869,10 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                          'test', True,
                                          override=overrides)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
             req = self.new_list_request('ports')
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 200)
+            self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
             ports = self.deserialize(self.fmt, res)
             self.assertEqual(len(ports['ports']), 0)
 
@@ -900,7 +902,9 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                                                  'test',
                                                  True)
                     # We expect a 500 as we injected a fault in the plugin
-                    self._validate_behavior_on_bulk_failure(res, 'ports', 500)
+                    self._validate_behavior_on_bulk_failure(
+                        res, 'ports', webob.exc.HTTPServerError.code
+                    )
 
     def test_create_ports_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -919,7 +923,8 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
                                              'test', True, context=ctx)
                 # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'ports', 500)
+                self._validate_behavior_on_bulk_failure(
+                    res, 'ports', webob.exc.HTTPServerError.code)
 
     def test_list_ports(self):
         # for this test we need to enable overlapping ips
@@ -1064,13 +1069,13 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         with self.port() as port:
             req = self.new_show_request('port', self.fmt, port['port']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 404)
+            self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
 
     def test_delete_port_public_network(self):
         with self.network(shared=True) as network:
             port_res = self._create_port(self.fmt,
                                          network['network']['id'],
-                                         201,
+                                         webob.exc.HTTPCreated.code,
                                          tenant_id='another_tenant',
                                          set_context=True)
 
@@ -1106,14 +1111,14 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             data = {'port': {'device_id': None}}
             req = self.new_update_request('ports', data, port['port']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_delete_network_if_port_exists(self):
         with self.port() as port:
             req = self.new_delete_request('networks',
                                           port['port']['network_id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 409)
+            self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
     def test_delete_network_port_exists_owned_by_network(self):
         res = self._create_network(fmt=self.fmt, name='net',
@@ -1123,7 +1128,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         self._create_port(self.fmt, network_id, device_owner='network:dhcp')
         req = self.new_delete_request('networks', network_id)
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_update_port_delete_ip(self):
         with self.subnet() as subnet:
@@ -1145,7 +1150,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             data = self.deserialize(self.fmt, res)
             msg = str(q_exc.IpAddressGenerationFailure(net_id=id))
             self.assertEqual(data['NeutronError'], msg)
-            self.assertEqual(res.status_int, 409)
+            self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
     def test_update_port_update_ip(self):
         """Test update of port IP.
@@ -1242,7 +1247,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             kwargs = {"mac_address": mac}
             net_id = port['port']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 409)
+            self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
     def test_mac_generation(self):
         cfg.CONF.set_override('base_mac', "12:34:56:00:00:00")
@@ -1278,7 +1283,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             network = self.deserialize(self.fmt, res)
             net_id = network['network']['id']
             res = self._create_port(self.fmt, net_id=net_id)
-            self.assertEqual(res.status_int, 503)
+            self.assertEqual(res.status_int,
+                             webob.exc.HTTPServiceUnavailable.code)
 
     def test_requested_duplicate_ip(self):
         with self.subnet() as subnet:
@@ -1292,7 +1298,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                          'ip_address': ips[0]['ip_address']}]}
                 net_id = port['port']['network_id']
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                self.assertEqual(res.status_int, 409)
+                self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
     def test_requested_subnet_delete(self):
         with self.subnet() as subnet:
@@ -1304,7 +1310,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 req = self.new_delete_request('subnet',
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 404)
+                self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
 
     def test_requested_subnet_id(self):
         with self.subnet() as subnet:
@@ -1339,7 +1345,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                          subnet2['subnet']['id']}]}
                 net_id = port['port']['network_id']
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_overlapping_subnets(self):
         with self.subnet() as subnet:
@@ -1351,7 +1358,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                       cidr='10.0.0.225/28',
                                       ip_version=4,
                                       gateway_ip=ATTR_NOT_SPECIFIED)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_requested_subnet_id_v4_and_v6(self):
         with self.subnet() as subnet:
@@ -1450,7 +1457,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 net_id = port['port']['network_id']
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
                 port2 = self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 404)
+                self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
 
                 # Test invalid IP address on specified subnet_id
                 kwargs = {"fixed_ips":
@@ -1459,7 +1466,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 net_id = port['port']['network_id']
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
                 port2 = self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
                 # Test invalid addresses - IP's not on subnet or network
                 # address or broadcast address
@@ -1469,7 +1477,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     kwargs = {"fixed_ips": [{'ip_address': ip}]}
                     res = self._create_port(self.fmt, net_id=net_id, **kwargs)
                     port2 = self.deserialize(self.fmt, res)
-                    self.assertEqual(res.status_int, 400)
+                    self.assertEqual(res.status_int,
+                                     webob.exc.HTTPClientError.code)
 
                 # Enable allocation of gateway address
                 kwargs = {"fixed_ips":
@@ -1491,7 +1500,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '1011.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_requested_split(self):
         with self.subnet() as subnet:
@@ -1537,7 +1546,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '10.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_fixed_ip_invalid_subnet_id(self):
         with self.subnet() as subnet:
@@ -1546,7 +1555,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '10.0.0.5'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_fixed_ip_invalid_ip(self):
         with self.subnet() as subnet:
@@ -1555,7 +1564,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                      'ip_address': '10.0.0.55555'}]}
             net_id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_requested_ips_only(self):
         with self.subnet() as subnet:
@@ -1622,7 +1631,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                              'fixed_ips': []}}
             port_req = self.new_create_request('ports', data)
             res = port_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_invalid_mac_address(self):
         with self.network() as network:
@@ -1633,7 +1642,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                              'fixed_ips': []}}
             port_req = self.new_create_request('ports', data)
             res = port_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_update_fixed_ip_lease_expiration_invalid_address(self):
         cfg.CONF.set_override('dhcp_lease_duration', 10)
@@ -1683,7 +1692,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                            {'subnet_id': subnet['subnet']['id']}]}
                 net_id = subnet['subnet']['network_id']
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_update_max_fixed_ips_exceeded(self):
         with self.subnet(gateway_ip='10.0.0.3',
@@ -1701,7 +1711,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 req = self.new_update_request('ports', data,
                                               port['port']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
 
 class TestNetworksV2(NeutronDbPluginV2TestCase):
@@ -1732,7 +1743,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                               tenant_id="another_tenant",
                               set_context=True):
                 pass
-        self.assertEqual(ctx_manager.exception.code, 403)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPForbidden.code)
 
     def test_update_network(self):
         with self.network() as network:
@@ -1753,7 +1765,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             req.environ['neutron.context'] = context.Context('', 'somebody')
             res = req.get_response(self.api)
             # The API layer always returns 404 on updates in place of 403
-            self.assertEqual(res.status_int, 404)
+            self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
 
     def test_update_network_set_shared(self):
         with self.network(shared=False) as network:
@@ -1784,7 +1796,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         with self.network(shared=True) as network:
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
-                                     201,
+                                     webob.exc.HTTPCreated.code,
                                      tenant_id=network['network']['tenant_id'],
                                      set_context=True)
             data = {'network': {'shared': False}}
@@ -1800,14 +1812,15 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         with self.network(shared=True) as network:
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
-                                     201,
+                                     webob.exc.HTTPCreated.code,
                                      tenant_id='somebody_else',
                                      set_context=True)
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'])
-            self.assertEqual(req.get_response(self.api).status_int, 409)
+            self.assertEqual(req.get_response(self.api).status_int,
+                             webob.exc.HTTPConflict.code)
             port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
 
@@ -1815,19 +1828,20 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         with self.network(shared=True) as network:
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
-                                     201,
+                                     webob.exc.HTTPCreated.code,
                                      tenant_id='somebody_else',
                                      set_context=True)
             res2 = self._create_port(self.fmt,
                                      network['network']['id'],
-                                     201,
+                                     webob.exc.HTTPCreated.code,
                                      tenant_id=network['network']['tenant_id'],
                                      set_context=True)
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'])
-            self.assertEqual(req.get_response(self.api).status_int, 409)
+            self.assertEqual(req.get_response(self.api).status_int,
+                             webob.exc.HTTPConflict.code)
             port1 = self.deserialize(self.fmt, res1)
             port2 = self.deserialize(self.fmt, res2)
             self._delete('ports', port1['port']['id'])
@@ -1837,20 +1851,21 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         with self.network(shared=True) as network:
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
-                                     201,
+                                     webob.exc.HTTPCreated.code,
                                      tenant_id='somebody_else',
                                      set_context=True)
             self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.0.0/24',
-                                201,
+                                webob.exc.HTTPCreated.code,
                                 tenant_id=network['network']['tenant_id'],
                                 set_context=True)
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'])
-            self.assertEqual(req.get_response(self.api).status_int, 409)
+            self.assertEqual(req.get_response(self.api).status_int,
+                             webob.exc.HTTPConflict.code)
 
             port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
@@ -1867,7 +1882,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         quota = 4
         cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
         res = self._create_network_bulk(self.fmt, quota + 1, 'test', True)
-        self._validate_behavior_on_bulk_failure(res, 'networks', errcode=409)
+        self._validate_behavior_on_bulk_failure(
+            res, 'networks',
+            errcode=webob.exc.HTTPConflict.code)
 
     def test_create_networks_bulk_tenants_and_quotas(self):
         if self._skip_native_bulk:
@@ -1884,7 +1901,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                                  'tenant_id': 't1'}}]
 
         res = self._create_bulk_from_list(self.fmt, 'network', networks)
-        self.assertEqual(res.status_int, 201)
+        self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
     def test_create_networks_bulk_tenants_and_quotas_fail(self):
         if self._skip_native_bulk:
@@ -1903,7 +1920,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                                  'tenant_id': 't1'}}]
 
         res = self._create_bulk_from_list(self.fmt, 'network', networks)
-        self.assertEqual(res.status_int, 409)
+        self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
     def test_create_networks_bulk_emulated(self):
         real_has_attr = hasattr
@@ -1923,10 +1940,10 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         res = self._create_network_bulk(self.fmt, 2, 'test', True,
                                         override={1:
                                                   {'admin_state_up': 'doh'}})
-        self.assertEqual(res.status_int, 400)
+        self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
         req = self.new_list_request('networks')
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 200)
+        self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
         nets = self.deserialize(self.fmt, res)
         self.assertEqual(len(nets['networks']), 0)
 
@@ -1952,7 +1969,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 patched_plugin.side_effect = side_effect
                 res = self._create_network_bulk(self.fmt, 2, 'test', True)
                 # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'networks', 500)
+                self._validate_behavior_on_bulk_failure(
+                    res, 'networks', webob.exc.HTTPServerError.code
+                )
 
     def test_create_networks_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -1968,7 +1987,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             patched_plugin.side_effect = side_effect
             res = self._create_network_bulk(self.fmt, 2, 'test', True)
             # We expect a 500 as we injected a fault in the plugin
-            self._validate_behavior_on_bulk_failure(res, 'networks', 500)
+            self._validate_behavior_on_bulk_failure(
+                res, 'networks', webob.exc.HTTPServerError.code
+            )
 
     def test_list_networks(self):
         with contextlib.nested(self.network(),
@@ -2004,7 +2025,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 'networks',
                 params='sort_key=provider:segmentation_id&sort_dir=asc')
             res = req.get_response(self.api)
-            self.assertEqual(400, res.status_int)
+            self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
     def test_list_networks_with_sort_remote_key_native_returns_400(self):
         if self._skip_native_sorting:
@@ -2019,7 +2040,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             req = self.new_list_request(
                 'networks', params='sort_key=subnets&sort_dir=asc')
             res = req.get_response(self.api)
-            self.assertEqual(400, res.status_int)
+            self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
     def test_list_networks_with_sort_emulated(self):
         helper_patcher = mock.patch(
@@ -2157,7 +2178,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             req = self.new_list_request('networks',
                                         params='admin_state_up=fake')
             res = req.get_response(self.api)
-            self.assertEqual(400, res.status_int)
+            self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
     def test_list_shared_networks_with_non_admin_user(self):
         with contextlib.nested(self.network(shared=False,
@@ -2191,10 +2212,15 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                                  subnet['subnet']['id'])
 
     def test_invalid_admin_status(self):
-        value = [[7, False, 400], [True, True, 201], ["True", True, 201],
-                 ["true", True, 201], [1, True, 201], ["False", False, 201],
-                 [False, False, 201], ["false", False, 201],
-                 ["7", False, 400]]
+        value = [[7, False, webob.exc.HTTPClientError.code],
+                 [True, True, webob.exc.HTTPCreated.code],
+                 ["True", True, webob.exc.HTTPCreated.code],
+                 ["true", True, webob.exc.HTTPCreated.code],
+                 [1, True, webob.exc.HTTPCreated.code],
+                 ["False", False, webob.exc.HTTPCreated.code],
+                 [False, False, webob.exc.HTTPCreated.code],
+                 ["false", False, webob.exc.HTTPCreated.code],
+                 ["7", False, webob.exc.HTTPClientError.code]]
         for v in value:
             data = {'network': {'name': 'net',
                                 'admin_state_up': v[0],
@@ -2202,7 +2228,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             network_req = self.new_create_request('networks', data)
             req = network_req.get_response(self.api)
             self.assertEqual(req.status_int, v[2])
-            if v[2] == 201:
+            if v[2] == webob.exc.HTTPCreated.code:
                 res = self.deserialize(self.fmt, req)
                 self.assertEqual(res['network']['admin_state_up'], v[1])
 
@@ -2279,7 +2305,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                      gateway_ip=gateway_ip_2,
                                      cidr=cidr_2):
                         pass
-                self.assertEqual(ctx_manager.exception.code, 400)
+                self.assertEqual(ctx_manager.exception.code,
+                                 webob.exc.HTTPClientError.code)
 
     def test_create_subnet_bad_V4_cidr(self):
         with self.network() as network:
@@ -2290,7 +2317,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_bad_V6_cidr(self):
         with self.network() as network:
@@ -2301,7 +2328,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'gateway_ip': 'fe80::1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_2_subnets_overlapping_cidr_allowed_returns_200(self):
         cidr_1 = '10.0.0.0/23'
@@ -2321,7 +2348,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             with contextlib.nested(self.subnet(cidr=cidr_1),
                                    self.subnet(cidr=cidr_2)):
                 pass
-        self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
 
     def test_create_subnets_bulk_native(self):
         if self._skip_native_bulk:
@@ -2373,7 +2401,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                                    net['network']['id'],
                                                    'test')
                 # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'subnets', 500)
+                self._validate_behavior_on_bulk_failure(
+                    res, 'subnets', webob.exc.HTTPServerError.code
+                )
 
     def test_create_subnets_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
@@ -2392,7 +2422,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                                'test')
 
                 # We expect a 500 as we injected a fault in the plugin
-                self._validate_behavior_on_bulk_failure(res, 'subnets', 500)
+                self._validate_behavior_on_bulk_failure(
+                    res, 'subnets', webob.exc.HTTPServerError.code
+                )
 
     def test_delete_subnet(self):
         gateway_ip = '10.0.0.1'
@@ -2405,7 +2437,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    cidr, ip_version=4)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_delete_subnet_port_exists_owned_by_network(self):
         gateway_ip = '10.0.0.1'
@@ -2421,7 +2453,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                           device_owner='network:dhcp')
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_delete_subnet_port_exists_owned_by_other(self):
         with self.subnet() as subnet:
@@ -2430,7 +2462,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_delete_request('subnets', id)
                 res = req.get_response(self.api)
                 data = self.deserialize(self.fmt, res)
-                self.assertEqual(res.status_int, 409)
+                self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
                 msg = str(q_exc.SubnetInUse(subnet_id=id))
                 self.assertEqual(data['NeutronError'], msg)
 
@@ -2444,7 +2476,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         self._make_subnet(self.fmt, network, gateway_ip, cidr, ip_version=4)
         req = self.new_delete_request('networks', network['network']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_create_subnet_bad_tenant(self):
         with self.network() as network:
@@ -2456,7 +2488,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 403)
+            self.assertEqual(res.status_int, webob.exc.HTTPForbidden.code)
 
     def test_create_subnet_bad_cidr(self):
         with self.network() as network:
@@ -2479,7 +2511,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_bad_ip_version_null(self):
         with self.network() as network:
@@ -2491,7 +2523,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_bad_uuid(self):
         with self.network() as network:
@@ -2503,7 +2535,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_bad_boolean(self):
         with self.network() as network:
@@ -2516,7 +2548,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_bad_pools(self):
         with self.network() as network:
@@ -2539,7 +2571,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    'allocation_pools': pool}}
                 subnet_req = self.new_create_request('subnets', data)
                 res = subnet_req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_create_subnet_bad_nameserver(self):
         with self.network() as network:
@@ -2557,7 +2590,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    'dns_nameservers': nameservers}}
                 subnet_req = self.new_create_request('subnets', data)
                 res = subnet_req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_create_subnet_bad_hostroutes(self):
         with self.network() as network:
@@ -2578,7 +2612,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    'host_routes': hostroutes}}
                 subnet_req = self.new_create_request('subnets', data)
                 res = subnet_req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_create_subnet_defaults(self):
         gateway = '10.0.0.1'
@@ -2628,7 +2663,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.0.0/24',
-                                400,
+                                webob.exc.HTTPClientError.code,
                                 gateway_ip='100.0.0.1')
 
     def test_create_subnet_gw_of_network_force_on_returns_400(self):
@@ -2637,7 +2672,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.0.0/24',
-                                400,
+                                webob.exc.HTTPClientError.code,
                                 gateway_ip='10.0.0.0')
 
     def test_create_subnet_gw_bcast_force_on_returns_400(self):
@@ -2646,7 +2681,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.0.0/24',
-                                400,
+                                webob.exc.HTTPClientError.code,
                                 gateway_ip='10.0.0.255')
 
     def test_create_subnet_with_allocation_pool(self):
@@ -2689,7 +2724,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '10.0.0.10'}]}
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 201)
+            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
             port = self.deserialize(self.fmt, res)
             # delete the port
             self._delete('ports', port['port']['id'])
@@ -2698,7 +2733,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '10.0.0.1'}]}
             res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-            self.assertEqual(res.status_int, 201)
+            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
             port = self.deserialize(self.fmt, res)
             # delete the port
             self._delete('ports', port['port']['id'])
@@ -2756,7 +2791,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 409)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPConflict.code)
 
     def test_create_subnet_gateway_in_allocation_pool_returns_409(self):
         gateway_ip = '10.0.0.50'
@@ -2768,7 +2804,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 409)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPConflict.code)
 
     def test_create_subnet_overlapping_allocation_pools_returns_409(self):
         gateway_ip = '10.0.0.1'
@@ -2782,7 +2819,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 409)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPConflict.code)
 
     def test_create_subnet_invalid_allocation_pool_returns_400(self):
         gateway_ip = '10.0.0.1'
@@ -2794,7 +2832,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
 
     def test_create_subnet_out_of_range_allocation_pool_returns_400(self):
         gateway_ip = '10.0.0.1'
@@ -2806,7 +2845,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self._test_create_subnet(gateway_ip=gateway_ip,
                                      cidr=cidr,
                                      allocation_pools=allocation_pools)
-        self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
 
     def test_create_subnet_shared_returns_400(self):
         cidr = '10.0.0.0/24'
@@ -2814,7 +2854,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(cidr=cidr,
                                      shared=True)
-        self.assertEqual(ctx_manager.exception.code, 400)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
 
     def test_create_subnet_inconsistent_ipv6_cidrv4(self):
         with self.network() as network:
@@ -2824,7 +2865,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_inconsistent_ipv4_cidrv6(self):
         with self.network() as network:
@@ -2834,7 +2875,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_inconsistent_ipv4_gatewayv6(self):
         with self.network() as network:
@@ -2845,7 +2886,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_inconsistent_ipv6_gatewayv4(self):
         with self.network() as network:
@@ -2856,7 +2897,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_inconsistent_ipv6_dns_v4(self):
         with self.network() as network:
@@ -2867,7 +2908,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_inconsistent_ipv4_hostroute_dst_v6(self):
         host_routes = [{'destination': 'fe80::0/48',
@@ -2880,7 +2921,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_inconsistent_ipv4_hostroute_np_v6(self):
         host_routes = [{'destination': '172.16.0.0/24',
@@ -2893,7 +2934,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_update_subnet_no_gateway(self):
         with self.subnet() as subnet:
@@ -2954,7 +2995,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_update_subnet_gw_outside_cidr_force_on_returns_400(self):
         cfg.CONF.set_override('force_gateway_on_subnet', True)
@@ -2964,7 +3006,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_update_subnet_inconsistent_ipv4_gatewayv6(self):
         with self.network() as network:
@@ -2973,7 +3016,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_update_subnet_inconsistent_ipv6_gatewayv4(self):
         with self.network() as network:
@@ -2983,7 +3027,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_update_subnet_inconsistent_ipv4_dns_v6(self):
         dns_nameservers = ['fe80::1']
@@ -2993,7 +3038,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_update_subnet_inconsistent_ipv6_hostroute_dst_v4(self):
         host_routes = [{'destination': 'fe80::0/48',
@@ -3005,7 +3051,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_update_subnet_inconsistent_ipv6_hostroute_np_v4(self):
         host_routes = [{'destination': '172.16.0.0/24',
@@ -3017,7 +3064,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_update_subnet_gateway_in_allocation_pool_returns_409(self):
         allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.254'}]
@@ -3029,7 +3077,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 409)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPConflict.code)
 
     def test_show_subnet(self):
         with self.network() as network:
@@ -3194,7 +3243,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_invalid_subnet(self):
         with self.network() as network:
@@ -3206,7 +3255,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_invalid_ip_address(self):
         with self.network() as network:
@@ -3218,7 +3267,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_invalid_uuid(self):
         with self.network() as network:
@@ -3230,7 +3279,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_with_one_dns(self):
         gateway_ip = '10.0.0.1'
@@ -3266,7 +3315,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_with_one_host_route(self):
         gateway_ip = '10.0.0.1'
@@ -3313,7 +3362,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_update_subnet_dns(self):
         with self.subnet() as subnet:
@@ -3345,7 +3394,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_update_subnet_route(self):
         with self.subnet() as subnet:
@@ -3382,7 +3431,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
             res = req.get_response(self.api)
-            self.assertEqual(res.status_int, 400)
+            self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
     def test_delete_subnet_with_dns(self):
         gateway_ip = '10.0.0.1'
@@ -3397,7 +3446,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    dns_nameservers=dns_nameservers)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_delete_subnet_with_route(self):
         gateway_ip = '10.0.0.1'
@@ -3413,7 +3462,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    host_routes=host_routes)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_delete_subnet_with_dns_and_route(self):
         gateway_ip = '10.0.0.1'
@@ -3431,7 +3480,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    host_routes=host_routes)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
+        self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
 
 class DbModelTestCase(base.BaseTestCase):
