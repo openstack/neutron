@@ -81,6 +81,11 @@ class DeviceDriverImportError(qexception.NeutronException):
     message = _("Can not load driver :%(device_driver)s")
 
 
+class SubnetIsNotConnectedToRouter(qexception.BadRequest):
+    message = _("Subnet %(subnet_id)s is not "
+                "connected to Router %(router_id)s")
+
+
 vpn_supported_initiators = ['bi-directional', 'response-only']
 vpn_supported_encryption_algorithms = ['3des', 'aes-128',
                                        'aes-192', 'aes-256']
