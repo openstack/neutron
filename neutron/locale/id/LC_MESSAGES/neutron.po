@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-14 06:08+0000\n"
+"POT-Creation-Date: 2013-09-15 06:08+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Indonesian "
@@ -10771,12 +10771,12 @@ msgstr ""
 msgid "Network Admin State Validation Falied: "
 msgstr ""
 
-#: neutron/plugins/ryu/ryu_neutron_plugin.py:62
+#: neutron/plugins/ryu/ryu_neutron_plugin.py:63
 #, python-format
 msgid "get_ofp_rest_api: %s"
 msgstr ""
 
-#: neutron/plugins/ryu/ryu_neutron_plugin.py:122
+#: neutron/plugins/ryu/ryu_neutron_plugin.py:123
 msgid "Invalid configuration. check ryu.ini"
 msgstr ""
 
