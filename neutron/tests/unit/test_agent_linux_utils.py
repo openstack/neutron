@@ -29,9 +29,9 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         self.test_file = self.useFixture(
             fixtures.TempDir()).join("test_execute.tmp")
         open(self.test_file, 'w').close()
-        instance = mock.patch("subprocess.Popen.communicate")
-        self.mock_popen = instance.start()
-        self.addCleanup(self.mock_popen.stop)
+        self.mock_popen_p = mock.patch("subprocess.Popen.communicate")
+        self.mock_popen = self.mock_popen_p.start()
+        self.addCleanup(self.mock_popen_p.stop)
 
     def test_without_helper(self):
         expected = "%s\n" % self.test_file
