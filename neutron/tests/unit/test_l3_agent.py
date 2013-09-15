@@ -634,6 +634,18 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def test_disable_metadata_proxy_spawn(self):
         self._configure_metadata_proxy(enableflag=False)
 
+    def test_metadata_nat_rules(self):
+        self.conf.set_override('enable_metadata_proxy', False)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.assertEqual([], agent.metadata_nat_rules())
+
+        self.conf.set_override('metadata_port', '8775')
+        self.conf.set_override('enable_metadata_proxy', True)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        rules = ('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
+                 '-p tcp -m tcp --dport 80 -j REDIRECT --to-port 8775')
+        self.assertEqual([rules], agent.metadata_nat_rules())
+
 
 class TestL3AgentEventHandler(base.BaseTestCase):
 
