@@ -34,12 +34,16 @@ class NeutronException(Exception):
     def __init__(self, **kwargs):
         try:
             super(NeutronException, self).__init__(self.message % kwargs)
+            self.msg = self.message % kwargs
         except Exception:
             if _FATAL_EXCEPTION_FORMAT_ERRORS:
                 raise
             else:
                 # at least get the core message out if something happened
                 super(NeutronException, self).__init__(self.message)
+
+    def __unicode__(self):
+        return unicode(self.msg)
 
 
 class BadRequest(NeutronException):
