@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-14 06:08+0000\n"
+"POT-Creation-Date: 2013-09-15 06:08+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -10824,12 +10824,12 @@ msgstr "此外掛程式尚不支援 admin_state_up = False 的網路。正在忽
 msgid "Network Admin State Validation Falied: "
 msgstr "網路管理狀態驗證失敗："
 
-#: neutron/plugins/ryu/ryu_neutron_plugin.py:62
+#: neutron/plugins/ryu/ryu_neutron_plugin.py:63
 #, python-format
 msgid "get_ofp_rest_api: %s"
 msgstr "get_ofp_rest_api：%s"
 
-#: neutron/plugins/ryu/ryu_neutron_plugin.py:122
+#: neutron/plugins/ryu/ryu_neutron_plugin.py:123
 msgid "Invalid configuration. check ryu.ini"
 msgstr "無效的配置。請檢查 ryu.ini"
 
