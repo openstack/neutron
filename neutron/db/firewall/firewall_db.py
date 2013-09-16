@@ -183,6 +183,9 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                     # the integrity of this list.
                     raise firewall.FirewallRuleNotFound(firewall_rule_id=
                                                         fwrule_id)
+                elif rules_dict[fwrule_id]['firewall_policy_id']:
+                    raise firewall.FirewallRuleInUse(
+                        firewall_rule_id=fwrule_id)
             # New list of rules is valid so we will first reset the existing
             # list and then add each rule in order.
             # Note that the list could be empty in which case we interpret
