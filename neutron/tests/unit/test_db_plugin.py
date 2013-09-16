@@ -794,18 +794,27 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
             self.assertEqual('myname', port['port']['name'])
 
+    def test_create_port_as_admin(self):
+        with self.network(do_delete=False) as network:
+            self._create_port(self.fmt,
+                              network['network']['id'],
+                              webob.exc.HTTPCreated.code,
+                              tenant_id='bad_tenant_id',
+                              device_id='fake_device',
+                              device_owner='fake_owner',
+                              fixed_ips=[],
+                              set_context=False)
+
     def test_create_port_bad_tenant(self):
         with self.network() as network:
-            data = {'port': {'network_id': network['network']['id'],
-                             'tenant_id': 'bad_tenant_id',
-                             'admin_state_up': True,
-                             'device_id': 'fake_device',
-                             'device_owner': 'fake_owner',
-                             'fixed_ips': []}}
-
-            port_req = self.new_create_request('ports', data)
-            res = port_req.get_response(self.api)
-            self.assertEqual(res.status_int, webob.exc.HTTPForbidden.code)
+            self._create_port(self.fmt,
+                              network['network']['id'],
+                              webob.exc.HTTPNotFound.code,
+                              tenant_id='bad_tenant_id',
+                              device_id='fake_device',
+                              device_owner='fake_owner',
+                              fixed_ips=[],
+                              set_context=True)
 
     def test_create_port_public_network(self):
         keys = [('admin_state_up', True), ('status', self.port_create_status)]
@@ -2484,15 +2493,27 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_create_subnet_bad_tenant(self):
         with self.network() as network:
-            data = {'subnet': {'network_id': network['network']['id'],
-                               'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
-                               'tenant_id': 'bad_tenant_id',
-                               'gateway_ip': '10.0.2.1'}}
+            self._create_subnet(self.fmt,
+                                network['network']['id'],
+                                '10.0.2.0/24',
+                                webob.exc.HTTPNotFound.code,
+                                ip_version=4,
+                                tenant_id='bad_tenant_id',
+                                gateway_ip='10.0.2.1',
+                                device_owner='fake_owner',
+                                set_context=True)
 
-            subnet_req = self.new_create_request('subnets', data)
-            res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, webob.exc.HTTPForbidden.code)
+    def test_create_subnet_as_admin(self):
+        with self.network(do_delete=False) as network:
+            self._create_subnet(self.fmt,
+                                network['network']['id'],
+                                '10.0.2.0/24',
+                                webob.exc.HTTPCreated.code,
+                                ip_version=4,
+                                tenant_id='bad_tenant_id',
+                                gateway_ip='10.0.2.1',
+                                device_owner='fake_owner',
+                                set_context=False)
 
     def test_create_subnet_bad_cidr(self):
         with self.network() as network:

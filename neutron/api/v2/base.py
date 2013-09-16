@@ -604,7 +604,8 @@ class Controller(object):
     def _validate_network_tenant_ownership(self, request, resource_item):
         # TODO(salvatore-orlando): consider whether this check can be folded
         # in the policy engine
-        if self._resource not in ('port', 'subnet'):
+        if (request.context.is_admin or
+                self._resource not in ('port', 'subnet')):
             return
         network = self._plugin.get_network(
             request.context,
