@@ -26,6 +26,7 @@ Neutron network life-cycle management.
 
 from ncclient import manager
 
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.brocade.nos import nctemplates as template
 
@@ -51,27 +52,40 @@ class NOSdriver():
     """
 
     def __init__(self):
-        pass
+        self.mgr = None
 
     def connect(self, host, username, password):
         """Connect via SSH and initialize the NETCONF session."""
+
+        # Use the persisted NETCONF connection
+        if self.mgr and self.mgr.connected:
+            return self.mgr
+
+        # Open new NETCONF connection
         try:
-            mgr = manager.connect(host=host, port=SSH_PORT,
-                                  username=username, password=password,
-                                  unknown_host_cb=nos_unknown_host_cb)
+            self.mgr = manager.connect(host=host, port=SSH_PORT,
+                                       username=username, password=password,
+                                       unknown_host_cb=nos_unknown_host_cb)
         except Exception as e:
-            LOG.debug(_("Connect failed to switch: %s"), e)
+            LOG.error(_("Connect failed to switch: %s"), e)
             raise
 
         LOG.debug(_("Connect success to host %(host)s:%(ssh_port)d"),
                   dict(host=host, ssh_port=SSH_PORT))
-        return mgr
+        return self.mgr
+
+    def close_session(self):
+        """Close NETCONF session."""
+        if self.mgr:
+            self.mgr.close_session()
+            self.mgr = None
 
     def create_network(self, host, username, password, net_id):
         """Creates a new virtual network."""
 
         name = template.OS_PORT_PROFILE_NAME.format(id=net_id)
-        with self.connect(host, username, password) as mgr:
+        try:
+            mgr = self.connect(host, username, password)
             self.create_vlan_interface(mgr, net_id)
             self.create_port_profile(mgr, name)
             self.create_vlan_profile_for_port_profile(mgr, name)
@@ -79,31 +93,50 @@ class NOSdriver():
             self.configure_trunk_mode_for_vlan_profile(mgr, name)
             self.configure_allowed_vlans_for_vlan_profile(mgr, name, net_id)
             self.activate_port_profile(mgr, name)
+        except Exception as ex:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error: %s"), ex)
+                self.close_session()
 
     def delete_network(self, host, username, password, net_id):
         """Deletes a virtual network."""
 
         name = template.OS_PORT_PROFILE_NAME.format(id=net_id)
-        with self.connect(host, username, password) as mgr:
+        try:
+            mgr = self.connect(host, username, password)
             self.deactivate_port_profile(mgr, name)
             self.delete_port_profile(mgr, name)
             self.delete_vlan_interface(mgr, net_id)
+        except Exception as ex:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error: %s"), ex)
+                self.close_session()
 
     def associate_mac_to_network(self, host, username, password,
                                  net_id, mac):
         """Associates a MAC address to virtual network."""
 
         name = template.OS_PORT_PROFILE_NAME.format(id=net_id)
-        with self.connect(host, username, password) as mgr:
+        try:
+            mgr = self.connect(host, username, password)
             self.associate_mac_to_port_profile(mgr, name, mac)
+        except Exception as ex:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error: %s"), ex)
+                self.close_session()
 
     def dissociate_mac_from_network(self, host, username, password,
                                     net_id, mac):
         """Dissociates a MAC address from virtual network."""
 
         name = template.OS_PORT_PROFILE_NAME.format(id=net_id)
-        with self.connect(host, username, password) as mgr:
+        try:
+            mgr = self.connect(host, username, password)
             self.dissociate_mac_from_port_profile(mgr, name, mac)
+        except Exception as ex:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("NETCONF error: %s"), ex)
+                self.close_session()
 
     def create_vlan_interface(self, mgr, vlan_id):
         """Configures a VLAN interface."""
