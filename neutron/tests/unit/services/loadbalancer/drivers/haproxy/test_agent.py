@@ -29,8 +29,6 @@ class TestLbaasService(base.BaseTestCase):
         super(TestLbaasService, self).setUp()
         self.addCleanup(cfg.CONF.reset)
 
-        cfg.CONF.register_opts(agent.OPTS)
-
     def test_start(self):
         with mock.patch.object(
             agent.rpc_service.Service, 'start'
@@ -49,8 +47,9 @@ class TestLbaasService(base.BaseTestCase):
             mock.patch.object(agent.service, 'launch'),
             mock.patch.object(agent, 'eventlet'),
             mock.patch('sys.argv'),
-            mock.patch.object(agent.manager, 'LbaasAgentManager')
-        ) as (mock_logging, mock_launch, mock_eventlet, sys_argv, mgr_cls):
+            mock.patch.object(agent.manager, 'LbaasAgentManager'),
+            mock.patch.object(cfg.CONF, 'register_opts')
+        ) as (mock_logging, mock_launch, mock_eventlet, sys_argv, mgr_cls, ro):
             agent.main()
 
             self.assertTrue(mock_eventlet.monkey_patch.called)
