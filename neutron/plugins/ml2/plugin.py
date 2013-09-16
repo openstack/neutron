@@ -235,13 +235,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.mechanism_manager.unbind_port(mech_context)
         self._update_port_dict_binding(port, binding)
 
-    def _extend_port_dict_binding(self, port_res, port_db):
+    def _ml2_extend_port_dict_binding(self, port_res, port_db):
         # None when called during unit tests for other plugins.
         if port_db.port_binding:
             self._update_port_dict_binding(port_res, port_db.port_binding)
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
-        attributes.PORTS, [_extend_port_dict_binding])
+        attributes.PORTS, ['_ml2_extend_port_dict_binding'])
 
     # Note - The following hook methods have "ml2" in their names so
     # that they are not called twice during unit tests due to global
