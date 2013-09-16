@@ -1675,7 +1675,10 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             if not subnet:
                 subnet = self._get_subnet(context, subnet_id)
             router = self._get_router(context, router_id)
-            self._delete_subnet_snat_rule(router, subnet)
+            # If router is enabled_snat = False there are no snat rules to
+            # delete.
+            if router.enable_snat:
+                self._delete_subnet_snat_rule(router, subnet)
             # Relax the minimum expected number as the nosnat rules
             # do not exist in 2.x deployments
             nvplib.delete_nat_rules_by_match(
