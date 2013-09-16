@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-15 06:08+0000\n"
+"POT-Creation-Date: 2013-09-16 06:08+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Italian (Italy) "
@@ -460,14 +460,14 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:818
+#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:819
 #: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:823
+#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:824
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:762
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:184
@@ -477,7 +477,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:828
+#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:829
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:281
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
@@ -560,51 +560,51 @@ msgstr ""
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:618
+#: neutron/agent/l3_agent.py:619
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:623
+#: neutron/agent/l3_agent.py:624
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:631
+#: neutron/agent/l3_agent.py:632
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:635
+#: neutron/agent/l3_agent.py:636
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:642
+#: neutron/agent/l3_agent.py:643
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:698 neutron/agent/l3_agent.py:729
+#: neutron/agent/l3_agent.py:699 neutron/agent/l3_agent.py:730
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:725
+#: neutron/agent/l3_agent.py:726
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:733
+#: neutron/agent/l3_agent.py:734
 msgid "L3 agent started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:753
+#: neutron/agent/l3_agent.py:754
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:761
+#: neutron/agent/l3_agent.py:762
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
@@ -1601,8 +1601,8 @@ msgid "%s failed"
 msgstr ""
 
 #: neutron/api/v2/resource.py:117
-#: neutron/tests/unit/test_api_v2_resource.py:263
-#: neutron/tests/unit/test_api_v2_resource.py:279
+#: neutron/tests/unit/test_api_v2_resource.py:261
+#: neutron/tests/unit/test_api_v2_resource.py:277
 msgid "Request Failed: internal server error while processing your request."
 msgstr ""
 
@@ -1721,283 +1721,283 @@ msgstr ""
 msgid "An unknown exception occurred."
 msgstr ""
 
-#: neutron/common/exceptions.py:46
+#: neutron/common/exceptions.py:50
 #, python-format
 msgid "Bad %(resource)s request: %(msg)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:58
+#: neutron/common/exceptions.py:62
 msgid "Not authorized."
 msgstr ""
 
-#: neutron/common/exceptions.py:62
-msgid "The service is unavailable"
-msgstr ""
-
 #: neutron/common/exceptions.py:66
-#, python-format
-msgid "User does not have admin privileges: %(reason)s"
+msgid "The service is unavailable"
 msgstr ""
 
 #: neutron/common/exceptions.py:70
 #, python-format
-msgid "Policy doesn't allow %(action)s to be performed."
+msgid "User does not have admin privileges: %(reason)s"
 msgstr ""
 
 #: neutron/common/exceptions.py:74
 #, python-format
-msgid "Network %(net_id)s could not be found"
+msgid "Policy doesn't allow %(action)s to be performed."
 msgstr ""
 
 #: neutron/common/exceptions.py:78
 #, python-format
-msgid "Subnet %(subnet_id)s could not be found"
+msgid "Network %(net_id)s could not be found"
 msgstr ""
 
 #: neutron/common/exceptions.py:82
 #, python-format
-msgid "Port %(port_id)s could not be found"
+msgid "Subnet %(subnet_id)s could not be found"
 msgstr ""
 
 #: neutron/common/exceptions.py:86
 #, python-format
+msgid "Port %(port_id)s could not be found"
+msgstr ""
+
+#: neutron/common/exceptions.py:90
+#, python-format
 msgid "Port %(port_id)s could not be found on network %(net_id)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:91
-msgid "Policy configuration policy.json could not be found"
-msgstr ""
-
 #: neutron/common/exceptions.py:95
-#, python-format
-msgid "Requested rule:%(rule)s cannot be found"
+msgid "Policy configuration policy.json could not be found"
 msgstr ""
 
 #: neutron/common/exceptions.py:99
 #, python-format
-msgid "Failed to init policy %(policy)s because %(reason)s"
+msgid "Requested rule:%(rule)s cannot be found"
 msgstr ""
 
 #: neutron/common/exceptions.py:103
 #, python-format
-msgid "Failed to check policy %(policy)s because %(reason)s"
+msgid "Failed to init policy %(policy)s because %(reason)s"
 msgstr ""
 
 #: neutron/common/exceptions.py:107
 #, python-format
-msgid "Unsupported port state: %(port_state)s"
+msgid "Failed to check policy %(policy)s because %(reason)s"
 msgstr ""
 
 #: neutron/common/exceptions.py:111
-msgid "The resource is inuse"
+#, python-format
+msgid "Unsupported port state: %(port_state)s"
 msgstr ""
 
 #: neutron/common/exceptions.py:115
+msgid "The resource is inuse"
+msgstr ""
+
+#: neutron/common/exceptions.py:119
 #, python-format
 msgid ""
 "Unable to complete operation on network %(net_id)s. There are one or more"
 " ports still in use on the network."
 msgstr ""
 
-#: neutron/common/exceptions.py:120
+#: neutron/common/exceptions.py:124
 #, python-format
 msgid ""
 "Unable to complete operation on subnet %(subnet_id)s. One or more ports "
 "have an IP allocation from this subnet."
 msgstr ""
 
-#: neutron/common/exceptions.py:125
+#: neutron/common/exceptions.py:129
 #, python-format
 msgid ""
 "Unable to complete operation on port %(port_id)s for network %(net_id)s. "
 "Port already has an attacheddevice %(device_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:131
+#: neutron/common/exceptions.py:135
 #, python-format
 msgid ""
 "Unable to complete operation for network %(net_id)s. The mac address "
 "%(mac)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:137
+#: neutron/common/exceptions.py:141
 #, python-format
 msgid ""
 "Unable to complete operation for %(subnet_id)s. The number of host routes"
 " exceeds the limit %(quota)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:143
+#: neutron/common/exceptions.py:147
 #, python-format
 msgid ""
 "Unable to complete operation for %(subnet_id)s. The number of DNS "
 "nameservers exceeds the limit %(quota)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:148
+#: neutron/common/exceptions.py:152
 #, python-format
 msgid ""
 "Unable to complete operation for network %(net_id)s. The IP address "
 "%(ip_address)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:153
+#: neutron/common/exceptions.py:157
 #, python-format
 msgid ""
 "Unable to create the network. The VLAN %(vlan_id)s on physical network "
 "%(physical_network)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:159
+#: neutron/common/exceptions.py:163
 #, python-format
 msgid ""
 "Unable to create the flat network. Physical network %(physical_network)s "
 "is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:164
+#: neutron/common/exceptions.py:168
 #, python-format
 msgid "Unable to create the network. The tunnel ID %(tunnel_id)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:169
+#: neutron/common/exceptions.py:173
 msgid "Tenant network creation is not enabled."
 msgstr ""
 
-#: neutron/common/exceptions.py:177
+#: neutron/common/exceptions.py:181
 msgid ""
 "Unable to create the network. No tenant network is available for "
 "allocation."
 msgstr ""
 
-#: neutron/common/exceptions.py:182
+#: neutron/common/exceptions.py:186
 #, python-format
 msgid ""
 "Subnet on port %(port_id)s does not match the requested subnet "
 "%(subnet_id)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:187
+#: neutron/common/exceptions.py:191
 #, python-format
 msgid "Malformed request body: %(reason)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:197
+#: neutron/common/exceptions.py:201
 #, python-format
 msgid "Invalid input for operation: %(error_message)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:201
+#: neutron/common/exceptions.py:205
 #, python-format
 msgid "The allocation pool %(pool)s is not valid."
 msgstr ""
 
-#: neutron/common/exceptions.py:205
+#: neutron/common/exceptions.py:209
 #, python-format
 msgid ""
 "Found overlapping allocation pools:%(pool_1)s %(pool_2)s for subnet "
 "%(subnet_cidr)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:210
+#: neutron/common/exceptions.py:214
 #, python-format
 msgid "The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:215
+#: neutron/common/exceptions.py:219
 #, python-format
 msgid "Unable to generate unique mac on network %(net_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:219
+#: neutron/common/exceptions.py:223
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:223
+#: neutron/common/exceptions.py:227
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr ""
 
-#: neutron/common/exceptions.py:227
+#: neutron/common/exceptions.py:231
 #, python-format
 msgid "Creation failed. %(dev_name)s already exists."
 msgstr ""
 
-#: neutron/common/exceptions.py:231
-msgid "Sudo priviledge is required to run this command."
-msgstr ""
-
 #: neutron/common/exceptions.py:235
-#, python-format
-msgid "Unknown quota resources %(unknown)s."
+msgid "Sudo priviledge is required to run this command."
 msgstr ""
 
 #: neutron/common/exceptions.py:239
 #, python-format
-msgid "Quota exceeded for resources: %(overs)s"
+msgid "Unknown quota resources %(unknown)s."
 msgstr ""
 
 #: neutron/common/exceptions.py:243
-msgid "Tenant-id was missing from Quota request"
+#, python-format
+msgid "Quota exceeded for resources: %(overs)s"
 msgstr ""
 
 #: neutron/common/exceptions.py:247
+msgid "Tenant-id was missing from Quota request"
+msgstr ""
+
+#: neutron/common/exceptions.py:251
 #, python-format
 msgid ""
 "Change would make usage less than 0 for the following resources: "
 "%(unders)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:252
+#: neutron/common/exceptions.py:256
 #, python-format
 msgid ""
 "Unable to reconfigure sharing settings for network %(network)s. Multiple "
 "tenants are using it"
 msgstr ""
 
-#: neutron/common/exceptions.py:257
+#: neutron/common/exceptions.py:261
 #, python-format
 msgid "Invalid extension environment: %(reason)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:261
+#: neutron/common/exceptions.py:265
 #, python-format
 msgid "Invalid content type %(content_type)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:265
+#: neutron/common/exceptions.py:269
 #, python-format
 msgid "Unable to find any IP address on external network %(net_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:270
+#: neutron/common/exceptions.py:274
 msgid "More than one external network exists"
 msgstr ""
 
-#: neutron/common/exceptions.py:274
+#: neutron/common/exceptions.py:278
 #, python-format
 msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:279
+#: neutron/common/exceptions.py:283
 #, python-format
 msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:284
+#: neutron/common/exceptions.py:288
 #, python-format
 msgid ""
 "Current gateway ip %(ip_address)s already in use by port %(port_id)s. "
 "Unable to update."
 msgstr ""
 
-#: neutron/common/exceptions.py:289
+#: neutron/common/exceptions.py:293
 #, python-format
 msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'"
 msgstr ""
 
-#: neutron/common/exceptions.py:299
+#: neutron/common/exceptions.py:303
 #, python-format
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'"
 msgstr ""
@@ -2627,7 +2627,7 @@ msgstr ""
 msgid "Available commands"
 msgstr ""
 
-#: neutron/db/vpn/vpn_db.py:639
+#: neutron/db/vpn/vpn_db.py:658
 #, python-format
 msgid "vpnservice %s in db is already deleted"
 msgstr ""
@@ -3276,6 +3276,11 @@ msgstr ""
 #: neutron/extensions/vpnaas.py:81
 #, python-format
 msgid "Can not load driver :%(device_driver)s"
+msgstr ""
+
+#: neutron/extensions/vpnaas.py:85
+#, python-format
+msgid "Subnet %(subnet_id)s is not connected to Router %(router_id)s"
 msgstr ""
 
 #: neutron/openstack/common/excutils.py:48
@@ -11563,8 +11568,8 @@ msgstr ""
 msgid "Failed to disable vpn process on router %s"
 msgstr ""
 
-#: neutron/tests/unit/test_api_v2_resource.py:169
-#: neutron/tests/unit/test_api_v2_resource.py:232
+#: neutron/tests/unit/test_api_v2_resource.py:168
+#: neutron/tests/unit/test_api_v2_resource.py:230
 msgid "Unmapped error"
 msgstr ""
 
