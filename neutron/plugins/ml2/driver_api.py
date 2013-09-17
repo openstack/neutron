@@ -566,7 +566,7 @@ class MechanismDriver(object):
         :param context: PortContext instance describing the port
 
         Called inside transaction context on session, prior to
-        create_network_precommit or update_network_precommit, to
+        create_port_precommit or update_port_precommit, to
         attempt to establish a port binding. If the driver is able to
         bind the port, it calls context.set_binding with the binding
         details.
