@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-16 06:08+0000\n"
+"POT-Creation-Date: 2013-09-17 06:08+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (United States) "
@@ -1589,7 +1589,7 @@ msgstr ""
 msgid "Unrecognized attribute(s) '%s'"
 msgstr ""
 
-#: neutron/api/v2/base.py:619
+#: neutron/api/v2/base.py:620
 #, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
@@ -2506,90 +2506,90 @@ msgid ""
 "sort '%(resource)s'"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:228
+#: neutron/db/firewall/firewall_db.py:231
 #: neutron/services/firewall/fwaas_plugin.py:211
 msgid "create_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:244
+#: neutron/db/firewall/firewall_db.py:247
 #: neutron/services/firewall/fwaas_plugin.py:220
 msgid "update_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:254
+#: neutron/db/firewall/firewall_db.py:257
 #: neutron/services/firewall/fwaas_plugin.py:235
 msgid "delete_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:264
+#: neutron/db/firewall/firewall_db.py:267
 msgid "get_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:269
+#: neutron/db/firewall/firewall_db.py:272
 msgid "get_firewalls() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:275
+#: neutron/db/firewall/firewall_db.py:278
 msgid "get_firewalls_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:280
+#: neutron/db/firewall/firewall_db.py:283
 msgid "create_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:296
+#: neutron/db/firewall/firewall_db.py:299
 #: neutron/services/firewall/fwaas_plugin.py:244
 msgid "update_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:308
+#: neutron/db/firewall/firewall_db.py:311
 msgid "delete_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:320
+#: neutron/db/firewall/firewall_db.py:323
 msgid "get_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:325
+#: neutron/db/firewall/firewall_db.py:328
 msgid "get_firewall_policies() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:331
+#: neutron/db/firewall/firewall_db.py:334
 msgid "get_firewall_policies_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:336
+#: neutron/db/firewall/firewall_db.py:339
 msgid "create_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:364
+#: neutron/db/firewall/firewall_db.py:367
 #: neutron/services/firewall/fwaas_plugin.py:252
 msgid "update_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:388
+#: neutron/db/firewall/firewall_db.py:391
 #: neutron/services/firewall/fwaas_plugin.py:262
 msgid "delete_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:396
+#: neutron/db/firewall/firewall_db.py:399
 msgid "get_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:401
+#: neutron/db/firewall/firewall_db.py:404
 msgid "get_firewall_rules() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:407
+#: neutron/db/firewall/firewall_db.py:410
 msgid "get_firewall_rules_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:416
+#: neutron/db/firewall/firewall_db.py:419
 #: neutron/services/firewall/fwaas_plugin.py:281
 msgid "insert_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:456
+#: neutron/db/firewall/firewall_db.py:459
 #: neutron/services/firewall/fwaas_plugin.py:289
 msgid "remove_rule() called"
 msgstr ""
@@ -9748,56 +9748,56 @@ msgid ""
 "parameters to ensure chunk size is less than %(max_page_size)d"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:494
+#: neutron/plugins/nicira/common/sync.py:496
 #, python-format
 msgid "Fetching up to %s resources from NVP backend"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:514
+#: neutron/plugins/nicira/common/sync.py:516
 #, python-format
 msgid "Total data size: %d"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:518
+#: neutron/plugins/nicira/common/sync.py:520
 #, python-format
 msgid ""
 "Fetched %(num_lswitches)d logical switches, %(num_lswitchports)d logical "
 "switch ports,%(num_lrouters)d logical routers"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:534
+#: neutron/plugins/nicira/common/sync.py:536
 #, python-format
 msgid "Running state synchronization task. Chunk: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:544
+#: neutron/plugins/nicira/common/sync.py:546
 #, python-format
 msgid ""
 "An error occured while communicating with NVP backend. Will retry "
 "synchronization in %d seconds"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:548
+#: neutron/plugins/nicira/common/sync.py:550
 #, python-format
 msgid "Time elapsed querying NVP: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:555
+#: neutron/plugins/nicira/common/sync.py:557
 #, python-format
 msgid "Number of chunks: %d"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:571
+#: neutron/plugins/nicira/common/sync.py:573
 #, python-format
 msgid "Time elapsed hashing data: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:584
+#: neutron/plugins/nicira/common/sync.py:586
 #, python-format
 msgid "Synchronization for chunk %(chunk_num)d of %(total_chunks)d performed"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:596
+#: neutron/plugins/nicira/common/sync.py:598
 #, python-format
 msgid "Time elapsed at end of sync: %s"
 msgstr ""
@@ -11760,12 +11760,12 @@ msgstr ""
 msgid "An OFC exception has occurred: Failed to connect OFC : "
 msgstr ""
 
-#: neutron/tests/unit/nicira/fake_nvpapiclient.py:398
+#: neutron/tests/unit/nicira/fake_nvpapiclient.py:402
 #, python-format
 msgid "lswitch:%s not found"
 msgstr ""
 
-#: neutron/tests/unit/nicira/fake_nvpapiclient.py:407
+#: neutron/tests/unit/nicira/fake_nvpapiclient.py:411
 #, python-format
 msgid "lrouter:%s not found"
 msgstr ""
