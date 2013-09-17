@@ -113,24 +113,6 @@ class TestMidonetSubnetsV2(test_plugin.TestSubnetsV2,
     def test_create_subnet_inconsistent_ipv6_gatewayv4(self):
         pass
 
-    # Multiple subnets in a network is not supported by MidoNet yet.  Ignore
-    # tests that attempt to create them.
-
-    def test_create_subnets_bulk_emulated(self):
-        pass
-
-    def test_create_two_subnets(self):
-        pass
-
-    def test_list_subnets(self):
-        pass
-
-    def test_list_subnets_with_parameter(self):
-        pass
-
-    def test_create_two_subnets_same_cidr_returns_400(self):
-        pass
-
 
 class TestMidonetPortsV2(test_plugin.TestPortsV2,
                          MidonetPluginV2TestCase):
@@ -139,10 +121,4 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
     # create IPv6 subnet.
 
     def test_requested_subnet_id_v4_and_v6(self):
-        pass
-
-    # Multiple subnets in a network is not supported by MidoNet yet.  Ignore
-    # tests that attempt to create them.
-
-    def test_overlapping_subnets(self):
         pass
