@@ -115,7 +115,7 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
     def test_main(self):
         with mock.patch.object(hyperv_neutron_agent,
                                'HyperVNeutronAgent') as plugin:
-            with mock.patch.object(hyperv_neutron_agent, 'cfg') as cfg:
+            with mock.patch.object(hyperv_neutron_agent.cfg, 'CONF') as cfg:
                 with mock.patch('eventlet.monkey_patch') as eventlet:
                     with mock.patch.object(
                         hyperv_neutron_agent,

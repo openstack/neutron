@@ -21,7 +21,6 @@
 import eventlet
 import platform
 import re
-import sys
 import time
 
 from oslo.config import cfg
@@ -356,4 +355,3 @@ def main():
     # Start everything.
     LOG.info(_("Agent initialized successfully, now running... "))
     plugin.daemon_loop()
-    sys.exit(0)
