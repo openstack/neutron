@@ -40,12 +40,13 @@ def convert_to_valid_router_rules(data):
     Validates and converts router rules to the appropriate data structure
     Example argument = [{'source': 'any', 'destination': 'any',
                          'action':'deny'},
-                        {'source': '1.1.1.1/32', 'destination': 'any',
+                        {'source': '1.1.1.1/32', 'destination': 'external',
                          'action':'permit',
                          'nexthops': ['1.1.1.254', '1.1.1.253']}
                        ]
     """
     V4ANY = '0.0.0.0/0'
+    CIDRALL = ['any', 'external']
     if not isinstance(data, list):
         emsg = _("Invalid data format for router rule: '%s'") % data
         LOG.debug(emsg)
@@ -58,8 +59,8 @@ def convert_to_valid_router_rules(data):
         if not isinstance(rule['nexthops'], list):
             rule['nexthops'] = rule['nexthops'].split('+')
 
-        src = V4ANY if rule['source'] == 'any' else rule['source']
-        dst = V4ANY if rule['destination'] == 'any' else rule['destination']
+        src = V4ANY if rule['source'] in CIDRALL else rule['source']
+        dst = V4ANY if rule['destination'] in CIDRALL else rule['destination']
 
         errors = [attr._verify_dict_keys(expected_keys, rule, False),
                   attr._validate_subnet(dst),

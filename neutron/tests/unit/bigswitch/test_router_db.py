@@ -327,7 +327,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBIntTestCase):
             rules = body['router']['router_rules']
             self.assertEqual(_strip_rule_ids(rules), router_rules)
             # Try after adding another rule
-            router_rules.append({'source': 'any',
+            router_rules.append({'source': 'external',
                                  'destination': '8.8.8.8/32',
                                  'action': 'permit', 'nexthops': []})
             body = self._update('routers', r['router']['id'],
