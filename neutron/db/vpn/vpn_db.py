@@ -110,7 +110,7 @@ class IPsecSiteConnection(model_base.BASEV2,
     __tablename__ = 'ipsec_site_connections'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255))
-    peer_address = sa.Column(sa.String(64), nullable=False)
+    peer_address = sa.Column(sa.String(255), nullable=False)
     peer_id = sa.Column(sa.String(255), nullable=False)
     route_mode = sa.Column(sa.String(8), nullable=False)
     mtu = sa.Column(sa.Integer, nullable=False)
