@@ -135,7 +135,7 @@ class FakeClient:
 
     def _get_filters(self, querystring):
         if not querystring:
-            return (None, None, None)
+            return (None, None, None, None)
         params = urlparse.parse_qs(querystring)
         tag_filter = None
         attr_filter = None
@@ -144,15 +144,15 @@ class FakeClient:
                           'tag': params['tag'][0]}
         elif 'uuid' in params:
             attr_filter = {'uuid': params['uuid'][0]}
-        # Handle page_length
-        # TODO(salv-orlando): Handle page cursor too
+        # Handle page length and page cursor parameter
         page_len = params.get('_page_length')
+        page_cursor = params.get('_page_cursor')
         if page_len:
             page_len = int(page_len[0])
         else:
             # Explicitly set it to None (avoid 0 or empty list)
             page_len = None
-        return (tag_filter, attr_filter, page_len)
+        return (tag_filter, attr_filter, page_len, page_cursor)
 
     def _add_lswitch(self, body):
         fake_lswitch = json.loads(body)
@@ -369,7 +369,11 @@ class FakeClient:
 
     def _list(self, resource_type, response_file,
               parent_uuid=None, query=None, relations=None):
-        (tag_filter, attr_filter, page_len) = self._get_filters(query)
+        (tag_filter, attr_filter,
+         page_len, page_cursor) = self._get_filters(query)
+        # result_count attribute in response should appear only when
+        # page_cursor is not specified
+        do_result_count = not page_cursor
         with open("%s/%s" % (self.fake_files_path, response_file)) as f:
             response_template = f.read()
             res_dict = getattr(self, '_fake_%s_dict' % resource_type)
@@ -410,6 +414,15 @@ class FakeClient:
                     return True
                 return False
 
+            def _cursor_match(res_uuid, page_cursor):
+                if not page_cursor:
+                    return True
+                if page_cursor == res_uuid:
+                    # always return True once page_cursor has been found
+                    page_cursor = None
+                    return True
+                return False
+
             def _build_item(resource):
                 item = json.loads(response_template % resource)
                 if relations:
@@ -437,7 +450,8 @@ class FakeClient:
                      for res_uuid in res_dict
                      if (parent_func(res_uuid) and
                          _tag_match(res_uuid) and
-                         _attr_match(res_uuid))]
+                         _attr_match(res_uuid) and
+                         _cursor_match(res_uuid, page_cursor))]
             # Rather inefficient, but hey this is just a mock!
             next_cursor = None
             total_items = len(items)
@@ -447,10 +461,11 @@ class FakeClient:
                 except IndexError:
                     next_cursor = None
                 items = items[:page_len]
-            response_dict = {'results': items,
-                             'result_count': total_items}
+            response_dict = {'results': items}
             if next_cursor:
                 response_dict['page_cursor'] = next_cursor
+            if do_result_count:
+                response_dict['result_count'] = total_items
             return json.dumps(response_dict)
 
     def _show(self, resource_type, response_file,
