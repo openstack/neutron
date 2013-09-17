@@ -21,6 +21,7 @@ from oslo.config import cfg
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as q_exc
 from neutron.common import topics
+from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_gwmode_db
@@ -143,7 +144,8 @@ class VlanNetworkProvider(BaseNetworkProvider):
         network[provider.SEGMENTATION_ID] = binding.segmentation_id
 
 
-class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
+class HyperVNeutronPlugin(agents_db.AgentDbMixin,
+                          db_base_plugin_v2.NeutronDbPluginV2,
                           external_net_db.External_net_db_mixin,
                           l3_gwmode_db.L3_NAT_db_mixin,
                           portbindings_base.PortBindingBaseMixin):
@@ -153,7 +155,7 @@ class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     # is qualified by class
     __native_bulk_support = True
     supported_extension_aliases = ["provider", "external-net", "router",
-                                   "ext-gw-mode", "binding", "quotas"]
+                                   "agent", "ext-gw-mode", "binding", "quotas"]
 
     def __init__(self, configfile=None):
         self._db = hyperv_db.HyperVPluginDB()
@@ -165,7 +167,6 @@ class HyperVNeutronPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         self._parse_network_vlan_ranges()
         self._create_network_providers_map()
-
         self._db.sync_vlan_allocations(self._network_vlan_ranges)
 
         self._setup_rpc()

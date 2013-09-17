@@ -25,11 +25,14 @@ import time
 
 from oslo.config import cfg
 
+from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as logging_config
+from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron import context
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.hyperv.agent import utils
 from neutron.plugins.hyperv.agent import utilsfactory
@@ -63,6 +66,7 @@ agent_opts = [
 
 CONF = cfg.CONF
 CONF.register_opts(agent_opts, "AGENT")
+config.register_agent_state_opts_helper(cfg.CONF)
 
 
 class HyperVNeutronAgent(object):
@@ -74,12 +78,33 @@ class HyperVNeutronAgent(object):
         self._polling_interval = CONF.AGENT.polling_interval
         self._load_physical_network_mappings()
         self._network_vswitch_map = {}
+        self._set_agent_state()
         self._setup_rpc()
+
+    def _set_agent_state(self):
+        self.agent_state = {
+            'binary': 'neutron-hyperv-agent',
+            'host': cfg.CONF.host,
+            'topic': n_const.L2_AGENT_TOPIC,
+            'configurations': {'vswitch_mappings':
+                               self._physical_network_mappings},
+            'agent_type': n_const.AGENT_TYPE_HYPERV,
+            'start_flag': True}
+
+    def _report_state(self):
+        try:
+            self.state_rpc.report_state(self.context,
+                                        self.agent_state)
+            self.agent_state.pop('start_flag', None)
+        except Exception as ex:
+            LOG.exception(_("Failed reporting state! %s"), ex)
 
     def _setup_rpc(self):
         self.agent_id = 'hyperv_%s' % platform.node()
         self.topic = topics.AGENT
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
+
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
 
         # RPC network init
         self.context = context.get_admin_context_without_session()
@@ -93,6 +118,10 @@ class HyperVNeutronAgent(object):
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
+        report_interval = CONF.AGENT.report_interval
+        if report_interval:
+            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat.start(interval=report_interval)
 
     def _load_physical_network_mappings(self):
         self._physical_network_mappings = {}
@@ -103,14 +132,14 @@ class HyperVNeutronAgent(object):
             else:
                 pattern = re.escape(parts[0].strip()).replace('\\*', '.*')
                 vswitch = parts[1].strip()
-                self._physical_network_mappings[re.compile(pattern)] = vswitch
+                self._physical_network_mappings[pattern] = vswitch
 
     def _get_vswitch_for_physical_network(self, phys_network_name):
-        for compre in self._physical_network_mappings:
+        for pattern in self._physical_network_mappings:
             if phys_network_name is None:
                 phys_network_name = ''
-            if compre.match(phys_network_name):
-                return self._physical_network_mappings[compre]
+            if re.match(pattern, phys_network_name):
+                return self._physical_network_mappings[pattern]
         # Not found in the mappings, the vswitch has the same name
         return phys_network_name
 
