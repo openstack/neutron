@@ -431,7 +431,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         :param context: PortContext instance describing the port
 
         Called inside transaction context on session, prior to
-        create_network_precommit or update_network_precommit, to
+        create_port_precommit or update_port_precommit, to
         attempt to establish a port binding.
         """
         binding = context._binding
