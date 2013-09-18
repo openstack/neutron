@@ -29,6 +29,14 @@ class VcnsGeneralException(VcnsException):
         super(VcnsGeneralException, self).__init__()
 
 
+class VcnsBadRequest(exceptions.BadRequest):
+    pass
+
+
+class VcnsNotFound(exceptions.NotFound):
+    message = _('%(resource)s not found: %(msg)s')
+
+
 class VcnsApiException(VcnsException):
     message = _("An unknown exception %(status)s occurred: %(response)s.")
 

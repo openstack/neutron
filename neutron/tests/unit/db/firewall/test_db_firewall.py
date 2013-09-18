@@ -58,23 +58,25 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         for k in firewall.RESOURCE_ATTRIBUTE_MAP.keys()
     )
 
-    def setUp(self, core_plugin=None, fw_plugin=None):
+    def setUp(self, core_plugin=None, fw_plugin=None, ext_mgr=None):
         if not fw_plugin:
             fw_plugin = DB_FW_PLUGIN_KLASS
         service_plugins = {'fw_plugin_name': fw_plugin}
 
         fdb.Firewall_db_mixin.supported_extension_aliases = ["fwaas"]
         super(FirewallPluginDbTestCase, self).setUp(
+            ext_mgr=ext_mgr,
             service_plugins=service_plugins
         )
 
-        self.plugin = importutils.import_object(fw_plugin)
-        ext_mgr = api_ext.PluginAwareExtensionManager(
-            extensions_path,
-            {constants.FIREWALL: self.plugin}
-        )
-        app = config.load_paste_app('extensions_test_app')
-        self.ext_api = api_ext.ExtensionMiddleware(app, ext_mgr=ext_mgr)
+        if not ext_mgr:
+            self.plugin = importutils.import_object(fw_plugin)
+            ext_mgr = api_ext.PluginAwareExtensionManager(
+                extensions_path,
+                {constants.FIREWALL: self.plugin}
+            )
+            app = config.load_paste_app('extensions_test_app')
+            self.ext_api = api_ext.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
     def _test_list_resources(self, resource, items,
                              neutron_context=None,

@@ -1,4 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+    # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 # Copyright 2013 VMware, Inc.
 # All Rights Reserved
@@ -18,13 +18,16 @@
 
 import netaddr
 from oslo.config import cfg
-from sqlalchemy.orm import exc as sa_exc
 
 from neutron.common import exceptions as q_exc
+from neutron.db.firewall import firewall_db
 from neutron.db import l3_db
+from neutron.db import routedserviceinsertion_db as rsi_db
+from neutron.extensions import firewall as fw_ext
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.nicira.common import config  # noqa
+from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.dbexts import servicerouter as sr_db
 from neutron.plugins.nicira.dbexts import vcns_db
 from neutron.plugins.nicira.dbexts import vcns_models
@@ -38,6 +41,7 @@ from neutron.plugins.nicira.vshield.common.constants import RouterStatus
 from neutron.plugins.nicira.vshield.common import exceptions
 from neutron.plugins.nicira.vshield.tasks.constants import TaskStatus
 from neutron.plugins.nicira.vshield import vcns_driver
+from sqlalchemy.orm import exc as sa_exc
 
 LOG = logging.getLogger(__name__)
 
@@ -66,11 +70,15 @@ ROUTER_STATUS_LEVEL = {
 
 
 class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
-                        NeutronPlugin.NvpPluginV2):
-
+                        NeutronPlugin.NvpPluginV2,
+                        rsi_db.RoutedServiceInsertionDbMixin,
+                        firewall_db.Firewall_db_mixin,
+                        ):
     supported_extension_aliases = (
         NeutronPlugin.NvpPluginV2.supported_extension_aliases + [
-            'service-router'
+            "service-router",
+            "routed-service-insertion",
+            "fwaas"
         ])
 
     def __init__(self):
@@ -652,7 +660,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             router = self._get_router(context, router_id)
             if router.enable_snat:
                 self._update_nat_rules(context, router)
-            # TODO(fank): do rollback if error, or have a dedicated thread
+            # TODO(fank): do rollback on error, or have a dedicated thread
             # do sync work (rollback, re-configure, or make router down)
             self._vcns_update_static_routes(context, router=router)
         return info
@@ -664,7 +672,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             router = self._get_router(context, router_id)
             if router.enable_snat:
                 self._update_nat_rules(context, router)
-            # TODO(fank): do rollback if error, or have a dedicated thread
+            # TODO(fank): do rollback on error, or have a dedicated thread
             # do sync work (rollback, re-configure, or make router down)
             self._vcns_update_static_routes(context, router=router)
         return info
@@ -675,7 +683,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         router_id = fip.get('router_id')
         if router_id and self._is_advanced_service_router(context, router_id):
             router = self._get_router(context, router_id)
-            # TODO(fank): do rollback if error, or have a dedicated thread
+            # TODO(fank): do rollback on error, or have a dedicated thread
             # do sync work (rollback, re-configure, or make router down)
             self._update_interface(context, router)
             self._update_nat_rules(context, router)
@@ -687,7 +695,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         router_id = fip.get('router_id')
         if router_id and self._is_advanced_service_router(context, router_id):
             router = self._get_router(context, router_id)
-            # TODO(fank): do rollback if error, or have a dedicated thread
+            # TODO(fank): do rollback on error, or have a dedicated thread
             # do sync work (rollback, re-configure, or make router down)
             self._update_interface(context, router)
             self._update_nat_rules(context, router)
@@ -701,7 +709,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         super(NvpAdvancedPlugin, self).delete_floatingip(context, id)
         if router_id and self._is_advanced_service_router(context, router_id):
             router = self._get_router(context, router_id)
-            # TODO(fank): do rollback if error, or have a dedicated thread
+            # TODO(fank): do rollback on error, or have a dedicated thread
             # do sync work (rollback, re-configure, or make router down)
             self._update_interface(context, router)
             self._update_nat_rules(context, router)
@@ -717,16 +725,291 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                                                                 port_id)
         if router_id and self._is_advanced_service_router(context, router_id):
             router = self._get_router(context, router_id)
-            # TODO(fank): do rollback if error, or have a dedicated thread
+            # TODO(fank): do rollback on error, or have a dedicated thread
             # do sync work (rollback, re-configure, or make router down)
             self._update_interface(context, router)
             self._update_nat_rules(context, router)
 
+    #
+    # FWaaS plugin implementation
+    #
+    def _firewall_set_status(
+        self, context, firewall_id, status, firewall=None):
+        with context.session.begin(subtransactions=True):
+            fw_db = self._get_firewall(context, firewall_id)
+            if status == service_constants.PENDING_UPDATE and (
+                fw_db.status == service_constants.PENDING_DELETE):
+                    raise fw_ext.FirewallInPendingState(
+                        firewall_id=firewall_id, pending_state=status)
+            else:
+                fw_db.status = status
+                if firewall:
+                    firewall['status'] = status
+
+    def _ensure_firewall_update_allowed(self, context, firewall_id):
+        fwall = self.get_firewall(context, firewall_id)
+        if fwall['status'] in [service_constants.PENDING_CREATE,
+                               service_constants.PENDING_UPDATE,
+                               service_constants.PENDING_DELETE]:
+            raise fw_ext.FirewallInPendingState(firewall_id=firewall_id,
+                                                pending_state=fwall['status'])
+
+    def _ensure_firewall_policy_update_allowed(
+        self, context, firewall_policy_id):
+        firewall_policy = self.get_firewall_policy(context, firewall_policy_id)
+        for firewall_id in firewall_policy.get('firewall_list', []):
+            self._ensure_firewall_update_allowed(context, firewall_id)
+
+    def _ensure_update_or_delete_firewall_rule(
+        self, context, firewall_rule_id):
+        fw_rule = self.get_firewall_rule(context, firewall_rule_id)
+        if fw_rule.get('firewall_policy_id'):
+            self._ensure_firewall_policy_update_allowed(
+                context, fw_rule['firewall_policy_id'])
+
+    def _make_firewall_rule_list_by_policy_id(self, context, fw_policy_id):
+        if not fw_policy_id:
+            return None
+        firewall_policy_db = self._get_firewall_policy(context, fw_policy_id)
+        return [
+            self._make_firewall_rule_dict(fw_rule_db)
+            for fw_rule_db in firewall_policy_db['firewall_rules']
+        ]
+
+    def _get_edge_id_by_vcns_edge_binding(self, context,
+                                          router_id):
+        #Get vcns_router_binding mapping between router and edge
+        router_binding = vcns_db.get_vcns_router_binding(
+            context.session, router_id)
+        return router_binding.edge_id
+
+    def _get_firewall_list_from_firewall_policy(self, context, policy_id):
+        firewall_policy_db = self._get_firewall_policy(context, policy_id)
+        return [
+            self._make_firewall_dict(fw_db)
+            for fw_db in firewall_policy_db['firewalls']
+        ]
+
+    def _get_firewall_list_from_firewall_rule(self, context, rule_id):
+        rule = self._get_firewall_rule(context, rule_id)
+        if not rule.firewall_policy_id:
+            # The firewall rule is not associated with firewall policy yet
+            return None
+
+        return self._get_firewall_list_from_firewall_policy(
+            context, rule.firewall_policy_id)
+
+    def _vcns_update_firewall(self, context, fw, router_id=None, **kwargs):
+        edge_id = kwargs.get('edge_id')
+        if not edge_id:
+            edge_id = self._get_edge_id_by_vcns_edge_binding(
+                context, router_id)
+        firewall_rule_list = kwargs.get('firewall_rule_list')
+        if not firewall_rule_list:
+            firewall_rule_list = self._make_firewall_rule_list_by_policy_id(
+                context, fw['firewall_policy_id'])
+        fw_with_rules = fw
+        fw_with_rules['firewall_rule_list'] = firewall_rule_list
+        try:
+            self.vcns_driver.update_firewall(context, edge_id, fw_with_rules)
+        except exceptions.VcnsApiException as e:
+            self._firewall_set_status(
+                context, fw['id'], service_constants.ERROR)
+            msg = (_("Failed to create firewall on vShield Edge "
+                     "bound on router %s") % router_id)
+            LOG.exception(msg)
+            raise e
+
+        except exceptions.BadRequest as e:
+            self._firewall_set_status(
+                context, fw['id'], service_constants.ERROR)
+            LOG.exception(_("Bad Firewall request Input"))
+            raise e
+
+    def _vcns_delete_firewall(self, context, router_id=None, **kwargs):
+        edge_id = kwargs.get('edge_id')
+        if not edge_id:
+            edge_id = self._get_edge_id_by_vcns_edge_binding(
+                context, router_id)
+        #TODO(linb):do rollback on error
+        self.vcns_driver.delete_firewall(context, edge_id)
+
+    def create_firewall(self, context, firewall):
+        LOG.debug(_("create_firewall() called"))
+        router_id = firewall['firewall'].get(vcns_const.ROUTER_ID)
+        if not router_id:
+            msg = _("router_id is not provided!")
+            LOG.error(msg)
+            raise q_exc.BadRequest(resource='router', msg=msg)
+        if not self._is_advanced_service_router(context, router_id):
+            msg = _("router_id:%s is not an advanced router!") % router_id
+            LOG.error(msg)
+            raise q_exc.BadRequest(resource='router', msg=msg)
+        if self._get_resource_router_id_binding(
+            context, firewall_db.Firewall, router_id=router_id):
+            msg = _("A firewall is already associated with the router")
+            LOG.error(msg)
+            raise nvp_exc.NvpServiceOverQuota(
+                overs='firewall', err_msg=msg)
+
+        fw = super(NvpAdvancedPlugin, self).create_firewall(context, firewall)
+        #Add router service insertion binding with firewall object
+        res = {
+            'id': fw['id'],
+            'router_id': router_id
+        }
+        self._process_create_resource_router_id(
+            context, res, firewall_db.Firewall)
+        #Since there is only one firewall per edge,
+        #here would be bulk configureation operation on firewall
+        self._vcns_update_firewall(context, fw, router_id)
+        self._firewall_set_status(
+            context, fw['id'], service_constants.ACTIVE, fw)
+        return fw
+
+    def update_firewall(self, context, id, firewall):
+        LOG.debug(_("update_firewall() called"))
+        self._ensure_firewall_update_allowed(context, id)
+        rule_list_pre = self._make_firewall_rule_list_by_policy_id(
+            context,
+            self.get_firewall(context, id)['firewall_policy_id'])
+        firewall['firewall']['status'] = service_constants.PENDING_UPDATE
+        fw = super(NvpAdvancedPlugin, self).update_firewall(
+            context, id, firewall)
+        rule_list_new = self._make_firewall_rule_list_by_policy_id(
+            context, fw['firewall_policy_id'])
+        if rule_list_pre == rule_list_new:
+            self._firewall_set_status(
+                context, fw['id'], service_constants.ACTIVE, fw)
+            return fw
+        else:
+            service_router_binding = self._get_resource_router_id_binding(
+                context, firewall_db.Firewall, resource_id=id)
+            self._vcns_update_firewall(
+                context, fw, service_router_binding.router_id)
+            self._firewall_set_status(
+                context, fw['id'], service_constants.ACTIVE, fw)
+            return fw
+
+    def delete_firewall(self, context, id):
+        LOG.debug(_("delete_firewall() called"))
+        self._firewall_set_status(
+            context, id, service_constants.PENDING_DELETE)
+        service_router_binding = self._get_resource_router_id_binding(
+            context, firewall_db.Firewall, resource_id=id)
+        self._vcns_delete_firewall(context, service_router_binding.router_id)
+        super(NvpAdvancedPlugin, self).delete_firewall(context, id)
+        self._delete_resource_router_id_binding(
+            context, id, firewall_db.Firewall)
+
+    def update_firewall_rule(self, context, id, firewall_rule):
+        LOG.debug(_("update_firewall_rule() called"))
+        self._ensure_update_or_delete_firewall_rule(context, id)
+        fwr_pre = self.get_firewall_rule(context, id)
+        fwr = super(NvpAdvancedPlugin, self).update_firewall_rule(
+            context, id, firewall_rule)
+        if fwr_pre == fwr:
+            return fwr
+
+        # check if this rule is associated with firewall
+        fw_list = self._get_firewall_list_from_firewall_rule(context, id)
+        if not fw_list:
+            return fwr
+
+        for fw in fw_list:
+            # get router service insertion binding with firewall id
+            service_router_binding = self._get_resource_router_id_binding(
+                context, firewall_db.Firewall, resource_id=fw['id'])
+            edge_id = self._get_edge_id_by_vcns_edge_binding(
+                context, service_router_binding.router_id)
+
+            #TODO(linb): do rollback on error
+            self.vcns_driver.update_firewall_rule(context, id, edge_id, fwr)
+
+        return fwr
+
+    def update_firewall_policy(self, context, id, firewall_policy):
+        LOG.debug(_("update_firewall_policy() called"))
+        self._ensure_firewall_policy_update_allowed(context, id)
+        firewall_rules_pre = self._make_firewall_rule_list_by_policy_id(
+            context, id)
+        fwp = super(NvpAdvancedPlugin, self).update_firewall_policy(
+            context, id, firewall_policy)
+        firewall_rules = self._make_firewall_rule_list_by_policy_id(
+            context, id)
+        if firewall_rules_pre == firewall_rules:
+            return fwp
+
+        # check if this policy is associated with firewall
+        fw_list = self._get_firewall_list_from_firewall_policy(context, id)
+        if not fw_list:
+            return fwp
+
+        for fw in fw_list:
+            # Get the router_service insertion binding with firewall id
+            # TODO(fank): optimized by using _get_resource_router_id_bindings
+            service_router_binding = self._get_resource_router_id_binding(
+                context, firewall_db.Firewall, resource_id=fw['id'])
+            self._vcns_update_firewall(
+                context, fw, service_router_binding.router_id)
+        return fwp
+
+    def insert_rule(self, context, id, rule_info):
+        LOG.debug(_("insert_rule() called"))
+        self._ensure_firewall_policy_update_allowed(context, id)
+        fwp = super(NvpAdvancedPlugin, self).insert_rule(
+            context, id, rule_info)
+        fwr = super(NvpAdvancedPlugin, self).get_firewall_rule(
+            context, rule_info['firewall_rule_id'])
+
+        # check if this policy is associated with firewall
+        fw_list = self._get_firewall_list_from_firewall_policy(context, id)
+        if not fw_list:
+            return fwp
+        for fw in fw_list:
+            # TODO(fank): optimized by using _get_resource_router_id_bindings
+            service_router_binding = self._get_resource_router_id_binding(
+                context, firewall_db.Firewall, resource_id=fw['id'])
+            edge_id = self._get_edge_id_by_vcns_edge_binding(
+                context, service_router_binding.router_id)
+
+            if rule_info.get('insert_before') or rule_info.get('insert_after'):
+                #if insert_before or insert_after is set, we would call
+                #VCNS insert_rule API
+                #TODO(linb): do rollback on error
+                self.vcns_driver.insert_rule(context, rule_info, edge_id, fwr)
+            else:
+                #Else we would call bulk configuration on the firewall
+                self._vcns_update_firewall(context, fw, edge_id=edge_id)
+        return fwp
+
+    def remove_rule(self, context, id, rule_info):
+        LOG.debug(_("remove_rule() called"))
+        self._ensure_firewall_policy_update_allowed(context, id)
+        fwp = super(NvpAdvancedPlugin, self).remove_rule(
+            context, id, rule_info)
+        fwr = super(NvpAdvancedPlugin, self).get_firewall_rule(
+            context, rule_info['firewall_rule_id'])
+
+        # check if this policy is associated with firewall
+        fw_list = self._get_firewall_list_from_firewall_policy(context, id)
+        if not fw_list:
+            return fwp
+        for fw in fw_list:
+            # TODO(fank): optimized by using _get_resource_router_id_bindings
+            service_router_binding = self._get_resource_router_id_binding(
+                context, firewall_db.Firewall, resource_id=fw['id'])
+            edge_id = self._get_edge_id_by_vcns_edge_binding(
+                context, service_router_binding.router_id)
+            #TODO(linb): do rollback on error
+            self.vcns_driver.delete_firewall_rule(
+                context, fwr['id'], edge_id)
+        return fwp
+
 
 class VcnsCallbacks(object):
-    """Edge callback implementation
-
-    Callback functions for asynchronous tasks
+    """Edge callback implementation Callback functions for
+    asynchronous tasks.
     """
     def __init__(self, plugin):
         self.plugin = plugin

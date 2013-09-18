@@ -474,13 +474,13 @@ class TestNiciraL3ExtensionManager(object):
         return []
 
 
-class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase,
-                              NiciraPluginV2TestCase):
+class NiciraL3NatTest(test_l3_plugin.L3BaseForIntTests,
+                      NiciraPluginV2TestCase):
 
     def _restore_l3_attribute_map(self):
         l3.RESOURCE_ATTRIBUTE_MAP = self._l3_attribute_map_bk
 
-    def setUp(self, plugin=None, ext_mgr=None):
+    def setUp(self, plugin=None, ext_mgr=None, service_plugins=None):
         self._l3_attribute_map_bk = {}
         for item in l3.RESOURCE_ATTRIBUTE_MAP:
             self._l3_attribute_map_bk[item] = (
@@ -488,16 +488,18 @@ class TestNiciraL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase,
         cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
         self.addCleanup(self._restore_l3_attribute_map)
         ext_mgr = ext_mgr or TestNiciraL3ExtensionManager()
-        super(TestNiciraL3NatTestCase, self).setUp(
-            plugin=plugin, ext_mgr=ext_mgr)
+        super(NiciraL3NatTest, self).setUp(
+            plugin=plugin, ext_mgr=ext_mgr, service_plugins=service_plugins)
         plugin_instance = NeutronManager.get_plugin()
         self._plugin_name = "%s.%s" % (
             plugin_instance.__module__,
             plugin_instance.__class__.__name__)
         self._plugin_class = plugin_instance.__class__
 
-    def tearDown(self):
-        super(TestNiciraL3NatTestCase, self).tearDown()
+
+class TestNiciraL3NatTestCase(NiciraL3NatTest,
+                              test_l3_plugin.L3NatDBIntTestCase,
+                              NiciraPluginV2TestCase):
 
     def _create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'

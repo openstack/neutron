@@ -65,12 +65,33 @@ class RoutedServiceInsertionDbMixin(object):
             context, resource['resource_id'], model)
         resource[rsi.ROUTER_ID] = binding['router_id']
 
-    def _get_resource_router_id_binding(self, context, resource_id, model):
+    def _get_resource_router_id_binding(self, context, model,
+                                        resource_id=None,
+                                        router_id=None):
         query = self._model_query(context, ServiceRouterBinding)
         query = query.filter(
-            ServiceRouterBinding.resource_id == resource_id,
             ServiceRouterBinding.resource_type == model.__tablename__)
+        if resource_id:
+            query = query.filter(
+                ServiceRouterBinding.resource_id == resource_id)
+        if router_id:
+            query = query.filter(
+                ServiceRouterBinding.router_id == router_id)
         return query.first()
+
+    def _get_resource_router_id_bindings(self, context, model,
+                                         resource_ids=None,
+                                         router_ids=None):
+        query = self._model_query(context, ServiceRouterBinding)
+        query = query.filter(
+            ServiceRouterBinding.resource_type == model.__tablename__)
+        if resource_ids:
+            query = query.filter(
+                ServiceRouterBinding.resource_id.in_(resource_ids))
+        if router_ids:
+            query = query.filter(
+                ServiceRouterBinding.router_id.in_(router_ids))
+        return query.all()
 
     def _make_resource_router_id_dict(self, resource_router_binding, model,
                                       fields=None):
@@ -82,6 +103,6 @@ class RoutedServiceInsertionDbMixin(object):
     def _delete_resource_router_id_binding(self, context, resource_id, model):
         with context.session.begin(subtransactions=True):
             binding = self._get_resource_router_id_binding(
-                context, resource_id, model)
+                context, model, resource_id=resource_id)
             if binding:
                 context.session.delete(binding)

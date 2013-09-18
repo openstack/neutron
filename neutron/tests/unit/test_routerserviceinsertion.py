@@ -52,8 +52,8 @@ class RouterServiceInsertionTestPlugin(
     db_base_plugin_v2.NeutronDbPluginV2):
 
     supported_extension_aliases = [
-        "router", "router-service-type",
-        "routed-service-insertion", "service-type", "lbaas"
+        "router", "router-service-type", "routed-service-insertion",
+        "service-type", "lbaas"
     ]
 
     def create_router(self, context, router):
@@ -104,7 +104,7 @@ class RouterServiceInsertionTestPlugin(
         o = method(context, id, fields)
         if fields is None or rsi.ROUTER_ID in fields:
             rsbind = self._get_resource_router_id_binding(
-                context, id, model)
+                context, model, id)
             if rsbind:
                 o[rsi.ROUTER_ID] = rsbind['router_id']
         return o
@@ -116,7 +116,7 @@ class RouterServiceInsertionTestPlugin(
                              method_name)
             method(context, id)
             self._delete_resource_router_id_binding(context, id, model)
-        if self._get_resource_router_id_binding(context, id, model):
+        if self._get_resource_router_id_binding(context, model, id):
             raise Exception("{0}-router binding is not deleted".format(res))
 
     def create_pool(self, context, pool):
