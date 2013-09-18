@@ -475,6 +475,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         need_port_update_notify = False
 
         session = context.session
+        changed_fixed_ips = 'fixed_ips' in port['port']
         with session.begin(subtransactions=True):
             original_port = super(Ml2Plugin, self).get_port(context, id)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
@@ -485,6 +486,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     context, updated_port,
                     port['port'][addr_pair.ADDRESS_PAIRS])
                 need_port_update_notify = True
+            elif changed_fixed_ips:
+                self._check_fixed_ips_and_address_pairs_no_overlap(
+                    context, updated_port)
             need_port_update_notify |= self.update_security_group_on_port(
                 context, id, port, original_port, updated_port)
             network = self.get_network(context, original_port['network_id'])
