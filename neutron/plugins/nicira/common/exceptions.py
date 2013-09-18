@@ -67,7 +67,7 @@ class MaintenanceInProgress(NvpPluginException):
 class NvpServicePluginException(q_exc.NeutronException):
     """NVP Service Plugin exceptions."""
     message = _("An unexpected error happened "
-                "in the NVP Service Plugin:%(err_msg)s")
+                "in the NVP Service Plugin: %(err_msg)s")
 
 
 class NvpServiceOverQuota(q_exc.Conflict):

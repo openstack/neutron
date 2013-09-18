@@ -17,8 +17,13 @@
 
 from sqlalchemy.orm import exc
 
+from neutron.openstack.common import log as logging
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.dbexts import vcns_models
+from neutron.plugins.nicira.vshield.common import (
+    exceptions as vcns_exc)
+
+LOG = logging.getLogger(__name__)
 
 
 def add_vcns_router_binding(session, router_id, vse_id, lswitch_id, status):
@@ -55,6 +60,7 @@ def delete_vcns_router_binding(session, router_id):
 
 #
 # Edge Firewall binding methods
+#
 def add_vcns_edge_firewallrule_binding(session, map_info):
     with session.begin(subtransactions=True):
         binding = vcns_models.VcnsEdgeFirewallRuleBinding(
@@ -95,3 +101,103 @@ def cleanup_vcns_edge_firewallrule_binding(session, edge_id):
         session.query(
             vcns_models.VcnsEdgeFirewallRuleBinding).filter_by(
                 edge_id=edge_id).delete()
+
+
+def add_vcns_edge_vip_binding(session, map_info):
+    with session.begin(subtransactions=True):
+        binding = vcns_models.VcnsEdgeVipBinding(
+            vip_id=map_info['vip_id'],
+            edge_id=map_info['edge_id'],
+            vip_vseid=map_info['vip_vseid'],
+            app_profileid=map_info['app_profileid'])
+        session.add(binding)
+
+    return binding
+
+
+def get_vcns_edge_vip_binding(session, id):
+    with session.begin(subtransactions=True):
+        try:
+            qry = session.query(vcns_models.VcnsEdgeVipBinding)
+            return qry.filter_by(vip_id=id).one()
+        except exc.NoResultFound:
+            msg = _("VIP Resource binding with id:%s not found!") % id
+            LOG.exception(msg)
+            raise vcns_exc.VcnsNotFound(
+                resource='router_service_binding', msg=msg)
+
+
+def delete_vcns_edge_vip_binding(session, id):
+    with session.begin(subtransactions=True):
+        qry = session.query(vcns_models.VcnsEdgeVipBinding)
+        if not qry.filter_by(vip_id=id).delete():
+            msg = _("VIP Resource binding with id:%s not found!") % id
+            LOG.exception(msg)
+            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+
+
+def add_vcns_edge_pool_binding(session, map_info):
+    with session.begin(subtransactions=True):
+        binding = vcns_models.VcnsEdgePoolBinding(
+            pool_id=map_info['pool_id'],
+            edge_id=map_info['edge_id'],
+            pool_vseid=map_info['pool_vseid'])
+        session.add(binding)
+
+    return binding
+
+
+def get_vcns_edge_pool_binding(session, id, edge_id):
+    with session.begin(subtransactions=True):
+        return (session.query(vcns_models.VcnsEdgePoolBinding).
+                filter_by(pool_id=id, edge_id=edge_id).first())
+
+
+def get_vcns_edge_pool_binding_by_vseid(session, edge_id, pool_vseid):
+    with session.begin(subtransactions=True):
+        try:
+            qry = session.query(vcns_models.VcnsEdgePoolBinding)
+            binding = qry.filter_by(edge_id=edge_id,
+                                    pool_vseid=pool_vseid).one()
+        except exc.NoResultFound:
+            msg = (_("Pool Resource binding with edge_id:%(edge_id)s "
+                     "pool_vseid:%(pool_vseid)s not found!") %
+                   {'edge_id': edge_id, 'pool_vseid': pool_vseid})
+            LOG.exception(msg)
+            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+        return binding
+
+
+def delete_vcns_edge_pool_binding(session, id, edge_id):
+    with session.begin(subtransactions=True):
+        qry = session.query(vcns_models.VcnsEdgePoolBinding)
+        if not qry.filter_by(pool_id=id, edge_id=edge_id).delete():
+            msg = _("Pool Resource binding with id:%s not found!") % id
+            LOG.exception(msg)
+            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+
+
+def add_vcns_edge_monitor_binding(session, map_info):
+    with session.begin(subtransactions=True):
+        binding = vcns_models.VcnsEdgeMonitorBinding(
+            monitor_id=map_info['monitor_id'],
+            edge_id=map_info['edge_id'],
+            monitor_vseid=map_info['monitor_vseid'])
+        session.add(binding)
+
+    return binding
+
+
+def get_vcns_edge_monitor_binding(session, id, edge_id):
+    with session.begin(subtransactions=True):
+        return (session.query(vcns_models.VcnsEdgeMonitorBinding).
+                filter_by(monitor_id=id, edge_id=edge_id).first())
+
+
+def delete_vcns_edge_monitor_binding(session, id, edge_id):
+    with session.begin(subtransactions=True):
+        qry = session.query(vcns_models.VcnsEdgeMonitorBinding)
+        if not qry.filter_by(monitor_id=id, edge_id=edge_id).delete():
+            msg = _("Monitor Resource binding with id:%s not found!") % id
+            LOG.exception(msg)
+            raise nvp_exc.NvpServicePluginException(err_msg=msg)

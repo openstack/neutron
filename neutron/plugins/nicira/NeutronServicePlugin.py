@@ -22,8 +22,10 @@ from oslo.config import cfg
 from neutron.common import exceptions as q_exc
 from neutron.db.firewall import firewall_db
 from neutron.db import l3_db
+from neutron.db.loadbalancer import loadbalancer_db
 from neutron.db import routedserviceinsertion_db as rsi_db
 from neutron.extensions import firewall as fw_ext
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.nicira.common import config  # noqa
@@ -39,6 +41,7 @@ from neutron.plugins.nicira.vshield.common import (
     constants as vcns_const)
 from neutron.plugins.nicira.vshield.common.constants import RouterStatus
 from neutron.plugins.nicira.vshield.common import exceptions
+from neutron.plugins.nicira.vshield.tasks.constants import TaskState
 from neutron.plugins.nicira.vshield.tasks.constants import TaskStatus
 from neutron.plugins.nicira.vshield import vcns_driver
 from sqlalchemy.orm import exc as sa_exc
@@ -73,12 +76,15 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                         NeutronPlugin.NvpPluginV2,
                         rsi_db.RoutedServiceInsertionDbMixin,
                         firewall_db.Firewall_db_mixin,
+                        loadbalancer_db.LoadBalancerPluginDb
                         ):
+
     supported_extension_aliases = (
         NeutronPlugin.NvpPluginV2.supported_extension_aliases + [
             "service-router",
             "routed-service-insertion",
-            "fwaas"
+            "fwaas",
+            "lbaas"
         ])
 
     def __init__(self):
@@ -257,7 +263,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                                           binding['edge_id'],
                                           snat, dnat)
 
-    def _update_interface(self, context, router):
+    def _update_interface(self, context, router, sync=False):
         addr, mask, nexthop = self._get_external_attachment_info(
             context, router)
 
@@ -267,14 +273,20 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         for fip in fip_db:
             if fip.fixed_port_id:
                 secondary.append(fip.floating_ip_address)
+        #Add all vip addresses bound on the router
+        vip_addrs = self._get_all_vip_addrs_by_router_id(context,
+                                                         router['id'])
+        secondary.extend(vip_addrs)
 
         binding = vcns_db.get_vcns_router_binding(context.session,
                                                   router['id'])
-        self.vcns_driver.update_interface(
+        task = self.vcns_driver.update_interface(
             router['id'], binding['edge_id'],
             vcns_const.EXTERNAL_VNIC_INDEX,
             self.vcns_driver.external_network,
             addr, mask, secondary=secondary)
+        if sync:
+            task.wait(TaskState.RESULT)
 
     def _update_router_gw_info(self, context, router_id, info):
         if not self._is_advanced_service_router(context, router_id):
@@ -1005,6 +1017,483 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self.vcns_driver.delete_firewall_rule(
                 context, fwr['id'], edge_id)
         return fwp
+
+    #
+    # LBAAS service plugin implementation
+    #
+    def _get_edge_id_by_vip_id(self, context, vip_id):
+        try:
+            router_binding = self._get_resource_router_id_bindings(
+                context, loadbalancer_db.Vip, resource_ids=[vip_id])[0]
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to find the edge with "
+                                "vip_id: %s"), vip_id)
+        service_binding = vcns_db.get_vcns_router_binding(
+            context.session, router_binding.router_id)
+        return service_binding.edge_id
+
+    def _get_all_vip_addrs_by_router_id(
+        self, context, router_id):
+        vip_bindings = self._get_resource_router_id_bindings(
+            context, loadbalancer_db.Vip, router_ids=[router_id])
+        vip_addrs = []
+        for vip_binding in vip_bindings:
+            vip = self.get_vip(context, vip_binding.resource_id)
+            vip_addrs.append(vip.get('address'))
+        return vip_addrs
+
+    def _add_router_service_insertion_binding(self, context, resource_id,
+                                              router_id,
+                                              model):
+        res = {
+            'id': resource_id,
+            'router_id': router_id
+        }
+        self._process_create_resource_router_id(context, res,
+                                                model)
+
+    def _resource_set_status(self, context, model, id, status, obj=None,
+                             pool_id=None):
+        with context.session.begin(subtransactions=True):
+            try:
+                qry = context.session.query(model)
+                if issubclass(model, loadbalancer_db.PoolMonitorAssociation):
+                    res = qry.filter_by(monitor_id=id,
+                                        pool_id=pool_id).one()
+                else:
+                    res = qry.filter_by(id=id).one()
+                if status == service_constants.PENDING_UPDATE and (
+                    res.get('status') == service_constants.PENDING_DELETE):
+                    msg = (_("Operation can't be performed, Since resource "
+                             "%(model)s : %(id)s is in DELETEing status!") %
+                           {'model': model,
+                            'id': id})
+                    LOG.error(msg)
+                    raise nvp_exc.NvpServicePluginException(err_msg=msg)
+                else:
+                    res.status = status
+            except sa_exc.NoResultFound:
+                msg = (_("Resource %(model)s : %(id)s not found!") %
+                       {'model': model,
+                        'id': id})
+                LOG.exception(msg)
+                raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            if obj:
+                obj['status'] = status
+
+    def _vcns_create_pool_and_monitors(self, context, pool_id, **kwargs):
+        pool = self.get_pool(context, pool_id)
+        edge_id = kwargs.get('edge_id')
+        if not edge_id:
+            edge_id = self._get_edge_id_by_vip_id(
+                context, pool['vip_id'])
+        #Check wheter the pool is already created on the router
+        #in case of future's M:N relation between Pool and Vip
+
+        #Check associated HealthMonitors and then create them
+        for monitor_id in pool.get('health_monitors'):
+            hm = self.get_health_monitor(context, monitor_id)
+            try:
+                self.vcns_driver.create_health_monitor(
+                    context, edge_id, hm)
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    LOG.exception(_("Failed to create healthmonitor "
+                                    "associated with pool id: %s!") % pool_id)
+                    for monitor_ide in pool.get('health_monitors'):
+                        if monitor_ide == monitor_id:
+                            break
+                        self.vcns_driver.delete_health_monitor(
+                            context, monitor_ide, edge_id)
+        #Create the pool on the edge
+        members = [
+            super(NvpAdvancedPlugin, self).get_member(
+                context, member_id)
+            for member_id in pool.get('members')
+        ]
+        try:
+            self.vcns_driver.create_pool(context, edge_id, pool, members)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to create pool on vshield edge"))
+                self.vcns_driver.delete_pool(
+                    context, pool_id, edge_id)
+                for monitor_id in pool.get('health_monitors'):
+                    self.vcns_driver.delete_health_monitor(
+                        context, monitor_id, edge_id)
+
+    def _vcns_update_pool(self, context, pool, **kwargs):
+        edge_id = self._get_edge_id_by_vip_id(context, pool['vip_id'])
+        members = kwargs.get('members')
+        if not members:
+            members = [
+                super(NvpAdvancedPlugin, self).get_member(
+                    context, member_id)
+                for member_id in pool.get('members')
+            ]
+        self.vcns_driver.update_pool(context, edge_id, pool, members)
+
+    def create_vip(self, context, vip):
+        LOG.debug(_("create_vip() called"))
+        router_id = vip['vip'].get(vcns_const.ROUTER_ID)
+        if not router_id:
+            msg = _("router_id is not provided!")
+            LOG.error(msg)
+            raise q_exc.BadRequest(resource='router', msg=msg)
+
+        if not self._is_advanced_service_router(context, router_id):
+            msg = _("router_id: %s is not an advanced router!") % router_id
+            LOG.error(msg)
+            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+
+        #Check whether the vip port is an external port
+        subnet_id = vip['vip']['subnet_id']
+        network_id = self.get_subnet(context, subnet_id)['network_id']
+        ext_net = self._get_network(context, network_id)
+        if not ext_net.external:
+            msg = (_("Network '%s' is not a valid external "
+                     "network") % network_id)
+            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+
+        v = super(NvpAdvancedPlugin, self).create_vip(context, vip)
+        #Get edge_id for the resource
+        router_binding = vcns_db.get_vcns_router_binding(
+            context.session,
+            router_id)
+        edge_id = router_binding.edge_id
+        #Add vip_router binding
+        self._add_router_service_insertion_binding(context, v['id'],
+                                                   router_id,
+                                                   loadbalancer_db.Vip)
+        #Create the vip port on vShield Edge
+        router = self._get_router(context, router_id)
+        self._update_interface(context, router, sync=True)
+        #Create the vip and associated pool/monitor on the corresponding edge
+        try:
+            self._vcns_create_pool_and_monitors(
+                context, v['pool_id'], edge_id=edge_id)
+            self.vcns_driver.create_vip(context, edge_id, v)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to create vip!"))
+                self._delete_resource_router_id_binding(
+                    context, v['id'], loadbalancer_db.Vip)
+                super(NvpAdvancedPlugin, self).delete_vip(context, v['id'])
+        self._resource_set_status(context, loadbalancer_db.Vip,
+                                  v['id'], service_constants.ACTIVE, v)
+
+        return v
+
+    def update_vip(self, context, id, vip):
+        edge_id = self._get_edge_id_by_vip_id(context, id)
+        old_vip = self.get_vip(context, id)
+        vip['vip']['status'] = service_constants.PENDING_UPDATE
+        v = super(NvpAdvancedPlugin, self).update_vip(context, id, vip)
+        if old_vip['pool_id'] != v['pool_id']:
+            self.vcns_driver.delete_vip(context, id)
+            #Delete old pool/monitor on the edge
+            #TODO(linb): Factor out procedure for removing pool and health
+            #separate method
+            old_pool = self.get_pool(context, old_vip['pool_id'])
+            self.vcns_driver.delete_pool(
+                context, old_vip['pool_id'], edge_id)
+            for monitor_id in old_pool.get('health_monitors'):
+                self.vcns_driver.delete_health_monitor(
+                    context, monitor_id, edge_id)
+            #Create new pool/monitor object on the edge
+            #TODO(linb): add exception handle if error
+            self._vcns_create_pool_and_monitors(
+                context, v['pool_id'], edge_id=edge_id)
+            self.vcns_driver.create_vip(context, edge_id, v)
+            return v
+        try:
+            self.vcns_driver.update_vip(context, v)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to update vip with id: %s!"), id)
+                self._resource_set_status(context, loadbalancer_db.Vip,
+                                          id, service_constants.ERROR, v)
+
+        self._resource_set_status(context, loadbalancer_db.Vip,
+                                  v['id'], service_constants.ACTIVE, v)
+        return v
+
+    def delete_vip(self, context, id):
+        v = self.get_vip(context, id)
+        self._resource_set_status(
+            context, loadbalancer_db.Vip,
+            id, service_constants.PENDING_DELETE)
+        try:
+            self.vcns_driver.delete_vip(context, id)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to delete vip with id: %s!"), id)
+                self._resource_set_status(context, loadbalancer_db.Vip,
+                                          id, service_constants.ERROR)
+        edge_id = self._get_edge_id_by_vip_id(context, id)
+        #Check associated HealthMonitors and then delete them
+        pool = self.get_pool(context, v['pool_id'])
+        self.vcns_driver.delete_pool(context, v['pool_id'], edge_id)
+        for monitor_id in pool.get('health_monitors'):
+            #TODO(linb): do exception handle if error
+            self.vcns_driver.delete_health_monitor(
+                context, monitor_id, edge_id)
+
+        router_binding = self._get_resource_router_id_binding(
+            context, loadbalancer_db.Vip, resource_id=id)
+        router = self._get_router(context, router_binding.router_id)
+        self._delete_resource_router_id_binding(
+            context, id, loadbalancer_db.Vip)
+        super(NvpAdvancedPlugin, self).delete_vip(context, id)
+        self._update_interface(context, router, sync=True)
+
+    def update_pool(self, context, id, pool):
+        pool['pool']['status'] = service_constants.PENDING_UPDATE
+        p = super(NvpAdvancedPlugin, self).update_pool(context, id, pool)
+        #Check whether the pool is already associated with the vip
+        if not p.get('vip_id'):
+            self._resource_set_status(context, loadbalancer_db.Pool,
+                                      p['id'], service_constants.ACTIVE, p)
+            return p
+        try:
+            self._vcns_update_pool(context, p)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to update pool with id: %s!"), id)
+                self._resource_set_status(context, loadbalancer_db.Pool,
+                                          p['id'], service_constants.ERROR, p)
+        self._resource_set_status(context, loadbalancer_db.Pool,
+                                  p['id'], service_constants.ACTIVE, p)
+        return p
+
+    def create_member(self, context, member):
+        m = super(NvpAdvancedPlugin, self).create_member(context, member)
+        pool_id = m.get('pool_id')
+        pool = self.get_pool(context, pool_id)
+        if not pool.get('vip_id'):
+            self._resource_set_status(context, loadbalancer_db.Member,
+                                      m['id'], service_constants.ACTIVE, m)
+            return m
+        self._resource_set_status(context, loadbalancer_db.Pool,
+                                  pool_id,
+                                  service_constants.PENDING_UPDATE)
+        try:
+            self._vcns_update_pool(context, pool)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to update pool with the member"))
+                super(NvpAdvancedPlugin, self).delete_member(context, m['id'])
+
+        self._resource_set_status(context, loadbalancer_db.Pool,
+                                  pool_id, service_constants.ACTIVE)
+        self._resource_set_status(context, loadbalancer_db.Member,
+                                  m['id'], service_constants.ACTIVE, m)
+        return m
+
+    def update_member(self, context, id, member):
+        member['member']['status'] = service_constants.PENDING_UPDATE
+        old_member = self.get_member(context, id)
+        m = super(NvpAdvancedPlugin, self).update_member(
+            context, id, member)
+
+        if m['pool_id'] != old_member['pool_id']:
+            old_pool_id = old_member['pool_id']
+            old_pool = self.get_pool(context, old_pool_id)
+            if old_pool.get('vip_id'):
+                self._resource_set_status(
+                    context, loadbalancer_db.Pool,
+                    old_pool_id, service_constants.PENDING_UPDATE)
+                try:
+                    self._vcns_update_pool(context, old_pool)
+                except Exception:
+                    with excutils.save_and_reraise_exception():
+                        LOG.exception(_("Failed to update old pool "
+                                        "with the member"))
+                        super(NvpAdvancedPlugin, self).delete_member(
+                            context, m['id'])
+                self._resource_set_status(
+                    context, loadbalancer_db.Pool,
+                    old_pool_id, service_constants.ACTIVE)
+
+        pool_id = m['pool_id']
+        pool = self.get_pool(context, pool_id)
+        if not pool.get('vip_id'):
+            self._resource_set_status(context, loadbalancer_db.Member,
+                                      m['id'], service_constants.ACTIVE, m)
+            return m
+        self._resource_set_status(context, loadbalancer_db.Pool,
+                                  pool_id,
+                                  service_constants.PENDING_UPDATE)
+        try:
+            self._vcns_update_pool(context, pool)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to update pool with the member"))
+                super(NvpAdvancedPlugin, self).delete_member(
+                    context, m['id'])
+
+        self._resource_set_status(context, loadbalancer_db.Pool,
+                                  pool_id, service_constants.ACTIVE)
+        self._resource_set_status(context, loadbalancer_db.Member,
+                                  m['id'], service_constants.ACTIVE, m)
+        return m
+
+    def delete_member(self, context, id):
+        m = self.get_member(context, id)
+        super(NvpAdvancedPlugin, self).delete_member(context, id)
+        pool_id = m['pool_id']
+        pool = self.get_pool(context, pool_id)
+        if not pool.get('vip_id'):
+            return
+        self._resource_set_status(context, loadbalancer_db.Pool,
+                                  pool_id, service_constants.PENDING_UPDATE)
+        try:
+            self._vcns_update_pool(context, pool)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to update pool with the member"))
+        self._resource_set_status(context, loadbalancer_db.Pool,
+                                  pool_id, service_constants.ACTIVE)
+
+    def update_health_monitor(self, context, id, health_monitor):
+        old_hm = super(NvpAdvancedPlugin, self).get_health_monitor(
+            context, id)
+        hm = super(NvpAdvancedPlugin, self).update_health_monitor(
+            context, id, health_monitor)
+        for hm_pool in hm.get('pools'):
+            pool_id = hm_pool['pool_id']
+            pool = self.get_pool(context, pool_id)
+            if pool.get('vip_id'):
+                edge_id = self._get_edge_id_by_vip_id(
+                    context, pool['vip_id'])
+                try:
+                    self.vcns_driver.update_health_monitor(
+                        context, edge_id, old_hm, hm)
+                except Exception:
+                    with excutils.save_and_reraise_exception():
+                        LOG.exception(_("Failed to update monitor "
+                                        "with id: %s!"), id)
+        return hm
+
+    def delete_health_monitor(self, context, id):
+        with context.session.begin(subtransactions=True):
+            qry = context.session.query(
+                loadbalancer_db.PoolMonitorAssociation
+            ).filter_by(monitor_id=id)
+            for assoc in qry:
+                pool_id = assoc['pool_id']
+                super(NvpAdvancedPlugin,
+                      self).delete_pool_health_monitor(context,
+                                                       id,
+                                                       pool_id)
+                pool = self.get_pool(context, pool_id)
+                if not pool.get('vip_id'):
+                    continue
+                edge_id = self._get_edge_id_by_vip_id(
+                    context, pool['vip_id'])
+                self._resource_set_status(
+                    context, loadbalancer_db.Pool,
+                    pool_id, service_constants.PENDING_UPDATE)
+                try:
+                    self._vcns_update_pool(context, pool)
+                except Exception:
+                    with excutils.save_and_reraise_exception():
+                        LOG.exception(_("Failed to update pool with monitor!"))
+                self._resource_set_status(
+                    context, loadbalancer_db.Pool,
+                    pool_id, service_constants.ACTIVE)
+                try:
+                    self.vcns_driver.delete_health_monitor(
+                        context, id, edge_id)
+                except Exception:
+                    with excutils.save_and_reraise_exception():
+                        LOG.exception(_("Failed to delete monitor "
+                                        "with id: %s!"), id)
+                        super(NvpAdvancedPlugin,
+                              self).delete_health_monitor(context, id)
+                        self._delete_resource_router_id_binding(
+                            context, id, loadbalancer_db.HealthMonitor)
+
+        super(NvpAdvancedPlugin, self).delete_health_monitor(context, id)
+        self._delete_resource_router_id_binding(
+            context, id, loadbalancer_db.HealthMonitor)
+
+    def create_pool_health_monitor(self, context,
+                                   health_monitor, pool_id):
+        monitor_id = health_monitor['health_monitor']['id']
+        pool = self.get_pool(context, pool_id)
+        monitors = pool.get('health_monitors')
+        if len(monitors) > 0:
+            msg = _("Vcns right now can only support "
+                    "one monitor per pool")
+            LOG.error(msg)
+            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+        #Check whether the pool is already associated with the vip
+        if not pool.get('vip_id'):
+            res = super(NvpAdvancedPlugin,
+                        self).create_pool_health_monitor(context,
+                                                         health_monitor,
+                                                         pool_id)
+            return res
+        #Get the edge_id
+        edge_id = self._get_edge_id_by_vip_id(context, pool['vip_id'])
+        res = super(NvpAdvancedPlugin,
+                    self).create_pool_health_monitor(context,
+                                                     health_monitor,
+                                                     pool_id)
+        monitor = self.get_health_monitor(context, monitor_id)
+        #TODO(linb)Add Exception handle if error
+        self.vcns_driver.create_health_monitor(context, edge_id, monitor)
+        #Get updated pool
+        pool['health_monitors'].append(monitor['id'])
+        self._resource_set_status(
+            context, loadbalancer_db.Pool,
+            pool_id, service_constants.PENDING_UPDATE)
+        try:
+            self._vcns_update_pool(context, pool)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to associate monitor with pool!"))
+                self._resource_set_status(
+                    context, loadbalancer_db.Pool,
+                    pool_id, service_constants.ERROR)
+                super(NvpAdvancedPlugin, self).delete_pool_health_monitor(
+                    context, monitor_id, pool_id)
+        self._resource_set_status(
+            context, loadbalancer_db.Pool,
+            pool_id, service_constants.ACTIVE)
+        self._resource_set_status(
+            context, loadbalancer_db.PoolMonitorAssociation,
+            monitor_id, service_constants.ACTIVE, res,
+            pool_id=pool_id)
+        return res
+
+    def delete_pool_health_monitor(self, context, id, pool_id):
+        super(NvpAdvancedPlugin, self).delete_pool_health_monitor(
+            context, id, pool_id)
+        pool = self.get_pool(context, pool_id)
+        #Check whether the pool is already associated with the vip
+        if pool.get('vip_id'):
+            #Delete the monitor on vshield edge
+            edge_id = self._get_edge_id_by_vip_id(context, pool['vip_id'])
+            self._resource_set_status(
+                context, loadbalancer_db.Pool,
+                pool_id, service_constants.PENDING_UPDATE)
+            try:
+                self._vcns_update_pool(context, pool)
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    LOG.exception(
+                        _("Failed to update pool with pool_monitor!"))
+                    self._resource_set_status(
+                        context, loadbalancer_db.Pool,
+                        pool_id, service_constants.ERROR)
+            #TODO(linb): Add exception handle if error
+            self.vcns_driver.delete_health_monitor(context, id, edge_id)
+            self._resource_set_status(
+                context, loadbalancer_db.Pool,
+                pool_id, service_constants.ACTIVE)
 
 
 class VcnsCallbacks(object):

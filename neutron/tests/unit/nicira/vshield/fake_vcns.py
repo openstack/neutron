@@ -48,6 +48,11 @@ class FakeVcns(object):
                 "firewallRules": []
             }
         }
+        self._fake_virtualservers_dict = {}
+        self._fake_pools_dict = {}
+        self._fake_monitors_dict = {}
+        self._fake_app_profiles_dict = {}
+        self._fake_loadbalancer_config = {}
 
     def set_fake_nvpapi(self, fake_nvpapi):
         self._fake_nvpapi = fake_nvpapi
@@ -363,6 +368,173 @@ class FakeVcns(object):
                 break
         return self.return_helper(header, response)
 
+    #
+    #Fake Edge LBAAS call
+    #
+    def create_vip(self, edge_id, vip_new):
+        if not self._fake_virtualservers_dict.get(edge_id):
+            self._fake_virtualservers_dict[edge_id] = {}
+        vip_vseid = uuidutils.generate_uuid()
+        self._fake_virtualservers_dict[edge_id][vip_vseid] = vip_new
+        header = {
+            'status': 204,
+            'location': "https://host/api/4.0/edges/edge_id"
+                        "/loadbalancer/config/%s" % vip_vseid}
+        response = ""
+        return self.return_helper(header, response)
+
+    def get_vip(self, edge_id, vip_vseid):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_virtualservers_dict.get(edge_id) or (
+            not self._fake_virtualservers_dict[edge_id].get(vip_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        response = self._fake_virtualservers_dict[edge_id][vip_vseid]
+        return self.return_helper(header, response)
+
+    def update_vip(self, edge_id, vip_vseid, vip_new):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_virtualservers_dict.get(edge_id) or (
+            not self._fake_virtualservers_dict[edge_id].get(vip_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        self._fake_virtualservers_dict[edge_id][vip_vseid].update(
+            vip_new)
+        return self.return_helper(header, response)
+
+    def delete_vip(self, edge_id, vip_vseid):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_virtualservers_dict.get(edge_id) or (
+            not self._fake_virtualservers_dict[edge_id].get(vip_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        del self._fake_virtualservers_dict[edge_id][vip_vseid]
+        return self.return_helper(header, response)
+
+    def create_pool(self, edge_id, pool_new):
+        if not self._fake_pools_dict.get(edge_id):
+            self._fake_pools_dict[edge_id] = {}
+        pool_vseid = uuidutils.generate_uuid()
+        self._fake_pools_dict[edge_id][pool_vseid] = pool_new
+        header = {
+            'status': 204,
+            'location': "https://host/api/4.0/edges/edge_id"
+                        "/loadbalancer/config/%s" % pool_vseid}
+        response = ""
+        return self.return_helper(header, response)
+
+    def get_pool(self, edge_id, pool_vseid):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_pools_dict.get(edge_id) or (
+            not self._fake_pools_dict[edge_id].get(pool_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        response = self._fake_pools_dict[edge_id][pool_vseid]
+        return self.return_helper(header, response)
+
+    def update_pool(self, edge_id, pool_vseid, pool_new):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_pools_dict.get(edge_id) or (
+            not self._fake_pools_dict[edge_id].get(pool_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        self._fake_pools_dict[edge_id][pool_vseid].update(
+            pool_new)
+        return self.return_helper(header, response)
+
+    def delete_pool(self, edge_id, pool_vseid):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_pools_dict.get(edge_id) or (
+            not self._fake_pools_dict[edge_id].get(pool_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        del self._fake_pools_dict[edge_id][pool_vseid]
+        return self.return_helper(header, response)
+
+    def create_health_monitor(self, edge_id, monitor_new):
+        if not self._fake_monitors_dict.get(edge_id):
+            self._fake_monitors_dict[edge_id] = {}
+        monitor_vseid = uuidutils.generate_uuid()
+        self._fake_monitors_dict[edge_id][monitor_vseid] = monitor_new
+        header = {
+            'status': 204,
+            'location': "https://host/api/4.0/edges/edge_id"
+                        "/loadbalancer/config/%s" % monitor_vseid}
+        response = ""
+        return self.return_helper(header, response)
+
+    def get_health_monitor(self, edge_id, monitor_vseid):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_monitors_dict.get(edge_id) or (
+            not self._fake_monitors_dict[edge_id].get(monitor_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        response = self._fake_monitors_dict[edge_id][monitor_vseid]
+        return self.return_helper(header, response)
+
+    def update_health_monitor(self, edge_id, monitor_vseid, monitor_new):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_monitors_dict.get(edge_id) or (
+            not self._fake_monitors_dict[edge_id].get(monitor_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        self._fake_monitors_dict[edge_id][monitor_vseid].update(
+            monitor_new)
+        return self.return_helper(header, response)
+
+    def delete_health_monitor(self, edge_id, monitor_vseid):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_monitors_dict.get(edge_id) or (
+            not self._fake_monitors_dict[edge_id].get(monitor_vseid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        del self._fake_monitors_dict[edge_id][monitor_vseid]
+        return self.return_helper(header, response)
+
+    def create_app_profile(self, edge_id, app_profile):
+        if not self._fake_app_profiles_dict.get(edge_id):
+            self._fake_app_profiles_dict[edge_id] = {}
+        app_profileid = uuidutils.generate_uuid()
+        self._fake_app_profiles_dict[edge_id][app_profileid] = app_profile
+        header = {
+            'status': 204,
+            'location': "https://host/api/4.0/edges/edge_id"
+                        "/loadbalancer/config/%s" % app_profileid}
+        response = ""
+        return self.return_helper(header, response)
+
+    def delete_app_profile(self, edge_id, app_profileid):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_app_profiles_dict.get(edge_id) or (
+            not self._fake_app_profiles_dict[edge_id].get(app_profileid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        del self._fake_app_profiles_dict[edge_id][app_profileid]
+        return self.return_helper(header, response)
+
+    def get_loadbalancer_config(self, edge_id):
+        header = {'status': 204}
+        response = {'config': False}
+        if self._fake_loadbalancer_config[edge_id]:
+            response['config'] = self._fake_loadbalancer_config[edge_id]
+        return self.return_helper(header, response)
+
+    def enable_service_loadbalancer(self, edge_id, config):
+        header = {'status': 204}
+        response = ""
+        self._fake_loadbalancer_config[edge_id] = True
+        return self.return_helper(header, response)
+
     def return_helper(self, header, response):
         status = int(header['status'])
         if 200 <= status <= 300:
@@ -379,3 +551,8 @@ class FakeVcns(object):
         self._edges.clear()
         self._lswitches.clear()
         self.fake_firewall_dict = {}
+        self._fake_virtualservers_dict = {}
+        self._fake_pools_dict = {}
+        self._fake_monitors_dict = {}
+        self._fake_app_profiles_dict = {}
+        self._fake_loadbalancer_config = {}
