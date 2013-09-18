@@ -98,7 +98,7 @@ class ChanceScheduler(object):
                 candidates = plugin.get_l3_agent_candidates(router, [l3_agent])
                 if not candidates:
                     to_removed_ids.append(router['id'])
-            router_ids = set(unscheduled_router_ids) - set(to_removed_ids)
+            router_ids = set([r['id'] for r in routers]) - set(to_removed_ids)
             if not router_ids:
                 LOG.warn(_('No routers compatible with L3 agent configuration'
                            ' on host %s'), host)
