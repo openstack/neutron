@@ -831,7 +831,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             orig_net = super(NeutronRestProxyV2,
                              self).get_network(context, net_id)
             # update network on network controller
-            self._send_update_network(orig_net)
+            self._send_update_network(orig_net, context)
         return new_subnet
 
     def update_subnet(self, context, id, subnet):
@@ -847,7 +847,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             orig_net = super(NeutronRestProxyV2,
                              self).get_network(context, net_id)
             # update network on network controller
-            self._send_update_network(orig_net)
+            self._send_update_network(orig_net, context)
             return new_subnet
 
     def delete_subnet(self, context, id):
@@ -860,7 +860,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             orig_net = super(NeutronRestProxyV2, self).get_network(context,
                                                                    net_id)
             # update network on network controller - exception will rollback
-            self._send_update_network(orig_net)
+            self._send_update_network(orig_net, context)
 
     def _get_tenant_default_router_rules(self, tenant):
         rules = cfg.CONF.ROUTER.tenant_default_router_rule
@@ -1032,7 +1032,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                                    net_id)
             # create floatingip on the network controller
             try:
-                self._send_update_network(orig_net)
+                self._send_update_network(orig_net, context)
             except RemoteRestError as e:
                 with excutils.save_and_reraise_exception():
                     LOG.error(
@@ -1053,7 +1053,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             orig_net = super(NeutronRestProxyV2, self).get_network(context,
                                                                    net_id)
             # update network on network controller
-            self._send_update_network(orig_net)
+            self._send_update_network(orig_net, context)
             return new_fl_ip
 
     def delete_floatingip(self, context, id):
@@ -1069,7 +1069,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             orig_net = super(NeutronRestProxyV2, self).get_network(context,
                                                                    net_id)
             # update network on network controller
-            self._send_update_network(orig_net)
+            self._send_update_network(orig_net, context)
 
     def _send_all_data(self):
         """Pushes all data to network ctrl (networks/ports, ports/attachments).
@@ -1200,7 +1200,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         return network
 
-    def _send_update_network(self, network, context=None):
+    def _send_update_network(self, network, context):
         net_id = network['id']
         tenant_id = network['tenant_id']
         # update network on network controller
