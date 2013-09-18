@@ -85,7 +85,6 @@ class NeutronDB(object):
     def update_network(self, tenant_id, net_id, param_data):
         """Rename a network."""
         try:
-            print param_data
             net = db.network_update(net_id, tenant_id, **param_data)
             LOG.debug("Updated network: %s", net.uuid)
             net_dict = {}

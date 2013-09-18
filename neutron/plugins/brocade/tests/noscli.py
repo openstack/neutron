@@ -21,6 +21,7 @@
 
 
 """Brocade NOS Driver CLI."""
+from __future__ import print_function
 
 import argparse
 
@@ -50,7 +51,7 @@ class NOSCli(object):
         elif args.cmd == 'dissociate' and numargs == 2:
             self._dissociate(args.otherargs[0], args.otherargs[1])
         else:
-            print usage_desc
+            print(usage_desc)
             exit(0)
 
     def _create(self, net_id):

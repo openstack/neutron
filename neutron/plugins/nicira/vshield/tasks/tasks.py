@@ -15,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from __future__ import print_function
+
 import collections
 import uuid
 
@@ -356,10 +358,10 @@ class TaskManager():
 
     def show_pending_tasks(self):
         for task in self._tasks_queue:
-            print str(task)
+            print(str(task))
         for resource, tasks in self._tasks.iteritems():
             for task in tasks:
-                print str(task)
+                print(str(task))
 
     def count(self):
         count = 0

@@ -13,6 +13,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from __future__ import print_function
 
 import compiler
 import imp
@@ -56,43 +57,41 @@ class Visitor(object):
         if is_localized(node):
             for (checker, msg) in self.msg_format_checkers:
                 if checker(node):
-                    print >> sys.stderr, (
-                        '%s:%d %s: %s' %
-                        (self.filename, node.lineno,
-                         self.lines[node.lineno - 1][:-1],
-                         "Error: %s" % msg))
+                    print('%s:%d %s: %s Error: %s' %
+                          (self.filename, node.lineno,
+                           self.lines[node.lineno - 1][:-1], msg),
+                           file=sys.stderr)
                     self.error = 1
                     return
             if debug:
-                print ('%s:%d %s: %s' %
-                       (self.filename, node.lineno,
-                        self.lines[node.lineno - 1][:-1],
-                        "Pass"))
+                print('%s:%d %s: %s' %
+                      (self.filename, node.lineno,
+                       self.lines[node.lineno - 1][:-1],
+                       "Pass"))
         else:
             for (predicate, action, msg) in self.i18n_msg_predicates:
                 if predicate(node):
                     if action == 'skip':
                         if debug:
-                            print ('%s:%d %s: %s' %
-                                   (self.filename, node.lineno,
-                                    self.lines[node.lineno - 1][:-1],
-                                    "Pass"))
+                            print('%s:%d %s: %s' %
+                                  (self.filename, node.lineno,
+                                  self.lines[node.lineno - 1][:-1],
+                                  "Pass"))
                         return
                     elif action == 'error':
-                        print >> sys.stderr, (
-                            '%s:%d %s: %s' %
-                            (self.filename, node.lineno,
-                             self.lines[node.lineno - 1][:-1],
-                             "Error: %s" % msg))
+                        print('%s:%d %s: %s Error: %s' %
+                              (self.filename, node.lineno,
+                               self.lines[node.lineno - 1][:-1], msg),
+                               file=sys.stderr)
                         self.error = 1
                         return
                     elif action == 'warn':
-                        print ('%s:%d %s: %s' %
-                               (self.filename, node.lineno,
-                                self.lines[node.lineno - 1][:-1],
-                                "Warn: %s" % msg))
+                        print('%s:%d %s: %s' %
+                              (self.filename, node.lineno,
+                              self.lines[node.lineno - 1][:-1],
+                              "Warn: %s" % msg))
                         return
-                    print >> sys.stderr, 'Predicate with wrong action!'
+                    print('Predicate with wrong action!', file=sys.stderr)
 
 
 def is_file_in_black_list(black_list, f):
@@ -120,7 +119,7 @@ if __name__ == '__main__':
     try:
         cfg_mod = imp.load_source('', cfg_path)
     except Exception:
-        print >> sys.stderr, "Load cfg module failed"
+        print("Load cfg module failed", file=sys.stderr)
         sys.exit(1)
 
     i18n_msg_predicates = cfg_mod.i18n_msg_predicates

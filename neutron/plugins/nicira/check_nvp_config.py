@@ -18,6 +18,8 @@
 #
 # @author: Aaron Rosen, VMware
 
+from __future__ import print_function
+
 import sys
 
 from oslo.config import cfg
@@ -31,7 +33,7 @@ config.setup_logging(cfg.CONF)
 
 
 def help(name):
-    print "Usage: %s path/to/nvp.ini" % name
+    print("Usage: %s path/to/nvp.ini" % name)
     sys.exit(1)
 
 
@@ -55,33 +57,33 @@ def main(argv):
     args = ['--config-file']
     args.append(argv[1])
     config.parse(args)
-    print "------------------------ Database Options ------------------------"
-    print "\tconnection: %s" % cfg.CONF.database.connection
-    print "\tretry_interval: %d" % cfg.CONF.database.retry_interval
-    print "\tmax_retries: %d" % cfg.CONF.database.max_retries
-    print "------------------------    NVP Options   ------------------------"
-    print "\tNVP Generation Timeout %d" % cfg.CONF.NVP.nvp_gen_timeout
-    print ("\tNumber of concurrent connections to each controller %d" %
-           cfg.CONF.NVP.concurrent_connections)
-    print "\tmax_lp_per_bridged_ls: %s" % cfg.CONF.NVP.max_lp_per_bridged_ls
-    print "\tmax_lp_per_overlay_ls: %s" % cfg.CONF.NVP.max_lp_per_overlay_ls
-    print "------------------------  Cluster Options ------------------------"
-    print "\trequested_timeout: %s" % cfg.CONF.req_timeout
-    print "\tretries: %s" % cfg.CONF.retries
-    print "\tredirects: %s" % cfg.CONF.redirects
-    print "\thttp_timeout: %s" % cfg.CONF.http_timeout
+    print("----------------------- Database Options -----------------------")
+    print("\tconnection: %s" % cfg.CONF.database.connection)
+    print("\tretry_interval: %d" % cfg.CONF.database.retry_interval)
+    print("\tmax_retries: %d" % cfg.CONF.database.max_retries)
+    print("-----------------------    NVP Options   -----------------------")
+    print("\tNVP Generation Timeout %d" % cfg.CONF.NVP.nvp_gen_timeout)
+    print("\tNumber of concurrent connections to each controller %d" %
+          cfg.CONF.NVP.concurrent_connections)
+    print("\tmax_lp_per_bridged_ls: %s" % cfg.CONF.NVP.max_lp_per_bridged_ls)
+    print("\tmax_lp_per_overlay_ls: %s" % cfg.CONF.NVP.max_lp_per_overlay_ls)
+    print("-----------------------  Cluster Options -----------------------")
+    print("\trequested_timeout: %s" % cfg.CONF.req_timeout)
+    print("\tretries: %s" % cfg.CONF.retries)
+    print("\tredirects: %s" % cfg.CONF.redirects)
+    print("\thttp_timeout: %s" % cfg.CONF.http_timeout)
     cluster = NeutronPlugin.create_nvp_cluster(
         cfg.CONF,
         cfg.CONF.NVP.concurrent_connections,
         cfg.CONF.NVP.nvp_gen_timeout)
     num_controllers = len(cluster.nvp_controllers)
-    print "Number of controllers found: %s" % num_controllers
+    print("Number of controllers found: %s" % num_controllers)
     if num_controllers == 0:
-        print "You must specify at least one controller!"
+        print("You must specify at least one controller!")
         sys.exit(1)
 
     for controller in cluster.nvp_controllers:
-        print "\tController endpoint: %s" % controller
+        print("\tController endpoint: %s" % controller)
         nvplib.check_cluster_connectivity(cluster)
         gateway_services = get_gateway_services(cluster)
         default_gateways = {
@@ -90,24 +92,24 @@ def main(argv):
         errors = 0
         for svc_type in default_gateways.keys():
             for uuid in gateway_services[svc_type]:
-                print "\t\tGateway(%s) uuid: %s" % (svc_type, uuid)
+                print("\t\tGateway(%s) uuid: %s" % (svc_type, uuid))
             if (default_gateways[svc_type] and
                 default_gateways[svc_type] not in gateway_services):
-                print ("\t\t\tError: specified default %s gateway (%s) is "
-                       "missing from NVP Gateway Services!" % (svc_type,
-                       default_gateways[svc_type]))
+                print("\t\t\tError: specified default %s gateway (%s) is "
+                      "missing from NVP Gateway Services!" % (svc_type,
+                      default_gateways[svc_type]))
                 errors += 1
         transport_zones = get_transport_zones(cluster)
-        print "\tTransport zones: %s" % transport_zones
+        print("\tTransport zones: %s" % transport_zones)
         if cfg.CONF.default_tz_uuid not in transport_zones:
-            print ("\t\tError: specified default transport zone "
-                   "(%s) is missing from NVP transport zones!"
-                   % cfg.CONF.default_tz_uuid)
+            print("\t\tError: specified default transport zone "
+                  "(%s) is missing from NVP transport zones!"
+                  % cfg.CONF.default_tz_uuid)
             errors += 1
 
     if errors:
-        print ("\nThere are %d errors with your configuration. "
-               " Please, revise!" % errors)
+        print("\nThere are %d errors with your configuration. "
+              " Please, revise!" % errors)
         sys.exit(1)
     else:
-        print "Done."
+        print("Done.")

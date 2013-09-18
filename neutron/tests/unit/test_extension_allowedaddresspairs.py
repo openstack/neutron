@@ -271,7 +271,6 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
                                         port_security_enabled=True,
                                         allowed_address_pairs=address_pairs)
                 port = self.deserialize(self.fmt, res)
-                print port
                 update_port = {'port': {psec.PORTSECURITY: False}}
                 # If plugin implements security groups we also need to remove
                 # the security group on port.

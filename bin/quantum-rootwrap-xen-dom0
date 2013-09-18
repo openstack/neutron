@@ -21,6 +21,7 @@ Executes networking commands in dom0.  The XenAPI plugin is
 responsible determining whether a command is safe to execute.
 
 """
+from __future__ import print_function
 
 import ConfigParser
 import json
@@ -42,7 +43,7 @@ def parse_args():
     exec_name = sys.argv.pop(0)
     # argv[0] required; path to conf file
     if len(sys.argv) < 2:
-        print "%s: No command specified" % exec_name
+        print("%s: No command specified" % exec_name)
         sys.exit(RC_NOCOMMAND)
 
     config_file = sys.argv.pop(0)
@@ -56,7 +57,7 @@ def _xenapi_section_name(config):
     if len(sections) == 1:
         return sections[0]
 
-    print "Multiple [xenapi] sections or no [xenapi] section found!"
+    print("Multiple [xenapi] sections or no [xenapi] section found!")
     sys.exit(RC_BADCONFIG)
 
 
@@ -71,13 +72,13 @@ def load_configuration(exec_name, config_file):
         username = config.get(section, "xenapi_connection_username")
         password = config.get(section, "xenapi_connection_password")
     except ConfigParser.Error:
-        print "%s: Incorrect configuration file: %s" % (exec_name, config_file)
+        print("%s: Incorrect configuration file: %s" % (exec_name, config_file))
         sys.exit(RC_BADCONFIG)
     if not url or not password:
         msg = ("%s: Must specify xenapi_connection_url, "
                "xenapi_connection_username (optionally), and "
                "xenapi_connection_password in %s") % (exec_name, config_file)
-        print msg
+        print(msg)
         sys.exit(RC_BADCONFIG)
     return dict(
         filters_path=filters_path,
@@ -102,7 +103,7 @@ def filter_command(exec_name, filters_path, user_args, exec_dirs):
     filter_match = wrapper.match_filter(
         filters, user_args, exec_dirs=exec_dirs)
     if not filter_match:
-        print "Unauthorized command: %s" % ' '.join(user_args)
+        print("Unauthorized command: %s" % ' '.join(user_args))
         sys.exit(RC_UNAUTHORIZED)
 
 
@@ -128,4 +129,4 @@ def main():
 
 
 if __name__ == '__main__':
-    print main()
+    print(main())

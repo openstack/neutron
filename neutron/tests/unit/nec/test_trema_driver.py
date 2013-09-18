@@ -241,7 +241,6 @@ class TremaFilterDriverTest(TremaDriverTestBase):
              'status': "ACTIVE"}
         if filter_dict:
             f.update(filter_dict)
-        print 'filter=%s' % f
 
         net_path = "/networks/%s" % n
 
@@ -462,8 +461,7 @@ class TremaIdConvertTestBase(base.BaseTestCase):
 
         ret = self.driver.convert_ofc_port_id(self.ctx, ofc_p_id, t_id, n_id)
         exp = port_path_template % {'network': ofc_n_id, 'port': ofc_p_id}
-        print 'exp=', exp
-        print 'ret=', ret
+
         self.assertEqual(ret, exp)
         self.mox.VerifyAll()
 
