@@ -1163,7 +1163,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         "%(tenant_id)s: (%(id)s)"), port_data)
 
             self._process_portbindings_create_and_update(context,
-                                                         port, port_data)
+                                                         port['port'],
+                                                         port_data)
         # DB Operation is complete, perform NVP operation
         try:
             port_data = port['port'].copy()
@@ -1311,7 +1312,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
             self._process_portbindings_create_and_update(context,
                                                          port['port'],
-                                                         port)
+                                                         ret_port)
         return ret_port
 
     def delete_port(self, context, id, l3_port_check=True,

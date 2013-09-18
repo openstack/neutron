@@ -165,7 +165,8 @@ class TestNiciraProvidernet(NiciraPluginV2TestCase):
 
 class TestNiciraPortsV2(NiciraPluginV2TestCase,
                         test_plugin.TestPortsV2,
-                        test_bindings.PortBindingsTestCase):
+                        test_bindings.PortBindingsTestCase,
+                        test_bindings.PortBindingsHostTestCaseMixin):
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = True
