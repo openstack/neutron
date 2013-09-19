@@ -30,12 +30,12 @@ class MetadataModes:
 
 
 nvp_opts = [
-    cfg.IntOpt('max_lp_per_bridged_ls', default=64,
+    cfg.IntOpt('max_lp_per_bridged_ls', default=5000,
                help=_("Maximum number of ports of a logical switch on a "
-                      "bridged transport zone (default 64)")),
+                      "bridged transport zone (default 5000)")),
     cfg.IntOpt('max_lp_per_overlay_ls', default=256,
                help=_("Maximum number of ports of a logical switch on an "
-                      "overlay transport zone (default 64)")),
+                      "overlay transport zone (default 256)")),
     cfg.IntOpt('concurrent_connections', default=5,
                help=_("Maximum concurrent connections")),
     cfg.IntOpt('nvp_gen_timeout', default=-1,
