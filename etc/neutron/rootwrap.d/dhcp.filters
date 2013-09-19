@@ -16,8 +16,6 @@ dnsmasq: EnvFilter, dnsmasq, root, NEUTRON_NETWORK_ID=
 kill_dnsmasq: KillFilter, root, /sbin/dnsmasq, -9, -HUP
 kill_dnsmasq_usr: KillFilter, root, /usr/sbin/dnsmasq, -9, -HUP
 
-# dhcp-agent uses cat
-cat: RegExpFilter, cat, root, cat, /proc/\d+/cmdline
 ovs-vsctl: CommandFilter, ovs-vsctl, root
 ivs-ctl: CommandFilter, ivs-ctl, root
 dhcp_release: CommandFilter, dhcp_release, root

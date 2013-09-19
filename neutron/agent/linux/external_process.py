@@ -100,8 +100,9 @@ class ProcessManager(object):
         if pid is None:
             return False
 
-        cmd = ['cat', '/proc/%s/cmdline' % pid]
+        cmdline = '/proc/%s/cmdline' % pid
         try:
-            return self.uuid in utils.execute(cmd, self.root_helper)
-        except RuntimeError:
+            with open(cmdline, "r") as f:
+                return self.uuid in f.readline()
+        except IOError:
             return False

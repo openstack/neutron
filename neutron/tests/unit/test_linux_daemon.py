@@ -84,40 +84,43 @@ class TestPidfile(base.BaseTestCase):
         self.assertEqual(34, p.read())
 
     def test_is_running(self):
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
-            execute.return_value = 'python'
+        with mock.patch('__builtin__.open') as mock_open:
             p = daemon.Pidfile('thefile', 'python')
+            mock_open.return_value.__enter__ = lambda s: s
+            mock_open.return_value.__exit__ = mock.Mock()
+            mock_open.return_value.readline.return_value = 'python'
 
             with mock.patch.object(p, 'read') as read:
                 read.return_value = 34
                 self.assertTrue(p.is_running())
 
-            execute.assert_called_once_with(
-                ['cat', '/proc/34/cmdline'], 'sudo')
+            mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
 
     def test_is_running_uuid_true(self):
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
-            execute.return_value = 'python 1234'
+        with mock.patch('__builtin__.open') as mock_open:
             p = daemon.Pidfile('thefile', 'python', uuid='1234')
+            mock_open.return_value.__enter__ = lambda s: s
+            mock_open.return_value.__exit__ = mock.Mock()
+            mock_open.return_value.readline.return_value = 'python 1234'
 
             with mock.patch.object(p, 'read') as read:
                 read.return_value = 34
                 self.assertTrue(p.is_running())
 
-            execute.assert_called_once_with(
-                ['cat', '/proc/34/cmdline'], 'sudo')
+            mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
 
     def test_is_running_uuid_false(self):
-        with mock.patch('neutron.agent.linux.utils.execute') as execute:
-            execute.return_value = 'python 1234'
+        with mock.patch('__builtin__.open') as mock_open:
             p = daemon.Pidfile('thefile', 'python', uuid='6789')
+            mock_open.return_value.__enter__ = lambda s: s
+            mock_open.return_value.__exit__ = mock.Mock()
+            mock_open.return_value.readline.return_value = 'python 1234'
 
             with mock.patch.object(p, 'read') as read:
                 read.return_value = 34
                 self.assertFalse(p.is_running())
 
-            execute.assert_called_once_with(
-                ['cat', '/proc/34/cmdline'], 'sudo')
+            mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
 
 
 class TestDaemon(base.BaseTestCase):
