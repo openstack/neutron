@@ -23,11 +23,11 @@ import inspect
 import logging
 import sys
 
-from novaclient.v1_1 import client as nova_client
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
 from neutron.db import api as db_api
+from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import importutils
@@ -51,7 +51,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
     """
     MANAGE_STATE = True
     __native_bulk_support = True
-    supported_extension_aliases = ["provider"]
+    supported_extension_aliases = ["provider", "binding"]
     _plugins = {}
     _methods_to_delegate = ['create_network_bulk',
                             'get_network', 'get_networks',
@@ -176,21 +176,6 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             raise cexc.NetworkSegmentIDNotFound(net_id=network_id)
         return binding_seg_id.segmentation_id
 
-    def _get_instance_host(self, tenant_id, instance_id):
-        keystone_conf = cfg.CONF.keystone_authtoken
-        keystone_auth_url = '%s://%s:%s/v2.0/' % (keystone_conf.auth_protocol,
-                                                  keystone_conf.auth_host,
-                                                  keystone_conf.auth_port)
-        nc = nova_client.Client(keystone_conf.admin_user,
-                                keystone_conf.admin_password,
-                                keystone_conf.admin_tenant_name,
-                                keystone_auth_url,
-                                no_cache=True)
-        serv = nc.servers.get(instance_id)
-        host = serv.__getattr__('OS-EXT-SRV-ATTR:host')
-
-        return host
-
     def _get_provider_vlan_id(self, network):
         if (all(attributes.is_attr_set(network.get(attr))
                 for attr in (provider.NETWORK_TYPE,
@@ -275,7 +260,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         pass
 
     def _invoke_nexus_for_net_create(self, context, tenant_id, net_id,
-                                     instance_id):
+                                     instance_id, host_id):
         if not self.config_nexus:
             return False
 
@@ -287,16 +272,30 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         attachment = {
             const.TENANT_ID: tenant_id,
             const.INSTANCE_ID: instance_id,
-            const.HOST_NAME: self._get_instance_host(tenant_id, instance_id),
+            const.HOST_NAME: host_id,
         }
         self._invoke_plugin_per_device(
             const.NEXUS_PLUGIN,
             'create_network',
             [network, attachment])
 
-    @staticmethod
-    def _should_call_create_net(device_owner, instance_id):
-        return (instance_id and device_owner != 'network:dhcp')
+    def _check_valid_port_device_owner(self, port):
+        """Check the port for valid device_owner.
+
+        Don't call the nexus plugin for router and dhcp
+        port owners.
+        """
+        return port['device_owner'].startswith('compute')
+
+    def _get_port_host_id_from_bindings(self, port):
+        """Get host_id from portbindings."""
+        host_id = None
+
+        if (portbindings.HOST_ID in port and
+            attributes.is_attr_set(port[portbindings.HOST_ID])):
+            host_id = port[portbindings.HOST_ID]
+
+        return host_id
 
     def create_port(self, context, port):
         """Create port.
@@ -309,16 +308,18 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
                                                     args)
-        try:
-            instance_id = port['port']['device_id']
-            device_owner = port['port']['device_owner']
+        instance_id = port['port']['device_id']
 
-            if self._should_call_create_net(device_owner, instance_id):
+        # Only call nexus plugin if there's a valid instance_id, host_id
+        # and device_owner
+        try:
+            host_id = self._get_port_host_id_from_bindings(port['port'])
+            if (instance_id and host_id and
+                self._check_valid_port_device_owner(port['port'])):
                 net_id = port['port']['network_id']
                 tenant_id = port['port']['tenant_id']
                 self._invoke_nexus_for_net_create(
-                    context, tenant_id, net_id, instance_id)
-
+                    context, tenant_id, net_id, instance_id, host_id)
         except Exception:
             # Create network on the Nexus plugin has failed, so we need
             # to rollback the port creation on the VSwitch plugin.
@@ -356,17 +357,19 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
                                                     args)
-        try:
-            net_id = old_port['network_id']
-            instance_id = ''
-            if 'device_id' in port['port']:
-                instance_id = port['port']['device_id']
+        net_id = old_port['network_id']
+        instance_id = ''
+        if 'device_id' in port['port']:
+            instance_id = port['port']['device_id']
 
-            # Check if there's a new device_id
-            if instance_id and not old_device:
+        # Check if there's a new device_id
+        try:
+            host_id = self._get_port_host_id_from_bindings(port['port'])
+            if (instance_id and not old_device and host_id and
+                self._check_valid_port_device_owner(port['port'])):
                 tenant_id = old_port['tenant_id']
                 self._invoke_nexus_for_net_create(
-                    context, tenant_id, net_id, instance_id)
+                    context, tenant_id, net_id, instance_id, host_id)
 
             return ovs_output[0]
         except Exception:
@@ -392,8 +395,11 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         """
         LOG.debug(_("delete_port() called"))
         port = self.get_port(context, id)
-        exclude_list = ('', 'compute:none', 'network:dhcp')
-        if self.config_nexus and port['device_owner'] not in exclude_list:
+
+        host_id = self._get_port_host_id_from_bindings(port)
+
+        if (self.config_nexus and host_id and
+            self._check_valid_port_device_owner(port)):
             vlan_id = self._get_segmentation_id(port['network_id'])
             n_args = [port['device_id'], vlan_id]
             self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
@@ -411,8 +417,9 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                 tenant_id = port['tenant_id']
                 net_id = port['network_id']
                 instance_id = port['device_id']
-                self._invoke_nexus_for_net_create(context, tenant_id,
-                                                  net_id, instance_id)
+                host_id = port[portbindings.HOST_ID]
+                self._invoke_nexus_for_net_create(context, tenant_id, net_id,
+                                                  instance_id, host_id)
             finally:
                 # Raise the original exception.
                 raise exc_info[0], exc_info[1], exc_info[2]
