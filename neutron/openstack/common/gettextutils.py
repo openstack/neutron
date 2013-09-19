@@ -26,10 +26,13 @@ Usual usage in an openstack.common module:
 
 import copy
 import gettext
-import logging.handlers
+import logging
 import os
 import re
-import UserString
+try:
+    import UserString as _userString
+except ImportError:
+    import collections as _userString
 
 from babel import localedata
 import six
@@ -37,11 +40,27 @@ import six
 _localedir = os.environ.get('neutron'.upper() + '_LOCALEDIR')
 _t = gettext.translation('neutron', localedir=_localedir, fallback=True)
 
-_AVAILABLE_LANGUAGES = []
+_AVAILABLE_LANGUAGES = {}
+USE_LAZY = False
+
+
+def enable_lazy():
+    """Convenience function for configuring _() to use lazy gettext
+
+    Call this at the start of execution to enable the gettextutils._
+    function to use lazy gettext functionality. This is useful if
+    your project is importing _ directly instead of using the
+    gettextutils.install() way of importing the _ function.
+    """
+    global USE_LAZY
+    USE_LAZY = True
 
 
 def _(msg):
-    return _t.ugettext(msg)
+    if USE_LAZY:
+        return Message(msg, 'neutron')
+    else:
+        return _t.ugettext(msg)
 
 
 def install(domain, lazy=False):
@@ -95,15 +114,15 @@ def install(domain, lazy=False):
                         unicode=True)
 
 
-class Message(UserString.UserString, object):
+class Message(_userString.UserString, object):
     """Class used to encapsulate translatable messages."""
     def __init__(self, msg, domain):
         # _msg is the gettext msgid and should never change
         self._msg = msg
         self._left_extra_msg = ''
         self._right_extra_msg = ''
+        self._locale = None
         self.params = None
-        self.locale = None
         self.domain = domain
 
     @property
@@ -131,6 +150,32 @@ class Message(UserString.UserString, object):
             full_msg = full_msg % self.params
 
         return six.text_type(full_msg)
+
+    @property
+    def locale(self):
+        return self._locale
+
+    @locale.setter
+    def locale(self, value):
+        self._locale = value
+        if not self.params:
+            return
+
+        # This Message object may have been constructed with one or more
+        # Message objects as substitution parameters, given as a single
+        # Message, or a tuple or Map containing some, so when setting the
+        # locale for this Message we need to set it for those Messages too.
+        if isinstance(self.params, Message):
+            self.params.locale = value
+            return
+        if isinstance(self.params, tuple):
+            for param in self.params:
+                if isinstance(param, Message):
+                    param.locale = value
+            return
+        for param in self.params.values():
+            if isinstance(param, Message):
+                param.locale = value
 
     def _save_dictionary_parameter(self, dict_param):
         full_msg = self.data
@@ -182,7 +227,7 @@ class Message(UserString.UserString, object):
 
     def __getstate__(self):
         to_copy = ['_msg', '_right_extra_msg', '_left_extra_msg',
-                   'domain', 'params', 'locale']
+                   'domain', 'params', '_locale']
         new_dict = self.__dict__.fromkeys(to_copy)
         for attr in to_copy:
             new_dict[attr] = copy.deepcopy(self.__dict__[attr])
@@ -236,7 +281,7 @@ class Message(UserString.UserString, object):
         if name in ops:
             return getattr(self.data, name)
         else:
-            return UserString.UserString.__getattribute__(self, name)
+            return _userString.UserString.__getattribute__(self, name)
 
 
 def get_available_languages(domain):
@@ -244,8 +289,8 @@ def get_available_languages(domain):
 
     :param domain: the domain to get languages for
     """
-    if _AVAILABLE_LANGUAGES:
-        return _AVAILABLE_LANGUAGES
+    if domain in _AVAILABLE_LANGUAGES:
+        return copy.copy(_AVAILABLE_LANGUAGES[domain])
 
     localedir = '%s_LOCALEDIR' % domain.upper()
     find = lambda x: gettext.find(domain,
@@ -254,7 +299,7 @@ def get_available_languages(domain):
 
     # NOTE(mrodden): en_US should always be available (and first in case
     # order matters) since our in-line message strings are en_US
-    _AVAILABLE_LANGUAGES.append('en_US')
+    language_list = ['en_US']
     # NOTE(luisg): Babel <1.0 used a function called list(), which was
     # renamed to locale_identifiers() in >=1.0, the requirements master list
     # requires >=0.9.6, uncapped, so defensively work with both. We can remove
@@ -264,13 +309,14 @@ def get_available_languages(domain):
     locale_identifiers = list_identifiers()
     for i in locale_identifiers:
         if find(i) is not None:
-            _AVAILABLE_LANGUAGES.append(i)
-    return _AVAILABLE_LANGUAGES
+            language_list.append(i)
+    _AVAILABLE_LANGUAGES[domain] = language_list
+    return copy.copy(language_list)
 
 
 def get_localized_message(message, user_locale):
     """Gets a localized version of the given message in the given locale."""
-    if (isinstance(message, Message)):
+    if isinstance(message, Message):
         if user_locale:
             message.locale = user_locale
         return unicode(message)
