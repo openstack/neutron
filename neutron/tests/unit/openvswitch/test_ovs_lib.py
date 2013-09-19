@@ -219,7 +219,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         remote_ip = "9.9.9.9"
         ofport = "6"
 
-        utils.execute(["ovs-vsctl", self.TO, "--may-exist", "add-port",
+        utils.execute(["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
                        self.BR_NAME, pname], root_helper=self.root_helper)
         utils.execute(["ovs-vsctl", self.TO, "set", "Interface",
                        pname, "type=gre"], root_helper=self.root_helper)
