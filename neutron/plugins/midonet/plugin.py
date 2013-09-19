@@ -295,10 +295,11 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _bind_port_to_sgs(self, context, port, sg_ids):
         self._process_port_create_security_group(context, port, sg_ids)
-        for sg_id in sg_ids:
-            pg_name = _sg_port_group_name(sg_id)
-            self.client.add_port_to_port_group_by_name(port["tenant_id"],
-                                                       pg_name, port["id"])
+        if sg_ids is not None:
+            for sg_id in sg_ids:
+                pg_name = _sg_port_group_name(sg_id)
+                self.client.add_port_to_port_group_by_name(
+                    port["tenant_id"], pg_name, port["id"])
 
     def _unbind_port_from_sgs(self, context, port_id):
         self._delete_port_security_group_bindings(context, port_id)
@@ -477,7 +478,6 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def create_port(self, context, port):
         """Create a L2 port in Neutron/MidoNet."""
         LOG.debug(_("MidonetPluginV2.create_port called: port=%r"), port)
-
         port_data = port['port']
 
         # Create a bridge port in MidoNet and set the bridge port ID as the
@@ -493,38 +493,42 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 new_port = super(MidonetPluginV2, self).create_port(context,
                                                                     port)
                 port_data.update(new_port)
-
-                # Bind security groups to the port
-                sg_ids = self._get_security_groups_on_port(context, port)
-                if sg_ids:
+                self._ensure_default_security_group_on_port(context,
+                                                            port)
+                if _is_vif_port(port_data):
+                    # Bind security groups to the port
+                    sg_ids = self._get_security_groups_on_port(context, port)
                     self._bind_port_to_sgs(context, port_data, sg_ids)
-                port_data[ext_sg.SECURITYGROUPS] = sg_ids
 
-                # Create port chains
-                port_chains = {}
-                for d, name in _port_chain_names(new_port["id"]).iteritems():
-                    port_chains[d] = self.client.create_chain(tenant_id, name)
+                    # Create port chains
+                    port_chains = {}
+                    for d, name in _port_chain_names(
+                        new_port["id"]).iteritems():
+                        port_chains[d] = self.client.create_chain(tenant_id,
+                                                                  name)
 
-                self._initialize_port_chains(port_data, port_chains['inbound'],
-                                             port_chains['outbound'], sg_ids)
+                    self._initialize_port_chains(port_data,
+                                                 port_chains['inbound'],
+                                                 port_chains['outbound'],
+                                                 sg_ids)
 
-                # Update the port with the chain
-                self.client.update_port_chains(
-                    bridge_port, port_chains["inbound"].get_id(),
-                    port_chains["outbound"].get_id())
+                    # Update the port with the chain
+                    self.client.update_port_chains(
+                        bridge_port, port_chains["inbound"].get_id(),
+                        port_chains["outbound"].get_id())
 
-                if _is_dhcp_port(port_data):
-                    # For DHCP port, add a metadata route
-                    for cidr, ip in self._metadata_subnets(
-                        context, port_data["fixed_ips"]):
-                        self.client.add_dhcp_route_option(bridge, cidr, ip,
-                                                          METADATA_DEFAULT_IP)
-                elif _is_vif_port(port_data):
                     # DHCP mapping is only for VIF ports
                     for cidr, ip, mac in self._dhcp_mappings(
                             context, port_data["fixed_ips"],
                             port_data["mac_address"]):
                         self.client.add_dhcp_host(bridge, cidr, ip, mac)
+
+                elif _is_dhcp_port(port_data):
+                    # For DHCP port, add a metadata route
+                    for cidr, ip in self._metadata_subnets(
+                        context, port_data["fixed_ips"]):
+                        self.client.add_dhcp_route_option(bridge, cidr, ip,
+                                                          METADATA_DEFAULT_IP)
 
         except Exception as ex:
             # Try removing the MidoNet port before raising an exception.
@@ -629,8 +633,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     self._check_update_has_security_groups(port)):
                 self._unbind_port_from_sgs(context, p["id"])
                 sg_ids = self._get_security_groups_on_port(context, port)
-                if sg_ids:
-                    self._bind_port_to_sgs(context, p, sg_ids)
+                self._bind_port_to_sgs(context, p, sg_ids)
+
         return p
 
     def create_router(self, context, router):
@@ -884,12 +888,12 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # Not all VM images supports DHCP option 121.  Add a route for the
             # Metadata server in the router to forward the packet to the bridge
             # that will send them to the Metadata Proxy.
-            net_addr, net_len = net_util.net_addr(METADATA_DEFAULT_IP)
+            md_net_addr, md_net_len = net_util.net_addr(METADATA_DEFAULT_IP)
             self.client.add_router_route(
                 router, type='Normal', src_network_addr=net_addr,
                 src_network_length=net_len,
-                dst_network_addr=net_addr,
-                dst_network_length=32,
+                dst_network_addr=md_net_addr,
+                dst_network_length=md_net_len,
                 next_hop_port=router_port.get_id(),
                 next_hop_gateway=metadata_gw_ip)
 
