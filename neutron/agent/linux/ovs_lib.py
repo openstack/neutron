@@ -207,7 +207,8 @@ class OVSBridge:
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=constants.TYPE_GRE,
                         vxlan_udp_port=constants.VXLAN_UDP_PORT):
-        self.run_vsctl(["--may-exist", "add-port", self.br_name, port_name])
+        self.run_vsctl(["--", "--may-exist", "add-port", self.br_name,
+                       port_name])
         self.set_db_attribute("Interface", port_name, "type", tunnel_type)
         if tunnel_type == constants.TYPE_VXLAN:
             # Only set the VXLAN UDP port if it's not the default
