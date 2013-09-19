@@ -86,7 +86,10 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
                 netaddr.AddrFormatError) as e:
             LOG.exception(_('%s failed'), action)
             e = translate(e, language)
-            body = serializer.serialize({'NeutronError': e})
+            # following structure is expected by python-neutronclient
+            err_data = {'type': e.__class__.__name__,
+                        'message': e, 'detail': ''}
+            body = serializer.serialize({'NeutronError': err_data})
             kwargs = {'body': body, 'content_type': content_type}
             for fault in faults:
                 if isinstance(e, fault):

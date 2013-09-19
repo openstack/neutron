@@ -129,7 +129,11 @@ class ResourceTestCase(base.BaseTestCase):
 
         class TestException(q_exc.NeutronException):
             message = msg
-        expected_res = {'body': {'NeutronError': msg}}
+        expected_res = {'body': {
+            'NeutronError': {
+                'type': 'TestException',
+                'message': msg,
+                'detail': ''}}}
         controller = mock.MagicMock()
         controller.test.side_effect = TestException()
 
@@ -147,7 +151,11 @@ class ResourceTestCase(base.BaseTestCase):
 
         class TestException(q_exc.NeutronException):
             message = msg
-        expected_res = {'body': {'NeutronError': msg}}
+        expected_res = {'body': {
+            'NeutronError': {
+                'type': 'TestException',
+                'message': msg,
+                'detail': ''}}}
         controller = mock.MagicMock()
         controller.test.side_effect = TestException()
 
@@ -187,7 +195,11 @@ class ResourceTestCase(base.BaseTestCase):
 
         class TestException(q_exc.NeutronException):
             message = msg
-        expected_res = {'body': {'NeutronError': msg}}
+        expected_res = {'body': {
+            'NeutronError': {
+                'type': 'TestException',
+                'message': msg,
+                'detail': ''}}}
         controller = mock.MagicMock()
         controller.test.side_effect = TestException()
 
@@ -207,7 +219,11 @@ class ResourceTestCase(base.BaseTestCase):
 
         class TestException(q_exc.NeutronException):
             message = msg
-        expected_res = {'body': {'NeutronError': msg}}
+        expected_res = {'body': {
+            'NeutronError': {
+                'type': 'TestException',
+                'message': msg,
+                'detail': ''}}}
         controller = mock.MagicMock()
         controller.test.side_effect = TestException()
 
