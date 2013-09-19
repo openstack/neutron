@@ -127,5 +127,7 @@
 
     "create_metering_label_rule": "rule:admin_only",
     "delete_metering_label_rule": "rule:admin_only",
-    "get_metering_label_rule": "rule:admin_only"
+    "get_metering_label_rule": "rule:admin_only",
+
+    "get_service_provider": "rule:regular_user"
 }
