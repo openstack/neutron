@@ -870,7 +870,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                       network['tenant_id'],
                                       tags=tags)
             transport_zone_config = self._convert_to_nvp_transport_zones(
-                cluster, bindings=network_bindings)
+                cluster, network, bindings=network_bindings)
             selected_lswitch = nvplib.create_lswitch(
                 cluster, network.tenant_id,
                 "%s-ext-%s" % (network.name, len(lswitches)),
