@@ -1775,16 +1775,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 context,
                 fip,
                 floatingip_db['floating_network_id'])
-
-        # Retrieve and delete existing NAT rules, if any
-        if not router_id and floatingip_db.get('fixed_port_id'):
-            # This happens if we're disassociating. Need to explicitly
-            # find the router serving this floating IP
-            tmp_fip = fip.copy()
-            tmp_fip['port_id'] = floatingip_db['fixed_port_id']
-            _pid, internal_ip, router_id = self.get_assoc_data(
-                context, tmp_fip, floatingip_db['floating_network_id'])
-
         return (port_id, internal_ip, router_id)
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
@@ -1793,6 +1783,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         Overrides method from base class.
         The method is augmented for creating NAT rules in the process.
         """
+        # Store router currently serving the floating IP
+        old_router_id = floatingip_db.router_id
         port_id, internal_ip, router_id = self._get_fip_assoc_data(
             context, fip, floatingip_db)
         floating_ip = floatingip_db['floating_ip_address']
@@ -1803,14 +1795,31 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                 internal_ip,
                                                 router_id)
             # Fetch logical port of router's external gateway
+        # Fetch logical port of router's external gateway
+        nvp_floating_ips = self._build_ip_address_list(
+            context.elevated(), external_port['fixed_ips'])
+        floating_ip = floatingip_db['floating_ip_address']
+        # Retrieve and delete existing NAT rules, if any
+        if old_router_id:
+            # Retrieve the current internal ip
+            _p, _s, old_internal_ip = self._internal_fip_assoc_data(
+                context, {'id': floatingip_db.id,
+                          'port_id': floatingip_db.fixed_port_id,
+                          'fixed_ip_address': floatingip_db.fixed_ip_address,
+                          'tenant_id': floatingip_db.tenant_id})
+            nvp_gw_port_id = nvplib.find_router_gw_port(
+                context, self.cluster, old_router_id)['uuid']
+            self._retrieve_and_delete_nat_rules(
+                context, floating_ip, old_internal_ip, old_router_id)
+            nvplib.update_lrouter_port_ips(
+                self.cluster, old_router_id, nvp_gw_port_id,
+                ips_to_add=[], ips_to_remove=nvp_floating_ips)
+
+        if router_id:
             nvp_gw_port_id = nvplib.find_router_gw_port(
                 context, self.cluster, router_id)['uuid']
-            nvp_floating_ips = self._build_ip_address_list(
-                context.elevated(), external_port['fixed_ips'])
-            LOG.debug(_("Address list for NVP logical router "
-                        "port:%s"), nvp_floating_ips)
             # Re-create NAT rules only if a port id is specified
-            if 'port_id' in fip and fip['port_id']:
+            if fip.get('port_id'):
                 try:
                     # Create new NAT rules
                     nvplib.create_lrouter_dnat_rule(
@@ -1847,15 +1856,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    'internal_ip': internal_ip})
                     msg = _("Failed to update NAT rules for floatingip update")
                     raise nvp_exc.NvpPluginException(err_msg=msg)
-            elif floatingip_db['fixed_port_id']:
-                # This is a disassociation.
-                # Remove floating IP address from logical router port
-                internal_ip = None
-                nvplib.update_lrouter_port_ips(self.cluster,
-                                               router_id,
-                                               nvp_gw_port_id,
-                                               ips_to_add=[],
-                                               ips_to_remove=nvp_floating_ips)
 
         floatingip_db.update({'fixed_ip_address': internal_ip,
                               'fixed_port_id': port_id,

@@ -475,34 +475,42 @@ class L3NatTestCaseMixin(object):
                             public_sub['subnet']['network_id'])
 
     @contextlib.contextmanager
+    def floatingip_no_assoc_with_public_sub(
+        self, private_sub, fmt=None, set_context=False, public_sub=None):
+        self._set_net_external(public_sub['subnet']['network_id'])
+        with self.router() as r:
+            floatingip = None
+            try:
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+                self._router_interface_action('add', r['router']['id'],
+                                              private_sub['subnet']['id'],
+                                              None)
+
+                floatingip = self._make_floatingip(
+                    fmt or self.fmt,
+                    public_sub['subnet']['network_id'],
+                    set_context=set_context)
+                yield floatingip, r
+            finally:
+                if floatingip:
+                    self._delete('floatingips',
+                                 floatingip['floatingip']['id'])
+                self._router_interface_action('remove', r['router']['id'],
+                                              private_sub['subnet']['id'],
+                                              None)
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+
+    @contextlib.contextmanager
     def floatingip_no_assoc(self, private_sub, fmt=None, set_context=False):
         with self.subnet(cidr='12.0.0.0/24') as public_sub:
-            self._set_net_external(public_sub['subnet']['network_id'])
-            with self.router() as r:
-                floatingip = None
-                try:
-                    self._add_external_gateway_to_router(
-                        r['router']['id'],
-                        public_sub['subnet']['network_id'])
-                    self._router_interface_action('add', r['router']['id'],
-                                                  private_sub['subnet']['id'],
-                                                  None)
-
-                    floatingip = self._make_floatingip(
-                        fmt or self.fmt,
-                        public_sub['subnet']['network_id'],
-                        set_context=set_context)
-                    yield floatingip
-                finally:
-                    if floatingip:
-                        self._delete('floatingips',
-                                     floatingip['floatingip']['id'])
-                    self._router_interface_action('remove', r['router']['id'],
-                                                  private_sub['subnet']['id'],
-                                                  None)
-                    self._remove_external_gateway_from_router(
-                        r['router']['id'],
-                        public_sub['subnet']['network_id'])
+            with self.floatingip_no_assoc_with_public_sub(
+                private_sub, fmt, set_context, public_sub) as (f, r):
+                # Yield only the floating ip object
+                yield f
 
 
 class L3NatTestCaseBase(L3NatTestCaseMixin):
@@ -1242,6 +1250,68 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertEqual(body['floatingip']['port_id'], port_id)
                 self.assertEqual(body['floatingip']['fixed_ip_address'],
                                  ip_address)
+
+    def test_floatingip_update_different_router(self):
+        # Create subnet with different CIDRs to account for plugins which
+        # do not support overlapping IPs
+        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
+                               self.subnet(cidr='10.0.1.0/24')) as (
+                                   s1, s2):
+            with contextlib.nested(self.port(subnet=s1),
+                                   self.port(subnet=s2)) as (p1, p2):
+                private_sub1 = {'subnet':
+                                {'id':
+                                 p1['port']['fixed_ips'][0]['subnet_id']}}
+                private_sub2 = {'subnet':
+                                {'id':
+                                 p2['port']['fixed_ips'][0]['subnet_id']}}
+                with self.subnet(cidr='12.0.0.0/24') as public_sub:
+                    with contextlib.nested(
+                            self.floatingip_no_assoc_with_public_sub(
+                                private_sub1, public_sub=public_sub),
+                            self.floatingip_no_assoc_with_public_sub(
+                                private_sub2, public_sub=public_sub)) as (
+                                    (fip1, r1), (fip2, r2)):
+
+                        def assert_no_assoc(fip):
+                            body = self._show('floatingips',
+                                              fip['floatingip']['id'])
+                            self.assertEqual(body['floatingip']['port_id'],
+                                             None)
+                            self.assertIsNone(
+                                body['floatingip']['fixed_ip_address'], None)
+
+                        assert_no_assoc(fip1)
+                        assert_no_assoc(fip2)
+
+                        def associate_and_assert(fip, port):
+                            port_id = port['port']['id']
+                            ip_address = (port['port']['fixed_ips']
+                                          [0]['ip_address'])
+                            body = self._update(
+                                'floatingips', fip['floatingip']['id'],
+                                {'floatingip': {'port_id': port_id}})
+                            self.assertEqual(body['floatingip']['port_id'],
+                                             port_id)
+                            self.assertEqual(
+                                body['floatingip']['fixed_ip_address'],
+                                ip_address)
+                            return body['floatingip']['router_id']
+
+                        fip1_r1_res = associate_and_assert(fip1, p1)
+                        self.assertEqual(fip1_r1_res, r1['router']['id'])
+                        # The following operation will associate the floating
+                        # ip to a different router
+                        fip1_r2_res = associate_and_assert(fip1, p2)
+                        self.assertEqual(fip1_r2_res, r2['router']['id'])
+                        fip2_r1_res = associate_and_assert(fip2, p1)
+                        self.assertEqual(fip2_r1_res, r1['router']['id'])
+                        # disassociate fip1
+                        self._update(
+                            'floatingips', fip1['floatingip']['id'],
+                            {'floatingip': {'port_id': None}})
+                        fip2_r2_res = associate_and_assert(fip2, p2)
+                        self.assertEqual(fip2_r2_res, r2['router']['id'])
 
     def test_floatingip_with_assoc(self):
         with self.floatingip_with_assoc() as fip:
