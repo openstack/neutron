@@ -184,8 +184,10 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                     raise firewall.FirewallRuleNotFound(firewall_rule_id=
                                                         fwrule_id)
                 elif rules_dict[fwrule_id]['firewall_policy_id']:
-                    raise firewall.FirewallRuleInUse(
-                        firewall_rule_id=fwrule_id)
+                    if (rules_dict[fwrule_id]['firewall_policy_id'] !=
+                            fwp_db['id']):
+                        raise firewall.FirewallRuleInUse(
+                            firewall_rule_id=fwrule_id)
             # New list of rules is valid so we will first reset the existing
             # list and then add each rule in order.
             # Note that the list could be empty in which case we interpret
@@ -193,6 +195,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
             fwp_db.firewall_rules = []
             for fwrule_id in rule_id_list:
                 fwp_db.firewall_rules.append(rules_dict[fwrule_id])
+            fwp_db.firewall_rules.reorder()
             fwp_db.audited = False
 
     def _process_rule_for_policy(self, context, firewall_policy_id,
