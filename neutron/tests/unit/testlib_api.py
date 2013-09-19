@@ -72,3 +72,13 @@ class WebTestCase(base.BaseTestCase):
         result = wsgi.Serializer(
             attributes.get_attr_metadata()).serialize(data, ctype)
         return result
+
+
+class SubDictMatch(object):
+
+    def __init__(self, sub_dict):
+        self.sub_dict = sub_dict
+
+    def __eq__(self, super_dict):
+        return all(item in super_dict.items()
+                   for item in self.sub_dict.items())

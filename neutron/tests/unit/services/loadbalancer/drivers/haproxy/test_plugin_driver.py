@@ -22,6 +22,7 @@ from neutron.common import exceptions
 from neutron import context
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as st_db
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
@@ -30,6 +31,7 @@ from neutron.services.loadbalancer.drivers.haproxy import (
 )
 from neutron.tests import base
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
+from neutron.tests.unit import testlib_api
 
 
 class TestLoadBalancerPluginBase(
@@ -274,6 +276,24 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
             self.callbacks.plug_vip_port,
             host='host'
         )
+
+    def test_plug_vip_port_mock_with_host(self):
+        exp = {
+            'device_owner': 'neutron:' + constants.LOADBALANCER,
+            'device_id': 'c596ce11-db30-5c72-8243-15acaae8690f',
+            'admin_state_up': True,
+            portbindings.HOST_ID: 'host'
+        }
+        with mock.patch.object(
+            self.plugin._core_plugin, 'update_port') as mock_update_port:
+            with self.pool() as pool:
+                with self.vip(pool=pool) as vip:
+                    ctx = context.get_admin_context()
+                    self.callbacks.plug_vip_port(
+                        ctx, port_id=vip['vip']['port_id'], host='host')
+            mock_update_port.assert_called_once_with(
+                ctx, vip['vip']['port_id'],
+                {'port': testlib_api.SubDictMatch(exp)})
 
     def test_unplug_vip_port(self):
         exp = {
