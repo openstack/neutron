@@ -257,26 +257,3 @@ class NvpApiClient(object):
         if port is None:
             port = 443 if is_ssl else 80
         return (host, port, is_ssl)
-
-    def update_providers(self, api_providers):
-        new_providers = set([tuple(p) for p in api_providers])
-        if new_providers != self._api_providers:
-            new_conns = []
-            while not self._conn_pool.empty():
-                priority, conn = self._conn_pool.get_nowait()
-                if self._conn_params(conn) in new_providers:
-                    new_conns.append((priority, conn))
-
-            to_subtract = self._api_providers - new_providers
-            for p in to_subtract:
-                self._set_provider_data(p, None)
-            to_add = new_providers - self._api_providers
-            for unused_i in range(self._concurrent_connections):
-                for host, port, is_ssl in to_add:
-                    conn = self._create_connection(host, port, is_ssl)
-                    new_conns.append((self._next_conn_priority, conn))
-                    self._next_conn_priority += 1
-
-            for priority, conn in new_conns:
-                self._conn_pool.put((priority, conn))
-            self._api_providers = new_providers
