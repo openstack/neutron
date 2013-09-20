@@ -29,8 +29,8 @@ class CredentialNameNotFound(exceptions.NeutronException):
 
 
 class CredentialAlreadyExists(exceptions.NeutronException):
-    """Credential ID already exists."""
-    message = _("Credential %(credential_id)s already exists "
+    """Credential name already exists."""
+    message = _("Credential %(credential_name)s already exists "
                 "for tenant %(tenant_id)s.")
 
 
