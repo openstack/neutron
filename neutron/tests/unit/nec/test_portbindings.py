@@ -265,14 +265,22 @@ class TestNecPortBindingValidatePortInfo(test_nec_plugin.NecPluginV2TestCase):
         profile = {'portinfo:datapath_id': '0x1234567890abcdef',
                    'portinfo:port_no': 123}
         portinfo = self.plugin._validate_portinfo(profile)
-        self.assertEqual(portinfo['datapath_id'], '0x1234567890abcdef')
+        # NOTE(mriedem): Handle long integer conversion universally.
+        self.assertEqual(
+            0x1234567890abcdef,
+            int(portinfo['datapath_id'].replace('L', ''), 16)
+        )
         self.assertEqual(portinfo['port_no'], 123)
 
     def test_validate_portinfo_ok_without_0x(self):
         profile = {'portinfo:datapath_id': '1234567890abcdef',
                    'portinfo:port_no': 123}
         portinfo = self.plugin._validate_portinfo(profile)
-        self.assertEqual(portinfo['datapath_id'], '0x1234567890abcdef')
+        # NOTE(mriedem): Handle long integer conversion universally.
+        self.assertEqual(
+            0x1234567890abcdef,
+            int(portinfo['datapath_id'].replace('L', ''), 16)
+        )
         self.assertEqual(portinfo['port_no'], 123)
 
     def _test_validate_exception(self, profile, expected_msg):
