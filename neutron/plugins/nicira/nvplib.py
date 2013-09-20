@@ -30,8 +30,8 @@ from neutron.common import constants
 from neutron.common import exceptions as exception
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log
-from neutron.plugins.nicira.common import (
-    exceptions as nvp_exc)
+from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira import NvpApiClient
 from neutron.version import version_info
 
@@ -55,8 +55,6 @@ LQUEUE_RESOURCE = "lqueue"
 GWSERVICE_RESOURCE = "gateway-service"
 # Current neutron version
 NEUTRON_VERSION = version_info.release_string()
-# Other constants for NVP resource
-MAX_DISPLAY_NAME_LEN = 40
 # Constants for NAT rules
 MATCH_KEYS = ["destination_ip_addresses", "destination_port_max",
               "destination_port_min", "source_ip_addresses",
@@ -87,7 +85,7 @@ def device_id_to_vm_id(device_id, obfuscate=False):
     # To fit it into an NVP tag we need to hash it, however device_id
     # used for ports associated to VM's are small enough so let's skip the
     # hashing
-    if len(device_id) > MAX_DISPLAY_NAME_LEN or obfuscate:
+    if len(device_id) > utils.MAX_DISPLAY_NAME_LEN or obfuscate:
         return hashlib.sha1(device_id).hexdigest()
     else:
         return device_id
@@ -147,14 +145,6 @@ def _build_uri_path(resource,
         if query_string:
             uri_path += "?%s" % query_string
     return uri_path
-
-
-def _check_and_truncate_name(display_name):
-    if display_name and len(display_name) > MAX_DISPLAY_NAME_LEN:
-        LOG.debug(_("Specified name:'%s' exceeds maximum length. "
-                    "It will be truncated on NVP"), display_name)
-        return display_name[:MAX_DISPLAY_NAME_LEN]
-    return display_name or ''
 
 
 def get_cluster_version(cluster):
@@ -239,7 +229,7 @@ def create_lswitch(cluster, tenant_id, display_name,
                    neutron_net_id=None,
                    shared=None,
                    **kwargs):
-    lswitch_obj = {"display_name": _check_and_truncate_name(display_name),
+    lswitch_obj = {"display_name": utils.check_and_truncate(display_name),
                    "transport_zones": transport_zones_config,
                    "tags": [{"tag": tenant_id, "scope": "os_tid"},
                             {"tag": NEUTRON_VERSION, "scope": "quantum"}]}
@@ -261,7 +251,7 @@ def create_lswitch(cluster, tenant_id, display_name,
 def update_lswitch(cluster, lswitch_id, display_name,
                    tenant_id=None, **kwargs):
     uri = _build_uri_path(LSWITCH_RESOURCE, resource_id=lswitch_id)
-    lswitch_obj = {"display_name": _check_and_truncate_name(display_name),
+    lswitch_obj = {"display_name": utils.check_and_truncate(display_name),
                    "tags": [{"tag": tenant_id, "scope": "os_tid"},
                             {"tag": NEUTRON_VERSION, "scope": "quantum"}]}
     if "tags" in kwargs:
@@ -295,7 +285,7 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
                  "device_id": device['interface_name'],
                  "type": "L2Gateway"} for device in devices]
     gwservice_obj = {
-        "display_name": _check_and_truncate_name(display_name),
+        "display_name": utils.check_and_truncate(display_name),
         "tags": tags,
         "gateways": gateways,
         "type": "L2GatewayServiceConfig"
@@ -308,7 +298,7 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
 def _prepare_lrouter_body(name, tenant_id, router_type,
                           distributed=None, **kwargs):
     body = {
-        "display_name": _check_and_truncate_name(name),
+        "display_name": utils.check_and_truncate(name),
         "tags": [{"tag": tenant_id, "scope": "os_tid"},
                  {"tag": NEUTRON_VERSION, "scope": "quantum"}],
         "routing_config": {
@@ -459,7 +449,7 @@ def update_l2_gw_service(cluster, gateway_id, display_name):
     if not display_name:
         # Nothing to update
         return gwservice_obj
-    gwservice_obj["display_name"] = _check_and_truncate_name(display_name)
+    gwservice_obj["display_name"] = utils.check_and_truncate(display_name)
     return do_request("PUT", _build_uri_path(GWSERVICE_RESOURCE,
                                              resource_id=gateway_id),
                       json.dumps(gwservice_obj), cluster=cluster)
@@ -471,7 +461,7 @@ def update_implicit_routing_lrouter(cluster, r_id, display_name, nexthop):
         # Nothing to update
         return lrouter_obj
     # It seems that this is faster than the doing an if on display_name
-    lrouter_obj["display_name"] = (_check_and_truncate_name(display_name) or
+    lrouter_obj["display_name"] = (utils.check_and_truncate(display_name) or
                                    lrouter_obj["display_name"])
     if nexthop:
         nh_element = lrouter_obj["routing_config"].get(
@@ -808,7 +798,7 @@ def update_port(cluster, lswitch_uuid, lport_uuid, neutron_port_id, tenant_id,
                 mac_learning_enabled=None, allowed_address_pairs=None):
     lport_obj = dict(
         admin_status_enabled=admin_status_enabled,
-        display_name=_check_and_truncate_name(display_name),
+        display_name=utils.check_and_truncate(display_name),
         tags=[dict(scope='os_tid', tag=tenant_id),
               dict(scope='q_port_id', tag=neutron_port_id),
               dict(scope='vm_id', tag=device_id_to_vm_id(device_id)),
@@ -839,7 +829,7 @@ def create_lport(cluster, lswitch_uuid, tenant_id, neutron_port_id,
                  security_profiles=None, queue_id=None,
                  mac_learning_enabled=None, allowed_address_pairs=None):
     """Creates a logical port on the assigned logical switch."""
-    display_name = _check_and_truncate_name(display_name)
+    display_name = utils.check_and_truncate(display_name)
     lport_obj = dict(
         admin_status_enabled=admin_status_enabled,
         display_name=display_name,
@@ -1092,7 +1082,7 @@ def create_security_profile(cluster, tenant_id, security_profile):
                      {'ethertype': 'IPv6'}]}
     tags = [dict(scope='os_tid', tag=tenant_id),
             dict(scope='quantum', tag=NEUTRON_VERSION)]
-    display_name = _check_and_truncate_name(security_profile.get('name'))
+    display_name = utils.check_and_truncate(security_profile.get('name'))
     body = mk_body(
         tags=tags, display_name=display_name,
         logical_port_ingress_rules=(

@@ -20,6 +20,7 @@
 from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
+from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.vshield.common import (
     constants as vcns_const)
 from neutron.plugins.nicira.vshield.common.constants import RouterStatus
@@ -625,7 +626,7 @@ class EdgeApplianceDriver(object):
 
     def create_lswitch(self, name, tz_config):
         lsconfig = {
-            'display_name': name,
+            'display_name': utils.check_and_truncate(name),
             "tags": [],
             "type": "LogicalSwitchConfig",
             "_schema": "/ws.v1/schema/LogicalSwitchConfig",

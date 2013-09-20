@@ -24,6 +24,7 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira import nvp_cluster
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
@@ -1483,18 +1484,18 @@ class NvplibMiscTestCase(base.BaseTestCase):
 
     def test_check_and_truncate_name_with_none(self):
         name = None
-        result = nvplib._check_and_truncate_name(name)
+        result = utils.check_and_truncate(name)
         self.assertEqual('', result)
 
     def test_check_and_truncate_name_with_short_name(self):
         name = 'foo_port_name'
-        result = nvplib._check_and_truncate_name(name)
+        result = utils.check_and_truncate(name)
         self.assertEqual(name, result)
 
     def test_check_and_truncate_name_long_name(self):
         name = 'this_is_a_port_whose_name_is_longer_than_40_chars'
-        result = nvplib._check_and_truncate_name(name)
-        self.assertEqual(len(result), nvplib.MAX_DISPLAY_NAME_LEN)
+        result = utils.check_and_truncate(name)
+        self.assertEqual(len(result), utils.MAX_DISPLAY_NAME_LEN)
 
 
 def _nicira_method(method_name, module_name='nvplib'):
