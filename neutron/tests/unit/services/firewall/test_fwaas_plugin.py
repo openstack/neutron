@@ -140,16 +140,10 @@ class TestFirewallCallbacks(test_db_firewall.FirewallPluginDbTestCase):
             fwp_id = fwp['firewall_policy']['id']
             attrs = self._get_test_firewall_attrs()
             attrs['firewall_policy_id'] = fwp_id
-            with contextlib.nested(self.firewall(
-                firewall_policy_id=fwp_id,
-                tenant_id=tenant_id,
-                admin_state_up=test_db_firewall.ADMIN_STATE_UP,
-                no_delete=True), self.firewall(
-                    firewall_policy_id=fwp_id,
-                    tenant_id=tenant_id,
-                    admin_state_up=test_db_firewall.ADMIN_STATE_UP,
-                    no_delete=True)) as fws:
-                    fw_list = [fw['firewall'] for fw in fws]
+            with self.firewall(firewall_policy_id=fwp_id, tenant_id=tenant_id,
+                               admin_state_up=test_db_firewall.ADMIN_STATE_UP,
+                               no_delete=True) as fw:
+                    fw_list = [fw['firewall']]
                     f = self.callbacks.get_firewalls_for_tenant_without_rules
                     res = f(ctx, host='dummy')
                     for fw in res:
@@ -201,6 +195,13 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
     def setUp(self):
         super(TestFirewallPluginBase, self).setUp(fw_plugin=FW_PLUGIN_KLASS)
         self.callbacks = self.plugin.callbacks
+
+    def test_create_second_firewall_not_permitted(self):
+        with self.firewall(no_delete=True):
+            res = self._create_firewall(
+                None, 'firewall2', description='test',
+                firewall_policy_id=None, admin_state_up=True)
+            self.assertEqual(res.status_int, 500)
 
     def test_update_firewall(self):
         ctx = context.get_admin_context()
@@ -352,3 +353,11 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
             fw_id = fw['firewall']['id']
             fw_rules = self.plugin._make_firewall_dict_with_rules(ctx, fw_id)
             self.assertEqual(fw_rules['firewall_rule_list'], [])
+
+    def test_list_firewalls(self):
+        with self.firewall_policy(no_delete=True) as fwp:
+            fwp_id = fwp['firewall_policy']['id']
+            with self.firewall(name='fw1', firewall_policy_id=fwp_id,
+                               description='fw') as fwalls:
+                self._test_list_resources('firewall', [fwalls],
+                                          query_params='description=fw')
