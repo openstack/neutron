@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-19 06:09+0000\n"
+"POT-Creation-Date: 2013-09-20 06:10+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -730,24 +730,24 @@ msgstr ""
 msgid "Top-level directory for maintaining dhcp state"
 msgstr "用於維護 DHCP 狀態的最上層目錄"
 
-#: neutron/agent/linux/daemon.py:36
+#: neutron/agent/linux/daemon.py:35
 #, python-format
 msgid "Failed to open pidfile: %s"
 msgstr "無法開啟 pidfile：%s"
 
-#: neutron/agent/linux/daemon.py:43
+#: neutron/agent/linux/daemon.py:41
 msgid "Unable to lock pid file"
 msgstr "無法鎖定 PID 檔案"
 
-#: neutron/agent/linux/daemon.py:50
+#: neutron/agent/linux/daemon.py:48
 msgid "Unable to unlock pid file"
 msgstr "無法解除鎖定 PID 檔案"
 
-#: neutron/agent/linux/daemon.py:99
+#: neutron/agent/linux/daemon.py:97
 msgid "Fork failed"
 msgstr "分岔失敗"
 
-#: neutron/agent/linux/daemon.py:141
+#: neutron/agent/linux/daemon.py:139
 #, python-format
 msgid "Pidfile %s already exist. Daemon already running?"
 msgstr "pidfile %s 已存在。常駐程式已在執行中？"
@@ -797,60 +797,60 @@ msgstr "無法轉換 %s 中的值"
 msgid "Unable to access %s"
 msgstr "無法存取 %s"
 
-#: neutron/agent/linux/dhcp.py:279
+#: neutron/agent/linux/dhcp.py:280
 #, python-format
 msgid ""
 "FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
 " Please ensure that its version is %s or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:284
+#: neutron/agent/linux/dhcp.py:285
 #, python-format
 msgid ""
 "Unable to determine dnsmasq version. Please ensure that its version is %s"
 " or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:384
+#: neutron/agent/linux/dhcp.py:385
 #, python-format
 msgid "Killing dhcpmasq for network since all subnets have turned off DHCP: %s"
 msgstr "由於所有子網路都已關閉 DHCP，所以正在結束網路的 dhcpmasq：%s"
 
-#: neutron/agent/linux/dhcp.py:394
+#: neutron/agent/linux/dhcp.py:395
 #, python-format
 msgid "Pid %d is stale, relaunching dnsmasq"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:395
+#: neutron/agent/linux/dhcp.py:396
 #, python-format
 msgid "Reloading allocations for network: %s"
 msgstr "正在重新載入網路的配置：%s"
 
-#: neutron/agent/linux/dhcp.py:555
+#: neutron/agent/linux/dhcp.py:556
 msgid "You must specify an interface driver"
 msgstr "必須指定介面驅動程式"
 
-#: neutron/agent/linux/dhcp.py:560
+#: neutron/agent/linux/dhcp.py:561
 #, python-format
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:608
+#: neutron/agent/linux/dhcp.py:609
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:618
+#: neutron/agent/linux/dhcp.py:619
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:659
+#: neutron/agent/linux/dhcp.py:660
 #, python-format
 msgid "DHCP port %(device_id)s on network %(network_id)s does not yet exist."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:695 neutron/debug/debug_agent.py:75
+#: neutron/agent/linux/dhcp.py:696 neutron/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr "正在重複使用現有裝置：%s。"
@@ -916,14 +916,14 @@ msgstr "鑑別區域"
 
 #: neutron/agent/linux/interface.py:198 neutron/agent/linux/interface.py:267
 #: neutron/agent/linux/interface.py:316
-#: neutron/plugins/midonet/agent/midonet_driver.py:129
+#: neutron/plugins/midonet/agent/midonet_driver.py:130
 #, python-format
 msgid "Device %s already exists"
 msgstr "裝置 %s 已存在"
 
 #: neutron/agent/linux/interface.py:216 neutron/agent/linux/interface.py:279
 #: neutron/agent/linux/interface.py:323
-#: neutron/plugins/midonet/agent/midonet_driver.py:137
+#: neutron/plugins/midonet/agent/midonet_driver.py:138
 #, python-format
 msgid "Unplugged interface '%s'"
 msgstr "已拔除介面 '%s'"
@@ -1004,7 +1004,7 @@ msgid "Attempted to get traffic counters of chain %s which does not exist"
 msgstr ""
 
 #: neutron/agent/linux/ovs_lib.py:73 neutron/agent/linux/ovs_lib.py:103
-#: neutron/agent/linux/ovs_lib.py:271
+#: neutron/agent/linux/ovs_lib.py:272
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
 msgstr "無法執行 %(cmd)s。異常狀況：%(exception)s"
@@ -1035,35 +1035,35 @@ msgstr ""
 msgid "%(action)s: %(flow)s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:334
+#: neutron/agent/linux/ovs_lib.py:335
 #, python-format
 msgid "Unable to parse regex results. Exception: %s"
 msgstr "無法剖析 Regex 結果。異常狀況：%s"
 
-#: neutron/agent/linux/ovs_lib.py:352
+#: neutron/agent/linux/ovs_lib.py:353
 #, fuzzy, python-format
 msgid "Unable to determine mac address for %s"
 msgstr "嘗試 %s 次之後仍無法產生 MAC 位址"
 
-#: neutron/agent/linux/ovs_lib.py:361
+#: neutron/agent/linux/ovs_lib.py:362
 #, python-format
 msgid "Interface %s not found."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:370
+#: neutron/agent/linux/ovs_lib.py:371
 #, python-format
 msgid "Unable to retrieve bridges. Exception: %s"
 msgstr "無法擷取橋接器。異常狀況：%s"
 
-#: neutron/agent/linux/ovs_lib.py:381
+#: neutron/agent/linux/ovs_lib.py:382
 msgid "Unable to retrieve OVS userspace version."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:393
+#: neutron/agent/linux/ovs_lib.py:394
 msgid "Unable to retrieve OVS kernel module version."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:402
+#: neutron/agent/linux/ovs_lib.py:403
 #, python-format
 msgid "Bridge %s not found."
 msgstr ""
@@ -2521,96 +2521,96 @@ msgid ""
 "sort '%(resource)s'"
 msgstr "屬性 '%(attr)s' 是對其他資源的參照，無法由排序 '%(resource)s' 使用"
 
-#: neutron/db/firewall/firewall_db.py:231
+#: neutron/db/firewall/firewall_db.py:234
 #: neutron/plugins/nicira/NeutronServicePlugin.py:850
 #: neutron/services/firewall/fwaas_plugin.py:211
 msgid "create_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:247
+#: neutron/db/firewall/firewall_db.py:250
 #: neutron/plugins/nicira/NeutronServicePlugin.py:883
 #: neutron/services/firewall/fwaas_plugin.py:220
 msgid "update_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:257
+#: neutron/db/firewall/firewall_db.py:260
 #: neutron/plugins/nicira/NeutronServicePlugin.py:907
 #: neutron/services/firewall/fwaas_plugin.py:235
 msgid "delete_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:267
+#: neutron/db/firewall/firewall_db.py:270
 msgid "get_firewall() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:272
+#: neutron/db/firewall/firewall_db.py:275
 msgid "get_firewalls() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:278
+#: neutron/db/firewall/firewall_db.py:281
 msgid "get_firewalls_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:283
+#: neutron/db/firewall/firewall_db.py:286
 msgid "create_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:299
+#: neutron/db/firewall/firewall_db.py:302
 #: neutron/plugins/nicira/NeutronServicePlugin.py:944
 #: neutron/services/firewall/fwaas_plugin.py:244
 msgid "update_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:311
+#: neutron/db/firewall/firewall_db.py:314
 msgid "delete_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:323
+#: neutron/db/firewall/firewall_db.py:326
 msgid "get_firewall_policy() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:328
+#: neutron/db/firewall/firewall_db.py:331
 msgid "get_firewall_policies() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:334
+#: neutron/db/firewall/firewall_db.py:337
 msgid "get_firewall_policies_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:339
+#: neutron/db/firewall/firewall_db.py:342
 msgid "create_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:367
+#: neutron/db/firewall/firewall_db.py:370
 #: neutron/plugins/nicira/NeutronServicePlugin.py:918
 #: neutron/services/firewall/fwaas_plugin.py:252
 msgid "update_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:391
+#: neutron/db/firewall/firewall_db.py:394
 #: neutron/services/firewall/fwaas_plugin.py:262
 msgid "delete_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:399
+#: neutron/db/firewall/firewall_db.py:402
 msgid "get_firewall_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:404
+#: neutron/db/firewall/firewall_db.py:407
 msgid "get_firewall_rules() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:410
+#: neutron/db/firewall/firewall_db.py:413
 msgid "get_firewall_rules_count() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:419
+#: neutron/db/firewall/firewall_db.py:422
 #: neutron/plugins/nicira/NeutronServicePlugin.py:970
 #: neutron/services/firewall/fwaas_plugin.py:281
 msgid "insert_rule() called"
 msgstr ""
 
-#: neutron/db/firewall/firewall_db.py:459
+#: neutron/db/firewall/firewall_db.py:462
 #: neutron/plugins/nicira/NeutronServicePlugin.py:999
 #: neutron/services/firewall/fwaas_plugin.py:289
 msgid "remove_rule() called"
@@ -4480,12 +4480,12 @@ msgid "'%(model)s' object has no attribute '%(name)s'"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:134
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:209
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:194
 msgid "create_network() called"
 msgstr "已呼叫 create_network()"
 
 #: neutron/plugins/cisco/network_plugin.py:151
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:241
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:226
 msgid "update_network() called"
 msgstr "已呼叫 update_network()"
 
@@ -4502,17 +4502,17 @@ msgid "get_networks() called"
 msgstr "已呼叫 get_networks()"
 
 #: neutron/plugins/cisco/network_plugin.py:197
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:307
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:306
 msgid "create_port() called"
 msgstr "已呼叫 create_port()"
 
 #: neutron/plugins/cisco/network_plugin.py:207
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:393
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:396
 msgid "delete_port() called"
 msgstr "已呼叫 delete_port()"
 
 #: neutron/plugins/cisco/network_plugin.py:226
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:352
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:353
 msgid "update_port() called"
 msgstr "已呼叫 update_port()"
 
@@ -5149,31 +5149,31 @@ msgstr "未載入 %s 外掛程式"
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr "%(plugin_key)s：已忽略帶有引數 %(args)s 的 %(function_name)s"
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:222
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:207
 #, python-format
 msgid "Provider network added to DB: %(network_id)s, %(vlan_id)s"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:266
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:251
 #, python-format
 msgid "Provider network removed from DB: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:374
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:377
 #, python-format
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:430
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:437
 msgid "Nexus plugin loaded, creating SVI on switch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:450
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:475
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:457
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:482
 msgid "No Nexus plugin, sending to vswitch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:464
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:471
 msgid "Nexus plugin loaded, deleting SVI from switch"
 msgstr ""
 
@@ -6914,101 +6914,101 @@ msgstr ""
 msgid "provider_router_id should be configured in the plugin config file"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:367
+#: neutron/plugins/midonet/plugin.py:368
 #, python-format
 msgid "MidonetPluginV2.create_subnet called: subnet=%r"
 msgstr "已呼叫 MidonetPluginV2.create_subnet：子網路 = %r"
 
-#: neutron/plugins/midonet/plugin.py:388
+#: neutron/plugins/midonet/plugin.py:389
 #, python-format
 msgid "MidonetPluginV2.create_subnet exiting: sn_entry=%r"
 msgstr "MidonetPluginV2.create_subnet 正在結束：sn_entry = %r"
 
-#: neutron/plugins/midonet/plugin.py:397
+#: neutron/plugins/midonet/plugin.py:398
 #, python-format
 msgid "MidonetPluginV2.delete_subnet called: id=%s"
 msgstr "已呼叫 MidonetPluginV2.delete_subnet：ID = %s"
 
-#: neutron/plugins/midonet/plugin.py:412
+#: neutron/plugins/midonet/plugin.py:413
 msgid "MidonetPluginV2.delete_subnet exiting"
 msgstr "MidonetPluginV2.delete_subnet 正在結束"
 
-#: neutron/plugins/midonet/plugin.py:419
+#: neutron/plugins/midonet/plugin.py:420
 #, python-format
 msgid "MidonetPluginV2.create_network called: network=%r"
 msgstr "已呼叫 MidonetPluginV2.create_network：網路 = %r"
 
-#: neutron/plugins/midonet/plugin.py:433
+#: neutron/plugins/midonet/plugin.py:434
 #, python-format
 msgid "MidonetPluginV2.create_network exiting: net=%r"
 msgstr "MidonetPluginV2.create_network 正在結束：網路 = %r"
 
-#: neutron/plugins/midonet/plugin.py:442
+#: neutron/plugins/midonet/plugin.py:443
 #, python-format
 msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr "已呼叫 MidonetPluginV2.update_network：ID = %(id)r，網路 = %(network)r"
 
-#: neutron/plugins/midonet/plugin.py:450
+#: neutron/plugins/midonet/plugin.py:451
 #, python-format
 msgid "MidonetPluginV2.update_network exiting: net=%r"
 msgstr "MidonetPluginV2.update_network 正在結束：網路 = %r"
 
-#: neutron/plugins/midonet/plugin.py:458
+#: neutron/plugins/midonet/plugin.py:459
 #, python-format
 msgid "MidonetPluginV2.get_network called: id=%(id)r, fields=%(fields)r"
 msgstr "已呼叫 MidonetPluginV2.get_network：ID = %(id)r，欄位 = %(fields)r"
 
-#: neutron/plugins/midonet/plugin.py:463
+#: neutron/plugins/midonet/plugin.py:464
 #, python-format
 msgid "MidonetPluginV2.get_network exiting: qnet=%r"
 msgstr "MidonetPluginV2.get_network 正在結束：qnet = %r"
 
-#: neutron/plugins/midonet/plugin.py:468
+#: neutron/plugins/midonet/plugin.py:469
 #, python-format
 msgid "MidonetPluginV2.delete_network called: id=%r"
 msgstr "已呼叫 MidonetPluginV2.delete_network：ID = %r"
 
-#: neutron/plugins/midonet/plugin.py:473
+#: neutron/plugins/midonet/plugin.py:474
 #, python-format
 msgid "Failed to delete neutron db, while Midonet bridge=%rhad been deleted"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:479
+#: neutron/plugins/midonet/plugin.py:480
 #, python-format
 msgid "MidonetPluginV2.create_port called: port=%r"
 msgstr "已呼叫 MidonetPluginV2.create_port：埠 = %r"
 
-#: neutron/plugins/midonet/plugin.py:532
+#: neutron/plugins/midonet/plugin.py:536
 #, python-format
 msgid "Failed to create a port on network %(net_id)s: %(err)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:537
+#: neutron/plugins/midonet/plugin.py:541
 #, python-format
 msgid "MidonetPluginV2.create_port exiting: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:542
+#: neutron/plugins/midonet/plugin.py:546
 #, python-format
 msgid "MidonetPluginV2.get_port called: id=%(id)s fields=%(fields)r"
 msgstr "已呼叫 MidonetPluginV2.get_port：ID = %(id)s 欄位 = %(fields)r"
 
-#: neutron/plugins/midonet/plugin.py:549
+#: neutron/plugins/midonet/plugin.py:553
 #, python-format
 msgid "There is no port with ID %(id)s in MidoNet."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:553
+#: neutron/plugins/midonet/plugin.py:557
 #, python-format
 msgid "MidonetPluginV2.get_port exiting: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:558
+#: neutron/plugins/midonet/plugin.py:562
 #, python-format
 msgid "MidonetPluginV2.get_ports called: filters=%(filters)s fields=%(fields)r"
 msgstr "已呼叫 MidonetPluginV2.get_ports：過濾器 = %(filters)s 欄位 = %(fields)r"
 
-#: neutron/plugins/midonet/plugin.py:567
+#: neutron/plugins/midonet/plugin.py:571
 #, python-format
 msgid ""
 "MidonetPluginV2.delete_port called: id=%(id)s "
@@ -7017,49 +7017,49 @@ msgstr ""
 "已呼叫 MidonetPluginV2.delete_port：ID = %(id)s "
 "l3_port_check=%(l3_port_check)r"
 
-#: neutron/plugins/midonet/plugin.py:600
+#: neutron/plugins/midonet/plugin.py:604
 #, python-format
 msgid "Failed to delete DHCP mapping for port %(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:646
+#: neutron/plugins/midonet/plugin.py:650
 #, python-format
 msgid "MidonetPluginV2.create_router called: router=%(router)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:682
+#: neutron/plugins/midonet/plugin.py:686
 #, python-format
 msgid "MidonetPluginV2.create_router exiting: router_data=%(router_data)s."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:694
+#: neutron/plugins/midonet/plugin.py:698
 #, python-format
 msgid ""
 "MidonetPluginV2.set_router_gateway called: id=%(id)s, "
 "gw_router=%(gw_router)s, gw_ip=%(gw_ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:738
+#: neutron/plugins/midonet/plugin.py:742
 #, python-format
 msgid "MidonetPluginV2.remove_router_gateway called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:758
+#: neutron/plugins/midonet/plugin.py:762
 #, python-format
 msgid "MidonetPluginV2.update_router called: id=%(id)s router=%(router)r"
 msgstr "已呼叫 MidonetPluginV2.update_router：ID = %(id)s 路由器 = %(router)r"
 
-#: neutron/plugins/midonet/plugin.py:796
+#: neutron/plugins/midonet/plugin.py:800
 #, python-format
 msgid "MidonetPluginV2.update_router exiting: router=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:807
+#: neutron/plugins/midonet/plugin.py:811
 #, python-format
 msgid "MidonetPluginV2.delete_router called: id=%s"
 msgstr "已呼叫 MidonetPluginV2.delete_router：ID = %s"
 
-#: neutron/plugins/midonet/plugin.py:907
+#: neutron/plugins/midonet/plugin.py:911
 #, python-format
 msgid ""
 "MidonetPluginV2.add_router_interface called: router_id=%(router_id)s "
@@ -7068,25 +7068,25 @@ msgstr ""
 "已呼叫 MidonetPluginV2.add_router_interface：router_id = %(router_id)s "
 "interface_info = %(interface_info)r"
 
-#: neutron/plugins/midonet/plugin.py:931
+#: neutron/plugins/midonet/plugin.py:935
 msgid ""
 "DHCP agent is not working correctly. No port to reach the Metadata server"
 " on this network"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:938
+#: neutron/plugins/midonet/plugin.py:942
 #, python-format
 msgid ""
 "Failed to create MidoNet resources to add router interface. "
 "info=%(info)s, router_id=%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:945
+#: neutron/plugins/midonet/plugin.py:949
 #, python-format
 msgid "MidonetPluginV2.add_router_interface exiting: info=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:951
+#: neutron/plugins/midonet/plugin.py:955
 #, python-format
 msgid ""
 "MidonetPluginV2.update_floatingip called: id=%(id)s "
@@ -7095,12 +7095,12 @@ msgstr ""
 "已呼叫 MidonetPluginV2.update_floatingip：ID = %(id)s floatingip = "
 "%(floatingip)s "
 
-#: neutron/plugins/midonet/plugin.py:1005
+#: neutron/plugins/midonet/plugin.py:1009
 #, python-format
 msgid "MidonetPluginV2.update_floating_ip exiting: fip=%s"
 msgstr "MidonetPluginV2.update_floating_ip 正在結束：fip = %s"
 
-#: neutron/plugins/midonet/plugin.py:1015
+#: neutron/plugins/midonet/plugin.py:1019
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group called: "
@@ -7109,22 +7109,22 @@ msgstr ""
 "已呼叫 MidonetPluginV2.create_security_group：security_group = "
 "%(security_group)s default_sg = %(default_sg)s "
 
-#: neutron/plugins/midonet/plugin.py:1044
+#: neutron/plugins/midonet/plugin.py:1048
 #, python-format
 msgid "Failed to create MidoNet resources for sg %(sg)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1051
+#: neutron/plugins/midonet/plugin.py:1055
 #, python-format
 msgid "MidonetPluginV2.create_security_group exiting: sg=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1057
+#: neutron/plugins/midonet/plugin.py:1061
 #, python-format
 msgid "MidonetPluginV2.delete_security_group called: id=%s"
 msgstr "已呼叫 MidonetPluginV2.delete_security_group：ID = %s"
 
-#: neutron/plugins/midonet/plugin.py:1089
+#: neutron/plugins/midonet/plugin.py:1093
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group_rule called: "
@@ -7133,12 +7133,12 @@ msgstr ""
 "已呼叫 MidonetPluginV2.create_security_group_rule：security_group_rule = "
 "%(security_group_rule)r"
 
-#: neutron/plugins/midonet/plugin.py:1099
+#: neutron/plugins/midonet/plugin.py:1103
 #, python-format
 msgid "MidonetPluginV2.create_security_group_rule exiting: rule=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1109
+#: neutron/plugins/midonet/plugin.py:1113
 #, python-format
 msgid "MidonetPluginV2.delete_security_group_rule called: sg_rule_id=%s"
 msgstr ""
@@ -7149,26 +7149,27 @@ msgid "Failed to create a if-vport mapping on host=%s"
 msgstr ""
 
 #: neutron/plugins/midonet/agent/midonet_driver.py:126
-msgid "Faild binding vport=%(vport) to device=%(device)"
+#, python-format
+msgid "Faild binding vport=%(vport)s to device=%(device)s"
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:25
-#: neutron/tests/unit/midonet/test_midonet_driver.py:54
+#: neutron/tests/unit/midonet/test_midonet_driver.py:50
 msgid "MidoNet API server URI."
 msgstr "MidoNet API 伺服器 URI。"
 
 #: neutron/plugins/midonet/common/config.py:27
-#: neutron/tests/unit/midonet/test_midonet_driver.py:56
+#: neutron/tests/unit/midonet/test_midonet_driver.py:52
 msgid "MidoNet admin username."
 msgstr "MidoNet 管理者使用者名稱。"
 
 #: neutron/plugins/midonet/common/config.py:30
-#: neutron/tests/unit/midonet/test_midonet_driver.py:59
+#: neutron/tests/unit/midonet/test_midonet_driver.py:55
 msgid "MidoNet admin password."
 msgstr "MidoNet 管理者密碼。"
 
 #: neutron/plugins/midonet/common/config.py:33
-#: neutron/tests/unit/midonet/test_midonet_driver.py:62
+#: neutron/tests/unit/midonet/test_midonet_driver.py:58
 msgid "ID of the project that MidoNet admin userbelongs to."
 msgstr "MidoNet 管理者使用者所屬的專案 ID。"
 
@@ -9004,19 +9005,14 @@ msgstr "在 NVP 平台上移除浮動 IP 的 NAT 規則時發生錯誤：%s。"
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr "在 NVP 平台上找到的相符 NAT 規則數目不正確"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1810
-#, python-format
-msgid "Address list for NVP logical router port:%s"
-msgstr "NVP 邏輯路由器埠的位址清單：%s"
-
-#: neutron/plugins/nicira/NeutronPlugin.py:1842
+#: neutron/plugins/nicira/NeutronPlugin.py:1851
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr "在 NVP 平台上給浮動 IP %(floating_ip)s（已對映到內部 IP %(internal_ip)s）建立 NAT 規則時發生錯誤"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1848
+#: neutron/plugins/nicira/NeutronPlugin.py:1857
 msgid "Failed to update NAT rules for floatingip update"
 msgstr ""
 
@@ -12822,4 +12818,10 @@ msgstr ""
 
 #~ msgid "Loaded device plugin %s\n"
 #~ msgstr "已載入裝置外掛程式 %s\n"
+
+#~ msgid "Faild binding vport=%(vport) to device=%(device)"
+#~ msgstr ""
+
+#~ msgid "Address list for NVP logical router port:%s"
+#~ msgstr "NVP 邏輯路由器埠的位址清單：%s"
 
