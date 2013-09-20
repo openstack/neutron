@@ -181,3 +181,21 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
                          'service_type': prov['service_type']}
             )
             self.assertEqual(p, [prov])
+
+    def test_get_service_providers_with_fields(self):
+        provs = [{'service_type': constants.LOADBALANCER,
+                  'name': 'name',
+                  'driver': 'path',
+                  'default': False},
+                 {'service_type': constants.LOADBALANCER,
+                  'name': 'name2',
+                  'driver': 'path2',
+                  'default': False}]
+        pconf = provconf.ProviderConfiguration(provs)
+        for prov in provs:
+            p = pconf.get_service_providers(
+                filters={'name': [prov['name']],
+                         'service_type': prov['service_type']},
+                fields=['name']
+            )
+            self.assertEqual(p, [{'name': prov['name']}])
