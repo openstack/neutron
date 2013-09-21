@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron.plugins.ml2 import config as config
+from neutron.plugins.ml2.drivers import mechanism_ncs
 from neutron.tests.unit import test_db_plugin as test_plugin
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -31,6 +32,11 @@ class NCSTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.addCleanup(config.cfg.CONF.reset)
         super(NCSTestCase, self).setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
+        mechanism_ncs.NCSMechanismDriver.sendjson = self.check_sendjson
+
+    def check_sendjson(self, method, urlpath, obj):
+        # Confirm fix for bug #1224981
+        self.assertFalse(urlpath.startswith("http://"))
 
 
 class NCSMechanismTestBasicGet(test_plugin.TestBasicGet, NCSTestCase):
