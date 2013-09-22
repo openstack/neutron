@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron jenkins.neutron.propose.translation.update.85"
+"Project-Id-Version: neutron jenkins.neutron.propose.translation.update.86"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-21 06:09+0000\n"
+"POT-Creation-Date: 2013-09-22 06:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -9621,13 +9621,13 @@ msgstr ""
 #: neutron/plugins/nicira/common/config.py:34
 msgid ""
 "Maximum number of ports of a logical switch on a bridged transport zone "
-"(default 64)"
+"(default 5000)"
 msgstr ""
 
 #: neutron/plugins/nicira/common/config.py:37
 msgid ""
 "Maximum number of ports of a logical switch on an overlay transport zone "
-"(default 64)"
+"(default 256)"
 msgstr ""
 
 #: neutron/plugins/nicira/common/config.py:40

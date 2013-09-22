@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-21 06:09+0000\n"
+"POT-Creation-Date: 2013-09-22 06:09+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -9670,14 +9670,14 @@ msgstr "[%(rid)d] 無法剖析 API 提供者：%(e)s"
 #: neutron/plugins/nicira/common/config.py:34
 msgid ""
 "Maximum number of ports of a logical switch on a bridged transport zone "
-"(default 64)"
-msgstr "已橋接傳輸區域上邏輯交換器的埠數目上限（預設值 64）"
+"(default 5000)"
+msgstr ""
 
 #: neutron/plugins/nicira/common/config.py:37
 msgid ""
 "Maximum number of ports of a logical switch on an overlay transport zone "
-"(default 64)"
-msgstr "套版傳輸區域上邏輯交換器的埠數目上限（預設值 64）"
+"(default 256)"
+msgstr ""
 
 #: neutron/plugins/nicira/common/config.py:40
 msgid "Maximum concurrent connections"
@@ -12824,4 +12824,16 @@ msgstr ""
 
 #~ msgid "Address list for NVP logical router port:%s"
 #~ msgstr "NVP 邏輯路由器埠的位址清單：%s"
+
+#~ msgid ""
+#~ "Maximum number of ports of a "
+#~ "logical switch on a bridged transport"
+#~ " zone (default 64)"
+#~ msgstr "已橋接傳輸區域上邏輯交換器的埠數目上限（預設值 64）"
+
+#~ msgid ""
+#~ "Maximum number of ports of a "
+#~ "logical switch on an overlay transport"
+#~ " zone (default 64)"
+#~ msgstr "套版傳輸區域上邏輯交換器的埠數目上限（預設值 64）"
 

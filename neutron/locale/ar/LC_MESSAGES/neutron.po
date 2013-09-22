@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-21 06:09+0000\n"
+"POT-Creation-Date: 2013-09-22 06:09+0000\n"
 "PO-Revision-Date: 2013-09-12 23:31+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Arabic "
@@ -9622,13 +9622,13 @@ msgstr ""
 #: neutron/plugins/nicira/common/config.py:34
 msgid ""
 "Maximum number of ports of a logical switch on a bridged transport zone "
-"(default 64)"
+"(default 5000)"
 msgstr ""
 
 #: neutron/plugins/nicira/common/config.py:37
 msgid ""
 "Maximum number of ports of a logical switch on an overlay transport zone "
-"(default 64)"
+"(default 256)"
 msgstr ""
 
 #: neutron/plugins/nicira/common/config.py:40
@@ -12118,5 +12118,17 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Address list for NVP logical router port:%s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Maximum number of ports of a "
+#~ "logical switch on a bridged transport"
+#~ " zone (default 64)"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Maximum number of ports of a "
+#~ "logical switch on an overlay transport"
+#~ " zone (default 64)"
 #~ msgstr ""
 
