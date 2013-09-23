@@ -125,9 +125,6 @@ class VcnsDriverTaskManagerTestCase(base.BaseTestCase):
 
         task.wait(TaskState.RESULT)
 
-        if 'error' in userdata:
-            print userdata['error']
-
         self.assertTrue(userdata['result'])
 
     def test_task_manager_task_sync_exec_process_state(self):
@@ -172,11 +169,6 @@ class VcnsDriverTaskManagerTestCase(base.BaseTestCase):
             self.manager.add(task)
 
         last_task.wait(TaskState.RESULT)
-
-        for task in tasks:
-            if 'error' in task.userdata:
-                print "Task %s failed: " % (
-                    tasks.name, tasks.userdata['error'])
 
         for task in tasks:
             self.assertTrue(task.userdata['result'])

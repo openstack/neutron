@@ -20,6 +20,7 @@
 # @author: Mandeep Dhami, Big Switch Networks, Inc.
 
 """Determine version of NeutronRestProxy plugin"""
+from __future__ import print_function
 
 # if vcsversion exists, use it. Else, use LOCALBRANCH:LOCALREVISION
 try:
@@ -61,4 +62,4 @@ def version_string_with_vcs():
 
 
 if __name__ == "__main__":
-    print version_string_with_vcs()
+    print(version_string_with_vcs())

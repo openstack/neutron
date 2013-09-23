@@ -22,6 +22,7 @@
 
 Used for NeutronRestProxy tests
 """
+from __future__ import print_function
 
 import json
 import re
@@ -128,15 +129,15 @@ class TestNetworkCtrl(object):
                         pass
 
             if self.debug:
-                print '\n'
+                print('\n')
                 if self.debug_env:
-                    print '%s:' % 'environ:'
+                    print('environ:')
                     for (key, value) in sorted(environ.iteritems()):
-                        print '  %16s : %s' % (key, value)
+                        print('  %16s : %s' % (key, value))
 
-                print '%s %s' % (method, uri)
+                print('%s %s' % (method, uri))
                 if request_data:
-                    print '%s' % (
+                    print('%s' %
                           json.dumps(request_data, sort_keys=True, indent=4))
 
             status, body = self.request_handler(method, uri, None)
@@ -151,13 +152,13 @@ class TestNetworkCtrl(object):
             start_response(status, headers)
             if self.debug:
                 if self.debug_env:
-                    print '%s: %s' % ('Response',
-                          json.dumps(body_data, sort_keys=True, indent=4))
+                    print('%s: %s' % ('Response',
+                          json.dumps(body_data, sort_keys=True, indent=4)))
             return body
         return make_server(self.host, self.port, app)
 
     def run(self):
-        print "Serving on port %d ..." % self.port
+        print("Serving on port %d ..." % self.port)
         try:
             self.server().serve_forever()
         except KeyboardInterrupt:

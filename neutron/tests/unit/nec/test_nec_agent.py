@@ -172,9 +172,6 @@ class TestNecAgent(TestNecAgentBase):
         self._check_report_state([dummy_vif] * 5, 5, fail_mode)
         self._check_report_state([], 0, fail_mode)
 
-        print 'record_state', self.record_calls
-        print 'num_ports_hist', self.num_ports_hist
-
         # Since loopingcall start is mocked, call_count is same as
         # the call count of check_report_state.
         self.assertEqual(state_rpc.report_state.call_count, 4)

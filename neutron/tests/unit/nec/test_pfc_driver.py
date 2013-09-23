@@ -427,7 +427,6 @@ class PFCIdConvertTest(base.BaseTestCase):
 
     def test_convert_tenant_id(self):
         ofc_t_id = self.generate_random_ids(1)
-        print ofc_t_id
         ret = self.driver.convert_ofc_tenant_id(self.ctx, ofc_t_id)
         self.assertEqual(ret, '/tenants/%s' % ofc_t_id)
 

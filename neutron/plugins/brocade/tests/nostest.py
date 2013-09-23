@@ -19,6 +19,8 @@
 
 
 """Brocade NOS Driver Test."""
+from __future__ import print_function
+
 import sys
 
 from neutron.plugins.brocade.nos import nosdriver as nos
@@ -38,8 +40,8 @@ def nostest(host, username, password):
 
     # AMPP enumeration
     with driver.connect(host, username, password) as mgr:
-        print driver.get_port_profiles(mgr)
-        print driver.get_port_profile(mgr, 'default')
+        print(driver.get_port_profiles(mgr))
+        print(driver.get_port_profile(mgr, 'default'))
 
 
 if __name__ == '__main__':
