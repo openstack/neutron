@@ -26,8 +26,8 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
-from neutron.plugins.nicira import nvplib
 
 
 LOG = log.getLogger(__name__)
@@ -309,6 +309,6 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
             if attr.is_attr_set(queue.get(api_name))
         )
         if 'display_name' in nvp_queue:
-            nvp_queue['display_name'] = nvplib._check_and_truncate_name(
+            nvp_queue['display_name'] = utils.check_and_truncate(
                 nvp_queue['display_name'])
         return nvp_queue
