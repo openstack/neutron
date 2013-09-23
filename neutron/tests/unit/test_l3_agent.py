@@ -657,6 +657,21 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertEqual(['1234'], agent._router_ids())
 
+    def test_nonexistent_interface_driver(self):
+        self.conf.set_override('interface_driver', None)
+        with mock.patch.object(l3_agent, 'LOG') as log:
+            self.assertRaises(SystemExit, l3_agent.L3NATAgent,
+                              HOSTNAME, self.conf)
+            msg = 'An interface driver must be specified'
+            log.error.assert_called_once_with(msg)
+
+        self.conf.set_override('interface_driver', 'wrong_driver')
+        with mock.patch.object(l3_agent, 'LOG') as log:
+            self.assertRaises(SystemExit, l3_agent.L3NATAgent,
+                              HOSTNAME, self.conf)
+            msg = "Error importing interface driver 'wrong_driver'"
+            log.error.assert_called_once_with(msg)
+
 
 class TestL3AgentEventHandler(base.BaseTestCase):
 
