@@ -132,7 +132,8 @@ class LoadBalancerCallbacks(object):
                 )
             retval['members'] = [
                 self.plugin._make_member_dict(m)
-                for m in pool.members if m.status == constants.ACTIVE
+                for m in pool.members if m.status in (constants.ACTIVE,
+                                                      constants.INACTIVE)
             ]
             retval['healthmonitors'] = [
                 self.plugin._make_health_monitor_dict(hm.healthmonitor)
