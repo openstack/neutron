@@ -466,6 +466,23 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
         self._show('packet_filters', pf_id,
                    expected_code=webob.exc.HTTPNotFound.code)
 
+    def test_auto_delete_pf_in_port_deletion(self):
+        with self.port(no_delete=True) as port:
+            network = self._show('networks', port['port']['network_id'])
+
+            with self.packet_filter_on_network(network=network) as pfn:
+                with self.packet_filter_on_port(port=port, do_delete=False,
+                                                set_portinfo=False) as pf:
+                    pf_id = pf['packet_filter']['id']
+                    in_port_id = pf['packet_filter']['in_port']
+
+                    self._delete('ports', in_port_id)
+                    # Check the packet filter on the port is deleted.
+                    self._show('packet_filters', pf_id,
+                               expected_code=webob.exc.HTTPNotFound.code)
+                    # Check the packet filter on the network is not deleted.
+                    self._show('packet_filters', pfn['packet_filter']['id'])
+
     def test_no_pf_activation_while_port_operations(self):
         with self.packet_filter_on_port() as pf:
             in_port_id = pf['packet_filter']['in_port']

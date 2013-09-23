@@ -16,6 +16,7 @@
 # @author: Ryota MIBU
 
 import sqlalchemy as sa
+from sqlalchemy import orm
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron.api.v2 import attributes
@@ -43,7 +44,9 @@ class PacketFilter(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     priority = sa.Column(sa.Integer, nullable=False)
     action = sa.Column(sa.String(16), nullable=False)
     # condition
-    in_port = sa.Column(sa.String(36), nullable=False)
+    in_port = sa.Column(sa.String(36),
+                        sa.ForeignKey('ports.id', ondelete="CASCADE"),
+                        nullable=True)
     src_mac = sa.Column(sa.String(32), nullable=False)
     dst_mac = sa.Column(sa.String(32), nullable=False)
     eth_type = sa.Column(sa.Integer, nullable=False)
@@ -55,6 +58,16 @@ class PacketFilter(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     # status
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     status = sa.Column(sa.String(16), nullable=False)
+
+    network = orm.relationship(
+        models_v2.Network,
+        backref=orm.backref('packetfilters', lazy='joined', cascade='delete'),
+        uselist=False)
+    in_port_ref = orm.relationship(
+        models_v2.Port,
+        backref=orm.backref('packetfilters', lazy='joined', cascade='delete'),
+        primaryjoin="Port.id==PacketFilter.in_port",
+        uselist=False)
 
 
 class PacketFilterDbMixin(object):
@@ -127,7 +140,10 @@ class PacketFilterDbMixin(object):
                   'protocol': pf_dict['protocol']}
         for key, default in params.items():
             if params[key] == attributes.ATTR_NOT_SPECIFIED:
-                params.update({key: ''})
+                if key == 'in_port':
+                    params[key] = None
+                else:
+                    params[key] = ''
 
         with context.session.begin(subtransactions=True):
             pf_entry = PacketFilter(**params)

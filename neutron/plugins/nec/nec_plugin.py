@@ -336,8 +336,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         of the tenant, delete unnessary ofc_tenant.
         """
         LOG.debug(_("NECPluginV2.delete_network() called, id=%s ."), id)
-        net = super(NECPluginV2, self).get_network(context, id)
-        tenant_id = net['tenant_id']
+        net_db = self._get_network(context, id)
+        tenant_id = net_db['tenant_id']
         ports = self.get_ports(context, filters={'network_id': [id]})
 
         # check if there are any tenant owned ports in-use
@@ -358,19 +358,16 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       ','.join(_error_ports))
             raise nexc.OFCException(reason=reason)
 
-        # delete all packet_filters of the network
-        if self.packet_filter_enabled:
-            filters = dict(network_id=[id])
-            pfs = self.get_packet_filters(context, filters=filters)
-            for pf in pfs:
-                self.delete_packet_filter(context, pf['id'])
+        # delete all packet_filters of the network from the controller
+        for pf in net_db.packetfilters:
+            self.delete_packet_filter(context, pf['id'])
 
         try:
-            self.ofc.delete_ofc_network(context, id, net)
+            self.ofc.delete_ofc_network(context, id, net_db)
         except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
             reason = _("delete_network() failed due to %s") % exc
             LOG.error(reason)
-            self._update_resource_status(context, "network", net['id'],
+            self._update_resource_status(context, "network", net_db['id'],
                                          const.NET_STATUS_ERROR)
             raise
 
@@ -591,21 +588,18 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # ext_sg.SECURITYGROUPS attribute for the port is required
         # since notifier.security_groups_member_updated() need the attribute.
         # Thus we need to call self.get_port() instead of super().get_port()
-        port = self.get_port(context, id)
+        port_db = self._get_port(context, id)
+        port = self._make_port_dict(port_db)
 
         handler = self._get_port_handler('delete', port['device_owner'])
         port = handler(context, port)
-        # port = self.deactivate_port(context, port)
         if port['status'] == const.PORT_STATUS_ERROR:
             reason = _("Failed to delete port=%s from OFC.") % id
             raise nexc.OFCException(reason=reason)
 
-        # delete all packet_filters of the port
-        if self.packet_filter_enabled:
-            filters = dict(port_id=[id])
-            pfs = self.get_packet_filters(context, filters=filters)
-            for packet_filter in pfs:
-                self.delete_packet_filter(context, packet_filter['id'])
+        # delete all packet_filters of the port from the controller
+        for pf in port_db.packetfilters:
+            self.delete_packet_filter(context, pf['id'])
 
         # if needed, check to see if this is a port owned by
         # and l3-router.  If so, we should prevent deletion.
