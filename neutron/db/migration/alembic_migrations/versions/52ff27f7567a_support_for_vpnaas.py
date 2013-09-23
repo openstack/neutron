@@ -30,7 +30,7 @@ down_revision = '39cf3f799352'
 # Change to ['*'] if this migration applies to all plugins
 
 migration_for_plugins = [
-    'neutron.services.vpn.plugin.VPNPlugin',
+    'neutron.services.vpn.plugin.VPNDriverPlugin',
 ]
 
 from alembic import op
