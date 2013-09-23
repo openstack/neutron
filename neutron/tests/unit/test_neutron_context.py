@@ -30,20 +30,18 @@ class TestNeutronContext(base.BaseTestCase):
         self.db_api_session = self._db_api_session_patcher.start()
         self.addCleanup(self._db_api_session_patcher.stop)
 
-    # TODO(salv-orlando): Remove camelcase for test names in this module
-
-    def testNeutronContextCreate(self):
+    def test_neutron_context_create(self):
         cxt = context.Context('user_id', 'tenant_id')
         self.assertEqual('user_id', cxt.user_id)
         self.assertEqual('tenant_id', cxt.project_id)
 
-    def testNeutronContextToDict(self):
+    def test_neutron_context_to_dict(self):
         cxt = context.Context('user_id', 'tenant_id')
         cxt_dict = cxt.to_dict()
         self.assertEqual('user_id', cxt_dict['user_id'])
         self.assertEqual('tenant_id', cxt_dict['project_id'])
 
-    def testNeutronContextAdminToDict(self):
+    def test_neutron_context_admin_to_dict(self):
         self.db_api_session.return_value = 'fakesession'
         cxt = context.get_admin_context()
         cxt_dict = cxt.to_dict()
@@ -52,7 +50,7 @@ class TestNeutronContext(base.BaseTestCase):
         self.assertIsNotNone(cxt.session)
         self.assertFalse('session' in cxt_dict)
 
-    def testNeutronContextAdminWithoutSessionToDict(self):
+    def test_neutron_context_admin_without_session_to_dict(self):
         cxt = context.get_admin_context_without_session()
         cxt_dict = cxt.to_dict()
         self.assertIsNone(cxt_dict['user_id'])
