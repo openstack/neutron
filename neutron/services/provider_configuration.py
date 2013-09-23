@@ -153,10 +153,10 @@ class ProviderConfiguration(object):
         return resource
 
     def get_service_providers(self, filters=None, fields=None):
-        res = [{'service_type': k[0],
-                'name': k[1],
-                'driver': v['driver'],
-                'default': v['default']}
-               for k, v in self.providers.items()
-               if self._check_entry(k, v, filters)]
-        return self._fields(res, fields)
+        return [self._fields({'service_type': k[0],
+                              'name': k[1],
+                              'driver': v['driver'],
+                              'default': v['default']},
+                             fields)
+                for k, v in self.providers.items()
+                if self._check_entry(k, v, filters)]
