@@ -25,6 +25,7 @@ from neutron.db import l3_db
 from neutron.db.loadbalancer import loadbalancer_db
 from neutron.db import routedserviceinsertion_db as rsi_db
 from neutron.extensions import firewall as fw_ext
+from neutron.extensions import l3
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
@@ -473,14 +474,10 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         return lrouter
 
     def _delete_lrouter(self, context, id):
-        if not self._is_advanced_service_router(context, id):
-            super(NvpAdvancedPlugin, self)._delete_lrouter(context, id)
-            if id in self._router_type:
-                del self._router_type[id]
-            return
-
         binding = vcns_db.get_vcns_router_binding(context.session, id)
-        if binding:
+        if not binding:
+            super(NvpAdvancedPlugin, self)._delete_lrouter(context, id)
+        else:
             vcns_db.update_vcns_router_binding(
                 context.session, id, status=service_constants.PENDING_DELETE)
 
@@ -499,8 +496,9 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             }
             self.vcns_driver.delete_edge(id, edge_id, jobdata=jobdata)
 
-        # delete LR
-        nvplib.delete_lrouter(self.cluster, id)
+            # delete LR
+            nvplib.delete_lrouter(self.cluster, id)
+
         if id in self._router_type:
             del self._router_type[id]
 
@@ -1528,24 +1526,33 @@ class VcnsCallbacks(object):
         lrouter = jobdata['lrouter']
         context = jobdata['context']
         name = task.userdata['router_name']
-        router_db = self.plugin._get_router(context, lrouter['uuid'])
+        router_db = None
+        try:
+            router_db = self.plugin._get_router(context, lrouter['uuid'])
+        except l3.RouterNotFound:
+            # Router might have been deleted before deploy finished
+            LOG.exception(_("Router %s not found"), lrouter['uuid'])
+
         if task.status == TaskStatus.COMPLETED:
             LOG.debug(_("Successfully deployed %(edge_id)s for "
                         "router %(name)s"), {
                             'edge_id': task.userdata['edge_id'],
                             'name': name})
-            if router_db['status'] == service_constants.PENDING_CREATE:
+            if (router_db and
+                    router_db['status'] == service_constants.PENDING_CREATE):
                 router_db['status'] = service_constants.ACTIVE
-                binding = vcns_db.get_vcns_router_binding(
-                    context.session, lrouter['uuid'])
-                # only update status to active if its status is pending create
-                if binding['status'] == service_constants.PENDING_CREATE:
-                    vcns_db.update_vcns_router_binding(
-                        context.session, lrouter['uuid'],
-                        status=service_constants.ACTIVE)
+
+            binding = vcns_db.get_vcns_router_binding(
+                context.session, lrouter['uuid'])
+            # only update status to active if its status is pending create
+            if binding['status'] == service_constants.PENDING_CREATE:
+                vcns_db.update_vcns_router_binding(
+                    context.session, lrouter['uuid'],
+                    status=service_constants.ACTIVE)
         else:
             LOG.debug(_("Failed to deploy Edge for router %s"), name)
-            router_db['status'] = service_constants.ERROR
+            if router_db:
+                router_db['status'] = service_constants.ERROR
             vcns_db.update_vcns_router_binding(
                 context.session, lrouter['uuid'],
                 status=service_constants.ERROR)

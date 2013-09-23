@@ -166,7 +166,7 @@ class ServiceRouterTestCase(ServiceRouterTest, NvpRouterTestCase):
                           ('admin_state_up', True),
                           ('external_gateway_info', None),
                           ('service_router', True)]
-        with self.router(name='router1', admin_state_up=True,
+        with self.router(name=name, admin_state_up=True,
                          tenant_id=tenant_id) as router:
             expected_value_1 = expected_value + [('status', 'PENDING_CREATE')]
             for k, v in expected_value_1:
@@ -189,6 +189,21 @@ class ServiceRouterTestCase(ServiceRouterTest, NvpRouterTestCase):
                     break
             else:
                 self.fail("Integration lswitch not found")
+
+        # check an integration lswitch is deleted
+        lswitch_name = "%s-ls" % name
+        for lswitch_id, lswitch in self.fc2._lswitches.iteritems():
+            if lswitch['display_name'] == lswitch_name:
+                self.fail("Integration switch is not deleted")
+
+    def test_router_delete_after_plugin_restart(self):
+        name = 'router1'
+        tenant_id = _uuid()
+        with self.router(name=name, admin_state_up=True,
+                         tenant_id=tenant_id):
+            # clear router type cache to mimic plugin restart
+            plugin = NeutronManager.get_plugin()
+            plugin._router_type = {}
 
         # check an integration lswitch is deleted
         lswitch_name = "%s-ls" % name

@@ -102,7 +102,8 @@ class EdgeApplianceDriver(object):
             }
             if secondary:
                 address_group['secondaryAddresses'] = {
-                    'ipAddress': secondary
+                    'ipAddress': secondary,
+                    'type': 'IpAddressesDto'
                 }
 
             vnic['addressGroups'] = {
