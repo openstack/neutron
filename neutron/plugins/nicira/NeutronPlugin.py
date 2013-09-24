@@ -741,15 +741,15 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 cluster,
                 neutron_port['network_id'],
                 neutron_port['id'])
-            if nvp_port:
-                nicira_db.add_neutron_nvp_port_mapping(
-                    context.session,
-                    neutron_port['id'],
-                    nvp_port['uuid'])
-                return nvp_port['uuid']
-        except Exception:
+        except NvpApiClient.NvpApiException:
             LOG.exception(_("Unable to find NVP uuid for Neutron port %s"),
                           neutron_port['id'])
+
+        if nvp_port:
+            nicira_db.add_neutron_nvp_port_mapping(
+                context.session, neutron_port['id'],
+                nvp_port['uuid'])
+            return nvp_port['uuid']
 
     def _extend_fault_map(self):
         """Extends the Neutron Fault Map.
