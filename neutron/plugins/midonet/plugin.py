@@ -24,6 +24,7 @@
 from midonetclient import api
 from oslo.config import cfg
 
+from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
@@ -367,7 +368,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         LOG.debug(_("MidonetPluginV2.create_subnet called: subnet=%r"), subnet)
 
-        subnet_data = subnet["subnet"]
+        s = subnet["subnet"]
         net = super(MidonetPluginV2, self).get_network(
             context, subnet['subnet']['network_id'], fields=None)
 
@@ -377,9 +378,19 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                                   subnet)
             bridge = self.client.get_bridge(sn_entry['network_id'])
 
-            gateway_ip = subnet_data['gateway_ip']
-            cidr = subnet_data['cidr']
-            self.client.create_dhcp(bridge, gateway_ip, cidr)
+            gateway_ip = s['gateway_ip']
+            cidr = s['cidr']
+            dns_nameservers = None
+            host_routes = None
+            if s['dns_nameservers'] is not attributes.ATTR_NOT_SPECIFIED:
+                dns_nameservers = s['dns_nameservers']
+
+            if s['host_routes'] is not attributes.ATTR_NOT_SPECIFIED:
+                host_routes = s['host_routes']
+
+            self.client.create_dhcp(bridge, gateway_ip, cidr,
+                                    host_rts=host_routes,
+                                    dns_servers=dns_nameservers)
 
             # For external network, link the bridge to the provider router.
             if net['router:external']:
@@ -503,7 +514,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     # Create port chains
                     port_chains = {}
                     for d, name in _port_chain_names(
-                        new_port["id"]).iteritems():
+                            new_port["id"]).iteritems():
                         port_chains[d] = self.client.create_chain(tenant_id,
                                                                   name)
 
@@ -526,7 +537,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 elif _is_dhcp_port(port_data):
                     # For DHCP port, add a metadata route
                     for cidr, ip in self._metadata_subnets(
-                        context, port_data["fixed_ips"]):
+                            context, port_data["fixed_ips"]):
                         self.client.add_dhcp_route_option(bridge, cidr, ip,
                                                           METADATA_DEFAULT_IP)
 
@@ -774,7 +785,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             tenant_id = r["tenant_id"]
             if gw_updated:
                 if (l3_db.EXTERNAL_GW_INFO in r and
-                    r[l3_db.EXTERNAL_GW_INFO] is not None):
+                        r[l3_db.EXTERNAL_GW_INFO] is not None):
                     # Gateway created
                     gw_port = self._get_port(context, r["gw_port_id"])
                     gw_ip = gw_port['fixed_ips'][0]['ip_address']

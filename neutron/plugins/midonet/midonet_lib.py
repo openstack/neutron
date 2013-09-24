@@ -21,7 +21,7 @@
 # @author: Rossella Sblendido, Midokura Japan KK
 
 
-from midonetclient import midoapi_exceptions
+from midonetclient import exc
 from webob import exc as w_exc
 
 from neutron.common import exceptions as n_exc
@@ -37,7 +37,7 @@ def handle_api_error(fn):
         try:
             return fn(*args, **kwargs)
         except (w_exc.HTTPException,
-                midoapi_exceptions.MidoApiConnectionError) as ex:
+                exc.MidoApiConnectionError) as ex:
             raise MidonetApiException(msg=ex)
     return wrapped
 
@@ -107,21 +107,25 @@ class MidoClient:
             raise MidonetResourceNotFound(resource_type='Bridge', id=id)
 
     @handle_api_error
-    def create_dhcp(self, bridge, gateway_ip, cidr):
+    def create_dhcp(self, bridge, gateway_ip, cidr, host_rts=None,
+                    dns_servers=None):
         """Create a new DHCP entry
 
         :param bridge: bridge object to add dhcp to
         :param gateway_ip: IP address of gateway
         :param cidr: subnet represented as x.x.x.x/y
+        :param host_rts: list of routes set in the host
+        :param dns_servers: list of dns servers
         :returns: newly created dhcp
         """
         LOG.debug(_("MidoClient.create_dhcp called: bridge=%(bridge)s, "
-                    "cidr=%(cidr)s, gateway_ip=%(gateway_ip)s"),
-                  {'bridge': bridge, 'cidr': cidr, 'gateway_ip': gateway_ip})
-        net_addr, net_len = net_util.net_addr(cidr)
-        return bridge.add_dhcp_subnet().default_gateway(
-            gateway_ip).subnet_prefix(net_addr).subnet_length(
-                net_len).create()
+                    "cidr=%(cidr)s, gateway_ip=%(gateway_ip)s, "
+                    "host_rts=%(host_rts)s, dns_servers=%(dns_servers)s"),
+                  {'bridge': bridge, 'cidr': cidr, 'gateway_ip': gateway_ip,
+                   'host_rts': host_rts, 'dns_servers': dns_servers})
+        self.mido_api.add_bridge_dhcp(bridge, gateway_ip, cidr,
+                                      host_rts=host_rts,
+                                      dns_nservers=dns_servers)
 
     @handle_api_error
     def add_dhcp_host(self, bridge, cidr, ip, mac):
@@ -319,6 +323,9 @@ class MidoClient:
         prefix, length = dst_ip.split("/")
         routes = [{'destinationPrefix': prefix, 'destinationLength': length,
                    'gatewayAddr': gw_ip}]
+        cur_routes = subnet.get_opt121_routes()
+        if cur_routes:
+            routes = routes + cur_routes
         subnet.opt121_routes(routes).update()
 
     @handle_api_error
