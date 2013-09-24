@@ -50,6 +50,7 @@ STATS_MAP = {
 }
 
 ACTIVE = qconstants.ACTIVE
+INACTIVE = qconstants.INACTIVE
 
 
 def save_config(conf_path, logical_config, socket_path=None):
@@ -137,7 +138,7 @@ def _build_backend(config):
 
     # add the members
     for member in config['members']:
-        if member['status'] == ACTIVE and member['admin_state_up']:
+        if member['status'] in (ACTIVE, INACTIVE) and member['admin_state_up']:
             server = (('server %(id)s %(address)s:%(protocol_port)s '
                        'weight %(weight)s') % member) + server_addon
             if _has_http_cookie_persistence(config):

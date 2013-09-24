@@ -227,6 +227,28 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
 
                     self.assertEqual(logical_config, expected)
 
+    def test_get_logical_device_inactive_member(self):
+        with self.pool() as pool:
+            with self.vip(pool=pool) as vip:
+                with self.member(pool_id=vip['vip']['pool_id']) as member:
+                    ctx = context.get_admin_context()
+                    self.plugin_instance.update_status(ctx, ldb.Pool,
+                                                       pool['pool']['id'],
+                                                       'ACTIVE')
+                    self.plugin_instance.update_status(ctx, ldb.Vip,
+                                                       vip['vip']['id'],
+                                                       'ACTIVE')
+                    self.plugin_instance.update_status(ctx, ldb.Member,
+                                                       member['member']['id'],
+                                                       'INACTIVE')
+
+                    logical_config = self.callbacks.get_logical_device(
+                        ctx, pool['pool']['id'], activate=False)
+
+                    member['member']['status'] = constants.INACTIVE
+                    self.assertEqual([member['member']],
+                                     logical_config['members'])
+
     def _update_port_test_helper(self, expected, func, **kwargs):
         core = self.plugin_instance._core_plugin
 
