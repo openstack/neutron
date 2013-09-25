@@ -250,6 +250,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if subnet["ip_version"] == 6:
                 # TODO(ryu) handle IPv6
                 continue
+            if not subnet["enable_dhcp"]:
+                # Skip if DHCP is disabled
+                continue
             yield subnet['cidr'], fixed_ip["ip_address"], mac
 
     def _metadata_subnets(self, context, fixed_ips):
@@ -405,17 +408,18 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             gateway_ip = s['gateway_ip']
             cidr = s['cidr']
-            dns_nameservers = None
-            host_routes = None
-            if s['dns_nameservers'] is not attributes.ATTR_NOT_SPECIFIED:
-                dns_nameservers = s['dns_nameservers']
+            if s['enable_dhcp']:
+                dns_nameservers = None
+                host_routes = None
+                if s['dns_nameservers'] is not attributes.ATTR_NOT_SPECIFIED:
+                    dns_nameservers = s['dns_nameservers']
 
-            if s['host_routes'] is not attributes.ATTR_NOT_SPECIFIED:
-                host_routes = s['host_routes']
+                if s['host_routes'] is not attributes.ATTR_NOT_SPECIFIED:
+                    host_routes = s['host_routes']
 
-            self.client.create_dhcp(bridge, gateway_ip, cidr,
-                                    host_rts=host_routes,
-                                    dns_servers=dns_nameservers)
+                self.client.create_dhcp(bridge, gateway_ip, cidr,
+                                        host_rts=host_routes,
+                                        dns_servers=dns_nameservers)
 
             # For external network, link the bridge to the provider router.
             if net['router:external']:
@@ -442,7 +446,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             super(MidonetPluginV2, self).delete_subnet(context, id)
             bridge = self.client.get_bridge(subnet['network_id'])
-            self.client.delete_dhcp(bridge, subnet['cidr'])
+            if subnet['enable_dhcp']:
+                self.client.delete_dhcp(bridge, subnet['cidr'])
 
             # If the network is external, clean up routes, links, ports
             if net[ext_net.EXTERNAL]:
