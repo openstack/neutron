@@ -26,6 +26,7 @@ from neutron.common import rpc as q_rpc
 from neutron.db import agents_db
 from neutron.db.loadbalancer import loadbalancer_db
 from neutron.extensions import lbaas_agentscheduler
+from neutron.extensions import portbindings
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
@@ -168,7 +169,7 @@ class LoadBalancerCallbacks(object):
         port['admin_state_up'] = True
         port['device_owner'] = 'neutron:' + constants.LOADBALANCER
         port['device_id'] = str(uuid.uuid5(uuid.NAMESPACE_DNS, str(host)))
-
+        port[portbindings.HOST_ID] = host
         self.plugin._core_plugin.update_port(
             context,
             port_id,
