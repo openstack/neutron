@@ -281,6 +281,10 @@ class HyperVNeutronAgent(object):
                     device_details['physical_network'],
                     device_details['segmentation_id'],
                     device_details['admin_state_up'])
+                self.plugin_rpc.update_device_up(self.context,
+                                                 device,
+                                                 self.agent_id,
+                                                 cfg.CONF.host)
         return resync
 
     def _treat_devices_removed(self, devices):
