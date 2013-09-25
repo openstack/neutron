@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-24 06:09+0000\n"
+"POT-Creation-Date: 2013-09-25 06:09+0000\n"
 "PO-Revision-Date: 2013-06-28 06:06+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Slovenian (Slovenia) "
@@ -2513,19 +2513,19 @@ msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:234
 #: neutron/plugins/nicira/NeutronServicePlugin.py:848
-#: neutron/services/firewall/fwaas_plugin.py:211
+#: neutron/services/firewall/fwaas_plugin.py:223
 msgid "create_firewall() called"
 msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:250
 #: neutron/plugins/nicira/NeutronServicePlugin.py:881
-#: neutron/services/firewall/fwaas_plugin.py:220
+#: neutron/services/firewall/fwaas_plugin.py:237
 msgid "update_firewall() called"
 msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:260
 #: neutron/plugins/nicira/NeutronServicePlugin.py:905
-#: neutron/services/firewall/fwaas_plugin.py:235
+#: neutron/services/firewall/fwaas_plugin.py:252
 msgid "delete_firewall() called"
 msgstr ""
 
@@ -2547,7 +2547,7 @@ msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:302
 #: neutron/plugins/nicira/NeutronServicePlugin.py:942
-#: neutron/services/firewall/fwaas_plugin.py:244
+#: neutron/services/firewall/fwaas_plugin.py:261
 msgid "update_firewall_policy() called"
 msgstr ""
 
@@ -2573,12 +2573,12 @@ msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:370
 #: neutron/plugins/nicira/NeutronServicePlugin.py:916
-#: neutron/services/firewall/fwaas_plugin.py:252
+#: neutron/services/firewall/fwaas_plugin.py:269
 msgid "update_firewall_rule() called"
 msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:394
-#: neutron/services/firewall/fwaas_plugin.py:262
+#: neutron/services/firewall/fwaas_plugin.py:279
 msgid "delete_firewall_rule() called"
 msgstr ""
 
@@ -2596,13 +2596,13 @@ msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:422
 #: neutron/plugins/nicira/NeutronServicePlugin.py:968
-#: neutron/services/firewall/fwaas_plugin.py:281
+#: neutron/services/firewall/fwaas_plugin.py:298
 msgid "insert_rule() called"
 msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:462
 #: neutron/plugins/nicira/NeutronServicePlugin.py:997
-#: neutron/services/firewall/fwaas_plugin.py:289
+#: neutron/services/firewall/fwaas_plugin.py:306
 msgid "remove_rule() called"
 msgstr ""
 
@@ -4406,31 +4406,25 @@ msgid "%s can not be found in database"
 msgstr ""
 
 #: neutron/plugins/brocade/NeutronPlugin.py:300
-#: neutron/plugins/brocade/NeutronPlugin.py:344
-#: neutron/plugins/brocade/NeutronPlugin.py:398
-msgid "Brocade NOS driver:"
+#: neutron/plugins/brocade/NeutronPlugin.py:343
+#: neutron/plugins/brocade/NeutronPlugin.py:396
+#: neutron/plugins/brocade/NeutronPlugin.py:426
+msgid "Brocade NOS driver error"
 msgstr ""
 
 #: neutron/plugins/brocade/NeutronPlugin.py:301
-#: neutron/plugins/brocade/NeutronPlugin.py:345
-#: neutron/plugins/brocade/NeutronPlugin.py:399
-#: neutron/plugins/embrane/agent/dispatcher.py:143
-#, python-format
-msgid "%s"
-msgstr ""
-
-#: neutron/plugins/brocade/NeutronPlugin.py:302
 #, python-format
 msgid "Returning the allocated vlan (%d) to the pool"
 msgstr ""
 
-#: neutron/plugins/brocade/NeutronPlugin.py:305
-#: neutron/plugins/brocade/NeutronPlugin.py:346
-#: neutron/plugins/brocade/NeutronPlugin.py:400
+#: neutron/plugins/brocade/NeutronPlugin.py:304
+#: neutron/plugins/brocade/NeutronPlugin.py:344
+#: neutron/plugins/brocade/NeutronPlugin.py:397
+#: neutron/plugins/brocade/NeutronPlugin.py:428
 msgid "Brocade plugin raised exception, check logs"
 msgstr ""
 
-#: neutron/plugins/brocade/NeutronPlugin.py:311
+#: neutron/plugins/brocade/NeutronPlugin.py:310
 #, python-format
 msgid "Allocated vlan (%d) from the pool"
 msgstr ""
@@ -5655,6 +5649,11 @@ msgstr ""
 #: neutron/plugins/embrane/base_plugin.py:265
 #, python-format
 msgid "Deleting router=%s"
+msgstr ""
+
+#: neutron/plugins/embrane/agent/dispatcher.py:143
+#, python-format
+msgid "%s"
 msgstr ""
 
 #: neutron/plugins/embrane/agent/operations/router_operations.py:99
@@ -8788,7 +8787,7 @@ msgid ""
 "%(network_id)s. The new port id is %(id)s."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:751
+#: neutron/plugins/nicira/NeutronPlugin.py:745
 #, python-format
 msgid "Unable to find NVP uuid for Neutron port %s"
 msgstr ""
@@ -9872,12 +9871,12 @@ msgstr ""
 msgid "Logical router for neutron router %s not found on NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:388
+#: neutron/plugins/nicira/common/sync.py:389
 #, python-format
 msgid "Logical switch port for neutron port %s not found on NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:463
+#: neutron/plugins/nicira/common/sync.py:465
 #, python-format
 msgid ""
 "Requested page size is %(cur_chunk_size)d.It might be necessary to do "
@@ -9885,56 +9884,56 @@ msgid ""
 "parameters to ensure chunk size is less than %(max_page_size)d"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:496
+#: neutron/plugins/nicira/common/sync.py:498
 #, python-format
 msgid "Fetching up to %s resources from NVP backend"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:516
+#: neutron/plugins/nicira/common/sync.py:518
 #, python-format
 msgid "Total data size: %d"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:520
+#: neutron/plugins/nicira/common/sync.py:522
 #, python-format
 msgid ""
 "Fetched %(num_lswitches)d logical switches, %(num_lswitchports)d logical "
 "switch ports,%(num_lrouters)d logical routers"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:536
+#: neutron/plugins/nicira/common/sync.py:538
 #, python-format
 msgid "Running state synchronization task. Chunk: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:546
+#: neutron/plugins/nicira/common/sync.py:548
 #, python-format
 msgid ""
 "An error occured while communicating with NVP backend. Will retry "
 "synchronization in %d seconds"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:550
+#: neutron/plugins/nicira/common/sync.py:552
 #, python-format
 msgid "Time elapsed querying NVP: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:557
+#: neutron/plugins/nicira/common/sync.py:559
 #, python-format
 msgid "Number of chunks: %d"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:573
+#: neutron/plugins/nicira/common/sync.py:575
 #, python-format
 msgid "Time elapsed hashing data: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:586
+#: neutron/plugins/nicira/common/sync.py:588
 #, python-format
 msgid "Synchronization for chunk %(chunk_num)d of %(total_chunks)d performed"
 msgstr ""
 
-#: neutron/plugins/nicira/common/sync.py:598
+#: neutron/plugins/nicira/common/sync.py:600
 #, python-format
 msgid "Time elapsed at end of sync: %s"
 msgstr ""
@@ -11371,29 +11370,36 @@ msgstr ""
 msgid "Default provider is not specified for service type %s"
 msgstr ""
 
-#: neutron/services/firewall/fwaas_plugin.py:48
+#: neutron/services/firewall/fwaas_plugin.py:49
 msgid "set_firewall_status() called"
 msgstr ""
 
-#: neutron/services/firewall/fwaas_plugin.py:60
+#: neutron/services/firewall/fwaas_plugin.py:61
 msgid "firewall_deleted() called"
 msgstr ""
 
-#: neutron/services/firewall/fwaas_plugin.py:68
+#: neutron/services/firewall/fwaas_plugin.py:69
 #, python-format
 msgid "Firewall %s unexpectedly deleted by agent."
 msgstr ""
 
-#: neutron/services/firewall/fwaas_plugin.py:74
+#: neutron/services/firewall/fwaas_plugin.py:75
 msgid "get_firewalls_for_tenant() called"
 msgstr ""
 
-#: neutron/services/firewall/fwaas_plugin.py:83
+#: neutron/services/firewall/fwaas_plugin.py:84
 msgid "get_firewalls_for_tenant_without_rules() called"
 msgstr ""
 
-#: neutron/services/firewall/fwaas_plugin.py:89
+#: neutron/services/firewall/fwaas_plugin.py:90
 msgid "get_tenants_with_firewalls() called"
+msgstr ""
+
+#: neutron/services/firewall/fwaas_plugin.py:138
+#, python-format
+msgid ""
+"Exceeded allowed count of firewalls for tenant %(tenant_id)s. Only one "
+"firewall is supported per tenant."
 msgstr ""
 
 #: neutron/services/firewall/agents/firewall_agent_api.py:34
@@ -12777,5 +12783,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Credential %(credential_id)s already exists for tenant %(tenant_id)s."
+#~ msgstr ""
+
+#~ msgid "Brocade NOS driver:"
 #~ msgstr ""
 
