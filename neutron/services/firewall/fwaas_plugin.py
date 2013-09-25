@@ -19,6 +19,7 @@
 
 from oslo.config import cfg
 
+from neutron.common import exceptions as n_exception
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
 from neutron import context as neutron_context
@@ -127,6 +128,17 @@ class FirewallAgentApi(proxy.RpcProxy):
         )
 
 
+class FirewallCountExceeded(n_exception.NeutronException):
+
+    """Reference implementation specific exception for firewall count.
+
+    Only one firewall is supported per tenant. When a second
+    firewall is tried to be created, this exception will be raised.
+    """
+    message = _("Exceeded allowed count of firewalls for tenant "
+                "%(tenant_id)s. Only one firewall is supported per tenant.")
+
+
 class FirewallPlugin(firewall_db.Firewall_db_mixin):
 
     """Implementation of the Neutron Firewall Service Plugin.
@@ -209,6 +221,11 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
 
     def create_firewall(self, context, firewall):
         LOG.debug(_("create_firewall() called"))
+        tenant_id = self._get_tenant_id_for_create(context,
+                                                   firewall['firewall'])
+        fw_count = self.get_firewalls_count(context)
+        if fw_count:
+            raise FirewallCountExceeded(tenant_id=tenant_id)
         firewall['firewall']['status'] = const.PENDING_CREATE
         fw = super(FirewallPlugin, self).create_firewall(context, firewall)
         fw_with_rules = (
