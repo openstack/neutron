@@ -23,8 +23,6 @@ python-keystoneclient>=0.3.0
 alembic>=0.4.1
 six
 stevedore>=0.10
-
--f http://tarballs.openstack.org/oslo.config/oslo.config-1.2.0a3.tar.gz#egg=oslo.config-1.2.0a3
-oslo.config>=1.2.0a3
+oslo.config>=1.2.0
 
 python-novaclient>=2.12.0
