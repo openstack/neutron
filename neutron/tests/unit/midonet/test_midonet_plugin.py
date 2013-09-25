@@ -174,6 +174,11 @@ class TestMidonetSubnetsV2(test_plugin.TestSubnetsV2,
     def test_create_subnet_inconsistent_ipv6_gatewayv4(self):
         pass
 
+    def test_create_subnet_dhcp_disabled(self):
+        super(TestMidonetSubnetsV2, self)._test_create_subnet(
+            enable_dhcp=False)
+        self.assertFalse(self.instance.return_value.create_dhcp.called)
+
 
 class TestMidonetPortsV2(test_plugin.TestPortsV2,
                          MidonetPluginV2TestCase):
