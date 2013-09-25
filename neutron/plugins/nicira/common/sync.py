@@ -381,17 +381,19 @@ class NvpSynchronizer():
                     lswitchport = nvplib.get_port(
                         self._cluster, neutron_port_data['network_id'],
                         lp_uuid, relations='LogicalPortStatus')
-            except exceptions.PortNotFoundOnNetwork:
+            except (exceptions.PortNotFoundOnNetwork):
                 # NOTE(salv-orlando): We should be catching
-                # NvpApiClient.ResourceNotFound here
-                # The logical switch port was not found
+                # NvpApiClient.ResourceNotFound here instead
+                # of PortNotFoundOnNetwork when the id exists but
+                # the logical switch port was not found
                 LOG.warning(_("Logical switch port for neutron port %s "
                               "not found on NVP."), neutron_port_data['id'])
                 lswitchport = None
             else:
-                # Update the cache
-                self._nvp_cache.update_lswitchport(lswitchport)
-
+                # If lswitchport is not None, update the cache.
+                # It could be none if the port was deleted from the backend
+                if lswitchport:
+                    self._nvp_cache.update_lswitchport(lswitchport)
         # Note(salv-orlando): It might worth adding a check to verify neutron
         # resource tag in nvp entity matches Neutron id.
         # By default assume things go wrong
