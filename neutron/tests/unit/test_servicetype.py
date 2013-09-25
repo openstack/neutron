@@ -238,7 +238,7 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
         res = self._list_service_providers()
         self.assertEqual(res.status_int, webexc.HTTPOk.code)
         data = self.deserialize(res)
-        self.assertTrue('service_providers' in data)
+        self.assertIn('service_providers', data)
         self.assertEqual(len(data['service_providers']), 2)
 
 

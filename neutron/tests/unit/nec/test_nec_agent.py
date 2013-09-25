@@ -230,7 +230,7 @@ class TestNecAgent(TestNecAgentBase):
         dummy_vif = ovs_lib.VifPort('port1', '1', 'id-1', 'mac-1', None)
 
         self.state_rpc_api.assert_called_once_with('q-plugin')
-        self.assertTrue('start_flag' in self.agent.agent_state)
+        self.assertIn('start_flag', self.agent.agent_state)
 
         self._check_report_state([], 0, fail_mode, first=True)
         self._check_report_state([dummy_vif] * 2, 2, fail_mode)

@@ -44,7 +44,7 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                          self.HAS_PORT_FILTER)
 
     def _check_response_no_portbindings(self, port):
-        self.assertTrue('status' in port)
+        self.assertIn('status', port)
         self.assertNotIn(portbindings.VIF_TYPE, port)
         self.assertNotIn(portbindings.CAPABILITIES, port)
 

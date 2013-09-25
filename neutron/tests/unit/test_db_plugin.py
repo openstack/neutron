@@ -788,7 +788,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
         with self.port(name='myname') as port:
             for k, v in keys:
                 self.assertEqual(port['port'][k], v)
-            self.assertTrue('mac_address' in port['port'])
+            self.assertIn('mac_address', port['port'])
             ips = port['port']['fixed_ips']
             self.assertEqual(len(ips), 1)
             self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
@@ -827,7 +827,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             port = self.deserialize(self.fmt, port_res)
             for k, v in keys:
                 self.assertEqual(port['port'][k], v)
-            self.assertTrue('mac_address' in port['port'])
+            self.assertIn('mac_address', port['port'])
             self._delete('ports', port['port']['id'])
 
     def test_create_port_public_network_with_ip(self):
@@ -845,7 +845,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 port = self.deserialize(self.fmt, port_res)
                 for k, v in keys:
                     self.assertEqual(port['port'][k], v)
-                self.assertTrue('mac_address' in port['port'])
+                self.assertIn('mac_address', port['port'])
                 self._delete('ports', port['port']['id'])
 
     def test_create_ports_bulk_native(self):
