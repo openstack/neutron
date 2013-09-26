@@ -47,6 +47,7 @@ class TestBrocadeDb(test_plugin.QuantumDbPluginV2TestCase):
 
         # Delete the network
         brocade_db.delete_network(self.context, net['id'])
+        self.assertFalse(brocade_db.get_networks(self.context))
 
     def test_create_port(self):
         """Test brocade specific port db."""
@@ -96,3 +97,4 @@ class TestBrocadeDb(test_plugin.QuantumDbPluginV2TestCase):
 
         # Delete Port
         brocade_db.delete_port(self.context, port_id)
+        self.assertFalse(brocade_db.get_ports(self.context))

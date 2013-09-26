@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright 2013 Brocade Communications System, Inc.
+# Copyright 2013 Brocade Communications System,  Inc.
 # All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -273,10 +273,9 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                             switch['username'],
                                             switch['password'],
                                             vlan_id)
-            except Exception as e:
+            except Exception:
                 # Proper formatting
-                LOG.warning(_("Brocade NOS driver:"))
-                LOG.warning(_("%s"), e)
+                LOG.exception(_("Brocade NOS driver error"))
                 LOG.debug(_("Returning the allocated vlan (%d) to the pool"),
                           vlan_id)
                 self._vlan_bitmap.release_vlan(int(vlan_id))
@@ -314,12 +313,12 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                 self._driver.delete_network(switch['address'],
                                             switch['username'],
                                             switch['password'],
-                                            net_id)
-            except Exception as e:
+                                            vlan_id)
+            except Exception:
                 # Proper formatting
-                LOG.warning(_("Brocade NOS driver:"))
-                LOG.warning(_("%s"), e)
-                raise Exception("Brocade plugin raised exception, check logs")
+                LOG.exception(_("Brocade NOS driver error"))
+                raise Exception(_("Brocade plugin raised exception, "
+                                  "check logs"))
 
             # now ok to delete the network
             brocade_db.delete_network(context, net_id)
@@ -387,11 +386,11 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
                                                       switch['password'],
                                                       vlan_id,
                                                       mac)
-            except Exception as e:
+            except Exception:
                 # Proper formatting
-                LOG.warning(_("Brocade NOS driver:"))
-                LOG.warning(_("%s"), e)
-                raise Exception("Brocade plugin raised exception, check logs")
+                LOG.exception(_("Brocade NOS driver error"))
+                raise Exception(_("Brocade plugin raised exception, "
+                                  "check logs"))
 
             # save to brocade persistent db
             brocade_db.create_port(context, port_id, network_id,
@@ -403,6 +402,26 @@ class BrocadePluginV2(db_base_plugin_v2.QuantumDbPluginV2,
 
     def delete_port(self, context, port_id):
         with context.session.begin(subtransactions=True):
+            neutron_port = self.get_port(context, port_id)
+            interface_mac = neutron_port['mac_address']
+            # convert mac format: xx:xx:xx:xx:xx:xx -> xxxx.xxxx.xxxx
+            mac = self.mac_reformat_62to34(interface_mac)
+
+            brocade_port = brocade_db.get_port(context, port_id)
+            vlan_id = brocade_port['vlan_id']
+
+            switch = self._switch
+            try:
+                self._driver.dissociate_mac_from_network(switch['address'],
+                                                         switch['username'],
+                                                         switch['password'],
+                                                         vlan_id,
+                                                         mac)
+            except Exception:
+                LOG.exception(_("Brocade NOS driver error"))
+                raise Exception(
+                    _("Brocade plugin raised exception, check logs"))
+
             super(BrocadePluginV2, self).delete_port(context, port_id)
             brocade_db.delete_port(context, port_id)
 
