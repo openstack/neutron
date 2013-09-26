@@ -1552,7 +1552,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # router, but if it does, it should not happen within a
             # transaction, and it should be restored on rollback
             self.handle_router_metadata_access(
-                context, router_id, do_create=False)
+                context, router_id, interface=None)
             # Pre-delete checks
             # NOTE(salv-orlando): These checks will be repeated anyway when
             # calling the superclass. This is wasteful, but is the simplest
@@ -1654,7 +1654,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Ensure the NVP logical router has a connection to a 'metadata access'
         # network (with a proxy listening on its DHCP port), by creating it
         # if needed.
-        self.handle_router_metadata_access(context, router_id)
+        self.handle_router_metadata_access(
+            context, router_id, interface=router_iface_info)
         LOG.debug(_("Add_router_interface completed for subnet:%(subnet_id)s "
                     "and router:%(router_id)s"),
                   {'subnet_id': subnet_id, 'router_id': router_id})
@@ -1698,7 +1699,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Ensure the connection to the 'metadata access network'
         # is removed  (with the network) if this the last subnet
         # on the router
-        self.handle_router_metadata_access(context, router_id)
+        self.handle_router_metadata_access(
+            context, router_id, interface=info)
         try:
             if not subnet:
                 subnet = self._get_subnet(context, subnet_id)

@@ -77,6 +77,7 @@ class DhcpMetadataAccess(object):
             self.supported_extension_aliases.remove(
                 "dhcp_agent_scheduler")
         nvp_svc.register_dhcp_opts(cfg)
+        nvp_svc.register_metadata_opts(cfg)
         self.lsn_manager = nvp_svc.LsnManager(self)
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             nvp_svc.DhcpAgentNotifyAPI(self, self.lsn_manager))
@@ -106,9 +107,10 @@ class DhcpMetadataAccess(object):
         self.handle_port_dhcp_access_delegate(self, context, port_data, action)
 
     def handle_port_metadata_access(self, context, port, is_delete=False):
-        self.handle_port_metadata_access_delegate(context, port, is_delete)
+        self.handle_port_metadata_access_delegate(self, context,
+                                                  port, is_delete)
 
     def handle_router_metadata_access(self, context,
-                                      router_id, do_create=True):
+                                      router_id, interface=None):
         self.handle_metadata_access_delegate(self, context,
-                                             router_id, do_create)
+                                             router_id, interface)

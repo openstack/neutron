@@ -112,6 +112,31 @@ class LSNTestCase(base.BaseTestCase):
             "DELETE",
             "/ws.v1/lservices-node/%s" % lsn_id, cluster=self.cluster)
 
+    def _test_lsn_port_host_entries_update(self, lsn_type, hosts_data):
+        lsn_id = 'foo_lsn_id'
+        lsn_port_id = 'foo_lsn_port_id'
+        lsnlib.lsn_port_host_entries_update(
+            self.cluster, lsn_id, lsn_port_id, lsn_type, hosts_data)
+        self.mock_request.assert_called_once_with(
+            'PUT',
+            '/ws.v1/lservices-node/%s/lport/%s/%s' % (lsn_id,
+                                                      lsn_port_id,
+                                                      lsn_type),
+            json.dumps({'hosts': hosts_data}),
+            cluster=self.cluster)
+
+    def test_lsn_port_dhcp_entries_update(self):
+        hosts_data = [{"ip_address": "11.22.33.44",
+                       "mac_address": "aa:bb:cc:dd:ee:ff"},
+                      {"ip_address": "44.33.22.11",
+                       "mac_address": "ff:ee:dd:cc:bb:aa"}]
+        self._test_lsn_port_host_entries_update("dhcp", hosts_data)
+
+    def test_lsn_port_metadata_entries_update(self):
+        hosts_data = [{"ip_address": "11.22.33.44",
+                       "device_id": "foo_vm_uuid"}]
+        self._test_lsn_port_host_entries_update("metadata-proxy", hosts_data)
+
     def test_lsn_port_create(self):
         port_data = {
             "ip_address": "1.2.3.0/24",
@@ -230,6 +255,50 @@ class LSNTestCase(base.BaseTestCase):
         self._test_lsn_port_dhcp_configure(
             lsn_id, lsn_port_id, is_enabled, opts)
 
+    def _test_lsn_metadata_configure(
+        self, lsn_id, is_enabled, opts, expected_opts):
+        lsnlib.lsn_metadata_configure(
+            self.cluster, lsn_id, is_enabled, opts)
+        lsn_obj = {"enabled": is_enabled}
+        lsn_obj.update(expected_opts)
+        self.mock_request.assert_has_calls([
+            mock.call("PUT",
+                      "/ws.v1/lservices-node/%s/metadata-proxy" % lsn_id,
+                      json.dumps(lsn_obj),
+                      cluster=self.cluster),
+        ])
+
+    def test_lsn_port_metadata_configure_empty_secret(self):
+        lsn_id = "foo_lsn_id"
+        is_enabled = True
+        opts = {
+            "metadata_server_ip": "1.2.3.4",
+            "metadata_server_port": "8775"
+        }
+        expected_opts = {
+            "metadata_server_ip": "1.2.3.4",
+            "metadata_server_port": "8775",
+            "misc_options": []
+        }
+        self._test_lsn_metadata_configure(
+            lsn_id, is_enabled, opts, expected_opts)
+
+    def test_lsn_metadata_configure_with_secret(self):
+        lsn_id = "foo_lsn_id"
+        is_enabled = True
+        opts = {
+            "metadata_server_ip": "1.2.3.4",
+            "metadata_server_port": "8775",
+            "metadata_proxy_shared_secret": "foo_secret"
+        }
+        expected_opts = {
+            "metadata_server_ip": "1.2.3.4",
+            "metadata_server_port": "8775",
+            "misc_options": ["metadata_proxy_shared_secret=foo_secret"]
+        }
+        self._test_lsn_metadata_configure(
+            lsn_id, is_enabled, opts, expected_opts)
+
     def _test_lsn_port_host_action(
             self, lsn_port_action_func, extra_action, action, host):
         lsn_id = "foo_lsn_id"
@@ -256,3 +325,19 @@ class LSNTestCase(base.BaseTestCase):
         }
         self._test_lsn_port_host_action(
             lsnlib.lsn_port_dhcp_host_remove, "dhcp", "remove_host", host)
+
+    def test_lsn_port_metadata_host_add(self):
+        host = {
+            "ip_address": "1.2.3.4",
+            "instance_id": "foo_instance_id"
+        }
+        self._test_lsn_port_host_action(lsnlib.lsn_port_metadata_host_add,
+                                        "metadata-proxy", "add_host", host)
+
+    def test_lsn_port_metadata_host_remove(self):
+        host = {
+            "ip_address": "1.2.3.4",
+            "instance_id": "foo_instance_id"
+        }
+        self._test_lsn_port_host_action(lsnlib.lsn_port_metadata_host_remove,
+                                        "metadata-proxy", "remove_host", host)
