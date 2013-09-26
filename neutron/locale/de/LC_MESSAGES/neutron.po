@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-25 06:09+0000\n"
+"POT-Creation-Date: 2013-09-26 06:10+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -8552,32 +8552,32 @@ msgstr "Aufruf von 'NECPluginV2.delete_network()', id=%s ."
 msgid "Failed to delete port(s)=%s from OFC."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:371
+#: neutron/plugins/nec/nec_plugin.py:368
 #, python-format
 msgid "delete_network() failed due to %s"
 msgstr "'delete_network()' fehlgeschlagen. Grund: %s"
 
-#: neutron/plugins/nec/nec_plugin.py:507
+#: neutron/plugins/nec/nec_plugin.py:504
 #, python-format
 msgid "NECPluginV2.create_port() called, port=%s ."
 msgstr "Aufruf von 'NECPluginV2.create_port()', port=%s ."
 
-#: neutron/plugins/nec/nec_plugin.py:567
+#: neutron/plugins/nec/nec_plugin.py:564
 #, python-format
 msgid "NECPluginV2.update_port() called, id=%(id)s port=%(port)s ."
 msgstr "Aufruf von 'NECPluginV2.update_port()', id=%(id)s port=%(port)s ."
 
-#: neutron/plugins/nec/nec_plugin.py:590
+#: neutron/plugins/nec/nec_plugin.py:587
 #, python-format
 msgid "NECPluginV2.delete_port() called, id=%s ."
 msgstr "Aufruf von 'NECPluginV2.delete_port()', id=%s ."
 
-#: neutron/plugins/nec/nec_plugin.py:600
+#: neutron/plugins/nec/nec_plugin.py:597
 #, python-format
 msgid "Failed to delete port=%s from OFC."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:660
+#: neutron/plugins/nec/nec_plugin.py:654
 #, python-format
 msgid ""
 "NECPluginV2RPCCallbacks.get_port_from_device() called, device=%(device)s "
@@ -8586,26 +8586,26 @@ msgstr ""
 "Aufruf von 'NECPluginV2RPCCallbacks.get_port_from_device()', "
 "device=%(device)s => %(ret)s."
 
-#: neutron/plugins/nec/nec_plugin.py:691
+#: neutron/plugins/nec/nec_plugin.py:685
 #, python-format
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
 msgstr "Aufruf von 'NECPluginV2RPCCallbacks.update_ports()', kwargs=%s ."
 
-#: neutron/plugins/nec/nec_plugin.py:701
+#: neutron/plugins/nec/nec_plugin.py:695
 #, python-format
 msgid ""
 "update_ports(): ignore unchanged portinfo in port_added message "
 "(port_id=%s)."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:720
+#: neutron/plugins/nec/nec_plugin.py:714
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message due to portinfo for "
 "port_id=%s was not registered"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:725
+#: neutron/plugins/nec/nec_plugin.py:719
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message received from different host "
@@ -8950,7 +8950,7 @@ msgstr "'del_portinfo()': NotFound-Portinfo für port_id: %s"
 msgid "get_port_with_securitygroups() called:port_id=%s"
 msgstr "Aufruf von 'get_port_with_securitygroups()': port_id=%s"
 
-#: neutron/plugins/nec/db/packetfilter.py:34
+#: neutron/plugins/nec/db/packetfilter.py:35
 #, python-format
 msgid "PacketFilter %(id)s could not be found"
 msgstr "PacketFilter %(id)s konnte nicht gefunden werden"
@@ -12248,26 +12248,26 @@ msgstr "Fehler beim Versuch, mit Statistiksocket zu verbinden: %s"
 msgid "Unable to kill haproxy process: %s"
 msgstr "HAProxy-Prozess kann nicht beendet werden: %s"
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:48
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:49
 msgid "Driver to use for scheduling pool to a default loadbalancer agent"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:85
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:86
 #, python-format
 msgid "Multiple lbaas agents found on host %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:118
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:119
 msgid "Expected active pool and vip"
 msgstr "Aktiver Pool und aktive VIP erwartet"
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:164
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:165
 #, python-format
 msgid "Unable to find port %s to plug."
 msgstr "Zu verbindender Port %s kann nicht gefunden werden."
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:188
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:205
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:189
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:206
 #, python-format
 msgid ""
 "Unable to find port %s to unplug.  This can occur when the Vip has been "
