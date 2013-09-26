@@ -402,7 +402,7 @@ class MidoClient:
     def remove_rules_by_property(self, tenant_id, chain_name, key, value):
         """Remove all the rules that match the provided key and value."""
         LOG.debug(_("MidoClient.remove_rules_by_property called: "
-                    "tenant_id=%(tenant_id)s, chain_name=%(chain_name)s"
+                    "tenant_id=%(tenant_id)s, chain_name=%(chain_name)s, "
                     "key=%(key)s, value=%(value)s"),
                   {'tenant_id': tenant_id, 'chain_name': chain_name,
                    'key': key, 'value': value})
@@ -412,9 +412,9 @@ class MidoClient:
                                           id=chain_name)
 
         for r in chain.get_rules():
-            if key in r.get_properties():
-                if r.get_properties()[key] == value:
-                    self.mido_api.delete_rule(r.get_id())
+            props = r.get_properties()
+            if props is not None and key in props and props[key] == value:
+                self.mido_api.delete_rule(r.get_id())
 
     @handle_api_error
     def add_router_chains(self, router, inbound_chain_name,
@@ -694,3 +694,7 @@ class MidoClient:
     def add_chain_rule(self, chain, action='accept', **kwargs):
         """Create a new accept chain rule."""
         self.mido_api.add_chain_rule(chain, action, **kwargs)
+
+    @handle_api_error
+    def remove_chain_rule(self, rule_id):
+        self.mido_api.delete_rule(rule_id)

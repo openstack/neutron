@@ -69,6 +69,10 @@ SG_EGRESS_CHAIN_NAME = "OS_SG_%s_EGRESS"
 SG_PORT_GROUP_NAME = "OS_PG_%s"
 SNAT_RULE = 'SNAT'
 
+ETHERTYPE_ARP = 0x0806
+ETHERTYPE_IPV4 = 0x0800
+ETHERTYPE_IPV6 = 0x86dd
+
 
 def _get_nat_ips(type, fip):
     """Get NAT IP address information.
@@ -264,66 +268,143 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 continue
             yield subnet['cidr'], fixed_ip["ip_address"]
 
-    def _initialize_port_chains(self, port, in_chain, out_chain, sg_ids):
+    def _initialize_port_chains(self, context, port,
+                                in_chain, out_chain, sg_ids):
+        """Initializes port's security rule chains.
+
+        in_chain - Empty chain to be initialized. This is the chain
+        regulating traffic into the network and out of the VM.
+
+        out_chain - Empty chain to be initialized. This is the chain
+        regulating traffic out of the network and into the VM.
+
+        sg_ids - IDs of security groups to which the port belongs.
+        """
 
         tenant_id = port["tenant_id"]
 
-        position = 1
-        # mac spoofing protection
+        # Inserting a rule at position 1 will insert it at the
+        # beginning and push all rules back, so we insert the rules in
+        # reverse order.
+
+        # Both chains drop non-ARP traffic if no other rules match.
+        for chain in [in_chain, out_chain]:
+            self._add_chain_rule(chain, action='drop',
+                                 dl_type=ETHERTYPE_ARP,
+                                 inv_dl_type=True, position=1)
+
+        # Add reverse flow matching for in_chain.
+        self._add_chain_rule(in_chain, action='accept',
+                             match_return_flow=True,
+                             position=1)
+
+        # MAC spoofing protection for in_chain
         self._add_chain_rule(in_chain, action='drop',
                              dl_src=port["mac_address"], inv_dl_src=True,
-                             position=position)
+                             position=1)
 
-        # ip spoofing protection
+        # IP spoofing protection for in_chain
         for fixed_ip in port["fixed_ips"]:
-            position += 1
-            self._add_chain_rule(in_chain, action="drop",
-                                 src_addr=fixed_ip["ip_address"] + "/32",
-                                 inv_nw_src=True, dl_type=0x0800,  # IPv4
-                                 position=position)
+            subnet = self._get_subnet(context, fixed_ip["subnet_id"])
+            if subnet["ip_version"] == 6:
+                self._add_chain_rule(in_chain, action="drop", position=1,
+                                     src_addr=fixed_ip["ip_address"] + "/128",
+                                     inv_nw_src=True, dl_type=ETHERTYPE_IPV6)
+            else:
+                self._add_chain_rule(in_chain, action="drop", position=1,
+                                     src_addr=fixed_ip["ip_address"] + "/32",
+                                     inv_nw_src=True, dl_type=ETHERTYPE_IPV4)
 
-        # conntrack
-        position += 1
-        self._add_chain_rule(in_chain, action='accept',
-                             match_forward_flow=True,
-                             position=position)
-
-        # Reset the position to process egress
-        position = 1
-
-        # Add rule for SGs
-        if sg_ids:
-            for sg_id in sg_ids:
-                chain_name = _sg_chain_names(sg_id)["ingress"]
-                chain = self.client.get_chain_by_name(tenant_id, chain_name)
-                self._add_chain_rule(out_chain, action='jump',
-                                     jump_chain_id=chain.get_id(),
-                                     jump_chain_name=chain_name,
-                                     position=position)
-                position += 1
-
-        # add reverse flow matching at the end
+        # Add reverse flow matching for out_chain.
         self._add_chain_rule(out_chain, action='accept',
                              match_return_flow=True,
-                             position=position)
-        position += 1
+                             position=1)
 
-        # fall back DROP rule at the end except for ARP
-        self._add_chain_rule(out_chain, action='drop',
-                             dl_type=0x0806,  # ARP
-                             inv_dl_type=True, position=position)
+        # Add jump rules for security groups.
+        if sg_ids:
+            for sg_id in sg_ids:
+                sg_egress, sg_ingress = self._get_sg_chains(tenant_id, sg_id)
+                self._add_sg_jumps_to_port_chains(
+                    in_chain, out_chain, sg_egress, sg_ingress)
+
+    def _add_sg_jumps_to_port_chains(self, port_inbound, port_outbound,
+                                     sg_egress, sg_ingress):
+        """Adds jumps from port chains to security group chains.
+
+        Specifically, adds a jump from port_inbound to sg_egress and a
+        jump from port_outbound to sg_ingress. The jumps are inserted
+        at the penultimate position in each port chain, just before the
+        drop rule that drops all non-ARP traffic not allowed by a
+        security group's rule.
+
+        port_inbound - Port's chain for traffic into the network and
+        out of the VM.
+
+        port_outbound - Port's chain for traffic out of the network and
+        in to the VM.
+
+        sg_egress - Security group's chain for traffic out of the VM.
+        """
+
+        for port_chain, sg_chain in [(port_inbound, sg_egress),
+                                     (port_outbound, sg_ingress)]:
+            self._add_chain_rule(port_chain, action='jump',
+                                 jump_chain_id=sg_chain.get_id(),
+                                 jump_chain_name=sg_chain.get_name(),
+                                 position=len(port_chain.get_rules()))
+
+    def _remove_sg_jumps_from_port_chains(self, port):
+        tenant_id = port["tenant_id"]
+        port_inbound, port_outbound = self._get_port_chains(port)
+        for sg_id in port["security_groups"]:
+            sg_egress, sg_ingress = self._get_sg_chains(tenant_id, sg_id)
+            for port_chain, sg_chain in [(port_inbound, sg_egress),
+                                         (port_outbound, sg_ingress)]:
+                for r in port_chain.get_rules():
+                    if (r.get_type() == "jump" and
+                            r.get_jump_chain_name() == sg_chain.get_name()):
+                        self.client.remove_chain_rule(r.get_id())
 
     def _bind_port_to_sgs(self, context, port, sg_ids):
         self._process_port_create_security_group(context, port, sg_ids)
         if sg_ids is not None:
+            tenant_id = port["tenant_id"]
+            in_chain, out_chain = self._get_port_chains(port)
             for sg_id in sg_ids:
                 pg_name = _sg_port_group_name(sg_id)
                 self.client.add_port_to_port_group_by_name(
                     port["tenant_id"], pg_name, port["id"])
 
-    def _unbind_port_from_sgs(self, context, port_id):
-        self._delete_port_security_group_bindings(context, port_id)
-        self.client.remove_port_from_port_groups(port_id)
+                # If the port chains don't exist yet, the port is still
+                # being created, and we can skip adding jump rules now
+                # because it will be handled later.
+                if in_chain is not None:
+                    egress_chain, ingress_chain = self._get_sg_chains(
+                        tenant_id, sg_id)
+                    self._add_sg_jumps_to_port_chains(
+                        in_chain, out_chain, egress_chain, ingress_chain)
+
+    def _unbind_port_from_sgs(self, context, port):
+        self._delete_port_security_group_bindings(context, port["id"])
+        self.client.remove_port_from_port_groups(port["id"])
+        self._remove_sg_jumps_from_port_chains(port)
+
+    def _get_port_chains(self, port):
+        tenant_id = port["tenant_id"]
+        chain_names = _port_chain_names(port["id"])
+        in_chain = self.client.get_chain_by_name(
+            tenant_id, chain_names["inbound"])
+        out_chain = self.client.get_chain_by_name(
+            tenant_id, chain_names["outbound"])
+        return in_chain, out_chain
+
+    def _get_sg_chains(self, tenant_id, sg_id):
+        chain_names = _sg_chain_names(sg_id)
+        egress_chain = self.client.get_chain_by_name(
+            tenant_id, chain_names["egress"])
+        ingress_chain = self.client.get_chain_by_name(
+            tenant_id, chain_names["ingress"])
+        return egress_chain, ingress_chain
 
     def _create_accept_chain_rule(self, context, sg_rule, chain=None):
         direction = sg_rule["direction"]
@@ -347,27 +428,26 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         src_addr = dst_addr = None
         src_port_to = dst_port_to = None
         src_port_from = dst_port_from = None
+        dst_port_from = sg_rule["port_range_min"]
+        dst_port_to = sg_rule["port_range_max"]
         if direction == "egress":
             dst_pg_id = pg_id
             dst_addr = sg_rule["remote_ip_prefix"]
-            dst_port_from = sg_rule["port_range_min"]
-            dst_port_to = sg_rule["port_range_max"]
+            match_forward_flow = True
         else:
             src_pg_id = pg_id
             src_addr = sg_rule["remote_ip_prefix"]
-            src_port_from = sg_rule["port_range_min"]
-            src_port_to = sg_rule["port_range_max"]
+            match_forward_flow = False
 
         return self._add_chain_rule(
-            chain, action='accept', port_group_src=src_pg_id,
-            port_group_dst=dst_pg_id,
-            src_addr=src_addr, src_port_from=src_port_from,
-            src_port_to=src_port_to,
-            dst_addr=dst_addr, dst_port_from=dst_port_from,
-            dst_port_to=dst_port_to,
+            chain, action='accept', properties=props,
+            match_forward_flow=match_forward_flow,
+            port_group_src=src_pg_id, port_group_dst=dst_pg_id,
+            src_addr=src_addr, dst_addr=dst_addr,
+            src_port_from=src_port_from, src_port_to=src_port_to,
+            dst_port_from=dst_port_from, dst_port_to=dst_port_to,
             nw_proto=net_util.get_protocol_value(sg_rule["protocol"]),
-            dl_type=net_util.get_ethertype_value(sg_rule["ethertype"]),
-            properties=props)
+            dl_type=net_util.get_ethertype_value(sg_rule["ethertype"]))
 
     def _remove_nat_rules(self, fip):
         router = self.client.get_router(fip["router_id"])
@@ -584,7 +664,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         port_chains[d] = self.client.create_chain(tenant_id,
                                                                   name)
 
-                    self._initialize_port_chains(port_data,
+                    self._initialize_port_chains(context,
+                                                 port_data,
                                                  port_chains['inbound'],
                                                  port_chains['outbound'],
                                                  sg_ids)
@@ -757,7 +838,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             if (self._check_update_deletes_security_groups(port) or
                     self._check_update_has_security_groups(port)):
-                self._unbind_port_from_sgs(context, p["id"])
+                self._unbind_port_from_sgs(context, p)
                 sg_ids = self._get_security_groups_on_port(context, port)
                 self._bind_port_to_sgs(context, p, sg_ids)
 
@@ -940,10 +1021,10 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # Update the Neutron DB
             r = super(MidonetPluginV2, self).update_router(context, id,
                                                            router)
-            if gw_updated:
-                if (l3_db.EXTERNAL_GW_INFO in r and
-                        r[l3_db.EXTERNAL_GW_INFO] is not None):
-                    self._set_up_gateway(context, r)
+
+            if (gw_updated and l3_db.EXTERNAL_GW_INFO in r and
+                    r[l3_db.EXTERNAL_GW_INFO] is not None):
+                self._set_up_gateway(context, r)
 
             self.client.update_router(id, **router_data)
 
