@@ -250,7 +250,12 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "create_something": "rule:admin_or_owner",
             "create_something:attr": "rule:admin_or_owner",
             "create_something:attr:sub_attr_1": "rule:admin_or_owner",
-            "create_something:attr:sub_attr_2": "rule:admin_only"
+            "create_something:attr:sub_attr_2": "rule:admin_only",
+
+            "get_firewall_policy": "rule:admin_or_owner or "
+                            "rule:shared",
+            "get_firewall_rule": "rule:admin_or_owner or "
+                            "rule:shared"
         }.items())
 
         def fakepolicyinit():
@@ -386,6 +391,18 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_enforce_regularuser_on_read(self):
         action = "get_network"
+        target = {'shared': True, 'tenant_id': 'somebody_else'}
+        result = policy.enforce(self.context, action, target)
+        self.assertTrue(result)
+
+    def test_enforce_firewall_policy_shared(self):
+        action = "get_firewall_policy"
+        target = {'shared': True, 'tenant_id': 'somebody_else'}
+        result = policy.enforce(self.context, action, target)
+        self.assertTrue(result)
+
+    def test_enforce_firewall_rule_shared(self):
+        action = "get_firewall_rule"
         target = {'shared': True, 'tenant_id': 'somebody_else'}
         result = policy.enforce(self.context, action, target)
         self.assertTrue(result)
