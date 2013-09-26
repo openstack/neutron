@@ -51,15 +51,12 @@ class MidoClientTestCase(testtools.TestCase):
     def test_delete_chains_by_names(self):
 
         tenant_id = uuidutils.generate_uuid()
-        chain1_id = uuidutils.generate_uuid()
-        chain1 = _create_test_chain(chain1_id, "chain1", tenant_id)
+        chain1 = self.mock_api_cfg._create_chain(tenant_id, name="chain1")
+        chain2 = self.mock_api_cfg._create_chain(tenant_id, name="chain2")
 
-        chain2_id = uuidutils.generate_uuid()
-        chain2 = _create_test_chain(chain2_id, "chain2", tenant_id)
+        calls = [mock.call.delete_chain(chain1.get_id()),
+                 mock.call.delete_chain(chain2.get_id())]
 
-        calls = [mock.call.delete_chain(chain1_id),
-                 mock.call.delete_chain(chain2_id)]
-        self.mock_api_cfg.chains_in = [chain2, chain1]
         self.client.delete_chains_by_names(tenant_id, ["chain1", "chain2"])
 
         self.mock_api.assert_has_calls(calls, any_order=True)

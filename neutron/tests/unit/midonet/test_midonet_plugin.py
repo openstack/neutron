@@ -1,5 +1,4 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright (C) 2012 Midokura Japan K.K.
 # Copyright (C) 2013 Midokura PTE LTD
 # All Rights Reserved.
@@ -22,6 +21,7 @@
 
 import mock
 import os
+import re
 import sys
 
 import neutron.common.test_lib as test_lib
@@ -33,6 +33,16 @@ import webob.exc
 
 MIDOKURA_PKG_PATH = "neutron.plugins.midonet.plugin"
 MIDONET_PLUGIN_NAME = ('%s.MidonetPluginV2' % MIDOKURA_PKG_PATH)
+
+ETHERTYPE_ARP = 0x0806
+ETHERTYPE_IP4 = 0x0800
+ETHERTYPE_IP6 = 0x86dd
+
+mac_addr_regex = re.compile("(?:[0-9a-f]{2}:){5}[0-9a-f]{2}")
+inbound_chain_regex = re.compile("OS_PORT_.*_INBOUND")
+outbound_chain_regex = re.compile("OS_PORT_.*_OUTBOUND")
+egress_chain_regex = re.compile("OS_SG_.*_EGRESS")
+ingress_chain_regex = re.compile("OS_SG_.*_INGRESS")
 
 # Need to mock the midonetclient module since the plugin will try to load it.
 sys.modules["midonetclient"] = mock.Mock()
@@ -53,6 +63,8 @@ class MidonetPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.instance = self.mock_api.start()
         mock_cfg = mock_lib.MidonetLibMockConfig(self.instance.return_value)
         mock_cfg.setup()
+        mock_client = mock_lib.MidoClientMockConfig(self.instance.return_value)
+        mock_client.setup()
         super(MidonetPluginV2TestCase, self).setUp(plugin=plugin,
                                                    ext_mgr=ext_mgr)
 
@@ -166,7 +178,6 @@ class TestMidonetSecurityGroupsTestCase(sg.SecurityGroupDBTestCase):
 
 class TestMidonetSecurityGroup(sg.TestSecurityGroups,
                                TestMidonetSecurityGroupsTestCase):
-
     pass
 
 
@@ -207,6 +218,108 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
 
     # IPv6 is not supported by MidoNet yet.  Ignore tests that attempt to
     # create IPv6 subnet.
-
     def test_requested_subnet_id_v4_and_v6(self):
         pass
+
+    def test_create_port_json(self):
+        super(TestMidonetPortsV2, self).test_create_port_json()
+
+        # Verify that creating the port resulted in the creation of
+        # the correct rule chains for the ports and security groups.
+        # If this fails, the reason is likely either in the plugin
+        # code that makes the API calls to create the chains
+        # (_initialize_port_chains in plugin.py) or in the code that
+        # mocks the API calls (mock_lib.py).
+
+        # The order of the chains isn't important, and the UUIDs vary from run
+        # to run, so just loop through them to find the ones whose names match
+        # the patterns we're looking for.
+        chains = self.instance().get_chains(query=None)
+        for chain in chains:
+            if inbound_chain_regex.match(chain.get_name()):
+                self._verify_inbound_chain(chain)
+            elif outbound_chain_regex.match(chain.get_name()):
+                self._verify_outbound_chain(chain)
+            elif egress_chain_regex.match(chain.get_name()):
+                self._verify_egress_chain(chain)
+            elif ingress_chain_regex.match(chain.get_name()):
+                self._verify_ingress_chain(chain)
+            else:
+                self.Fail("Unexpected chain: " + chain.get_name())
+
+            for rule in chain.get_rules():
+                self.assertEqual(chain.get_id(), rule.get_chain_id())
+
+    def _verify_inbound_chain(self, chain):
+        rules = chain.get_rules()
+
+        # IP spoofing prevention.
+        self.assertEqual(ETHERTYPE_IP4, rules[0].get_dl_type())
+        self.assertEqual("drop", rules[0].get_flow_action())
+        self.assertTrue(rules[0].get_inv_nw_src())
+        self.assertEqual("10.0.0.2", rules[0].get_nw_src_address())
+        self.assertEqual(32, rules[0].get_nw_src_length())
+
+        # MAC spoofing prevention.
+        self.assertTrue(mac_addr_regex.match(rules[1].get_dl_src()))
+        self.assertEqual("drop", rules[1].get_flow_action())
+        self.assertTrue(rules[1].get_inv_dl_src())
+
+        # Accept return flow traffic.
+        self.assertEqual("accept", rules[2].get_flow_action())
+        self.assertTrue(rules[2].is_match_return_flow())
+
+        # Jump to SG egress chain.
+        self.assertEqual("jump", rules[3].get_flow_action())
+        self.assertTrue(
+            egress_chain_regex.match(rules[3].get_jump_chain_name()))
+
+        # Drop non-ARP traffic that doesn't match any other rules.
+        self.assertEqual("drop", rules[4].get_flow_action())
+        self.assertEqual(ETHERTYPE_ARP, rules[4].get_dl_type())
+        self.assertTrue(rules[4].get_inv_dl_type())
+
+    def _verify_outbound_chain(self, chain):
+        rules = chain.get_rules()
+
+        # Accept return flow traffic.
+        self.assertEqual("accept", rules[0].get_flow_action())
+        self.assertTrue(rules[0].is_match_return_flow())
+
+        # Jump to SG ingress chain.
+        self.assertEqual("jump", rules[1].get_flow_action())
+        self.assertTrue(
+            ingress_chain_regex.match(rules[1].get_jump_chain_name()))
+
+        # Drop non-ARP traffic.
+        self.assertEqual("drop", rules[2].get_flow_action())
+        self.assertEqual(ETHERTYPE_ARP, rules[2].get_dl_type())
+        self.assertTrue(rules[2].get_inv_dl_type())
+
+    def _verify_egress_chain(self, chain):
+        rules = chain.get_rules()
+
+        # Allow all IPv6 traffic.
+        self.assertEqual("accept", rules[0].get_flow_action())
+        self.assertEqual(ETHERTYPE_IP6, rules[0].get_dl_type())
+        self.assertTrue(rules[0].is_match_forward_flow())
+
+        # Allow all IPv4 traffic.
+        self.assertEqual("accept", rules[1].get_flow_action())
+        self.assertEqual(ETHERTYPE_IP4, rules[1].get_dl_type())
+        self.assertTrue(rules[1].is_match_forward_flow())
+
+    def _verify_ingress_chain(self, chain):
+        rules = chain.get_rules()
+
+        # Accept all IPv6 traffic from a particular port group.
+        self.assertEqual("accept", rules[0].get_flow_action())
+        self.assertEqual(ETHERTYPE_IP6, rules[0].get_dl_type())
+        self.assertIsNotNone(rules[0].get_port_group_src())
+        self.assertFalse(rules[0].is_match_forward_flow())
+
+        self.assertEqual("accept", rules[1].get_flow_action())
+        self.assertEqual(ETHERTYPE_IP4, rules[1].get_dl_type())
+        self.assertIsNotNone(rules[1].get_port_group_src())
+        self.assertFalse(rules[1].is_match_forward_flow())
+

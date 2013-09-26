@@ -124,8 +124,8 @@ class MidonetInterfaceDriver(interface.LinuxInterfaceDriver):
                     host, vport_id, host_dev_name)
             except w_exc.HTTPError:
                 LOG.warn(_(
-                         'Faild binding vport=%(vport)s to device=%(device)s'),
-                         {"vport": vport_id, "device": host_dev_name})
+                    'Failed binding vport=%(vport)s to device=%(device)s'),
+                    {"vport": vport_id, "device": host_dev_name})
         else:
             LOG.warn(_("Device %s already exists"), device_name)
 
