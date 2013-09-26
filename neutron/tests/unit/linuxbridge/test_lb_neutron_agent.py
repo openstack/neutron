@@ -878,3 +878,26 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                           check_exit_code=False),
             ]
             execute_fn.assert_has_calls(expected)
+
+    def test_fdb_update_chg_ip(self):
+        fdb_entries = {'chg_ip':
+                       {'net_id':
+                        {'agent_ip':
+                         {'before': [['port_mac', 'port_ip_1']],
+                          'after': [['port_mac', 'port_ip_2']]}}}}
+
+        with mock.patch.object(utils, 'execute',
+                               return_value='') as execute_fn:
+            self.lb_rpc.fdb_update(None, fdb_entries)
+
+            expected = [
+                mock.call(['ip', 'neigh', 'add', 'port_ip_2', 'lladdr',
+                           'port_mac', 'dev', 'vxlan-1', 'nud', 'permanent'],
+                          root_helper=self.root_helper,
+                          check_exit_code=False),
+                mock.call(['ip', 'neigh', 'del', 'port_ip_1', 'lladdr',
+                           'port_mac', 'dev', 'vxlan-1'],
+                          root_helper=self.root_helper,
+                          check_exit_code=False)
+            ]
+            execute_fn.assert_has_calls(expected)
