@@ -284,8 +284,9 @@ class TestHaproxyNSDriver(base.BaseTestCase):
         with contextlib.nested(
             mock.patch('os.path.exists'),
             mock.patch('__builtin__.open'),
-            mock.patch('neutron.agent.linux.utils.execute')
-        ) as (path_exists, mock_open, mock_execute):
+            mock.patch('neutron.agent.linux.utils.execute'),
+            mock.patch.object(namespace_driver.LOG, 'exception'),
+        ) as (path_exists, mock_open, mock_execute, mock_log):
             file_mock = mock.MagicMock()
             mock_open.return_value = file_mock
             file_mock.__enter__.return_value = file_mock
@@ -300,6 +301,7 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             path_exists.return_value = True
             mock_execute.side_effect = RuntimeError
             namespace_driver.kill_pids_in_file('sudo', 'test_path')
+            self.assertTrue(mock_log.called)
             mock_execute.assert_called_once_with(
                 ['kill', '-9', '123'], 'sudo')
 
