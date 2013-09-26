@@ -76,4 +76,13 @@ class L2populationAgentNotifyAPI(proxy.RpcProxy):
                 self._notification_fanout(context, 'remove_fdb_entries',
                                           fdb_entries)
 
+    def update_fdb_entries(self, context, fdb_entries, host=None):
+        if fdb_entries:
+            if host:
+                self._notification_host(context, 'update_fdb_entries',
+                                        fdb_entries, host)
+            else:
+                self._notification_fanout(context, 'update_fdb_entries',
+                                          fdb_entries)
+
 L2populationAgentNotify = L2populationAgentNotifyAPI()

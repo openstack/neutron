@@ -37,10 +37,19 @@ class L2populationRpcCallBackMixin(object):
         if not host or host == cfg.CONF.host:
             self.fdb_remove(context, fdb_entries)
 
+    @log.log
+    def update_fdb_entries(self, context, fdb_entries, host=None):
+        if not host or host == cfg.CONF.host:
+            self.fdb_update(context, fdb_entries)
+
     @abc.abstractmethod
     def fdb_add(self, context, fdb_entries):
         pass
 
     @abc.abstractmethod
     def fdb_remove(self, context, fdb_entries):
+        pass
+
+    @abc.abstractmethod
+    def fdb_update(self, context, fdb_entries):
         pass

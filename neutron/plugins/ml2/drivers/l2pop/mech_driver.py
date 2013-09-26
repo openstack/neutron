@@ -36,6 +36,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
 
     def initialize(self):
         LOG.debug(_("Experimental L2 population driver"))
+        self.rpc_ctx = n_context.get_admin_context_without_session()
 
     def _get_port_fdb_entries(self, port):
         return [[port['mac_address'],
@@ -45,31 +46,64 @@ class L2populationMechanismDriver(api.MechanismDriver,
         self.remove_fdb_entries = self._update_port_down(context)
 
     def delete_port_postcommit(self, context):
-        self._notify_remove_fdb_entries(context,
-                                        self.remove_fdb_entries)
-
-    def _notify_remove_fdb_entries(self, context, fdb_entries):
-        rpc_ctx = n_context.get_admin_context_without_session()
         l2pop_rpc.L2populationAgentNotify.remove_fdb_entries(
-            rpc_ctx, fdb_entries)
+            self.rpc_ctx, self.remove_fdb_entries)
+
+    def _get_diff_ips(self, orig, port):
+        orig_ips = set([ip['ip_address'] for ip in orig['fixed_ips']])
+        port_ips = set([ip['ip_address'] for ip in port['fixed_ips']])
+
+        # check if an ip has been added or removed
+        orig_chg_ips = orig_ips.difference(port_ips)
+        port_chg_ips = port_ips.difference(orig_ips)
+
+        if orig_chg_ips or port_chg_ips:
+            return orig_chg_ips, port_chg_ips
+
+    def _fixed_ips_changed(self, context, orig, port):
+        diff_ips = self._get_diff_ips(orig, port)
+        if not diff_ips:
+            return
+        orig_ips, port_ips = diff_ips
+
+        port_infos = self._get_port_infos(context, orig)
+        if not port_infos:
+            return
+        agent, agent_ip, segment, port_fdb_entries = port_infos
+
+        orig_mac_ip = [[port['mac_address'], ip] for ip in orig_ips]
+        port_mac_ip = [[port['mac_address'], ip] for ip in port_ips]
+
+        upd_fdb_entries = {port['network_id']: {agent_ip: {}}}
+
+        ports = upd_fdb_entries[port['network_id']][agent_ip]
+        if orig_mac_ip:
+            ports['before'] = orig_mac_ip
+
+        if port_mac_ip:
+            ports['after'] = port_mac_ip
+
+        l2pop_rpc.L2populationAgentNotify.update_fdb_entries(
+            self.rpc_ctx, {'chg_ip': upd_fdb_entries})
+
+        return True
 
     def update_port_postcommit(self, context):
         port = context.current
         orig = context.original
 
         if port['status'] == orig['status']:
-            return
+            self._fixed_ips_changed(context, orig, port)
 
         if port['status'] == const.PORT_STATUS_ACTIVE:
             self._update_port_up(context)
         elif port['status'] == const.PORT_STATUS_DOWN:
             fdb_entries = self._update_port_down(context)
-            self._notify_remove_fdb_entries(context, fdb_entries)
+            l2pop_rpc.L2populationAgentNotify.remove_fdb_entries(
+                self.rpc_ctx, fdb_entries)
 
-    def _update_port_up(self, context):
-        port_context = context.current
-        network_id = port_context['network_id']
-        agent_host = port_context['binding:host_id']
+    def _get_port_infos(self, context, port):
+        agent_host = port['binding:host_id']
         if not agent_host:
             return
 
@@ -80,25 +114,38 @@ class L2populationMechanismDriver(api.MechanismDriver,
 
         agent_ip = self.get_agent_ip(agent)
         if not agent_ip:
-            LOG.warning(_("Unable to retrieve the tunelling ip of agent %s"),
-                        agent_host)
+            LOG.warning(_("Unable to retrieve the agent ip, check the agent "
+                          "configuration."))
             return
 
         segment = context.bound_segment
         if not segment:
             LOG.warning(_("Port %(port)s updated by agent %(agent)s "
                           "isn't bound to any segment"),
-                        {'port': port_context['id'], 'agent': agent.host})
+                        {'port': port['id'], 'agent': agent})
             return
 
         tunnel_types = self.get_agent_tunnel_types(agent)
         if segment['network_type'] not in tunnel_types:
             return
 
+        fdb_entries = self._get_port_fdb_entries(port)
+
+        return agent, agent_ip, segment, fdb_entries
+
+    def _update_port_up(self, context):
+        port_context = context.current
+        port_infos = self._get_port_infos(context, port_context)
+        if not port_infos:
+            return
+        agent, agent_ip, segment, port_fdb_entries = port_infos
+
+        agent_host = port_context['binding:host_id']
+        network_id = port_context['network_id']
+
+        session = db_api.get_session()
         agent_ports = self.get_agent_network_port_count(session, agent_host,
                                                         network_id)
-
-        rpc_ctx = n_context.get_admin_context_without_session()
 
         other_fdb_entries = {network_id:
                              {'segment_id': segment['segmentation_id'],
@@ -138,45 +185,25 @@ class L2populationMechanismDriver(api.MechanismDriver,
 
             if ports.keys():
                 l2pop_rpc.L2populationAgentNotify.add_fdb_entries(
-                    rpc_ctx, agent_fdb_entries, agent_host)
+                    self.rpc_ctx, agent_fdb_entries, agent_host)
 
         # Notify other agents to add fdb rule for current port
-        fdb_entries = self._get_port_fdb_entries(port_context)
-        other_fdb_entries[network_id]['ports'][agent_ip] += fdb_entries
+        other_fdb_entries[network_id]['ports'][agent_ip] += port_fdb_entries
 
-        l2pop_rpc.L2populationAgentNotify.add_fdb_entries(rpc_ctx,
+        l2pop_rpc.L2populationAgentNotify.add_fdb_entries(self.rpc_ctx,
                                                           other_fdb_entries)
 
     def _update_port_down(self, context):
         port_context = context.current
-        network_id = port_context['network_id']
+        port_infos = self._get_port_infos(context, port_context)
+        if not port_infos:
+            return
+        agent, agent_ip, segment, port_fdb_entries = port_infos
 
         agent_host = port_context['binding:host_id']
-        if not agent_host:
-            return
+        network_id = port_context['network_id']
 
         session = db_api.get_session()
-        agent = self.get_agent_by_host(session, agent_host)
-        if not agent:
-            return
-
-        agent_ip = self.get_agent_ip(agent)
-        if not agent_ip:
-            LOG.warning(_("Unable to retrieve the agent ip, check the agent "
-                          "configuration."))
-            return
-
-        segment = context.bound_segment
-        if not segment:
-            LOG.warning(_("Port %(port)s updated by agent %(agent)s "
-                          "isn't bound to any segment"),
-                        {'port': port_context['id'], 'agent': agent})
-            return
-
-        tunnel_types = self.get_agent_tunnel_types(agent)
-        if segment['network_type'] not in tunnel_types:
-            return
-
         agent_ports = self.get_agent_network_port_count(session, agent_host,
                                                         network_id)
 

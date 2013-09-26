@@ -415,6 +415,15 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                      dl_vlan=lvm.vlan,
                                      dl_dst=port_info[0])
 
+    def fdb_update(self, context, fdb_entries):
+        LOG.debug(_("fdb_update received"))
+        for action, values in fdb_entries.items():
+            method = '_fdb_' + action
+            if not hasattr(self, method):
+                raise NotImplementedError()
+
+            getattr(self, method)(context, values)
+
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
 

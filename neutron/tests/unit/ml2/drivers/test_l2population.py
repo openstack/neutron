@@ -406,3 +406,80 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
             self.mock_fanout.assert_any_call(
                 mock.ANY, expected, topic=self.fanout_topic)
+
+    def test_fixed_ips_changed(self):
+        self._register_ml2_agents()
+
+        with self.subnet(network=self._network) as subnet:
+            host_arg = {portbindings.HOST_ID: HOST}
+            with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                p1 = port1['port']
+
+                self.mock_fanout.reset_mock()
+
+                data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.2'},
+                                               {'ip_address': '10.0.0.10'}]}}
+                req = self.new_update_request('ports', data, p1['id'])
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                ips = res['port']['fixed_ips']
+                self.assertEqual(len(ips), 2)
+
+                add_expected = {'args':
+                                {'fdb_entries':
+                                 {'chg_ip':
+                                  {p1['network_id']:
+                                   {'20.0.0.1':
+                                    {'after': [[p1['mac_address'],
+                                                '10.0.0.10']]}}}}},
+                                'namespace': None,
+                                'method': 'update_fdb_entries'}
+
+                self.mock_fanout.assert_any_call(
+                    mock.ANY, add_expected, topic=self.fanout_topic)
+
+                self.mock_fanout.reset_mock()
+
+                data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.2'},
+                                               {'ip_address': '10.0.0.16'}]}}
+                req = self.new_update_request('ports', data, p1['id'])
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                ips = res['port']['fixed_ips']
+                self.assertEqual(len(ips), 2)
+
+                upd_expected = {'args':
+                                {'fdb_entries':
+                                 {'chg_ip':
+                                  {p1['network_id']:
+                                   {'20.0.0.1':
+                                    {'before': [[p1['mac_address'],
+                                                 '10.0.0.10']],
+                                     'after': [[p1['mac_address'],
+                                                '10.0.0.16']]}}}}},
+                                'namespace': None,
+                                'method': 'update_fdb_entries'}
+
+                self.mock_fanout.assert_any_call(
+                    mock.ANY, upd_expected, topic=self.fanout_topic)
+
+                self.mock_fanout.reset_mock()
+
+                data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.16'}]}}
+                req = self.new_update_request('ports', data, p1['id'])
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                ips = res['port']['fixed_ips']
+                self.assertEqual(len(ips), 1)
+
+                del_expected = {'args':
+                                {'fdb_entries':
+                                 {'chg_ip':
+                                  {p1['network_id']:
+                                   {'20.0.0.1':
+                                    {'before': [[p1['mac_address'],
+                                                 '10.0.0.2']]}}}}},
+                                'namespace': None,
+                                'method': 'update_fdb_entries'}
+
+                self.mock_fanout.assert_any_call(
+                    mock.ANY, del_expected, topic=self.fanout_topic)
