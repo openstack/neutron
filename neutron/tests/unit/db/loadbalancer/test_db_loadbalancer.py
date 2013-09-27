@@ -593,7 +593,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             keys.append(('subnet_id', vip['vip']['subnet_id']))
             req = self.new_list_request('vips')
             res = self.deserialize(self.fmt, req.get_response(self.ext_api))
-            self.assertEqual(len(res), 1)
+            self.assertEqual(len(res['vips']), 1)
             for k, v in keys:
                 self.assertEqual(res['vips'][0][k], v)
 

@@ -26,6 +26,7 @@ from neutron.db.loadbalancer import loadbalancer_db
 from neutron.db import routedserviceinsertion_db as rsi_db
 from neutron.extensions import firewall as fw_ext
 from neutron.extensions import l3
+from neutron.extensions import routedserviceinsertion as rsi
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
@@ -794,7 +795,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
     def _make_firewall_rule_list_by_policy_id(self, context, fw_policy_id):
         if not fw_policy_id:
-            return None
+            return []
         firewall_policy_db = self._get_firewall_policy(context, fw_policy_id)
         return [
             self._make_firewall_rule_dict(fw_rule_db)
@@ -890,17 +891,21 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         self._vcns_update_firewall(context, fw, router_id)
         self._firewall_set_status(
             context, fw['id'], service_constants.ACTIVE, fw)
+        fw[rsi.ROUTER_ID] = router_id
         return fw
 
     def update_firewall(self, context, id, firewall):
         LOG.debug(_("update_firewall() called"))
         self._ensure_firewall_update_allowed(context, id)
+        service_router_binding = self._get_resource_router_id_binding(
+            context, firewall_db.Firewall, resource_id=id)
         rule_list_pre = self._make_firewall_rule_list_by_policy_id(
             context,
             self.get_firewall(context, id)['firewall_policy_id'])
         firewall['firewall']['status'] = service_constants.PENDING_UPDATE
         fw = super(NvpAdvancedPlugin, self).update_firewall(
             context, id, firewall)
+        fw[rsi.ROUTER_ID] = service_router_binding['router_id']
         rule_list_new = self._make_firewall_rule_list_by_policy_id(
             context, fw['firewall_policy_id'])
         if rule_list_pre == rule_list_new:
@@ -908,10 +913,9 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 context, fw['id'], service_constants.ACTIVE, fw)
             return fw
         else:
-            service_router_binding = self._get_resource_router_id_binding(
-                context, firewall_db.Firewall, resource_id=id)
             self._vcns_update_firewall(
-                context, fw, service_router_binding.router_id)
+                context, fw, service_router_binding.router_id,
+                firewall_rule_list=rule_list_new)
             self._firewall_set_status(
                 context, fw['id'], service_constants.ACTIVE, fw)
             return fw
@@ -926,6 +930,31 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         super(NvpAdvancedPlugin, self).delete_firewall(context, id)
         self._delete_resource_router_id_binding(
             context, id, firewall_db.Firewall)
+
+    def get_firewall(self, context, id, fields=None):
+        fw = super(NvpAdvancedPlugin, self).get_firewall(
+            context, id, fields)
+        if fields and rsi.ROUTER_ID not in fields:
+            return fw
+
+        service_router_binding = self._get_resource_router_id_binding(
+            context, firewall_db.Firewall, resource_id=fw['id'])
+        fw[rsi.ROUTER_ID] = service_router_binding['router_id']
+        return fw
+
+    def get_firewalls(self, context, filters=None, fields=None):
+        fws = super(NvpAdvancedPlugin, self).get_firewalls(
+            context, filters, fields)
+        if fields and rsi.ROUTER_ID not in fields:
+            return fws
+        service_router_bindings = self._get_resource_router_id_bindings(
+            context, firewall_db.Firewall,
+            resource_ids=[fw['id'] for fw in fws])
+        mapping = dict([(binding['resource_id'], binding['router_id'])
+                        for binding in service_router_bindings])
+        for fw in fws:
+            fw[rsi.ROUTER_ID] = mapping[fw['id']]
+        return fws
 
     def update_firewall_rule(self, context, id, firewall_rule):
         LOG.debug(_("update_firewall_rule() called"))
@@ -976,7 +1005,8 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             service_router_binding = self._get_resource_router_id_binding(
                 context, firewall_db.Firewall, resource_id=fw['id'])
             self._vcns_update_firewall(
-                context, fw, service_router_binding.router_id)
+                context, fw, service_router_binding.router_id,
+                firewall_rule_list=firewall_rules)
         return fwp
 
     def insert_rule(self, context, id, rule_info):
@@ -1036,15 +1066,14 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
     #
     def _get_edge_id_by_vip_id(self, context, vip_id):
         try:
-            router_binding = self._get_resource_router_id_bindings(
-                context, loadbalancer_db.Vip, resource_ids=[vip_id])[0]
+            service_router_binding = self._get_resource_router_id_binding(
+                context, loadbalancer_db.Vip, resource_id=vip_id)
         except Exception:
             with excutils.save_and_reraise_exception():
                 LOG.exception(_("Failed to find the edge with "
                                 "vip_id: %s"), vip_id)
-        service_binding = vcns_db.get_vcns_router_binding(
-            context.session, router_binding.router_id)
-        return service_binding.edge_id
+        return self._get_edge_id_by_vcns_edge_binding(
+            context, service_router_binding.router_id)
 
     def _get_all_vip_addrs_by_router_id(
         self, context, router_id):
@@ -1195,6 +1224,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 super(NvpAdvancedPlugin, self).delete_vip(context, v['id'])
         self._resource_set_status(context, loadbalancer_db.Vip,
                                   v['id'], service_constants.ACTIVE, v)
+        v[rsi.ROUTER_ID] = router_id
 
         return v
 
@@ -1203,6 +1233,8 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         old_vip = self.get_vip(context, id)
         vip['vip']['status'] = service_constants.PENDING_UPDATE
         v = super(NvpAdvancedPlugin, self).update_vip(context, id, vip)
+        v[rsi.ROUTER_ID] = self._get_resource_router_id_binding(
+            context, loadbalancer_db.Vip, resource_id=id)['router_id']
         if old_vip['pool_id'] != v['pool_id']:
             self.vcns_driver.delete_vip(context, id)
             #Delete old pool/monitor on the edge
@@ -1260,6 +1292,30 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             context, id, loadbalancer_db.Vip)
         super(NvpAdvancedPlugin, self).delete_vip(context, id)
         self._update_interface(context, router, sync=True)
+
+    def get_vip(self, context, id, fields=None):
+        vip = super(NvpAdvancedPlugin, self).get_vip(context, id, fields)
+        if fields and rsi.ROUTER_ID not in fields:
+            return vip
+
+        service_router_binding = self._get_resource_router_id_binding(
+            context, loadbalancer_db.Vip, resource_id=vip['id'])
+        vip[rsi.ROUTER_ID] = service_router_binding['router_id']
+        return vip
+
+    def get_vips(self, context, filters=None, fields=None):
+        vips = super(NvpAdvancedPlugin, self).get_vips(
+            context, filters, fields)
+        if fields and rsi.ROUTER_ID not in fields:
+            return vips
+        service_router_bindings = self._get_resource_router_id_bindings(
+            context, loadbalancer_db.Vip,
+            resource_ids=[vip['id'] for vip in vips])
+        mapping = dict([(binding['resource_id'], binding['router_id'])
+                        for binding in service_router_bindings])
+        for vip in vips:
+            vip[rsi.ROUTER_ID] = mapping[vip['id']]
+        return vips
 
     def update_pool(self, context, id, pool):
         pool['pool']['status'] = service_constants.PENDING_UPDATE
