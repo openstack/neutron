@@ -1070,12 +1070,12 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         with context.session.begin(subtransactions=True):
             # goto to the plugin DB and fetch the network
             network = self._get_network(context, id)
-            if fields and 'status' in fields:
+            if (self.nvp_sync_opts.always_read_status or
+                fields and 'status' in fields):
                 # External networks are not backed by nvp lswitches
                 if not network.external:
                     # Perform explicit state synchronization
-                    self._synchronizer.synchronize_network(
-                        context, network)
+                    self._synchronizer.synchronize_network(context, network)
             # Don't do field selection here otherwise we won't be able
             # to add provider networks fields
             net_result = self._make_network_dict(network)
@@ -1356,7 +1356,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def get_port(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
-            if fields and 'status' in fields:
+            if (self.nvp_sync_opts.always_read_status or
+                fields and 'status' in fields):
                 # Perform explicit state synchronization
                 db_port = self._get_port(context, id)
                 self._synchronizer.synchronize_port(
@@ -1366,7 +1367,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 return super(NvpPluginV2, self).get_port(context, id, fields)
 
     def get_router(self, context, id, fields=None):
-        if fields and 'status' in fields:
+        if (self.nvp_sync_opts.always_read_status or
+            fields and 'status' in fields):
             db_router = self._get_router(context, id)
             # Perform explicit state synchronization
             self._synchronizer.synchronize_router(

@@ -70,7 +70,11 @@ sync_opts = [
                       'exceed state_sync_interval')),
     cfg.IntOpt('min_chunk_size', default=500,
                help=_('Minimum number of resources to be retrieved from NVP '
-                      'during state synchronization'))
+                      'during state synchronization')),
+    cfg.BoolOpt('always_read_status', default=False,
+                help=_('Always read operational status from backend on show '
+                       'operations. Enabling this option might slow down '
+                       'the system.'))
 ]
 
 connection_opts = [

@@ -287,16 +287,22 @@ class NvpSyncTestCase(base.BaseTestCase):
         args = ['--config-file', get_fake_conf('neutron.conf.test'),
                 '--config-file', get_fake_conf('nvp.ini.test')]
         config.parse(args=args)
+        cfg.CONF.set_override('allow_overlapping_ips', True)
         self._plugin = NeutronPlugin.NvpPluginV2()
+        # Mock neutron manager plugin load functions to speed up tests
         mock_nm_get_plugin = mock.patch('neutron.manager.NeutronManager.'
                                         'get_plugin')
+        mock_nm_get_service_plugins = mock.patch(
+            'neutron.manager.NeutronManager.get_service_plugins')
         self.mock_nm_get_plugin = mock_nm_get_plugin.start()
         self.mock_nm_get_plugin.return_value = self._plugin
+        mock_nm_get_service_plugins.start()
         super(NvpSyncTestCase, self).setUp()
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(patch_sync.stop)
         self.addCleanup(mock_nvpapi.stop)
         self.addCleanup(mock_nm_get_plugin.stop)
+        self.addCleanup(mock_nm_get_service_plugins.stop)
 
     def tearDown(self):
         cfg.CONF.reset()
@@ -547,10 +553,20 @@ class NvpSyncTestCase(base.BaseTestCase):
                     exp_status = constants.NET_STATUS_ACTIVE
                 self.assertEqual(exp_status, q_net['status'])
 
+    def test_synchronize_network_on_get(self):
+        cfg.CONF.set_override('always_read_status', True, 'NVP_SYNC')
+        ctx = context.get_admin_context()
+        with self._populate_data(ctx):
+            # Put a network down to verify punctual synchronization
+            q_net_id = ls_uuid = self.fc._fake_lswitch_dict.keys()[0]
+            self.fc._fake_lswitch_dict[ls_uuid]['status'] = 'false'
+            q_net_data = self._plugin.get_network(ctx, q_net_id)
+            self.assertEqual(constants.NET_STATUS_DOWN, q_net_data['status'])
+
     def test_synchronize_port(self):
         ctx = context.get_admin_context()
         with self._populate_data(ctx):
-            # Put a network down to verify synchronization
+            # Put a port down to verify synchronization
             lp_uuid = self.fc._fake_lswitch_lport_dict.keys()[0]
             lport = self.fc._fake_lswitch_lport_dict[lp_uuid]
             q_port_id = self._get_tag_dict(lport['tags'])['q_port_id']
@@ -566,10 +582,23 @@ class NvpSyncTestCase(base.BaseTestCase):
                     exp_status = constants.PORT_STATUS_ACTIVE
                 self.assertEqual(exp_status, q_port['status'])
 
+    def test_synchronize_port_on_get(self):
+        cfg.CONF.set_override('always_read_status', True, 'NVP_SYNC')
+        ctx = context.get_admin_context()
+        with self._populate_data(ctx):
+            # Put a port down to verify punctual synchronization
+            lp_uuid = self.fc._fake_lswitch_lport_dict.keys()[0]
+            lport = self.fc._fake_lswitch_lport_dict[lp_uuid]
+            q_port_id = self._get_tag_dict(lport['tags'])['q_port_id']
+            lport['status'] = 'false'
+            q_port_data = self._plugin.get_port(ctx, q_port_id)
+            self.assertEqual(constants.PORT_STATUS_DOWN,
+                             q_port_data['status'])
+
     def test_synchronize_router(self):
         ctx = context.get_admin_context()
         with self._populate_data(ctx):
-            # Put a network down to verify synchronization
+            # Put a router down to verify synchronization
             q_rtr_id = lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
             self.fc._fake_lrouter_dict[lr_uuid]['status'] = 'false'
             q_rtr_data = self._plugin._get_router(ctx, q_rtr_id)
@@ -582,6 +611,16 @@ class NvpSyncTestCase(base.BaseTestCase):
                 else:
                     exp_status = constants.NET_STATUS_ACTIVE
                 self.assertEqual(exp_status, q_rtr['status'])
+
+    def test_synchronize_router_on_get(self):
+        cfg.CONF.set_override('always_read_status', True, 'NVP_SYNC')
+        ctx = context.get_admin_context()
+        with self._populate_data(ctx):
+            # Put a router down to verify punctual synchronization
+            q_rtr_id = lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
+            self.fc._fake_lrouter_dict[lr_uuid]['status'] = 'false'
+            q_rtr_data = self._plugin.get_router(ctx, q_rtr_id)
+            self.assertEqual(constants.NET_STATUS_DOWN, q_rtr_data['status'])
 
     def test_sync_nvp_failure_backoff(self):
         self.mock_nvpapi.return_value.request.side_effect = (
