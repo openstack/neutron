@@ -79,16 +79,6 @@ class NVPCluster(object):
             elif options.get(arg) is not None:
                 # Process deprecated attributes only if specified
                 self._deprecated_attributes[arg] = options.get(arg)
-            if arg.startswith("CLUSTER:"):
-                cluster_section = cfg.CONF.get(arg)
-                for option in cluster_section:
-                    v = cluster_section.get(option)
-                    if option not in DEPRECATED_ATTRIBUTES:
-                        # option may be in dict, but with None value
-                        setattr(self, option, options.get(option) or v)
-                        self._process_attribute(option)
-                    else:
-                        self._deprecated_attributes[option] = v
 
     def _process_attribute(self, attribute):
         # Process the attribute only if it's not empty!
