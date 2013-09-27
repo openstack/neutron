@@ -61,7 +61,7 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
 
     def __init__(self, api_providers, user, password, request_timeout,
                  http_timeout, retries, redirects,
-                 concurrent_connections=3, nvp_gen_timeout=-1):
+                 concurrent_connections=10, nvp_gen_timeout=-1):
         '''Constructor.
 
         :param api_providers: a list of tuples in the form:
