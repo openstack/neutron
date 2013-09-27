@@ -149,6 +149,33 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
                 mock.sentinel.context,
                 fake_firewall['id'])
 
+    def test_delete_firewall_no_router(self):
+        fake_firewall = {'id': 0, 'tenant_id': 1}
+        self.api.plugin_rpc = mock.Mock()
+        with contextlib.nested(
+            mock.patch.object(self.api.plugin_rpc, 'get_routers'),
+            mock.patch.object(self.api, '_get_router_info_list_for_tenant'),
+            mock.patch.object(self.api.fwplugin_rpc, 'firewall_deleted')
+        ) as (
+            mock_get_routers,
+            mock_get_router_info_list_for_tenant,
+            mock_firewall_deleted):
+
+            mock_get_router_info_list_for_tenant.return_value = []
+            self.api.delete_firewall(
+                context=mock.sentinel.context,
+                firewall=fake_firewall, host='host')
+
+            mock_get_routers.assert_called_once_with(
+                mock.sentinel.context)
+
+            mock_get_router_info_list_for_tenant.assert_called_once_with(
+                mock_get_routers.return_value, fake_firewall['tenant_id'])
+
+            mock_firewall_deleted.assert_called_once_with(
+                mock.sentinel.context,
+                fake_firewall['id'])
+
     def test_process_router_add_fw_update(self):
         fake_firewall_list = [{'id': 0, 'tenant_id': 1,
                                'status': constants.PENDING_UPDATE}]
