@@ -195,8 +195,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         self.root_helper = config.get_root_helper(self.conf)
         self.router_info = {}
 
-        if not self.conf.interface_driver:
-            raise SystemExit(_('An interface driver must be specified'))
+        self._check_config_params()
+
         try:
             self.driver = importutils.import_object(
                 self.conf.interface_driver,
@@ -220,6 +220,20 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self._rpc_loop)
         self.rpc_loop.start(interval=RPC_LOOP_INTERVAL)
         super(L3NATAgent, self).__init__(conf=self.conf)
+
+    def _check_config_params(self):
+        """Check items in configuration files.
+
+        Check for required and invalid configuration items.
+        The actual values are not verified for correctness.
+        """
+        if not self.conf.interface_driver:
+            raise SystemExit(_('An interface driver must be specified'))
+
+        if not self.conf.use_namespaces and not self.conf.router_id:
+            msg = _('Router id is required if not using namespaces.')
+            LOG.error(msg)
+            raise SystemExit(msg)
 
     def _destroy_router_namespaces(self, only_router_id=None):
         """Destroy router namespaces on the host to eliminate all stale

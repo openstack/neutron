@@ -43,6 +43,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
         agent_config.register_root_helper(self.conf)
         self.conf.register_opts(interface.OPTS)
+        self.conf.set_override('router_id', 'fake_id')
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.root_helper = 'sudo'
@@ -645,6 +646,16 @@ class TestBasicRouterOperations(base.BaseTestCase):
         rules = ('PREROUTING', '-s 0.0.0.0/0 -d 169.254.169.254/32 '
                  '-p tcp -m tcp --dport 80 -j REDIRECT --to-port 8775')
         self.assertEqual([rules], agent.metadata_nat_rules())
+
+    def test_router_id_specified_in_conf(self):
+        self.conf.set_override('use_namespaces', False)
+        self.conf.set_override('router_id', '')
+        self.assertRaises(SystemExit, l3_agent.L3NATAgent,
+                          HOSTNAME, self.conf)
+
+        self.conf.set_override('router_id', '1234')
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.assertEqual(['1234'], agent._router_ids())
 
 
 class TestL3AgentEventHandler(base.BaseTestCase):
