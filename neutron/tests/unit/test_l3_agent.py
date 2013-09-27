@@ -217,39 +217,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def test_agent_remove_external_gateway(self):
         self._test_external_gateway_action('remove')
 
-    def _test_floating_ip_action(self, action):
-        router_id = _uuid()
-        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
-                                 self.conf.use_namespaces, None)
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        floating_ip = '20.0.0.100'
-        fixed_ip = '10.0.0.23'
-        ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
-                                     'subnet_id': _uuid()}],
-                      'subnet': {'gateway_ip': '20.0.0.1'},
-                      'id': _uuid(),
-                      'mac_address': 'ca:fe:de:ad:be:ef',
-                      'ip_cidr': '20.0.0.30/24'}
-        interface_name = agent.get_external_device_name(ex_gw_port['id'])
-
-        if action == 'add':
-            self.device_exists.return_value = False
-            agent.floating_ip_added(ri, ex_gw_port, floating_ip, fixed_ip)
-            self.send_arp.assert_called_once_with(ri, interface_name,
-                                                  floating_ip)
-
-        elif action == 'remove':
-            self.device_exists.return_value = True
-            agent.floating_ip_removed(ri, ex_gw_port, floating_ip, fixed_ip)
-        else:
-            raise Exception("Invalid action %s" % action)
-
-    def test_agent_add_floating_ip(self):
-        self._test_floating_ip_action('add')
-
-    def test_agent_remove_floating_ip(self):
-        self._test_floating_ip_action('remove')
-
     def _check_agent_method_called(self, agent, calls, namespace):
         if namespace:
             self.mock_ip.netns.execute.assert_has_calls(
@@ -405,6 +372,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_process_router(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.process_router_floating_ips = mock.Mock()
         router = self._prepare_router_data()
         fake_floatingips1 = {'floatingips': [
             {'id': _uuid(),
@@ -414,6 +382,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
         agent.process_router(ri)
+        ex_gw_port = agent._get_ex_gw_port(ri)
+        agent.process_router_floating_ips.assert_called_with(ri, ex_gw_port)
+        agent.process_router_floating_ips.reset_mock()
 
         # remap floating IP to a new fixed ip
         fake_floatingips2 = copy.deepcopy(fake_floatingips1)
@@ -421,16 +392,94 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         router[l3_constants.FLOATINGIP_KEY] = fake_floatingips2['floatingips']
         agent.process_router(ri)
+        ex_gw_port = agent._get_ex_gw_port(ri)
+        agent.process_router_floating_ips.assert_called_with(ri, ex_gw_port)
+        agent.process_router_floating_ips.reset_mock()
 
         # remove just the floating ips
         del router[l3_constants.FLOATINGIP_KEY]
         agent.process_router(ri)
+        ex_gw_port = agent._get_ex_gw_port(ri)
+        agent.process_router_floating_ips.assert_called_with(ri, ex_gw_port)
+        agent.process_router_floating_ips.reset_mock()
 
         # now no ports so state is torn down
         del router[l3_constants.INTERFACE_KEY]
         del router['gw_port']
         agent.process_router(ri)
         self.send_arp.assert_called_once()
+        self.assertFalse(agent.process_router_floating_ips.called)
+
+    @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
+    def test_process_router_floating_ip_add(self, IPDevice):
+        fip = {
+            'id': _uuid(), 'port_id': _uuid(),
+            'floating_ip_address': '15.1.2.3',
+            'fixed_ip_address': '192.168.0.1'
+        }
+
+        IPDevice.return_value = device = mock.Mock()
+        device.addr.list.return_value = []
+
+        ri = mock.MagicMock()
+        ri.router.get.return_value = [fip]
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        agent.process_router_floating_ips(ri, {'id': _uuid()})
+
+        device.addr.add.assert_called_once_with(4, '15.1.2.3/32', '15.1.2.3')
+
+        nat = ri.iptables_manager.ipv4['nat']
+        nat.clear_rules_by_tag.assert_called_once_with('floating_ip')
+        rules = agent.floating_forward_rules('15.1.2.3', '192.168.0.1')
+        for chain, rule in rules:
+            nat.add_rule.assert_any_call(chain, rule, tag='floating_ip')
+
+    @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
+    def test_process_router_floating_ip_remove(self, IPDevice):
+        IPDevice.return_value = device = mock.Mock()
+        device.addr.list.return_value = [{'cidr': '15.1.2.3/32'}]
+
+        ri = mock.MagicMock()
+        ri.router.get.return_value = []
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        agent.process_router_floating_ips(ri, {'id': _uuid()})
+
+        device.addr.delete.assert_called_once_with(4, '15.1.2.3/32')
+
+        nat = ri.iptables_manager.ipv4['nat']
+        nat = ri.iptables_manager.ipv4['nat']
+        nat.clear_rules_by_tag.assert_called_once_with('floating_ip')
+
+    @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
+    def test_process_router_floating_ip_remap(self, IPDevice):
+        fip = {
+            'id': _uuid(), 'port_id': _uuid(),
+            'floating_ip_address': '15.1.2.3',
+            'fixed_ip_address': '192.168.0.2'
+        }
+
+        IPDevice.return_value = device = mock.Mock()
+        device.addr.list.return_value = [{'cidr': '15.1.2.3/32'}]
+        ri = mock.MagicMock()
+
+        ri.router.get.return_value = [fip]
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        agent.process_router_floating_ips(ri, {'id': _uuid()})
+
+        self.assertFalse(device.addr.add.called)
+        self.assertFalse(device.addr.delete.called)
+
+        nat = ri.iptables_manager.ipv4['nat']
+        nat.clear_rules_by_tag.assert_called_once_with('floating_ip')
+        rules = agent.floating_forward_rules('15.1.2.3', '192.168.0.2')
+        for chain, rule in rules:
+            nat.add_rule.assert_any_call(chain, rule, tag='floating_ip')
 
     def test_process_router_snat_disabled(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
