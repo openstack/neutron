@@ -479,7 +479,6 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """Create a L2 port in Neutron/MidoNet."""
         LOG.debug(_("MidonetPluginV2.create_port called: port=%r"), port)
         port_data = port['port']
-
         # Create a bridge port in MidoNet and set the bridge port ID as the
         # port ID in Neutron.
         bridge = self.client.get_bridge(port_data["network_id"])
@@ -614,19 +613,42 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             old_port = self._get_port(context, id)
             net_id = old_port["network_id"]
             mac = old_port["mac_address"]
-            old_fixed_ips = old_port.get('fixed_ips')
-
+            old_ips = old_port["fixed_ips"]
+            import pdb
+            LOG.debug("SUBNET 1 old ips %s", old_ips)
             # update the port DB
             p = super(MidonetPluginV2, self).update_port(context, id, port)
-
-            if "fixed_ips" in p:
-                # IPs have changed.  Re-map the DHCP entries
-                bridge = self.client.get_bridge(net_id)
+            # Calculate ip diff
+            new_ips = p["fixed_ips"]
+            LOG.debug("SUBNET 2 new ip %s", new_ips)
+            for old_ip in old_ips[:]:
+                for new_ip in new_ips[:]:
+                    if ('ip_address' in new_ip and
+                        old_ip['ip_address'] == new_ip['ip_address']):
+                        old_ips.remove(old_ip)
+                        new_ips.remove(new_ip)
+            bridge = self.client.get_bridge(net_id)
+            # For DHCP port, add or remove a metadata route
+            LOG.debug("SUBNET 3 new ip n=%(n)s, old ip o=%(o)s", {"n":new_ips, "o":old_ips})
+            if _is_dhcp_port(p):
+                if old_ips:
+                    for cidr, ip in self._metadata_subnets(
+                        context, old_ips):
+                        self.client.remove_dhcp_route_option(
+                            bridge, cidr, ip, METADATA_DEFAULT_IP)
+                if new_ips:
+                    for cidr, ip in self._metadata_subnets(
+                        context, new_ips):
+                        self.client.add_dhcp_route_option(
+                            bridge, cidr, ip, METADATA_DEFAULT_IP)
+            # IPs have changed.  Re-map the DHCP entries
+            if old_ips:
                 for cidr, ip, mac in self._dhcp_mappings(
-                        context, old_fixed_ips, mac):
+                        context, old_ips, mac):
                     self.client.remove_dhcp_host(bridge, cidr, ip, mac)
+            if new_ips:
                 for cidr, ip, mac in self._dhcp_mappings(context,
-                                                         p["fixed_ips"], mac):
+                                                         new_ips, mac):
                     self.client.add_dhcp_host(bridge, cidr, ip, mac)
 
             if (self._check_update_deletes_security_groups(port) or
