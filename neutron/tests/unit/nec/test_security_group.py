@@ -46,11 +46,26 @@ class NecSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
                                              RESOURCE_ATTRIBUTE_MAP[item].
                                              copy())
         super(NecSecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
-        self.notifier = manager.NeutronManager.get_plugin().notifier
+        plugin = manager.NeutronManager.get_plugin()
+        self.notifier = plugin.notifier
+        self.rpc = plugin.callback_sg
 
     def tearDown(self):
         super(NecSecurityGroupsTestCase, self).tearDown()
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk_
+
+
+class TestNecSGServerRpcCallBack(
+    test_sg_rpc.SGServerRpcCallBackMixinTestCase,
+    NecSecurityGroupsTestCase):
+    pass
+
+
+# TODO(amotoki): The test is blocked by 1229954
+# class TestNecSGServerRpcCallBackXML(
+#     test_sg_rpc.SGServerRpcCallBackMixinTestCaseXML,
+#     NecSecurityGroupsTestCase):
+#     pass
 
 
 class TestNecSecurityGroups(NecSecurityGroupsTestCase,
