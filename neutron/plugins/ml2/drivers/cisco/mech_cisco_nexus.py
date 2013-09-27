@@ -17,9 +17,10 @@
 ML2 Mechanism Driver for Cisco Nexus platforms.
 """
 
-from novaclient.v1_1 import client as nova_client
 from oslo.config import cfg
 
+from neutron.common import constants as n_const
+from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import driver_api as api
@@ -50,12 +51,22 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         # Initialize credential store after database initialization
         cred.Store.initialize()
 
-    def _get_vlanid(self, port_context):
-        """Return the VLAN ID (segmentation ID) for this network."""
-        # NB: Currently only a single physical network is supported.
-        network_context = port_context.network
-        network_segments = network_context.network_segments
-        return network_segments[0]['segmentation_id']
+    def _valid_network_segment(self, segment):
+        return (cfg.CONF.ml2_cisco.managed_physical_network is None or
+                cfg.CONF.ml2_cisco.managed_physical_network ==
+                segment[api.PHYSICAL_NETWORK])
+
+    def _get_vlanid(self, context):
+        segment = context.bound_segment
+        if (segment and segment[api.NETWORK_TYPE] == 'vlan' and
+            self._valid_network_segment(segment)):
+            return context.bound_segment.get(api.SEGMENTATION_ID)
+
+    def _is_deviceowner_compute(self, port):
+        return port['device_owner'].startswith('compute')
+
+    def _is_status_active(self, port):
+        return port['status'] == n_const.PORT_STATUS_ACTIVE
 
     def _get_credential(self, nexus_ip):
         """Return credential information for a given Nexus IP address.
@@ -128,51 +139,24 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
                     self.driver.disable_vlan_on_trunk_int(switch_ip, vlan_id,
                                                           port_id)
 
-    # TODO(rcurran) Temporary access to host_id. When available use
-    # port-binding to access host name.
-    def _get_instance_host(self, instance_id):
-        keystone_conf = cfg.CONF.keystone_authtoken
-        keystone_auth_url = '%s://%s:%s/v2.0/' % (keystone_conf.auth_protocol,
-                                                  keystone_conf.auth_host,
-                                                  keystone_conf.auth_port)
-        nc = nova_client.Client(keystone_conf.admin_user,
-                                keystone_conf.admin_password,
-                                keystone_conf.admin_tenant_name,
-                                keystone_auth_url,
-                                no_cache=True)
-        serv = nc.servers.get(instance_id)
-        host = serv.__getattr__('OS-EXT-SRV-ATTR:host')
-
-        return host
-
-    def _invoke_nexus_on_port_event(self, context, instance_id):
-        """Prepare variables for call to nexus switch."""
+    def _invoke_nexus_on_port_event(self, context):
         vlan_id = self._get_vlanid(context)
-        host = self._get_instance_host(instance_id)
+        host_id = context.current.get(portbindings.HOST_ID)
 
-        # Trunk segmentation id for only this host
-        vlan_name = cfg.CONF.ml2_cisco.vlan_name_prefix + str(vlan_id)
-        self._manage_port(vlan_name, vlan_id, host, instance_id)
-
-    def create_port_postcommit(self, context):
-        """Create port post-database commit event."""
-        port = context.current
-        instance_id = port['device_id']
-        device_owner = port['device_owner']
-
-        if instance_id and device_owner != 'network:dhcp':
-            self._invoke_nexus_on_port_event(context, instance_id)
+        if vlan_id and host_id:
+            vlan_name = cfg.CONF.ml2_cisco.vlan_name_prefix + str(vlan_id)
+            instance_id = context.current.get('device_id')
+            self._manage_port(vlan_name, vlan_id, host_id, instance_id)
+        else:
+            LOG.debug(_("Vlan ID %(vlan_id)s or Host ID %(host_id)s missing."),
+                      {'vlan_id': vlan_id, 'host_id': host_id})
 
     def update_port_postcommit(self, context):
         """Update port post-database commit event."""
         port = context.current
-        old_port = context.original
-        old_device = old_port['device_id']
-        instance_id = port['device_id'] if 'device_id' in port else ""
 
-        # Check if there's a new device_id
-        if instance_id and not old_device:
-            self._invoke_nexus_on_port_event(context, instance_id)
+        if self._is_deviceowner_compute(port) and self._is_status_active(port):
+            self._invoke_nexus_on_port_event(context)
 
     def delete_port_precommit(self, context):
         """Delete port pre-database commit event.
@@ -180,9 +164,16 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         Delete port bindings from the database and scan whether the network
         is still required on the interfaces trunked.
         """
+
+        if not self._is_deviceowner_compute(context.current):
+            return
+
         port = context.current
         device_id = port['device_id']
         vlan_id = self._get_vlanid(context)
+
+        if not vlan_id or not device_id:
+            return
 
         # Delete DB row for this port
         try:

@@ -21,6 +21,8 @@ ml2_cisco_opts = [
                help=_("VLAN Name prefix")),
     cfg.BoolOpt('svi_round_robin', default=False,
                 help=_("Distribute SVI interfaces over all switches")),
+    cfg.StrOpt('managed_physical_network', default=None,
+               help=_("The physical network managed by the switches.")),
 ]
 
 

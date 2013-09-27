@@ -17,8 +17,11 @@ import collections
 import mock
 import testtools
 
+from neutron.common import constants as n_const
 from neutron.db import api as db
+from neutron.extensions import portbindings
 from neutron.openstack.common import importutils
+from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.cisco import constants
 from neutron.plugins.ml2.drivers.cisco import exceptions
 from neutron.plugins.ml2.drivers.cisco import mech_cisco_nexus
@@ -43,6 +46,8 @@ VLAN_ID_2 = 265
 VLAN_ID_PC = 268
 DEVICE_OWNER = 'compute:test'
 NEXUS_SSH_PORT = '22'
+PORT_STATE = n_const.PORT_STATUS_ACTIVE
+NETWORK_TYPE = 'vlan'
 NEXUS_DRIVER = ('neutron.plugins.ml2.drivers.cisco.'
                 'nexus_network_driver.CiscoNexusDriver')
 
@@ -52,7 +57,8 @@ class FakeNetworkContext(object):
     """Network context for testing purposes only."""
 
     def __init__(self, segment_id):
-        self._network_segments = [{'segmentation_id': segment_id}]
+        self._network_segments = {api.SEGMENTATION_ID: segment_id,
+                                  api.NETWORK_TYPE: NETWORK_TYPE}
 
     @property
     def network_segments(self):
@@ -63,12 +69,15 @@ class FakePortContext(object):
 
     """Port context for testing purposes only."""
 
-    def __init__(self, device_id, network_context):
+    def __init__(self, device_id, host_name, network_context):
         self._port = {
+            'status': PORT_STATE,
             'device_id': device_id,
-            'device_owner': DEVICE_OWNER
+            'device_owner': DEVICE_OWNER,
+            portbindings.HOST_ID: host_name
         }
         self._network = network_context
+        self._segment = network_context.network_segments
 
     @property
     def current(self):
@@ -77,6 +86,10 @@ class FakePortContext(object):
     @property
     def network(self):
         return self._network
+
+    @property
+    def bound_segment(self):
+        return self._segment
 
 
 class TestCiscoNexusDevice(base.BaseTestCase):
@@ -166,26 +179,22 @@ class TestCiscoNexusDevice(base.BaseTestCase):
         vlan_id = port_config.vlan_id
 
         network_context = FakeNetworkContext(vlan_id)
-        port_context = FakePortContext(instance_id, network_context)
+        port_context = FakePortContext(instance_id, host_name,
+                                       network_context)
 
-        with mock.patch.object(mech_cisco_nexus.CiscoNexusMechanismDriver,
-                               '_get_instance_host') as mock_host:
-            mock_host.return_value = host_name
+        self._cisco_mech_driver.update_port_postcommit(port_context)
+        bindings = nexus_db_v2.get_nexusport_binding(nexus_port,
+                                                     vlan_id,
+                                                     nexus_ip_addr,
+                                                     instance_id)
+        self.assertEqual(len(bindings), 1)
 
-            self._cisco_mech_driver.create_port_postcommit(port_context)
-            bindings = nexus_db_v2.get_nexusport_binding(nexus_port,
-                                                         vlan_id,
-                                                         nexus_ip_addr,
-                                                         instance_id)
-            self.assertEqual(len(bindings), 1)
-
-            self._cisco_mech_driver.delete_port_precommit(port_context)
-            with testtools.ExpectedException(
-                    exceptions.NexusPortBindingNotFound):
-                nexus_db_v2.get_nexusport_binding(nexus_port,
-                                                  vlan_id,
-                                                  nexus_ip_addr,
-                                                  instance_id)
+        self._cisco_mech_driver.delete_port_precommit(port_context)
+        with testtools.ExpectedException(exceptions.NexusPortBindingNotFound):
+            nexus_db_v2.get_nexusport_binding(nexus_port,
+                                              vlan_id,
+                                              nexus_ip_addr,
+                                              instance_id)
 
     def test_create_delete_ports(self):
         """Tests creation and deletion of two new virtual Ports."""
