@@ -1315,7 +1315,7 @@ class QuotaTest(APIv2TestBase):
         instance.get_networks_count.assert_called_with(mock.ANY,
                                                        filters=mock.ANY)
         self.assertIn("Quota exceeded for resources",
-                      res.json['NeutronError'])
+                      res.json['NeutronError']['message'])
 
     def test_create_network_quota_no_counts(self):
         cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
@@ -1332,7 +1332,7 @@ class QuotaTest(APIv2TestBase):
         instance.get_networks_count.assert_called_with(mock.ANY,
                                                        filters=mock.ANY)
         self.assertIn("Quota exceeded for resources",
-                      res.json['NeutronError'])
+                      res.json['NeutronError']['message'])
 
     def test_create_network_quota_without_limit(self):
         cfg.CONF.set_override('quota_network', -1, group='QUOTAS')

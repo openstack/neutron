@@ -1162,7 +1162,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             res = self._create_port(self.fmt, id)
             data = self.deserialize(self.fmt, res)
             msg = str(q_exc.IpAddressGenerationFailure(net_id=id))
-            self.assertEqual(data['NeutronError'], msg)
+            self.assertEqual(data['NeutronError']['message'], msg)
             self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
     def test_update_port_update_ip(self):
@@ -2477,7 +2477,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 data = self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
                 msg = str(q_exc.SubnetInUse(subnet_id=id))
-                self.assertEqual(data['NeutronError'], msg)
+                self.assertEqual(data['NeutronError']['message'], msg)
 
     def test_delete_network(self):
         gateway_ip = '10.0.0.1'
