@@ -61,6 +61,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
             'neutron.agent.linux.external_process.ProcessManager')
         self.external_process = self.external_process_p.start()
 
+        self.send_arp_p = mock.patch(
+            'neutron.agent.l3_agent.L3NATAgent._send_gratuitous_arp_packet')
+        self.send_arp = self.send_arp_p.start()
+
         self.dvr_cls_p = mock.patch('neutron.agent.linux.interface.NullDriver')
         driver_cls = self.dvr_cls_p.start()
         self.mock_driver = mock.MagicMock()
@@ -122,6 +126,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         cidr = '99.0.1.9/24'
         mac = 'ca:fe:de:ad:be:ef'
+        interface_name = agent.get_internal_device_name(port_id)
 
         if action == 'add':
             self.device_exists.return_value = False
@@ -129,6 +134,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                          port_id, cidr, mac)
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
+            self.send_arp.assert_called_once_with(ri, interface_name,
+                                                  '99.0.1.9')
         elif action == 'remove':
             self.device_exists.return_value = True
             agent.internal_network_removed(ri, port_id, cidr)
@@ -163,16 +170,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                          interface_name, internal_cidrs)
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
-            arping_cmd = ['arping', '-A', '-U',
-                          '-I', interface_name,
-                          '-c', self.conf.send_arp_for_ha,
-                          '20.0.0.30']
-            if self.conf.use_namespaces:
-                self.mock_ip.netns.execute.assert_any_call(
-                    arping_cmd, check_exit_code=True)
-            else:
-                self.utils_exec.assert_any_call(
-                    check_exit_code=True, root_helper=self.conf.root_helper)
+            self.send_arp.assert_called_once_with(ri, interface_name,
+                                                  '20.0.0.30')
 
         elif action == 'remove':
             self.device_exists.return_value = True
@@ -184,6 +183,36 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_agent_add_external_gateway(self):
         self._test_external_gateway_action('add')
+
+    def _test_arping(self, namespace):
+        if not namespace:
+            self.conf.set_override('use_namespaces', False)
+
+        router_id = _uuid()
+        ri = l3_agent.RouterInfo(router_id, self.conf.root_helper,
+                                 self.conf.use_namespaces, None)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        floating_ip = '20.0.0.101'
+        interface_name = agent.get_external_device_name(router_id)
+        agent._arping(ri, interface_name, floating_ip)
+
+        arping_cmd = ['arping', '-A',
+                      '-I', interface_name,
+                      '-c', self.conf.send_arp_for_ha,
+                      floating_ip]
+        if self.conf.use_namespaces:
+            self.mock_ip.netns.execute.assert_any_call(
+                arping_cmd, check_exit_code=True)
+        else:
+            self.utils_exec.assert_any_call(arping_cmd,
+                                            check_exit_code=True,
+                                            root_helper=self.conf.root_helper)
+
+    def test_arping_namespace(self):
+        self._test_arping(namespace=True)
+
+    def test_arping_no_namespace(self):
+        self._test_arping(namespace=False)
 
     def test_agent_remove_external_gateway(self):
         self._test_external_gateway_action('remove')
@@ -206,16 +235,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         if action == 'add':
             self.device_exists.return_value = False
             agent.floating_ip_added(ri, ex_gw_port, floating_ip, fixed_ip)
-            arping_cmd = ['arping', '-A', '-U',
-                          '-I', interface_name,
-                          '-c', self.conf.send_arp_for_ha,
-                          floating_ip]
-            if self.conf.use_namespaces:
-                self.mock_ip.netns.execute.assert_any_call(
-                    arping_cmd, check_exit_code=True)
-            else:
-                self.utils_exec.assert_any_call(
-                    check_exit_code=True, root_helper=self.conf.root_helper)
+            self.send_arp.assert_called_once_with(ri, interface_name,
+                                                  floating_ip)
 
         elif action == 'remove':
             self.device_exists.return_value = True
@@ -409,6 +430,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         del router[l3_constants.INTERFACE_KEY]
         del router['gw_port']
         agent.process_router(ri)
+        self.send_arp.assert_called_once()
 
     def test_process_router_snat_disabled(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -429,6 +451,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                            if r not in ri.iptables_manager.ipv4['nat'].rules]
         self.assertEqual(len(nat_rules_delta), 2)
         self._verify_snat_rules(nat_rules_delta, router)
+        self.send_arp.assert_called_once()
 
     def test_process_router_snat_enabled(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -449,6 +472,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                            if r not in orig_nat_rules]
         self.assertEqual(len(nat_rules_delta), 2)
         self._verify_snat_rules(nat_rules_delta, router)
+        self.send_arp.assert_called_once()
 
     def test_process_router_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -477,6 +501,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                            if r not in orig_nat_rules]
         self.assertEqual(len(nat_rules_delta), 1)
         self._verify_snat_rules(nat_rules_delta, router)
+        self.send_arp.assert_called_once()
 
     def test_process_router_interface_removed(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -497,6 +522,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                            if r not in ri.iptables_manager.ipv4['nat'].rules]
         self.assertEqual(len(nat_rules_delta), 1)
         self._verify_snat_rules(nat_rules_delta, router, negate=True)
+        self.send_arp.assert_called_once()
 
     def test_handle_router_snat_rules_add_back_jump(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

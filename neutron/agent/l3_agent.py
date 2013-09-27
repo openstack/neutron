@@ -483,22 +483,25 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def _get_ex_gw_port(self, ri):
         return ri.router.get('gw_port')
 
+    def _arping(self, ri, interface_name, ip_address):
+        arping_cmd = ['arping', '-A',
+                      '-I', interface_name,
+                      '-c', self.conf.send_arp_for_ha,
+                      ip_address]
+        try:
+            if self.conf.use_namespaces:
+                ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                              namespace=ri.ns_name())
+                ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
+            else:
+                utils.execute(arping_cmd, check_exit_code=True,
+                              root_helper=self.root_helper)
+        except Exception as e:
+            LOG.error(_("Failed sending gratuitous ARP: %s"), str(e))
+
     def _send_gratuitous_arp_packet(self, ri, interface_name, ip_address):
         if self.conf.send_arp_for_ha > 0:
-            arping_cmd = ['arping', '-A', '-U',
-                          '-I', interface_name,
-                          '-c', self.conf.send_arp_for_ha,
-                          ip_address]
-            try:
-                if self.conf.use_namespaces:
-                    ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                                  namespace=ri.ns_name())
-                    ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
-                else:
-                    utils.execute(arping_cmd, check_exit_code=True,
-                                  root_helper=self.root_helper)
-            except Exception as e:
-                LOG.error(_("Failed sending gratuitous ARP: %s"), str(e))
+            eventlet.spawn_n(self._arping, ri, interface_name, ip_address)
 
     def get_internal_device_name(self, port_id):
         return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
