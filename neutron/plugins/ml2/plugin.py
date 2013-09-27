@@ -368,17 +368,53 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return [self._fields(net, fields) for net in nets]
 
     def delete_network(self, context, id):
+        # REVISIT(rkukura) The super(Ml2Plugin, self).delete_network()
+        # function is not used because it auto-deletes ports and
+        # subnets from the DB without invoking the derived class's
+        # delete_port() or delete_subnet(), preventing mechanism
+        # drivers from being called. This approach should be revisited
+        # when the API layer is reworked during icehouse.
+
         session = context.session
-        with session.begin(subtransactions=True):
-            network = self.get_network(context, id)
-            mech_context = driver_context.NetworkContext(self, context,
-                                                         network)
-            self.mechanism_manager.delete_network_precommit(mech_context)
-            super(Ml2Plugin, self).delete_network(context, id)
-            for segment in mech_context.network_segments:
-                self.type_manager.release_segment(session, segment)
-            # The segment records are deleted via cascade from the
-            # network record, so explicit removal is not necessary.
+        while True:
+            with session.begin(subtransactions=True):
+                filter = {'network_id': [id]}
+
+                # Get ports to auto-delete.
+                ports = self.get_ports(context, filters=filter)
+                only_auto_del = all(p['device_owner']
+                                    in db_base_plugin_v2.
+                                    AUTO_DELETE_PORT_OWNERS
+                                    for p in ports)
+                if not only_auto_del:
+                    raise exc.NetworkInUse(net_id=id)
+
+                # Get subnets to auto-delete.
+                subnets = self.get_subnets(context, filters=filter)
+
+                if not ports or subnets:
+                    network = self.get_network(context, id)
+                    mech_context = driver_context.NetworkContext(self,
+                                                                 context,
+                                                                 network)
+                    self.mechanism_manager.delete_network_precommit(
+                        mech_context)
+
+                    record = self._get_network(context, id)
+                    context.session.delete(record)
+
+                    for segment in mech_context.network_segments:
+                        self.type_manager.release_segment(session, segment)
+
+                    # The segment records are deleted via cascade from the
+                    # network record, so explicit removal is not necessary.
+                    break
+
+            for port in ports:
+                self.delete_port(context, port['id'])
+
+            for subnet in subnets:
+                self.delete_subnet(context, subnet['id'])
 
         try:
             self.mechanism_manager.delete_network_postcommit(mech_context)
