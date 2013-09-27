@@ -695,8 +695,8 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             router = self._get_router(context, router_id)
             # TODO(fank): do rollback on error, or have a dedicated thread
             # do sync work (rollback, re-configure, or make router down)
-            self._update_interface(context, router)
             self._update_nat_rules(context, router)
+            self._update_interface(context, router)
         return fip
 
     def update_floatingip(self, context, id, floatingip):
@@ -707,8 +707,8 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             router = self._get_router(context, router_id)
             # TODO(fank): do rollback on error, or have a dedicated thread
             # do sync work (rollback, re-configure, or make router down)
-            self._update_interface(context, router)
             self._update_nat_rules(context, router)
+            self._update_interface(context, router)
         return fip
 
     def delete_floatingip(self, context, id):
