@@ -26,6 +26,9 @@ from neutron import context
 from neutron.extensions import l3
 from neutron.manager import NeutronManager
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira import NeutronServicePlugin as nsp
+from neutron.plugins.nicira import nvplib
+from neutron.tests import base
 from neutron.tests.unit.nicira import NVPEXT_PATH
 from neutron.tests.unit.nicira import SERVICE_PLUGIN_NAME
 from neutron.tests.unit.nicira import test_nicira_plugin
@@ -64,6 +67,11 @@ class NvpRouterTestCase(test_nicira_plugin.TestNiciraL3NatTestCase):
 
     def setUp(self, plugin=None, ext_mgr=None, service_plugins=None):
         plugin = plugin or SERVICE_PLUGIN_NAME
+        # Disable the proxying in the tests but functionality will
+        # be covered separately
+        mock_proxy = mock.patch(
+            "%s.%s" % (SERVICE_PLUGIN_NAME, '_set_create_lswitch_proxy'))
+        mock_proxy.start()
         super(NvpRouterTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                              service_plugins=service_plugins)
 
@@ -110,6 +118,9 @@ class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
         self.fc2 = fake_vcns.FakeVcns(unique_router_name=False)
         self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)
         self.vcns_patch()
+        mock_proxy = mock.patch(
+            "%s.%s" % (SERVICE_PLUGIN_NAME, '_set_create_lswitch_proxy'))
+        mock_proxy.start()
 
         ext_mgr = ext_mgr or ServiceRouterTestExtensionManager()
         super(ServiceRouterTest, self).setUp(
@@ -234,3 +245,77 @@ class ServiceRouterTestCase(ServiceRouterTest, NvpRouterTestCase):
         super(ServiceRouterTestCase,
               self)._test_router_update_gateway_on_l3_ext_net(
                   vlan_id, validate_ext_gw=False)
+
+
+class TestProxyCreateLswitch(base.BaseTestCase):
+    def setUp(self):
+        super(TestProxyCreateLswitch, self).setUp()
+        self.tenant_id = "foo_tenant"
+        self.display_name = "foo_network"
+        self.tz_config = [
+            {'zone_uuid': 'foo_zone',
+             'transport_type': 'stt'}
+        ]
+        self.tags = [
+            {'scope': 'quantum', 'tag': nvplib.NEUTRON_VERSION},
+            {'scope': 'os_tid', 'tag': self.tenant_id}
+        ]
+        self.cluster = None
+
+    def test_create_lswitch_with_basic_args(self):
+        result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       self.tenant_id,
+                                                       self.display_name,
+                                                       self.tz_config)
+        self.assertEqual(self.display_name, result[0])
+        self.assertEqual(self.tz_config, result[1])
+        self.assertEqual(self.tags, result[2])
+
+    def test_create_lswitch_with_neutron_net_id_as_kwarg(self):
+        result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       self.tenant_id,
+                                                       self.display_name,
+                                                       self.tz_config,
+                                                       neutron_net_id='foo')
+        expected = self.tags + [{'scope': 'quantum_net_id', 'tag': 'foo'}]
+        self.assertEqual(expected, result[2])
+
+    def test_create_lswitch_with_neutron_net_id_as_arg(self):
+        result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       self.tenant_id,
+                                                       self.display_name,
+                                                       self.tz_config,
+                                                       'foo')
+        expected = self.tags + [{'scope': 'quantum_net_id', 'tag': 'foo'}]
+        self.assertEqual(expected, result[2])
+
+    def test_create_lswitch_with_shared_as_kwarg(self):
+        result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       self.tenant_id,
+                                                       self.display_name,
+                                                       self.tz_config,
+                                                       shared=True)
+        expected = self.tags + [{'scope': 'shared', 'tag': 'true'}]
+        self.assertEqual(expected, result[2])
+
+    def test_create_lswitch_with_shared_as_arg(self):
+        result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       self.tenant_id,
+                                                       self.display_name,
+                                                       self.tz_config,
+                                                       'foo',
+                                                       True)
+        additional_tags = [{'scope': 'quantum_net_id', 'tag': 'foo'},
+                           {'scope': 'shared', 'tag': 'true'}]
+        expected = self.tags + additional_tags
+        self.assertEqual(expected, result[2])
+
+    def test_create_lswitch_with_additional_tags(self):
+        more_tags = [{'scope': 'foo_scope', 'tag': 'foo_tag'}]
+        result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       self.tenant_id,
+                                                       self.display_name,
+                                                       self.tz_config,
+                                                       tags=more_tags)
+        expected = self.tags + more_tags
+        self.assertEqual(expected, result[2])

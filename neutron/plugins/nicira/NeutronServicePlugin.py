@@ -108,6 +108,21 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         # load the vCNS driver
         self._load_vcns_drivers()
 
+        # nvplib's create_lswitch needs to be replaced in order to proxy
+        # logical switch create requests to vcns
+        self._set_create_lswitch_proxy()
+
+    def _set_create_lswitch_proxy(self):
+        NeutronPlugin.nvplib.create_lswitch = self._proxy_create_lswitch
+
+    def _proxy_create_lswitch(self, *args, **kwargs):
+        name, tz_config, tags = (
+            _process_base_create_lswitch_args(*args, **kwargs)
+        )
+        return self.vcns_driver.create_lswitch(
+            name, tz_config, tags=tags,
+            port_isolation=None, replication_mode=None)
+
     def _load_vcns_drivers(self):
         self.vcns_driver = vcns_driver.VcnsDriver(self.callbacks)
 
@@ -1585,3 +1600,22 @@ class VcnsCallbacks(object):
 
     def nat_update_result(self, task):
         LOG.debug(_("nat_update_result %d"), task.status)
+
+
+def _process_base_create_lswitch_args(*args, **kwargs):
+    tags = [{"tag": nvplib.NEUTRON_VERSION, "scope": "quantum"}]
+    if args[1]:
+        tags.append({"tag": args[1], "scope": "os_tid"})
+    switch_name = args[2]
+    tz_config = args[3]
+    if "neutron_net_id" in kwargs or len(args) >= 5:
+        neutron_net_id = kwargs.get('neutron_net_id')
+        if neutron_net_id is None:
+            neutron_net_id = args[4]
+        tags.append({"tag": neutron_net_id,
+                     "scope": "quantum_net_id"})
+    if kwargs.get("shared", False) or len(args) >= 6:
+        tags.append({"tag": "true", "scope": "shared"})
+    if kwargs.get("tags"):
+        tags.extend(kwargs["tags"])
+    return switch_name, tz_config, tags
