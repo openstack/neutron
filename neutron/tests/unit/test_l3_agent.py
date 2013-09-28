@@ -84,7 +84,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         self.addCleanup(mock.patch.stopall)
 
-    def testRouterInfoCreate(self):
+    def test_router_info_create(self):
         id = _uuid()
         ri = l3_agent.RouterInfo(id, self.conf.root_helper,
                                  self.conf.use_namespaces, None)
@@ -109,7 +109,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertTrue(ri.ns_name().endswith(id))
         self.assertEqual(ri.router, router)
 
-    def testAgentCreate(self):
+    def test_agent_create(self):
         l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
     def _test_internal_network_action(self, action):
@@ -135,10 +135,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         else:
             raise Exception("Invalid action %s" % action)
 
-    def testAgentAddInternalNetwork(self):
+    def test_agent_add_internal_network(self):
         self._test_internal_network_action('add')
 
-    def testAgentRemoveInternalNetwork(self):
+    def test_agent_remove_internal_network(self):
         self._test_internal_network_action('remove')
 
     def _test_external_gateway_action(self, action):
@@ -181,10 +181,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         else:
             raise Exception("Invalid action %s" % action)
 
-    def testAgentAddExternalGateway(self):
+    def test_agent_add_external_gateway(self):
         self._test_external_gateway_action('add')
 
-    def testAgentRemoveExternalGateway(self):
+    def test_agent_remove_external_gateway(self):
         self._test_external_gateway_action('remove')
 
     def _test_floating_ip_action(self, action):
@@ -222,10 +222,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         else:
             raise Exception("Invalid action %s" % action)
 
-    def testAgentAddFloatingIP(self):
+    def test_agent_add_floating_ip(self):
         self._test_floating_ip_action('add')
 
-    def testAgentRemoveFloatingIP(self):
+    def test_agent_remove_floating_ip(self):
         self._test_floating_ip_action('remove')
 
     def _check_agent_method_called(self, agent, calls, namespace):
@@ -274,16 +274,16 @@ class TestBasicRouterOperations(base.BaseTestCase):
                      'via', '1.2.3.4']]
         self._check_agent_method_called(agent, expected, namespace)
 
-    def testAgentRoutingTableUpdated(self):
+    def test_agent_routing_table_updated(self):
         self._test_routing_table_update(namespace=True)
 
-    def testAgentRoutingTableUpdatedNoNameSpace(self):
+    def test_agent_routing_table_updated_no_namespace(self):
         self._test_routing_table_update(namespace=False)
 
-    def testRoutesUpdated(self):
+    def test_routes_updated(self):
         self._test_routes_updated(namespace=True)
 
-    def testRoutesUpdatedNoNamespace(self):
+    def test_routes_updated_no_namespace(self):
         self._test_routes_updated(namespace=False)
 
     def _test_routes_updated(self, namespace=True):
@@ -381,7 +381,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
             router['enable_snat'] = enable_snat
         return router
 
-    def testProcessRouter(self):
+    def test_process_router(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = self._prepare_router_data()
         fake_floatingips1 = {'floatingips': [
@@ -514,7 +514,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                 self.assertEqual(kwargs, {})
                 break
 
-    def testRoutersWithAdminStateDown(self):
+    def test_routers_with_admin_state_down(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_external_network_id.return_value = None
 
@@ -567,7 +567,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent._process_router_delete()
         self.assertFalse(list(agent.removed_routers))
 
-    def testDestroyNamespace(self):
+    def test_destroy_namespace(self):
 
         class FakeDev(object):
             def __init__(self, name):
@@ -585,7 +585,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         self.assertEqual(agent._destroy_router_namespace.call_count, 2)
 
-    def testDestroyNamespaceWithRouterId(self):
+    def test_destroy_namespace_with_router_id(self):
 
         class FakeDev(object):
             def __init__(self, name):
