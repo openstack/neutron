@@ -79,15 +79,21 @@ class MidoClientTestCase(testtools.TestCase):
     def test_create_dhcp(self):
 
         bridge = mock.Mock()
-        gw_call = mock.call.add_dhcp_subnet().default_gateway("192.168.1.1")
-        subnet_prefix_call = gw_call.subnet_prefix("192.168.1.0")
-        subnet_length_call = subnet_prefix_call.subnet_length(24)
 
-        calls = [gw_call, subnet_prefix_call, subnet_length_call,
-                 subnet_length_call.create()]
+        gateway_ip = "192.168.1.1"
+        cidr = "192.168.1.0/24"
+        host_rts = [{'destination': '10.0.0.0/24', 'nexthop': '10.0.0.1'},
+                    {'destination': '10.0.1.0/24', 'nexthop': '10.0.1.1'}]
+        dns_servers = ["8.8.8.8", "8.8.4.4"]
 
-        self.client.create_dhcp(bridge, "192.168.1.1", "192.168.1.0/24")
-        bridge.assert_has_calls(calls, any_order=True)
+        dhcp_call = mock.call.add_bridge_dhcp(bridge, gateway_ip, cidr,
+                                              host_rts=host_rts,
+                                              dns_servers=dns_servers)
+
+        self.client.create_dhcp(bridge, gateway_ip, cidr, host_rts=host_rts,
+                                dns_servers=dns_servers)
+
+        bridge.assert_has_call(dhcp_call)
 
     def test_add_dhcp_host(self):
 
