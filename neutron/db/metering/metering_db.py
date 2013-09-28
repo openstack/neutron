@@ -144,9 +144,12 @@ class MeteringDbMixin(metering.MeteringPluginBase,
 
         return self._make_metering_label_rule_dict(metering_label_rule, fields)
 
-    def _validate_cidr(self, context, remote_ip_prefix, direction, excluded):
+    def _validate_cidr(self, context, label_id, remote_ip_prefix,
+                       direction, excluded):
         r_ips = self.get_metering_label_rules(context,
-                                              filters={'direction':
+                                              filters={'metering_label_id':
+                                                       label_id,
+                                                       'direction':
                                                        [direction],
                                                        'excluded':
                                                        [excluded]},
@@ -166,7 +169,8 @@ class MeteringDbMixin(metering.MeteringPluginBase,
             direction = m['direction']
             excluded = m['excluded']
 
-            self._validate_cidr(context, ip_prefix, direction, excluded)
+            self._validate_cidr(context, label_id, ip_prefix, direction,
+                                excluded)
             metering_db = MeteringLabelRule(id=uuidutils.generate_uuid(),
                                             metering_label_id=label_id,
                                             direction=direction,

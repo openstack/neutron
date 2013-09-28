@@ -263,6 +263,34 @@ class MeteringPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
                 self._test_list_resources('metering-label-rule',
                                           metering_label_rule)
 
+    def test_create_metering_label_rule_two_labels(self):
+        name1 = 'my label 1'
+        name2 = 'my label 2'
+        description = 'my metering label'
+
+        with self.metering_label(name1, description) as metering_label1:
+            metering_label_id1 = metering_label1['metering_label']['id']
+
+            with self.metering_label(name2, description) as metering_label2:
+                metering_label_id2 = metering_label2['metering_label']['id']
+
+                direction = 'egress'
+                remote_ip_prefix = '192.168.0.0/24'
+                excluded = True
+
+                with contextlib.nested(
+                    self.metering_label_rule(metering_label_id1,
+                                             direction,
+                                             remote_ip_prefix,
+                                             excluded),
+                    self.metering_label_rule(metering_label_id2,
+                                             direction,
+                                             remote_ip_prefix,
+                                             excluded)) as metering_label_rule:
+
+                    self._test_list_resources('metering-label-rule',
+                                              metering_label_rule)
+
 
 class TestMeteringDbXML(MeteringPluginDbTestCase):
     fmt = 'xml'
