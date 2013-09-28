@@ -1402,6 +1402,14 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         with context.session.begin(subtransactions=True):
             self._delete_port(context, id)
 
+    def delete_ports(self, context, filters):
+        with context.session.begin(subtransactions=True):
+            ports = self._get_ports_query(
+                context, filters=filters).with_lockmode('update')
+            if ports:
+                for port in ports:
+                    self.delete_port(context, port['id'])
+
     def _delete_port(self, context, id):
         port = self._get_port(context, id)
 
