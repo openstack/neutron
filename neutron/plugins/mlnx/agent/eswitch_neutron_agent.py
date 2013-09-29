@@ -392,6 +392,10 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
                     # If treat devices fails - must resync with plugin
                     sync = self.process_network_ports(port_info)
                     ports = port_info['current']
+            except exceptions.RequestTimeout:
+                LOG.exception(_("Request timeout in agent event loop "
+                                "eSwitchD is not responding - exiting..."))
+                raise SystemExit(1)
             except Exception:
                 LOG.exception(_("Error in agent event loop"))
                 sync = True
