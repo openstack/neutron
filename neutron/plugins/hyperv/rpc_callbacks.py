@@ -18,6 +18,7 @@
 
 from neutron.common import constants as q_const
 from neutron.common import rpc as q_rpc
+from neutron.db import agents_db
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_rpc_base
 from neutron.openstack.common import log as logging
@@ -44,7 +45,8 @@ class HyperVRpcCallbacks(
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return q_rpc.PluginRpcDispatcher([self])
+        return q_rpc.PluginRpcDispatcher([self,
+                                         agents_db.AgentExtRpcCallback()])
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""

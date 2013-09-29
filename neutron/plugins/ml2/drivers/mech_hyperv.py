@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import re
+
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.openstack.common import log
@@ -46,6 +48,10 @@ class HypervMechanismDriver(mech_agent.AgentMechanismDriverBase):
         if network_type == 'local':
             return True
         elif network_type in ['flat', 'vlan']:
-            return segment[api.PHYSICAL_NETWORK] in mappings
+            for pattern in mappings:
+                if re.match(pattern, segment[api.PHYSICAL_NETWORK]):
+                    return True
+            else:
+                return False
         else:
             return False
