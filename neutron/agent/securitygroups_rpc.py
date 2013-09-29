@@ -65,6 +65,11 @@ class SecurityGroupAgentRpcCallbackMixin(object):
     #mix-in object should be have sg_agent
     sg_agent = None
 
+    def _security_groups_agent_not_set(self):
+        LOG.warning(_("Security group agent binding currently not set. "
+                      "This should be set by the end of the init "
+                      "process."))
+
     def security_groups_rule_updated(self, context, **kwargs):
         """Callback for security group rule update.
 
@@ -73,6 +78,8 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         security_groups = kwargs.get('security_groups', [])
         LOG.debug(
             _("Security group rule updated on remote: %s"), security_groups)
+        if not self.sg_agent:
+            return self._security_groups_agent_not_set()
         self.sg_agent.security_groups_rule_updated(security_groups)
 
     def security_groups_member_updated(self, context, **kwargs):
@@ -83,11 +90,15 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         security_groups = kwargs.get('security_groups', [])
         LOG.debug(
             _("Security group member updated on remote: %s"), security_groups)
+        if not self.sg_agent:
+            return self._security_groups_agent_not_set()
         self.sg_agent.security_groups_member_updated(security_groups)
 
     def security_groups_provider_updated(self, context, **kwargs):
         """Callback for security group provider update."""
         LOG.debug(_("Provider rule updated"))
+        if not self.sg_agent:
+            return self._security_groups_agent_not_set()
         self.sg_agent.security_groups_provider_updated()
 
 
