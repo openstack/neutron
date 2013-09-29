@@ -20,3 +20,11 @@ from neutron.common import exceptions as qexc
 
 class MlnxException(qexc.NeutronException):
     message = _("Mlnx Exception: %(err_msg)s")
+
+
+class RequestTimeout(qexc.NeutronException):
+    message = _("Request Timeout: no response from eSwitchD")
+
+
+class OperationFailed(qexc.NeutronException):
+    message = _("Operation Failed: %(err_msg)s")

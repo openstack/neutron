@@ -48,6 +48,13 @@ eswitch_opts = [
     cfg.IntOpt('request_timeout', default=3000,
                help=_("The number of milliseconds the agent will wait for "
                       "response on request to daemon.")),
+    cfg.IntOpt('retries', default=3,
+               help=_("The number of retries the agent will send request "
+                      "to daemon before giving up")),
+    cfg.IntOpt('backoff_rate', default=2,
+               help=_("backoff rate multiplier for waiting period between "
+                      "retries for request to daemon, i.e. value of 2 will "
+                      " double the request timeout each retry")),
 ]
 
 agent_opts = [
