@@ -6,10 +6,10 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron jenkins.neutron.propose.translation.update.92"
+"Project-Id-Version: neutron jenkins.neutron.propose.translation.update.93"
 "\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-28 06:10+0000\n"
+"POT-Creation-Date: 2013-09-29 06:10+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -460,14 +460,14 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:833
+#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:836
 #: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:838
+#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:841
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:762
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:184
@@ -477,7 +477,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:843
+#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:846
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:281
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
@@ -527,88 +527,88 @@ msgstr ""
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:231
+#: neutron/agent/l3_agent.py:232
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:98
 msgid "An interface driver must be specified"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:234
+#: neutron/agent/l3_agent.py:237
 msgid "Router id is required if not using namespaces."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:255
+#: neutron/agent/l3_agent.py:258
 #, python-format
 msgid "Failed deleting namespace '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:284
+#: neutron/agent/l3_agent.py:287
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:355
+#: neutron/agent/l3_agent.py:358
 #: neutron/services/firewall/agents/varmour/varmour_router.py:100
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:357 neutron/db/l3_db.py:832
+#: neutron/agent/l3_agent.py:360 neutron/db/l3_db.py:832
 #: neutron/services/firewall/agents/varmour/varmour_router.py:103
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:495
+#: neutron/agent/l3_agent.py:498
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:633
+#: neutron/agent/l3_agent.py:636
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:638
+#: neutron/agent/l3_agent.py:641
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:646
+#: neutron/agent/l3_agent.py:649
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:650
+#: neutron/agent/l3_agent.py:653
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:657
+#: neutron/agent/l3_agent.py:660
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:713 neutron/agent/l3_agent.py:744
+#: neutron/agent/l3_agent.py:716 neutron/agent/l3_agent.py:747
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:740
+#: neutron/agent/l3_agent.py:743
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:748
+#: neutron/agent/l3_agent.py:751
 msgid "L3 agent started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:768
+#: neutron/agent/l3_agent.py:771
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:776
+#: neutron/agent/l3_agent.py:779
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
@@ -4383,7 +4383,7 @@ msgid "The network interface to use when creatinga port"
 msgstr ""
 
 #: neutron/plugins/brocade/NeutronPlugin.py:134
-#: neutron/plugins/hyperv/rpc_callbacks.py:53
+#: neutron/plugins/hyperv/rpc_callbacks.py:55
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:88
 #: neutron/plugins/mlnx/rpc_callbacks.py:76
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:103
@@ -4393,8 +4393,8 @@ msgstr ""
 
 #: neutron/plugins/brocade/NeutronPlugin.py:148
 #: neutron/plugins/brocade/NeutronPlugin.py:165
-#: neutron/plugins/hyperv/rpc_callbacks.py:69
-#: neutron/plugins/hyperv/rpc_callbacks.py:88
+#: neutron/plugins/hyperv/rpc_callbacks.py:71
+#: neutron/plugins/hyperv/rpc_callbacks.py:90
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:111
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:131
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:146
@@ -5403,7 +5403,7 @@ msgid "Seg list %s "
 msgstr ""
 
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1073
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:253
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:254
 #: neutron/plugins/metaplugin/meta_neutron_plugin.py:174
 #: neutron/plugins/mlnx/mlnx_plugin.py:332
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:492
@@ -5828,38 +5828,38 @@ msgid ""
 "pool"
 msgstr ""
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:45
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:46
 msgid "Network type for tenant networks (local, flat, vlan or none)"
 msgstr ""
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:49
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:50
 #: neutron/plugins/linuxbridge/common/config.py:35
 #: neutron/plugins/mlnx/common/config.py:32
 #: neutron/plugins/openvswitch/common/config.py:51
 msgid "List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network>"
 msgstr ""
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:77
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:99
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:78
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:100
 #, python-format
 msgid "segmentation_id specified for %s network"
 msgstr ""
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:84
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:85
 #, python-format
 msgid "physical_network specified for %s network"
 msgstr ""
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:126
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:127
 msgid "physical_network not provided"
 msgstr ""
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:179
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:180
 #, python-format
 msgid "Invalid tenant_network_type: %s. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:202
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:203
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:290
 #: neutron/plugins/ml2/drivers/type_vlan.py:94
 #: neutron/plugins/mlnx/mlnx_plugin.py:143
@@ -5868,12 +5868,12 @@ msgstr ""
 msgid "Network VLAN ranges: %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:227
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:228
 #, python-format
 msgid "Network type %s not supported"
 msgstr ""
 
-#: neutron/plugins/hyperv/rpc_callbacks.py:77
+#: neutron/plugins/hyperv/rpc_callbacks.py:79
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:119
 #: neutron/plugins/mlnx/rpc_callbacks.py:105
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:129
@@ -5881,17 +5881,17 @@ msgstr ""
 msgid "Device %(device)s no longer exists on %(agent_id)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:44
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:47
 msgid ""
 "List of <physical_network>:<vswitch> where the physical networks can be "
 "expressed with wildcards, e.g.: .\"*:external\""
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:50
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:53
 msgid "Private vswitch name used for local networks"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:52
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:55
 #: neutron/plugins/linuxbridge/common/config.py:66
 #: neutron/plugins/mlnx/common/config.py:55
 #: neutron/plugins/nec/common/config.py:32
@@ -5902,140 +5902,145 @@ msgid ""
 "device changes."
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:56
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:59
 msgid ""
 "Enables metrics collections for switch ports by using Hyper-V's metric "
 "APIs. Collected data can by retrieved by other apps and services, e.g.: "
 "Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:102
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:100
+#, python-format
+msgid "Failed reporting state! %s"
+msgstr ""
+
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:131
 #, python-format
 msgid "Invalid physical network mapping: %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:123
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:152
 #, python-format
 msgid "network_delete received. Deleting network %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:129
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:158
 #, python-format
 msgid "Network %s not defined on agent."
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:132
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:161
 msgid "port_delete received"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:137
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:166
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:626
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:173
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:281
 msgid "port_update received"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:158
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:187
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:131
 #, python-format
 msgid "Provisioning network %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:171
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:200
 #, python-format
 msgid ""
 "Cannot provision unknown network type %(network_type)s for network "
 "%(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:183
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:212
 #, python-format
 msgid "Reclaiming local network %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:191
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:220
 #, python-format
 msgid "Binding port %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:204
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:233
 #, python-format
 msgid "Binding VLAN ID %(segmentation_id)s to switch port %(port_id)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:217
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:246
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:116
 #, python-format
 msgid "Unsupported network type %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:225
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:254
 #, python-format
 msgid "Network %s is not avalailable on this agent"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:229
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:258
 #, python-format
 msgid "Unbinding port %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:255
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:284
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:209
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:321
 #, python-format
 msgid "No port %s defined on agent."
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:260
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:289
 #, python-format
 msgid "Adding port %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:268
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:297
 #, python-format
 msgid "Unable to get port details for device %(device)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:275
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:304
 #, python-format
 msgid "Port %(device)s updated. Details: %(device_details)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:289
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:318
 #, python-format
 msgid "Removing port %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:296
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:325
 #, python-format
 msgid "Removing port failed for device %(device)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:321
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:350
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:899
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:384
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1035
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:329
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:358
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:911
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1049
 msgid "Agent loop has new devices!"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:334
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:363
 #, python-format
 msgid "Error in agent event loop: %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:342
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:371
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:403
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:356
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:385
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:950
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1180
 msgid "Agent initialized successfully, now running... "
@@ -7308,17 +7313,17 @@ msgstr ""
 msgid "mechanism_manager.create_network failed, deleting network '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:403
+#: neutron/plugins/ml2/plugin.py:439
 #, python-format
 msgid "mechanism_manager.create_subnet failed, deleting subnet '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:467
+#: neutron/plugins/ml2/plugin.py:503
 #, python-format
 msgid "mechanism_manager.create_port failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:555
+#: neutron/plugins/ml2/plugin.py:591
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -7414,7 +7419,7 @@ msgstr ""
 msgid "Unbinding port %(port)s on network %(network)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_hyperv.py:42
+#: neutron/plugins/ml2/drivers/mech_hyperv.py:44
 #, python-format
 msgid "Checking segment: %(segment)s for mappings: %(mappings)s"
 msgstr ""

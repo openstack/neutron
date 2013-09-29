@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-28 06:10+0000\n"
+"POT-Creation-Date: 2013-09-29 06:10+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -460,14 +460,14 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr "在 meta 資料存取網路上找到 %(port_num)d 個路由器埠。將僅考量路由器 %(router_id)s 的埠 %(port_id)s"
 
-#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:833
+#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:836
 #: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:838
+#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:841
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:762
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:184
@@ -477,7 +477,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
-#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:843
+#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:846
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:281
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
@@ -528,88 +528,88 @@ msgstr ""
 msgid "Error importing interface driver '%s'"
 msgstr "匯入介面驅動程式 '%s' 時發生錯誤"
 
-#: neutron/agent/l3_agent.py:231
+#: neutron/agent/l3_agent.py:232
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:98
 msgid "An interface driver must be specified"
 msgstr "必須指定介面驅動程式"
 
-#: neutron/agent/l3_agent.py:234
+#: neutron/agent/l3_agent.py:237
 msgid "Router id is required if not using namespaces."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:255
+#: neutron/agent/l3_agent.py:258
 #, python-format
 msgid "Failed deleting namespace '%s'"
 msgstr "刪除名稱空間 '%s' 時失敗"
 
-#: neutron/agent/l3_agent.py:284
+#: neutron/agent/l3_agent.py:287
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:355
+#: neutron/agent/l3_agent.py:358
 #: neutron/services/firewall/agents/varmour/varmour_router.py:100
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr "路由器埠 %s 沒有 IP 位址"
 
-#: neutron/agent/l3_agent.py:357 neutron/db/l3_db.py:832
+#: neutron/agent/l3_agent.py:360 neutron/db/l3_db.py:832
 #: neutron/services/firewall/agents/varmour/varmour_router.py:103
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "正在忽略路由器埠 %s 上的多個 IP"
 
-#: neutron/agent/l3_agent.py:495
+#: neutron/agent/l3_agent.py:498
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr "傳送無償 ARP 時失敗：%s"
 
-#: neutron/agent/l3_agent.py:633
+#: neutron/agent/l3_agent.py:636
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:638
+#: neutron/agent/l3_agent.py:641
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:646
+#: neutron/agent/l3_agent.py:649
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:650
+#: neutron/agent/l3_agent.py:653
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:657
+#: neutron/agent/l3_agent.py:660
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr "外部網路橋接器 '%s' 不存在"
 
-#: neutron/agent/l3_agent.py:713 neutron/agent/l3_agent.py:744
+#: neutron/agent/l3_agent.py:716 neutron/agent/l3_agent.py:747
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr "同步路由器時失敗"
 
-#: neutron/agent/l3_agent.py:740
+#: neutron/agent/l3_agent.py:743
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:748
+#: neutron/agent/l3_agent.py:751
 msgid "L3 agent started"
 msgstr "已啟動 L3 代理程式"
 
-#: neutron/agent/l3_agent.py:768
+#: neutron/agent/l3_agent.py:771
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr "所新增的路徑項目是 '%s'"
 
-#: neutron/agent/l3_agent.py:776
+#: neutron/agent/l3_agent.py:779
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr "所移除的路徑項目是 '%s'"
@@ -4404,7 +4404,7 @@ msgid "The network interface to use when creatinga port"
 msgstr ""
 
 #: neutron/plugins/brocade/NeutronPlugin.py:134
-#: neutron/plugins/hyperv/rpc_callbacks.py:53
+#: neutron/plugins/hyperv/rpc_callbacks.py:55
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:88
 #: neutron/plugins/mlnx/rpc_callbacks.py:76
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:103
@@ -4414,8 +4414,8 @@ msgstr "從 %(agent_id)s 要求的裝置 %(device)s 詳細資料"
 
 #: neutron/plugins/brocade/NeutronPlugin.py:148
 #: neutron/plugins/brocade/NeutronPlugin.py:165
-#: neutron/plugins/hyperv/rpc_callbacks.py:69
-#: neutron/plugins/hyperv/rpc_callbacks.py:88
+#: neutron/plugins/hyperv/rpc_callbacks.py:71
+#: neutron/plugins/hyperv/rpc_callbacks.py:90
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:111
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:131
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:146
@@ -5424,7 +5424,7 @@ msgid "Seg list %s "
 msgstr ""
 
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1073
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:253
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:254
 #: neutron/plugins/metaplugin/meta_neutron_plugin.py:174
 #: neutron/plugins/mlnx/mlnx_plugin.py:332
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:492
@@ -5849,38 +5849,38 @@ msgid ""
 "pool"
 msgstr "正在將實體網路 %(physical_network)s 上的 VLAN %(vlan_id)s 從儲存區中移除"
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:45
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:46
 msgid "Network type for tenant networks (local, flat, vlan or none)"
 msgstr "Tenant 網路的網路類型（本端、平面、VLAN 或無）"
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:49
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:50
 #: neutron/plugins/linuxbridge/common/config.py:35
 #: neutron/plugins/mlnx/common/config.py:32
 #: neutron/plugins/openvswitch/common/config.py:51
 msgid "List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network>"
 msgstr "<physical_network>:<vlan_min>:<vlan_max> 或 <physical_network> 的清單"
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:77
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:99
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:78
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:100
 #, python-format
 msgid "segmentation_id specified for %s network"
 msgstr "指定給 %s 網路的 segmentation_id"
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:84
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:85
 #, python-format
 msgid "physical_network specified for %s network"
 msgstr "指定給 %s 網路的 physical_network"
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:126
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:127
 msgid "physical_network not provided"
 msgstr "未提供 physical_network"
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:179
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:180
 #, python-format
 msgid "Invalid tenant_network_type: %s. Agent terminated!"
 msgstr "無效的 tenant_network_type：%s。已終止代理程式！"
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:202
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:203
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:290
 #: neutron/plugins/ml2/drivers/type_vlan.py:94
 #: neutron/plugins/mlnx/mlnx_plugin.py:143
@@ -5889,12 +5889,12 @@ msgstr "無效的 tenant_network_type：%s。已終止代理程式！"
 msgid "Network VLAN ranges: %s"
 msgstr "網路 VLAN 範圍：%s"
 
-#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:227
+#: neutron/plugins/hyperv/hyperv_neutron_plugin.py:228
 #, python-format
 msgid "Network type %s not supported"
 msgstr "不支援網路類型 %s"
 
-#: neutron/plugins/hyperv/rpc_callbacks.py:77
+#: neutron/plugins/hyperv/rpc_callbacks.py:79
 #: neutron/plugins/linuxbridge/lb_neutron_plugin.py:119
 #: neutron/plugins/mlnx/rpc_callbacks.py:105
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:129
@@ -5902,17 +5902,17 @@ msgstr "不支援網路類型 %s"
 msgid "Device %(device)s no longer exists on %(agent_id)s"
 msgstr "裝置 %(device)s 已不再存在於 %(agent_id)s 上"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:44
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:47
 msgid ""
 "List of <physical_network>:<vswitch> where the physical networks can be "
 "expressed with wildcards, e.g.: .\"*:external\""
 msgstr "<physical_network>:<vswitch> 的清單，其中，實體網路可以用萬用字元來表示，例如：.\"*:external\""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:50
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:53
 msgid "Private vswitch name used for local networks"
 msgstr "用於本端網路的專用 vSwitch 名稱"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:52
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:55
 #: neutron/plugins/linuxbridge/common/config.py:66
 #: neutron/plugins/mlnx/common/config.py:55
 #: neutron/plugins/nec/common/config.py:32
@@ -5923,140 +5923,145 @@ msgid ""
 "device changes."
 msgstr "輪詢本端裝置變更之間代理程式將等待的秒數。"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:56
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:59
 msgid ""
 "Enables metrics collections for switch ports by using Hyper-V's metric "
 "APIs. Collected data can by retrieved by other apps and services, e.g.: "
 "Ceilometer. Requires Hyper-V / Windows Server 2012 and above"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:102
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:100
+#, python-format
+msgid "Failed reporting state! %s"
+msgstr ""
+
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:131
 #, python-format
 msgid "Invalid physical network mapping: %s"
 msgstr "無效的實體網路對映：%s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:123
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:152
 #, python-format
 msgid "network_delete received. Deleting network %s"
 msgstr "收到 network_delete。正在刪除網路 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:129
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:158
 #, python-format
 msgid "Network %s not defined on agent."
 msgstr "代理程式上未定義網路 %s。"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:132
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:161
 msgid "port_delete received"
 msgstr "收到 port_delete"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:137
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:166
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:626
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:173
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:281
 msgid "port_update received"
 msgstr "收到 port_update"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:158
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:187
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:131
 #, python-format
 msgid "Provisioning network %s"
 msgstr "正在供應網路 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:171
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:200
 #, python-format
 msgid ""
 "Cannot provision unknown network type %(network_type)s for network "
 "%(net_uuid)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:183
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:212
 #, python-format
 msgid "Reclaiming local network %s"
 msgstr "正在收回本端網路 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:191
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:220
 #, python-format
 msgid "Binding port %s"
 msgstr "正在連結埠 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:204
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:233
 #, python-format
 msgid "Binding VLAN ID %(segmentation_id)s to switch port %(port_id)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:217
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:246
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:116
 #, python-format
 msgid "Unsupported network type %s"
 msgstr "不支援的網路類型 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:225
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:254
 #, python-format
 msgid "Network %s is not avalailable on this agent"
 msgstr "在此代理程式上無法使用網路 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:229
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:258
 #, python-format
 msgid "Unbinding port %s"
 msgstr "正在切斷埠 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:255
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:284
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:209
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:321
 #, python-format
 msgid "No port %s defined on agent."
 msgstr "代理程式上未定義埠 %s。"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:260
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:289
 #, python-format
 msgid "Adding port %s"
 msgstr "正在新增連接埠 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:268
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:297
 #, python-format
 msgid "Unable to get port details for device %(device)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:275
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:304
 #, python-format
 msgid "Port %(device)s updated. Details: %(device_details)s"
 msgstr "已更新埠 %(device)s。詳細資料：%(device_details)s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:289
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:318
 #, python-format
 msgid "Removing port %s"
 msgstr "正在移除埠 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:296
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:325
 #, python-format
 msgid "Removing port failed for device %(device)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:321
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:350
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:899
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:384
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1035
 msgid "Agent out of sync with plugin!"
 msgstr "代理程式與外掛程式不同步！"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:329
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:358
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:911
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1049
 msgid "Agent loop has new devices!"
 msgstr "代理程式迴圈具有新裝置！"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:334
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:363
 #, python-format
 msgid "Error in agent event loop: %s"
 msgstr "代理程式事件迴圈發生錯誤：%s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:342
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:371
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:403
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s）"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:356
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:385
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:950
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1180
 msgid "Agent initialized successfully, now running... "
@@ -7346,17 +7351,17 @@ msgstr ""
 msgid "mechanism_manager.create_network failed, deleting network '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:403
+#: neutron/plugins/ml2/plugin.py:439
 #, python-format
 msgid "mechanism_manager.create_subnet failed, deleting subnet '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:467
+#: neutron/plugins/ml2/plugin.py:503
 #, python-format
 msgid "mechanism_manager.create_port failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:555
+#: neutron/plugins/ml2/plugin.py:591
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -7452,7 +7457,7 @@ msgstr ""
 msgid "Unbinding port %(port)s on network %(network)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_hyperv.py:42
+#: neutron/plugins/ml2/drivers/mech_hyperv.py:44
 #, python-format
 msgid "Checking segment: %(segment)s for mappings: %(mappings)s"
 msgstr ""
@@ -12203,7 +12208,7 @@ msgstr ""
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr "套版傳輸區域上邏輯交換器的埠數目上限（預設值 64）"
+#~ msgstr ""
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -12852,9 +12857,4 @@ msgstr ""
 
 #~ msgid "Brocade NOS driver:"
 #~ msgstr "Brocade NOS 驅動程式："
-
-#~ msgid ""
-#~ "MidoClient.create_dhcp called: bridge=%(bridge)s, "
-#~ "cidr=%(cidr)s, gateway_ip=%(gateway_ip)s"
-#~ msgstr ""
 
