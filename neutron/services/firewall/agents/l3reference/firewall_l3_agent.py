@@ -113,6 +113,11 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
                 fw['tenant_id'])
             if not router_info_list:
                 LOG.debug(_('No Routers on tenant: %s'), fw['tenant_id'])
+                # fw was created before any routers were added, and if a
+                # delete is sent then we need to ack so that plugin can
+                # cleanup.
+                if func_name == 'delete_firewall':
+                    self.fwplugin_rpc.firewall_deleted(context, fw['id'])
                 return
             LOG.debug(_("Apply fw on Router List: '%s'"),
                       [ri.router['id'] for ri in router_info_list])
