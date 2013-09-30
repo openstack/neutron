@@ -103,6 +103,17 @@ class NexusPlugin(L2DevicePluginBase):
             vlan_created = False
             vlan_trunked = False
             eport_id = '%s:%s' % (etype, port_id)
+            # Check for switch vlan bindings
+            try:
+                # This vlan has already been created on this switch
+                # via another operation, like SVI bindings.
+                nxos_db.get_nexusvlan_binding(vlan_id, switch_ip)
+                vlan_created = True
+                auto_create = False
+            except cisco_exc.NexusPortBindingNotFound:
+                # No changes, proceed as normal
+                pass
+
             try:
                 nxos_db.get_port_vlan_switch_binding(eport_id, vlan_id,
                                                      switch_ip)
@@ -282,6 +293,7 @@ class NexusPlugin(L2DevicePluginBase):
             etype, nexus_port = '', ''
             if row['port_id'] == 'router':
                 etype, nexus_port = 'vlan', row['port_id']
+                auto_untrunk = False
             else:
                 etype, nexus_port = row['port_id'].split(':')
 

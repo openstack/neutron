@@ -141,9 +141,9 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
             db.configure_db()
 
         # Use a mock netconf client
-        mock_ncclient = mock.Mock()
+        self.mock_ncclient = mock.Mock()
         self.patch_obj = mock.patch.dict('sys.modules',
-                                         {'ncclient': mock_ncclient})
+                                         {'ncclient': self.mock_ncclient})
         self.patch_obj.start()
 
         with mock.patch.object(cisco_nexus_plugin_v2.NexusPlugin,
@@ -261,8 +261,45 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
                                                       subnet_id,
                                                       gateway_ip,
                                                       router_id)
+        try:
+            self.assertRaises(
+                cisco_exc.SubnetInterfacePresent,
+                self._cisco_nexus_plugin.add_router_interface,
+                vlan_name, vlan_id, subnet_id, gateway_ip, router_id)
+        finally:
+            self._cisco_nexus_plugin.remove_router_interface(vlan_id,
+                                                             router_id)
 
-        self.assertRaises(
-            cisco_exc.SubnetInterfacePresent,
-            self._cisco_nexus_plugin.add_router_interface,
-            vlan_name, vlan_id, subnet_id, gateway_ip, router_id)
+    def test_nexus_add_port_after_router_interface(self):
+        """Tests creating a port after a router interface.
+
+        Test creating a port after an SVI router interface has
+        been created. Only a trunk call should be invoked and the
+        plugin should not attempt to recreate the vlan.
+        """
+        vlan_name = self.vlan_name
+        vlan_id = self.vlan_id
+        gateway_ip = '10.0.0.1/24'
+        router_id = '00000R1'
+        subnet_id = '00001'
+
+        self._cisco_nexus_plugin.add_router_interface(vlan_name,
+                                                      vlan_id,
+                                                      subnet_id,
+                                                      gateway_ip,
+                                                      router_id)
+        # Create a network on the switch
+        self._cisco_nexus_plugin.create_network(
+            self.network1, self.attachment1)
+
+        # Grab a list of all mock calls from ncclient
+        last_cfgs = (self.mock_ncclient.manager.connect().
+                     edit_config.mock_calls)
+
+        # The last ncclient call should be for trunking and the second
+        # to last call should be creating the SVI interface
+        last_cfg = last_cfgs[-1][2]['config']
+        self.assertIn('allowed', last_cfg)
+
+        slast_cfg = last_cfgs[-2][2]['config']
+        self.assertIn('10.0.0.1/24', slast_cfg)
