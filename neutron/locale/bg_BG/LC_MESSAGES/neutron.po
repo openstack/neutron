@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-29 06:10+0000\n"
+"POT-Creation-Date: 2013-09-30 06:09+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Bulgarian (Bulgaria) "
@@ -662,55 +662,61 @@ msgstr ""
 msgid "Get security group rules for devices via rpc %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:75
+#: neutron/agent/securitygroups_rpc.py:69
+msgid ""
+"Security group agent binding currently not set. This should be set by the"
+" end of the init process."
+msgstr ""
+
+#: neutron/agent/securitygroups_rpc.py:80
 #, python-format
 msgid "Security group rule updated on remote: %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:85
+#: neutron/agent/securitygroups_rpc.py:92
 #, python-format
 msgid "Security group member updated on remote: %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:90
-#: neutron/agent/securitygroups_rpc.py:139
+#: neutron/agent/securitygroups_rpc.py:99
+#: neutron/agent/securitygroups_rpc.py:150
 msgid "Provider rule updated"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:101
+#: neutron/agent/securitygroups_rpc.py:112
 #, python-format
 msgid "Init firewall settings (driver=%s)"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:107
+#: neutron/agent/securitygroups_rpc.py:118
 #, python-format
 msgid "Preparing filters for devices %s"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:115
+#: neutron/agent/securitygroups_rpc.py:126
 #, python-format
 msgid "Security group rule updated %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:122
+#: neutron/agent/securitygroups_rpc.py:133
 #, python-format
 msgid "Security group member updated %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:145
+#: neutron/agent/securitygroups_rpc.py:156
 #, python-format
 msgid "Remove device filter for %r"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:154
+#: neutron/agent/securitygroups_rpc.py:165
 msgid "Refresh firewall rules"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:161
+#: neutron/agent/securitygroups_rpc.py:172
 msgid "No ports here to refresh firewall"
 msgstr ""
 
-#: neutron/agent/securitygroups_rpc.py:167
+#: neutron/agent/securitygroups_rpc.py:178
 #, python-format
 msgid "Update port filter for %s"
 msgstr ""
@@ -4872,7 +4878,7 @@ msgid "N1K Policy profile polling duration in seconds"
 msgstr ""
 
 #: neutron/plugins/cisco/common/config.py:124
-#: neutron/plugins/ml2/drivers/cisco/config.py:56
+#: neutron/plugins/ml2/drivers/cisco/config.py:58
 #: neutron/plugins/nicira/common/config.py:182
 msgid "Some config files were not parsed properly"
 msgstr ""
@@ -5532,7 +5538,7 @@ msgid "NexusPlugin:create_network() called"
 msgstr ""
 
 #: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:112
-#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:101
+#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:112
 #, python-format
 msgid "Nexus: create & trunk vlan %s"
 msgstr ""
@@ -5543,25 +5549,25 @@ msgid "Nexus: create vlan %s"
 msgstr ""
 
 #: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:124
-#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:108
+#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:119
 #, python-format
 msgid "Nexus: trunk vlan %s"
 msgstr ""
 
 #: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:137
-#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:120
+#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:131
 #, python-format
 msgid "Nexus: delete & untrunk vlan %s"
 msgstr ""
 
 #: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:143
-#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:124
+#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:135
 #, python-format
 msgid "Nexus: delete vlan %s"
 msgstr ""
 
 #: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:146
-#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:127
+#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:138
 #, python-format
 msgid "Nexus: untrunk vlan %s"
 msgstr ""
@@ -7702,6 +7708,10 @@ msgstr ""
 msgid "add_vxlan_endpoint() called for ip %s"
 msgstr ""
 
+#: neutron/plugins/ml2/drivers/cisco/config.py:25
+msgid "The physical network managed by the switches."
+msgstr ""
+
 #: neutron/plugins/ml2/drivers/cisco/exceptions.py:33
 #, python-format
 msgid "Credential %(credential_name)s already exists for tenant %(tenant_id)s."
@@ -7712,9 +7722,14 @@ msgstr ""
 msgid "Nexus Port Binding (%(filters)s) is not present"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:45
+#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:46
 #, python-format
 msgid "nexus_switches found = %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:151
+#, python-format
+msgid "Vlan ID %(vlan_id)s or Host ID %(host_id)s missing."
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/l2pop/config.py:25
