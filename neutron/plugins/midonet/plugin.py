@@ -38,6 +38,7 @@ from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db
+from neutron.extensions import external_net as ext_net
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
@@ -412,16 +413,19 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         net = super(MidonetPluginV2, self).get_network(context,
                                                        subnet['network_id'],
                                                        fields=None)
-        bridge = self.client.get_bridge(subnet['network_id'])
-        self.client.delete_dhcp(bridge)
+        session = context.session
+        with session.begin(subtransactions=True):
 
-        # If the network is external, clean up routes, links, ports.
-        if net['router:external']:
-            self._unlink_bridge_from_gw_router(bridge,
-                                               self._get_provider_router())
+            super(MidonetPluginV2, self).delete_subnet(context, id)
+            bridge = self.client.get_bridge(subnet['network_id'])
+            self.client.delete_dhcp(bridge, subnet['cidr'])
 
-        super(MidonetPluginV2, self).delete_subnet(context, id)
-        LOG.debug(_("MidonetPluginV2.delete_subnet exiting"))
+            # If the network is external, clean up routes, links, ports
+            if net[ext_net.EXTERNAL]:
+                self._unlink_bridge_from_gw_router(
+                    bridge, self._get_provider_router())
+
+            LOG.debug(_("MidonetPluginV2.delete_subnet exiting"))
 
     def create_network(self, context, network):
         """Create Neutron network.
