@@ -56,7 +56,7 @@ def upgrade(active_plugins=None, options=None):
         'arista_provisioned_vms',
         sa.Column('tenant_id', sa.String(length=255), nullable=True),
         sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('vm_id', sa.String(length=36), nullable=True),
+        sa.Column('vm_id', sa.String(length=255), nullable=True),
         sa.Column('host_id', sa.String(length=255), nullable=True),
         sa.Column('port_id', sa.String(length=36), nullable=True),
         sa.Column('network_id', sa.String(length=36), nullable=True),
