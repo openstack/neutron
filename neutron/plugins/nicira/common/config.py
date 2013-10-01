@@ -36,8 +36,9 @@ nvp_opts = [
     cfg.IntOpt('max_lp_per_overlay_ls', default=256,
                help=_("Maximum number of ports of a logical switch on an "
                       "overlay transport zone (default 256)")),
-    cfg.IntOpt('concurrent_connections', default=5,
-               help=_("Maximum concurrent connections")),
+    cfg.IntOpt('concurrent_connections', default=10,
+               help=_("Maximum concurrent connections to each NVP "
+                      "controller.")),
     cfg.IntOpt('nvp_gen_timeout', default=-1,
                help=_("Number of seconds a generation id should be valid for "
                       "(default -1 meaning do not time out)")),
