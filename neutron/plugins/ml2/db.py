@@ -119,3 +119,17 @@ def get_port_and_sgs(port_id):
         port_dict['fixed_ips'] = [ip['ip_address']
                                   for ip in port['fixed_ips']]
         return port_dict
+
+
+def get_port_binding_host(port_id):
+    session = db_api.get_session()
+    with session.begin(subtransactions=True):
+        try:
+            query = (session.query(models.PortBinding).
+                     filter(models.PortBinding.port_id.startswith(port_id)).
+                     one())
+        except exc.NoResultFound:
+            LOG.debug(_("No binding found for port %(port_id)s"),
+                      {'port_id': port_id})
+            return
+    return query.host

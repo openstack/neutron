@@ -753,7 +753,8 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             rpc_obj.update_device_down.assert_called_with(
                 self.lb_rpc.context,
                 "tap123",
-                self.lb_rpc.agent.agent_id
+                self.lb_rpc.agent.agent_id,
+                cfg.CONF.host
             )
 
     def test_port_update_plugin_rpc_failed(self):

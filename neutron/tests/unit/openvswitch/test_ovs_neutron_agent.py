@@ -288,7 +288,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                            "124", "vlan", "physnet",
                                            "1", False)
             upddown_fn.assert_called_with(self.agent.context,
-                                          "123", self.agent.agent_id)
+                                          "123", self.agent.agent_id,
+                                          cfg.CONF.host)
 
             port["admin_state_up"] = True
             self.agent.port_update("unused_context",
@@ -297,7 +298,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                    segmentation_id="1",
                                    physical_network="physnet")
             updup_fn.assert_called_with(self.agent.context,
-                                        "123", self.agent.agent_id)
+                                        "123", self.agent.agent_id,
+                                        cfg.CONF.host)
 
     def test_port_update_plugin_rpc_failed(self):
         port = {'id': 1,
