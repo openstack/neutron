@@ -140,6 +140,7 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
             }
             db.configure_db()
 
+        self.addCleanup(db.clear_db)
         # Use a mock netconf client
         self.mock_ncclient = mock.Mock()
         self.patch_obj = mock.patch.dict('sys.modules',
