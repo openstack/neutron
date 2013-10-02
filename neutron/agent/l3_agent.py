@@ -163,10 +163,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                    help=_("TCP Port used by Neutron metadata namespace "
                           "proxy.")),
         cfg.IntOpt('send_arp_for_ha',
-                   default=3,
-                   help=_("Send this many gratuitous ARPs for HA setup, "
-                          "set it below or equal to 0 to disable this "
-                          "feature.")),
+                   default=0,
+                   help=_("Send this many gratuitous ARPs for HA setup, if "
+                          "less than or equal to 0, the feature is disabled")),
         cfg.BoolOpt('use_namespaces', default=True,
                     help=_("Allow overlapping IP.")),
         cfg.StrOpt('router_id', default='',
@@ -308,7 +307,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self._spawn_metadata_proxy(ri)
 
     def _router_removed(self, router_id):
-        ri = self.router_info[router_id]
+        ri = self.router_info.get(router_id)
+        if ri is None:
+            LOG.warn(_("Info for router %s were not found. "
+                       "Skipping router removal"), router_id)
+            return
         ri.router['gw_port'] = None
         ri.router[l3_constants.INTERFACE_KEY] = []
         ri.router[l3_constants.FLOATINGIP_KEY] = []
@@ -706,6 +709,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # so we can clear the value of updated_routers
         # and removed_routers
         try:
+            LOG.debug(_("Starting RPC loop for %d updated routers"),
+                      len(self.updated_routers))
             if self.updated_routers:
                 router_ids = list(self.updated_routers)
                 self.updated_routers.clear()
@@ -713,6 +718,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                     self.context, router_ids)
                 self._process_routers(routers)
             self._process_router_delete()
+            LOG.debug(_("RPC loop successfully completed"))
         except Exception:
             LOG.exception(_("Failed synchronizing routers"))
             self.fullsync = True
@@ -732,6 +738,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def _sync_routers_task(self, context):
         if self.services_sync:
             super(L3NATAgent, self).process_services_sync(context)
+        LOG.debug(_("Starting _sync_routers_task - fullsync:%s"),
+                  self.fullsync)
         if not self.fullsync:
             return
         try:
@@ -744,6 +752,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             LOG.debug(_('Processing :%r'), routers)
             self._process_routers(routers, all_routers=True)
             self.fullsync = False
+            LOG.debug(_("_sync_routers_task successfully completed"))
         except Exception:
             LOG.exception(_("Failed synchronizing routers"))
             self.fullsync = True
@@ -809,6 +818,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):
+        LOG.debug(_("Report state task started"))
         num_ex_gw_ports = 0
         num_interfaces = 0
         num_floating_ips = 0
@@ -832,6 +842,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
                                         self.use_call)
             self.agent_state.pop('start_flag', None)
             self.use_call = False
+            LOG.debug(_("Report state task successfully completed"))
         except AttributeError:
             # This means the server does not support report_state
             LOG.warn(_("Neutron server does not support state report."

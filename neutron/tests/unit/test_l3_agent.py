@@ -46,6 +46,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.conf.set_override('router_id', 'fake_id')
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
+        self.conf.set_override('send_arp_for_ha', 1)
         self.conf.root_helper = 'sudo'
 
         self.device_exists_p = mock.patch(
