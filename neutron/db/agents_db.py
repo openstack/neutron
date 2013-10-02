@@ -15,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from eventlet import greenthread
+
 from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
@@ -146,14 +148,18 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
                 res['heartbeat_timestamp'] = current_time
                 if agent.get('start_flag'):
                     res['started_at'] = current_time
+                greenthread.sleep(0)
                 agent_db.update(res)
             except ext_agent.AgentNotFoundByTypeHost:
+                greenthread.sleep(0)
                 res['created_at'] = current_time
                 res['started_at'] = current_time
                 res['heartbeat_timestamp'] = current_time
                 res['admin_state_up'] = True
                 agent_db = Agent(**res)
+                greenthread.sleep(0)
                 context.session.add(agent_db)
+            greenthread.sleep(0)
 
 
 class AgentExtRpcCallback(object):
