@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-30 06:09+0000\n"
+"POT-Creation-Date: 2013-10-02 06:09+0000\n"
 "PO-Revision-Date: 2013-08-27 04:58+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Hindi "
@@ -4879,7 +4879,7 @@ msgstr ""
 
 #: neutron/plugins/cisco/common/config.py:124
 #: neutron/plugins/ml2/drivers/cisco/config.py:58
-#: neutron/plugins/nicira/common/config.py:182
+#: neutron/plugins/nicira/common/config.py:183
 msgid "Some config files were not parsed properly"
 msgstr ""
 
@@ -5537,91 +5537,91 @@ msgstr ""
 msgid "NexusPlugin:create_network() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:112
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:123
 #: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:112
 #, python-format
 msgid "Nexus: create & trunk vlan %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:119
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:130
 #, python-format
 msgid "Nexus: create vlan %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:124
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:135
 #: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:119
 #, python-format
 msgid "Nexus: trunk vlan %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:137
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:148
 #: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:131
 #, python-format
 msgid "Nexus: delete & untrunk vlan %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:143
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:154
 #: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:135
 #, python-format
 msgid "Nexus: delete vlan %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:146
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:157
 #: neutron/plugins/ml2/drivers/cisco/mech_cisco_nexus.py:138
 #, python-format
 msgid "Nexus: untrunk vlan %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:203
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:214
 msgid "Grabbing a switch to create SVI"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:206
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:217
 msgid "Using round robin to create SVI"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:225
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:236
 msgid "No round robin or zero weights, using first switch"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:236
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:247
 msgid "NexusPlugin:delete_network() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:240
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:251
 msgid "NexusPlugin:update_network() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:248
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:259
 msgid "NexusPlugin:get_all_ports() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:256
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:267
 msgid "NexusPlugin:create_port() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:264
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:275
 msgid "NexusPlugin:delete_port() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:276
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:287
 #, python-format
 msgid "delete_network(): provider vlan %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:321
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:333
 msgid "NexusPlugin:update_port() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:329
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:341
 msgid "NexusPlugin:get_port_details() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:338
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:350
 msgid "NexusPlugin:plug_interface() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:346
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:358
 msgid "NexusPlugin:unplug_interface() called"
 msgstr ""
 
@@ -9655,16 +9655,16 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/nicira/common/config.py:40
-msgid "Maximum concurrent connections"
+msgid "Maximum concurrent connections to each NVP controller."
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:42
+#: neutron/plugins/nicira/common/config.py:43
 msgid ""
 "Number of seconds a generation id should be valid for (default -1 meaning"
 " do not time out)"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:45
+#: neutron/plugins/nicira/common/config.py:46
 msgid ""
 "If set to access_network this enables a dedicated connection to the "
 "metadata proxy for metadata server access via Neutron router. If set to "
@@ -9673,139 +9673,139 @@ msgid ""
 "namespaces otherwise access_network should be used."
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:53
+#: neutron/plugins/nicira/common/config.py:54
 msgid ""
 "The default network tranport type to use (stt, gre, bridge, ipsec_gre, or"
 " ipsec_stt)"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:56
+#: neutron/plugins/nicira/common/config.py:57
 msgid "The mode used to implement DHCP/metadata services."
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:61
+#: neutron/plugins/nicira/common/config.py:62
 msgid ""
 "Interval in seconds between runs of the state synchronization task. Set "
 "it to 0 to disable it"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:64
+#: neutron/plugins/nicira/common/config.py:65
 msgid ""
 "Maximum value for the additional random delay in seconds between runs of "
 "the state synchronization task"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:68
+#: neutron/plugins/nicira/common/config.py:69
 msgid ""
 "Minimum delay, in seconds, between two state synchronization queries to "
 "NVP. It must not exceed state_sync_interval"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:72
+#: neutron/plugins/nicira/common/config.py:73
 msgid ""
 "Minimum number of resources to be retrieved from NVP during state "
 "synchronization"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:75
+#: neutron/plugins/nicira/common/config.py:76
 msgid ""
 "Always read operational status from backend on show operations. Enabling "
 "this option might slow down the system."
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:83
+#: neutron/plugins/nicira/common/config.py:84
 msgid "User name for NVP controllers in this cluster"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:87
+#: neutron/plugins/nicira/common/config.py:88
 msgid "Password for NVP controllers in this cluster"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:90
+#: neutron/plugins/nicira/common/config.py:91
 msgid "Total time limit for a cluster request"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:93
+#: neutron/plugins/nicira/common/config.py:94
 msgid "Time before aborting a request"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:96
+#: neutron/plugins/nicira/common/config.py:97
 msgid "Number of time a request should be retried"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:99
+#: neutron/plugins/nicira/common/config.py:100
 msgid "Number of times a redirect should be followed"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:101
+#: neutron/plugins/nicira/common/config.py:102
 msgid "Lists the NVP controllers in this cluster"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:106
+#: neutron/plugins/nicira/common/config.py:107
 msgid ""
 "This is uuid of the default NVP Transport zone that will be used for "
 "creating tunneled isolated \"Neutron\" networks. It needs to be created "
 "in NVP before starting Neutron with the nvp plugin."
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:111
+#: neutron/plugins/nicira/common/config.py:112
 msgid ""
 "Optional paramter identifying the UUID of the cluster in NVP.  This can "
 "be retrieved from NVP management console \"admin\" section."
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:115
+#: neutron/plugins/nicira/common/config.py:116
 msgid ""
 "Unique identifier of the NVP L3 Gateway service which will be used for "
 "implementing routers and floating IPs"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:119
+#: neutron/plugins/nicira/common/config.py:120
 msgid ""
 "Unique identifier of the NVP L2 Gateway service which will be used by "
 "default for network gateways"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:122
+#: neutron/plugins/nicira/common/config.py:123
 msgid ""
 "Name of the interface on a L2 Gateway transport nodewhich should be used "
 "by default when setting up a network connection"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:132
+#: neutron/plugins/nicira/common/config.py:133
 msgid "User name for vsm"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:136
+#: neutron/plugins/nicira/common/config.py:137
 msgid "Password for vsm"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:138
+#: neutron/plugins/nicira/common/config.py:139
 msgid "uri for vsm"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:140
+#: neutron/plugins/nicira/common/config.py:141
 msgid "Optional parameter identifying the ID of datacenter to deploy NSX Edges"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:143
-#: neutron/plugins/nicira/common/config.py:149
+#: neutron/plugins/nicira/common/config.py:144
+#: neutron/plugins/nicira/common/config.py:150
 msgid "Optional parameter identifying the ID of datastore to deploy NSX Edges"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:146
+#: neutron/plugins/nicira/common/config.py:147
 msgid "Optional parameter identifying the ID of resource to deploy NSX Edges"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:152
+#: neutron/plugins/nicira/common/config.py:153
 msgid "Network ID for physical network connectivity"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:155
+#: neutron/plugins/nicira/common/config.py:156
 msgid "Task status check interval"
 msgstr ""
 
-#: neutron/plugins/nicira/common/config.py:168
+#: neutron/plugins/nicira/common/config.py:169
 msgid ""
 "Describes a connection to a single controller. A different connection for"
 " each controller in the cluster can be specified; there must be at least "
@@ -11472,59 +11472,59 @@ msgstr ""
 msgid "No Routers on tenant: %s"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:117
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:241
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:122
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:246
 #, python-format
 msgid "Apply fw on Router List: '%s'"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:126
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:131
 #, python-format
 msgid "Firewall Driver Error for %(func_name)s for fw: %(fwid)s"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:141
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:146
 #, python-format
 msgid "FWaaS RPC failure in %(func_name)s for fw: %(fwid)s"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:158
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:171
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:163
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:176
 #, python-format
 msgid "Firewall Driver Error on fw state %(fwmsg)s for fw: %(fwid)s"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:183
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:188
 #, python-format
 msgid "Process router add, router_id: '%s'"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:194
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:199
 #, python-format
 msgid "Process router add, fw_list: '%s'"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:211
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:216
 #, python-format
 msgid "FWaaS RPC info call failed for '%s'."
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:223
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:228
 #, python-format
 msgid "Tenants with Firewalls: '%s'"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:233
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:238
 #, python-format
 msgid "Router List: '%s'"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:235
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:240
 #, python-format
 msgid "fw_list: '%s'"
 msgstr ""
 
-#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:252
+#: neutron/services/firewall/agents/l3reference/firewall_l3_agent.py:257
 msgid "Failed fwaas process services sync"
 msgstr ""
 
@@ -12534,5 +12534,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Brocade NOS driver:"
+#~ msgstr ""
+
+#~ msgid "Maximum concurrent connections"
 #~ msgstr ""
 
