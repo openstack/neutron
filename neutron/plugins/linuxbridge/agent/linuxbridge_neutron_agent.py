@@ -653,11 +653,13 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     # update plugin about port status
                     self.agent.plugin_rpc.update_device_up(self.context,
                                                            tap_device_name,
-                                                           self.agent.agent_id)
+                                                           self.agent.agent_id,
+                                                           cfg.CONF.host)
                 else:
                     self.plugin_rpc.update_device_down(self.context,
                                                        tap_device_name,
-                                                       self.agent.agent_id)
+                                                       self.agent.agent_id,
+                                                       cfg.CONF.host)
             else:
                 bridge_name = self.agent.br_mgr.get_bridge_name(
                     port['network_id'])
@@ -666,7 +668,8 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 # update plugin about port status
                 self.agent.plugin_rpc.update_device_down(self.context,
                                                          tap_device_name,
-                                                         self.agent.agent_id)
+                                                         self.agent.agent_id,
+                                                         cfg.CONF.host)
         except rpc_common.Timeout:
             LOG.error(_("RPC timeout while updating port %s"), port['id'])
 
@@ -855,11 +858,13 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                         # update plugin about port status
                         self.plugin_rpc.update_device_up(self.context,
                                                          device,
-                                                         self.agent_id)
+                                                         self.agent_id,
+                                                         cfg.CONF.host)
                     else:
                         self.plugin_rpc.update_device_down(self.context,
                                                            device,
-                                                           self.agent_id)
+                                                           self.agent_id,
+                                                           cfg.CONF.host)
                 else:
                     self.remove_port_binding(details['network_id'],
                                              details['port_id'])
@@ -875,7 +880,8 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
             try:
                 details = self.plugin_rpc.update_device_down(self.context,
                                                              device,
-                                                             self.agent_id)
+                                                             self.agent_id,
+                                                             cfg.CONF.host)
             except Exception as e:
                 LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
                           {'device': device, 'e': e})

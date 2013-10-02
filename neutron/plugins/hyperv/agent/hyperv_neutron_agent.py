@@ -319,7 +319,8 @@ class HyperVNeutronAgent(object):
             try:
                 self.plugin_rpc.update_device_down(self.context,
                                                    device,
-                                                   self.agent_id)
+                                                   self.agent_id,
+                                                   cfg.CONF.host)
             except Exception as e:
                 LOG.debug(
                     _("Removing port failed for device %(device)s: %(e)s"),

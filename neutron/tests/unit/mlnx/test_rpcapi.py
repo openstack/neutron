@@ -141,11 +141,13 @@ class rpcApiTestCase(base.BaseTestCase):
         self._test_mlnx_api(rpcapi, topics.PLUGIN,
                             'update_device_down', rpc_method='call',
                             device='fake_device',
-                            agent_id='fake_agent_id')
+                            agent_id='fake_agent_id',
+                            host='fake_host')
 
     def test_update_device_up(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
         self._test_mlnx_api(rpcapi, topics.PLUGIN,
                             'update_device_up', rpc_method='call',
                             device='fake_device',
-                            agent_id='fake_agent_id')
+                            agent_id='fake_agent_id',
+                            host='fake_host')

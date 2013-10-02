@@ -297,11 +297,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if port['admin_state_up']:
                 # update plugin about port status
                 self.plugin_rpc.update_device_up(self.context, port['id'],
-                                                 self.agent_id)
+                                                 self.agent_id,
+                                                 cfg.CONF.host)
             else:
                 # update plugin about port status
                 self.plugin_rpc.update_device_down(self.context, port['id'],
-                                                   self.agent_id)
+                                                   self.agent_id,
+                                                   cfg.CONF.host)
         except rpc_common.Timeout:
             LOG.error(_("RPC timeout while updating port %s"), port['id'])
 
@@ -910,7 +912,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 # update plugin about port status
                 self.plugin_rpc.update_device_up(self.context,
                                                  device,
-                                                 self.agent_id)
+                                                 self.agent_id,
+                                                 cfg.CONF.host)
             else:
                 LOG.debug(_("Device %s not defined on plugin"), device)
                 if (port and int(port.ofport) != -1):
@@ -934,7 +937,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # update plugin about port status
             self.plugin_rpc.update_device_up(self.context,
                                              device,
-                                             self.agent_id)
+                                             self.agent_id,
+                                             cfg.CONF.host)
         return resync
 
     def treat_devices_removed(self, devices):
@@ -945,7 +949,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             try:
                 details = self.plugin_rpc.update_device_down(self.context,
                                                              device,
-                                                             self.agent_id)
+                                                             self.agent_id,
+                                                             cfg.CONF.host)
             except Exception as e:
                 LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
                           {'device': device, 'e': e})
@@ -966,7 +971,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             try:
                 details = self.plugin_rpc.update_device_down(self.context,
                                                              device,
-                                                             self.agent_id)
+                                                             self.agent_id,
+                                                             cfg.CONF.host)
             except Exception as e:
                 LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
                           {'device': device, 'e': e})
