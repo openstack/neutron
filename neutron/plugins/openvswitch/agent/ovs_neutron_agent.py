@@ -32,6 +32,7 @@ from oslo.config import cfg
 from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
+from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as logging_config
@@ -778,6 +779,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             br.delete_port(phys_veth_name)
             if ip_lib.device_exists(int_veth_name, self.root_helper):
                 ip_lib.IPDevice(int_veth_name, self.root_helper).link.delete()
+                # Give udev a chance to process its rules here, to avoid
+                # race conditions between commands launched by udev rules
+                # and the subsequent call to ip_wrapper.add_veth
+                utils.execute(['/sbin/udevadm', 'settle', '--timeout=10'])
             int_veth, phys_veth = ip_wrapper.add_veth(int_veth_name,
                                                       phys_veth_name)
             self.int_ofports[physical_network] = self.int_br.add_port(int_veth)
