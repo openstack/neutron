@@ -71,13 +71,11 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
             #check if route exists and have permission to access
             router_db = self._get_router(context, id)
             if 'routes' in r:
-                self._update_extra_routes(context,
-                                          router_db,
-                                          r['routes'])
-            router_updated = super(ExtraRoute_db_mixin, self).update_router(
-                context, id, router)
-            router_updated['routes'] = self._get_extra_routes_by_router_id(
-                context, id)
+                self._update_extra_routes(context, router_db, r['routes'])
+            routes = self._get_extra_routes_by_router_id(context, id)
+        router_updated = super(ExtraRoute_db_mixin, self).update_router(
+            context, id, router)
+        router_updated['routes'] = routes
 
         return router_updated
 
