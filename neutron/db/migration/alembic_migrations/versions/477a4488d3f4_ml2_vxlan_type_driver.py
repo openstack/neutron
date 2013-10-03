@@ -66,4 +66,4 @@ def downgrade(active_plugins=None, options=None):
         return
 
     op.drop_table('ml2_vxlan_allocations')
-    op.drop_table('ml2_vxlan_endpoint')
+    op.drop_table('ml2_vxlan_endpoints')
