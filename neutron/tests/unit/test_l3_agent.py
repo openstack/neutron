@@ -672,6 +672,18 @@ class TestBasicRouterOperations(base.BaseTestCase):
             msg = "Error importing interface driver 'wrong_driver'"
             log.error.assert_called_once_with(msg)
 
+    def test_metadata_filter_rules(self):
+        self.conf.set_override('enable_metadata_proxy', False)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.assertEqual([], agent.metadata_filter_rules())
+
+        self.conf.set_override('metadata_port', '8775')
+        self.conf.set_override('enable_metadata_proxy', True)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        rules = ('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
+                 '-p tcp -m tcp --dport 8775 -j ACCEPT')
+        self.assertEqual([rules], agent.metadata_filter_rules())
+
 
 class TestL3AgentEventHandler(base.BaseTestCase):
 

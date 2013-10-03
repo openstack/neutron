@@ -544,9 +544,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
     def metadata_filter_rules(self):
         rules = []
-        rules.append(('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
-                      '-p tcp -m tcp --dport %s '
-                      '-j ACCEPT' % self.conf.metadata_port))
+        if self.conf.enable_metadata_proxy:
+            rules.append(('INPUT', '-s 0.0.0.0/0 -d 127.0.0.1 '
+                          '-p tcp -m tcp --dport %s '
+                          '-j ACCEPT' % self.conf.metadata_port))
         return rules
 
     def metadata_nat_rules(self):
