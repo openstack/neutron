@@ -57,7 +57,7 @@ from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.plugins.common import constants as plugin_const
-from neutron.plugins.nicira.common import config
+from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import securitygroups as nvp_sec
 from neutron.plugins.nicira.common import sync
@@ -97,11 +97,6 @@ class NetworkTypes:
 
 def create_nvp_cluster(cluster_opts, concurrent_connections,
                        nvp_gen_timeout):
-    # NOTE(armando-migliaccio): remove this block once we no longer
-    # want to support deprecated options in the nvp config file
-    # ### BEGIN
-    config.register_deprecated(cfg.CONF)
-    # ### END
     cluster = nvp_cluster.NVPCluster(**cluster_opts)
     api_providers = [ctrl.split(':') + [True]
                      for ctrl in cluster.nvp_controllers]

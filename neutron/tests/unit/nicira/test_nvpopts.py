@@ -35,7 +35,6 @@ BASE_CONF_PATH = get_fake_conf('neutron.conf.test')
 NVP_BASE_CONF_PATH = get_fake_conf('neutron.conf.test')
 NVP_INI_PATH = get_fake_conf('nvp.ini.basic.test')
 NVP_INI_FULL_PATH = get_fake_conf('nvp.ini.full.test')
-NVP_INI_DEPR_PATH = get_fake_conf('nvp.ini.grizzly.test')
 NVP_INI_AGENTLESS_PATH = get_fake_conf('nvp.ini.agentless.test')
 
 
@@ -173,36 +172,3 @@ class ConfigurationTest(testtools.TestCase):
                       plugin.supported_extension_aliases)
         self.assertIn('dhcp_agent_scheduler',
                       plugin.supported_extension_aliases)
-
-
-class OldConfigurationTest(testtools.TestCase):
-
-    def setUp(self):
-        super(OldConfigurationTest, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
-        self.useFixture(fixtures.MonkeyPatch(
-                        'neutron.manager.NeutronManager._instance',
-                        None))
-        # Avoid runs of the synchronizer looping call
-        patch_sync = mock.patch.object(sync, '_start_loopingcall')
-        patch_sync.start()
-        self.addCleanup(patch_sync.stop)
-
-    def _assert_required_options(self, cluster):
-        self.assertEqual(cluster.nvp_controllers, ['fake_1:443', 'fake_2:443'])
-        self.assertEqual(cluster.default_tz_uuid, 'fake_tz_uuid')
-        self.assertEqual(cluster.nvp_user, 'foo')
-        self.assertEqual(cluster.nvp_password, 'bar')
-
-    def test_load_plugin_with_deprecated_options(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NVP_INI_DEPR_PATH])
-        cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
-        plugin = NeutronManager().get_plugin()
-        cluster = plugin.cluster
-        self._assert_required_options(cluster)
-        # Verify nvp_controller_connection has been fully parsed
-        self.assertEqual(4, cluster.req_timeout)
-        self.assertEqual(3, cluster.http_timeout)
-        self.assertEqual(2, cluster.retries)
-        self.assertEqual(1, cluster.redirects)
