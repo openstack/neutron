@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-02 06:09+0000\n"
+"POT-Creation-Date: 2013-10-03 06:09+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -460,14 +460,14 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr "在 meta 資料存取網路上找到 %(port_num)d 個路由器埠。將僅考量路由器 %(router_id)s 的埠 %(port_id)s"
 
-#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:836
+#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:837
 #: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:841
+#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:842
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:762
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:184
@@ -477,7 +477,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
-#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:846
+#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:847
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:281
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
@@ -565,51 +565,51 @@ msgstr "正在忽略路由器埠 %s 上的多個 IP"
 msgid "Failed sending gratuitous ARP: %s"
 msgstr "傳送無償 ARP 時失敗：%s"
 
-#: neutron/agent/l3_agent.py:636
+#: neutron/agent/l3_agent.py:637
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:641
+#: neutron/agent/l3_agent.py:642
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:649
+#: neutron/agent/l3_agent.py:650
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:653
+#: neutron/agent/l3_agent.py:654
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:660
+#: neutron/agent/l3_agent.py:661
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr "外部網路橋接器 '%s' 不存在"
 
-#: neutron/agent/l3_agent.py:716 neutron/agent/l3_agent.py:747
+#: neutron/agent/l3_agent.py:717 neutron/agent/l3_agent.py:748
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr "同步路由器時失敗"
 
-#: neutron/agent/l3_agent.py:743
+#: neutron/agent/l3_agent.py:744
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:751
+#: neutron/agent/l3_agent.py:752
 msgid "L3 agent started"
 msgstr "已啟動 L3 代理程式"
 
-#: neutron/agent/l3_agent.py:771
+#: neutron/agent/l3_agent.py:772
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr "所新增的路徑項目是 '%s'"
 
-#: neutron/agent/l3_agent.py:779
+#: neutron/agent/l3_agent.py:780
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr "所移除的路徑項目是 '%s'"
@@ -2070,16 +2070,16 @@ msgstr "對映 '%(mapping)s' 中的索引鍵 %(key)s 不是唯一的"
 msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr "對映 '%(mapping)s' 中的值 %(value)s 不是唯一的"
 
-#: neutron/db/agents_db.py:33
+#: neutron/db/agents_db.py:35
 msgid "Seconds to regard the agent is down."
 msgstr "將代理程式視為已關閉的秒數。"
 
-#: neutron/db/agents_db.py:79
+#: neutron/db/agents_db.py:81
 #, python-format
 msgid "Configuration for agent %(agent_type)s on host %(host)s is invalid."
 msgstr "主機 %(host)s 上代理程式 %(agent_type)s 的配置無效。"
 
-#: neutron/db/agents_db.py:173
+#: neutron/db/agents_db.py:179
 msgid "Message with invalid timestamp received"
 msgstr "收到含有無效時間戳記的訊息"
 
