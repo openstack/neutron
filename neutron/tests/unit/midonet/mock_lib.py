@@ -21,21 +21,21 @@ import mock
 import uuid
 
 
-def get_bridge_mock(id=None, tenant_id='test-tenant', name='net'):
+def get_bridge_mock(id=None, **kwargs):
     if id is None:
         id = str(uuid.uuid4())
 
     bridge = mock.Mock()
     bridge.get_id.return_value = id
-    bridge.get_tenant_id.return_value = tenant_id
-    bridge.get_name.return_value = name
+    bridge.get_tenant_id.return_value = kwargs.get("tenant_id", "test-tenant")
+    bridge.get_name.return_value = kwargs.get("name", "net")
     bridge.get_ports.return_value = []
     bridge.get_peer_ports.return_value = []
+    bridge.get_admin_state_up.return_value = kwargs.get("admin_state_up", True)
     return bridge
 
 
-def get_bridge_port_mock(id=None, bridge_id=None,
-                         type='ExteriorBridge'):
+def get_bridge_port_mock(id=None, bridge_id=None, **kwargs):
     if id is None:
         id = str(uuid.uuid4())
     if bridge_id is None:
@@ -43,8 +43,10 @@ def get_bridge_port_mock(id=None, bridge_id=None,
 
     port = mock.Mock()
     port.get_id.return_value = id
-    port.get_brige_id.return_value = bridge_id
-    port.get_type.return_value = type
+    port.get_bridge_id.return_value = bridge_id
+    port.get_admin_state_up.return_value = kwargs.get("admin_state_up", True)
+    port.get_type.return_value = "Bridge"
+    port.create.return_value = port
     return port
 
 
@@ -75,17 +77,18 @@ def get_port_group_mock(id=None, tenant_id='test-tenant', name='pg'):
     return port_group
 
 
-def get_router_mock(id=None, tenant_id='test-tenant', name='router'):
+def get_router_mock(id=None, **kwargs):
     if id is None:
         id = str(uuid.uuid4())
 
     router = mock.Mock()
     router.get_id.return_value = id
-    router.get_tenant_id.return_value = tenant_id
-    router.get_name.return_value = name
+    router.get_tenant_id.return_value = kwargs.get("tenant_id", "test-tenant")
+    router.get_name.return_value = kwargs.get("name", "router")
     router.get_ports.return_value = []
     router.get_peer_ports.return_value = []
     router.get_routes.return_value = []
+    router.get_admin_state_up.return_value = kwargs.get("admin_state_up", True)
     return router
 
 
@@ -125,19 +128,19 @@ class MidonetLibMockConfig():
     def __init__(self, inst):
         self.inst = inst
 
-    def _create_bridge(self, tenant_id, name):
-        return get_bridge_mock(tenant_id=tenant_id, name=name)
+    def _create_bridge(self, **kwargs):
+        return get_bridge_mock(**kwargs)
 
-    def _create_router(self, tenant_id, name):
-        return get_router_mock(tenant_id=tenant_id, name=name)
+    def _create_router(self, **kwargs):
+        return get_router_mock(**kwargs)
 
     def _create_subnet(self, bridge, gateway_ip, subnet_prefix, subnet_len):
         return get_subnet_mock(bridge.get_id(), gateway_ip=gateway_ip,
                                subnet_prefix=subnet_prefix,
                                subnet_len=subnet_len)
 
-    def _add_bridge_port(self, bridge):
-        return get_bridge_port_mock(bridge_id=bridge.get_id())
+    def _add_bridge_port(self, bridge, **kwargs):
+        return get_bridge_port_mock(bridge_id=bridge.get_id(), **kwargs)
 
     def _get_bridge(self, id):
         return get_bridge_mock(id=id)
@@ -148,8 +151,8 @@ class MidonetLibMockConfig():
     def _get_router(self, id):
         return get_router_mock(id=id)
 
-    def _update_bridge(self, id, name):
-        return get_bridge_mock(id=id, name=name)
+    def _update_bridge(self, id, **kwargs):
+        return get_bridge_mock(id=id, **kwargs)
 
     def setup(self):
         # Bridge methods side effects
@@ -250,9 +253,13 @@ class MidoClientMockConfig():
     def _get_router(self, id):
         return get_router_mock(id=id)
 
+    def _add_bridge_port(self, bridge):
+        return get_bridge_port_mock(bridge_id=bridge.get_id())
+
     def setup(self):
         self.inst.get_bridge.side_effect = self._get_bridge
         self.inst.get_chains.side_effect = self._get_chains
         self.inst.get_chain.side_effect = self._get_chain
         self.inst.get_port_groups.side_effect = self._get_port_groups
         self.inst.get_router.side_effect = self._get_router
+        self.inst.add_bridge_port.side_effect = self._add_bridge_port
