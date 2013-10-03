@@ -38,9 +38,11 @@ from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import models_v2
+from neutron.db import portbindings_db
 from neutron.db import securitygroups_db
 from neutron.extensions import external_net as ext_net
 from neutron.extensions import l3
+from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
@@ -195,13 +197,14 @@ class MidonetPluginException(n_exc.NeutronException):
 
 
 class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
+                      portbindings_db.PortBindingMixin,
                       external_net_db.External_net_db_mixin,
                       l3_db.L3_NAT_db_mixin,
                       agentschedulers_db.DhcpAgentSchedulerDbMixin,
                       securitygroups_db.SecurityGroupDbMixin):
 
     supported_extension_aliases = ['external-net', 'router', 'security-group',
-                                   'agent' 'dhcp_agent_scheduler']
+                                   'agent' 'dhcp_agent_scheduler', 'binding']
     __native_bulk_support = False
 
     def __init__(self):
@@ -228,6 +231,12 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         self.setup_rpc()
         db.configure_db()
+
+        self.base_binding_dict = {
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_MIDONET,
+            portbindings.CAPABILITIES: {
+                portbindings.CAP_PORT_FILTER:
+                'security-group' in self.supported_extension_aliases}}
 
     def _get_provider_router(self):
         if self.provider_router is None:
@@ -529,7 +538,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 if _is_vif_port(port_data):
                     # Bind security groups to the port
                     sg_ids = self._get_security_groups_on_port(context, port)
-                    self._bind_port_to_sgs(context, port_data, sg_ids)
+                    self._bind_port_to_sgs(context, new_port, sg_ids)
 
                     # Create port chains
                     port_chains = {}
@@ -561,6 +570,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         self.client.add_dhcp_route_option(bridge, cidr, ip,
                                                           METADATA_DEFAULT_IP)
 
+            self._process_portbindings_create_and_update(context,
+                                                         port_data, new_port)
         except Exception as ex:
             # Try removing the MidoNet port before raising an exception.
             with excutils.save_and_reraise_exception():
@@ -569,8 +580,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                           {"net_id": port_data["network_id"], "err": ex})
                 self.client.delete_port(bridge_port.get_id())
 
-        LOG.debug(_("MidonetPluginV2.create_port exiting: port=%r"), port_data)
-        return port_data
+        LOG.debug(_("MidonetPluginV2.create_port exiting: port=%r"), new_port)
+        return new_port
 
     def get_port(self, context, id, fields=None):
         """Retrieve port."""
@@ -677,6 +688,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 sg_ids = self._get_security_groups_on_port(context, port)
                 self._bind_port_to_sgs(context, p, sg_ids)
 
+            self._process_portbindings_create_and_update(context,
+                                                         port['port'],
+                                                         p)
         return p
 
     def create_router(self, context, router):
