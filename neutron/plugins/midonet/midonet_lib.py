@@ -19,7 +19,7 @@
 # @author: Tomoe Sugihara, Midokura Japan KK
 # @author: Ryu Ishimoto, Midokura Japan KK
 # @author: Rossella Sblendido, Midokura Japan KK
-
+# @author: Duarte Nunes, Midokura Japan KK
 
 from midonetclient import exc
 from webob import exc as w_exc
@@ -55,19 +55,35 @@ class MidoClient:
     def __init__(self, mido_api):
         self.mido_api = mido_api
 
+    @classmethod
+    def _fill_dto(cls, dto, fields):
+        for field_name, field_value in fields.iteritems():
+            # We assume the setters are named the
+            # same way as the attributes themselves.
+            try:
+                getattr(dto, field_name)(field_value)
+            except AttributeError:
+                pass
+        return dto
+
+    @classmethod
+    def _create_dto(cls, dto, fields):
+        return cls._fill_dto(dto, fields).create()
+
+    @classmethod
+    def _update_dto(cls, dto, fields):
+        return cls._fill_dto(dto, fields).update()
+
     @handle_api_error
-    def create_bridge(self, tenant_id, name):
+    def create_bridge(self, **kwargs):
         """Create a new bridge
 
-        :param tenant_id: id of tenant creating the bridge
-        :param name: name of the bridge
+        :param \**kwargs: configuration of the new bridge
         :returns: newly created bridge
         """
         LOG.debug(_("MidoClient.create_bridge called: "
-                    "tenant_id=%(tenant_id)s, name=%(name)s"),
-                  {'tenant_id': tenant_id, 'name': name})
-        return self.mido_api.add_bridge().name(name).tenant_id(
-            tenant_id).create()
+                    "kwargs=%(kwargs)s"), {'kwargs': kwargs})
+        return self._create_dto(self.mido_api.add_bridge(), kwargs)
 
     @handle_api_error
     def delete_bridge(self, id):
@@ -92,17 +108,18 @@ class MidoClient:
             raise MidonetResourceNotFound(resource_type='Bridge', id=id)
 
     @handle_api_error
-    def update_bridge(self, id, name):
-        """Update a bridge of the given id with the new name
+    def update_bridge(self, id, **kwargs):
+        """Update a bridge of the given id with the new fields
 
         :param id: id of the bridge
-        :param name: name of the bridge to set to
+        :param \**kwargs: the fields to update and their values
         :returns: bridge object
         """
         LOG.debug(_("MidoClient.update_bridge called: "
-                    "id=%(id)s, name=%(name)s"), {'id': id, 'name': name})
+                    "id=%(id)s, kwargs=%(kwargs)s"),
+                  {'id': id, 'kwargs': kwargs})
         try:
-            return self.mido_api.get_bridge(id).name(name).update()
+            return self._update_dto(self.mido_api.get_bridge(id), kwargs)
         except w_exc.HTTPNotFound:
             raise MidonetResourceNotFound(resource_type='Bridge', id=id)
 
@@ -234,38 +251,53 @@ class MidoClient:
             raise MidonetResourceNotFound(resource_type='Port', id=id)
 
     @handle_api_error
-    def add_bridge_port(self, bridge):
+    def add_bridge_port(self, bridge, **kwargs):
         """Add a port on a bridge
 
-        :param bridge: Bridge to add a new port to
+        :param bridge: bridge to add a new port to
+        :param \**kwargs: configuration of the new port
         :returns: newly created port
         """
         LOG.debug(_("MidoClient.add_bridge_port called: "
-                    "bridge=%(bridge)s"), {'bridge': bridge})
-        return self.mido_api.add_bridge_port(bridge)
+                    "bridge=%(bridge)s, kwargs=%(kwargs)s"),
+                  {'bridge': bridge, 'kwargs': kwargs})
+        return self._create_dto(self.mido_api.add_bridge_port(bridge), kwargs)
 
     @handle_api_error
-    def add_router_port(self, router, port_address=None,
-                        network_address=None, network_length=None):
-        """Add a new port to an existing router."""
-        return self.mido_api.add_router_port(router,
-                                             port_address=port_address,
-                                             network_address=network_address,
-                                             network_length=network_length)
+    def update_port(self, id, **kwargs):
+        """Update a port of the given id with the new fields
+
+        :param id: id of the port
+        :param \**kwargs: the fields to update and their values
+        """
+        LOG.debug(_("MidoClient.update_port called: "
+                    "id=%(id)s, kwargs=%(kwargs)s"),
+                  {'id': id, 'kwargs': kwargs})
+        try:
+            return self._update_dto(self.mido_api.get_port(id), kwargs)
+        except w_exc.HTTPNotFound:
+            raise MidonetResourceNotFound(resource_type='Port', id=id)
 
     @handle_api_error
-    def create_router(self, tenant_id, name):
+    def add_router_port(self, router, **kwargs):
+        """Add a new port to an existing router.
+
+        :param router: router to add a new port to
+        :param \**kwargs: configuration of the new port
+        :returns: newly created port
+        """
+        return self._create_dto(self.mido_api.add_router_port(router), kwargs)
+
+    @handle_api_error
+    def create_router(self, **kwargs):
         """Create a new router
 
-        :param tenant_id: id of tenant creating the router
-        :param name: name of the router
+        :param \**kwargs: configuration of the new router
         :returns: newly created router
         """
         LOG.debug(_("MidoClient.create_router called: "
-                    "tenant_id=%(tenant_id)s, name=%(name)s"),
-                  {'tenant_id': tenant_id, 'name': name})
-        return self.mido_api.add_router().name(name).tenant_id(
-            tenant_id).create()
+                    "kwargs=%(kwargs)s"), {'kwargs': kwargs})
+        return self._create_dto(self.mido_api.add_router(), kwargs)
 
     @handle_api_error
     def delete_router(self, id):
@@ -290,17 +322,18 @@ class MidoClient:
             raise MidonetResourceNotFound(resource_type='Router', id=id)
 
     @handle_api_error
-    def update_router(self, id, name):
+    def update_router(self, id, **kwargs):
         """Update a router of the given id with the new name
 
         :param id: id of the router
-        :param name: name of the router to set to
+        :param \**kwargs: the fields to update and their values
         :returns: router object
         """
         LOG.debug(_("MidoClient.update_router called: "
-                    "id=%(id)s, name=%(name)s"), {'id': id, 'name': name})
+                    "id=%(id)s, kwargs=%(kwargs)s"),
+                  {'id': id, 'kwargs': kwargs})
         try:
-            return self.mido_api.get_router(id).name(name).update()
+            return self._update_dto(self.mido_api.get_router(id), kwargs)
         except w_exc.HTTPNotFound:
             raise MidonetResourceNotFound(resource_type='Router', id=id)
 
