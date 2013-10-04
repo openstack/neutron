@@ -41,6 +41,7 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
+from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
@@ -116,13 +117,20 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         # TODO(garyk) - live migration and port status
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
+        host = kwargs.get('host')
+        port = self.get_port_from_device(device)
         LOG.debug(_("Device %(device)s no longer exists on %(agent_id)s"),
                   {'device': device, 'agent_id': agent_id})
-        port = self.get_port_from_device(device)
+        plugin = manager.NeutronManager.get_plugin()
         if port:
             entry = {'device': device,
                      'exists': True}
-            if port['status'] != q_const.PORT_STATUS_DOWN:
+            if (host and not
+                plugin.get_port_host(rpc_context, port['id']) == host):
+                LOG.debug(_("Device %(device)s not bound to the"
+                            " agent host %(host)s"),
+                          {'device': device, 'host': host})
+            elif port['status'] != q_const.PORT_STATUS_DOWN:
                 # Set port status to DOWN
                 db.set_port_status(port['id'], q_const.PORT_STATUS_DOWN)
         else:
@@ -135,13 +143,21 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         """Device is up on agent."""
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
-        LOG.debug(_("Device %(device)s up %(agent_id)s"),
+        host = kwargs.get('host')
+        port = self.get_port_from_device.get_port(device)
+        LOG.debug(_("Device %(device)s up on %(agent_id)s"),
                   {'device': device, 'agent_id': agent_id})
-        port = self.get_port_from_device(device)
+        plugin = manager.NeutronManager.get_plugin()
         if port:
-            if port['status'] != q_const.PORT_STATUS_ACTIVE:
-                # Set port status to ACTIVE
-                db.set_port_status(port['id'], q_const.PORT_STATUS_ACTIVE)
+            if (host and
+                not plugin.get_port_host(rpc_context, port['id']) == host):
+                LOG.debug(_("Device %(device)s not bound to the"
+                            " agent host %(host)s"),
+                          {'device': device, 'host': host})
+                return
+            elif port['status'] != q_const.PORT_STATUS_ACTIVE:
+                db.set_port_status(port['id'],
+                                   q_const.PORT_STATUS_ACTIVE)
         else:
             LOG.debug(_("%s can not be found in database"), device)
 

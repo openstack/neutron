@@ -591,7 +591,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.warning(_("Port %(port)s updated up by agent not found"),
                             {'port': port_id})
                 return False
-
             if port.status != status:
                 original_port = self._make_port_dict(port)
                 port.status = status
@@ -608,3 +607,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.update_port_postcommit(mech_context)
 
         return True
+
+    def port_bound_to_host(self, port_id, host):
+        port_host = db.get_port_binding_host(port_id)
+        return (port_host == host)

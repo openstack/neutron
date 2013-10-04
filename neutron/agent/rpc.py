@@ -94,16 +94,16 @@ class PluginApi(proxy.RpcProxy):
                                        agent_id=agent_id),
                          topic=self.topic)
 
-    def update_device_down(self, context, device, agent_id):
+    def update_device_down(self, context, device, agent_id, host=None):
         return self.call(context,
                          self.make_msg('update_device_down', device=device,
-                                       agent_id=agent_id),
+                                       agent_id=agent_id, host=host),
                          topic=self.topic)
 
-    def update_device_up(self, context, device, agent_id):
+    def update_device_up(self, context, device, agent_id, host=None):
         return self.call(context,
                          self.make_msg('update_device_up', device=device,
-                                       agent_id=agent_id),
+                                       agent_id=agent_id, host=host),
                          topic=self.topic)
 
     def tunnel_sync(self, context, tunnel_ip, tunnel_type=None):
