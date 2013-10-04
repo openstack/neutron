@@ -55,7 +55,7 @@ class AristaProvisionedVms(model_base.BASEV2, models_v2.HasId,
     """
     __tablename__ = 'arista_provisioned_vms'
 
-    vm_id = sa.Column(sa.String(UUID_LEN))
+    vm_id = sa.Column(sa.String(STR_LEN))
     host_id = sa.Column(sa.String(STR_LEN))
     port_id = sa.Column(sa.String(UUID_LEN))
     network_id = sa.Column(sa.String(UUID_LEN))

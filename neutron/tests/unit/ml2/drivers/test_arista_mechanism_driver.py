@@ -24,10 +24,10 @@ from neutron.plugins.ml2.drivers.mech_arista import mechanism_arista as arista
 from neutron.tests import base
 
 
-def setup_arista_wrapper_config(value=None):
+def setup_arista_wrapper_config(value=''):
     cfg.CONF.keystone_authtoken = fake_keystone_info_class()
-    for opt in arista.AristaRPCWrapper.required_options:
-        cfg.CONF.set_override(opt, value, "ml2_arista")
+    cfg.CONF.set_override('eapi_host', value, "ml2_arista")
+    cfg.CONF.set_override('eapi_username', value, "ml2_arista")
 
 
 def setup_valid_config():
@@ -233,8 +233,26 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         cmds = ['enable', 'configure', 'management openstack',
                 'region RegionOne',
                 'tenant ten-1', 'vm id vm-1 hostid host',
-                'port id 123 name 123-port network-id net-id',
+                'port id 123 name "123-port" network-id net-id',
                 'exit', 'exit', 'exit', 'exit']
+
+        self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
+
+    def test_plug_dhcp_port_into_network(self):
+        tenant_id = 'ten-1'
+        vm_id = 'vm-1'
+        port_id = 123
+        network_id = 'net-id'
+        host = 'host'
+        port_name = '123-port'
+
+        self.drv.plug_dhcp_port_into_network(vm_id, host, port_id,
+                                             network_id, tenant_id, port_name)
+        cmds = ['enable', 'configure', 'management openstack',
+                'region RegionOne',
+                'tenant ten-1', 'network id net-id',
+                'dhcp id vm-1 hostid host port-id 123 name "123-port"',
+                'exit', 'exit', 'exit']
 
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
@@ -248,9 +266,26 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
                                           network_id, tenant_id)
         cmds = ['enable', 'configure', 'management openstack',
                 'region RegionOne',
-                'tenant ten-1', 'vm id vm-1 host host',
-                'no port id 123 network-id net-id',
+                'tenant ten-1', 'vm id vm-1 hostid host',
+                'no port id 123',
                 'exit', 'exit', 'exit', 'exit']
+        self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
+
+    def test_unplug_dhcp_port_from_network(self):
+        tenant_id = 'ten-1'
+        vm_id = 'vm-1'
+        port_id = 123
+        network_id = 'net-id'
+        host = 'host'
+
+        self.drv.unplug_dhcp_port_from_network(vm_id, host, port_id,
+                                               network_id, tenant_id)
+        cmds = ['enable', 'configure', 'management openstack',
+                'region RegionOne',
+                'tenant ten-1', 'network id net-id',
+                'no dhcp id vm-1 port-id 123',
+                'exit', 'exit', 'exit']
+
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_create_network(self):
@@ -261,7 +296,7 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         self.drv.create_network(tenant_id, network_id, network_name, vlan_id)
         cmds = ['enable', 'configure', 'management openstack',
                 'region RegionOne',
-                'tenant ten-1', 'network id net-id name net-name',
+                'tenant ten-1', 'network id net-id name "net-name"',
                 'segment 1 type vlan id 123',
                 'exit', 'exit', 'exit', 'exit', 'exit']
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
@@ -327,7 +362,7 @@ class AristaRPCWrapperInvalidConfigTestCase(base.BaseTestCase):
         self.setup_invalid_config()  # Invalid config, required options not set
 
     def setup_invalid_config(self):
-        setup_arista_wrapper_config(None)
+        setup_arista_wrapper_config('')
 
     def test_raises_exception_on_wrong_configuration(self):
         self.assertRaises(arista_exc.AristaConfigError,

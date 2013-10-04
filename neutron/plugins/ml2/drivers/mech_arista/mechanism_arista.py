@@ -37,10 +37,6 @@ class AristaRPCWrapper(object):
     EOS - operating system used on Arista hardware
     Command API - JSON RPC API provided by Arista EOS
     """
-    required_options = ['eapi_username',
-                        'eapi_password',
-                        'eapi_host']
-
     def __init__(self):
         self._server = jsonrpclib.Server(self._eapi_host_url())
         self.keystone_conf = cfg.CONF.keystone_authtoken
@@ -54,7 +50,7 @@ class AristaRPCWrapper(object):
         return keystone_auth_url
 
     def get_tenants(self):
-        """Returns dict of all tanants known by EOS.
+        """Returns dict of all tenants known by EOS.
 
         :returns: dictionary containing the networks per tenant
                   and VMs allocated per tenant
@@ -64,6 +60,33 @@ class AristaRPCWrapper(object):
         tenants = command_output[0]['tenants']
 
         return tenants
+
+    def plug_port_into_network(self, vm_id, host_id, port_id,
+                               net_id, tenant_id, port_name, device_owner):
+        """Genric routine plug a port of a VM instace into network.
+
+        :param vm_id: globally unique identifier for VM instance
+        :param host: ID of the host where the VM is placed
+        :param port_id: globally unique port ID that connects VM to network
+        :param network_id: globally unique neutron network identifier
+        :param tenant_id: globally unique neutron tenant identifier
+        :param port_name: Name of the port - for display purposes
+        :param device_owner: Device owner - e.g. compute or network:dhcp
+        """
+        if device_owner == 'network:dhcp':
+            self.plug_dhcp_port_into_network(vm_id,
+                                             host_id,
+                                             port_id,
+                                             net_id,
+                                             tenant_id,
+                                             port_name)
+        elif device_owner.startswith('compute'):
+            self.plug_host_into_network(vm_id,
+                                        host_id,
+                                        port_id,
+                                        net_id,
+                                        tenant_id,
+                                        port_name)
 
     def plug_host_into_network(self, vm_id, host, port_id,
                                network_id, tenant_id, port_name):
@@ -79,12 +102,34 @@ class AristaRPCWrapper(object):
         cmds = ['tenant %s' % tenant_id,
                 'vm id %s hostid %s' % (vm_id, host)]
         if port_name:
-            cmds.append('port id %s name %s network-id %s' %
+            cmds.append('port id %s name "%s" network-id %s' %
                         (port_id, port_name, network_id))
         else:
             cmds.append('port id %s network-id %s' %
                         (port_id, network_id))
         cmds.append('exit')
+        cmds.append('exit')
+        self._run_openstack_cmds(cmds)
+
+    def plug_dhcp_port_into_network(self, dhcp_id, host, port_id,
+                                    network_id, tenant_id, port_name):
+        """Creates VLAN between TOR and dhcp host.
+
+        :param dhcp_id: globally unique identifier for dhcp
+        :param host: ID of the host where the dhcp is hosted
+        :param port_id: globally unique port ID that connects dhcp to network
+        :param network_id: globally unique neutron network identifier
+        :param tenant_id: globally unique neutron tenant identifier
+        :param port_name: Name of the port - for display purposes
+        """
+        cmds = ['tenant %s' % tenant_id,
+                'network id %s' % network_id]
+        if port_name:
+            cmds.append('dhcp id %s hostid %s port-id %s name "%s"' %
+                        (dhcp_id, host, port_id, port_name))
+        else:
+            cmds.append('dhcp id %s hostid %s port-id %s' %
+                        (dhcp_id, host, port_id))
         cmds.append('exit')
         self._run_openstack_cmds(cmds)
 
@@ -99,9 +144,25 @@ class AristaRPCWrapper(object):
         :param tenant_id: globally unique neutron tenant identifier
         """
         cmds = ['tenant %s' % tenant_id,
-                'vm id %s host %s' % (vm_id, host),
-                'no port id %s network-id %s' % (port_id, network_id),
+                'vm id %s hostid %s' % (vm_id, host),
+                'no port id %s' % port_id,
                 'exit',
+                'exit']
+        self._run_openstack_cmds(cmds)
+
+    def unplug_dhcp_port_from_network(self, dhcp_id, host, port_id,
+                                      network_id, tenant_id):
+        """Removes previously configured VLAN between TOR and a dhcp host.
+
+        :param dhcp_id: globally unique identifier for dhcp
+        :param host: ID of the host where the dhcp is hosted
+        :param port_id: globally unique port ID that connects dhcp to network
+        :param network_id: globally unique neutron network identifier
+        :param tenant_id: globally unique neutron tenant identifier
+        """
+        cmds = ['tenant %s' % tenant_id,
+                'network id %s' % network_id,
+                'no dhcp id %s port-id %s' % (dhcp_id, port_id),
                 'exit']
         self._run_openstack_cmds(cmds)
 
@@ -115,7 +176,8 @@ class AristaRPCWrapper(object):
         """
         cmds = ['tenant %s' % tenant_id]
         if network_name:
-            cmds.append('network id %s name %s' % (network_id, network_name))
+            cmds.append('network id %s name "%s"' %
+                        (network_id, network_name))
         else:
             cmds.append('network id %s' % network_id)
         cmds.append('segment 1 type vlan id %d' % seg_id)
@@ -140,7 +202,7 @@ class AristaRPCWrapper(object):
         """
         if segments:
             cmds = ['tenant %s' % tenant_id,
-                    'network id %s name %s' % (network_id, network_name)]
+                    'network id %s name "%s"' % (network_id, network_name)]
             seg_num = 1
             for seg in segments:
                 cmds.append('segment %d type %s id %d' % (seg_num,
@@ -255,11 +317,14 @@ class AristaRPCWrapper(object):
         return eapi_server_url
 
     def _validate_config(self):
-        for option in self.required_options:
-            if cfg.CONF.ml2_arista.get(option) is None:
-                msg = _('Required option %s is not set') % option
-                LOG.error(msg)
-                raise arista_exc.AristaConfigError(msg=msg)
+        if cfg.CONF.ml2_arista.get('eapi_host') == '':
+            msg = _('Required option eapi_host is not set')
+            LOG.error(msg)
+            raise arista_exc.AristaConfigError(msg=msg)
+        if cfg.CONF.ml2_arista.get('eapi_username') == '':
+            msg = _('Required option eapi_username is not set')
+            LOG.error(msg)
+            raise arista_exc.AristaConfigError(msg=msg)
 
 
 class SyncService(object):
@@ -278,6 +343,8 @@ class SyncService(object):
 
         LOG.info(_('Syncing Neutron <-> EOS'))
         try:
+            #Always register with EOS to ensure that it has correct credentials
+            self._rpc._register_with_eos()
             eos_tenants = self._rpc.get_tenants()
         except arista_exc.AristaRpcError:
             msg = _('EOS is not available, will try sync later')
@@ -298,21 +365,20 @@ class SyncService(object):
             LOG.warning(msg)
             return
 
-        if len(eos_tenants) > len(db_tenants):
-            # EOS has extra tenants configured which should not be there.
-            for tenant in eos_tenants:
-                if tenant not in db_tenants:
-                    try:
-                        self._rpc.delete_tenant(tenant)
-                    except arista_exc.AristaRpcError:
-                        msg = _('EOS is not available,'
-                                'failed to delete tenant %s') % tenant
-                        LOG.warning(msg)
-                        return
-
         # EOS and Neutron has matching set of tenants. Now check
         # to ensure that networks and VMs match on both sides for
         # each tenant.
+        for tenant in eos_tenants.keys():
+            if tenant not in db_tenants:
+                #send delete tenant to EOS
+                try:
+                    self._rpc.delete_tenant(tenant)
+                    del eos_tenants[tenant]
+                except arista_exc.AristaRpcError:
+                    msg = _('EOS is not available, '
+                            'failed to delete tenant %s') % tenant
+                    LOG.warning(msg)
+
         for tenant in db_tenants:
             db_nets = db.get_networks(tenant)
             db_vms = db.get_vms(tenant)
@@ -325,7 +391,7 @@ class SyncService(object):
                 # check the vM list
                 if eos_vms == db_vms:
                     # Nothing to do. Everything is in sync for this tenant
-                    break
+                    continue
 
             # Neutron DB and EOS reruires synchronization.
             # First delete anything which should not be EOS
@@ -338,7 +404,6 @@ class SyncService(object):
                         msg = _('EOS is not available,'
                                 'failed to delete vm %s') % vm_id
                         LOG.warning(msg)
-                        return
 
             # delete network from EOS if it is not present in neutron DB
             for net_id in eos_nets:
@@ -349,7 +414,6 @@ class SyncService(object):
                         msg = _('EOS is not available,'
                                 'failed to delete network %s') % net_id
                         LOG.warning(msg)
-                        return
 
             # update networks in EOS if it is present in neutron DB
             for net_id in db_nets:
@@ -364,7 +428,6 @@ class SyncService(object):
                         msg = _('EOS is not available, failed to create'
                                 'network id %s') % net_id
                         LOG.warning(msg)
-                        return
 
             # Update VMs in EOS if it is present in neutron DB
             for vm_id in db_vms:
@@ -373,29 +436,33 @@ class SyncService(object):
                     ports = self._ndb.get_all_ports_for_vm(tenant, vm_id)
                     for port in ports:
                         port_id = port['id']
-                        network_id = port['network_id']
+                        net_id = port['network_id']
                         port_name = port['name']
+                        device_owner = port['device_owner']
+                        vm_id = vm['vmId']
+                        host_id = vm['host']
                         try:
-                            self._rpc.plug_host_into_network(vm['vmId'],
-                                                             vm['host'],
+                            self._rpc.plug_port_into_network(vm_id,
+                                                             host_id,
                                                              port_id,
-                                                             network_id,
+                                                             net_id,
                                                              tenant,
-                                                             port_name)
+                                                             port_name,
+                                                             device_owner)
                         except arista_exc.AristaRpcError:
-                            msg = _('EOS is not available, failed to create'
+                            msg = _('EOS is not available, failed to create '
                                     'vm id %s') % vm['vmId']
                             LOG.warning(msg)
 
     def _get_eos_networks(self, eos_tenants, tenant):
         networks = {}
-        if eos_tenants:
+        if eos_tenants and tenant in eos_tenants:
             networks = eos_tenants[tenant]['tenantNetworks']
         return networks
 
     def _get_eos_vms(self, eos_tenants, tenant):
         vms = {}
-        if eos_tenants:
+        if eos_tenants and tenant in eos_tenants:
             vms = eos_tenants[tenant]['tenantVmInstances']
         return vms
 
@@ -410,6 +477,9 @@ class AristaDriver(driver_api.MechanismDriver):
     def __init__(self, rpc=None):
 
         self.rpc = rpc or AristaRPCWrapper()
+        self.db_nets = db.AristaProvisionedNets()
+        self.db_vms = db.AristaProvisionedVms()
+        self.db_tenants = db.AristaProvisionedTenants()
         self.ndb = db.NeutronNets()
 
         confg = cfg.CONF.ml2_arista
@@ -419,11 +489,10 @@ class AristaDriver(driver_api.MechanismDriver):
         self.sync_timeout = confg['sync_interval']
         self.eos_sync_lock = threading.Lock()
 
-        self._synchronization_thread()
-
     def initialize(self):
         self.rpc._register_with_eos()
         self._cleanupDb()
+        self._synchronization_thread()
 
     def create_network_precommit(self, context):
         """Remember the tenant, and network information."""
@@ -466,7 +535,7 @@ class AristaDriver(driver_api.MechanismDriver):
     def update_network_precommit(self, context):
         """At the moment we only support network name change
 
-        Any other change in network is not supprted at this time.
+        Any other change in network is not supported at this time.
         We do not store the network names, therefore, no DB store
         action is performed here.
         """
@@ -540,8 +609,6 @@ class AristaDriver(driver_api.MechanismDriver):
         port = context.current
         device_id = port['device_id']
         device_owner = port['device_owner']
-
-        # TODO(sukhdev) revisit this once port biniding support is implemented
         host = port['binding:host_id']
 
         # device_id and device_owner are set on VM boot
@@ -563,12 +630,70 @@ class AristaDriver(driver_api.MechanismDriver):
         port = context.current
         device_id = port['device_id']
         device_owner = port['device_owner']
-
-        # TODO(sukhdev) revisit this once port biniding support is implemented
         host = port['binding:host_id']
 
         # device_id and device_owner are set on VM boot
         is_vm_boot = device_id and device_owner
+        if host and is_vm_boot:
+            port_id = port['id']
+            port_name = port['name']
+            network_id = port['network_id']
+            tenant_id = port['tenant_id']
+            with self.eos_sync_lock:
+                hostname = self._host_name(host)
+                vm_provisioned = db.is_vm_provisioned(device_id,
+                                                      host,
+                                                      port_id,
+                                                      network_id,
+                                                      tenant_id)
+                net_provisioned = db.is_network_provisioned(tenant_id,
+                                                            network_id)
+                if vm_provisioned and net_provisioned:
+                    try:
+                        self.rpc.plug_port_into_network(device_id,
+                                                        hostname,
+                                                        port_id,
+                                                        network_id,
+                                                        tenant_id,
+                                                        port_name,
+                                                        device_owner)
+                    except arista_exc.AristaRpcError:
+                        LOG.info(EOS_UNREACHABLE_MSG)
+                        raise ml2_exc.MechanismDriverError()
+                else:
+                    msg = _('VM %s is not created as it is not found in '
+                            'Arista DB') % device_id
+                    LOG.info(msg)
+
+    def update_port_precommit(self, context):
+        """At the moment we only support port name change.
+
+        Any other change to port is not supported at this time.
+        We do not store the port names, therefore, no DB store
+        action is performed here.
+        """
+        new_port = context.current
+        orig_port = context.original
+        if new_port['name'] != orig_port['name']:
+            msg = _('Port name changed to %s') % new_port['name']
+            LOG.info(msg)
+
+    def update_port_postcommit(self, context):
+        """At the moment we only support port name change
+
+        Any other change to port is not supported at this time.
+        """
+        port = context.current
+        orig_port = context.original
+        if port['name'] == orig_port['name']:
+            # nothing to do
+            return
+
+        device_id = port['device_id']
+        device_owner = port['device_owner']
+        host = port['binding:host_id']
+        is_vm_boot = device_id and device_owner
+
         if host and is_vm_boot:
             port_id = port['id']
             port_name = port['name']
@@ -588,33 +713,25 @@ class AristaDriver(driver_api.MechanismDriver):
                                                             segmentation_id)
                 if vm_provisioned and net_provisioned:
                     try:
-                        self.rpc.plug_host_into_network(device_id,
+                        self.rpc.plug_port_into_network(device_id,
                                                         hostname,
                                                         port_id,
                                                         network_id,
                                                         tenant_id,
-                                                        port_name)
+                                                        port_name,
+                                                        device_owner)
                     except arista_exc.AristaRpcError:
                         LOG.info(EOS_UNREACHABLE_MSG)
                         raise ml2_exc.MechanismDriverError()
                 else:
-                    msg = _('VM %s is not created as it is not found in'
+                    msg = _('VM %s is not updated as it is not found in '
                             'Arista DB') % device_id
                     LOG.info(msg)
-
-    def update_port_precommit(self, context):
-        # TODO(sukhdev) revisit once the port binding support is implemented
-        return
-
-    def update_port_postcommit(self, context):
-        # TODO(sukhdev) revisit once the port binding support is implemented
-        return
 
     def delete_port_precommit(self, context):
         """Delete information about a VM and host from the DB."""
         port = context.current
 
-        # TODO(sukhdev) revisit this once port biniding support is implemented
         host_id = port['binding:host_id']
         device_id = port['device_id']
         tenant_id = port['tenant_id']
@@ -636,22 +753,27 @@ class AristaDriver(driver_api.MechanismDriver):
         """
         port = context.current
         device_id = port['device_id']
-
-        # TODO(sukhdev) revisit this once port biniding support is implemented
         host = port['binding:host_id']
-
         port_id = port['id']
         network_id = port['network_id']
         tenant_id = port['tenant_id']
+        device_owner = port['device_owner']
 
         try:
             with self.eos_sync_lock:
                 hostname = self._host_name(host)
-                self.rpc.unplug_host_from_network(device_id,
-                                                  hostname,
-                                                  port_id,
-                                                  network_id,
-                                                  tenant_id)
+                if device_owner == 'network:dhcp':
+                    self.rpc.unplug_dhcp_port_from_network(device_id,
+                                                           hostname,
+                                                           port_id,
+                                                           network_id,
+                                                           tenant_id)
+                else:
+                    self.rpc.unplug_host_from_network(device_id,
+                                                      hostname,
+                                                      port_id,
+                                                      network_id,
+                                                      tenant_id)
         except arista_exc.AristaRpcError:
             LOG.info(EOS_UNREACHABLE_MSG)
             raise ml2_exc.MechanismDriverError()
