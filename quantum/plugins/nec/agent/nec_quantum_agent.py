@@ -55,17 +55,13 @@ class NECPluginApi(agent_rpc.PluginApi):
         LOG.info(_("Update ports: added=%(added)s, "
                    "removed=%(removed)s"),
                  {'added': port_added, 'removed': port_removed})
-        try:
-            self.call(context,
-                      self.make_msg('update_ports',
-                                    topic=topics.AGENT,
-                                    agent_id=agent_id,
-                                    datapath_id=datapath_id,
-                                    port_added=port_added,
-                                    port_removed=port_removed))
-        except Exception as e:
-            LOG.warn(_("update_ports() failed."))
-            return
+        self.call(context,
+                  self.make_msg('update_ports',
+                                topic=topics.AGENT,
+                                agent_id=agent_id,
+                                datapath_id=datapath_id,
+                                port_added=port_added,
+                                port_removed=port_removed))
 
 
 class NECAgentRpcCallback(object):
@@ -127,6 +123,7 @@ class NECQuantumAgent(object):
         self.int_br = ovs_lib.OVSBridge(integ_br, root_helper)
         self.polling_interval = polling_interval
         self.cur_ports = []
+        self.need_sync = True
 
         self.datapath_id = "0x%s" % self.int_br.get_datapath_id()
 
@@ -194,21 +191,22 @@ class NECQuantumAgent(object):
         if port_removed:
             self.sg_agent.remove_devices_filter(port_removed)
 
-    def daemon_loop(self):
-        """Main processing loop for NEC Plugin Agent."""
-        while True:
+    def loop_handler(self):
+        try:
+            # self.cur_ports will be kept until loop_handler succeeds.
+            cur_ports = [] if self.need_sync else self.cur_ports
             new_ports = []
 
             port_added = []
             for vif_port in self.int_br.get_vif_ports():
                 port_id = vif_port.vif_id
                 new_ports.append(port_id)
-                if port_id not in self.cur_ports:
+                if port_id not in cur_ports:
                     port_info = self._vif_port_to_port_info(vif_port)
                     port_added.append(port_info)
 
             port_removed = []
-            for port_id in self.cur_ports:
+            for port_id in cur_ports:
                 if port_id not in new_ports:
                     port_removed.append(port_id)
 
@@ -221,6 +219,15 @@ class NECQuantumAgent(object):
                 LOG.debug(_("No port changed."))
 
             self.cur_ports = new_ports
+            self.need_sync = False
+        except Exception:
+            LOG.exception(_("Error in agent event loop"))
+            self.need_sync = True
+
+    def daemon_loop(self):
+        """Main processing loop for NEC Plugin Agent."""
+        while True:
+            self.loop_handler()
             time.sleep(self.polling_interval)
 
 
