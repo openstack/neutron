@@ -54,7 +54,7 @@ agent_opts = [
     cfg.IntOpt('polling_interval', default=2,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
-    cfg.BoolOpt('rpc_support_old_agents', default=True,
+    cfg.BoolOpt('rpc_support_old_agents', default=False,
                 help=_("Enable server RPC compatibility with old agents")),
 ]
 

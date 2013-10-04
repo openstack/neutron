@@ -24,7 +24,7 @@ class ConfigurationTest(base.BaseTestCase):
     def test_defaults(self):
         self.assertEqual(2,
                          cfg.CONF.AGENT.polling_interval)
-        self.assertEqual(True,
+        self.assertEqual(False,
                          cfg.CONF.AGENT.rpc_support_old_agents)
         self.assertEqual('sudo',
                          cfg.CONF.AGENT.root_helper)
