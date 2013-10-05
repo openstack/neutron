@@ -717,6 +717,40 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                      ports,
                                                      interface)
 
+    def _fdb_chg_ip(self, context, fdb_entries):
+        LOG.debug(_("update chg_ip received"))
+        for network_id, agent_ports in fdb_entries.items():
+            segment = self.agent.br_mgr.network_map.get(network_id)
+            if not segment:
+                return
+
+            if segment.network_type != lconst.TYPE_VXLAN:
+                return
+
+            interface = self.agent.br_mgr.get_vxlan_device_name(
+                segment.segmentation_id)
+
+            for agent_ip, state in agent_ports.items():
+                if agent_ip == self.agent.br_mgr.local_ip:
+                    continue
+
+                after = state.get('after')
+                for mac, ip in after:
+                    self.agent.br_mgr.add_fdb_ip_entry(mac, ip, interface)
+
+                before = state.get('before')
+                for mac, ip in before:
+                    self.agent.br_mgr.remove_fdb_ip_entry(mac, ip, interface)
+
+    def fdb_update(self, context, fdb_entries):
+        LOG.debug(_("fdb_update received"))
+        for action, values in fdb_entries.items():
+            method = '_fdb_' + action
+            if not hasattr(self, method):
+                raise NotImplementedError()
+
+            getattr(self, method)(context, values)
+
     def create_rpc_dispatcher(self):
         '''Get the rpc dispatcher for this manager.
 
