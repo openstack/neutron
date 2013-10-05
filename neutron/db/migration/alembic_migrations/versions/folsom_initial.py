@@ -504,7 +504,7 @@ def downgrade_ryu():
 
 def downgrade_cisco():
     op.drop_tables(
-        'nextport_bindings',
+        'nexusport_bindings',
         'port_bindings',
         'credentials',
         'qoss',
