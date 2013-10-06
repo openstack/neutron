@@ -47,7 +47,7 @@ quota_opts = [
                help=_('Number of ports allowed per tenant, minus for '
                       'unlimited')),
     cfg.StrOpt('quota_driver',
-               default='neutron.quota.ConfDriver',
+               default='neutron.db.quota_db.DbQuotaDriver',
                help=_('Default driver to use for quota checks')),
 ]
 # Register the configuration options
@@ -209,14 +209,18 @@ class QuotaEngine(object):
     def __init__(self, quota_driver_class=None):
         """Initialize a Quota object."""
 
-        if not quota_driver_class:
-            quota_driver_class = cfg.CONF.QUOTAS.quota_driver
-
-        if isinstance(quota_driver_class, basestring):
-            quota_driver_class = importutils.import_object(quota_driver_class)
-
         self._resources = {}
-        self._driver = quota_driver_class
+        self._driver = None
+        self._driver_class = quota_driver_class
+
+    def get_driver(self):
+        if self._driver is None:
+            _driver_class = (self._driver_class or
+                             cfg.CONF.QUOTAS.quota_driver)
+            if isinstance(_driver_class, basestring):
+                _driver_class = importutils.import_object(_driver_class)
+            self._driver = _driver_class
+        return self._driver
 
     def __contains__(self, resource):
         return resource in self._resources
@@ -281,8 +285,8 @@ class QuotaEngine(object):
         :param context: The request context, for access checks.
         """
 
-        return self._driver.limit_check(context, tenant_id,
-                                        self._resources, values)
+        return self.get_driver().limit_check(context, tenant_id,
+                                             self._resources, values)
 
     @property
     def resources(self):

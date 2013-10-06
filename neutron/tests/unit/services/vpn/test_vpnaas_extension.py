@@ -31,6 +31,7 @@ from neutron.extensions import vpnaas
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
+from neutron import quota
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
@@ -87,6 +88,10 @@ class VpnaasExtensionTestCase(testlib_api.WebTestCase):
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
         super(VpnaasExtensionTestCase, self).setUp()
+
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+                              group='QUOTAS')
 
     def tearDown(self):
         self._plugin_patcher.stop()
