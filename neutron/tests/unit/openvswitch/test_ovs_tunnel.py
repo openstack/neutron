@@ -172,7 +172,7 @@ class TunnelTest(base.BaseTestCase):
                                                self.TUN_BRIDGE,
                                                self.MAP_TUN_BRIDGE])
 
-    def testConstruct(self):
+    def test_construct(self):
         self.mox.ReplayAll()
         ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
                                           self.TUN_BRIDGE,
@@ -181,7 +181,7 @@ class TunnelTest(base.BaseTestCase):
                                           self.VETH_MTU)
         self.mox.VerifyAll()
 
-    def testConstructVXLAN(self):
+    def test_construct_vxlan(self):
         self.mox.StubOutWithMock(ovs_lib, 'get_installed_ovs_klm_version')
         ovs_lib.get_installed_ovs_klm_version().AndReturn("1.10")
         self.mox.StubOutWithMock(ovs_lib, 'get_installed_ovs_usr_version')
@@ -194,7 +194,7 @@ class TunnelTest(base.BaseTestCase):
                                           self.VETH_MTU)
         self.mox.VerifyAll()
 
-    def testProvisionLocalVlan(self):
+    def test_provision_local_vlan(self):
         ofports = ','.join(TUN_OFPORTS[constants.TYPE_GRE].values())
         self.mock_tun_bridge.mod_flow(table=constants.FLOOD_TO_TUN,
                                       priority=1,
@@ -220,7 +220,7 @@ class TunnelTest(base.BaseTestCase):
         a.provision_local_vlan(NET_UUID, constants.TYPE_GRE, None, LS_ID)
         self.mox.VerifyAll()
 
-    def testProvisionLocalVlanFlat(self):
+    def test_provision_local_vlan_flat(self):
         action_string = 'strip_vlan,normal'
         self.mock_map_tun_bridge.add_flow(
             priority=4, in_port=self.MAP_TUN_OFPORT,
@@ -244,7 +244,7 @@ class TunnelTest(base.BaseTestCase):
         a.provision_local_vlan(NET_UUID, constants.TYPE_FLAT, 'net1', LS_ID)
         self.mox.VerifyAll()
 
-    def testProvisionLocalVlanFlatFail(self):
+    def test_provision_local_vlan_flat_fail(self):
         self.mox.ReplayAll()
         a = ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
@@ -254,7 +254,7 @@ class TunnelTest(base.BaseTestCase):
         a.provision_local_vlan(NET_UUID, constants.TYPE_FLAT, 'net2', LS_ID)
         self.mox.VerifyAll()
 
-    def testProvisionLocalVlanVlan(self):
+    def test_provision_local_vlan_vlan(self):
         action_string = 'mod_vlan_vid:%s,normal' % LS_ID
         self.mock_map_tun_bridge.add_flow(
             priority=4, in_port=self.MAP_TUN_OFPORT,
@@ -277,7 +277,7 @@ class TunnelTest(base.BaseTestCase):
         a.provision_local_vlan(NET_UUID, constants.TYPE_VLAN, 'net1', LS_ID)
         self.mox.VerifyAll()
 
-    def testProvisionLocalVlanVlanFail(self):
+    def test_provision_local_vlan_vlan_fail(self):
         self.mox.ReplayAll()
         a = ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
@@ -287,7 +287,7 @@ class TunnelTest(base.BaseTestCase):
         a.provision_local_vlan(NET_UUID, constants.TYPE_VLAN, 'net2', LS_ID)
         self.mox.VerifyAll()
 
-    def testReclaimLocalVlan(self):
+    def test_reclaim_local_vlan(self):
         self.mock_tun_bridge.delete_flows(
             table=constants.TUN_TABLE['gre'], tun_id=LS_ID)
         self.mock_tun_bridge.delete_flows(dl_vlan=LVM.vlan)
@@ -304,7 +304,7 @@ class TunnelTest(base.BaseTestCase):
         self.assertTrue(LVM.vlan in a.available_local_vlans)
         self.mox.VerifyAll()
 
-    def testReclaimLocalVlanFlat(self):
+    def test_reclaim_local_vlan_flat(self):
         self.mock_map_tun_bridge.delete_flows(
             in_port=self.MAP_TUN_OFPORT, dl_vlan=LVM_FLAT.vlan)
 
@@ -327,7 +327,7 @@ class TunnelTest(base.BaseTestCase):
         self.assertTrue(LVM_FLAT.vlan in a.available_local_vlans)
         self.mox.VerifyAll()
 
-    def testReclaimLocalVlanVLAN(self):
+    def test_reclaim_local_vlan_vlan(self):
         self.mock_map_tun_bridge.delete_flows(
             in_port=self.MAP_TUN_OFPORT, dl_vlan=LVM_VLAN.vlan)
 
@@ -350,7 +350,7 @@ class TunnelTest(base.BaseTestCase):
         self.assertTrue(LVM_VLAN.vlan in a.available_local_vlans)
         self.mox.VerifyAll()
 
-    def testPortBound(self):
+    def test_port_bound(self):
         self.mock_int_bridge.set_db_attribute('Port', VIF_PORT.port_name,
                                               'tag', str(LVM.vlan))
         self.mock_int_bridge.delete_flows(in_port=VIF_PORT.ofport)
@@ -365,7 +365,7 @@ class TunnelTest(base.BaseTestCase):
         a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID)
         self.mox.VerifyAll()
 
-    def testPortUnbound(self):
+    def test_port_unbound(self):
         self.mox.StubOutWithMock(
             ovs_neutron_agent.OVSNeutronAgent, 'reclaim_local_vlan')
         ovs_neutron_agent.OVSNeutronAgent.reclaim_local_vlan(NET_UUID)
@@ -381,7 +381,7 @@ class TunnelTest(base.BaseTestCase):
         a.port_unbound(VIF_ID, NET_UUID)
         self.mox.VerifyAll()
 
-    def testPortDead(self):
+    def test_port_dead(self):
         self.mock_int_bridge.set_db_attribute(
             'Port', VIF_PORT.port_name, 'tag', ovs_neutron_agent.DEAD_VLAN_TAG)
 
@@ -399,7 +399,7 @@ class TunnelTest(base.BaseTestCase):
         a.port_dead(VIF_PORT)
         self.mox.VerifyAll()
 
-    def testTunnelUpdate(self):
+    def test_tunnel_update(self):
         self.mock_tun_bridge.add_tunnel_port('gre-1', '10.0.10.1', '10.0.0.1',
                                              'gre', 4789)
         self.mox.ReplayAll()
@@ -413,7 +413,7 @@ class TunnelTest(base.BaseTestCase):
             tunnel_type=constants.TYPE_GRE)
         self.mox.VerifyAll()
 
-    def testTunnelUpdateSelf(self):
+    def test_tunnel_update_self(self):
         self.mox.ReplayAll()
         a = ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
@@ -424,7 +424,7 @@ class TunnelTest(base.BaseTestCase):
             mox.MockAnything, tunnel_id='1', tunnel_ip='10.0.0.1')
         self.mox.VerifyAll()
 
-    def testDaemonLoop(self):
+    def test_daemon_loop(self):
         reply2 = {'current': set(['tap0']),
                   'added': set([]),
                   'removed': set([])}
