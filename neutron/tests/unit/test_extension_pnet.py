@@ -30,6 +30,7 @@ from neutron import context
 from neutron.extensions import providernet as pnet
 from neutron.manager import NeutronManager
 from neutron.openstack.common import uuidutils
+from neutron import quota
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
@@ -86,6 +87,10 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         self.addCleanup(cfg.CONF.reset)
         self.addCleanup(self._restore_attribute_map)
         self.api = webtest.TestApp(router.APIRouter())
+
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+                              group='QUOTAS')
 
     def _restore_attribute_map(self):
         # Restore the global RESOURCE_ATTRIBUTE_MAP

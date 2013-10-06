@@ -327,6 +327,13 @@ class QuotaExtensionDbTestCaseXML(QuotaExtensionDbTestCase):
 class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
     fmt = 'json'
 
+    def setUp(self):
+        cfg.CONF.set_override(
+            'quota_driver',
+            'neutron.quota.ConfDriver',
+            group='QUOTAS')
+        super(QuotaExtensionCfgTestCase, self).setUp()
+
     def test_quotas_default_values(self):
         tenant_id = 'tenant_id1'
         env = {'neutron.context': context.Context('', tenant_id)}

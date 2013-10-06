@@ -29,6 +29,7 @@ from neutron.common import config
 from neutron import manager
 from neutron.plugins.common import constants
 from neutron.plugins.openvswitch import ovs_neutron_plugin
+from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit.extensions import extendedattribute as extattr
 from neutron.tests.unit import test_api_v2
@@ -107,6 +108,10 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         self.agentscheduler_dbMinxin = manager.NeutronManager.get_plugin()
         self.addCleanup(cfg.CONF.reset)
         self.addCleanup(self.restore_attribute_map)
+
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+                              group='QUOTAS')
 
     def restore_attribute_map(self):
         # Restore the original RESOURCE_ATTRIBUTE_MAP

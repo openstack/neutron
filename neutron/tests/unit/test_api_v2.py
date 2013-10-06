@@ -36,6 +36,7 @@ from neutron.manager import NeutronManager
 from neutron.openstack.common.notifier import api as notifer_api
 from neutron.openstack.common import policy as common_policy
 from neutron.openstack.common import uuidutils
+from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import testlib_api
 
@@ -117,6 +118,10 @@ class APIv2TestBase(base.BaseTestCase):
 
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
+
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+                              group='QUOTAS')
 
 
 class _ArgMatcher(object):
@@ -1376,6 +1381,10 @@ class ExtensionTestCase(base.BaseTestCase):
 
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
+
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+                              group='QUOTAS')
 
     def tearDown(self):
         super(ExtensionTestCase, self).tearDown()
