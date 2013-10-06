@@ -108,6 +108,25 @@ class MidoClientTestCase(testtools.TestCase):
                                   "2A:DB:6B:8C:19:99")
         bridge.assert_has_calls(calls, any_order=True)
 
+    def test_add_dhcp_route_option(self):
+
+        bridge = mock.Mock()
+        subnet = bridge.get_dhcp_subnet.return_value
+        subnet.get_opt121_routes.return_value = None
+        dhcp_subnet_call = mock.call.get_dhcp_subnet("10.0.0.0_24")
+        dst_ip = "10.0.0.3/24"
+        gw_ip = "10.0.0.1"
+        prefix, length = dst_ip.split("/")
+        routes = [{'destinationPrefix': prefix, 'destinationLength': length,
+                   'gatewayAddr': gw_ip}]
+        opt121_routes_call = dhcp_subnet_call.opt121_routes(routes)
+        calls = [dhcp_subnet_call, opt121_routes_call,
+                 opt121_routes_call.update()]
+
+        self.client.add_dhcp_route_option(bridge, "10.0.0.0/24",
+                                          gw_ip, dst_ip)
+        bridge.assert_has_calls(calls, any_order=True)
+
     def test_get_router_error(self):
         self.mock_api.get_router.side_effect = w_exc.HTTPInternalServerError()
         self.assertRaises(midonet_lib.MidonetApiException,
