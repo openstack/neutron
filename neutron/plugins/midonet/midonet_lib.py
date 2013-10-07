@@ -187,18 +187,24 @@ class MidoClient:
         self.remove_dhcp_host(bridge, net_util.subnet_str(cidr), ip, mac)
 
     @handle_api_error
-    def delete_dhcp(self, bridge):
+    def delete_dhcp(self, bridge, cidr):
         """Delete a DHCP entry
 
         :param bridge: bridge to remove DHCP from
+        :param cidr: subnet represented as x.x.x.x/y
         """
-        LOG.debug(_("MidoClient.delete_dhcp called: bridge=%(bridge)s, "),
-                  {'bridge': bridge})
-        dhcp = bridge.get_dhcp_subnets()
-        if not dhcp:
+        LOG.debug(_("MidoClient.delete_dhcp called: bridge=%(bridge)s, "
+                    "cidr=%(cidr)s"),
+                  {'bridge': bridge, 'cidr': cidr})
+        dhcp_subnets = bridge.get_dhcp_subnets()
+        net_addr, net_len = net_util.net_addr(cidr)
+        if not dhcp_subnets:
             raise MidonetApiException(
                 msg=_("Tried to delete non-existent DHCP"))
-        dhcp[0].delete()
+        for dhcp in dhcp_subnets:
+            if dhcp.get_subnet_prefix() == net_addr:
+                dhcp.delete()
+                break
 
     @handle_api_error
     def delete_port(self, id, delete_chains=False):

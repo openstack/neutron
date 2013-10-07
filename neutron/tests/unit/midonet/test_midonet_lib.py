@@ -95,6 +95,18 @@ class MidoClientTestCase(testtools.TestCase):
 
         bridge.assert_has_call(dhcp_call)
 
+    def test_delete_dhcp(self):
+
+        bridge = mock.Mock()
+        subnet = mock.Mock()
+        subnet.get_subnet_prefix.return_value = "10.0.0.0"
+        subnets = mock.MagicMock(return_value=[subnet])
+        bridge.get_dhcp_subnets.side_effect = subnets
+        self.client.delete_dhcp(bridge, "10.0.0.0/24")
+        bridge.assert_has_calls(mock.call.get_dhcp_subnets)
+        subnet.assert_has_calls([mock.call.get_subnet_prefix(),
+                                mock.call.delete()])
+
     def test_add_dhcp_host(self):
 
         bridge = mock.Mock()
