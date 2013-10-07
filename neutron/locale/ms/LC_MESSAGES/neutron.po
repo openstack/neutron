@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-06 06:09+0000\n"
+"POT-Creation-Date: 2013-10-07 06:14+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Malay "
@@ -4442,14 +4442,22 @@ msgstr ""
 msgid "Allocated vlan (%d) from the pool"
 msgstr ""
 
-#: neutron/plugins/brocade/nos/nosdriver.py:63
+#: neutron/plugins/brocade/nos/nosdriver.py:70
 #, python-format
 msgid "Connect failed to switch: %s"
 msgstr ""
 
-#: neutron/plugins/brocade/nos/nosdriver.py:66
+#: neutron/plugins/brocade/nos/nosdriver.py:73
 #, python-format
 msgid "Connect success to host %(host)s:%(ssh_port)d"
+msgstr ""
+
+#: neutron/plugins/brocade/nos/nosdriver.py:98
+#: neutron/plugins/brocade/nos/nosdriver.py:112
+#: neutron/plugins/brocade/nos/nosdriver.py:125
+#: neutron/plugins/brocade/nos/nosdriver.py:138
+#, python-format
+msgid "NETCONF error: %s"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:74
@@ -7029,115 +7037,115 @@ msgstr ""
 msgid "Failed to delete DHCP mapping for port %(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:661
+#: neutron/plugins/midonet/plugin.py:671
 #, python-format
 msgid "MidonetPluginV2.create_router called: router=%(router)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:697
+#: neutron/plugins/midonet/plugin.py:707
 #, python-format
 msgid "MidonetPluginV2.create_router exiting: router_data=%(router_data)s."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:709
+#: neutron/plugins/midonet/plugin.py:719
 #, python-format
 msgid ""
 "MidonetPluginV2.set_router_gateway called: id=%(id)s, "
 "gw_router=%(gw_router)s, gw_ip=%(gw_ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:753
+#: neutron/plugins/midonet/plugin.py:763
 #, python-format
 msgid "MidonetPluginV2.remove_router_gateway called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:773
+#: neutron/plugins/midonet/plugin.py:783
 #, python-format
 msgid "MidonetPluginV2.update_router called: id=%(id)s router=%(router)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:811
+#: neutron/plugins/midonet/plugin.py:821
 #, python-format
 msgid "MidonetPluginV2.update_router exiting: router=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:822
+#: neutron/plugins/midonet/plugin.py:832
 #, python-format
 msgid "MidonetPluginV2.delete_router called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:922
+#: neutron/plugins/midonet/plugin.py:932
 #, python-format
 msgid ""
 "MidonetPluginV2.add_router_interface called: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:946
+#: neutron/plugins/midonet/plugin.py:956
 msgid ""
 "DHCP agent is not working correctly. No port to reach the Metadata server"
 " on this network"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:953
+#: neutron/plugins/midonet/plugin.py:963
 #, python-format
 msgid ""
 "Failed to create MidoNet resources to add router interface. "
 "info=%(info)s, router_id=%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:960
+#: neutron/plugins/midonet/plugin.py:970
 #, python-format
 msgid "MidonetPluginV2.add_router_interface exiting: info=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:966
+#: neutron/plugins/midonet/plugin.py:976
 #, python-format
 msgid ""
 "MidonetPluginV2.update_floatingip called: id=%(id)s "
 "floatingip=%(floatingip)s "
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1020
+#: neutron/plugins/midonet/plugin.py:1030
 #, python-format
 msgid "MidonetPluginV2.update_floating_ip exiting: fip=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1030
+#: neutron/plugins/midonet/plugin.py:1040
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group called: "
 "security_group=%(security_group)s default_sg=%(default_sg)s "
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1059
+#: neutron/plugins/midonet/plugin.py:1069
 #, python-format
 msgid "Failed to create MidoNet resources for sg %(sg)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1066
+#: neutron/plugins/midonet/plugin.py:1076
 #, python-format
 msgid "MidonetPluginV2.create_security_group exiting: sg=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1072
+#: neutron/plugins/midonet/plugin.py:1082
 #, python-format
 msgid "MidonetPluginV2.delete_security_group called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1104
+#: neutron/plugins/midonet/plugin.py:1114
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group_rule called: "
 "security_group_rule=%(security_group_rule)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1114
+#: neutron/plugins/midonet/plugin.py:1124
 #, python-format
 msgid "MidonetPluginV2.create_security_group_rule exiting: rule=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1124
+#: neutron/plugins/midonet/plugin.py:1134
 #, python-format
 msgid "MidonetPluginV2.delete_security_group_rule called: sg_rule_id=%s"
 msgstr ""
