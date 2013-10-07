@@ -61,6 +61,71 @@ class TestNecAgentBase(base.BaseTestCase):
 
 class TestNecAgent(TestNecAgentBase):
 
+    def _setup_mock(self):
+        vif_ports = [ovs_lib.VifPort('port1', '1', 'id-1', 'mac-1',
+                                     self.agent.int_br),
+                     ovs_lib.VifPort('port2', '2', 'id-2', 'mac-2',
+                                     self.agent.int_br)]
+        self.get_vif_ports = mock.patch.object(
+            ovs_lib.OVSBridge, 'get_vif_ports',
+            return_value=vif_ports).start()
+        self.update_ports = mock.patch.object(
+            nec_neutron_agent.NECPluginApi, 'update_ports').start()
+        self.prepare_devices_filter = mock.patch.object(
+            self.agent.sg_agent, 'prepare_devices_filter').start()
+        self.remove_devices_filter = mock.patch.object(
+            self.agent.sg_agent, 'remove_devices_filter').start()
+
+    def _test_single_loop(self, with_exc=False, need_sync=False):
+        self.agent.cur_ports = ['id-0', 'id-1']
+        self.agent.need_sync = need_sync
+
+        self.agent.loop_handler()
+        if with_exc:
+            self.assertEqual(self.agent.cur_ports, ['id-0', 'id-1'])
+            self.assertTrue(self.agent.need_sync)
+        else:
+            self.assertEqual(self.agent.cur_ports, ['id-1', 'id-2'])
+            self.assertFalse(self.agent.need_sync)
+
+    def test_single_loop_normal(self):
+        self._setup_mock()
+        self._test_single_loop()
+        agent_id = 'nec-q-agent.dummy-host'
+        self.update_ports.assert_called_once_with(
+            mock.ANY, agent_id, OVS_DPID_0X,
+            [{'id': 'id-2', 'mac': 'mac-2', 'port_no': '2'}],
+            ['id-0'])
+        self.prepare_devices_filter.assert_called_once_with(['id-2'])
+        self.remove_devices_filter.assert_called_once_with(['id-0'])
+
+    def test_single_loop_need_sync(self):
+        self._setup_mock()
+        self._test_single_loop(need_sync=True)
+        agent_id = 'nec-q-agent.dummy-host'
+        self.update_ports.assert_called_once_with(
+            mock.ANY, agent_id, OVS_DPID_0X,
+            [{'id': 'id-1', 'mac': 'mac-1', 'port_no': '1'},
+             {'id': 'id-2', 'mac': 'mac-2', 'port_no': '2'}],
+            [])
+        self.prepare_devices_filter.assert_called_once_with(['id-1', 'id-2'])
+        self.assertFalse(self.remove_devices_filter.call_count)
+
+    def test_single_loop_with_sg_exception_remove(self):
+        self._setup_mock()
+        self.update_ports.side_effect = Exception()
+        self._test_single_loop(with_exc=True)
+
+    def test_single_loop_with_sg_exception_prepare(self):
+        self._setup_mock()
+        self.prepare_devices_filter.side_effect = Exception()
+        self._test_single_loop(with_exc=True)
+
+    def test_single_loop_with_update_ports_exception(self):
+        self._setup_mock()
+        self.remove_devices_filter.side_effect = Exception()
+        self._test_single_loop(with_exc=True)
+
     def test_daemon_loop(self):
 
         def state_check(index):
@@ -277,9 +342,6 @@ class TestNecAgentPluginApi(TestNecAgentBase):
 
     def test_plugin_api(self):
         self._test_plugin_api()
-
-    def test_plugin_api_fail(self):
-        self._test_plugin_api(expected_failure=True)
 
 
 class TestNecAgentMain(base.BaseTestCase):
