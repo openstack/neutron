@@ -21,6 +21,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
+from neutron.db import servicetype_db as sdb
 from neutron.extensions import agent
 from neutron.extensions import lbaas_agentscheduler
 from neutron import manager
@@ -77,6 +78,9 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
               'loadbalancer.drivers.haproxy.plugin_driver.'
               'HaproxyOnHostPluginDriver:default')],
             'service_providers')
+
+        #force service type manager to reload configuration:
+        sdb.ServiceTypeManager._instance = None
 
         super(LBaaSAgentSchedulerTestCase, self).setUp(
             self.plugin_str, service_plugins=service_plugins)

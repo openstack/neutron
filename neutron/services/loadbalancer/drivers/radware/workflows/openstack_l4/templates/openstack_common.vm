@@ -1,0 +1,247 @@
+
+#property("summary", "Openstack - common macros and constants.")
+
+## --------------------
+## Common "constants"
+## --------------------
+#set($NONE="none")
+#set($DEFAULT_HEALTH_MONITOR_TYPE="arp")
+#set($HC_TYPE_CONVERSION={"PING":"icmp","TCP":"tcp","HTTP":"http","HTTPS":"http"})
+#set($SERVICE_ALGO_CONVERSION={"ROUND_ROBIN":"roundrobin","LEAST_CONNECTIONS":"leastconns","SOURCE_IP":"phash"})
+#set($HC_TYPE_TO_POJO_CONVERSION={"HTTP":"SlbNewAdvhcHttpEntry","HTTPS":"SlbNewAdvhcHttpEntry","PING":"SlbNewAdvhcIcmpEntry","TCP":"SlbNewAdvhcTcpEntry"})
+#set($HC_MAX_HCS_PER_GROUP=8)
+#set($HC_MAX_DELAY=600)
+#set($HC_MAX_TIMEOUT=600)
+#set($HC_HTTP_METHODS=['get','head','post'])
+#set($SERVICE_TYPES=["http","https","ssl","dns","rtsp","wts","basic-slb"])
+#set($HC_HTTP_MAX_RESPONSE_STRING_SIZE=47)
+#set($HC_HTTP_MAX_RESPONSE_ELEMENT_COUNT=12)
+#set($HC_MAX_ID_LENGTH=32)
+#set($GROUP_NAME_MAX_LENGTH=31)
+
+#set($NO_IP="0.0.0.0")
+#set($SESSION_PERSISTENCE_COOKIE_SIZE=64)
+#set($CREATE_MODE = "CREATE")
+#set($DELETE_MODE = "DELETE")
+#set($DOT = ".")
+
+#set($IPV4="v4")
+#set($IPV6="v6")
+
+#set ($IP_FIELDS = {$IPV4 : "IpAddr" , $IPV6 : "Ipv6Addr"})
+#set ($VIRT_IP_FIELDS = {$IPV4 : "IpAddress" , $IPV6 : "Ipv6Addr"})
+
+#set($IPV4_REGEX = ""+'\'+"A(25[0-5]|2[0-4]" + '\' + "d|[0-1]?" + '\' + "d?" + '\' + "d)(" + '\' + ".(25[0-5]|2[0-4]" + '\' + "d|[0-1]?" + '\' + "d?" + '\' + "d)){3}" + '\' + "z")
+#set($IPV6_HEX4DECCOMPRESSED_REGEX = "" + '\' + "A((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?) ::((?:[0-9A-Fa-f]{1,4}:)*)(25[0-5]|2[0-4]" + '\' + "d|[0-1]?" + '\' + "d?" + '\' + "d)(" + '\' + ".(25[0-5]|2[0-4]" + '\' + "d|[0-1]?" + '\' + "d?" + '\' + "d)){3}" + '\' + "z")
+#set($IPV6_6HEX4DEC_REGEX = "" + '\' + "A((?:[0-9A-Fa-f]{1,4}:){6,6})(25[0-5]|2[0-4]" + '\' + "d|[0-1]?" + '\' + "d?" + '\' + "d)(" + '\' + ".(25[0-5]|2[0-4]" + '\' + "d|[0-1]?" + '\' + "d?" + '\' + "d)){3}" + '\' + "z")
+#set($IPV6_HEXCOMPRESSED_REGEX = "" + '\' + "A((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)" + '\' + "z")
+#set($IPV6_REGEX = "" + '\' + "A(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}" + '\' + "z")
+
+## ------------------------------------ macros ------------------------------------------------------------------
+
+#macro(os_print_hc_config,$hcType, $hcUUID,$hcRefCount,$hcMxRetries,$hcDelay, $hcTimeout,$hcUrlPath,$hcExpectedCodes)
+    #os_print_health_check_header($hcType, $hcUUID)
+    dport   none
+    name    "$hcRefCount"
+    retry   $hcMxRetries
+    #os_print_inter_and_timeout($hcDelay, $hcTimeout)
+    #if($hcType.startsWith("HTTP"))
+        #if($hcType=="HTTPS")
+            ssl enabled
+        #end
+        http
+        #os_print_http_method($hcHttpMethod, $hcUUID)
+        path "$hcUrlPath"
+        #os_print_http_response($hcExpectedCodes, $hcUUID)
+    #end
+#end
+
+#macro(os_print_inter_and_timeout, $hcDelay, $hcTimeout)
+    ##Alteon requires that the timeout will be samller or equal to the interval.
+    #if($hcTimeout > $hcDelay)
+        #set($hcDelay=$hcTimeout)
+    #end
+    #if($hcDelay>$HC_MAX_DELAY)
+        #set($hcDelay=$HC_MAX_DELAY)
+    #end
+    inter   $hcDelay
+    #if($hcTimeout>$HC_MAX_TIMEOUT)
+        #set($hcTimeout=$HC_MAX_TIMEOUT)
+    #end
+    timeout $hcTimeout
+#end
+
+#macro(os_get_ref_count_for_hc, $hcUUID, $hcType, $refCountRetArray)
+        ## find the vDirect POJO for the given $hcType
+        #set($hceName=$HC_TYPE_TO_POJO_CONVERSION.get($hcType))
+        #if($adc.isNull($hceName))
+            #error("Unknown Health Check type occured $hcType with id $hcUUID!")
+        #end
+        ## strip the uuid
+        #set($stripped_uuid=[-1])
+        #os_strip_uuid($hcUUID,$stripped_uuid)
+        ## allocate a bean and look for it by its ID (openstack uuid is used here)
+        #set($hce = $adc.newBean($hceName))
+        #set($hce.ID = $stripped_uuid[0])
+        #set($hce2 = $adc.read($hce))
+        #if ($hce2.isEmpty())
+            ## hc was not found on the device - RefCount is zero
+            #set($refCountRetArray[0]=0)
+        #else
+            ## hc was found on the device - we use the 'Name' field to store its reference count
+            #set($hcRefCountStr=$hce2.Name)
+            #set($hcRefCount=0)
+            #set($hcRefCount=$hcRefCount.parseInt($hcRefCountStr))
+            #set($refCountRetArray[0]=$hcRefCount)
+        #end
+#end
+
+#macro(os_print_health_check_header, $hcType, $hcUUID)
+    #set($stripped_uuid=[-1])
+    #os_strip_uuid($hcUUID,$stripped_uuid)
+    #if($hcType==$NONE)
+        /c/slb/advhc/health $stripped_uuid[0]
+    #else
+        #set($calcHcType=$HC_TYPE_CONVERSION.get($hcType))
+        #if($adc.isNull($calcHcType))
+            #error("Unsupported Health Monitor type $hcType in id $hcUUID!")
+        #else
+            /c/slb/advhc/health $stripped_uuid[0] $calcHcType
+        #end
+    #end
+#end
+
+#macro(os_print_http_method, $method, $hcUUID)
+    #set($lower_method=$method.toLowerCase())
+    #set($found=$HC_HTTP_METHODS.contains($lower_method))
+    #if(!$found)
+        #error("Unsupported HTTP method $method for id $hcUUID!")
+    #else
+        method $lower_method
+    #end
+#end
+
+#macro(os_convert_range_into_two_integers, $response,$result)
+    #set($left=$response.substring(0,$dash_index))
+    #set($offset=$dash_index + 1)
+    #set($right=$response.substring($offset,$response.length()))
+    #set($leftInt=0)
+    #set($leftInt=$leftInt.parseInt($left))
+    #set($rightInt=0)
+    #set($rightInt=$rightInt.parseInt($right))
+    #set($result[0]=$leftInt)
+    #set($result[1]=$rightInt)
+#end
+
+#macro(os_print_http_response, $response, $hcUUID)
+    #set($dash_index=$response.indexOf('-'))
+    #if($dash_index != -1)
+        #set($result=[-1,-1])
+        #os_convert_range_into_two_integers($response,$result)
+        #set($range_size=$result[1] - $result[0])
+        #if($range_size > $HC_HTTP_MAX_RESPONSE_ELEMENT_COUNT)
+            #error("Too many reponse codes in the range $response ($range_size) for id $hcUUID! Up to $HC_HTTP_MAX_RESPONSE_ELEMENT_COUNT reponse codes are supported!")
+        #else
+            #set($calc_reponse="")
+            #foreach($response_code in [$leftInt..$rightInt])
+                #set($calc_reponse=$calc_reponse + $response_code + ",")
+            #end
+            #set($len=$calc_reponse.length() - 1))
+            #set($calc_reponse=$calc_reponse.substring(0,$len))
+            response $calc_reponse none ""
+        #end
+    #else
+        #if($response.length() > $HC_HTTP_MAX_RESPONSE_STRING_SIZE)
+            #error("Too many reponse codes in the range $response ($range_size) for id $hcUUID! Up to $HC_HTTP_MAX_RESPONSE_ELEMENT_COUNT reponse codes are supported!")
+        #else
+            response $response none ""
+        #end
+    #end
+#end
+
+## Remove the "-" from $uuid
+## Make sure it is not too long
+## Return value using $result
+#macro(os_strip_uuid,$uuid,$result)
+    #set($strippedUUID=$uuid.replaceAll("-",""))
+    #if($strippedUUID.length() > $HC_MAX_ID_LENGTH)
+        #error("UUID $strippedUUID is too long and cant be used as Health Monitor ID. Maximum length is $HC_MAX_ID_LENGTH.")
+    #end
+    #set($result[0]=$strippedUUID)
+#end
+
+## --------------------------------------------------------------
+## Get the IP version of the incoming argument
+## Raise an exception if no match was found
+## --------------------------------------------------------------
+#macro(os_get_ip_version, $ip)
+    #if($ip.matches($IPV4_REGEX))
+        $IPV4
+    #elseif($ip.matches($IPV6_REGEX) || $ip.matches($IPV6_HEXCOMPRESSED_REGEX) || $ip.matches($IPV6_6HEX4DEC_REGEX) || $ip.matches($IPV6_HEX4DECCOMPRESSED_REGEX))
+        $IPV6
+    #else
+        #error("IP Address $ip is not a valid IP!")
+    #end
+#end
+
+
+#macro(os_print_persist_command, $persistMethod, $cookieName, $serviceType)
+    #if ($persistMethod=="APP_COOKIE")
+            pbind cookie passive "$cookieName" 1 64 enable
+    #elseif ($persistMethod=="HTTP_COOKIE")
+            pbind cookie insert "$cookieName" secure
+    #elseif ($persistMethod=="SOURCE_IP")
+        #if($serviceType=="https")
+            pbind sslid
+        #else
+            pbind clientip norport
+        #end
+    #end
+#end
+
+
+#macro(os_get_service_type, $serviceType)
+    #set($serviceType=$serviceType.toLowerCase())
+    #if($SERVICE_TYPES.contains($serviceType))
+        $serviceType
+    #else
+        #if($serviceType=="tcp")
+            "basic-slb"
+        #else
+            #error("Unsupported service type $serviceType!")
+        #end
+    #end
+#end
+
+
+#macro(os_print_metric_command, $serviceAlgorithm)
+    #set($algo=$SERVICE_ALGO_CONVERSION.get($serviceAlgorithm))
+    #if($adc.isNull($algo))
+        #error("Unsupported group metric type $serviceAlgorithm!")
+    #else
+        metric $algo
+    #end
+#end
+
+##
+## Verify that a field is not NULL/Empty and its lenght is < maximal length
+##
+#macro(verify_field_length,$field_name,$field_value,$max_len)
+    #if($adc.isNull($field_value) || $field_value.isEmpty())
+        #error("Field '$field_name' can not be NULL or empty.")
+    #end
+    #if($field_value.length() > $max_len)
+        #error("Field '$field_name' can not be longer than $max_len chars. Current length is $field_value.length()")
+    #end
+#end
+
+##
+## Map boolean value to ena/dis
+##
+#macro(os_print_bool_to_ena_dis, $boolean_val)
+    #if($boolean_val)
+        ena
+    #else
+        dis
+    #end
+#end
