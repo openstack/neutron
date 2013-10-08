@@ -885,7 +885,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                     another_l3_agent_id = com['id']
                     another_l3_agent_host = com['host']
                     break
-            self.assertTrue(another_l3_agent_id is not None)
+            self.assertIsNotNone(another_l3_agent_id)
             self._add_router_to_l3_agent(another_l3_agent_id,
                                          router['router']['id'],
                                          expected_code=exc.HTTPConflict.code)
