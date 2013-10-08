@@ -28,10 +28,10 @@ import neutron.common.test_lib as test_lib
 import neutron.tests.unit.midonet.mock_lib as mock_lib
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_security_group as sg
-
+import neutron.tests.unit.test_l3_plugin as test_l3_plugin
 
 MIDOKURA_PKG_PATH = "neutron.plugins.midonet.plugin"
-
+MIDONET_PLUGIN_NAME = ('%s.MidonetPluginV2' % MIDOKURA_PKG_PATH)
 
 # Need to mock the midonetclient module since the plugin will try to load it.
 sys.modules["midonetclient"] = mock.Mock()
@@ -39,9 +39,10 @@ sys.modules["midonetclient"] = mock.Mock()
 
 class MidonetPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
-    _plugin_name = ('%s.MidonetPluginV2' % MIDOKURA_PKG_PATH)
-
-    def setUp(self):
+    def setUp(self,
+              plugin=MIDONET_PLUGIN_NAME,
+              ext_mgr=None,
+              service_plugins=None):
         self.mock_api = mock.patch(
             'neutron.plugins.midonet.midonet_lib.MidoClient')
         etc_path = os.path.join(os.path.dirname(__file__), 'etc')
@@ -51,7 +52,8 @@ class MidonetPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.instance = self.mock_api.start()
         mock_cfg = mock_lib.MidonetLibMockConfig(self.instance.return_value)
         mock_cfg.setup()
-        super(MidonetPluginV2TestCase, self).setUp(self._plugin_name)
+        super(MidonetPluginV2TestCase, self).setUp(plugin=plugin,
+                                                   ext_mgr=ext_mgr)
 
     def tearDown(self):
         super(MidonetPluginV2TestCase, self).tearDown()
@@ -62,6 +64,20 @@ class TestMidonetNetworksV2(test_plugin.TestNetworksV2,
                             MidonetPluginV2TestCase):
 
     pass
+
+
+class TestMidonetL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase,
+                               MidonetPluginV2TestCase):
+    def setUp(self,
+              plugin=MIDONET_PLUGIN_NAME,
+              ext_mgr=None,
+              service_plugins=None):
+        super(TestMidonetL3NatTestCase, self).setUp(plugin=plugin,
+                                                    ext_mgr=None,
+                                                    service_plugins=None)
+
+    def test_floatingip_with_invalid_create_port(self):
+        self._test_floatingip_with_invalid_create_port(MIDONET_PLUGIN_NAME)
 
 
 class TestMidonetSecurityGroupsTestCase(sg.SecurityGroupDBTestCase):
