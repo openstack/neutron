@@ -25,6 +25,7 @@ import struct
 import tempfile
 
 from eventlet.green import subprocess
+from eventlet import greenthread
 
 from neutron.common import utils
 from neutron.openstack.common import log as logging
@@ -43,22 +44,27 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
     env = os.environ.copy()
     if addl_env:
         env.update(addl_env)
-    obj = utils.subprocess_popen(cmd, shell=False,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 env=env)
-
-    _stdout, _stderr = (process_input and
-                        obj.communicate(process_input) or
-                        obj.communicate())
-    obj.stdin.close()
-    m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdout: %(stdout)r\n"
-          "Stderr: %(stderr)r") % {'cmd': cmd, 'code': obj.returncode,
-                                   'stdout': _stdout, 'stderr': _stderr}
-    LOG.debug(m)
-    if obj.returncode and check_exit_code:
-        raise RuntimeError(m)
+    try:
+        obj = utils.subprocess_popen(cmd, shell=False,
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     env=env)
+        _stdout, _stderr = (process_input and
+                            obj.communicate(process_input) or
+                            obj.communicate())
+        obj.stdin.close()
+        m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdout: %(stdout)r\n"
+              "Stderr: %(stderr)r") % {'cmd': cmd, 'code': obj.returncode,
+                                       'stdout': _stdout, 'stderr': _stderr}
+        LOG.debug(m)
+        if obj.returncode and check_exit_code:
+            raise RuntimeError(m)
+    finally:
+        # NOTE(termie): this appears to be necessary to let the subprocess
+        #               call clean something up in between calls, without
+        #               it two execute calls in a row hangs the second one
+        greenthread.sleep(0)
 
     return return_stderr and (_stdout, _stderr) or _stdout
 
