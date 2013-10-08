@@ -46,6 +46,7 @@ from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common.notifier import test_notifier
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
+from neutron import quota
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extensions
@@ -113,6 +114,10 @@ class L3NatExtensionTestCase(testlib_api.WebTestCase):
         ext_mgr = L3TestExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
+
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+                              group='QUOTAS')
 
     def tearDown(self):
         self._plugin_patcher.stop()

@@ -32,6 +32,7 @@ from neutron.db import db_base_plugin_v2
 from neutron import manager
 from neutron.plugins.nicira.dbexts import nicira_networkgw_db
 from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
+from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin
@@ -92,6 +93,10 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
         PluginAwareExtensionManager._instance = ext_mgr
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
+
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+                              group='QUOTAS')
 
     def test_network_gateway_create(self):
         nw_gw_id = _uuid()
