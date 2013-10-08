@@ -227,20 +227,19 @@ class DhcpAgent(manager.Manager):
         else:
             self.disable_dhcp_helper(network.id)
 
-    def release_lease_for_removed_ips(self, port, network):
+    def release_lease_for_removed_ips(self, prev_port, updated_port, network):
         """Releases the dhcp lease for ips removed from a port."""
-        prev_port = self.cache.get_port_by_id(port.id)
         if prev_port:
             previous_ips = set(fixed_ip.ip_address
                                for fixed_ip in prev_port.fixed_ips)
             current_ips = set(fixed_ip.ip_address
-                              for fixed_ip in port.fixed_ips)
+                              for fixed_ip in updated_port.fixed_ips)
             # pass in port with removed ips on it
             removed_ips = previous_ips - current_ips
             if removed_ips:
                 self.call_driver('release_lease',
                                  network,
-                                 mac_address=port.mac_address,
+                                 mac_address=updated_port.mac_address,
                                  removed_ips=removed_ips)
 
     @utils.synchronized('dhcp-agent')
@@ -283,12 +282,14 @@ class DhcpAgent(manager.Manager):
     @utils.synchronized('dhcp-agent')
     def port_update_end(self, context, payload):
         """Handle the port.update.end notification event."""
-        port = dhcp.DictModel(payload['port'])
-        network = self.cache.get_network_by_id(port.network_id)
+        updated_port = dhcp.DictModel(payload['port'])
+        network = self.cache.get_network_by_id(updated_port.network_id)
         if network:
-            self.release_lease_for_removed_ips(port, network)
-            self.cache.put_port(port)
+            prev_port = self.cache.get_port_by_id(updated_port.id)
+            self.cache.put_port(updated_port)
             self.call_driver('reload_allocations', network)
+            self.release_lease_for_removed_ips(prev_port, updated_port,
+                                               network)
 
     # Use the update handler for the port create event.
     port_create_end = port_update_end
@@ -300,13 +301,13 @@ class DhcpAgent(manager.Manager):
         if port:
             network = self.cache.get_network_by_id(port.network_id)
             self.cache.remove_port(port)
+            self.call_driver('reload_allocations', network)
             removed_ips = [fixed_ip.ip_address
                            for fixed_ip in port.fixed_ips]
             self.call_driver('release_lease',
                              network,
                              mac_address=port.mac_address,
                              removed_ips=removed_ips)
-            self.call_driver('reload_allocations', network)
 
     def enable_isolated_metadata_proxy(self, network):
 
