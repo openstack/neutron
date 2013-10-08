@@ -29,7 +29,7 @@ class EmbraneOvsPlugin(base.EmbranePlugin, l2.OVSNeutronPluginV2):
     and the base EmbranePlugin for L3.
 
     '''
-    _plugin_support = openvswitch_support.OpenvswitchSupport
+    _plugin_support = openvswitch_support.OpenvswitchSupport()
 
     def __init__(self):
         '''First run plugin specific initialization, then Embrane's.'''
