@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-07 06:14+0000\n"
+"POT-Creation-Date: 2013-10-08 06:16+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan "
@@ -470,7 +470,7 @@ msgstr ""
 #: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:842
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:799
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:184
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:181
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:235
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:181
 #: neutron/services/metering/agents/metering_agent.py:273
@@ -3949,7 +3949,7 @@ msgid "RPC Message Invalid."
 msgstr ""
 
 #: neutron/openstack/common/rpc/impl_zmq.py:744
-#: neutron/plugins/midonet/plugin.py:189
+#: neutron/plugins/midonet/plugin.py:190
 #: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:23
 #: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:27
 #, python-format
@@ -6398,7 +6398,7 @@ msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:813
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:260
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:145
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:142
 #, python-format
 msgid "RPC agent_id: %s"
 msgstr ""
@@ -6523,7 +6523,7 @@ msgstr ""
 msgid "List of <physical_network>:<physical_interface>"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/common/config.py:70
+#: neutron/plugins/linuxbridge/common/config.py:69
 #: neutron/plugins/mlnx/common/config.py:58
 msgid "Enable server RPC compatibility with old agents"
 msgstr ""
@@ -6730,103 +6730,103 @@ msgid ""
 "cidr=%(cidr)s, ip=%(ip)s, mac=%(mac)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:195
+#: neutron/plugins/midonet/midonet_lib.py:196
 #, python-format
-msgid "MidoClient.delete_dhcp called: bridge=%(bridge)s, "
+msgid "MidoClient.delete_dhcp called: bridge=%(bridge)s, cidr=%(cidr)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:200
+#: neutron/plugins/midonet/midonet_lib.py:203
 msgid "Tried to delete non-existent DHCP"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:209
+#: neutron/plugins/midonet/midonet_lib.py:215
 #, python-format
 msgid "MidoClient.delete_port called: id=%(id)s, delete_chains=%(delete_chains)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:224
+#: neutron/plugins/midonet/midonet_lib.py:230
 #, python-format
 msgid "MidoClient.get_port called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:237
+#: neutron/plugins/midonet/midonet_lib.py:243
 #, python-format
 msgid "MidoClient.add_bridge_port called: bridge=%(bridge)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:258
+#: neutron/plugins/midonet/midonet_lib.py:264
 #, python-format
 msgid "MidoClient.create_router called: tenant_id=%(tenant_id)s, name=%(name)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:270
+#: neutron/plugins/midonet/midonet_lib.py:276
 #, python-format
 msgid "MidoClient.delete_router called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:280
+#: neutron/plugins/midonet/midonet_lib.py:286
 #, python-format
 msgid "MidoClient.get_router called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:294
+#: neutron/plugins/midonet/midonet_lib.py:300
 #, python-format
 msgid "MidoClient.update_router called: id=%(id)s, name=%(name)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:314
+#: neutron/plugins/midonet/midonet_lib.py:320
 #, python-format
 msgid ""
 "MidoClient.add_dhcp_route_option called: bridge=%(bridge)s, "
 "cidr=%(cidr)s, gw_ip=%(gw_ip)sdst_ip=%(dst_ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:322
+#: neutron/plugins/midonet/midonet_lib.py:328
 msgid "Tried to access non-existent DHCP"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:354
+#: neutron/plugins/midonet/midonet_lib.py:360
 #, python-format
 msgid "MidoClient.unlink called: port=%(port)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:359
+#: neutron/plugins/midonet/midonet_lib.py:365
 #, python-format
 msgid "Attempted to unlink a port that was not linked. %s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:365
+#: neutron/plugins/midonet/midonet_lib.py:371
 #, python-format
 msgid ""
 "MidoClient.remove_rules_by_property called: tenant_id=%(tenant_id)s, "
 "chain_name=%(chain_name)skey=%(key)s, value=%(value)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:392
+#: neutron/plugins/midonet/midonet_lib.py:398
 #, python-format
 msgid ""
 "MidoClient.create_router_chains called: router=%(router)s, "
 "inbound_chain_name=%(in_chain)s, outbound_chain_name=%(out_chain)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:415
+#: neutron/plugins/midonet/midonet_lib.py:421
 #, python-format
 msgid "MidoClient.delete_router_chains called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:430
+#: neutron/plugins/midonet/midonet_lib.py:436
 #, python-format
 msgid "MidoClient.delete_port_chains called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:442
+#: neutron/plugins/midonet/midonet_lib.py:448
 #, python-format
 msgid ""
 "MidoClient.get_link_port called: router=%(router)s, "
 "peer_router_id=%(peer_router_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:481
+#: neutron/plugins/midonet/midonet_lib.py:487
 #, python-format
 msgid ""
 "MidoClient.add_static_nat called: tenant_id=%(tenant_id)s, "
@@ -6834,17 +6834,17 @@ msgid ""
 "port_id=%(port_id)s, nat_type=%(nat_type)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:489
+#: neutron/plugins/midonet/midonet_lib.py:495
 #, python-format
 msgid "Invalid NAT type passed in %s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:541
+#: neutron/plugins/midonet/midonet_lib.py:547
 #, python-format
 msgid "MidoClient.remote_static_route called: router=%(router)s, ip=%(ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:552
+#: neutron/plugins/midonet/midonet_lib.py:558
 #, python-format
 msgid ""
 "MidoClient.update_port_chains called: "
@@ -6852,300 +6852,300 @@ msgid ""
 "outbound_chain_id=%(outbound_chain_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:563
+#: neutron/plugins/midonet/midonet_lib.py:569
 #, python-format
 msgid "MidoClient.create_chain called: tenant_id=%(tenant_id)s  name=%(name)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:571
+#: neutron/plugins/midonet/midonet_lib.py:577
 #, python-format
 msgid "MidoClient.delete_chain called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:577
+#: neutron/plugins/midonet/midonet_lib.py:583
 #, python-format
 msgid ""
 "MidoClient.delete_chains_by_names called: tenant_id=%(tenant_id)s "
 "names=%(names)s "
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:588
+#: neutron/plugins/midonet/midonet_lib.py:594
 #, python-format
 msgid ""
 "MidoClient.get_chain_by_name called: tenant_id=%(tenant_id)s "
 "name=%(name)s "
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:599
+#: neutron/plugins/midonet/midonet_lib.py:605
 #, python-format
 msgid ""
 "MidoClient.get_port_group_by_name called: tenant_id=%(tenant_id)s "
 "name=%(name)s "
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:613
+#: neutron/plugins/midonet/midonet_lib.py:619
 #, python-format
 msgid "MidoClient.create_port_group called: tenant_id=%(tenant_id)s name=%(name)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:622
+#: neutron/plugins/midonet/midonet_lib.py:628
 #, python-format
 msgid ""
 "MidoClient.delete_port_group_by_name called: tenant_id=%(tenant_id)s "
 "name=%(name)s "
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:628
+#: neutron/plugins/midonet/midonet_lib.py:634
 #, python-format
 msgid "Deleting pg %(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:634
+#: neutron/plugins/midonet/midonet_lib.py:640
 #, python-format
 msgid ""
 "MidoClient.add_port_to_port_group_by_name called: tenant_id=%(tenant_id)s"
 " name=%(name)s port_id=%(port_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:648
+#: neutron/plugins/midonet/midonet_lib.py:654
 #, python-format
 msgid "MidoClient.remove_port_from_port_groups called: port_id=%(port_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:76
+#: neutron/plugins/midonet/plugin.py:77
 #, python-format
 msgid "Invalid nat_type %s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:133
+#: neutron/plugins/midonet/plugin.py:134
 #, python-format
 msgid "Unrecognized direction %s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:167
+#: neutron/plugins/midonet/plugin.py:168
 #, python-format
 msgid "There is no %(name)s with ID %(id)s in MidoNet."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:219
+#: neutron/plugins/midonet/plugin.py:220
 msgid "provider_router_id should be configured in the plugin config file"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:369
+#: neutron/plugins/midonet/plugin.py:370
 #, python-format
 msgid "MidonetPluginV2.create_subnet called: subnet=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:400
+#: neutron/plugins/midonet/plugin.py:401
 #, python-format
 msgid "MidonetPluginV2.create_subnet exiting: sn_entry=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:409
+#: neutron/plugins/midonet/plugin.py:410
 #, python-format
 msgid "MidonetPluginV2.delete_subnet called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:424
+#: neutron/plugins/midonet/plugin.py:428
 msgid "MidonetPluginV2.delete_subnet exiting"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:431
+#: neutron/plugins/midonet/plugin.py:435
 #, python-format
 msgid "MidonetPluginV2.create_network called: network=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:445
+#: neutron/plugins/midonet/plugin.py:449
 #, python-format
 msgid "MidonetPluginV2.create_network exiting: net=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:454
+#: neutron/plugins/midonet/plugin.py:458
 #, python-format
 msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:462
+#: neutron/plugins/midonet/plugin.py:466
 #, python-format
 msgid "MidonetPluginV2.update_network exiting: net=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:470
+#: neutron/plugins/midonet/plugin.py:474
 #, python-format
 msgid "MidonetPluginV2.get_network called: id=%(id)r, fields=%(fields)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:475
+#: neutron/plugins/midonet/plugin.py:479
 #, python-format
 msgid "MidonetPluginV2.get_network exiting: qnet=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:480
+#: neutron/plugins/midonet/plugin.py:484
 #, python-format
 msgid "MidonetPluginV2.delete_network called: id=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:485
+#: neutron/plugins/midonet/plugin.py:489
 #, python-format
 msgid "Failed to delete neutron db, while Midonet bridge=%rhad been deleted"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:491
+#: neutron/plugins/midonet/plugin.py:495
 #, python-format
 msgid "MidonetPluginV2.create_port called: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:547
+#: neutron/plugins/midonet/plugin.py:551
 #, python-format
 msgid "Failed to create a port on network %(net_id)s: %(err)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:552
+#: neutron/plugins/midonet/plugin.py:556
 #, python-format
 msgid "MidonetPluginV2.create_port exiting: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:557
+#: neutron/plugins/midonet/plugin.py:561
 #, python-format
 msgid "MidonetPluginV2.get_port called: id=%(id)s fields=%(fields)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:564
+#: neutron/plugins/midonet/plugin.py:568
 #, python-format
 msgid "There is no port with ID %(id)s in MidoNet."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:568
+#: neutron/plugins/midonet/plugin.py:572
 #, python-format
 msgid "MidonetPluginV2.get_port exiting: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:573
+#: neutron/plugins/midonet/plugin.py:577
 #, python-format
 msgid "MidonetPluginV2.get_ports called: filters=%(filters)s fields=%(fields)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:582
+#: neutron/plugins/midonet/plugin.py:586
 #, python-format
 msgid ""
 "MidonetPluginV2.delete_port called: id=%(id)s "
 "l3_port_check=%(l3_port_check)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:615
+#: neutron/plugins/midonet/plugin.py:619
 #, python-format
 msgid "Failed to delete DHCP mapping for port %(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:671
+#: neutron/plugins/midonet/plugin.py:675
 #, python-format
 msgid "MidonetPluginV2.create_router called: router=%(router)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:707
+#: neutron/plugins/midonet/plugin.py:711
 #, python-format
 msgid "MidonetPluginV2.create_router exiting: router_data=%(router_data)s."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:719
+#: neutron/plugins/midonet/plugin.py:723
 #, python-format
 msgid ""
 "MidonetPluginV2.set_router_gateway called: id=%(id)s, "
 "gw_router=%(gw_router)s, gw_ip=%(gw_ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:763
+#: neutron/plugins/midonet/plugin.py:767
 #, python-format
 msgid "MidonetPluginV2.remove_router_gateway called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:783
+#: neutron/plugins/midonet/plugin.py:787
 #, python-format
 msgid "MidonetPluginV2.update_router called: id=%(id)s router=%(router)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:821
+#: neutron/plugins/midonet/plugin.py:825
 #, python-format
 msgid "MidonetPluginV2.update_router exiting: router=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:832
+#: neutron/plugins/midonet/plugin.py:836
 #, python-format
 msgid "MidonetPluginV2.delete_router called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:932
+#: neutron/plugins/midonet/plugin.py:936
 #, python-format
 msgid ""
 "MidonetPluginV2.add_router_interface called: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:956
+#: neutron/plugins/midonet/plugin.py:960
 msgid ""
 "DHCP agent is not working correctly. No port to reach the Metadata server"
 " on this network"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:963
+#: neutron/plugins/midonet/plugin.py:967
 #, python-format
 msgid ""
 "Failed to create MidoNet resources to add router interface. "
 "info=%(info)s, router_id=%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:970
+#: neutron/plugins/midonet/plugin.py:974
 #, python-format
 msgid "MidonetPluginV2.add_router_interface exiting: info=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:976
+#: neutron/plugins/midonet/plugin.py:980
 #, python-format
 msgid ""
 "MidonetPluginV2.update_floatingip called: id=%(id)s "
 "floatingip=%(floatingip)s "
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1030
+#: neutron/plugins/midonet/plugin.py:1034
 #, python-format
 msgid "MidonetPluginV2.update_floating_ip exiting: fip=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1040
+#: neutron/plugins/midonet/plugin.py:1044
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group called: "
 "security_group=%(security_group)s default_sg=%(default_sg)s "
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1069
+#: neutron/plugins/midonet/plugin.py:1073
 #, python-format
 msgid "Failed to create MidoNet resources for sg %(sg)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1076
+#: neutron/plugins/midonet/plugin.py:1080
 #, python-format
 msgid "MidonetPluginV2.create_security_group exiting: sg=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1082
+#: neutron/plugins/midonet/plugin.py:1086
 #, python-format
 msgid "MidonetPluginV2.delete_security_group called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1114
+#: neutron/plugins/midonet/plugin.py:1118
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group_rule called: "
 "security_group_rule=%(security_group_rule)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1124
+#: neutron/plugins/midonet/plugin.py:1128
 #, python-format
 msgid "MidonetPluginV2.create_security_group_rule exiting: rule=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1134
+#: neutron/plugins/midonet/plugin.py:1138
 #, python-format
 msgid "MidonetPluginV2.delete_security_group_rule called: sg_rule_id=%s"
 msgstr ""
@@ -8099,6 +8099,7 @@ msgid "Agent loop process devices!"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:396
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:224
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1083
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:275
 #: neutron/tests/unit/openvswitch/test_ovs_tunnel.py:438
@@ -8528,16 +8529,12 @@ msgstr ""
 msgid "Update ports: added=%(added)s, removed=%(removed)s"
 msgstr ""
 
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:66
-msgid "update_ports() failed."
-msgstr ""
-
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:80
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:76
 #, python-format
 msgid "port_update received: %s"
 msgstr ""
 
-#: neutron/plugins/nec/agent/nec_neutron_agent.py:221
+#: neutron/plugins/nec/agent/nec_neutron_agent.py:219
 msgid "No port changed."
 msgstr ""
 
@@ -11872,6 +11869,172 @@ msgid ""
 "deleted first."
 msgstr ""
 
+#: neutron/services/loadbalancer/drivers/radware/driver.py:81
+msgid "vdirect server IP address"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:84
+msgid "service HA pair"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:87
+msgid "service throughtput"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:90
+msgid "service ssl throughtput"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:93
+msgid "service compression throughtput"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:96
+msgid "service cache"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:138
+#, python-format
+msgid "create_vip. vip: %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:140
+#, python-format
+msgid "create_vip. extended_vip: %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:142
+#, python-format
+msgid "create_vip. network_id: %s "
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:144
+#, python-format
+msgid "create_vip. service_name: %s "
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:174
+#, python-format
+msgid "Failed to remove workflow %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:262
+#, python-format
+msgid ""
+"_handle_pool_health_monitor. health_monitor = %(hm_id)s pool_id = "
+"%(pool_id)s delete = %(delete)s vip_id = %(vip_id)s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:308
+#, python-format
+msgid "_update_workflow response: %s "
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:314
+#: neutron/services/loadbalancer/drivers/radware/driver.py:330
+msgid "params must contain __ids__ field!"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:322
+#: neutron/services/loadbalancer/drivers/radware/driver.py:348
+#, python-format
+msgid "Pushing operation %s to the queue"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:334
+#, python-format
+msgid "Remove the workflow %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:439
+#, python-format
+msgid "create_workflow response: %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:468
+#, python-format
+msgid "About to upload wf template named %s.zip"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:484
+#, python-format
+msgid "Folders are %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:486
+#, python-format
+msgid "Folder is %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:490
+#, python-format
+msgid "About to add file %s to zip"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:491
+#, python-format
+msgid "Path: %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:494
+#, python-format
+msgid "File %s was added to zip"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:520
+#, python-format
+msgid "vDirectRESTClient:init server=%(server)s, port=%(port)d, ssl=%(ssl)r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:545
+msgid "vdirectRESTClient: Could not establish HTTPS connection"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:552
+msgid "vdirectRESTClient: Could not establish HTTP connection"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:569
+#, python-format
+msgid "vdirectRESTClient: %(action)s failure, %(e)r"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:616
+#, python-format
+msgid "Operation %(operation)s failed. Reason: %(msg)s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:650
+#, python-format
+msgid ""
+"Operation %(oper)s is completed after %(sec_to_completion)d sec with "
+"success status: %(success)s :"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:664
+#, python-format
+msgid "Operation %s is not completed yet.."
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:674
+msgid "Exception was thrown inside OperationCompletionHander"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:697
+#, python-format
+msgid "_update: %s "
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:732
+#, python-format
+msgid "_remove_object_from_db %s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:745
+#, python-format
+msgid "Tried to remove unsupported lbaas entity %s!"
+msgstr ""
+
 #: neutron/services/metering/agents/metering_agent.py:67
 msgid "Metering driver"
 msgstr ""
@@ -12868,5 +13031,11 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "VM %s is not created as it is not found inArista DB"
+#~ msgstr ""
+
+#~ msgid "MidoClient.delete_dhcp called: bridge=%(bridge)s, "
+#~ msgstr ""
+
+#~ msgid "update_ports() failed."
 #~ msgstr ""
 
