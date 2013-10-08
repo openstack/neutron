@@ -23,6 +23,7 @@ import testtools
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
+from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.openstack.common.rpc import common as rpc_common
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
@@ -329,6 +330,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         with contextlib.nested(
             mock.patch.object(ip_lib, "device_exists"),
             mock.patch.object(sys, "exit"),
+            mock.patch.object(utils, "execute"),
             mock.patch.object(ovs_lib.OVSBridge, "remove_all_flows"),
             mock.patch.object(ovs_lib.OVSBridge, "add_flow"),
             mock.patch.object(ovs_lib.OVSBridge, "add_port"),
@@ -339,15 +341,26 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(ip_lib.IpLinkCommand, "delete"),
             mock.patch.object(ip_lib.IpLinkCommand, "set_up"),
             mock.patch.object(ip_lib.IpLinkCommand, "set_mtu")
-        ) as (devex_fn, sysexit_fn, remflows_fn, ovs_addfl_fn,
+        ) as (devex_fn, sysexit_fn, utilsexec_fn, remflows_fn, ovs_addfl_fn,
               ovs_addport_fn, ovs_delport_fn, br_addport_fn,
               br_delport_fn, addveth_fn, linkdel_fn, linkset_fn, linkmtu_fn):
             devex_fn.return_value = True
+            parent = mock.MagicMock()
+            parent.attach_mock(utilsexec_fn, 'utils_execute')
+            parent.attach_mock(linkdel_fn, 'link_delete')
+            parent.attach_mock(addveth_fn, 'add_veth')
             addveth_fn.return_value = (ip_lib.IPDevice("int-br-eth1"),
                                        ip_lib.IPDevice("phy-br-eth1"))
             ovs_addport_fn.return_value = "int_ofport"
             br_addport_fn.return_value = "phys_veth"
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
+            expected_calls = [mock.call.link_delete(),
+                              mock.call.utils_execute(['/sbin/udevadm',
+                                                       'settle',
+                                                       '--timeout=10']),
+                              mock.call.add_veth('int-br-eth',
+                                                 'phy-br-eth')]
+            parent.assert_has_calls(expected_calls, any_order=False)
             self.assertEqual(self.agent.int_ofports["physnet1"],
                              "phys_veth")
             self.assertEqual(self.agent.phys_ofports["physnet1"],
