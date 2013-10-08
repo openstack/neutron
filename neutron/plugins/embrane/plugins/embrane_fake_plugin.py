@@ -25,7 +25,7 @@ from neutron.plugins.embrane.l2base.fake import fakeplugin_support as sup
 
 class EmbraneFakePlugin(base.EmbranePlugin, extraroute_db.ExtraRoute_db_mixin,
                         l2.FakeL2Plugin):
-    _plugin_support = sup.FakePluginSupport
+    _plugin_support = sup.FakePluginSupport()
 
     def __init__(self):
         '''First run plugin specific initialization, then Embrane's.'''
