@@ -158,7 +158,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
 
         self.req._issue_request()
         LOG.info('request_error: %s' % self.req._request_error)
-        self.assertTrue(isinstance(self.req._request_error, Exception))
+        self.assertIsInstance(self.req._request_error, Exception)
         self.assertTrue(self.client.acquire_connection.called)
 
     def test_issue_request_handle_none_sock(self):

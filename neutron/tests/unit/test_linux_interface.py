@@ -358,9 +358,7 @@ class TestMetaInterfaceDriver(TestBase):
     def test_get_driver_by_network_id(self):
         meta_interface = interface.MetaInterfaceDriver(self.conf)
         driver = meta_interface._get_driver_by_network_id('test')
-        self.assertTrue(isinstance(
-            driver,
-            interface.OVSInterfaceDriver))
+        self.assertIsInstance(driver, interface.OVSInterfaceDriver)
 
     def test_set_device_plugin_tag(self):
         meta_interface = interface.MetaInterfaceDriver(self.conf)
