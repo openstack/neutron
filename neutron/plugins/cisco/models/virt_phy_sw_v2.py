@@ -336,6 +336,47 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         """For this model this method will be delegated to vswitch plugin."""
         pass
 
+    def _check_nexus_net_create_needed(self, new_port, old_port):
+        """Check if nexus plugin should be invoked for net_create.
+
+        In the following cases, the plugin should be invoked:
+           -- a port is attached to a VM instance. The old host id is None
+           -- VM migration. The old host id has a valid value
+
+        When the plugin needs to be invoked, return the old_host_id,
+        and a list of calling arguments.
+        Otherwise, return '' for old host id and an empty list
+        """
+        old_device_id = old_port['device_id']
+        new_device_id = new_port.get('device_id')
+        new_host_id = self._get_port_host_id_from_bindings(new_port)
+        tenant_id = old_port['tenant_id']
+        net_id = old_port['network_id']
+        old_host_id = self._get_port_host_id_from_bindings(old_port)
+
+        LOG.debug(_("tenant_id: %(tid)s, net_id: %(nid)s, "
+                    "old_device_id: %(odi)s, new_device_id: %(ndi)s, "
+                    "old_host_id: %(ohi)s, new_host_id: %(nhi)s, "
+                    "old_device_owner: %(odo)s, new_device_owner: %(ndo)s"),
+                  {'tid': tenant_id, 'nid': net_id,
+                   'odi': old_device_id, 'ndi': new_device_id,
+                   'ohi': old_host_id, 'nhi': new_host_id,
+                   'odo': old_port.get('device_owner'),
+                   'ndo': new_port.get('device_owner')})
+
+        # A port is attached to an instance
+        if (new_device_id and not old_device_id and new_host_id and
+                self._check_valid_port_device_owner(new_port)):
+            return '', [tenant_id, net_id, new_device_id, new_host_id]
+
+        # An instance is being migrated
+        if (old_device_id and old_host_id and new_host_id != old_host_id and
+                self._check_valid_port_device_owner(old_port)):
+            return old_host_id, [tenant_id, net_id, old_device_id, new_host_id]
+
+        # no need to invoke the plugin
+        return '', []
+
     def update_port(self, context, id, port):
         """Update port.
 
@@ -344,24 +385,27 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         """
         LOG.debug(_("update_port() called"))
         old_port = self.get_port(context, id)
-        old_device = old_port['device_id']
         args = [context, id, port]
         ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                     self._func_name(),
                                                     args)
-        net_id = old_port['network_id']
-        instance_id = ''
-        if 'device_id' in port['port']:
-            instance_id = port['port']['device_id']
-
-        # Check if there's a new device_id
         try:
-            host_id = self._get_port_host_id_from_bindings(port['port'])
-            if (instance_id and not old_device and host_id and
-                self._check_valid_port_device_owner(port['port'])):
-                tenant_id = old_port['tenant_id']
-                self._invoke_nexus_for_net_create(
-                    context, tenant_id, net_id, instance_id, host_id)
+            # Check if the nexus plugin needs to be invoked
+            old_host_id, create_args = self._check_nexus_net_create_needed(
+                port['port'], old_port)
+
+            # In the case of migration, invoke it to remove
+            # the previous port binding
+            if old_host_id:
+                vlan_id = self._get_segmentation_id(old_port['network_id'])
+                delete_args = [old_port['device_id'], vlan_id]
+                self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
+                                               "delete_port",
+                                               delete_args)
+
+            # Invoke the Nexus plugin to create a net and/or new port binding
+            if create_args:
+                self._invoke_nexus_for_net_create(context, *create_args)
 
             return ovs_output[0]
         except Exception:

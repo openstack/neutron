@@ -21,6 +21,7 @@ import mock
 import webob.exc as wexc
 
 from neutron.api import extensions
+from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.common import exceptions as q_exc
 from neutron import context
@@ -50,12 +51,16 @@ BRIDGE_NAME = 'br-eth1'
 VLAN_START = 1000
 VLAN_END = 1100
 COMP_HOST_NAME = 'testhost'
+COMP_HOST_NAME_2 = 'testhost_2'
 NEXUS_IP_ADDR = '1.1.1.1'
 NEXUS_DEV_ID = 'NEXUS_SWITCH'
 NEXUS_USERNAME = 'admin'
 NEXUS_PASSWORD = 'mySecretPassword'
 NEXUS_SSH_PORT = 22
 NEXUS_INTERFACE = '1/1'
+NEXUS_INTERFACE_2 = '1/2'
+NEXUS_PORT_1 = 'ethernet:1/1'
+NEXUS_PORT_2 = 'ethernet:1/2'
 NETWORK_NAME = 'test_network'
 CIDR_1 = '10.0.0.0/24'
 CIDR_2 = '10.0.1.0/24'
@@ -104,6 +109,7 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             (NEXUS_DEV_ID, NEXUS_IP_ADDR, 'password'): NEXUS_PASSWORD,
             (NEXUS_DEV_ID, NEXUS_IP_ADDR, 'ssh_port'): NEXUS_SSH_PORT,
             (NEXUS_DEV_ID, NEXUS_IP_ADDR, COMP_HOST_NAME): NEXUS_INTERFACE,
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, COMP_HOST_NAME_2): NEXUS_INTERFACE_2,
         }
         nexus_patch = mock.patch.dict(cisco_config.device_dictionary,
                                       nexus_config)
@@ -545,6 +551,198 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
             end_rows = nexus_db_v2.get_nexusvlan_binding(VLAN_START,
                                                          NEXUS_IP_ADDR)
             self.assertEqual(start_rows, end_rows)
+
+    def test_model_update_port_attach(self):
+        """Test the model for update_port in attaching to an instance.
+
+        Mock the routines that call into the plugin code, and make sure they
+        are called with correct arguments.
+
+        """
+        with contextlib.nested(
+                self.port(),
+                mock.patch.object(virt_phy_sw_v2.VirtualPhysicalSwitchModelV2,
+                                  '_invoke_plugin_per_device'),
+                mock.patch.object(virt_phy_sw_v2.VirtualPhysicalSwitchModelV2,
+                                  '_invoke_nexus_for_net_create')
+        ) as (port, invoke_plugin_per_device, invoke_nexus_for_net_create):
+            data = {'port': {portbindings.HOST_ID: COMP_HOST_NAME,
+                    'device_id': DEVICE_ID_1,
+                    'device_owner': DEVICE_OWNER}}
+
+            req = self.new_update_request('ports', data, port['port']['id'])
+            # Note, due to mocking out the two model routines, response won't
+            # contain any useful data
+            req.get_response(self.api)
+
+            # Note that call_args_list is used instead of
+            # assert_called_once_with which requires exact match of arguments.
+            # This is because the mocked routines contain variable number of
+            # arguments and/or dynamic objects.
+            self.assertEqual(invoke_plugin_per_device.call_count, 1)
+            self.assertEqual(
+                invoke_plugin_per_device.call_args_list[0][0][0:2],
+                (const.VSWITCH_PLUGIN, 'update_port'))
+            self.assertEqual(invoke_nexus_for_net_create.call_count, 1)
+            self.assertEqual(
+                invoke_nexus_for_net_create.call_args_list[0][0][1:],
+                (port['port']['tenant_id'], port['port']['network_id'],
+                 data['port']['device_id'],
+                 data['port'][portbindings.HOST_ID],))
+
+    def test_model_update_port_migrate(self):
+        """Test the model for update_port in migrating an instance.
+
+        Mock the routines that call into the plugin code, and make sure they
+        are called with correct arguments.
+
+        """
+        arg_list = (portbindings.HOST_ID,)
+        data = {portbindings.HOST_ID: COMP_HOST_NAME,
+                'device_id': DEVICE_ID_1,
+                'device_owner': DEVICE_OWNER}
+
+        with contextlib.nested(
+                self.port(arg_list=arg_list, **data),
+                mock.patch.object(virt_phy_sw_v2.VirtualPhysicalSwitchModelV2,
+                                  '_invoke_plugin_per_device'),
+                mock.patch.object(virt_phy_sw_v2.VirtualPhysicalSwitchModelV2,
+                                  '_invoke_nexus_for_net_create')
+        ) as (port, invoke_plugin_per_device, invoke_nexus_for_net_create):
+            data = {'port': {portbindings.HOST_ID: COMP_HOST_NAME_2}}
+            req = self.new_update_request('ports', data, port['port']['id'])
+            # Note, due to mocking out the two model routines, response won't
+            # contain any useful data
+            req.get_response(self.api)
+
+            # Note that call_args_list is used instead of
+            # assert_called_once_with which requires exact match of arguments.
+            # This is because the mocked routines contain variable number of
+            # arguments and/or dynamic objects.
+            self.assertEqual(invoke_plugin_per_device.call_count, 2)
+            self.assertEqual(
+                invoke_plugin_per_device.call_args_list[0][0][0:2],
+                (const.VSWITCH_PLUGIN, 'update_port'))
+            self.assertEqual(
+                invoke_plugin_per_device.call_args_list[1][0][0:2],
+                (const.NEXUS_PLUGIN, 'delete_port'))
+            self.assertEqual(invoke_nexus_for_net_create.call_count, 1)
+            self.assertEqual(
+                invoke_nexus_for_net_create.call_args_list[0][0][1:],
+                (port['port']['tenant_id'], port['port']['network_id'],
+                 port['port']['device_id'],
+                 data['port'][portbindings.HOST_ID],))
+
+    def test_model_update_port_net_create_not_needed(self):
+        """Test the model for update_port when no action is needed.
+
+        Mock the routines that call into the plugin code, and make sure that
+        VSWITCH plugin is called with correct arguments, while NEXUS plugin is
+        not called at all.
+
+        """
+        arg_list = (portbindings.HOST_ID,)
+        data = {portbindings.HOST_ID: COMP_HOST_NAME,
+                'device_id': DEVICE_ID_1,
+                'device_owner': DEVICE_OWNER}
+
+        with contextlib.nested(
+                self.port(arg_list=arg_list, **data),
+                mock.patch.object(virt_phy_sw_v2.VirtualPhysicalSwitchModelV2,
+                                  '_invoke_plugin_per_device'),
+                mock.patch.object(virt_phy_sw_v2.VirtualPhysicalSwitchModelV2,
+                                  '_invoke_nexus_for_net_create')
+        ) as (port, invoke_plugin_per_device, invoke_nexus_for_net_create):
+            data = {'port': {portbindings.HOST_ID: COMP_HOST_NAME,
+                    'device_id': DEVICE_ID_1,
+                    'device_owner': DEVICE_OWNER}}
+            req = self.new_update_request('ports', data, port['port']['id'])
+            # Note, due to mocking out the two model routines, response won't
+            # contain any useful data
+            req.get_response(self.api)
+
+            # Note that call_args_list is used instead of
+            # assert_called_once_with which requires exact match of arguments.
+            # This is because the mocked routines contain variable number of
+            # arguments and/or dynamic objects.
+            self.assertEqual(invoke_plugin_per_device.call_count, 1)
+            self.assertEqual(
+                invoke_plugin_per_device.call_args_list[0][0][0:2],
+                (const.VSWITCH_PLUGIN, 'update_port'))
+            self.assertFalse(invoke_nexus_for_net_create.called)
+
+    def verify_portbinding(self, host_id1, host_id2,
+                           vlan, device_id, binding_port):
+        """Verify a port binding entry in the DB is correct."""
+        self.assertEqual(host_id1, host_id2)
+        pb = nexus_db_v2.get_nexusvm_bindings(vlan, device_id)
+        self.assertEqual(len(pb), 1)
+        self.assertEqual(pb[0].port_id, binding_port)
+        self.assertEqual(pb[0].switch_ip, NEXUS_IP_ADDR)
+
+    def test_db_update_port_attach(self):
+        """Test DB for update_port in attaching to an instance.
+
+        Query DB for the port binding entry corresponding to the search key
+        (vlan, device_id), and make sure that it's bound to correct switch port
+
+        """
+        with self.port() as port:
+            data = {'port': {portbindings.HOST_ID: COMP_HOST_NAME,
+                    'device_id': DEVICE_ID_1,
+                    'device_owner': DEVICE_OWNER}}
+
+            req = self.new_update_request('ports', data, port['port']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            ctx = context.get_admin_context()
+            net = self._show('networks', res['port']['network_id'],
+                             neutron_context=ctx)['network']
+            self.assertTrue(attributes.is_attr_set(
+                            net.get(provider.SEGMENTATION_ID)))
+            vlan = net[provider.SEGMENTATION_ID]
+            self.assertEqual(vlan, VLAN_START)
+            self.verify_portbinding(res['port'][portbindings.HOST_ID],
+                                    data['port'][portbindings.HOST_ID],
+                                    vlan,
+                                    data['port']['device_id'],
+                                    NEXUS_PORT_1)
+
+    def test_db_update_port_migrate(self):
+        """Test DB for update_port in migrating an instance.
+
+        Query DB for the port binding entry corresponding to the search key
+        (vlan, device_id), and make sure that it's bound to correct switch port
+        before and after the migration.
+
+        """
+        arg_list = (portbindings.HOST_ID,)
+        data = {portbindings.HOST_ID: COMP_HOST_NAME,
+                'device_id': DEVICE_ID_1,
+                'device_owner': DEVICE_OWNER}
+
+        with self.port(arg_list=arg_list, **data) as port:
+            ctx = context.get_admin_context()
+            net = self._show('networks', port['port']['network_id'],
+                             neutron_context=ctx)['network']
+            self.assertTrue(attributes.is_attr_set(
+                            net.get(provider.SEGMENTATION_ID)))
+            vlan = net[provider.SEGMENTATION_ID]
+            self.assertEqual(vlan, VLAN_START)
+            self.verify_portbinding(port['port'][portbindings.HOST_ID],
+                                    data[portbindings.HOST_ID],
+                                    vlan,
+                                    data['device_id'],
+                                    NEXUS_PORT_1)
+
+            new_data = {'port': {portbindings.HOST_ID: COMP_HOST_NAME_2}}
+            req = self.new_update_request('ports',
+                                          new_data, port['port']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.verify_portbinding(res['port'][portbindings.HOST_ID],
+                                    new_data['port'][portbindings.HOST_ID],
+                                    vlan,
+                                    data['device_id'],
+                                    NEXUS_PORT_2)
 
 
 class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
