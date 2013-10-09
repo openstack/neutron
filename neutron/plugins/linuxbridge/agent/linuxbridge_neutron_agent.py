@@ -256,6 +256,8 @@ class LinuxBridgeManager:
                 args['ttl'] = cfg.CONF.VXLAN.ttl
             if cfg.CONF.VXLAN.tos:
                 args['tos'] = cfg.CONF.VXLAN.tos
+            if cfg.CONF.VXLAN.l2_population:
+                args['proxy'] = True
             int_vxlan = self.ip.add_vxlan(interface, segmentation_id, **args)
             int_vxlan.link.set_up()
             LOG.debug(_("Done creating vxlan interface %s"), interface)

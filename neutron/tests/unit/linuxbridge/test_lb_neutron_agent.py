@@ -361,6 +361,13 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
                                                 group="224.0.0.1",
                                                 dev=self.lbm.local_int)
+                cfg.CONF.set_override('l2_population', 'True', 'VXLAN')
+                self.assertEqual(self.lbm.ensure_vxlan(seg_id),
+                                 "vxlan-" + seg_id)
+                add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
+                                                group="224.0.0.1",
+                                                dev=self.lbm.local_int,
+                                                proxy=True)
 
     def test_update_interface_ip_details(self):
         gwdict = dict(gateway='1.1.1.1',

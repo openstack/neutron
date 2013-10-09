@@ -147,8 +147,8 @@ class IPWrapper(SubProcessBase):
             device.link.set_netns(self.namespace)
 
     def add_vxlan(self, name, vni, group=None, dev=None, ttl=None, tos=None,
-                  local=None, port=None):
-        cmd = ['add', name, 'type', 'vxlan', 'id', vni, 'proxy']
+                  local=None, port=None, proxy=False):
+        cmd = ['add', name, 'type', 'vxlan', 'id', vni]
         if group:
                 cmd.extend(['group', group])
         if dev:
@@ -159,6 +159,8 @@ class IPWrapper(SubProcessBase):
                 cmd.extend(['tos', tos])
         if local:
                 cmd.extend(['local', local])
+        if proxy:
+                cmd.append('proxy')
         # tuple: min,max
         if port and len(port) == 2:
                 cmd.extend(['port', port[0], port[1]])
