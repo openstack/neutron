@@ -1071,6 +1071,16 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
             # update network on network controller
             self._send_update_network(orig_net, context)
 
+    def disassociate_floatingips(self, context, port_id):
+        LOG.debug(_("NeutronRestProxyV2: diassociate_floatingips() called"))
+        super(NeutronRestProxyV2, self).disassociate_floatingips(context,
+                                                                 port_id)
+        port = super(NeutronRestProxyV2, self).get_port(context, port_id)
+        net_id = port['network_id']
+        orig_net = super(NeutronRestProxyV2, self).get_network(context,
+                                                               net_id)
+        self._send_update_network(orig_net, context)
+
     def _send_all_data(self):
         """Pushes all data to network ctrl (networks/ports, ports/attachments).
 
