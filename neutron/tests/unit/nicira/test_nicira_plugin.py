@@ -1138,7 +1138,7 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
                                 tenant_id='not_admin', set_context=True)
 
         port = self.deserialize('json', res)
-        self.assertEqual(ext_qos.QUEUE not in port['port'], True)
+        self.assertNotIn(ext_qos.QUEUE, port['port'])
 
     def test_dscp_value_out_of_range(self):
         body = {'qos_queue': {'tenant_id': 'admin', 'dscp': '64',
@@ -1172,7 +1172,7 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
         neutron_context = context.Context('', 'not_admin')
         port = self._update('ports', port['port']['id'], data,
                             neutron_context=neutron_context)
-        self.assertFalse(ext_qos.QUEUE in port['port'])
+        self.assertNotIn(ext_qos.QUEUE, port['port'])
 
     def test_rxtx_factor(self):
         with self.qos_queue(max=10) as q1:
@@ -1438,7 +1438,7 @@ class TestNiciraMultiProviderNetworks(NiciraPluginV2TestCase):
         network = self.deserialize(self.fmt, net_req.get_response(self.api))
         for provider_field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
                                pnet.SEGMENTATION_ID]:
-            self.assertTrue(provider_field not in network['network'])
+            self.assertNotIn(provider_field, network['network'])
         tz = network['network'][mpnet.SEGMENTS][0]
         self.assertEqual(tz[pnet.NETWORK_TYPE], 'vlan')
         self.assertEqual(tz[pnet.PHYSICAL_NETWORK], 'physnet1')

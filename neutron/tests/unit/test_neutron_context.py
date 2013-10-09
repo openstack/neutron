@@ -48,7 +48,7 @@ class TestNeutronContext(base.BaseTestCase):
         self.assertIsNone(cxt_dict['user_id'])
         self.assertIsNone(cxt_dict['tenant_id'])
         self.assertIsNotNone(cxt.session)
-        self.assertFalse('session' in cxt_dict)
+        self.assertNotIn('session', cxt_dict)
 
     def test_neutron_context_admin_without_session_to_dict(self):
         cxt = context.get_admin_context_without_session()

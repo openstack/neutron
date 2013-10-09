@@ -45,8 +45,8 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
     def _check_response_no_portbindings(self, port):
         self.assertTrue('status' in port)
-        self.assertFalse(portbindings.VIF_TYPE in port)
-        self.assertFalse(portbindings.CAPABILITIES in port)
+        self.assertNotIn(portbindings.VIF_TYPE, port)
+        self.assertNotIn(portbindings.CAPABILITIES, port)
 
     def _get_non_admin_context(self):
         return context.Context(user_id=None,
