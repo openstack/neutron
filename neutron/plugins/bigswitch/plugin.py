@@ -1075,11 +1075,19 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_("NeutronRestProxyV2: diassociate_floatingips() called"))
         super(NeutronRestProxyV2, self).disassociate_floatingips(context,
                                                                  port_id)
-        port = super(NeutronRestProxyV2, self).get_port(context, port_id)
-        net_id = port['network_id']
-        orig_net = super(NeutronRestProxyV2, self).get_network(context,
-                                                               net_id)
-        self._send_update_network(orig_net, context)
+        try:
+            ext_net_id = self.get_external_network_id(context)
+            if ext_net_id:
+                # Use the elevated state of the context for the ext_net query
+                admin_context = context.elevated()
+                ext_net = super(NeutronRestProxyV2,
+                                self).get_network(admin_context, ext_net_id)
+                # update external network on network controller
+                self._send_update_network(ext_net, admin_context)
+        except exceptions.TooManyExternalNetworks:
+            # get_external_network can raise errors when multiple external
+            # networks are detected, which isn't supported by the Plugin
+            LOG.error(_("NeutronRestProxyV2: too many external networks"))
 
     def _send_all_data(self):
         """Pushes all data to network ctrl (networks/ports, ports/attachments).
