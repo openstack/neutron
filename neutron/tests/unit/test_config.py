@@ -15,6 +15,7 @@
 
 import os
 
+import mock
 from oslo.config import cfg
 
 from neutron.common import config  # noqa
@@ -44,3 +45,11 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual(86400, cfg.CONF.dhcp_lease_duration)
         self.assertFalse(cfg.CONF.allow_overlapping_ips)
         self.assertEqual('neutron', cfg.CONF.control_exchange)
+
+    def test_load_paste_app_not_found(self):
+        self.config(api_paste_config='no_such_file.conf')
+        with mock.patch.object(cfg.CONF, 'find_file', return_value=None) as ff:
+            e = self.assertRaises(cfg.ConfigFilesNotFoundError,
+                                  config.load_paste_app, 'app')
+            ff.assert_called_once_with('no_such_file.conf')
+            self.assertEqual(['no_such_file.conf'], e.config_files)

@@ -132,12 +132,15 @@ def load_paste_app(app_name):
     """Builds and returns a WSGI app from a paste config file.
 
     :param app_name: Name of the application to load
-    :raises RuntimeError when config file cannot be located or application
-            cannot be loaded from config file
+    :raises ConfigFilesNotFoundError when config file cannot be located
+    :raises RuntimeError when application cannot be loaded from config file
     """
 
-    config_path = os.path.abspath(cfg.CONF.find_file(
-        cfg.CONF.api_paste_config))
+    config_path = cfg.CONF.find_file(cfg.CONF.api_paste_config)
+    if not config_path:
+        raise cfg.ConfigFilesNotFoundError(
+            config_files=[cfg.CONF.api_paste_config])
+    config_path = os.path.abspath(config_path)
     LOG.info(_("Config paste file: %s"), config_path)
 
     try:
