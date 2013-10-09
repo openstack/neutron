@@ -69,4 +69,4 @@ class MediaTypeUnsupport(VcnsApiException):
 
 
 class ServiceUnavailable(VcnsApiException):
-    message = _("Service on available: %(uri)s")
+    message = _("Service Unavailable: %(uri)s")
