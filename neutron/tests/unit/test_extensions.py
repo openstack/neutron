@@ -115,7 +115,7 @@ class ResourceExtensionTest(base.BaseTestCase):
             # Shouldn't be reached
             self.assertTrue(False)
         except webtest.AppError as e:
-            self.assertTrue('501' in e.message)
+            self.assertIn('501', e.message)
 
     def test_resource_can_be_added_as_extension(self):
         res_ext = extensions.ResourceExtension(
@@ -438,7 +438,7 @@ class ExtensionManagerTest(base.BaseTestCase):
         ext_mgr.add_extension(InvalidExtension())
         ext_mgr.add_extension(ext_stubs.StubExtension("valid_extension"))
 
-        self.assertTrue('valid_extension' in ext_mgr.extensions)
+        self.assertIn('valid_extension', ext_mgr.extensions)
         self.assertNotIn('invalid_extension', ext_mgr.extensions)
 
 
@@ -453,9 +453,9 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         ext_mgr.add_extension(ext_stubs.StubExtension("e2"))
         ext_mgr.add_extension(ext_stubs.StubExtension("e3"))
 
-        self.assertTrue("e1" in ext_mgr.extensions)
+        self.assertIn("e1", ext_mgr.extensions)
         self.assertNotIn("e2", ext_mgr.extensions)
-        self.assertTrue("e3" in ext_mgr.extensions)
+        self.assertIn("e3", ext_mgr.extensions)
 
     def test_extensions_are_not_loaded_for_plugins_unaware_of_extensions(self):
         class ExtensionUnawarePlugin(object):
@@ -498,7 +498,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         ext_mgr.add_extension(
             ext_stubs.ExtensionExpectingPluginInterface("supported_extension"))
 
-        self.assertTrue("supported_extension" in ext_mgr.extensions)
+        self.assertIn("supported_extension", ext_mgr.extensions)
 
     def test_extensions_expecting_neutron_plugin_interface_are_loaded(self):
         class ExtensionForQuamtumPluginInterface(ext_stubs.StubExtension):
@@ -512,7 +512,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
 
-        self.assertTrue("e1" in ext_mgr.extensions)
+        self.assertIn("e1", ext_mgr.extensions)
 
     def test_extensions_without_need_for__plugin_interface_are_loaded(self):
         class ExtensionWithNoNeedForPluginInterface(ext_stubs.StubExtension):
@@ -528,7 +528,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
 
-        self.assertTrue("e1" in ext_mgr.extensions)
+        self.assertIn("e1", ext_mgr.extensions)
 
     def test_extension_loaded_for_non_core_plugin(self):
         class NonCorePluginExtenstion(ext_stubs.StubExtension):
@@ -540,7 +540,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
         ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
         ext_mgr.add_extension(NonCorePluginExtenstion("e1"))
 
-        self.assertTrue("e1" in ext_mgr.extensions)
+        self.assertIn("e1", ext_mgr.extensions)
 
 
 class ExtensionControllerTest(testlib_api.WebTestCase):

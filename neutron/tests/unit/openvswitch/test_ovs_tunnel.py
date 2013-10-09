@@ -301,7 +301,7 @@ class TunnelTest(base.BaseTestCase):
         a.available_local_vlans = set()
         a.local_vlan_map[NET_UUID] = LVM
         a.reclaim_local_vlan(NET_UUID)
-        self.assertTrue(LVM.vlan in a.available_local_vlans)
+        self.assertIn(LVM.vlan, a.available_local_vlans)
         self.mox.VerifyAll()
 
     def test_reclaim_local_vlan_flat(self):
@@ -324,7 +324,7 @@ class TunnelTest(base.BaseTestCase):
         a.available_local_vlans = set()
         a.local_vlan_map[NET_UUID] = LVM_FLAT
         a.reclaim_local_vlan(NET_UUID)
-        self.assertTrue(LVM_FLAT.vlan in a.available_local_vlans)
+        self.assertIn(LVM_FLAT.vlan, a.available_local_vlans)
         self.mox.VerifyAll()
 
     def test_reclaim_local_vlan_vlan(self):
@@ -347,7 +347,7 @@ class TunnelTest(base.BaseTestCase):
         a.available_local_vlans = set()
         a.local_vlan_map[NET_UUID] = LVM_VLAN
         a.reclaim_local_vlan(NET_UUID)
-        self.assertTrue(LVM_VLAN.vlan in a.available_local_vlans)
+        self.assertIn(LVM_VLAN.vlan, a.available_local_vlans)
         self.mox.VerifyAll()
 
     def test_port_bound(self):

@@ -258,7 +258,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBIntTestCase):
                     r1_id = r1['router']['id']
                     body = self._router_interface_action('add', r_id, s_id,
                                                          None)
-                    self.assertTrue('port_id' in body)
+                    self.assertIn('port_id', body)
                     r_port_id = body['port_id']
                     body = self._show('ports', r_port_id)
                     self.assertEqual(body['port']['device_id'], r_id)
@@ -267,7 +267,7 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBIntTestCase):
                         s1_id = s1['subnet']['id']
                         body = self._router_interface_action('add', r1_id,
                                                              s1_id, None)
-                        self.assertTrue('port_id' in body)
+                        self.assertIn('port_id', body)
                         r1_port_id = body['port_id']
                         body = self._show('ports', r1_port_id)
                         self.assertEqual(body['port']['device_id'], r1_id)
