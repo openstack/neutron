@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-08 06:16+0000\n"
+"POT-Creation-Date: 2013-10-09 06:16+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -193,7 +193,7 @@ msgstr "要用於配額檢查的預設驅動程式"
 msgid "Access to this resource was denied."
 msgstr ""
 
-#: neutron/quota.py:227
+#: neutron/quota.py:231
 #, python-format
 msgid "%s is already registered."
 msgstr "已登錄 %s。"
@@ -395,7 +395,7 @@ msgstr "重新同步的間隔。"
 msgid "The driver used to manage the DHCP server."
 msgstr "用於管理 DHCP 伺服器的驅動程式。"
 
-#: neutron/agent/dhcp_agent.py:53 neutron/agent/l3_agent.py:171
+#: neutron/agent/dhcp_agent.py:53 neutron/agent/l3_agent.py:170
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:42
 msgid "Allow overlapping IP."
 msgstr "容許重疊的 IP。"
@@ -414,7 +414,7 @@ msgstr ""
 msgid "Number of threads to use during sync process."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:64 neutron/agent/l3_agent.py:186
+#: neutron/agent/dhcp_agent.py:64 neutron/agent/l3_agent.py:185
 #: neutron/agent/metadata/namespace_proxy.py:155
 msgid "Location of Metadata Proxy UNIX domain socket"
 msgstr "meta 資料 Proxy UNIX 網域 Socket 的位置"
@@ -460,14 +460,14 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr "在 meta 資料存取網路上找到 %(port_num)d 個路由器埠。將僅考量路由器 %(router_id)s 的埠 %(port_id)s"
 
-#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:837
+#: neutron/agent/dhcp_agent.py:558 neutron/agent/l3_agent.py:848
 #: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:842
+#: neutron/agent/dhcp_agent.py:564 neutron/agent/l3_agent.py:853
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:799
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:181
@@ -477,7 +477,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
-#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:847
+#: neutron/agent/dhcp_agent.py:572 neutron/agent/l3_agent.py:858
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:281
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
@@ -500,119 +500,150 @@ msgstr ""
 
 #: neutron/agent/l3_agent.py:167
 msgid ""
-"Send this many gratuitous ARPs for HA setup, set it below or equal to 0 "
-"to disable this feature."
-msgstr "給這個項目傳送了用於高可用性設定的許多無償 ARP，請將其設為小於或等於 0 以停用此功能。"
+"Send this many gratuitous ARPs for HA setup, if less than or equal to 0, "
+"the feature is disabled"
+msgstr ""
 
-#: neutron/agent/l3_agent.py:173
+#: neutron/agent/l3_agent.py:172
 #, fuzzy
 msgid ""
 "If namespaces is disabled, the l3 agent can only configure a router that "
 "has the matching router ID."
 msgstr "如果名稱空間已停用，則 L3 代理程式只能配置一個具有相符路由器 ID 的路由器。"
 
-#: neutron/agent/l3_agent.py:178
+#: neutron/agent/l3_agent.py:177
 msgid "Agent should implement routers with no gateway"
 msgstr "代理程式應該實作不含閘道的路由器"
 
-#: neutron/agent/l3_agent.py:180
+#: neutron/agent/l3_agent.py:179
 msgid "UUID of external network for routers implemented by the agents."
 msgstr "代理程式所實作路由器的外部網路 UUID。"
 
-#: neutron/agent/l3_agent.py:183
+#: neutron/agent/l3_agent.py:182
 msgid "Allow running metadata proxy."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:206
+#: neutron/agent/l3_agent.py:205
 #, python-format
 msgid "Error importing interface driver '%s'"
 msgstr "匯入介面驅動程式 '%s' 時發生錯誤"
 
-#: neutron/agent/l3_agent.py:232
+#: neutron/agent/l3_agent.py:231
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:98
 msgid "An interface driver must be specified"
 msgstr "必須指定介面驅動程式"
 
-#: neutron/agent/l3_agent.py:237
+#: neutron/agent/l3_agent.py:236
 msgid "Router id is required if not using namespaces."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:258
+#: neutron/agent/l3_agent.py:257
 #, python-format
 msgid "Failed deleting namespace '%s'"
 msgstr "刪除名稱空間 '%s' 時失敗"
 
-#: neutron/agent/l3_agent.py:287
+#: neutron/agent/l3_agent.py:286
 msgid ""
 "The 'gateway_external_network_id' option must be configured for this "
 "agent as Neutron has more than one external network."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:358
+#: neutron/agent/l3_agent.py:312
+#, python-format
+msgid "Info for router %s were not found. Skipping router removal"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:361
 #: neutron/services/firewall/agents/varmour/varmour_router.py:100
 #, python-format
 msgid "Router port %s has no IP address"
 msgstr "路由器埠 %s 沒有 IP 位址"
 
-#: neutron/agent/l3_agent.py:360 neutron/db/l3_db.py:832
+#: neutron/agent/l3_agent.py:363 neutron/db/l3_db.py:832
 #: neutron/services/firewall/agents/varmour/varmour_router.py:103
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "正在忽略路由器埠 %s 上的多個 IP"
 
-#: neutron/agent/l3_agent.py:498
+#: neutron/agent/l3_agent.py:501
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr "傳送無償 ARP 時失敗：%s"
 
-#: neutron/agent/l3_agent.py:637
+#: neutron/agent/l3_agent.py:640
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:642
+#: neutron/agent/l3_agent.py:645
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:650
+#: neutron/agent/l3_agent.py:653
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:654
+#: neutron/agent/l3_agent.py:657
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:661
+#: neutron/agent/l3_agent.py:664
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr "外部網路橋接器 '%s' 不存在"
 
-#: neutron/agent/l3_agent.py:717 neutron/agent/l3_agent.py:748
+#: neutron/agent/l3_agent.py:712
+#, python-format
+msgid "Starting RPC loop for %d updated routers"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:721
+msgid "RPC loop successfully completed"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:723 neutron/agent/l3_agent.py:757
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr "同步路由器時失敗"
 
-#: neutron/agent/l3_agent.py:744
+#: neutron/agent/l3_agent.py:741
+#, python-format
+msgid "Starting _sync_routers_task - fullsync:%s"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:752
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:752
+#: neutron/agent/l3_agent.py:755
+msgid "_sync_routers_task successfully completed"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:761
 msgid "L3 agent started"
 msgstr "已啟動 L3 代理程式"
 
-#: neutron/agent/l3_agent.py:772
+#: neutron/agent/l3_agent.py:781
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr "所新增的路徑項目是 '%s'"
 
-#: neutron/agent/l3_agent.py:780
+#: neutron/agent/l3_agent.py:789
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr "所移除的路徑項目是 '%s'"
+
+#: neutron/agent/l3_agent.py:821
+msgid "Report state task started"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:845
+msgid "Report state task successfully completed"
+msgstr ""
 
 #: neutron/agent/netns_cleanup_util.py:54
 msgid "Delete the namespace by removing all devices."
@@ -1078,12 +1109,12 @@ msgstr ""
 msgid "Bridge %s not found."
 msgstr ""
 
-#: neutron/agent/linux/utils.py:42
+#: neutron/agent/linux/utils.py:43
 #, python-format
 msgid "Running command: %s"
 msgstr "正在執行指令：%s"
 
-#: neutron/agent/linux/utils.py:56
+#: neutron/agent/linux/utils.py:57
 #, python-format
 msgid ""
 "\n"
@@ -1728,12 +1759,12 @@ msgstr "基本 MAC：%s"
 msgid "Logging enabled!"
 msgstr "已啟用記載！"
 
-#: neutron/common/config.py:141
+#: neutron/common/config.py:144
 #, python-format
 msgid "Config paste file: %s"
 msgstr "配置貼上檔案：%s"
 
-#: neutron/common/config.py:146
+#: neutron/common/config.py:149
 #, python-format
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr "無法從配置檔 %(config_path)s 載入 %(app_name)s。"
@@ -3970,7 +4001,7 @@ msgid "RPC Message Invalid."
 msgstr "RPC 訊息無效。"
 
 #: neutron/openstack/common/rpc/impl_zmq.py:744
-#: neutron/plugins/midonet/plugin.py:190
+#: neutron/plugins/midonet/plugin.py:194
 #: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:23
 #: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:27
 #, python-format
@@ -6939,120 +6970,120 @@ msgstr ""
 msgid "MidoClient.remove_port_from_port_groups called: port_id=%(port_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:77
+#: neutron/plugins/midonet/plugin.py:81
 #, python-format
 msgid "Invalid nat_type %s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:134
+#: neutron/plugins/midonet/plugin.py:138
 #, python-format
 msgid "Unrecognized direction %s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:168
+#: neutron/plugins/midonet/plugin.py:172
 #, python-format
 msgid "There is no %(name)s with ID %(id)s in MidoNet."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:220
+#: neutron/plugins/midonet/plugin.py:224
 msgid "provider_router_id should be configured in the plugin config file"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:370
+#: neutron/plugins/midonet/plugin.py:385
 #, python-format
 msgid "MidonetPluginV2.create_subnet called: subnet=%r"
 msgstr "已呼叫 MidonetPluginV2.create_subnet：子網路 = %r"
 
-#: neutron/plugins/midonet/plugin.py:401
+#: neutron/plugins/midonet/plugin.py:416
 #, python-format
 msgid "MidonetPluginV2.create_subnet exiting: sn_entry=%r"
 msgstr "MidonetPluginV2.create_subnet 正在結束：sn_entry = %r"
 
-#: neutron/plugins/midonet/plugin.py:410
+#: neutron/plugins/midonet/plugin.py:425
 #, python-format
 msgid "MidonetPluginV2.delete_subnet called: id=%s"
 msgstr "已呼叫 MidonetPluginV2.delete_subnet：ID = %s"
 
-#: neutron/plugins/midonet/plugin.py:428
+#: neutron/plugins/midonet/plugin.py:443
 msgid "MidonetPluginV2.delete_subnet exiting"
 msgstr "MidonetPluginV2.delete_subnet 正在結束"
 
-#: neutron/plugins/midonet/plugin.py:435
+#: neutron/plugins/midonet/plugin.py:450
 #, python-format
 msgid "MidonetPluginV2.create_network called: network=%r"
 msgstr "已呼叫 MidonetPluginV2.create_network：網路 = %r"
 
-#: neutron/plugins/midonet/plugin.py:449
+#: neutron/plugins/midonet/plugin.py:464
 #, python-format
 msgid "MidonetPluginV2.create_network exiting: net=%r"
 msgstr "MidonetPluginV2.create_network 正在結束：網路 = %r"
 
-#: neutron/plugins/midonet/plugin.py:458
+#: neutron/plugins/midonet/plugin.py:473
 #, python-format
 msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr "已呼叫 MidonetPluginV2.update_network：ID = %(id)r，網路 = %(network)r"
 
-#: neutron/plugins/midonet/plugin.py:466
+#: neutron/plugins/midonet/plugin.py:482
 #, python-format
 msgid "MidonetPluginV2.update_network exiting: net=%r"
 msgstr "MidonetPluginV2.update_network 正在結束：網路 = %r"
 
-#: neutron/plugins/midonet/plugin.py:474
+#: neutron/plugins/midonet/plugin.py:490
 #, python-format
 msgid "MidonetPluginV2.get_network called: id=%(id)r, fields=%(fields)r"
 msgstr "已呼叫 MidonetPluginV2.get_network：ID = %(id)r，欄位 = %(fields)r"
 
-#: neutron/plugins/midonet/plugin.py:479
+#: neutron/plugins/midonet/plugin.py:495
 #, python-format
 msgid "MidonetPluginV2.get_network exiting: qnet=%r"
 msgstr "MidonetPluginV2.get_network 正在結束：qnet = %r"
 
-#: neutron/plugins/midonet/plugin.py:484
+#: neutron/plugins/midonet/plugin.py:500
 #, python-format
 msgid "MidonetPluginV2.delete_network called: id=%r"
 msgstr "已呼叫 MidonetPluginV2.delete_network：ID = %r"
 
-#: neutron/plugins/midonet/plugin.py:489
+#: neutron/plugins/midonet/plugin.py:505
 #, python-format
 msgid "Failed to delete neutron db, while Midonet bridge=%rhad been deleted"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:495
+#: neutron/plugins/midonet/plugin.py:511
 #, python-format
 msgid "MidonetPluginV2.create_port called: port=%r"
 msgstr "已呼叫 MidonetPluginV2.create_port：埠 = %r"
 
-#: neutron/plugins/midonet/plugin.py:551
+#: neutron/plugins/midonet/plugin.py:567
 #, python-format
 msgid "Failed to create a port on network %(net_id)s: %(err)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:556
+#: neutron/plugins/midonet/plugin.py:572
 #, python-format
 msgid "MidonetPluginV2.create_port exiting: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:561
+#: neutron/plugins/midonet/plugin.py:577
 #, python-format
 msgid "MidonetPluginV2.get_port called: id=%(id)s fields=%(fields)r"
 msgstr "已呼叫 MidonetPluginV2.get_port：ID = %(id)s 欄位 = %(fields)r"
 
-#: neutron/plugins/midonet/plugin.py:568
+#: neutron/plugins/midonet/plugin.py:584
 #, python-format
 msgid "There is no port with ID %(id)s in MidoNet."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:572
+#: neutron/plugins/midonet/plugin.py:588
 #, python-format
 msgid "MidonetPluginV2.get_port exiting: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:577
+#: neutron/plugins/midonet/plugin.py:593
 #, python-format
 msgid "MidonetPluginV2.get_ports called: filters=%(filters)s fields=%(fields)r"
 msgstr "已呼叫 MidonetPluginV2.get_ports：過濾器 = %(filters)s 欄位 = %(fields)r"
 
-#: neutron/plugins/midonet/plugin.py:586
+#: neutron/plugins/midonet/plugin.py:602
 #, python-format
 msgid ""
 "MidonetPluginV2.delete_port called: id=%(id)s "
@@ -7061,49 +7092,49 @@ msgstr ""
 "已呼叫 MidonetPluginV2.delete_port：ID = %(id)s "
 "l3_port_check=%(l3_port_check)r"
 
-#: neutron/plugins/midonet/plugin.py:619
+#: neutron/plugins/midonet/plugin.py:636
 #, python-format
 msgid "Failed to delete DHCP mapping for port %(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:675
+#: neutron/plugins/midonet/plugin.py:697
 #, python-format
 msgid "MidonetPluginV2.create_router called: router=%(router)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:711
+#: neutron/plugins/midonet/plugin.py:747
 #, python-format
 msgid "MidonetPluginV2.create_router exiting: router_data=%(router_data)s."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:723
+#: neutron/plugins/midonet/plugin.py:759
 #, python-format
 msgid ""
 "MidonetPluginV2.set_router_gateway called: id=%(id)s, "
 "gw_router=%(gw_router)s, gw_ip=%(gw_ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:767
+#: neutron/plugins/midonet/plugin.py:803
 #, python-format
 msgid "MidonetPluginV2.remove_router_gateway called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:787
+#: neutron/plugins/midonet/plugin.py:823
 #, python-format
 msgid "MidonetPluginV2.update_router called: id=%(id)s router=%(router)r"
 msgstr "已呼叫 MidonetPluginV2.update_router：ID = %(id)s 路由器 = %(router)r"
 
-#: neutron/plugins/midonet/plugin.py:825
+#: neutron/plugins/midonet/plugin.py:862
 #, python-format
 msgid "MidonetPluginV2.update_router exiting: router=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:836
+#: neutron/plugins/midonet/plugin.py:873
 #, python-format
 msgid "MidonetPluginV2.delete_router called: id=%s"
 msgstr "已呼叫 MidonetPluginV2.delete_router：ID = %s"
 
-#: neutron/plugins/midonet/plugin.py:936
+#: neutron/plugins/midonet/plugin.py:973
 #, python-format
 msgid ""
 "MidonetPluginV2.add_router_interface called: router_id=%(router_id)s "
@@ -7112,25 +7143,25 @@ msgstr ""
 "已呼叫 MidonetPluginV2.add_router_interface：router_id = %(router_id)s "
 "interface_info = %(interface_info)r"
 
-#: neutron/plugins/midonet/plugin.py:960
+#: neutron/plugins/midonet/plugin.py:997
 msgid ""
 "DHCP agent is not working correctly. No port to reach the Metadata server"
 " on this network"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:967
+#: neutron/plugins/midonet/plugin.py:1004
 #, python-format
 msgid ""
 "Failed to create MidoNet resources to add router interface. "
 "info=%(info)s, router_id=%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:974
+#: neutron/plugins/midonet/plugin.py:1011
 #, python-format
 msgid "MidonetPluginV2.add_router_interface exiting: info=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:980
+#: neutron/plugins/midonet/plugin.py:1017
 #, python-format
 msgid ""
 "MidonetPluginV2.update_floatingip called: id=%(id)s "
@@ -7139,12 +7170,12 @@ msgstr ""
 "已呼叫 MidonetPluginV2.update_floatingip：ID = %(id)s floatingip = "
 "%(floatingip)s "
 
-#: neutron/plugins/midonet/plugin.py:1034
+#: neutron/plugins/midonet/plugin.py:1061
 #, python-format
 msgid "MidonetPluginV2.update_floating_ip exiting: fip=%s"
 msgstr "MidonetPluginV2.update_floating_ip 正在結束：fip = %s"
 
-#: neutron/plugins/midonet/plugin.py:1044
+#: neutron/plugins/midonet/plugin.py:1082
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group called: "
@@ -7153,22 +7184,22 @@ msgstr ""
 "已呼叫 MidonetPluginV2.create_security_group：security_group = "
 "%(security_group)s default_sg = %(default_sg)s "
 
-#: neutron/plugins/midonet/plugin.py:1073
+#: neutron/plugins/midonet/plugin.py:1111
 #, python-format
 msgid "Failed to create MidoNet resources for sg %(sg)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1080
+#: neutron/plugins/midonet/plugin.py:1118
 #, python-format
 msgid "MidonetPluginV2.create_security_group exiting: sg=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1086
+#: neutron/plugins/midonet/plugin.py:1124
 #, python-format
 msgid "MidonetPluginV2.delete_security_group called: id=%s"
 msgstr "已呼叫 MidonetPluginV2.delete_security_group：ID = %s"
 
-#: neutron/plugins/midonet/plugin.py:1118
+#: neutron/plugins/midonet/plugin.py:1156
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group_rule called: "
@@ -7177,12 +7208,12 @@ msgstr ""
 "已呼叫 MidonetPluginV2.create_security_group_rule：security_group_rule = "
 "%(security_group_rule)r"
 
-#: neutron/plugins/midonet/plugin.py:1128
+#: neutron/plugins/midonet/plugin.py:1166
 #, python-format
 msgid "MidonetPluginV2.create_security_group_rule exiting: rule=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1138
+#: neutron/plugins/midonet/plugin.py:1176
 #, python-format
 msgid "MidonetPluginV2.delete_security_group_rule called: sg_rule_id=%s"
 msgstr ""
@@ -13093,4 +13124,10 @@ msgstr ""
 
 #~ msgid "update_ports() failed."
 #~ msgstr "update_ports() 失敗。"
+
+#~ msgid ""
+#~ "Send this many gratuitous ARPs for "
+#~ "HA setup, set it below or equal"
+#~ " to 0 to disable this feature."
+#~ msgstr "給這個項目傳送了用於高可用性設定的許多無償 ARP，請將其設為小於或等於 0 以停用此功能。"
 
