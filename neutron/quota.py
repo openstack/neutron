@@ -16,6 +16,8 @@
 
 """Quotas for instances, volumes, and floating ips."""
 
+import sys
+
 from oslo.config import cfg
 import webob
 
@@ -25,6 +27,10 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
+QUOTA_DB_MODULE = 'neutron.db.quota_db'
+QUOTA_DB_DRIVER = 'neutron.db.quota_db.DbQuotaDriver'
+QUOTA_CONF_DRIVER = 'neutron.quota.ConfDriver'
+
 quota_opts = [
     cfg.ListOpt('quota_items',
                 default=['network', 'subnet', 'port'],
@@ -47,7 +53,7 @@ quota_opts = [
                help=_('Number of ports allowed per tenant, minus for '
                       'unlimited')),
     cfg.StrOpt('quota_driver',
-               default='neutron.db.quota_db.DbQuotaDriver',
+               default=QUOTA_DB_DRIVER,
                help=_('Default driver to use for quota checks')),
 ]
 # Register the configuration options
@@ -217,9 +223,16 @@ class QuotaEngine(object):
         if self._driver is None:
             _driver_class = (self._driver_class or
                              cfg.CONF.QUOTAS.quota_driver)
+            if (_driver_class == QUOTA_DB_DRIVER and
+                    QUOTA_DB_MODULE not in sys.modules):
+                # If quotas table is not loaded, force config quota driver.
+                _driver_class = QUOTA_CONF_DRIVER
+                LOG.info(_("ConfDriver is used as quota_driver because the "
+                           "loaded plugin does not support 'quotas' table."))
             if isinstance(_driver_class, basestring):
                 _driver_class = importutils.import_object(_driver_class)
             self._driver = _driver_class
+            LOG.info(_('Loaded quota_driver: %s.'), _driver_class)
         return self._driver
 
     def __contains__(self, resource):

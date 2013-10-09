@@ -15,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
+
 import mock
 from oslo.config import cfg
 import testtools
@@ -408,3 +410,32 @@ class TestDbQuotaDriver(base.BaseTestCase):
             get_tenant_quotas.assert_called_once_with(ctx,
                                                       default_quotas,
                                                       target_tenant)
+
+
+class TestQuotaDriverLoad(base.BaseTestCase):
+    def setUp(self):
+        super(TestQuotaDriverLoad, self).setUp()
+        # Make sure QuotaEngine is reinitialized in each test.
+        quota.QUOTAS._driver = None
+
+    def _test_quota_driver(self, cfg_driver, loaded_driver,
+                           with_quota_db_module=True):
+        cfg.CONF.set_override('quota_driver', cfg_driver, group='QUOTAS')
+        with mock.patch.dict(sys.modules, {}):
+            if (not with_quota_db_module and
+                    'neutron.db.quota_db' in sys.modules):
+                del sys.modules['neutron.db.quota_db']
+            driver = quota.QUOTAS.get_driver()
+            self.assertEqual(loaded_driver, driver.__class__.__name__)
+
+    def test_quota_db_driver_with_quotas_table(self):
+        self._test_quota_driver('neutron.db.quota_db.DbQuotaDriver',
+                                'DbQuotaDriver', True)
+
+    def test_quota_db_driver_fallback_conf_driver(self):
+        self._test_quota_driver('neutron.db.quota_db.DbQuotaDriver',
+                                'ConfDriver', False)
+
+    def test_quota_conf_driver(self):
+        self._test_quota_driver('neutron.quota.ConfDriver',
+                                'ConfDriver', True)
