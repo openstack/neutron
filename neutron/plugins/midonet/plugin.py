@@ -625,20 +625,30 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             old_port = self._get_port(context, id)
             net_id = old_port["network_id"]
             mac = old_port["mac_address"]
-            old_fixed_ips = old_port.get('fixed_ips')
-
+            old_ips = old_port["fixed_ips"]
             # update the port DB
             p = super(MidonetPluginV2, self).update_port(context, id, port)
 
-            if "fixed_ips" in p:
-                # IPs have changed.  Re-map the DHCP entries
+            new_ips = p["fixed_ips"]
+            if new_ips:
                 bridge = self.client.get_bridge(net_id)
-                for cidr, ip, mac in self._dhcp_mappings(
-                        context, old_fixed_ips, mac):
-                    self.client.remove_dhcp_host(bridge, cidr, ip, mac)
-                for cidr, ip, mac in self._dhcp_mappings(context,
-                                                         p["fixed_ips"], mac):
-                    self.client.add_dhcp_host(bridge, cidr, ip, mac)
+                # If it's a DHCP port, add a route to reach the MD server
+                if _is_dhcp_port(p):
+                    for cidr, ip in self._metadata_subnets(
+                        context, new_ips):
+                        self.client.add_dhcp_route_option(
+                            bridge, cidr, ip, METADATA_DEFAULT_IP)
+                else:
+                # IPs have changed.  Re-map the DHCP entries
+                    for cidr, ip, mac in self._dhcp_mappings(
+                            context, old_ips, mac):
+                        self.client.remove_dhcp_host(
+                            bridge, cidr, ip, mac)
+
+                    for cidr, ip, mac in self._dhcp_mappings(
+                        context, new_ips, mac):
+                        self.client.add_dhcp_host(
+                            bridge, cidr, ip, mac)
 
             if (self._check_update_deletes_security_groups(port) or
                     self._check_update_has_security_groups(port)):
