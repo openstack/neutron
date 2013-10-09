@@ -31,7 +31,7 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual('', cfg.CONF.api_extensions_path)
         self.assertEqual('policy.json', cfg.CONF.policy_file)
         self.assertEqual('keystone', cfg.CONF.auth_strategy)
-        self.assertEqual(None, cfg.CONF.core_plugin)
+        self.assertIsNone(cfg.CONF.core_plugin)
         self.assertEqual(0, len(cfg.CONF.service_plugins))
         self.assertEqual('fa:16:3e:00:00:00', cfg.CONF.base_mac)
         self.assertEqual(16, cfg.CONF.mac_generation_retries)

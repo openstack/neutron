@@ -77,7 +77,7 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase):
         self.assertEqual(tenant.quantum_id, q)
 
         tenant_none = ndb.get_ofc_item(self.session, 'ofc_tenant', n)
-        self.assertEqual(None, tenant_none)
+        self.assertIsNone(tenant_none)
 
     def testb_get_ofc_id(self):
         """test get OFC d."""
@@ -87,7 +87,7 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase):
         self.assertEqual(tenant_id, o)
 
         tenant_none = ndb.get_ofc_item(self.session, 'ofc_tenant', n)
-        self.assertEqual(None, tenant_none)
+        self.assertIsNone(tenant_none)
 
     def testb_exists_ofc_item(self):
         """test get OFC d."""
@@ -97,7 +97,7 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase):
         self.assertTrue(ret)
 
         tenant_none = ndb.get_ofc_item(self.session, 'ofc_tenant', n)
-        self.assertEqual(None, tenant_none)
+        self.assertIsNone(tenant_none)
 
     def testc_find_ofc_item(self):
         """test find OFC item."""
@@ -108,7 +108,7 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase):
         self.assertEqual(tenant.quantum_id, q)
 
         tenant_none = ndb.find_ofc_item(self.session, 'ofc_tenant', n)
-        self.assertEqual(None, tenant_none)
+        self.assertIsNone(tenant_none)
 
     def testc_del_ofc_item(self):
         """test delete OFC item."""
@@ -118,10 +118,10 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase):
 
         tenant_none = ndb.get_ofc_item(self.session,
                                        'ofc_tenant', q)
-        self.assertEqual(None, tenant_none)
+        self.assertIsNone(tenant_none)
         tenant_none = ndb.find_ofc_item(self.session,
                                         'ofc_tenant', o)
-        self.assertEqual(None, tenant_none)
+        self.assertIsNone(tenant_none)
 
     def _compare_portinfo(self, portinfo, expected):
         self.assertEqual(portinfo.id, expected['port_id'])
@@ -157,7 +157,7 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase):
 
             nonexist_id = uuidutils.generate_uuid()
             portinfo_none = ndb.get_portinfo(self.session, nonexist_id)
-            self.assertEqual(None, portinfo_none)
+            self.assertIsNone(portinfo_none)
 
     def testf_del_portinfo(self):
         """test delete portinfo."""
@@ -167,7 +167,7 @@ class NECPluginV2DBTest(NECPluginV2DBTestBase):
             self.assertEqual(portinfo.id, params['port_id'])
             ndb.del_portinfo(self.session, params['port_id'])
             portinfo_none = ndb.get_portinfo(self.session, params['port_id'])
-            self.assertEqual(None, portinfo_none)
+            self.assertIsNone(portinfo_none)
 
 
 class NECPluginV2DBOldMappingTest(NECPluginV2DBTestBase):
@@ -187,7 +187,7 @@ class NECPluginV2DBOldMappingTest(NECPluginV2DBTestBase):
         self.assertEqual(ret.ofc_id, o)
         self.assertEqual(ret.quantum_id, q)
         ret = ndb.get_ofc_item(self.session, 'ofc_tenant', q, self.OLD)
-        self.assertEqual(ret, None)
+        self.assertIsNone(ret)
 
     def test_add_ofc_item_old(self):
         o, q, n = self.get_ofc_item_random_params()
@@ -196,7 +196,7 @@ class NECPluginV2DBOldMappingTest(NECPluginV2DBTestBase):
         self.assertEqual(ret.quantum_id, q)
 
         ret = ndb.get_ofc_item(self.session, 'ofc_tenant', q, self.NEW)
-        self.assertEqual(ret, None)
+        self.assertIsNone(ret)
         ret = ndb.get_ofc_item(self.session, 'ofc_tenant', q, self.OLD)
         self.assertEqual(ret.id, o)
         self.assertEqual(ret.quantum_id, q)
@@ -260,9 +260,9 @@ class NECPluginV2DBOldMappingTest(NECPluginV2DBTestBase):
             ndb.del_ofc_item(self.session, 'ofc_tenant', q, mode)
 
         ret = ndb.get_ofc_item(self.session, 'ofc_tenant', q, self.NEW)
-        self.assertEqual(ret, None)
+        self.assertIsNone(ret)
         ret = ndb.get_ofc_item(self.session, 'ofc_tenant', q, self.OLD)
-        self.assertEqual(ret, None)
+        self.assertIsNone(ret)
 
     def test_delete_ofc_item_new(self):
         self._check_delete_ofc_item(self.NEW)

@@ -218,7 +218,7 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         self.drv._server = mock.MagicMock()
 
     def test_no_exception_on_correct_configuration(self):
-        self.assertNotEqual(self.drv, None)
+        self.assertIsNotNone(self.drv)
 
     def test_plug_host_into_network(self):
         tenant_id = 'ten-1'

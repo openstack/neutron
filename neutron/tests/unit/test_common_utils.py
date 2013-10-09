@@ -100,12 +100,12 @@ class TestVlanRangeVerifyValid(UtilTestParseVlanRanges):
         return plugin_utils.verify_vlan_range(vlan_range)
 
     def test_range_valid_ranges(self):
-        self.assertEqual(self.verify_range((1, 2)), None)
-        self.assertEqual(self.verify_range((1, 1999)), None)
-        self.assertEqual(self.verify_range((100, 100)), None)
-        self.assertEqual(self.verify_range((100, 200)), None)
-        self.assertEqual(self.verify_range((4001, 4094)), None)
-        self.assertEqual(self.verify_range((1, 4094)), None)
+        self.assertIsNone(self.verify_range((1, 2)))
+        self.assertIsNone(self.verify_range((1, 1999)))
+        self.assertIsNone(self.verify_range((100, 100)))
+        self.assertIsNone(self.verify_range((100, 200)))
+        self.assertIsNone(self.verify_range((4001, 4094)))
+        self.assertIsNone(self.verify_range((1, 4094)))
 
     def check_one_vlan_invalid(self, bad_range, which):
         expected_msg = self._vrange_invalid_vlan(bad_range, which)

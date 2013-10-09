@@ -2211,8 +2211,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             self.assertEqual(1, len(res['networks']))
             self.assertEqual(res['networks'][0]['name'],
                              net1['network']['name'])
-            self.assertEqual(None,
-                             res['networks'][0].get('id'))
+            self.assertIsNone(res['networks'][0].get('id'))
 
     def test_list_networks_with_parameters_invalid_values(self):
         with contextlib.nested(self.network(name='net1',
@@ -3003,7 +3002,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
-            self.assertEqual(None, data['subnet']['gateway_ip'])
+            self.assertIsNone(data['subnet']['gateway_ip'])
 
     def test_update_subnet(self):
         with self.subnet() as subnet:

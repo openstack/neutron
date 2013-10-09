@@ -269,7 +269,7 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
 
     def test_router_create_no_service_type_id(self):
         router = self._router_create()
-        self.assertEqual(router.get('service_type_id'), None)
+        self.assertIsNone(router.get('service_type_id'))
 
     def test_router_create_with_service_type_id(self):
         router = self._router_create(self._service_type_id)

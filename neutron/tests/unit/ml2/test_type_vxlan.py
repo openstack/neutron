@@ -155,7 +155,7 @@ class VxlanTypeTest(base.BaseTestCase):
             tunnel_ids.add(segment[api.SEGMENTATION_ID])
 
         segment = self.driver.allocate_tenant_segment(self.session)
-        self.assertEqual(None, segment)
+        self.assertIsNone(segment)
 
         segment = {api.NETWORK_TYPE: 'vxlan',
                    api.PHYSICAL_NETWORK: 'None',

@@ -528,7 +528,7 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
                                   self.plugin.get_firewall_policy,
                                   ctx, fwp_id)
                 fw_rule = self.plugin.get_firewall_rule(ctx, fr_id)
-                self.assertEqual(fw_rule['firewall_policy_id'], None)
+                self.assertIsNone(fw_rule['firewall_policy_id'])
 
     def test_delete_firewall_policy_with_firewall_association(self):
         attrs = self._get_test_firewall_attrs()

@@ -345,7 +345,7 @@ class TestIPDevice(base.BaseTestCase):
 
     def test_eq_other_is_none(self):
         dev1 = ip_lib.IPDevice('tap0', 'sudo', 'ns1')
-        self.assertNotEqual(dev1, None)
+        self.assertIsNotNone(dev1)
 
     def test_str(self):
         self.assertEqual(str(ip_lib.IPDevice('tap0')), 'tap0')

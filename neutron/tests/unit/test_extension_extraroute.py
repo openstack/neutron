@@ -400,7 +400,7 @@ class ExtraRouteDBTestCaseBase(object):
                     s['subnet']['network_id'])
                 body = self._show('routers', r['router']['id'])
                 gw_info = body['router']['external_gateway_info']
-                self.assertEqual(gw_info, None)
+                self.assertIsNone(gw_info)
 
     def test_router_list_with_sort(self):
         with contextlib.nested(self.router(name='router1'),
