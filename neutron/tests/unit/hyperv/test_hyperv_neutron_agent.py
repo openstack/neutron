@@ -111,8 +111,20 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
     def test_treat_devices_added_updates_known_port(self):
         details = mock.MagicMock()
         details.__contains__.side_effect = lambda x: True
-        self.assertTrue(self.mock_treat_devices_added(details,
-                                                      '_treat_vif_port'))
+        with mock.patch.object(self.agent.plugin_rpc,
+                               "update_device_up") as func:
+            self.assertTrue(self.mock_treat_devices_added(details,
+                                                          '_treat_vif_port'))
+            self.assertTrue(func.called)
+
+    def test_treat_devices_added_missing_port_id(self):
+        details = mock.MagicMock()
+        details.__contains__.side_effect = lambda x: False
+        with mock.patch.object(self.agent.plugin_rpc,
+                               "update_device_up") as func:
+            self.assertFalse(self.mock_treat_devices_added(details,
+                                                           '_treat_vif_port'))
+            self.assertFalse(func.called)
 
     def test_treat_devices_removed_returns_true_for_missing_device(self):
         attrs = {'update_device_down.side_effect': Exception()}
