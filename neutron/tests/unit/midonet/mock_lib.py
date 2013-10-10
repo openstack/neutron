@@ -29,6 +29,8 @@ def get_bridge_mock(id=None, tenant_id='test-tenant', name='net'):
     bridge.get_id.return_value = id
     bridge.get_tenant_id.return_value = tenant_id
     bridge.get_name.return_value = name
+    bridge.get_ports.return_value = []
+    bridge.get_peer_ports.return_value = []
     return bridge
 
 
@@ -81,6 +83,9 @@ def get_router_mock(id=None, tenant_id='test-tenant', name='router'):
     router.get_id.return_value = id
     router.get_tenant_id.return_value = tenant_id
     router.get_name.return_value = name
+    router.get_ports.return_value = []
+    router.get_peer_ports.return_value = []
+    router.get_routes.return_value = []
     return router
 
 
@@ -123,6 +128,9 @@ class MidonetLibMockConfig():
     def _create_bridge(self, tenant_id, name):
         return get_bridge_mock(tenant_id=tenant_id, name=name)
 
+    def _create_router(self, tenant_id, name):
+        return get_router_mock(tenant_id=tenant_id, name=name)
+
     def _create_subnet(self, bridge, gateway_ip, subnet_prefix, subnet_len):
         return get_subnet_mock(bridge.get_id(), gateway_ip=gateway_ip,
                                subnet_prefix=subnet_prefix,
@@ -158,6 +166,7 @@ class MidonetLibMockConfig():
         self.inst.get_port.side_effect = self._get_port
 
         # Router methods side effects
+        self.inst.create_router.side_effect = self._create_router
         self.inst.get_router.side_effect = self._get_router
 
 
