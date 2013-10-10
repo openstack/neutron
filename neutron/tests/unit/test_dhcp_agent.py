@@ -749,12 +749,13 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
              mock.call.get_port_by_id(fake_port1.id),
              mock.call.put_port(mock.ANY)])
         self.call_driver.assert_has_calls(
-            [mock.call.call_driver(
-                'release_lease',
-                fake_network,
-                mac_address=fake_port1.mac_address,
-                removed_ips=set([updated_fake_port1.fixed_ips[0].ip_address])),
-             mock.call.call_driver('reload_allocations', fake_network)])
+            [mock.call.call_driver('reload_allocations', fake_network),
+             mock.call.call_driver(
+                 'release_lease',
+                 fake_network,
+                 mac_address=fake_port1.mac_address,
+                 removed_ips=set([updated_fake_port1.fixed_ips[0].ip_address]))
+             ])
 
     def test_port_delete_end(self):
         payload = dict(port_id=fake_port2.id)
@@ -769,11 +770,11 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
              mock.call.get_network_by_id(fake_network.id),
              mock.call.remove_port(fake_port2)])
         self.call_driver.assert_has_calls(
-            [mock.call.call_driver('release_lease',
+            [mock.call.call_driver('reload_allocations', fake_network),
+             mock.call.call_driver('release_lease',
                                    fake_network,
                                    mac_address=fake_port2.mac_address,
-                                   removed_ips=removed_ips),
-             mock.call.call_driver('reload_allocations', fake_network)])
+                                   removed_ips=removed_ips)])
 
     def test_port_delete_end_unknown_port(self):
         payload = dict(port_id='unknown')
