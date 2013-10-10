@@ -23,10 +23,11 @@ methods that needs to be implemented by a v2 Neutron Plug-in.
 
 from abc import ABCMeta, abstractmethod
 
+import six
 
+
+@six.add_metaclass(ABCMeta)
 class NeutronPluginBaseV2(object):
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def create_subnet(self, context, subnet):

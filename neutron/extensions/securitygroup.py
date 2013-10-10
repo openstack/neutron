@@ -19,6 +19,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 from oslo.config import cfg
+import six
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
@@ -291,8 +292,8 @@ class Securitygroup(extensions.ExtensionDescriptor):
             return {}
 
 
+@six.add_metaclass(ABCMeta)
 class SecurityGroupPluginBase(object):
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def create_security_group(self, context, security_group):

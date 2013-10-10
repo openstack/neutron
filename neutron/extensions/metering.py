@@ -16,6 +16,8 @@
 
 import abc
 
+import six
+
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
@@ -147,8 +149,8 @@ class Metering(extensions.ExtensionDescriptor):
             return {}
 
 
+@six.add_metaclass(abc.ABCMeta)
 class MeteringPluginBase(service_base.ServicePluginBase):
-    __metaclass__ = abc.ABCMeta
 
     def get_plugin_name(self):
         return constants.METERING

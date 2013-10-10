@@ -19,7 +19,10 @@
 from abc import ABCMeta, abstractmethod
 import inspect
 
+import six
 
+
+@six.add_metaclass(ABCMeta)
 class L2DevicePluginBase(object):
     """Base class for a device-specific plugin.
 
@@ -27,8 +30,6 @@ class L2DevicePluginBase(object):
     The network model relies on device-category-specific plugins to perform
     the configuration on each device.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def get_all_networks(self, tenant_id, **kwargs):

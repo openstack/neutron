@@ -19,7 +19,10 @@
 
 import abc
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class SupportBase(object):
     """abstract support class.
 
@@ -27,7 +30,6 @@ class SupportBase(object):
     the L2 base for Embrane plugin.
 
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def __init__(self):

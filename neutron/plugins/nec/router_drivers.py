@@ -19,6 +19,8 @@
 import abc
 import httplib
 
+import six
+
 from neutron.common import log as call_log
 from neutron.common import utils
 from neutron.openstack.common import excutils
@@ -31,9 +33,8 @@ LOG = logging.getLogger(__name__)
 PROVIDER_OPENFLOW = nconst.ROUTER_PROVIDER_OPENFLOW
 
 
+@six.add_metaclass(abc.ABCMeta)
 class RouterDriverBase(object):
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, plugin, ofc_manager):
         self.plugin = plugin
