@@ -30,6 +30,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import portbindings_db
+from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -60,7 +61,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                               external_net_db.External_net_db_mixin,
                               l3_db.L3_NAT_db_mixin):
 
-    supported_extension_aliases = ["external-net", "router", "binding"]
+    supported_extension_aliases = ["external-net", "router", "binding",
+                                   "quotas"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"

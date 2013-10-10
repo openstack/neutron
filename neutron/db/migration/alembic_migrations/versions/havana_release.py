@@ -25,7 +25,7 @@ Create Date: 2013-10-02 00:00:00.000000
 
 # revision identifiers, used by Alembic.
 revision = 'havana'
-down_revision = '3a520dd165d0'
+down_revision = '27ef74513d33'
 
 # Change to ['*'] if this migration applies to all plugins
 
