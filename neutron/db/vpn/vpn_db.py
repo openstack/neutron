@@ -504,7 +504,7 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
                 if lifetime_info:
                     if lifetime_info.get('units'):
                         ipsecp['lifetime_units'] = lifetime_info['units']
-                    if lifetime_info('value'):
+                    if lifetime_info.get('value'):
                         ipsecp['lifetime_value'] = lifetime_info['value']
                 ipsecp_db.update(ipsecp)
         return self._make_ipsecpolicy_dict(ipsecp_db)
