@@ -287,7 +287,7 @@ class EdgeApplianceDriver(object):
             except exceptions.ResourceNotFound:
                 pass
             except exceptions.VcnsApiException as e:
-                msg = _("VCNS: Failed to delete %{edge_id)s:\n"
+                msg = _("VCNS: Failed to delete %(edge_id)s:\n"
                         "%(response)s") % {
                             'edge_id': edge_id, 'response': e.response}
                 LOG.exception(msg)
