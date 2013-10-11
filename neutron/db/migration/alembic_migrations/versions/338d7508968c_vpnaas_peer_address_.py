@@ -44,7 +44,7 @@ def upgrade(active_plugins=None, options=None):
         return
 
     op.alter_column('ipsec_site_connections', 'peer_address',
-                    _type=sa.String(255), existing_type=sa.String(64))
+                    type_=sa.String(255), existing_type=sa.String(64))
 
 
 def downgrade(active_plugins=None, options=None):
@@ -52,4 +52,4 @@ def downgrade(active_plugins=None, options=None):
         return
 
     op.alter_column('ipsec_site_connections', 'peer_address',
-                    _type=sa.String(64), existing_type=sa.String(255))
+                    type_=sa.String(64), existing_type=sa.String(255))
