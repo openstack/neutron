@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-10 06:15+0000\n"
+"POT-Creation-Date: 2013-10-11 06:16+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -6079,41 +6079,41 @@ msgstr ""
 msgid "Port %(device)s updated. Details: %(device_details)s"
 msgstr "已更新埠 %(device)s。詳細資料：%(device_details)s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:318
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:322
 #, python-format
 msgid "Removing port %s"
 msgstr "正在移除埠 %s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:326
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:330
 #, python-format
 msgid "Removing port failed for device %(device)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:351
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:355
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:939
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:384
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1055
 msgid "Agent out of sync with plugin!"
 msgstr "代理程式與外掛程式不同步！"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:359
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:363
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:951
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1069
 msgid "Agent loop has new devices!"
 msgstr "代理程式迴圈具有新裝置！"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:364
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:368
 #, python-format
 msgid "Error in agent event loop: %s"
 msgstr "代理程式事件迴圈發生錯誤：%s"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:372
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:376
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:403
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s）"
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:386
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:390
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:990
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1200
 msgid "Agent initialized successfully, now running... "
@@ -10695,7 +10695,7 @@ msgstr ""
 
 #: neutron/plugins/nicira/vshield/common/exceptions.py:72
 #, python-format
-msgid "Service on available: %(uri)s"
+msgid "Service Unavailable: %(uri)s"
 msgstr ""
 
 #: neutron/plugins/nicira/vshield/tasks/tasks.py:52
@@ -12455,7 +12455,7 @@ msgstr ""
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr "給這個項目傳送了用於高可用性設定的許多無償 ARP，請將其設為小於或等於 0 以停用此功能。"
+#~ msgstr ""
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -13129,8 +13129,6 @@ msgstr ""
 #~ msgid "update_ports() failed."
 #~ msgstr "update_ports() 失敗。"
 
-#~ msgid ""
-#~ "VCNS: Failed to delete %{edge_id)s:\n"
-#~ "%(response)s"
+#~ msgid "Service on available: %(uri)s"
 #~ msgstr ""
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-10 06:15+0000\n"
+"POT-Creation-Date: 2013-10-11 06:16+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Bosnian "
@@ -6059,41 +6059,41 @@ msgstr ""
 msgid "Port %(device)s updated. Details: %(device_details)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:318
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:322
 #, python-format
 msgid "Removing port %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:326
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:330
 #, python-format
 msgid "Removing port failed for device %(device)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:351
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:355
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:939
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:384
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1055
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:359
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:363
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:951
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1069
 msgid "Agent loop has new devices!"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:364
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:368
 #, python-format
 msgid "Error in agent event loop: %s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:372
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:376
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:403
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:386
+#: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:390
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:990
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1200
 msgid "Agent initialized successfully, now running... "
@@ -10647,7 +10647,7 @@ msgstr ""
 
 #: neutron/plugins/nicira/vshield/common/exceptions.py:72
 #, python-format
-msgid "Service on available: %(uri)s"
+msgid "Service Unavailable: %(uri)s"
 msgstr ""
 
 #: neutron/plugins/nicira/vshield/tasks/tasks.py:52
@@ -13075,8 +13075,6 @@ msgstr ""
 #~ msgid "update_ports() failed."
 #~ msgstr ""
 
-#~ msgid ""
-#~ "VCNS: Failed to delete %{edge_id)s:\n"
-#~ "%(response)s"
+#~ msgid "Service on available: %(uri)s"
 #~ msgstr ""
 
