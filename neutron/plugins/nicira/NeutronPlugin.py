@@ -120,10 +120,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     functionality using NVP.
     """
 
-    supported_extension_aliases = ["agent",
-                                   "allowed-address-pairs",
+    supported_extension_aliases = ["allowed-address-pairs",
                                    "binding",
-                                   "dhcp_agent_scheduler",
                                    "dist-router",
                                    "ext-gw-mode",
                                    "extraroute",

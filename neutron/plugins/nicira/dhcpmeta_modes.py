@@ -1,6 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 VMware, Inc.
+#
 # All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -25,9 +24,13 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.plugins.nicira.common import config
-from neutron.plugins.nicira.common import exceptions as nvp_exc
-from neutron.plugins.nicira.dhcp_meta import nvp as nvp_svc
-from neutron.plugins.nicira.dhcp_meta import rpc as nvp_rpc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
+from neutron.plugins.nicira.dhcp_meta import combined
+from neutron.plugins.nicira.dhcp_meta import lsnmanager
+from neutron.plugins.nicira.dhcp_meta import migration
+from neutron.plugins.nicira.dhcp_meta import nsx as nsx_svc
+from neutron.plugins.nicira.dhcp_meta import rpc as nsx_rpc
+from neutron.plugins.nicira.extensions import lsn
 
 LOG = logging.getLogger(__name__)
 
@@ -36,12 +39,21 @@ class DhcpMetadataAccess(object):
 
     def setup_dhcpmeta_access(self):
         """Initialize support for DHCP and Metadata services."""
+        self._init_extensions()
         if cfg.CONF.NSX.agent_mode == config.AgentModes.AGENT:
             self._setup_rpc_dhcp_metadata()
-            mod = nvp_rpc
+            mod = nsx_rpc
         elif cfg.CONF.NSX.agent_mode == config.AgentModes.AGENTLESS:
-            self._setup_nvp_dhcp_metadata()
-            mod = nvp_svc
+            self._setup_nsx_dhcp_metadata()
+            mod = nsx_svc
+        elif cfg.CONF.NSX.agent_mode == config.AgentModes.COMBINED:
+            notifier = self._setup_nsx_dhcp_metadata()
+            self._setup_rpc_dhcp_metadata(notifier=notifier)
+            mod = combined
+        else:
+            error = _("Invalid agent_mode: %s") % cfg.CONF.NSX.agent_mode
+            LOG.error(error)
+            raise nsx_exc.NvpPluginException(err_msg=error)
         self.handle_network_dhcp_access_delegate = (
             mod.handle_network_dhcp_access
         )
@@ -55,49 +67,78 @@ class DhcpMetadataAccess(object):
             mod.handle_router_metadata_access
         )
 
-    def _setup_rpc_dhcp_metadata(self):
+    def _setup_rpc_dhcp_metadata(self, notifier=None):
         self.topic = topics.PLUGIN
         self.conn = rpc.create_connection(new=True)
-        self.dispatcher = nvp_rpc.NVPRpcCallbacks().create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher,
-                                  fanout=False)
+        self.dispatcher = nsx_rpc.NVPRpcCallbacks().create_rpc_dispatcher()
+        self.conn.create_consumer(self.topic, self.dispatcher, fanout=False)
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
-            dhcp_rpc_agent_api.DhcpAgentNotifyAPI())
+            notifier or dhcp_rpc_agent_api.DhcpAgentNotifyAPI())
         self.conn.consume_in_thread()
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver
         )
+        self.supported_extension_aliases.extend(
+            ['agent', 'dhcp_agent_scheduler'])
 
-    def _setup_nvp_dhcp_metadata(self):
-        # In agentless mode the following extensions, and related
-        # operations, are not supported; so do not publish them
-        if "agent" in self.supported_extension_aliases:
-            self.supported_extension_aliases.remove("agent")
-        if "dhcp_agent_scheduler" in self.supported_extension_aliases:
-            self.supported_extension_aliases.remove(
-                "dhcp_agent_scheduler")
-        nvp_svc.register_dhcp_opts(cfg)
-        nvp_svc.register_metadata_opts(cfg)
-        self.lsn_manager = nvp_svc.LsnManager(self)
-        self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
-            nvp_svc.DhcpAgentNotifyAPI(self, self.lsn_manager))
-        # In agentless mode, ports whose owner is DHCP need to
-        # be special cased; so add it to the list of special
-        # owners list
-        if const.DEVICE_OWNER_DHCP not in self.port_special_owners:
-            self.port_special_owners.append(const.DEVICE_OWNER_DHCP)
+    def _setup_nsx_dhcp_metadata(self):
+        self._check_services_requirements()
+        nsx_svc.register_dhcp_opts(cfg)
+        nsx_svc.register_metadata_opts(cfg)
+        lsnmanager.register_lsn_opts(cfg)
+        lsn_manager = lsnmanager.PersistentLsnManager(self)
+        self.lsn_manager = lsn_manager
+        if cfg.CONF.NSX.agent_mode == config.AgentModes.AGENTLESS:
+            notifier = nsx_svc.DhcpAgentNotifyAPI(self, lsn_manager)
+            self.agent_notifiers[const.AGENT_TYPE_DHCP] = notifier
+            # In agentless mode, ports whose owner is DHCP need to
+            # be special cased; so add it to the list of special
+            # owners list
+            if const.DEVICE_OWNER_DHCP not in self.port_special_owners:
+                self.port_special_owners.append(const.DEVICE_OWNER_DHCP)
+        elif cfg.CONF.NSX.agent_mode == config.AgentModes.COMBINED:
+            # This becomes ineffective, as all new networks creations
+            # are handled by Logical Services Nodes in NSX
+            cfg.CONF.set_override('network_auto_schedule', False)
+            LOG.warn(_('network_auto_schedule has been disabled'))
+            notifier = combined.DhcpAgentNotifyAPI(self, lsn_manager)
+        self.supported_extension_aliases.append(lsn.EXT_ALIAS)
+        # Add the capability to migrate dhcp and metadata services over
+        self.migration_manager = (
+            migration.MigrationManager(self, lsn_manager, notifier))
+        return notifier
+
+    def _init_extensions(self):
+        extensions = (lsn.EXT_ALIAS, 'agent', 'dhcp_agent_scheduler')
+        for ext in extensions:
+            if ext in self.supported_extension_aliases:
+                self.supported_extension_aliases.remove(ext)
+
+    def _check_services_requirements(self):
         try:
             error = None
-            nvp_svc.check_services_requirements(self.cluster)
-        except nvp_exc.NvpInvalidVersion:
+            nsx_svc.check_services_requirements(self.cluster)
+        except nsx_exc.NvpInvalidVersion:
             error = _("Unable to run Neutron with config option '%s', as NSX "
-                      "does not support it") % config.AgentModes.AGENTLESS
-        except nvp_exc.ServiceClusterUnavailable:
+                      "does not support it") % cfg.CONF.NSX.agent_mode
+        except nsx_exc.ServiceClusterUnavailable:
             error = _("Unmet dependency for config option "
-                      "'%s'") % config.AgentModes.AGENTLESS
+                      "'%s'") % cfg.CONF.NSX.agent_mode
         if error:
             LOG.exception(error)
-            raise nvp_exc.NvpPluginException(err_msg=error)
+            raise nsx_exc.NvpPluginException(err_msg=error)
+
+    def get_lsn(self, context, network_id, fields=None):
+        report = self.migration_manager.report(context, network_id)
+        return {'network': network_id, 'report': report}
+
+    def create_lsn(self, context, lsn):
+        network_id = lsn['lsn']['network']
+        subnet = self.migration_manager.validate(context, network_id)
+        subnet_id = None if not subnet else subnet['id']
+        self.migration_manager.migrate(context, network_id, subnet)
+        r = self.migration_manager.report(context, network_id, subnet_id)
+        return {'network': network_id, 'report': r}
 
     def handle_network_dhcp_access(self, context, network, action):
         self.handle_network_dhcp_access_delegate(self, context,
