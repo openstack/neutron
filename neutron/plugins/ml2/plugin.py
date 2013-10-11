@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
+from sqlalchemy import orm
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -315,8 +316,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("mechanism_manager.create_network failed, "
-                            "deleting network '%s'"), result['id'])
+                LOG.error(_("mechanism_manager.create_network_postcommit "
+                            "failed, deleting network '%s'"), result['id'])
                 self.delete_network(context, result['id'])
         return result
 
@@ -375,24 +376,30 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # drivers from being called. This approach should be revisited
         # when the API layer is reworked during icehouse.
 
+        LOG.debug(_("Deleting network %s"), id)
         session = context.session
+        filter = {'network_id': [id]}
         while True:
             with session.begin(subtransactions=True):
-                filter = {'network_id': [id]}
-
                 # Get ports to auto-delete.
-                ports = self.get_ports(context, filters=filter)
-                only_auto_del = all(p['device_owner']
+                ports = (self._get_ports_query(context, filters=filter).
+                         all())
+                LOG.debug(_("Ports to auto-delete: %s"), ports)
+                only_auto_del = all(p.device_owner
                                     in db_base_plugin_v2.
                                     AUTO_DELETE_PORT_OWNERS
                                     for p in ports)
                 if not only_auto_del:
+                    LOG.debug(_("Tenant-owned ports exist"))
                     raise exc.NetworkInUse(net_id=id)
 
                 # Get subnets to auto-delete.
-                subnets = self.get_subnets(context, filters=filter)
+                subnets = (session.query(models_v2.Subnet).
+                           filter_by(network_id=id).
+                           all())
+                LOG.debug(_("Subnets to auto-delete: %s"), subnets)
 
-                if not ports or subnets:
+                if not (ports or subnets):
                     network = self.get_network(context, id)
                     mech_context = driver_context.NetworkContext(self,
                                                                  context,
@@ -400,21 +407,37 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self.mechanism_manager.delete_network_precommit(
                         mech_context)
 
+                    LOG.debug(_("Deleting network record"))
                     record = self._get_network(context, id)
-                    context.session.delete(record)
+                    session.delete(record)
 
                     for segment in mech_context.network_segments:
                         self.type_manager.release_segment(session, segment)
 
                     # The segment records are deleted via cascade from the
                     # network record, so explicit removal is not necessary.
+                    LOG.debug(_("Committing transaction"))
                     break
 
             for port in ports:
-                self.delete_port(context, port['id'])
+                try:
+                    self.delete_port(context, port.id)
+                except exc.PortNotFound:
+                    LOG.debug(_("Port %s concurrently deleted"), port.id)
+                except Exception:
+                    LOG.exception(_("Exception auto-deleting port %s"),
+                                  port.id)
+                    raise
 
             for subnet in subnets:
-                self.delete_subnet(context, subnet['id'])
+                try:
+                    self.delete_subnet(context, subnet.id)
+                except exc.SubnetNotFound:
+                    LOG.debug(_("Subnet %s concurrently deleted"), subnet.id)
+                except Exception:
+                    LOG.exception(_("Exception auto-deleting subnet %s"),
+                                  subnet.id)
+                    raise
 
         try:
             self.mechanism_manager.delete_network_postcommit(mech_context)
@@ -422,7 +445,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # TODO(apech) - One or more mechanism driver failed to
             # delete the network.  Ideally we'd notify the caller of
             # the fact that an error occurred.
-            pass
+            LOG.error(_("mechanism_manager.delete_network_postcommit failed"))
         self.notifier.network_delete(context, id)
 
     def create_subnet(self, context, subnet):
@@ -436,8 +459,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_subnet_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("mechanism_manager.create_subnet failed, "
-                            "deleting subnet '%s'"), result['id'])
+                LOG.error(_("mechanism_manager.create_subnet_postcommit "
+                            "failed, deleting subnet '%s'"), result['id'])
                 self.delete_subnet(context, result['id'])
         return result
 
@@ -459,19 +482,62 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return updated_subnet
 
     def delete_subnet(self, context, id):
+        # REVISIT(rkukura) The super(Ml2Plugin, self).delete_subnet()
+        # function is not used because it auto-deletes ports from the
+        # DB without invoking the derived class's delete_port(),
+        # preventing mechanism drivers from being called. This
+        # approach should be revisited when the API layer is reworked
+        # during icehouse.
+
+        LOG.debug(_("Deleting subnet %s"), id)
         session = context.session
-        with session.begin(subtransactions=True):
-            subnet = self.get_subnet(context, id)
-            mech_context = driver_context.SubnetContext(self, context, subnet)
-            self.mechanism_manager.delete_subnet_precommit(mech_context)
-            super(Ml2Plugin, self).delete_subnet(context, id)
+        while True:
+            with session.begin(subtransactions=True):
+                # Get ports to auto-delete.
+                allocated = (session.query(models_v2.IPAllocation).
+                             options(orm.joinedload('ports')).
+                             filter_by(subnet_id=id).
+                             all())
+                LOG.debug(_("Ports to auto-delete: %s"), allocated)
+                only_auto_del = all(not a.port_id or
+                                    a.ports.device_owner in db_base_plugin_v2.
+                                    AUTO_DELETE_PORT_OWNERS
+                                    for a in allocated)
+                if not only_auto_del:
+                    LOG.debug(_("Tenant-owned ports exist"))
+                    raise exc.SubnetInUse(subnet_id=id)
+
+                if not allocated:
+                    subnet = self.get_subnet(context, id)
+                    mech_context = driver_context.SubnetContext(self, context,
+                                                                subnet)
+                    self.mechanism_manager.delete_subnet_precommit(
+                        mech_context)
+
+                    LOG.debug(_("Deleting subnet record"))
+                    record = self._get_subnet(context, id)
+                    session.delete(record)
+
+                    LOG.debug(_("Committing transaction"))
+                    break
+
+            for a in allocated:
+                try:
+                    self.delete_port(context, a.port_id)
+                except exc.PortNotFound:
+                    LOG.debug(_("Port %s concurrently deleted"), a.port_id)
+                except Exception:
+                    LOG.exception(_("Exception auto-deleting port %s"),
+                                  a.port_id)
+                    raise
+
         try:
             self.mechanism_manager.delete_subnet_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             # TODO(apech) - One or more mechanism driver failed to
             # delete the subnet.  Ideally we'd notify the caller of
             # the fact that an error occurred.
-            pass
+            LOG.error(_("mechanism_manager.delete_subnet_postcommit failed"))
 
     def create_port(self, context, port):
         attrs = port['port']
@@ -500,8 +566,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_port_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("mechanism_manager.create_port failed, "
-                            "deleting port '%s'"), result['id'])
+                LOG.error(_("mechanism_manager.create_port_postcommit "
+                            "failed, deleting port '%s'"), result['id'])
                 self.delete_port(context, result['id'])
         self.notify_security_groups_member_updated(context, result)
         return result
@@ -555,6 +621,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return updated_port
 
     def delete_port(self, context, id, l3_port_check=True):
+        LOG.debug(_("Deleting port %s"), id)
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         if l3plugin and l3_port_check:
@@ -571,6 +638,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.delete_port_precommit(mech_context)
             self._delete_port_binding(mech_context)
             self._delete_port_security_group_bindings(context, id)
+            LOG.debug(_("Calling base delete_port"))
             super(Ml2Plugin, self).delete_port(context, id)
 
         try:
@@ -579,7 +647,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # TODO(apech) - One or more mechanism driver failed to
             # delete the port.  Ideally we'd notify the caller of the
             # fact that an error occurred.
-            pass
+            LOG.error(_("mechanism_manager.delete_port_postcommit failed"))
         self.notify_security_groups_member_updated(context, port)
 
     def update_port_status(self, context, port_id, status):
