@@ -553,7 +553,9 @@ class DeviceManager(object):
         self.root_helper = root_helper
         self.plugin = plugin
         if not conf.interface_driver:
-            raise SystemExit(_('You must specify an interface driver'))
+            msg = _('An interface driver must be specified')
+            LOG.error(msg)
+            raise SystemExit(msg)
         try:
             self.driver = importutils.import_object(
                 conf.interface_driver, conf)
@@ -561,6 +563,7 @@ class DeviceManager(object):
             msg = (_("Error importing interface driver '%(driver)s': "
                    "%(inner)s") % {'driver': conf.interface_driver,
                                    'inner': e})
+            LOG.error(msg)
             raise SystemExit(msg)
 
     def get_interface_name(self, network, port):

@@ -139,12 +139,7 @@ class TestDhcpAgent(base.BaseTestCase):
         self.driver_cls.return_value = self.driver
         self.mock_makedirs_p = mock.patch("os.makedirs")
         self.mock_makedirs = self.mock_makedirs_p.start()
-
-    def tearDown(self):
-        self.driver_cls_p.stop()
-        self.mock_makedirs_p.stop()
-        cfg.CONF.reset()
-        super(TestDhcpAgent, self).tearDown()
+        self.addCleanup(mock.patch.stopall)
 
     def test_dhcp_agent_manager(self):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
@@ -318,6 +313,25 @@ class TestDhcpAgent(base.BaseTestCase):
         )
 
         self.assertEqual(set(networks), set(dhcp.cache.get_network_ids()))
+
+    def test_none_interface_driver(self):
+        cfg.CONF.set_override('interface_driver', None)
+        with mock.patch.object(dhcp, 'LOG') as log:
+            self.assertRaises(SystemExit, dhcp.DeviceManager,
+                              cfg.CONF, 'sudo', None)
+            msg = 'An interface driver must be specified'
+            log.error.assert_called_once_with(msg)
+
+    def test_nonexistent_interface_driver(self):
+        # Temporarily turn off mock, so could use the real import_class
+        # to import interface_driver.
+        self.driver_cls_p.stop()
+        self.addCleanup(self.driver_cls_p.start)
+        cfg.CONF.set_override('interface_driver', 'foo')
+        with mock.patch.object(dhcp, 'LOG') as log:
+            self.assertRaises(SystemExit, dhcp.DeviceManager,
+                              cfg.CONF, 'sudo', None)
+            log.error.assert_called_once()
 
 
 class TestLogArgs(base.BaseTestCase):
