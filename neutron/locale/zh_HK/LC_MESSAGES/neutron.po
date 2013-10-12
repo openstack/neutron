@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-11 06:16+0000\n"
+"POT-Creation-Date: 2013-10-12 06:15+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Chinese (Hong Kong) "
@@ -165,35 +165,46 @@ msgstr ""
 msgid "Unable to find requested field: %(field)s in target: %(target_dict)s"
 msgstr ""
 
-#: neutron/quota.py:31
+#: neutron/quota.py:37
 msgid "Resource name(s) that are supported in quota features"
 msgstr ""
 
-#: neutron/quota.py:35
+#: neutron/quota.py:41
 msgid "Default number of resource allowed per tenant, minus for unlimited"
 msgstr ""
 
-#: neutron/quota.py:39
+#: neutron/quota.py:45
 msgid "Number of networks allowed per tenant,minus for unlimited"
 msgstr ""
 
-#: neutron/quota.py:43
+#: neutron/quota.py:49
 msgid "Number of subnets allowed per tenant, minus for unlimited"
 msgstr ""
 
-#: neutron/quota.py:47
+#: neutron/quota.py:53
 msgid "Number of ports allowed per tenant, minus for unlimited"
 msgstr ""
 
-#: neutron/quota.py:51
+#: neutron/quota.py:57
 msgid "Default driver to use for quota checks"
 msgstr ""
 
-#: neutron/quota.py:146 neutron/quota.py:151
+#: neutron/quota.py:152 neutron/quota.py:157
 msgid "Access to this resource was denied."
 msgstr ""
 
-#: neutron/quota.py:231
+#: neutron/quota.py:230
+msgid ""
+"ConfDriver is used as quota_driver because the loaded plugin does not "
+"support 'quotas' table."
+msgstr ""
+
+#: neutron/quota.py:235
+#, python-format
+msgid "Loaded quota_driver: %s."
+msgstr ""
+
+#: neutron/quota.py:244
 #, python-format
 msgid "%s is already registered."
 msgstr ""
@@ -1354,7 +1365,7 @@ msgid "Nofity agent at %(host)s the message %(method)s"
 msgstr ""
 
 #: neutron/api/rpc/agentnotifiers/l3_rpc_agent_api.py:58
-#: neutron/services/vpn/service_drivers/ipsec.py:83
+#: neutron/services/vpn/service_drivers/ipsec.py:85
 #, python-format
 msgid "Notify agent at %(topic)s.%(host)s the message %(method)s"
 msgstr ""
@@ -7363,42 +7374,119 @@ msgstr ""
 msgid "Mechanism driver %s failed in unbind_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:112
+#: neutron/plugins/ml2/plugin.py:113
 msgid "Modular L2 Plugin initialization complete"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:141
+#: neutron/plugins/ml2/plugin.py:142
 msgid "network_type required"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:180
+#: neutron/plugins/ml2/plugin.py:181
 #, python-format
 msgid "Network %s has no segments"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:276
+#: neutron/plugins/ml2/plugin.py:277
 #, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on "
 "network %(network_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:318
+#: neutron/plugins/ml2/plugin.py:319
 #, python-format
-msgid "mechanism_manager.create_network failed, deleting network '%s'"
+msgid "mechanism_manager.create_network_postcommit failed, deleting network '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:439
+#: neutron/plugins/ml2/plugin.py:379
 #, python-format
-msgid "mechanism_manager.create_subnet failed, deleting subnet '%s'"
+msgid "Deleting network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:503
+#: neutron/plugins/ml2/plugin.py:387 neutron/plugins/ml2/plugin.py:501
 #, python-format
-msgid "mechanism_manager.create_port failed, deleting port '%s'"
+msgid "Ports to auto-delete: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:591
+#: neutron/plugins/ml2/plugin.py:393 neutron/plugins/ml2/plugin.py:507
+msgid "Tenant-owned ports exist"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:400
+#, python-format
+msgid "Subnets to auto-delete: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:410
+msgid "Deleting network record"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:419 neutron/plugins/ml2/plugin.py:521
+msgid "Committing transaction"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:426 neutron/plugins/ml2/plugin.py:528
+#, python-format
+msgid "Port %s concurrently deleted"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:428 neutron/plugins/ml2/plugin.py:530
+#, python-format
+msgid "Exception auto-deleting port %s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:436
+#, python-format
+msgid "Subnet %s concurrently deleted"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:438
+#, python-format
+msgid "Exception auto-deleting subnet %s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:448
+msgid "mechanism_manager.delete_network_postcommit failed"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:462
+#, python-format
+msgid "mechanism_manager.create_subnet_postcommit failed, deleting subnet '%s'"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:492
+#, python-format
+msgid "Deleting subnet %s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:517
+msgid "Deleting subnet record"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:540
+msgid "mechanism_manager.delete_subnet_postcommit failed"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:569
+#, python-format
+msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:624
+#, python-format
+msgid "Deleting port %s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:641
+msgid "Calling base delete_port"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:650
+msgid "mechanism_manager.delete_port_postcommit failed"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:659
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -13075,5 +13163,14 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Service on available: %(uri)s"
+#~ msgstr ""
+
+#~ msgid "mechanism_manager.create_network failed, deleting network '%s'"
+#~ msgstr ""
+
+#~ msgid "mechanism_manager.create_subnet failed, deleting subnet '%s'"
+#~ msgstr ""
+
+#~ msgid "mechanism_manager.create_port failed, deleting port '%s'"
 #~ msgstr ""
 
