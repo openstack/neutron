@@ -99,10 +99,6 @@ class AllowedAddressPairDBTestCase(AllowedAddressPairTestCase):
         super(AllowedAddressPairDBTestCase, self).tearDown()
 
 
-class AllowedAddressPairDBTestCaseXML(AllowedAddressPairDBTestCase):
-    fmt = 'xml'
-
-
 class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
 
     def test_create_port_allowed_address_pairs(self):
@@ -297,3 +293,7 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
             port = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(port['port'][addr_pair.ADDRESS_PAIRS], [])
             self._delete('ports', port['port']['id'])
+
+
+class TestAllowedAddressPairsXML(TestAllowedAddressPairs):
+    fmt = 'xml'

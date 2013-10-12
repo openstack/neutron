@@ -117,6 +117,8 @@ class Allowedaddresspairs(object):
 
     def get_extended_resources(self, version):
         if version == "2.0":
+            attr.PLURALS.update({'allowed_address_pairs':
+                                 'allowed_address_pair'})
             return EXTENDED_ATTRIBUTES_2_0
         else:
             return {}
