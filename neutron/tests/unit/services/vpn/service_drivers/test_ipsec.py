@@ -19,6 +19,7 @@ import mock
 
 from neutron import context
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants
 from neutron.services.vpn.service_drivers import ipsec as ipsec_driver
 from neutron.tests import base
 
@@ -46,8 +47,13 @@ class TestIPsecDriver(base.BaseTestCase):
         plugin_p = mock.patch('neutron.manager.NeutronManager.get_plugin')
         get_plugin = plugin_p.start()
         get_plugin.return_value = plugin
+        service_plugin_p = mock.patch(
+            'neutron.manager.NeutronManager.get_service_plugins')
+        get_service_plugin = service_plugin_p.start()
+        get_service_plugin.return_value = {constants.L3_ROUTER_NAT: plugin}
 
         service_plugin = mock.Mock()
+        service_plugin.get_l3_agents_hosting_routers.return_value = [l3_agent]
         service_plugin._get_vpnservice.return_value = {
             'router_id': _uuid()
         }

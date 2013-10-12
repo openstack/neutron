@@ -21,6 +21,7 @@ from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
+from neutron.plugins.common import constants
 from neutron.services.vpn.common import topics
 from neutron.services.vpn import service_drivers
 
@@ -72,7 +73,8 @@ class IPsecVpnAgentApi(proxy.RpcProxy):
         dispatch notification for the agent.
         """
         adminContext = context.is_admin and context or context.elevated()
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            constants.L3_ROUTER_NAT)
         if not version:
             version = self.RPC_API_VERSION
         l3_agents = plugin.get_l3_agents_hosting_routers(
