@@ -41,6 +41,8 @@ cisco_opts = [
     cfg.BoolOpt('provider_vlan_auto_trunk', default=True,
                 help=_('Provider VLANs are automatically trunked as needed '
                        'on the ports of the Nexus switch')),
+    cfg.BoolOpt('nexus_l3_enable', default=False,
+                help=_("Enable L3 support on the Nexus switches")),
     cfg.BoolOpt('svi_round_robin', default=False,
                 help=_("Distribute SVI interfaces over all switches")),
     cfg.StrOpt('model_class',

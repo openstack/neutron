@@ -18,9 +18,9 @@ import inspect
 import logging
 import mock
 
-from oslo.config import cfg
 import webob.exc as wexc
 
+from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.common import exceptions as q_exc
 from neutron import context
@@ -38,29 +38,88 @@ from neutron.plugins.openvswitch.common import config as ovs_config
 from neutron.plugins.openvswitch import ovs_db_v2
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit import test_extensions
 
 LOG = logging.getLogger(__name__)
+CORE_PLUGIN = 'neutron.plugins.cisco.network_plugin.PluginV2'
 NEXUS_PLUGIN = 'neutron.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin'
+NEXUS_DRIVER = ('neutron.plugins.cisco.nexus.'
+                'cisco_nexus_network_driver_v2.CiscoNEXUSDriver')
+PHYS_NET = 'physnet1'
+BRIDGE_NAME = 'br-eth1'
+VLAN_START = 1000
+VLAN_END = 1100
+COMP_HOST_NAME = 'testhost'
+NEXUS_IP_ADDR = '1.1.1.1'
+NEXUS_DEV_ID = 'NEXUS_SWITCH'
+NEXUS_USERNAME = 'admin'
+NEXUS_PASSWORD = 'mySecretPassword'
+NEXUS_SSH_PORT = 22
+NEXUS_INTERFACE = '1/1'
+NETWORK_NAME = 'test_network'
+CIDR_1 = '10.0.0.0/24'
+CIDR_2 = '10.0.1.0/24'
+DEVICE_ID_1 = '11111111-1111-1111-1111-111111111111'
+DEVICE_ID_2 = '22222222-2222-2222-2222-222222222222'
+DEVICE_OWNER = 'compute:None'
 
 
 class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
-    _plugin_name = 'neutron.plugins.cisco.network_plugin.PluginV2'
-
     def setUp(self):
+        """Configure for end-to-end neutron testing using a mock ncclient.
+
+        This setup includes:
+        - Configure the OVS plugin to use VLANs in the range of
+          VLAN_START-VLAN_END.
+        - Configure the Cisco plugin model to use the Nexus driver.
+        - Configure the Nexus driver to use an imaginary switch
+          at NEXUS_IP_ADDR.
+
+        """
+        # Configure the OVS and Cisco plugins
+        phys_bridge = ':'.join([PHYS_NET, BRIDGE_NAME])
+        phys_vlan_range = ':'.join([PHYS_NET, str(VLAN_START), str(VLAN_END)])
+        config = {
+            ovs_config: {
+                'OVS': {'bridge_mappings': phys_bridge,
+                        'network_vlan_ranges': [phys_vlan_range],
+                        'tenant_network_type': 'vlan'}
+            },
+            cisco_config: {
+                'CISCO': {'nexus_driver': NEXUS_DRIVER},
+                'CISCO_PLUGINS': {'nexus_plugin': NEXUS_PLUGIN},
+            }
+        }
+        for module in config:
+            for group in config[module]:
+                for opt, val in config[module][group].items():
+                    module.cfg.CONF.set_override(opt, val, group)
+            self.addCleanup(module.cfg.CONF.reset)
+
+        # Configure the Nexus switch dictionary
+        # TODO(Henry): add tests for other devices
+        nexus_config = {
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, 'username'): NEXUS_USERNAME,
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, 'password'): NEXUS_PASSWORD,
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, 'ssh_port'): NEXUS_SSH_PORT,
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, COMP_HOST_NAME): NEXUS_INTERFACE,
+        }
+        nexus_patch = mock.patch.dict(cisco_config.device_dictionary,
+                                      nexus_config)
+        nexus_patch.start()
+        self.addCleanup(nexus_patch.stop)
+
         # Use a mock netconf client
         self.mock_ncclient = mock.Mock()
-        self.patch_obj = mock.patch.dict('sys.modules',
+        ncclient_patch = mock.patch.dict('sys.modules',
                                          {'ncclient': self.mock_ncclient})
-        self.patch_obj.start()
+        ncclient_patch.start()
+        self.addCleanup(ncclient_patch.stop)
 
-        cisco_config.cfg.CONF.set_override('nexus_plugin', NEXUS_PLUGIN,
-                                           'CISCO_PLUGINS')
-        self.addCleanup(cisco_config.cfg.CONF.reset)
-
-        super(CiscoNetworkPluginV2TestCase, self).setUp(self._plugin_name)
+        # Call the parent setUp, start the core plugin
+        super(CiscoNetworkPluginV2TestCase, self).setUp(CORE_PLUGIN)
         self.port_create_status = 'DOWN'
-        self.addCleanup(self.patch_obj.stop)
 
     def _get_plugin_ref(self):
         plugin_obj = NeutronManager.get_plugin()
@@ -71,74 +130,6 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                 _plugins[const.VSWITCH_PLUGIN]
 
         return plugin_ref
-
-
-class TestCiscoBasicGet(CiscoNetworkPluginV2TestCase,
-                        test_db_plugin.TestBasicGet):
-    pass
-
-
-class TestCiscoV2HTTPResponse(CiscoNetworkPluginV2TestCase,
-                              test_db_plugin.TestV2HTTPResponse):
-
-    pass
-
-
-class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
-                       test_db_plugin.TestPortsV2,
-                       test_bindings.PortBindingsHostTestCaseMixin):
-
-    def setUp(self):
-        """Configure for end-to-end neutron testing using a mock ncclient.
-
-        This setup includes:
-        - Configure the OVS plugin to use VLANs in the range of 1000-1100.
-        - Configure the Cisco plugin model to use the real Nexus driver.
-        - Configure the Nexus sub-plugin to use an imaginary switch
-          at 1.1.1.1.
-
-        """
-        self.addCleanup(mock.patch.stopall)
-
-        self.vlan_start = 1000
-        self.vlan_end = 1100
-        range_str = 'physnet1:%d:%d' % (self.vlan_start,
-                                        self.vlan_end)
-        nexus_driver = ('neutron.plugins.cisco.nexus.'
-                        'cisco_nexus_network_driver_v2.CiscoNEXUSDriver')
-
-        config = {
-            ovs_config: {
-                'OVS': {'bridge_mappings': 'physnet1:br-eth1',
-                        'network_vlan_ranges': [range_str],
-                        'tenant_network_type': 'vlan'}
-            },
-            cisco_config: {
-                'CISCO': {'nexus_driver': nexus_driver},
-                'CISCO_PLUGINS': {'nexus_plugin': NEXUS_PLUGIN},
-            }
-        }
-
-        for module in config:
-            for group in config[module]:
-                for opt in config[module][group]:
-                    module.cfg.CONF.set_override(opt,
-                                                 config[module][group][opt],
-                                                 group)
-            self.addCleanup(module.cfg.CONF.reset)
-
-        # TODO(Henry): add tests for other devices
-        self.dev_id = 'NEXUS_SWITCH'
-        self.switch_ip = '1.1.1.1'
-        nexus_config = {
-            (self.dev_id, self.switch_ip, 'username'): 'admin',
-            (self.dev_id, self.switch_ip, 'password'): 'mySecretPassword',
-            (self.dev_id, self.switch_ip, 'ssh_port'): 22,
-            (self.dev_id, self.switch_ip, 'testhost'): '1/1',
-        }
-        mock.patch.dict(cisco_config.device_dictionary, nexus_config).start()
-
-        super(TestCiscoPortsV2, self).setUp()
 
     @contextlib.contextmanager
     def _patch_ncclient(self, attr, value):
@@ -160,9 +151,38 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         config = {attr: None}
         self.mock_ncclient.configure_mock(**config)
 
+    def _is_in_nexus_cfg(self, words):
+        """Check if any config sent to Nexus contains all words in a list."""
+        for call in (self.mock_ncclient.manager.connect.return_value.
+                     edit_config.mock_calls):
+            configlet = call[2]['config']
+            if all(word in configlet for word in words):
+                return True
+
+    def _is_in_last_nexus_cfg(self, words):
+        """Check if last config sent to Nexus contains all words in a list."""
+        last_cfg = (self.mock_ncclient.manager.connect.return_value.
+                    edit_config.mock_calls[-1][2]['config'])
+        return all(word in last_cfg for word in words)
+
+
+class TestCiscoBasicGet(CiscoNetworkPluginV2TestCase,
+                        test_db_plugin.TestBasicGet):
+    pass
+
+
+class TestCiscoV2HTTPResponse(CiscoNetworkPluginV2TestCase,
+                              test_db_plugin.TestV2HTTPResponse):
+    pass
+
+
+class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
+                       test_db_plugin.TestPortsV2,
+                       test_bindings.PortBindingsHostTestCaseMixin):
+
     @contextlib.contextmanager
-    def _create_port_res(self, name='myname', cidr='1.0.0.0/24',
-                         do_delete=True, host_id='testhost'):
+    def _create_port_res(self, name=NETWORK_NAME, cidr=CIDR_1,
+                         do_delete=True, host_id=COMP_HOST_NAME):
         """Create a network, subnet, and port and yield the result.
 
         Create a network, subnet, and port, yield the result,
@@ -172,6 +192,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         :param cidr: cidr address of subnetwork to be created
         :param do_delete: If set to True, delete the port at the
                           end of testing
+        :param host_id: Name of compute host to use for testing
 
         """
         ctx = context.get_admin_context()
@@ -180,8 +201,8 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 net_id = subnet['subnet']['network_id']
                 args = (portbindings.HOST_ID, 'device_id', 'device_owner')
                 port_dict = {portbindings.HOST_ID: host_id,
-                             'device_id': 'testdev',
-                             'device_owner': 'compute:None'}
+                             'device_id': DEVICE_ID_1,
+                             'device_owner': DEVICE_OWNER}
                 res = self._create_port(self.fmt, net_id, arg_list=args,
                                         context=ctx, **port_dict)
                 port = self.deserialize(self.fmt, res)
@@ -207,11 +228,6 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         else:
             expected_http = wexc.HTTPInternalServerError.code
         self.assertEqual(status, expected_http)
-
-    def _is_in_last_nexus_cfg(self, words):
-        last_cfg = (self.mock_ncclient.manager.connect().
-                    edit_config.mock_calls[-1][2]['config'])
-        return all(word in last_cfg for word in words)
 
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -268,7 +284,8 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                                                 *args, **kwargs)
 
                 patched_plugin.side_effect = side_effect
-                res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
+                res = self._create_port_bulk(self.fmt, 2,
+                                             net['network']['id'],
                                              'test', True, context=ctx)
                 # We expect an internal server error as we injected a fault
                 self._validate_behavior_on_bulk_failure(
@@ -279,11 +296,11 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
     def test_nexus_enable_vlan_cmd(self):
         """Verify the syntax of the command to enable a vlan on an intf."""
         # First vlan should be configured without 'add' keyword
-        with self._create_port_res(name='net1', cidr='1.0.0.0/24'):
+        with self._create_port_res(name='net1', cidr=CIDR_1):
             self.assertTrue(self._is_in_last_nexus_cfg(['allowed', 'vlan']))
             self.assertFalse(self._is_in_last_nexus_cfg(['add']))
             # Second vlan should be configured with 'add' keyword
-            with self._create_port_res(name='net2', cidr='1.0.1.0/24'):
+            with self._create_port_res(name='net2', cidr=CIDR_2):
                 self.assertTrue(
                     self._is_in_last_nexus_cfg(['allowed', 'vlan', 'add']))
 
@@ -332,7 +349,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config_a):
-            with self._create_port_res(name='myname') as res:
+            with self._create_port_res() as res:
                 self.assertEqual(res.status_int, wexc.HTTPCreated.code)
 
         def mock_edit_config_b(target, config):
@@ -342,7 +359,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config_b):
-            with self._create_port_res(name='myname') as res:
+            with self._create_port_res() as res:
                 self.assertEqual(res.status_int, wexc.HTTPCreated.code)
 
     def test_nexus_vlan_config_rollback(self):
@@ -360,7 +377,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config):
-            with self._create_port_res(name='myname', do_delete=False) as res:
+            with self._create_port_res(do_delete=False) as res:
                 # Confirm that the last configuration sent to the Nexus
                 # switch was deletion of the VLAN.
                 self.assertTrue(
@@ -402,7 +419,8 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         a fictitious host name during port creation.
 
         """
-        with self._create_port_res(do_delete=False, host_id='fakehost') as res:
+        with self._create_port_res(do_delete=False,
+                                   host_id='fakehost') as res:
             self._assertExpectedHTTP(res.status_int,
                                      c_exc.NexusComputeHostNotConfigured)
 
@@ -431,8 +449,14 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         (restored) by the Cisco plugin model layer when there is a
         failure in the Nexus sub-plugin for an update port operation.
 
+        The update port operation simulates a port attachment scenario:
+        first a port is created with no instance (null device_id),
+        and then a port update is requested with a non-null device_id
+        to simulate the port attachment.
+
         """
-        with self.port(fmt=self.fmt) as orig_port:
+        with self.port(fmt=self.fmt, device_id='',
+                       device_owner=DEVICE_OWNER) as orig_port:
 
             inserted_exc = ValueError
             with mock.patch.object(
@@ -440,12 +464,10 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 '_invoke_nexus_for_net_create',
                 side_effect=inserted_exc):
 
-                # Send an update port request with a new device ID
-                device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
-                if orig_port['port']['device_id'] == device_id:
-                    device_id = "600df00d-e4a8-4a3a-8906-feed600df00d"
-                data = {'port': {'device_id': device_id,
-                                 portbindings.HOST_ID: 'testhost'}}
+                # Send an update port request including a non-null device ID
+                data = {'port': {'device_id': DEVICE_ID_2,
+                                 'device_owner': DEVICE_OWNER,
+                                 portbindings.HOST_ID: COMP_HOST_NAME}}
                 port_id = orig_port['port']['id']
                 req = self.new_update_request('ports', data, port_id)
                 res = req.get_response(self.api)
@@ -473,8 +495,8 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
             # After port is created, we should have one binding for this
             # vlan/nexus switch.
             port = self.deserialize(self.fmt, res)
-            start_rows = nexus_db_v2.get_nexusvlan_binding(self.vlan_start,
-                                                           self.switch_ip)
+            start_rows = nexus_db_v2.get_nexusvlan_binding(VLAN_START,
+                                                           NEXUS_IP_ADDR)
             self.assertEqual(len(start_rows), 1)
 
             # Inject an exception in the OVS plugin delete_port
@@ -489,8 +511,8 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
             # Confirm that the Cisco model plugin has restored
             # the nexus configuration for this port after deletion failure.
-            end_rows = nexus_db_v2.get_nexusvlan_binding(self.vlan_start,
-                                                         self.switch_ip)
+            end_rows = nexus_db_v2.get_nexusvlan_binding(VLAN_START,
+                                                         NEXUS_IP_ADDR)
             self.assertEqual(start_rows, end_rows)
 
     def test_nexus_delete_port_rollback(self):
@@ -507,8 +529,8 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
             # Check that there is only one binding in the nexus database
             # for this VLAN/nexus switch.
-            start_rows = nexus_db_v2.get_nexusvlan_binding(self.vlan_start,
-                                                           self.switch_ip)
+            start_rows = nexus_db_v2.get_nexusvlan_binding(VLAN_START,
+                                                           NEXUS_IP_ADDR)
             self.assertEqual(len(start_rows), 1)
 
             # Simulate a Nexus switch configuration error during
@@ -520,23 +542,13 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                              base.FAULT_MAP[c_exc.NexusConfigFailed].code)
 
             # Confirm that the binding has been restored (rolled back).
-            end_rows = nexus_db_v2.get_nexusvlan_binding(self.vlan_start,
-                                                         self.switch_ip)
+            end_rows = nexus_db_v2.get_nexusvlan_binding(VLAN_START,
+                                                         NEXUS_IP_ADDR)
             self.assertEqual(start_rows, end_rows)
 
 
 class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                           test_db_plugin.TestNetworksV2):
-
-    def setUp(self):
-        self.physnet = 'testphys1'
-        self.vlan_range = '100:199'
-        phys_vrange = ':'.join([self.physnet, self.vlan_range])
-        cfg.CONF.set_override('tenant_network_type', 'vlan', 'OVS')
-        cfg.CONF.set_override('network_vlan_ranges', [phys_vrange], 'OVS')
-        self.addCleanup(cfg.CONF.reset)
-
-        super(TestCiscoNetworksV2, self).setUp()
 
     def test_create_networks_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -587,7 +599,7 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
 
     def test_create_provider_vlan_network(self):
         provider_attrs = {provider.NETWORK_TYPE: 'vlan',
-                          provider.PHYSICAL_NETWORK: self.physnet,
+                          provider.PHYSICAL_NETWORK: PHYS_NET,
                           provider.SEGMENTATION_ID: '1234'}
         arg_list = tuple(provider_attrs.keys())
         res = self._create_network(self.fmt, 'pvnet1', True,
@@ -598,7 +610,7 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                     ('status', 'ACTIVE'),
                     ('shared', False),
                     (provider.NETWORK_TYPE, 'vlan'),
-                    (provider.PHYSICAL_NETWORK, self.physnet),
+                    (provider.PHYSICAL_NETWORK, PHYS_NET),
                     (provider.SEGMENTATION_ID, 1234)]
         for k, v in expected:
             self.assertEqual(net['network'][k], v)
@@ -662,6 +674,74 @@ class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
                     wexc.HTTPInternalServerError.code)
 
 
+class TestCiscoRouterInterfacesV2(CiscoNetworkPluginV2TestCase):
+
+    def setUp(self):
+        """Configure an API extension manager."""
+        super(TestCiscoRouterInterfacesV2, self).setUp()
+        ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+
+    @contextlib.contextmanager
+    def _router(self, subnet):
+        """Create a virtual router, yield it for testing, then delete it."""
+        data = {'router': {'tenant_id': 'test_tenant_id'}}
+        router_req = self.new_create_request('routers', data, self.fmt)
+        res = router_req.get_response(self.ext_api)
+        router = self.deserialize(self.fmt, res)
+        try:
+            yield router
+        finally:
+            self._delete('routers', router['router']['id'])
+
+    @contextlib.contextmanager
+    def _router_interface(self, router, subnet):
+        """Create a router interface, yield for testing, then delete it."""
+        interface_data = {'subnet_id': subnet['subnet']['id']}
+        req = self.new_action_request('routers', interface_data,
+                                      router['router']['id'],
+                                      'add_router_interface')
+        req.get_response(self.ext_api)
+        try:
+            yield
+        finally:
+            req = self.new_action_request('routers', interface_data,
+                                          router['router']['id'],
+                                          'remove_router_interface')
+            req.get_response(self.ext_api)
+
+    def test_nexus_l3_enable_config(self):
+        """Verify proper operation of the Nexus L3 enable configuration."""
+        self.addCleanup(cisco_config.CONF.reset)
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                with self._router(subnet) as router:
+                    # With 'nexus_l3_enable' configured to True, confirm that
+                    # a switched virtual interface (SVI) is created/deleted
+                    # on the Nexus switch when a virtual router interface is
+                    # created/deleted.
+                    cisco_config.CONF.set_override('nexus_l3_enable',
+                                                   True, 'CISCO')
+                    with self._router_interface(router, subnet):
+                        self.assertTrue(self._is_in_last_nexus_cfg(
+                            ['interface', 'vlan', 'ip', 'address']))
+                    self.assertTrue(self._is_in_nexus_cfg(
+                        ['no', 'interface', 'vlan']))
+                    self.assertTrue(self._is_in_last_nexus_cfg(
+                        ['no', 'vlan']))
+
+                    # With 'nexus_l3_enable' configured to False, confirm
+                    # that no changes are made to the Nexus switch running
+                    # configuration when a virtual router interface is
+                    # created and then deleted.
+                    cisco_config.CONF.set_override('nexus_l3_enable',
+                                                   False, 'CISCO')
+                    self.mock_ncclient.reset_mock()
+                    self._router_interface(router, subnet)
+                    self.assertFalse(self.mock_ncclient.manager.connect.
+                                     return_value.edit_config.called)
+
+
 class TestCiscoPortsV2XML(TestCiscoPortsV2):
     fmt = 'xml'
 
@@ -671,4 +751,8 @@ class TestCiscoNetworksV2XML(TestCiscoNetworksV2):
 
 
 class TestCiscoSubnetsV2XML(TestCiscoSubnetsV2):
+    fmt = 'xml'
+
+
+class TestCiscoRouterInterfacesV2XML(TestCiscoRouterInterfacesV2):
     fmt = 'xml'

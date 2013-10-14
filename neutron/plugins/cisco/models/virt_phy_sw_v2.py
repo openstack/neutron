@@ -23,8 +23,6 @@ import inspect
 import logging
 import sys
 
-from oslo.config import cfg
-
 from neutron.api.v2 import attributes
 from neutron.db import api as db_api
 from neutron.extensions import portbindings
@@ -96,10 +94,10 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                    'name': self.__class__.__name__})
 
         # Check whether we have a valid Nexus driver loaded
-        self.config_nexus = False
-        nexus_driver = cfg.CONF.CISCO.nexus_driver
+        self.is_nexus_plugin = False
+        nexus_driver = conf.CISCO.nexus_driver
         if nexus_driver.endswith('CiscoNEXUSDriver'):
-            self.config_nexus = True
+            self.is_nexus_plugin = True
 
     def __getattribute__(self, name):
         """Delegate calls to OVS sub-plugin.
@@ -130,7 +128,8 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         func_name = frame_record[3]
         return func_name
 
-    def _invoke_plugin_per_device(self, plugin_key, function_name, args):
+    def _invoke_plugin_per_device(self, plugin_key, function_name,
+                                  args, **kwargs):
         """Invoke plugin per device.
 
         Invokes a device plugin's relevant functions (based on the
@@ -143,10 +142,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                      {'plugin_key': plugin_key, 'function_name': function_name,
                       'args': args})
             return
-
-        device_params = {const.DEVICE_IP: []}
-        return [self._invoke_plugin(plugin_key, function_name, args,
-                                    device_params)]
+        return [self._invoke_plugin(plugin_key, function_name, args, kwargs)]
 
     def _invoke_plugin(self, plugin_key, function_name, args, kwargs):
         """Invoke plugin.
@@ -156,7 +152,6 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         """
         func = getattr(self._plugins[plugin_key], function_name)
         func_args_len = int(inspect.getargspec(func).args.__len__()) - 1
-        fargs, varargs, varkw, defaults = inspect.getargspec(func)
         if args.__len__() > func_args_len:
             func_args = args[:func_args_len]
             extra_args = args[func_args_len:]
@@ -165,10 +160,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                     kwargs[k] = v
             return func(*func_args, **kwargs)
         else:
-            if (varkw == 'kwargs'):
-                return func(*args, **kwargs)
-            else:
-                return func(*args)
+            return func(*args, **kwargs)
 
     def _get_segmentation_id(self, network_id):
         binding_seg_id = odb.get_network_binding(None, network_id)
@@ -261,7 +253,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
 
     def _invoke_nexus_for_net_create(self, context, tenant_id, net_id,
                                      instance_id, host_id):
-        if not self.config_nexus:
+        if not self.is_nexus_plugin:
             return False
 
         network = self.get_network(context, net_id)
@@ -387,7 +379,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                 # Re-raise the original exception
                 raise exc_info[0], exc_info[1], exc_info[2]
 
-    def delete_port(self, context, id):
+    def delete_port(self, context, id, l3_port_check=True):
         """Delete port.
 
         Perform this operation in the context of the configured device
@@ -398,7 +390,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
 
         host_id = self._get_port_host_id_from_bindings(port)
 
-        if (self.config_nexus and host_id and
+        if (self.is_nexus_plugin and host_id and
             self._check_valid_port_device_owner(port)):
             vlan_id = self._get_segmentation_id(port['network_id'])
             n_args = [port['device_id'], vlan_id]
@@ -407,9 +399,9 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                                            n_args)
         try:
             args = [context, id]
-            ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
-                                                        self._func_name(),
-                                                        args)
+            ovs_output = self._invoke_plugin_per_device(
+                const.VSWITCH_PLUGIN, self._func_name(),
+                args, l3_port_check=l3_port_check)
         except Exception:
             exc_info = sys.exc_info()
             # Roll back the delete port on the Nexus plugin
@@ -429,12 +421,12 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
     def add_router_interface(self, context, router_id, interface_info):
         """Add a router interface on a subnet.
 
-        Only invoke the Nexus plugin to create SVI if a Nexus
-        plugin is loaded, otherwise send it to the vswitch plugin
+        Only invoke the Nexus plugin to create SVI if L3 support on
+        the Nexus switches is enabled and a Nexus plugin is loaded,
+        otherwise send it to the vswitch plugin
         """
-        nexus_driver = cfg.CONF.CISCO.nexus_driver
-        if nexus_driver.endswith('CiscoNEXUSDriver'):
-            LOG.debug(_("Nexus plugin loaded, creating SVI on switch"))
+        if (conf.CISCO.nexus_l3_enable and self.is_nexus_plugin):
+            LOG.debug(_("L3 enabled on Nexus plugin, create SVI on switch"))
             if 'subnet_id' not in interface_info:
                 raise cexc.SubnetNotSpecified()
             if 'port_id' in interface_info:
@@ -454,7 +446,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                                                   self._func_name(),
                                                   n_args)
         else:
-            LOG.debug(_("No Nexus plugin, sending to vswitch"))
+            LOG.debug(_("L3 disabled or not Nexus plugin, send to vswitch"))
             n_args = [context, router_id, interface_info]
             return self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                   self._func_name(),
@@ -463,12 +455,12 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
     def remove_router_interface(self, context, router_id, interface_info):
         """Remove a router interface.
 
-        Only invoke the Nexus plugin to delete SVI if a Nexus
-        plugin is loaded, otherwise send it to the vswitch plugin
+        Only invoke the Nexus plugin to delete SVI if L3 support on
+        the Nexus switches is enabled and a Nexus plugin is loaded,
+        otherwise send it to the vswitch plugin
         """
-        nexus_driver = cfg.CONF.CISCO.nexus_driver
-        if nexus_driver.endswith('CiscoNEXUSDriver'):
-            LOG.debug(_("Nexus plugin loaded, deleting SVI from switch"))
+        if (conf.CISCO.nexus_l3_enable and self.is_nexus_plugin):
+            LOG.debug(_("L3 enabled on Nexus plugin, delete SVI from switch"))
 
             subnet = self.get_subnet(context, interface_info['subnet_id'])
             network_id = subnet['network_id']
@@ -479,7 +471,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                                                   self._func_name(),
                                                   n_args)
         else:
-            LOG.debug(_("No Nexus plugin, sending to vswitch"))
+            LOG.debug(_("L3 disabled or not Nexus plugin, send to vswitch"))
             n_args = [context, router_id, interface_info]
             return self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
                                                   self._func_name(),
