@@ -95,11 +95,11 @@ def serve_wsgi(cls):
             service = cls.create()
             service.start()
         except RuntimeError:
-            LOG.warn(_('Attempting fallback to old Quantum api-paste config'))
+            LOG.exception(_('Error occurred: trying old api-paste.ini.'))
             service = cls.create('quantum')
             service.start()
     except Exception:
-        LOG.exception(_('In serve_wsgi()'))
+        LOG.exception(_('Unrecoverable error: please check log for details.'))
         raise
 
     return service
