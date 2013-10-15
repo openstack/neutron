@@ -70,9 +70,12 @@ class AsyncProcess(object):
         self.respawn_interval = respawn_interval
         self._process = None
         self._kill_event = None
+        self._reset_queues()
+        self._watchers = []
+
+    def _reset_queues(self):
         self._stdout_lines = eventlet.queue.LightQueue()
         self._stderr_lines = eventlet.queue.LightQueue()
-        self._watchers = []
 
     def start(self):
         """Launch a process and monitor it asynchronously."""
