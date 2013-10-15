@@ -515,9 +515,13 @@ class TestVpnaas(VPNPluginDbTestCase):
                 ('phase1_negotiation_mode', 'main'),
                 ('ike_version', 'v1'),
                 ('pfs', 'group5'),
-                ('tenant_id', self._tenant_id)]
+                ('tenant_id', self._tenant_id),
+                ('lifetime', {'units': 'seconds',
+                              'value': 60})]
         with self.ikepolicy(name=name) as ikepolicy:
-            data = {'ikepolicy': {'name': name}}
+            data = {'ikepolicy': {'name': name,
+                                  'lifetime': {'units': 'seconds',
+                                               'value': 60}}}
             req = self.new_update_request("ikepolicies",
                                           data,
                                           ikepolicy['ikepolicy']['id'])
@@ -699,15 +703,36 @@ class TestVpnaas(VPNPluginDbTestCase):
                 ('encapsulation_mode', 'tunnel'),
                 ('transform_protocol', 'esp'),
                 ('pfs', 'group5'),
-                ('tenant_id', self._tenant_id)]
+                ('tenant_id', self._tenant_id),
+                ('lifetime', {'units': 'seconds',
+                              'value': 60})]
         with self.ipsecpolicy(name=name) as ipsecpolicy:
-            data = {'ipsecpolicy': {'name': name}}
+            data = {'ipsecpolicy': {'name': name,
+                                    'lifetime': {'units': 'seconds',
+                                                 'value': 60}}}
             req = self.new_update_request("ipsecpolicies",
                                           data,
                                           ipsecpolicy['ipsecpolicy']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.ext_api))
             for k, v in keys:
                 self.assertEqual(res['ipsecpolicy'][k], v)
+
+    def test_update_ipsecpolicy_lifetime(self):
+        with self.ipsecpolicy() as ipsecpolicy:
+            data = {'ipsecpolicy': {'lifetime': {'units': 'seconds'}}}
+            req = self.new_update_request("ipsecpolicies",
+                                          data,
+                                          ipsecpolicy['ipsecpolicy']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.ext_api))
+            self.assertEqual(res['ipsecpolicy']['lifetime']['units'],
+                             'seconds')
+
+            data = {'ipsecpolicy': {'lifetime': {'value': 60}}}
+            req = self.new_update_request("ipsecpolicies",
+                                          data,
+                                          ipsecpolicy['ipsecpolicy']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.ext_api))
+            self.assertEqual(res['ipsecpolicy']['lifetime']['value'], 60)
 
     def test_create_ipsecpolicy_with_invalid_values(self):
         """Test case to test invalid values."""
