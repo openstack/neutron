@@ -34,7 +34,7 @@ def _create_test_chain(id, name, tenant_id):
     return {'id': id, 'name': name, 'tenant_id': tenant_id}
 
 
-def _create_test_port_group(id, name, tenant_id):
+def _create_test_ip_addr_group(id, name, tenant_id):
     return {"id": id, "name": name, "tenant_id": tenant_id}
 
 
@@ -61,17 +61,17 @@ class MidoClientTestCase(testtools.TestCase):
 
         self.mock_api.assert_has_calls(calls, any_order=True)
 
-    def test_delete_port_group_by_name(self):
+    def test_delete_ip_addr_group(self):
 
         tenant_id = uuidutils.generate_uuid()
-        pg1_id = uuidutils.generate_uuid()
-        pg1 = _create_test_port_group(pg1_id, "pg1", tenant_id)
-        pg2_id = uuidutils.generate_uuid()
-        pg2 = _create_test_port_group(pg2_id, "pg2", tenant_id)
+        ipg1_id = uuidutils.generate_uuid()
+        ipg1 = _create_test_ip_addr_group(ipg1_id, "pg1", tenant_id)
+        ipg2_id = uuidutils.generate_uuid()
+        ipg2 = _create_test_ip_addr_group(ipg2_id, "pg2", tenant_id)
 
-        self.mock_api_cfg.port_groups_in = [pg1, pg2]
-        self.client.delete_port_group_by_name(tenant_id, "pg1")
-        self.mock_api.delete_port_group.assert_called_once_with(pg1_id)
+        self.mock_api_cfg.ip_addr_groups_in = [ipg1, ipg2]
+        self.client.delete_ip_addr_group(ipg1_id)
+        self.mock_api.delete_ip_addr_group.assert_called_once_with(ipg1_id)
 
     def test_create_dhcp(self):
 
