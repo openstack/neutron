@@ -19,13 +19,10 @@
 import base64
 import copy
 import httplib
-import os
 import Queue
 import socket
-from StringIO import StringIO
 import threading
 import time
-from zipfile import ZipFile
 
 import eventlet
 from oslo.config import cfg
@@ -49,13 +46,6 @@ RESP_REASON = 1
 RESP_STR = 2
 RESP_DATA = 3
 
-L2_L3_WORKFLOW_TEMPLATE_NAME = 'openstack_l2_l3'
-L4_WORKFLOW_TEMPLATE_NAME = 'openstack_l4'
-
-ACTIONS_TO_SKIP = ['setup_l2_l3']
-
-L4_ACTION_NAME = 'BaseCreate'
-
 TEMPLATE_HEADER = {'Content-Type':
                    'application/vnd.com.radware.vdirect.'
                    'template-parameters+json'}
@@ -65,20 +55,22 @@ PROVISION_HEADER = {'Content-Type':
 CREATE_SERVICE_HEADER = {'Content-Type':
                          'application/vnd.com.radware.'
                          'vdirect.adc-service-specification+json'}
-ZIP_HEADER = {'Content-Type': 'application/x-zip-compressed'}
-
-L2_CTOR_PARAMS = {"service": "_REPLACE_", "ha_network_name": "HA-Network",
-                  "ha_ip_pool_name": "default", "allocate_ha_vrrp": True,
-                  "allocate_ha_ips": True}
-L2_SETUP_L2_L3_PARAMS = {"data_port": 1,
-                         "data_ip_address": "192.168.200.99",
-                         "data_ip_mask": "255.255.255.0",
-                         "gateway": "192.168.200.1",
-                         "ha_port": 2}
 
 driver_opts = [
     cfg.StrOpt('vdirect_address',
                help=_('vdirect server IP address')),
+    cfg.StrOpt('vdirect_user',
+               default='vDirect',
+               help=_('vdirect user name')),
+    cfg.StrOpt('vdirect_password',
+               default='radware',
+               help=_('vdirect user password')),
+    cfg.StrOpt('service_adc_type',
+               default="VA",
+               help=_('Service ADC type')),
+    cfg.StrOpt('service_adc_version',
+               default="",
+               help=_('Service ADC version')),
     cfg.BoolOpt('service_ha_pair',
                 default=False,
                 help=_('service HA pair')),
@@ -93,7 +85,44 @@ driver_opts = [
                help=_('service compression throughtput')),
     cfg.IntOpt('service_cache',
                default=20,
-               help=_('service cache'))
+               help=_('service cache')),
+    cfg.StrOpt('l2_l3_workflow_name',
+               default='openstack_l2_l3',
+               help=_('l2_l3 workflow name')),
+    cfg.StrOpt('l4_workflow_name',
+               default='openstack_l4',
+               help=_('l4 workflow name')),
+    cfg.DictOpt('l2_l3_ctor_params',
+                default={"service": "_REPLACE_",
+                         "ha_network_name": "HA-Network",
+                         "ha_ip_pool_name": "default",
+                         "allocate_ha_vrrp": True,
+                         "allocate_ha_ips": True},
+                help=_('l2_l3 workflow constructor params')),
+    cfg.DictOpt('l2_l3_setup_params',
+                default={"data_port": 1,
+                         "data_ip_address": "192.168.200.99",
+                         "data_ip_mask": "255.255.255.0",
+                         "gateway": "192.168.200.1",
+                         "ha_port": 2},
+                help=_('l2_l3 workflow setup params')),
+    cfg.ListOpt('actions_to_skip',
+                default=['setup_l2_l3'],
+                help=_('List of actions that we dont want to push to '
+                       'the completion queue')),
+    cfg.StrOpt('l4_action_name',
+               default='BaseCreate',
+               help=_('l4 workflow action name')),
+    cfg.ListOpt('service_resource_pool_ids',
+                default=[],
+                help=_('Resource pool ids')),
+    cfg.IntOpt('service_isl_vlan',
+               default=-1,
+               help=_('A required VLAN for the interswitch link to use')),
+    cfg.BoolOpt('service_session_mirroring_enabled',
+                default=False,
+                help=_('Support an Alteon interswitch '
+                       'link for stateful session failover'))
 ]
 
 cfg.CONF.register_opts(driver_opts, "radware")
@@ -108,6 +137,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         self.plugin = plugin
         self.service = {
             "haPair": rad.service_ha_pair,
+            "sessionMirroringEnabled": rad.service_session_mirroring_enabled,
             "primary": {
                 "capacity": {
                     "throughput": rad.service_throughput,
@@ -120,17 +150,32 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                     "type": "portgroup",
                     "portgroups": ['DATA_NETWORK']
                 },
-                "adcType": "VA",
+                "adcType": rad.service_adc_type,
                 "acceptableAdc": "Exact"
             }
         }
+        if rad.service_resource_pool_ids:
+            ids = rad.service_resource_pool_ids
+            self.service['resourcePoolIds'] = [
+                {'name': id} for id in ids
+            ]
+        if rad.service_isl_vlan:
+            self.service['islVlan'] = rad.service_isl_vlan
+        self.l2_l3_wf_name = rad.l2_l3_workflow_name
+        self.l4_wf_name = rad.l4_workflow_name
+        self.l2_l3_ctor_params = rad.l2_l3_ctor_params
+        self.l2_l3_setup_params = rad.l2_l3_setup_params
+        self.l4_action_name = rad.l4_action_name
+        self.actions_to_skip = rad.actions_to_skip
         vdirect_address = cfg.CONF.radware.vdirect_address
-        self.rest_client = vDirectRESTClient(server=vdirect_address)
+        self.rest_client = vDirectRESTClient(server=vdirect_address,
+                                             user=rad.vdirect_user,
+                                             password=rad.vdirect_password)
         self.queue = Queue.Queue()
         self.completion_handler = OperationCompletionHander(self.queue,
                                                             self.rest_client,
                                                             plugin)
-        self.workflows_were_uploaded = False
+        self.workflow_templates_exists = False
         self.completion_handler.setDaemon(True)
         self.completion_handler.start()
 
@@ -143,17 +188,17 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         service_name = self._get_service(extended_vip['pool_id'], network_id)
         LOG.debug(_('create_vip. service_name: %s '), service_name)
         self._create_workflow(
-            vip['pool_id'], L4_WORKFLOW_TEMPLATE_NAME,
+            vip['pool_id'], self.l4_wf_name,
             {"service": service_name})
         self._update_workflow(
             vip['pool_id'],
-            L4_ACTION_NAME, extended_vip)
+            self.l4_action_name, extended_vip, context)
 
     def update_vip(self, context, old_vip, vip):
         extended_vip = self.plugin.populate_vip_graph(context, vip)
         self._update_workflow(
-            vip['pool_id'], L4_ACTION_NAME,
-            extended_vip, False, lb_db.Vip, vip['id'])
+            vip['pool_id'], self.l4_action_name,
+            extended_vip, context, False, lb_db.Vip, vip['id'])
 
     def delete_vip(self, context, vip):
         """Delete a Vip
@@ -195,8 +240,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                 vip = self.plugin.get_vip(context, vip_id)
                 extended_vip = self.plugin.populate_vip_graph(context, vip)
                 self._update_workflow(
-                    pool['id'], L4_ACTION_NAME,
-                    extended_vip, delete, lb_db.Pool, pool['id'])
+                    pool['id'], self.l4_action_name,
+                    extended_vip, context, delete, lb_db.Pool, pool['id'])
         else:
             if delete:
                 self.plugin._delete_db_pool(context, pool['id'])
@@ -223,8 +268,9 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
             vip = self.plugin.get_vip(context, vip_id)
             extended_vip = self.plugin.populate_vip_graph(context, vip)
             self._update_workflow(
-                member['pool_id'], L4_ACTION_NAME,
-                extended_vip, delete, lb_db.Member, member['id'])
+                member['pool_id'], self.l4_action_name,
+                extended_vip, context,
+                delete, lb_db.Member, member['id'])
         # We have to delete this member but it is not connected to a vip yet
         elif delete:
             self.plugin._delete_db_member(context, member['id'])
@@ -267,8 +313,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         if vip_id:
             vip = self.plugin.get_vip(context, vip_id)
             extended_vip = self.plugin.populate_vip_graph(context, vip)
-            self._update_workflow(pool_id, L4_ACTION_NAME,
-                                  extended_vip,
+            self._update_workflow(pool_id, self.l4_action_name,
+                                  extended_vip, context,
                                   delete, lb_db.PoolMonitorAssociation,
                                   health_monitor['id'])
         elif delete:
@@ -289,15 +335,19 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         return subnet['network_id']
 
     @call_log.log
-    def _update_workflow(self, wf_name, action, wf_params, delete=False,
+    def _update_workflow(self, wf_name, action,
+                         wf_params, context,
+                         delete=False,
                          lbaas_entity=None, entity_id=None):
         """Update the WF state. Push the result to a queue for processing."""
 
-        if not self.workflows_were_uploaded:
-            self._upload_workflows_templates()
+        if not self.workflow_templates_exists:
+            self._verify_workflow_templates()
 
-        if action not in ACTIONS_TO_SKIP:
-            params = _translate_vip_object_graph(wf_params)
+        if action not in self.actions_to_skip:
+            params = _translate_vip_object_graph(wf_params,
+                                                 self.plugin,
+                                                 context)
         else:
             params = wf_params
 
@@ -307,7 +357,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                                  TEMPLATE_HEADER))
         LOG.debug(_('_update_workflow response: %s '), response)
 
-        if action not in ACTIONS_TO_SKIP:
+        if action not in self.actions_to_skip:
             ids = params.pop('__ids__', None)
             if not ids:
                 raise q_exc.NeutronException(
@@ -323,7 +373,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
             self.queue.put_nowait(oper)
 
     def _remove_workflow(self, wf_params, context):
-        params = _translate_vip_object_graph(wf_params)
+        params = _translate_vip_object_graph(wf_params, self.plugin, context)
         ids = params.pop('__ids__', None)
         if not ids:
             raise q_exc.NeutronException(
@@ -361,20 +411,20 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         create a service and create l2_l2 WF.
 
         """
+        if not self.workflow_templates_exists:
+            self._verify_workflow_templates()
         incoming_service_name = 'srv_' + network_id
         service_name = self._get_available_service(incoming_service_name)
         if not service_name:
             LOG.debug(
                 'Could not find a service named ' + incoming_service_name)
             service_name = self._create_service(pool_id, network_id)
-            L2_CTOR_PARAMS["service"] = incoming_service_name
+            self.l2_l3_ctor_params["service"] = incoming_service_name
             wf_name = 'l2_l3_' + network_id
-            if not self.workflows_were_uploaded:
-                self._upload_workflows_templates()
             self._create_workflow(
-                wf_name, L2_L3_WORKFLOW_TEMPLATE_NAME, L2_CTOR_PARAMS)
+                wf_name, self.l2_l3_wf_name, self.l2_l3_ctor_params)
             self._update_workflow(
-                wf_name, "setup_l2_l3", L2_SETUP_L2_L3_PARAMS)
+                wf_name, "setup_l2_l3", self.l2_l3_setup_params, None)
         else:
             LOG.debug('A service named ' + service_name + ' was found.')
         return service_name
@@ -424,8 +474,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
     def _create_workflow(self, wf_name, wf_template_name,
                          create_workflow_params=None):
         """Create a WF if it doesnt exists yet."""
-        if not self.workflows_were_uploaded:
-                self._upload_workflows_templates()
+        if not self.workflow_templates_exists:
+                self._verify_workflow_templates()
         if not self._workflow_exists(wf_name):
             if not create_workflow_params:
                 create_workflow_params = {}
@@ -438,10 +488,10 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                                                            TEMPLATE_HEADER))
             LOG.debug(_('create_workflow response: %s'), str(response))
 
-    def _upload_workflows_templates(self):
-        """Upload the driver workflows to vDirect server."""
-        workflows = {L2_L3_WORKFLOW_TEMPLATE_NAME:
-                     False, L4_WORKFLOW_TEMPLATE_NAME: False}
+    def _verify_workflow_templates(self):
+        """Verify the existance of workflows on vDirect server."""
+        workflows = {self.l2_l3_wf_name:
+                     False, self.l4_wf_name: False}
         resource = '/api/workflowTemplate'
         response = _rest_wrapper(self.rest_client.call('GET',
                                                        resource,
@@ -454,46 +504,9 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                     break
         for wf, found in workflows.items():
             if not found:
-                self._upload_workflow_template(wf)
-        self.workflows_were_uploaded = True
-
-    def _upload_workflow_template(self, wf_template_name):
-        """Upload a wf template to vDirect server."""
-        def _get_folders():
-            current_folder = os.path.dirname(os.path.realpath(__file__))
-            folders = [current_folder + '/workflows/' + wf_template_name,
-                       current_folder + '/workflows/common']
-            return folders
-
-        LOG.debug(_('About to upload wf template named %s.zip'),
-                  wf_template_name)
-        data = self._get_workflow_zip_data(_get_folders())
-        _rest_wrapper(self.rest_client.call('POST',
-                                            '/api/workflowTemplate',
-                                            data,
-                                            ZIP_HEADER, binary=True), [201])
-
-    def _get_workflow_zip_data(self, folders):
-        """Create a zip file on the fly and return its content."""
-        def _file_to_zip(f):
-            n, ext = os.path.splitext(f)
-            LOG.debug("file name = " + n + " ext = " + ext)
-            return f == 'workflow.xml' or ext in ['.vm', '.groovy']
-        in_memory_file = StringIO()
-        zip_file = ZipFile(in_memory_file, 'w')
-        LOG.debug(_('Folders are %s'), folders)
-        for folder in folders:
-            LOG.debug(_('Folder is %s'), folder)
-            for root, dirs, files in os.walk(folder):
-                for file in files:
-                    if _file_to_zip(file):
-                        LOG.debug(_('About to add file %s to zip'), str(file))
-                        LOG.debug(_('Path: %s'), os.path.join(root, file))
-                        zip_file.write(os.path.join(root, file),
-                                       os.path.basename(file))
-                        LOG.debug(_('File %s was added to zip'), str(file))
-        zip_file.close()
-        return in_memory_file.getvalue()
+                msg = _('The workflow %s does not exist on vDirect.') % wf
+                raise q_exc.NeutronException(msg)
+        self.workflow_templates_exists = True
 
 
 class vDirectRESTClient:
@@ -501,9 +514,10 @@ class vDirectRESTClient:
 
     def __init__(self,
                  server='localhost',
-                 port=2188,
-                 ssl=None,
-                 auth=None,
+                 user=None,
+                 password=None,
+                 port=2189,
+                 ssl=True,
                  timeout=5000,
                  base_uri=''):
         self.server = server
@@ -511,9 +525,12 @@ class vDirectRESTClient:
         self.ssl = ssl
         self.base_uri = base_uri
         self.timeout = timeout
-        self.auth = None
-        if auth:
-            self.auth = 'Basic ' + base64.encodestring(auth).strip()
+        if user and password:
+            self.auth = base64.encodestring('%s:%s' % (user, password))
+            self.auth = self.auth.replace('\n', '')
+        else:
+            msg = _('User and password must be specified')
+            raise q_exc.NeutronException(msg)
         debug_params = {'server': self.server,
                         'port': self.port,
                         'ssl': self.ssl}
@@ -535,8 +552,9 @@ class vDirectRESTClient:
         debug_data = 'binary' if binary else body
         debug_data = debug_data if debug_data else 'EMPTY'
         if not headers:
-            headers = {}
-
+            headers = {'Authorization': 'Basic %s' % self.auth}
+        else:
+            headers['Authorization'] = 'Basic %s' % self.auth
         conn = None
         if self.ssl:
             conn = httplib.HTTPSConnection(
@@ -733,7 +751,7 @@ def _remove_object_from_db(plugin, context, oper):
     if oper.lbaas_entity == lb_db.PoolMonitorAssociation:
         plugin._delete_db_pool_health_monitor(context,
                                               oper.entity_id,
-                                              oper.object_graph['pool_id'])
+                                              oper.object_graph['pool'])
     elif oper.lbaas_entity == lb_db.Member:
         plugin._delete_db_member(context, oper.entity_id)
     elif oper.lbaas_entity == lb_db.Vip:
@@ -762,7 +780,7 @@ HEALTH_MONITOR_PROPERTIES = ['type', 'delay', 'timeout', 'max_retries',
                              'expected_codes', 'id']
 
 
-def _translate_vip_object_graph(extended_vip):
+def _translate_vip_object_graph(extended_vip, plugin, context):
     """Translate the extended vip
 
     translate to a structure that can be
@@ -799,35 +817,25 @@ def _translate_vip_object_graph(extended_vip):
     for member_property in MEMBER_PROPERTIES:
         trans_vip[_create_key('member', member_property)] = []
     for member in extended_vip['members']:
-        for member_property in MEMBER_PROPERTIES:
-            trans_vip[_create_key('member', member_property)].append(
-                member.get(member_property,
-                           TRANSLATION_DEFAULTS.get(member_property)))
+        if member['status'] != constants.PENDING_DELETE:
+            for member_property in MEMBER_PROPERTIES:
+                trans_vip[_create_key('member', member_property)].append(
+                    member.get(member_property,
+                               TRANSLATION_DEFAULTS.get(member_property)))
     for hm_property in HEALTH_MONITOR_PROPERTIES:
         trans_vip[
             _create_key('hm', _trans_prop_name(hm_property))] = []
     for hm in extended_vip['health_monitors']:
-        for hm_property in HEALTH_MONITOR_PROPERTIES:
-            value = hm.get(hm_property,
-                           TRANSLATION_DEFAULTS.get(hm_property))
-            trans_vip[_create_key('hm',
-                      _trans_prop_name(hm_property))].append(value)
+        hm_pool = plugin.get_pool_health_monitor(context,
+                                                 hm['id'],
+                                                 extended_vip['pool']['id'])
+        if hm_pool['status'] != constants.PENDING_DELETE:
+            for hm_property in HEALTH_MONITOR_PROPERTIES:
+                value = hm.get(hm_property,
+                               TRANSLATION_DEFAULTS.get(hm_property))
+                trans_vip[_create_key('hm',
+                          _trans_prop_name(hm_property))].append(value)
     ids = get_ids(extended_vip)
     trans_vip['__ids__'] = ids
     LOG.debug('Translated Vip graph: ' + str(trans_vip))
     return trans_vip
-
-
-def _drop_pending_delete_elements(extended_vip):
-    """Traverse the Vip object graph and drop PENDEING_DELETE nodes."""
-    # What if the pool is pendening_delete?
-    extended_vip['health_monitors'] = [
-        hm for hm in extended_vip['health_monitors']
-        if hm['status'] != constants.PENDING_DELETE
-    ]
-    extended_vip['members'] = [
-        member for member in extended_vip['members']
-        if member['status'] != constants.PENDING_DELETE
-    ]
-
-    return extended_vip

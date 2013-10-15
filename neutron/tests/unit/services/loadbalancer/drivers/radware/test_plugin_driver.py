@@ -49,13 +49,16 @@ def rest_call_function_mock(action, resource, data, headers, binary=False):
 
 def _get_handler(resource):
     if resource == GET_200[2]:
-        data = json.loads('[{"name":"a"},{"name":"b"}]')
+        if rest_call_function_mock.TEMPLATES_MISSING:
+            data = []
+        else:
+            data = [{"name": "openstack_l2_l3"}, {"name": "openstack_l4"}]
         return 200, '', '', data
 
     if resource in GET_200:
         return 200, '', '', ''
     else:
-        data = json.loads('{"complete":"True", "success": "True"}')
+        data = {"complete": "True", "success": "True"}
         return 202, '', '', data
 
 
@@ -97,6 +100,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
         rest_call_function_mock.__dict__.update(
             {'RESPOND_WITH_ERROR': False})
+        rest_call_function_mock.__dict__.update(
+            {'TEMPLATES_MISSING': False})
 
         self.rest_call_mock = mock.Mock(name='rest_call_mock',
                                         side_effect=rest_call_function_mock,
@@ -110,6 +115,32 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
         self.addCleanup(radware_driver.completion_handler.join)
         self.addCleanup(mock.patch.stopall)
+
+    def test_create_vip_templates_missing(self):
+        """Test the rest call failure handling by Exception raising."""
+        self.rest_call_mock.reset_mock()
+        with self.subnet() as subnet:
+            with self.pool(provider='radware') as pool:
+                vip_data = {
+                    'name': 'vip1',
+                    'subnet_id': subnet['subnet']['id'],
+                    'pool_id': pool['pool']['id'],
+                    'description': '',
+                    'protocol_port': 80,
+                    'protocol': 'HTTP',
+                    'connection_limit': -1,
+                    'admin_state_up': True,
+                    'status': 'PENDING_CREATE',
+                    'tenant_id': self._tenant_id,
+                    'session_persistence': ''
+                }
+
+                rest_call_function_mock.__dict__.update(
+                    {'TEMPLATES_MISSING': True})
+                #TODO(avishayb) Check that NeutronException is raised
+                self.assertRaises(StandardError,
+                                  self.plugin_instance.create_vip,
+                                  (self.ctx, {'vip': vip_data}))
 
     def test_create_vip_failure(self):
         """Test the rest call failure handling by Exception raising."""
@@ -175,18 +206,18 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
 
                     mock.call('POST', '/api/workflowTemplate/' +
-                              driver.L4_WORKFLOW_TEMPLATE_NAME +
+                              'openstack_l4' +
                               '?name=' + pool['pool']['id'],
                               mock.ANY,
                               driver.TEMPLATE_HEADER),
                     mock.call('POST', '/api/workflowTemplate/' +
-                              driver.L2_L3_WORKFLOW_TEMPLATE_NAME +
+                              'openstack_l2_l3' +
                               '?name=l2_l3_' + subnet['subnet']['network_id'],
                               mock.ANY,
                               driver.TEMPLATE_HEADER),
 
                     mock.call('POST', '/api/workflow/' + pool['pool']['id'] +
-                              '/action/' + driver.L4_ACTION_NAME,
+                              '/action/BaseCreate',
                               mock.ANY, driver.TEMPLATE_HEADER),
                     mock.call('GET', '/api/workflow/' +
                               pool['pool']['id'], None, None)
@@ -238,7 +269,7 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                 # Test REST calls
                 calls = [
                     mock.call('POST', '/api/workflow/' + pool['pool']['id'] +
-                              '/action/' + driver.L4_ACTION_NAME,
+                              '/action/BaseCreate',
                               mock.ANY, driver.TEMPLATE_HEADER),
                 ]
                 self.rest_call_mock.assert_has_calls(calls, any_order=True)
@@ -306,12 +337,12 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                         calls = [
                             mock.call(
                                 'POST', '/api/workflow/' + p['pool']['id'] +
-                                '/action/' + driver.L4_ACTION_NAME,
+                                '/action/BaseCreate',
                                 mock.ANY, driver.TEMPLATE_HEADER
                             ),
                             mock.call(
                                 'POST', '/api/workflow/' + p['pool']['id'] +
-                                '/action/' + driver.L4_ACTION_NAME,
+                                '/action/BaseCreate',
                                 mock.ANY, driver.TEMPLATE_HEADER
                             )
                         ]
@@ -330,12 +361,12 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                         calls = [
                             mock.call(
                                 'POST', '/api/workflow/' + p['pool']['id'] +
-                                '/action/' + driver.L4_ACTION_NAME,
+                                '/action/BaseCreate',
                                 mock.ANY, driver.TEMPLATE_HEADER
                             ),
                             mock.call(
                                 'POST', '/api/workflow/' + p['pool']['id'] +
-                                '/action/' + driver.L4_ACTION_NAME,
+                                '/action/BaseCreate',
                                 mock.ANY, driver.TEMPLATE_HEADER
                             )
                         ]
@@ -379,12 +410,12 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                         calls = [
                             mock.call(
                                 'POST', '/api/workflow/' + p['pool']['id'] +
-                                '/action/' + driver.L4_ACTION_NAME,
+                                '/action/BaseCreate',
                                 mock.ANY, driver.TEMPLATE_HEADER
                             ),
                             mock.call(
                                 'POST', '/api/workflow/' + p['pool']['id'] +
-                                '/action/' + driver.L4_ACTION_NAME,
+                                '/action/BaseCreate',
                                 mock.ANY, driver.TEMPLATE_HEADER
                             )
                         ]
