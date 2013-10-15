@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-14 06:15+0000\n"
+"POT-Creation-Date: 2013-10-15 06:33+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Bosnian "
@@ -782,6 +782,48 @@ msgstr ""
 msgid "Top-level directory for maintaining dhcp state"
 msgstr ""
 
+#: neutron/agent/linux/async_process.py:69
+msgid "respawn_interval must be >= 0 if provided."
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:80
+msgid "Process is already started"
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:82
+#, python-format
+msgid "Launching async process [%s]."
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:88
+#, python-format
+msgid "Halting async process [%s]."
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:91
+msgid "Process is not running."
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:156
+#, python-format
+msgid "An error occurred while killing [%s]."
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:163
+#, python-format
+msgid "Halting async process [%s] in response to an error."
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:169
+#, python-format
+msgid "Respawning async process [%s]."
+msgstr ""
+
+#: neutron/agent/linux/async_process.py:178
+#, python-format
+msgid "An error occured while communicating with async process [%s]."
+msgstr ""
+
 #: neutron/agent/linux/daemon.py:35
 #, python-format
 msgid "Failed to open pidfile: %s"
@@ -1120,12 +1162,12 @@ msgstr ""
 msgid "Bridge %s not found."
 msgstr ""
 
-#: neutron/agent/linux/utils.py:43
+#: neutron/agent/linux/utils.py:47
 #, python-format
 msgid "Running command: %s"
 msgstr ""
 
-#: neutron/agent/linux/utils.py:57
+#: neutron/agent/linux/utils.py:70
 #, python-format
 msgid ""
 "\n"
@@ -4522,12 +4564,12 @@ msgid "'%(model)s' object has no attribute '%(name)s'"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:134
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:194
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:186
 msgid "create_network() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:151
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:226
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:218
 msgid "update_network() called"
 msgstr ""
 
@@ -4544,17 +4586,17 @@ msgid "get_networks() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:197
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:306
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:298
 msgid "create_port() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:207
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:396
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:388
 msgid "delete_port() called"
 msgstr ""
 
 #: neutron/plugins/cisco/network_plugin.py:226
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:353
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:345
 msgid "update_port() called"
 msgstr ""
 
@@ -4876,67 +4918,71 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/cisco/common/config.py:45
+msgid "Enable L3 support on the Nexus switches"
+msgstr ""
+
+#: neutron/plugins/cisco/common/config.py:47
 #: neutron/plugins/ml2/drivers/cisco/config.py:23
 msgid "Distribute SVI interfaces over all switches"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:49
+#: neutron/plugins/cisco/common/config.py:51
 msgid "Model Class"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:53
+#: neutron/plugins/cisco/common/config.py:55
 msgid "Nexus Driver Name"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:58
+#: neutron/plugins/cisco/common/config.py:60
 msgid "N1K Integration Bridge"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:60
+#: neutron/plugins/cisco/common/config.py:62
 msgid "N1K Enable Tunneling"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:62
+#: neutron/plugins/cisco/common/config.py:64
 msgid "N1K Tunnel Bridge"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:64
+#: neutron/plugins/cisco/common/config.py:66
 msgid "N1K Local IP"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:66
+#: neutron/plugins/cisco/common/config.py:68
 msgid "N1K Tenant Network Type"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:68
+#: neutron/plugins/cisco/common/config.py:70
 msgid "N1K Bridge Mappings"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:70
+#: neutron/plugins/cisco/common/config.py:72
 msgid "N1K VXLAN ID Ranges"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:72
+#: neutron/plugins/cisco/common/config.py:74
 msgid "N1K Network VLAN Ranges"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:74
+#: neutron/plugins/cisco/common/config.py:76
 msgid "N1K default network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:76
+#: neutron/plugins/cisco/common/config.py:78
 msgid "N1K default policy profile"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:78
+#: neutron/plugins/cisco/common/config.py:80
 msgid "N1K policy profile for network node"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:80
+#: neutron/plugins/cisco/common/config.py:82
 msgid "N1K Policy profile polling duration in seconds"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:124
+#: neutron/plugins/cisco/common/config.py:126
 #: neutron/plugins/ml2/drivers/cisco/config.py:58
 msgid "Some config files were not parsed properly"
 msgstr ""
@@ -5170,52 +5216,52 @@ msgstr ""
 msgid "get_nexussvi_bindings() called"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:77
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:75
 #, python-format
 msgid "Loaded device plugin %s"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:94
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:92
 #, python-format
 msgid "%(module)s.%(name)s init done"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:140
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:139
 #, python-format
 msgid "No %s Plugin loaded"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:141
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:140
 #, python-format
 msgid "%(plugin_key)s: %(function_name)s with args %(args)s ignored"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:207
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:199
 #, python-format
 msgid "Provider network added to DB: %(network_id)s, %(vlan_id)s"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:251
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:243
 #, python-format
 msgid "Provider network removed from DB: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:377
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:369
 #, python-format
 msgid "Unable to update port '%s' on Nexus switch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:437
-msgid "Nexus plugin loaded, creating SVI on switch"
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:429
+msgid "L3 enabled on Nexus plugin, create SVI on switch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:457
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:482
-msgid "No Nexus plugin, sending to vswitch"
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:449
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:474
+msgid "L3 disabled or not Nexus plugin, send to vswitch"
 msgstr ""
 
-#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:471
-msgid "Nexus plugin loaded, deleting SVI from switch"
+#: neutron/plugins/cisco/models/virt_phy_sw_v2.py:463
+msgid "L3 enabled on Nexus plugin, delete SVI from switch"
 msgstr ""
 
 #: neutron/plugins/cisco/n1kv/n1kv_client.py:256
@@ -13173,5 +13219,14 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "mechanism_manager.create_port failed, deleting port '%s'"
+#~ msgstr ""
+
+#~ msgid "Nexus plugin loaded, creating SVI on switch"
+#~ msgstr ""
+
+#~ msgid "No Nexus plugin, sending to vswitch"
+#~ msgstr ""
+
+#~ msgid "Nexus plugin loaded, deleting SVI from switch"
 #~ msgstr ""
 
