@@ -61,11 +61,10 @@ class TestNecSGServerRpcCallBack(
     pass
 
 
-# TODO(amotoki): The test is blocked by 1229954
-# class TestNecSGServerRpcCallBackXML(
-#     test_sg_rpc.SGServerRpcCallBackMixinTestCaseXML,
-#     NecSecurityGroupsTestCase):
-#     pass
+class TestNecSGServerRpcCallBackXML(
+    test_sg_rpc.SGServerRpcCallBackMixinTestCaseXML,
+    NecSecurityGroupsTestCase):
+    pass
 
 
 class TestNecSecurityGroups(NecSecurityGroupsTestCase,
