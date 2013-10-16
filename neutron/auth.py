@@ -42,8 +42,13 @@ class NeutronKeystoneContext(wsgi.Middleware):
         # Suck out the roles
         roles = [r.strip() for r in req.headers.get('X_ROLES', '').split(',')]
 
+        # Human-friendly names
+        tenant_name = req.headers.get('X_PROJECT_NAME')
+        user_name = req.headers.get('X_USER_NAME')
+
         # Create a context with the authentication data
-        ctx = context.Context(user_id, tenant_id, roles=roles)
+        ctx = context.Context(user_id, tenant_id, roles=roles,
+                              user_name=user_name, tenant_name=tenant_name)
 
         # Inject the context...
         req.environ['neutron.context'] = ctx

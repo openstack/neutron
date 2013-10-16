@@ -35,7 +35,7 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.request = webob.Request.blank('/')
         self.request.headers['X_AUTH_TOKEN'] = 'testauthtoken'
 
-    def test_no_user_no_user_id(self):
+    def test_no_user_id(self):
         self.request.headers['X_PROJECT_ID'] = 'testtenantid'
         response = self.request.get_response(self.middleware)
         self.assertEqual(response.status, '401 Unauthorized')
@@ -46,6 +46,7 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         response = self.request.get_response(self.middleware)
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(self.context.user_id, 'testuserid')
+        self.assertEqual(self.context.user, 'testuserid')
 
     def test_with_tenant_id(self):
         self.request.headers['X_PROJECT_ID'] = 'testtenantid'
@@ -53,6 +54,7 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         response = self.request.get_response(self.middleware)
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(self.context.tenant_id, 'testtenantid')
+        self.assertEqual(self.context.tenant, 'testtenantid')
 
     def test_roles_no_admin(self):
         self.request.headers['X_PROJECT_ID'] = 'testtenantid'
@@ -74,3 +76,15 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.assertEqual(self.context.roles, ['role1', 'role2', 'role3',
                                               'role4', 'role5', 'AdMiN'])
         self.assertEqual(self.context.is_admin, True)
+
+    def test_with_user_tenant_name(self):
+        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_USER_ID'] = 'testuserid'
+        self.request.headers['X_PROJECT_NAME'] = 'testtenantname'
+        self.request.headers['X_USER_NAME'] = 'testusername'
+        response = self.request.get_response(self.middleware)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(self.context.user_id, 'testuserid')
+        self.assertEqual(self.context.user_name, 'testusername')
+        self.assertEqual(self.context.tenant_id, 'testtenantid')
+        self.assertEqual(self.context.tenant_name, 'testtenantname')

@@ -23,6 +23,7 @@ from datetime import datetime
 
 from neutron.db import api as db_api
 from neutron.openstack.common import context as common_context
+from neutron.openstack.common import local
 from neutron.openstack.common import log as logging
 from neutron import policy
 
@@ -38,18 +39,31 @@ class ContextBase(common_context.RequestContext):
     """
 
     def __init__(self, user_id, tenant_id, is_admin=None, read_deleted="no",
-                 roles=None, timestamp=None, load_admin_roles=True, **kwargs):
+                 roles=None, timestamp=None, load_admin_roles=True,
+                 request_id=None, tenant_name=None, user_name=None,
+                 overwrite=True, **kwargs):
         """Object initialization.
 
         :param read_deleted: 'no' indicates deleted records are hidden, 'yes'
             indicates deleted records are visible, 'only' indicates that
             *only* deleted records are visible.
+
+        :param overwrite: Set to False to ensure that the greenthread local
+            copy of the index is not overwritten.
+
+        :param kwargs: Extra arguments that might be present, but we ignore
+            because they possibly came in from older rpc messages.
         """
         if kwargs:
             LOG.warn(_('Arguments dropped when creating '
                        'context: %s'), kwargs)
+
         super(ContextBase, self).__init__(user=user_id, tenant=tenant_id,
-                                          is_admin=is_admin)
+                                          is_admin=is_admin,
+                                          request_id=request_id)
+        self.user_name = user_name
+        self.tenant_name = tenant_name
+
         self.read_deleted = read_deleted
         if not timestamp:
             timestamp = datetime.utcnow()
@@ -63,6 +77,9 @@ class ContextBase(common_context.RequestContext):
             admin_roles = policy.get_admin_roles()
             if admin_roles:
                 self.roles = list(set(self.roles) | set(admin_roles))
+        # Allow openstack.common.log to access the context
+        if overwrite or not hasattr(local.store, 'context'):
+            local.store.context = self
 
     @property
     def project_id(self):
@@ -106,7 +123,13 @@ class ContextBase(common_context.RequestContext):
                 'is_admin': self.is_admin,
                 'read_deleted': self.read_deleted,
                 'roles': self.roles,
-                'timestamp': str(self.timestamp)}
+                'timestamp': str(self.timestamp),
+                'request_id': self.request_id,
+                'tenant': self.tenant,
+                'user': self.user,
+                'tenant_name': self.tenant_name,
+                'user_name': self.user_name,
+                }
 
     @classmethod
     def from_dict(cls, values):
@@ -139,7 +162,8 @@ def get_admin_context(read_deleted="no", load_admin_roles=True):
                    tenant_id=None,
                    is_admin=True,
                    read_deleted=read_deleted,
-                   load_admin_roles=load_admin_roles)
+                   load_admin_roles=load_admin_roles,
+                   overwrite=False)
 
 
 def get_admin_context_without_session(read_deleted="no"):
