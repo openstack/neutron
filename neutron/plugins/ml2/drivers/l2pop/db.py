@@ -60,6 +60,7 @@ class L2populationDbMixin(base_db.CommonDbMixin):
             query = query.join(agents_db.Agent,
                                agents_db.Agent.host ==
                                ml2_models.PortBinding.host)
+            query = query.join(models_v2.Port)
             query = query.filter(models_v2.Port.network_id == network_id,
                                  models_v2.Port.admin_state_up == True,
                                  agents_db.Agent.agent_type.in_(
