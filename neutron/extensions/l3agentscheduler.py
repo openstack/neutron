@@ -161,6 +161,11 @@ class RouterSchedulingFailed(exceptions.Conflict):
                 " the L3 Agent %(agent_id)s.")
 
 
+class RouterReschedulingFailed(exceptions.Conflict):
+    message = _("Failed rescheduling router %(router_id)s: "
+                "no eligible l3 agent found.")
+
+
 class RouterNotHostedByL3Agent(exceptions.Conflict):
     message = _("The router %(router_id)s is not hosted"
                 " by L3 agent %(agent_id)s.")

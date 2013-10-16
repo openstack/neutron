@@ -905,6 +905,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
                 'router_id': self.conf.router_id,
                 'handle_internal_only_routers':
                 self.conf.handle_internal_only_routers,
+                'external_network_bridge': self.conf.external_network_bridge,
                 'gateway_external_network_id':
                 self.conf.gateway_external_network_id,
                 'interface_driver': self.conf.interface_driver},
