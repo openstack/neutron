@@ -16,6 +16,7 @@
 #    under the License.
 
 import datetime
+import itertools
 import random
 
 import netaddr
@@ -329,13 +330,22 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             models_v2.IPAllocationPool).filter_by(subnet_id=subnet_id).
             options(orm.joinedload('available_ranges', innerjoin=True)).
             with_lockmode('update'))
+        # If there are no available ranges the previous query will return no
+        # results as it uses an inner join to avoid errors with the postgresql
+        # backend (see lp bug 1215350). In this case IP allocation pools must
+        # be loaded with a different query, which does not require lock for
+        # update as the allocation pools for a subnet are immutable.
+        # The 2nd query will be executed only if the first yields no results
+        unlocked_allocation_pools = (context.session.query(
+            models_v2.IPAllocationPool).filter_by(subnet_id=subnet_id))
 
         # Find the allocation pool for the IP to recycle
         pool_id = None
-        for allocation_pool in allocation_pools:
+
+        for allocation_pool in itertools.chain(allocation_pools,
+                                               unlocked_allocation_pools):
             allocation_pool_range = netaddr.IPRange(
-                allocation_pool['first_ip'],
-                allocation_pool['last_ip'])
+                allocation_pool['first_ip'], allocation_pool['last_ip'])
             if netaddr.IPAddress(ip_address) in allocation_pool_range:
                 pool_id = allocation_pool['id']
                 break
@@ -451,7 +461,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         for subnet in subnets:
             range = range_qry.filter_by(subnet_id=subnet['id']).first()
             if not range:
-                LOG.debug(_("All IP's from subnet %(subnet_id)s (%(cidr)s) "
+                LOG.debug(_("All IPs from subnet %(subnet_id)s (%(cidr)s) "
                             "allocated"),
                           {'subnet_id': subnet['id'], 'cidr': subnet['cidr']})
                 continue
