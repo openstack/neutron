@@ -30,7 +30,7 @@ MEMBER_SEGMENTS = 'n1kv:member_segments'
 
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {
-        PROFILE_ID: {'allow_post': True, 'allow_put': True,
+        PROFILE_ID: {'allow_post': True, 'allow_put': False,
                      'validate': {'type:regex': attributes.UUID_PATTERN},
                      'default': attributes.ATTR_NOT_SPECIFIED,
                      'is_visible': True},
@@ -48,7 +48,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                           'is_visible': True},
     },
     'ports': {
-        PROFILE_ID: {'allow_post': True, 'allow_put': True,
+        PROFILE_ID: {'allow_post': True, 'allow_put': False,
                      'validate': {'type:regex': attributes.UUID_PATTERN},
                      'default': attributes.ATTR_NOT_SPECIFIED,
                      'is_visible': True}

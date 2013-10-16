@@ -849,6 +849,7 @@ def create_network_profile(db_session, network_profile):
             kwargs["multicast_ip_range"] = network_profile[
                 "multicast_ip_range"]
             kwargs["segment_range"] = network_profile["segment_range"]
+            kwargs["sub_type"] = network_profile["sub_type"]
         elif network_profile["segment_type"] == c_const.NETWORK_TYPE_TRUNK:
             kwargs["sub_type"] = network_profile["sub_type"]
         net_profile = n1kv_models_v2.NetworkProfile(**kwargs)

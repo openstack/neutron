@@ -105,6 +105,7 @@ MAPPING = 'mapping'
 SEGMENTS = 'segments'
 SEGMENT = 'segment'
 BRIDGE_DOMAIN_SUFFIX = '_bd'
+LOGICAL_NETWORK_SUFFIX = '_log_net'
 ENCAPSULATION_PROFILE_SUFFIX = '_profile'
 
 UUID_LENGTH = 36
