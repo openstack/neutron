@@ -94,7 +94,7 @@ class IPWrapper(SubProcessBase):
                 continue
             tokens = line.split(':', 2)
             if len(tokens) >= 3:
-                name = tokens[1].strip()
+                name = tokens[1].split('@', 1)[0].strip()
 
                 if exclude_loopback and name == LOOPBACK_DEVNAME:
                     continue
