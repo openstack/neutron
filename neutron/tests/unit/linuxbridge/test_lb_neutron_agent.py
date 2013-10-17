@@ -506,20 +506,44 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             mock.patch.object(self.lbm, "get_interface_details"),
             mock.patch.object(self.lbm, "update_interface_ip_details"),
             mock.patch.object(self.lbm, "delete_vlan"),
+            mock.patch.object(self.lbm, "delete_vxlan"),
             mock.patch.object(utils, "execute")
         ) as (de_fn, getif_fn, remif_fn, if_det_fn,
-              updif_fn, del_vlan, exec_fn):
+              updif_fn, del_vlan, del_vxlan, exec_fn):
             de_fn.return_value = False
             self.lbm.delete_vlan_bridge("br0")
             self.assertFalse(getif_fn.called)
 
             de_fn.return_value = True
-            getif_fn.return_value = ["eth0", "eth1.1", "eth1"]
+            getif_fn.return_value = ["eth0", "eth1.1", "eth1", "vxlan-1002"]
             if_det_fn.return_value = ("ips", "gateway")
             exec_fn.return_value = False
             self.lbm.delete_vlan_bridge("br0")
             updif_fn.assert_called_with("eth1", "br0", "ips", "gateway")
             del_vlan.assert_called_with("eth1.1")
+            del_vxlan.assert_called_with("vxlan-1002")
+
+    def test_delete_vxlan_bridge_no_int_mappings(self):
+        interface_mappings = {}
+        lbm = linuxbridge_neutron_agent.LinuxBridgeManager(
+            interface_mappings, self.root_helper)
+
+        with contextlib.nested(
+            mock.patch.object(lbm, "device_exists"),
+            mock.patch.object(lbm, "get_interfaces_on_bridge"),
+            mock.patch.object(lbm, "remove_interface"),
+            mock.patch.object(lbm, "delete_vxlan"),
+            mock.patch.object(utils, "execute")
+        ) as (de_fn, getif_fn, remif_fn, del_vxlan, exec_fn):
+            de_fn.return_value = False
+            lbm.delete_vlan_bridge("br0")
+            self.assertFalse(getif_fn.called)
+
+            de_fn.return_value = True
+            getif_fn.return_value = ["vxlan-1002"]
+            exec_fn.return_value = False
+            lbm.delete_vlan_bridge("br0")
+            del_vxlan.assert_called_with("vxlan-1002")
 
     def test_remove_empty_bridges(self):
         self.lbm.network_map = {'net1': mock.Mock(), 'net2': mock.Mock()}
