@@ -233,11 +233,7 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
         self._add_rules_to_chain(ipt_mgr, IPV6, 'FORWARD', jump_rule)
 
     def _convert_fwaas_to_iptables_rule(self, rule):
-        if rule.get('action') == 'allow':
-            rule['action'] = 'ACCEPT'
-        else:
-            rule['action'] = 'DROP'
-
+        action = rule.get('action') == 'allow' and 'ACCEPT' or 'DROP'
         args = [self._protocol_arg(rule.get('protocol')),
                 self._port_arg('dport',
                                rule.get('protocol'),
@@ -247,7 +243,7 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
                                rule.get('source_port')),
                 self._ip_prefix_arg('s', rule.get('source_ip_address')),
                 self._ip_prefix_arg('d', rule.get('destination_ip_address')),
-                self._action_arg(rule.get('action'))]
+                self._action_arg(action)]
 
         iptables_rule = ' '.join(args)
         return iptables_rule
