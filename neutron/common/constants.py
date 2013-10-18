@@ -92,3 +92,12 @@ PROTO_NUM_TCP = 6
 PROTO_NUM_ICMP = 1
 PROTO_NUM_ICMP_V6 = 58
 PROTO_NUM_UDP = 17
+
+# List of ICMPv6 types that should be allowed by default:
+# Multicast Listener Query (130),
+# Multicast Listener Report (131),
+# Multicast Listener Done (132),
+# Router Advertisement (134),
+# Neighbor Solicitation (135),
+# Neighbor Advertisement (136)
+ICMPV6_ALLOWED_TYPES = [130, 131, 132, 134, 135, 136]

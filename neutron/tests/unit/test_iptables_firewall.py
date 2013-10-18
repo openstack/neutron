@@ -23,6 +23,7 @@ from oslo.config import cfg
 
 from neutron.agent.common import config as a_cfg
 from neutron.agent.linux.iptables_firewall import IptablesFirewallDriver
+from neutron.common import constants
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 
@@ -747,11 +748,18 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                                '-m physdev --physdev-out tapfake_dev '
                                '--physdev-is-bridged '
                                '-j $ifake_dev'),
-                 call.add_rule(
-                     'ifake_dev', '-m state --state INVALID -j DROP'),
-                 call.add_rule(
-                     'ifake_dev',
-                     '-m state --state RELATED,ESTABLISHED -j RETURN')]
+                 ]
+        if ethertype == 'IPv6':
+            for icmp6_type in constants.ICMPV6_ALLOWED_TYPES:
+                calls.append(
+                    call.add_rule('ifake_dev',
+                                  '-p icmpv6 --icmpv6-type %s -j RETURN' %
+                                  icmp6_type))
+        calls += [call.add_rule('ifake_dev',
+                                '-m state --state INVALID -j DROP'),
+                  call.add_rule(
+                      'ifake_dev',
+                      '-m state --state RELATED,ESTABLISHED -j RETURN')]
 
         if ingress_expected_call:
             calls.append(ingress_expected_call)
