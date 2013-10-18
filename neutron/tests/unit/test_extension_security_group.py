@@ -240,14 +240,10 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 class SecurityGroupDBTestCase(SecurityGroupsTestCase):
     def setUp(self, plugin=None):
-        test_config['plugin_name_v2'] = DB_PLUGIN_KLASS
+        plugin = plugin or DB_PLUGIN_KLASS
         ext_mgr = SecurityGroupTestExtensionManager()
         test_config['extension_manager'] = ext_mgr
         super(SecurityGroupDBTestCase, self).setUp(plugin)
-
-    def tearDown(self):
-        del test_config['plugin_name_v2']
-        super(SecurityGroupDBTestCase, self).tearDown()
 
 
 class TestSecurityGroups(SecurityGroupDBTestCase):
