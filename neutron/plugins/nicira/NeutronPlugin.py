@@ -520,8 +520,12 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         nvp_port_id = self._nvp_get_port_id(context, self.cluster,
                                             port_data)
         if not nvp_port_id:
-            raise q_exc.PortNotFound(port_id=port_data['id'])
-
+            LOG.warn(_("Neutron port %(port_id)s not found on NVP backend. "
+                       "Terminating delete operation. A dangling router port "
+                       "might have been left on router %(router_id)s"),
+                     {'port_id': port_data['id'],
+                      'router_id': lrouter_id})
+            return
         try:
             nvplib.delete_peer_router_lport(self.cluster,
                                             lrouter_id,
