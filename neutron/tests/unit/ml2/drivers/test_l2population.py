@@ -26,6 +26,7 @@ from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
+from neutron import manager
 from neutron.openstack.common import timeutils
 from neutron.plugins.ml2 import config as config
 from neutron.plugins.ml2.drivers.l2pop import constants as l2_consts
@@ -83,7 +84,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                      'ml2')
         super(TestL2PopulationRpcTestCase, self).setUp(PLUGIN_NAME)
         self.addCleanup(config.cfg.CONF.reset)
-        self.port_create_status = 'DOWN'
 
         self.adminContext = context.get_admin_context()
 
@@ -417,6 +417,12 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                            **host_arg) as port1:
                 p1 = port1['port']
 
+                device = 'tap' + p1['id']
+
+                self.callbacks.update_device_up(self.adminContext,
+                                                agent_id=HOST,
+                                                device=device)
+
                 self.mock_fanout.reset_mock()
 
                 data = {'port': {'fixed_ips': [{'ip_address': '10.0.0.2'},
@@ -483,3 +489,32 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
                 self.mock_fanout.assert_any_call(
                     mock.ANY, del_expected, topic=self.fanout_topic)
+
+    def test_no_fdb_updates_without_port_updates(self):
+        self._register_ml2_agents()
+
+        with self.subnet(network=self._network) as subnet:
+            host_arg = {portbindings.HOST_ID: HOST}
+            with self.port(subnet=subnet, cidr='10.0.0.0/24',
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                p1 = port1['port']
+
+                device = 'tap' + p1['id']
+
+                self.callbacks.update_device_up(self.adminContext,
+                                                agent_id=HOST,
+                                                device=device)
+                p1['status'] = 'ACTIVE'
+                self.mock_fanout.reset_mock()
+
+                fanout = ('neutron.plugins.ml2.drivers.l2pop.rpc.'
+                          'L2populationAgentNotifyAPI._notification_fanout')
+                fanout_patch = mock.patch(fanout)
+                mock_fanout = fanout_patch.start()
+
+                plugin = manager.NeutronManager.get_plugin()
+                plugin.update_port(self.adminContext, p1['id'], port1)
+
+                self.assertFalse(mock_fanout.called)
+                fanout_patch.stop()

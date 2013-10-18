@@ -94,8 +94,7 @@ class L2populationMechanismDriver(api.MechanismDriver,
 
         if port['status'] == orig['status']:
             self._fixed_ips_changed(context, orig, port)
-
-        if port['status'] == const.PORT_STATUS_ACTIVE:
+        elif port['status'] == const.PORT_STATUS_ACTIVE:
             self._update_port_up(context)
         elif port['status'] == const.PORT_STATUS_DOWN:
             fdb_entries = self._update_port_down(context)
