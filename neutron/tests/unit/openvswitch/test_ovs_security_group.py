@@ -25,8 +25,6 @@ from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 PLUGIN_NAME = ('neutron.plugins.openvswitch.'
                'ovs_neutron_plugin.OVSNeutronPluginV2')
-AGENT_NAME = ('neutron.plugins.openvswitch.'
-              'agent.ovs_neutron_agent.OVSNeutronAgent')
 NOTIFIER = ('neutron.plugins.openvswitch.'
             'ovs_neutron_plugin.AgentNotifierApi')
 

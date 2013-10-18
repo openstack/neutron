@@ -26,8 +26,6 @@ from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 PLUGIN_NAME = ('neutron.plugins.linuxbridge.'
                'lb_neutron_plugin.LinuxBridgePluginV2')
-AGENT_NAME = ('neutron.plugins.linuxbridge.'
-              'agent.linuxbridg_neutron_agent.LinuxBridgeNeutronAgentRPC')
 NOTIFIER = ('neutron.plugins.linuxbridge.'
             'lb_neutron_plugin.AgentNotifierApi')
 

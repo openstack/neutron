@@ -25,8 +25,6 @@ from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 PLUGIN_NAME = ('neutron.plugins.mlnx.'
                'mlnx_plugin.MellanoxEswitchPlugin')
-AGENT_NAME = ('neutron.plugins.mlnx.'
-              'agent.eswitch_neutron_agent.MlnxEswitchNeutronAgent')
 NOTIFIER = ('neutron.plugins.mlnx.'
             'agent_notify_api.AgentNotifierApi')
 
