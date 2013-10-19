@@ -243,15 +243,15 @@ class SyncLoopingCallTestCase(base.BaseTestCase):
         # Avoid runs of the synchronization process - just start
         # the looping call
         with mock.patch.object(
-            sync.NvpSynchronizer, '_synchronize_state',
-            return_value=0.01):
+            sync.NvpSynchronizer, '_synchronize_state', return_value=0.01):
             synchronizer = sync.NvpSynchronizer(None, None,
                                                 100, 0, 0)
-            time.sleep(0.04999)
+            time.sleep(0.03)
             # stop looping call before asserting
             synchronizer._sync_looping_call.stop()
-            self.assertEqual(
-                5, synchronizer._synchronize_state.call_count)
+            # Just verify the looping call has been called, trying
+            # to assess the exact number of calls would be unreliable
+            self.assertTrue(synchronizer._synchronize_state.call_count)
 
 
 class NvpSyncTestCase(base.BaseTestCase):
