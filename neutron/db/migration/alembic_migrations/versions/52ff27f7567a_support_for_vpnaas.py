@@ -55,7 +55,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column(
             'encryption_algorithm',
             sa.Enum('3des', 'aes-128', 'aes-256', 'aes-192',
-            name='vpn_encrypt_algorithms'), nullable=False),
+                    name='vpn_encrypt_algorithms'), nullable=False),
         sa.Column(
             'phase1_negotiation_mode',
             sa.Enum('main', name='ike_phase1_mode'), nullable=False),

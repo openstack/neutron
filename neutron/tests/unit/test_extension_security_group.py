@@ -1073,7 +1073,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 with self.security_group() as sg:
                     res = self._create_port(self.fmt, n['network']['id'],
                                             security_groups=(
-                                            [sg['security_group']['id']]))
+                                                [sg['security_group']['id']]))
                     port = self.deserialize(self.fmt, res)
 
                     data = {'port': {'fixed_ips': port['port']['fixed_ips'],
@@ -1094,7 +1094,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 with self.security_group() as sg:
                     res = self._create_port(self.fmt, n['network']['id'],
                                             security_groups=(
-                                            [sg['security_group']['id']]))
+                                                [sg['security_group']['id']]))
                     port = self.deserialize(self.fmt, res)
 
                     data = {'port': {'fixed_ips': port['port']['fixed_ips'],
@@ -1124,7 +1124,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 with self.security_group() as sg:
                     res = self._create_port(self.fmt, n['network']['id'],
                                             security_groups=(
-                                            [sg['security_group']['id']]))
+                                                [sg['security_group']['id']]))
                     port = self.deserialize(self.fmt, res)
                     self.assertEqual(port['port'][ext_sg.SECURITYGROUPS][0],
                                      sg['security_group']['id'])

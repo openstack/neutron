@@ -263,8 +263,7 @@ class ExtensionMiddleware(wsgi.Middleware):
     def __init__(self, application,
                  ext_mgr=None):
         self.ext_mgr = (ext_mgr
-                        or ExtensionManager(
-                        get_extensions_path()))
+                        or ExtensionManager(get_extensions_path()))
         mapper = routes.Mapper()
 
         # extended resources

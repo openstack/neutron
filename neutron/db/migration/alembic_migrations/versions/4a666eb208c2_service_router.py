@@ -58,9 +58,7 @@ def upgrade(active_plugins=None, options=None):
     )
     op.add_column(
         u'nsxrouterextattributess',
-        sa.Column('service_router',
-        sa.Boolean(),
-        nullable=False))
+        sa.Column('service_router', sa.Boolean(), nullable=False))
     op.execute("UPDATE nsxrouterextattributess set service_router=False")
 
 

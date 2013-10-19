@@ -76,9 +76,9 @@ def del_multi_segment_binding(db_session, multi_segment_id, segment_pairs):
         for (segment1_id, segment2_id) in segment_pairs:
             (db_session.query(n1kv_models_v2.
              N1kvMultiSegmentNetworkBinding).filter_by(
-             multi_segment_id=multi_segment_id,
-             segment1_id=segment1_id,
-             segment2_id=segment2_id).delete())
+                 multi_segment_id=multi_segment_id,
+                 segment1_id=segment1_id,
+                 segment2_id=segment2_id).delete())
 
 
 def add_trunk_segment_binding(db_session, trunk_segment_id, segment_pairs):
@@ -1490,7 +1490,7 @@ class PolicyProfile_db_mixin(object):
         with db_session.begin(subtransactions=True):
             a_set_q = (db_session.query(n1kv_models_v2.ProfileBinding).
                        filter_by(tenant_id=c_const.TENANT_ID_NOT_SET,
-                       profile_type=c_const.POLICY))
+                                 profile_type=c_const.POLICY))
             a_set = set(i.profile_id for i in a_set_q)
             b_set_q = (db_session.query(n1kv_models_v2.ProfileBinding).
                        filter(and_(n1kv_models_v2.ProfileBinding.

@@ -429,7 +429,7 @@ class TestDhcpLocalProcess(TestBase):
     def test_enable(self):
         attrs_to_mock = dict(
             [(a, mock.DEFAULT) for a in
-            ['active', 'get_conf_file_name', 'interface_name']]
+                ['active', 'get_conf_file_name', 'interface_name']]
         )
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
@@ -586,7 +586,7 @@ class TestDnsmasq(TestBase):
 
         attrs_to_mock = dict(
             [(a, mock.DEFAULT) for a in
-            ['_output_opts_file', 'get_conf_file_name', 'interface_name']]
+                ['_output_opts_file', 'get_conf_file_name', 'interface_name']]
         )
 
         with mock.patch.multiple(dhcp.Dnsmasq, **attrs_to_mock) as mocks:

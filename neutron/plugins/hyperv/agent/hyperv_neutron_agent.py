@@ -45,8 +45,8 @@ agent_opts = [
         'physical_network_vswitch_mappings',
         default=[],
         help=_('List of <physical_network>:<vswitch> '
-        'where the physical networks can be expressed with '
-        'wildcards, e.g.: ."*:external"')),
+               'where the physical networks can be expressed with '
+               'wildcards, e.g.: ."*:external"')),
     cfg.StrOpt(
         'local_network_vswitch',
         default='private',

@@ -386,7 +386,7 @@ class VPNPluginDbTestCase(test_l3_plugin.L3NatTestCaseMixin,
                     self._delete(
                         'ipsec-site-connections',
                         ipsec_site_connection[
-                        'ipsec_site_connection']['id']
+                            'ipsec_site_connection']['id']
                     )
 
 
@@ -1359,7 +1359,7 @@ class TestVpnaas(VPNPluginDbTestCase):
                     req = self.new_show_request(
                         'ipsec-site-connections',
                         ipsec_site_connection[
-                        'ipsec_site_connection']['id'],
+                            'ipsec_site_connection']['id'],
                         fmt=self.fmt
                     )
                     res = self.deserialize(
@@ -1476,7 +1476,7 @@ class TestVpnaas(VPNPluginDbTestCase):
                 '192.168.1.10',
                 '192.168.1.10',
                 ['192.168.2.0/24',
-                '192.168.3.0/24'],
+                 '192.168.3.0/24'],
                 1500,
                 'abcdef',
                 'bi-directional',
@@ -1573,7 +1573,7 @@ class TestVpnaas(VPNPluginDbTestCase):
                         '192.168.1.10',
                         '192.168.1.10',
                         ['192.168.2.0/24',
-                        '192.168.3.0/24'],
+                         '192.168.3.0/24'],
                         1500,
                         'abcdef',
                         'bi-directional',

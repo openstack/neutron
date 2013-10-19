@@ -232,9 +232,7 @@ class EdgeLbDriver():
             context.session, id, edge_id)
         if not pool_binding:
             msg = (_("pool_binding not found with id: %(id)s "
-                     "edge_id: %(edge_id)s") % {
-                   'id': id,
-                   'edge_id': edge_id})
+                     "edge_id: %(edge_id)s") % {'id': id, 'edge_id': edge_id})
             LOG.error(msg)
             raise vcns_exc.VcnsNotFound(
                 resource='router_service_binding', msg=msg)
@@ -294,9 +292,7 @@ class EdgeLbDriver():
             context.session, id, edge_id)
         if not monitor_binding:
             msg = (_("monitor_binding not found with id: %(id)s "
-                     "edge_id: %(edge_id)s") % {
-                   'id': id,
-                   'edge_id': edge_id})
+                     "edge_id: %(edge_id)s") % {'id': id, 'edge_id': edge_id})
             LOG.error(msg)
             raise vcns_exc.VcnsNotFound(
                 resource='router_service_binding', msg=msg)

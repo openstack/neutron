@@ -670,10 +670,11 @@ class NetworkProfileTests(base.BaseTestCase,
         _db_profile = (n1kv_db_v2.create_network_profile(
                        self.session, TEST_NETWORK_PROFILE_MULTI_SEGMENT))
         self.assertIsNotNone(_db_profile)
-        db_profile = (self.session.query(n1kv_models_v2.NetworkProfile).
-                      filter_by(
-                      name=TEST_NETWORK_PROFILE_MULTI_SEGMENT['name']).
-                      one())
+        db_profile = (
+            self.session.query(
+                n1kv_models_v2.NetworkProfile).filter_by(
+                    name=TEST_NETWORK_PROFILE_MULTI_SEGMENT['name'])
+            .one())
         self.assertIsNotNone(db_profile)
         self.assertEqual(_db_profile.id, db_profile.id)
         self.assertEqual(_db_profile.name, db_profile.name)
