@@ -144,7 +144,7 @@ class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         agent_id = kwargs.get('agent_id')
         device = kwargs.get('device')
         host = kwargs.get('host')
-        port = self.get_port_from_device.get_port(device)
+        port = self.get_port_from_device(device)
         LOG.debug(_("Device %(device)s up on %(agent_id)s"),
                   {'device': device, 'agent_id': agent_id})
         plugin = manager.NeutronManager.get_plugin()
