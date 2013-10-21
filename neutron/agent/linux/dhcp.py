@@ -324,6 +324,7 @@ class Dnsmasq(DhcpLocalProcess):
             '--pid-file=%s' % self.get_conf_file_name(
                 'pid', ensure_conf_dir=True),
             '--dhcp-hostsfile=%s' % self._output_hosts_file(),
+            '--addn-hosts=%s' % self._output_addn_hosts_file(),
             '--dhcp-optsfile=%s' % self._output_opts_file(),
             '--leasefile-ro',
         ]
@@ -390,6 +391,7 @@ class Dnsmasq(DhcpLocalProcess):
 
         self._release_unused_leases()
         self._output_hosts_file()
+        self._output_addn_hosts_file()
         self._output_opts_file()
         if self.active:
             cmd = ['kill', '-HUP', self.pid]
@@ -399,40 +401,67 @@ class Dnsmasq(DhcpLocalProcess):
         LOG.debug(_('Reloading allocations for network: %s'), self.network.id)
         self.device_manager.update(self.network)
 
+    def _iter_hosts(self):
+        """Iterate over hosts.
+
+        For each host on the network we yield a tuple containing:
+        (
+            port,  # a DictModel instance representing the port.
+            alloc,  # a DictModel instance of the allocated ip and subnet.
+            host_name,  # Host name.
+            name,  # Host name and domain name in the format 'hostname.domain'.
+        )
+        """
+        for port in self.network.ports:
+            for alloc in port.fixed_ips:
+                hostname = 'host-%s' % alloc.ip_address.replace(
+                    '.', '-').replace(':', '-')
+                fqdn = '%s.%s' % (hostname, self.conf.dhcp_domain)
+                yield (port, alloc, hostname, fqdn)
+
     def _output_hosts_file(self):
-        """Writes a dnsmasq compatible hosts file."""
-        r = re.compile('[:.]')
+        """Writes a dnsmasq compatible dhcp hosts file.
+
+        The generated file is sent to the --dhcp-hostsfile option of dnsmasq,
+        and lists the hosts on the network which should receive a dhcp lease.
+        Each line in this file is in the form::
+
+            'mac_address,FQDN,ip_address'
+
+        IMPORTANT NOTE: a dnsmasq instance does not resolve hosts defined in
+        this file if it did not give a lease to a host listed in it (e.g.:
+        multiple dnsmasq instances on the same network if this network is on
+        multiple network nodes). This file is only defining hosts which
+        should receive a dhcp lease, the hosts resolution in itself is
+        defined by the `_output_addn_hosts_file` method.
+        """
         buf = six.StringIO()
         filename = self.get_conf_file_name('host')
 
         LOG.debug(_('Building host file: %s'), filename)
+        for (port, alloc, hostname, name) in self._iter_hosts():
+            set_tag = ''
+            # (dzyu) Check if it is legal ipv6 address, if so, need wrap
+            # it with '[]' to let dnsmasq to distinguish MAC address from
+            # IPv6 address.
+            ip_address = alloc.ip_address
+            if netaddr.valid_ipv6(ip_address):
+                ip_address = '[%s]' % ip_address
 
-        for port in self.network.ports:
-            for alloc in port.fixed_ips:
-                name = 'host-%s.%s' % (r.sub('-', alloc.ip_address),
-                                       self.conf.dhcp_domain)
-                set_tag = ''
-                # (dzyu) Check if it is legal ipv6 address, if so, need wrap
-                # it with '[]' to let dnsmasq to distinguish MAC address from
-                # IPv6 address.
-                ip_address = alloc.ip_address
-                if netaddr.valid_ipv6(ip_address):
-                    ip_address = '[%s]' % ip_address
+            LOG.debug(_('Adding %(mac)s : %(name)s : %(ip)s'),
+                      {"mac": port.mac_address, "name": name,
+                       "ip": ip_address})
 
-                LOG.debug(_('Adding %(mac)s : %(name)s : %(ip)s'),
-                          {"mac": port.mac_address, "name": name,
-                           "ip": ip_address})
+            if getattr(port, 'extra_dhcp_opts', False):
+                if self.version >= self.MINIMUM_VERSION:
+                    set_tag = 'set:'
 
-                if getattr(port, 'extra_dhcp_opts', False):
-                    if self.version >= self.MINIMUM_VERSION:
-                        set_tag = 'set:'
-
-                    buf.write('%s,%s,%s,%s%s\n' %
-                              (port.mac_address, name, ip_address,
-                               set_tag, port.id))
-                else:
-                    buf.write('%s,%s,%s\n' %
-                              (port.mac_address, name, ip_address))
+                buf.write('%s,%s,%s,%s%s\n' %
+                          (port.mac_address, name, ip_address,
+                           set_tag, port.id))
+            else:
+                buf.write('%s,%s,%s\n' %
+                          (port.mac_address, name, ip_address))
 
         utils.replace_file(filename, buf.getvalue())
         LOG.debug(_('Done building host file %s'), filename)
@@ -458,6 +487,25 @@ class Dnsmasq(DhcpLocalProcess):
 
         for ip, mac in old_leases - new_leases:
             self._release_lease(mac, ip)
+
+    def _output_addn_hosts_file(self):
+        """Writes a dnsmasq compatible additional hosts file.
+
+        The generated file is sent to the --addn-hosts option of dnsmasq,
+        and lists the hosts on the network which should be resolved even if
+        the dnsmaq instance did not give a lease to the host (see the
+        `_output_hosts_file` method).
+        Each line in this file is in the same form as a standard /etc/hosts
+        file.
+        """
+        buf = six.StringIO()
+        for (port, alloc, hostname, fqdn) in self._iter_hosts():
+            # It is compulsory to write the `fqdn` before the `hostname` in
+            # order to obtain it in PTR responses.
+            buf.write('%s\t%s %s\n' % (alloc.ip_address, fqdn, hostname))
+        addn_hosts = self.get_conf_file_name('addn_hosts')
+        utils.replace_file(addn_hosts, buf.getvalue())
+        return addn_hosts
 
     def _output_opts_file(self):
         """Write a dnsmasq compatible options file."""

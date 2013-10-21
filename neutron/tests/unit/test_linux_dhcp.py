@@ -672,6 +672,7 @@ class TestDnsmasq(TestBase):
             '--except-interface=lo',
             '--pid-file=/dhcp/%s/pid' % network.id,
             '--dhcp-hostsfile=/dhcp/%s/host' % network.id,
+            '--addn-hosts=/dhcp/%s/addn_hosts' % network.id,
             '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
             '--leasefile-ro']
 
@@ -962,7 +963,8 @@ tag:44444444-4444-4444-4444-444444444444,option:bootfile-name,pxelinux3.0"""
 
         self.safe.assert_called_once_with('/foo/opts', expected)
 
-    def test_reload_allocations(self):
+    @property
+    def _test_reload_allocation_data(self):
         exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
         exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
                          '192.168.0.2\n'
@@ -974,8 +976,23 @@ tag:44444444-4444-4444-4444-444444444444,option:bootfile-name,pxelinux3.0"""
                          'openstacklocal,[fdca:3ba5:a17a:4ba3::3]\n'
                          '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal,'
                          '192.168.0.1\n').lstrip()
+        exp_addn_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/addn_hosts'
+        exp_addn_data = (
+            '192.168.0.2\t'
+            'host-192-168-0-2.openstacklocal host-192-168-0-2\n'
+            'fdca:3ba5:a17a:4ba3::2\t'
+            'host-fdca-3ba5-a17a-4ba3--2.openstacklocal '
+            'host-fdca-3ba5-a17a-4ba3--2\n'
+            '192.168.0.3\thost-192-168-0-3.openstacklocal '
+            'host-192-168-0-3\n'
+            'fdca:3ba5:a17a:4ba3::3\t'
+            'host-fdca-3ba5-a17a-4ba3--3.openstacklocal '
+            'host-fdca-3ba5-a17a-4ba3--3\n'
+            '192.168.0.1\t'
+            'host-192-168-0-1.openstacklocal '
+            'host-192-168-0-1\n'
+        ).lstrip()
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
-        exp_opt_data = "tag:tag0,option:router,192.168.0.1"
         fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
         fake_v6_cidr = 'gdca:3ba5:a17a:4ba3::/64'
         exp_opt_data = """
@@ -988,6 +1005,14 @@ tag:tag1,option:classless-static-route,%s,%s
 tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
                                   fake_v6_cidr, fake_v6,
                                   fake_v6_cidr, fake_v6)
+        return (exp_host_name, exp_host_data,
+                exp_addn_name, exp_addn_data,
+                exp_opt_name, exp_opt_data,)
+
+    def test_reload_allocations(self):
+        (exp_host_name, exp_host_data,
+         exp_addn_name, exp_addn_data,
+         exp_opt_name, exp_opt_data,) = self._test_reload_allocation_data
 
         exp_args = ['kill', '-HUP', 5]
 
@@ -1008,36 +1033,14 @@ tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
                         self.assertTrue(ip_map.called)
 
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
+                                    mock.call(exp_addn_name, exp_addn_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
         self.execute.assert_called_once_with(exp_args, 'sudo')
 
     def test_reload_allocations_stale_pid(self):
-        exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
-        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
-                         '192.168.0.2\n'
-                         '00:00:f3:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--2.'
-                         'openstacklocal,[fdca:3ba5:a17a:4ba3::2]\n'
-                         '00:00:0f:aa:bb:cc,host-192-168-0-3.openstacklocal,'
-                         '192.168.0.3\n'
-                         '00:00:0f:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--3.'
-                         'openstacklocal,[fdca:3ba5:a17a:4ba3::3]\n'
-                         '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal,'
-                         '192.168.0.1\n').lstrip()
-        exp_host_data.replace('\n', '')
-        exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
-        exp_opt_data = "tag:tag0,option:router,192.168.0.1"
-        fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
-        fake_v6_cidr = 'gdca:3ba5:a17a:4ba3::/64'
-        exp_opt_data = """
-tag:tag0,option:dns-server,8.8.8.8
-tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1
-tag:tag0,249,20.0.0.1/24,20.0.0.1
-tag:tag0,option:router,192.168.0.1
-tag:tag1,option:dns-server,%s
-tag:tag1,option:classless-static-route,%s,%s
-tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
-                                  fake_v6_cidr, fake_v6,
-                                  fake_v6_cidr, fake_v6)
+        (exp_host_name, exp_host_data,
+         exp_addn_name, exp_addn_data,
+         exp_opt_name, exp_opt_data,) = self._test_reload_allocation_data
 
         with mock.patch('__builtin__.open') as mock_open:
             mock_open.return_value.__enter__ = lambda s: s
@@ -1057,9 +1060,11 @@ tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
                         dm.reload_allocations()
                         self.assertTrue(ipmap.called)
 
-            self.safe.assert_has_calls([mock.call(exp_host_name,
-                                                  exp_host_data),
-                                        mock.call(exp_opt_name, exp_opt_data)])
+            self.safe.assert_has_calls([
+                mock.call(exp_host_name, exp_host_data),
+                mock.call(exp_addn_name, exp_addn_data),
+                mock.call(exp_opt_name, exp_opt_data),
+            ])
             mock_open.assert_called_once_with('/proc/5/cmdline', 'r')
 
     def test_release_unused_leases(self):
