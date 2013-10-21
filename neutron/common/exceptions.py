@@ -301,3 +301,7 @@ class NetworkVlanRangeError(NeutronException):
 
 class NetworkVxlanPortRangeError(NeutronException):
     message = _("Invalid network VXLAN port range: '%(vxlan_range)s'")
+
+
+class DuplicatedExtension(NeutronException):
+    message = _("Found duplicate extension: %(alias)s")

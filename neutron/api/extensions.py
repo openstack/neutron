@@ -567,8 +567,7 @@ class ExtensionManager(object):
         LOG.info(_('Loaded extension: %s'), alias)
 
         if alias in self.extensions:
-            raise exceptions.Error(_("Found duplicate extension: %s") %
-                                   alias)
+            raise exceptions.DuplicatedExtension(alias=alias)
         self.extensions[alias] = ext
 
 
