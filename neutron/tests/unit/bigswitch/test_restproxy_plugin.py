@@ -91,7 +91,8 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
             plugin_obj = NeutronManager.get_plugin()
             with patch.object(plugin_obj.servers,
                               'rest_plug_interface') as mock_plug_interface:
-                mock_plug_interface.side_effect = RemoteRestError('fake error')
+                mock_plug_interface.side_effect = RemoteRestError(
+                    reason='fake error')
                 kwargs = {'device_id': 'somedevid',
                           'tenant_id': n['network']['tenant_id']}
                 self._create_port('json', n['network']['id'],
@@ -142,7 +143,7 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
                                   'rest_delete_port'
                                   ) as mock_plug_interface:
                     mock_plug_interface.side_effect = RemoteRestError(
-                        'fake error')
+                        reason='fake error')
                     self._delete('ports', port['port']['id'],
                                  expected_code=
                                  webob.exc.HTTPInternalServerError.code)
