@@ -40,7 +40,7 @@ class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
         l3.ROUTERS, ['_extend_router_dict_gw_mode'])
 
-    def _extend_router_dict_gw_mode(seld, router_res, router_db):
+    def _extend_router_dict_gw_mode(self, router_res, router_db):
         if router_db.gw_port_id:
             nw_id = router_db.gw_port['network_id']
             router_res[EXTERNAL_GW_INFO] = {
