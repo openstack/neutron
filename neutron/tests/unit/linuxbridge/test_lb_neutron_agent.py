@@ -97,11 +97,6 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         super(TestLinuxBridgeAgent, self).setUp()
         cfg.CONF.set_override('rpc_backend',
                               'neutron.openstack.common.rpc.impl_fake')
-        self.lbmgr_patcher = mock.patch('neutron.plugins.linuxbridge.agent.'
-                                        'linuxbridge_neutron_agent.'
-                                        'LinuxBridgeManager')
-        self.lbmgr_mock = self.lbmgr_patcher.start()
-        self.addCleanup(self.lbmgr_patcher.stop)
         self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
         self.execute = self.execute_p.start()
         self.addCleanup(self.execute_p.stop)
@@ -113,8 +108,6 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self.get_mac.return_value = '00:00:00:00:00:01'
 
     def test_update_devices_failed(self):
-        lbmgr_instance = self.lbmgr_mock.return_value
-        lbmgr_instance.update_devices.side_effect = RuntimeError
         agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC({},
                                                                      0,
                                                                      None)
@@ -125,17 +118,18 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                 raise_exception[0] += 1
             else:
                 raise RuntimeError()
-
-        with mock.patch.object(linuxbridge_neutron_agent.LOG, 'info') as log:
-            log.side_effect = info_mock
-            with testtools.ExpectedException(RuntimeError):
-                agent.daemon_loop()
-            self.assertEqual(3, log.call_count)
+        with mock.patch.object(agent.br_mgr,
+                               "update_devices") as update_devices:
+            update_devices.side_effect = RuntimeError
+            with mock.patch.object(linuxbridge_neutron_agent.LOG,
+                                   'info') as log:
+                log.side_effect = info_mock
+                with testtools.ExpectedException(RuntimeError):
+                    agent.daemon_loop()
+                self.assertEqual(3, log.call_count)
 
     def test_process_network_devices_failed(self):
         device_info = {'current': [1, 2, 3]}
-        lbmgr_instance = self.lbmgr_mock.return_value
-        lbmgr_instance.update_devices.return_value = device_info
         agent = linuxbridge_neutron_agent.LinuxBridgeNeutronAgentRPC({},
                                                                      0,
                                                                      None)
@@ -147,15 +141,18 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
             else:
                 raise RuntimeError()
 
-        with contextlib.nested(
-            mock.patch.object(linuxbridge_neutron_agent.LOG, 'info'),
-            mock.patch.object(agent, 'process_network_devices')
-        ) as (log, process_network_devices):
-            log.side_effect = info_mock
-            process_network_devices.side_effect = RuntimeError
-            with testtools.ExpectedException(RuntimeError):
-                agent.daemon_loop()
-            self.assertEqual(3, log.call_count)
+        with mock.patch.object(agent.br_mgr,
+                               "update_devices") as update_devices:
+            update_devices.side_effect = device_info
+            with contextlib.nested(
+                mock.patch.object(linuxbridge_neutron_agent.LOG, 'info'),
+                mock.patch.object(agent, 'process_network_devices')
+            ) as (log, process_network_devices):
+                log.side_effect = info_mock
+                process_network_devices.side_effect = RuntimeError
+                with testtools.ExpectedException(RuntimeError):
+                    agent.daemon_loop()
+                self.assertEqual(3, log.call_count)
 
 
 class TestLinuxBridgeManager(base.BaseTestCase):
