@@ -36,12 +36,15 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+firewallrules_action = sa.Enum('allow', 'deny', name='firewallrules_action')
+
 
 def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.drop_table('firewall_rules')
+    firewallrules_action.drop(op.get_bind(), checkfirst=False)
     op.drop_table('firewalls')
     op.drop_table('firewall_policies')
 
@@ -94,9 +97,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('source_port_range_max', sa.Integer(), nullable=True),
         sa.Column('destination_port_range_min', sa.Integer(), nullable=True),
         sa.Column('destination_port_range_max', sa.Integer(), nullable=True),
-        sa.Column('action',
-                  sa.Enum('allow', 'deny', name='firewallrules_action'),
-                  nullable=True),
+        sa.Column('action', firewallrules_action, nullable=True),
         sa.Column('enabled', sa.Boolean(), autoincrement=False,
                   nullable=True),
         sa.Column('position', sa.Integer(), autoincrement=False,

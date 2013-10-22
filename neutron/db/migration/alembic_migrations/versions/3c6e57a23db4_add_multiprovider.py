@@ -36,8 +36,23 @@ migration_for_plugins = [
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 from neutron.db import migration
+
+
+def get_enum():
+    engine = op.get_bind().engine
+    # In PostgreSQL types created separately, so if type was already created in
+    # 1341ed32cc1e_nvp_netbinding_update it should be created one time.
+    # Use parameter create_type=False for that.
+    if engine.name == 'postgresql':
+        return postgresql.ENUM('flat', 'vlan', 'stt', 'gre', 'l3_ext',
+                               name='nvp_network_bindings_binding_type',
+                               create_type=False)
+    else:
+        return sa.Enum('flat', 'vlan', 'stt', 'gre', 'l3_ext',
+                       name='nvp_network_bindings_binding_type')
 
 
 def upgrade(active_plugins=None, options=None):
@@ -55,11 +70,7 @@ def upgrade(active_plugins=None, options=None):
     op.create_table('rename_nvp_network_bindings',
                     sa.Column('network_id', sa.String(length=36),
                               primary_key=True),
-                    sa.Column('binding_type',
-                              sa.Enum(
-                                  'flat', 'vlan', 'stt', 'gre', 'l3_ext',
-                                  name=(
-                                      'nvp_network_bindings_binding_type')),
+                    sa.Column('binding_type', get_enum(),
                               nullable=False, primary_key=True),
                     sa.Column('phy_uuid', sa.String(36), primary_key=True,
                               nullable=True),
@@ -80,17 +91,17 @@ def downgrade(active_plugins=None, options=None):
     # Delete the multi_provider_network entries from nvp_network_bindings
     op.execute("DELETE from nvp_network_bindings WHERE network_id IN "
                "(SELECT network_id from nvp_multi_provider_networks)")
-
     # create table with previous contains
-    op.create_table(
-        'rename_nvp_network_bindings',
-        sa.Column('network_id', sa.String(length=36), primary_key=True),
-        sa.Column('binding_type',
-                  sa.Enum('flat', 'vlan', 'stt', 'gre', 'l3_ext',
-                          name=('nvp_network_bindings_binding_type')),
-                  nullable=False),
-        sa.Column('phy_uuid', sa.String(36), nullable=True),
-        sa.Column('vlan_id', sa.Integer, nullable=True, autoincrement=False))
+    op.create_table('rename_nvp_network_bindings',
+                    sa.Column('network_id', sa.String(length=36),
+                              primary_key=True),
+                    sa.Column('binding_type',
+                              get_enum(),
+                              nullable=False),
+                    sa.Column('phy_uuid', sa.String(36),
+                              nullable=True),
+                    sa.Column('vlan_id', sa.Integer,
+                              nullable=True, autoincrement=False))
 
     # copy data from nvp_network_bindings into rename_nvp_network_bindings
     op.execute("INSERT INTO rename_nvp_network_bindings SELECT network_id, "

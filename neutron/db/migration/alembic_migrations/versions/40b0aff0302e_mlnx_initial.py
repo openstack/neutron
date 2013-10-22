@@ -36,6 +36,9 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+securitygrouprules_direction = sa.Enum('ingress', 'egress',
+                                       name='securitygrouprules_direction')
+
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
@@ -96,9 +99,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('security_group_id', sa.String(length=36), nullable=False),
         sa.Column('remote_group_id', sa.String(length=36), nullable=True),
-        sa.Column('direction',
-                  sa.Enum('ingress', 'egress',
-                          name='securitygrouprules_direction'),
+        sa.Column('direction', securitygrouprules_direction,
                   nullable=True),
         sa.Column('ethertype', sa.String(length=40), nullable=True),
         sa.Column('protocol', sa.String(length=40), nullable=True),
@@ -187,6 +188,7 @@ def downgrade(active_plugins=None, options=None):
     op.drop_column('routers', 'enable_snat')
     op.drop_table('port_profile')
     op.drop_table('securitygrouprules')
+    securitygrouprules_direction.drop(op.get_bind(), checkfirst=False)
     op.drop_table('networkdhcpagentbindings')
     op.drop_table('mlnx_network_bindings')
     op.drop_table('quotas')

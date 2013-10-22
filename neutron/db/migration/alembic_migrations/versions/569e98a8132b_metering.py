@@ -35,12 +35,16 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+meteringlabels_direction = sa.Enum('ingress', 'egress',
+                                   name='meteringlabels_direction')
+
 
 def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
     op.drop_table('meteringlabelrules')
+    meteringlabels_direction.drop(op.get_bind(), checkfirst=False)
     op.drop_table('meteringlabels')
 
 
@@ -54,14 +58,12 @@ def upgrade(active_plugins=None, options=None):
                     sa.Column('id', sa.String(length=36), nullable=False),
                     sa.Column('name', sa.String(length=255),
                               nullable=True),
-                    sa.Column('description', sa.String(length=255),
+                    sa.Column('description', sa.String(length=1024),
                               nullable=True),
                     sa.PrimaryKeyConstraint('id'))
     op.create_table('meteringlabelrules',
                     sa.Column('id', sa.String(length=36), nullable=False),
-                    sa.Column('direction',
-                              sa.Enum('ingress', 'egress',
-                                      name='meteringlabels_direction'),
+                    sa.Column('direction', meteringlabels_direction,
                               nullable=True),
                     sa.Column('remote_ip_prefix', sa.String(length=64),
                               nullable=True),
