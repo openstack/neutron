@@ -538,7 +538,7 @@ def downgrade_brocade():
 
 
 def downgrade_cisco():
-    op.drop_tables(
+    drop_tables(
         'nexusport_bindings',
         'port_bindings',
         'credentials',
