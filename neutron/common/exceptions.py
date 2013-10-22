@@ -299,5 +299,5 @@ class NetworkVlanRangeError(NeutronException):
         super(NetworkVlanRangeError, self).__init__(**kwargs)
 
 
-class NetworkVxlanPortRangeError(object):
+class NetworkVxlanPortRangeError(NeutronException):
     message = _("Invalid network VXLAN port range: '%(vxlan_range)s'")
