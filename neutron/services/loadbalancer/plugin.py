@@ -21,6 +21,7 @@ from neutron import context
 from neutron.db import api as qdbapi
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as st_db
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer import agent_scheduler
@@ -168,13 +169,28 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
     def _delete_db_pool(self, context, id):
         # proxy the call until plugin inherits from DBPlugin
         # rely on uuid uniqueness:
-        with context.session.begin(subtransactions=True):
-            self.service_type_manager.del_resource_associations(context, [id])
-            super(LoadBalancerPlugin, self).delete_pool(context, id)
+        try:
+            with context.session.begin(subtransactions=True):
+                self.service_type_manager.del_resource_associations(
+                    context, [id])
+                super(LoadBalancerPlugin, self).delete_pool(context, id)
+        except Exception:
+            # that should not happen
+            # if it's still a case - something goes wrong
+            # log the error and mark the pool as ERROR
+            LOG.error(_('Failed to delete pool %s, putting it in ERROR state'),
+                      id)
+            with excutils.save_and_reraise_exception():
+                self.update_status(context, ldb.Pool,
+                                   id, constants.ERROR)
 
     def delete_pool(self, context, id):
-        self.update_status(context, ldb.Pool,
-                           id, constants.PENDING_DELETE)
+        # check for delete conditions and update the status
+        # within a transaction to avoid a race
+        with context.session.begin(subtransactions=True):
+            self.update_status(context, ldb.Pool,
+                               id, constants.PENDING_DELETE)
+            self._ensure_pool_delete_conditions(context, id)
         p = self.get_pool(context, id)
         driver = self._get_driver_for_provider(p['provider'])
         driver.delete_pool(context, p)

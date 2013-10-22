@@ -679,6 +679,25 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 res = req.get_response(self.ext_api)
                 self.assertEqual(res.status_int, 204)
 
+    def test_delete_pool_preserve_state(self):
+        with self.pool(no_delete=True) as pool:
+            with self.vip(pool=pool):
+                req = self.new_delete_request('pools',
+                                              pool['pool']['id'])
+                res = req.get_response(self.ext_api)
+                self.assertEqual(res.status_int, 409)
+                req = self.new_show_request('pools',
+                                            pool['pool']['id'],
+                                            fmt=self.fmt)
+                res = req.get_response(self.ext_api)
+                self.assertEqual(res.status_int, 200)
+                res = self.deserialize(self.fmt,
+                                       req.get_response(self.ext_api))
+                self.assertEqual(res['pool']['status'],
+                                 constants.PENDING_CREATE)
+            req = self.new_delete_request('pools',
+                                          pool['pool']['id'])
+
     def test_show_pool(self):
         name = "pool1"
         keys = [('name', name),
