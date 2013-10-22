@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 import eventlet.event
 import eventlet.queue
 import eventlet.timeout
@@ -187,11 +189,17 @@ class TestAsyncProcess(base.BaseTestCase):
                                root_helper=None, pids=None):
         if root_helper:
             self.proc.root_helper = root_helper
+
+        xpid = collections.namedtuple('xpid', ['pid'])
+        xpids = [xpid(pid) for pid in pids or []]
+
         with mock.patch.object(self.proc, '_process') as mock_process:
             with mock.patch.object(mock_process, 'pid') as mock_pid:
-                with mock.patch.object(utils, 'find_child_pids',
-                                       return_value=pids):
+                with mock.patch('psutil.Process') as mock_ps_process:
+                    instance = mock_ps_process.return_value
+                    instance.get_children.return_value = xpids
                     actual = self.proc._get_pid_to_kill()
+
         if expected is _marker:
             expected = mock_pid
         self.assertEqual(expected, actual)
@@ -201,6 +209,10 @@ class TestAsyncProcess(base.BaseTestCase):
 
     def test__get_pid_to_kill_returns_child_pid_with_root_helper(self):
         self._test__get_pid_to_kill(expected='1', pids=['1'], root_helper='a')
+
+    def test__get_pid_to_kill_returns_last_child_pid_with_root_Helper(self):
+        self._test__get_pid_to_kill(expected='3', pids=['1', '2', '3'],
+                                    root_helper='a')
 
     def test__get_pid_to_kill_returns_none_with_root_helper(self):
         self._test__get_pid_to_kill(expected=None, root_helper='a')

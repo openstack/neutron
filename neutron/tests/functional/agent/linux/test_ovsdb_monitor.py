@@ -69,7 +69,8 @@ class BaseMonitorTest(base.BaseTestCase):
 
         self._check_test_requirements()
 
-        self.root_helper = 'sudo'
+        # Emulate using a rootwrap script with sudo
+        self.root_helper = 'sudo sudo'
         self.ovs = ovs_lib.BaseOVS(self.root_helper)
         self.bridge = create_ovs_resource('test-br-', self.ovs.add_bridge)
 

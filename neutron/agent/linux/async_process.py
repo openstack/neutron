@@ -18,6 +18,7 @@ import eventlet
 import eventlet.event
 import eventlet.queue
 import eventlet.timeout
+import psutil
 
 from neutron.agent.linux import utils
 from neutron.openstack.common import log as logging
@@ -129,21 +130,22 @@ class AsyncProcess(object):
 
     def _get_pid_to_kill(self):
         pid = self._process.pid
-        # If root helper was used, two processes will be created:
+        # If root helper was used, two or more processes will be created:
         #
         #  - a root helper process (e.g. sudo myscript)
+        #  - possibly a rootwrap script (e.g. neutron-rootwrap)
         #  - a child process (e.g. myscript)
         #
         # Killing the root helper process will leave the child process
-        # as a zombie, so the only way to ensure that both die is to
-        # target the child process directly.
+        # running, re-parented to init, so the only way to ensure that both
+        # die is to target the child process directly.
         if self.root_helper:
-            pids = utils.find_child_pids(pid)
-            if pids:
-                # The root helper will only ever launch a single child.
-                pid = pids[0]
-            else:
-                # Process is already dead.
+            try:
+                # This assumes that there are not multiple children in any
+                # level of the process tree under the parent process.
+                pid = psutil.Process(
+                    self._process.pid).get_children(recursive=True)[-1].pid
+            except (psutil.NoSuchProcess, IndexError):
                 pid = None
         return pid
 
