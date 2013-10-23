@@ -383,7 +383,7 @@ def create_explicit_routing_lrouter(cluster, tenant_id,
 def create_lrouter(cluster, *args, **kwargs):
     if kwargs.get('distributed', None):
         v = cluster.api_client.get_nvp_version()
-        if (v.major < 3) or (v.major >= 3 and v.minor < 1):
+        if (v.major < 3) or (v.major == 3 and v.minor < 1):
             raise nvp_exc.NvpInvalidVersion(version=v)
         return v
 

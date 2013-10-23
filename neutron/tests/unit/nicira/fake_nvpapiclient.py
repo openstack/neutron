@@ -175,8 +175,11 @@ class FakeClient:
         fake_lrouter['tenant_id'] = self._get_tag(fake_lrouter, 'os_tid')
         default_nexthop = fake_lrouter['routing_config'].get(
             'default_route_next_hop')
-        fake_lrouter['default_next_hop'] = default_nexthop.get(
-            'gateway_ip_address', '0.0.0.0')
+        if default_nexthop:
+            fake_lrouter['default_next_hop'] = default_nexthop.get(
+                'gateway_ip_address', '0.0.0.0')
+        else:
+            fake_lrouter['default_next_hop'] = '0.0.0.0'
         # NOTE(salv-orlando): We won't make the Fake NVP API client
         # aware of NVP version. The long term plan is to replace it
         # with behavioral mocking of NVP API requests
