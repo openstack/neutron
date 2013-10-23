@@ -318,6 +318,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
 
         with context.session.begin(subtransactions=True):
+            self._process_l3_delete(context, net_id)
             result = super(BrocadePluginV2, self).delete_network(context,
                                                                  net_id)
             # we must delete all ports in db first (foreign key constraint)

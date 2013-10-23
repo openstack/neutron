@@ -516,7 +516,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_("MidonetPluginV2.delete_network called: id=%r"), id)
         self.client.delete_bridge(id)
         try:
-            super(MidonetPluginV2, self).delete_network(context, id)
+            with context.session.begin(subtransactions=True):
+                self._process_l3_delete(context, id)
+                super(MidonetPluginV2, self).delete_network(context, id)
         except Exception:
             with excutils.save_and_reraise_exception():
                 LOG.error(_('Failed to delete neutron db, while Midonet '

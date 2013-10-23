@@ -18,6 +18,7 @@
 import contextlib
 import itertools
 
+import mock
 import testtools
 from webob import exc
 
@@ -157,6 +158,18 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         with self.network(router__external=True) as ext_net:
             self.assertEqual(ext_net['network'][external_net.EXTERNAL],
                              True)
+
+    def test_delete_network_check_disassociated_floatingips(self):
+        with mock.patch.object(NeutronManager,
+                               'get_service_plugins') as srv_plugins:
+            l3_mock = mock.Mock()
+            srv_plugins.return_value = {'L3_ROUTER_NAT': l3_mock}
+            with self.network(do_delete=False) as net:
+                req = self.new_delete_request('networks', net['network']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+                (l3_mock.delete_disassociated_floatingips
+                 .assert_called_once_with(mock.ANY, net['network']['id']))
 
 
 class ExtNetDBTestCaseXML(ExtNetDBTestCase):
