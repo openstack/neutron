@@ -51,11 +51,11 @@ def get_transport_zones(cluster):
     return [transport_zone['uuid'] for transport_zone in transport_zones]
 
 
-def main(argv):
-    if len(argv) != 2:
-        help(argv[0])
+def main():
+    if len(sys.argv) != 2:
+        help(sys.argv[0])
     args = ['--config-file']
-    args.append(argv[1])
+    args.append(sys.argv[1])
     config.parse(args)
     print("----------------------- Database Options -----------------------")
     print("\tconnection: %s" % cfg.CONF.database.connection)
