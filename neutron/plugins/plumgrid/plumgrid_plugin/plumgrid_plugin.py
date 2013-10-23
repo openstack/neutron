@@ -53,7 +53,7 @@ director_server_opts = [
     cfg.IntOpt('servertimeout', default=5,
                help=_("PLUMgrid Director server timeout")), ]
 
-cfg.CONF.register_opts(director_server_opts, "PLUMgridDirector")
+cfg.CONF.register_opts(director_server_opts, "plumgriddirector")
 
 
 class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
@@ -80,11 +80,11 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def plumgrid_init(self):
         """PLUMgrid initialization."""
-        director_plumgrid = cfg.CONF.PLUMgridDirector.director_server
-        director_port = cfg.CONF.PLUMgridDirector.director_server_port
-        director_admin = cfg.CONF.PLUMgridDirector.username
-        director_password = cfg.CONF.PLUMgridDirector.password
-        timeout = cfg.CONF.PLUMgridDirector.servertimeout
+        director_plumgrid = cfg.CONF.plumgriddirector.director_server
+        director_port = cfg.CONF.plumgriddirector.director_server_port
+        director_admin = cfg.CONF.plumgriddirector.username
+        director_password = cfg.CONF.plumgriddirector.password
+        timeout = cfg.CONF.plumgriddirector.servertimeout
 
         # PLUMgrid Director info validation
         LOG.info(_('Neutron PLUMgrid Director: %s'), director_plumgrid)
