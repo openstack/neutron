@@ -304,11 +304,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return net
 
     def delete_network(self, context, id):
-        filter = {'network_id': [id]}
-        subnets = self.get_subnets(context, filters=filter)
-        for subnet in subnets:
-            self.delete_subnet(context, subnet['id'])
-        super(NuagePlugin, self).delete_network(context, id)
+        with context.session.begin(subtransactions=True):
+            self._process_l3_delete(context, id)
+            filter = {'network_id': [id]}
+            subnets = self.get_subnets(context, filters=filter)
+            for subnet in subnets:
+                self.delete_subnet(context, subnet['id'])
+            super(NuagePlugin, self).delete_network(context, id)
 
     def _get_net_partition_for_subnet(self, context, subnet):
         subn = subnet['subnet']

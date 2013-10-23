@@ -373,17 +373,24 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         tenant_id = net_db['tenant_id']
         ports = self.get_ports(context, filters={'network_id': [id]})
 
-        # check if there are any tenant owned ports in-use
+        # check if there are any tenant owned ports in-use;
+        # consider ports owned by floating ips as auto_delete as if there are
+        # no other tenant owned ports, those floating ips are disassociated
+        # and will be auto deleted with self._process_l3_delete()
         only_auto_del = all(p['device_owner'] in
-                            db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS
+                            db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS or
+                            p['device_owner'] == const.DEVICE_OWNER_FLOATINGIP
                             for p in ports)
         if not only_auto_del:
             raise n_exc.NetworkInUse(net_id=id)
 
+        self._process_l3_delete(context, id)
+
         # Make sure auto-delete ports on OFC are deleted.
         # If an error occurs during port deletion,
         # delete_network will be aborted.
-        for port in ports:
+        for port in [p for p in ports if p['device_owner']
+                     in db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS]:
             port = self.deactivate_port(context, port)
 
         # delete all packet_filters of the network from the controller

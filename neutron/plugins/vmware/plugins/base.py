@@ -1046,7 +1046,10 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         if not external:
             lswitch_ids = nsx_utils.get_nsx_switch_ids(
                 context.session, self.cluster, id)
-        super(NsxPluginV2, self).delete_network(context, id)
+        with context.session.begin(subtransactions=True):
+            self._process_l3_delete(context, id)
+            super(NsxPluginV2, self).delete_network(context, id)
+
         # clean up network owned ports
         for port in router_iface_ports:
             try:

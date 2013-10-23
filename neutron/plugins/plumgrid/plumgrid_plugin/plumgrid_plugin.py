@@ -157,6 +157,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                        self).get_network(context, net_id)
 
         with context.session.begin(subtransactions=True):
+            self._process_l3_delete(context, net_id)
             # Plugin DB - Network Delete
             super(NeutronPluginPLUMgridV2, self).delete_network(context,
                                                                 net_id)
