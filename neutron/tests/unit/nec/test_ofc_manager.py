@@ -49,7 +49,9 @@ class OFCManagerTestBase(base.BaseTestCase):
         driver = "neutron.tests.unit.nec.stub_ofc_driver.StubOFCDriver"
         config.CONF.set_override('driver', driver, 'OFC')
         self.addCleanup(ndb.clear_db)
-        self.ofc = ofc_manager.OFCManager()
+        self.plugin = mock.Mock()
+        self.plugin.get_packet_filters_for_port.return_value = None
+        self.ofc = ofc_manager.OFCManager(self.plugin)
         # NOTE: enable_autocheck() is a feature of StubOFCDriver
         self.ofc.driver.enable_autocheck()
         self.ctx = context.get_admin_context()
@@ -124,19 +126,34 @@ class OFCManagerTest(OFCManagerTestBase):
         get_portinfo.return_value = fake_portinfo
         return get_portinfo
 
-    def testg_create_ofc_port(self):
-        """test create ofc_port."""
+    def _test_create_ofc_port(self, with_filter=False):
         t, n, p, f, none = self.get_random_params()
         self.ofc.create_ofc_tenant(self.ctx, t)
         self.ofc.create_ofc_network(self.ctx, t, n)
         self.assertFalse(ndb.get_ofc_item(self.ctx.session, 'ofc_port', p))
         get_portinfo = self._mock_get_portinfo(p)
         port = {'tenant_id': t, 'network_id': n}
+        if with_filter:
+            _filters = ['filter1', 'filter2']
+            self.plugin.get_packet_filters_for_port.return_value = _filters
         self.ofc.create_ofc_port(self.ctx, p, port)
         self.assertTrue(ndb.get_ofc_item(self.ctx.session, 'ofc_port', p))
         port = ndb.get_ofc_item(self.ctx.session, 'ofc_port', p)
         self.assertEqual(port.ofc_id, "ofc-" + p[:-4])
         get_portinfo.assert_called_once_with(mock.ANY, p)
+        portval = self.ofc.driver.ofc_port_dict[port.ofc_id]
+        if with_filter:
+            self.assertEqual(_filters, portval['filters'])
+        else:
+            self.assertFalse('filters' in portval)
+
+    def testg_create_ofc_port(self):
+        """test create ofc_port."""
+        self._test_create_ofc_port(with_filter=False)
+
+    def testg_create_ofc_port_with_filters(self):
+        """test create ofc_port."""
+        self._test_create_ofc_port(with_filter=True)
 
     def testh_exists_ofc_port(self):
         """test exists_ofc_port."""

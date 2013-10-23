@@ -15,6 +15,7 @@
 #    under the License.
 # @author: Ryota MIBU
 
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
@@ -46,6 +47,9 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
         LOG.debug(_("create_packet_filter() called, packet_filter=%s ."),
                   packet_filter)
 
+        if hasattr(self.ofc.driver, 'validate_filter_create'):
+            pf = packet_filter['packet_filter']
+            self.ofc.driver.validate_filter_create(context, pf)
         pf = super(PacketFilterMixin, self).create_packet_filter(
             context, packet_filter)
 
@@ -60,6 +64,10 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
                     "id=%(id)s packet_filter=%(packet_filter)s ."),
                   {'id': id, 'packet_filter': packet_filter})
 
+        pf_data = packet_filter['packet_filter']
+        if hasattr(self.ofc.driver, 'validate_filter_update'):
+            self.ofc.driver.validate_filter_update(context, pf_data)
+
         # validate ownership
         pf_old = self.get_packet_filter(context, id)
 
@@ -67,18 +75,71 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
             context, id, packet_filter)
 
         def _packet_filter_changed(old_pf, new_pf):
+            LOG.debug('old_pf=%(old_pf)s, new_pf=%(new_pf)s',
+                      {'old_pf': old_pf, 'new_pf': new_pf})
+            # When the status is ERROR, force sync to OFC.
+            if old_pf['status'] == pf_db.PF_STATUS_ERROR:
+                LOG.debug('update_packet_filter: Force filter update '
+                          'because the previous status is ERROR.')
+                return True
             for key in new_pf:
-                if key not in ('id', 'name', 'tenant_id', 'network_id',
-                               'in_port', 'status'):
-                    if old_pf[key] != new_pf[key]:
-                        return True
+                if key in ('id', 'name', 'tenant_id', 'network_id',
+                           'in_port', 'status'):
+                    continue
+                if old_pf[key] != new_pf[key]:
+                    return True
             return False
 
         if _packet_filter_changed(pf_old, pf):
-            pf = self.deactivate_packet_filter(context, pf)
-            pf = self.activate_packet_filter_if_ready(context, pf)
+            if hasattr(self.ofc.driver, 'update_filter'):
+                # admin_state is changed
+                if pf_old['admin_state_up'] != pf['admin_state_up']:
+                    LOG.debug('update_packet_filter: admin_state '
+                              'is changed to %s', pf['admin_state_up'])
+                    if pf['admin_state_up']:
+                        self.activate_packet_filter_if_ready(context, pf)
+                    else:
+                        self.deactivate_packet_filter(context, pf)
+                elif pf['admin_state_up']:
+                    LOG.debug('update_packet_filter: admin_state is '
+                              'unchanged (True)')
+                    if self.ofc.exists_ofc_packet_filter(context, id):
+                        pf = self._update_packet_filter(context, pf, pf_data)
+                    else:
+                        pf = self.activate_packet_filter_if_ready(context, pf)
+                else:
+                    LOG.debug('update_packet_filter: admin_state is unchanged '
+                              '(False). No need to update OFC filter.')
+            else:
+                pf = self.deactivate_packet_filter(context, pf)
+                pf = self.activate_packet_filter_if_ready(context, pf)
 
         return pf
+
+    def _update_packet_filter(self, context, new_pf, pf_data):
+        pf_id = new_pf['id']
+        prev_status = new_pf['status']
+        try:
+            # If previous status is ERROR, try to sync all attributes.
+            pf = new_pf if prev_status == pf_db.PF_STATUS_ERROR else pf_data
+            self.ofc.update_ofc_packet_filter(context, pf_id, pf)
+            new_status = pf_db.PF_STATUS_ACTIVE
+            if new_status != prev_status:
+                self._update_resource_status(context, "packet_filter",
+                                             pf_id, new_status)
+                new_pf['status'] = new_status
+            return new_pf
+        except Exception as exc:
+            with excutils.save_and_reraise_exception():
+                if (isinstance(exc, nexc.OFCException) or
+                    isinstance(exc, nexc.OFCConsistencyBroken)):
+                    LOG.error(_("Failed to create packet_filter id=%(id)s on "
+                                "OFC: %(exc)s"),
+                              {'id': pf_id, 'exc': exc})
+                new_status = pf_db.PF_STATUS_ERROR
+                if new_status != prev_status:
+                    self._update_resource_status(context, "packet_filter",
+                                                 pf_id, new_status)
 
     def delete_packet_filter(self, context, id):
         """Deactivate and delete packet_filter."""
@@ -129,7 +190,7 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
                 pf_status = pf_db.PF_STATUS_ACTIVE
             except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
                 LOG.error(_("Failed to create packet_filter id=%(id)s on "
-                            "OFC: %(exc)s"), {'id': pf_id, 'exc': str(exc)})
+                            "OFC: %(exc)s"), {'id': pf_id, 'exc': exc})
                 pf_status = pf_db.PF_STATUS_ERROR
 
         if pf_status != current:
@@ -155,7 +216,7 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
                 pf_status = pf_db.PF_STATUS_DOWN
             except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
                 LOG.error(_("Failed to delete packet_filter id=%(id)s from "
-                            "OFC: %(exc)s"), {'id': pf_id, 'exc': str(exc)})
+                            "OFC: %(exc)s"), {'id': pf_id, 'exc': exc})
                 pf_status = pf_db.PF_STATUS_ERROR
         else:
             LOG.debug(_("deactivate_packet_filter(): skip, "
@@ -187,3 +248,8 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
         pfs = self.get_packet_filters(context, filters=filters)
         for pf in pfs:
             self.deactivate_packet_filter(context, pf)
+
+    def get_packet_filters_for_port(self, context, port):
+        if self.packet_filter_enabled:
+            return super(PacketFilterMixin,
+                         self).get_packet_filters_for_port(context, port)

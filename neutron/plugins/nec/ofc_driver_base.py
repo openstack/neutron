@@ -74,7 +74,7 @@ class OFCDriverBase(object):
 
     @abstractmethod
     def create_port(self, ofc_network_id, portinfo,
-                    port_id=None):
+                    port_id=None, filters=None):
         """Create a new port on specified network at OFC.
 
         :param ofc_network_id: a OFC tenant ID in which a new port belongs.
@@ -89,6 +89,8 @@ class OFCDriverBase(object):
 
             If a port is identified in combination with a network or
             a tenant, such information should be included in the ID.
+        :param filters: A list of packet filter associated with the port.
+            Each element is a tuple (neutron ID, OFC ID)
 
         :returns: ID of the port created at OpenFlow Controller.
         :raises: neutron.plugin.nec.common.exceptions.OFCException

@@ -104,7 +104,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self):
         super(NECPluginV2, self).__init__()
-        self.ofc = ofc_manager.OFCManager()
+        self.ofc = ofc_manager.OFCManager(self)
         self.base_binding_dict = self._get_base_binding_dict()
         portbindings_base.register_port_dict_function()
 
