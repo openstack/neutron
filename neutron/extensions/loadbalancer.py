@@ -69,6 +69,11 @@ class PoolInUse(qexception.InUse):
     message = _("Pool %(pool_id)s is still in use")
 
 
+class HealthMonitorInUse(qexception.InUse):
+    message = _("Health monitor %(monitor_id)s still has associations with "
+                "pools")
+
+
 class PoolStatsNotFound(qexception.NotFound):
     message = _("Statistics of Pool %(pool_id)s could not be found")
 

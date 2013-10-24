@@ -770,6 +770,15 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         return self._make_health_monitor_dict(monitor_db)
 
     def delete_health_monitor(self, context, id):
+        """Delete health monitor object from DB
+
+        Raises an error if the monitor has associations with pools
+        """
+        query = self._model_query(context, PoolMonitorAssociation)
+        has_associations = query.filter_by(monitor_id=id).first()
+        if has_associations:
+            raise loadbalancer.HealthMonitorInUse(monitor_id=id)
+
         with context.session.begin(subtransactions=True):
             monitor_db = self._get_resource(context, HealthMonitor, id)
             context.session.delete(monitor_db)
