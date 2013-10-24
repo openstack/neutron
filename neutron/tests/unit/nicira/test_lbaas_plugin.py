@@ -397,7 +397,7 @@ class TestLoadbalancerPlugin(
                                                   data,
                                                   member['member']['id'])
                     raw_res = req.get_response(self.ext_api)
-                    self.assertEquals(web_exc.HTTPOk.code, raw_res.status_int)
+                    self.assertEqual(web_exc.HTTPOk.code, raw_res.status_int)
                     res = self.deserialize(self.fmt, raw_res)
                     for k, v in keys:
                         self.assertEqual(res['member'][k], v)
