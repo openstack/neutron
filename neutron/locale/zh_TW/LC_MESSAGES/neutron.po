@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-19 06:33+0000\n"
+"POT-Creation-Date: 2013-10-24 06:34+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -471,15 +471,15 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr "在 meta 資料存取網路上找到 %(port_num)d 個路由器埠。將僅考量路由器 %(router_id)s 的埠 %(port_id)s"
 
-#: neutron/agent/dhcp_agent.py:559 neutron/agent/l3_agent.py:848
+#: neutron/agent/dhcp_agent.py:559 neutron/agent/l3_agent.py:851
 #: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:565 neutron/agent/l3_agent.py:853
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:801
+#: neutron/agent/dhcp_agent.py:565 neutron/agent/l3_agent.py:856
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:804
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:181
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:240
@@ -488,7 +488,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
-#: neutron/agent/dhcp_agent.py:573 neutron/agent/l3_agent.py:858
+#: neutron/agent/dhcp_agent.py:573 neutron/agent/l3_agent.py:861
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:281
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
@@ -539,7 +539,7 @@ msgstr ""
 msgid "Error importing interface driver '%s'"
 msgstr "匯入介面驅動程式 '%s' 時發生錯誤"
 
-#: neutron/agent/l3_agent.py:231
+#: neutron/agent/l3_agent.py:231 neutron/agent/linux/dhcp.py:556
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:98
 msgid "An interface driver must be specified"
 msgstr "必須指定介面驅動程式"
@@ -576,83 +576,83 @@ msgstr "路由器埠 %s 沒有 IP 位址"
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "正在忽略路由器埠 %s 上的多個 IP"
 
-#: neutron/agent/l3_agent.py:501
+#: neutron/agent/l3_agent.py:500
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr "傳送無償 ARP 時失敗：%s"
 
-#: neutron/agent/l3_agent.py:640
+#: neutron/agent/l3_agent.py:643
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:645
+#: neutron/agent/l3_agent.py:648
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:653
+#: neutron/agent/l3_agent.py:656
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:657
+#: neutron/agent/l3_agent.py:660
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:664
+#: neutron/agent/l3_agent.py:667
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr "外部網路橋接器 '%s' 不存在"
 
-#: neutron/agent/l3_agent.py:712
+#: neutron/agent/l3_agent.py:715
 #, python-format
 msgid "Starting RPC loop for %d updated routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:721
+#: neutron/agent/l3_agent.py:724
 msgid "RPC loop successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:723 neutron/agent/l3_agent.py:757
+#: neutron/agent/l3_agent.py:726 neutron/agent/l3_agent.py:760
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr "同步路由器時失敗"
 
-#: neutron/agent/l3_agent.py:741
+#: neutron/agent/l3_agent.py:744
 #, python-format
 msgid "Starting _sync_routers_task - fullsync:%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:752
+#: neutron/agent/l3_agent.py:755
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:755
+#: neutron/agent/l3_agent.py:758
 msgid "_sync_routers_task successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:761
+#: neutron/agent/l3_agent.py:764
 msgid "L3 agent started"
 msgstr "已啟動 L3 代理程式"
 
-#: neutron/agent/l3_agent.py:781
+#: neutron/agent/l3_agent.py:784
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr "所新增的路徑項目是 '%s'"
 
-#: neutron/agent/l3_agent.py:789
+#: neutron/agent/l3_agent.py:792
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr "所移除的路徑項目是 '%s'"
 
-#: neutron/agent/l3_agent.py:821
+#: neutron/agent/l3_agent.py:824
 msgid "Report state task started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:845
+#: neutron/agent/l3_agent.py:848
 msgid "Report state task successfully completed"
 msgstr ""
 
@@ -677,7 +677,7 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/ovs_cleanup_util.py:73
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:624
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:627
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:278
 #, python-format
 msgid "Delete %s"
@@ -920,31 +920,27 @@ msgstr ""
 msgid "Reloading allocations for network: %s"
 msgstr "正在重新載入網路的配置：%s"
 
-#: neutron/agent/linux/dhcp.py:556
-msgid "You must specify an interface driver"
-msgstr "必須指定介面驅動程式"
-
-#: neutron/agent/linux/dhcp.py:561
+#: neutron/agent/linux/dhcp.py:563
 #, python-format
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:609
+#: neutron/agent/linux/dhcp.py:612
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:619
+#: neutron/agent/linux/dhcp.py:622
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:660
+#: neutron/agent/linux/dhcp.py:663
 #, python-format
 msgid "DHCP port %(device_id)s on network %(network_id)s does not yet exist."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:696 neutron/debug/debug_agent.py:75
+#: neutron/agent/linux/dhcp.py:699 neutron/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr "正在重複使用現有裝置：%s。"
@@ -6088,7 +6084,7 @@ msgid "port_delete received"
 msgstr "收到 port_delete"
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:166
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:628
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:631
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:173
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:287
 msgid "port_update received"
@@ -6171,14 +6167,14 @@ msgid "Removing port failed for device %(device)s: %(e)s"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:355
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:941
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:944
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:384
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1063
 msgid "Agent out of sync with plugin!"
 msgstr "代理程式與外掛程式不同步！"
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:363
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:953
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:956
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1079
 msgid "Agent loop has new devices!"
 msgstr "代理程式迴圈具有新裝置！"
@@ -6195,7 +6191,7 @@ msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s）"
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:390
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:992
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:995
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1217
 msgid "Agent initialized successfully, now running... "
 msgstr "已順利地起始設定代理程式，現正在執行中..."
@@ -6430,139 +6426,139 @@ msgstr "正在將裝置 %(tap_device_name)s 新增至橋接器 %(bridge_name)s"
 msgid "%(tap_device_name)s already exists on bridge %(bridge_name)s"
 msgstr "%(tap_device_name)s 已存在於橋接器 %(bridge_name)s 上"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:436
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:439
 #, python-format
 msgid "Deleting bridge %s"
 msgstr "正在刪除橋接器 %s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:443
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:446
 #, python-format
 msgid "Done deleting bridge %s"
 msgstr "已完成刪除橋接器 %s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:446
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:449
 #, python-format
 msgid "Cannot delete bridge %s, does not exist"
 msgstr "無法刪除橋接器 %s，不存在"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:460
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:463
 #, python-format
 msgid "Removing device %(interface_name)s from bridge %(bridge_name)s"
 msgstr "正在將裝置 %(interface_name)s 從橋接器 %(bridge_name)s 中移除"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:467
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:470
 #, python-format
 msgid "Done removing device %(interface_name)s from bridge %(bridge_name)s"
 msgstr "已完成將裝置 %(interface_name)s 從橋接器 %(bridge_name)s 中移除"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:473
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:476
 #, python-format
 msgid ""
 "Cannot remove device %(interface_name)s bridge %(bridge_name)s does not "
 "exist"
 msgstr "無法將裝置 %(interface_name)s 從橋接器 %(bridge_name)s 中移除，該裝置不存在"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:481
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:484
 #, python-format
 msgid "Deleting subinterface %s for vlan"
 msgstr "正在刪除 VLAN 的子介面 %s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:488
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:491
 #, python-format
 msgid "Done deleting subinterface %s"
 msgstr "已完成刪除子介面 %s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:492
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:495
 #, python-format
 msgid "Deleting vxlan interface %s for vlan"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:497
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:500
 #, python-format
 msgid "Done deleting vxlan interface %s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:540
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:543
 msgid ""
 "VXLAN muticast group must be provided in vxlan_group option to enable "
 "VXLAN"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:544
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:547
 msgid ""
 "Unable to use VXLAN, it requires at least 3.8 linux kernel and iproute2 "
 "3.8"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:546
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:549
 #, python-format
 msgid "Using %s VXLAN mode"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:621
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:624
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:164
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:276
 msgid "network_delete received"
 msgstr "收到 network_delete"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:676
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:679
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:207
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:314
 #, python-format
 msgid "RPC timeout while updating port %s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:679
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:682
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:338
 msgid "fdb_add received"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:701
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:704
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:363
 msgid "fdb_remove received"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:723
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:726
 msgid "update chg_ip received"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:748
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:751
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:424
 msgid "fdb_update received"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:811
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:814
 msgid "Unable to obtain MAC address for unique ID. Agent terminated!"
 msgstr "無法取得唯一 ID 的 MAC 位址。已終止代理程式！"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:815
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:818
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:260
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:142
 #, python-format
 msgid "RPC agent_id: %s"
 msgstr "RPC agent_id：%s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:864
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:867
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:909
 #, python-format
 msgid "Port %s added"
 msgstr "已新增埠 %s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:870
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:873
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:915
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:950
 #, python-format
 msgid "Unable to get port details for %(device)s: %(e)s"
 msgstr "無法取得 %(device)s 的埠詳細資料：%(e)s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:876
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:879
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:922
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr "已更新埠 %(device)s。詳細資料：%(details)s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:908
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:928
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:911
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:931
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:370
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:937
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:982
@@ -6571,21 +6567,21 @@ msgstr "已更新埠 %(device)s。詳細資料：%(details)s"
 msgid "Device %s not defined on plugin"
 msgstr "外掛程式上未定義裝置 %s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:915
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:918
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:967
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:989
 #, python-format
 msgid "Attachment %s removed"
 msgstr "已移除連接裝置 %s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:922
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:925
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:974
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:996
 #, python-format
 msgid "port_removed failed for %(device)s: %(e)s"
 msgstr "對 %(device)s 執行 port_removed 作業失敗：%(e)s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:926
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:929
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:368
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:979
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1001
@@ -6593,33 +6589,33 @@ msgstr "對 %(device)s 執行 port_removed 作業失敗：%(e)s"
 msgid "Port %s updated."
 msgstr "已更新埠 %s。"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:936
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:939
 msgid "LinuxBridge Agent RPC Daemon Started!"
 msgstr "已啟動「LinuxBridge 代理程式 RPC 常駐程式」！"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:948
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:951
 msgid "Update devices failed"
 msgstr "更新裝置失敗"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:959
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:962
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
 msgstr "代理程式迴圈發生錯誤。裝置資訊：%s"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:967
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:970
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1106
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:281
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
 msgstr "迴圈反覆運算已超出間隔（%(polling_interval)s 與 %(elapsed)s）！"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:982
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:985
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:418
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr "剖析 physical_interface_mappings 失敗：%s。已終止代理程式！"
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:985
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:988
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:421
 #, python-format
 msgid "Interface mappings: %s"
@@ -8014,16 +8010,16 @@ msgstr ""
 msgid "Experimental L2 population driver"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:117
+#: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:116
 msgid "Unable to retrieve the agent ip, check the agent configuration."
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:123
+#: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:122
 #, python-format
 msgid "Port %(port)s updated by agent %(agent)s isn't bound to any segment"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:173
+#: neutron/plugins/ml2/drivers/l2pop/mech_driver.py:172
 #, python-format
 msgid ""
 "Unable to retrieve the agent ip, check the agent %(agent_host)s "
@@ -13328,4 +13324,7 @@ msgstr ""
 
 #~ msgid "All IP's from subnet %(subnet_id)s (%(cidr)s) allocated"
 #~ msgstr "子網路 %(subnet_id)s (%(cidr)s) 的所有 IP 都已配置"
+
+#~ msgid "You must specify an interface driver"
+#~ msgstr "必須指定介面驅動程式"
 
