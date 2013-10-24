@@ -70,6 +70,10 @@ class NvpServicePluginException(q_exc.NeutronException):
                 "in the NVP Service Plugin: %(err_msg)s")
 
 
+class NvpL2GatewayAlreadyInUse(q_exc.Conflict):
+    message = _("Gateway Service %(gateway)s is already in use")
+
+
 class NvpServiceOverQuota(q_exc.Conflict):
     message = _("Quota exceeded for Vcns resource: %(overs)s: %(err_msg)s")
 
