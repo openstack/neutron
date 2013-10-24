@@ -1914,11 +1914,12 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             nvp_res = nvplib.create_l2_gw_service(self.cluster, tenant_id,
                                                   gw_data['name'], devices)
             nvp_uuid = nvp_res.get('uuid')
-        except Exception:
-            raise nvp_exc.NvpPluginException(
-                err_msg=_("Create_l2_gw_service did not "
-                          "return an uuid for the newly "
-                          "created resource:%s") % nvp_res)
+        except NvpApiClient.Conflict:
+            raise nvp_exc.NvpL2GatewayAlreadyInUse(gateway=gw_data['name'])
+        except NvpApiClient.NvpApiException:
+            err_msg = _("Unable to create l2_gw_service for: %s") % gw_data
+            LOG.exception(err_msg)
+            raise nvp_exc.NvpPluginException(err_msg=err_msg)
         gw_data['id'] = nvp_uuid
         return super(NvpPluginV2, self).create_network_gateway(context,
                                                                network_gateway)
