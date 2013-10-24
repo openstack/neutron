@@ -472,9 +472,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             req = self.new_update_request('vips', update_info, v['vip']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.ext_api))
 
-            # If session persistence has been removed, it won't be present in
-            # the response.
-            self.assertNotIn('session_persistence', res['vip'])
+            self.assertIsNone(res['vip']['session_persistence'])
 
     def test_update_vip(self):
         name = 'new_vip'
