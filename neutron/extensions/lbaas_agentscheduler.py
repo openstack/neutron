@@ -63,7 +63,7 @@ class LbaasAgentHostingPoolController(wsgi.Controller):
 
 
 class Lbaas_agentscheduler(extensions.ExtensionDescriptor):
-    """Extension class supporting l3 agent scheduler.
+    """Extension class supporting LBaaS agent scheduler.
     """
 
     @classmethod
