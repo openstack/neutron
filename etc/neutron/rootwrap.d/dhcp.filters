@@ -18,6 +18,7 @@ kill_dnsmasq_usr: KillFilter, root, /usr/sbin/dnsmasq, -9, -HUP
 
 ovs-vsctl: CommandFilter, ovs-vsctl, root
 ivs-ctl: CommandFilter, ivs-ctl, root
+mm-ctl: CommandFilter, mm-ctl, root
 dhcp_release: CommandFilter, dhcp_release, root
 
 # metadata proxy

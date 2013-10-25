@@ -15,6 +15,7 @@ haproxy: CommandFilter, haproxy, root
 kill_haproxy_usr: KillFilter, root, /usr/sbin/haproxy, -9, -HUP
 
 ovs-vsctl: CommandFilter, ovs-vsctl, root
+mm-ctl: CommandFilter, mm-ctl, root
 
 # ip_lib
 ip: IpFilter, ip, root
