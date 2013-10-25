@@ -195,6 +195,7 @@ class NVPApiHelper(client_eventlet.NvpApiClientEventlet):
     # TODO(del): ensure error_codes are handled/raised appropriately
     # in api_client.
     error_codes = {404: fourZeroFour,
+                   405: zero,
                    409: fourZeroNine,
                    503: fiveZeroThree,
                    403: fourZeroThree,
