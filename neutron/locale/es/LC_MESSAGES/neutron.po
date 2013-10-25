@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-24 06:34+0000\n"
+"POT-Creation-Date: 2013-10-25 06:34+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Spanish "
@@ -1822,7 +1822,7 @@ msgstr ""
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:32 neutron/plugins/nicira/NvpApiClient.py:217
+#: neutron/common/exceptions.py:32 neutron/plugins/nicira/NvpApiClient.py:218
 msgid "An unknown exception occurred."
 msgstr ""
 
@@ -9502,33 +9502,33 @@ msgstr ""
 msgid "Unable to determine NVP version. Plugin might not work as expected."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:232
+#: neutron/plugins/nicira/NvpApiClient.py:233
 msgid "Server denied session's authentication credentials."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:236
+#: neutron/plugins/nicira/NvpApiClient.py:237
 msgid "An entity referenced in the request was not found."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:240
+#: neutron/plugins/nicira/NvpApiClient.py:241
 msgid "Request conflicts with configuration on a different entity."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:245
+#: neutron/plugins/nicira/NvpApiClient.py:246
 msgid ""
 "Request could not completed because the associated resource could not be "
 "reached."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:250
+#: neutron/plugins/nicira/NvpApiClient.py:251
 msgid "The request is forbidden from accessing the referenced resource."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:255
+#: neutron/plugins/nicira/NvpApiClient.py:256
 msgid "Create/Update actions are forbidden when in read-only mode."
 msgstr ""
 
-#: neutron/plugins/nicira/NvpApiClient.py:259
+#: neutron/plugins/nicira/NvpApiClient.py:260
 msgid "The request has timed out."
 msgstr ""
 
