@@ -401,7 +401,9 @@ class TunnelTest(base.BaseTestCase):
 
     def test_tunnel_update(self):
         self.mock_tun_bridge.add_tunnel_port('gre-1', '10.0.10.1', '10.0.0.1',
-                                             'gre', 4789)
+                                             'gre', 4789).AndReturn('9999')
+        self.mock_tun_bridge.add_flow(actions='resubmit(,2)', in_port='9999',
+                                      priority=1)
         self.mox.ReplayAll()
         a = ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
                                               self.TUN_BRIDGE,
