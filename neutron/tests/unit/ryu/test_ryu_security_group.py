@@ -28,8 +28,6 @@ from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 PLUGIN_NAME = ('neutron.plugins.ryu.'
                'ryu_neutron_plugin.RyuNeutronPluginV2')
-AGENT_NAME = ('neutron.plugins.ryu.'
-              'agent.ryu_neutron_agent.OVSNeutronOFPRyuAgent')
 NOTIFIER = ('neutron.plugins.ryu.'
             'ryu_neutron_plugin.AgentNotifierApi')
 
