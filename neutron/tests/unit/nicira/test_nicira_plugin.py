@@ -593,8 +593,14 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
             if res.status_int == 201:
                 self._delete('routers', router['router']['id'])
 
-    def test_router_create_distributed(self):
+    def test_router_create_distributed_with_3_1(self):
         self._test_router_create_with_distributed(True, True)
+
+    def test_router_create_distributed_with_new_nvp_versions(self):
+        with mock.patch.object(nvplib, 'create_explicit_route_lrouter'):
+            self._test_router_create_with_distributed(True, True, '3.2')
+            self._test_router_create_with_distributed(True, True, '4.0')
+            self._test_router_create_with_distributed(True, True, '4.1')
 
     def test_router_create_not_distributed(self):
         self._test_router_create_with_distributed(False, False)
