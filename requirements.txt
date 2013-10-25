@@ -11,7 +11,7 @@ eventlet>=0.13.0
 greenlet>=0.3.2
 httplib2
 requests>=1.1
-iso8601==0.1.4
+iso8601>=0.1.8
 jsonrpclib
 Jinja2
 kombu>=2.4.8
