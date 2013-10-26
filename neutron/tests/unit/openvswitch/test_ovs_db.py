@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import mock
+from oslo.config import cfg
 import testtools
 from testtools import matchers
 
@@ -39,6 +40,9 @@ TUN_MIN = 100
 TUN_MAX = 109
 TUNNEL_RANGES = [(TUN_MIN, TUN_MAX)]
 UPDATED_TUNNEL_RANGES = [(TUN_MIN + 5, TUN_MAX + 5)]
+
+PLUGIN_NAME = ('neutron.plugins.openvswitch.'
+               'ovs_neutron_plugin.OVSNeutronPluginV2')
 
 
 class VlanAllocationsTest(base.BaseTestCase):
@@ -295,17 +299,19 @@ class TunnelAllocationsTest(base.BaseTestCase):
 
 class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
-        super(NetworkBindingsTest, self).setUp()
+        cfg.CONF.set_override('network_vlan_ranges', ['physnet1:1000:2999'],
+                              group='OVS')
+        super(NetworkBindingsTest, self).setUp(plugin=PLUGIN_NAME)
         ovs_db_v2.initialize()
         self.session = db.get_session()
 
     def test_add_network_binding(self):
-        with self.network() as network:
+        params = {'provider:network_type': 'vlan',
+                  'provider:physical_network': PHYS_NET,
+                  'provider:segmentation_id': 1234}
+        params['arg_list'] = tuple(params.keys())
+        with self.network(**params) as network:
             TEST_NETWORK_ID = network['network']['id']
-            self.assertIsNone(ovs_db_v2.get_network_binding(self.session,
-                                                            TEST_NETWORK_ID))
-            ovs_db_v2.add_network_binding(self.session, TEST_NETWORK_ID,
-                                          'vlan', PHYS_NET, 1234)
             binding = ovs_db_v2.get_network_binding(self.session,
                                                     TEST_NETWORK_ID)
             self.assertIsNotNone(binding)

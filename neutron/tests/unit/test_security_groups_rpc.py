@@ -52,7 +52,7 @@ class FakeSGCallback(sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
 class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
     def setUp(self, plugin=None):
-        super(SGServerRpcCallBackMixinTestCase, self).setUp()
+        super(SGServerRpcCallBackMixinTestCase, self).setUp(plugin)
         self.rpc = FakeSGCallback()
 
     def test_security_group_rules_for_devices_ipv4_ingress(self):

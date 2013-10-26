@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.config import cfg
 import testtools
 from testtools import matchers
 
@@ -29,6 +30,9 @@ VLAN_MAX = 19
 VLAN_RANGES = {PHYS_NET: [(VLAN_MIN, VLAN_MAX)]}
 UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
                        PHYS_NET_2: [(VLAN_MIN + 20, VLAN_MAX + 20)]}
+
+PLUGIN_NAME = ('neutron.plugins.linuxbridge.'
+               'lb_neutron_plugin.LinuxBridgePluginV2')
 
 
 class NetworkStatesTest(base.BaseTestCase):
@@ -147,17 +151,19 @@ class NetworkStatesTest(base.BaseTestCase):
 
 class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
-        super(NetworkBindingsTest, self).setUp()
+        cfg.CONF.set_override('network_vlan_ranges', ['physnet1:1000:2999'],
+                              group='VLANS')
+        super(NetworkBindingsTest, self).setUp(plugin=PLUGIN_NAME)
         lb_db.initialize()
         self.session = db.get_session()
 
     def test_add_network_binding(self):
-        with self.network() as network:
+        params = {'provider:network_type': 'vlan',
+                  'provider:physical_network': PHYS_NET,
+                  'provider:segmentation_id': 1234}
+        params['arg_list'] = tuple(params.keys())
+        with self.network(**params) as network:
             TEST_NETWORK_ID = network['network']['id']
-            self.assertIsNone(lb_db.get_network_binding(self.session,
-                                                        TEST_NETWORK_ID))
-            lb_db.add_network_binding(self.session, TEST_NETWORK_ID, PHYS_NET,
-                                      1234)
             binding = lb_db.get_network_binding(self.session, TEST_NETWORK_ID)
             self.assertIsNotNone(binding)
             self.assertEqual(binding.network_id, TEST_NETWORK_ID)
