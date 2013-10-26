@@ -61,6 +61,7 @@ from neutron.openstack.common import lockutils
 from neutron.plugins.common import constants as plugin_const
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import nsx_utils
 from neutron.plugins.nicira.common import securitygroups as nvp_sec
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.dbexts import distributedrouter as dist_rtr
@@ -446,7 +447,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 # Remove orphaned port from NVP
                 nvplib.delete_port(self.cluster, ls_uuid, lp_uuid)
             # rollback the neutron-nvp port mapping
-            nicira_db.delete_neutron_nvp_port_mapping(context.session,
+            nicira_db.delete_neutron_nsx_port_mapping(context.session,
                                                       port_id)
             msg = (_("An exception occurred while creating the "
                      "quantum port %s on the NVP plaform") % port_id)
@@ -474,8 +475,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                  selected_lswitch['uuid'],
                                                  port_data,
                                                  True)
-            nicira_db.add_neutron_nvp_port_mapping(
-                context.session, port_data['id'], lport['uuid'])
+            nicira_db.add_neutron_nsx_port_mapping(
+                context.session, port_data['id'],
+                selected_lswitch['uuid'], lport['uuid'])
             if port_data['device_owner'] not in self.port_special_owners:
                 nvplib.plug_interface(self.cluster, selected_lswitch['uuid'],
                                       lport['uuid'], "VifAttachment",
@@ -499,8 +501,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         "external networks. Port %s will be down."),
                       port_data['network_id'])
             return
-        nvp_port_id = self._nvp_get_port_id(context, self.cluster,
-                                            port_data)
+        nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+            context.session, self.cluster, port_data['id'])
         if not nvp_port_id:
             LOG.debug(_("Port '%s' was already deleted on NVP platform"), id)
             return
@@ -509,21 +511,20 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # the lswitch.
         try:
             nvplib.delete_port(self.cluster,
-                               port_data['network_id'],
+                               nvp_switch_id,
                                nvp_port_id)
             LOG.debug(_("_nvp_delete_port completed for port %(port_id)s "
                         "on network %(net_id)s"),
                       {'port_id': port_data['id'],
                        'net_id': port_data['network_id']})
-
         except q_exc.NotFound:
             LOG.warning(_("Port %s not found in NVP"), port_data['id'])
 
     def _nvp_delete_router_port(self, context, port_data):
         # Delete logical router port
         lrouter_id = port_data['device_id']
-        nvp_port_id = self._nvp_get_port_id(context, self.cluster,
-                                            port_data)
+        nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+            context.session, self.cluster, port_data['id'])
         if not nvp_port_id:
             LOG.warn(_("Neutron port %(port_id)s not found on NVP backend. "
                        "Terminating delete operation. A dangling router port "
@@ -534,7 +535,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         try:
             nvplib.delete_peer_router_lport(self.cluster,
                                             lrouter_id,
-                                            port_data['network_id'],
+                                            nvp_switch_id,
                                             nvp_port_id)
         except NvpApiClient.NvpApiException:
             # Do not raise because the issue might as well be that the
@@ -573,8 +574,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 self.cluster, context, router_id, port_data,
                 "PatchAttachment", ls_port['uuid'],
                 subnet_ids=[subnet_id])
-            nicira_db.add_neutron_nvp_port_mapping(
-                context.session, port_data['id'], ls_port['uuid'])
+            nicira_db.add_neutron_nsx_port_mapping(
+                context.session, port_data['id'],
+                selected_lswitch['uuid'], ls_port['uuid'])
             LOG.debug(_("_nvp_create_router_port completed for port "
                         "%(name)s on network %(network_id)s. The new "
                         "port id is %(id)s."),
@@ -701,8 +703,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 selected_lswitch['uuid'],
                 port_data,
                 True)
-            nicira_db.add_neutron_nvp_port_mapping(
-                context.session, port_data['id'], lport['uuid'])
+            nicira_db.add_neutron_nsx_port_mapping(
+                context.session, port_data['id'],
+                selected_lswitch['uuid'], lport['uuid'])
             nvplib.plug_l2_gw_service(
                 self.cluster,
                 port_data['network_id'],
@@ -728,33 +731,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # As we do not create ports for floating IPs in NVP,
         # this is a no-op driver
         pass
-
-    def _nvp_get_port_id(self, context, cluster, neutron_port):
-        """Return the NVP port uuid for a given neutron port.
-
-        First, look up the Neutron database. If not found, execute
-        a query on NVP platform as the mapping might be missing because
-        the port was created before upgrading to grizzly.
-        """
-        nvp_port_id = nicira_db.get_nvp_port_id(context.session,
-                                                neutron_port['id'])
-        if nvp_port_id:
-            return nvp_port_id
-        # Perform a query to NVP and then update the DB
-        try:
-            nvp_port = nvplib.get_port_by_neutron_tag(
-                cluster,
-                neutron_port['network_id'],
-                neutron_port['id'])
-        except NvpApiClient.NvpApiException:
-            LOG.exception(_("Unable to find NVP uuid for Neutron port %s"),
-                          neutron_port['id'])
-
-        if nvp_port:
-            nicira_db.add_neutron_nvp_port_mapping(
-                context.session, neutron_port['id'],
-                nvp_port['uuid'])
-            return nvp_port['uuid']
 
     def _extend_fault_map(self):
         """Extends the Neutron Fault Map.
@@ -1032,23 +1008,24 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                        'device_owner': ['network:router_interface']}
         router_iface_ports = self.get_ports(context, filters=port_filter)
         for port in router_iface_ports:
-            nvp_port_id = self._nvp_get_port_id(
-                context, self.cluster, port)
-            if nvp_port_id:
-                port['nvp_port_id'] = nvp_port_id
-            else:
-                LOG.warning(_("A nvp lport identifier was not found for "
-                              "neutron port '%s'"), port['id'])
+            nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+                context.session, self.cluster, id)
 
         super(NvpPluginV2, self).delete_network(context, id)
         # clean up network owned ports
         for port in router_iface_ports:
             try:
-                if 'nvp_port_id' in port:
+                if nvp_port_id:
                     nvplib.delete_peer_router_lport(self.cluster,
                                                     port['device_id'],
-                                                    port['network_id'],
-                                                    port['nvp_port_id'])
+                                                    nvp_switch_id,
+                                                    nvp_port_id)
+                else:
+                    LOG.warning(_("A nvp lport identifier was not found for "
+                                  "neutron port '%s'. Unable to remove "
+                                  "the peer router port for this switch port"),
+                                port['id'])
+
             except (TypeError, KeyError,
                     NvpApiClient.NvpApiException,
                     NvpApiClient.ResourceNotFound):
@@ -1282,12 +1259,12 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._process_port_queue_mapping(context, ret_port,
                                              port_queue_id)
             LOG.warn(_("Update port request: %s"), port)
-            nvp_port_id = self._nvp_get_port_id(
-                context, self.cluster, ret_port)
+            nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+                context.session, self.cluster, id)
             if nvp_port_id:
                 try:
                     nvplib.update_port(self.cluster,
-                                       ret_port['network_id'],
+                                       nvp_switch_id,
                                        nvp_port_id, id, tenant_id,
                                        ret_port['name'], ret_port['device_id'],
                                        ret_port['admin_state_up'],
@@ -1635,21 +1612,10 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         subnet_id = router_iface_info['subnet_id']
         if port_id:
             port_data = self._get_port(context, port_id)
-            nvp_port_id = self._nvp_get_port_id(
-                context, self.cluster, port_data)
-            # Fetch lswitch port from NVP in order to retrieve LS uuid
-            # this is necessary as in the case of bridged networks
-            # ls_uuid may be different from network id
-            # TODO(salv-orlando): avoid this NVP round trip by storing
-            # lswitch uuid together with lport uuid mapping.
-            nvp_port = nvplib.query_lswitch_lports(
-                self.cluster, '*',
-                filters={'uuid': nvp_port_id},
-                relations='LogicalSwitchConfig')[0]
-
-            ls_uuid = nvp_port['_relations']['LogicalSwitchConfig']['uuid']
+            nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+                context.session, self.cluster, port_id)
             # Unplug current attachment from lswitch port
-            nvplib.plug_interface(self.cluster, ls_uuid,
+            nvplib.plug_interface(self.cluster, nvp_switch_id,
                                   nvp_port_id, "NoAttachment")
             # Create logical router port and plug patch attachment
             self._create_and_attach_router_port(

@@ -57,18 +57,20 @@ class NvpNetworkBinding(model_base.BASEV2):
                                                   self.vlan_id)
 
 
-class NeutronNvpPortMapping(model_base.BASEV2):
+class NeutronNsxPortMapping(model_base.BASEV2):
     """Represents the mapping between neutron and nvp port uuids."""
 
-    __tablename__ = 'quantum_nvp_port_mapping'
-    quantum_id = Column(String(36),
+    __tablename__ = 'neutron_nsx_port_mappings'
+    neutron_id = Column(String(36),
                         ForeignKey('ports.id', ondelete="CASCADE"),
                         primary_key=True)
-    nvp_id = Column(String(36))
+    nsx_switch_id = Column(String(36))
+    nsx_port_id = Column(String(36))
 
-    def __init__(self, quantum_id, nvp_id):
-        self.quantum_id = quantum_id
-        self.nvp_id = nvp_id
+    def __init__(self, neutron_id, nsx_switch_id, nsx_port_id):
+        self.neutron_id = neutron_id
+        self.nsx_switch_id = nsx_switch_id
+        self.nsx_port_id = nsx_port_id
 
 
 class MultiProviderNetworks(model_base.BASEV2):

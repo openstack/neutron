@@ -22,6 +22,7 @@ from neutron.plugins.nicira import extensions
 import neutron.plugins.nicira.NeutronPlugin as plugin
 import neutron.plugins.nicira.NeutronServicePlugin as service_plugin
 import neutron.plugins.nicira.NvpApiClient as nvpapi
+from neutron.plugins.nicira import nvplib
 from neutron.plugins.nicira.vshield.common import (
     VcnsApiClient as vcnsapi)
 from neutron.plugins.nicira.vshield import vcns
@@ -38,6 +39,7 @@ vcns_api_helper = vcnsapi.VcnsApiHelper
 STUBS_PATH = os.path.join(os.path.dirname(__file__), 'etc')
 NVPEXT_PATH = os.path.dirname(extensions.__file__)
 NVPAPI_NAME = '%s.%s' % (api_helper.__module__, api_helper.__name__)
+NVPLIB_NAME = nvplib.__name__
 PLUGIN_NAME = '%s.%s' % (nvp_plugin.__module__, nvp_plugin.__name__)
 SERVICE_PLUGIN_NAME = '%s.%s' % (nvp_service_plugin.__module__,
                                  nvp_service_plugin.__name__)
@@ -50,3 +52,7 @@ VCNSAPI_NAME = '%s.%s' % (vcns_api_helper.__module__,
 
 def get_fake_conf(filename):
     return os.path.join(STUBS_PATH, filename)
+
+
+def nicira_method(method_name, module_name='nvplib'):
+    return '%s.%s.%s' % ('neutron.plugins.nicira', module_name, method_name)
