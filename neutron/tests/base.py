@@ -26,6 +26,8 @@ import fixtures
 from oslo.config import cfg
 import testtools
 
+from neutron.tests import post_mortem_debug
+
 
 CONF = cfg.CONF
 TRUE_STRING = ['True', '1']
@@ -40,6 +42,10 @@ class BaseTestCase(testtools.TestCase):
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
+
+        # Configure this first to ensure pm debugging support for setUp()
+        if os.environ.get('OS_POST_MORTEM_DEBUG') in TRUE_STRING:
+            self.addOnException(post_mortem_debug.exception_handler)
 
         if os.environ.get('OS_DEBUG') in TRUE_STRING:
             _level = logging.DEBUG
