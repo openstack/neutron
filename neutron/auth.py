@@ -31,16 +31,16 @@ class NeutronKeystoneContext(wsgi.Middleware):
     @webob.dec.wsgify
     def __call__(self, req):
         # Determine the user ID
-        user_id = req.headers.get('X_USER_ID', req.headers.get('X_USER'))
+        user_id = req.headers.get('X_USER_ID')
         if not user_id:
-            LOG.debug(_("Neither X_USER_ID nor X_USER found in request"))
+            LOG.debug(_("X_USER_ID is not found in request"))
             return webob.exc.HTTPUnauthorized()
 
         # Determine the tenant
-        tenant_id = req.headers.get('X_TENANT_ID', req.headers.get('X_TENANT'))
+        tenant_id = req.headers.get('X_PROJECT_ID')
 
         # Suck out the roles
-        roles = [r.strip() for r in req.headers.get('X_ROLE', '').split(',')]
+        roles = [r.strip() for r in req.headers.get('X_ROLES', '').split(',')]
 
         # Create a context with the authentication data
         ctx = context.Context(user_id, tenant_id, roles=roles)
