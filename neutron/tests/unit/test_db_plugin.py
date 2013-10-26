@@ -99,7 +99,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self._tenant_id = 'test-tenant'
 
         if not plugin:
-            plugin = test_config.get('plugin_name_v2', DB_PLUGIN_KLASS)
+            plugin = DB_PLUGIN_KLASS
 
         # Create the default configurations
         args = ['--config-file', etcdir('neutron.conf.test')]
@@ -152,7 +152,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                             native_sorting_attr_name, False))
 
         self._skip_native_sorting = not _is_native_sorting_support()
-        ext_mgr = ext_mgr or test_config.get('extension_manager')
         if ext_mgr:
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 

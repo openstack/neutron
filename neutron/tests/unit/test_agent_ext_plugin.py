@@ -23,7 +23,6 @@ from webob import exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
-from neutron.common.test_lib import test_config
 from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
@@ -169,8 +168,7 @@ class AgentDBTestCase(AgentDBTestMixIn,
 
     def setUp(self):
         self.adminContext = context.get_admin_context()
-        test_config['plugin_name_v2'] = (
-            'neutron.tests.unit.test_agent_ext_plugin.TestAgentPlugin')
+        plugin = 'neutron.tests.unit.test_agent_ext_plugin.TestAgentPlugin'
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
         # Save the original RESOURCE_ATTRIBUTE_MAP
@@ -178,10 +176,9 @@ class AgentDBTestCase(AgentDBTestMixIn,
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
             self.saved_attr_map[resource] = attrs.copy()
         ext_mgr = AgentTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
         self.addCleanup(self.restore_resource_attribute_map)
         self.addCleanup(cfg.CONF.reset)
-        super(AgentDBTestCase, self).setUp()
+        super(AgentDBTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def restore_resource_attribute_map(self):
         # Restore the originak RESOURCE_ATTRIBUTE_MAP

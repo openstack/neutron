@@ -59,14 +59,12 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
         self.adminContext = context.get_admin_context()
         test_config['config_files'] = [get_fake_conf('nsx.ini.full.test')]
-        test_config['plugin_name_v2'] = PLUGIN_NAME
         cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
         # Save the original RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
             self.saved_attr_map[resource] = attrs.copy()
         ext_mgr = MacLearningExtensionManager()
-        test_config['extension_manager'] = ext_mgr
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
         self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
@@ -87,7 +85,8 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         self.addCleanup(patch_sync.stop)
         self.addCleanup(self.restore_resource_attribute_map)
         self.addCleanup(cfg.CONF.reset)
-        super(MacLearningDBTestCase, self).setUp()
+        super(MacLearningDBTestCase, self).setUp(plugin=PLUGIN_NAME,
+                                                 ext_mgr=ext_mgr)
 
     def restore_resource_attribute_map(self):
         # Restore the original RESOURCE_ATTRIBUTE_MAP

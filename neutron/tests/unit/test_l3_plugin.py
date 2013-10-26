@@ -31,7 +31,6 @@ from neutron.api.v2 import attributes
 from neutron.common import config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as q_exc
-from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.db import api as qdbapi
 from neutron.db import db_base_plugin_v2
@@ -1728,12 +1727,11 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 class L3BaseForIntTests(test_db_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self, plugin=None, ext_mgr=None, service_plugins=None):
-        test_config['plugin_name_v2'] = (
-            'neutron.tests.unit.test_l3_plugin.TestL3NatIntPlugin')
+        if not plugin:
+            plugin = 'neutron.tests.unit.test_l3_plugin.TestL3NatIntPlugin'
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
         ext_mgr = ext_mgr or L3TestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
         super(L3BaseForIntTests, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                              service_plugins=service_plugins)
 
@@ -1743,16 +1741,15 @@ class L3BaseForIntTests(test_db_plugin.NeutronDbPluginV2TestCase):
 
     def tearDown(self):
         test_notifier.NOTIFICATIONS = []
-        del test_config['extension_manager']
         super(L3BaseForIntTests, self).tearDown()
 
 
 class L3BaseForSepTests(test_db_plugin.NeutronDbPluginV2TestCase):
 
-    def setUp(self):
+    def setUp(self, plugin=None, ext_mgr=None):
         # the plugin without L3 support
-        test_config['plugin_name_v2'] = (
-            'neutron.tests.unit.test_l3_plugin.TestNoL3NatPlugin')
+        if not plugin:
+            plugin = 'neutron.tests.unit.test_l3_plugin.TestNoL3NatPlugin'
         # the L3 service plugin
         l3_plugin = ('neutron.tests.unit.test_l3_plugin.'
                      'TestL3NatServicePlugin')
@@ -1760,9 +1757,10 @@ class L3BaseForSepTests(test_db_plugin.NeutronDbPluginV2TestCase):
 
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        ext_mgr = L3TestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        super(L3BaseForSepTests, self).setUp(service_plugins=service_plugins)
+        if not ext_mgr:
+            ext_mgr = L3TestExtensionManager()
+        super(L3BaseForSepTests, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
+                                             service_plugins=service_plugins)
 
         # Set to None to reload the drivers
         notifier_api._drivers = None
@@ -1770,7 +1768,6 @@ class L3BaseForSepTests(test_db_plugin.NeutronDbPluginV2TestCase):
 
     def tearDown(self):
         test_notifier.NOTIFICATIONS = []
-        del test_config['extension_manager']
         super(L3BaseForSepTests, self).tearDown()
 
 

@@ -21,7 +21,6 @@ import itertools
 import testtools
 from webob import exc
 
-from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.db import models_v2
 from neutron.extensions import external_net as external_net
@@ -64,11 +63,9 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             fmt, name, admin_state_up, arg_list=arg_list, **new_args)
 
     def setUp(self):
-        test_config['plugin_name_v2'] = (
-            'neutron.tests.unit.test_l3_plugin.TestNoL3NatPlugin')
+        plugin = 'neutron.tests.unit.test_l3_plugin.TestNoL3NatPlugin'
         ext_mgr = ExtNetTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        super(ExtNetDBTestCase, self).setUp()
+        super(ExtNetDBTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,

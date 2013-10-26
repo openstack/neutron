@@ -21,7 +21,6 @@ import webob.exc
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants as const
-from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
@@ -239,11 +238,11 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 
 class SecurityGroupDBTestCase(SecurityGroupsTestCase):
-    def setUp(self, plugin=None):
+    def setUp(self, plugin=None, ext_mgr=None):
         plugin = plugin or DB_PLUGIN_KLASS
-        ext_mgr = SecurityGroupTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        super(SecurityGroupDBTestCase, self).setUp(plugin)
+        ext_mgr = ext_mgr or SecurityGroupTestExtensionManager()
+        super(SecurityGroupDBTestCase,
+              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
 
 class TestSecurityGroups(SecurityGroupDBTestCase):

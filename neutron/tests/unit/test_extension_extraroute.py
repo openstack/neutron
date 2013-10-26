@@ -19,7 +19,6 @@ import contextlib
 from oslo.config import cfg
 from webob import exc
 
-from neutron.common.test_lib import test_config
 from neutron.db import extraroute_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3
@@ -460,20 +459,16 @@ class ExtraRouteDBTestCaseBase(object):
 class ExtraRouteDBIntTestCase(test_l3.L3NatDBIntTestCase,
                               ExtraRouteDBTestCaseBase):
 
-    def setUp(self, plugin=None):
+    def setUp(self, plugin=None, ext_mgr=None):
         if not plugin:
             plugin = ('neutron.tests.unit.test_extension_extraroute.'
                       'TestExtraRouteIntPlugin')
-        test_config['plugin_name_v2'] = plugin
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
         ext_mgr = ExtraRouteTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        # L3NatDBIntTestCase will overwrite plugin_name_v2,
-        # so we don't need to setUp on the class here
-        super(test_l3.L3BaseForIntTests, self).setUp()
-
+        super(test_l3.L3BaseForIntTests, self).setUp(plugin=plugin,
+                                                     ext_mgr=ext_mgr)
         # Set to None to reload the drivers
         notifier_api._drivers = None
         cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
@@ -487,8 +482,7 @@ class ExtraRouteDBSepTestCase(test_l3.L3NatDBSepTestCase,
                               ExtraRouteDBTestCaseBase):
     def setUp(self):
         # the plugin without L3 support
-        test_config['plugin_name_v2'] = (
-            'neutron.tests.unit.test_l3_plugin.TestNoL3NatPlugin')
+        plugin = 'neutron.tests.unit.test_l3_plugin.TestNoL3NatPlugin'
         # the L3 service plugin
         l3_plugin = ('neutron.tests.unit.test_extension_extraroute.'
                      'TestExtraRouteL3NatServicePlugin')
@@ -498,10 +492,8 @@ class ExtraRouteDBSepTestCase(test_l3.L3NatDBSepTestCase,
         cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
         ext_mgr = ExtraRouteTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        # L3NatDBSepTestCase will overwrite plugin_name_v2,
-        # so we don't need to setUp on the class here
         super(test_l3.L3BaseForSepTests, self).setUp(
+            plugin=plugin, ext_mgr=ext_mgr,
             service_plugins=service_plugins)
 
         # Set to None to reload the drivers

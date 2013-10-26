@@ -15,7 +15,6 @@
 
 
 from neutron.api.v2 import attributes as attr
-from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
@@ -31,7 +30,7 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.test_extension_portsecurity.'
 
 class PortSecurityTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def setUp(self, plugin=None):
-        super(PortSecurityTestCase, self).setUp()
+        super(PortSecurityTestCase, self).setUp(plugin)
 
         # Check if a plugin supports security groups
         plugin_obj = NeutronManager.get_plugin()
@@ -161,12 +160,8 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 class PortSecurityDBTestCase(PortSecurityTestCase):
     def setUp(self, plugin=None):
-        test_config['plugin_name_v2'] = plugin or DB_PLUGIN_KLASS
-        super(PortSecurityDBTestCase, self).setUp()
-
-    def tearDown(self):
-        del test_config['plugin_name_v2']
-        super(PortSecurityDBTestCase, self).tearDown()
+        plugin = plugin or DB_PLUGIN_KLASS
+        super(PortSecurityDBTestCase, self).setUp(plugin)
 
 
 class TestPortSecurity(PortSecurityDBTestCase):
