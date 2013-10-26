@@ -89,7 +89,7 @@ class TestRyuSecurityGroups(RyuSecurityGroupsTestCase,
     def test_security_group_get_port_from_device_with_no_port(self):
         plugin = manager.NeutronManager.get_plugin()
         port_dict = plugin.callbacks.get_port_from_device('bad_device_id')
-        self.assertEqual(None, port_dict)
+        self.assertIsNone(port_dict)
 
 
 class TestRyuSecurityGroupsXML(TestRyuSecurityGroups):

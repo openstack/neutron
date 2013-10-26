@@ -93,7 +93,7 @@ class TestLinuxBridgeSecurityGroupsDB(LinuxBridgeSecurityGroupsTestCase):
 
     def test_security_group_get_port_from_device_with_no_port(self):
         port_dict = lb_db.get_port_from_device('bad_device_id')
-        self.assertEqual(None, port_dict)
+        self.assertIsNone(port_dict)
 
 
 class TestLinuxBridgeSecurityGroupsDBXML(TestLinuxBridgeSecurityGroupsDB):

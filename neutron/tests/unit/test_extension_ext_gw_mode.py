@@ -262,7 +262,7 @@ class TestL3GwModeMixin(base.BaseTestCase):
     def test_make_router_dict_no_ext_gw(self):
         self._reset_ext_gw()
         router_dict = self.target_object._make_router_dict(self.router)
-        self.assertEqual(None, router_dict[l3.EXTERNAL_GW_INFO])
+        self.assertIsNone(router_dict[l3.EXTERNAL_GW_INFO])
 
     def test_make_router_dict_with_ext_gw(self):
         router_dict = self.target_object._make_router_dict(self.router)

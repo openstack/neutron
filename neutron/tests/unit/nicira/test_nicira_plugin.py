@@ -1023,7 +1023,7 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
                                    return_value={"uuid": "fake_queue"}):
                 with self.qos_queue(name='fake_lqueue', min=34, max=44,
                                     qos_marking='trusted', default=False) as q:
-                    self.assertEqual(q['qos_queue']['dscp'], None)
+                    self.assertIsNone(q['qos_queue']['dscp'])
                     self.assertTrue(log.called)
 
     def test_create_qos_queue_name_exceeds_40_chars(self):
@@ -1119,7 +1119,7 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
             device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
             res = self._create_port('json', net1['network']['id'])
             port = self.deserialize('json', res)
-            self.assertEqual(port['port'][ext_qos.QUEUE], None)
+            self.assertIsNone(port['port'][ext_qos.QUEUE])
 
             data = {'port': {'device_id': device_id}}
             req = self.new_update_request('ports', data,

@@ -133,7 +133,7 @@ class GreTypeTest(base.BaseTestCase):
         self.driver.release_segment(self.session, segment)
         alloc = self.driver.get_gre_allocation(self.session,
                                                segment[api.SEGMENTATION_ID])
-        self.assertEqual(None, alloc)
+        self.assertIsNone(alloc)
 
     def test_allocate_tenant_segment(self):
         tunnel_ids = set()
@@ -146,7 +146,7 @@ class GreTypeTest(base.BaseTestCase):
             tunnel_ids.add(segment[api.SEGMENTATION_ID])
 
         segment = self.driver.allocate_tenant_segment(self.session)
-        self.assertEqual(None, segment)
+        self.assertIsNone(segment)
 
         segment = {api.NETWORK_TYPE: 'gre',
                    api.PHYSICAL_NETWORK: 'None',

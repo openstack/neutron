@@ -206,7 +206,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         vn_id = constants.MAX_VXLAN_VNI
         self.assertEqual(self.lbm.get_vxlan_device_name(vn_id),
                          "vxlan-" + str(vn_id))
-        self.assertEqual(self.lbm.get_vxlan_device_name(vn_id + 1), None)
+        self.assertIsNone(self.lbm.get_vxlan_device_name(vn_id + 1))
 
     def test_get_all_neutron_bridges(self):
         br_list = ["br-int", "brq1", "brq2", "br-ex"]
@@ -253,8 +253,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             get_if_fn.return_value = ["tap1", "tap2", "tap3"]
             self.assertEqual(self.lbm.get_bridge_for_tap_device("tap1"),
                              "br-int")
-            self.assertEqual(self.lbm.get_bridge_for_tap_device("tap4"),
-                             None)
+            self.assertIsNone(self.lbm.get_bridge_for_tap_device("tap4"))
 
     def test_is_device_on_bridge(self):
         self.assertTrue(not self.lbm.is_device_on_bridge(""))
