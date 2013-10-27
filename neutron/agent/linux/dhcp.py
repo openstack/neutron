@@ -183,15 +183,17 @@ class DhcpLocalProcess(DhcpBase):
         """Disable DHCP for this network by killing the local process."""
         pid = self.pid
 
-        if self.active:
-            cmd = ['kill', '-9', pid]
-            utils.execute(cmd, self.root_helper)
+        if pid:
+            if self.active:
+                cmd = ['kill', '-9', pid]
+                utils.execute(cmd, self.root_helper)
+            else:
+                LOG.debug(_('DHCP for %(net_id)s is stale, pid %(pid)d '
+                            'does not exist, performing cleanup'),
+                          {'net_id': self.network.id, 'pid': pid})
             if not retain_port:
-                self.device_manager.destroy(self.network, self.interface_name)
-
-        elif pid:
-            LOG.debug(_('DHCP for %(net_id)s pid %(pid)d is stale, ignoring '
-                        'command'), {'net_id': self.network.id, 'pid': pid})
+                self.device_manager.destroy(self.network,
+                                            self.interface_name)
         else:
             LOG.debug(_('No DHCP started for %s'), self.network.id)
 

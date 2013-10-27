@@ -540,10 +540,14 @@ class TestDhcpLocalProcess(TestBase):
             mocks['pid'].__get__ = mock.Mock(return_value=5)
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             with mock.patch.object(dhcp.LOG, 'debug') as log:
-                lp = LocalChild(self.conf, FakeDualNetwork())
+                network = FakeDualNetwork()
+                lp = LocalChild(self.conf, network)
+                lp.device_manager = mock.Mock()
                 lp.disable()
                 msg = log.call_args[0][0]
-                self.assertIn('stale', msg)
+                self.assertIn('does not exist', msg)
+                lp.device_manager.destroy.assert_called_once_with(
+                    network, 'tap0')
 
     def test_disable_unknown_network(self):
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
