@@ -1389,6 +1389,15 @@ class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
                 devices=[{'id': uuidutils.generate_uuid()}])
             self.assertEqual(500, res.status_int)
 
+    def test_create_network_gateway_nvp_error_returns_409(self):
+        with mock.patch.object(nvplib,
+                               'create_l2_gw_service',
+                               side_effect=NvpApiClient.Conflict):
+            res = self._create_network_gateway(
+                self.fmt, 'xxx', name='yyy',
+                devices=[{'id': uuidutils.generate_uuid()}])
+            self.assertEqual(409, res.status_int)
+
     def test_list_network_gateways(self):
         with self._network_gateway(name='test-gw-1') as gw1:
             with self._network_gateway(name='test_gw_2') as gw2:
