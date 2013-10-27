@@ -20,10 +20,11 @@
 import inspect
 import os
 
-import mox
+import mock
 
 from neutron.agent.linux import iptables_manager
 from neutron.tests import base
+from neutron.tests import tools
 
 
 IPTABLES_ARG = {'bn': iptables_manager.binary_name}
@@ -67,12 +68,11 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(IptablesManagerStateFulTestCase, self).setUp()
-        self.mox = mox.Mox()
         self.root_helper = 'sudo'
         self.iptables = (iptables_manager.
                          IptablesManager(root_helper=self.root_helper))
-        self.mox.StubOutWithMock(self.iptables, "execute")
-        self.addCleanup(self.mox.UnsetStubs)
+        self.execute = mock.patch.object(self.iptables, "execute").start()
+        self.addCleanup(mock.patch.stopall)
 
     def test_binary_name(self):
         self.assertEqual(iptables_manager.binary_name,
@@ -94,10 +94,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables = (iptables_manager.
                          IptablesManager(root_helper=self.root_helper,
                                          binary_name=bn))
-        self.mox.StubOutWithMock(self.iptables, "execute")
-
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
+        self.execute = mock.patch.object(self.iptables, "execute").start()
 
         iptables_args = {'bn': bn[:16]}
 
@@ -154,18 +151,23 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                     'COMMIT\n'
                     '# Completed by iptables_manager\n' % iptables_args)
 
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=nat_dump + filter_dump_mod,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
-
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=nat_dump + filter_dump,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.mox.ReplayAll()
+        expected_calls_and_values = [
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=nat_dump + filter_dump_mod,
+                       root_helper=self.root_helper),
+             None),
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=nat_dump + filter_dump,
+                       root_helper=self.root_helper),
+             None),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
         self.iptables.ipv4['filter'].add_chain('filter')
         self.iptables.apply()
@@ -173,7 +175,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables.ipv4['filter'].empty_chain('filter')
         self.iptables.apply()
 
-        self.mox.VerifyAll()
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_empty_chain_custom_binary_name(self):
         bn = ("abcdef" * 5)[:16]
@@ -181,10 +183,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables = (iptables_manager.
                          IptablesManager(root_helper=self.root_helper,
                                          binary_name=bn))
-        self.mox.StubOutWithMock(self.iptables, "execute")
-
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
+        self.execute = mock.patch.object(self.iptables, "execute").start()
 
         iptables_args = {'bn': bn}
 
@@ -241,18 +240,23 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                     'COMMIT\n'
                     '# Completed by iptables_manager\n' % iptables_args)
 
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=nat_dump + filter_dump_mod,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
-
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=nat_dump + filter_dump,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.mox.ReplayAll()
+        expected_calls_and_values = [
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=nat_dump + filter_dump_mod,
+                       root_helper=self.root_helper),
+             None),
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=nat_dump + filter_dump,
+                       root_helper=self.root_helper),
+             None),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
         self.iptables.ipv4['filter'].add_chain('filter')
         self.iptables.ipv4['filter'].add_rule('filter',
@@ -262,12 +266,9 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables.ipv4['filter'].remove_chain('filter')
         self.iptables.apply()
 
-        self.mox.VerifyAll()
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_add_and_remove_chain(self):
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
-
         filter_dump_mod = ('# Generated by iptables_manager\n'
                            '*filter\n'
                            ':neutron-filter-top - [0:0]\n'
@@ -286,18 +287,23 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                            '# Completed by iptables_manager\n'
                            % IPTABLES_ARG)
 
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=NAT_DUMP + filter_dump_mod,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
-
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=NAT_DUMP + FILTER_DUMP,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.mox.ReplayAll()
+        expected_calls_and_values = [
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=NAT_DUMP + filter_dump_mod,
+                       root_helper=self.root_helper),
+             None),
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=NAT_DUMP + FILTER_DUMP,
+                       root_helper=self.root_helper),
+             None),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
         self.iptables.ipv4['filter'].add_chain('filter')
         self.iptables.apply()
@@ -305,12 +311,9 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables.ipv4['filter'].remove_chain('filter')
         self.iptables.apply()
 
-        self.mox.VerifyAll()
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_add_filter_rule(self):
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
-
         filter_dump_mod = ('# Generated by iptables_manager\n'
                            '*filter\n'
                            ':neutron-filter-top - [0:0]\n'
@@ -332,19 +335,24 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                            '# Completed by iptables_manager\n'
                            % IPTABLES_ARG)
 
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=NAT_DUMP + filter_dump_mod,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
-
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=NAT_DUMP + FILTER_DUMP,
-                              root_helper=self.root_helper
-                              ).AndReturn(None)
-
-        self.mox.ReplayAll()
+        expected_calls_and_values = [
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=NAT_DUMP + filter_dump_mod,
+                       root_helper=self.root_helper),
+             None),
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=NAT_DUMP + FILTER_DUMP,
+                       root_helper=self.root_helper
+                       ),
+             None),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
         self.iptables.ipv4['filter'].add_chain('filter')
         self.iptables.ipv4['filter'].add_rule('filter', '-j DROP')
@@ -361,7 +369,8 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables.ipv4['filter'].remove_chain('filter')
 
         self.iptables.apply()
-        self.mox.VerifyAll()
+
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_add_nat_rule(self):
         nat_dump = ('# Generated by iptables_manager\n'
@@ -405,21 +414,24 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                         '# Completed by iptables_manager\n'
                         % IPTABLES_ARG)
 
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
+        expected_calls_and_values = [
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=nat_dump_mod + FILTER_DUMP,
+                       root_helper=self.root_helper),
+             None),
+            (mock.call(['iptables-save', '-c'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['iptables-restore', '-c'],
+                       process_input=nat_dump + FILTER_DUMP,
+                       root_helper=self.root_helper),
+             None),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=nat_dump_mod + FILTER_DUMP,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.iptables.execute(['iptables-save', '-c'],
-                              root_helper=self.root_helper).AndReturn('')
-
-        self.iptables.execute(['iptables-restore', '-c'],
-                              process_input=nat_dump + FILTER_DUMP,
-                              root_helper=self.root_helper).AndReturn(None)
-
-        self.mox.ReplayAll()
         self.iptables.ipv4['nat'].add_chain('nat')
         self.iptables.ipv4['nat'].add_rule('PREROUTING',
                                            '-d 192.168.0.3 -j '
@@ -439,57 +451,37 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables.ipv4['nat'].remove_chain('nat')
 
         self.iptables.apply()
-        self.mox.VerifyAll()
+
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_add_rule_to_a_nonexistent_chain(self):
         self.assertRaises(LookupError, self.iptables.ipv4['filter'].add_rule,
                           'nonexistent', '-j DROP')
 
     def test_remove_nonexistent_chain(self):
-        self.mox.StubOutWithMock(iptables_manager, "LOG")
-        iptables_manager.LOG.warn(('Attempted to remove chain %s which does '
-                                   'not exist'), 'nonexistent')
-        self.mox.ReplayAll()
-        self.iptables.ipv4['filter'].remove_chain('nonexistent')
-        self.mox.VerifyAll()
+        with mock.patch.object(iptables_manager, "LOG") as log:
+            self.iptables.ipv4['filter'].remove_chain('nonexistent')
+        log.warn.assert_called_once_with(
+            'Attempted to remove chain %s which does not exist',
+            'nonexistent')
 
     def test_remove_nonexistent_rule(self):
-        self.mox.StubOutWithMock(iptables_manager, "LOG")
-        iptables_manager.LOG.warn('Tried to remove rule that was not there: '
-                                  '%(chain)r %(rule)r %(wrap)r %(top)r',
-                                  {'wrap': True, 'top': False,
-                                   'rule': '-j DROP',
-                                   'chain': 'nonexistent'})
-        self.mox.ReplayAll()
-        self.iptables.ipv4['filter'].remove_rule('nonexistent', '-j DROP')
-        self.mox.VerifyAll()
+        with mock.patch.object(iptables_manager, "LOG") as log:
+            self.iptables.ipv4['filter'].remove_rule('nonexistent', '-j DROP')
+        log.warn.assert_called_once_with(
+            'Tried to remove rule that was not there: '
+            '%(chain)r %(rule)r %(wrap)r %(top)r',
+            {'wrap': True, 'top': False, 'rule': '-j DROP',
+             'chain': 'nonexistent'})
 
     def test_get_traffic_counters_chain_notexists(self):
-        iptables_dump = (
-            'Chain OUTPUT (policy ACCEPT 400 packets, 65901 bytes)\n'
-            '    pkts      bytes target     prot opt in     out     source'
-            '               destination         \n'
-            '     400   65901 chain1     all  --  *      *       0.0.0.0/0'
-            '            0.0.0.0/0           \n'
-            '     400   65901 chain2     all  --  *      *       0.0.0.0/0'
-            '            0.0.0.0/0           \n')
-
-        self.iptables.execute(['iptables', '-t', 'filter', '-L', 'OUTPUT',
-                               '-n', '-v', '-x'],
-                              root_helper=self.root_helper
-                              ).AndReturn(iptables_dump)
-        self.iptables.execute(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
-                               '-v', '-x'],
-                              root_helper=self.root_helper
-                              ).AndReturn('')
-        self.iptables.execute(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
-                               '-n', '-v', '-x'],
-                              root_helper=self.root_helper
-                              ).AndReturn(iptables_dump)
-
-        self.mox.ReplayAll()
-        acc = self.iptables.get_traffic_counters('chain1')
-        self.assertIsNone(acc)
+        with mock.patch.object(iptables_manager, "LOG") as log:
+            acc = self.iptables.get_traffic_counters('chain1')
+            self.assertIsNone(acc)
+        self.assertEqual(0, self.execute.call_count)
+        log.warn.assert_called_once_with(
+            'Attempted to get traffic counters of chain %s which '
+            'does not exist', 'chain1')
 
     def test_get_traffic_counters(self):
         iptables_dump = (
@@ -501,26 +493,27 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             '     400   65901 chain2     all  --  *      *       0.0.0.0/0'
             '            0.0.0.0/0           \n')
 
-        self.iptables.execute(['iptables', '-t', 'filter', '-L', 'OUTPUT',
-                               '-n', '-v', '-x'],
-                              root_helper=self.root_helper
-                              ).AndReturn(iptables_dump)
-        self.iptables.execute(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
-                               '-v', '-x'],
-                              root_helper=self.root_helper
-                              ).AndReturn('')
+        expected_calls_and_values = [
+            (mock.call(['iptables', '-t', 'filter', '-L', 'OUTPUT',
+                        '-n', '-v', '-x'],
+                       root_helper=self.root_helper),
+             iptables_dump),
+            (mock.call(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
+                        '-v', '-x'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
+                        '-n', '-v', '-x'],
+                       root_helper=self.root_helper),
+             iptables_dump),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
-        self.iptables.execute(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
-                               '-n', '-v', '-x'],
-                              root_helper=self.root_helper
-                              ).AndReturn(iptables_dump)
-
-        self.mox.ReplayAll()
         acc = self.iptables.get_traffic_counters('OUTPUT')
         self.assertEqual(acc['pkts'], 1600)
         self.assertEqual(acc['bytes'], 263604)
 
-        self.mox.VerifyAll()
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_get_traffic_counters_with_zero(self):
         iptables_dump = (
@@ -532,26 +525,27 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             '     400   65901 chain2     all  --  *      *       0.0.0.0/0'
             '            0.0.0.0/0           \n')
 
-        self.iptables.execute(['iptables', '-t', 'filter', '-L', 'OUTPUT',
-                               '-n', '-v', '-x', '-Z'],
-                              root_helper=self.root_helper
-                              ).AndReturn(iptables_dump)
-        self.iptables.execute(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
-                               '-v', '-x', '-Z'],
-                              root_helper=self.root_helper
-                              ).AndReturn('')
+        expected_calls_and_values = [
+            (mock.call(['iptables', '-t', 'filter', '-L', 'OUTPUT',
+                        '-n', '-v', '-x', '-Z'],
+                       root_helper=self.root_helper),
+             iptables_dump),
+            (mock.call(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
+                        '-v', '-x', '-Z'],
+                       root_helper=self.root_helper),
+             ''),
+            (mock.call(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
+                        '-n', '-v', '-x', '-Z'],
+                       root_helper=self.root_helper),
+             iptables_dump),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
-        self.iptables.execute(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
-                               '-n', '-v', '-x', '-Z'],
-                              root_helper=self.root_helper
-                              ).AndReturn(iptables_dump)
-
-        self.mox.ReplayAll()
         acc = self.iptables.get_traffic_counters('OUTPUT', zero=True)
         self.assertEqual(acc['pkts'], 1600)
         self.assertEqual(acc['bytes'], 263604)
 
-        self.mox.VerifyAll()
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
 
 class IptablesManagerStateLessTestCase(base.BaseTestCase):

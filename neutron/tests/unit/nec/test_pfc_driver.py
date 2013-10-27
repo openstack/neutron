@@ -18,10 +18,9 @@
 import random
 import string
 
-import mox
+import mock
 import netaddr
 
-from neutron import context
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import ofc_client as ofc
 from neutron.plugins.nec.db import api as ndb
@@ -50,10 +49,10 @@ class PFCDriverTestBase(base.BaseTestCase):
 
     def setUp(self):
         super(PFCDriverTestBase, self).setUp()
-        self.mox = mox.Mox()
         self.driver = drivers.get_driver(self.driver)(TestConfig)
-        self.mox.StubOutWithMock(ofc.OFCClient, 'do_request')
-        self.addCleanup(self.mox.UnsetStubs)
+        self.do_request = mock.patch.object(ofc.OFCClient,
+                                            'do_request').start()
+        self.addCleanup(mock.patch.stopall)
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test."""
@@ -85,14 +84,12 @@ class PFCDriverTestBase(base.BaseTestCase):
             body['description'] = ofc_description
         if post_id:
             body['id'] = ofc_t
-            ofc.OFCClient.do_request("POST", path, body=body)
+            self.do_request.return_value = None
         else:
-            ofc.OFCClient.do_request("POST", path, body=body).\
-                AndReturn({'id': ofc_t})
-        self.mox.ReplayAll()
+            self.do_request.return_value = {'id': ofc_t}
 
         ret = self.driver.create_tenant(description, t)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("POST", path, body=body)
         self.assertEqual(ret, tenant_path)
 
     def testa_create_tenant(self):
@@ -104,11 +101,9 @@ class PFCDriverTestBase(base.BaseTestCase):
         t, n, p = self.get_ofc_item_random_params()
 
         path = "/tenants/%s" % _ofc(t)
-        ofc.OFCClient.do_request("DELETE", path)
-        self.mox.ReplayAll()
 
         self.driver.delete_tenant(path)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("DELETE", path)
 
     def testd_create_network(self):
         t, n, p = self.get_ofc_item_random_params()
@@ -119,12 +114,10 @@ class PFCDriverTestBase(base.BaseTestCase):
         post_path = "%s/networks" % tenant_path
         body = {'description': ofc_description}
         network = {'id': _ofc(n)}
-        ofc.OFCClient.do_request("POST", post_path, body=body).\
-            AndReturn(network)
-        self.mox.ReplayAll()
+        self.do_request.return_value = network
 
         ret = self.driver.create_network(tenant_path, description, n)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("POST", post_path, body=body)
         net_path = "/tenants/%s/networks/%s" % (_ofc(t), _ofc(n))
         self.assertEqual(ret, net_path)
 
@@ -132,11 +125,9 @@ class PFCDriverTestBase(base.BaseTestCase):
         t, n, p = self.get_ofc_item_random_params()
 
         net_path = "/tenants/%s/networks/%s" % (_ofc(t), _ofc(n))
-        ofc.OFCClient.do_request("DELETE", net_path)
-        self.mox.ReplayAll()
 
         self.driver.delete_network(net_path)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("DELETE", net_path)
 
     def testg_create_port(self):
         t, n, p = self.get_ofc_item_random_params()
@@ -149,11 +140,10 @@ class PFCDriverTestBase(base.BaseTestCase):
                 'port': str(p.port_no),
                 'vid': str(p.vlan_id)}
         port = {'id': _ofc(p.id)}
-        ofc.OFCClient.do_request("POST", post_path, body=body).AndReturn(port)
-        self.mox.ReplayAll()
+        self.do_request.return_value = port
 
         ret = self.driver.create_port(net_path, p, p.id)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("POST", post_path, body=body)
         self.assertEqual(ret, port_path)
 
     def testh_delete_port(self):
@@ -161,11 +151,9 @@ class PFCDriverTestBase(base.BaseTestCase):
 
         port_path = "/tenants/%s/networks/%s/ports/%s" % (_ofc(t), _ofc(n),
                                                           _ofc(p.id))
-        ofc.OFCClient.do_request("DELETE", port_path)
-        self.mox.ReplayAll()
 
         self.driver.delete_port(port_path)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("DELETE", port_path)
 
     def test_filter_supported(self):
         self.assertFalse(self.driver.filter_supported())
@@ -180,23 +168,16 @@ class PFCV3DriverTest(PFCDriverTestBase):
 
     def testa_create_tenant(self):
         t, n, p = self.get_ofc_item_random_params()
-        self.mox.ReplayAll()
-
         ret = self.driver.create_tenant('dummy_desc', t)
-        self.mox.VerifyAll()
-
+        self.assertEqual(0, self.do_request.call_count)
         ofc_t_path = "/tenants/" + self._generate_ofc_tenant_id(t)
         self.assertEqual(ofc_t_path, ret)
 
     def testc_delete_tenant(self):
         t, n, p = self.get_ofc_item_random_params()
-
         path = "/tenants/%s" % _ofc(t)
-        # There is no API call.
-        self.mox.ReplayAll()
-
         self.driver.delete_tenant(path)
-        self.mox.VerifyAll()
+        self.assertEqual(0, self.do_request.call_count)
 
 
 class PFCV4DriverTest(PFCDriverTestBase):
@@ -214,12 +195,10 @@ class PFCV5DriverTest(PFCDriverTestBase):
         tenant_path = "/tenants/%s" % _ofc(t)
         post_path = "%s/routers" % tenant_path
         router = {'id': _ofc(r)}
-        ofc.OFCClient.do_request("POST", post_path,
-                                 body=None).AndReturn(router)
-        self.mox.ReplayAll()
+        self.do_request.return_value = router
 
         ret = self.driver.create_router(tenant_path, description, r)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("POST", post_path, body=None)
         router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
         self.assertEqual(ret, router_path)
 
@@ -228,11 +207,9 @@ class PFCV5DriverTest(PFCDriverTestBase):
         r = uuidutils.generate_uuid()
 
         router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
-        ofc.OFCClient.do_request("DELETE", router_path)
-        self.mox.ReplayAll()
 
         self.driver.delete_router(router_path)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("DELETE", router_path)
 
     def test_add_router_interface(self):
         t = uuidutils.generate_uuid()
@@ -249,13 +226,12 @@ class PFCV5DriverTest(PFCDriverTestBase):
                 'ip_address': ip_address,
                 'mac_address': mac_address}
         inf = {'id': _ofc(p)}
-        ofc.OFCClient.do_request("POST", infs_path,
-                                 body=body).AndReturn(inf)
-        self.mox.ReplayAll()
+        self.do_request.return_value = inf
 
         ret = self.driver.add_router_interface(router_path, net_path,
                                                ip_address, mac_address)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("POST", infs_path, body=body)
+
         inf_path = "%s/interfaces/%s" % (router_path, _ofc(p))
         self.assertEqual(ret, inf_path)
 
@@ -269,22 +245,16 @@ class PFCV5DriverTest(PFCDriverTestBase):
         ip_address = '10.1.1.1/24'
         mac_address = '11:22:33:44:55:66'
 
-        body = {'ip_address': ip_address,
-                'mac_address': mac_address}
-        ofc.OFCClient.do_request("PUT", inf_path, body=body)
-
-        body = {'ip_address': ip_address}
-        ofc.OFCClient.do_request("PUT", inf_path, body=body)
-
-        body = {'mac_address': mac_address}
-        ofc.OFCClient.do_request("PUT", inf_path, body=body)
-
-        self.mox.ReplayAll()
-
         self.driver.update_router_interface(inf_path, ip_address, mac_address)
         self.driver.update_router_interface(inf_path, ip_address=ip_address)
         self.driver.update_router_interface(inf_path, mac_address=mac_address)
-        self.mox.VerifyAll()
+
+        self.do_request.assert_has_calls([
+            mock.call("PUT", inf_path, body={'ip_address': ip_address,
+                                             'mac_address': mac_address}),
+            mock.call("PUT", inf_path, body={'ip_address': ip_address}),
+            mock.call("PUT", inf_path, body={'mac_address': mac_address}),
+        ])
 
     def test_delete_router_interface(self):
         t = uuidutils.generate_uuid()
@@ -293,11 +263,9 @@ class PFCV5DriverTest(PFCDriverTestBase):
 
         router_path = "/tenants/%s/routers/%s" % (_ofc(t), _ofc(r))
         inf_path = "%s/interfaces/%s" % (router_path, _ofc(p))
-        ofc.OFCClient.do_request("DELETE", inf_path)
-        self.mox.ReplayAll()
 
         self.driver.delete_router_interface(inf_path)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("DELETE", inf_path)
 
     def _get_route_id(self, dest, nexthop):
         dest = netaddr.IPNetwork(dest)
@@ -313,13 +281,11 @@ class PFCV5DriverTest(PFCDriverTestBase):
         nexthop = '192.168.100.10'
         body = {'destination': dest, 'nexthop': nexthop}
         route_id = self._get_route_id(dest, nexthop)
-        ofc.OFCClient.do_request("POST", routes_path,
-                                 body=body).AndReturn({'id': route_id})
-        self.mox.ReplayAll()
+        self.do_request.return_value = {'id': route_id}
 
         ret = self.driver.add_router_route(router_path, '10.1.1.0/24',
                                            '192.168.100.10')
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("POST", routes_path, body=body)
         route_path = routes_path + '/' + route_id
         self.assertEqual(ret, route_path)
 
@@ -332,11 +298,9 @@ class PFCV5DriverTest(PFCDriverTestBase):
 
         route_id = self._get_route_id('10.1.1.0/24', '192.168.100.10')
         route_path = routes_path + '/' + route_id
-        ofc.OFCClient.do_request("DELETE", route_path)
-        self.mox.ReplayAll()
 
         self.driver.delete_router_route(route_path)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("DELETE", route_path)
 
     def test_list_router_routes(self):
         t = uuidutils.generate_uuid()
@@ -350,11 +314,10 @@ class PFCV5DriverTest(PFCDriverTestBase):
         data = {'routes': [{'id': self._get_route_id(route[0], route[1]),
                             'destination': route[0], 'nexthop': route[1]}
                            for route in routes]}
-        ofc.OFCClient.do_request("GET", routes_path).AndReturn(data)
-        self.mox.ReplayAll()
+        self.do_request.return_value = data
 
         ret = self.driver.list_router_routes(router_path)
-        self.mox.VerifyAll()
+        self.do_request.assert_called_once_with("GET", routes_path)
 
         expected = [{'id': (routes_path + "/" +
                             self._get_route_id(route[0], route[1])),
@@ -412,12 +375,12 @@ class PFCIdConvertTest(base.BaseTestCase):
 
     def setUp(self):
         super(PFCIdConvertTest, self).setUp()
-        self.mox = mox.Mox()
         self.driver = drivers.get_driver(self.driver)(TestConfig)
-        self.ctx = self.mox.CreateMock(context.Context)
+        self.ctx = mock.Mock()
         self.ctx.session = "session"
-        self.mox.StubOutWithMock(ndb, 'get_ofc_id_lookup_both')
-        self.addCleanup(self.mox.UnsetStubs)
+        self.get_ofc_id_lookup_both = mock.patch.object(
+            ndb, 'get_ofc_id_lookup_both').start()
+        self.addCleanup(mock.patch.stopall)
 
     def generate_random_ids(self, count=1):
         if count == 1:
@@ -437,26 +400,24 @@ class PFCIdConvertTest(base.BaseTestCase):
 
     def test_convert_network_id(self):
         t_id, ofc_t_id, ofc_n_id = self.generate_random_ids(3)
-        ndb.get_ofc_id_lookup_both(
-            self.ctx.session, 'ofc_tenant', t_id).AndReturn(ofc_t_id)
-        self.mox.ReplayAll()
+        self.get_ofc_id_lookup_both.return_value = ofc_t_id
 
         ret = self.driver.convert_ofc_network_id(self.ctx, ofc_n_id, t_id)
         self.assertEqual(ret, ('/tenants/%(tenant)s/networks/%(network)s' %
                                {'tenant': ofc_t_id, 'network': ofc_n_id}))
-        self.mox.VerifyAll()
+        self.get_ofc_id_lookup_both.assert_called_once_with(
+            self.ctx.session, 'ofc_tenant', t_id)
 
     def test_convert_network_id_with_new_tenant_id(self):
         t_id, ofc_t_id, ofc_n_id = self.generate_random_ids(3)
         ofc_t_path = '/tenants/%s' % ofc_t_id
-        ndb.get_ofc_id_lookup_both(
-            self.ctx.session, 'ofc_tenant', t_id).AndReturn(ofc_t_path)
-        self.mox.ReplayAll()
+        self.get_ofc_id_lookup_both.return_value = ofc_t_path
 
         ret = self.driver.convert_ofc_network_id(self.ctx, ofc_n_id, t_id)
         self.assertEqual(ret, ('/tenants/%(tenant)s/networks/%(network)s' %
                                {'tenant': ofc_t_id, 'network': ofc_n_id}))
-        self.mox.VerifyAll()
+        self.get_ofc_id_lookup_both.assert_called_once_with(
+            self.ctx.session, 'ofc_tenant', t_id)
 
     def test_convert_network_id_noconv(self):
         t_id = 'dummy'
@@ -470,34 +431,32 @@ class PFCIdConvertTest(base.BaseTestCase):
         t_id, n_id = self.generate_random_ids(2)
         ofc_t_id, ofc_n_id, ofc_p_id = self.generate_random_ids(3)
 
-        ndb.get_ofc_id_lookup_both(
-            self.ctx.session, 'ofc_network', n_id).AndReturn(ofc_n_id)
-        ndb.get_ofc_id_lookup_both(
-            self.ctx.session, 'ofc_tenant', t_id).AndReturn(ofc_t_id)
-        self.mox.ReplayAll()
+        self.get_ofc_id_lookup_both.side_effect = [ofc_n_id, ofc_t_id]
 
         ret = self.driver.convert_ofc_port_id(self.ctx, ofc_p_id, t_id, n_id)
         exp = ('/tenants/%(tenant)s/networks/%(network)s/ports/%(port)s' %
                {'tenant': ofc_t_id, 'network': ofc_n_id, 'port': ofc_p_id})
         self.assertEqual(ret, exp)
-        self.mox.VerifyAll()
+        self.get_ofc_id_lookup_both.assert_has_calls([
+            mock.call(self.ctx.session, 'ofc_network', n_id),
+            mock.call(self.ctx.session, 'ofc_tenant', t_id),
+        ])
 
     def test_convert_port_id_with_new_tenant_id(self):
         t_id, n_id = self.generate_random_ids(2)
         ofc_t_id, ofc_n_id, ofc_p_id = self.generate_random_ids(3)
 
         ofc_t_path = '/tenants/%s' % ofc_t_id
-        ndb.get_ofc_id_lookup_both(
-            self.ctx.session, 'ofc_network', n_id).AndReturn(ofc_n_id)
-        ndb.get_ofc_id_lookup_both(
-            self.ctx.session, 'ofc_tenant', t_id).AndReturn(ofc_t_path)
-        self.mox.ReplayAll()
+        self.get_ofc_id_lookup_both.side_effect = [ofc_n_id, ofc_t_path]
 
         ret = self.driver.convert_ofc_port_id(self.ctx, ofc_p_id, t_id, n_id)
         exp = ('/tenants/%(tenant)s/networks/%(network)s/ports/%(port)s' %
                {'tenant': ofc_t_id, 'network': ofc_n_id, 'port': ofc_p_id})
         self.assertEqual(ret, exp)
-        self.mox.VerifyAll()
+        self.get_ofc_id_lookup_both.assert_has_calls([
+            mock.call(self.ctx.session, 'ofc_network', n_id),
+            mock.call(self.ctx.session, 'ofc_tenant', t_id),
+        ])
 
     def test_convert_port_id_with_new_network_id(self):
         t_id, n_id = self.generate_random_ids(2)
@@ -505,15 +464,14 @@ class PFCIdConvertTest(base.BaseTestCase):
 
         ofc_n_path = ('/tenants/%(tenant)s/networks/%(network)s' %
                       {'tenant': ofc_t_id, 'network': ofc_n_id})
-        ndb.get_ofc_id_lookup_both(
-            self.ctx.session, 'ofc_network', n_id).AndReturn(ofc_n_path)
-        self.mox.ReplayAll()
+        self.get_ofc_id_lookup_both.return_value = ofc_n_path
 
         ret = self.driver.convert_ofc_port_id(self.ctx, ofc_p_id, t_id, n_id)
         exp = ('/tenants/%(tenant)s/networks/%(network)s/ports/%(port)s' %
                {'tenant': ofc_t_id, 'network': ofc_n_id, 'port': ofc_p_id})
         self.assertEqual(ret, exp)
-        self.mox.VerifyAll()
+        self.get_ofc_id_lookup_both.assert_called_once_with(
+            self.ctx.session, 'ofc_network', n_id)
 
     def test_convert_port_id_noconv(self):
         t_id = n_id = 'dummy'
