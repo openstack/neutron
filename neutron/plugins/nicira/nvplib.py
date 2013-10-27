@@ -317,11 +317,12 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
         json.dumps(gwservice_obj), cluster=cluster)
 
 
-def _prepare_lrouter_body(name, tenant_id, router_type,
+def _prepare_lrouter_body(name, neutron_router_id, tenant_id, router_type,
                           distributed=None, **kwargs):
     body = {
         "display_name": utils.check_and_truncate(name),
         "tags": [{"tag": tenant_id, "scope": "os_tid"},
+                 {"tag": neutron_router_id, "scope": "q_router_id"},
                  {"tag": NEUTRON_VERSION, "scope": "quantum"}],
         "routing_config": {
             "type": router_type
@@ -336,9 +337,8 @@ def _prepare_lrouter_body(name, tenant_id, router_type,
     return body
 
 
-def _create_implicit_routing_lrouter(cluster, tenant_id,
-                                     display_name, nexthop,
-                                     distributed=None):
+def _create_implicit_routing_lrouter(cluster, neutron_router_id, tenant_id,
+                                     display_name, nexthop, distributed=None):
     implicit_routing_config = {
         "default_route_next_hop": {
             "gateway_ip_address": nexthop,
@@ -346,7 +346,7 @@ def _create_implicit_routing_lrouter(cluster, tenant_id,
         },
     }
     lrouter_obj = _prepare_lrouter_body(
-        display_name, tenant_id,
+        display_name, neutron_router_id, tenant_id,
         "SingleDefaultRouteImplicitRoutingConfig",
         distributed=distributed,
         **implicit_routing_config)
@@ -354,7 +354,7 @@ def _create_implicit_routing_lrouter(cluster, tenant_id,
                       json.dumps(lrouter_obj), cluster=cluster)
 
 
-def create_implicit_routing_lrouter(cluster, tenant_id,
+def create_implicit_routing_lrouter(cluster, neutron_router_id, tenant_id,
                                     display_name, nexthop):
     """Create a NVP logical router on the specified cluster.
 
@@ -367,11 +367,12 @@ def create_implicit_routing_lrouter(cluster, tenant_id,
         with the NVP controller
     """
     return _create_implicit_routing_lrouter(
-        cluster, tenant_id, display_name, nexthop)
+        cluster, neutron_router_id, tenant_id, display_name, nexthop)
 
 
 def create_implicit_routing_lrouter_with_distribution(
-    cluster, tenant_id, display_name, nexthop, distributed=None):
+    cluster, neutron_router_id, tenant_id,
+    display_name, nexthop, distributed=None):
     """Create a NVP logical router on the specified cluster.
 
     This function also allows for creating distributed lrouters
@@ -385,14 +386,16 @@ def create_implicit_routing_lrouter_with_distribution(
     with the NVP controller
     """
     return _create_implicit_routing_lrouter(
-        cluster, tenant_id, display_name, nexthop, distributed)
+        cluster, neutron_router_id, tenant_id,
+        display_name, nexthop, distributed)
 
 
-def create_explicit_routing_lrouter(cluster, tenant_id,
+def create_explicit_routing_lrouter(cluster, neutron_router_id, tenant_id,
                                     display_name, nexthop,
                                     distributed=None):
     lrouter_obj = _prepare_lrouter_body(
-        display_name, tenant_id, "RoutingTableRoutingConfig",
+        display_name, neutron_router_id,
+        tenant_id, "RoutingTableRoutingConfig",
         distributed=distributed)
     router = do_request(HTTP_POST, _build_uri_path(LROUTER_RESOURCE),
                         json.dumps(lrouter_obj), cluster=cluster)
@@ -437,7 +440,17 @@ def get_l2_gw_service(cluster, gateway_id):
         cluster=cluster)
 
 
+def query_lrouters(cluster, fields=None, filters=None):
+    return get_all_query_pages(
+        _build_uri_path(LROUTER_RESOURCE,
+                        fields=fields,
+                        relations='LogicalRouterStatus',
+                        filters=filters),
+        cluster)
+
+
 def get_lrouters(cluster, tenant_id, fields=None, filters=None):
+    # FIXME(salv-orlando): Fields parameter is ignored in this routine
     actual_filters = {}
     if filters:
         actual_filters.update(filters)
@@ -445,12 +458,7 @@ def get_lrouters(cluster, tenant_id, fields=None, filters=None):
         actual_filters['tag'] = tenant_id
         actual_filters['tag_scope'] = 'os_tid'
     lrouter_fields = "uuid,display_name,fabric_status,tags"
-    return get_all_query_pages(
-        _build_uri_path(LROUTER_RESOURCE,
-                        fields=lrouter_fields,
-                        relations='LogicalRouterStatus',
-                        filters=actual_filters),
-        cluster)
+    return query_lrouters(cluster, lrouter_fields, actual_filters)
 
 
 def get_l2_gw_services(cluster, tenant_id=None,

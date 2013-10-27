@@ -385,7 +385,9 @@ class NvpSyncTestCase(base.BaseTestCase):
         lp_uuid = self.fc._fake_lswitch_lport_dict.keys()[0]
         neutron_port_id = self._get_tag_dict(
             self.fc._fake_lswitch_lport_dict[lp_uuid]['tags'])['q_port_id']
-        neutron_rtr_id = lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
+        lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
+        neutron_rtr_id = self._get_tag_dict(
+            self.fc._fake_lrouter_dict[lr_uuid]['tags'])['q_router_id']
         if action_callback:
             action_callback(ls_uuid, lp_uuid, lr_uuid)
         # Make chunk big enough to read everything
@@ -605,7 +607,9 @@ class NvpSyncTestCase(base.BaseTestCase):
         ctx = context.get_admin_context()
         with self._populate_data(ctx):
             # Put a router down to verify synchronization
-            q_rtr_id = lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
+            lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
+            q_rtr_id = self._get_tag_dict(
+                self.fc._fake_lrouter_dict[lr_uuid]['tags'])['q_router_id']
             self.fc._fake_lrouter_dict[lr_uuid]['status'] = 'false'
             q_rtr_data = self._plugin._get_router(ctx, q_rtr_id)
             self._plugin._synchronizer.synchronize_router(ctx, q_rtr_data)
@@ -623,7 +627,9 @@ class NvpSyncTestCase(base.BaseTestCase):
         ctx = context.get_admin_context()
         with self._populate_data(ctx):
             # Put a router down to verify punctual synchronization
-            q_rtr_id = lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
+            lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
+            q_rtr_id = self._get_tag_dict(
+                self.fc._fake_lrouter_dict[lr_uuid]['tags'])['q_router_id']
             self.fc._fake_lrouter_dict[lr_uuid]['status'] = 'false'
             q_rtr_data = self._plugin.get_router(ctx, q_rtr_id)
             self.assertEqual(constants.NET_STATUS_DOWN, q_rtr_data['status'])

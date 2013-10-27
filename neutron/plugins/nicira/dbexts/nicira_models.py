@@ -86,6 +86,15 @@ class NeutronNsxPortMapping(model_base.BASEV2):
         self.nsx_port_id = nsx_port_id
 
 
+class NeutronNsxRouterMapping(model_base.BASEV2):
+    """Maps neutron router identifiers to NSX identifiers."""
+    __tablename__ = 'neutron_nsx_router_mappings'
+    neutron_id = Column(String(36),
+                        ForeignKey('routers.id', ondelete='CASCADE'),
+                        primary_key=True)
+    nsx_id = Column(String(36))
+
+
 class MultiProviderNetworks(model_base.BASEV2):
     """Networks that were provision through multiprovider extension."""
 

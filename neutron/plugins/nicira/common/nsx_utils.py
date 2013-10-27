@@ -111,17 +111,16 @@ def get_nsx_switch_and_port_id(session, cluster, neutron_port_id):
         nvp_port = nvp_ports[0]
         nvp_switch_id = (nvp_port['_relations']
                          ['LogicalSwitchConfig']['uuid'])
-        with session.begin(subtransactions=True):
-            if nvp_port_id:
-                # Mapping already exists. Delete before recreating
-                nicira_db.delete_neutron_nsx_port_mapping(
-                    session, neutron_port_id)
-            else:
-                nvp_port_id = nvp_port['uuid']
-            # (re)Create DB mapping
-            nicira_db.add_neutron_nsx_port_mapping(
-                session, neutron_port_id,
-                nvp_switch_id, nvp_port_id)
+        if nvp_port_id:
+            # Mapping already exists. Delete before recreating
+            nicira_db.delete_neutron_nsx_port_mapping(
+                session, neutron_port_id)
+        else:
+            nvp_port_id = nvp_port['uuid']
+        # (re)Create DB mapping
+        nicira_db.add_neutron_nsx_port_mapping(
+            session, neutron_port_id,
+            nvp_switch_id, nvp_port_id)
     return nvp_switch_id, nvp_port_id
 
 
@@ -142,3 +141,37 @@ def create_nsx_cluster(cluster_opts, concurrent_connections, nsx_gen_timeout):
         concurrent_connections=concurrent_connections,
         nvp_gen_timeout=nsx_gen_timeout)
     return cluster
+
+
+def get_nsx_router_id(session, cluster, neutron_router_id):
+    """Return the NSX router uuid for a given neutron router.
+
+    First, look up the Neutron database. If not found, execute
+    a query on NSX platform as the mapping might be missing.
+    """
+    nsx_router_id = nicira_db.get_nsx_router_id(
+        session, neutron_router_id)
+    if not nsx_router_id:
+        # Find logical router from backend.
+        # This is a rather expensive query, but it won't be executed
+        # more than once for each router in Neutron's lifetime
+        nsx_routers = nvplib.query_lrouters(
+            cluster, '*',
+            filters={'tag': neutron_router_id,
+                     'tag_scope': 'q_router_id'})
+        # Only one result expected
+        # NOTE(salv-orlando): Not handling the case where more than one
+        # port is found with the same neutron port tag
+        if not nsx_routers:
+            LOG.warn(_("Unable to find NSX router for Neutron router %s"),
+                     neutron_router_id)
+            return
+        nsx_router = nsx_routers[0]
+        nsx_router_id = nsx_router['uuid']
+        with session.begin(subtransactions=True):
+            # Create DB mapping
+            nicira_db.add_neutron_nsx_router_mapping(
+                session,
+                neutron_router_id,
+                nsx_router_id)
+    return nsx_router_id

@@ -82,6 +82,14 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
     return mapping
 
 
+def add_neutron_nsx_router_mapping(session, neutron_id, nsx_router_id):
+    with session.begin(subtransactions=True):
+        mapping = nicira_models.NeutronNsxRouterMapping(
+            neutron_id=neutron_id, nsx_id=nsx_router_id)
+        session.add(mapping)
+        return mapping
+
+
 def get_nsx_switch_ids(session, neutron_id):
     # This function returns a list of NSX switch identifiers because of
     # the possibility of chained logical switches
@@ -102,9 +110,28 @@ def get_nsx_switch_and_port_id(session, neutron_id):
         return None, None
 
 
+def get_nsx_router_id(session, neutron_id):
+    try:
+        mapping = (session.query(nicira_models.NeutronNsxRouterMapping).
+                   filter_by(neutron_id=neutron_id).one())
+        return mapping['nsx_id']
+    except exc.NoResultFound:
+        LOG.debug(_("NSX identifiers for neutron router %s not yet "
+                    "stored in Neutron DB"), neutron_id)
+
+
+def _delete_by_neutron_id(session, model, neutron_id):
+    return session.query(model).filter_by(neutron_id=neutron_id).delete()
+
+
 def delete_neutron_nsx_port_mapping(session, neutron_id):
-    return (session.query(nicira_models.NeutronNsxPortMapping).
-            filter_by(neutron_id=neutron_id).delete())
+    return _delete_by_neutron_id(
+        session, nicira_models.NeutronNsxPortMapping, neutron_id)
+
+
+def delete_neutron_nsx_router_mapping(session, neutron_id):
+    return _delete_by_neutron_id(
+        session, nicira_models.NeutronNsxRouterMapping, neutron_id)
 
 
 def unset_default_network_gateways(session):

@@ -317,8 +317,10 @@ class NvpSynchronizer():
             # Try to get router from nvp
             try:
                 # This query will return the logical router status too
+                nsx_router_id = nsx_utils.get_nsx_router_id(
+                    context.session, self._cluster, neutron_router_data['id'])
                 lrouter = nvplib.get_lrouter(
-                    self._cluster, neutron_router_data['id'])
+                    self._cluster, nsx_router_id)
             except exceptions.NotFound:
                 # NOTE(salv-orlando): We should be catching
                 # NvpApiClient.ResourceNotFound here

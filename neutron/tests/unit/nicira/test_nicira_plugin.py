@@ -570,8 +570,11 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
         """Verify data on fake NVP API client in order to validate
         plugin did set them properly
         """
+        # First find the NSX router ID
+        ctx = context.get_admin_context()
+        nsx_router_id = nicira_db.get_nsx_router_id(ctx.session, router_id)
         ports = [port for port in self.fc._fake_lrouter_lport_dict.values()
-                 if (port['lr_uuid'] == router_id and
+                 if (port['lr_uuid'] == nsx_router_id and
                      port['att_type'] == "L3GatewayAttachment")]
         self.assertEqual(len(ports), 1)
         self.assertEqual(ports[0]['attachment_gwsvc_uuid'], l3_gw_uuid)

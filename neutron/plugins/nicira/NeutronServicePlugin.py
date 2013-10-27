@@ -1,4 +1,4 @@
-    # vim: tabstop=4 shiftwidth=4 softtabstop=4
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 # Copyright 2013 VMware, Inc.
 # All Rights Reserved
@@ -355,17 +355,17 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
         self._update_nat_rules(context, router)
 
-    def _add_subnet_snat_rule(self, router, subnet):
+    def _add_subnet_snat_rule(self, context, router, subnet):
         # NOP for service router
         if not self._is_advanced_service_router(router=router):
             super(NvpAdvancedPlugin, self)._add_subnet_snat_rule(
-                router, subnet)
+                context, router, subnet)
 
-    def _delete_subnet_snat_rule(self, router, subnet):
+    def _delete_subnet_snat_rule(self, context, router, subnet):
         # NOP for service router
         if not self._is_advanced_service_router(router=router):
             super(NvpAdvancedPlugin, self)._delete_subnet_snat_rule(
-                router, subnet)
+                context, router, subnet)
 
     def _remove_floatingip_address(self, context, fip_db):
         # NOP for service router
@@ -374,15 +374,17 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             super(NvpAdvancedPlugin, self)._remove_floatingip_address(
                 context, fip_db)
 
-    def _create_advanced_service_router(self, context, name, lrouter, lswitch):
+    def _create_advanced_service_router(self, context, neutron_router_id,
+                                        name, lrouter, lswitch):
 
         # store binding
         binding = vcns_db.add_vcns_router_binding(
-            context.session, lrouter['uuid'], None, lswitch['uuid'],
+            context.session, neutron_router_id, None, lswitch['uuid'],
             service_constants.PENDING_CREATE)
 
         # deploy edge
         jobdata = {
+            'neutron_router_id': neutron_router_id,
             'lrouter': lrouter,
             'lswitch': lswitch,
             'context': context
@@ -477,7 +479,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
         try:
             self._create_advanced_service_router(
-                context, name, lrouter, lswitch)
+                context, router['id'], name, lrouter, lswitch)
         except Exception:
             msg = (_("Unable to create advance service router for %s") % name)
             LOG.exception(msg)
@@ -488,13 +490,15 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         lrouter['status'] = service_constants.PENDING_CREATE
         return lrouter
 
-    def _delete_lrouter(self, context, id):
-        binding = vcns_db.get_vcns_router_binding(context.session, id)
+    def _delete_lrouter(self, context, router_id, nsx_router_id):
+        binding = vcns_db.get_vcns_router_binding(context.session, router_id)
         if not binding:
-            super(NvpAdvancedPlugin, self)._delete_lrouter(context, id)
+            super(NvpAdvancedPlugin, self)._delete_lrouter(
+                context, router_id, nsx_router_id)
         else:
             vcns_db.update_vcns_router_binding(
-                context.session, id, status=service_constants.PENDING_DELETE)
+                context.session, router_id,
+                status=service_constants.PENDING_DELETE)
 
             lswitch_id = binding['lswitch_id']
             edge_id = binding['edge_id']
@@ -509,13 +513,13 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             jobdata = {
                 'context': context
             }
-            self.vcns_driver.delete_edge(id, edge_id, jobdata=jobdata)
+            self.vcns_driver.delete_edge(router_id, edge_id, jobdata=jobdata)
 
-            # delete LR
-            nvplib.delete_lrouter(self.cluster, id)
+            # delete NSX logical router
+            nvplib.delete_lrouter(self.cluster, nsx_router_id)
 
         if id in self._router_type:
-            del self._router_type[id]
+            del self._router_type[router_id]
 
     def _update_lrouter(self, context, router_id, name, nexthop, routes=None):
         if not self._is_advanced_service_router(context, router_id):
@@ -572,7 +576,6 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
     def _get_vse_status(self, context, id):
         binding = vcns_db.get_vcns_router_binding(context.session, id)
-
         edge_status_level = self.vcns_driver.get_edge_status(
             binding['edge_id'])
         edge_db_status_level = ROUTER_STATUS_LEVEL[binding.status]
@@ -1519,20 +1522,20 @@ class VcnsCallbacks(object):
     def edge_deploy_started(self, task):
         """callback when deployment task started."""
         jobdata = task.userdata['jobdata']
-        lrouter = jobdata['lrouter']
         context = jobdata['context']
         edge_id = task.userdata.get('edge_id')
+        neutron_router_id = jobdata['neutron_router_id']
         name = task.userdata['router_name']
         if edge_id:
             LOG.debug(_("Start deploying %(edge_id)s for router %(name)s"), {
                 'edge_id': edge_id,
                 'name': name})
             vcns_db.update_vcns_router_binding(
-                context.session, lrouter['uuid'], edge_id=edge_id)
+                context.session, neutron_router_id, edge_id=edge_id)
         else:
                 LOG.debug(_("Failed to deploy Edge for router %s"), name)
                 vcns_db.update_vcns_router_binding(
-                    context.session, lrouter['uuid'],
+                    context.session, neutron_router_id,
                     status=service_constants.ERROR)
 
     def edge_deploy_result(self, task):
@@ -1541,9 +1544,11 @@ class VcnsCallbacks(object):
         lrouter = jobdata['lrouter']
         context = jobdata['context']
         name = task.userdata['router_name']
+        neutron_router_id = jobdata['neutron_router_id']
         router_db = None
         try:
-            router_db = self.plugin._get_router(context, lrouter['uuid'])
+            router_db = self.plugin._get_router(
+                context, neutron_router_id)
         except l3.RouterNotFound:
             # Router might have been deleted before deploy finished
             LOG.exception(_("Router %s not found"), lrouter['uuid'])
@@ -1558,18 +1563,18 @@ class VcnsCallbacks(object):
                 router_db['status'] = service_constants.ACTIVE
 
             binding = vcns_db.get_vcns_router_binding(
-                context.session, lrouter['uuid'])
+                context.session, neutron_router_id)
             # only update status to active if its status is pending create
             if binding['status'] == service_constants.PENDING_CREATE:
                 vcns_db.update_vcns_router_binding(
-                    context.session, lrouter['uuid'],
+                    context.session, neutron_router_id,
                     status=service_constants.ACTIVE)
         else:
             LOG.debug(_("Failed to deploy Edge for router %s"), name)
             if router_db:
                 router_db['status'] = service_constants.ERROR
             vcns_db.update_vcns_router_binding(
-                context.session, lrouter['uuid'],
+                context.session, neutron_router_id,
                 status=service_constants.ERROR)
 
     def edge_delete_result(self, task):
