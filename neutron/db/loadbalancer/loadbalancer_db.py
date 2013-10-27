@@ -341,6 +341,9 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                     raise loadbalancer.ProtocolMismatch(
                         vip_proto=v['protocol'],
                         pool_proto=pool['protocol'])
+                if pool['status'] == constants.PENDING_DELETE:
+                    raise loadbalancer.StateInvalid(state=pool['status'],
+                                                    id=pool['id'])
             else:
                 pool = None
 
@@ -418,6 +421,10 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                             raise loadbalancer.ProtocolMismatch(
                                 vip_proto=vip_db['protocol'],
                                 pool_proto=new_pool['protocol'])
+                        if new_pool['status'] == constants.PENDING_DELETE:
+                            raise loadbalancer.StateInvalid(
+                                state=new_pool['status'],
+                                id=new_pool['id'])
 
                         if old_pool_id:
                             old_pool = self._get_resource(
@@ -553,15 +560,17 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
         return self._make_pool_dict(pool_db)
 
-    def delete_pool(self, context, id):
+    def _ensure_pool_delete_conditions(self, context, pool_id):
+        if context.session.query(Vip).filter_by(pool_id=pool_id).first():
+            raise loadbalancer.PoolInUse(pool_id=pool_id)
+
+    def delete_pool(self, context, pool_id):
         # Check if the pool is in use
-        vip = context.session.query(Vip).filter_by(pool_id=id).first()
-        if vip:
-            raise loadbalancer.PoolInUse(pool_id=id)
+        self._ensure_pool_delete_conditions(context, pool_id)
 
         with context.session.begin(subtransactions=True):
-            self._delete_pool_stats(context, id)
-            pool_db = self._get_resource(context, Pool, id)
+            self._delete_pool_stats(context, pool_id)
+            pool_db = self._get_resource(context, Pool, pool_id)
             context.session.delete(pool_db)
 
     def get_pool(self, context, id, fields=None):
