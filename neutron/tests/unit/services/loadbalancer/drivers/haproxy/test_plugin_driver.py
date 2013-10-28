@@ -17,6 +17,7 @@
 # @author: Mark McClain, DreamHost
 
 import mock
+from webob import exc
 
 from neutron.common import exceptions
 from neutron import context
@@ -473,7 +474,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
             req = self.new_delete_request('pools',
                                           pool['pool']['id'])
             res = req.get_response(self.ext_api)
-            self.assertEqual(res.status_int, 204)
+            self.assertEqual(res.status_int, exc.HTTPNoContent.code)
             self.mock_api.destroy_pool.assert_called_once_with(
                 mock.ANY, pool['pool']['id'], 'host')
 
@@ -521,7 +522,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                 req = self.new_delete_request('members',
                                               member['member']['id'])
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 204)
+                self.assertEqual(res.status_int, exc.HTTPNoContent.code)
                 self.mock_api.modify_pool.assert_called_once_with(
                     mock.ANY, pool_id, 'host')
 
@@ -566,7 +567,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                     id=pool['pool']['id'],
                     subresource='health_monitors')
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, exc.HTTPCreated.code)
                 self.mock_api.modify_pool.assert_called_once_with(
                     mock.ANY,
                     pool['pool']['id'],

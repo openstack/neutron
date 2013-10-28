@@ -193,7 +193,7 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
             req = self.new_delete_request('pools',
                                           pool['pool']['id'])
             res = req.get_response(self.ext_api)
-            self.assertEqual(res.status_int, 204)
+            self.assertEqual(res.status_int, exc.HTTPNoContent.code)
             pools = self._list_pools_hosted_by_lbaas_agent(
                 lbaas_agent['agent']['id'])
             self.assertEqual(0, len(pools['pools']))
