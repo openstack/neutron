@@ -157,7 +157,7 @@ class N1kvTrunkSegmentBinding(model_base.BASEV2):
 
     trunk_segment_id = sa.Column(sa.String(36),
                                  sa.ForeignKey('networks.id',
-                                 ondelete="CASCADE"),
+                                               ondelete="CASCADE"),
                                  primary_key=True)
     segment_id = sa.Column(sa.String(36), nullable=False, primary_key=True)
     dot1qtag = sa.Column(sa.String(36), nullable=False, primary_key=True)
@@ -170,7 +170,7 @@ class N1kvMultiSegmentNetworkBinding(model_base.BASEV2):
 
     multi_segment_id = sa.Column(sa.String(36),
                                  sa.ForeignKey('networks.id',
-                                 ondelete="CASCADE"),
+                                               ondelete="CASCADE"),
                                  primary_key=True)
     segment1_id = sa.Column(sa.String(36), nullable=False, primary_key=True)
     segment2_id = sa.Column(sa.String(36), nullable=False, primary_key=True)

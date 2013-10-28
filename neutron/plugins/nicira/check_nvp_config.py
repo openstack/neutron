@@ -96,8 +96,9 @@ def main():
             if (default_gateways[svc_type] and
                 default_gateways[svc_type] not in gateway_services):
                 print("\t\t\tError: specified default %s gateway (%s) is "
-                      "missing from NVP Gateway Services!" % (svc_type,
-                      default_gateways[svc_type]))
+                      "missing from NVP Gateway Services!" % (
+                          svc_type,
+                          default_gateways[svc_type]))
                 errors += 1
         transport_zones = get_transport_zones(cluster)
         print("\tTransport zones: %s" % transport_zones)

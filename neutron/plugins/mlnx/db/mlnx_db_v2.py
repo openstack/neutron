@@ -135,9 +135,8 @@ def reserve_specific_network(session, physical_network, segmentation_id):
         try:
             entry = (session.query(mlnx_models_v2.SegmentationIdAllocation).
                      filter_by(physical_network=physical_network,
-                     segmentation_id=segmentation_id).
-                     with_lockmode('update').
-                     one())
+                               segmentation_id=segmentation_id).
+                     with_lockmode('update').one())
             if entry.allocated:
                 raise q_exc.VlanIdInUse(vlan_id=segmentation_id,
                                         physical_network=physical_network)

@@ -610,8 +610,8 @@ class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
             [call(None,
              {'args':
                  {'devices': ['fake_device']},
-             'method': 'security_group_rules_for_devices',
-             'namespace': None},
+              'method': 'security_group_rules_for_devices',
+              'namespace': None},
              version=sg_rpc.SG_RPC_VERSION,
              topic='fake_topic')])
 

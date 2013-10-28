@@ -145,9 +145,9 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                             [{pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1',
                               pnet.SEGMENTATION_ID: 1},
-                            {pnet.NETWORK_TYPE: 'vlan',
-                             pnet.PHYSICAL_NETWORK: 'physnet1',
-                             pnet.SEGMENTATION_ID: 2}],
+                             {pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1',
+                              pnet.SEGMENTATION_ID: 2}],
                             'tenant_id': 'tenant_one'}}
         network_req = self.new_create_request('networks', data)
         network = self.deserialize(self.fmt,
@@ -188,9 +188,9 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                             [{pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1',
                               pnet.SEGMENTATION_ID: 1},
-                            {pnet.NETWORK_TYPE: 'vlan',
-                             pnet.PHYSICAL_NETWORK: 'physnet1',
-                             pnet.SEGMENTATION_ID: 1}],
+                             {pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1',
+                              pnet.SEGMENTATION_ID: 1}],
                             'tenant_id': 'tenant_one'}}
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)

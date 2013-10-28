@@ -263,8 +263,8 @@ class AristaRPCWrapper(object):
         """
         cmds = ['auth url %s user %s password %s' %
                 (self._keystone_url(),
-                self.keystone_conf.admin_user,
-                self.keystone_conf.admin_password)]
+                 self.keystone_conf.admin_user,
+                 self.keystone_conf.admin_password)]
 
         self._run_openstack_cmds(cmds)
 

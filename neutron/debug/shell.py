@@ -41,7 +41,7 @@ COMMAND_V2 = {
         'neutron.debug.commands.ExecProbe'),
     'ping-all': utils.import_class(
         'neutron.debug.commands.PingAll'),
-#TODO(nati)  ping, netcat , nmap, bench
+    #TODO(nati)  ping, netcat , nmap, bench
 }
 COMMANDS = {'2.0': COMMAND_V2}
 

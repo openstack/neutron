@@ -353,10 +353,10 @@ class RouterDBTestCase(test_l3_plugin.L3NatDBIntTestCase):
                                  'nexthops': ['4.4.4.4', '4.4.4.5']}]
                 body1 = self._update('routers', r1_id,
                                      {'router':
-                                     {'router_rules': router1_rules}})
+                                         {'router_rules': router1_rules}})
                 body2 = self._update('routers', r2_id,
                                      {'router':
-                                     {'router_rules': router2_rules}})
+                                         {'router_rules': router2_rules}})
 
                 body1 = self._show('routers', r1_id)
                 body2 = self._show('routers', r2_id)

@@ -140,7 +140,7 @@ class NvplibNegativeTests(base.BaseTestCase):
                           'fake-tenant',
                           'fake-gateway',
                           [{'id': _uuid(),
-                          'interface_name': 'xxx'}])
+                           'interface_name': 'xxx'}])
 
     def test_delete_l2_gw_service_on_failure(self):
         self.assertRaises(nvplib.NvpApiClient.NvpApiException,
@@ -437,7 +437,7 @@ class TestNvplibExplicitLRouters(NvplibTestCase):
                         'default_route_next_hop':
                         {'gateway_ip_address': 'fake_address',
                          'type': 'RouterNextHop'},
-                    'type': 'SingleDefaultRouteImplicitRoutingConfig'},
+                        'type': 'SingleDefaultRouteImplicitRoutingConfig'},
                     'tags': [{'scope': 'os_tid', 'tag': 'fake_tenant_id'},
                              {'scope': 'quantum',
                               'tag': nvplib.NEUTRON_VERSION}],

@@ -3408,7 +3408,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         host_routes = [{'destination': '135.207.0.0/16',
                        'nexthop': '1.2.3.4'},
                        {'destination': '12.0.0.0/8',
-                       'nexthop': '4.3.2.1'}]
+                        'nexthop': '4.3.2.1'}]
 
         self._test_create_subnet(gateway_ip=gateway_ip,
                                  cidr=cidr,

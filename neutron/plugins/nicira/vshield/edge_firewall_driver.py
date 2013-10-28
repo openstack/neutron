@@ -218,8 +218,8 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
         except vcns_exc.VcnsApiException as e:
             LOG.exception(_("Failed to get firewall rule: %(rule_id)s "
                             "with edge_id: %(edge_id)s"), {
-                          'rule_id': id,
-                          'edge_id': edge_id})
+                                'rule_id': id,
+                                'edge_id': edge_id})
             raise e
         return self._restore_firewall_rule(context, edge_id, response)
 

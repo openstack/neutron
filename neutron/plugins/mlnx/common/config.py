@@ -26,7 +26,7 @@ DEFAULT_INTERFACE_MAPPINGS = []
 vlan_opts = [
     cfg.StrOpt('tenant_network_type', default='vlan',
                help=_("Network type for tenant networks "
-               "(local, ib, vlan, or none)")),
+                      "(local, ib, vlan, or none)")),
     cfg.ListOpt('network_vlan_ranges',
                 default=DEFAULT_VLAN_RANGES,
                 help=_("List of <physical_network>:<vlan_min>:<vlan_max> "

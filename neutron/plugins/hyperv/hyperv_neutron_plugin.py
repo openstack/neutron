@@ -44,11 +44,11 @@ DEFAULT_VLAN_RANGES = []
 hyperv_opts = [
     cfg.StrOpt('tenant_network_type', default='local',
                help=_("Network type for tenant networks "
-               "(local, flat, vlan or none)")),
+                      "(local, flat, vlan or none)")),
     cfg.ListOpt('network_vlan_ranges',
                 default=DEFAULT_VLAN_RANGES,
                 help=_("List of <physical_network>:<vlan_min>:<vlan_max> "
-                "or <physical_network>")),
+                       "or <physical_network>")),
 ]
 
 cfg.CONF.register_opts(hyperv_opts, "HYPERV")

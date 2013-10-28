@@ -331,7 +331,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         expected = [['ip', 'route', 'replace', 'to', '110.100.30.0/24',
                     'via', '10.100.10.30'],
                     ['ip', 'route', 'replace', 'to', '110.100.31.0/24',
-                    'via', '10.100.10.30']]
+                     'via', '10.100.10.30']]
 
         self._check_agent_method_called(agent, expected, namespace)
 

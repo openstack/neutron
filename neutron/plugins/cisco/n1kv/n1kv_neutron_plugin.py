@@ -464,7 +464,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 n1kv_db_v2.add_multi_segment_encap_profile_name(session,
                                                                 net_id,
                                                                 (segment1,
-                                                                segment2),
+                                                                 segment2),
                                                                 encap_profile)
             else:
                 raise cisco_exceptions.NoClusterFound
@@ -491,7 +491,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             binding = (
                 n1kv_db_v2.get_multi_segment_network_binding(session, net_id,
                                                              (segment1,
-                                                             segment2)))
+                                                              segment2)))
             encap_profile = binding['encap_profile_name']
             if encap_profile in encap_dict:
                 profile_dict = encap_dict[encap_profile]

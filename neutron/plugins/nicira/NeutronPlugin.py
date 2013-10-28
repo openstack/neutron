@@ -2026,7 +2026,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                 in securitygroups_db.IP_PROTOCOL_MAP.values())
             if (not port_based_proto and
                 (r['port_range_min'] is not None or
-                r['port_range_max'] is not None)):
+                 r['port_range_max'] is not None)):
                 msg = (_("Port values not valid for "
                          "protocol: %s") % r['protocol'])
                 raise q_exc.BadRequest(resource='security_group_rule',

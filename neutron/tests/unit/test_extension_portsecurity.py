@@ -139,7 +139,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 filters = {'port_id': [id]}
                 security_groups = (super(PortSecurityTestPlugin, self).
                                    _get_port_security_group_bindings(
-                                   context, filters))
+                                       context, filters))
                 if security_groups and not delete_security_groups:
                     raise psec.PortSecurityPortHasSecurityGroup()
 

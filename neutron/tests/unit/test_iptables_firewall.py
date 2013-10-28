@@ -786,8 +786,8 @@ class IptablesFirewallTestCase(base.BaseTestCase):
         calls += [call.add_rule(
                   'ofake_dev', '-m state --state INVALID -j DROP'),
                   call.add_rule(
-                  'ofake_dev',
-                  '-m state --state RELATED,ESTABLISHED -j RETURN')]
+                      'ofake_dev',
+                      '-m state --state RELATED,ESTABLISHED -j RETURN')]
 
         if egress_expected_call:
             calls.append(egress_expected_call)
