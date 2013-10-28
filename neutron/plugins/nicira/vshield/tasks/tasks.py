@@ -15,8 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from __future__ import print_function
-
 import collections
 import uuid
 
@@ -167,6 +165,9 @@ class TaskManager():
         # A dict to store resource -> resource's tasks
         self._tasks = {}
 
+        # Current task being executed in main thread
+        self._main_thread_exec_task = None
+
         # New request event
         self._req = event.Event()
 
@@ -311,8 +312,10 @@ class TaskManager():
                     continue
 
                 try:
+                    self._main_thread_exec_task = task
                     self._execute(task)
                 finally:
+                    self._main_thread_exec_task = None
                     if task.status is None:
                         # The thread is killed during _execute(). To guarantee
                         # the task been aborted correctly, put it to the queue.
@@ -348,20 +351,19 @@ class TaskManager():
         self._thread = None
 
     def has_pending_task(self):
-        if self._tasks_queue:
+        if self._tasks_queue or self._tasks or self._main_thread_exec_task:
             return True
-
-        if self._tasks:
-            return True
-
-        return False
+        else:
+            return False
 
     def show_pending_tasks(self):
         for task in self._tasks_queue:
-            print(str(task))
+            LOG.info(str(task))
         for resource, tasks in self._tasks.iteritems():
             for task in tasks:
-                print(str(task))
+                LOG.info(str(task))
+        if self._main_thread_exec_task:
+            LOG.info(str(self._main_thread_exec_task))
 
     def count(self):
         count = 0

@@ -135,7 +135,8 @@ class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
     def tearDown(self):
         plugin = NeutronManager.get_plugin()
         manager = plugin.vcns_driver.task_manager
-        for i in range(20):
+        # wait max ~10 seconds for all tasks to be finished
+        for i in range(100):
             if not manager.has_pending_task():
                 break
             greenthread.sleep(0.1)
@@ -183,8 +184,8 @@ class ServiceRouterTestCase(ServiceRouterTest, NvpRouterTestCase):
             for k, v in expected_value_1:
                 self.assertEqual(router['router'][k], v)
 
-            # wait ~1 seconds for router status update
-            for i in range(2):
+            # wait max ~10 seconds for router status update
+            for i in range(20):
                 greenthread.sleep(0.5)
                 res = self._show('routers', router['router']['id'])
                 if res['router']['status'] == 'ACTIVE':

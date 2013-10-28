@@ -253,6 +253,31 @@ class VcnsDriverTaskManagerTestCase(base.BaseTestCase):
     def test_task_manager_stop_4(self):
         self._test_task_manager_stop(False, False, 1)
 
+    def test_task_pending_task(self):
+        def _exec(task):
+            task.userdata['executing'] = True
+            while not task.userdata['tested']:
+                greenthread.sleep(0)
+            task.userdata['executing'] = False
+            return TaskStatus.COMPLETED
+
+        userdata = {
+            'executing': False,
+            'tested': False
+        }
+        manager = ts.TaskManager().start(100)
+        task = ts.Task('name', 'res', _exec, userdata=userdata)
+        manager.add(task)
+
+        while not userdata['executing']:
+            greenthread.sleep(0)
+        self.assertTrue(manager.has_pending_task())
+
+        userdata['tested'] = True
+        while userdata['executing']:
+            greenthread.sleep(0)
+        self.assertFalse(manager.has_pending_task())
+
 
 class VcnsDriverTestCase(base.BaseTestCase):
 
@@ -297,6 +322,10 @@ class VcnsDriverTestCase(base.BaseTestCase):
 
         self.edge_id = None
         self.result = None
+
+    def tearDown(self):
+        self.vcns_driver.task_manager.stop()
+        super(VcnsDriverTestCase, self).tearDown()
 
     def _deploy_edge(self):
         task = self.vcns_driver.deploy_edge(
@@ -355,12 +384,13 @@ class VcnsDriverTestCase(base.BaseTestCase):
         self.assertTrue(jobdata.get('edge_deploy_result'))
 
     def test_deploy_edge_fail(self):
-        self.vcns_driver.deploy_edge(
+        task1 = self.vcns_driver.deploy_edge(
             'router-1', 'myedge', 'internal-network', {}, wait_for_exec=True)
-        task = self.vcns_driver.deploy_edge(
+        task2 = self.vcns_driver.deploy_edge(
             'router-2', 'myedge', 'internal-network', {}, wait_for_exec=True)
-        task.wait(TaskState.RESULT)
-        self.assertEqual(task.status, TaskStatus.ERROR)
+        task1.wait(TaskState.RESULT)
+        task2.wait(TaskState.RESULT)
+        self.assertEqual(task2.status, TaskStatus.ERROR)
 
     def test_get_edge_status(self):
         self._deploy_edge()
