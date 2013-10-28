@@ -18,7 +18,8 @@
 
 import re
 
-from eventlet import greenthread
+import contextlib
+import eventlet
 import mock
 
 from neutron import context
@@ -27,6 +28,7 @@ from neutron import manager
 from neutron.openstack.common import jsonutils as json
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers.radware import driver
+from neutron.services.loadbalancer.drivers.radware import exceptions as r_exc
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
 
 GET_200 = ('/api/workflow/', '/api/service/', '/api/workflowTemplate')
@@ -35,7 +37,7 @@ GET_200 = ('/api/workflow/', '/api/service/', '/api/workflowTemplate')
 def rest_call_function_mock(action, resource, data, headers, binary=False):
 
     if rest_call_function_mock.RESPOND_WITH_ERROR:
-        return 400, 'error_status', 'error_reason', None
+        return 400, 'error_status', 'error_description', None
 
     if action == 'GET':
         return _get_handler(resource)
@@ -50,15 +52,17 @@ def rest_call_function_mock(action, resource, data, headers, binary=False):
 def _get_handler(resource):
     if resource == GET_200[2]:
         if rest_call_function_mock.TEMPLATES_MISSING:
-            data = []
+            data = json.loads('[]')
         else:
-            data = [{"name": "openstack_l2_l3"}, {"name": "openstack_l4"}]
+            data = json.loads(
+                '[{"name":"openstack_l2_l3"},{"name":"openstack_l4"}]'
+            )
         return 200, '', '', data
 
     if resource in GET_200:
         return 200, '', '', ''
     else:
-        data = {"complete": "True", "success": "True"}
+        data = json.loads('{"complete":"True", "success": "True"}')
         return 202, '', '', data
 
 
@@ -111,61 +115,45 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
         radware_driver = self.plugin_instance.drivers['radware']
         radware_driver.rest_client.call = self.rest_call_mock
 
-        self.ctx = context.get_admin_context()
-
         self.addCleanup(radware_driver.completion_handler.join)
         self.addCleanup(mock.patch.stopall)
 
-    def test_create_vip_templates_missing(self):
+    def test_verify_workflow_templates(self):
         """Test the rest call failure handling by Exception raising."""
-        self.rest_call_mock.reset_mock()
-        with self.subnet() as subnet:
-            with self.pool(provider='radware') as pool:
-                vip_data = {
-                    'name': 'vip1',
-                    'subnet_id': subnet['subnet']['id'],
-                    'pool_id': pool['pool']['id'],
-                    'description': '',
-                    'protocol_port': 80,
-                    'protocol': 'HTTP',
-                    'connection_limit': -1,
-                    'admin_state_up': True,
-                    'status': 'PENDING_CREATE',
-                    'tenant_id': self._tenant_id,
-                    'session_persistence': ''
-                }
+        rest_call_function_mock.__dict__.update(
+            {'TEMPLATES_MISSING': True})
 
-                rest_call_function_mock.__dict__.update(
-                    {'TEMPLATES_MISSING': True})
-                #TODO(avishayb) Check that NeutronException is raised
-                self.assertRaises(StandardError,
-                                  self.plugin_instance.create_vip,
-                                  (self.ctx, {'vip': vip_data}))
+        self.assertRaises(r_exc.WorkflowMissing,
+                          self.plugin_instance.drivers['radware'].
+                          _verify_workflow_templates)
 
     def test_create_vip_failure(self):
         """Test the rest call failure handling by Exception raising."""
         self.rest_call_mock.reset_mock()
-        with self.subnet() as subnet:
-            with self.pool(provider='radware') as pool:
-                vip_data = {
-                    'name': 'vip1',
-                    'subnet_id': subnet['subnet']['id'],
-                    'pool_id': pool['pool']['id'],
-                    'description': '',
-                    'protocol_port': 80,
-                    'protocol': 'HTTP',
-                    'connection_limit': -1,
-                    'admin_state_up': True,
-                    'status': 'PENDING_CREATE',
-                    'tenant_id': self._tenant_id,
-                    'session_persistence': ''
-                }
+        with self.network(do_delete=False) as network:
+            with self.subnet(network=network, do_delete=False) as subnet:
+                with self.pool(no_delete=True, provider='radware') as pool:
+                    vip_data = {
+                        'name': 'vip1',
+                        'subnet_id': subnet['subnet']['id'],
+                        'pool_id': pool['pool']['id'],
+                        'description': '',
+                        'protocol_port': 80,
+                        'protocol': 'HTTP',
+                        'connection_limit': -1,
+                        'admin_state_up': True,
+                        'status': constants.PENDING_CREATE,
+                        'tenant_id': self._tenant_id,
+                        'session_persistence': ''
+                    }
 
-                rest_call_function_mock.__dict__.update(
-                    {'RESPOND_WITH_ERROR': True})
-                self.assertRaises(StandardError,
-                                  self.plugin_instance.create_vip,
-                                  (self.ctx, {'vip': vip_data}))
+                    rest_call_function_mock.__dict__.update(
+                        {'RESPOND_WITH_ERROR': True})
+
+                    self.assertRaises(r_exc.RESTRequestFailure,
+                                      self.plugin_instance.create_vip,
+                                      context.get_admin_context(),
+                                      {'vip': vip_data})
 
     def test_create_vip(self):
         self.rest_call_mock.reset_mock()
@@ -180,13 +168,13 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                     'protocol': 'HTTP',
                     'connection_limit': -1,
                     'admin_state_up': True,
-                    'status': 'PENDING_CREATE',
+                    'status': constants.PENDING_CREATE,
                     'tenant_id': self._tenant_id,
                     'session_persistence': ''
                 }
 
                 vip = self.plugin_instance.create_vip(
-                    self.ctx, {'vip': vip_data})
+                    context.get_admin_context(), {'vip': vip_data})
 
                 # Test creation REST calls
                 calls = [
@@ -225,14 +213,18 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                 self.rest_call_mock.assert_has_calls(calls, any_order=True)
 
                 # sleep to wait for the operation completion
-                greenthread.sleep(1)
+                eventlet.greenthread.sleep(0)
 
                 #Test DB
-                new_vip = self.plugin_instance.get_vip(self.ctx, vip['id'])
-                self.assertEqual(new_vip['status'], 'ACTIVE')
+                new_vip = self.plugin_instance.get_vip(
+                    context.get_admin_context(),
+                    vip['id']
+                )
+                self.assertEqual(new_vip['status'], constants.ACTIVE)
 
                 # Delete VIP
-                self.plugin_instance.delete_vip(self.ctx, vip['id'])
+                self.plugin_instance.delete_vip(
+                    context.get_admin_context(), vip['id'])
 
                 # Test deletion REST calls
                 calls = [
@@ -254,17 +246,18 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                     'protocol': 'HTTP',
                     'connection_limit': -1,
                     'admin_state_up': True,
-                    'status': 'PENDING_CREATE',
+                    'status': constants.PENDING_CREATE,
                     'tenant_id': self._tenant_id,
                     'session_persistence': ''
                 }
 
                 vip = self.plugin_instance.create_vip(
-                    self.ctx, {'vip': vip_data})
+                    context.get_admin_context(), {'vip': vip_data})
 
-                vip_data['status'] = 'PENDING_UPDATE'
-                self.plugin_instance.update_vip(self.ctx, vip['id'],
-                                                {'vip': vip_data})
+                vip_data['status'] = constants.PENDING_UPDATE
+                self.plugin_instance.update_vip(
+                    context.get_admin_context(),
+                    vip['id'], {'vip': vip_data})
 
                 # Test REST calls
                 calls = [
@@ -274,16 +267,66 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                 ]
                 self.rest_call_mock.assert_has_calls(calls, any_order=True)
 
-                updated_vip = self.plugin_instance.get_vip(self.ctx, vip['id'])
-                self.assertEqual(updated_vip['status'], 'PENDING_UPDATE')
+                updated_vip = self.plugin_instance.get_vip(
+                    context.get_admin_context(), vip['id'])
+                self.assertEqual(updated_vip['status'],
+                                 constants.PENDING_UPDATE)
 
                 # sleep to wait for the operation completion
-                greenthread.sleep(1)
-                updated_vip = self.plugin_instance.get_vip(self.ctx, vip['id'])
-                self.assertEqual(updated_vip['status'], 'ACTIVE')
+                eventlet.greenthread.sleep(1)
+                updated_vip = self.plugin_instance.get_vip(
+                    context.get_admin_context(), vip['id'])
+                self.assertEqual(updated_vip['status'], constants.ACTIVE)
 
                 # delete VIP
-                self.plugin_instance.delete_vip(self.ctx, vip['id'])
+                self.plugin_instance.delete_vip(
+                    context.get_admin_context(), vip['id'])
+
+    def test_delete_vip_failure(self):
+        self.rest_call_mock.reset_mock()
+        plugin = self.plugin_instance
+
+        with self.network(do_delete=False) as network:
+            with self.subnet(network=network, do_delete=False) as subnet:
+                with self.pool(no_delete=True, provider='radware') as pool:
+                    with contextlib.nested(
+                        self.member(pool_id=pool['pool']['id'],
+                                    no_delete=True),
+                        self.member(pool_id=pool['pool']['id'],
+                                    no_delete=True),
+                        self.health_monitor(no_delete=True),
+                        self.vip(pool=pool, subnet=subnet, no_delete=True)
+                    ) as (mem1, mem2, hm, vip):
+
+                        plugin.create_pool_health_monitor(
+                            context.get_admin_context(), hm, pool['pool']['id']
+                        )
+
+                        eventlet.greenthread.sleep(1)
+
+                        rest_call_function_mock.__dict__.update(
+                            {'RESPOND_WITH_ERROR': True})
+
+                        plugin.delete_vip(
+                            context.get_admin_context(), vip['vip']['id'])
+
+                        u_vip = plugin.get_vip(
+                            context.get_admin_context(), vip['vip']['id'])
+                        u_pool = plugin.get_pool(
+                            context.get_admin_context(), pool['pool']['id'])
+                        u_mem1 = plugin.get_member(
+                            context.get_admin_context(), mem1['member']['id'])
+                        u_mem2 = plugin.get_member(
+                            context.get_admin_context(), mem2['member']['id'])
+                        u_phm = plugin.get_pool_health_monitor(
+                            context.get_admin_context(),
+                            hm['health_monitor']['id'], pool['pool']['id'])
+
+                        self.assertEqual(u_vip['status'], constants.ERROR)
+                        self.assertEqual(u_pool['status'], constants.ACTIVE)
+                        self.assertEqual(u_mem1['status'], constants.ACTIVE)
+                        self.assertEqual(u_mem2['status'], constants.ACTIVE)
+                        self.assertEqual(u_phm['status'], constants.ACTIVE)
 
     def test_delete_vip(self):
         self.rest_call_mock.reset_mock()
@@ -298,15 +341,16 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                     'protocol': 'HTTP',
                     'connection_limit': -1,
                     'admin_state_up': True,
-                    'status': 'PENDING_CREATE',
+                    'status': constants.PENDING_CREATE,
                     'tenant_id': self._tenant_id,
                     'session_persistence': ''
                 }
 
                 vip = self.plugin_instance.create_vip(
-                    self.ctx, {'vip': vip_data})
+                    context.get_admin_context(), {'vip': vip_data})
 
-                self.plugin_instance.delete_vip(self.ctx, vip['id'])
+                self.plugin_instance.delete_vip(
+                    context.get_admin_context(), vip['id'])
 
                 calls = [
                     mock.call('DELETE', '/api/workflow/' + pool['pool']['id'],
@@ -316,8 +360,20 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
                 self.assertRaises(loadbalancer.VipNotFound,
                                   self.plugin_instance.get_vip,
-                                  self.ctx, vip['id'])
-                # add test checking all vip graph objects were removed from DB
+                                  context.get_admin_context(), vip['id'])
+
+    def test_update_pool(self):
+        self.rest_call_mock.reset_mock()
+        with self.subnet():
+            with self.pool() as pool:
+                del pool['pool']['provider']
+                del pool['pool']['status']
+                self.plugin_instance.update_pool(
+                    context.get_admin_context(),
+                    pool['pool']['id'], pool)
+                pool_db = self.plugin_instance.get_pool(
+                    context.get_admin_context(), pool['pool']['id'])
+                self.assertEqual(pool_db['status'], constants.PENDING_UPDATE)
 
     def test_delete_pool_with_vip(self):
         self.rest_call_mock.reset_mock()
@@ -326,7 +382,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                 with self.vip(pool=pool, subnet=subnet):
                     self.assertRaises(loadbalancer.PoolInUse,
                                       self.plugin_instance.delete_pool,
-                                      self.ctx, pool['pool']['id'])
+                                      context.get_admin_context(),
+                                      pool['pool']['id'])
 
     def test_create_member_with_vip(self):
         self.rest_call_mock.reset_mock()
@@ -356,7 +413,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                 with self.member(pool_id=p['pool']['id']) as member:
                     with self.vip(pool=p, subnet=subnet):
                         self.plugin_instance.update_member(
-                            self.ctx, member['member']['id'], member
+                            context.get_admin_context(),
+                            member['member']['id'], member
                         )
                         calls = [
                             mock.call(
@@ -374,27 +432,31 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                                                              any_order=True)
 
                         updated_member = self.plugin_instance.get_member(
-                            self.ctx, member['member']['id']
+                            context.get_admin_context(),
+                            member['member']['id']
                         )
 
                         # sleep to wait for the operation completion
-                        greenthread.sleep(1)
+                        eventlet.greenthread.sleep(0)
                         updated_member = self.plugin_instance.get_member(
-                            self.ctx, member['member']['id']
+                            context.get_admin_context(),
+                            member['member']['id']
                         )
-                        self.assertEqual(updated_member['status'], 'ACTIVE')
+                        self.assertEqual(updated_member['status'],
+                                         constants.ACTIVE)
 
     def test_update_member_without_vip(self):
         self.rest_call_mock.reset_mock()
         with self.subnet():
             with self.pool(provider='radware') as pool:
                 with self.member(pool_id=pool['pool']['id']) as member:
-                    member['member']['status'] = 'PENDING_UPDATE'
+                    member['member']['status'] = constants.PENDING_UPDATE
                     updated_member = self.plugin_instance.update_member(
-                        self.ctx, member['member']['id'], member
+                        context.get_admin_context(),
+                        member['member']['id'], member
                     )
                     self.assertEqual(updated_member['status'],
-                                     'PENDING_UPDATE')
+                                     constants.PENDING_UPDATE)
 
     def test_delete_member_with_vip(self):
         self.rest_call_mock.reset_mock()
@@ -404,28 +466,40 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                                  no_delete=True) as m:
                     with self.vip(pool=p, subnet=subnet):
 
-                        self.plugin_instance.delete_member(self.ctx,
-                                                           m['member']['id'])
+                        # Reset mock and
+                        # wait for being sure the member
+                        # Changed status from PENDING-CREATE
+                        # to ACTIVE
+                        self.rest_call_mock.reset_mock()
+                        eventlet.greenthread.sleep(1)
 
+                        self.plugin_instance.delete_member(
+                            context.get_admin_context(),
+                            m['member']['id']
+                        )
+
+                        args, kwargs = self.rest_call_mock.call_args
+                        deletion_post_graph = str(args[2])
+
+                        self.assertTrue(re.search(
+                            r'.*\'member_address_array\': \[\].*',
+                            deletion_post_graph
+                        ))
                         calls = [
-                            mock.call(
-                                'POST', '/api/workflow/' + p['pool']['id'] +
-                                '/action/BaseCreate',
-                                mock.ANY, driver.TEMPLATE_HEADER
-                            ),
                             mock.call(
                                 'POST', '/api/workflow/' + p['pool']['id'] +
                                 '/action/BaseCreate',
                                 mock.ANY, driver.TEMPLATE_HEADER
                             )
                         ]
-                        self.rest_call_mock.assert_has_calls(calls,
-                                                             any_order=True)
+                        self.rest_call_mock.assert_has_calls(
+                            calls, any_order=True)
 
-                        greenthread.sleep(1)
+                        eventlet.greenthread.sleep(1)
                         self.assertRaises(loadbalancer.MemberNotFound,
                                           self.plugin_instance.get_member,
-                                          self.ctx, m['member']['id'])
+                                          context.get_admin_context(),
+                                          m['member']['id'])
 
     def test_delete_member_without_vip(self):
         self.rest_call_mock.reset_mock()
@@ -433,8 +507,96 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
             with self.pool(provider='radware') as p:
                 with self.member(pool_id=p['pool']['id'], no_delete=True) as m:
                     self.plugin_instance.delete_member(
-                        self.ctx, m['member']['id']
+                        context.get_admin_context(), m['member']['id']
                     )
                     self.assertRaises(loadbalancer.MemberNotFound,
                                       self.plugin_instance.get_member,
-                                      self.ctx, m['member']['id'])
+                                      context.get_admin_context(),
+                                      m['member']['id'])
+
+    def test_create_hm_with_vip(self):
+        self.rest_call_mock.reset_mock()
+        with self.subnet() as subnet:
+            with self.health_monitor() as hm:
+                with self.pool(provider='radware') as pool:
+                    with self.vip(pool=pool, subnet=subnet):
+
+                        self.plugin_instance.create_pool_health_monitor(
+                            context.get_admin_context(),
+                            hm, pool['pool']['id']
+                        )
+
+                        # Test REST calls
+                        calls = [
+                            mock.call(
+                                'POST', '/api/workflow/' + pool['pool']['id'] +
+                                '/action/BaseCreate',
+                                mock.ANY, driver.TEMPLATE_HEADER
+                            ),
+                            mock.call(
+                                'POST', '/api/workflow/' + pool['pool']['id'] +
+                                '/action/BaseCreate',
+                                mock.ANY, driver.TEMPLATE_HEADER
+                            )
+                        ]
+                        self.rest_call_mock.assert_has_calls(
+                            calls, any_order=True)
+
+                        eventlet.greenthread.sleep(1)
+
+                        phm = self.plugin_instance.get_pool_health_monitor(
+                            context.get_admin_context(),
+                            hm['health_monitor']['id'], pool['pool']['id']
+                        )
+                        self.assertEqual(phm['status'], constants.ACTIVE)
+
+    def test_delete_pool_hm_with_vip(self):
+        self.rest_call_mock.reset_mock()
+        with self.subnet() as subnet:
+            with self.health_monitor(no_delete=True) as hm:
+                with self.pool(provider='radware') as pool:
+                    with self.vip(pool=pool, subnet=subnet):
+                        self.plugin_instance.create_pool_health_monitor(
+                            context.get_admin_context(),
+                            hm, pool['pool']['id']
+                        )
+
+                        # Reset mock and
+                        # wait for being sure that status
+                        # changed from PENDING-CREATE
+                        # to ACTIVE
+                        self.rest_call_mock.reset_mock()
+                        eventlet.greenthread.sleep(1)
+
+                        self.plugin_instance.delete_pool_health_monitor(
+                            context.get_admin_context(),
+                            hm['health_monitor']['id'],
+                            pool['pool']['id']
+                        )
+
+                        eventlet.greenthread.sleep(1)
+                        name, args, kwargs = self.rest_call_mock.mock_calls[-2]
+                        deletion_post_graph = str(args[2])
+
+                        self.assertTrue(re.search(
+                            r'.*\'hm_uuid_array\': \[\].*',
+                            deletion_post_graph
+                        ))
+
+                        calls = [
+                            mock.call(
+                                'POST', '/api/workflow/' + pool['pool']['id'] +
+                                '/action/BaseCreate',
+                                mock.ANY, driver.TEMPLATE_HEADER
+                            )
+                        ]
+                        self.rest_call_mock.assert_has_calls(
+                            calls, any_order=True)
+
+                        self.assertRaises(
+                            loadbalancer.PoolMonitorAssociationNotFound,
+                            self.plugin_instance.get_pool_health_monitor,
+                            context.get_admin_context(),
+                            hm['health_monitor']['id'],
+                            pool['pool']['id']
+                        )
