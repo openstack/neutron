@@ -47,7 +47,7 @@ class DhcpNoOpDriver(dhcp.DhcpLocalProcess):
     def disable(self, retain_port=False):
         """Disable DHCP for this network."""
         if not retain_port:
-            self.device_delegate.destroy(self.network, self.interface_name)
+            self.device_manager.destroy(self.network, self.interface_name)
         self._remove_config_files()
 
     def release_lease(self, mac_address, removed_ips):

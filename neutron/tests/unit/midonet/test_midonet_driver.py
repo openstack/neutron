@@ -24,8 +24,10 @@ import sys
 sys.modules["midonetclient"] = mock.Mock()
 
 from neutron.agent.common import config
+from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
+from neutron.common import config as base_config
 from neutron.openstack.common import uuidutils
 import neutron.plugins.midonet.agent.midonet_driver as driver
 from neutron.tests import base
@@ -102,3 +104,31 @@ class MidoInterfaceDriverTestCase(base.BaseTestCase):
                       self.namespace),
             mock.call().link.delete()])
         self.ip.assert_has_calls(mock.call().garbage_collect_namespace())
+
+
+class FakeNetwork:
+    id = 'aaaabbbb-cccc-dddd-eeee-ffff00001111'
+    namespace = 'qdhcp-ns'
+
+
+class TestDhcpNoOpDriver(base.BaseTestCase):
+    def setUp(self):
+        super(TestDhcpNoOpDriver, self).setUp()
+        self.conf = config.setup_conf()
+        self.conf.register_opts(base_config.core_opts)
+        self.conf.register_opts(dhcp.OPTS)
+        self.conf.enable_isolated_metadata = True
+        self.conf.use_namespaces = True
+        instance = mock.patch("neutron.agent.linux.dhcp.DeviceManager")
+        self.mock_mgr = instance.start()
+        self.addCleanup(instance.stop)
+
+    def test_disable_no_retain_port(self):
+        dhcp_driver = driver.DhcpNoOpDriver(self.conf, FakeNetwork())
+        dhcp_driver.disable(retain_port=False)
+        self.assertTrue(self.mock_mgr.return_value.destroy.called)
+
+    def test_disable_retain_port(self):
+        dhcp_driver = driver.DhcpNoOpDriver(self.conf, FakeNetwork())
+        dhcp_driver.disable(retain_port=True)
+        self.assertFalse(self.mock_mgr.return_value.destroy.called)
