@@ -36,6 +36,9 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+vlan_type = sa.Enum('vlan', 'vxlan', name='vlan_type')
+network_type = sa.Enum('network', 'policy', name='network_type')
+
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
@@ -74,7 +77,7 @@ def upgrade(active_plugins=None, options=None):
         'cisco_network_profiles',
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
-        sa.Column('segment_type', sa.Enum('vlan', 'vxlan'), nullable=False),
+        sa.Column('segment_type', vlan_type, nullable=False),
         sa.Column('segment_range', sa.String(length=255), nullable=True),
         sa.Column('multicast_ip_index', sa.Integer(), autoincrement=False,
                   nullable=True),
@@ -84,7 +87,7 @@ def upgrade(active_plugins=None, options=None):
     )
     op.create_table(
         'cisco_n1kv_profile_bindings',
-        sa.Column('profile_type', sa.Enum('network', 'policy'), nullable=True),
+        sa.Column('profile_type', network_type, nullable=True),
         sa.Column('tenant_id', sa.String(length=36), nullable=False),
         sa.Column('profile_id', sa.String(length=36), nullable=False),
         sa.PrimaryKeyConstraint('tenant_id', 'profile_id')
@@ -133,7 +136,9 @@ def downgrade(active_plugins=None, options=None):
     op.drop_table('cisco_n1kv_vlan_allocations')
     op.drop_table('cisco_n1kv_port_bindings')
     op.drop_table('cisco_n1kv_profile_bindings')
+    network_type.drop(op.get_bind(), checkfirst=False)
     op.drop_table('cisco_network_profiles')
+    vlan_type.drop(op.get_bind(), checkfirst=False)
     op.drop_table('cisco_n1kv_vxlan_allocations')
     op.drop_table('cisco_n1kv_vmnetworks')
     op.drop_table('cisco_policy_profiles')
