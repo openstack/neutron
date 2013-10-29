@@ -28,17 +28,51 @@ NETNS_SAMPLE = [
 
 LINK_SAMPLE = [
     '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN \\'
-    'link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00',
+    'link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 promiscuity 0',
     '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP '
     'qlen 1000\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff'
     '\    alias openvswitch',
     '3: br-int: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN '
-    '\    link/ether aa:bb:cc:dd:ee:ff brd ff:ff:ff:ff:ff:ff',
+    '\    link/ether aa:bb:cc:dd:ee:ff brd ff:ff:ff:ff:ff:ff promiscuity 0',
     '4: gw-ddc717df-49: <BROADCAST,MULTICAST> mtu 1500 qdisc noop '
-    'state DOWN \    link/ether fe:dc:ba:fe:dc:ba brd ff:ff:ff:ff:ff:ff',
-    '5: eth0.50@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc '
+    'state DOWN \    link/ether fe:dc:ba:fe:dc:ba brd ff:ff:ff:ff:ff:ff '
+    'promiscuity 0',
+    '5: foo:foo: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state '
+    'UP qlen 1000\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff '
+    'promiscuity 0',
+    '6: foo@foo: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state '
+    'UP qlen 1000\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff '
+    'promiscuity 0',
+    '7: foo:foo@foo: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq '
+    'state UP qlen 1000'
+    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0',
+    '8: foo@foo:foo: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq '
+    'state UP qlen 1000'
+    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0',
+    '9: bar.9@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc '
     ' noqueue master brq0b24798c-07 state UP mode DEFAULT'
-    '\    link/ether ab:04:49:b6:ab:a0 brd ff:ff:ff:ff:ff:ff']
+    '\    link/ether ab:04:49:b6:ab:a0 brd ff:ff:ff:ff:ff:ff promiscuity 0'
+    '\    vlan protocol 802.1q id 9 <REORDER_HDR>',
+    '10: bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc '
+    ' noqueue master brq0b24798c-07 state UP mode DEFAULT'
+    '\    link/ether ab:04:49:b6:ab:a0 brd ff:ff:ff:ff:ff:ff promiscuity 0'
+    '\    vlan protocol 802.1Q id 10 <REORDER_HDR>',
+    '11: bar:bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq '
+    'state UP qlen 1000'
+    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0'
+    '\    vlan id 11 <REORDER_HDR>',
+    '12: bar@bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq '
+    'state UP qlen 1000'
+    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0'
+    '\    vlan id 12 <REORDER_HDR>',
+    '13: bar:bar@bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 '
+    'qdisc mq state UP qlen 1000'
+    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0'
+    '\    vlan protocol 802.1q id 13 <REORDER_HDR>',
+    '14: bar@bar:bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 '
+    'qdisc mq state UP qlen 1000'
+    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0'
+    '\    vlan protocol 802.1Q id 14 <REORDER_HDR>']
 
 ADDR_SAMPLE = ("""
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP qlen 1000
@@ -168,9 +202,18 @@ class TestIpWrapper(base.BaseTestCase):
                           ip_lib.IPDevice('eth0'),
                           ip_lib.IPDevice('br-int'),
                           ip_lib.IPDevice('gw-ddc717df-49'),
-                          ip_lib.IPDevice('eth0.50')])
+                          ip_lib.IPDevice('foo:foo'),
+                          ip_lib.IPDevice('foo@foo'),
+                          ip_lib.IPDevice('foo:foo@foo'),
+                          ip_lib.IPDevice('foo@foo:foo'),
+                          ip_lib.IPDevice('bar.9'),
+                          ip_lib.IPDevice('bar'),
+                          ip_lib.IPDevice('bar:bar'),
+                          ip_lib.IPDevice('bar@bar'),
+                          ip_lib.IPDevice('bar:bar@bar'),
+                          ip_lib.IPDevice('bar@bar:bar')])
 
-        self.execute.assert_called_once_with('o', 'link', ('list',),
+        self.execute.assert_called_once_with(['o', 'd'], 'link', ('list',),
                                              'sudo', None)
 
     def test_get_devices_malformed_line(self):
@@ -181,9 +224,18 @@ class TestIpWrapper(base.BaseTestCase):
                           ip_lib.IPDevice('eth0'),
                           ip_lib.IPDevice('br-int'),
                           ip_lib.IPDevice('gw-ddc717df-49'),
-                          ip_lib.IPDevice('eth0.50')])
+                          ip_lib.IPDevice('foo:foo'),
+                          ip_lib.IPDevice('foo@foo'),
+                          ip_lib.IPDevice('foo:foo@foo'),
+                          ip_lib.IPDevice('foo@foo:foo'),
+                          ip_lib.IPDevice('bar.9'),
+                          ip_lib.IPDevice('bar'),
+                          ip_lib.IPDevice('bar:bar'),
+                          ip_lib.IPDevice('bar@bar'),
+                          ip_lib.IPDevice('bar:bar@bar'),
+                          ip_lib.IPDevice('bar@bar:bar')])
 
-        self.execute.assert_called_once_with('o', 'link', ('list',),
+        self.execute.assert_called_once_with(['o', 'd'], 'link', ('list',),
                                              'sudo', None)
 
     def test_get_namespaces(self):
