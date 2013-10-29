@@ -259,12 +259,14 @@ class TestProxyCreateLswitch(base.BaseTestCase):
         ]
         self.tags = [
             {'scope': 'quantum', 'tag': nvplib.NEUTRON_VERSION},
+            {'scope': 'quantum_net_id', 'tag': 'foo_id'},
             {'scope': 'os_tid', 'tag': self.tenant_id}
         ]
         self.cluster = None
 
     def test_create_lswitch_with_basic_args(self):
         result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       'foo_id',
                                                        self.tenant_id,
                                                        self.display_name,
                                                        self.tz_config)
@@ -272,26 +274,9 @@ class TestProxyCreateLswitch(base.BaseTestCase):
         self.assertEqual(self.tz_config, result[1])
         self.assertEqual(self.tags, result[2])
 
-    def test_create_lswitch_with_neutron_net_id_as_kwarg(self):
-        result = nsp._process_base_create_lswitch_args(self.cluster,
-                                                       self.tenant_id,
-                                                       self.display_name,
-                                                       self.tz_config,
-                                                       neutron_net_id='foo')
-        expected = self.tags + [{'scope': 'quantum_net_id', 'tag': 'foo'}]
-        self.assertEqual(expected, result[2])
-
-    def test_create_lswitch_with_neutron_net_id_as_arg(self):
-        result = nsp._process_base_create_lswitch_args(self.cluster,
-                                                       self.tenant_id,
-                                                       self.display_name,
-                                                       self.tz_config,
-                                                       'foo')
-        expected = self.tags + [{'scope': 'quantum_net_id', 'tag': 'foo'}]
-        self.assertEqual(expected, result[2])
-
     def test_create_lswitch_with_shared_as_kwarg(self):
         result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       'foo_id',
                                                        self.tenant_id,
                                                        self.display_name,
                                                        self.tz_config,
@@ -301,19 +286,19 @@ class TestProxyCreateLswitch(base.BaseTestCase):
 
     def test_create_lswitch_with_shared_as_arg(self):
         result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       'foo_id',
                                                        self.tenant_id,
                                                        self.display_name,
                                                        self.tz_config,
-                                                       'foo',
                                                        True)
-        additional_tags = [{'scope': 'quantum_net_id', 'tag': 'foo'},
-                           {'scope': 'shared', 'tag': 'true'}]
+        additional_tags = [{'scope': 'shared', 'tag': 'true'}]
         expected = self.tags + additional_tags
         self.assertEqual(expected, result[2])
 
     def test_create_lswitch_with_additional_tags(self):
         more_tags = [{'scope': 'foo_scope', 'tag': 'foo_tag'}]
         result = nsp._process_base_create_lswitch_args(self.cluster,
+                                                       'foo_id',
                                                        self.tenant_id,
                                                        self.display_name,
                                                        self.tz_config,

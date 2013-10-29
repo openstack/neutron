@@ -202,7 +202,29 @@ def get_all_query_pages(path, c):
 # -------------------------------------------------------------------
 # Network functions
 # -------------------------------------------------------------------
+def get_lswitch_by_id(cluster, lswitch_id):
+    try:
+        lswitch_uri_path = _build_uri_path(
+            LSWITCH_RESOURCE, lswitch_id,
+            relations="LogicalSwitchStatus")
+        return do_request(HTTP_GET, lswitch_uri_path, cluster=cluster)
+    except exception.NotFound:
+        # FIXME(salv-orlando): this should not raise a neutron exception
+        raise exception.NetworkNotFound(net_id=lswitch_id)
+
+
 def get_lswitches(cluster, neutron_net_id):
+
+    def lookup_switches_by_tag():
+        # Fetch extra logical switches
+        lswitch_query_path = _build_uri_path(
+            LSWITCH_RESOURCE,
+            fields="uuid,display_name,tags,lport_count",
+            relations="LogicalSwitchStatus",
+            filters={'tag': neutron_net_id,
+                     'tag_scope': 'quantum_net_id'})
+        return get_all_query_pages(lswitch_query_path, cluster)
+
     lswitch_uri_path = _build_uri_path(LSWITCH_RESOURCE, neutron_net_id,
                                        relations="LogicalSwitchStatus")
     results = []
@@ -212,33 +234,30 @@ def get_lswitches(cluster, neutron_net_id):
         for tag in ls['tags']:
             if (tag['scope'] == "multi_lswitch" and
                 tag['tag'] == "True"):
-                # Fetch extra logical switches
-                extra_lswitch_uri_path = _build_uri_path(
-                    LSWITCH_RESOURCE,
-                    fields="uuid,display_name,tags,lport_count",
-                    relations="LogicalSwitchStatus",
-                    filters={'tag': neutron_net_id,
-                             'tag_scope': 'quantum_net_id'})
-                extra_switches = get_all_query_pages(extra_lswitch_uri_path,
-                                                     cluster)
-                results.extend(extra_switches)
-        return results
+                results.extend(lookup_switches_by_tag())
     except exception.NotFound:
+        # This is legit if the neutron network was created using
+        # a post-Havana version of the plugin
+        results.extend(lookup_switches_by_tag())
+    if results:
+        return results
+    else:
         raise exception.NetworkNotFound(net_id=neutron_net_id)
 
 
-def create_lswitch(cluster, tenant_id, display_name,
+def create_lswitch(cluster, neutron_net_id, tenant_id, display_name,
                    transport_zones_config,
-                   neutron_net_id=None,
                    shared=None,
                    **kwargs):
+    # The tag scope adopts a slightly different naming convention for
+    # historical reasons
     lswitch_obj = {"display_name": utils.check_and_truncate(display_name),
                    "transport_zones": transport_zones_config,
                    "tags": [{"tag": tenant_id, "scope": "os_tid"},
+                            {"tag": neutron_net_id, "scope": "quantum_net_id"},
                             {"tag": NEUTRON_VERSION, "scope": "quantum"}]}
-    if neutron_net_id:
-        lswitch_obj["tags"].append({"tag": neutron_net_id,
-                                    "scope": "quantum_net_id"})
+    # TODO(salv-orlando): Now that we have async status synchronization
+    # this tag is perhaps not needed anymore
     if shared:
         lswitch_obj["tags"].append({"tag": "true",
                                     "scope": "shared"})

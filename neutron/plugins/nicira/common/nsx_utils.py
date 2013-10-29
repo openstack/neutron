@@ -25,6 +25,54 @@ from neutron.plugins.nicira import nvplib
 LOG = log.getLogger(__name__)
 
 
+def fetch_nsx_switches(session, cluster, neutron_net_id):
+    """Retrieve logical switches for a neutron network.
+
+    This function is optimized for fetching all the lswitches always
+    with a single NSX query.
+    If there is more than 1 logical switch (chained switches use case)
+    NSX lswitches are queried by 'quantum_net_id' tag. Otherwise the NSX
+    lswitch is directly retrieved by id (more efficient).
+    """
+    nsx_switch_ids = get_nsx_switch_ids(session, cluster, neutron_net_id)
+    if len(nsx_switch_ids) > 1:
+        lswitches = nvplib.get_lswitches(cluster, neutron_net_id)
+    else:
+        lswitches = [nvplib.get_lswitch_by_id(
+            cluster, nsx_switch_ids[0])]
+    return lswitches
+
+
+def get_nsx_switch_ids(session, cluster, neutron_network_id):
+    """Return the NSX switch id for a given neutron network.
+
+    First lookup for mappings in Neutron database. If no mapping is
+    found, query the NSX backend and add the mappings.
+    """
+    nsx_switch_ids = nicira_db.get_nsx_switch_ids(
+        session, neutron_network_id)
+    if not nsx_switch_ids:
+        # Find logical switches from backend.
+        # This is a rather expensive query, but it won't be executed
+        # more than once for each network in Neutron's lifetime
+        nsx_switches = nvplib.get_lswitches(cluster, neutron_network_id)
+        if not nsx_switches:
+            LOG.warn(_("Unable to find NSX switches for Neutron network %s"),
+                     neutron_network_id)
+            return
+        nsx_switch_ids = []
+        with session.begin(subtransactions=True):
+            for nsx_switch in nsx_switches:
+                nsx_switch_id = nsx_switch['uuid']
+                nsx_switch_ids.append(nsx_switch_id)
+                # Create DB mapping
+                nicira_db.add_neutron_nsx_network_mapping(
+                    session,
+                    neutron_network_id,
+                    nsx_switch_id)
+    return nsx_switch_ids
+
+
 def get_nsx_switch_and_port_id(session, cluster, neutron_port_id):
     """Return the NSX switch and port uuids for a given neutron port.
 

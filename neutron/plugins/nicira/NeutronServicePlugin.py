@@ -1604,16 +1604,12 @@ class VcnsCallbacks(object):
 
 def _process_base_create_lswitch_args(*args, **kwargs):
     tags = [{"tag": nvplib.NEUTRON_VERSION, "scope": "quantum"}]
-    if args[1]:
-        tags.append({"tag": args[1], "scope": "os_tid"})
-    switch_name = args[2]
-    tz_config = args[3]
-    if "neutron_net_id" in kwargs or len(args) >= 5:
-        neutron_net_id = kwargs.get('neutron_net_id')
-        if neutron_net_id is None:
-            neutron_net_id = args[4]
-        tags.append({"tag": neutron_net_id,
-                     "scope": "quantum_net_id"})
+    tags.append({"tag": args[1],
+                 "scope": "quantum_net_id"})
+    if args[2]:
+        tags.append({"tag": args[2], "scope": "os_tid"})
+    switch_name = args[3]
+    tz_config = args[4]
     if kwargs.get("shared", False) or len(args) >= 6:
         tags.append({"tag": "true", "scope": "shared"})
     if kwargs.get("tags"):

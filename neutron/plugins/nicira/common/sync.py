@@ -249,8 +249,9 @@ class NvpSynchronizer():
         if not lswitches:
             # Try to get logical switches from nvp
             try:
-                lswitches = nvplib.get_lswitches(
-                    self._cluster, neutron_network_data['id'])
+                lswitches = nsx_utils.fetch_nsx_switches(
+                    context.session, self._cluster,
+                    neutron_network_data['id'])
             except exceptions.NetworkNotFound:
                 # TODO(salv-orlando): We should be catching
                 # NvpApiClient.ResourceNotFound here

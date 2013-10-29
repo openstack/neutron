@@ -57,6 +57,19 @@ class NvpNetworkBinding(model_base.BASEV2):
                                                   self.vlan_id)
 
 
+class NeutronNsxNetworkMapping(model_base.BASEV2):
+    """Maps neutron network identifiers to NSX identifiers.
+
+    Because of chained logical switches more than one mapping might exist
+    for a single Neutron network.
+    """
+    __tablename__ = 'neutron_nsx_network_mappings'
+    neutron_id = Column(String(36),
+                        ForeignKey('networks.id', ondelete='CASCADE'),
+                        primary_key=True)
+    nsx_id = Column(String(36), primary_key=True)
+
+
 class NeutronNsxPortMapping(model_base.BASEV2):
     """Represents the mapping between neutron and nvp port uuids."""
 

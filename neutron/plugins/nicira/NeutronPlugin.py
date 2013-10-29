@@ -22,6 +22,7 @@
 
 import logging
 import os
+import uuid
 
 from oslo.config import cfg
 from sqlalchemy import exc as sql_exc
@@ -394,9 +395,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 allow_extra_lswitches = True
                 break
         try:
-            return self._handle_lswitch_selection(self.cluster, network,
-                                                  network_bindings, max_ports,
-                                                  allow_extra_lswitches)
+            return self._handle_lswitch_selection(
+                context, self.cluster, network, network_bindings,
+                max_ports, allow_extra_lswitches)
         except NvpApiClient.NvpApiException:
             err_desc = _("An exception occurred while selecting logical "
                          "switch for the port")
@@ -823,12 +824,12 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                      pnet.SEGMENTATION_ID: binding.vlan_id}
                     for binding in bindings]
 
-    def _handle_lswitch_selection(self, cluster, network,
+    def _handle_lswitch_selection(self, context, cluster, network,
                                   network_bindings, max_ports,
                                   allow_extra_lswitches):
-        lswitches = nvplib.get_lswitches(cluster, network.id)
+        lswitches = nsx_utils.fetch_nsx_switches(
+            context.session, cluster, network.id)
         try:
-            # TODO(salvatore-orlando) find main_ls too!
             return [ls for ls in lswitches
                     if (ls['_relations']['LogicalSwitchStatus']
                         ['lport_count'] < max_ports)].pop(0)
@@ -837,23 +838,35 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             LOG.debug(_("No switch has available ports (%d checked)"),
                       len(lswitches))
         if allow_extra_lswitches:
-            main_ls = [ls for ls in lswitches if ls['uuid'] == network.id]
-            tag_dict = dict((x['scope'], x['tag']) for x in main_ls[0]['tags'])
-            if 'multi_lswitch' not in tag_dict:
-                tags = main_ls[0]['tags']
+            # The 'main' logical switch is either the only one available
+            # or the one where the 'multi_lswitch' tag was set
+            while lswitches:
+                main_ls = lswitches.pop(0)
+                tag_dict = dict((x['scope'], x['tag'])
+                                for x in main_ls['tags'])
+                if 'multi_lswitch' in tag_dict:
+                    break
+            else:
+                # by construction this statement is hit if there is only one
+                # logical switch and the multi_lswitch tag has not been set.
+                # The tag must therefore be added.
+                tags = main_ls['tags']
                 tags.append({'tag': 'True', 'scope': 'multi_lswitch'})
                 nvplib.update_lswitch(cluster,
-                                      main_ls[0]['uuid'],
-                                      main_ls[0]['display_name'],
+                                      main_ls['uuid'],
+                                      main_ls['display_name'],
                                       network['tenant_id'],
                                       tags=tags)
             transport_zone_config = self._convert_to_nvp_transport_zones(
                 cluster, network, bindings=network_bindings)
             selected_lswitch = nvplib.create_lswitch(
-                cluster, network.tenant_id,
+                cluster, network.id, network.tenant_id,
                 "%s-ext-%s" % (network.name, len(lswitches)),
-                transport_zone_config,
-                network.id)
+                transport_zone_config)
+            # add a mapping between the neutron network and the newly
+            # created logical switch
+            nicira_db.add_neutron_nsx_network_mapping(
+                context.session, network.id, selected_lswitch['uuid'])
             return selected_lswitch
         else:
             LOG.error(_("Maximum number of logical ports reached for "
@@ -952,19 +965,21 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         transport_zone_config = self._convert_to_nvp_transport_zones(
             self.cluster, net_data)
         external = net_data.get(ext_net_extn.EXTERNAL)
+        # NOTE(salv-orlando): Pre-generating uuid for Neutron
+        # network. This will be removed once the network create operation
+        # becomes an asynchronous task
+        net_data['id'] = str(uuid.uuid4())
         if (not attr.is_attr_set(external) or
             attr.is_attr_set(external) and not external):
             lswitch = nvplib.create_lswitch(
-                self.cluster, tenant_id, net_data.get('name'),
+                self.cluster, net_data['id'],
+                tenant_id, net_data.get('name'),
                 transport_zone_config,
                 shared=net_data.get(attr.SHARED))
-            net_data['id'] = lswitch['uuid']
 
         with context.session.begin(subtransactions=True):
             new_net = super(NvpPluginV2, self).create_network(context,
                                                               network)
-            # Ensure there's an id in net_data
-            net_data['id'] = new_net['id']
             # Process port security extension
             self._process_network_port_security_create(
                 context, net_data, new_net)
@@ -977,7 +992,12 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 self.get_qos_queue(context, net_queue_id)
                 self._process_network_queue_mapping(
                     context, new_net, net_queue_id)
-
+            # Add mapping between neutron network and NSX switch
+            if (not attr.is_attr_set(external) or
+                attr.is_attr_set(external) and not external):
+                nicira_db.add_neutron_nsx_network_mapping(
+                    context.session, new_net['id'],
+                    lswitch['uuid'])
             if (net_data.get(mpnet.SEGMENTS) and
                 isinstance(provider_type, bool)):
                 net_bindings = []
@@ -1007,7 +1027,11 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         for port in router_iface_ports:
             nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, id)
-
+        # Before removing entry from Neutron DB, retrieve NSX switch
+        # identifiers for removing them from backend
+        if not external:
+            lswitch_ids = nsx_utils.get_nsx_switch_ids(
+                context.session, self.cluster, id)
         super(NvpPluginV2, self).delete_network(context, id)
         # clean up network owned ports
         for port in router_iface_ports:
@@ -1036,8 +1060,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Do not go to NVP for external networks
         if not external:
             try:
-                lswitch_ids = [ls['uuid'] for ls in
-                               nvplib.get_lswitches(self.cluster, id)]
                 nvplib.delete_networks(self.cluster, id, lswitch_ids)
                 LOG.debug(_("delete_network completed for tenant: %s"),
                           context.tenant_id)
