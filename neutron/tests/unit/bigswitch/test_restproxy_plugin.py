@@ -15,38 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 from mock import patch
 from oslo.config import cfg
 import webob.exc
 
-import neutron.common.test_lib as test_lib
 from neutron import context
 from neutron.extensions import portbindings
 from neutron.manager import NeutronManager
 from neutron.plugins.bigswitch.plugin import RemoteRestError
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.bigswitch import fake_server
+from neutron.tests.unit.bigswitch import test_base
 from neutron.tests.unit import test_api_v2
 import neutron.tests.unit.test_db_plugin as test_plugin
 
-RESTPROXY_PKG_PATH = 'neutron.plugins.bigswitch.plugin'
 
-
-class BigSwitchProxyPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
-
-    _plugin_name = ('%s.NeutronRestProxyV2' % RESTPROXY_PKG_PATH)
+class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,
+                                     test_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
-        etc_path = os.path.join(os.path.dirname(__file__), 'etc')
-        test_lib.test_config['config_files'] = [os.path.join(etc_path,
-                                                'restproxy.ini.test')]
-
-        self.httpPatch = patch('httplib.HTTPConnection', create=True,
-                               new=fake_server.HTTPConnectionMock)
-        self.addCleanup(self.httpPatch.stop)
-        self.httpPatch.start()
+        self.setup_config_files()
+        self.setup_patches()
         super(BigSwitchProxyPluginV2TestCase,
               self).setUp(self._plugin_name)
 
