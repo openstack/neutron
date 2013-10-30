@@ -370,13 +370,16 @@ def enforce(context, action, target, plugin=None):
     :param plugin: currently unused and deprecated.
         Kept for backward compatibility.
 
-    :raises neutron.exceptions.PolicyNotAllowed: if verification fails.
+    :raises neutron.exceptions.PolicyNotAuthorized: if verification fails.
     """
 
     init()
     rule, target, credentials = _prepare_check(context, action, target)
-    return policy.check(rule, target, credentials,
-                        exc=exceptions.PolicyNotAuthorized, action=action)
+    result = policy.check(rule, target, credentials, action=action)
+    if not result:
+        LOG.debug(_("Failed policy check for '%s'"), action)
+        raise exceptions.PolicyNotAuthorized(action=action)
+    return result
 
 
 def check_is_admin(context):
