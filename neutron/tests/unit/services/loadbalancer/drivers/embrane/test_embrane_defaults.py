@@ -1,4 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+# vim:  tabstop=4 shiftwidth=4 softtabstop=4
 
 # Copyright 2013 Embrane, Inc.
 # All Rights Reserved.
@@ -15,14 +15,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: Ivar Lazzaro, Embrane, Inc.
+# @author:  Ivar Lazzaro, Embrane, Inc.
 
-from neutron.common import exceptions as neutron_exec
+import sys
+
+import mock
+from oslo.config import cfg
+
+from neutron.services.loadbalancer.drivers.embrane import config  # noqa
+from neutron.tests import base
+
+sys.modules["heleosapi"] = mock.Mock()
 
 
-class EmbranePluginException(neutron_exec.NeutronException):
-    message = _("An unexpected error occurred:%(err_msg)s")
+class ConfigurationTest(base.BaseTestCase):
 
-
-class UnsupportedException(EmbranePluginException):
-    message = _("%(err_msg)s")
+    def test_defaults(self):
+        self.assertEqual('small', cfg.CONF.heleoslb.lb_flavor)
+        self.assertEqual(60, cfg.CONF.heleoslb.sync_interval)

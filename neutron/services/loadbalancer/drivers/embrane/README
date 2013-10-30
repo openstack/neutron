@@ -1,0 +1,9 @@
+Embrane LBaaS Driver
+
+This DRIVER interfaces OpenStack Neutron with Embrane's heleos platform,
+Load Balancing appliances for cloud environments.
+
+L2 connectivity is leveraged by one of the supported existing plugins.
+
+For more details on use, configuration and implementation please refer to:
+https://wiki.openstack.org/wiki/Neutron/LBaaS/EmbraneDriver

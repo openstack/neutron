@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2013 Embrane, Inc.
+# Copyright 2014 Embrane, Inc.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,14 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: Ivar Lazzaro, Embrane, Inc.
+# @author:  Ivar Lazzaro, Embrane, Inc. ivar@embrane.com
 
-from neutron.common import exceptions as neutron_exec
+import sqlalchemy as sql
 
-
-class EmbranePluginException(neutron_exec.NeutronException):
-    message = _("An unexpected error occurred:%(err_msg)s")
+from neutron.db.models_v2 import model_base
 
 
-class UnsupportedException(EmbranePluginException):
-    message = _("%(err_msg)s")
+class PoolPort(model_base.BASEV2):
+    """Represents the connection between pools and ports."""
+    __tablename__ = 'embrane_pool_port'
+
+    pool_id = sql.Column(sql.String(36), sql.ForeignKey('pools.id'),
+                         primary_key=True)
+    port_id = sql.Column(sql.String(36), sql.ForeignKey('ports.id'),
+                         nullable=False)

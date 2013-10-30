@@ -40,7 +40,7 @@ class Dispatcher(object):
     def dispatch_l3(self, d_context, args=(), kwargs={}):
         item = d_context.item
         event = d_context.event
-        q_context = d_context.q_context
+        n_context = d_context.n_context
         chain = d_context.chain
 
         item_id = item["id"]
@@ -52,7 +52,7 @@ class Dispatcher(object):
                     self.sync_items[item_id] = (queue.Queue(),)
                     first_run = True
                 self.sync_items[item_id][0].put(
-                    ctx.OperationContext(event, q_context, item, chain, f,
+                    ctx.OperationContext(event, n_context, item, chain, f,
                                          args, kwargs))
                 t = None
                 if first_run:
@@ -93,7 +93,7 @@ class Dispatcher(object):
                 try:
                     dva_state = operation_context.function(
                         plugin._esm_api,
-                        operation_context.q_context.tenant_id,
+                        operation_context.n_context.tenant_id,
                         operation_context.item,
                         *operation_context.args,
                         **operation_context.kwargs)
@@ -122,12 +122,12 @@ class Dispatcher(object):
                     if transient_state:
                         if transient_state == p_con.Status.DELETED:
                             current_state = plugin._delete_router(
-                                operation_context.q_context,
+                                operation_context.n_context,
                                 operation_context.item["id"])
                         # Error state cannot be reverted
                         elif transient_state != p_con.Status.ERROR:
                             current_state = plugin._update_neutron_state(
-                                operation_context.q_context,
+                                operation_context.n_context,
                                 operation_context.item,
                                 transient_state)
             except Exception:

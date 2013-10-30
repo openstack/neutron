@@ -23,7 +23,7 @@ class DispatcherContext(object):
     def __init__(self, event, item, neutron_context, chain=None):
         self.event = event
         self.item = item
-        self.q_context = neutron_context
+        self.n_context = neutron_context
         self.chain = chain
 
 
