@@ -131,9 +131,9 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
                                          device_id='devid')
 
         self.plugin.assert_has_calls([
-            mock.call.get_ports(mock.ANY, filters=dict(network_id=['netid'],
-                                                       device_id=['devid'])),
-            mock.call.delete_port(mock.ANY, 'port_id')])
+            mock.call.delete_ports(mock.ANY,
+                                   filters=dict(network_id=['netid'],
+                                                device_id=['devid']))])
 
     def test_release_port_fixed_ip(self):
         port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])

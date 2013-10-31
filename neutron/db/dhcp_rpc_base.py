@@ -179,10 +179,7 @@ class DhcpRpcCallbackMixin(object):
                   {'network_id': network_id, 'host': host})
         plugin = manager.NeutronManager.get_plugin()
         filters = dict(network_id=[network_id], device_id=[device_id])
-        ports = plugin.get_ports(context, filters=filters)
-
-        if ports:
-            plugin.delete_port(context, ports[0]['id'])
+        plugin.delete_ports(context, filters=filters)
 
     def release_port_fixed_ip(self, context, **kwargs):
         """Release the fixed_ip associated the subnet on a port."""
