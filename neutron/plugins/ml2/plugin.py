@@ -490,10 +490,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def delete_subnet(self, context, id):
         # REVISIT(rkukura) The super(Ml2Plugin, self).delete_subnet()
-        # function is not used because it auto-deletes ports from the
-        # DB without invoking the derived class's delete_port(),
-        # preventing mechanism drivers from being called. This
-        # approach should be revisited when the API layer is reworked
+        # function is not used because it deallocates the subnet's addresses
+        # from ports in the DB without invoking the derived class's
+        # update_port(), preventing mechanism drivers from being called.
+        # This approach should be revisited when the API layer is reworked
         # during icehouse.
 
         LOG.debug(_("Deleting subnet %s"), id)
@@ -501,13 +501,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         while True:
             with session.begin(subtransactions=True):
                 subnet = self.get_subnet(context, id)
-                # Get ports to auto-delete.
+                # Get ports to auto-deallocate
                 allocated = (session.query(models_v2.IPAllocation).
                              filter_by(subnet_id=id).
                              join(models_v2.Port).
                              filter_by(network_id=subnet['network_id']).
                              with_lockmode('update').all())
-                LOG.debug(_("Ports to auto-delete: %s"), allocated)
+                LOG.debug(_("Ports to auto-deallocate: %s"), allocated)
                 only_auto_del = all(not a.port_id or
                                     a.ports.device_owner in db_base_plugin_v2.
                                     AUTO_DELETE_PORT_OWNERS
@@ -530,12 +530,21 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     break
 
             for a in allocated:
-                try:
-                    self.delete_port(context, a.port_id)
-                except Exception:
-                    LOG.exception(_("Exception auto-deleting port %s"),
-                                  a.port_id)
-                    raise
+                if a.port_id:
+                    # calling update_port() for each allocation to remove the
+                    # IP from the port and call the MechanismDrivers
+                    data = {'port':
+                            {'fixed_ips': [{'subnet_id': ip.subnet_id,
+                                            'ip_address': ip.ip_address}
+                                           for ip in a.ports.fixed_ips
+                                           if ip.subnet_id != id]}}
+                    try:
+                        self.update_port(context, a.port_id, data)
+                    except Exception:
+                        LOG.exception(_("Exception deleting fixed_ip from "
+                                        "port %s"), a.port_id)
+                        raise
+                session.delete(a)
 
         try:
             self.mechanism_manager.delete_subnet_postcommit(mech_context)
