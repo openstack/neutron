@@ -35,7 +35,10 @@ LINK_SAMPLE = [
     '3: br-int: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN '
     '\    link/ether aa:bb:cc:dd:ee:ff brd ff:ff:ff:ff:ff:ff',
     '4: gw-ddc717df-49: <BROADCAST,MULTICAST> mtu 1500 qdisc noop '
-    'state DOWN \    link/ether fe:dc:ba:fe:dc:ba brd ff:ff:ff:ff:ff:ff']
+    'state DOWN \    link/ether fe:dc:ba:fe:dc:ba brd ff:ff:ff:ff:ff:ff',
+    '5: eth0.50@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc '
+    ' noqueue master brq0b24798c-07 state UP mode DEFAULT'
+    '\    link/ether ab:04:49:b6:ab:a0 brd ff:ff:ff:ff:ff:ff']
 
 ADDR_SAMPLE = ("""
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP qlen 1000
@@ -164,7 +167,8 @@ class TestIpWrapper(base.BaseTestCase):
                          [ip_lib.IPDevice('lo'),
                           ip_lib.IPDevice('eth0'),
                           ip_lib.IPDevice('br-int'),
-                          ip_lib.IPDevice('gw-ddc717df-49')])
+                          ip_lib.IPDevice('gw-ddc717df-49'),
+                          ip_lib.IPDevice('eth0.50')])
 
         self.execute.assert_called_once_with('o', 'link', ('list',),
                                              'sudo', None)
@@ -176,7 +180,8 @@ class TestIpWrapper(base.BaseTestCase):
                          [ip_lib.IPDevice('lo'),
                           ip_lib.IPDevice('eth0'),
                           ip_lib.IPDevice('br-int'),
-                          ip_lib.IPDevice('gw-ddc717df-49')])
+                          ip_lib.IPDevice('gw-ddc717df-49'),
+                          ip_lib.IPDevice('eth0.50')])
 
         self.execute.assert_called_once_with('o', 'link', ('list',),
                                              'sudo', None)
