@@ -420,6 +420,11 @@ class LinuxBridgeManager:
             interfaces_on_bridge = self.get_interfaces_on_bridge(bridge_name)
             for interface in interfaces_on_bridge:
                 self.remove_interface(bridge_name, interface)
+
+                if interface.startswith(VXLAN_INTERFACE_PREFIX):
+                    self.delete_vxlan(interface)
+                    continue
+
                 for physical_interface in self.interface_mappings.itervalues():
                     if physical_interface == interface:
                         # This is a flat network => return IP's from bridge to
@@ -430,8 +435,6 @@ class LinuxBridgeManager:
                                                          ips, gateway)
                     elif interface.startswith(physical_interface):
                         self.delete_vlan(interface)
-                    elif interface.startswith(VXLAN_INTERFACE_PREFIX):
-                        self.delete_vxlan(interface)
 
             LOG.debug(_("Deleting bridge %s"), bridge_name)
             if utils.execute(['ip', 'link', 'set', bridge_name, 'down'],
