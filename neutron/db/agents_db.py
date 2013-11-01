@@ -31,8 +31,10 @@ from neutron.openstack.common import timeutils
 
 LOG = logging.getLogger(__name__)
 cfg.CONF.register_opt(
-    cfg.IntOpt('agent_down_time', default=5,
-               help=_("Seconds to regard the agent is down.")))
+    cfg.IntOpt('agent_down_time', default=9,
+               help=_("Seconds to regard the agent is down; should be at "
+                      "least twice report_interval, to be sure the "
+                      "agent is down for good.")))
 
 
 class Agent(model_base.BASEV2, models_v2.HasId):
