@@ -33,7 +33,9 @@ ROOT_HELPER_OPTS = [
 
 AGENT_STATE_OPTS = [
     cfg.IntOpt('report_interval', default=4,
-               help=_('Seconds between nodes reporting state to server')),
+               help=_('Seconds between nodes reporting state to server; '
+                      'should be less than agent_down_time, best if it '
+                      'is half or less than agent_down_time.')),
 ]
 
 
