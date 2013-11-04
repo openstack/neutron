@@ -26,6 +26,7 @@ import webtest
 
 from neutron.api import api_common
 from neutron.api.extensions import PluginAwareExtensionManager
+from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
@@ -1303,6 +1304,57 @@ class NotificationTest(APIv2TestBase):
         cfg.CONF.set_override('default_notification_level', 'DEBUG')
         self._resource_op_notifier('create', 'network',
                                    notification_level='DEBUG')
+
+
+class DHCPNotificationTest(APIv2TestBase):
+    def _test_dhcp_notifier(self, opname, resource, initial_input=None):
+        instance = self.plugin.return_value
+        instance.get_networks.return_value = initial_input
+        instance.get_networks_count.return_value = 0
+        expected_code = exc.HTTPCreated.code
+        with mock.patch.object(dhcp_rpc_agent_api.DhcpAgentNotifyAPI,
+                               'notify') as dhcp_notifier:
+            if opname == 'create':
+                res = self.api.post_json(
+                    _get_path('networks'),
+                    initial_input)
+            if opname == 'update':
+                res = self.api.put_json(
+                    _get_path('networks', id=_uuid()),
+                    initial_input)
+                expected_code = exc.HTTPOk.code
+            if opname == 'delete':
+                res = self.api.delete(_get_path('networks', id=_uuid()))
+                expected_code = exc.HTTPNoContent.code
+            expected_item = mock.call(mock.ANY, mock.ANY,
+                                      resource + "." + opname + ".end")
+            if initial_input and resource not in initial_input:
+                resource += 's'
+            num = len(initial_input[resource]) if initial_input and isinstance(
+                initial_input[resource], list) else 1
+            expected = [expected_item for x in xrange(num)]
+            self.assertEqual(expected, dhcp_notifier.call_args_list)
+            self.assertEqual(num, dhcp_notifier.call_count)
+        self.assertEqual(expected_code, res.status_int)
+
+    def test_network_create_dhcp_notifer(self):
+        input = {'network': {'name': 'net',
+                             'tenant_id': _uuid()}}
+        self._test_dhcp_notifier('create', 'network', input)
+
+    def test_network_delete_dhcp_notifer(self):
+        self._test_dhcp_notifier('delete', 'network')
+
+    def test_network_update_dhcp_notifer(self):
+        input = {'network': {'name': 'net'}}
+        self._test_dhcp_notifier('update', 'network', input)
+
+    def test_networks_create_bulk_dhcp_notifer(self):
+        input = {'networks': [{'name': 'net1',
+                               'tenant_id': _uuid()},
+                              {'name': 'net2',
+                               'tenant_id': _uuid()}]}
+        self._test_dhcp_notifier('create', 'network', input)
 
 
 class QuotaTest(APIv2TestBase):
