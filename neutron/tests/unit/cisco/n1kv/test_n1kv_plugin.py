@@ -256,7 +256,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
                                     'segment_type': segment_type,
                                     'tenant_id': self.tenant_id}}
         if segment_type == 'vlan':
-            netp['network_profile']['segment_range'] = '100-200'
+            netp['network_profile']['segment_range'] = '100-180'
             netp['network_profile']['physical_network'] = 'phys1'
         elif segment_type == 'overlay':
             netp['network_profile']['segment_range'] = '10000-10010'
