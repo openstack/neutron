@@ -140,7 +140,7 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
             raise SystemExit(msg % conf.device_driver)
 
         self.agent_state = {
-            'binary': 'neutron-loadbalancer-agent',
+            'binary': 'neutron-lbaas-agent',
             'host': conf.host,
             'topic': plugin_driver.TOPIC_LOADBALANCER_AGENT,
             'configurations': {'device_driver': conf.device_driver,
