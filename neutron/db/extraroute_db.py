@@ -147,7 +147,7 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
 
     def _get_extra_routes_by_router_id(self, context, id):
         query = context.session.query(RouterRoute)
-        query.filter(RouterRoute.router_id == id)
+        query = query.filter_by(router_id=id)
         return self._make_extra_route_list(query)
 
     def get_router(self, context, id, fields=None):
