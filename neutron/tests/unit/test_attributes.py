@@ -397,6 +397,36 @@ class TestAttributes(base.BaseTestCase):
                                           None)
         self.assertIsNone(msg)
 
+        # Valid - uncompressed ipv6 address
+        cidr = "fe80:0:0:0:0:0:0:0/128"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        self.assertIsNone(msg)
+
+        # Valid - ipv6 address with multiple consecutive zero
+        cidr = "2001:0db8:0:0:1::1/128"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        self.assertIsNone(msg)
+
+        # Valid - ipv6 address with multiple consecutive zero
+        cidr = "2001:0db8::1:0:0:1/128"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        self.assertIsNone(msg)
+
+        # Valid - ipv6 address with multiple consecutive zero
+        cidr = "2001::0:1:0:0:1100/120"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        self.assertIsNone(msg)
+
+        # Valid - abbreviated ipv4 address
+        cidr = "10/24"
+        msg = attributes._validate_subnet(cidr,
+                                          None)
+        self.assertIsNone(msg)
+
         # Invalid - IPv4 missing mask
         cidr = "10.0.2.0"
         msg = attributes._validate_subnet(cidr,

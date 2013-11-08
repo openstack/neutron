@@ -531,10 +531,7 @@ class TestFirewallAttributeValidators(base.BaseTestCase):
         # Valid - IPv6 with final octets
         cidr = "fe80::0/24"
         msg = firewall._validate_ip_or_subnet_or_none(cidr, None)
-        self.assertEqual(msg, ("'%s' is not a valid IP address and "
-                               "'%s' isn't a recognized IP subnet cidr,"
-                               " 'fe80::/24' is recommended") % (cidr,
-                                                                 cidr))
+        self.assertIsNone(msg)
 
         cidr = "fe80::"
         msg = firewall._validate_ip_or_subnet_or_none(cidr, None)
