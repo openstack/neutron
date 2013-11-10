@@ -275,8 +275,8 @@ class OVSBridge(BaseOVS):
     def db_get_map(self, table, record, column):
         output = self.run_vsctl(["get", table, record, column])
         if output:
-            str = output.rstrip("\n\r")
-            return self.db_str_to_map(str)
+            output_str = output.rstrip("\n\r")
+            return self.db_str_to_map(output_str)
         return {}
 
     def db_get_val(self, table, record, column):
