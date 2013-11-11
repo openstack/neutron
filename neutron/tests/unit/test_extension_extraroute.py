@@ -144,6 +144,33 @@ class ExtraRouteDBTestCaseBase(object):
                     self._routes_update_cleanup(p['port']['id'],
                                                 None, r['router']['id'], [])
 
+    def test_routes_update_for_multiple_routers(self):
+        routes1 = [{'destination': '135.207.0.0/16',
+                   'nexthop': '10.0.0.3'}]
+        routes2 = [{'destination': '12.0.0.0/8',
+                   'nexthop': '10.0.0.4'}]
+        with contextlib.nested(
+                self.router(),
+                self.router(),
+                self.subnet(cidr='10.0.0.0/24')) as (r1, r2, s):
+            with contextlib.nested(
+                    self.port(subnet=s, no_delete=True),
+                    self.port(subnet=s, no_delete=True)) as (p1, p2):
+                body = self._routes_update_prepare(r1['router']['id'],
+                                                   None, p1['port']['id'],
+                                                   routes1)
+                self.assertEqual(body['router']['routes'], routes1)
+
+                body = self._routes_update_prepare(r2['router']['id'],
+                                                   None, p2['port']['id'],
+                                                   routes2)
+                self.assertEqual(body['router']['routes'], routes2)
+
+                self._routes_update_cleanup(p1['port']['id'],
+                                            None, r1['router']['id'], [])
+                self._routes_update_cleanup(p2['port']['id'],
+                                            None, r2['router']['id'], [])
+
     def test_router_update_delete_routes(self):
         routes_orig = [{'destination': '135.207.0.0/16',
                         'nexthop': '10.0.1.3'},
