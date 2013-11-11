@@ -124,10 +124,8 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
         try:
             vif_driver = importutils.import_object(conf.interface_driver, conf)
         except ImportError:
-            # the driver is optional
             msg = _('Error importing interface driver: %s')
             raise SystemExit(msg % conf.interface_driver)
-            vif_driver = None
 
         try:
             self.driver = importutils.import_object(
