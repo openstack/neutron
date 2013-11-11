@@ -18,9 +18,6 @@
 # @author: Salvatore Orlando, Nicira, Inc
 #
 
-import stubout
-
-import fixtures
 import mock
 from oslo.config import cfg
 from webob import exc
@@ -47,25 +44,6 @@ FAKE_FIP_INT_PORT_ID = _uuid()
 FAKE_FIP_INT_PORT_MAC = 'aa:aa:aa:aa:aa:aa'
 FAKE_ROUTER_PORT_ID = _uuid()
 FAKE_ROUTER_PORT_MAC = 'bb:bb:bb:bb:bb:bb'
-
-
-class StuboutFixture(fixtures.Fixture):
-    """Setup stubout and add unsetAll to cleanup."""
-
-    def setUp(self):
-        super(StuboutFixture, self).setUp()
-        self.stubs = stubout.StubOutForTesting()
-        self.addCleanup(self.stubs.UnsetAll)
-        self.addCleanup(self.stubs.SmartUnsetAll)
-
-
-def stubout_floating_ip_calls(stubs, fake_count=0):
-
-    def get_floatingips_count(_1, _2, filters):
-        return fake_count
-
-    stubs.Set(l3_db.L3_NAT_db_mixin, 'get_floatingips_count',
-              get_floatingips_count)
 
 
 class TestExtensionManager(object):
@@ -104,8 +82,6 @@ class TestL3GwModeMixin(base.BaseTestCase):
 
     def setUp(self):
         super(TestL3GwModeMixin, self).setUp()
-        stubout_fixture = self.useFixture(StuboutFixture())
-        self.stubs = stubout_fixture.stubs
         self.target_object = TestDbIntPlugin()
         # Patch the context
         ctx_patcher = mock.patch('neutron.context', autospec=True)

@@ -24,15 +24,16 @@ import os
 import eventlet.timeout
 import fixtures
 from oslo.config import cfg
-import stubout
 import testtools
-
-from neutron.common import exceptions
 
 
 CONF = cfg.CONF
 TRUE_STRING = ['True', '1']
 LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
+
+
+def fake_use_fatal_exceptions(*args):
+    return True
 
 
 class BaseTestCase(testtools.TestCase):
@@ -72,8 +73,9 @@ class BaseTestCase(testtools.TestCase):
         if os.environ.get('OS_STDERR_CAPTURE') in TRUE_STRING:
             stderr = self.useFixture(fixtures.StringStream('stderr')).stream
             self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
-        self.stubs = stubout.StubOutForTesting()
-        self.stubs.Set(exceptions, '_FATAL_EXCEPTION_FORMAT_ERRORS', True)
+        self.useFixture(fixtures.MonkeyPatch(
+            'neutron.common.exceptions.NeutronException.use_fatal_exceptions',
+            fake_use_fatal_exceptions))
 
     def config(self, **kw):
         """Override some configuration values.

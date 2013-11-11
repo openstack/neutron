@@ -19,8 +19,6 @@
 Neutron base exception handling.
 """
 
-_FATAL_EXCEPTION_FORMAT_ERRORS = False
-
 
 class NeutronException(Exception):
     """Base Neutron Exception.
@@ -36,7 +34,7 @@ class NeutronException(Exception):
             super(NeutronException, self).__init__(self.message % kwargs)
             self.msg = self.message % kwargs
         except Exception:
-            if _FATAL_EXCEPTION_FORMAT_ERRORS:
+            if self.use_fatal_exceptions():
                 raise
             else:
                 # at least get the core message out if something happened
@@ -44,6 +42,9 @@ class NeutronException(Exception):
 
     def __unicode__(self):
         return unicode(self.msg)
+
+    def use_fatal_exceptions(self):
+        return False
 
 
 class BadRequest(NeutronException):
