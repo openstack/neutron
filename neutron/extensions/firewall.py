@@ -283,16 +283,16 @@ RESOURCE_ATTRIBUTE_MAP = {
 firewall_quota_opts = [
     cfg.IntOpt('quota_firewall',
                default=1,
-               help=_('Number of firewalls allowed per tenant, -1 for '
-                      'unlimited')),
+               help=_('Number of firewalls allowed per tenant. '
+                      'A negative value means unlimited.')),
     cfg.IntOpt('quota_firewall_policy',
                default=1,
-               help=_('Number of firewall policies allowed per tenant, -1 '
-                      'for unlimited')),
+               help=_('Number of firewall policies allowed per tenant. '
+                      'A negative value means unlimited.')),
     cfg.IntOpt('quota_firewall_rule',
                default=-1,
-               help=_('Number of firewall rules allowed per tenant, -1 '
-                      'for unlimited')),
+               help=_('Number of firewall rules allowed per tenant. '
+                      'A negative value means unlimited.')),
 ]
 cfg.CONF.register_opts(firewall_quota_opts, 'QUOTAS')
 
