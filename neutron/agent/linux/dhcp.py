@@ -29,6 +29,7 @@ from oslo.config import cfg
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import constants
 from neutron.common import exceptions
 from neutron.openstack.common import importutils
 from neutron.openstack.common import jsonutils
@@ -445,12 +446,8 @@ class Dnsmasq(DhcpLocalProcess):
                     host_routes.append("%s,%s" % (hr.destination, hr.nexthop))
 
             # Add host routes for isolated network segments
-            enable_metadata = (
-                self.conf.enable_isolated_metadata
-                and not subnet.gateway_ip
-                and subnet.ip_version == 4)
 
-            if enable_metadata:
+            if self._enable_metadata(subnet):
                 subnet_dhcp_ip = subnet_to_interface_ip[subnet.id]
                 host_routes.append(
                     '%s/32,%s' % (METADATA_DEFAULT_IP, subnet_dhcp_ip)
@@ -518,6 +515,25 @@ class Dnsmasq(DhcpLocalProcess):
             option = 'option:%s' % option
 
         return ','.join((set_tag + tag, '%s' % option) + args)
+
+    def _enable_metadata(self, subnet):
+        '''Determine if the metadata route will be pushed to hosts on subnet.
+
+        If subnet has a Neutron router attached, we want the hosts to get
+        metadata from the router's proxy via their default route instead.
+        '''
+        if self.conf.enable_isolated_metadata and subnet.ip_version == 4:
+            if subnet.gateway_ip is None:
+                return True
+            else:
+                for port in self.network.ports:
+                    if port.device_owner == constants.DEVICE_OWNER_ROUTER_INTF:
+                        for alloc in port.fixed_ips:
+                            if alloc.subnet_id == subnet.id:
+                                return False
+                return True
+        else:
+            return False
 
     @classmethod
     def lease_update(cls):
