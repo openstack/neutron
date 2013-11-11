@@ -81,6 +81,51 @@ class TestMidonetL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase,
     def test_floatingip_with_invalid_create_port(self):
         self._test_floatingip_with_invalid_create_port(MIDONET_PLUGIN_NAME)
 
+    def test_floatingip_assoc_no_port(self):
+        with self.subnet(cidr='200.0.0.0/24') as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            res = super(TestMidonetL3NatTestCase, self)._create_floatingip(
+                self.fmt, public_sub['subnet']['network_id'])
+            # Cleanup
+            floatingip = self.deserialize(self.fmt, res)
+            self._delete('floatingips', floatingip['floatingip']['id'])
+        self.assertFalse(self.instance.return_value.add_static_nat.called)
+
+    def test_floatingip_assoc_with_port(self):
+        with self.subnet(cidr='200.0.0.0/24') as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            with self.port() as private_port:
+                with self.router() as r:
+                    # We need to hook up the private subnet to the external
+                    # network in order to associate the fip.
+                    sid = private_port['port']['fixed_ips'][0]['subnet_id']
+                    private_sub = {'subnet': {'id': sid}}
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        public_sub['subnet']['network_id'])
+                    self._router_interface_action('add', r['router']['id'],
+                                                  private_sub['subnet']['id'],
+                                                  None)
+
+                    # Create the fip.
+                    res = super(TestMidonetL3NatTestCase,
+                                self)._create_floatingip(
+                                    self.fmt,
+                                    public_sub['subnet']['network_id'],
+                                    port_id=private_port['port']['id'])
+
+                    # Cleanup the resources used for the test
+                    floatingip = self.deserialize(self.fmt, res)
+                    self._delete('floatingips', floatingip['floatingip']['id'])
+                    self._remove_external_gateway_from_router(
+                        r['router']['id'],
+                        public_sub['subnet']['network_id'])
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  private_sub['subnet']['id'],
+                                                  None)
+        self.assertTrue(self.instance.return_value.add_static_nat.called)
+
 
 class TestMidonetSecurityGroupsTestCase(sg.SecurityGroupDBTestCase):
 
