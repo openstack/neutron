@@ -380,15 +380,17 @@ class Dnsmasq(DhcpLocalProcess):
             utils.execute(cmd, self.root_helper)
 
     def release_lease(self, mac_address, removed_ips):
+        pass
+
+    def _release_lease(self, mac_address, ip):
         """Release a DHCP lease."""
-        for ip in removed_ips or []:
-            cmd = ['dhcp_release', self.interface_name, ip, mac_address]
-            if self.network.namespace:
-                ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                              self.network.namespace)
-                ip_wrapper.netns.execute(cmd)
-            else:
-                utils.execute(cmd, self.root_helper)
+        cmd = ['dhcp_release', self.interface_name, ip, mac_address]
+        if self.network.namespace:
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                          self.network.namespace)
+            ip_wrapper.netns.execute(cmd)
+        else:
+            utils.execute(cmd, self.root_helper)
 
     def reload_allocations(self):
         """Rebuild the dnsmasq config and signal the dnsmasq to reload."""
@@ -400,6 +402,7 @@ class Dnsmasq(DhcpLocalProcess):
                         'turned off DHCP: %s'), self.network.id)
             return
 
+        self._release_unused_leases()
         self._output_hosts_file()
         self._output_opts_file()
         if self.active:
@@ -434,6 +437,27 @@ class Dnsmasq(DhcpLocalProcess):
         name = self.get_conf_file_name('host')
         utils.replace_file(name, buf.getvalue())
         return name
+
+    def _read_hosts_file_leases(self, filename):
+        leases = set()
+        if os.path.exists(filename):
+            with open(filename) as f:
+                for l in f.readlines():
+                    host = l.strip().split(',')
+                    leases.add((host[2], host[0]))
+        return leases
+
+    def _release_unused_leases(self):
+        filename = self.get_conf_file_name('host')
+        old_leases = self._read_hosts_file_leases(filename)
+
+        new_leases = set()
+        for port in self.network.ports:
+            for alloc in port.fixed_ips:
+                new_leases.add((alloc.ip_address, port.mac_address))
+
+        for ip, mac in old_leases - new_leases:
+            self._release_lease(mac, ip)
 
     def _output_opts_file(self):
         """Write a dnsmasq compatible options file."""
