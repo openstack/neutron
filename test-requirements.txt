@@ -1,4 +1,4 @@
-hacking>=0.5.6,<0.8
+hacking>=0.8.0,<0.9
 
 cliff>=1.4.3
 coverage>=3.6
