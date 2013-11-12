@@ -18,6 +18,8 @@ import threading
 import jsonrpclib
 from oslo.config import cfg
 
+from neutron.common import constants as n_const
+from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api
@@ -73,7 +75,7 @@ class AristaRPCWrapper(object):
         :param port_name: Name of the port - for display purposes
         :param device_owner: Device owner - e.g. compute or network:dhcp
         """
-        if device_owner == 'network:dhcp':
+        if device_owner == n_const.DEVICE_OWNER_DHCP:
             self.plug_dhcp_port_into_network(vm_id,
                                              host_id,
                                              port_id,
@@ -263,8 +265,8 @@ class AristaRPCWrapper(object):
         """
         cmds = ['auth url %s user %s password %s' %
                 (self._keystone_url(),
-                 self.keystone_conf.admin_user,
-                 self.keystone_conf.admin_password)]
+                self.keystone_conf.admin_user,
+                self.keystone_conf.admin_password)]
 
         self._run_openstack_cmds(cmds)
 
@@ -609,7 +611,7 @@ class AristaDriver(driver_api.MechanismDriver):
         port = context.current
         device_id = port['device_id']
         device_owner = port['device_owner']
-        host = port['binding:host_id']
+        host = port[portbindings.HOST_ID]
 
         # device_id and device_owner are set on VM boot
         is_vm_boot = device_id and device_owner
@@ -630,7 +632,7 @@ class AristaDriver(driver_api.MechanismDriver):
         port = context.current
         device_id = port['device_id']
         device_owner = port['device_owner']
-        host = port['binding:host_id']
+        host = port[portbindings.HOST_ID]
 
         # device_id and device_owner are set on VM boot
         is_vm_boot = device_id and device_owner
@@ -666,8 +668,9 @@ class AristaDriver(driver_api.MechanismDriver):
                     LOG.info(msg)
 
     def update_port_precommit(self, context):
-        """At the moment we only support port name change.
+        """Update the name of a given port.
 
+        At the moment we only support port name change.
         Any other change to port is not supported at this time.
         We do not store the port names, therefore, no DB store
         action is performed here.
@@ -679,8 +682,9 @@ class AristaDriver(driver_api.MechanismDriver):
             LOG.info(msg)
 
     def update_port_postcommit(self, context):
-        """At the moment we only support port name change
+        """Update the name of a given port in EOS.
 
+        At the moment we only support port name change
         Any other change to port is not supported at this time.
         """
         port = context.current
@@ -691,7 +695,7 @@ class AristaDriver(driver_api.MechanismDriver):
 
         device_id = port['device_id']
         device_owner = port['device_owner']
-        host = port['binding:host_id']
+        host = port[portbindings.HOST_ID]
         is_vm_boot = device_id and device_owner
 
         if host and is_vm_boot:
@@ -732,7 +736,7 @@ class AristaDriver(driver_api.MechanismDriver):
         """Delete information about a VM and host from the DB."""
         port = context.current
 
-        host_id = port['binding:host_id']
+        host_id = port[portbindings.HOST_ID]
         device_id = port['device_id']
         tenant_id = port['tenant_id']
         network_id = port['network_id']
@@ -753,7 +757,7 @@ class AristaDriver(driver_api.MechanismDriver):
         """
         port = context.current
         device_id = port['device_id']
-        host = port['binding:host_id']
+        host = port[portbindings.HOST_ID]
         port_id = port['id']
         network_id = port['network_id']
         tenant_id = port['tenant_id']
@@ -762,7 +766,7 @@ class AristaDriver(driver_api.MechanismDriver):
         try:
             with self.eos_sync_lock:
                 hostname = self._host_name(host)
-                if device_owner == 'network:dhcp':
+                if device_owner == n_const.DEVICE_OWNER_DHCP:
                     self.rpc.unplug_dhcp_port_from_network(device_id,
                                                            hostname,
                                                            port_id,
