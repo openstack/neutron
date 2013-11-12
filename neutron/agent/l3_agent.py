@@ -180,6 +180,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                           "by the agents.")),
         cfg.BoolOpt('enable_metadata_proxy', default=True,
                     help=_("Allow running metadata proxy.")),
+        cfg.BoolOpt('router_delete_namespaces', default=False,
+                    help=_("Delete namespace after removing a router.")),
         cfg.StrOpt('metadata_proxy_socket',
                    default='$state_path/metadata_proxy',
                    help=_('Location of Metadata Proxy UNIX domain '
@@ -272,7 +274,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                                    bridge=self.conf.external_network_bridge,
                                    namespace=namespace,
                                    prefix=EXTERNAL_DEV_PREFIX)
-        #TODO(garyk) Address the failure for the deletion of the namespace
+
+        if self.conf.router_delete_namespaces:
+            try:
+                ns_ip.netns.delete(namespace)
+            except RuntimeError:
+                msg = _('Failed trying to delete namespace: %s')
+                LOG.exception(msg % namespace)
 
     def _create_router_namespace(self, ri):
             ip_wrapper_root = ip_lib.IPWrapper(self.root_helper)
