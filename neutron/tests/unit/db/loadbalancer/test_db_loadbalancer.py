@@ -35,6 +35,9 @@ from neutron.plugins.common import constants
 from neutron.services.loadbalancer import (
     plugin as loadbalancer_plugin
 )
+from neutron.services.loadbalancer.drivers import (
+    abstract_driver
+)
 from neutron.services import provider_configuration as pconf
 from neutron.tests.unit import test_db_plugin
 
@@ -46,6 +49,8 @@ DB_LB_PLUGIN_KLASS = (
     "neutron.services.loadbalancer."
     "plugin.LoadBalancerPlugin"
 )
+NOOP_DRIVER_KLASS = ('neutron.tests.unit.db.loadbalancer.test_db_loadbalancer.'
+                     'NoopLbaaSDriver')
 ROOTDIR = os.path.dirname(__file__) + '../../../..'
 ETCDIR = os.path.join(ROOTDIR, 'etc')
 
@@ -56,6 +61,61 @@ _subnet_id = "0c798ed8-33ba-11e2-8b28-000c291c4d14"
 
 def etcdir(*p):
     return os.path.join(ETCDIR, *p)
+
+
+class NoopLbaaSDriver(abstract_driver.LoadBalancerAbstractDriver):
+    """A dummy lbass driver that that only performs object deletion."""
+
+    def __init__(self, plugin):
+        self.plugin = plugin
+
+    def create_vip(self, context, vip):
+        pass
+
+    def update_vip(self, context, old_vip, vip):
+        pass
+
+    def delete_vip(self, context, vip):
+        self.plugin._delete_db_vip(context, vip["id"])
+
+    def create_pool(self, context, pool):
+        pass
+
+    def update_pool(self, context, old_pool, pool):
+        pass
+
+    def delete_pool(self, context, pool):
+        self.plugin._delete_db_pool(context, pool["id"])
+
+    def stats(self, context, pool_id):
+        return {"bytes_in": 0,
+                "bytes_out": 0,
+                "active_connections": 0,
+                "total_connections": 0}
+
+    def create_member(self, context, member):
+        pass
+
+    def update_member(self, context, old_member, member):
+        pass
+
+    def delete_member(self, context, member):
+        self.plugin._delete_db_member(context, member["id"])
+
+    def update_health_monitor(self, context, old_health_monitor,
+                              health_monitor,
+                              pool_association):
+        pass
+
+    def create_pool_health_monitor(self, context,
+                                   health_monitor, pool_id):
+        pass
+
+    def delete_pool_health_monitor(self, context, health_monitor, pool_id):
+        self.plugin._delete_db_pool_health_monitor(
+            context, health_monitor["id"],
+            pool_id
+        )
 
 
 class LoadBalancerTestMixin(object):
@@ -265,8 +325,7 @@ class LoadBalancerPluginDbTestCase(LoadBalancerTestMixin,
         if not lbaas_provider:
             lbaas_provider = (
                 constants.LOADBALANCER +
-                ':lbaas:neutron.services.loadbalancer.'
-                'drivers.noop.noop_driver.NoopLbaaSDriver:default')
+                ':lbaas:' + NOOP_DRIVER_KLASS + ':default')
         cfg.CONF.set_override('service_provider',
                               [lbaas_provider],
                               'service_providers')
@@ -584,8 +643,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
     def _create_pool_directly_via_plugin(self, provider_name):
         #default provider will be haproxy
         prov1 = (constants.LOADBALANCER +
-                 ':lbaas:neutron.services.loadbalancer.'
-                 'drivers.noop.noop_driver.NoopLbaaSDriver')
+                 ':lbaas:' + NOOP_DRIVER_KLASS)
         prov2 = (constants.LOADBALANCER +
                  ':haproxy:neutron.services.loadbalancer.'
                  'drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver'
@@ -1461,9 +1519,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             #removing driver
             cfg.CONF.set_override('service_provider',
                                   [constants.LOADBALANCER +
-                                   ':lbaas1:neutron.services.loadbalancer.'
-                                   'drivers.noop.noop_driver.'
-                                   'NoopLbaaSDriver:default'],
+                                   ':lbaas1:' + NOOP_DRIVER_KLASS +
+                                   ':default'],
                                   'service_providers')
             sdb.ServiceTypeManager._instance = None
             # calling _remove_orphan... in constructor
