@@ -106,6 +106,13 @@ CISCO_PLUGINS = cfg.CONF.CISCO_PLUGINS
 #
 device_dictionary = {}
 
+#
+# first_device_ip - IP address of first switch discovered in config
+#
+# Used for SVI placement when round-robin placement is disabled
+#
+first_device_ip = None
+
 
 class CiscoConfigOptions():
     """Cisco Configuration Options Class."""
@@ -119,17 +126,22 @@ class CiscoConfigOptions():
         device supported sections. Ex. NEXUS_SWITCH, N1KV.
         """
 
+        global first_device_ip
+
         multi_parser = cfg.MultiConfigParser()
         read_ok = multi_parser.read(CONF.config_file)
 
         if len(read_ok) != len(CONF.config_file):
             raise cfg.Error(_("Some config files were not parsed properly"))
 
+        first_device_ip = None
         for parsed_file in multi_parser.parsed:
             for parsed_item in parsed_file.keys():
                 dev_id, sep, dev_ip = parsed_item.partition(':')
                 if dev_id.lower() in ['nexus_switch', 'n1kv']:
                     for dev_key, value in parsed_file[parsed_item].items():
+                        if dev_ip and not first_device_ip:
+                            first_device_ip = dev_ip
                         device_dictionary[dev_id, dev_ip, dev_key] = value[0]
 
 

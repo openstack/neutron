@@ -127,6 +127,12 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         super(CiscoNetworkPluginV2TestCase, self).setUp(CORE_PLUGIN)
         self.port_create_status = 'DOWN'
 
+        # Set Cisco config module's first configured Nexus IP address.
+        # Used for SVI placement when round-robin placement is disabled.
+        mock.patch.object(cisco_config, 'first_device_ip',
+                          new=NEXUS_IP_ADDR).start()
+        self.addCleanup(mock.patch.stopall)
+
     def _get_plugin_ref(self):
         plugin_obj = NeutronManager.get_plugin()
         if getattr(plugin_obj, "_master"):

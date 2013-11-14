@@ -14,11 +14,14 @@
 #    under the License.
 
 import collections
+import mock
 import testtools
 
 from neutron.db import api as db
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
+from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import nexus_db_v2 as nxdb
+from neutron.plugins.cisco.nexus import cisco_nexus_plugin_v2
 from neutron.tests import base
 
 
@@ -165,6 +168,52 @@ class CiscoNexusDbTest(base.BaseTestCase):
         self._add_to_db([npbr2])
         npb_svi = nxdb.get_nexussvi_bindings()
         self.assertEqual(len(npb_svi), 2)
+
+    def test_nexussviswitch_find(self):
+        """Test Nexus switch selection for SVI placement."""
+        # Configure 2 Nexus switches
+        nexus_switches = {
+            ('1.1.1.1', 'username'): 'admin',
+            ('1.1.1.1', 'password'): 'password1',
+            ('1.1.1.1', 'host1'): '1/1',
+            ('2.2.2.2', 'username'): 'admin',
+            ('2.2.2.2', 'password'): 'password2',
+            ('2.2.2.2', 'host2'): '1/1',
+        }
+        nexus_plugin = cisco_nexus_plugin_v2.NexusPlugin()
+        nexus_plugin._client = mock.Mock()
+        nexus_plugin._client.nexus_switches = nexus_switches
+
+        # Set the Cisco config module's first configured device IP address
+        # according to the preceding switch config
+        with mock.patch.object(config, 'first_device_ip', new='1.1.1.1'):
+
+            # Enable round-robin mode with no SVIs configured on any of the
+            # Nexus switches (i.e. no entries in the SVI database). The
+            # plugin should select the first switch in the configuration.
+            config.CONF.set_override('svi_round_robin', True, 'CISCO')
+            switch_ip = nexus_plugin._find_switch_for_svi()
+            self.assertEqual(switch_ip, '1.1.1.1')
+
+            # Keep round-robin mode enabled, and add entries to the SVI
+            # database. The plugin should select the switch with the least
+            # number of entries in the SVI database.
+            vlan = 100
+            npbr11 = self._npb_test_obj('router', vlan, switch='1.1.1.1',
+                                        instance='instance11')
+            npbr12 = self._npb_test_obj('router', vlan, switch='1.1.1.1',
+                                        instance='instance12')
+            npbr21 = self._npb_test_obj('router', vlan, switch='2.2.2.2',
+                                        instance='instance21')
+            self._add_to_db([npbr11, npbr12, npbr21])
+            switch_ip = nexus_plugin._find_switch_for_svi()
+            self.assertEqual(switch_ip, '2.2.2.2')
+
+            # Disable round-robin mode. The plugin should select the
+            # first switch in the configuration.
+            config.CONF.clear_override('svi_round_robin', 'CISCO')
+            switch_ip = nexus_plugin._find_switch_for_svi()
+            self.assertEqual(switch_ip, '1.1.1.1')
 
     def test_nexusbinding_update(self):
         npb11 = self._npb_test_obj(10, 100, switch='1.1.1.1', instance='test')

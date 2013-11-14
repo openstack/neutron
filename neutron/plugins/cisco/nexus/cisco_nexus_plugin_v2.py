@@ -228,15 +228,14 @@ class NexusPlugin(L2DevicePluginBase):
                         switch_dict[switch_ip] += 1
                 # Search for the lowest value in the dict
                 if switch_dict:
-                    switch_ip = min(switch_dict.items(), key=switch_dict.get)
-                    return switch_ip[0]
+                    switch_ip = min(switch_dict, key=switch_dict.get)
+                    return switch_ip
             except cisco_exc.NexusPortBindingNotFound:
                 pass
 
         LOG.debug(_("No round robin or zero weights, using first switch"))
         # Return the first switch in the config
-        for switch_ip, attr in nexus_switches:
-            return switch_ip
+        return conf.first_device_ip
 
     def delete_network(self, tenant_id, net_id, **kwargs):
         """Delete network.
