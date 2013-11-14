@@ -182,6 +182,7 @@ class TestCiscoNexusDevice(base.BaseTestCase):
         port_context = FakePortContext(instance_id, host_name,
                                        network_context)
 
+        self._cisco_mech_driver.update_port_precommit(port_context)
         self._cisco_mech_driver.update_port_postcommit(port_context)
         bindings = nexus_db_v2.get_nexusport_binding(nexus_port,
                                                      vlan_id,
@@ -190,6 +191,7 @@ class TestCiscoNexusDevice(base.BaseTestCase):
         self.assertEqual(len(bindings), 1)
 
         self._cisco_mech_driver.delete_port_precommit(port_context)
+        self._cisco_mech_driver.delete_port_postcommit(port_context)
         with testtools.ExpectedException(exceptions.NexusPortBindingNotFound):
             nexus_db_v2.get_nexusport_binding(nexus_port,
                                               vlan_id,
