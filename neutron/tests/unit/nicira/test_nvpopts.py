@@ -43,7 +43,6 @@ class NVPClusterTest(testtools.TestCase):
     cluster_opts = {'default_tz_uuid': uuidutils.generate_uuid(),
                     'default_l2_gw_service_uuid': uuidutils.generate_uuid(),
                     'default_l2_gw_service_uuid': uuidutils.generate_uuid(),
-                    'nvp_cluster_uuid': uuidutils.generate_uuid(),
                     'nvp_user': 'foo',
                     'nvp_password': 'bar',
                     'req_timeout': 45,
@@ -128,7 +127,6 @@ class ConfigurationTest(testtools.TestCase):
         self.assertEqual('stt', cfg.CONF.NVP.default_transport_type)
 
         self.assertIsNone(cfg.CONF.default_tz_uuid)
-        self.assertIsNone(cfg.CONF.nvp_cluster_uuid)
         self.assertEqual('admin', cfg.CONF.nvp_user)
         self.assertEqual('admin', cfg.CONF.nvp_password)
         self.assertEqual(30, cfg.CONF.req_timeout)
