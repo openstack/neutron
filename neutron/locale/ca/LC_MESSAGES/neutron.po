@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-30 06:33+0000\n"
+"POT-Creation-Date: 2013-11-15 06:39+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan "
@@ -25,7 +25,7 @@ msgid ""
 msgstr ""
 
 #: neutron/auth.py:36
-msgid "Neither X_USER_ID nor X_USER found in request"
+msgid "X_USER_ID is not found in request"
 msgstr ""
 
 #: neutron/context.py:49
@@ -214,187 +214,191 @@ msgid "Seconds between running periodic tasks"
 msgstr ""
 
 #: neutron/service.py:41
+msgid "Number of separate worker processes for service"
+msgstr ""
+
+#: neutron/service.py:44
 msgid ""
 "Range of seconds to randomly delay when starting the periodic task "
 "scheduler to reduce stampeding. (Disable by setting to 0)"
 msgstr ""
 
-#: neutron/service.py:98
+#: neutron/service.py:101
 msgid "Error occurred: trying old api-paste.ini."
 msgstr ""
 
-#: neutron/service.py:102
+#: neutron/service.py:105
 msgid "Unrecoverable error: please check log for details."
 msgstr ""
 
-#: neutron/service.py:111
+#: neutron/service.py:114
 msgid "No known API applications configured."
 msgstr ""
 
-#: neutron/service.py:117
+#: neutron/service.py:121
 #, python-format
 msgid "Neutron service started, listening on %(host)s:%(port)s"
 msgstr ""
 
-#: neutron/service.py:218
+#: neutron/service.py:222
 msgid "Exception occurs when timer stops"
 msgstr ""
 
-#: neutron/service.py:228
+#: neutron/service.py:232
 msgid "Exception occurs when waiting for timer"
 msgstr ""
 
-#: neutron/wsgi.py:49
+#: neutron/wsgi.py:51
 msgid "Number of backlog requests to configure the socket with"
 msgstr ""
 
-#: neutron/wsgi.py:53
+#: neutron/wsgi.py:55
 msgid ""
 "Sets the value of TCP_KEEPIDLE in seconds for each server socket. Not "
 "supported on OS X."
 msgstr ""
 
-#: neutron/wsgi.py:57
+#: neutron/wsgi.py:59
 msgid "Number of seconds to keep retrying to listen"
 msgstr ""
 
-#: neutron/wsgi.py:60
+#: neutron/wsgi.py:62
 msgid "Enable SSL on the API server"
 msgstr ""
 
-#: neutron/wsgi.py:63
+#: neutron/wsgi.py:65
 msgid "CA certificate file to use to verify connecting clients"
 msgstr ""
 
-#: neutron/wsgi.py:67
+#: neutron/wsgi.py:69
 msgid "Certificate file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:71
+#: neutron/wsgi.py:73
 msgid "Private key file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:107
+#: neutron/wsgi.py:136
 #, python-format
 msgid "Unable to listen on %(host)s:%(port)s"
 msgstr ""
 
-#: neutron/wsgi.py:113
+#: neutron/wsgi.py:142
 #, python-format
 msgid "Unable to find ssl_cert_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:117
+#: neutron/wsgi.py:146
 #, python-format
 msgid "Unable to find ssl_key_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:122
+#: neutron/wsgi.py:151
 #, python-format
 msgid "Unable to find ssl_ca_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:154
+#: neutron/wsgi.py:183
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: neutron/wsgi.py:297
+#: neutron/wsgi.py:340
 msgid "Missing Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:486
+#: neutron/wsgi.py:529
 #, python-format
 msgid "Data %(data)s type is %(type)s"
 msgstr ""
 
-#: neutron/wsgi.py:569
+#: neutron/wsgi.py:612
 msgid "Cannot understand JSON"
 msgstr ""
 
-#: neutron/wsgi.py:582 neutron/wsgi.py:585
+#: neutron/wsgi.py:625 neutron/wsgi.py:628
 msgid "Inline DTD forbidden"
 msgstr ""
 
-#: neutron/wsgi.py:665
+#: neutron/wsgi.py:708
 msgid "Cannot understand XML"
 msgstr ""
 
-#: neutron/wsgi.py:776
+#: neutron/wsgi.py:819
 msgid "Unrecognized Content-Type provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:780
+#: neutron/wsgi.py:823
 msgid "No Content-Type provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:784
+#: neutron/wsgi.py:827
 msgid "Empty body provided in request"
 msgstr ""
 
-#: neutron/wsgi.py:790
+#: neutron/wsgi.py:833
 msgid "Unable to deserialize body as provided Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:886
+#: neutron/wsgi.py:929
 msgid "You must implement __call__"
 msgstr ""
 
-#: neutron/wsgi.py:979 neutron/api/v2/base.py:173 neutron/api/v2/base.py:295
+#: neutron/wsgi.py:1022 neutron/api/v2/base.py:173 neutron/api/v2/base.py:295
 #: neutron/api/v2/base.py:428 neutron/api/v2/base.py:479
 #: neutron/extensions/l3agentscheduler.py:51
 #: neutron/extensions/l3agentscheduler.py:89
 msgid "The resource could not be found."
 msgstr ""
 
-#: neutron/wsgi.py:1026
+#: neutron/wsgi.py:1069
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr ""
 
-#: neutron/wsgi.py:1032
+#: neutron/wsgi.py:1075
 msgid "Unsupported Content-Type"
 msgstr ""
 
-#: neutron/wsgi.py:1033
+#: neutron/wsgi.py:1076
 #, python-format
 msgid "InvalidContentType: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1037
+#: neutron/wsgi.py:1080
 msgid "Malformed request body"
 msgstr ""
 
-#: neutron/wsgi.py:1038
+#: neutron/wsgi.py:1081
 #, python-format
 msgid "MalformedRequestBody: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1045
+#: neutron/wsgi.py:1088
 #, python-format
 msgid "HTTP exception thrown: %s"
 msgstr ""
 
-#: neutron/wsgi.py:1050
+#: neutron/wsgi.py:1093
 msgid "Internal error"
 msgstr ""
 
-#: neutron/wsgi.py:1065 neutron/wsgi.py:1167
+#: neutron/wsgi.py:1108 neutron/wsgi.py:1210
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr ""
 
-#: neutron/wsgi.py:1068
+#: neutron/wsgi.py:1111
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr ""
 
-#: neutron/wsgi.py:1186
+#: neutron/wsgi.py:1229
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr ""
 
-#: neutron/wsgi.py:1245
+#: neutron/wsgi.py:1288
 msgid "Could not deserialize data"
 msgstr ""
 
@@ -483,13 +487,13 @@ msgstr ""
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:181
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:240
-#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:181
+#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:179
 #: neutron/services/metering/agents/metering_agent.py:273
 msgid "Failed reporting state!"
 msgstr ""
 
 #: neutron/agent/dhcp_agent.py:573 neutron/agent/l3_agent.py:861
-#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:281
+#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:279
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -499,7 +503,7 @@ msgstr ""
 msgid "Name of bridge used for external network traffic."
 msgstr ""
 
-#: neutron/agent/l3_agent.py:159 neutron/agent/linux/dhcp.py:58
+#: neutron/agent/l3_agent.py:159 neutron/agent/linux/dhcp.py:59
 #: neutron/debug/debug_agent.py:45
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:39
 msgid "The driver used to manage the virtual interface."
@@ -538,7 +542,7 @@ msgstr ""
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:231 neutron/agent/linux/dhcp.py:556
+#: neutron/agent/l3_agent.py:231 neutron/agent/linux/dhcp.py:572
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:98
 msgid "An interface driver must be specified"
 msgstr ""
@@ -768,16 +772,18 @@ msgid "Root helper application."
 msgstr ""
 
 #: neutron/agent/common/config.py:36
-msgid "Seconds between nodes reporting state to server"
+msgid ""
+"Seconds between nodes reporting state to server; should be less than "
+"agent_down_time, best if it is half or less than agent_down_time."
 msgstr ""
 
-#: neutron/agent/common/config.py:84
+#: neutron/agent/common/config.py:86
 msgid ""
 "DEFAULT.root_helper is deprecated! Please move root_helper configuration "
 "to [AGENT] section."
 msgstr ""
 
-#: neutron/agent/common/config.py:95
+#: neutron/agent/common/config.py:97
 msgid "Top-level directory for maintaining dhcp state"
 msgstr ""
 
@@ -845,101 +851,101 @@ msgstr ""
 msgid "Pidfile %s already exist. Daemon already running?"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:43
+#: neutron/agent/linux/dhcp.py:44
 msgid "Location to store DHCP server config files"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:46
+#: neutron/agent/linux/dhcp.py:47
 msgid "Domain to use for building the hostnames"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:49
+#: neutron/agent/linux/dhcp.py:50
 msgid "Override the default dnsmasq settings with this file"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:51
+#: neutron/agent/linux/dhcp.py:52
 msgid "Use another DNS server before any in /etc/resolv.conf."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:56
+#: neutron/agent/linux/dhcp.py:57
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:185
+#: neutron/agent/linux/dhcp.py:186
 #, python-format
 msgid "DHCP for %(net_id)s pid %(pid)d is stale, ignoring command"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:188
+#: neutron/agent/linux/dhcp.py:189
 #, python-format
 msgid "No DHCP started for %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:210 neutron/agent/linux/external_process.py:84
+#: neutron/agent/linux/dhcp.py:211 neutron/agent/linux/external_process.py:84
 #, python-format
 msgid "Error while reading %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:217 neutron/agent/linux/external_process.py:92
+#: neutron/agent/linux/dhcp.py:218 neutron/agent/linux/external_process.py:92
 #, python-format
 msgid "Unable to convert value in %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:219 neutron/agent/linux/external_process.py:90
+#: neutron/agent/linux/dhcp.py:220 neutron/agent/linux/external_process.py:90
 #, python-format
 msgid "Unable to access %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:280
+#: neutron/agent/linux/dhcp.py:281
 #, python-format
 msgid ""
 "FAILED VERSION REQUIREMENT FOR DNSMASQ. DHCP AGENT MAY NOT RUN CORRECTLY!"
 " Please ensure that its version is %s or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:285
+#: neutron/agent/linux/dhcp.py:286
 #, python-format
 msgid ""
 "Unable to determine dnsmasq version. Please ensure that its version is %s"
 " or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:385
+#: neutron/agent/linux/dhcp.py:386
 #, python-format
 msgid "Killing dhcpmasq for network since all subnets have turned off DHCP: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:395
+#: neutron/agent/linux/dhcp.py:396
 #, python-format
 msgid "Pid %d is stale, relaunching dnsmasq"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:396
+#: neutron/agent/linux/dhcp.py:397
 #, python-format
 msgid "Reloading allocations for network: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:563
+#: neutron/agent/linux/dhcp.py:579
 #, python-format
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:612
+#: neutron/agent/linux/dhcp.py:628
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:622
+#: neutron/agent/linux/dhcp.py:638
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:663
+#: neutron/agent/linux/dhcp.py:679
 #, python-format
 msgid "DHCP port %(device_id)s on network %(network_id)s does not yet exist."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:699 neutron/debug/debug_agent.py:75
+#: neutron/agent/linux/dhcp.py:715 neutron/debug/debug_agent.py:75
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
@@ -1389,17 +1395,12 @@ msgstr ""
 msgid "Loaded extension: %s"
 msgstr ""
 
-#: neutron/api/extensions.py:570
-#, python-format
-msgid "Found duplicate extension: %s"
-msgstr ""
-
-#: neutron/api/extensions.py:598
+#: neutron/api/extensions.py:597
 #, python-format
 msgid "Extension %s not supported by any of loaded plugins"
 msgstr ""
 
-#: neutron/api/extensions.py:609
+#: neutron/api/extensions.py:608
 #, python-format
 msgid "Loaded plugins do not implement extension %s interface"
 msgstr ""
@@ -1479,7 +1480,7 @@ msgstr ""
 msgid "'%s' is not a valid boolean value"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:113 neutron/api/v2/attributes.py:414
+#: neutron/api/v2/attributes.py:113 neutron/api/v2/attributes.py:413
 #, python-format
 msgid "'%s' is not an integer"
 msgstr ""
@@ -1549,67 +1550,67 @@ msgstr ""
 msgid "Duplicate hostroute '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:272 neutron/tests/unit/test_attributes.py:404
-#: neutron/tests/unit/test_attributes.py:413
-#: neutron/tests/unit/test_attributes.py:422
-#: neutron/tests/unit/test_attributes.py:431
+#: neutron/api/v2/attributes.py:271 neutron/tests/unit/test_attributes.py:434
+#: neutron/tests/unit/test_attributes.py:443
+#: neutron/tests/unit/test_attributes.py:452
+#: neutron/tests/unit/test_attributes.py:461
 #, python-format
 msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:278
+#: neutron/api/v2/attributes.py:277
 #, python-format
 msgid "'%s' is not a valid IP subnet"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:286 neutron/api/v2/attributes.py:327
+#: neutron/api/v2/attributes.py:285 neutron/api/v2/attributes.py:326
 #, python-format
 msgid "'%s' is not a list"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:291 neutron/api/v2/attributes.py:338
+#: neutron/api/v2/attributes.py:290 neutron/api/v2/attributes.py:337
 #, python-format
 msgid "Duplicate items in the list: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:308
+#: neutron/api/v2/attributes.py:307
 #, python-format
 msgid "'%s' is not a valid input"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:315
+#: neutron/api/v2/attributes.py:314
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:646
 #, python-format
 msgid "'%s' is not a valid UUID"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:358
+#: neutron/api/v2/attributes.py:357
 #, python-format
 msgid "Validator '%s' does not exist."
 msgstr ""
 
-#: neutron/api/v2/attributes.py:368
+#: neutron/api/v2/attributes.py:367
 #, python-format
 msgid "'%s' is not a dictionary"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:419
+#: neutron/api/v2/attributes.py:418
 #, python-format
 msgid "'%s' should be non-negative"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:438
+#: neutron/api/v2/attributes.py:437
 #, python-format
 msgid "'%s' cannot be converted to boolean"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:446
+#: neutron/api/v2/attributes.py:445
 #: neutron/plugins/nec/extensions/packetfilter.py:48
 #, python-format
 msgid "'%s' is not a integer"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:459
+#: neutron/api/v2/attributes.py:458
 #, python-format
 msgid "'%s' is not of the form <key>=[value]"
 msgstr ""
@@ -2107,6 +2108,11 @@ msgstr ""
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'"
 msgstr ""
 
+#: neutron/common/exceptions.py:307
+#, python-format
+msgid "Found duplicate extension: %(alias)s"
+msgstr ""
+
 #: neutron/common/legacy.py:33
 #, python-format
 msgid "Old class module path in use.  Please change '%(old)s' to '%(new)s'."
@@ -2155,15 +2161,17 @@ msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
 msgstr ""
 
 #: neutron/db/agents_db.py:35
-msgid "Seconds to regard the agent is down."
+msgid ""
+"Seconds to regard the agent is down; should be at least twice "
+"report_interval, to be sure the agent is down for good."
 msgstr ""
 
-#: neutron/db/agents_db.py:81
+#: neutron/db/agents_db.py:83
 #, python-format
 msgid "Configuration for agent %(agent_type)s on host %(host)s is invalid."
 msgstr ""
 
-#: neutron/db/agents_db.py:179
+#: neutron/db/agents_db.py:181
 msgid "Message with invalid timestamp received"
 msgstr ""
 
@@ -2177,11 +2185,6 @@ msgstr ""
 
 #: neutron/db/agentschedulers_db.py:41
 msgid "Number of DHCP agents scheduled to host a network."
-msgstr ""
-
-#: neutron/db/agentschedulers_db.py:209
-#, python-format
-msgid "Fail scheduling network %s"
 msgstr ""
 
 #: neutron/db/api.py:59
@@ -2387,7 +2390,7 @@ msgstr ""
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1430
+#: neutron/db/db_base_plugin_v2.py:1447
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
@@ -2424,22 +2427,22 @@ msgstr ""
 msgid "DHCP port deletion for %(network_id)s request from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:194
+#: neutron/db/dhcp_rpc_base.py:191
 #, python-format
 msgid "DHCP port remove fixed_ip for %(subnet_id)s request from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:218
+#: neutron/db/dhcp_rpc_base.py:215
 #, python-format
 msgid "Updating lease expiration is now deprecated. Issued  from host %s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:225
+#: neutron/db/dhcp_rpc_base.py:222
 #, python-format
 msgid "Create dhcp port %(port)s from %(host)s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:242
+#: neutron/db/dhcp_rpc_base.py:239
 #, python-format
 msgid "Update dhcp port %(port)s from %(host)s."
 msgstr ""
@@ -2497,8 +2500,8 @@ msgid ""
 msgstr ""
 
 #: neutron/db/l3_db.py:306 neutron/db/l3_db.py:383
-#: neutron/plugins/bigswitch/plugin.py:998
-#: neutron/plugins/bigswitch/plugin.py:1007
+#: neutron/plugins/bigswitch/plugin.py:1010
+#: neutron/plugins/bigswitch/plugin.py:1019
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
@@ -3425,22 +3428,22 @@ msgstr ""
 msgid "Released file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
 msgstr ""
 
-#: neutron/openstack/common/log.py:244
+#: neutron/openstack/common/log.py:250
 #, python-format
 msgid "Deprecated: %s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:336
+#: neutron/openstack/common/log.py:349
 #, python-format
 msgid "Error loading logging config %(log_config)s: %(err_msg)s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:386
+#: neutron/openstack/common/log.py:400
 #, python-format
 msgid "syslog facility must be one of: %s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:556
+#: neutron/openstack/common/log.py:570
 #, python-format
 msgid "Fatal call to deprecated config: %(msg)s"
 msgstr ""
@@ -4093,7 +4096,7 @@ msgstr ""
 msgid "Creating Consumer connection for Service %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:90
+#: neutron/plugins/bigswitch/plugin.py:93
 msgid ""
 "A comma separated list of BigSwitch or Floodlight servers and port "
 "numbers. The plugin proxies the requests to the BigSwitch/Floodlight "
@@ -4102,39 +4105,39 @@ msgid ""
 "servers to support failover."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:97
+#: neutron/plugins/bigswitch/plugin.py:100
 msgid ""
 "The username and password for authenticating against  the BigSwitch or "
 "Floodlight controller."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:100
+#: neutron/plugins/bigswitch/plugin.py:103
 msgid ""
 "If True, Use SSL when connecting to the BigSwitch or Floodlight "
 "controller."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:103
+#: neutron/plugins/bigswitch/plugin.py:106
 msgid "Sync data on connect"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:105
+#: neutron/plugins/bigswitch/plugin.py:108
 msgid ""
 "Maximum number of seconds to wait for proxy request to connect and "
 "complete."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:109
+#: neutron/plugins/bigswitch/plugin.py:112
 msgid "User defined identifier for this Neutron deployment"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:111
+#: neutron/plugins/bigswitch/plugin.py:114
 msgid ""
 "Flag to decide if a route to the metadata server should be injected into "
 "the VM"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:120
+#: neutron/plugins/bigswitch/plugin.py:123
 msgid ""
 "The default router rules installed in new tenant routers. Repeat the "
 "config option for each rule. Format is "
@@ -4142,277 +4145,277 @@ msgid ""
 "all tenants."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:125
+#: neutron/plugins/bigswitch/plugin.py:128
 msgid "Maximum number of router rules"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:132
+#: neutron/plugins/bigswitch/plugin.py:135
 msgid "Virtual interface type to configure on Nova compute nodes"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:139
+#: neutron/plugins/bigswitch/plugin.py:142
 #, python-format
 msgid "Nova compute nodes to manually set VIF type to %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:146
+#: neutron/plugins/bigswitch/plugin.py:149
 msgid "List of allowed vif_type values."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:164
+#: neutron/plugins/bigswitch/plugin.py:167
 msgid "Syntax error in server config file, aborting plugin"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:175
+#: neutron/plugins/bigswitch/plugin.py:178
 msgid "Error in REST call to remote network controller"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:211
+#: neutron/plugins/bigswitch/plugin.py:214
 #, python-format
 msgid ""
 "ServerProxy: server=%(server)s, port=%(port)d, ssl=%(ssl)r, "
 "action=%(action)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:215
+#: neutron/plugins/bigswitch/plugin.py:218
 #, python-format
 msgid "ServerProxy: resource=%(resource)s, data=%(data)r, headers=%(headers)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:224
+#: neutron/plugins/bigswitch/plugin.py:227
 msgid "ServerProxy: Could not establish HTTPS connection"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:231
+#: neutron/plugins/bigswitch/plugin.py:234
 msgid "ServerProxy: Could not establish HTTP connection"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:248
+#: neutron/plugins/bigswitch/plugin.py:251
 #, python-format
 msgid "ServerProxy: %(action)s failure, %(e)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:252
+#: neutron/plugins/bigswitch/plugin.py:255
 #, python-format
 msgid ""
 "ServerProxy: status=%(status)d, reason=%(reason)r, ret=%(ret)s, "
 "data=%(data)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:302
+#: neutron/plugins/bigswitch/plugin.py:305
 #, python-format
 msgid ""
 "ServerProxy: %(action)s failure for servers: %(server)r Response: "
 "%(response)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:308
+#: neutron/plugins/bigswitch/plugin.py:311
 #, python-format
 msgid ""
 "ServerProxy: Error details: status=%(status)d, reason=%(reason)r, "
 "ret=%(ret)s, data=%(data)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:315
+#: neutron/plugins/bigswitch/plugin.py:318
 #, python-format
 msgid "ServerProxy: %(action)s failure for all servers: %(server)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:334
+#: neutron/plugins/bigswitch/plugin.py:337
 msgid "NeutronRestProxyV2: "
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:337
+#: neutron/plugins/bigswitch/plugin.py:340
 #, python-format
 msgid ""
 "NeutronRestProxyV2: Received and ignored error code %(code)s on "
 "%(action)s action to resource %(resource)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:347
+#: neutron/plugins/bigswitch/plugin.py:350
 #, python-format
 msgid "Unable to create remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:353
+#: neutron/plugins/bigswitch/plugin.py:356
 #, python-format
 msgid "Unable to update remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:358
+#: neutron/plugins/bigswitch/plugin.py:361
 #, python-format
 msgid "Unable to delete remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:364
+#: neutron/plugins/bigswitch/plugin.py:367
 #, python-format
 msgid "Unable to add router interface: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:369
+#: neutron/plugins/bigswitch/plugin.py:372
 #, python-format
 msgid "Unable to delete remote intf: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:375
+#: neutron/plugins/bigswitch/plugin.py:378
 #, python-format
 msgid "Unable to create remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:381
-#: neutron/plugins/bigswitch/plugin.py:386
+#: neutron/plugins/bigswitch/plugin.py:384
+#: neutron/plugins/bigswitch/plugin.py:389
 #, python-format
 msgid "Unable to update remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:392
+#: neutron/plugins/bigswitch/plugin.py:395
 #, python-format
 msgid "Unable to create remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:398
+#: neutron/plugins/bigswitch/plugin.py:401
 #, python-format
 msgid "Unable to update remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:403
+#: neutron/plugins/bigswitch/plugin.py:406
 #, python-format
 msgid "Unable to delete remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:415
+#: neutron/plugins/bigswitch/plugin.py:418
 #, python-format
 msgid "Unable to plug in interface: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:420
+#: neutron/plugins/bigswitch/plugin.py:423
 #, python-format
 msgid "Unable to unplug interface: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:441
+#: neutron/plugins/bigswitch/plugin.py:447
 #, python-format
 msgid "NeutronRestProxy: Starting plugin. Version=%s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:461
+#: neutron/plugins/bigswitch/plugin.py:467
 msgid "Servers not defined. Aborting plugin"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:483
+#: neutron/plugins/bigswitch/plugin.py:495
 msgid "NeutronRestProxyV2: initialization done"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:509
+#: neutron/plugins/bigswitch/plugin.py:521
 msgid "NeutronRestProxyV2: create_network() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:554
+#: neutron/plugins/bigswitch/plugin.py:566
 msgid "NeutronRestProxyV2.update_network() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:579
+#: neutron/plugins/bigswitch/plugin.py:591
 msgid "NeutronRestProxyV2: delete_network() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:627
+#: neutron/plugins/bigswitch/plugin.py:639
 msgid "NeutronRestProxyV2: create_port() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:718
+#: neutron/plugins/bigswitch/plugin.py:730
 msgid "NeutronRestProxyV2: update_port() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:778
+#: neutron/plugins/bigswitch/plugin.py:790
 msgid "NeutronRestProxyV2: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:822
+#: neutron/plugins/bigswitch/plugin.py:834
 msgid "NeutronRestProxyV2: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:838
+#: neutron/plugins/bigswitch/plugin.py:850
 msgid "NeutronRestProxyV2: update_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:854
+#: neutron/plugins/bigswitch/plugin.py:866
 msgid "NeutronRestProxyV2: delete_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:892
+#: neutron/plugins/bigswitch/plugin.py:904
 msgid "NeutronRestProxyV2: create_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:914
+#: neutron/plugins/bigswitch/plugin.py:926
 msgid "NeutronRestProxyV2.update_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:933
+#: neutron/plugins/bigswitch/plugin.py:945
 msgid "NeutronRestProxyV2: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:962
+#: neutron/plugins/bigswitch/plugin.py:974
 msgid "NeutronRestProxyV2: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:990
+#: neutron/plugins/bigswitch/plugin.py:1002
 msgid "NeutronRestProxyV2: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1023
+#: neutron/plugins/bigswitch/plugin.py:1035
 msgid "NeutronRestProxyV2: create_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1039
+#: neutron/plugins/bigswitch/plugin.py:1051
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1045
+#: neutron/plugins/bigswitch/plugin.py:1057
 msgid "NeutronRestProxyV2: update_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1060
+#: neutron/plugins/bigswitch/plugin.py:1072
 msgid "NeutronRestProxyV2: delete_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1075
+#: neutron/plugins/bigswitch/plugin.py:1087
 msgid "NeutronRestProxyV2: diassociate_floatingips() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1090
+#: neutron/plugins/bigswitch/plugin.py:1102
 msgid "NeutronRestProxyV2: too many external networks"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1152
+#: neutron/plugins/bigswitch/plugin.py:1164
 #, python-format
 msgid "Unable to update remote topology: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1168
+#: neutron/plugins/bigswitch/plugin.py:1180
 msgid "Adding host route: "
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1169
+#: neutron/plugins/bigswitch/plugin.py:1181
 #, python-format
 msgid "Destination:%(dst)s nexthop:%(next)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1244
+#: neutron/plugins/bigswitch/plugin.py:1256
 #, python-format
 msgid ""
 "Setting admin_state_up=False is not supported in this plugin version. "
 "Ignoring setting for resource: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1250
+#: neutron/plugins/bigswitch/plugin.py:1262
 #, python-format
 msgid ""
 "Operational status is internally set by the plugin. Ignoring setting "
 "status=%s."
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1277
+#: neutron/plugins/bigswitch/plugin.py:1289
 #, python-format
 msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs. "
 msgstr ""
@@ -7440,119 +7443,114 @@ msgstr ""
 msgid "Mechanism driver %s failed in unbind_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:113
+#: neutron/plugins/ml2/plugin.py:114
 msgid "Modular L2 Plugin initialization complete"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:142
+#: neutron/plugins/ml2/plugin.py:143
 msgid "network_type required"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:181
+#: neutron/plugins/ml2/plugin.py:182
 #, python-format
 msgid "Network %s has no segments"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:277
+#: neutron/plugins/ml2/plugin.py:278
 #, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on "
 "network %(network_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:319
+#: neutron/plugins/ml2/plugin.py:320
 #, python-format
 msgid "mechanism_manager.create_network_postcommit failed, deleting network '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:379
+#: neutron/plugins/ml2/plugin.py:380
 #, python-format
 msgid "Deleting network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:387 neutron/plugins/ml2/plugin.py:501
+#: neutron/plugins/ml2/plugin.py:390 neutron/plugins/ml2/plugin.py:510
 #, python-format
 msgid "Ports to auto-delete: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:393 neutron/plugins/ml2/plugin.py:507
+#: neutron/plugins/ml2/plugin.py:396 neutron/plugins/ml2/plugin.py:516
 msgid "Tenant-owned ports exist"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:400
+#: neutron/plugins/ml2/plugin.py:404
 #, python-format
 msgid "Subnets to auto-delete: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:410
-msgid "Deleting network record"
+#: neutron/plugins/ml2/plugin.py:415
+#, python-format
+msgid "Deleting network record %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:419 neutron/plugins/ml2/plugin.py:521
+#: neutron/plugins/ml2/plugin.py:423 neutron/plugins/ml2/plugin.py:529
 msgid "Committing transaction"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:426 neutron/plugins/ml2/plugin.py:528
-#, python-format
-msgid "Port %s concurrently deleted"
+#: neutron/plugins/ml2/plugin.py:427
+msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:428 neutron/plugins/ml2/plugin.py:530
+#: neutron/plugins/ml2/plugin.py:437 neutron/plugins/ml2/plugin.py:536
 #, python-format
 msgid "Exception auto-deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:436
-#, python-format
-msgid "Subnet %s concurrently deleted"
-msgstr ""
-
-#: neutron/plugins/ml2/plugin.py:438
+#: neutron/plugins/ml2/plugin.py:445
 #, python-format
 msgid "Exception auto-deleting subnet %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:448
+#: neutron/plugins/ml2/plugin.py:455
 msgid "mechanism_manager.delete_network_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:462
+#: neutron/plugins/ml2/plugin.py:469
 #, python-format
 msgid "mechanism_manager.create_subnet_postcommit failed, deleting subnet '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:492
+#: neutron/plugins/ml2/plugin.py:499
 #, python-format
 msgid "Deleting subnet %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:517
+#: neutron/plugins/ml2/plugin.py:525
 msgid "Deleting subnet record"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:540
+#: neutron/plugins/ml2/plugin.py:546
 msgid "mechanism_manager.delete_subnet_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:569
+#: neutron/plugins/ml2/plugin.py:575
 #, python-format
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:624
+#: neutron/plugins/ml2/plugin.py:630
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:641
+#: neutron/plugins/ml2/plugin.py:647
 msgid "Calling base delete_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:650
+#: neutron/plugins/ml2/plugin.py:656
 msgid "mechanism_manager.delete_port_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:659
+#: neutron/plugins/ml2/plugin.py:665
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -8037,98 +8035,98 @@ msgid ""
 "of\"RegionOne\" is assumed"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:30
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:32
 msgid "Unable to reach EOS"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:288
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:290
 #, python-format
 msgid "Executing command on Arista EOS: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:300
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:302
 #, python-format
 msgid "Error %(err)s while trying to execute commands %(cmd)s on EOS %(host)s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:321
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:323
 msgid "Required option eapi_host is not set"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:325
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:327
 msgid "Required option eapi_username is not set"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:344
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:346
 msgid "Syncing Neutron <-> EOS"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:350
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:352
 msgid "EOS is not available, will try sync later"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:360
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:362
 #, python-format
 msgid ""
 "No Tenants configured in Neutron DB. But %d tenants disovered in EOS "
 "during synchronization.Enitre EOS region is cleared"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:364
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:366
 msgid "EOS is not available, failed to delete this region"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:378
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:380
 #, python-format
 msgid "EOS is not available, failed to delete tenant %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:404
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:406
 #, python-format
 msgid "EOS is not available,failed to delete vm %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:414
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:416
 #, python-format
 msgid "EOS is not available,failed to delete network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:428
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:430
 #, python-format
 msgid "EOS is not available, failed to createnetwork id %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:453
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:455
 #, python-format
 msgid "EOS is not available, failed to create vm id %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:531
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:533
 #, python-format
 msgid "Network %s is not created as it is not found inArista DB"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:545
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:547
 #, python-format
 msgid "Network name changed to %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:572
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:574
 #, python-format
 msgid "Network %s is not updated as it is not found inArista DB"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:664
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:666
 #, python-format
 msgid "VM %s is not created as it is not found in Arista DB"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:678
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:681
 #, python-format
 msgid "Port name changed to %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:727
+#: neutron/plugins/ml2/drivers/mech_arista/mechanism_arista.py:731
 #, python-format
 msgid "VM %s is not updated as it is not found in Arista DB"
 msgstr ""
@@ -12009,30 +12007,30 @@ msgstr ""
 msgid "The user group"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:128
+#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:127
 #, python-format
 msgid "Error importing interface driver: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:141
+#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:139
 #, python-format
 msgid "Error importing loadbalancer device driver: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:200
+#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:198
 msgid "Error upating stats"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:221
+#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:219
 msgid "Unable to retrieve ready devices"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:236
+#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:234
 #, python-format
 msgid "Unable to refresh device for pool: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:247
+#: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:245
 #, python-format
 msgid "Unable to destroy device for pool: %s"
 msgstr ""
@@ -13312,11 +13310,6 @@ msgstr ""
 #~ msgid "You must specify an interface driver"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Create_l2_gw_service did not return an "
-#~ "uuid for the newly created resource:%s"
-#~ msgstr ""
-
 #~ msgid "About to upload wf template named %s.zip"
 #~ msgstr ""
 
@@ -13333,5 +13326,29 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "File %s was added to zip"
+#~ msgstr ""
+
+#~ msgid "Neither X_USER_ID nor X_USER found in request"
+#~ msgstr ""
+
+#~ msgid "Seconds between nodes reporting state to server"
+#~ msgstr ""
+
+#~ msgid "Found duplicate extension: %s"
+#~ msgstr ""
+
+#~ msgid "Seconds to regard the agent is down."
+#~ msgstr ""
+
+#~ msgid "Fail scheduling network %s"
+#~ msgstr ""
+
+#~ msgid "Deleting network record"
+#~ msgstr ""
+
+#~ msgid "Port %s concurrently deleted"
+#~ msgstr ""
+
+#~ msgid "Subnet %s concurrently deleted"
 #~ msgstr ""
 
