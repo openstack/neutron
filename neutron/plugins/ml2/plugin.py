@@ -425,7 +425,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             except os_db.exception.DBError as e:
                 if isinstance(e.inner_exception, sql_exc.IntegrityError):
                     msg = _("A concurrent port creation has occurred")
-                    LOG.exception(msg)
+                    LOG.warning(msg)
                     continue
                 else:
                     raise
