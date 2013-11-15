@@ -63,12 +63,13 @@ class IptablesRule(object):
     """
 
     def __init__(self, chain, rule, wrap=True, top=False,
-                 binary_name=binary_name):
+                 binary_name=binary_name, tag=None):
         self.chain = get_chain_name(chain, wrap)
         self.rule = rule
         self.wrap = wrap
         self.top = top
         self.wrap_name = binary_name[:16]
+        self.tag = tag
 
     def __eq__(self, other):
         return ((self.chain == other.chain) and
@@ -177,7 +178,7 @@ class IptablesTable(object):
         self.rules = [r for r in self.rules
                       if jump_snippet not in r.rule]
 
-    def add_rule(self, chain, rule, wrap=True, top=False):
+    def add_rule(self, chain, rule, wrap=True, top=False, tag=None):
         """Add a rule to the table.
 
         This is just like what you'd feed to iptables, just without
@@ -195,7 +196,8 @@ class IptablesTable(object):
         if '$' in rule:
             rule = ' '.join(map(self._wrap_target_chain, rule.split(' ')))
 
-        self.rules.append(IptablesRule(chain, rule, wrap, top, self.wrap_name))
+        self.rules.append(IptablesRule(chain, rule, wrap, top, self.wrap_name,
+                                       tag))
 
     def _wrap_target_chain(self, s):
         if s.startswith('$'):
@@ -229,6 +231,13 @@ class IptablesTable(object):
         chained_rules = [rule for rule in self.rules
                          if rule.chain == chain and rule.wrap == wrap]
         for rule in chained_rules:
+            self.rules.remove(rule)
+
+    def clear_rules_by_tag(self, tag):
+        if not tag:
+            return
+        rules = [rule for rule in self.rules if rule.tag == tag]
+        for rule in rules:
             self.rules.remove(rule)
 
 
