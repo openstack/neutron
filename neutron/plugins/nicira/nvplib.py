@@ -1142,13 +1142,13 @@ def update_security_group_rules(cluster, spid, rules):
 
 def delete_security_profile(cluster, spid):
     path = "/ws.v1/security-profile/%s" % spid
-
     try:
         do_request(HTTP_DELETE, path, cluster=cluster)
-    except exception.NotFound as e:
-        # FIXME(salv-orlando): should not raise NeutronException
-        LOG.error(format_exception("Unknown", e, locals()))
-        raise exception.NeutronException()
+    except exception.NotFound:
+        # This is not necessarily an error condition
+        LOG.warn(_("Unable to find security profile %s on NSX backend"),
+                 spid)
+        raise
 
 
 def _create_nat_match_obj(**kwargs):
