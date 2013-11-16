@@ -579,10 +579,13 @@ class DeviceManager(object):
         """Return DHCP ip_lib device for this host on the network."""
         device_id = self.get_device_id(network)
         port = self.plugin.get_dhcp_port(network.id, device_id)
-        interface_name = self.get_interface_name(network, port)
-        return ip_lib.IPDevice(interface_name,
-                               self.root_helper,
-                               network.namespace)
+        if port:
+            interface_name = self.get_interface_name(network, port)
+            return ip_lib.IPDevice(interface_name,
+                                   self.root_helper,
+                                   network.namespace)
+        else:
+            raise exceptions.NetworkNotFound(net_id=network.id)
 
     def _set_default_route(self, network):
         """Sets the default gateway for this dhcp namespace.

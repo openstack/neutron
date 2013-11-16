@@ -32,6 +32,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.common import constants as const
 from neutron.common import exceptions
+from neutron.openstack.common.rpc import common
 from neutron.tests import base
 
 
@@ -210,11 +211,11 @@ class TestDhcpAgent(base.BaseTestCase):
                                             mock.ANY,
                                             mock.ANY)
 
-    def test_call_driver_failure(self):
+    def _test_call_driver_failure(self, exc=None, trace_level='exception'):
         network = mock.Mock()
         network.id = '1'
-        self.driver.return_value.foo.side_effect = Exception
-        with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
+        self.driver.return_value.foo.side_effect = exc or Exception
+        with mock.patch.object(dhcp_agent.LOG, trace_level) as log:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             self.assertIsNone(dhcp.call_driver('foo', network))
             self.driver.assert_called_once_with(cfg.CONF,
@@ -224,6 +225,19 @@ class TestDhcpAgent(base.BaseTestCase):
                                                 mock.ANY)
             self.assertEqual(log.call_count, 1)
             self.assertTrue(dhcp.needs_resync)
+
+    def test_call_driver_failure(self):
+        self._test_call_driver_failure()
+
+    def test_call_driver_remote_error_net_not_found(self):
+        self._test_call_driver_failure(
+            exc=common.RemoteError(exc_type='NetworkNotFound'),
+            trace_level='warning')
+
+    def test_call_driver_network_not_found(self):
+        self._test_call_driver_failure(
+            exc=exceptions.NetworkNotFound(net_id='1'),
+            trace_level='warning')
 
     def _test_sync_state_helper(self, known_networks, active_networks):
         with mock.patch(DHCP_PLUGIN) as plug:
@@ -476,6 +490,16 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.assertFalse(self.call_driver.called)
         self.assertFalse(self.cache.called)
         self.assertFalse(self.external_process.called)
+
+    def test_enable_dhcp_helper_network_none(self):
+        self.plugin.get_network_info.return_value = None
+        with mock.patch.object(dhcp_agent.LOG, 'warn') as log:
+            self.dhcp.enable_dhcp_helper('fake_id')
+            self.plugin.assert_has_calls(
+                [mock.call.get_network_info('fake_id')])
+            self.assertFalse(self.call_driver.called)
+            self.assertTrue(log.called)
+            self.assertFalse(self.dhcp.needs_resync)
 
     def test_enable_dhcp_helper_exception_during_rpc(self):
         self.plugin.get_network_info.side_effect = Exception

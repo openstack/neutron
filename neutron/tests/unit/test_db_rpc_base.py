@@ -15,6 +15,7 @@
 
 import mock
 
+from neutron.common import exceptions as n_exc
 from neutron.db import dhcp_rpc_base
 from neutron.tests import base
 
@@ -48,6 +49,11 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
                                     filters=dict(admin_state_up=[True]))])
 
         self.assertEqual(len(self.log.mock_calls), 1)
+
+    def test_get_network_info_return_none_on_not_found(self):
+        self.plugin.get_network.side_effect = n_exc.NetworkNotFound(net_id='a')
+        retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
+        self.assertIsNone(retval)
 
     def test_get_network_info(self):
         network_retval = dict(id='a')
@@ -100,6 +106,34 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
         self._test_get_dhcp_port_helper(port_retval, expectations,
                                         update_port=port_retval)
         self.assertEqual(len(self.log.mock_calls), 1)
+
+    def _test_get_dhcp_port_with_failures(self,
+                                          raise_get_network=None,
+                                          raise_create_port=None):
+        self.plugin.update_port.return_value = None
+        if raise_get_network:
+            self.plugin.get_network.side_effect = raise_get_network
+        else:
+            self.plugin.get_network.return_value = {'tenant_id': 'foo_tenant'}
+        if raise_create_port:
+            self.plugin.create_port.side_effect = raise_create_port
+        retval = self.callbacks.get_dhcp_port(mock.Mock(),
+                                              network_id='netid',
+                                              device_id='devid',
+                                              host='host')
+        self.assertIsNone(retval)
+
+    def test_get_dhcp_port_catch_not_found_on_get_network(self):
+        self._test_get_dhcp_port_with_failures(
+            raise_get_network=n_exc.NetworkNotFound(net_id='a'))
+
+    def test_get_dhcp_port_catch_network_not_found_on_create_port(self):
+        self._test_get_dhcp_port_with_failures(
+            raise_create_port=n_exc.NetworkNotFound(net_id='a'))
+
+    def test_get_dhcp_port_catch_subnet_not_found_on_create_port(self):
+        self._test_get_dhcp_port_with_failures(
+            raise_create_port=n_exc.SubnetNotFound(subnet_id='b'))
 
     def test_get_dhcp_port_create_new(self):
         self.plugin.get_network.return_value = dict(tenant_id='tenantid')
