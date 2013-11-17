@@ -1,7 +1,6 @@
 [DEFAULT]
 default_tz_uuid = fake_tz_uuid
 nova_zone_id = whatever
-nvp_cluster_uuid = fake_cluster_uuid
 nvp_controllers = fake_1, fake_2
 nvp_user = foo
 nvp_password = bar
