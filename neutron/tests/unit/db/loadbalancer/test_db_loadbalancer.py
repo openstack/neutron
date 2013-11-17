@@ -819,6 +819,25 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     self.assertIn(member2['member']['id'],
                                   pool_update['pool']['members'])
 
+    def test_create_same_member_in_same_pool_raises_member_exists(self):
+        with self.subnet():
+            with self.pool(name="pool1") as pool:
+                pool_id = pool['pool']['id']
+                with self.member(address='192.168.1.100',
+                                 protocol_port=80,
+                                 pool_id=pool_id):
+                    member_data = {
+                        'address': '192.168.1.100',
+                        'protocol_port': 80,
+                        'weight': 1,
+                        'admin_state_up': True,
+                        'pool_id': pool_id
+                    }
+                    self.assertRaises(loadbalancer.MemberExists,
+                                      self.plugin.create_member,
+                                      context.get_admin_context(),
+                                      {'member': member_data})
+
     def test_update_member(self):
         with self.pool(name="pool1") as pool1:
             with self.pool(name="pool2") as pool2:

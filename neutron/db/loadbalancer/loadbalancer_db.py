@@ -97,6 +97,10 @@ class Member(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant,
              models_v2.HasStatusDescription):
     """Represents a v2 neutron loadbalancer member."""
 
+    __table_args__ = (
+        sa.schema.UniqueConstraint('pool_id', 'address', 'protocol_port',
+                                   name='uniq_member0pool_id0address0port'),
+    )
     pool_id = sa.Column(sa.String(36), sa.ForeignKey("pools.id"),
                         nullable=False)
     address = sa.Column(sa.String(64), nullable=False)
@@ -668,31 +672,40 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         v = member['member']
         tenant_id = self._get_tenant_id_for_create(context, v)
 
-        with context.session.begin(subtransactions=True):
-            # ensuring that pool exists
-            self._get_resource(context, Pool, v['pool_id'])
-
-            member_db = Member(id=uuidutils.generate_uuid(),
-                               tenant_id=tenant_id,
-                               pool_id=v['pool_id'],
-                               address=v['address'],
-                               protocol_port=v['protocol_port'],
-                               weight=v['weight'],
-                               admin_state_up=v['admin_state_up'],
-                               status=constants.PENDING_CREATE)
-            context.session.add(member_db)
-
-        return self._make_member_dict(member_db)
+        try:
+            with context.session.begin(subtransactions=True):
+                # ensuring that pool exists
+                self._get_resource(context, Pool, v['pool_id'])
+                member_db = Member(id=uuidutils.generate_uuid(),
+                                   tenant_id=tenant_id,
+                                   pool_id=v['pool_id'],
+                                   address=v['address'],
+                                   protocol_port=v['protocol_port'],
+                                   weight=v['weight'],
+                                   admin_state_up=v['admin_state_up'],
+                                   status=constants.PENDING_CREATE)
+                context.session.add(member_db)
+                return self._make_member_dict(member_db)
+        except exception.DBDuplicateEntry:
+            raise loadbalancer.MemberExists(
+                address=v['address'],
+                port=v['protocol_port'],
+                pool=v['pool_id'])
 
     def update_member(self, context, id, member):
         v = member['member']
-        with context.session.begin(subtransactions=True):
-            member_db = self._get_resource(context, Member, id)
-            self.assert_modification_allowed(member_db)
-            if v:
-                member_db.update(v)
-
-        return self._make_member_dict(member_db)
+        try:
+            with context.session.begin(subtransactions=True):
+                member_db = self._get_resource(context, Member, id)
+                self.assert_modification_allowed(member_db)
+                if v:
+                    member_db.update(v)
+            return self._make_member_dict(member_db)
+        except exception.DBDuplicateEntry:
+            raise loadbalancer.MemberExists(
+                address=member_db['address'],
+                port=member_db['protocol_port'],
+                pool=member_db['pool_id'])
 
     def delete_member(self, context, id):
         with context.session.begin(subtransactions=True):

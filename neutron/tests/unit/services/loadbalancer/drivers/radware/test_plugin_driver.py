@@ -293,6 +293,7 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                         self.member(pool_id=pool['pool']['id'],
                                     no_delete=True),
                         self.member(pool_id=pool['pool']['id'],
+                                    address='192.168.1.101',
                                     no_delete=True),
                         self.health_monitor(no_delete=True),
                         self.vip(pool=pool, subnet=subnet, no_delete=True)

@@ -76,6 +76,11 @@ class ProtocolMismatch(qexception.BadRequest):
                 "pool protocol %(pool_proto)s")
 
 
+class MemberExists(qexception.NeutronException):
+    message = _("Member with address %(address)s and port %(port)s "
+                "already present in pool %(pool)s")
+
+
 RESOURCE_ATTRIBUTE_MAP = {
     'vips': {
         'id': {'allow_post': False, 'allow_put': False,
