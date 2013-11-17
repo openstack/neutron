@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-15 06:39+0000\n"
+"POT-Creation-Date: 2013-11-17 06:40+0000\n"
 "PO-Revision-Date: 2013-06-28 06:06+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Polish (Poland) "
@@ -164,6 +164,11 @@ msgstr ""
 #: neutron/policy.py:309
 #, python-format
 msgid "Unable to find requested field: %(field)s in target: %(target_dict)s"
+msgstr ""
+
+#: neutron/policy.py:380
+#, python-format
+msgid "Failed policy check for '%s'"
 msgstr ""
 
 #: neutron/quota.py:37
@@ -476,14 +481,14 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:559 neutron/agent/l3_agent.py:851
+#: neutron/agent/dhcp_agent.py:559 neutron/agent/l3_agent.py:824
 #: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:565 neutron/agent/l3_agent.py:856
+#: neutron/agent/dhcp_agent.py:565 neutron/agent/l3_agent.py:829
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:804
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:181
@@ -493,7 +498,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:573 neutron/agent/l3_agent.py:861
+#: neutron/agent/dhcp_agent.py:573 neutron/agent/l3_agent.py:834
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:279
 #: neutron/services/metering/agents/metering_agent.py:276
 #, python-format
@@ -580,83 +585,83 @@ msgstr ""
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:500
+#: neutron/agent/l3_agent.py:501
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:643
+#: neutron/agent/l3_agent.py:616
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:648
+#: neutron/agent/l3_agent.py:621
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:656
+#: neutron/agent/l3_agent.py:629
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:660
+#: neutron/agent/l3_agent.py:633
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:667
+#: neutron/agent/l3_agent.py:640
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:715
+#: neutron/agent/l3_agent.py:688
 #, python-format
 msgid "Starting RPC loop for %d updated routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:724
+#: neutron/agent/l3_agent.py:697
 msgid "RPC loop successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:726 neutron/agent/l3_agent.py:760
+#: neutron/agent/l3_agent.py:699 neutron/agent/l3_agent.py:733
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:744
+#: neutron/agent/l3_agent.py:717
 #, python-format
 msgid "Starting _sync_routers_task - fullsync:%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:755
+#: neutron/agent/l3_agent.py:728
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:758
+#: neutron/agent/l3_agent.py:731
 msgid "_sync_routers_task successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:764
+#: neutron/agent/l3_agent.py:737
 msgid "L3 agent started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:784
+#: neutron/agent/l3_agent.py:757
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:792
+#: neutron/agent/l3_agent.py:765
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:824
+#: neutron/agent/l3_agent.py:797
 msgid "Report state task started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:848
+#: neutron/agent/l3_agent.py:821
 msgid "Report state task successfully completed"
 msgstr ""
 
@@ -1068,33 +1073,33 @@ msgstr ""
 msgid "Attempted to remove port filter which is not filtered %r"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:151
+#: neutron/agent/linux/iptables_manager.py:152
 #, python-format
 msgid "Attempted to remove chain %s which does not exist"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:193
+#: neutron/agent/linux/iptables_manager.py:194
 #, python-format
 msgid "Unknown chain: %r"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:221
+#: neutron/agent/linux/iptables_manager.py:223
 #, python-format
 msgid ""
 "Tried to remove rule that was not there: %(chain)r %(rule)r %(wrap)r "
 "%(top)r"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:374
+#: neutron/agent/linux/iptables_manager.py:383
 msgid "IPTablesManager.apply completed with success"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:384
+#: neutron/agent/linux/iptables_manager.py:393
 #, python-format
 msgid "Unable to find table %s"
 msgstr ""
 
-#: neutron/agent/linux/iptables_manager.py:586
+#: neutron/agent/linux/iptables_manager.py:595
 #, python-format
 msgid "Attempted to get traffic counters of chain %s which does not exist"
 msgstr ""
