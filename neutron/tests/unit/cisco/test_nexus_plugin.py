@@ -22,6 +22,7 @@ from neutron.extensions import providernet as provider
 from neutron.openstack.common import importutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as cisco_exc
+from neutron.plugins.cisco.common import config as cisco_config
 from neutron.plugins.cisco.db import network_db_v2 as cdb
 from neutron.plugins.cisco.nexus import cisco_nexus_plugin_v2
 from neutron.tests import base
@@ -146,12 +147,17 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         self.patch_obj = mock.patch.dict('sys.modules',
                                          {'ncclient': self.mock_ncclient})
         self.patch_obj.start()
+        self.addCleanup(self.patch_obj.stop)
 
         with mock.patch.object(cisco_nexus_plugin_v2.NexusPlugin,
                                '__init__', new=new_nexus_init):
             self._cisco_nexus_plugin = cisco_nexus_plugin_v2.NexusPlugin()
 
-        self.addCleanup(self.patch_obj.stop)
+        # Set the Cisco config module's first configured device IP address
+        # according to the preceding switch config.
+        mock.patch.object(cisco_config, 'first_device_ip',
+                          new=NEXUS_IP_ADDRESS).start()
+        self.addCleanup(mock.patch.stopall)
 
     def test_create_delete_networks(self):
         """Tests creation of two new Virtual Networks."""
