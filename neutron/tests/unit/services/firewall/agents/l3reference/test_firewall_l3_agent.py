@@ -19,10 +19,14 @@
 # @author: Dan Florea, dflorea@cisco.com, Cisco Systems, Inc.
 
 import contextlib
+import uuid
+
 import mock
 from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
+from neutron.agent import l3_agent
+from neutron.agent.linux import ip_lib
 from neutron.common import config as base_config
 from neutron import context
 from neutron.plugins.common import constants
@@ -47,6 +51,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
 
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(base_config.core_opts)
+        self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
         agent_config.register_root_helper(self.conf)
         self.conf.root_helper = 'sudo'
         self.api = FWaasAgent(self.conf)
@@ -262,3 +267,56 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
             mock_firewall_deleted.assert_called_once_with(
                 ctx,
                 fake_firewall_list[0]['id'])
+
+    def _prepare_router_data(self, use_namespaces):
+        router = {'id': str(uuid.uuid4()), 'tenant_id': str(uuid.uuid4())}
+        return l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                   use_namespaces, router=router)
+
+    def _get_router_info_list_with_namespace_helper(self,
+                                                    router_use_namespaces):
+        self.conf.set_override('use_namespaces', True)
+        ri = self._prepare_router_data(
+            use_namespaces=router_use_namespaces)
+        routers = [ri.router]
+        self.api.router_info = {ri.router_id: ri}
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_namespaces') as mock_get_namespaces:
+            mock_get_namespaces.return_value = ri.ns_name()
+            router_info_list = self.api._get_router_info_list_for_tenant(
+                routers,
+                ri.router['tenant_id'])
+            self.assertEqual([ri], router_info_list)
+            mock_get_namespaces.assert_called_once_with(
+                self.conf.root_helper)
+
+    def _get_router_info_list_without_namespace_helper(self,
+                                                       router_use_namespaces):
+        self.conf.set_override('use_namespaces', False)
+        ri = self._prepare_router_data(
+            use_namespaces=router_use_namespaces)
+        routers = [ri.router]
+        self.api.router_info = {ri.router_id: ri}
+        router_info_list = self.api._get_router_info_list_for_tenant(
+            routers,
+            ri.router['tenant_id'])
+        if router_use_namespaces:
+            self.assertFalse(router_info_list)
+        else:
+            self.assertEqual([ri], router_info_list)
+
+    def test_get_router_info_list_for_tenant_for_namespaces_enabled(self):
+        self._get_router_info_list_with_namespace_helper(
+            router_use_namespaces=True)
+
+    def test_get_router_info_list_for_tenant_for_namespaces_disabled(self):
+        self._get_router_info_list_without_namespace_helper(
+            router_use_namespaces=False)
+
+    def test_get_router_info_list_tenant_with_namespace_router_without(self):
+        self._get_router_info_list_with_namespace_helper(
+            router_use_namespaces=False)
+
+    def test_get_router_info_list_tenant_without_namespace_router_with(self):
+        self._get_router_info_list_without_namespace_helper(
+            router_use_namespaces=True)
