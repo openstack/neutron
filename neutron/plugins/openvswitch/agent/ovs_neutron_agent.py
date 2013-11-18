@@ -862,7 +862,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                              self.local_ip,
                                              tunnel_type,
                                              self.vxlan_udp_port)
-        if ofport < 0:
+        ofport_int = -1
+        try:
+            ofport_int = int(ofport)
+        except (TypeError, ValueError):
+            LOG.exception(_("ofport should have a value that can be "
+                            "interpreted as an integer"))
+        if ofport_int < 0:
             LOG.error(_("Failed to set-up %(type)s tunnel port to %(ip)s"),
                       {'type': tunnel_type, 'ip': remote_ip})
             return 0
