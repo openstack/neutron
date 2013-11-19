@@ -19,8 +19,8 @@ from contextlib import nested
 
 import mock
 from mock import call
-import mox
 from oslo.config import cfg
+from testtools import matchers
 import webob.exc
 
 from neutron.agent import firewall as firewall_base
@@ -1212,13 +1212,11 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
     def setUp(self):
         super(TestSecurityGroupAgentWithIptables, self).setUp()
-        self.mox = mox.Mox()
         cfg.CONF.set_override(
             'firewall_driver',
             self.FIREWALL_DRIVER,
             group='SECURITYGROUP')
         self.addCleanup(mock.patch.stopall)
-        self.addCleanup(self.mox.UnsetStubs)
 
         self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
         self.agent.context = None
@@ -1228,7 +1226,13 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         self.agent.init_firewall()
 
         self.iptables = self.agent.firewall.iptables
-        self.mox.StubOutWithMock(self.iptables, "execute")
+        self.iptables_execute = mock.patch.object(self.iptables,
+                                                  "execute").start()
+        self.iptables_execute_return_values = []
+        self.expected_call_count = 0
+        self.expected_calls = []
+        self.expected_process_inputs = []
+        self.iptables_execute.side_effect = self.iptables_execute_return_values
 
         self.rpc = mock.Mock()
         self.agent.plugin_rpc = self.rpc
@@ -1300,36 +1304,65 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         value = value.replace('[', '\[')
         value = value.replace(']', '\]')
         value = value.replace('*', '\*')
-        return mox.Regex(value)
+        return value
+
+    def _register_mock_call(self, *args, **kwargs):
+        return_value = kwargs.pop('return_value', None)
+        self.iptables_execute_return_values.append(return_value)
+
+        has_process_input = 'process_input' in kwargs
+        process_input = kwargs.get('process_input')
+        self.expected_process_inputs.append((has_process_input, process_input))
+
+        if has_process_input:
+            kwargs['process_input'] = mock.ANY
+        self.expected_calls.append(call(*args, **kwargs))
+        self.expected_call_count += 1
+
+    def _verify_mock_calls(self):
+        self.assertEqual(self.expected_call_count,
+                         self.iptables_execute.call_count)
+        self.iptables_execute.assert_has_calls(self.expected_calls)
+
+        for i, expected in enumerate(self.expected_process_inputs):
+            check, expected_regex = expected
+            if not check:
+                continue
+            # The second or later arguments of self.iptables.execute
+            # are keyword parameter, so keyword argument is extracted by [1]
+            kwargs = self.iptables_execute.call_args_list[i][1]
+            self.assertThat(kwargs['process_input'],
+                            matchers.MatchesRegex(expected_regex))
 
     def _replay_iptables(self, v4_filter, v6_filter):
-        self.iptables.execute(
+        self._register_mock_call(
             ['iptables-save', '-c'],
-            root_helper=self.root_helper).AndReturn('')
-
-        self.iptables.execute(
+            root_helper=self.root_helper,
+            return_value='')
+        self._register_mock_call(
             ['iptables-restore', '-c'],
-            process_input=(self._regex(IPTABLES_NAT + v4_filter)),
-            root_helper=self.root_helper).AndReturn('')
-
-        self.iptables.execute(
+            process_input=self._regex(IPTABLES_NAT + v4_filter),
+            root_helper=self.root_helper,
+            return_value='')
+        self._register_mock_call(
             ['ip6tables-save', '-c'],
-            root_helper=self.root_helper).AndReturn('')
-
-        self.iptables.execute(
+            root_helper=self.root_helper,
+            return_value='')
+        self._register_mock_call(
             ['ip6tables-restore', '-c'],
             process_input=self._regex(v6_filter),
-            root_helper=self.root_helper).AndReturn('')
+            root_helper=self.root_helper,
+            return_value='')
 
     def test_prepare_remove_port(self):
         self.rpc.security_group_rules_for_devices.return_value = self.devices1
         self._replay_iptables(IPTABLES_FILTER_1, IPTABLES_FILTER_V6_1)
         self._replay_iptables(IPTABLES_FILTER_EMPTY, IPTABLES_FILTER_V6_EMPTY)
-        self.mox.ReplayAll()
 
         self.agent.prepare_devices_filter(['tap_port1'])
         self.agent.remove_devices_filter(['tap_port1'])
-        self.mox.VerifyAll()
+
+        self._verify_mock_calls()
 
     def test_security_group_member_updated(self):
         self.rpc.security_group_rules_for_devices.return_value = self.devices1
@@ -1339,7 +1372,6 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         self._replay_iptables(IPTABLES_FILTER_2_2, IPTABLES_FILTER_V6_2)
         self._replay_iptables(IPTABLES_FILTER_1, IPTABLES_FILTER_V6_1)
         self._replay_iptables(IPTABLES_FILTER_EMPTY, IPTABLES_FILTER_V6_EMPTY)
-        self.mox.ReplayAll()
 
         self.agent.prepare_devices_filter(['tap_port1'])
         self.rpc.security_group_rules_for_devices.return_value = self.devices2
@@ -1349,19 +1381,19 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         self.agent.security_groups_member_updated(['security_group1'])
         self.agent.remove_devices_filter(['tap_port2'])
         self.agent.remove_devices_filter(['tap_port1'])
-        self.mox.VerifyAll()
+
+        self._verify_mock_calls()
 
     def test_security_group_rule_updated(self):
         self.rpc.security_group_rules_for_devices.return_value = self.devices2
         self._replay_iptables(IPTABLES_FILTER_2, IPTABLES_FILTER_V6_2)
         self._replay_iptables(IPTABLES_FILTER_2_3, IPTABLES_FILTER_V6_2)
-        self.mox.ReplayAll()
 
         self.agent.prepare_devices_filter(['tap_port1', 'tap_port3'])
         self.rpc.security_group_rules_for_devices.return_value = self.devices3
         self.agent.security_groups_rule_updated(['security_group1'])
 
-        self.mox.VerifyAll()
+        self._verify_mock_calls()
 
 
 class SGNotificationTestMixin():
