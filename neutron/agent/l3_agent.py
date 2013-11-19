@@ -243,13 +243,17 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
         If only_router_id is passed, only destroy single namespace, to allow
         for multiple l3 agents on the same host, without stepping on each
-        other's toes on init.  This only makes sense if router_id is set.
+        other's toes on init.  This only makes sense if only_router_id is set.
         """
         root_ip = ip_lib.IPWrapper(self.root_helper)
         for ns in root_ip.get_namespaces(self.root_helper):
             if ns.startswith(NS_PREFIX):
-                if only_router_id and not ns.endswith(only_router_id):
+                router_id = ns[len(NS_PREFIX):]
+                if only_router_id and not only_router_id == router_id:
                     continue
+
+                if self.conf.enable_metadata_proxy:
+                    self._destroy_metadata_proxy(router_id, ns)
 
                 try:
                     self._destroy_router_namespace(ns)
@@ -304,7 +308,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         ri.iptables_manager.apply()
         super(L3NATAgent, self).process_router_add(ri)
         if self.conf.enable_metadata_proxy:
-            self._spawn_metadata_proxy(ri)
+            self._spawn_metadata_proxy(ri.router_id, ri.ns_name())
 
     def _router_removed(self, router_id):
         ri = self.router_info.get(router_id)
@@ -322,37 +326,37 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
         ri.iptables_manager.apply()
         if self.conf.enable_metadata_proxy:
-            self._destroy_metadata_proxy(ri)
+            self._destroy_metadata_proxy(ri.router_id, ri.ns_name())
         del self.router_info[router_id]
         self._destroy_router_namespace(ri.ns_name())
 
-    def _spawn_metadata_proxy(self, router_info):
+    def _spawn_metadata_proxy(self, router_id, ns_name):
         def callback(pid_file):
             metadata_proxy_socket = cfg.CONF.metadata_proxy_socket
             proxy_cmd = ['neutron-ns-metadata-proxy',
                          '--pid_file=%s' % pid_file,
                          '--metadata_proxy_socket=%s' % metadata_proxy_socket,
-                         '--router_id=%s' % router_info.router_id,
+                         '--router_id=%s' % router_id,
                          '--state_path=%s' % self.conf.state_path,
                          '--metadata_port=%s' % self.conf.metadata_port]
             proxy_cmd.extend(config.get_log_args(
                 cfg.CONF, 'neutron-ns-metadata-proxy-%s.log' %
-                router_info.router_id))
+                router_id))
             return proxy_cmd
 
         pm = external_process.ProcessManager(
             self.conf,
-            router_info.router_id,
+            router_id,
             self.root_helper,
-            router_info.ns_name())
+            ns_name)
         pm.enable(callback)
 
-    def _destroy_metadata_proxy(self, router_info):
+    def _destroy_metadata_proxy(self, router_id, ns_name):
         pm = external_process.ProcessManager(
             self.conf,
-            router_info.router_id,
+            router_id,
             self.root_helper,
-            router_info.ns_name())
+            ns_name)
         pm.disable()
 
     def _set_subnet_info(self, port):

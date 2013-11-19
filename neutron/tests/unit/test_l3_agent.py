@@ -668,12 +668,12 @@ class TestBasicRouterOperations(base.BaseTestCase):
                 agent, '_spawn_metadata_proxy') as spawn_proxy:
                 agent._router_added(router_id, router)
                 if enableflag:
-                    spawn_proxy.assert_called_with(mock.ANY)
+                    spawn_proxy.assert_called_with(mock.ANY, mock.ANY)
                 else:
                     self.assertFalse(spawn_proxy.call_count)
                 agent._router_removed(router_id)
                 if enableflag:
-                    destroy_proxy.assert_called_with(mock.ANY)
+                    destroy_proxy.assert_called_with(mock.ANY, mock.ANY)
                 else:
                     self.assertFalse(destroy_proxy.call_count)
 
@@ -783,19 +783,13 @@ class TestL3AgentEventHandler(base.BaseTestCase):
         cfg.CONF.set_override('log_file', 'test.log')
         cfg.CONF.set_override('debug', True)
 
-        router_info = l3_agent.RouterInfo(
-            router_id, cfg.CONF.root_helper, cfg.CONF.use_namespaces, None
-        )
-
         self.external_process_p.stop()
+        ns = 'qrouter-' + router_id
         try:
             with mock.patch(ip_class_path) as ip_mock:
-                self.agent._spawn_metadata_proxy(router_info)
+                self.agent._spawn_metadata_proxy(router_id, ns)
                 ip_mock.assert_has_calls([
-                    mock.call(
-                        'sudo',
-                        'qrouter-' + router_id
-                    ),
+                    mock.call('sudo', ns),
                     mock.call().netns.execute([
                         'neutron-ns-metadata-proxy',
                         mock.ANY,
