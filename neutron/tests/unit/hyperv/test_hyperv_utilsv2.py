@@ -97,6 +97,24 @@ class TestHyperVUtilsV2(base.BaseTestCase):
         mock_svc.AddResourceSettings.assert_called_with(self._FAKE_VM_PATH,
                                                         [self._FAKE_RES_DATA])
 
+    def test_add_virt_feature(self):
+        mock_svc = self._utils._conn.Msvm_VirtualSystemManagementService()[0]
+        mock_svc.AddFeatureSettings.return_value = (self._FAKE_JOB_PATH,
+                                                    mock.MagicMock(),
+                                                    self._FAKE_RET_VAL)
+        mock_res_setting_data = mock.MagicMock()
+        mock_res_setting_data.GetText_.return_value = self._FAKE_RES_DATA
+
+        mock_vm = mock.MagicMock()
+        mock_vm.path_.return_value = self._FAKE_VM_PATH
+
+        self._utils._check_job_status = mock.MagicMock()
+
+        self._utils._add_virt_feature(mock_vm, mock_res_setting_data)
+
+        mock_svc.AddFeatureSettings.assert_called_once_with(
+            self._FAKE_VM_PATH, [self._FAKE_RES_DATA])
+
     def test_modify_virt_resource(self):
         mock_svc = self._utils._conn.Msvm_VirtualSystemManagementService()[0]
         mock_svc.ModifyResourceSettings.return_value = (self._FAKE_JOB_PATH,
@@ -220,11 +238,14 @@ class TestHyperVUtilsV2(base.BaseTestCase):
             mock_port, True))
 
         mock_acl = mock.MagicMock()
-        self._utils._get_default_setting_data = mock.MagicMock(
-            return_value=mock_acl)
-        self._utils._add_virt_feature = mock.MagicMock()
 
-        self._utils.enable_port_metrics_collection(self._FAKE_PORT_NAME)
+        with mock.patch.multiple(
+            self._utils,
+            _get_default_setting_data=mock.MagicMock(return_value=mock_acl),
+            _add_virt_feature=mock.MagicMock()):
 
-        self.assertEqual(4, len(self._utils._add_virt_feature.mock_calls))
-        self._utils._add_virt_feature.assert_called_with(mock_port, mock_acl)
+            self._utils.enable_port_metrics_collection(self._FAKE_PORT_NAME)
+
+            self.assertEqual(4, len(self._utils._add_virt_feature.mock_calls))
+            self._utils._add_virt_feature.assert_called_with(
+                mock_port, mock_acl)

@@ -74,6 +74,12 @@ class HyperVUtilsV2(utils.HyperVUtils):
             ResourceSettings=[res_setting_data.path_()])
         self._check_job_status(ret_val, job)
 
+    def _add_virt_feature(self, element, res_setting_data):
+        vs_man_svc = self._conn.Msvm_VirtualSystemManagementService()[0]
+        (job_path, out_set_data, ret_val) = vs_man_svc.AddFeatureSettings(
+            element.path_(), [res_setting_data.GetText_(1)])
+        self._check_job_status(ret_val, job_path)
+
     def disconnect_switch_port(
             self, vswitch_name, switch_port_name, delete_port):
         """Disconnects the switch port."""
