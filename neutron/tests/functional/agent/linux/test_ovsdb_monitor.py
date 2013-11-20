@@ -121,8 +121,8 @@ class TestOvsdbMonitor(BaseMonitorTest):
             old_pid = self.monitor._process.pid
             output1 = self.collect_initial_output()
             pid = self.monitor._get_pid_to_kill()
-            self.monitor._reset_queues()
             self.monitor._kill_process(pid)
+            self.monitor._reset_queues()
             while (self.monitor._process.pid == old_pid):
                 eventlet.sleep(0.01)
             output2 = self.collect_initial_output()
