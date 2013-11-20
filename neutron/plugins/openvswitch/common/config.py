@@ -66,6 +66,10 @@ agent_opts = [
                 default=False,
                 help=_("Minimize polling by monitoring ovsdb for interface "
                        "changes.")),
+    cfg.IntOpt('ovsdb_monitor_respawn_interval',
+               default=constants.DEFAULT_OVSDBMON_RESPAWN,
+               help=_("The number of seconds to wait before respawning the "
+                      "ovsdb monitor after losing communication with it")),
     cfg.ListOpt('tunnel_types', default=DEFAULT_TUNNEL_TYPES,
                 help=_("Network types supported by the agent "
                        "(gre and/or vxlan)")),
