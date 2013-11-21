@@ -63,7 +63,7 @@ agent_opts = [
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
     cfg.BoolOpt('minimize_polling',
-                default=False,
+                default=True,
                 help=_("Minimize polling by monitoring ovsdb for interface "
                        "changes.")),
     cfg.IntOpt('ovsdb_monitor_respawn_interval',
