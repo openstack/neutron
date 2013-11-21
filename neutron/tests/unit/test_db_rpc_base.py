@@ -138,6 +138,10 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
         self._test_get_dhcp_port_with_failures(
             raise_create_port=n_exc.SubnetNotFound(subnet_id='b'))
 
+    def test_get_dhcp_port_catch_ip_generation_failure_on_create_port(self):
+        self._test_get_dhcp_port_with_failures(
+            raise_create_port=n_exc.IpAddressGenerationFailure(net_id='a'))
+
     def _test_get_dhcp_port_create_new(self, update_port=None):
         self.plugin.get_network.return_value = dict(tenant_id='tenantid')
         create_spec = dict(tenant_id='tenantid', device_id='devid',
