@@ -48,3 +48,6 @@ UCAST_TO_TUN = 20
 FLOOD_TO_TUN = 21
 # Map tunnel types to tables number
 TUN_TABLE = {TYPE_GRE: GRE_TUN_TO_LV, TYPE_VXLAN: VXLAN_TUN_TO_LV}
+
+# The default respawn interval for the ovsdb monitor
+DEFAULT_OVSDBMON_RESPAWN = 30
