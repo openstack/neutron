@@ -33,6 +33,7 @@ from neutron.manager import NeutronManager
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.common import config as cisco_config
+from neutron.plugins.cisco.db import network_db_v2
 from neutron.plugins.cisco.db import nexus_db_v2
 from neutron.plugins.cisco.models import virt_phy_sw_v2
 from neutron.plugins.openvswitch.common import config as ovs_config
@@ -163,6 +164,29 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         config = {attr: None}
         self.mock_ncclient.configure_mock(**config)
 
+    @staticmethod
+    def _config_dependent_side_effect(match_config, exc):
+        """Generates a config-dependent side effect for ncclient edit_config.
+
+        This method generates a mock side-effect function which can be
+        configured on the mock ncclient module for the edit_config method.
+        This side effect will cause a given exception to be raised whenever
+        the XML config string that is passed to edit_config contains all
+        words in a given match config string.
+
+        :param match_config: String containing keywords to be matched
+        :param exc: Exception to be raised when match is found
+        :return: Side effect function for the mock ncclient module's
+                 edit_config method.
+
+        """
+        keywords = match_config.split()
+
+        def _side_effect_function(target, config):
+            if all(word in config for word in keywords):
+                raise exc
+        return _side_effect_function
+
     def _is_in_nexus_cfg(self, words):
         """Check if any config sent to Nexus contains all words in a list."""
         for call in (self.mock_ncclient.manager.connect.return_value.
@@ -186,11 +210,13 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                 vlan_created == vlan_creation_expected and
                 add_appears == add_keyword_expected)
 
-    def _is_vlan_unconfigured(self, vlan_deletion_expected=True):
-        vlan_deleted = self._is_in_last_nexus_cfg(
+    def _is_vlan_unconfigured(self, vlan_deletion_expected=True,
+                              vlan_untrunk_expected=True):
+        vlan_deleted = self._is_in_nexus_cfg(
             ['no', 'vlan', 'vlan-id-create-delete'])
-        return (self._is_in_nexus_cfg(['allowed', 'vlan', 'remove']) and
-                vlan_deleted == vlan_deletion_expected)
+        vlan_untrunked = self._is_in_nexus_cfg(['allowed', 'vlan', 'remove'])
+        return (vlan_deleted == vlan_deletion_expected and
+                vlan_untrunked == vlan_untrunk_expected)
 
 
 class TestCiscoBasicGet(CiscoNetworkPluginV2TestCase,
@@ -419,25 +445,17 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         are ignored by the Nexus plugin.
 
         """
-        def mock_edit_config_a(target, config):
-            if all(word in config for word in ['state', 'active']):
-                raise Exception("Can't modify state for extended")
-
-        with self._patch_ncclient(
-            'manager.connect.return_value.edit_config.side_effect',
-            mock_edit_config_a):
-            with self._create_port_res() as res:
-                self.assertEqual(res.status_int, wexc.HTTPCreated.code)
-
-        def mock_edit_config_b(target, config):
-            if all(word in config for word in ['no', 'shutdown']):
-                raise Exception("Command is only allowed on VLAN")
-
-        with self._patch_ncclient(
-            'manager.connect.return_value.edit_config.side_effect',
-            mock_edit_config_b):
-            with self._create_port_res() as res:
-                self.assertEqual(res.status_int, wexc.HTTPCreated.code)
+        config_err_strings = {
+            "state active": "Can't modify state for extended",
+            "no shutdown": "Command is only allowed on VLAN",
+        }
+        for config, err_string in config_err_strings.items():
+            with self._patch_ncclient(
+                'manager.connect.return_value.edit_config.side_effect',
+                self._config_dependent_side_effect(config,
+                                                   Exception(err_string))):
+                with self._create_port_res() as res:
+                    self.assertEqual(res.status_int, wexc.HTTPCreated.code)
 
     def test_nexus_vlan_config_rollback(self):
         """Test rollback following Nexus VLAN state config failure.
@@ -448,20 +466,19 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         for the extended VLAN range).
 
         """
-        def mock_edit_config(target, config):
-            if all(word in config for word in ['state', 'active']):
-                raise ValueError
-        with self._patch_ncclient(
-            'manager.connect.return_value.edit_config.side_effect',
-            mock_edit_config):
-            with self._create_port_res(do_delete=False) as res:
-                # Confirm that the last configuration sent to the Nexus
-                # switch was deletion of the VLAN.
-                self.assertTrue(
-                    self._is_in_last_nexus_cfg(['<no>', '<vlan>'])
-                )
-                self._assertExpectedHTTP(res.status_int,
-                                         c_exc.NexusConfigFailed)
+        vlan_state_configs = ['state active', 'no shutdown']
+        for config in vlan_state_configs:
+            with self._patch_ncclient(
+                'manager.connect.return_value.edit_config.side_effect',
+                self._config_dependent_side_effect(config, ValueError)):
+                with self._create_port_res(do_delete=False) as res:
+                    # Confirm that the last configuration sent to the Nexus
+                    # switch was deletion of the VLAN.
+                    self.assertTrue(
+                        self._is_in_last_nexus_cfg(['<no>', '<vlan>'])
+                    )
+                    self._assertExpectedHTTP(res.status_int,
+                                             c_exc.NexusConfigFailed)
 
     def test_get_seg_id_fail(self):
         """Test handling of a NetworkSegmentIDNotFound exception.
@@ -501,7 +518,9 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
             self._assertExpectedHTTP(res.status_int,
                                      c_exc.NexusComputeHostNotConfigured)
 
-    def test_nexus_bind_fail_rollback(self):
+    def _check_rollback_on_bind_failure(self,
+                                        vlan_deletion_expected,
+                                        vlan_untrunk_expected):
         """Test for proper rollback following add Nexus DB binding failure.
 
         Test that the Cisco Nexus plugin correctly rolls back the vlan
@@ -509,15 +528,47 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         within the plugin's create_port() method.
 
         """
+        inserted_exc = KeyError
         with mock.patch.object(nexus_db_v2, 'add_nexusport_binding',
-                               side_effect=KeyError):
+                               side_effect=inserted_exc):
             with self._create_port_res(do_delete=False) as res:
-                # Confirm that the last configuration sent to the Nexus
-                # switch was a removal of vlan from the test interface.
-                self.assertTrue(
-                    self._is_in_last_nexus_cfg(['<vlan>', '<remove>'])
-                )
-                self._assertExpectedHTTP(res.status_int, KeyError)
+                # Confirm that the configuration sent to the Nexus
+                # switch includes deletion of the vlan (if expected)
+                # and untrunking of the vlan from the ethernet interface
+                # (if expected).
+                self.assertTrue(self._is_vlan_unconfigured(
+                    vlan_deletion_expected=vlan_deletion_expected,
+                    vlan_untrunk_expected=vlan_untrunk_expected))
+                self._assertExpectedHTTP(res.status_int, inserted_exc)
+
+    def test_nexus_rollback_on_bind_failure_non_provider_vlan(self):
+        """Test rollback upon DB binding failure for non-provider vlan."""
+        self._check_rollback_on_bind_failure(vlan_deletion_expected=True,
+                                             vlan_untrunk_expected=True)
+
+    def test_nexus_rollback_on_bind_failure_prov_vlan_no_auto_create(self):
+        """Test rollback on bind fail for prov vlan w auto-create disabled."""
+        with mock.patch.object(network_db_v2, 'is_provider_vlan',
+                               return_value=True):
+            # Disable auto-create. This config change will be cleared based
+            # on cleanup scheduled in the CiscoNetworkPluginV2TestCase
+            # class' setUp() method.
+            cisco_config.CONF.set_override('provider_vlan_auto_create',
+                                           False, 'CISCO')
+            self._check_rollback_on_bind_failure(vlan_deletion_expected=False,
+                                                 vlan_untrunk_expected=True)
+
+    def test_nexus_rollback_on_bind_failure_prov_vlan_no_auto_trunk(self):
+        """Test rollback on bind fail for prov vlan w auto-trunk disabled."""
+        with mock.patch.object(network_db_v2, 'is_provider_vlan',
+                               return_value=True):
+            # Disable auto-trunk. This config change will be cleared
+            # based on post-test cleanup scheduled in the
+            # CiscoNetworkPluginV2TestCase class' setUp() method.
+            cisco_config.CONF.set_override('provider_vlan_auto_trunk',
+                                           False, 'CISCO')
+            self._check_rollback_on_bind_failure(vlan_deletion_expected=True,
+                                                 vlan_untrunk_expected=False)
 
     def test_model_update_port_rollback(self):
         """Test for proper rollback for Cisco model layer update port failure.

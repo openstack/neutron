@@ -31,15 +31,6 @@ class L2DevicePluginBase(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get_all_networks(self, tenant_id, **kwargs):
-        """Get newtorks.
-
-        :returns:
-        :raises:
-        """
-        pass
-
-    @abstractmethod
     def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id,
                        **kwargs):
         """Create network.
@@ -68,15 +59,6 @@ class L2DevicePluginBase(object):
         pass
 
     @abstractmethod
-    def get_all_ports(self, tenant_id, net_id, **kwargs):
-        """Get ports.
-
-        :returns:
-        :raises:
-        """
-        pass
-
-    @abstractmethod
     def create_port(self, tenant_id, net_id, port_state, port_id, **kwargs):
         """Create port.
 
@@ -97,15 +79,6 @@ class L2DevicePluginBase(object):
     @abstractmethod
     def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """Update port.
-
-        :returns:
-        :raises:
-        """
-        pass
-
-    @abstractmethod
-    def get_port_details(self, tenant_id, net_id, port_id, **kwargs):
-        """Get port details.
 
         :returns:
         :raises:

@@ -45,10 +45,6 @@ class CiscoNEXUSFakeDriver():
         """Delete a VLAN on Nexus Switch given the VLAN ID."""
         pass
 
-    def enable_port_trunk(self, mgr, interface):
-        """Enable trunk mode an interface on Nexus Switch."""
-        pass
-
     def disable_switch_port(self, mgr, interface):
         """Disable trunk mode an interface on Nexus Switch."""
         pass

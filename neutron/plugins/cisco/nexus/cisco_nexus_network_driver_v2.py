@@ -84,12 +84,6 @@ class CiscoNEXUSDriver():
             }
         return self.credentials[nexus_ip]
 
-    def get_switch_and_port_id(self, host_name):
-        for switch_ip, attr in self.nexus_switches:
-            if str(attr) == host_name:
-                return switch_ip, self.nexus_switches[switch_ip, attr]
-        return None, None
-
     def nxos_connect(self, nexus_host):
         """Make SSH connection to the Nexus Switch."""
         if getattr(self.connections.get(nexus_host), 'connected', None):
@@ -149,20 +143,6 @@ class CiscoNEXUSDriver():
         """Delete a VLAN on Nexus Switch given the VLAN ID."""
         confstr = snipp.CMD_NO_VLAN_CONF_SNIPPET % vlanid
         confstr = self.create_xml_snippet(confstr)
-        self._edit_config(nexus_host, target='running', config=confstr)
-
-    def enable_port_trunk(self, nexus_host, etype, interface):
-        """Enable trunk mode an interface on Nexus Switch."""
-        confstr = snipp.CMD_PORT_TRUNK % (etype, interface, etype)
-        confstr = self.create_xml_snippet(confstr)
-        LOG.debug(_("NexusDriver: %s"), confstr)
-        self._edit_config(nexus_host, target='running', config=confstr)
-
-    def disable_switch_port(self, nexus_host, etype, interface):
-        """Disable trunk mode an interface on Nexus Switch."""
-        confstr = snipp.CMD_NO_SWITCHPORT % (etype, interface, etype)
-        confstr = self.create_xml_snippet(confstr)
-        LOG.debug(_("NexusDriver: %s"), confstr)
         self._edit_config(nexus_host, target='running', config=confstr)
 
     def enable_vlan_on_trunk_int(self, nexus_host, vlanid, etype, interface):
