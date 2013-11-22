@@ -29,6 +29,11 @@ OPTS = [
 
 
 LOOPBACK_DEVNAME = 'lo'
+# NOTE(ethuleau): depend of the version of iproute2, the vlan
+# interface details vary.
+VLAN_INTERFACE_DETAIL = ['vlan protocol 802.1q',
+                         'vlan protocol 802.1Q',
+                         'vlan id']
 
 
 class SubProcessBase(object):
@@ -87,14 +92,18 @@ class IPWrapper(SubProcessBase):
 
     def get_devices(self, exclude_loopback=False):
         retval = []
-        output = self._execute('o', 'link', ('list',),
+        output = self._execute(['o', 'd'], 'link', ('list',),
                                self.root_helper, self.namespace)
         for line in output.split('\n'):
             if '<' not in line:
                 continue
-            tokens = line.split(':', 2)
-            if len(tokens) >= 3:
-                name = tokens[1].split('@', 1)[0].strip()
+            tokens = line.split(' ', 2)
+            if len(tokens) == 3:
+                if any(v in tokens[2] for v in VLAN_INTERFACE_DETAIL):
+                    delimiter = '@'
+                else:
+                    delimiter = ':'
+                name = tokens[1].rpartition(delimiter)[0].strip()
 
                 if exclude_loopback and name == LOOPBACK_DEVNAME:
                     continue
