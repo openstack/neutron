@@ -74,6 +74,11 @@ def _validate_values(data, valid_values=None):
         return msg
 
 
+def _validate_string_or_none(data, max_len=None):
+    if data is not None:
+        return _validate_string(data, max_len=None)
+
+
 def _validate_string(data, max_len=None):
     if not isinstance(data, basestring):
         msg = _("'%s' is not a valid string") % data
@@ -521,6 +526,7 @@ validators = {'type:dict': _validate_dict,
               'type:range': _validate_range,
               'type:regex': _validate_regex,
               'type:string': _validate_string,
+              'type:string_or_none': _validate_string_or_none,
               'type:subnet': _validate_subnet,
               'type:subnet_list': _validate_subnet_list,
               'type:uuid': _validate_uuid,

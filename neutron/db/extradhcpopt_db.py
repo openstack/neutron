@@ -62,11 +62,12 @@ class ExtraDhcpOptMixin(object):
             return port
         with context.session.begin(subtransactions=True):
             for dopt in extra_dhcp_opts:
-                db = ExtraDhcpOpt(
-                    port_id=port['id'],
-                    opt_name=dopt['opt_name'],
-                    opt_value=dopt['opt_value'])
-                context.session.add(db)
+                if dopt['opt_value']:
+                    db = ExtraDhcpOpt(
+                        port_id=port['id'],
+                        opt_name=dopt['opt_name'],
+                        opt_value=dopt['opt_value'])
+                    context.session.add(db)
         return self._extend_port_extra_dhcp_opts_dict(context, port)
 
     def _extend_port_extra_dhcp_opts_dict(self, context, port):
@@ -90,25 +91,19 @@ class ExtraDhcpOptMixin(object):
                 context, ExtraDhcpOpt).filter_by(port_id=id).all()
             # if there are currently no dhcp_options associated to
             # this port, Then just insert the new ones and be done.
-            if not opt_db:
-                with context.session.begin(subtransactions=True):
-                    for dopt in dopts:
-                        db = ExtraDhcpOpt(
-                            port_id=id,
-                            opt_name=dopt['opt_name'],
-                            opt_value=dopt['opt_value'])
-                        context.session.add(db)
-            else:
+            with context.session.begin(subtransactions=True):
                 for upd_rec in dopts:
-                    with context.session.begin(subtransactions=True):
-                        for opt in opt_db:
-                            if opt['opt_name'] == upd_rec['opt_name']:
-                                if opt['opt_value'] != upd_rec['opt_value']:
-                                    opt.update(
-                                        {'opt_value': upd_rec['opt_value']})
-                                break
-                        # this handles the adding an option that didn't exist.
-                        else:
+                    for opt in opt_db:
+                        if opt['opt_name'] == upd_rec['opt_name']:
+                            # to handle deleting of a opt from the port.
+                            if upd_rec['opt_value'] is None:
+                                context.session.delete(opt)
+                            elif opt['opt_value'] != upd_rec['opt_value']:
+                                opt.update(
+                                    {'opt_value': upd_rec['opt_value']})
+                            break
+                    else:
+                        if upd_rec['opt_value'] is not None:
                             db = ExtraDhcpOpt(
                                 port_id=id,
                                 opt_name=upd_rec['opt_name'],
