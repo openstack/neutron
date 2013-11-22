@@ -67,6 +67,11 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
     pass
 
 
+class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
+                       Ml2PluginV2TestCase):
+    pass
+
+
 class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_update_port_status_build(self):
