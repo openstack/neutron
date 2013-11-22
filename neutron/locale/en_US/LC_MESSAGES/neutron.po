@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-21 06:39+0000\n"
+"POT-Creation-Date: 2013-11-22 06:40+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (United States) "
@@ -1055,7 +1055,7 @@ msgstr ""
 msgid "Force ip_lib calls to use the root helper"
 msgstr ""
 
-#: neutron/agent/linux/ip_lib.py:448
+#: neutron/agent/linux/ip_lib.py:457
 msgid "No namespace defined for parent"
 msgstr ""
 
@@ -2412,64 +2412,64 @@ msgstr ""
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:56
+#: neutron/db/dhcp_rpc_base.py:55
 #, python-format
 msgid "get_active_networks requested from %s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:63
+#: neutron/db/dhcp_rpc_base.py:62
 #, python-format
 msgid "get_active_networks_info from %s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:83
+#: neutron/db/dhcp_rpc_base.py:82
 #, python-format
 msgid "Network %(network_id)s requested from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:90 neutron/db/dhcp_rpc_base.py:154
+#: neutron/db/dhcp_rpc_base.py:89 neutron/db/dhcp_rpc_base.py:153
 #, python-format
 msgid "Network %s could not be found, it might have been deleted concurrently."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:112
+#: neutron/db/dhcp_rpc_base.py:111
 #, python-format
 msgid "Port %(device_id)s for %(network_id)s requested from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:146
+#: neutron/db/dhcp_rpc_base.py:145
 #, python-format
 msgid ""
 "DHCP port %(device_id)s on network %(network_id)s does not exist on "
 "%(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:173
+#: neutron/db/dhcp_rpc_base.py:172
 #, python-format
 msgid "Port for network %(net_id)s could not be created: %(reason)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:190
+#: neutron/db/dhcp_rpc_base.py:189
 #, python-format
 msgid "DHCP port deletion for %(network_id)s request from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:204
+#: neutron/db/dhcp_rpc_base.py:203
 #, python-format
 msgid "DHCP port remove fixed_ip for %(subnet_id)s request from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:228
+#: neutron/db/dhcp_rpc_base.py:227
 #, python-format
 msgid "Updating lease expiration is now deprecated. Issued  from host %s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:235
+#: neutron/db/dhcp_rpc_base.py:234
 #, python-format
 msgid "Create dhcp port %(port)s from %(host)s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:252
+#: neutron/db/dhcp_rpc_base.py:251
 #, python-format
 msgid "Update dhcp port %(port)s from %(host)s."
 msgstr ""
@@ -2741,11 +2741,11 @@ msgstr ""
 msgid "The %(key)s field can not have negative value. Current value is %(value)d."
 msgstr ""
 
-#: neutron/db/loadbalancer/loadbalancer_db.py:260
+#: neutron/db/loadbalancer/loadbalancer_db.py:261
 msgid "'cookie_name' should be specified for this type of session persistence."
 msgstr ""
 
-#: neutron/db/loadbalancer/loadbalancer_db.py:264
+#: neutron/db/loadbalancer/loadbalancer_db.py:265
 msgid "'cookie_name' is not allowed for this type of session persistence"
 msgstr ""
 
@@ -7303,22 +7303,22 @@ msgid "Faild binding vport=%(vport)s to device=%(device)s"
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:25
-#: neutron/tests/unit/midonet/test_midonet_driver.py:50
+#: neutron/tests/unit/midonet/test_midonet_driver.py:52
 msgid "MidoNet API server URI."
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:27
-#: neutron/tests/unit/midonet/test_midonet_driver.py:52
+#: neutron/tests/unit/midonet/test_midonet_driver.py:54
 msgid "MidoNet admin username."
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:30
-#: neutron/tests/unit/midonet/test_midonet_driver.py:55
+#: neutron/tests/unit/midonet/test_midonet_driver.py:57
 msgid "MidoNet admin password."
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:33
-#: neutron/tests/unit/midonet/test_midonet_driver.py:58
+#: neutron/tests/unit/midonet/test_midonet_driver.py:60
 msgid "ID of the project that MidoNet admin userbelongs to."
 msgstr ""
 
@@ -13389,12 +13389,5 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Network %s RPC info call failed."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Optional paramter identifying the UUID "
-#~ "of the cluster in NVP.  This can"
-#~ " be retrieved from NVP management "
-#~ "console \"admin\" section."
 #~ msgstr ""
 
