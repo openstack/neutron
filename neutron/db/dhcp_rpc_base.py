@@ -46,6 +46,31 @@ class DhcpRpcCallbackMixin(object):
             nets = plugin.get_networks(context, filters=filters)
         return nets
 
+    def _port_action(self, plugin, context, port, action):
+        """Perform port operations taking care of concurrency issues."""
+        try:
+            if action == 'create_port':
+                return plugin.create_port(context, port)
+            else:
+                msg = _('Unrecognized action')
+                raise n_exc.Invalid(message=msg)
+        except (db_exc.DBError, n_exc.NetworkNotFound,
+                n_exc.SubnetNotFound, n_exc.IpAddressGenerationFailure) as e:
+            if isinstance(e, n_exc.IpAddressGenerationFailure):
+                # Check if the subnet still exists and if it does not, this is
+                # the reason why the ip address generation failed. In any other
+                # unlikely event re-raise
+                try:
+                    subnet_id = port['port']['fixed_ips'][0]['subnet_id']
+                    plugin.get_subnet(context, subnet_id)
+                except n_exc.SubnetNotFound:
+                    pass
+                else:
+                    raise
+            network_id = port['port']['network_id']
+            LOG.warn(_("Port for network %(net_id)s could not be created: "
+                       "%(reason)s") % {"net_id": network_id, 'reason': e})
+
     def get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active network ids."""
         # NOTE(arosen): This method is no longer used by the DHCP agent but is
@@ -99,7 +124,7 @@ class DhcpRpcCallbackMixin(object):
 
         This method will re-use an existing port if one already exists.  When a
         port is re-used, the fixed_ip allocation will be updated to the current
-        network state.
+        network state. If an expected failure occurs, a None port is returned.
 
         """
         host = kwargs.get('host')
@@ -164,14 +189,9 @@ class DhcpRpcCallbackMixin(object):
                 device_owner='network:dhcp',
                 fixed_ips=[dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
 
-            try:
-                retval = plugin.create_port(context, dict(port=port_dict))
-            except (db_exc.DBError,
-                    n_exc.NetworkNotFound,
-                    n_exc.SubnetNotFound,
-                    n_exc.IpAddressGenerationFailure) as e:
-                LOG.warn(_("Port for network %(net_id)s could not be created: "
-                           "%(reason)s") % {"net_id": network_id, 'reason': e})
+            retval = self._port_action(plugin, context, {'port': port_dict},
+                                       'create_port')
+            if not retval:
                 return
 
         # Convert subnet_id to subnet dict
@@ -229,7 +249,11 @@ class DhcpRpcCallbackMixin(object):
                       'from host %s.'), host)
 
     def create_dhcp_port(self, context, **kwargs):
-        """Create the dhcp port."""
+        """Create and return dhcp port information.
+
+        If an expected failure occurs, a None port is returned.
+
+        """
         host = kwargs.get('host')
         port = kwargs.get('port')
         LOG.debug(_('Create dhcp port %(port)s '
@@ -242,7 +266,7 @@ class DhcpRpcCallbackMixin(object):
         if 'mac_address' not in port['port']:
             port['port']['mac_address'] = attributes.ATTR_NOT_SPECIFIED
         plugin = manager.NeutronManager.get_plugin()
-        return plugin.create_port(context, port)
+        return self._port_action(plugin, context, port, 'create_port')
 
     def update_dhcp_port(self, context, **kwargs):
         """Update the dhcp port."""
