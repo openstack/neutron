@@ -14,7 +14,6 @@
 # limitations under the License.
 
 from oslo.config import cfg
-from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -138,8 +137,8 @@ class DhcpRpcCallbackMixin(object):
                 retval = plugin.update_port(context, port['id'],
                                             dict(port=port))
 
-        except exc.NoResultFound:
-            pass
+        except n_exc.NotFound as e:
+            LOG.warning(e)
 
         if retval is None:
             # No previous port exists, so create a new one.
