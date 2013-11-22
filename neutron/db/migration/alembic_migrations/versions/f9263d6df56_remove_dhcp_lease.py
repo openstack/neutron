@@ -42,5 +42,5 @@ def upgrade(active_plugins=None, options=None):
 
 
 def downgrade(active_plugins=None, options=None):
-    op.add_column('ipallocations', sa.Column(u'expiration', sa.DATETIME(),
+    op.add_column('ipallocations', sa.Column(u'expiration', sa.DateTime(),
                   nullable=True))
