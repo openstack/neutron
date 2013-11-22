@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-21 06:39+0000\n"
+"POT-Creation-Date: 2013-11-22 06:40+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -1056,7 +1056,7 @@ msgstr "驅動程式位置：%s"
 msgid "Force ip_lib calls to use the root helper"
 msgstr ""
 
-#: neutron/agent/linux/ip_lib.py:448
+#: neutron/agent/linux/ip_lib.py:457
 msgid "No namespace defined for parent"
 msgstr "未給母項定義名稱空間"
 
@@ -2419,64 +2419,64 @@ msgstr "已配置 IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr "%(address)s (%(subnet_id)s) 未回收"
 
-#: neutron/db/dhcp_rpc_base.py:56
+#: neutron/db/dhcp_rpc_base.py:55
 #, python-format
 msgid "get_active_networks requested from %s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:63
+#: neutron/db/dhcp_rpc_base.py:62
 #, python-format
 msgid "get_active_networks_info from %s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:83
+#: neutron/db/dhcp_rpc_base.py:82
 #, python-format
 msgid "Network %(network_id)s requested from %(host)s"
 msgstr "從 %(host)s 要求的網路 %(network_id)s"
 
-#: neutron/db/dhcp_rpc_base.py:90 neutron/db/dhcp_rpc_base.py:154
+#: neutron/db/dhcp_rpc_base.py:89 neutron/db/dhcp_rpc_base.py:153
 #, python-format
 msgid "Network %s could not be found, it might have been deleted concurrently."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:112
+#: neutron/db/dhcp_rpc_base.py:111
 #, python-format
 msgid "Port %(device_id)s for %(network_id)s requested from %(host)s"
 msgstr "從 %(host)s 要求的 %(network_id)s 埠 %(device_id)s"
 
-#: neutron/db/dhcp_rpc_base.py:146
+#: neutron/db/dhcp_rpc_base.py:145
 #, python-format
 msgid ""
 "DHCP port %(device_id)s on network %(network_id)s does not exist on "
 "%(host)s"
 msgstr "網路 %(network_id)s 上的 DHCP 埠 %(device_id)s 不存在於 %(host)s 上"
 
-#: neutron/db/dhcp_rpc_base.py:173
+#: neutron/db/dhcp_rpc_base.py:172
 #, python-format
 msgid "Port for network %(net_id)s could not be created: %(reason)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:190
+#: neutron/db/dhcp_rpc_base.py:189
 #, python-format
 msgid "DHCP port deletion for %(network_id)s request from %(host)s"
 msgstr "%(host)s 提出 %(network_id)s 要求來刪除 DHCP 埠"
 
-#: neutron/db/dhcp_rpc_base.py:204
+#: neutron/db/dhcp_rpc_base.py:203
 #, python-format
 msgid "DHCP port remove fixed_ip for %(subnet_id)s request from %(host)s"
 msgstr "%(host)s 提出 %(subnet_id)s 要求來移除 DHCP 埠 fixed_ip"
 
-#: neutron/db/dhcp_rpc_base.py:228
+#: neutron/db/dhcp_rpc_base.py:227
 #, python-format
 msgid "Updating lease expiration is now deprecated. Issued  from host %s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:235
+#: neutron/db/dhcp_rpc_base.py:234
 #, python-format
 msgid "Create dhcp port %(port)s from %(host)s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:252
+#: neutron/db/dhcp_rpc_base.py:251
 #, python-format
 msgid "Update dhcp port %(port)s from %(host)s."
 msgstr ""
@@ -2752,11 +2752,11 @@ msgstr ""
 msgid "The %(key)s field can not have negative value. Current value is %(value)d."
 msgstr ""
 
-#: neutron/db/loadbalancer/loadbalancer_db.py:260
+#: neutron/db/loadbalancer/loadbalancer_db.py:261
 msgid "'cookie_name' should be specified for this type of session persistence."
 msgstr "應該給這種類型的階段作業持續性指定 'cookie_name'。"
 
-#: neutron/db/loadbalancer/loadbalancer_db.py:264
+#: neutron/db/loadbalancer/loadbalancer_db.py:265
 msgid "'cookie_name' is not allowed for this type of session persistence"
 msgstr "這種類型的階段作業持續性不接受 'cookie_name'"
 
@@ -7340,22 +7340,22 @@ msgid "Faild binding vport=%(vport)s to device=%(device)s"
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:25
-#: neutron/tests/unit/midonet/test_midonet_driver.py:50
+#: neutron/tests/unit/midonet/test_midonet_driver.py:52
 msgid "MidoNet API server URI."
 msgstr "MidoNet API 伺服器 URI。"
 
 #: neutron/plugins/midonet/common/config.py:27
-#: neutron/tests/unit/midonet/test_midonet_driver.py:52
+#: neutron/tests/unit/midonet/test_midonet_driver.py:54
 msgid "MidoNet admin username."
 msgstr "MidoNet 管理者使用者名稱。"
 
 #: neutron/plugins/midonet/common/config.py:30
-#: neutron/tests/unit/midonet/test_midonet_driver.py:55
+#: neutron/tests/unit/midonet/test_midonet_driver.py:57
 msgid "MidoNet admin password."
 msgstr "MidoNet 管理者密碼。"
 
 #: neutron/plugins/midonet/common/config.py:33
-#: neutron/tests/unit/midonet/test_midonet_driver.py:58
+#: neutron/tests/unit/midonet/test_midonet_driver.py:60
 msgid "ID of the project that MidoNet admin userbelongs to."
 msgstr "MidoNet 管理者使用者所屬的專案 ID。"
 
@@ -12691,7 +12691,7 @@ msgstr ""
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr "Create_l2_gw_service 未傳回所新建資源的 UUID：%s"
+#~ msgstr "選用參數，用以識別 NVP 中叢集的 UUID。這可以從 NVP 管理主控台 \"admin\" 部分擷取。"
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -13445,11 +13445,4 @@ msgstr ""
 
 #~ msgid "Network %s RPC info call failed."
 #~ msgstr "呼叫網路 %s RPC 資訊失敗。"
-
-#~ msgid ""
-#~ "Optional paramter identifying the UUID "
-#~ "of the cluster in NVP.  This can"
-#~ " be retrieved from NVP management "
-#~ "console \"admin\" section."
-#~ msgstr "選用參數，用以識別 NVP 中叢集的 UUID。這可以從 NVP 管理主控台 \"admin\" 部分擷取。"
 
