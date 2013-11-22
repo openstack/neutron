@@ -222,7 +222,7 @@ class LoadBalancerTestMixin(object):
                                        admin_state_up,
                                        subnet_id=tmp_subnet['subnet']['id'],
                                        **kwargs)
-                if res.status_int >= 400:
+                if res.status_int >= webob.exc.HTTPClientError.code:
                     raise webob.exc.HTTPClientError(
                         explanation=_("Unexpected error code: %s") %
                         res.status_int
@@ -246,7 +246,7 @@ class LoadBalancerTestMixin(object):
                                 protocol,
                                 admin_state_up,
                                 **kwargs)
-        if res.status_int >= 400:
+        if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(
                 explanation=_("Unexpected error code: %s") % res.status_int
             )
@@ -267,7 +267,7 @@ class LoadBalancerTestMixin(object):
                                   protocol_port,
                                   admin_state_up,
                                   **kwargs)
-        if res.status_int >= 400:
+        if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(
                 explanation=_("Unexpected error code: %s") % res.status_int
             )
@@ -292,7 +292,7 @@ class LoadBalancerTestMixin(object):
                                           max_retries,
                                           admin_state_up,
                                           **kwargs)
-        if res.status_int >= 400:
+        if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(
                 explanation=_("Unexpected error code: %s") % res.status_int
             )
@@ -514,7 +514,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 data = {'vip': {'pool_id': pool['pool']['id']}}
                 req = self.new_update_request('vips', data, vip['vip']['id'])
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 400)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_reset_session_persistence(self):
         name = 'vip4'
@@ -561,7 +562,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 req = self.new_delete_request('vips',
                                               vip['vip']['id'])
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 204)
+                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_show_vip(self):
         name = "vip_show"
@@ -733,7 +734,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 req = self.new_delete_request('pools',
                                               pool['pool']['id'])
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 204)
+                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
     def test_delete_pool_preserve_state(self):
         with self.pool(no_delete=True) as pool:
@@ -741,12 +742,12 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 req = self.new_delete_request('pools',
                                               pool['pool']['id'])
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 409)
+                self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
                 req = self.new_show_request('pools',
                                             pool['pool']['id'],
                                             fmt=self.fmt)
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 200)
+                self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
                 res = self.deserialize(self.fmt,
                                        req.get_response(self.ext_api))
                 self.assertEqual(res['pool']['status'],
@@ -888,7 +889,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 req = self.new_delete_request('members',
                                               member['member']['id'])
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 204)
+                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
                 req = self.new_show_request('pools',
                                             pool_id,
@@ -997,7 +998,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             req = self.new_delete_request('health_monitors',
                                           monitor['health_monitor']['id'])
             res = req.get_response(self.ext_api)
-            self.assertEqual(res.status_int, 204)
+            self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
             qry = ctx.session.query(ldb.HealthMonitor)
             qry = qry.filter_by(id=monitor['health_monitor']['id'])
             self.assertIsNone(qry.first())
@@ -1018,7 +1019,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     id=pool['pool']['id'],
                     subresource='health_monitors')
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
                 ctx = context.get_admin_context()
 
@@ -1032,7 +1033,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                     monitor['health_monitor']['id']
                 )
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 204)
+                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
                 # check if all corresponding Pool associations are deleted
                 qry = ctx.session.query(ldb.PoolMonitorAssociation)
                 qry = qry.filter_by(monitor_id=monitor['health_monitor']['id'])
@@ -1164,7 +1165,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                         id=pool['pool']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
-                    self.assertEqual(res.status_int, 201)
+                    self.assertEqual(res.status_int,
+                                     webob.exc.HTTPCreated.code)
 
                     data = {"health_monitor": {
                             "id": monitor2['health_monitor']['id'],
@@ -1176,7 +1178,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                         id=pool['pool']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
-                    self.assertEqual(res.status_int, 201)
+                    self.assertEqual(res.status_int,
+                                     webob.exc.HTTPCreated.code)
 
                     req = self.new_show_request(
                         'pools',
@@ -1216,7 +1219,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                         id=pool['pool']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
-                    self.assertEqual(res.status_int, 201)
+                    self.assertEqual(res.status_int,
+                                     webob.exc.HTTPCreated.code)
 
                     data = {"health_monitor": {
                             "id": monitor2['health_monitor']['id'],
@@ -1228,7 +1232,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                         id=pool['pool']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
-                    self.assertEqual(res.status_int, 201)
+                    self.assertEqual(res.status_int,
+                                     webob.exc.HTTPCreated.code)
 
                     # remove one of healthmonitor from the pool
                     req = self.new_delete_request(
@@ -1238,7 +1243,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                         sub_id=monitor1['health_monitor']['id'],
                         subresource="health_monitors")
                     res = req.get_response(self.ext_api)
-                    self.assertEqual(res.status_int, 204)
+                    self.assertEqual(res.status_int,
+                                     webob.exc.HTTPNoContent.code)
 
                     req = self.new_show_request(
                         'pools',
@@ -1289,7 +1295,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                                   '3',
                                                   True)
                 health_monitor = self.deserialize(self.fmt, req)
-                self.assertEqual(req.status_int, 201)
+                self.assertEqual(req.status_int, webob.exc.HTTPCreated.code)
 
                 # Associate the health_monitor to the pool
                 data = {"health_monitor": {
@@ -1301,7 +1307,7 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                               id=pool['pool']['id'],
                                               subresource="health_monitors")
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 201)
+                self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
                 # Get pool and vip
                 req = self.new_show_request('pools',
