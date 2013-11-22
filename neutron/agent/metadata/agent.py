@@ -28,9 +28,15 @@ from neutronclient.v2_0 import client
 from oslo.config import cfg
 import webob
 
+from neutron.agent.common import config as agent_conf
+from neutron.agent import rpc as agent_rpc
 from neutron.common import config
+from neutron.common import constants as n_const
+from neutron.common import topics
 from neutron.common import utils
+from neutron import context
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import loopingcall
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
@@ -222,6 +228,45 @@ class UnixDomainMetadataProxy(object):
         else:
             os.makedirs(dirname, 0o755)
 
+        self._init_state_reporting()
+
+    def _init_state_reporting(self):
+        self.context = context.get_admin_context_without_session()
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
+        self.agent_state = {
+            'binary': 'neutron-metadata-agent',
+            'host': cfg.CONF.host,
+            'topic': 'N/A',
+            'configurations': {
+                'metadata_proxy_socket': cfg.CONF.metadata_proxy_socket,
+                'nova_metadata_ip': cfg.CONF.nova_metadata_ip,
+                'nova_metadata_port': cfg.CONF.nova_metadata_port,
+            },
+            'start_flag': True,
+            'agent_type': n_const.AGENT_TYPE_METADATA}
+        report_interval = cfg.CONF.AGENT.report_interval
+        if report_interval:
+            self.heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
+            self.heartbeat.start(interval=report_interval)
+
+    def _report_state(self):
+        try:
+            self.state_rpc.report_state(
+                self.context,
+                self.agent_state,
+                use_call=self.agent_state.get('start_flag'))
+        except AttributeError:
+            # This means the server does not support report_state
+            LOG.warn(_('Neutron server does not support state report.'
+                       ' State report for this agent will be disabled.'))
+            self.heartbeat.stop()
+            return
+        except Exception:
+            LOG.exception(_("Failed reporting state!"))
+            return
+        self.agent_state.pop('start_flag', None)
+
     def run(self):
         server = UnixDomainWSGIServer('neutron-metadata-agent')
         server.start(MetadataProxyHandler(self.conf),
@@ -233,6 +278,7 @@ def main():
     eventlet.monkey_patch()
     cfg.CONF.register_opts(UnixDomainMetadataProxy.OPTS)
     cfg.CONF.register_opts(MetadataProxyHandler.OPTS)
+    agent_conf.register_agent_state_opts_helper(cfg.CONF)
     cfg.CONF(project='neutron')
     config.setup_logging(cfg.CONF)
     utils.log_opt_values(LOG)

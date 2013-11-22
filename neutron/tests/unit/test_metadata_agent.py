@@ -381,3 +381,23 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                                 mock.call(cfg.CONF),
                                 mock.call().run()]
                             )
+
+    def test_init_state_reporting(self):
+        with mock.patch('neutron.openstack.common.loopingcall.'
+                        'FixedIntervalLoopingCall') as loop_call:
+            with mock.patch('os.makedirs'):
+                proxy = agent.UnixDomainMetadataProxy(mock.Mock())
+                loop_call.assert_called_once_with(proxy._report_state)
+                loop_call.return_value.start.assert_called_once_with(
+                    interval=mock.ANY)
+
+    def test_report_state(self):
+        with mock.patch('neutron.agent.rpc.PluginReportStateAPI') as state_api:
+            with mock.patch('os.makedirs'):
+                proxy = agent.UnixDomainMetadataProxy(mock.Mock())
+                self.assertTrue(proxy.agent_state['start_flag'])
+                proxy._report_state()
+                self.assertNotIn('start_flag', proxy.agent_state)
+                state_api_inst = state_api.return_value
+                state_api_inst.report_state.assert_called_once_with(
+                    proxy.context, proxy.agent_state, use_call=True)
