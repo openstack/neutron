@@ -339,7 +339,6 @@ class TestBase(base.BaseTestCase):
         self.conf.register_opts(dhcp.OPTS)
         instance = mock.patch("neutron.agent.linux.dhcp.DeviceManager")
         self.mock_mgr = instance.start()
-        self.addCleanup(self.mock_mgr.stop)
         self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
                                            default=True))
         self.conf(args=args)
@@ -348,10 +347,9 @@ class TestBase(base.BaseTestCase):
 
         self.replace_p = mock.patch('neutron.agent.linux.utils.replace_file')
         self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
-        self.addCleanup(self.replace_p.stop)
-        self.addCleanup(self.execute_p.stop)
         self.safe = self.replace_p.start()
         self.execute = self.execute_p.start()
+        self.addCleanup(mock.patch.stopall)
 
 
 class TestDhcpBase(TestBase):
