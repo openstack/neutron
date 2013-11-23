@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-22 06:40+0000\n"
+"POT-Creation-Date: 2013-11-23 06:39+0000\n"
 "PO-Revision-Date: 2013-09-05 06:03+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Nepali "
@@ -28,12 +28,12 @@ msgstr ""
 msgid "X_USER_ID is not found in request"
 msgstr ""
 
-#: neutron/context.py:49
+#: neutron/context.py:58
 #, python-format
 msgid "Arguments dropped when creating context: %s"
 msgstr ""
 
-#: neutron/context.py:92
+#: neutron/context.py:109
 #, python-format
 msgid "read_deleted can only be one of 'no', 'yes' or 'only', not %r"
 msgstr ""
@@ -493,6 +493,7 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/dhcp_agent.py:581 neutron/agent/l3_agent.py:824
+#: neutron/agent/metadata/agent.py:261
 #: neutron/services/metering/agents/metering_agent.py:268
 msgid ""
 "Neutron server does not support state report. State report for this agent"
@@ -500,6 +501,7 @@ msgid ""
 msgstr ""
 
 #: neutron/agent/dhcp_agent.py:587 neutron/agent/l3_agent.py:829
+#: neutron/agent/metadata/agent.py:266
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:804
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:181
@@ -1001,27 +1003,27 @@ msgstr ""
 msgid "Admin username"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:49 neutron/agent/metadata/agent.py:46
+#: neutron/agent/linux/interface.py:49 neutron/agent/metadata/agent.py:52
 #: neutron/plugins/metaplugin/common/config.py:40
 msgid "Admin password"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:52 neutron/agent/metadata/agent.py:49
+#: neutron/agent/linux/interface.py:52 neutron/agent/metadata/agent.py:55
 #: neutron/plugins/metaplugin/common/config.py:43
 msgid "Admin tenant name"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:54 neutron/agent/metadata/agent.py:51
+#: neutron/agent/linux/interface.py:54 neutron/agent/metadata/agent.py:57
 #: neutron/plugins/metaplugin/common/config.py:45
 msgid "Authentication URL"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:56 neutron/agent/metadata/agent.py:53
+#: neutron/agent/linux/interface.py:56 neutron/agent/metadata/agent.py:59
 #: neutron/common/config.py:49 neutron/plugins/metaplugin/common/config.py:47
 msgid "The type of authentication to use"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:58 neutron/agent/metadata/agent.py:55
+#: neutron/agent/linux/interface.py:58 neutron/agent/metadata/agent.py:61
 #: neutron/plugins/metaplugin/common/config.py:49
 msgid "Authentication region"
 msgstr ""
@@ -1206,61 +1208,61 @@ msgid ""
 "Stderr: %(stderr)r"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:44
+#: neutron/agent/metadata/agent.py:50
 #: neutron/plugins/metaplugin/common/config.py:38
 msgid "Admin user"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:58
+#: neutron/agent/metadata/agent.py:64
 msgid "Network service endpoint type to pull from the keystone catalog"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:61
+#: neutron/agent/metadata/agent.py:67
 msgid "IP address used by Nova metadata server."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:64
+#: neutron/agent/metadata/agent.py:70
 msgid "TCP Port used by Nova metadata server."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:67
+#: neutron/agent/metadata/agent.py:73
 msgid "Shared secret to sign instance-id request"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:92
+#: neutron/agent/metadata/agent.py:98
 #: neutron/agent/metadata/namespace_proxy.py:68
 #, python-format
 msgid "Request: %s"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:101
+#: neutron/agent/metadata/agent.py:107
 #: neutron/agent/metadata/namespace_proxy.py:76
 msgid "Unexpected error."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:102
+#: neutron/agent/metadata/agent.py:108
 #: neutron/agent/metadata/namespace_proxy.py:77
 msgid "An unknown error has occurred. Please try your request again."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:154
+#: neutron/agent/metadata/agent.py:160
 msgid ""
 "The remote metadata server responded with Forbidden. This response "
 "usually occurs when shared secrets do not match."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:165
+#: neutron/agent/metadata/agent.py:171
 #: neutron/agent/metadata/namespace_proxy.py:116
 msgid "Remote metadata server experienced an internal server error."
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:171
+#: neutron/agent/metadata/agent.py:177
 #: neutron/agent/metadata/namespace_proxy.py:122
 #, python-format
 msgid "Unexpected response code: %s"
 msgstr ""
 
-#: neutron/agent/metadata/agent.py:209
+#: neutron/agent/metadata/agent.py:215
 msgid "Location for Metadata Proxy UNIX domain socket"
 msgstr ""
 
@@ -1482,92 +1484,92 @@ msgstr ""
 msgid "'%(data)s' is not in %(valid_values)s"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:79
+#: neutron/api/v2/attributes.py:84
 #, python-format
 msgid "'%s' is not a valid string"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:84
+#: neutron/api/v2/attributes.py:89
 #, python-format
 msgid "'%(data)s' exceeds maximum length of %(max_len)s"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:94
+#: neutron/api/v2/attributes.py:99
 #, python-format
 msgid "'%s' is not a valid boolean value"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:113 neutron/api/v2/attributes.py:413
+#: neutron/api/v2/attributes.py:118 neutron/api/v2/attributes.py:418
 #, python-format
 msgid "'%s' is not an integer"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:117
+#: neutron/api/v2/attributes.py:122
 #, python-format
 msgid "'%(data)s' is too small - must be at least '%(limit)d'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:122
+#: neutron/api/v2/attributes.py:127
 #, python-format
 msgid "'%(data)s' is too large - must be no larger than '%(limit)d'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:131
+#: neutron/api/v2/attributes.py:136
 #, python-format
 msgid "'%s' contains whitespace"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:141
+#: neutron/api/v2/attributes.py:146
 #, python-format
 msgid "'%s' is not a valid MAC address"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:150
+#: neutron/api/v2/attributes.py:155
 #, python-format
 msgid "'%s' is not a valid IP address"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:161
+#: neutron/api/v2/attributes.py:166
 #, python-format
 msgid "Invalid data format for IP pool: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:180 neutron/api/v2/attributes.py:187
+#: neutron/api/v2/attributes.py:185 neutron/api/v2/attributes.py:192
 #, python-format
 msgid "Invalid data format for fixed IP: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:195
+#: neutron/api/v2/attributes.py:200
 #, python-format
 msgid "Duplicate IP address '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:211
+#: neutron/api/v2/attributes.py:216
 #, python-format
 msgid "Invalid data format for nameserver: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:222
+#: neutron/api/v2/attributes.py:227
 #, python-format
 msgid "'%s' is not a valid nameserver"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:226
+#: neutron/api/v2/attributes.py:231
 #, python-format
 msgid "Duplicate nameserver '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:234
+#: neutron/api/v2/attributes.py:239
 #, python-format
 msgid "Invalid data format for hostroute: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:254
+#: neutron/api/v2/attributes.py:259
 #, python-format
 msgid "Duplicate hostroute '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:271 neutron/tests/unit/test_attributes.py:434
+#: neutron/api/v2/attributes.py:276 neutron/tests/unit/test_attributes.py:434
 #: neutron/tests/unit/test_attributes.py:443
 #: neutron/tests/unit/test_attributes.py:452
 #: neutron/tests/unit/test_attributes.py:461
@@ -1575,59 +1577,59 @@ msgstr ""
 msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:277
+#: neutron/api/v2/attributes.py:282
 #, python-format
 msgid "'%s' is not a valid IP subnet"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:285 neutron/api/v2/attributes.py:326
+#: neutron/api/v2/attributes.py:290 neutron/api/v2/attributes.py:331
 #, python-format
 msgid "'%s' is not a list"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:290 neutron/api/v2/attributes.py:337
+#: neutron/api/v2/attributes.py:295 neutron/api/v2/attributes.py:342
 #, python-format
 msgid "Duplicate items in the list: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:307
+#: neutron/api/v2/attributes.py:312
 #, python-format
 msgid "'%s' is not a valid input"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:314
+#: neutron/api/v2/attributes.py:319
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:646
 #, python-format
 msgid "'%s' is not a valid UUID"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:357
+#: neutron/api/v2/attributes.py:362
 #, python-format
 msgid "Validator '%s' does not exist."
 msgstr ""
 
-#: neutron/api/v2/attributes.py:367
+#: neutron/api/v2/attributes.py:372
 #, python-format
 msgid "'%s' is not a dictionary"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:418
+#: neutron/api/v2/attributes.py:423
 #, python-format
 msgid "'%s' should be non-negative"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:437
+#: neutron/api/v2/attributes.py:442
 #, python-format
 msgid "'%s' cannot be converted to boolean"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:445
+#: neutron/api/v2/attributes.py:450
 #: neutron/plugins/nec/extensions/packetfilter.py:48
 #, python-format
 msgid "'%s' is not a integer"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:458
+#: neutron/api/v2/attributes.py:463
 #, python-format
 msgid "'%s' is not of the form <key>=[value]"
 msgstr ""
@@ -6178,13 +6180,13 @@ msgstr ""
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:355
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:944
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:384
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1075
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1070
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:363
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:956
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1091
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1086
 msgid "Agent loop has new devices!"
 msgstr ""
 
@@ -6201,7 +6203,7 @@ msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:390
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:995
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1232
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1227
 msgid "Agent initialized successfully, now running... "
 msgstr ""
 
@@ -6568,30 +6570,28 @@ msgstr ""
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:931
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:370
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:949
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:994
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1016
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1011
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:918
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:979
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1001
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:996
 #, python-format
 msgid "Attachment %s removed"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:925
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:986
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1008
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1003
 #, python-format
 msgid "port_removed failed for %(device)s: %(e)s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:929
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:368
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:991
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1013
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1008
 #, python-format
 msgid "Port %s updated."
 msgstr ""
@@ -6610,7 +6610,7 @@ msgid "Error in agent loop. Devices info: %s"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:970
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1118
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1113
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:281
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
@@ -7500,7 +7500,7 @@ msgstr ""
 msgid "Deleting network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:390 neutron/plugins/ml2/plugin.py:510
+#: neutron/plugins/ml2/plugin.py:390
 #, python-format
 msgid "Ports to auto-delete: %s"
 msgstr ""
@@ -7527,7 +7527,7 @@ msgstr ""
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:437 neutron/plugins/ml2/plugin.py:536
+#: neutron/plugins/ml2/plugin.py:437
 #, python-format
 msgid "Exception auto-deleting port %s"
 msgstr ""
@@ -7551,33 +7551,43 @@ msgstr ""
 msgid "Deleting subnet %s"
 msgstr ""
 
+#: neutron/plugins/ml2/plugin.py:510
+#, python-format
+msgid "Ports to auto-deallocate: %s"
+msgstr ""
+
 #: neutron/plugins/ml2/plugin.py:525
 msgid "Deleting subnet record"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:546
+#: neutron/plugins/ml2/plugin.py:544
+#, python-format
+msgid "Exception deleting fixed_ip from port %s"
+msgstr ""
+
+#: neutron/plugins/ml2/plugin.py:555
 msgid "mechanism_manager.delete_subnet_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:575
+#: neutron/plugins/ml2/plugin.py:584
 #, python-format
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:630
+#: neutron/plugins/ml2/plugin.py:639
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:647
+#: neutron/plugins/ml2/plugin.py:656
 msgid "Calling base delete_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:656
+#: neutron/plugins/ml2/plugin.py:665
 msgid "mechanism_manager.delete_port_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:665
+#: neutron/plugins/ml2/plugin.py:674
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -8314,7 +8324,7 @@ msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:396
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:224
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1109
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1104
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:275
 msgid "Error in agent event loop"
 msgstr ""
@@ -11069,62 +11079,62 @@ msgstr ""
 msgid "Ancillary Port %s added"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1057
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1052
 #, python-format
 msgid "Unable to sync tunnel IP %(local_ip)s: %(e)s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1083
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1078
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1133
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1128
 msgid "Checking OVS version for VXLAN support"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1141
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1136
 #, python-format
 msgid ""
 "Failed userspace version check for Open vSwitch with VXLAN support. To "
 "use VXLAN tunnels with OVS, please ensure the OVS version is %s or newer!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1152
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1147
 #, python-format
 msgid ""
 "Failed kernel version check for Open vSwitch with VXLAN support. To use "
 "VXLAN tunnels with OVS, please ensure the OVS version is %s or newer!"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1159
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1154
 #, python-format
 msgid ""
 "Cannot determine kernel Open vSwitch version, please ensure your Open "
 "vSwitch kernel module is at least version %s to support VXLAN tunnels."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1164
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1159
 #, python-format
 msgid ""
 "Unable to determine Open vSwitch version. Please ensure that its version "
 "is %s or newer to use VXLAN tunnels with OVS."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1179
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1174
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1201
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1196
 #, python-format
 msgid "Invalid tunnel type specificed: %s"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1204
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1199
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1220
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1215
 #, python-format
 msgid "%s Agent terminated!"
 msgstr ""
@@ -12205,105 +12215,115 @@ msgstr ""
 msgid "create_vip. service_name: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:219
+#: neutron/services/loadbalancer/drivers/radware/driver.py:223
 #, python-format
-msgid "Failed to remove workflow %s"
+msgid "Failed to remove workflow %s. Going to set vip to ERROR status"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:308
+#: neutron/services/loadbalancer/drivers/radware/driver.py:314
 #, python-format
 msgid ""
 "_handle_pool_health_monitor. health_monitor = %(hm_id)s pool_id = "
 "%(pool_id)s delete = %(delete)s vip_id = %(vip_id)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:358
+#: neutron/services/loadbalancer/drivers/radware/driver.py:364
 #, python-format
 msgid "_update_workflow response: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:364
-#: neutron/services/loadbalancer/drivers/radware/driver.py:380
-msgid "params must contain __ids__ field!"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:372
-#: neutron/services/loadbalancer/drivers/radware/driver.py:398
+#: neutron/services/loadbalancer/drivers/radware/driver.py:373
+#: neutron/services/loadbalancer/drivers/radware/driver.py:393
 #, python-format
 msgid "Pushing operation %s to the queue"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:384
+#: neutron/services/loadbalancer/drivers/radware/driver.py:379
 #, python-format
 msgid "Remove the workflow %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:489
+#: neutron/services/loadbalancer/drivers/radware/driver.py:484
 #, python-format
 msgid "create_workflow response: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:507
-#, python-format
-msgid "The workflow %s does not exist on vDirect."
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:532
-msgid "User and password must be specified"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:537
+#: neutron/services/loadbalancer/drivers/radware/driver.py:531
 #, python-format
 msgid "vDirectRESTClient:init server=%(server)s, port=%(port)d, ssl=%(ssl)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:563
+#: neutron/services/loadbalancer/drivers/radware/driver.py:557
 msgid "vdirectRESTClient: Could not establish HTTPS connection"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:570
+#: neutron/services/loadbalancer/drivers/radware/driver.py:564
 msgid "vdirectRESTClient: Could not establish HTTP connection"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:587
+#: neutron/services/loadbalancer/drivers/radware/driver.py:581
 #, python-format
 msgid "vdirectRESTClient: %(action)s failure, %(e)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:634
+#: neutron/services/loadbalancer/drivers/radware/driver.py:628
 #, python-format
 msgid "Operation %(operation)s failed. Reason: %(msg)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:668
+#: neutron/services/loadbalancer/drivers/radware/driver.py:669
 #, python-format
 msgid ""
 "Operation %(oper)s is completed after %(sec_to_completion)d sec with "
 "success status: %(success)s :"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:682
+#: neutron/services/loadbalancer/drivers/radware/driver.py:681
 #, python-format
 msgid "Operation %s is not completed yet.."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:692
-msgid "Exception was thrown inside OperationCompletionHander"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:696
+msgid "Exception was thrown inside OperationCompletionHandler"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:715
+#: neutron/services/loadbalancer/drivers/radware/driver.py:723
 #, python-format
 msgid "_update: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:750
+#: neutron/services/loadbalancer/drivers/radware/driver.py:763
 #, python-format
 msgid "_remove_object_from_db %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:763
+#: neutron/services/loadbalancer/drivers/radware/exceptions.py:24
+msgid "An unknown exception occurred in Radware LBaaS provider."
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/exceptions.py:28
+msgid ""
+"vDirect user/password missing. Specify in configuration file, under "
+"[radware] section"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/exceptions.py:33
 #, python-format
-msgid "Tried to remove unsupported lbaas entity %s!"
+msgid ""
+"Workflow %(workflow)s is missing on vDirect server. Upload missing "
+"workflow"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/exceptions.py:38
+#, python-format
+msgid ""
+"REST request failed with status %(status)s. Reason: %(reason)s, "
+"Description: %(description)s. Success status codes are %(success_codes)s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/exceptions.py:44
+#, python-format
+msgid "%(operation)s operation is not supported for %(entity)s."
 msgstr ""
 
 #: neutron/services/metering/agents/metering_agent.py:67
@@ -12993,5 +13013,23 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Network %s RPC info call failed."
+#~ msgstr ""
+
+#~ msgid "Failed to remove workflow %s"
+#~ msgstr ""
+
+#~ msgid "params must contain __ids__ field!"
+#~ msgstr ""
+
+#~ msgid "The workflow %s does not exist on vDirect."
+#~ msgstr ""
+
+#~ msgid "User and password must be specified"
+#~ msgstr ""
+
+#~ msgid "Exception was thrown inside OperationCompletionHander"
+#~ msgstr ""
+
+#~ msgid "Tried to remove unsupported lbaas entity %s!"
 #~ msgstr ""
 
