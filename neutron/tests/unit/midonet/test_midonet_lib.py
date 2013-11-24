@@ -166,3 +166,25 @@ class MidoClientTestCase(testtools.TestCase):
 
         self.assertIsNotNone(bridge)
         self.assertEqual(bridge.get_id(), bridge_id)
+        self.assertTrue(bridge.get_admin_state_up())
+
+    def test_add_bridge_port(self):
+        bridge_id = uuidutils.generate_uuid()
+
+        bridge = self.client.get_bridge(bridge_id)
+
+        self.assertIsNotNone(bridge)
+
+        port = self.client.add_bridge_port(bridge)
+
+        self.assertEqual(bridge.get_id(), port.get_bridge_id())
+        self.assertTrue(port.get_admin_state_up())
+
+    def test_get_router(self):
+        router_id = uuidutils.generate_uuid()
+
+        router = self.client.get_router(router_id)
+
+        self.assertIsNotNone(router)
+        self.assertEqual(router.get_id(), router_id)
+        self.assertTrue(router.get_admin_state_up())

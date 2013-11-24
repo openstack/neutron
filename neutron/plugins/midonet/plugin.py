@@ -20,6 +20,7 @@
 # @author: Tomoe Sugihara, Midokura Japan KK
 # @author: Ryu Ishimoto, Midokura Japan KK
 # @author: Rossella Sblendido, Midokura Japan KK
+# @author: Duarte Nunes, Midokura Japan KK
 
 from midonetclient import api
 from oslo.config import cfg
@@ -458,17 +459,18 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         LOG.debug(_('MidonetPluginV2.create_network called: network=%r'),
                   network)
-        tenant_id = self._get_tenant_id_for_create(context, network['network'])
+        net_data = network['network']
+        tenant_id = self._get_tenant_id_for_create(context, net_data)
+        net_data['tenant_id'] = tenant_id
         self._ensure_default_security_group(context, tenant_id)
 
-        bridge = self.client.create_bridge(tenant_id,
-                                           network['network']['name'])
-        network['network']['id'] = bridge.get_id()
+        bridge = self.client.create_bridge(**net_data)
+        net_data['id'] = bridge.get_id()
 
         session = context.session
         with session.begin(subtransactions=True):
             net = super(MidonetPluginV2, self).create_network(context, network)
-            self._process_l3_create(context, net, network['network'])
+            self._process_l3_create(context, net, net_data)
 
         LOG.debug(_("MidonetPluginV2.create_network exiting: net=%r"), net)
         return net
@@ -486,7 +488,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             net = super(MidonetPluginV2, self).update_network(
                 context, id, network)
             self._process_l3_update(context, net, network['network'])
-            self.client.update_bridge(id, net['name'])
+            self.client.update_bridge(id, **network['network'])
 
         LOG.debug(_("MidonetPluginV2.update_network exiting: net=%r"), net)
         return net
@@ -524,8 +526,11 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # port ID in Neutron.
         bridge = self.client.get_bridge(port_data["network_id"])
         tenant_id = bridge.get_tenant_id()
-        bridge_port = self.client.add_bridge_port(bridge)
+        asu = port_data.get("admin_state_up", True)
+        bridge_port = self.client.add_bridge_port(bridge,
+                                                  admin_state_up=asu)
         port_data["id"] = bridge_port.get_id()
+
         try:
             session = context.session
             with session.begin(subtransactions=True):
@@ -661,6 +666,17 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # update the port DB
             p = super(MidonetPluginV2, self).update_port(context, id, port)
 
+            if "admin_state_up" in port["port"]:
+                asu = port["port"]["admin_state_up"]
+                mido_port = self.client.update_port(id, admin_state_up=asu)
+
+                # If we're changing the admin_state_up flag and the port is
+                # associated with a router, then we also need to update the
+                # peer port.
+                if _is_router_interface_port(p):
+                    self.client.update_port(mido_port.get_peer_id(),
+                                            admin_state_up=asu)
+
             new_ips = p["fixed_ips"]
             if new_ips:
                 bridge = self.client.get_bridge(net_id)
@@ -698,7 +714,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         When a new Neutron router is created, its corresponding MidoNet router
         is also created.  In MidoNet, this router is initialized with chains
-        for inbuond and outbound traffic, which will be used to hold other
+        for inbound and outbound traffic, which will be used to hold other
         chains that include various rules, such as NAT.
 
         :param router: Router information provided to create a new router.
@@ -710,19 +726,17 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # 3rd parties to specify IDs as we do with l2 plugin
         LOG.debug(_("MidonetPluginV2.create_router called: router=%(router)s"),
                   {"router": router})
-        tenant_id = self._get_tenant_id_for_create(context, router['router'])
-        mido_router = self.client.create_router(tenant_id,
-                                                router['router']['name'])
+        r = router['router']
+        tenant_id = self._get_tenant_id_for_create(context, r)
+        r['tenant_id'] = tenant_id
+        mido_router = self.client.create_router(**r)
         mido_router_id = mido_router.get_id()
 
         try:
-            r = router['router']
             has_gw_info = False
             if EXTERNAL_GW_INFO in r:
                 has_gw_info = True
-                gw_info = r[EXTERNAL_GW_INFO]
-                del r[EXTERNAL_GW_INFO]
-            tenant_id = self._get_tenant_id_for_create(context, r)
+                gw_info = r.pop(EXTERNAL_GW_INFO)
             with context.session.begin(subtransactions=True):
                 # pre-generate id so it will be available when
                 # configuring external gw port
@@ -868,10 +882,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                  chain_names['post-routing'],
                                                  gw_ip, gw_port["id"], **props)
 
-            # Update the name if changed
-            changed_name = router_data.get('name')
-            if changed_name:
-                self.client.update_router(id, changed_name)
+            self.client.update_router(id, **router_data)
 
         LOG.debug(_("MidonetPluginV2.update_router exiting: router=%r"), r)
         return r
@@ -945,12 +956,12 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         for port in bridge_ports_to_delete:
             self.client.delete_port(port.get_id())
 
-    def _link_bridge_to_router(self, router, bridge_port_id, net_addr, net_len,
+    def _link_bridge_to_router(self, router, bridge_port, net_addr, net_len,
                                gw_ip, metadata_gw_ip):
         router_port = self.client.add_router_port(
-            router, port_address=gw_ip, network_address=net_addr,
-            network_length=net_len)
-        self.client.link(router_port, bridge_port_id)
+            router, network_length=net_len, network_address=net_addr,
+            port_address=gw_ip, admin_state_up=bridge_port['admin_state_up'])
+        self.client.link(router_port, bridge_port['id'])
         self.client.add_router_route(router, type='Normal',
                                      src_network_addr='0.0.0.0',
                                      src_network_length=0,
@@ -999,7 +1010,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             net_addr, net_len = net_util.net_addr(cidr)
             router = self.client.get_router(router_id)
 
-            # Get the metadatat GW IP
+            # Get the metadata GW IP
             metadata_gw_ip = None
             rport_qry = context.session.query(models_v2.Port)
             dhcp_ports = rport_qry.filter_by(
@@ -1011,7 +1022,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.warn(_("DHCP agent is not working correctly. No port "
                            "to reach the Metadata server on this network"))
             # Link the router and the bridge
-            self._link_bridge_to_router(router, info["port_id"], net_addr,
+            port = super(MidonetPluginV2, self).get_port(context,
+                                                         info["port_id"])
+            self._link_bridge_to_router(router, port, net_addr,
                                         net_len, subnet["gateway_ip"],
                                         metadata_gw_ip)
         except Exception:
