@@ -43,6 +43,11 @@ class TestNeutronContext(base.BaseTestCase):
         self.assertIsNone(ctx.user_name)
         self.assertIsNone(ctx.tenant_name)
 
+    def test_neutron_context_create_logs_unknown_kwargs(self):
+        with mock.patch.object(context.LOG, 'warn') as mock_warn:
+            context.Context('user_id', 'tenant_id', foo='bar')
+        self.assertEqual(mock_warn.call_count, 1)
+
     def test_neutron_context_create_with_name(self):
         ctx = context.Context('user_id', 'tenant_id',
                               tenant_name='tenant_name', user_name='user_name')
@@ -67,6 +72,7 @@ class TestNeutronContext(base.BaseTestCase):
         self.assertEqual('tenant_id', ctx_dict['tenant'])
         self.assertIsNone(ctx_dict['user_name'])
         self.assertIsNone(ctx_dict['tenant_name'])
+        self.assertIsNone(ctx_dict['project_name'])
 
     def test_neutron_context_to_dict_with_name(self):
         ctx = context.Context('user_id', 'tenant_id',
@@ -74,6 +80,7 @@ class TestNeutronContext(base.BaseTestCase):
         ctx_dict = ctx.to_dict()
         self.assertEqual('user_name', ctx_dict['user_name'])
         self.assertEqual('tenant_name', ctx_dict['tenant_name'])
+        self.assertEqual('tenant_name', ctx_dict['project_name'])
 
     def test_neutron_context_admin_to_dict(self):
         self.db_api_session.return_value = 'fakesession'
