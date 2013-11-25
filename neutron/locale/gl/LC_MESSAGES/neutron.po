@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-24 06:39+0000\n"
+"POT-Creation-Date: 2013-11-25 06:39+0000\n"
 "PO-Revision-Date: 2013-10-28 23:23+0000\n"
 "Last-Translator: Tom Fifield <tom@openstack.org>\n"
 "Language-Team: Galician "
@@ -1842,292 +1842,292 @@ msgstr ""
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:32 neutron/plugins/nicira/NvpApiClient.py:218
+#: neutron/common/exceptions.py:30 neutron/plugins/nicira/NvpApiClient.py:218
 msgid "An unknown exception occurred."
 msgstr ""
 
-#: neutron/common/exceptions.py:50
+#: neutron/common/exceptions.py:51
 #, python-format
 msgid "Bad %(resource)s request: %(msg)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:62
+#: neutron/common/exceptions.py:63
 msgid "Not authorized."
 msgstr ""
 
-#: neutron/common/exceptions.py:66
+#: neutron/common/exceptions.py:67
 msgid "The service is unavailable"
 msgstr ""
 
-#: neutron/common/exceptions.py:70
+#: neutron/common/exceptions.py:71
 #, python-format
 msgid "User does not have admin privileges: %(reason)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:74
+#: neutron/common/exceptions.py:75
 #, python-format
 msgid "Policy doesn't allow %(action)s to be performed."
 msgstr ""
 
-#: neutron/common/exceptions.py:78
+#: neutron/common/exceptions.py:79
 #, python-format
 msgid "Network %(net_id)s could not be found"
 msgstr ""
 
-#: neutron/common/exceptions.py:82
+#: neutron/common/exceptions.py:83
 #, python-format
 msgid "Subnet %(subnet_id)s could not be found"
 msgstr ""
 
-#: neutron/common/exceptions.py:86
+#: neutron/common/exceptions.py:87
 #, python-format
 msgid "Port %(port_id)s could not be found"
 msgstr ""
 
-#: neutron/common/exceptions.py:90
+#: neutron/common/exceptions.py:91
 #, python-format
 msgid "Port %(port_id)s could not be found on network %(net_id)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:95
+#: neutron/common/exceptions.py:96
 msgid "Policy configuration policy.json could not be found"
 msgstr ""
 
-#: neutron/common/exceptions.py:99
+#: neutron/common/exceptions.py:100
 #, python-format
 msgid "Requested rule:%(rule)s cannot be found"
 msgstr ""
 
-#: neutron/common/exceptions.py:103
+#: neutron/common/exceptions.py:104
 #, python-format
 msgid "Failed to init policy %(policy)s because %(reason)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:107
+#: neutron/common/exceptions.py:108
 #, python-format
 msgid "Failed to check policy %(policy)s because %(reason)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:111
+#: neutron/common/exceptions.py:112
 #, python-format
 msgid "Unsupported port state: %(port_state)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:115
+#: neutron/common/exceptions.py:116
 msgid "The resource is inuse"
 msgstr ""
 
-#: neutron/common/exceptions.py:119
+#: neutron/common/exceptions.py:120
 #, python-format
 msgid ""
 "Unable to complete operation on network %(net_id)s. There are one or more"
 " ports still in use on the network."
 msgstr ""
 
-#: neutron/common/exceptions.py:124
+#: neutron/common/exceptions.py:125
 #, python-format
 msgid ""
 "Unable to complete operation on subnet %(subnet_id)s. One or more ports "
 "have an IP allocation from this subnet."
 msgstr ""
 
-#: neutron/common/exceptions.py:129
+#: neutron/common/exceptions.py:130
 #, python-format
 msgid ""
 "Unable to complete operation on port %(port_id)s for network %(net_id)s. "
 "Port already has an attacheddevice %(device_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:135
+#: neutron/common/exceptions.py:136
 #, python-format
 msgid ""
 "Unable to complete operation for network %(net_id)s. The mac address "
 "%(mac)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:141
+#: neutron/common/exceptions.py:142
 #, python-format
 msgid ""
 "Unable to complete operation for %(subnet_id)s. The number of host routes"
 " exceeds the limit %(quota)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:147
+#: neutron/common/exceptions.py:148
 #, python-format
 msgid ""
 "Unable to complete operation for %(subnet_id)s. The number of DNS "
 "nameservers exceeds the limit %(quota)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:152
+#: neutron/common/exceptions.py:153
 #, python-format
 msgid ""
 "Unable to complete operation for network %(net_id)s. The IP address "
 "%(ip_address)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:157
+#: neutron/common/exceptions.py:158
 #, python-format
 msgid ""
 "Unable to create the network. The VLAN %(vlan_id)s on physical network "
 "%(physical_network)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:163
+#: neutron/common/exceptions.py:164
 #, python-format
 msgid ""
 "Unable to create the flat network. Physical network %(physical_network)s "
 "is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:168
+#: neutron/common/exceptions.py:169
 #, python-format
 msgid "Unable to create the network. The tunnel ID %(tunnel_id)s is in use."
 msgstr ""
 
-#: neutron/common/exceptions.py:173
+#: neutron/common/exceptions.py:174
 msgid "Tenant network creation is not enabled."
 msgstr ""
 
-#: neutron/common/exceptions.py:181
+#: neutron/common/exceptions.py:182
 msgid ""
 "Unable to create the network. No tenant network is available for "
 "allocation."
 msgstr ""
 
-#: neutron/common/exceptions.py:186
+#: neutron/common/exceptions.py:187
 #, python-format
 msgid ""
 "Subnet on port %(port_id)s does not match the requested subnet "
 "%(subnet_id)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:191
+#: neutron/common/exceptions.py:192
 #, python-format
 msgid "Malformed request body: %(reason)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:201
+#: neutron/common/exceptions.py:202
 #, python-format
 msgid "Invalid input for operation: %(error_message)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:205
+#: neutron/common/exceptions.py:206
 #, python-format
 msgid "The allocation pool %(pool)s is not valid."
 msgstr ""
 
-#: neutron/common/exceptions.py:209
+#: neutron/common/exceptions.py:210
 #, python-format
 msgid ""
 "Found overlapping allocation pools:%(pool_1)s %(pool_2)s for subnet "
 "%(subnet_cidr)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:214
+#: neutron/common/exceptions.py:215
 #, python-format
 msgid "The allocation pool %(pool)s spans beyond the subnet cidr %(subnet_cidr)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:219
+#: neutron/common/exceptions.py:220
 #, python-format
 msgid "Unable to generate unique mac on network %(net_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:223
+#: neutron/common/exceptions.py:224
 #, python-format
 msgid "No more IP addresses available on network %(net_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:227
+#: neutron/common/exceptions.py:228
 #, python-format
 msgid "Bridge %(bridge)s does not exist."
 msgstr ""
 
-#: neutron/common/exceptions.py:231
+#: neutron/common/exceptions.py:232
 #, python-format
 msgid "Creation failed. %(dev_name)s already exists."
 msgstr ""
 
-#: neutron/common/exceptions.py:235
+#: neutron/common/exceptions.py:236
 msgid "Sudo priviledge is required to run this command."
 msgstr ""
 
-#: neutron/common/exceptions.py:239
+#: neutron/common/exceptions.py:240
 #, python-format
 msgid "Unknown quota resources %(unknown)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:243
+#: neutron/common/exceptions.py:244
 #, python-format
 msgid "Quota exceeded for resources: %(overs)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:247
+#: neutron/common/exceptions.py:248
 msgid "Tenant-id was missing from Quota request"
 msgstr ""
 
-#: neutron/common/exceptions.py:251
+#: neutron/common/exceptions.py:252
 #, python-format
 msgid ""
 "Change would make usage less than 0 for the following resources: "
 "%(unders)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:256
+#: neutron/common/exceptions.py:257
 #, python-format
 msgid ""
 "Unable to reconfigure sharing settings for network %(network)s. Multiple "
 "tenants are using it"
 msgstr ""
 
-#: neutron/common/exceptions.py:261
+#: neutron/common/exceptions.py:262
 #, python-format
 msgid "Invalid extension environment: %(reason)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:265
+#: neutron/common/exceptions.py:266
 #, python-format
 msgid "Invalid content type %(content_type)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:269
+#: neutron/common/exceptions.py:270
 #, python-format
 msgid "Unable to find any IP address on external network %(net_id)s."
 msgstr ""
 
-#: neutron/common/exceptions.py:274
+#: neutron/common/exceptions.py:275
 msgid "More than one external network exists"
 msgstr ""
 
-#: neutron/common/exceptions.py:278
+#: neutron/common/exceptions.py:279
 #, python-format
 msgid "An invalid value was provided for %(opt_name)s: %(opt_value)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:283
+#: neutron/common/exceptions.py:284
 #, python-format
 msgid "Gateway ip %(ip_address)s conflicts with allocation pool %(pool)s"
 msgstr ""
 
-#: neutron/common/exceptions.py:288
+#: neutron/common/exceptions.py:289
 #, python-format
 msgid ""
 "Current gateway ip %(ip_address)s already in use by port %(port_id)s. "
 "Unable to update."
 msgstr ""
 
-#: neutron/common/exceptions.py:293
+#: neutron/common/exceptions.py:294
 #, python-format
 msgid "Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'"
 msgstr ""
 
-#: neutron/common/exceptions.py:303
+#: neutron/common/exceptions.py:304
 #, python-format
 msgid "Invalid network VXLAN port range: '%(vxlan_range)s'"
 msgstr ""
 
-#: neutron/common/exceptions.py:307
+#: neutron/common/exceptions.py:308
 #, python-format
 msgid "Found duplicate extension: %(alias)s"
 msgstr ""
@@ -4072,7 +4072,7 @@ msgid "RPC Message Invalid."
 msgstr ""
 
 #: neutron/openstack/common/rpc/impl_zmq.py:744
-#: neutron/plugins/midonet/plugin.py:196
+#: neutron/plugins/midonet/plugin.py:197
 #: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:23
 #: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:27
 #, python-format
@@ -6810,27 +6810,27 @@ msgstr ""
 msgid "MidoNet API error: %(msg)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:66
+#: neutron/plugins/midonet/midonet_lib.py:84
 #, python-format
-msgid "MidoClient.create_bridge called: tenant_id=%(tenant_id)s, name=%(name)s"
+msgid "MidoClient.create_bridge called: kwargs=%(kwargs)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:78
+#: neutron/plugins/midonet/midonet_lib.py:94
 #, python-format
 msgid "MidoClient.delete_bridge called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:88
+#: neutron/plugins/midonet/midonet_lib.py:104
 #, python-format
 msgid "MidoClient.get_bridge called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:102
+#: neutron/plugins/midonet/midonet_lib.py:118
 #, python-format
-msgid "MidoClient.update_bridge called: id=%(id)s, name=%(name)s"
+msgid "MidoClient.update_bridge called: id=%(id)s, kwargs=%(kwargs)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:121
+#: neutron/plugins/midonet/midonet_lib.py:138
 #, python-format
 msgid ""
 "MidoClient.create_dhcp called: bridge=%(bridge)s, cidr=%(cidr)s, "
@@ -6838,137 +6838,142 @@ msgid ""
 "dns_servers=%(dns_servers)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:139
+#: neutron/plugins/midonet/midonet_lib.py:156
 #, python-format
 msgid ""
 "MidoClient.add_dhcp_host called: bridge=%(bridge)s, cidr=%(cidr)s, "
 "ip=%(ip)s, mac=%(mac)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:144
+#: neutron/plugins/midonet/midonet_lib.py:161
 msgid "Tried to add tonon-existent DHCP"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:158
+#: neutron/plugins/midonet/midonet_lib.py:175
 #, python-format
 msgid ""
 "MidoClient.remove_dhcp_host called: bridge=%(bridge)s, cidr=%(cidr)s, "
 "ip=%(ip)s, mac=%(mac)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:163
+#: neutron/plugins/midonet/midonet_lib.py:180
 msgid "Tried to delete mapping from non-existent subnet"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:168
+#: neutron/plugins/midonet/midonet_lib.py:185
 #, python-format
 msgid "MidoClient.remove_dhcp_host: Deleting %(dh)r"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:181
+#: neutron/plugins/midonet/midonet_lib.py:198
 #, python-format
 msgid ""
 "MidoClient.delete_dhcp_host called: bridge_id=%(bridge_id)s, "
 "cidr=%(cidr)s, ip=%(ip)s, mac=%(mac)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:196
+#: neutron/plugins/midonet/midonet_lib.py:213
 #, python-format
 msgid "MidoClient.delete_dhcp called: bridge=%(bridge)s, cidr=%(cidr)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:203
+#: neutron/plugins/midonet/midonet_lib.py:220
 msgid "Tried to delete non-existent DHCP"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:215
+#: neutron/plugins/midonet/midonet_lib.py:232
 #, python-format
 msgid "MidoClient.delete_port called: id=%(id)s, delete_chains=%(delete_chains)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:230
+#: neutron/plugins/midonet/midonet_lib.py:247
 #, python-format
 msgid "MidoClient.get_port called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:243
+#: neutron/plugins/midonet/midonet_lib.py:261
 #, python-format
-msgid "MidoClient.add_bridge_port called: bridge=%(bridge)s"
+msgid "MidoClient.add_bridge_port called: bridge=%(bridge)s, kwargs=%(kwargs)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:264
+#: neutron/plugins/midonet/midonet_lib.py:273
 #, python-format
-msgid "MidoClient.create_router called: tenant_id=%(tenant_id)s, name=%(name)s"
+msgid "MidoClient.update_port called: id=%(id)s, kwargs=%(kwargs)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:276
+#: neutron/plugins/midonet/midonet_lib.py:298
+#, python-format
+msgid "MidoClient.create_router called: kwargs=%(kwargs)s"
+msgstr ""
+
+#: neutron/plugins/midonet/midonet_lib.py:308
 #, python-format
 msgid "MidoClient.delete_router called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:286
+#: neutron/plugins/midonet/midonet_lib.py:318
 #, python-format
 msgid "MidoClient.get_router called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:300
+#: neutron/plugins/midonet/midonet_lib.py:332
 #, python-format
-msgid "MidoClient.update_router called: id=%(id)s, name=%(name)s"
+msgid "MidoClient.update_router called: id=%(id)s, kwargs=%(kwargs)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:320
+#: neutron/plugins/midonet/midonet_lib.py:353
 #, python-format
 msgid ""
 "MidoClient.add_dhcp_route_option called: bridge=%(bridge)s, "
 "cidr=%(cidr)s, gw_ip=%(gw_ip)sdst_ip=%(dst_ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:328
+#: neutron/plugins/midonet/midonet_lib.py:361
 msgid "Tried to access non-existent DHCP"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:360
+#: neutron/plugins/midonet/midonet_lib.py:393
 #, python-format
 msgid "MidoClient.unlink called: port=%(port)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:365
+#: neutron/plugins/midonet/midonet_lib.py:398
 #, python-format
 msgid "Attempted to unlink a port that was not linked. %s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:371
+#: neutron/plugins/midonet/midonet_lib.py:404
 #, python-format
 msgid ""
 "MidoClient.remove_rules_by_property called: tenant_id=%(tenant_id)s, "
 "chain_name=%(chain_name)skey=%(key)s, value=%(value)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:398
+#: neutron/plugins/midonet/midonet_lib.py:431
 #, python-format
 msgid ""
 "MidoClient.create_router_chains called: router=%(router)s, "
 "inbound_chain_name=%(in_chain)s, outbound_chain_name=%(out_chain)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:421
+#: neutron/plugins/midonet/midonet_lib.py:454
 #, python-format
 msgid "MidoClient.delete_router_chains called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:436
+#: neutron/plugins/midonet/midonet_lib.py:469
 #, python-format
 msgid "MidoClient.delete_port_chains called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:448
+#: neutron/plugins/midonet/midonet_lib.py:481
 #, python-format
 msgid ""
 "MidoClient.get_link_port called: router=%(router)s, "
 "peer_router_id=%(peer_router_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:487
+#: neutron/plugins/midonet/midonet_lib.py:520
 #, python-format
 msgid ""
 "MidoClient.add_static_nat called: tenant_id=%(tenant_id)s, "
@@ -6976,17 +6981,17 @@ msgid ""
 "port_id=%(port_id)s, nat_type=%(nat_type)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:495
+#: neutron/plugins/midonet/midonet_lib.py:528
 #, python-format
 msgid "Invalid NAT type passed in %s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:547
+#: neutron/plugins/midonet/midonet_lib.py:580
 #, python-format
 msgid "MidoClient.remote_static_route called: router=%(router)s, ip=%(ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:558
+#: neutron/plugins/midonet/midonet_lib.py:591
 #, python-format
 msgid ""
 "MidoClient.update_port_chains called: "
@@ -6994,300 +6999,300 @@ msgid ""
 "outbound_chain_id=%(outbound_chain_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:569
+#: neutron/plugins/midonet/midonet_lib.py:602
 #, python-format
 msgid "MidoClient.create_chain called: tenant_id=%(tenant_id)s  name=%(name)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:577
+#: neutron/plugins/midonet/midonet_lib.py:610
 #, python-format
 msgid "MidoClient.delete_chain called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:583
+#: neutron/plugins/midonet/midonet_lib.py:616
 #, python-format
 msgid ""
 "MidoClient.delete_chains_by_names called: tenant_id=%(tenant_id)s "
 "names=%(names)s "
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:594
+#: neutron/plugins/midonet/midonet_lib.py:627
 #, python-format
 msgid ""
 "MidoClient.get_chain_by_name called: tenant_id=%(tenant_id)s "
 "name=%(name)s "
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:605
+#: neutron/plugins/midonet/midonet_lib.py:638
 #, python-format
 msgid ""
 "MidoClient.get_port_group_by_name called: tenant_id=%(tenant_id)s "
 "name=%(name)s "
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:619
+#: neutron/plugins/midonet/midonet_lib.py:652
 #, python-format
 msgid "MidoClient.create_port_group called: tenant_id=%(tenant_id)s name=%(name)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:628
+#: neutron/plugins/midonet/midonet_lib.py:661
 #, python-format
 msgid ""
 "MidoClient.delete_port_group_by_name called: tenant_id=%(tenant_id)s "
 "name=%(name)s "
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:634
+#: neutron/plugins/midonet/midonet_lib.py:667
 #, python-format
 msgid "Deleting pg %(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:640
+#: neutron/plugins/midonet/midonet_lib.py:673
 #, python-format
 msgid ""
 "MidoClient.add_port_to_port_group_by_name called: tenant_id=%(tenant_id)s"
 " name=%(name)s port_id=%(port_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/midonet_lib.py:654
+#: neutron/plugins/midonet/midonet_lib.py:687
 #, python-format
 msgid "MidoClient.remove_port_from_port_groups called: port_id=%(port_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:83
+#: neutron/plugins/midonet/plugin.py:84
 #, python-format
 msgid "Invalid nat_type %s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:140
+#: neutron/plugins/midonet/plugin.py:141
 #, python-format
 msgid "Unrecognized direction %s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:174
+#: neutron/plugins/midonet/plugin.py:175
 #, python-format
 msgid "There is no %(name)s with ID %(id)s in MidoNet."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:227
+#: neutron/plugins/midonet/plugin.py:228
 msgid "provider_router_id should be configured in the plugin config file"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:394
+#: neutron/plugins/midonet/plugin.py:395
 #, python-format
 msgid "MidonetPluginV2.create_subnet called: subnet=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:425
+#: neutron/plugins/midonet/plugin.py:426
 #, python-format
 msgid "MidonetPluginV2.create_subnet exiting: sn_entry=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:434
+#: neutron/plugins/midonet/plugin.py:435
 #, python-format
 msgid "MidonetPluginV2.delete_subnet called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:452
+#: neutron/plugins/midonet/plugin.py:453
 msgid "MidonetPluginV2.delete_subnet exiting"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:459
+#: neutron/plugins/midonet/plugin.py:460
 #, python-format
 msgid "MidonetPluginV2.create_network called: network=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:473
+#: neutron/plugins/midonet/plugin.py:475
 #, python-format
 msgid "MidonetPluginV2.create_network exiting: net=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:482
+#: neutron/plugins/midonet/plugin.py:484
 #, python-format
 msgid "MidonetPluginV2.update_network called: id=%(id)r, network=%(network)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:491
+#: neutron/plugins/midonet/plugin.py:493
 #, python-format
 msgid "MidonetPluginV2.update_network exiting: net=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:499
+#: neutron/plugins/midonet/plugin.py:501
 #, python-format
 msgid "MidonetPluginV2.get_network called: id=%(id)r, fields=%(fields)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:504
+#: neutron/plugins/midonet/plugin.py:506
 #, python-format
 msgid "MidonetPluginV2.get_network exiting: qnet=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:509
+#: neutron/plugins/midonet/plugin.py:511
 #, python-format
 msgid "MidonetPluginV2.delete_network called: id=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:514
+#: neutron/plugins/midonet/plugin.py:516
 #, python-format
 msgid "Failed to delete neutron db, while Midonet bridge=%rhad been deleted"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:520
+#: neutron/plugins/midonet/plugin.py:522
 #, python-format
 msgid "MidonetPluginV2.create_port called: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:578
+#: neutron/plugins/midonet/plugin.py:583
 #, python-format
 msgid "Failed to create a port on network %(net_id)s: %(err)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:583
+#: neutron/plugins/midonet/plugin.py:588
 #, python-format
 msgid "MidonetPluginV2.create_port exiting: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:588
+#: neutron/plugins/midonet/plugin.py:593
 #, python-format
 msgid "MidonetPluginV2.get_port called: id=%(id)s fields=%(fields)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:595
+#: neutron/plugins/midonet/plugin.py:600
 #, python-format
 msgid "There is no port with ID %(id)s in MidoNet."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:599
+#: neutron/plugins/midonet/plugin.py:604
 #, python-format
 msgid "MidonetPluginV2.get_port exiting: port=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:604
+#: neutron/plugins/midonet/plugin.py:609
 #, python-format
 msgid "MidonetPluginV2.get_ports called: filters=%(filters)s fields=%(fields)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:613
+#: neutron/plugins/midonet/plugin.py:618
 #, python-format
 msgid ""
 "MidonetPluginV2.delete_port called: id=%(id)s "
 "l3_port_check=%(l3_port_check)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:647
+#: neutron/plugins/midonet/plugin.py:652
 #, python-format
 msgid "Failed to delete DHCP mapping for port %(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:711
+#: neutron/plugins/midonet/plugin.py:727
 #, python-format
 msgid "MidonetPluginV2.create_router called: router=%(router)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:761
+#: neutron/plugins/midonet/plugin.py:775
 #, python-format
 msgid "MidonetPluginV2.create_router exiting: router_data=%(router_data)s."
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:773
+#: neutron/plugins/midonet/plugin.py:787
 #, python-format
 msgid ""
 "MidonetPluginV2.set_router_gateway called: id=%(id)s, "
 "gw_router=%(gw_router)s, gw_ip=%(gw_ip)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:817
+#: neutron/plugins/midonet/plugin.py:831
 #, python-format
 msgid "MidonetPluginV2.remove_router_gateway called: id=%(id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:837
+#: neutron/plugins/midonet/plugin.py:851
 #, python-format
 msgid "MidonetPluginV2.update_router called: id=%(id)s router=%(router)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:876
+#: neutron/plugins/midonet/plugin.py:887
 #, python-format
 msgid "MidonetPluginV2.update_router exiting: router=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:887
+#: neutron/plugins/midonet/plugin.py:898
 #, python-format
 msgid "MidonetPluginV2.delete_router called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:987
+#: neutron/plugins/midonet/plugin.py:998
 #, python-format
 msgid ""
 "MidonetPluginV2.add_router_interface called: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1011
+#: neutron/plugins/midonet/plugin.py:1022
 msgid ""
 "DHCP agent is not working correctly. No port to reach the Metadata server"
 " on this network"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1018
+#: neutron/plugins/midonet/plugin.py:1031
 #, python-format
 msgid ""
 "Failed to create MidoNet resources to add router interface. "
 "info=%(info)s, router_id=%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1025
+#: neutron/plugins/midonet/plugin.py:1038
 #, python-format
 msgid "MidonetPluginV2.add_router_interface exiting: info=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1031
+#: neutron/plugins/midonet/plugin.py:1044
 #, python-format
 msgid ""
 "MidonetPluginV2.update_floatingip called: id=%(id)s "
 "floatingip=%(floatingip)s "
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1075
+#: neutron/plugins/midonet/plugin.py:1088
 #, python-format
 msgid "MidonetPluginV2.update_floating_ip exiting: fip=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1096
+#: neutron/plugins/midonet/plugin.py:1109
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group called: "
 "security_group=%(security_group)s default_sg=%(default_sg)s "
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1125
+#: neutron/plugins/midonet/plugin.py:1138
 #, python-format
 msgid "Failed to create MidoNet resources for sg %(sg)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1132
+#: neutron/plugins/midonet/plugin.py:1145
 #, python-format
 msgid "MidonetPluginV2.create_security_group exiting: sg=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1138
+#: neutron/plugins/midonet/plugin.py:1151
 #, python-format
 msgid "MidonetPluginV2.delete_security_group called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1170
+#: neutron/plugins/midonet/plugin.py:1183
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group_rule called: "
 "security_group_rule=%(security_group_rule)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1180
+#: neutron/plugins/midonet/plugin.py:1193
 #, python-format
 msgid "MidonetPluginV2.create_security_group_rule exiting: rule=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1190
+#: neutron/plugins/midonet/plugin.py:1203
 #, python-format
 msgid "MidonetPluginV2.delete_security_group_rule called: sg_rule_id=%s"
 msgstr ""
@@ -12692,5 +12697,20 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Tried to remove unsupported lbaas entity %s!"
+#~ msgstr ""
+
+#~ msgid "MidoClient.create_bridge called: tenant_id=%(tenant_id)s, name=%(name)s"
+#~ msgstr ""
+
+#~ msgid "MidoClient.update_bridge called: id=%(id)s, name=%(name)s"
+#~ msgstr ""
+
+#~ msgid "MidoClient.add_bridge_port called: bridge=%(bridge)s"
+#~ msgstr ""
+
+#~ msgid "MidoClient.create_router called: tenant_id=%(tenant_id)s, name=%(name)s"
+#~ msgstr ""
+
+#~ msgid "MidoClient.update_router called: id=%(id)s, name=%(name)s"
 #~ msgstr ""
 
