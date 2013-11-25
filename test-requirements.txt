@@ -5,7 +5,6 @@ coverage>=3.6
 discover
 fixtures>=0.3.14
 mock>=1.0
-mox>=0.5.3
 python-subunit
 sphinx>=1.1.2
 testrepository>=0.0.17
