@@ -142,21 +142,27 @@ def _rule_direction(sg_direction):
 def _is_router_interface_port(port):
     """Check whether the given port is a router interface port."""
     device_owner = port['device_owner']
-    return (device_owner in l3_db.DEVICE_OWNER_ROUTER_INTF)
+    return (device_owner == l3_db.DEVICE_OWNER_ROUTER_INTF)
 
 
 def _is_router_gw_port(port):
     """Check whether the given port is a router gateway port."""
     device_owner = port['device_owner']
-    return (device_owner in l3_db.DEVICE_OWNER_ROUTER_GW)
+    return (device_owner == l3_db.DEVICE_OWNER_ROUTER_GW)
+
+
+def _is_fip_port(port):
+    """Check whether the given port is a floating ip port."""
+    device_owner = port['device_owner']
+    return (device_owner == l3_db.DEVICE_OWNER_FLOATINGIP)
 
 
 def _is_vif_port(port):
     """Check whether the given port is a standard VIF port."""
-    device_owner = port['device_owner']
-    return (not _is_dhcp_port(port) and
-            device_owner not in (l3_db.DEVICE_OWNER_ROUTER_GW,
-                                 l3_db.DEVICE_OWNER_ROUTER_INTF))
+    return not (_is_dhcp_port(port) or
+                _is_fip_port(port) or
+                _is_router_gw_port(port) or
+                _is_router_interface_port(port))
 
 
 def _is_dhcp_port(port):
@@ -414,9 +420,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                         dns_servers=dns_nameservers)
 
             # For external network, link the bridge to the provider router.
-            if net['router:external']:
-                self._link_bridge_to_gw_router(
-                    bridge, self._get_provider_router(), gateway_ip, cidr)
+            if net[ext_net.EXTERNAL]:
+                self._link_to_provider_router(bridge, gateway_ip, cidr)
 
         LOG.debug(_("MidonetPluginV2.create_subnet exiting: sn_entry=%r"),
                   sn_entry)
@@ -443,8 +448,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             # If the network is external, clean up routes, links, ports
             if net[ext_net.EXTERNAL]:
-                self._unlink_bridge_from_gw_router(
-                    bridge, self._get_provider_router())
+                self._unlink_from_provider_router(bridge)
 
             LOG.debug(_("MidonetPluginV2.delete_subnet exiting"))
 
@@ -564,6 +568,24 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                             port_data["mac_address"]):
                         self.client.add_dhcp_host(bridge, cidr, ip, mac)
 
+                    net = super(MidonetPluginV2,
+                                self).get_network(context,
+                                                  port_data['network_id'],
+                                                  fields=None)
+
+                    # if the network is an external network, then each port
+                    # created on this network needs a route on the provider
+                    # router to override the general 'blackhole' route that
+                    # is set up to drop all illegitimate traffic to this
+                    # network.
+                    if net[ext_net.EXTERNAL]:
+                        for ip in port_data["fixed_ips"]:
+                            subnet = self._get_subnet(context, ip["subnet_id"])
+                            if subnet["ip_version"] == 6:
+                                continue
+                            self._add_route_to_provider(bridge,
+                                                        ip["ip_address"])
+
                 elif _is_dhcp_port(port_data):
                     # For DHCP port, add a metadata route
                     for cidr, ip in self._metadata_subnets(
@@ -635,6 +657,14 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     SNAT_RULE)
             # Remove the default routes and unlink
             self._remove_router_gateway(port['device_id'])
+        elif _is_vif_port(port):
+            net = super(MidonetPluginV2,
+                        self).get_network(context,
+                                          port['network_id'],
+                                          fields=None)
+            if net[ext_net.EXTERNAL]:
+                for ip in port["fixed_ips"]:
+                    self._remove_route_from_provider(ip["ip_address"])
 
         self.client.delete_port(id, delete_chains=True)
         try:
@@ -893,18 +923,43 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         super(MidonetPluginV2, self).delete_router(context, id)
 
-    def _link_bridge_to_gw_router(self, bridge, gw_router, gw_ip, cidr):
-        """Link a bridge to the gateway router
+    def _add_route_to_provider(self, bridge, ip):
+        """Add a route to the given IP through the given bridge.
+
+        :param bridge: bridge that is hooked up to the provider router.
+        :param ip: ip that will have traffic routed through the
+                   provider router.
+        """
+        provider_router = self._get_provider_router()
+        link_port = self.client.get_link_port(provider_router, bridge.get_id())
+        self.client.add_router_route(provider_router, type='Normal',
+                                     src_network_addr='0.0.0.0',
+                                     src_network_length=0,
+                                     dst_network_addr=ip,
+                                     dst_network_length=32,
+                                     next_hop_port=link_port.get_peer_id(),
+                                     weight=100)
+
+    def _remove_route_from_provider(self, ip):
+        provider_router = self._get_provider_router()
+        for route in provider_router.get_routes():
+            if (route.get_dst_network_addr() == ip and
+                    route.get_dst_network_length() == 32):
+                self.client.delete_route(route.get_id())
+
+    def _link_to_provider_router(self, bridge, gw_ip, cidr):
+        """Link a bridge to the provider router
 
         :param bridge:  bridge
-        :param gw_router: gateway router to link to
         :param gw_ip: IP address of gateway
         :param cidr: network CIDR
         """
+        provider_router = self._get_provider_router()
         net_addr, net_len = net_util.net_addr(cidr)
 
         # create a port on the gateway router
-        gw_port = self.client.add_router_port(gw_router, port_address=gw_ip,
+        gw_port = self.client.add_router_port(provider_router,
+                                              port_address=gw_ip,
                                               network_address=net_addr,
                                               network_length=net_len)
 
@@ -912,30 +967,32 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         port = self.client.add_bridge_port(bridge)
         self.client.link(gw_port, port.get_id())
 
-        # add a route for the subnet in the gateway router
-        self.client.add_router_route(gw_router, type='Normal',
+        # add a route for the subnet in the gateway router. We 'BlackHole' all
+        # of the traffic to this subnet because legitimate targets will have
+        # a more specific route. We drop illegitimate traffic for performance.
+        self.client.add_router_route(provider_router, type='BlackHole',
                                      src_network_addr='0.0.0.0',
                                      src_network_length=0,
                                      dst_network_addr=net_addr,
                                      dst_network_length=net_len,
-                                     next_hop_port=gw_port.get_id(),
                                      weight=100)
 
-    def _unlink_bridge_from_gw_router(self, bridge, gw_router):
-        """Unlink a bridge from the gateway router
+    def _unlink_from_provider_router(self, bridge):
+        """Unlink a bridge from the provider router
 
         :param bridge: bridge to unlink
-        :param gw_router: gateway router to unlink from
         """
+
+        provider_router = self._get_provider_router()
         # Delete routes and unlink the router and the bridge.
-        routes = self.client.get_router_routes(gw_router.get_id())
+        routes = self.client.get_router_routes(provider_router.get_id())
 
         bridge_ports_to_delete = [
-            p for p in gw_router.get_peer_ports()
+            p for p in provider_router.get_peer_ports()
             if p.get_device_id() == bridge.get_id()]
 
         for p in bridge.get_peer_ports():
-            if p.get_device_id() == gw_router.get_id():
+            if p.get_device_id() == provider_router.get_id():
                 # delete the routes going to the bridge
                 for r in routes:
                     if r.get_next_hop_port() == p.get_id():

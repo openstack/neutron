@@ -29,6 +29,7 @@ import neutron.tests.unit.midonet.mock_lib as mock_lib
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_security_group as sg
 import neutron.tests.unit.test_l3_plugin as test_l3_plugin
+import webob.exc
 
 MIDOKURA_PKG_PATH = "neutron.plugins.midonet.plugin"
 MIDONET_PLUGIN_NAME = ('%s.MidonetPluginV2' % MIDOKURA_PKG_PATH)
@@ -123,6 +124,27 @@ class TestMidonetL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase,
                                                   private_sub['subnet']['id'],
                                                   None)
         self.assertTrue(self.instance.return_value.add_static_nat.called)
+
+    def test_external_network_port_creation(self):
+        with self.subnet(cidr='200.200.200.0/24') as pub_sub:
+            self._set_net_external(pub_sub['subnet']['network_id'])
+            ip_addr = "200.200.200.200"
+            port_res = self._create_port(self.fmt,
+                                         pub_sub['subnet']['network_id'],
+                                         webob.exc.HTTPCreated.code,
+                                         tenant_id='fake_tenant_id',
+                                         device_id='fake_device',
+                                         device_owner='fake_owner',
+                                         fixed_ips=[{'subnet_id':
+                                                     pub_sub['subnet']['id'],
+                                                     'ip_address': ip_addr}],
+                                         set_context=False)
+            port = self.deserialize(self.fmt, port_res)
+            self._delete('ports', port['port']['id'])
+            verify_delete_call = self.instance.return_value.delete_route
+            self.assertTrue(verify_delete_call.called_once)
+        verify_add_call = self.instance.return_value.add_router_route
+        self.assertTrue(verify_add_call.called_with(dst_network_addr=ip_addr))
 
 
 class TestMidonetSecurityGroupsTestCase(sg.SecurityGroupDBTestCase):
