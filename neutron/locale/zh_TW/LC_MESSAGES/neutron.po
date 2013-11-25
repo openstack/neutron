@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-23 06:39+0000\n"
+"POT-Creation-Date: 2013-11-24 06:39+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -2591,7 +2591,7 @@ msgid ""
 "assigning a floating IP"
 msgstr "埠 %s 具有多個固定 IP。指派浮動 IP 時必須提供特定 IP"
 
-#: neutron/db/l3_db.py:576 neutron/plugins/nicira/NeutronPlugin.py:1761
+#: neutron/db/l3_db.py:576 neutron/plugins/nicira/NeutronPlugin.py:1757
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "如果未指定 port_id，則無法指定 fixed_ip_address"
 
@@ -9292,50 +9292,50 @@ msgid ""
 "router:%(router_id)s"
 msgstr "已對子網路 %(subnet_id)s 及路由器 %(router_id)s 完成 Add_router_interface"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1733
+#: neutron/plugins/nicira/NeutronPlugin.py:1729
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr "在 NVP 平台上移除浮動 IP 的 NAT 規則時發生錯誤：%s。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1739
+#: neutron/plugins/nicira/NeutronPlugin.py:1735
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr "在 NVP 平台上找到的相符 NAT 規則數目不正確"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1853
+#: neutron/plugins/nicira/NeutronPlugin.py:1862
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr "在 NVP 平台上給浮動 IP %(floating_ip)s（已對映到內部 IP %(internal_ip)s）建立 NAT 規則時發生錯誤"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1859
+#: neutron/plugins/nicira/NeutronPlugin.py:1868
 msgid "Failed to update NAT rules for floatingip update"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1890
+#: neutron/plugins/nicira/NeutronPlugin.py:1899
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr "埠 '%s' 未與浮動 IP 產生關聯"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1893
+#: neutron/plugins/nicira/NeutronPlugin.py:1902
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1920
+#: neutron/plugins/nicira/NeutronPlugin.py:1929
 #, python-format
 msgid "Unable to create l2_gw_service for: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1942
+#: neutron/plugins/nicira/NeutronPlugin.py:1951
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
 msgstr "無法將閘道服務從 NVP 平台中移除 - 找不到資源"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2030
+#: neutron/plugins/nicira/NeutronPlugin.py:2039
 #, python-format
 msgid "Port values not valid for protocol: %s"
 msgstr ""
