@@ -1442,9 +1442,7 @@ class SGNotificationTestMixin():
                     self._delete('ports', port['port']['id'])
                     self.notifier.assert_has_calls(
                         [call.security_groups_member_updated(
-                            mock.ANY, [mock.ANY]),
-                         call.security_groups_member_updated(
-                             mock.ANY, [security_group_id])])
+                            mock.ANY, [mock.ANY])])
 
 
 class TestSecurityGroupAgentWithOVSIptables(

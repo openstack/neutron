@@ -98,8 +98,6 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             not utils.compare_elements(
                 original_port.get(ext_sg.SECURITYGROUPS),
                 updated_port.get(ext_sg.SECURITYGROUPS))):
-            self.notify_security_groups_member_updated(
-                context, updated_port)
             need_notify = True
         return need_notify
 
