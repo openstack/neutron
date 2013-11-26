@@ -108,10 +108,6 @@ cluster_opts = [
                       "will be used for creating tunneled isolated "
                       "\"Neutron\" networks. It needs to be created in NVP "
                       "before starting Neutron with the nvp plugin.")),
-    cfg.StrOpt('nvp_cluster_uuid',
-               help=_("Optional paramter identifying the UUID of the cluster "
-                      "in NVP.  This can be retrieved from NVP management "
-                      "console \"admin\" section.")),
     cfg.StrOpt('default_l3_gw_service_uuid',
                help=_("Unique identifier of the NVP L3 Gateway service "
                       "which will be used for implementing routers and "
