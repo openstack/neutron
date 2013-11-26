@@ -17,6 +17,7 @@
 
 from oslo.config import cfg
 import sqlalchemy as sa
+from sqlalchemy import func
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
@@ -249,3 +250,14 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         """Schedule the routers to l3 agents."""
         for router in routers:
             self.schedule_router(context, router)
+
+    def get_l3_agent_with_min_routers(self, context, agent_ids):
+        """Return l3 agent with the least number of routers."""
+        query = context.session.query(
+            agents_db.Agent,
+            func.count(
+                RouterL3AgentBinding.router_id
+            ).label('count')).outerjoin(RouterL3AgentBinding).group_by(
+                RouterL3AgentBinding.l3_agent_id).order_by('count')
+        res = query.filter(agents_db.Agent.id.in_(agent_ids)).first()
+        return res[0]
