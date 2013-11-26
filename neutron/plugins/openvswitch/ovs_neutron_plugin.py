@@ -588,7 +588,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 context, id)
             updated_port = super(OVSNeutronPluginV2, self).update_port(
                 context, id, port)
-            if addr_pair.ADDRESS_PAIRS in port['port']:
+            if self.is_address_pairs_attribute_updated(original_port, port):
                 self._delete_allowed_address_pairs(context, id)
                 self._process_create_allowed_address_pairs(
                     context, updated_port,
