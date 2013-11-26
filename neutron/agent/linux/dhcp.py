@@ -672,6 +672,8 @@ class DeviceManager(object):
                         [dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
                     dhcp_port = self.plugin.update_dhcp_port(
                         port.id, {'port': {'fixed_ips': port_fixed_ips}})
+                    if not dhcp_port:
+                        raise exceptions.Conflict()
                 else:
                     dhcp_port = port
                 # break since we found port that matches device_id

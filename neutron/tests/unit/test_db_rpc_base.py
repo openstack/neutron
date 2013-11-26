@@ -63,6 +63,22 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
                                                       {'port': port},
                                                       action))
 
+    def _test__port_action_good_action(self, action, port, expected_call):
+        self.callbacks._port_action(self.plugin, mock.Mock(),
+                                    port, action)
+        self.plugin.assert_has_calls(expected_call)
+
+    def test_port_action_create_port(self):
+        self._test__port_action_good_action(
+            'create_port', mock.Mock(),
+            mock.call.create_port(mock.ANY, mock.ANY))
+
+    def test_port_action_update_port(self):
+        fake_port = {'id': 'foo_port_id', 'port': mock.Mock()}
+        self._test__port_action_good_action(
+            'update_port', fake_port,
+            mock.call.update_port(mock.ANY, 'foo_port_id', mock.ANY))
+
     def test__port_action_bad_action(self):
         self.assertRaises(
             n_exc.Invalid,
@@ -148,6 +164,14 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
         expected.extend(other_expectations)
         self.plugin.assert_has_calls(expected)
         return retval
+
+    def test_update_dhcp_port(self):
+        self.callbacks.update_dhcp_port(mock.Mock(),
+                                        host='foo_host',
+                                        port_id='foo_port_id',
+                                        port=mock.Mock())
+        self.plugin.assert_has_calls(
+            mock.call.update_port(mock.ANY, 'foo_port_id', mock.ANY))
 
     def test_get_dhcp_port_existing(self):
         port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])
