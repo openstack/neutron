@@ -223,7 +223,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             try:
                 def_network_gw = self._get_network_gateway(ctx,
                                                            def_l2_gw_uuid)
-            except sa_exc.NoResultFound:
+            except networkgw_db.GatewayNotFound:
                 # Create in DB only - don't go on NVP
                 def_gw_data = {'id': def_l2_gw_uuid,
                                'name': 'default L2 gateway service',

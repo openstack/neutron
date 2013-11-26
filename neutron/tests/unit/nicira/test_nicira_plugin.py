@@ -1421,6 +1421,12 @@ class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
         # The default gateway must still be there
         self._test_delete_network_gateway(1)
 
+    def test_show_network_gateway_nvp_error_returns_404(self):
+        invalid_id = 'b5afd4a9-eb71-4af7-a082-8fc625a35b61'
+        req = self.new_show_request(nvp_networkgw.COLLECTION_NAME, invalid_id)
+        res = req.get_response(self.ext_api)
+        self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+
 
 class TestNiciraMultiProviderNetworks(NiciraPluginV2TestCase):
 
