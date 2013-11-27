@@ -391,13 +391,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                      p['id'] not in current_port_ids]
         for p in new_ports:
             self._set_subnet_info(p)
-            ri.internal_ports.append(p)
             self.internal_network_added(ri, p['network_id'], p['id'],
                                         p['ip_cidr'], p['mac_address'])
+            ri.internal_ports.append(p)
 
         for p in old_ports:
-            ri.internal_ports.remove(p)
             self.internal_network_removed(ri, p['id'], p['ip_cidr'])
+            ri.internal_ports.remove(p)
 
         internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports]
         # TODO(salv-orlando): RouterInfo would be a better place for
