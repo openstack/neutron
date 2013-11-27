@@ -14,25 +14,45 @@
 #    under the License.
 
 import collections
+import mock
 import testtools
 
 from neutron.db import api as db
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_db_v2 as cdb
+from neutron.plugins.cisco import network_plugin
 from neutron.tests import base
 
 
-class CiscoNetworkQosDbTest(base.BaseTestCase):
+class CiscoNetworkDbTest(base.BaseTestCase):
 
-    """Unit tests for cisco.db.network_models_v2.QoS model."""
-
-    QosObj = collections.namedtuple('QosObj', 'tenant qname desc')
+    """Base class for Cisco network database unit tests."""
 
     def setUp(self):
-        super(CiscoNetworkQosDbTest, self).setUp()
+        super(CiscoNetworkDbTest, self).setUp()
         db.configure_db()
         self.session = db.get_session()
+
+        # The Cisco network plugin includes a thin layer of QoS and
+        # credential API methods which indirectly call Cisco QoS and
+        # credential database access methods. For better code coverage,
+        # this test suite will make calls to the QoS and credential database
+        # access methods indirectly through the network plugin. The network
+        # plugin's init function can be mocked out for this purpose.
+        def new_network_plugin_init(instance):
+            pass
+        with mock.patch.object(network_plugin.PluginV2,
+                               '__init__', new=new_network_plugin_init):
+            self._network_plugin = network_plugin.PluginV2()
+
         self.addCleanup(db.clear_db)
+
+
+class CiscoNetworkQosDbTest(CiscoNetworkDbTest):
+
+    """Unit tests for Cisco network QoS database model."""
+
+    QosObj = collections.namedtuple('QosObj', 'tenant qname desc')
 
     def _qos_test_obj(self, tnum, qnum, desc=None):
         """Create a Qos test object from a pair of numbers."""
@@ -49,80 +69,84 @@ class CiscoNetworkQosDbTest(base.BaseTestCase):
 
     def test_qos_add_remove(self):
         qos11 = self._qos_test_obj(1, 1)
-        qos = cdb.add_qos(qos11.tenant, qos11.qname, qos11.desc)
+        qos = self._network_plugin.create_qos(qos11.tenant, qos11.qname,
+                                              qos11.desc)
         self._assert_equal(qos, qos11)
         qos_id = qos.qos_id
-        qos = cdb.remove_qos(qos11.tenant, qos_id)
+        qos = self._network_plugin.delete_qos(qos11.tenant, qos_id)
         self._assert_equal(qos, qos11)
-        qos = cdb.remove_qos(qos11.tenant, qos_id)
+        qos = self._network_plugin.delete_qos(qos11.tenant, qos_id)
         self.assertIsNone(qos)
 
     def test_qos_add_dup(self):
         qos22 = self._qos_test_obj(2, 2)
-        qos = cdb.add_qos(qos22.tenant, qos22.qname, qos22.desc)
+        qos = self._network_plugin.create_qos(qos22.tenant, qos22.qname,
+                                              qos22.desc)
         self._assert_equal(qos, qos22)
         qos_id = qos.qos_id
         with testtools.ExpectedException(c_exc.QosNameAlreadyExists):
-            cdb.add_qos(qos22.tenant, qos22.qname, "duplicate 22")
-        qos = cdb.remove_qos(qos22.tenant, qos_id)
+            self._network_plugin.create_qos(qos22.tenant, qos22.qname,
+                                            "duplicate 22")
+        qos = self._network_plugin.delete_qos(qos22.tenant, qos_id)
         self._assert_equal(qos, qos22)
-        qos = cdb.remove_qos(qos22.tenant, qos_id)
+        qos = self._network_plugin.delete_qos(qos22.tenant, qos_id)
         self.assertIsNone(qos)
 
     def test_qos_get(self):
         qos11 = self._qos_test_obj(1, 1)
-        qos11_id = cdb.add_qos(qos11.tenant, qos11.qname, qos11.desc).qos_id
+        qos11_id = self._network_plugin.create_qos(qos11.tenant, qos11.qname,
+                                                   qos11.desc).qos_id
         qos21 = self._qos_test_obj(2, 1)
-        qos21_id = cdb.add_qos(qos21.tenant, qos21.qname, qos21.desc).qos_id
+        qos21_id = self._network_plugin.create_qos(qos21.tenant, qos21.qname,
+                                                   qos21.desc).qos_id
         qos22 = self._qos_test_obj(2, 2)
-        qos22_id = cdb.add_qos(qos22.tenant, qos22.qname, qos22.desc).qos_id
+        qos22_id = self._network_plugin.create_qos(qos22.tenant, qos22.qname,
+                                                   qos22.desc).qos_id
 
-        qos = cdb.get_qos(qos11.tenant, qos11_id)
+        qos = self._network_plugin.get_qos_details(qos11.tenant, qos11_id)
         self._assert_equal(qos, qos11)
-        qos = cdb.get_qos(qos21.tenant, qos21_id)
+        qos = self._network_plugin.get_qos_details(qos21.tenant, qos21_id)
         self._assert_equal(qos, qos21)
-        qos = cdb.get_qos(qos21.tenant, qos22_id)
+        qos = self._network_plugin.get_qos_details(qos21.tenant, qos22_id)
         self._assert_equal(qos, qos22)
 
         with testtools.ExpectedException(c_exc.QosNotFound):
-            cdb.get_qos(qos11.tenant, "dummyQosId")
+            self._network_plugin.get_qos_details(qos11.tenant, "dummyQosId")
         with testtools.ExpectedException(c_exc.QosNotFound):
-            cdb.get_qos(qos11.tenant, qos21_id)
+            self._network_plugin.get_qos_details(qos11.tenant, qos21_id)
         with testtools.ExpectedException(c_exc.QosNotFound):
-            cdb.get_qos(qos21.tenant, qos11_id)
+            self._network_plugin.get_qos_details(qos21.tenant, qos11_id)
 
-        qos_all_t1 = cdb.get_all_qoss(qos11.tenant)
+        qos_all_t1 = self._network_plugin.get_all_qoss(qos11.tenant)
         self.assertEqual(len(qos_all_t1), 1)
-        qos_all_t2 = cdb.get_all_qoss(qos21.tenant)
+        qos_all_t2 = self._network_plugin.get_all_qoss(qos21.tenant)
         self.assertEqual(len(qos_all_t2), 2)
-        qos_all_t3 = cdb.get_all_qoss("tenant3")
+        qos_all_t3 = self._network_plugin.get_all_qoss("tenant3")
         self.assertEqual(len(qos_all_t3), 0)
 
     def test_qos_update(self):
         qos11 = self._qos_test_obj(1, 1)
-        qos11_id = cdb.add_qos(qos11.tenant, qos11.qname, qos11.desc).qos_id
-        cdb.update_qos(qos11.tenant, qos11_id)
+        qos11_id = self._network_plugin.create_qos(qos11.tenant, qos11.qname,
+                                                   qos11.desc).qos_id
+        self._network_plugin.rename_qos(qos11.tenant, qos11_id,
+                                        new_name=None)
         new_qname = "new qos name"
-        new_qos = cdb.update_qos(qos11.tenant, qos11_id, new_qname)
+        new_qos = self._network_plugin.rename_qos(qos11.tenant, qos11_id,
+                                                  new_qname)
         expected_qobj = self.QosObj(qos11.tenant, new_qname, qos11.desc)
         self._assert_equal(new_qos, expected_qobj)
-        new_qos = cdb.get_qos(qos11.tenant, qos11_id)
+        new_qos = self._network_plugin.get_qos_details(qos11.tenant, qos11_id)
         self._assert_equal(new_qos, expected_qobj)
         with testtools.ExpectedException(c_exc.QosNotFound):
-            cdb.update_qos(qos11.tenant, "dummyQosId")
+            self._network_plugin.rename_qos(qos11.tenant, "dummyQosId",
+                                            new_name=None)
 
 
-class CiscoNetworkCredentialDbTest(base.BaseTestCase):
+class CiscoNetworkCredentialDbTest(CiscoNetworkDbTest):
 
-    """Unit tests for cisco.db.network_models_v2.Credential model."""
+    """Unit tests for Cisco network credentials database model."""
 
     CredObj = collections.namedtuple('CredObj', 'cname usr pwd ctype')
-
-    def setUp(self):
-        super(CiscoNetworkCredentialDbTest, self).setUp()
-        db.configure_db()
-        self.session = db.get_session()
-        self.addCleanup(db.clear_db)
 
     def _cred_test_obj(self, tnum, cnum):
         """Create a Credential test object from a pair of numbers."""
@@ -174,17 +198,17 @@ class CiscoNetworkCredentialDbTest(base.BaseTestCase):
         cred22_id = cdb.add_credential(
             cred22.cname, cred22.usr, cred22.pwd, cred22.ctype).credential_id
 
-        cred = cdb.get_credential(cred11_id)
+        cred = self._network_plugin.get_credential_details(cred11_id)
         self._assert_equal(cred, cred11)
-        cred = cdb.get_credential(cred21_id)
+        cred = self._network_plugin.get_credential_details(cred21_id)
         self._assert_equal(cred, cred21)
-        cred = cdb.get_credential(cred22_id)
+        cred = self._network_plugin.get_credential_details(cred22_id)
         self._assert_equal(cred, cred22)
 
         with testtools.ExpectedException(c_exc.CredentialNotFound):
-            cdb.get_credential("dummyCredentialId")
+            self._network_plugin.get_credential_details("dummyCredentialId")
 
-        cred_all_t1 = cdb.get_all_credentials()
+        cred_all_t1 = self._network_plugin.get_all_credentials()
         self.assertEqual(len(cred_all_t1), 3)
 
     def test_credential_get_name(self):
@@ -215,16 +239,23 @@ class CiscoNetworkCredentialDbTest(base.BaseTestCase):
         cred11 = self._cred_test_obj(1, 1)
         cred11_id = cdb.add_credential(
             cred11.cname, cred11.usr, cred11.pwd, cred11.ctype).credential_id
-        cdb.update_credential(cred11_id)
+        self._network_plugin.rename_credential(cred11_id, new_name=None,
+                                               new_password=None)
         new_usr = "new user name"
         new_pwd = "new password"
-        new_credential = cdb.update_credential(
+        new_credential = self._network_plugin.rename_credential(
             cred11_id, new_usr, new_pwd)
         expected_cred = self.CredObj(
             cred11.cname, new_usr, new_pwd, cred11.ctype)
         self._assert_equal(new_credential, expected_cred)
-        new_credential = cdb.get_credential(cred11_id)
+        new_credential = self._network_plugin.get_credential_details(
+            cred11_id)
         self._assert_equal(new_credential, expected_cred)
         with testtools.ExpectedException(c_exc.CredentialNotFound):
-            cdb.update_credential(
+            self._network_plugin.rename_credential(
                 "dummyCredentialId", new_usr, new_pwd)
+
+    def test_get_credential_not_found_exception(self):
+        self.assertRaises(c_exc.CredentialNotFound,
+                          self._network_plugin.get_credential_details,
+                          "dummyCredentialId")

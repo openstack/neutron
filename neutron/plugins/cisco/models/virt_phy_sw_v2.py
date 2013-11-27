@@ -47,7 +47,6 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
     following topology:
     One or more servers to a nexus switch.
     """
-    MANAGE_STATE = True
     __native_bulk_support = True
     supported_extension_aliases = ["provider", "binding"]
     _plugins = {}
