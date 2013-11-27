@@ -88,10 +88,10 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
 
             del self.router_info[router_id]
 
-    def _spawn_metadata_proxy(self, router_info):
+    def _spawn_metadata_proxy(self, router_id, ns_name):
         return
 
-    def _destroy_metadata_proxy(self, router_info):
+    def _destroy_metadata_proxy(self, router_id, ns_name):
         return
 
     def _set_subnet_info(self, port):
