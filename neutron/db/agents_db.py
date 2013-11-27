@@ -25,6 +25,7 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
 from neutron import manager
+from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import timeutils
@@ -39,6 +40,11 @@ cfg.CONF.register_opt(
 
 class Agent(model_base.BASEV2, models_v2.HasId):
     """Represents agents running in neutron deployments."""
+
+    __table_args__ = (
+        sa.UniqueConstraint('agent_type', 'host',
+                            name='uniq_agents0agent_type0host'),
+    )
 
     # L3 agent, DHCP agent, OVS agent, LinuxBridge
     agent_type = sa.Column(sa.String(255), nullable=False)
@@ -135,8 +141,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
         agent = self._get_agent(context, id)
         return self._make_agent_dict(agent, fields)
 
-    def create_or_update_agent(self, context, agent):
-        """Create or update agent according to report."""
+    def _create_or_update_agent(self, context, agent):
         with context.session.begin(subtransactions=True):
             res_keys = ['agent_type', 'binary', 'host', 'topic']
             res = dict((k, agent[k]) for k in res_keys)
@@ -162,6 +167,28 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
                 greenthread.sleep(0)
                 context.session.add(agent_db)
             greenthread.sleep(0)
+
+    def create_or_update_agent(self, context, agent):
+        """Create or update agent according to report."""
+
+        try:
+            return self._create_or_update_agent(context, agent)
+        except db_exc.DBDuplicateEntry as e:
+            if e.columns == ['agent_type', 'host']:
+                # It might happen that two or more concurrent transactions are
+                # trying to insert new rows having the same value of
+                # (agent_type, host) pair at the same time (if there has been
+                # no such entry in the table and multiple agent status updates
+                # are being processed at the moment). In this case having a
+                # unique constraint on (agent_type, host) columns guarantees
+                # that only one transaction will succeed and insert a new agent
+                # entry, others will fail and be rolled back. That means we
+                # must retry them one more time: no INSERTs will be issued,
+                # because _get_agent_by_type_and_host() will return the
+                # existing agent entry, which will be updated multiple times
+                return self._create_or_update_agent(context, agent)
+
+            raise
 
 
 class AgentExtRpcCallback(object):
