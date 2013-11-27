@@ -19,6 +19,7 @@ import abc
 
 import netaddr
 from oslo.config import cfg
+import six
 
 from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
@@ -59,8 +60,8 @@ OPTS = [
 ]
 
 
+@six.add_metaclass(abc.ABCMeta)
 class LinuxInterfaceDriver(object):
-    __metaclass__ = abc.ABCMeta
 
     # from linux IF_NAMESIZE
     DEV_NAME_LEN = 14

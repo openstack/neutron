@@ -15,12 +15,15 @@
 
 from abc import ABCMeta, abstractmethod
 
+import six
+
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
 
 
+@six.add_metaclass(ABCMeta)
 class AgentMechanismDriverBase(api.MechanismDriver):
     """Base class for drivers that attach to networks using an L2 agent.
 
@@ -34,8 +37,6 @@ class AgentMechanismDriverBase(api.MechanismDriver):
     and VIF type constants to __init__(), and must implement
     check_segment_for_agent().
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, agent_type, vif_type, cap_port_filter):
         """Initialize base class for specific L2 agent type.

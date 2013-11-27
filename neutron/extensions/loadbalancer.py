@@ -18,6 +18,7 @@
 import abc
 
 from oslo.config import cfg
+import six
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
@@ -381,8 +382,8 @@ class Loadbalancer(extensions.ExtensionDescriptor):
             return {}
 
 
+@six.add_metaclass(abc.ABCMeta)
 class LoadBalancerPluginBase(ServicePluginBase):
-    __metaclass__ = abc.ABCMeta
 
     def get_plugin_name(self):
         return constants.LOADBALANCER

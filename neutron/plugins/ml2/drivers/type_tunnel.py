@@ -14,6 +14,8 @@
 #    under the License.
 from abc import ABCMeta, abstractmethod
 
+import six
+
 from neutron.common import exceptions as exc
 from neutron.common import topics
 from neutron.openstack.common import log
@@ -24,14 +26,13 @@ LOG = log.getLogger(__name__)
 TUNNEL = 'tunnel'
 
 
+@six.add_metaclass(ABCMeta)
 class TunnelTypeDriver(api.TypeDriver):
     """Define stable abstract interface for ML2 type drivers.
 
     tunnel type networks rely on tunnel endpoints. This class defines abstract
     methods to manage these endpoints.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def add_endpoint(self, ip):

@@ -16,9 +16,11 @@
 #    under the License.
 import abc
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class DeviceDriver(object):
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, agent, host):
         pass

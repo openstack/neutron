@@ -24,6 +24,7 @@ import httplib
 import logging
 import time
 
+import six
 
 from neutron.plugins.nicira.api_client.common import (
     _conn_str)
@@ -37,14 +38,13 @@ DEFAULT_CONCURRENT_CONNECTIONS = 3
 DEFAULT_CONNECT_TIMEOUT = 5
 
 
+@six.add_metaclass(ABCMeta)
 class NvpApiClient(object):
     '''An abstract baseclass for all NvpApiClient implementations.
 
     This defines the interface and property structure for synchronous and
     coroutine-based classes.
     '''
-
-    __metaclass__ = ABCMeta
 
     CONN_IDLE_TIMEOUT = 60 * 15
 

@@ -26,6 +26,7 @@ import uuid
 
 import netaddr
 from oslo.config import cfg
+import six
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
@@ -101,8 +102,8 @@ class NetModel(DictModel):
         return self._ns_name
 
 
+@six.add_metaclass(abc.ABCMeta)
 class DhcpBase(object):
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, conf, network, root_helper='sudo',
                  version=None, plugin=None):

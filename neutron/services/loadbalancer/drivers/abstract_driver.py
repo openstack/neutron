@@ -18,7 +18,10 @@
 
 import abc
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class LoadBalancerAbstractDriver(object):
     """Abstract lbaas driver that expose ~same API as lbaas plugin.
 
@@ -27,7 +30,6 @@ class LoadBalancerAbstractDriver(object):
     Get operations are not part of the API - it will be handled
     by the lbaas plugin.
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def create_vip(self, context, vip):

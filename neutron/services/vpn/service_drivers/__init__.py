@@ -17,9 +17,11 @@
 
 import abc
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class VpnDriver(object):
-    __metaclass__ = abc.ABCMeta
 
     @property
     def service_type(self):

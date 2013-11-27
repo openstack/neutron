@@ -15,6 +15,8 @@
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+import six
+
 # The following keys are used in the segment dictionaries passed via
 # the driver API. These are defined separately from similar keys in
 # neutron.extensions.providernet so that drivers don't need to change
@@ -26,6 +28,7 @@ PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
 
 
+@six.add_metaclass(ABCMeta)
 class TypeDriver(object):
     """Define stable abstract interface for ML2 type drivers.
 
@@ -42,8 +45,6 @@ class TypeDriver(object):
     keys. Attributes not applicable for a particular network_type may
     either be excluded or stored as None.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def get_type(self):
@@ -128,6 +129,7 @@ class TypeDriver(object):
         pass
 
 
+@six.add_metaclass(ABCMeta)
 class NetworkContext(object):
     """Context passed to MechanismDrivers for changes to network resources.
 
@@ -136,8 +138,6 @@ class NetworkContext(object):
     from expensive operations are cached so that other
     MechanismDrivers can freely access the same information.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractproperty
     def current(self):
@@ -165,6 +165,7 @@ class NetworkContext(object):
         pass
 
 
+@six.add_metaclass(ABCMeta)
 class SubnetContext(object):
     """Context passed to MechanismDrivers for changes to subnet resources.
 
@@ -173,8 +174,6 @@ class SubnetContext(object):
     from expensive operations are cached so that other
     MechanismDrivers can freely access the same information.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractproperty
     def current(self):
@@ -197,6 +196,7 @@ class SubnetContext(object):
         pass
 
 
+@six.add_metaclass(ABCMeta)
 class PortContext(object):
     """Context passed to MechanismDrivers for changes to port resources.
 
@@ -205,8 +205,6 @@ class PortContext(object):
     expensive operations are cached so that other MechanismDrivers can
     freely access the same information.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractproperty
     def current(self):
@@ -262,6 +260,7 @@ class PortContext(object):
         pass
 
 
+@six.add_metaclass(ABCMeta)
 class MechanismDriver(object):
     """Define stable abstract interface for ML2 mechanism drivers.
 
@@ -282,8 +281,6 @@ class MechanismDriver(object):
     update network/port case, all data validation must be done within
     methods that are part of the database transaction.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def initialize(self):

@@ -19,7 +19,10 @@
 
 import abc
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class FwaasDriverBase(object):
     """Firewall as a Service Driver base class.
 
@@ -59,8 +62,6 @@ class FwaasDriverBase(object):
     related to out-of-order notifications or inconsistent behaviour by partial
     application of rules.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def create_firewall(self, apply_list, firewall):

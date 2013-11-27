@@ -17,6 +17,8 @@
 
 import abc
 
+import six
+
 from neutron.api import extensions
 from neutron.db import servicetype_db as sdb
 from neutron.openstack.common import importutils
@@ -26,9 +28,9 @@ from neutron.services import provider_configuration as pconf
 LOG = logging.getLogger(__name__)
 
 
+@six.add_metaclass(abc.ABCMeta)
 class ServicePluginBase(extensions.PluginInterface):
     """Define base interface for any Advanced Service plugin."""
-    __metaclass__ = abc.ABCMeta
     supported_extension_aliases = []
 
     @abc.abstractmethod

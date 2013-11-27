@@ -20,12 +20,13 @@
 import abc
 
 from oslo.config import cfg
+import six
 
 from neutron.common import log
 
 
+@six.add_metaclass(abc.ABCMeta)
 class L2populationRpcCallBackMixin(object):
-    __metaclass__ = abc.ABCMeta
 
     @log.log
     def add_fdb_entries(self, context, fdb_entries, host=None):

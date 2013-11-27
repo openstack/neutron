@@ -26,6 +26,8 @@ import logging
 import time
 import urlparse
 
+import six
+
 from neutron.openstack.common import excutils
 from neutron.plugins.nicira.api_client.common import (
     _conn_str)
@@ -45,14 +47,13 @@ DOWNLOAD_TIMEOUT = 180  # The UI code has a coorespoind 190 sec timeout
                         # for downloads, see: django/nvp_console/views.py
 
 
+@six.add_metaclass(ABCMeta)
 class NvpApiRequest(object):
     '''An abstract baseclass for all ApiRequest implementations.
 
     This defines the interface and property structure for both eventlet and
     gevent-based ApiRequest classes.
     '''
-
-    __metaclass__ = ABCMeta
 
     # List of allowed status codes.
     ALLOWED_STATUS_CODES = [

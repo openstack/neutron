@@ -18,15 +18,16 @@
 
 from abc import ABCMeta, abstractmethod
 
+import six
 
+
+@six.add_metaclass(ABCMeta)
 class OFCDriverBase(object):
     """OpenFlow Controller (OFC) Driver Specification.
 
     OFCDriverBase defines the minimum set of methods required by this plugin.
     It would be better that other methods like update_* are implemented.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def create_tenant(self, description, tenant_id=None):

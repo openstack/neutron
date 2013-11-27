@@ -18,7 +18,10 @@
 import abc
 import contextlib
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class FirewallDriver(object):
     """Firewall Driver base class.
 
@@ -51,8 +54,6 @@ class FirewallDriver(object):
         remote_group_id will be a list of dest_ip_prefix
       remote_group_id will also remaining membership update management
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def prepare_port_filter(self, port):
         """Prepare filters for the port.

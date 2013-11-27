@@ -23,6 +23,7 @@ import os
 
 from oslo.config import cfg
 import routes
+import six
 import webob.dec
 import webob.exc
 
@@ -37,8 +38,8 @@ from neutron import wsgi
 LOG = logging.getLogger(__name__)
 
 
+@six.add_metaclass(ABCMeta)
 class PluginInterface(object):
-    __metaclass__ = ABCMeta
 
     @classmethod
     def __subclasshook__(cls, klass):
