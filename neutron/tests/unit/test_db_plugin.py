@@ -2497,41 +2497,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
 
-    def test_delete_subnet_dhcp_port_associated_with_other_subnets(self):
-        # Create new network
-        res = self._create_network(fmt=self.fmt, name='net',
-                                   admin_state_up=True)
-        network = self.deserialize(self.fmt, res)
-        subnet1 = self._make_subnet(self.fmt, network, '10.0.0.1',
-                                    '10.0.0.0/24', ip_version=4)
-        subnet2 = self._make_subnet(self.fmt, network, '10.0.1.1',
-                                    '10.0.1.0/24', ip_version=4)
-        res = self._create_port(self.fmt,
-                                network['network']['id'],
-                                device_owner='network:dhcp',
-                                fixed_ips=[
-                                    {'subnet_id': subnet1['subnet']['id']},
-                                    {'subnet_id': subnet2['subnet']['id']}
-                                ])
-        port = self.deserialize(self.fmt, res)
-        expected_subnets = [subnet1['subnet']['id'], subnet2['subnet']['id']]
-        self.assertEqual(expected_subnets,
-                         [s['subnet_id'] for s in port['port']['fixed_ips']])
-        req = self.new_delete_request('subnets', subnet1['subnet']['id'])
-        res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
-        port = self._show('ports', port['port']['id'])
-
-        expected_subnets = [subnet2['subnet']['id']]
-        self.assertEqual(expected_subnets,
-                         [s['subnet_id'] for s in port['port']['fixed_ips']])
-        req = self.new_delete_request('subnets', subnet2['subnet']['id'])
-        res = req.get_response(self.api)
-        self.assertEqual(res.status_int, 204)
-        port = self._show('ports', port['port']['id'])
-        self.assertEqual([],
-                         [s['subnet_id'] for s in port['port']['fixed_ips']])
-
     def test_delete_subnet_port_exists_owned_by_other(self):
         with self.subnet() as subnet:
             with self.port(subnet=subnet):
