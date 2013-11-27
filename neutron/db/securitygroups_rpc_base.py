@@ -70,15 +70,19 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         It is because another changes for the port may require notification.
         """
         need_notify = False
-        if ext_sg.SECURITYGROUPS in port['port']:
+        port_updates = port['port']
+        if (ext_sg.SECURITYGROUPS in port_updates and
+            not utils.compare_elements(
+                original_port.get(ext_sg.SECURITYGROUPS),
+                port_updates[ext_sg.SECURITYGROUPS])):
             # delete the port binding and read it with the new rules
-            port['port'][ext_sg.SECURITYGROUPS] = (
+            port_updates[ext_sg.SECURITYGROUPS] = (
                 self._get_security_groups_on_port(context, port))
             self._delete_port_security_group_bindings(context, id)
             self._process_port_create_security_group(
                 context,
                 updated_port,
-                port['port'][ext_sg.SECURITYGROUPS])
+                port_updates[ext_sg.SECURITYGROUPS])
             need_notify = True
         else:
             updated_port[ext_sg.SECURITYGROUPS] = (
