@@ -22,6 +22,7 @@ import logging
 from sqlalchemy import orm
 import webob.exc as wexc
 
+from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import base
 from neutron.common import exceptions as exc
 from neutron.db import db_base_plugin_v2
@@ -31,13 +32,14 @@ from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as cexc
 from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import network_db_v2 as cdb
+from neutron.plugins.cisco import extensions
 
 LOG = logging.getLogger(__name__)
 
 
 class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
     """Meta-Plugin with v2 API support for multiple sub-plugins."""
-    supported_extension_aliases = ["Cisco Credential", "Cisco qos"]
+    supported_extension_aliases = ["credential", "Cisco qos"]
     _methods_to_delegate = ['create_network',
                             'delete_network', 'update_network', 'get_network',
                             'get_networks',
@@ -80,6 +82,8 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
         if hasattr(self._model, "supported_extension_aliases"):
             self.supported_extension_aliases.extend(
                 self._model.supported_extension_aliases)
+
+        neutron_extensions.append_api_extensions_path(extensions.__path__)
 
         # Extend the fault map
         self._extend_fault_map()

@@ -17,6 +17,7 @@
 # @author: Akihiro MOTOKI
 
 from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes as attrs
 from neutron.common import constants as const
@@ -46,6 +47,7 @@ from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec.db import router as rdb
+from neutron.plugins.nec import extensions
 from neutron.plugins.nec import nec_router
 from neutron.plugins.nec import ofc_manager
 from neutron.plugins.nec import packet_filter
@@ -104,11 +106,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.ofc = ofc_manager.OFCManager()
         self.base_binding_dict = self._get_base_binding_dict()
         portbindings_base.register_port_dict_function()
-        # Set the plugin default extension path
-        # if no api_extensions_path is specified.
-        if not config.CONF.api_extensions_path:
-            config.CONF.set_override('api_extensions_path',
-                                     'neutron/plugins/nec/extensions')
+
+        neutron_extensions.append_api_extensions_path(extensions.__path__)
 
         self.setup_rpc()
         self.l3_rpc_notifier = nec_router.L3AgentNotifyAPI()

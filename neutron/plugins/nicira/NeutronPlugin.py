@@ -27,6 +27,7 @@ from oslo.config import cfg
 from sqlalchemy.orm import exc as sa_exc
 import webob.exc
 
+from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import constants
@@ -181,9 +182,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                        'default': self._nvp_delete_port}
         }
 
-        # If no api_extensions_path is provided set the following
-        if not cfg.CONF.api_extensions_path:
-            cfg.CONF.set_override('api_extensions_path', NVP_EXT_PATH)
+        neutron_extensions.append_api_extensions_path([NVP_EXT_PATH])
         self.nvp_opts = cfg.CONF.NVP
         self.nvp_sync_opts = cfg.CONF.NVP_SYNC
         self.cluster = create_nvp_cluster(cfg.CONF,

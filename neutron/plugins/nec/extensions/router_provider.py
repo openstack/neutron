@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.openstack.common import log as logging
 
@@ -33,7 +32,7 @@ ROUTER_PROVIDER_ATTRIBUTE = {
 }
 
 
-class Router_provider(extensions.ExtensionDescriptor):
+class Router_provider(object):
     @classmethod
     def get_name(cls):
         return "Router Provider"

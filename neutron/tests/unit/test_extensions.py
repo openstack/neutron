@@ -17,12 +17,14 @@
 
 import os
 
+import mock
 import routes
 import webob
 import webtest
 
 from neutron.api import extensions
 from neutron.common import config
+from neutron.common import exceptions
 from neutron.db import db_base_plugin_v2
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
@@ -447,15 +449,17 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
     def test_unsupported_extensions_are_not_loaded(self):
         stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1", "e3"])
         plugin_info = {constants.CORE: stub_plugin}
-        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+        with mock.patch("neutron.api.extensions.PluginAwareExtensionManager."
+                        "check_if_plugin_extensions_loaded"):
+            ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
 
-        ext_mgr.add_extension(ext_stubs.StubExtension("e1"))
-        ext_mgr.add_extension(ext_stubs.StubExtension("e2"))
-        ext_mgr.add_extension(ext_stubs.StubExtension("e3"))
+            ext_mgr.add_extension(ext_stubs.StubExtension("e1"))
+            ext_mgr.add_extension(ext_stubs.StubExtension("e2"))
+            ext_mgr.add_extension(ext_stubs.StubExtension("e3"))
 
-        self.assertIn("e1", ext_mgr.extensions)
-        self.assertNotIn("e2", ext_mgr.extensions)
-        self.assertIn("e3", ext_mgr.extensions)
+            self.assertIn("e1", ext_mgr.extensions)
+            self.assertNotIn("e2", ext_mgr.extensions)
+            self.assertIn("e3", ext_mgr.extensions)
 
     def test_extensions_are_not_loaded_for_plugins_unaware_of_extensions(self):
         class ExtensionUnawarePlugin(object):
@@ -478,11 +482,13 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
             supported_extension_aliases = ["supported_extension"]
 
         plugin_info = {constants.CORE: PluginWithoutExpectedIface()}
-        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
-        ext_mgr.add_extension(
-            ext_stubs.ExtensionExpectingPluginInterface("supported_extension"))
+        with mock.patch("neutron.api.extensions.PluginAwareExtensionManager."
+                        "check_if_plugin_extensions_loaded"):
+            ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+            ext_mgr.add_extension(ext_stubs.ExtensionExpectingPluginInterface(
+                "supported_extension"))
 
-        self.assertNotIn("e1", ext_mgr.extensions)
+            self.assertNotIn("e1", ext_mgr.extensions)
 
     def test_extensions_are_loaded_for_plugin_with_expected_interface(self):
 
@@ -494,11 +500,13 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
                 pass
 
         plugin_info = {constants.CORE: PluginWithExpectedInterface()}
-        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
-        ext_mgr.add_extension(
-            ext_stubs.ExtensionExpectingPluginInterface("supported_extension"))
+        with mock.patch("neutron.api.extensions.PluginAwareExtensionManager."
+                        "check_if_plugin_extensions_loaded"):
+            ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+            ext_mgr.add_extension(ext_stubs.ExtensionExpectingPluginInterface(
+                "supported_extension"))
 
-        self.assertIn("supported_extension", ext_mgr.extensions)
+            self.assertIn("supported_extension", ext_mgr.extensions)
 
     def test_extensions_expecting_neutron_plugin_interface_are_loaded(self):
         class ExtensionForQuamtumPluginInterface(ext_stubs.StubExtension):
@@ -509,10 +517,13 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
             pass
         stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1"])
         plugin_info = {constants.CORE: stub_plugin}
-        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
-        ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
 
-        self.assertIn("e1", ext_mgr.extensions)
+        with mock.patch("neutron.api.extensions.PluginAwareExtensionManager."
+                        "check_if_plugin_extensions_loaded"):
+            ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+            ext_mgr.add_extension(ExtensionForQuamtumPluginInterface("e1"))
+
+            self.assertIn("e1", ext_mgr.extensions)
 
     def test_extensions_without_need_for__plugin_interface_are_loaded(self):
         class ExtensionWithNoNeedForPluginInterface(ext_stubs.StubExtension):
@@ -525,10 +536,12 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
         stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1"])
         plugin_info = {constants.CORE: stub_plugin}
-        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
-        ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
+        with mock.patch("neutron.api.extensions.PluginAwareExtensionManager."
+                        "check_if_plugin_extensions_loaded"):
+            ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+            ext_mgr.add_extension(ExtensionWithNoNeedForPluginInterface("e1"))
 
-        self.assertIn("e1", ext_mgr.extensions)
+            self.assertIn("e1", ext_mgr.extensions)
 
     def test_extension_loaded_for_non_core_plugin(self):
         class NonCorePluginExtenstion(ext_stubs.StubExtension):
@@ -537,10 +550,20 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
         stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1"])
         plugin_info = {constants.DUMMY: stub_plugin}
-        ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
-        ext_mgr.add_extension(NonCorePluginExtenstion("e1"))
+        with mock.patch("neutron.api.extensions.PluginAwareExtensionManager."
+                        "check_if_plugin_extensions_loaded"):
+            ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
+            ext_mgr.add_extension(NonCorePluginExtenstion("e1"))
 
-        self.assertIn("e1", ext_mgr.extensions)
+            self.assertIn("e1", ext_mgr.extensions)
+
+    def test_unloaded_supported_extensions_raises_exception(self):
+        stub_plugin = ext_stubs.StubPlugin(
+            supported_extensions=["unloaded_extension"])
+        plugin_info = {constants.CORE: stub_plugin}
+        self.assertRaises(exceptions.ExtensionsNotFound,
+                          extensions.PluginAwareExtensionManager,
+                          '', plugin_info)
 
 
 class ExtensionControllerTest(testlib_api.WebTestCase):
