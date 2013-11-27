@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mock
+
+from neutron import manager
 from neutron.plugins.ryu.db import models_v2 as ryu_models_v2  # noqa
 from neutron.tests.unit.ryu import fake_ryu
 from neutron.tests.unit import test_db_plugin as test_plugin
@@ -27,6 +30,8 @@ class RyuPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.ryu_patcher.start()
         super(RyuPluginV2TestCase, self).setUp(self._plugin_name)
         self.addCleanup(self.ryu_patcher.stop)
+        plugin = manager.NeutronManager.get_plugin()
+        plugin.notifier = mock.Mock()
 
 
 class TestRyuBasicGet(test_plugin.TestBasicGet, RyuPluginV2TestCase):
