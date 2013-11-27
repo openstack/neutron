@@ -54,10 +54,6 @@ class ContextBase(common_context.RequestContext):
         :param kwargs: Extra arguments that might be present, but we ignore
             because they possibly came in from older rpc messages.
         """
-        if kwargs:
-            LOG.warn(_('Arguments dropped when creating '
-                       'context: %s'), kwargs)
-
         super(ContextBase, self).__init__(user=user_id, tenant=tenant_id,
                                           is_admin=is_admin,
                                           request_id=request_id)
@@ -80,6 +76,12 @@ class ContextBase(common_context.RequestContext):
         # Allow openstack.common.log to access the context
         if overwrite or not hasattr(local.store, 'context'):
             local.store.context = self
+
+        # Log only once the context has been configured to prevent
+        # format errors.
+        if kwargs:
+            LOG.warn(_('Arguments dropped when creating '
+                       'context: %s'), kwargs)
 
     @property
     def project_id(self):
@@ -128,6 +130,7 @@ class ContextBase(common_context.RequestContext):
                 'tenant': self.tenant,
                 'user': self.user,
                 'tenant_name': self.tenant_name,
+                'project_name': self.tenant_name,
                 'user_name': self.user_name,
                 }
 
