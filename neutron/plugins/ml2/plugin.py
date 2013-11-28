@@ -654,12 +654,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             original_port = self._make_port_dict(port_db)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
                                                               port)
-            if self.is_address_pairs_attribute_updated(original_port, port):
-                self._delete_allowed_address_pairs(context, id)
-                self._process_create_allowed_address_pairs(
-                    context, updated_port,
-                    port['port'][addr_pair.ADDRESS_PAIRS])
-                need_port_update_notify = True
+            if addr_pair.ADDRESS_PAIRS in port['port']:
+                need_port_update_notify |= (
+                    self.update_address_pairs_on_port(context, id, port,
+                                                      original_port,
+                                                      updated_port))
             elif changed_fixed_ips:
                 self._check_fixed_ips_and_address_pairs_no_overlap(
                     context, updated_port)
