@@ -43,10 +43,10 @@ class TestNeutronContext(base.BaseTestCase):
         self.assertIsNone(ctx.user_name)
         self.assertIsNone(ctx.tenant_name)
 
-    def test_neutron_context_create_logs_unknown_kwargs(self):
-        with mock.patch.object(context.LOG, 'warn') as mock_warn:
-            context.Context('user_id', 'tenant_id', foo='bar')
-        self.assertEqual(mock_warn.call_count, 1)
+    def test_neutron_context_create_logs_unknown_kwarg(self):
+        with mock.patch.object(context.LOG, 'debug') as mock_log:
+            context.Context('user_id', 'tenant_id', foo=None)
+        self.assertEqual(mock_log.call_count, 1)
 
     def test_neutron_context_create_with_name(self):
         ctx = context.Context('user_id', 'tenant_id',
