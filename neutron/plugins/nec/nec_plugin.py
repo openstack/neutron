@@ -578,7 +578,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             new_port = super(NECPluginV2, self).update_port(context, id, port)
             portinfo_changed = self._process_portbindings_update(
                 context, port['port'], new_port)
-            if addr_pair.ADDRESS_PAIRS in port['port']:
+            if self.is_address_pairs_attribute_updated(old_port, port):
                 self._delete_allowed_address_pairs(context, id)
                 self._process_create_allowed_address_pairs(
                     context, new_port,

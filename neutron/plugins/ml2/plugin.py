@@ -597,7 +597,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             original_port = super(Ml2Plugin, self).get_port(context, id)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
                                                               port)
-            if addr_pair.ADDRESS_PAIRS in port['port']:
+            if self.is_address_pairs_attribute_updated(original_port, port):
                 self._delete_allowed_address_pairs(context, id)
                 self._process_create_allowed_address_pairs(
                     context, updated_port,

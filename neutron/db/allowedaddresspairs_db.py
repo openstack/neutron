@@ -20,6 +20,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes as attr
+from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -124,3 +125,17 @@ class AllowedAddressPairsMixin(object):
         """
         return (addr_pair.ADDRESS_PAIRS in port['port'] and
                 not self._has_address_pairs(port))
+
+    def is_address_pairs_attribute_updated(self, port, update_attrs):
+        """Check if the address pairs attribute is being updated.
+
+        This method returns a flag which indicates whether there is an update
+        and therefore a port update notification should be sent to agents or
+        third party controllers.
+        """
+        new_pairs = update_attrs.get(addr_pair.ADDRESS_PAIRS)
+        if new_pairs and not utils.compare_elements(
+            port.get(addr_pair.ADDRESS_PAIRS), new_pairs):
+            return True
+        # Missing or unchanged address pairs in attributes mean no update
+        return False
