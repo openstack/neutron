@@ -19,6 +19,7 @@ import copy
 
 import mock
 from oslo.config import cfg
+from testtools import matchers
 
 from neutron.agent.common import config as agent_config
 from neutron.agent import l3_agent
@@ -589,6 +590,30 @@ class TestBasicRouterOperations(base.BaseTestCase):
                 self.assertEqual(args, ('snat', '-j $float-snat'))
                 self.assertEqual(kwargs, {})
                 break
+
+    def test_handle_router_snat_rules_add_rules(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = l3_agent.RouterInfo(_uuid(), self.conf.root_helper,
+                                 self.conf.use_namespaces, None)
+        ex_gw_port = {'fixed_ips': [{'ip_address': '192.168.1.4'}]}
+        internal_cidrs = ['10.0.0.0/24']
+        agent._handle_router_snat_rules(ri, ex_gw_port, internal_cidrs,
+                                        "iface", "add_rules")
+
+        nat_rules = map(str, ri.iptables_manager.ipv4['nat'].rules)
+        wrap_name = ri.iptables_manager.wrap_name
+
+        jump_float_rule = "-A %s-snat -j %s-float-snat" % (wrap_name,
+                                                           wrap_name)
+        internal_net_rule = ("-A %s-snat -s %s -j SNAT --to-source %s") % (
+            wrap_name, internal_cidrs[0],
+            ex_gw_port['fixed_ips'][0]['ip_address'])
+
+        self.assertIn(jump_float_rule, nat_rules)
+
+        self.assertIn(internal_net_rule, nat_rules)
+        self.assertThat(nat_rules.index(jump_float_rule),
+                        matchers.LessThan(nat_rules.index(internal_net_rule)))
 
     def test_routers_with_admin_state_down(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
