@@ -48,6 +48,10 @@ class GatewayInUse(exceptions.InUse):
                 "with one or more neutron networks.")
 
 
+class GatewayNotFound(exceptions.NotFound):
+    message = _("Network Gateway %(gateway_id)s could not be found")
+
+
 class NetworkGatewayPortInUse(exceptions.InUse):
     message = _("Port '%(port_id)s' is owned by '%(device_owner)s' and "
                 "therefore cannot be deleted directly via the port API.")
@@ -130,7 +134,11 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
     resource = nvp_networkgw.RESOURCE_NAME.replace('-', '_')
 
     def _get_network_gateway(self, context, gw_id):
-        return self._get_by_id(context, NetworkGateway, gw_id)
+        try:
+            gw = self._get_by_id(context, NetworkGateway, gw_id)
+        except sa_orm_exc.NoResultFound:
+            raise GatewayNotFound(gateway_id=gw_id)
+        return gw
 
     def _make_gw_connection_dict(self, gw_conn):
         return {'port_id': gw_conn['port_id'],
