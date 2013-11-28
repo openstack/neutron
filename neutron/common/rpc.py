@@ -39,6 +39,7 @@ class PluginRpcDispatcher(dispatcher.RpcDispatcher):
         tenant_id = rpc_ctxt_dict.pop('tenant_id', None)
         if not tenant_id:
             tenant_id = rpc_ctxt_dict.pop('project_id', None)
-        neutron_ctxt = context.Context(user_id, tenant_id, **rpc_ctxt_dict)
+        neutron_ctxt = context.Context(user_id, tenant_id,
+                                       load_admin_roles=False, **rpc_ctxt_dict)
         return super(PluginRpcDispatcher, self).dispatch(
             neutron_ctxt, version, method, namespace, **kwargs)
