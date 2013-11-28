@@ -168,7 +168,8 @@ class DhcpRpcCallbackMixin(object):
                 retval = plugin.create_port(context, dict(port=port_dict))
             except (db_exc.DBError,
                     n_exc.NetworkNotFound,
-                    n_exc.SubnetNotFound) as e:
+                    n_exc.SubnetNotFound,
+                    n_exc.IpAddressGenerationFailure) as e:
                 LOG.warn(_("Port for network %(net_id)s could not be created: "
                            "%(reason)s") % {"net_id": network_id, 'reason': e})
                 return
