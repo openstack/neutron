@@ -214,6 +214,9 @@ class TunnelTest(base.BaseTestCase):
         self.get_bridges_expected = [
             mock.call('sudo')
         ]
+        self.execute = mock.patch('neutron.agent.linux.utils.execute').start()
+        self.execute_expected = [mock.call(['/sbin/udevadm', 'settle',
+                                            '--timeout=10'])]
 
     def _verify_mock_call(self, mock_obj, expected):
         mock_obj.assert_has_calls(expected)
@@ -233,6 +236,7 @@ class TunnelTest(base.BaseTestCase):
         self._verify_mock_call(self.get_bridges, self.get_bridges_expected)
         self._verify_mock_call(self.inta, self.inta_expected)
         self._verify_mock_call(self.intb, self.intb_expected)
+        self._verify_mock_call(self.execute, self.execute_expected)
 
     def test_construct(self):
         ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
