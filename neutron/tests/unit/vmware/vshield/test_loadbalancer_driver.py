@@ -22,6 +22,7 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.dbexts import vcns_db
 from neutron.plugins.vmware.vshield.common import exceptions as vcns_exc
 from neutron.plugins.vmware.vshield import vcns_driver
+from neutron.services.loadbalancer import constants as lb_constants
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import VCNS_NAME
@@ -68,6 +69,8 @@ class VcnsDriverTestCase(test_db_loadbalancer.LoadBalancerPluginDbTestCase):
             self.fc2.delete_health_monitor)
         instance.return_value.create_app_profile.side_effect = (
             self.fc2.create_app_profile)
+        instance.return_value.update_app_profile.side_effect = (
+            self.fc2.update_app_profile)
         instance.return_value.delete_app_profile.side_effect = (
             self.fc2.delete_app_profile)
         self.pool_id = None
@@ -105,6 +108,94 @@ class TestEdgeLbDriver(VcnsDriverTestCase):
                 vip_get = self.driver.get_vip(ctx, vip_create['id'])
                 for k, v in vip_get.iteritems():
                     self.assertEqual(vip_create[k], v)
+
+    def test_convert_app_profile(self):
+        app_profile_name = 'app_profile_name'
+        sess_persist1 = {'type': "SOURCE_IP"}
+        sess_persist2 = {'type': "HTTP_COOKIE"}
+        sess_persist3 = {'type': "APP_COOKIE",
+                         'cookie_name': "app_cookie_name"}
+        # protocol is HTTP and type is SOURCE_IP
+        expect_vcns_app_profile1 = {
+            'insertXForwardedFor': False,
+            'name': app_profile_name,
+            'serverSslEnabled': False,
+            'sslPassthrough': False,
+            'template': lb_constants.PROTOCOL_HTTP,
+            'persistence': {'method': 'sourceip'}}
+        vcns_app_profile = self.driver._convert_app_profile(
+            app_profile_name, sess_persist1, lb_constants.PROTOCOL_HTTP)
+        for k, v in expect_vcns_app_profile1.iteritems():
+            self.assertEqual(vcns_app_profile[k], v)
+        # protocol is HTTP and type is HTTP_COOKIE and APP_COOKIE
+        expect_vcns_app_profile2 = {
+            'insertXForwardedFor': False,
+            'name': app_profile_name,
+            'serverSslEnabled': False,
+            'sslPassthrough': False,
+            'template': lb_constants.PROTOCOL_HTTP,
+            'persistence': {'method': 'cookie',
+                            'cookieName': 'default_cookie_name',
+                            'cookieMode': 'insert'}}
+        vcns_app_profile = self.driver._convert_app_profile(
+            app_profile_name, sess_persist2, lb_constants.PROTOCOL_HTTP)
+        for k, v in expect_vcns_app_profile2.iteritems():
+            self.assertEqual(vcns_app_profile[k], v)
+        expect_vcns_app_profile3 = {
+            'insertXForwardedFor': False,
+            'name': app_profile_name,
+            'serverSslEnabled': False,
+            'sslPassthrough': False,
+            'template': lb_constants.PROTOCOL_HTTP,
+            'persistence': {'method': 'cookie',
+                            'cookieName': sess_persist3['cookie_name'],
+                            'cookieMode': 'app'}}
+        vcns_app_profile = self.driver._convert_app_profile(
+            app_profile_name, sess_persist3, lb_constants.PROTOCOL_HTTP)
+        for k, v in expect_vcns_app_profile3.iteritems():
+            self.assertEqual(vcns_app_profile[k], v)
+        # protocol is HTTPS and type is SOURCE_IP
+        expect_vcns_app_profile1 = {
+            'insertXForwardedFor': False,
+            'name': app_profile_name,
+            'serverSslEnabled': False,
+            'sslPassthrough': True,
+            'template': lb_constants.PROTOCOL_HTTPS,
+            'persistence': {'method': 'sourceip'}}
+        vcns_app_profile = self.driver._convert_app_profile(
+            app_profile_name, sess_persist1, lb_constants.PROTOCOL_HTTPS)
+        for k, v in expect_vcns_app_profile1.iteritems():
+            self.assertEqual(vcns_app_profile[k], v)
+        # protocol is HTTPS, and type isn't SOURCE_IP
+        self.assertRaises(vcns_exc.VcnsBadRequest,
+                          self.driver._convert_app_profile,
+                          app_profile_name,
+                          sess_persist2, lb_constants.PROTOCOL_HTTPS)
+        self.assertRaises(vcns_exc.VcnsBadRequest,
+                          self.driver._convert_app_profile,
+                          app_profile_name,
+                          sess_persist3, lb_constants.PROTOCOL_HTTPS)
+        # protocol is TCP and type is SOURCE_IP
+        expect_vcns_app_profile1 = {
+            'insertXForwardedFor': False,
+            'name': app_profile_name,
+            'serverSslEnabled': False,
+            'sslPassthrough': False,
+            'template': lb_constants.PROTOCOL_TCP,
+            'persistence': {'method': 'sourceip'}}
+        vcns_app_profile = self.driver._convert_app_profile(
+            app_profile_name, sess_persist1, lb_constants.PROTOCOL_TCP)
+        for k, v in expect_vcns_app_profile1.iteritems():
+            self.assertEqual(vcns_app_profile[k], v)
+        # protocol is TCP, and type isn't SOURCE_IP
+        self.assertRaises(vcns_exc.VcnsBadRequest,
+                          self.driver._convert_app_profile,
+                          app_profile_name,
+                          sess_persist2, lb_constants.PROTOCOL_TCP)
+        self.assertRaises(vcns_exc.VcnsBadRequest,
+                          self.driver._convert_app_profile,
+                          app_profile_name,
+                          sess_persist3, lb_constants.PROTOCOL_TCP)
 
     def test_update_vip(self):
         ctx = context.get_admin_context()

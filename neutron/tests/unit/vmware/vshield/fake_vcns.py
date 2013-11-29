@@ -510,6 +510,17 @@ class FakeVcns(object):
         response = ""
         return self.return_helper(header, response)
 
+    def update_app_profile(self, edge_id, app_profileid, app_profile):
+        header = {'status': 404}
+        response = ""
+        if not self._fake_app_profiles_dict.get(edge_id) or (
+            not self._fake_app_profiles_dict[edge_id].get(app_profileid)):
+            return self.return_helper(header, response)
+        header = {'status': 204}
+        self._fake_app_profiles_dict[edge_id][app_profileid].update(
+            app_profile)
+        return self.return_helper(header, response)
+
     def delete_app_profile(self, edge_id, app_profileid):
         header = {'status': 404}
         response = ""

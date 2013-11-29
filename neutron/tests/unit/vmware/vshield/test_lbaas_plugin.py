@@ -15,6 +15,7 @@
 
 import contextlib
 
+import testtools
 from webob import exc as web_exc
 
 from neutron.api.v2 import attributes
@@ -83,6 +84,8 @@ class TestLoadbalancerPlugin(
             self.fc2.delete_health_monitor)
         instance.return_value.create_app_profile.side_effect = (
             self.fc2.create_app_profile)
+        instance.return_value.update_app_profile.side_effect = (
+            self.fc2.update_app_profile)
         instance.return_value.delete_app_profile.side_effect = (
             self.fc2.delete_app_profile)
 
@@ -188,6 +191,15 @@ class TestLoadbalancerPlugin(
                          for k, v in vip['vip'].items() if k in expected),
                     expected
                 )
+
+    def test_create_vip_with_session_persistence(self):
+        self.test_create_vip(session_persistence={'type': 'HTTP_COOKIE'})
+
+    def test_create_vip_with_invalid_persistence_method(self):
+        with testtools.ExpectedException(web_exc.HTTPClientError):
+            self.test_create_vip(
+                protocol='TCP',
+                session_persistence={'type': 'HTTP_COOKIE'})
 
     def test_update_vip(self):
         name = 'new_vip'
