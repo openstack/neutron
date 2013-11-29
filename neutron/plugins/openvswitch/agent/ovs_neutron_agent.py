@@ -228,6 +228,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.sg_agent = OVSSecurityGroupAgent(self.context,
                                               self.plugin_rpc,
                                               root_helper)
+        # Initialize iteration counter
+        self.iter_num = 0
 
     def _check_ovs_version(self):
         if constants.TYPE_VXLAN in self.tunnel_types:
@@ -1015,9 +1017,19 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         resync_a = False
         resync_b = False
         if 'added' in port_info:
+            start = time.time()
             resync_a = self.treat_devices_added(port_info['added'])
+            LOG.debug(_("process_network_ports - iteration:%(iter_num)d -"
+                        "treat_devices_added completed in %(elapsed).3f"),
+                      {'iter_num': self.iter_num,
+                       'elapsed': time.time() - start})
         if 'removed' in port_info:
+            start = time.time()
             resync_b = self.treat_devices_removed(port_info['removed'])
+            LOG.debug(_("process_network_ports - iteration:%(iter_num)d -"
+                        "treat_devices_removed completed in %(elapsed).3f"),
+                      {'iter_num': self.iter_num,
+                       'elapsed': time.time() - start})
         # If one of the above opertaions fails => resync with plugin
         return (resync_a | resync_b)
 
@@ -1025,10 +1037,23 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         resync_a = False
         resync_b = False
         if 'added' in port_info:
+            start = time.time()
             resync_a = self.treat_ancillary_devices_added(port_info['added'])
+            LOG.debug(_("process_ancillary_network_ports - iteration: "
+                        "%(iter_num)d - treat_ancillary_devices_added "
+                        "completed in %(elapsed).3f"),
+                      {'iter_num': self.iter_num,
+                       'elapsed': time.time() - start})
         if 'removed' in port_info:
+            start = time.time()
             resync_b = self.treat_ancillary_devices_removed(
                 port_info['removed'])
+            LOG.debug(_("process_ancillary_network_ports - iteration: "
+                        "%(iter_num)d - treat_ancillary_devices_removed "
+                        "completed in %(elapsed).3f"),
+                      {'iter_num': self.iter_num,
+                       'elapsed': time.time() - start})
+
         # If one of the above opertaions fails => resync with plugin
         return (resync_a | resync_b)
 
@@ -1062,10 +1087,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ports = set()
         ancillary_ports = set()
         tunnel_sync = True
-
         while True:
             try:
                 start = time.time()
+                port_stats = {'regular': {'added': 0, 'removed': 0},
+                              'ancillary': {'added': 0, 'removed': 0}}
+                LOG.debug(_("Agent rpc_loop - iteration:%d started"),
+                          self.iter_num)
                 if sync:
                     LOG.info(_("Agent out of sync with plugin!"))
                     ports.clear()
@@ -1077,25 +1105,54 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 if self.enable_tunneling and tunnel_sync:
                     LOG.info(_("Agent tunnel out of sync with plugin!"))
                     tunnel_sync = self.tunnel_sync()
-
                 if polling_manager.is_polling_required:
+                    LOG.debug(_("Agent rpc_loop - iteration:%(iter_num)d - "
+                                "starting polling. Elapsed:%(elapsed).3f"),
+                              {'iter_num': self.iter_num,
+                               'elapsed': time.time() - start})
                     port_info = self.update_ports(ports)
-
+                    LOG.debug(_("Agent rpc_loop - iteration:%(iter_num)d - "
+                                "port information retrieved. "
+                                "Elapsed:%(elapsed).3f"),
+                              {'iter_num': self.iter_num,
+                               'elapsed': time.time() - start})
                     # notify plugin about port deltas
                     if port_info:
                         LOG.debug(_("Agent loop has new devices!"))
                         # If treat devices fails - must resync with plugin
                         sync = self.process_network_ports(port_info)
+                        LOG.debug(_("Agent rpc_loop - iteration:%(iter_num)d -"
+                                    "ports processed. Elapsed:%(elapsed).3f"),
+                                  {'iter_num': self.iter_num,
+                                   'elapsed': time.time() - start})
                         ports = port_info['current']
-
+                        port_stats['regular']['added'] = (
+                            len(port_info.get('added', [])))
+                        port_stats['regular']['removed'] = (
+                            len(port_info.get('removed', [])))
                     # Treat ancillary devices if they exist
                     if self.ancillary_brs:
                         port_info = self.update_ancillary_ports(
                             ancillary_ports)
+                        LOG.debug(_("Agent rpc_loop - iteration:%(iter_num)d -"
+                                    "ancillary port info retrieved. "
+                                    "Elapsed:%(elapsed).3f"),
+                                  {'iter_num': self.iter_num,
+                                   'elapsed': time.time() - start})
+
                         if port_info:
                             rc = self.process_ancillary_network_ports(
                                 port_info)
+                            LOG.debug(_("Agent rpc_loop - iteration:"
+                                        "%(iter_num)d - ancillary ports "
+                                        "processed. Elapsed:%(elapsed).3f"),
+                                      {'iter_num': self.iter_num,
+                                       'elapsed': time.time() - start})
                             ancillary_ports = port_info['current']
+                            port_stats['ancillary']['added'] = (
+                                len(port_info.get('added', [])))
+                            port_stats['ancillary']['removed'] = (
+                                len(port_info.get('removed', [])))
                             sync = sync | rc
 
                     polling_manager.polling_completed()
@@ -1107,6 +1164,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
             # sleep till end of polling interval
             elapsed = (time.time() - start)
+            LOG.debug(_("Agent rpc_loop - iteration:%(iter_num)d "
+                        "completed. Processed ports statistics: "
+                        "%(port_stats)s. Elapsed:%(elapsed).3f"),
+                      {'iter_num': self.iter_num,
+                       'port_stats': port_stats,
+                       'elapsed': elapsed})
             if (elapsed < self.polling_interval):
                 time.sleep(self.polling_interval - elapsed)
             else:
@@ -1114,6 +1177,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                             "(%(polling_interval)s vs. %(elapsed)s)!"),
                           {'polling_interval': self.polling_interval,
                            'elapsed': elapsed})
+            self.iter_num = self.iter_num + 1
 
     def daemon_loop(self):
         with polling.get_polling_manager(
