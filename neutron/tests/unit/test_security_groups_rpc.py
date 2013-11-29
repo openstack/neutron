@@ -42,7 +42,7 @@ from neutron.tests.unit import test_extension_security_group as test_sg
 
 
 FAKE_PREFIX = {const.IPv4: '10.0.0.0/24',
-               const.IPv6: '2001:0db8::/64'}
+               const.IPv6: '2001:db8::/64'}
 FAKE_IP = {const.IPv4: '10.0.0.1',
            const.IPv6: 'fe80::1',
            'IPv6_GLOBAL': '2001:0db8::1',
