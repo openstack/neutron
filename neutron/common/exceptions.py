@@ -306,3 +306,7 @@ class NetworkVxlanPortRangeError(object):
 class DeviceIDNotOwnedByTenant(Conflict):
     message = _("The following device_id %(device_id)s is not owned by your "
                 "tenant or matches another tenants router.")
+
+
+class InvalidCIDR(BadRequest):
+    message = _("Invalid CIDR %(input)s given as IP prefix")

@@ -16,6 +16,7 @@
 #
 # @author: Aaron Rosen, Nicira, Inc
 
+import netaddr
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -331,6 +332,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             new_rules.add(rule['security_group_id'])
 
             self._validate_port_range(rule)
+            self._validate_ip_prefix(rule)
 
             if rule['remote_ip_prefix'] and rule['remote_group_id']:
                 raise ext_sg.SecurityGroupRemoteGroupAndRemoteIpPrefix()
@@ -410,6 +412,24 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 id = db_rule.pop('id')
                 if (i['security_group_rule'] == db_rule):
                     raise ext_sg.SecurityGroupRuleExists(id=id)
+
+    def _validate_ip_prefix(self, rule):
+        """Check that a valid cidr was specified as remote_ip_prefix
+
+        No need to check that it is in fact an IP address as this is already
+        validated by attribute validators.
+        Check that rule ethertype is consistent with remote_ip_prefix ip type.
+        Add mask to ip_prefix if absent (192.168.1.10 -> 192.168.1.10/32).
+        """
+        input_prefix = rule['remote_ip_prefix']
+        if input_prefix:
+            addr = netaddr.IPNetwork(input_prefix)
+            # set input_prefix to always include the netmask:
+            rule['remote_ip_prefix'] = str(addr)
+            # check consistency of ethertype with addr version
+            if rule['ethertype'] != "IPv%d" % (addr.version):
+                raise ext_sg.SecurityGroupRuleParameterConflict(
+                    ethertype=rule['ethertype'], cidr=input_prefix)
 
     def get_security_group_rules(self, context, filters=None, fields=None,
                                  sorts=None, limit=None, marker=None,
