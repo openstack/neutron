@@ -291,6 +291,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         """Find UUID of single external network for this agent."""
         if self.conf.gateway_external_network_id:
             return self.conf.gateway_external_network_id
+
+        # L3 agent doesn't use external_network_bridge to handle external
+        # networks, so bridge_mappings with provider networks will be used
+        # and the L3 agent is able to handle any external networks.
+        if not self.conf.external_network_bridge:
+            return
+
         try:
             return self.plugin_rpc.get_external_network_id(self.context)
         except rpc_common.RemoteError as e:
@@ -681,7 +688,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             ex_net_id = (r['external_gateway_info'] or {}).get('network_id')
             if not ex_net_id and not self.conf.handle_internal_only_routers:
                 continue
-            if ex_net_id and ex_net_id != target_ex_net_id:
+            if (target_ex_net_id and ex_net_id and
+                ex_net_id != target_ex_net_id):
                 continue
             cur_router_ids.add(r['id'])
             if r['id'] not in self.router_info:
