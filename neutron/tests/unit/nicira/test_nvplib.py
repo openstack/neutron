@@ -1501,6 +1501,68 @@ class NvplibMiscTestCase(base.BaseTestCase):
         result = utils.check_and_truncate(name)
         self.assertEqual(len(result), utils.MAX_DISPLAY_NAME_LEN)
 
+    def test_build_uri_path_plain(self):
+        result = nvplib._build_uri_path('RESOURCE')
+        self.assertEqual("%s/%s" % (nvplib.URI_PREFIX, 'RESOURCE'), result)
+
+    def test_build_uri_path_with_field(self):
+        result = nvplib._build_uri_path('RESOURCE', fields='uuid')
+        expected = "%s/%s?fields=uuid" % (nvplib.URI_PREFIX, 'RESOURCE')
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_filters(self):
+        filters = {"tag": 'foo', "tag_scope": "scope_foo"}
+        result = nvplib._build_uri_path('RESOURCE', filters=filters)
+        expected = (
+            "%s/%s?tag_scope=scope_foo&tag=foo" %
+            (nvplib.URI_PREFIX, 'RESOURCE'))
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_resource_id(self):
+        res = 'RESOURCE'
+        res_id = 'resource_id'
+        result = nvplib._build_uri_path(res, resource_id=res_id)
+        expected = "%s/%s/%s" % (nvplib.URI_PREFIX, res, res_id)
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_parent_and_resource_id(self):
+        parent_res = 'RESOURCE_PARENT'
+        child_res = 'RESOURCE_CHILD'
+        res = '%s/%s' % (child_res, parent_res)
+        par_id = 'parent_resource_id'
+        res_id = 'resource_id'
+        result = nvplib._build_uri_path(
+            res, parent_resource_id=par_id, resource_id=res_id)
+        expected = ("%s/%s/%s/%s/%s" %
+                    (nvplib.URI_PREFIX, parent_res, par_id, child_res, res_id))
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_attachment(self):
+        parent_res = 'RESOURCE_PARENT'
+        child_res = 'RESOURCE_CHILD'
+        res = '%s/%s' % (child_res, parent_res)
+        par_id = 'parent_resource_id'
+        res_id = 'resource_id'
+        result = nvplib._build_uri_path(res, parent_resource_id=par_id,
+                                        resource_id=res_id, is_attachment=True)
+        expected = ("%s/%s/%s/%s/%s/%s" %
+                    (nvplib.URI_PREFIX, parent_res,
+                     par_id, child_res, res_id, 'attachment'))
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_extra_action(self):
+        parent_res = 'RESOURCE_PARENT'
+        child_res = 'RESOURCE_CHILD'
+        res = '%s/%s' % (child_res, parent_res)
+        par_id = 'parent_resource_id'
+        res_id = 'resource_id'
+        result = nvplib._build_uri_path(res, parent_resource_id=par_id,
+                                        resource_id=res_id, extra_action='doh')
+        expected = ("%s/%s/%s/%s/%s/%s" %
+                    (nvplib.URI_PREFIX, parent_res,
+                     par_id, child_res, res_id, 'doh'))
+        self.assertEqual(expected, result)
+
 
 def _nicira_method(method_name, module_name='nvplib'):
     return '%s.%s.%s' % ('neutron.plugins.nicira', module_name, method_name)

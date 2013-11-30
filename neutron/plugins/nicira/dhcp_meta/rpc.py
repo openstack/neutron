@@ -225,7 +225,7 @@ def _destroy_metadata_access_network(plugin, context, router_id, ports):
         # must re-add the router interface
         plugin.add_router_interface(context, router_id,
                                     {'subnet_id': meta_sub_id})
-     # Tell to stop the metadata agent proxy
+    # Tell to stop the metadata agent proxy
     _notify_rpc_agent(
         context, {'network': {'id': meta_net_id}}, 'network.delete.end')
 

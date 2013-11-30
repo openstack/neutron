@@ -161,6 +161,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # TODO(salv-orlando): Replace These dicts with
         # collections.defaultdict for better handling of default values
         # Routines for managing logical ports in NVP
+        self.port_special_owners = [l3_db.DEVICE_OWNER_ROUTER_GW,
+                                    l3_db.DEVICE_OWNER_ROUTER_INTF]
         self._port_drivers = {
             'create': {l3_db.DEVICE_OWNER_ROUTER_GW:
                        self._nvp_create_ext_gw_port,
@@ -469,9 +471,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                  True)
             nicira_db.add_neutron_nvp_port_mapping(
                 context.session, port_data['id'], lport['uuid'])
-            if (not port_data['device_owner'] in
-                (l3_db.DEVICE_OWNER_ROUTER_GW,
-                 l3_db.DEVICE_OWNER_ROUTER_INTF)):
+            if port_data['device_owner'] not in self.port_special_owners:
                 nvplib.plug_interface(self.cluster, selected_lswitch['uuid'],
                                       lport['uuid'], "VifAttachment",
                                       port_data['id'])

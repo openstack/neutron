@@ -122,7 +122,8 @@ def _build_uri_path(resource,
                     relations=None,
                     filters=None,
                     types=None,
-                    is_attachment=False):
+                    is_attachment=False,
+                    extra_action=None):
     resources = resource.split('/')
     res_path = resources[0] + (resource_id and "/%s" % resource_id or '')
     if len(resources) > 1:
@@ -132,6 +133,8 @@ def _build_uri_path(resource,
                                  res_path)
     if is_attachment:
         res_path = "%s/attachment" % res_path
+    elif extra_action:
+        res_path = "%s/%s" % (res_path, extra_action)
     params = []
     params.append(fields and "fields=%s" % fields)
     params.append(relations and "relations=%s" % relations)

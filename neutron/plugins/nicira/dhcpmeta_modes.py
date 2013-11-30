@@ -22,9 +22,14 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import constants as const
 from neutron.common import topics
 from neutron.openstack.common import importutils
+from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.plugins.nicira.common import config
+from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.dhcp_meta import nvp as nvp_svc
 from neutron.plugins.nicira.dhcp_meta import rpc as nvp_rpc
+
+LOG = logging.getLogger(__name__)
 
 
 class DhcpMetadataAccess(object):
@@ -33,30 +38,22 @@ class DhcpMetadataAccess(object):
         """Initialize support for DHCP and Metadata services."""
         if cfg.CONF.NVP.agent_mode == config.AgentModes.AGENT:
             self._setup_rpc_dhcp_metadata()
-            self.handle_network_dhcp_access_delegate = (
-                nvp_rpc.handle_network_dhcp_access
-            )
-            self.handle_port_dhcp_access_delegate = (
-                nvp_rpc.handle_port_dhcp_access
-            )
-            self.handle_port_metadata_access_delegate = (
-                nvp_rpc.handle_port_metadata_access
-            )
-            self.handle_metadata_access_delegate = (
-                nvp_rpc.handle_router_metadata_access
-            )
+            mod = nvp_rpc
         elif cfg.CONF.NVP.agent_mode == config.AgentModes.AGENTLESS:
-            # In agentless mode the following extensions, and related
-            # operations, are not supported; so do not publish them
-            if "agent" in self.supported_extension_aliases:
-                self.supported_extension_aliases.remove("agent")
-            if "dhcp_agent_scheduler" in self.supported_extension_aliases:
-                self.supported_extension_aliases.remove(
-                    "dhcp_agent_scheduler")
-            # TODO(armando-migliaccio): agentless support is not yet complete
-            # so it's better to raise an exception for now, in case some admin
-            # decides to jump the gun
-            raise NotImplementedError()
+            self._setup_nvp_dhcp_metadata()
+            mod = nvp_svc
+        self.handle_network_dhcp_access_delegate = (
+            mod.handle_network_dhcp_access
+        )
+        self.handle_port_dhcp_access_delegate = (
+            mod.handle_port_dhcp_access
+        )
+        self.handle_port_metadata_access_delegate = (
+            mod.handle_port_metadata_access
+        )
+        self.handle_metadata_access_delegate = (
+            mod.handle_router_metadata_access
+        )
 
     def _setup_rpc_dhcp_metadata(self):
         self.topic = topics.PLUGIN
@@ -70,6 +67,36 @@ class DhcpMetadataAccess(object):
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver
         )
+
+    def _setup_nvp_dhcp_metadata(self):
+        # In agentless mode the following extensions, and related
+        # operations, are not supported; so do not publish them
+        if "agent" in self.supported_extension_aliases:
+            self.supported_extension_aliases.remove("agent")
+        if "dhcp_agent_scheduler" in self.supported_extension_aliases:
+            self.supported_extension_aliases.remove(
+                "dhcp_agent_scheduler")
+        nvp_svc.register_dhcp_opts(cfg)
+        self.lsn_manager = nvp_svc.LsnManager(self)
+        self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
+            nvp_svc.DhcpAgentNotifyAPI(self, self.lsn_manager))
+        # In agentless mode, ports whose owner is DHCP need to
+        # be special cased; so add it to the list of special
+        # owners list
+        if const.DEVICE_OWNER_DHCP not in self.port_special_owners:
+            self.port_special_owners.append(const.DEVICE_OWNER_DHCP)
+        try:
+            error = None
+            nvp_svc.check_services_requirements(self.cluster)
+        except nvp_exc.NvpInvalidVersion:
+            error = _("Unable to run Neutron with config option '%s', as NVP "
+                      "does not support it") % config.AgentModes.AGENTLESS
+        except nvp_exc.ServiceClusterUnavailable:
+            error = _("Unmet dependency for config option "
+                      "'%s'") % config.AgentModes.AGENTLESS
+        if error:
+            LOG.exception(error)
+            raise nvp_exc.NvpPluginException(err_msg=error)
 
     def handle_network_dhcp_access(self, context, network, action):
         self.handle_network_dhcp_access_delegate(self, context,

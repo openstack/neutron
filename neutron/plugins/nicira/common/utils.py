@@ -16,9 +16,19 @@
 #    under the License.
 
 from neutron.openstack.common import log
+from neutron.version import version_info
+
 
 LOG = log.getLogger(__name__)
 MAX_DISPLAY_NAME_LEN = 40
+NEUTRON_VERSION = version_info.release_string()
+
+
+def get_tags(**kwargs):
+    tags = ([dict(tag=value, scope=key)
+            for key, value in kwargs.iteritems()])
+    tags.append({"tag": NEUTRON_VERSION, "scope": "quantum"})
+    return tags
 
 
 def check_and_truncate(display_name):
