@@ -909,6 +909,9 @@ class TestVpnaas(VPNPluginDbTestCase):
                     vpnservice['vpnservice']['id'])
                 res = req.get_response(self.ext_api)
                 self.assertEqual(400, res.status_int)
+                res = self.deserialize(self.fmt, res)
+                self.assertIn(vpnservice['vpnservice']['id'],
+                              res['NeutronError']['message'])
 
     def test_delete_vpnservice(self):
         """Test case to delete a vpnservice."""
