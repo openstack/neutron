@@ -79,10 +79,10 @@ def downgrade(active_plugins=None, options=None):
         u'portprofile_bindings',
         sa.Column(u'id', sa.String(255), nullable=False),
         sa.Column(u'tenant_id', sa.String(255), nullable=True),
-        sa.Column(u'port_id', sa.Integer(), nullable=True),
+        sa.Column(u'port_id', sa.String(255), nullable=True),
         sa.Column(u'portprofile_id', sa.String(255), nullable=True),
-        sa.Column(u'portprofile_id', sa.Boolean(), nullable=False),
+        sa.Column(u'default', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(['portprofile_id'], ['portprofiles.uuid'], ),
-        sa.ForeignKeyConstraint(['ports'], ['ports.id'], ),
+        sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ),
         sa.PrimaryKeyConstraint(u'id')
     )
