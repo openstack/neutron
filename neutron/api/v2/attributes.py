@@ -74,9 +74,22 @@ def _validate_values(data, valid_values=None):
         return msg
 
 
+def _validate_not_empty_string_or_none(data, max_len=None):
+    if data is not None:
+        return _validate_not_empty_string(data, max_len=max_len)
+
+
+def _validate_not_empty_string(data, max_len=None):
+    msg = _validate_string(data, max_len=max_len)
+    if msg:
+        return msg
+    if not data.strip():
+        return _("'%s' Blank strings are not permitted") % data
+
+
 def _validate_string_or_none(data, max_len=None):
     if data is not None:
-        return _validate_string(data, max_len=None)
+        return _validate_string(data, max_len=max_len)
 
 
 def _validate_string(data, max_len=None):
@@ -527,6 +540,9 @@ validators = {'type:dict': _validate_dict,
               'type:regex': _validate_regex,
               'type:string': _validate_string,
               'type:string_or_none': _validate_string_or_none,
+              'type:not_empty_string': _validate_not_empty_string,
+              'type:not_empty_string_or_none':
+              _validate_not_empty_string_or_none,
               'type:subnet': _validate_subnet,
               'type:subnet_list': _validate_subnet_list,
               'type:uuid': _validate_uuid,

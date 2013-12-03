@@ -65,6 +65,24 @@ class TestAttributes(base.BaseTestCase):
         msg = attributes._validate_values(7, (4, 6))
         self.assertEqual(msg, "'7' is not in (4, 6)")
 
+    def test_validate_not_empty_string(self):
+        msg = attributes._validate_not_empty_string('    ', None)
+        self.assertEqual(msg, u"'    ' Blank strings are not permitted")
+
+    def test_validate_not_empty_string_or_none(self):
+        msg = attributes._validate_not_empty_string_or_none('    ', None)
+        self.assertEqual(msg, u"'    ' Blank strings are not permitted")
+
+        msg = attributes._validate_not_empty_string_or_none(None, None)
+        self.assertIsNone(msg)
+
+    def test_validate_string_or_none(self):
+        msg = attributes._validate_not_empty_string_or_none('test', None)
+        self.assertIsNone(msg)
+
+        msg = attributes._validate_not_empty_string_or_none(None, None)
+        self.assertIsNone(msg)
+
     def test_validate_string(self):
         msg = attributes._validate_string(None, None)
         self.assertEqual(msg, "'None' is not a valid string")
