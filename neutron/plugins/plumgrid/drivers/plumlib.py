@@ -90,7 +90,7 @@ class Plumlib(object):
     def create_floatingip(self, net_db, floating_ip):
         self.plumlib.create_floatingip(net_db, floating_ip)
 
-    def update_floatingip(self, net_db, floating_ip):
+    def update_floatingip(self, net_db, floating_ip, id):
         self.plumlib.update_floatingip(net_db, floating_ip, id)
 
     def delete_floatingip(self, net_db, floating_ip_org, id):
