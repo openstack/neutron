@@ -170,12 +170,27 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             configlet = call[2]['config']
             if all(word in configlet for word in words):
                 return True
+        return False
 
     def _is_in_last_nexus_cfg(self, words):
         """Check if last config sent to Nexus contains all words in a list."""
         last_cfg = (self.mock_ncclient.manager.connect.return_value.
                     edit_config.mock_calls[-1][2]['config'])
         return all(word in last_cfg for word in words)
+
+    def _is_vlan_configured(self, vlan_creation_expected=True,
+                            add_keyword_expected=False):
+        vlan_created = self._is_in_nexus_cfg(['vlan', 'vlan-name'])
+        add_appears = self._is_in_last_nexus_cfg(['add'])
+        return (self._is_in_last_nexus_cfg(['allowed', 'vlan']) and
+                vlan_created == vlan_creation_expected and
+                add_appears == add_keyword_expected)
+
+    def _is_vlan_unconfigured(self, vlan_deletion_expected=True):
+        vlan_deleted = self._is_in_last_nexus_cfg(
+            ['no', 'vlan', 'vlan-id-create-delete'])
+        return (self._is_in_nexus_cfg(['allowed', 'vlan', 'remove']) and
+                vlan_deleted == vlan_deletion_expected)
 
 
 class TestCiscoBasicGet(CiscoNetworkPluginV2TestCase,
@@ -307,14 +322,64 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
     def test_nexus_enable_vlan_cmd(self):
         """Verify the syntax of the command to enable a vlan on an intf."""
+
         # First vlan should be configured without 'add' keyword
         with self._create_port_res(name='net1', cidr=CIDR_1):
-            self.assertTrue(self._is_in_last_nexus_cfg(['allowed', 'vlan']))
-            self.assertFalse(self._is_in_last_nexus_cfg(['add']))
+            self.assertTrue(self._is_vlan_configured(
+                vlan_creation_expected=True,
+                add_keyword_expected=False))
+            self.mock_ncclient.reset_mock()
+
             # Second vlan should be configured with 'add' keyword
             with self._create_port_res(name='net2', cidr=CIDR_2):
-                self.assertTrue(
-                    self._is_in_last_nexus_cfg(['allowed', 'vlan', 'add']))
+                self.assertTrue(self._is_vlan_configured(
+                    vlan_creation_expected=True,
+                    add_keyword_expected=True))
+
+    def test_nexus_vlan_config_two_hosts(self):
+        """Verify config/unconfig of vlan on two compute hosts."""
+
+        @contextlib.contextmanager
+        def _create_port_check_vlan(comp_host_name, device_id,
+                                    vlan_creation_expected=True):
+            arg_list = (portbindings.HOST_ID,)
+            port_dict = {portbindings.HOST_ID: comp_host_name,
+                         'device_id': device_id,
+                         'device_owner': DEVICE_OWNER}
+            with self.port(subnet=subnet, fmt=self.fmt,
+                           arg_list=arg_list, **port_dict):
+                self.assertTrue(self._is_vlan_configured(
+                    vlan_creation_expected=vlan_creation_expected,
+                    add_keyword_expected=False))
+                self.mock_ncclient.reset_mock()
+                yield
+
+        # Create network and subnet
+        with self.network(name=NETWORK_NAME) as network:
+            with self.subnet(network=network, cidr=CIDR_1) as subnet:
+
+                # Create an instance on first compute host
+                with _create_port_check_vlan(
+                    COMP_HOST_NAME, DEVICE_ID_1, vlan_creation_expected=True):
+
+                    # Create an instance on second compute host
+                    with _create_port_check_vlan(
+                        COMP_HOST_NAME_2, DEVICE_ID_2,
+                        vlan_creation_expected=False):
+                        pass
+
+                    # Instance on second host is now terminated.
+                    # Vlan should be untrunked from port, but vlan should
+                    # still exist on the switch.
+                    self.assertTrue(self._is_vlan_unconfigured(
+                        vlan_deletion_expected=False))
+                    self.mock_ncclient.reset_mock()
+
+                # Instance on first host is now terminated.
+                # Vlan should be untrunked from port and vlan should have
+                # been deleted from the switch.
+                self.assertTrue(self._is_vlan_unconfigured(
+                    vlan_deletion_expected=True))
 
     def test_nexus_connect_fail(self):
         """Test failure to connect to a Nexus switch.
