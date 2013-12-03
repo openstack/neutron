@@ -279,6 +279,22 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_sync_state_disabled_net(self):
         self._test_sync_state_helper(['b'], ['a'])
 
+    def test_sync_state_waitall(self):
+        class mockNetwork():
+            id = '0'
+            admin_state_up = True
+            subnets = []
+
+            def __init__(self, id):
+                self.id = id
+        with mock.patch.object(dhcp_agent.eventlet.GreenPool, 'waitall') as w:
+            active_networks = [mockNetwork('1'), mockNetwork('2'),
+                               mockNetwork('3'), mockNetwork('4'),
+                               mockNetwork('5')]
+            known_networks = ['1', '2', '3', '4', '5']
+            self._test_sync_state_helper(known_networks, active_networks)
+            w.assert_called_once_with()
+
     def test_sync_state_plugin_error(self):
         with mock.patch(DHCP_PLUGIN) as plug:
             mock_plugin = mock.Mock()
