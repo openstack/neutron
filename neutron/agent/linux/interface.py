@@ -220,6 +220,50 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                       device_name)
 
 
+class MidonetInterfaceDriver(LinuxInterfaceDriver):
+
+    def plug(self, network_id, port_id, device_name, mac_address,
+             bridge=None, namespace=None, prefix=None):
+        """This method is called by the Dhcp agent or by the L3 agent
+        when a new network is created
+        """
+        if not ip_lib.device_exists(device_name,
+                                    self.root_helper,
+                                    namespace=namespace):
+            ip = ip_lib.IPWrapper(self.root_helper)
+            tap_name = device_name.replace(prefix or 'tap', 'tap')
+
+            # Create ns_dev in a namespace if one is configured.
+            root_dev, ns_dev = ip.add_veth(tap_name, device_name,
+                                           namespace2=namespace)
+
+            ns_dev.link.set_address(mac_address)
+
+            # Add an interface created by ovs to the namespace.
+            namespace_obj = ip.ensure_namespace(namespace)
+            namespace_obj.add_device_to_namespace(ns_dev)
+
+            ns_dev.link.set_up()
+            root_dev.link.set_up()
+
+            cmd = ['mm-ctl', '--bind-port', port_id, device_name]
+            utils.execute(cmd, self.root_helper)
+
+        else:
+            LOG.warn(_("Device %s already exists"), device_name)
+
+    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
+        # the port will be deleted by the dhcp agent that will call the plugin
+        device = ip_lib.IPDevice(device_name,
+                                 self.root_helper,
+                                 namespace)
+        device.link.delete()
+        LOG.debug(_("Unplugged interface '%s'"), device_name)
+
+        ip_lib.IPWrapper(
+            self.root_helper, namespace).garbage_collect_namespace()
+
+
 class IVSInterfaceDriver(LinuxInterfaceDriver):
     """Driver for creating an internal interface on an IVS bridge."""
 
