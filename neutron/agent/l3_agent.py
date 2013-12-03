@@ -632,7 +632,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         """Deal with routers modification and creation RPC message."""
         LOG.debug(_('Got routers updated notification :%s'), routers)
         if routers:
-            # This is needed for backward compatiblity
+            # This is needed for backward compatibility
             if isinstance(routers[0], dict):
                 routers = [router['id'] for router in routers]
             self.updated_routers.update(routers)

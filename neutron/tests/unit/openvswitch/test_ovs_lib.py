@@ -100,7 +100,7 @@ class TestBaseOVS(base.BaseTestCase):
 
 
 class OVS_Lib_Test(base.BaseTestCase):
-    """A test suite to excercise the OVS libraries shared by Neutron agents.
+    """A test suite to exercise the OVS libraries shared by Neutron agents.
 
     Note: these tests do not actually execute ovs-* utilities, and thus
     can run on any system.  That does, however, limit their scope.

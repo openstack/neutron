@@ -150,7 +150,7 @@
       </xsd:appinfo>
     </annotation>
   </element>
-  
+
   <element name="network" type="csapi:AddressList">
     <annotation>
       <xsd:documentation
@@ -194,7 +194,7 @@
       </xsd:appinfo>
     </annotation>
   </element>
-  
+
 
   <!-- Complex Types -->
   <complexType name="Server">
@@ -315,7 +315,7 @@
                   xml:lang="EN"
                   xmlns="http://www.w3.org/1999/xhtml">
                   <p>
-                      The detials of a fault that may have occured
+                      The details of a fault that may have occurred
                       while cerating the server or performing a server
                       action.
                   </p>

@@ -413,7 +413,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 self.cluster, lswitch['uuid'], tenant_id,
                 '', '', lrouter['uuid'], True)
         except NvpApiClient.NvpApiException:
-            msg = (_("An exception occured while creating a port "
+            msg = (_("An exception occurred while creating a port "
                      "on lswitch %s") % lswitch['uuid'])
             LOG.exception(msg)
             raise q_exc.NeutronException(message=msg)

@@ -91,7 +91,7 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
 
         True will be returned if the monitor process is not active.
         This 'failing open' minimizes the risk of falsely indicating
-        the absense of updates at the expense of potential false
+        the absence of updates at the expense of potential false
         positives.
         """
         return bool(list(self.iter_stdout())) or not self.is_active

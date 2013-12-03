@@ -412,7 +412,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                   network_bindings, max_ports,
                                                   allow_extra_lswitches)
         except NvpApiClient.NvpApiException:
-            err_desc = _("An exception occured while selecting logical "
+            err_desc = _("An exception occurred while selecting logical "
                          "switch for the port")
             LOG.exception(err_desc)
             raise nvp_exc.NvpPluginException(err_msg=err_desc)
@@ -443,7 +443,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # rollback the neutron-nvp port mapping
             nicira_db.delete_neutron_nvp_port_mapping(context.session,
                                                       port_id)
-            msg = (_("An exception occured while creating the "
+            msg = (_("An exception occurred while creating the "
                      "quantum port %s on the NVP plaform") % port_id)
             LOG.exception(msg)
 

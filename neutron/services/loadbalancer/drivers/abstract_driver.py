@@ -52,7 +52,7 @@ class LoadBalancerAbstractDriver(object):
     def delete_vip(self, context, vip):
         """A real driver would invoke a call to his backend
         and try to delete the Vip.
-        if the deletion was successfull, delete the record from the database.
+        if the deletion was successful, delete the record from the database.
         if the deletion has failed, set the Vip status to ERROR.
         """
         pass

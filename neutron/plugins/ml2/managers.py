@@ -359,7 +359,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         if any mechanism driver create_port_postcommit call fails.
 
         Called after the database transaction. Errors raised by
-        mechanism drivers are left to propogate to the caller, where
+        mechanism drivers are left to propagate to the caller, where
         the port will be deleted, triggering any required
         cleanup. There is no guarantee that all mechanism drivers are
         called in this case.

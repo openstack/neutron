@@ -192,7 +192,7 @@ class VSMConnectionFailed(exceptions.ServiceUnavailable):
 
 
 class VSMError(exceptions.NeutronException):
-    """Error has occured on the VSM."""
+    """Error has occurred on the VSM."""
     message = _("Internal VSM Error: %(reason)s.")
 
 

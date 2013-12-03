@@ -38,8 +38,8 @@ def setup_valid_config():
 class AristaProvisionedVlansStorageTestCase(base.BaseTestCase):
     """Test storing and retriving functionality of Arista mechanism driver.
 
-    Tests all methods of this class by invoking them seperately as well
-    as a goup.
+    Tests all methods of this class by invoking them separately as well
+    as a group.
     """
 
     def setUp(self):

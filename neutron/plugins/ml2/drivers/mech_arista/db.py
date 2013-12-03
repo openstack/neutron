@@ -128,7 +128,7 @@ def num_provisioned_tenants():
 
 
 def remember_vm(vm_id, host_id, port_id, network_id, tenant_id):
-    """Stores all relevent information about a VM in repository.
+    """Stores all relevant information about a VM in repository.
 
     :param vm_id: globally unique identifier for VM instance
     :param host_id: ID of the host where the VM is placed
@@ -154,7 +154,7 @@ def remember_vm(vm_id, host_id, port_id, network_id, tenant_id):
 
 
 def forget_vm(vm_id, host_id, port_id, network_id, tenant_id):
-    """Removes all relevent information about a VM from repository.
+    """Removes all relevant information about a VM from repository.
 
     :param vm_id: globally unique identifier for VM instance
     :param host_id: ID of the host where the VM is placed
@@ -171,7 +171,7 @@ def forget_vm(vm_id, host_id, port_id, network_id, tenant_id):
 
 
 def remember_network(tenant_id, network_id, segmentation_id):
-    """Stores all relevent information about a Network in repository.
+    """Stores all relevant information about a Network in repository.
 
     :param tenant_id: globally unique neutron tenant identifier
     :param network_id: globally unique neutron network identifier
@@ -192,7 +192,7 @@ def remember_network(tenant_id, network_id, segmentation_id):
 
 
 def forget_network(tenant_id, network_id):
-    """Deletes all relevent information about a Network from repository.
+    """Deletes all relevant information about a Network from repository.
 
     :param tenant_id: globally unique neutron tenant identifier
     :param network_id: globally unique neutron network identifier

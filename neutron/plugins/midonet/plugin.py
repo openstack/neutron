@@ -1045,7 +1045,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         return info
 
     def update_floatingip(self, context, id, floatingip):
-        """Handle floating IP assocation and disassociation."""
+        """Handle floating IP association and disassociation."""
         LOG.debug(_("MidonetPluginV2.update_floatingip called: id=%(id)s "
                     "floatingip=%(floatingip)s "),
                   {'id': id, 'floatingip': floatingip})

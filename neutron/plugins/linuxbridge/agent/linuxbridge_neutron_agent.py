@@ -132,7 +132,7 @@ class LinuxBridgeManager:
         if 0 <= int(segmentation_id) <= constants.MAX_VXLAN_VNI:
             return VXLAN_INTERFACE_PREFIX + str(segmentation_id)
         else:
-            LOG.warning(_("Invalid Segementation ID: %s, will lead to "
+            LOG.warning(_("Invalid Segmentation ID: %s, will lead to "
                           "incorrect vxlan device name"), segmentation_id)
 
     def get_all_neutron_bridges(self):

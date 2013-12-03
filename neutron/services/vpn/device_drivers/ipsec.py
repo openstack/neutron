@@ -544,7 +544,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
     def ensure_process(self, process_id, vpnservice=None):
         """Ensuring process.
 
-        If the process dosen't exist, it will create process
+        If the process doesn't exist, it will create process
         and store it in self.processs
         """
         process = self.processes.get(process_id)

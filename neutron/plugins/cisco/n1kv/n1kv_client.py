@@ -99,7 +99,7 @@ class Client(object):
     Hence for every unique combination of a network and a policy-profile, a
     unique vm-network will be created and a reference to the port will be
     added. If the same combination of network and policy-profile is used by
-    another port, the refernce to that port will be added to the same
+    another port, the references to that port will be added to the same
     vm-network.
 
 

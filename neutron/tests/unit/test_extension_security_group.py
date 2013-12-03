@@ -1248,7 +1248,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
-    def test_create_security_group_rule_differnt_security_group_ids(self):
+    def test_create_security_group_rule_different_security_group_ids(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk "
                           "security_group_rule create")
