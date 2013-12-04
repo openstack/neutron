@@ -89,6 +89,30 @@ class FakeRouterPort:
         self.extra_dhcp_opts = []
 
 
+class FakePortMultipleAgents1:
+    id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
+    admin_state_up = True
+    device_owner = 'network:dhcp'
+    fixed_ips = [FakeIPAllocation('192.168.0.5',
+                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    mac_address = '00:00:0f:dd:dd:dd'
+
+    def __init__(self):
+        self.extra_dhcp_opts = []
+
+
+class FakePortMultipleAgents2:
+    id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    admin_state_up = True
+    device_owner = 'network:dhcp'
+    fixed_ips = [FakeIPAllocation('192.168.0.6',
+                                  'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+    mac_address = '00:00:0f:ee:ee:ee'
+
+    def __init__(self):
+        self.extra_dhcp_opts = []
+
+
 class FakeV4HostRoute:
     destination = '20.0.0.1/24'
     nexthop = '20.0.0.1'
@@ -122,6 +146,42 @@ class FakeV4SubnetGatewayRoute:
     enable_dhcp = True
     host_routes = [FakeV4HostRouteGateway]
     dns_nameservers = ['8.8.8.8']
+
+
+class FakeV4SubnetMultipleAgentsWithoutDnsProvided:
+    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+    ip_version = 4
+    cidr = '192.168.0.0/24'
+    gateway_ip = '192.168.0.1'
+    enable_dhcp = True
+    dns_nameservers = []
+    host_routes = []
+
+
+class FakeV4MultipleAgentsWithoutDnsProvided:
+    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    subnets = [FakeV4SubnetMultipleAgentsWithoutDnsProvided()]
+    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
+             FakePortMultipleAgents1(), FakePortMultipleAgents2()]
+    namespace = 'qdhcp-ns'
+
+
+class FakeV4SubnetMultipleAgentsWithDnsProvided:
+    id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+    ip_version = 4
+    cidr = '192.168.0.0/24'
+    gateway_ip = '192.168.0.1'
+    enable_dhcp = True
+    dns_nameservers = ['8.8.8.8']
+    host_routes = []
+
+
+class FakeV4MultipleAgentsWithDnsProvided:
+    id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    subnets = [FakeV4SubnetMultipleAgentsWithDnsProvided()]
+    ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
+             FakePortMultipleAgents1(), FakePortMultipleAgents2()]
+    namespace = 'qdhcp-ns'
 
 
 class FakeV6Subnet:
@@ -714,6 +774,30 @@ tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
                               version=float(2.59))
             dm._output_opts_file()
 
+        self.safe.assert_called_once_with('/foo/opts', expected)
+
+    def test_output_opts_file_multiple_agents_without_dns_provided(self):
+        expected = """
+tag:tag0,option:router,192.168.0.1
+tag:tag0,option:dns-server,192.168.0.5,192.168.0.6""".lstrip()
+        with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
+            conf_fn.return_value = '/foo/opts'
+            dm = dhcp.Dnsmasq(self.conf,
+                              FakeV4MultipleAgentsWithoutDnsProvided(),
+                              version=float(2.59))
+            dm._output_opts_file()
+        self.safe.assert_called_once_with('/foo/opts', expected)
+
+    def test_output_opts_file_multiple_agents_with_dns_provided(self):
+        expected = """
+tag:tag0,option:dns-server,8.8.8.8
+tag:tag0,option:router,192.168.0.1""".lstrip()
+        with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
+            conf_fn.return_value = '/foo/opts'
+            dm = dhcp.Dnsmasq(self.conf,
+                              FakeV4MultipleAgentsWithDnsProvided(),
+                              version=float(2.59))
+            dm._output_opts_file()
         self.safe.assert_called_once_with('/foo/opts', expected)
 
     def test_output_opts_file_single_dhcp(self):

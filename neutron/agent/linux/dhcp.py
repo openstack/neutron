@@ -16,6 +16,7 @@
 #    under the License.
 
 import abc
+import collections
 import os
 import re
 import shutil
@@ -442,6 +443,9 @@ class Dnsmasq(DhcpLocalProcess):
             subnet_to_interface_ip = self._make_subnet_interface_ip_map()
 
         options = []
+
+        dhcp_ips = collections.defaultdict(list)
+        subnet_idx_map = {}
         for i, subnet in enumerate(self.network.subnets):
             if not subnet.enable_dhcp:
                 continue
@@ -449,6 +453,10 @@ class Dnsmasq(DhcpLocalProcess):
                 options.append(
                     self._format_option(i, 'dns-server',
                                         ','.join(subnet.dns_nameservers)))
+            else:
+                # use the dnsmasq ip as nameservers only if there is no
+                # dns-server submitted by the server
+                subnet_idx_map[subnet.id] = i
 
             gateway = subnet.gateway_ip
             host_routes = []
@@ -485,6 +493,22 @@ class Dnsmasq(DhcpLocalProcess):
                 options.extend(
                     self._format_option(port.id, opt.opt_name, opt.opt_value)
                     for opt in port.extra_dhcp_opts)
+
+            # provides all dnsmasq ip as dns-server if there is more than
+            # one dnsmasq for a subnet and there is no dns-server submitted
+            # by the server
+            if port.device_owner == 'network:dhcp':
+                for ip in port.fixed_ips:
+                    i = subnet_idx_map.get(ip.subnet_id)
+                    if i is None:
+                        continue
+                    dhcp_ips[i].append(ip.ip_address)
+
+        for i, ips in dhcp_ips.items():
+            if len(ips) > 1:
+                options.append(self._format_option(i,
+                                                   'dns-server',
+                                                   ','.join(ips)))
 
         name = self.get_conf_file_name('opts')
         utils.replace_file(name, '\n'.join(options))
