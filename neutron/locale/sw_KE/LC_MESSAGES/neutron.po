@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-12-02 06:37+0000\n"
+"POT-Creation-Date: 2013-12-04 06:43+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Swahili (Kenya) "
@@ -1041,27 +1041,25 @@ msgstr ""
 msgid "Authentication region"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:199 neutron/agent/linux/interface.py:268
-#: neutron/agent/linux/interface.py:317
-#: neutron/plugins/midonet/agent/midonet_driver.py:130
+#: neutron/agent/linux/interface.py:199 neutron/agent/linux/interface.py:253
+#: neutron/agent/linux/interface.py:312 neutron/agent/linux/interface.py:361
 #, python-format
 msgid "Device %s already exists"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:217 neutron/agent/linux/interface.py:280
-#: neutron/agent/linux/interface.py:324
-#: neutron/plugins/midonet/agent/midonet_driver.py:138
+#: neutron/agent/linux/interface.py:217 neutron/agent/linux/interface.py:261
+#: neutron/agent/linux/interface.py:324 neutron/agent/linux/interface.py:368
 #, python-format
 msgid "Unplugged interface '%s'"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:219 neutron/agent/linux/interface.py:282
-#: neutron/agent/linux/interface.py:326
+#: neutron/agent/linux/interface.py:219 neutron/agent/linux/interface.py:326
+#: neutron/agent/linux/interface.py:370
 #, python-format
 msgid "Failed unplugging interface '%s'"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:384
+#: neutron/agent/linux/interface.py:428
 #, python-format
 msgid "Driver location: %s"
 msgstr ""
@@ -2789,7 +2787,7 @@ msgstr ""
 msgid "Available commands"
 msgstr ""
 
-#: neutron/db/vpn/vpn_db.py:658
+#: neutron/db/vpn/vpn_db.py:659
 #, python-format
 msgid "vpnservice %s in db is already deleted"
 msgstr ""
@@ -3434,20 +3432,20 @@ msgstr ""
 
 #: neutron/extensions/vpnaas.py:74
 #, python-format
-msgid "Invalid state %(state)s of vpnaas resource %(id)s"
+msgid "Invalid state %(state)s of vpnaas resource %(id)s for updating"
 msgstr ""
 
-#: neutron/extensions/vpnaas.py:78
+#: neutron/extensions/vpnaas.py:79
 #, python-format
 msgid "IPsecPolicy %(ipsecpolicy_id)s is still in use"
 msgstr ""
 
-#: neutron/extensions/vpnaas.py:82
+#: neutron/extensions/vpnaas.py:83
 #, python-format
 msgid "Can not load driver :%(device_driver)s"
 msgstr ""
 
-#: neutron/extensions/vpnaas.py:86
+#: neutron/extensions/vpnaas.py:87
 #, python-format
 msgid "Subnet %(subnet_id)s is not connected to Router %(router_id)s"
 msgstr ""
@@ -3482,22 +3480,22 @@ msgstr ""
 msgid "Released file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
 msgstr ""
 
-#: neutron/openstack/common/log.py:250
+#: neutron/openstack/common/log.py:251
 #, python-format
 msgid "Deprecated: %s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:349
+#: neutron/openstack/common/log.py:350
 #, python-format
 msgid "Error loading logging config %(log_config)s: %(err_msg)s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:400
+#: neutron/openstack/common/log.py:401
 #, python-format
 msgid "syslog facility must be one of: %s"
 msgstr ""
 
-#: neutron/openstack/common/log.py:570
+#: neutron/openstack/common/log.py:571
 #, python-format
 msgid "Fatal call to deprecated config: %(msg)s"
 msgstr ""
@@ -5789,19 +5787,19 @@ msgstr ""
 msgid "delete_network(): provider vlan %s"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:332
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:343
 msgid "NexusPlugin:update_port() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:340
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:351
 msgid "NexusPlugin:get_port_details() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:349
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:360
 msgid "NexusPlugin:plug_interface() called"
 msgstr ""
 
-#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:357
+#: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:368
 msgid "NexusPlugin:unplug_interface() called"
 msgstr ""
 
@@ -7322,33 +7320,19 @@ msgstr ""
 msgid "MidonetPluginV2.delete_security_group_rule called: sg_rule_id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/agent/midonet_driver.py:119
-#, python-format
-msgid "Failed to create a if-vport mapping on host=%s"
-msgstr ""
-
-#: neutron/plugins/midonet/agent/midonet_driver.py:126
-#, python-format
-msgid "Faild binding vport=%(vport)s to device=%(device)s"
-msgstr ""
-
 #: neutron/plugins/midonet/common/config.py:25
-#: neutron/tests/unit/midonet/test_midonet_driver.py:52
 msgid "MidoNet API server URI."
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:27
-#: neutron/tests/unit/midonet/test_midonet_driver.py:54
 msgid "MidoNet admin username."
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:30
-#: neutron/tests/unit/midonet/test_midonet_driver.py:57
 msgid "MidoNet admin password."
 msgstr ""
 
 #: neutron/plugins/midonet/common/config.py:33
-#: neutron/tests/unit/midonet/test_midonet_driver.py:60
 msgid "ID of the project that MidoNet admin userbelongs to."
 msgstr ""
 
@@ -13691,5 +13675,14 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Exception deleting fixed_ip from port %s"
+#~ msgstr ""
+
+#~ msgid "Invalid state %(state)s of vpnaas resource %(id)s"
+#~ msgstr ""
+
+#~ msgid "Failed to create a if-vport mapping on host=%s"
+#~ msgstr ""
+
+#~ msgid "Faild binding vport=%(vport)s to device=%(device)s"
 #~ msgstr ""
 
