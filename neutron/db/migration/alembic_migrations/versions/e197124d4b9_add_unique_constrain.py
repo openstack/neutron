@@ -59,7 +59,7 @@ def downgrade(active_plugins=None, options=None):
         return
 
     op.drop_constraint(
-        name=CONSTRAINT_NAME,
-        tablename=TABLE_NAME,
-        type='unique'
+        CONSTRAINT_NAME,
+        TABLE_NAME,
+        type_='unique'
     )
