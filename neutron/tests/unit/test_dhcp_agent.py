@@ -206,7 +206,8 @@ class TestDhcpAgent(base.BaseTestCase):
                                             mock.ANY,
                                             mock.ANY)
 
-    def _test_call_driver_failure(self, exc=None, trace_level='exception'):
+    def _test_call_driver_failure(self, exc=None,
+                                  trace_level='exception', expected_sync=True):
         network = mock.Mock()
         network.id = '1'
         self.driver.return_value.foo.side_effect = exc or Exception
@@ -219,7 +220,7 @@ class TestDhcpAgent(base.BaseTestCase):
                                                 mock.ANY,
                                                 mock.ANY)
             self.assertEqual(log.call_count, 1)
-            self.assertTrue(dhcp.needs_resync)
+            self.assertEqual(expected_sync, dhcp.needs_resync)
 
     def test_call_driver_failure(self):
         self._test_call_driver_failure()
@@ -233,6 +234,12 @@ class TestDhcpAgent(base.BaseTestCase):
         self._test_call_driver_failure(
             exc=exceptions.NetworkNotFound(net_id='1'),
             trace_level='warning')
+
+    def test_call_driver_conflict(self):
+        self._test_call_driver_failure(
+            exc=exceptions.Conflict(),
+            trace_level='warning',
+            expected_sync=False)
 
     def _test_sync_state_helper(self, known_networks, active_networks):
         with mock.patch(DHCP_PLUGIN) as plug:
@@ -859,6 +866,10 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
                                               device_id='devid',
                                               host='foo')
 
+    def test_get_dhcp_port_none(self):
+        self.call.return_value = None
+        self.assertIsNone(self.proxy.get_dhcp_port('netid', 'devid'))
+
     def test_get_active_networks_info(self):
         self.proxy.get_active_networks_info()
         self.make_msg.assert_called_once_with('get_active_networks_info',
@@ -877,6 +888,18 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
         self.make_msg.assert_called_once_with('create_dhcp_port',
                                               port=port_body,
                                               host='foo')
+
+    def test_create_dhcp_port_none(self):
+        self.call.return_value = None
+        port_body = (
+            {'port':
+                {'name': '', 'admin_state_up': True,
+                 'network_id': fake_network.id,
+                 'tenant_id': fake_network.tenant_id,
+                 'fixed_ips': [{'subnet_id': fake_fixed_ip1.subnet_id}],
+                 'device_id': mock.ANY}})
+        self.assertIsNone(self.proxy.create_dhcp_port(port_body))
+        self.proxy.create_dhcp_port(port_body)
 
     def test_update_dhcp_port(self):
         port_body = {'port': {'fixed_ips':

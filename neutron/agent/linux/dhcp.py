@@ -704,6 +704,9 @@ class DeviceManager(object):
                 fixed_ips=[dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
             dhcp_port = self.plugin.create_dhcp_port({'port': port_dict})
 
+        if not dhcp_port:
+            raise exceptions.Conflict()
+
         # Convert subnet_id to subnet dict
         fixed_ips = [dict(subnet_id=fixed_ip.subnet_id,
                           ip_address=fixed_ip.ip_address,

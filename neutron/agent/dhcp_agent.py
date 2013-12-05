@@ -127,7 +127,13 @@ class DhcpAgent(manager.Manager):
 
             getattr(driver, action)(**action_kwargs)
             return True
-
+        except exceptions.Conflict:
+            # No need to resync here, the agent will receive the event related
+            # to a status update for the network
+            LOG.warning(_('Unable to %(action)s dhcp for %(net_id)s: there is '
+                          'a conflict with its current state; please check '
+                          'that the network and/or its subnet(s) still exist.')
+                        % {'net_id': network.id, 'action': action})
         except Exception as e:
             self.needs_resync = True
             if (isinstance(e, common.RemoteError)
@@ -432,11 +438,13 @@ class DhcpPluginApi(proxy.RpcProxy):
 
     def create_dhcp_port(self, port):
         """Make a remote process call to create the dhcp port."""
-        return dhcp.DictModel(self.call(self.context,
-                                        self.make_msg('create_dhcp_port',
-                                                      port=port,
-                                                      host=self.host),
-                                        topic=self.topic))
+        port = self.call(self.context,
+                         self.make_msg('create_dhcp_port',
+                                       port=port,
+                                       host=self.host),
+                         topic=self.topic)
+        if port:
+            return dhcp.DictModel(port)
 
     def update_dhcp_port(self, port_id, port):
         """Make a remote process call to update the dhcp port."""
