@@ -248,6 +248,18 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
                                                         expected_del,
                                                         topic=self.topic)
 
+    def test_delete_metering_label_does_not_clear_router_tenant_id(self):
+        tenant_id = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'
+        with self.metering_label(tenant_id=tenant_id,
+                                 no_delete=True) as metering_label:
+            with self.router(tenant_id=tenant_id, set_context=True) as r:
+                router = self._show('routers', r['router']['id'])
+                self.assertEqual(tenant_id, router['router']['tenant_id'])
+                metering_label_id = metering_label['metering_label']['id']
+                self._delete('metering-labels', metering_label_id, 204)
+                router = self._show('routers', r['router']['id'])
+                self.assertEqual(tenant_id, router['router']['tenant_id'])
+
 
 class TestRouteIntPlugin(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                          test_l3_plugin.TestL3NatIntPlugin):
