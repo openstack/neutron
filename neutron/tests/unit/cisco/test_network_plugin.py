@@ -134,14 +134,8 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         self.addCleanup(mock.patch.stopall)
 
     def _get_plugin_ref(self):
-        plugin_obj = NeutronManager.get_plugin()
-        if getattr(plugin_obj, "_master"):
-            plugin_ref = plugin_obj
-        else:
-            plugin_ref = getattr(plugin_obj, "_model").\
-                _plugins[const.VSWITCH_PLUGIN]
-
-        return plugin_ref
+        return getattr(NeutronManager.get_plugin(),
+                       "_model")._plugins[const.VSWITCH_PLUGIN]
 
     @contextlib.contextmanager
     def _patch_ncclient(self, attr, value):

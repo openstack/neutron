@@ -16,19 +16,14 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
-import inspect
 import logging
 
-from sqlalchemy import orm
 import webob.exc as wexc
 
 from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import base
-from neutron.common import exceptions as exc
 from neutron.db import db_base_plugin_v2
-from neutron.db import models_v2
 from neutron.openstack.common import importutils
-from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as cexc
 from neutron.plugins.cisco.common import config
 from neutron.plugins.cisco.db import network_db_v2 as cdb
@@ -48,7 +43,6 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
                             'create_subnet',
                             'delete_subnet', 'update_subnet',
                             'get_subnet', 'get_subnets', ]
-    _master = True
 
     CISCO_FAULT_MAP = {
         cexc.NetworkSegmentIDNotFound: wexc.HTTPNotFound,
@@ -71,13 +65,10 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
     def __init__(self):
         """Load the model class."""
         self._model = importutils.import_object(config.CISCO.model_class)
-        if hasattr(self._model, "MANAGE_STATE") and self._model.MANAGE_STATE:
-            self._master = False
-            LOG.debug(_("Model %s manages state"), config.CISCO.model_class)
-            native_bulk_attr_name = ("_%s__native_bulk_support"
-                                     % self._model.__class__.__name__)
-            self.__native_bulk_support = getattr(self._model,
-                                                 native_bulk_attr_name, False)
+        native_bulk_attr_name = ("_%s__native_bulk_support"
+                                 % self._model.__class__.__name__)
+        self.__native_bulk_support = getattr(self._model,
+                                             native_bulk_attr_name, False)
 
         if hasattr(self._model, "supported_extension_aliases"):
             self.supported_extension_aliases.extend(
@@ -93,14 +84,12 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
     def __getattribute__(self, name):
         """Delegate core API calls to the model class.
 
-        When the configured model class offers to manage the state of the
-        logical resources, we delegate the core API calls directly to it.
+        Core API calls are delegated directly to the configured model class.
         Note: Bulking calls will be handled by this class, and turned into
         non-bulking calls to be considered for delegation.
         """
-        master = object.__getattribute__(self, "_master")
         methods = object.__getattribute__(self, "_methods_to_delegate")
-        if not master and name in methods:
+        if name in methods:
             return getattr(object.__getattribute__(self, "_model"),
                            name)
         else:
@@ -129,150 +118,6 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
 
         """
         base.FAULT_MAP.update(self.CISCO_FAULT_MAP)
-
-    """
-    Core API implementation
-    """
-    def create_network(self, context, network):
-        """Create new Virtual Network, and assigns it a symbolic name."""
-        LOG.debug(_("create_network() called"))
-        new_network = super(PluginV2, self).create_network(context,
-                                                           network)
-        try:
-            self._invoke_device_plugins(self._func_name(), [context,
-                                                            new_network])
-            return new_network
-        except Exception:
-            super(PluginV2, self).delete_network(context,
-                                                 new_network['id'])
-            raise
-
-    def update_network(self, context, id, network):
-        """Update network.
-
-        Updates the symbolic name belonging to a particular Virtual Network.
-        """
-        LOG.debug(_("update_network() called"))
-        upd_net_dict = super(PluginV2, self).update_network(context, id,
-                                                            network)
-        self._invoke_device_plugins(self._func_name(), [context, id,
-                                                        upd_net_dict])
-        return upd_net_dict
-
-    def delete_network(self, context, id):
-        """Delete network.
-
-        Deletes the network with the specified network identifier
-        belonging to the specified tenant.
-        """
-        LOG.debug(_("delete_network() called"))
-        #We first need to check if there are any ports on this network
-        with context.session.begin():
-            network = self._get_network(context, id)
-            filter = {'network_id': [id]}
-            ports = self.get_ports(context, filters=filter)
-
-            # check if there are any tenant owned ports in-use
-            prefix = db_base_plugin_v2.AGENT_OWNER_PREFIX
-            only_svc = all(p['device_owner'].startswith(prefix) for p in ports)
-            if not only_svc:
-                raise exc.NetworkInUse(net_id=id)
-        context.session.close()
-        #Network does not have any ports, we can proceed to delete
-        network = self._get_network(context, id)
-        kwargs = {const.NETWORK: network,
-                  const.BASE_PLUGIN_REF: self}
-        self._invoke_device_plugins(self._func_name(), [context, id,
-                                                        kwargs])
-        return super(PluginV2, self).delete_network(context, id)
-
-    def get_network(self, context, id, fields=None):
-        """Get a particular network."""
-        LOG.debug(_("get_network() called"))
-        return super(PluginV2, self).get_network(context, id, fields)
-
-    def get_networks(self, context, filters=None, fields=None):
-        """Get all networks."""
-        LOG.debug(_("get_networks() called"))
-        return super(PluginV2, self).get_networks(context, filters, fields)
-
-    def create_port(self, context, port):
-        """Create a port on the specified Virtual Network."""
-        LOG.debug(_("create_port() called"))
-        new_port = super(PluginV2, self).create_port(context, port)
-        try:
-            self._invoke_device_plugins(self._func_name(), [context, new_port])
-            return new_port
-        except Exception:
-            super(PluginV2, self).delete_port(context, new_port['id'])
-            raise
-
-    def delete_port(self, context, id):
-        LOG.debug(_("delete_port() called"))
-        port = self._get_port(context, id)
-        """Delete port.
-
-        TODO (Sumit): Disabling this check for now, check later
-        Allow deleting a port only if the administrative state is down,
-        and its operation status is also down
-        #if port['admin_state_up'] or port['status'] == 'ACTIVE':
-        #    raise exc.PortInUse(port_id=id, net_id=port['network_id'],
-        #                        att_id=port['device_id'])
-        """
-        kwargs = {const.PORT: port}
-        # TODO(Sumit): Might first need to check here if port is active
-        self._invoke_device_plugins(self._func_name(), [context, id,
-                                                        kwargs])
-        return super(PluginV2, self).delete_port(context, id)
-
-    def update_port(self, context, id, port):
-        """Update the state of a port and return the updated port."""
-        LOG.debug(_("update_port() called"))
-        self._invoke_device_plugins(self._func_name(), [context, id,
-                                                        port])
-        return super(PluginV2, self).update_port(context, id, port)
-
-    def create_subnet(self, context, subnet):
-        """Create subnet.
-
-        Create a subnet, which represents a range of IP addresses
-        that can be allocated to devices.
-        """
-        LOG.debug(_("create_subnet() called"))
-        new_subnet = super(PluginV2, self).create_subnet(context, subnet)
-        try:
-            self._invoke_device_plugins(self._func_name(), [context,
-                                                            new_subnet])
-            return new_subnet
-        except Exception:
-            super(PluginV2, self).delete_subnet(context, new_subnet['id'])
-            raise
-
-    def update_subnet(self, context, id, subnet):
-        """Updates the state of a subnet and returns the updated subnet."""
-        LOG.debug(_("update_subnet() called"))
-        self._invoke_device_plugins(self._func_name(), [context, id,
-                                                        subnet])
-        return super(PluginV2, self).update_subnet(context, id, subnet)
-
-    def delete_subnet(self, context, id):
-        LOG.debug(_("delete_subnet() called"))
-        with context.session.begin():
-            subnet = self._get_subnet(context, id)
-            # Check if ports are using this subnet
-            allocated_qry = context.session.query(models_v2.IPAllocation)
-            allocated_qry = allocated_qry.options(orm.joinedload('ports'))
-            allocated = allocated_qry.filter_by(subnet_id=id)
-
-            prefix = db_base_plugin_v2.AGENT_OWNER_PREFIX
-            if not all(not a.port_id or a.ports.device_owner.startswith(prefix)
-                       for a in allocated):
-                raise exc.SubnetInUse(subnet_id=id)
-        context.session.close()
-        kwargs = {const.SUBNET: subnet}
-        self._invoke_device_plugins(self._func_name(), [context, id,
-                                                        kwargs])
-        return super(PluginV2, self).delete_subnet(context, id)
 
     """
     Extension API implementation
@@ -313,59 +158,10 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
     def get_credential_details(self, credential_id):
         """Get a particular credential."""
         LOG.debug(_("get_credential_details() called"))
-        try:
-            credential = cdb.get_credential(credential_id)
-        except exc.NotFound:
-            raise cexc.CredentialNotFound(credential_id=credential_id)
-        return credential
+        return cdb.get_credential(credential_id)
 
-    def rename_credential(self, credential_id, new_name):
+    def rename_credential(self, credential_id, new_name, new_password):
         """Rename the particular credential resource."""
         LOG.debug(_("rename_credential() called"))
-        try:
-            credential = cdb.get_credential(credential_id)
-        except exc.NotFound:
-            raise cexc.CredentialNotFound(credential_id=credential_id)
-        credential = cdb.update_credential(credential_id, new_name)
-        return credential
-
-    def schedule_host(self, tenant_id, instance_id, instance_desc):
-        """Provides the hostname on which a dynamic vnic is reserved."""
-        LOG.debug(_("schedule_host() called"))
-        host_list = self._invoke_device_plugins(self._func_name(),
-                                                [tenant_id,
-                                                 instance_id,
-                                                 instance_desc])
-        return host_list
-
-    def associate_port(self, tenant_id, instance_id, instance_desc):
-        """Associate port.
-
-        Get the portprofile name and the device name for the dynamic vnic.
-        """
-        LOG.debug(_("associate_port() called"))
-        return self._invoke_device_plugins(self._func_name(), [tenant_id,
-                                                               instance_id,
-                                                               instance_desc])
-
-    def detach_port(self, tenant_id, instance_id, instance_desc):
-        """Remove the association of the VIF with the dynamic vnic."""
-        LOG.debug(_("detach_port() called"))
-        return self._invoke_device_plugins(self._func_name(), [tenant_id,
-                                                               instance_id,
-                                                               instance_desc])
-
-    """
-    Private functions
-    """
-    def _invoke_device_plugins(self, function_name, args):
-        """Device-specific calls.
-
-        Including core API and extensions are delegated to the model.
-        """
-        if hasattr(self._model, function_name):
-            return getattr(self._model, function_name)(*args)
-
-    def _func_name(self, offset=0):
-        """Getting the name of the calling funciton."""
-        return inspect.stack()[1 + offset][3]
+        return cdb.update_credential(credential_id, new_name,
+                                     new_password=new_password)
