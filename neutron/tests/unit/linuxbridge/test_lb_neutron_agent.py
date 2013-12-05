@@ -770,6 +770,30 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             addif_fn.assert_called_with(port["network_id"], lconst.TYPE_LOCAL,
                                         None, None, port["id"])
 
+            addif_fn.return_value = True
+            self.lb_rpc.port_update("unused_context", port=port,
+                                    network_type=lconst.TYPE_LOCAL,
+                                    segmentation_id=None,
+                                    physical_network=None)
+            rpc_obj.update_device_up.assert_called_with(
+                self.lb_rpc.context,
+                "tap123",
+                self.lb_rpc.agent.agent_id,
+                cfg.CONF.host
+            )
+
+            addif_fn.return_value = False
+            self.lb_rpc.port_update("unused_context", port=port,
+                                    network_type=lconst.TYPE_LOCAL,
+                                    segmentation_id=None,
+                                    physical_network=None)
+            rpc_obj.update_device_down.assert_called_with(
+                self.lb_rpc.context,
+                "tap123",
+                self.lb_rpc.agent.agent_id,
+                cfg.CONF.host
+            )
+
             port["admin_state_up"] = False
             port["security_groups"] = True
             getbr_fn.return_value = "br0"
