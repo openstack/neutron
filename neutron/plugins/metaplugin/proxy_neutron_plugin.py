@@ -42,7 +42,7 @@ class ProxyPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             tenant_name=cfg.CONF.PROXY.admin_tenant_name,
             auth_url=cfg.CONF.PROXY.auth_url,
             auth_strategy=cfg.CONF.PROXY.auth_strategy,
-            auth_region=cfg.CONF.PROXY.auth_region
+            region_name=cfg.CONF.PROXY.auth_region
         )
 
     def _get_client(self):
