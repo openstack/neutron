@@ -180,7 +180,7 @@ class AsyncProcess(object):
                 if not callback():
                     break
             except Exception:
-                LOG.exception(_('An error occured while communicating '
+                LOG.exception(_('An error occurred while communicating '
                                 'with async process [%s].'), self.cmd)
                 break
             # Ensure that watching a process with lots of output does

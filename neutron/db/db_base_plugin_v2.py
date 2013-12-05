@@ -944,7 +944,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             context.session.commit()
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.error(_("An exception occured while creating "
+                LOG.error(_("An exception occurred while creating "
                             "the %(resource)s:%(item)s"),
                           {'resource': resource, 'item': item})
                 context.session.rollback()

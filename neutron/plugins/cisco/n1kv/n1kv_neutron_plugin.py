@@ -182,7 +182,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         Setup Cisco Nexus 1000V related parameters and pull policy profiles.
 
-        Retreive all the policy profiles from the VSM when the plugin is
+        Retrieve all the policy profiles from the VSM when the plugin is
         is instantiated for the first time and then continue to poll for
         policy profile updates.
         """
@@ -973,7 +973,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _get_segmentation_id(self, context, id):
         """
-        Retreive segmentation ID for a given network.
+        Retrieve segmentation ID for a given network.
 
         :param context: neutron api request context
         :param id: UUID of the network
@@ -1169,7 +1169,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def get_network(self, context, id, fields=None):
         """
-        Retreive a Network.
+        Retrieve a Network.
 
         :param context: neutron api request context
         :param id: UUID representing the network to fetch
@@ -1184,7 +1184,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def get_networks(self, context, filters=None, fields=None):
         """
-        Retreive a list of networks.
+        Retrieve a list of networks.
 
         :param context: neutron api request context
         :param filters: a dictionary with keys that are valid keys for a

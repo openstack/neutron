@@ -112,7 +112,7 @@ class NvpApiClientEventlet(client.NvpApiClient):
             # self._concurrent_connections temporarily)
             if not result_conn:
                 conn = self._create_connection(*conn_params)
-                conn.priority = 0  # redirect connections ahve highest priority
+                conn.priority = 0  # redirect connections have highest priority
                 conn.no_release = True
                 result_conn = conn
         else:

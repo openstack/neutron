@@ -746,7 +746,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         v = health_monitor['health_monitor']
         tenant_id = self._get_tenant_id_for_create(context, v)
         with context.session.begin(subtransactions=True):
-            # setting ACTIVE status sinse healthmon is shared DB object
+            # setting ACTIVE status since healthmon is shared DB object
             monitor_db = HealthMonitor(id=uuidutils.generate_uuid(),
                                        tenant_id=tenant_id,
                                        type=v['type'],

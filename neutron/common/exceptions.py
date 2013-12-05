@@ -233,7 +233,7 @@ class PreexistingDeviceFailure(NeutronException):
 
 
 class SudoRequired(NeutronException):
-    message = _("Sudo priviledge is required to run this command.")
+    message = _("Sudo privilege is required to run this command.")
 
 
 class QuotaResourceUnknown(NotFound):

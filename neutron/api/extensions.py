@@ -46,7 +46,7 @@ class PluginInterface(object):
         """Checking plugin class.
 
         The __subclasshook__ method is a class method
-        that will be called everytime a class is tested
+        that will be called every time a class is tested
         using issubclass(klass, PluginInterface).
         In that case, it will check that every method
         marked with the abstractmethod decorator is
@@ -667,7 +667,7 @@ class ResourceExtension(object):
         self.attr_map = attr_map
 
 
-# Returns the extention paths from a config entry and the __path__
+# Returns the extension paths from a config entry and the __path__
 # of neutron.extensions
 def get_extensions_path():
     paths = ':'.join(neutron.extensions.__path__)

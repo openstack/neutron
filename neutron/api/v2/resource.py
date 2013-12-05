@@ -114,7 +114,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             kwargs = {'body': body, 'content_type': content_type}
             raise webob.exc.HTTPNotImplemented(**kwargs)
         except Exception as e:
-            # NOTE(jkoelker) Everyting else is 500
+            # NOTE(jkoelker) Everything else is 500
             LOG.exception(_('%s failed'), action)
             # Do not expose details of 500 error to clients.
             msg = _('Request Failed: internal server error while '

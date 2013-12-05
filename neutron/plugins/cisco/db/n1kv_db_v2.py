@@ -338,7 +338,7 @@ def get_segment_range(network_profile):
 
 def get_multicast_ip(network_profile):
     """
-    Retreive a multicast ip from the defined pool.
+    Retrieve a multicast ip from the defined pool.
 
     :params network_profile: object of type network profile
     :returns: string representing multicast IP

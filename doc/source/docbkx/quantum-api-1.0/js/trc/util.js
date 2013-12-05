@@ -36,7 +36,7 @@ trc.util = new Object();
 trc.util.browser = {
     //
     // Returns the current version of IE, or -1 if it's not an IE
-    // browser. This is one of the recomended ways of detecting IE
+    // browser. This is one of the recommended ways of detecting IE
     // see:
     //
     // http://msdn.microsoft.com/en-us/library/ms537509%28VS.85%29.aspx
@@ -174,7 +174,7 @@ trc.util.dom = {
     },
 
     //
-    // Dum utility function for setting the class name of an
+    // Dumb utility function for setting the class name of an
     // element.  Eventually we'll move completely to XHTML, but
     // this will never work in IE 6, so for now we need this
     // method for setting the class name.

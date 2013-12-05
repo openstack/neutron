@@ -449,7 +449,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
         neutron_extensions.append_api_extensions_path(extensions.__path__)
 
         # 'servers' is the list of network controller REST end-points
-        # (used in order specified till one suceeds, and it is sticky
+        # (used in order specified till one succeeds, and it is sticky
         # till next failure). Use 'server_auth' to encode api-key
         servers = cfg.CONF.RESTPROXY.servers
         server_auth = cfg.CONF.RESTPROXY.server_auth

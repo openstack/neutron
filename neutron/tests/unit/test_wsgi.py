@@ -572,7 +572,7 @@ class DictSerializerTest(base.BaseTestCase):
     def test_dispatch_default(self):
         serializer = wsgi.DictSerializer()
         self.assertEqual(
-            serializer.serialize({}, 'NonExistantAction'), '')
+            serializer.serialize({}, 'NonExistentAction'), '')
 
 
 class JSONDictSerializerTest(base.BaseTestCase):

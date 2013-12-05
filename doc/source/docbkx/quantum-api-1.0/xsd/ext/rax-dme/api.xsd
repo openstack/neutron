@@ -14,10 +14,10 @@
 
     <!-- Include/Redefine core schema -->
     <include vc:minVersion="1.0" vc:maxVersion="1.1" schemaLocation="../../api.xsd"/>
-    <!-- 
+    <!--
         For the purposes of extending the schema api.xsd should be a flat XSD.  This is, it should not have
         any <include ..> elements.  That's no the case today. We should generate a flat XSD at compile time
-        and refernce it here.
+        and reference it here.
      -->
     <redefine vc:minVersion="1.1" schemaLocation="../../api.xsd">
         <complexType name="Image">

@@ -2,8 +2,8 @@
 
 This plugin supports multiple plugin at same time. This plugin is for L3 connectivility
 between networks which are realized by different plugins.This plugin adds new attributes 'flavor:network' and 'flavor:router".
-flavor:network corresponds to specific l2 plugin ( flavor-plugin mapping could be configureable by plugin_list config.
-flavor:router corresponds to specific l3 plugin ( flavor-plugin mapping could be configureable by l3_plugin_list config. Note that Metaplugin can provide l3 functionaliteis for l2 plugin which didn't support l3 extension yet.
+flavor:network corresponds to specific l2 plugin ( flavor-plugin mapping could be configurable by plugin_list config.
+flavor:router corresponds to specific l3 plugin ( flavor-plugin mapping could be configurable by l3_plugin_list config. Note that Metaplugin can provide l3 functionaliteis for l2 plugin which didn't support l3 extension yet.
 This plugin also support extensions. We can map extension to plugin by using extension_map config.
 
 [database]
@@ -32,7 +32,7 @@ default_flavor = 'openvswitch'
 # Default value for l3
 default_l3_flavor = 'openvswitch'
 
-# supported extentions
+# supported extensions
 supported_extension_aliases = 'providernet'
 # specific method map for each flavor to extensions
 extension_map = 'get_port_stats:nvp'
@@ -76,7 +76,7 @@ Vlan ID range of each plugin should be different, since Metaplugin dose not mana
 #- limitations
 
 Basically, All plugin should inherit NeutronDbPluginV2.
-Metaplugin assumes all plugin share same Database expecially for IPAM part in NeutronV2 API.
+Metaplugin assumes all plugin share same Database especially for IPAM part in NeutronV2 API.
 You can use another plugin if you use ProxyPluginV2, which proxies request to the another neutron server.
 
 Example flavor configration for ProxyPluginV2

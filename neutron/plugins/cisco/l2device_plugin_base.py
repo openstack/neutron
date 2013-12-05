@@ -178,7 +178,7 @@ class L2DevicePluginBase(object):
         """Check plugin class.
 
         The __subclasshook__ method is a class method
-        that will be called everytime a class is tested
+        that will be called every time a class is tested
         using issubclass(klass, Plugin).
         In that case, it will check that every method
         marked with the abstractmethod decorator is

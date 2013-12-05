@@ -545,7 +545,7 @@ class NvpSynchronizer():
             sleep_interval = self._sync_backoff
             # Cap max back off to 64 seconds
             self._sync_backoff = min(self._sync_backoff * 2, 64)
-            LOG.exception(_("An error occured while communicating with "
+            LOG.exception(_("An error occurred while communicating with "
                             "NVP backend. Will retry synchronization "
                             "in %d seconds"), sleep_interval)
             return sleep_interval

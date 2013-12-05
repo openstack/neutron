@@ -205,7 +205,7 @@ class NvpApiClient(object):
                 provider_sem.release()
         else:
             LOG.debug(_("Waiting for auth to complete"))
-            # Wait until we can aquire then release
+            # Wait until we can acquire then release
             provider_sem.acquire(blocking=True)
             provider_sem.release()
 
