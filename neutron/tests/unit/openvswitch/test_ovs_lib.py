@@ -293,31 +293,16 @@ class OVS_Lib_Test(base.BaseTestCase):
         local_ip = "1.1.1.1"
         remote_ip = "9.9.9.9"
         ofport = "6"
-
+        command = ["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
+                   self.BR_NAME, pname]
+        command.extend(["--", "set", "Interface", pname])
+        command.extend(["type=gre", "options:remote_ip=" + remote_ip,
+                        "options:local_ip=" + local_ip,
+                        "options:in_key=flow",
+                        "options:out_key=flow"])
         # Each element is a tuple of (expected mock call, return_value)
         expected_calls_and_values = [
-            (mock.call(["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
-                        self.BR_NAME, pname], root_helper=self.root_helper),
-             None),
-            (mock.call(["ovs-vsctl", self.TO, "set", "Interface",
-                        pname, "type=gre"], root_helper=self.root_helper),
-             None),
-            (mock.call(["ovs-vsctl", self.TO, "set", "Interface",
-                        pname, "options:remote_ip=" + remote_ip],
-                       root_helper=self.root_helper),
-             None),
-            (mock.call(["ovs-vsctl", self.TO, "set", "Interface",
-                        pname, "options:local_ip=" + local_ip],
-                       root_helper=self.root_helper),
-             None),
-            (mock.call(["ovs-vsctl", self.TO, "set", "Interface",
-                        pname, "options:in_key=flow"],
-                       root_helper=self.root_helper),
-             None),
-            (mock.call(["ovs-vsctl", self.TO, "set", "Interface",
-                        pname, "options:out_key=flow"],
-                       root_helper=self.root_helper),
-             None),
+            (mock.call(command, root_helper=self.root_helper), None),
             (mock.call(["ovs-vsctl", self.TO, "get",
                         "Interface", pname, "ofport"],
                        root_helper=self.root_helper),
@@ -337,16 +322,11 @@ class OVS_Lib_Test(base.BaseTestCase):
         ofport = "6"
 
         # Each element is a tuple of (expected mock call, return_value)
+        command = ["ovs-vsctl", self.TO, "add-port", self.BR_NAME, pname]
+        command.extend(["--", "set", "Interface", pname])
+        command.extend(["type=patch", "options:peer=" + peer])
         expected_calls_and_values = [
-            (mock.call(["ovs-vsctl", self.TO, "add-port",
-                        self.BR_NAME, pname], root_helper=self.root_helper),
-             None),
-            (mock.call(["ovs-vsctl", self.TO, "set", "Interface",
-                        pname, "type=patch"], root_helper=self.root_helper),
-             None),
-            (mock.call(["ovs-vsctl", self.TO, "set",
-                        "Interface", pname, "options:peer=" + peer],
-                       root_helper=self.root_helper),
+            (mock.call(command, root_helper=self.root_helper),
              None),
             (mock.call(["ovs-vsctl", self.TO, "get",
                         "Interface", pname, "ofport"],

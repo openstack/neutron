@@ -247,29 +247,25 @@ class OVSBridge(BaseOVS):
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=constants.TYPE_GRE,
                         vxlan_udp_port=constants.VXLAN_UDP_PORT):
-        self.run_vsctl(["--", "--may-exist", "add-port", self.br_name,
-                       port_name])
-        self.set_db_attribute("Interface", port_name, "type", tunnel_type)
+        vsctl_command = ["--", "--may-exist", "add-port", self.br_name,
+                         port_name]
+        vsctl_command.extend(["--", "set", "Interface", port_name,
+                              "type=%s" % tunnel_type])
         if tunnel_type == constants.TYPE_VXLAN:
             # Only set the VXLAN UDP port if it's not the default
             if vxlan_udp_port != constants.VXLAN_UDP_PORT:
-                self.set_db_attribute("Interface", port_name,
-                                      "options:dst_port",
-                                      vxlan_udp_port)
-        self.set_db_attribute("Interface", port_name, "options:remote_ip",
-                              remote_ip)
-        self.set_db_attribute("Interface", port_name, "options:local_ip",
-                              local_ip)
-        self.set_db_attribute("Interface", port_name, "options:in_key", "flow")
-        self.set_db_attribute("Interface", port_name, "options:out_key",
-                              "flow")
+                vsctl_command.append("options:dst_port=%s" % vxlan_udp_port)
+        vsctl_command.extend(["options:remote_ip=%s" % remote_ip,
+                              "options:local_ip=%s" % local_ip,
+                              "options:in_key=flow",
+                              "options:out_key=flow"])
+        self.run_vsctl(vsctl_command)
         return self.get_port_ofport(port_name)
 
     def add_patch_port(self, local_name, remote_name):
-        self.run_vsctl(["add-port", self.br_name, local_name])
-        self.set_db_attribute("Interface", local_name, "type", "patch")
-        self.set_db_attribute("Interface", local_name, "options:peer",
-                              remote_name)
+        self.run_vsctl(["add-port", self.br_name, local_name,
+                        "--", "set", "Interface", local_name,
+                        "type=patch", "options:peer=%s" % remote_name])
         return self.get_port_ofport(local_name)
 
     def db_get_map(self, table, record, column):
