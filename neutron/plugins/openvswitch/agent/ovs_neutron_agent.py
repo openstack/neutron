@@ -961,21 +961,16 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         for device in devices:
             LOG.info(_("Attachment %s removed"), device)
             try:
-                details = self.plugin_rpc.update_device_down(self.context,
-                                                             device,
-                                                             self.agent_id,
-                                                             cfg.CONF.host)
+                self.plugin_rpc.update_device_down(self.context,
+                                                   device,
+                                                   self.agent_id,
+                                                   cfg.CONF.host)
             except Exception as e:
                 LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
                           {'device': device, 'e': e})
                 resync = True
                 continue
-            if details['exists']:
-                LOG.info(_("Port %s updated."), device)
-                # Nothing to do regarding local networking
-            else:
-                LOG.debug(_("Device %s not defined on plugin"), device)
-                self.port_unbound(device)
+            self.port_unbound(device)
         return resync
 
     def treat_ancillary_devices_removed(self, devices):
