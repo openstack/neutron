@@ -15,7 +15,7 @@
 #
 # @author: Edgar Magana, emagana@plumgrid.com, PLUMgrid, Inc.
 
-
+from neutron.extensions import providernet as provider
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -38,8 +38,13 @@ class Plumlib():
                  director_plumgrid + ':' + director_port)
         pass
 
-    def create_network(self, tenant_id, net_db):
-        pass
+    def create_network(self, tenant_id, net_db, network):
+        net_db["network"] = {}
+        for key in (provider.NETWORK_TYPE,
+                    provider.PHYSICAL_NETWORK,
+                    provider.SEGMENTATION_ID):
+            net_db["network"][key] = network["network"][key]
+        return net_db
 
     def update_network(self, tenant_id, net_id):
         pass

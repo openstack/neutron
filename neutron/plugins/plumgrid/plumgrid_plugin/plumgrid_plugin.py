@@ -61,7 +61,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                               l3_db.L3_NAT_db_mixin):
 
     supported_extension_aliases = ["external-net", "router", "binding",
-                                   "quotas"]
+                                   "quotas", "provider"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -112,7 +112,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             try:
                 LOG.debug(_('PLUMgrid Library: create_network() called'))
-                self._plumlib.create_network(tenant_id, net_db)
+                self._plumlib.create_network(tenant_id, net_db, network)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
