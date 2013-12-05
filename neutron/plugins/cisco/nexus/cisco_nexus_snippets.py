@@ -37,7 +37,6 @@ EXEC_CONF_SNIPPET = """
       </config>
 """
 
-
 CMD_VLAN_CONF_SNIPPET = """
             <vlan>
               <vlan-id-create-delete>
@@ -122,38 +121,6 @@ CMD_INT_VLAN_ADD_SNIPPET = (CMD_INT_VLAN_HEADER +
                             CMD_VLAN_ADD_ID +
                             CMD_INT_VLAN_TRAILER)
 
-CMD_PORT_TRUNK = """
-          <interface>
-            <%s>
-              <interface>%s</interface>
-              <__XML__MODE_if-ethernet-switch>
-                <switchport></switchport>
-                <switchport>
-                  <mode>
-                    <trunk>
-                    </trunk>
-                  </mode>
-                </switchport>
-              </__XML__MODE_if-ethernet-switch>
-            </%s>
-          </interface>
-"""
-
-CMD_NO_SWITCHPORT = """
-          <interface>
-            <%s>
-              <interface>%s</interface>
-              <__XML__MODE_if-ethernet-switch>
-                <no>
-                  <switchport>
-                  </switchport>
-                </no>
-              </__XML__MODE_if-ethernet-switch>
-            </%s>
-          </interface>
-"""
-
-
 CMD_NO_VLAN_INT_SNIPPET = """
           <interface>
             <%s>
@@ -176,7 +143,6 @@ CMD_NO_VLAN_INT_SNIPPET = """
           </interface>
 """
 
-
 FILTER_SHOW_VLAN_BRIEF_SNIPPET = """
       <show xmlns="http://www.cisco.com/nxos:1.0:vlan_mgr_cli">
         <vlan>
@@ -184,7 +150,6 @@ FILTER_SHOW_VLAN_BRIEF_SNIPPET = """
         </vlan>
       </show>
 """
-
 
 CMD_VLAN_SVI_SNIPPET = """
 <interface>

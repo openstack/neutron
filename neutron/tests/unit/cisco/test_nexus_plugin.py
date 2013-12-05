@@ -99,6 +99,10 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
             const.NET_VLAN_NAME: 'q-268',
             const.NET_VLAN_ID: '268',
         }
+        self.delete_port_args_1 = [
+            self.attachment1[const.INSTANCE_ID],
+            self.network1[const.NET_VLAN_ID],
+        ]
         self.providernet = {
             const.NET_ID: 9,
             const.NET_NAME: 'pnet1',
@@ -181,44 +185,38 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
 
         self.assertEqual(expected_instance_id, INSTANCE1)
 
-    def test_create_providernet(self):
+    def _create_delete_providernet(self, auto_create, auto_trunk):
+        cfg.CONF.set_override(
+            'provider_vlan_auto_create', auto_create, 'CISCO')
+        cfg.CONF.set_override(
+            'provider_vlan_auto_trunk', auto_trunk, 'CISCO')
+        self.addCleanup(cfg.CONF.reset)
         with mock.patch.object(cdb, 'is_provider_vlan',
                                return_value=True) as mock_db:
+            # Create a provider network
             new_net_dict = self._cisco_nexus_plugin.create_network(
                 self.providernet, self.attachment1)
             mock_db.assert_called_once()
             for attr in NET_ATTRS:
                 self.assertEqual(new_net_dict[attr], self.providernet[attr])
+            # Delete the provider network
+            instance_id = self._cisco_nexus_plugin.delete_port(
+                self.attachment1[const.INSTANCE_ID],
+                self.providernet[const.NET_VLAN_ID])
+            self.assertEqual(instance_id,
+                             self.attachment1[const.INSTANCE_ID])
 
-    def test_create_provider_vlan_network_cfg_auto_man(self):
-        cfg.CONF.set_override('provider_vlan_auto_create', True, 'CISCO')
-        cfg.CONF.set_override('provider_vlan_auto_trunk', False, 'CISCO')
-        self.addCleanup(cfg.CONF.reset)
-        with mock.patch.object(cdb, 'is_provider_vlan', return_value=True):
-            new_net_dict = self._cisco_nexus_plugin.create_network(
-                self.providernet, self.attachment1)
-            for attr in NET_ATTRS:
-                self.assertEqual(new_net_dict[attr], self.providernet[attr])
+    def test_create_delete_providernet(self):
+        self._create_delete_providernet(auto_create=True, auto_trunk=True)
 
-    def test_create_provider_vlan_network_cfg_man_auto(self):
-        cfg.CONF.set_override('provider_vlan_auto_create', False, 'CISCO')
-        cfg.CONF.set_override('provider_vlan_auto_trunk', True, 'CISCO')
-        self.addCleanup(cfg.CONF.reset)
-        with mock.patch.object(cdb, 'is_provider_vlan', return_value=True):
-            new_net_dict = self._cisco_nexus_plugin.create_network(
-                self.providernet, self.attachment1)
-            for attr in NET_ATTRS:
-                self.assertEqual(new_net_dict[attr], self.providernet[attr])
+    def test_create_delete_provider_vlan_network_cfg_auto_man(self):
+        self._create_delete_providernet(auto_create=True, auto_trunk=False)
 
-    def test_create_provider_vlan_network_cfg_man_man(self):
-        cfg.CONF.set_override('provider_vlan_auto_create', False, 'CISCO')
-        cfg.CONF.set_override('provider_vlan_auto_trunk', False, 'CISCO')
-        self.addCleanup(cfg.CONF.reset)
-        with mock.patch.object(cdb, 'is_provider_vlan', return_value=True):
-            new_net_dict = self._cisco_nexus_plugin.create_network(
-                self.providernet, self.attachment1)
-            for attr in NET_ATTRS:
-                self.assertEqual(new_net_dict[attr], self.providernet[attr])
+    def test_create_delete_provider_vlan_network_cfg_man_auto(self):
+        self._create_delete_providernet(auto_create=False, auto_trunk=True)
+
+    def test_create_delete_provider_vlan_network_cfg_man_man(self):
+        self._create_delete_providernet(auto_create=False, auto_trunk=False)
 
     def test_create_delete_network_portchannel(self):
         """Tests creation of a network over a portchannel."""
@@ -237,45 +235,48 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
             INSTANCE3, self.network3[const.NET_VLAN_ID]
         )
 
+    def _add_router_interface(self):
+        """Add a router interface using fixed (canned) parameters."""
+        vlan_name = self.vlan_name
+        vlan_id = self.vlan_id
+        gateway_ip = '10.0.0.1/24'
+        router_id = '00000R1'
+        subnet_id = '00001'
+        return self._cisco_nexus_plugin.add_router_interface(
+            vlan_name, vlan_id, subnet_id, gateway_ip, router_id)
+
+    def _remove_router_interface(self):
+        """Remove a router interface created with _add_router_interface."""
+        vlan_id = self.vlan_id
+        router_id = '00000R1'
+        return self._cisco_nexus_plugin.remove_router_interface(vlan_id,
+                                                                router_id)
+
     def test_nexus_add_remove_router_interface(self):
         """Tests addition of a router interface."""
-        vlan_name = self.vlan_name
-        vlan_id = self.vlan_id
-        gateway_ip = '10.0.0.1/24'
-        router_id = '00000R1'
-        subnet_id = '00001'
+        self.assertTrue(self._add_router_interface())
+        self.assertEqual(self._remove_router_interface(), '00000R1')
 
-        result = self._cisco_nexus_plugin.add_router_interface(vlan_name,
-                                                               vlan_id,
-                                                               subnet_id,
-                                                               gateway_ip,
-                                                               router_id)
-        self.assertTrue(result)
-        result = self._cisco_nexus_plugin.remove_router_interface(vlan_id,
-                                                                  router_id)
-        self.assertEqual(result, router_id)
-
-    def test_nexus_add_router_interface_fail(self):
-        """Tests deletion of a router interface."""
-        vlan_name = self.vlan_name
-        vlan_id = self.vlan_id
-        gateway_ip = '10.0.0.1/24'
-        router_id = '00000R1'
-        subnet_id = '00001'
-
-        self._cisco_nexus_plugin.add_router_interface(vlan_name,
-                                                      vlan_id,
-                                                      subnet_id,
-                                                      gateway_ip,
-                                                      router_id)
+    def test_nexus_dup_add_router_interface(self):
+        """Tests a duplicate add of a router interface."""
+        self._add_router_interface()
         try:
             self.assertRaises(
                 cisco_exc.SubnetInterfacePresent,
-                self._cisco_nexus_plugin.add_router_interface,
-                vlan_name, vlan_id, subnet_id, gateway_ip, router_id)
+                self._add_router_interface)
         finally:
-            self._cisco_nexus_plugin.remove_router_interface(vlan_id,
-                                                             router_id)
+            self._remove_router_interface()
+
+    def test_nexus_no_svi_switch_exception(self):
+        """Tests failure to find a Nexus switch for SVI placement."""
+        # Clear the Nexus switches dictionary.
+        with mock.patch.dict(self._cisco_nexus_plugin._client.nexus_switches,
+                             {}, clear=True):
+            # Clear the first Nexus IP address discovered in config
+            with mock.patch.object(cisco_config, 'first_device_ip',
+                                   new=None):
+                self.assertRaises(cisco_exc.NoNexusSviSwitch,
+                                  self._add_router_interface)
 
     def test_nexus_add_port_after_router_interface(self):
         """Tests creating a port after a router interface.
@@ -284,23 +285,13 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         been created. Only a trunk call should be invoked and the
         plugin should not attempt to recreate the vlan.
         """
-        vlan_name = self.vlan_name
-        vlan_id = self.vlan_id
-        gateway_ip = '10.0.0.1/24'
-        router_id = '00000R1'
-        subnet_id = '00001'
-
-        self._cisco_nexus_plugin.add_router_interface(vlan_name,
-                                                      vlan_id,
-                                                      subnet_id,
-                                                      gateway_ip,
-                                                      router_id)
+        self._add_router_interface()
         # Create a network on the switch
         self._cisco_nexus_plugin.create_network(
             self.network1, self.attachment1)
 
         # Grab a list of all mock calls from ncclient
-        last_cfgs = (self.mock_ncclient.manager.connect().
+        last_cfgs = (self.mock_ncclient.manager.connect.return_value.
                      edit_config.mock_calls)
 
         # The last ncclient call should be for trunking and the second
