@@ -18,7 +18,10 @@ import mock
 import testtools
 
 from neutron.db import api as db
+from neutron.plugins.cisco.common import cisco_constants
+from neutron.plugins.cisco.common import cisco_credentials_v2
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
+from neutron.plugins.cisco.common import config as config
 from neutron.plugins.cisco.db import network_db_v2 as cdb
 from neutron.plugins.cisco import network_plugin
 from neutron.tests import base
@@ -31,7 +34,6 @@ class CiscoNetworkDbTest(base.BaseTestCase):
     def setUp(self):
         super(CiscoNetworkDbTest, self).setUp()
         db.configure_db()
-        self.session = db.get_session()
 
         # The Cisco network plugin includes a thin layer of QoS and
         # credential API methods which indirectly call Cisco QoS and
@@ -259,3 +261,31 @@ class CiscoNetworkCredentialDbTest(CiscoNetworkDbTest):
         self.assertRaises(c_exc.CredentialNotFound,
                           self._network_plugin.get_credential_details,
                           "dummyCredentialId")
+
+
+class CiscoCredentialStoreTest(base.BaseTestCase):
+
+    """Cisco Credential Store unit tests."""
+
+    def setUp(self):
+        super(CiscoCredentialStoreTest, self).setUp()
+        db.configure_db()
+        self.addCleanup(db.clear_db)
+
+    def test_cred_store_init_duplicate_creds_ignored(self):
+        """Check that with multi store instances, dup creds are ignored."""
+        # Create a device dictionary containing credentials for 1 switch.
+        dev_dict = {
+            ('dev_id', '1.1.1.1', cisco_constants.USERNAME): 'user_1',
+            ('dev_id', '1.1.1.1', cisco_constants.PASSWORD): 'password_1',
+            ('dev_id', '1.1.1.1', 'host_a'): '1/1',
+            ('dev_id', '1.1.1.1', 'host_b'): '1/2',
+            ('dev_id', '1.1.1.1', 'host_c'): '1/3',
+        }
+        with mock.patch.object(config, 'get_device_dictionary',
+                               return_value=dev_dict):
+            # Create and initialize 2 instances of credential store.
+            cisco_credentials_v2.Store().initialize()
+            cisco_credentials_v2.Store().initialize()
+            # There should be only 1 switch credential in the database.
+            self.assertEqual(len(cdb.get_all_credentials()), 1)
