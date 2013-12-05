@@ -18,6 +18,7 @@
 import webob
 
 from neutron import auth
+from neutron.openstack.common.middleware import request_id
 from neutron.tests import base
 
 
@@ -88,3 +89,11 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.assertEqual(self.context.user_name, 'testusername')
         self.assertEqual(self.context.tenant_id, 'testtenantid')
         self.assertEqual(self.context.tenant_name, 'testtenantname')
+
+    def test_request_id_extracted_from_env(self):
+        req_id = 'dummy-request-id'
+        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_USER_ID'] = 'testuserid'
+        self.request.environ[request_id.ENV_REQUEST_ID] = req_id
+        self.request.get_response(self.middleware)
+        self.assertEqual(req_id, self.context.request_id)
