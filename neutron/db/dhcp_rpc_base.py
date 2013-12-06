@@ -51,6 +51,8 @@ class DhcpRpcCallbackMixin(object):
         try:
             if action == 'create_port':
                 return plugin.create_port(context, port)
+            elif action == 'update_port':
+                return plugin.update_port(context, port['id'], port['port'])
             else:
                 msg = _('Unrecognized action')
                 raise n_exc.Invalid(message=msg)
@@ -278,4 +280,6 @@ class DhcpRpcCallbackMixin(object):
                   {'port': port,
                    'host': host})
         plugin = manager.NeutronManager.get_plugin()
-        return plugin.update_port(context, port_id, port)
+        return self._port_action(plugin, context,
+                                 {'id': port_id, 'port': port},
+                                 'update_port')
