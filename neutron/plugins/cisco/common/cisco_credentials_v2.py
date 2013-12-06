@@ -49,11 +49,6 @@ class Store(object):
                     pass
 
     @staticmethod
-    def put_credential(cred_name, username, password):
-        """Set the username and password."""
-        cdb.add_credential(cred_name, username, password)
-
-    @staticmethod
     def get_username(cred_name):
         """Get the username."""
         credential = cdb.get_credential_name(cred_name)
@@ -64,15 +59,3 @@ class Store(object):
         """Get the password."""
         credential = cdb.get_credential_name(cred_name)
         return credential[const.CREDENTIAL_PASSWORD]
-
-    @staticmethod
-    def get_credential(cred_name):
-        """Get the username and password."""
-        cdb.get_credential_name(cred_name)
-        return {const.USERNAME: const.CREDENTIAL_USERNAME,
-                const.PASSWORD: const.CREDENTIAL_PASSWORD}
-
-    @staticmethod
-    def delete_credential(cred_name):
-        """Delete a credential."""
-        cdb.remove_credential(cred_name)
