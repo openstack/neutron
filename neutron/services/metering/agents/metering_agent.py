@@ -175,9 +175,13 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
     def _invoke_driver(self, context, meterings, func_name):
         try:
             return getattr(self.metering_driver, func_name)(context, meterings)
-        except RuntimeError:
+        except AttributeError:
             LOG.exception(_("Driver %(driver)s does not implement %(func)s"),
-                          {'driver': cfg.CONF.metering_driver,
+                          {'driver': self.conf.driver,
+                           'func': func_name})
+        except RuntimeError:
+            LOG.exception(_("Driver %(driver)s:%(func)s runtime error"),
+                          {'driver': self.conf.driver,
                            'func': func_name})
 
     @periodic_task.periodic_task(run_immediately=True)
