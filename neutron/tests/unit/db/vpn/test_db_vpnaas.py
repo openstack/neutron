@@ -243,18 +243,32 @@ class VPNPluginDbTestCase(test_l3_plugin.L3NatTestCaseMixin,
                    router=None,
                    admin_state_up=True,
                    no_delete=False,
-                   plug_subnet=True, **kwargs):
+                   plug_subnet=True,
+                   external_subnet_cidr='192.168.100.0/24',
+                   external_router=True,
+                   **kwargs):
         if not fmt:
             fmt = self.fmt
-        with test_db_plugin.optional_ctx(subnet, self.subnet) as tmp_subnet:
-            with test_db_plugin.optional_ctx(router,
-                                             self.router) as tmp_router:
-                if plug_subnet:
-                    self._router_interface_action(
-                        'add',
-                        tmp_router['router']['id'],
-                        tmp_subnet['subnet']['id'], None)
-
+        with contextlib.nested(
+            test_db_plugin.optional_ctx(subnet, self.subnet),
+            test_db_plugin.optional_ctx(router, self.router),
+            self.subnet(cidr=external_subnet_cidr)) as (tmp_subnet,
+                                                        tmp_router,
+                                                        public_sub):
+            if external_router:
+                self._set_net_external(
+                    public_sub['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    tmp_router['router']['id'],
+                    public_sub['subnet']['network_id'])
+                tmp_router['router']['external_gateway_info'] = {
+                    'network_id': public_sub['subnet']['network_id']}
+            if plug_subnet:
+                self._router_interface_action(
+                    'add',
+                    tmp_router['router']['id'],
+                    tmp_subnet['subnet']['id'], None)
+            try:
                 res = self._create_vpnservice(fmt,
                                               name,
                                               admin_state_up,
@@ -263,20 +277,27 @@ class VPNPluginDbTestCase(test_l3_plugin.L3NatTestCaseMixin,
                                               subnet_id=(tmp_subnet['subnet']
                                                          ['id']),
                                               **kwargs)
+                vpnservice = self.deserialize(fmt or self.fmt, res)
                 if res.status_int >= 400:
-                    raise webob.exc.HTTPClientError(code=res.status_int)
-                try:
-                    vpnservice = self.deserialize(fmt or self.fmt, res)
-                    yield vpnservice
-                finally:
-                    if not no_delete:
-                        self._delete('vpnservices',
-                                     vpnservice['vpnservice']['id'])
-                    if plug_subnet:
-                        self._router_interface_action(
-                            'remove',
-                            tmp_router['router']['id'],
-                            tmp_subnet['subnet']['id'], None)
+                    raise webob.exc.HTTPClientError(
+                        code=res.status_int, detail=vpnservice)
+                yield vpnservice
+            finally:
+                if not no_delete and vpnservice.get('vpnservice'):
+                    self._delete('vpnservices',
+                                 vpnservice['vpnservice']['id'])
+                if plug_subnet:
+                    self._router_interface_action(
+                        'remove',
+                        tmp_router['router']['id'],
+                        tmp_subnet['subnet']['id'], None)
+                if external_router:
+                    external_gateway = tmp_router['router'].get(
+                        'external_gateway_info')
+                    if external_gateway:
+                        network_id = external_gateway['network_id']
+                        self._remove_external_gateway_from_router(
+                            tmp_router['router']['id'], network_id)
 
     def _create_ipsec_site_connection(self, fmt, name='test',
                                       peer_address='192.168.1.10',
@@ -813,7 +834,7 @@ class TestVpnaas(VPNPluginDbTestCase):
                                      expected)
 
     def test_create_vpnservice_with_invalid_router(self):
-        """Test case to create a vpnservice with invalid router"""
+        """Test case to create a vpnservice with other tenant's router"""
         with self.network(
             set_context=True,
             tenant_id='tenant_a') as network:
@@ -828,6 +849,24 @@ class TestVpnaas(VPNPluginDbTestCase):
                         True, router_id, subnet_id,
                         expected_res_status=webob.exc.HTTPNotFound.code,
                         set_context=True, tenant_id='tenant_b')
+
+    def test_create_vpnservice_with_router_no_external_gateway(self):
+        """Test case to create a vpnservice with inner router"""
+        error_code = 0
+        with self.subnet(cidr='10.2.0.0/24') as subnet:
+            with self.router() as router:
+                router_id = router['router']['id']
+                try:
+                    with self.vpnservice(subnet=subnet,
+                                         router=router,
+                                         external_router=False):
+                        pass
+                except webob.exc.HTTPClientError as e:
+                    error_code, error_detail = (
+                        e.status_code, e.detail['NeutronError']['message'])
+        self.assertEqual(400, error_code)
+        msg = str(vpnaas.RouterIsNotExternal(router_id=router_id))
+        self.assertEqual(msg, error_detail)
 
     def test_create_vpnservice_with_nonconnected_subnet(self):
         """Test case to create a vpnservice with nonconnected subnet."""
@@ -959,15 +998,20 @@ class TestVpnaas(VPNPluginDbTestCase):
                 with contextlib.nested(
                     self.vpnservice(name='vpnservice1',
                                     subnet=subnet,
-                                    router=router),
+                                    router=router,
+                                    external_subnet_cidr='192.168.10.0/24',),
                     self.vpnservice(name='vpnservice2',
                                     subnet=subnet,
                                     router=router,
-                                    plug_subnet=False),
+                                    plug_subnet=False,
+                                    external_router=False,
+                                    external_subnet_cidr='192.168.11.0/24',),
                     self.vpnservice(name='vpnservice3',
                                     subnet=subnet,
                                     router=router,
-                                    plug_subnet=False)
+                                    plug_subnet=False,
+                                    external_router=False,
+                                    external_subnet_cidr='192.168.13.0/24',)
                 ) as(vpnservice1, vpnservice2, vpnservice3):
                     self._test_list_with_sort('vpnservice', (vpnservice3,
                                                              vpnservice2,
@@ -981,15 +1025,20 @@ class TestVpnaas(VPNPluginDbTestCase):
                 with contextlib.nested(
                     self.vpnservice(name='vpnservice1',
                                     subnet=subnet,
-                                    router=router),
+                                    router=router,
+                                    external_subnet_cidr='192.168.10.0/24'),
                     self.vpnservice(name='vpnservice2',
                                     subnet=subnet,
                                     router=router,
-                                    plug_subnet=False),
+                                    plug_subnet=False,
+                                    external_subnet_cidr='192.168.20.0/24',
+                                    external_router=False),
                     self.vpnservice(name='vpnservice3',
                                     subnet=subnet,
                                     router=router,
-                                    plug_subnet=False)
+                                    plug_subnet=False,
+                                    external_subnet_cidr='192.168.30.0/24',
+                                    external_router=False)
                 ) as(vpnservice1, vpnservice2, vpnservice3):
                     self._test_list_with_pagination('vpnservice',
                                                     (vpnservice1,
@@ -1004,15 +1053,20 @@ class TestVpnaas(VPNPluginDbTestCase):
                 with contextlib.nested(
                     self.vpnservice(name='vpnservice1',
                                     subnet=subnet,
-                                    router=router),
+                                    router=router,
+                                    external_subnet_cidr='192.168.10.0/24'),
                     self.vpnservice(name='vpnservice2',
                                     subnet=subnet,
                                     router=router,
-                                    plug_subnet=False),
+                                    plug_subnet=False,
+                                    external_subnet_cidr='192.168.11.0/24',
+                                    external_router=False),
                     self.vpnservice(name='vpnservice3',
                                     subnet=subnet,
                                     router=router,
-                                    plug_subnet=False)
+                                    plug_subnet=False,
+                                    external_subnet_cidr='192.168.12.0/24',
+                                    external_router=False)
                 ) as(vpnservice1, vpnservice2, vpnservice3):
                     self._test_list_with_pagination_reverse('vpnservice',
                                                             (vpnservice1,
