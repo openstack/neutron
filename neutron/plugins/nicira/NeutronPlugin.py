@@ -103,7 +103,11 @@ def create_nvp_cluster(cluster_opts, concurrent_connections,
     config.register_deprecated(cfg.CONF)
     # ### END
     cluster = nvp_cluster.NVPCluster(**cluster_opts)
-    api_providers = [ctrl.split(':') + [True]
+
+    def _ctrl_split(x, y):
+        return (x, int(y), True)
+
+    api_providers = [_ctrl_split(*ctrl.split(':'))
                      for ctrl in cluster.nvp_controllers]
     cluster.api_client = NvpApiClient.NVPApiHelper(
         api_providers, cluster.nvp_user, cluster.nvp_password,
