@@ -167,12 +167,20 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         if action == 'add':
             self.device_exists.return_value = False
+            ri.router = mock.Mock()
+            ri.router.get.return_value = [{'floating_ip_address':
+                                           '192.168.1.34'}]
             agent.external_gateway_added(ri, ex_gw_port,
                                          interface_name, internal_cidrs)
             self.assertEqual(self.mock_driver.plug.call_count, 1)
             self.assertEqual(self.mock_driver.init_l3.call_count, 1)
             self.send_arp.assert_called_once_with(ri, interface_name,
                                                   '20.0.0.30')
+            kwargs = {'preserve_ips': ['192.168.1.34/32'],
+                      'namespace': 'qrouter-' + router_id}
+            self.mock_driver.init_l3.assert_called_with(interface_name,
+                                                        ['20.0.0.30/24'],
+                                                        **kwargs)
 
         elif action == 'remove':
             self.device_exists.return_value = True

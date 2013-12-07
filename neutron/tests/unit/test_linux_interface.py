@@ -94,6 +94,21 @@ class TestABCDriver(TestBase):
              mock.call().addr.add(4, '192.168.1.2/24', '192.168.1.255'),
              mock.call().addr.delete(4, '172.16.77.240/24')])
 
+    def test_l3_init_with_preserve(self):
+        addresses = [dict(ip_version=4, scope='global',
+                          dynamic=False, cidr='192.168.1.3/32')]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+
+        bc = BaseChild(self.conf)
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc.init_l3('tap0', ['192.168.1.2/24'], namespace=ns,
+                   preserve_ips=['192.168.1.3/32'])
+        self.ip_dev.assert_has_calls(
+            [mock.call('tap0', 'sudo', namespace=ns),
+             mock.call().addr.list(scope='global', filters=['permanent']),
+             mock.call().addr.add(4, '192.168.1.2/24', '192.168.1.255')])
+        self.assertFalse(self.ip_dev().addr.delete.called)
+
 
 class TestOVSInterfaceDriver(TestBase):
 
