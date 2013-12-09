@@ -185,9 +185,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 for rule in port.get('security_group_rules', [])
                 if rule['direction'] == direction]
 
-    def _arp_spoofing_rule(self, port):
-        return '-m mac ! --mac-source %s -j DROP' % port['mac_address']
-
     def _setup_spoof_filter_chain(self, port, table, mac_ip_pairs, rules):
         if mac_ip_pairs:
             chain_name = self._port_chain_name(port, SPOOF_FILTER)
