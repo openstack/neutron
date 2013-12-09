@@ -57,6 +57,7 @@ from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
+from neutron.openstack.common import lockutils
 from neutron.plugins.common import constants as plugin_const
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
@@ -600,6 +601,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                          % router_id))
         return lr_port
 
+    @lockutils.synchronized('nicira', 'neutron-')
     def _nvp_create_ext_gw_port(self, context, port_data):
         """Driver for creating an external gateway port on NVP platform."""
         # TODO(salvatore-orlando): Handle NVP resource
@@ -1457,7 +1459,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # did not specify any value for the 'distributed' attribute
         # Platforms older than 3.x do not support the attribute
         r['distributed'] = lrouter.get('distributed', False)
-
+        # TODO(salv-orlando): Deal with backend object removal in case
+        # of db failures
         with context.session.begin(subtransactions=True):
             # Transaction nesting is needed to avoid foreign key violations
             # when processing the distributed router binding
@@ -1469,8 +1472,26 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                          status=lrouter['status'])
                 self._process_nsx_router_create(context, router_db, r)
                 context.session.add(router_db)
-            if has_gw_info:
+        if has_gw_info:
+            # NOTE(salv-orlando): This operation has been moved out of the
+            # database transaction since it performs several NVP queries,
+            # ithis ncreasing the risk of deadlocks between eventlet and
+            # sqlalchemy operations.
+            # Set external gateway and remove router in case of failure
+            try:
                 self._update_router_gw_info(context, router_db['id'], gw_info)
+            except (q_exc.NeutronException, NvpApiClient.NvpApiException):
+                with excutils.save_and_reraise_exception():
+                    # As setting gateway failed, the router must be deleted
+                    # in order to ensure atomicity
+                    router_id = router_db['id']
+                    LOG.warn(_("Failed to set gateway info for router being "
+                               "created:%s - removing router"), router_id)
+                    self.delete_router(context, router_id)
+                    LOG.info(_("Create router failed while setting external "
+                               "gateway. Router:%s has been removed from "
+                               "DB and backend"),
+                             router_id)
         router = self._make_router_dict(router_db)
         return router
 
