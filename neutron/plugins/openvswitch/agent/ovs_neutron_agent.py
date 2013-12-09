@@ -200,7 +200,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.int_br_device_count = 0
 
         self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
-        self.setup_rpc()
         self.setup_integration_br()
         self.setup_physical_bridges(bridge_mappings)
         self.local_vlan_map = {}
@@ -224,12 +223,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(integ_br, tun_br)
 
-        # Security group agent supprot
-        self.sg_agent = OVSSecurityGroupAgent(self.context,
-                                              self.plugin_rpc,
-                                              root_helper)
         # Initialize iteration counter
         self.iter_num = 0
+        # Perform rpc initialization only once all other configuration
+        # is complete
+        self.setup_rpc()
 
     def _check_ovs_version(self):
         if constants.TYPE_VXLAN in self.tunnel_types:
@@ -253,9 +251,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.topic = topics.AGENT
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
-
         # RPC network init
         self.context = context.get_admin_context_without_session()
+        # prepare sg_agent for Security group support
+        # before we enable RPC handler
+        self.sg_agent = OVSSecurityGroupAgent(self.context,
+                                              self.plugin_rpc,
+                                              self.root_helper)
         # Handle updates from service
         self.dispatcher = self.create_rpc_dispatcher()
         # Define the listening consumers for the agent
