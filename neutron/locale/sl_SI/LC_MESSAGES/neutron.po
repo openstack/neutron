@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-12-07 06:31+0000\n"
+"POT-Creation-Date: 2013-12-09 06:31+0000\n"
 "PO-Revision-Date: 2013-06-28 06:06+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Slovenian (Slovenia) "
@@ -505,7 +505,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:593 neutron/agent/l3_agent.py:836
+#: neutron/agent/dhcp_agent.py:593 neutron/agent/l3_agent.py:845
 #: neutron/agent/metadata/agent.py:261
 #: neutron/services/metering/agents/metering_agent.py:272
 msgid ""
@@ -513,7 +513,7 @@ msgid ""
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:599 neutron/agent/l3_agent.py:841
+#: neutron/agent/dhcp_agent.py:599 neutron/agent/l3_agent.py:850
 #: neutron/agent/metadata/agent.py:266
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:806
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:256
@@ -524,7 +524,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:607 neutron/agent/l3_agent.py:846
+#: neutron/agent/dhcp_agent.py:607 neutron/agent/l3_agent.py:855
 #: neutron/services/loadbalancer/drivers/haproxy/agent_manager.py:279
 #: neutron/services/metering/agents/metering_agent.py:280
 #, python-format
@@ -625,78 +625,78 @@ msgstr ""
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:628
+#: neutron/agent/l3_agent.py:637
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:633
+#: neutron/agent/l3_agent.py:642
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:641
+#: neutron/agent/l3_agent.py:650
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:645
+#: neutron/agent/l3_agent.py:654
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:652
+#: neutron/agent/l3_agent.py:661
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:700
+#: neutron/agent/l3_agent.py:709
 #, python-format
 msgid "Starting RPC loop for %d updated routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:709
+#: neutron/agent/l3_agent.py:718
 msgid "RPC loop successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:711 neutron/agent/l3_agent.py:745
+#: neutron/agent/l3_agent.py:720 neutron/agent/l3_agent.py:754
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:729
+#: neutron/agent/l3_agent.py:738
 #, python-format
 msgid "Starting _sync_routers_task - fullsync:%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:740
+#: neutron/agent/l3_agent.py:749
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:743
+#: neutron/agent/l3_agent.py:752
 msgid "_sync_routers_task successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:749
+#: neutron/agent/l3_agent.py:758
 msgid "L3 agent started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:769
+#: neutron/agent/l3_agent.py:778
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:777
+#: neutron/agent/l3_agent.py:786
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:809
+#: neutron/agent/l3_agent.py:818
 msgid "Report state task started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:833
+#: neutron/agent/l3_agent.py:842
 msgid "Report state task successfully completed"
 msgstr ""
 
@@ -1054,25 +1054,25 @@ msgstr ""
 msgid "Authentication region"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:199 neutron/agent/linux/interface.py:253
-#: neutron/agent/linux/interface.py:312 neutron/agent/linux/interface.py:361
+#: neutron/agent/linux/interface.py:202 neutron/agent/linux/interface.py:256
+#: neutron/agent/linux/interface.py:315 neutron/agent/linux/interface.py:364
 #, python-format
 msgid "Device %s already exists"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:217 neutron/agent/linux/interface.py:261
-#: neutron/agent/linux/interface.py:324 neutron/agent/linux/interface.py:368
+#: neutron/agent/linux/interface.py:220 neutron/agent/linux/interface.py:264
+#: neutron/agent/linux/interface.py:327 neutron/agent/linux/interface.py:371
 #, python-format
 msgid "Unplugged interface '%s'"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:219 neutron/agent/linux/interface.py:326
-#: neutron/agent/linux/interface.py:370
+#: neutron/agent/linux/interface.py:222 neutron/agent/linux/interface.py:329
+#: neutron/agent/linux/interface.py:373
 #, python-format
 msgid "Failed unplugging interface '%s'"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:428
+#: neutron/agent/linux/interface.py:431
 #, python-format
 msgid "Driver location: %s"
 msgstr ""
@@ -6034,7 +6034,7 @@ msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:55
 #: neutron/plugins/linuxbridge/common/config.py:66
-#: neutron/plugins/mlnx/common/config.py:55
+#: neutron/plugins/mlnx/common/config.py:62
 #: neutron/plugins/nec/common/config.py:32
 #: neutron/plugins/openvswitch/common/config.py:63
 #: neutron/plugins/ryu/common/config.py:45
@@ -6176,7 +6176,7 @@ msgid "Error in agent event loop: %s"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:376
-#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:403
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:407
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)"
 msgstr ""
@@ -6597,13 +6597,13 @@ msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:987
-#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:418
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:422
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:990
-#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:421
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:425
 #, python-format
 msgid "Interface mappings: %s"
 msgstr ""
@@ -6646,7 +6646,7 @@ msgid "List of <physical_network>:<physical_interface>"
 msgstr ""
 
 #: neutron/plugins/linuxbridge/common/config.py:69
-#: neutron/plugins/mlnx/common/config.py:58
+#: neutron/plugins/mlnx/common/config.py:65
 msgid "Enable server RPC compatibility with old agents"
 msgstr ""
 
@@ -8284,64 +8284,71 @@ msgid "Agent loop process devices!"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:396
+msgid ""
+"Request timeout in agent event loop eSwitchD is not responding - "
+"exiting..."
+msgstr ""
+
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:400
 #: neutron/plugins/nec/agent/nec_neutron_agent.py:224
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1161
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:275
 msgid "Error in agent event loop"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:426
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:430
 #, python-format
 msgid "Failed on Agent initialisation : %s. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:431
+#: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:435
 msgid "Agent initialised successfully, now running... "
-msgstr ""
-
-#: neutron/plugins/mlnx/agent/utils.py:58
-msgid "eSwitchD: Request timeout"
-msgstr ""
-
-#: neutron/plugins/mlnx/agent/utils.py:68
-#, python-format
-msgid "Action %(action)s failed: %(reason)s"
 msgstr ""
 
 #: neutron/plugins/mlnx/agent/utils.py:70
 #, python-format
+msgid "Action %(action)s failed: %(reason)s"
+msgstr ""
+
+#: neutron/plugins/mlnx/agent/utils.py:72
+#, python-format
 msgid "Unknown operation status %s"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/utils.py:75
+#: neutron/plugins/mlnx/agent/utils.py:77
 msgid "get_attached_vnics"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/utils.py:82
+#: neutron/plugins/mlnx/agent/utils.py:84
 #, python-format
 msgid ""
 "Set Vlan  %(segmentation_id)s on Port %(port_mac)s on Fabric "
 "%(physical_network)s"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/utils.py:95
+#: neutron/plugins/mlnx/agent/utils.py:97
 #, python-format
 msgid "Define Fabric %(fabric)s on interface %(ifc)s"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/utils.py:104
+#: neutron/plugins/mlnx/agent/utils.py:106
 #, python-format
 msgid "Port Up for %(port_mac)s on fabric %(fabric)s"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/utils.py:113
+#: neutron/plugins/mlnx/agent/utils.py:115
 #, python-format
 msgid "Port Down for %(port_mac)s on fabric %(fabric)s"
 msgstr ""
 
-#: neutron/plugins/mlnx/agent/utils.py:122
+#: neutron/plugins/mlnx/agent/utils.py:124
 #, python-format
 msgid "Port Release for %(port_mac)s on fabric %(fabric)s"
+msgstr ""
+
+#: neutron/plugins/mlnx/common/comm_utils.py:59
+#, python-format
+msgid "Request timeout - call again after %s seconds"
 msgstr ""
 
 #: neutron/plugins/mlnx/common/config.py:28
@@ -8362,9 +8369,30 @@ msgid ""
 " daemon."
 msgstr ""
 
+#: neutron/plugins/mlnx/common/config.py:52
+msgid ""
+"The number of retries the agent will send request to daemon before giving"
+" up"
+msgstr ""
+
+#: neutron/plugins/mlnx/common/config.py:55
+msgid ""
+"backoff rate multiplier for waiting period between retries for request to"
+" daemon, i.e. value of 2 will  double the request timeout each retry"
+msgstr ""
+
 #: neutron/plugins/mlnx/common/exceptions.py:22
 #, python-format
 msgid "Mlnx Exception: %(err_msg)s"
+msgstr ""
+
+#: neutron/plugins/mlnx/common/exceptions.py:26
+msgid "Request Timeout: no response from eSwitchD"
+msgstr ""
+
+#: neutron/plugins/mlnx/common/exceptions.py:30
+#, python-format
+msgid "Operation Failed: %(err_msg)s"
 msgstr ""
 
 #: neutron/plugins/mlnx/db/mlnx_db_v2.py:47
@@ -13709,5 +13737,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Error in REST call to remote network controller"
+#~ msgstr ""
+
+#~ msgid "eSwitchD: Request timeout"
 #~ msgstr ""
 
