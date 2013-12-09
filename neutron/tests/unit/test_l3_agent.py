@@ -582,6 +582,61 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self._verify_snat_rules(nat_rules_delta, router, negate=True)
         self.send_arp.assert_called_once()
 
+    def test_process_router_internal_network_added_unexpected_error(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data()
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        with mock.patch.object(
+                l3_agent.L3NATAgent,
+                'internal_network_added') as internal_network_added:
+            # raise RuntimeError to simulate that an unexpected exception
+            # occurrs
+            internal_network_added.side_effect = RuntimeError
+            self.assertRaises(RuntimeError, agent.process_router, ri)
+            self.assertNotIn(
+                router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
+
+            # The unexpected exception has been fixed manually
+            internal_network_added.side_effect = None
+
+            # _sync_routers_task finds out that _rpc_loop failed to process the
+            # router last time, it will retry in the next run.
+            agent.process_router(ri)
+            # We were able to add the port to ri.internal_ports
+            self.assertIn(
+                router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
+
+    def test_process_router_internal_network_removed_unexpected_error(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data()
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        # add an internal port
+        agent.process_router(ri)
+
+        with mock.patch.object(
+                l3_agent.L3NATAgent,
+                'internal_network_removed') as internal_net_removed:
+            # raise RuntimeError to simulate that an unexpected exception
+            # occurrs
+            internal_net_removed.side_effect = RuntimeError
+            ri.internal_ports[0]['admin_state_up'] = False
+            # The above port is set to down state, remove it.
+            self.assertRaises(RuntimeError, agent.process_router, ri)
+            self.assertIn(
+                router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
+
+            # The unexpected exception has been fixed manually
+            internal_net_removed.side_effect = None
+
+            # _sync_routers_task finds out that _rpc_loop failed to process the
+            # router last time, it will retry in the next run.
+            agent.process_router(ri)
+            # We were able to remove the port from ri.internal_ports
+            self.assertNotIn(
+                router[l3_constants.INTERFACE_KEY][0], ri.internal_ports)
+
     def test_handle_router_snat_rules_add_back_jump(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         ri = mock.MagicMock()
