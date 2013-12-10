@@ -20,26 +20,68 @@ import shutil
 import socket
 
 import netaddr
+from oslo.config import cfg
 
+from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
+from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer import constants as lb_const
+from neutron.services.loadbalancer.drivers import agent_device_driver
 from neutron.services.loadbalancer.drivers.haproxy import cfg as hacfg
 
 LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qlbaas-'
+DRIVER_NAME = 'haproxy_ns'
+
+ACTIVE_PENDING = (
+    constants.ACTIVE,
+    constants.PENDING_CREATE,
+    constants.PENDING_UPDATE
+)
+
+STATE_PATH_DEFAULT = '$state_path/lbaas'
+USER_GROUP_DEFAULT = 'nogroup'
+OPTS = [
+    cfg.StrOpt(
+        'loadbalancer_state_path',
+        default=STATE_PATH_DEFAULT,
+        help=_('Location to store config and state files'),
+        deprecated_opts=[cfg.DeprecatedOpt('loadbalancer_state_path')],
+    ),
+    cfg.StrOpt(
+        'user_group',
+        default=USER_GROUP_DEFAULT,
+        help=_('The user group'),
+        deprecated_opts=[cfg.DeprecatedOpt('user_group')],
+    )
+]
+cfg.CONF.register_opts(OPTS, 'haproxy')
 
 
-class HaproxyNSDriver(object):
-    def __init__(self, root_helper, state_path, vif_driver, vip_plug_callback):
-        self.root_helper = root_helper
-        self.state_path = state_path
+class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
+    def __init__(self, conf, plugin_rpc):
+        self.conf = conf
+        self.root_helper = config.get_root_helper(conf)
+        self.state_path = conf.haproxy.loadbalancer_state_path
+        try:
+            vif_driver = importutils.import_object(conf.interface_driver, conf)
+        except ImportError:
+            msg = (_('Error importing interface driver: %s')
+                   % conf.haproxy.interface_driver)
+            LOG.error(msg)
+            raise
+
         self.vif_driver = vif_driver
-        self.vip_plug_callback = vip_plug_callback
+        self.plugin_rpc = plugin_rpc
         self.pool_to_port_id = {}
+
+    @classmethod
+    def get_name(cls):
+        return DRIVER_NAME
 
     def create(self, logical_config):
         pool_id = logical_config['pool']['id']
@@ -62,8 +104,9 @@ class HaproxyNSDriver(object):
         conf_path = self._get_state_file_path(pool_id, 'conf')
         pid_path = self._get_state_file_path(pool_id, 'pid')
         sock_path = self._get_state_file_path(pool_id, 'sock')
+        user_group = self.conf.haproxy.user_group
 
-        hacfg.save_config(conf_path, logical_config, sock_path)
+        hacfg.save_config(conf_path, logical_config, sock_path, user_group)
         cmd = ['haproxy', '-f', conf_path, '-p', pid_path]
         cmd.extend(extra_cmd_args)
 
@@ -73,7 +116,7 @@ class HaproxyNSDriver(object):
         # remember the pool<>port mapping
         self.pool_to_port_id[pool_id] = logical_config['vip']['port']['id']
 
-    def destroy(self, pool_id):
+    def undeploy_instance(self, pool_id):
         namespace = get_ns_name(pool_id)
         ns = ip_lib.IPWrapper(self.root_helper, namespace)
         pid_path = self._get_state_file_path(pool_id, 'pid')
@@ -176,9 +219,6 @@ class HaproxyNSDriver(object):
 
         return res_stats
 
-    def remove_orphans(self, known_pool_ids):
-        raise NotImplementedError()
-
     def _get_state_file_path(self, pool_id, kind, ensure_state_dir=True):
         """Returns the file name for a given kind of config file."""
         confs_dir = os.path.abspath(os.path.normpath(self.state_path))
@@ -189,7 +229,7 @@ class HaproxyNSDriver(object):
         return os.path.join(conf_dir, kind)
 
     def _plug(self, namespace, port, reuse_existing=True):
-        self.vip_plug_callback('plug', port)
+        self.plugin_rpc.plug_vip_port(port['id'])
         interface_name = self.vif_driver.get_device_name(Wrap(port))
 
         if ip_lib.device_exists(interface_name, self.root_helper, namespace):
@@ -222,9 +262,66 @@ class HaproxyNSDriver(object):
 
     def _unplug(self, namespace, port_id):
         port_stub = {'id': port_id}
-        self.vip_plug_callback('unplug', port_stub)
+        self.plugin_rpc.unplug_vip_port(port_id)
         interface_name = self.vif_driver.get_device_name(Wrap(port_stub))
         self.vif_driver.unplug(interface_name, namespace=namespace)
+
+    def deploy_instance(self, logical_config):
+        # do actual deploy only if vip is configured and active
+        if ('vip' not in logical_config or
+            logical_config['vip']['status'] not in ACTIVE_PENDING or
+            not logical_config['vip']['admin_state_up']):
+            return
+
+        if self.exists(logical_config['pool']['id']):
+            self.update(logical_config)
+        else:
+            self.create(logical_config)
+
+    def _refresh_device(self, pool_id):
+        logical_config = self.plugin_rpc.get_logical_device(pool_id)
+        self.deploy_instance(logical_config)
+
+    def create_vip(self, vip):
+        self._refresh_device(vip['pool_id'])
+
+    def update_vip(self, old_vip, vip):
+        self._refresh_device(vip['pool_id'])
+
+    def delete_vip(self, vip):
+        self.undeploy_instance(vip['pool_id'])
+
+    def create_pool(self, pool):
+        # nothing to do here because a pool needs a vip to be useful
+        pass
+
+    def update_pool(self, old_pool, pool):
+        self._refresh_device(pool['id'])
+
+    def delete_pool(self, pool):
+        # delete_pool may be called before vip deletion in case
+        # pool's admin state set to down
+        if self.exists(pool['id']):
+            self.undeploy_instance(pool['id'])
+
+    def create_member(self, member):
+        self._refresh_device(member['pool_id'])
+
+    def update_member(self, old_member, member):
+        self._refresh_device(member['pool_id'])
+
+    def delete_member(self, member):
+        self._refresh_device(member['pool_id'])
+
+    def create_pool_health_monitor(self, health_monitor, pool_id):
+        self._refresh_device(pool_id)
+
+    def update_pool_health_monitor(self, old_health_monitor, health_monitor,
+                                   pool_id):
+        self._refresh_device(pool_id)
+
+    def delete_pool_health_monitor(self, health_monitor, pool_id):
+        self._refresh_device(pool_id)
 
 
 # NOTE (markmcclain) For compliance with interface.py which expects objects

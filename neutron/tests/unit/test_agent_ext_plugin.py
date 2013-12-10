@@ -116,9 +116,7 @@ class AgentDBTestMixIn(object):
             'binary': 'neutron-loadbalancer-agent',
             'host': LBAAS_HOSTA,
             'topic': 'LOADBALANCER_AGENT',
-            'configurations': {'device_driver': 'device_driver',
-                               'interface_driver': 'interface_driver',
-                               },
+            'configurations': {'device_drivers': ['haproxy_ns']},
             'agent_type': constants.AGENT_TYPE_LOADBALANCER}
         lbaas_hostb = copy.deepcopy(lbaas_hosta)
         lbaas_hostb['host'] = LBAAS_HOSTB

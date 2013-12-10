@@ -16,152 +16,100 @@
 #
 # @author: Mark McClain, DreamHost
 
-import weakref
-
 from oslo.config import cfg
 
-from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
-from neutron.common import constants
+from neutron.common import constants as n_const
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
+from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers.haproxy import (
     agent_api,
     plugin_driver
 )
 
 LOG = logging.getLogger(__name__)
-NS_PREFIX = 'qlbaas-'
 
 OPTS = [
-    cfg.StrOpt(
+    cfg.MultiStrOpt(
         'device_driver',
-        default=('neutron.services.loadbalancer.drivers'
-                 '.haproxy.namespace_driver.HaproxyNSDriver'),
-        help=_('The driver used to manage the loadbalancing device'),
-    ),
-    cfg.StrOpt(
-        'loadbalancer_state_path',
-        default='$state_path/lbaas',
-        help=_('Location to store config and state files'),
+        default=['neutron.services.loadbalancer.drivers'
+                 '.haproxy.namespace_driver.HaproxyNSDriver'],
+        help=_('Drivers used to manage loadbalancing devices'),
     ),
     cfg.StrOpt(
         'interface_driver',
         help=_('The driver used to manage the virtual interface')
     ),
-    cfg.StrOpt(
-        'user_group',
-        default='nogroup',
-        help=_('The user group'),
-    ),
 ]
 
 
-class LogicalDeviceCache(object):
-    """Manage a cache of known devices."""
-
-    class Device(object):
-        """Inner classes used to hold values for weakref lookups."""
-        def __init__(self, port_id, pool_id):
-            self.port_id = port_id
-            self.pool_id = pool_id
-
-        def __eq__(self, other):
-            return self.__dict__ == other.__dict__
-
-        def __hash__(self):
-            return hash((self.port_id, self.pool_id))
-
-    def __init__(self):
-        self.devices = set()
-        self.port_lookup = weakref.WeakValueDictionary()
-        self.pool_lookup = weakref.WeakValueDictionary()
-
-    def put(self, device):
-        port_id = device['vip']['port_id']
-        pool_id = device['pool']['id']
-        d = self.Device(device['vip']['port_id'], device['pool']['id'])
-        if d not in self.devices:
-            self.devices.add(d)
-            self.port_lookup[port_id] = d
-            self.pool_lookup[pool_id] = d
-
-    def remove(self, device):
-        if not isinstance(device, self.Device):
-            device = self.Device(
-                device['vip']['port_id'], device['pool']['id']
-            )
-        if device in self.devices:
-            self.devices.remove(device)
-
-    def remove_by_pool_id(self, pool_id):
-        d = self.pool_lookup.get(pool_id)
-        if d:
-            self.devices.remove(d)
-
-    def get_by_pool_id(self, pool_id):
-        return self.pool_lookup.get(pool_id)
-
-    def get_by_port_id(self, port_id):
-        return self.port_lookup.get(port_id)
-
-    def get_pool_ids(self):
-        return self.pool_lookup.keys()
+class DeviceNotFoundOnAgent(n_exc.NotFound):
+    msg = _('Unknown device with pool_id %(pool_id)s')
 
 
 class LbaasAgentManager(periodic_task.PeriodicTasks):
 
+    RPC_API_VERSION = '2.0'
     # history
     #   1.0 Initial version
     #   1.1 Support agent_updated call
-    RPC_API_VERSION = '1.1'
+    #   2.0 Generic API for agent based drivers
+    #       - modify/reload/destroy_pool methods were removed;
+    #       - added methods to handle create/update/delete for every lbaas
+    #       object individually;
 
     def __init__(self, conf):
         self.conf = conf
-        try:
-            vif_driver = importutils.import_object(conf.interface_driver, conf)
-        except ImportError:
-            msg = _('Error importing interface driver: %s')
-            raise SystemExit(msg % conf.interface_driver)
-
-        try:
-            self.driver = importutils.import_object(
-                conf.device_driver,
-                config.get_root_helper(self.conf),
-                conf.loadbalancer_state_path,
-                vif_driver,
-                self._vip_plug_callback
-            )
-        except ImportError:
-            msg = _('Error importing loadbalancer device driver: %s')
-            raise SystemExit(msg % conf.device_driver)
+        self.context = context.get_admin_context_without_session()
+        self.plugin_rpc = agent_api.LbaasAgentApi(
+            plugin_driver.TOPIC_LOADBALANCER_PLUGIN,
+            self.context,
+            self.conf.host
+        )
+        self._load_drivers()
 
         self.agent_state = {
             'binary': 'neutron-lbaas-agent',
             'host': conf.host,
             'topic': plugin_driver.TOPIC_LOADBALANCER_AGENT,
-            'configurations': {'device_driver': conf.device_driver,
-                               'interface_driver': conf.interface_driver},
-            'agent_type': constants.AGENT_TYPE_LOADBALANCER,
+            'configurations': {'device_drivers': self.device_drivers.keys()},
+            'agent_type': n_const.AGENT_TYPE_LOADBALANCER,
             'start_flag': True}
         self.admin_state_up = True
 
-        self.context = context.get_admin_context_without_session()
-        self._setup_rpc()
+        self._setup_state_rpc()
         self.needs_resync = False
-        self.cache = LogicalDeviceCache()
+        # pool_id->device_driver_name mapping used to store known instances
+        self.instance_mapping = {}
 
-    def _setup_rpc(self):
-        self.plugin_rpc = agent_api.LbaasAgentApi(
-            plugin_driver.TOPIC_PROCESS_ON_HOST,
-            self.context,
-            self.conf.host
-        )
+    def _load_drivers(self):
+        self.device_drivers = {}
+        for driver in self.conf.device_driver:
+            try:
+                driver_inst = importutils.import_object(
+                    driver,
+                    self.conf,
+                    self.plugin_rpc
+                )
+            except ImportError:
+                msg = _('Error importing loadbalancer device driver: %s')
+                raise SystemExit(msg % driver)
+
+            driver_name = driver_inst.get_name()
+            if driver_name not in self.device_drivers:
+                self.device_drivers[driver_name] = driver_inst
+            else:
+                msg = _('Multiple device drivers with the same name found: %s')
+                raise SystemExit(msg % driver_name)
+
+    def _setup_state_rpc(self):
         self.state_rpc = agent_rpc.PluginReportStateAPI(
-            plugin_driver.TOPIC_PROCESS_ON_HOST)
+            plugin_driver.TOPIC_LOADBALANCER_PLUGIN)
         report_interval = self.conf.AGENT.report_interval
         if report_interval:
             heartbeat = loopingcall.FixedIntervalLoopingCall(
@@ -170,8 +118,8 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
 
     def _report_state(self):
         try:
-            device_count = len(self.cache.devices)
-            self.agent_state['configurations']['devices'] = device_count
+            instance_count = len(self.instance_mapping)
+            self.agent_state['configurations']['instances'] = instance_count
             self.state_rpc.report_state(self.context,
                                         self.agent_state)
             self.agent_state.pop('start_flag', None)
@@ -189,31 +137,26 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
 
     @periodic_task.periodic_task(spacing=6)
     def collect_stats(self, context):
-        for pool_id in self.cache.get_pool_ids():
+        for pool_id, driver_name in self.instance_mapping.items():
+            driver = self.device_drivers[driver_name]
             try:
-                stats = self.driver.get_stats(pool_id)
+                stats = driver.get_stats(pool_id)
                 if stats:
                     self.plugin_rpc.update_pool_stats(pool_id, stats)
             except Exception:
                 LOG.exception(_('Error upating stats'))
                 self.needs_resync = True
 
-    def _vip_plug_callback(self, action, port):
-        if action == 'plug':
-            self.plugin_rpc.plug_vip_port(port['id'])
-        elif action == 'unplug':
-            self.plugin_rpc.unplug_vip_port(port['id'])
-
     def sync_state(self):
-        known_devices = set(self.cache.get_pool_ids())
+        known_instances = set(self.instance_mapping.keys())
         try:
-            ready_logical_devices = set(self.plugin_rpc.get_ready_devices())
+            ready_instances = set(self.plugin_rpc.get_ready_devices())
 
-            for deleted_id in known_devices - ready_logical_devices:
-                self.destroy_device(deleted_id)
+            for deleted_id in known_instances - ready_instances:
+                self._destroy_pool(deleted_id)
 
-            for pool_id in ready_logical_devices:
-                self.refresh_device(pool_id)
+            for pool_id in ready_instances:
+                self._reload_pool(pool_id)
 
         except Exception:
             LOG.exception(_('Unable to retrieve ready devices'))
@@ -221,51 +164,168 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
 
         self.remove_orphans()
 
-    def refresh_device(self, pool_id):
+    def _get_driver(self, pool_id):
+        if pool_id not in self.instance_mapping:
+            raise DeviceNotFoundOnAgent(pool_id=pool_id)
+
+        driver_name = self.instance_mapping[pool_id]
+        return self.device_drivers[driver_name]
+
+    def _reload_pool(self, pool_id):
         try:
             logical_config = self.plugin_rpc.get_logical_device(pool_id)
+            driver_name = logical_config['driver']
+            if driver_name not in self.device_drivers:
+                LOG.error(_('No device driver '
+                            'on agent: %s.'), driver_name)
+                self.plugin_rpc.update_status(
+                    'pool', pool_id, constants.ERROR)
+                return
 
-            if self.driver.exists(pool_id):
-                self.driver.update(logical_config)
-            else:
-                self.driver.create(logical_config)
-            self.cache.put(logical_config)
+            self.device_drivers[driver_name].deploy_instance(logical_config)
+            self.instance_mapping[pool_id] = driver_name
+            self.plugin_rpc.pool_deployed(pool_id)
         except Exception:
-            LOG.exception(_('Unable to refresh device for pool: %s'), pool_id)
+            LOG.exception(_('Unable to deploy instance for pool: %s'), pool_id)
             self.needs_resync = True
 
-    def destroy_device(self, pool_id):
-        device = self.cache.get_by_pool_id(pool_id)
-        if not device:
-            return
+    def _destroy_pool(self, pool_id):
+        driver = self._get_driver(pool_id)
         try:
-            self.driver.destroy(pool_id)
+            driver.undeploy_instance(pool_id)
+            del self.instance_mapping[pool_id]
             self.plugin_rpc.pool_destroyed(pool_id)
         except Exception:
             LOG.exception(_('Unable to destroy device for pool: %s'), pool_id)
             self.needs_resync = True
-        self.cache.remove(device)
 
     def remove_orphans(self):
+        for driver_name in self.device_drivers:
+            pool_ids = [pool_id for pool_id in self.instance_mapping
+                        if self.instance_mapping[pool_id] == driver_name]
+            try:
+                self.device_drivers[driver_name].remove_orphans(pool_ids)
+            except NotImplementedError:
+                pass  # Not all drivers will support this
+
+    def _handle_failed_driver_call(self, operation, obj_type, obj_id, driver):
+        LOG.exception(_('%(operation)s %(obj)s %(id)s failed on device driver '
+                        '%(driver)s'),
+                      {'operation': operation.capitalize(), 'obj': obj_type,
+                       'id': obj_id, 'driver': driver})
+        self.plugin_rpc.update_status(obj_type, obj_id, constants.ERROR)
+
+    def create_vip(self, context, vip):
+        driver = self._get_driver(vip['pool_id'])
         try:
-            self.driver.remove_orphans(self.cache.get_pool_ids())
-        except NotImplementedError:
-            pass  # Not all drivers will support this
+            driver.create_vip(vip)
+        except Exception:
+            self._handle_failed_driver_call('create', 'vip', vip['id'],
+                                            driver.get_name())
+        else:
+            self.plugin_rpc.update_status('vip', vip['id'], constants.ACTIVE)
 
-    def reload_pool(self, context, pool_id=None, host=None):
-        """Handle RPC cast from plugin to reload a pool."""
-        if pool_id:
-            self.refresh_device(pool_id)
+    def update_vip(self, context, old_vip, vip):
+        driver = self._get_driver(vip['pool_id'])
+        try:
+            driver.update_vip(old_vip, vip)
+        except Exception:
+            self._handle_failed_driver_call('update', 'vip', vip['id'],
+                                            driver.get_name())
+        else:
+            self.plugin_rpc.update_status('vip', vip['id'], constants.ACTIVE)
 
-    def modify_pool(self, context, pool_id=None, host=None):
-        """Handle RPC cast from plugin to modify a pool if known to agent."""
-        if self.cache.get_by_pool_id(pool_id):
-            self.refresh_device(pool_id)
+    def delete_vip(self, context, vip):
+        driver = self._get_driver(vip['pool_id'])
+        driver.delete_vip(vip)
 
-    def destroy_pool(self, context, pool_id=None, host=None):
-        """Handle RPC cast from plugin to destroy a pool if known to agent."""
-        if self.cache.get_by_pool_id(pool_id):
-            self.destroy_device(pool_id)
+    def create_pool(self, context, pool, driver_name):
+        if driver_name not in self.device_drivers:
+            LOG.error(_('No device driver on agent: %s.'), driver_name)
+            self.plugin_rpc.update_status('pool', pool['id'], constants.ERROR)
+            return
+
+        driver = self.device_drivers[driver_name]
+        try:
+            driver.create_pool(pool)
+        except Exception:
+            self._handle_failed_driver_call('create', 'pool', pool['id'],
+                                            driver.get_name())
+        else:
+            self.instance_mapping[pool['id']] = driver_name
+            self.plugin_rpc.update_status('pool', pool['id'], constants.ACTIVE)
+
+    def update_pool(self, context, old_pool, pool):
+        driver = self._get_driver(pool['id'])
+        try:
+            driver.update_pool(old_pool, pool)
+        except Exception:
+            self._handle_failed_driver_call('update', 'pool', pool['id'],
+                                            driver.get_name())
+        else:
+            self.plugin_rpc.update_status('pool', pool['id'], constants.ACTIVE)
+
+    def delete_pool(self, context, pool):
+        driver = self._get_driver(pool['id'])
+        driver.delete_pool(pool)
+        del self.instance_mapping[pool['id']]
+
+    def create_member(self, context, member):
+        driver = self._get_driver(member['pool_id'])
+        try:
+            driver.create_member(member)
+        except Exception:
+            self._handle_failed_driver_call('create', 'member', member['id'],
+                                            driver.get_name())
+        else:
+            self.plugin_rpc.update_status('member', member['id'],
+                                          constants.ACTIVE)
+
+    def update_member(self, context, old_member, member):
+        driver = self._get_driver(member['pool_id'])
+        try:
+            driver.update_member(old_member, member)
+        except Exception:
+            self._handle_failed_driver_call('update', 'member', member['id'],
+                                            driver.get_name())
+        else:
+            self.plugin_rpc.update_status('member', member['id'],
+                                          constants.ACTIVE)
+
+    def delete_member(self, context, member):
+        driver = self._get_driver(member['pool_id'])
+        driver.delete_member(member)
+
+    def create_pool_health_monitor(self, context, health_monitor, pool_id):
+        driver = self._get_driver(pool_id)
+        assoc_id = {'pool_id': pool_id, 'monitor_id': health_monitor['id']}
+        try:
+            driver.create_pool_health_monitor(health_monitor, pool_id)
+        except Exception:
+            self._handle_failed_driver_call(
+                'create', 'health_monitor', assoc_id, driver.get_name())
+        else:
+            self.plugin_rpc.update_status(
+                'health_monitor', assoc_id, constants.ACTIVE)
+
+    def update_pool_health_monitor(self, context, old_health_monitor,
+                                   health_monitor, pool_id):
+        driver = self._get_driver(pool_id)
+        assoc_id = {'pool_id': pool_id, 'monitor_id': health_monitor['id']}
+        try:
+            driver.update_pool_health_monitor(old_health_monitor,
+                                              health_monitor,
+                                              pool_id)
+        except Exception:
+            self._handle_failed_driver_call(
+                'update', 'health_monitor', assoc_id, driver.get_name())
+        else:
+            self.plugin_rpc.update_status(
+                'health_monitor', assoc_id, constants.ACTIVE)
+
+    def delete_pool_health_monitor(self, context, health_monitor, pool_id):
+        driver = self._get_driver(pool_id)
+        driver.delete_pool_health_monitor(health_monitor, pool_id)
 
     def agent_updated(self, context, payload):
         """Handle the agent_updated notification event."""
@@ -274,6 +334,8 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
             if self.admin_state_up:
                 self.needs_resync = True
             else:
-                for pool_id in self.cache.get_pool_ids():
-                    self.destroy_device(pool_id)
-            LOG.info(_("agent_updated by server side %s!"), payload)
+                for pool_id in self.instance_mapping.keys():
+                    LOG.info(_("Destroying pool %s due to agent disabling"),
+                             pool_id)
+                    self._destroy_pool(pool_id)
+            LOG.info(_("Agent_updated by server side %s!"), payload)

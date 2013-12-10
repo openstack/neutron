@@ -21,7 +21,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron import context
-from neutron.db import servicetype_db as sdb
+from neutron.db import servicetype_db as st_db
 from neutron.extensions import agent
 from neutron.extensions import lbaas_agentscheduler
 from neutron import manager
@@ -79,8 +79,8 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
               'HaproxyOnHostPluginDriver:default')],
             'service_providers')
 
-        #force service type manager to reload configuration:
-        sdb.ServiceTypeManager._instance = None
+        # need to reload provider configuration
+        st_db.ServiceTypeManager._instance = None
 
         super(LBaaSAgentSchedulerTestCase, self).setUp(
             self.plugin_str, service_plugins=service_plugins)
@@ -122,8 +122,7 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
             'binary': 'neutron-loadbalancer-agent',
             'host': LBAAS_HOSTA,
             'topic': 'LOADBALANCER_AGENT',
-            'configurations': {'device_driver': 'device_driver',
-                               'interface_driver': 'interface_driver'},
+            'configurations': {'device_drivers': ['haproxy_ns']},
             'agent_type': constants.AGENT_TYPE_LOADBALANCER}
         self._register_one_agent_state(lbaas_hosta)
         with self.pool() as pool:
@@ -150,8 +149,7 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
             'binary': 'neutron-loadbalancer-agent',
             'host': LBAAS_HOSTA,
             'topic': 'LOADBALANCER_AGENT',
-            'configurations': {'device_driver': 'device_driver',
-                               'interface_driver': 'interface_driver'},
+            'configurations': {'device_drivers': ['haproxy_ns']},
             'agent_type': constants.AGENT_TYPE_LOADBALANCER}
         self._register_one_agent_state(lbaas_hosta)
         is_agent_down_str = 'neutron.db.agents_db.AgentDbMixin.is_agent_down'

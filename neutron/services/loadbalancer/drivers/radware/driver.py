@@ -285,9 +285,9 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         # Anything to do here? the hm is not connected to the graph yet
         pass
 
-    def update_health_monitor(self, context, old_health_monitor,
-                              health_monitor,
-                              pool_id):
+    def update_pool_health_monitor(self, context, old_health_monitor,
+                                   health_monitor,
+                                   pool_id):
         self._handle_pool_health_monitor(context, health_monitor, pool_id)
 
     def create_pool_health_monitor(self, context,

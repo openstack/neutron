@@ -79,11 +79,19 @@ class LbaasAgentSchedulerDbMixin(agentschedulers_db.AgentSchedulerDbMixin,
         else:
             return {'pools': []}
 
+    def get_lbaas_agent_candidates(self, device_driver, active_agents):
+        candidates = []
+        for agent in active_agents:
+            agent_conf = self.get_configuration_dict(agent)
+            if device_driver in agent_conf['device_drivers']:
+                candidates.append(agent)
+        return candidates
+
 
 class ChanceScheduler(object):
     """Allocate a loadbalancer agent for a vip in a random way."""
 
-    def schedule(self, plugin, context, pool):
+    def schedule(self, plugin, context, pool, device_driver):
         """Schedule the pool to an active loadbalancer agent if there
         is no enabled agent hosting it.
         """
@@ -97,9 +105,16 @@ class ChanceScheduler(object):
                            'agent_id': lbaas_agent['id']})
                 return
 
-            candidates = plugin.get_lbaas_agents(context, active=True)
-            if not candidates:
+            active_agents = plugin.get_lbaas_agents(context, active=True)
+            if not active_agents:
                 LOG.warn(_('No active lbaas agents for pool %s'), pool['id'])
+                return
+
+            candidates = plugin.get_lbaas_agent_candidates(device_driver,
+                                                           active_agents)
+            if not candidates:
+                LOG.warn(_('No lbaas agent supporting device driver %s'),
+                         device_driver)
                 return
 
             chosen_agent = random.choice(candidates)

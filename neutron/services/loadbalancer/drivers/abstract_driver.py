@@ -107,10 +107,10 @@ class LoadBalancerAbstractDriver(object):
         pass
 
     @abc.abstractmethod
-    def update_health_monitor(self, context,
-                              old_health_monitor,
-                              health_monitor,
-                              pool_id):
+    def update_pool_health_monitor(self, context,
+                                   old_health_monitor,
+                                   health_monitor,
+                                   pool_id):
         pass
 
     @abc.abstractmethod

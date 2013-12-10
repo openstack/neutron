@@ -102,9 +102,9 @@ class NoopLbaaSDriver(abstract_driver.LoadBalancerAbstractDriver):
     def delete_member(self, context, member):
         self.plugin._delete_db_member(context, member["id"])
 
-    def update_health_monitor(self, context, old_health_monitor,
-                              health_monitor,
-                              pool_association):
+    def update_pool_health_monitor(self, context, old_health_monitor,
+                                   health_monitor,
+                                   pool_association):
         pass
 
     def create_pool_health_monitor(self, context,

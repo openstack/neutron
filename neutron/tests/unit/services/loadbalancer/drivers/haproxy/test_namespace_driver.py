@@ -17,6 +17,7 @@
 # @author: Mark McClain, DreamHost
 
 import contextlib
+
 import mock
 
 from neutron.common import exceptions
@@ -29,21 +30,32 @@ from neutron.tests import base
 class TestHaproxyNSDriver(base.BaseTestCase):
     def setUp(self):
         super(TestHaproxyNSDriver, self).setUp()
+        self.addCleanup(mock.patch.stopall)
 
-        self.vif_driver = mock.Mock()
-        self.vip_plug_callback = mock.Mock()
+        conf = mock.Mock()
+        conf.haproxy.loadbalancer_state_path = '/the/path'
+        conf.interface_driver = 'intdriver'
+        conf.haproxy.user_group = 'test_group'
+        conf.AGENT.root_helper = 'sudo_test'
+        self.mock_importer = mock.patch.object(namespace_driver,
+                                               'importutils').start()
 
+        self.rpc_mock = mock.Mock()
         self.driver = namespace_driver.HaproxyNSDriver(
-            'sudo',
-            '/the/path',
-            self.vif_driver,
-            self.vip_plug_callback
+            conf,
+            self.rpc_mock
         )
+        self.vif_driver = mock.Mock()
+        self.driver.vif_driver = self.vif_driver
 
         self.fake_config = {
             'pool': {'id': 'pool_id'},
-            'vip': {'id': 'vip_id', 'port': {'id': 'port_id'}}
+            'vip': {'id': 'vip_id', 'port': {'id': 'port_id'},
+                    'status': 'ACTIVE', 'admin_state_up': True}
         }
+
+    def test_get_name(self):
+        self.assertEqual(self.driver.get_name(), namespace_driver.DRIVER_NAME)
 
     def test_create(self):
         with mock.patch.object(self.driver, '_plug') as plug:
@@ -78,14 +90,15 @@ class TestHaproxyNSDriver(base.BaseTestCase):
 
             self.driver._spawn(self.fake_config)
 
-            mock_save.assert_called_once_with('conf', self.fake_config, 'sock')
+            mock_save.assert_called_once_with('conf', self.fake_config,
+                                              'sock', 'test_group')
             cmd = ['haproxy', '-f', 'conf', '-p', 'pid']
             ip_wrap.assert_has_calls([
-                mock.call('sudo', 'qlbaas-pool_id'),
+                mock.call('sudo_test', 'qlbaas-pool_id'),
                 mock.call().netns.execute(cmd)
             ])
 
-    def test_destroy(self):
+    def test_undeploy_instance(self):
         with contextlib.nested(
             mock.patch.object(self.driver, '_get_state_file_path'),
             mock.patch.object(namespace_driver, 'kill_pids_in_file'),
@@ -99,14 +112,14 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             self.driver.pool_to_port_id['pool_id'] = 'port_id'
             isdir.return_value = True
 
-            self.driver.destroy('pool_id')
+            self.driver.undeploy_instance('pool_id')
 
-            kill.assert_called_once_with('sudo', '/pool/pid')
+            kill.assert_called_once_with('sudo_test', '/pool/pid')
             unplug.assert_called_once_with('qlbaas-pool_id', 'port_id')
-            isdir.called_once_with('/pool')
+            isdir.assert_called_once_with('/pool')
             rmtree.assert_called_once_with('/pool')
             ip_wrap.assert_has_calls([
-                mock.call('sudo', 'qlbaas-pool_id'),
+                mock.call('sudo_test', 'qlbaas-pool_id'),
                 mock.call().garbage_collect_namespace()
             ])
 
@@ -125,7 +138,7 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             self.driver.exists('pool_id')
 
             ip_wrap.assert_has_calls([
-                mock.call('sudo'),
+                mock.call('sudo_test'),
                 mock.call().netns.exists('qlbaas-pool_id')
             ])
 
@@ -220,7 +233,8 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             ip_net.prefixlen = 24
 
             self.driver._plug('test_ns', test_port)
-            self.vip_plug_callback.assert_called_once_with('plug', test_port)
+            self.rpc_mock.plug_vip_port.assert_called_once_with(
+                test_port['id'])
             self.assertTrue(dev_exists.called)
             self.vif_driver.plug.assert_called_once_with('net_id', 'port_id',
                                                          'test_interface',
@@ -232,7 +246,7 @@ class TestHaproxyNSDriver(base.BaseTestCase):
                                                             'test_ns')
             cmd = ['route', 'add', 'default', 'gw', '10.0.0.1']
             ip_wrap.assert_has_calls([
-                mock.call('sudo', namespace='test_ns'),
+                mock.call('sudo_test', namespace='test_ns'),
                 mock.call().netns.execute(cmd, check_exit_code=False),
             ])
 
@@ -257,7 +271,8 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             ip_net.prefixlen = 24
 
             self.driver._plug('test_ns', test_port)
-            self.vip_plug_callback.assert_called_once_with('plug', test_port)
+            self.rpc_mock.plug_vip_port.assert_called_once_with(
+                test_port['id'])
             self.assertTrue(dev_exists.called)
             self.vif_driver.plug.assert_called_once_with('net_id', 'port_id',
                                                          'test_interface',
@@ -276,8 +291,7 @@ class TestHaproxyNSDriver(base.BaseTestCase):
         self.vif_driver.get_device_name.return_value = 'test_interface'
 
         self.driver._unplug('test_ns', 'port_id')
-        self.vip_plug_callback.assert_called_once_with('unplug',
-                                                       {'id': 'port_id'})
+        self.rpc_mock.unplug_vip_port.assert_called_once_with('port_id')
         self.vif_driver.unplug('test_interface', namespace='test_ns')
 
     def test_kill_pids_in_file(self):
@@ -293,20 +307,130 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             file_mock.__iter__.return_value = iter(['123'])
 
             path_exists.return_value = False
-            namespace_driver.kill_pids_in_file('sudo', 'test_path')
+            namespace_driver.kill_pids_in_file('sudo_test', 'test_path')
             path_exists.assert_called_once_with('test_path')
             self.assertFalse(mock_open.called)
             self.assertFalse(mock_execute.called)
 
             path_exists.return_value = True
             mock_execute.side_effect = RuntimeError
-            namespace_driver.kill_pids_in_file('sudo', 'test_path')
+            namespace_driver.kill_pids_in_file('sudo_test', 'test_path')
             self.assertTrue(mock_log.called)
             mock_execute.assert_called_once_with(
-                ['kill', '-9', '123'], 'sudo')
+                ['kill', '-9', '123'], 'sudo_test')
 
     def test_get_state_file_path(self):
         with mock.patch('os.makedirs') as mkdir:
             path = self.driver._get_state_file_path('pool_id', 'conf')
             self.assertEqual('/the/path/pool_id/conf', path)
             mkdir.assert_called_once_with('/the/path/pool_id', 0o755)
+
+    def test_deploy_instance(self):
+        with mock.patch.object(self.driver, 'exists') as exists:
+            with mock.patch.object(self.driver, 'update') as update:
+                self.driver.deploy_instance(self.fake_config)
+                exists.assert_called_once_with(self.fake_config['pool']['id'])
+                update.assert_called_once_with(self.fake_config)
+
+    def test_deploy_instance_non_existing(self):
+        with mock.patch.object(self.driver, 'exists') as exists:
+            with mock.patch.object(self.driver, 'create') as create:
+                exists.return_value = False
+                self.driver.deploy_instance(self.fake_config)
+                exists.assert_called_once_with(self.fake_config['pool']['id'])
+                create.assert_called_once_with(self.fake_config)
+
+    def test_deploy_instance_vip_status_non_active(self):
+        with mock.patch.object(self.driver, 'exists') as exists:
+            self.fake_config['vip']['status'] = 'NON_ACTIVE'
+            self.driver.deploy_instance(self.fake_config)
+            self.assertFalse(exists.called)
+
+    def test_deploy_instance_vip_admin_state_down(self):
+        with mock.patch.object(self.driver, 'exists') as exists:
+            self.fake_config['vip']['admin_state_up'] = False
+            self.driver.deploy_instance(self.fake_config)
+            self.assertFalse(exists.called)
+
+    def test_deploy_instance_no_vip(self):
+        with mock.patch.object(self.driver, 'exists') as exists:
+            del self.fake_config['vip']
+            self.driver.deploy_instance(self.fake_config)
+            self.assertFalse(exists.called)
+
+    def test_refresh_device(self):
+        with mock.patch.object(self.driver, 'deploy_instance') as deploy:
+            pool_id = 'pool_id1'
+            self.driver._refresh_device(pool_id)
+            self.rpc_mock.get_logical_device.assert_called_once_with(pool_id)
+            deploy.assert_called_once_with(
+                self.rpc_mock.get_logical_device.return_value)
+
+    def test_create_vip(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.create_vip({'pool_id': '1'})
+            refresh.assert_called_once_with('1')
+
+    def test_update_vip(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.update_vip({}, {'pool_id': '1'})
+            refresh.assert_called_once_with('1')
+
+    def test_delete_vip(self):
+        with mock.patch.object(self.driver, 'undeploy_instance') as undeploy:
+            self.driver.delete_vip({'pool_id': '1'})
+            undeploy.assert_called_once_with('1')
+
+    def test_create_pool(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.create_pool({'id': '1'})
+            self.assertFalse(refresh.called)
+
+    def test_update_pool(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.update_pool({}, {'id': '1'})
+            refresh.assert_called_once_with('1')
+
+    def test_delete_pool_existing(self):
+        with mock.patch.object(self.driver, 'undeploy_instance') as undeploy:
+            with mock.patch.object(self.driver, 'exists') as exists:
+                exists.return_value = True
+                self.driver.delete_pool({'id': '1'})
+                undeploy.assert_called_once_with('1')
+
+    def test_delete_pool_non_existing(self):
+        with mock.patch.object(self.driver, 'undeploy_instance') as undeploy:
+            with mock.patch.object(self.driver, 'exists') as exists:
+                exists.return_value = False
+                self.driver.delete_pool({'id': '1'})
+                self.assertFalse(undeploy.called)
+
+    def test_create_member(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.create_member({'pool_id': '1'})
+            refresh.assert_called_once_with('1')
+
+    def test_update_member(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.update_member({}, {'pool_id': '1'})
+            refresh.assert_called_once_with('1')
+
+    def test_delete_member(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.delete_member({'pool_id': '1'})
+            refresh.assert_called_once_with('1')
+
+    def test_create_pool_health_monitor(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.create_pool_health_monitor('', '1')
+            refresh.assert_called_once_with('1')
+
+    def test_update_pool_health_monitor(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.update_pool_health_monitor('', '', '1')
+            refresh.assert_called_once_with('1')
+
+    def test_delete_pool_health_monitor(self):
+        with mock.patch.object(self.driver, '_refresh_device') as refresh:
+            self.driver.delete_pool_health_monitor('', '1')
+            refresh.assert_called_once_with('1')

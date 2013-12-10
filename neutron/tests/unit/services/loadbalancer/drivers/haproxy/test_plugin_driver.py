@@ -16,6 +16,8 @@
 #
 # @author: Mark McClain, DreamHost
 
+import contextlib
+
 import mock
 from webob import exc
 
@@ -39,14 +41,21 @@ class TestLoadBalancerPluginBase(
     test_db_loadbalancer.LoadBalancerPluginDbTestCase):
 
     def setUp(self):
+        def reset_device_driver():
+            plugin_driver.AgentBasedPluginDriver.device_driver = None
+        self.addCleanup(reset_device_driver)
+
+        self.mock_importer = mock.patch.object(
+            plugin_driver, 'importutils').start()
+        self.addCleanup(mock.patch.stopall)
+
         # needed to reload provider configuration
         st_db.ServiceTypeManager._instance = None
+        plugin_driver.AgentBasedPluginDriver.device_driver = 'dummy'
         super(TestLoadBalancerPluginBase, self).setUp(
             lbaas_provider=('LOADBALANCER:lbaas:neutron.services.'
                             'loadbalancer.drivers.haproxy.plugin_driver.'
-                            'HaproxyOnHostPluginDriver:default'))
-        # create another API instance to make testing easier
-        # pass a mock to our API instance
+                            'AgentBasedPluginDriver:default'))
 
         # we need access to loaded plugins to modify models
         loaded_plugins = manager.NeutronManager().get_service_plugins()
@@ -65,12 +74,6 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
             'neutron.services.loadbalancer.agent_scheduler'
             '.LbaasAgentSchedulerDbMixin.get_lbaas_agents')
         get_lbaas_agents_patcher.start()
-
-        # mocking plugin_driver create_pool() as it does nothing more than
-        # pool scheduling which is beyond the scope of this test case
-        mock.patch('neutron.services.loadbalancer.drivers.haproxy'
-                   '.plugin_driver.HaproxyOnHostPluginDriver'
-                   '.create_pool').start()
 
         self.addCleanup(mock.patch.stopall)
 
@@ -132,10 +135,10 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                                                        {'id': pools[1].id},
                                                        {'id': pools[2].id}]}
             ready = self.callbacks.get_ready_devices(ctx)
-            self.assertEqual(len(ready), 2)
+            self.assertEqual(len(ready), 3)
             self.assertIn(pools[0].id, ready)
             self.assertIn(pools[1].id, ready)
-            self.assertNotIn(pools[2].id, ready)
+            self.assertIn(pools[2].id, ready)
         # cleanup
         ctx.session.query(ldb.Pool).delete()
         ctx.session.query(ldb.Vip).delete()
@@ -158,7 +161,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                 ready = self.callbacks.get_ready_devices(
                     context.get_admin_context(),
                 )
-                self.assertFalse(ready)
+                self.assertEqual([vip['vip']['pool_id']], ready)
 
     def test_get_ready_devices_inactive_pool(self):
         with self.vip() as vip:
@@ -188,15 +191,20 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                         exceptions.Invalid,
                         self.callbacks.get_logical_device,
                         context.get_admin_context(),
-                        pool['pool']['id'],
-                        activate=False
-                    )
+                        pool['pool']['id'])
 
-    def test_get_logical_device_activate(self):
+    def test_get_logical_device_active(self):
         with self.pool() as pool:
             with self.vip(pool=pool) as vip:
                 with self.member(pool_id=vip['vip']['pool_id']) as member:
                     ctx = context.get_admin_context()
+                    # activate objects
+                    self.plugin_instance.update_status(
+                        ctx, ldb.Pool, pool['pool']['id'], 'ACTIVE')
+                    self.plugin_instance.update_status(
+                        ctx, ldb.Member, member['member']['id'], 'ACTIVE')
+                    self.plugin_instance.update_status(
+                        ctx, ldb.Vip, vip['vip']['id'], 'ACTIVE')
 
                     # build the expected
                     port = self.plugin_instance._core_plugin.get_port(
@@ -221,11 +229,12 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                         'pool': pool,
                         'vip': vip['vip'],
                         'members': [member['member']],
-                        'healthmonitors': []
+                        'healthmonitors': [],
+                        'driver': 'dummy'
                     }
 
                     logical_config = self.callbacks.get_logical_device(
-                        ctx, pool['id'], activate=True
+                        ctx, pool['id']
                     )
 
                     self.assertEqual(logical_config, expected)
@@ -246,7 +255,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                                                        'INACTIVE')
 
                     logical_config = self.callbacks.get_logical_device(
-                        ctx, pool['pool']['id'], activate=False)
+                        ctx, pool['pool']['id'])
 
                     member['member']['status'] = constants.INACTIVE
                     self.assertEqual([member['member']],
@@ -308,6 +317,58 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
             host='host'
         )
 
+    def test_pool_deployed(self):
+        with self.pool() as pool:
+            with self.vip(pool=pool) as vip:
+                with self.member(pool_id=vip['vip']['pool_id']) as member:
+                    ctx = context.get_admin_context()
+                    p = self.plugin_instance.get_pool(ctx, pool['pool']['id'])
+                    self.assertEqual('PENDING_CREATE', p['status'])
+                    v = self.plugin_instance.get_vip(ctx, vip['vip']['id'])
+                    self.assertEqual('PENDING_CREATE', v['status'])
+                    m = self.plugin_instance.get_member(
+                        ctx, member['member']['id'])
+                    self.assertEqual('PENDING_CREATE', m['status'])
+
+                    self.callbacks.pool_deployed(ctx, pool['pool']['id'])
+
+                    p = self.plugin_instance.get_pool(ctx, pool['pool']['id'])
+                    self.assertEqual('ACTIVE', p['status'])
+                    v = self.plugin_instance.get_vip(ctx, vip['vip']['id'])
+                    self.assertEqual('ACTIVE', v['status'])
+                    m = self.plugin_instance.get_member(
+                        ctx, member['member']['id'])
+                    self.assertEqual('ACTIVE', m['status'])
+
+    def test_update_status_pool(self):
+        with self.pool() as pool:
+            pool_id = pool['pool']['id']
+            ctx = context.get_admin_context()
+            p = self.plugin_instance.get_pool(ctx, pool_id)
+            self.assertEqual('PENDING_CREATE', p['status'])
+            self.callbacks.update_status(ctx, 'pool', pool_id, 'ACTIVE')
+            p = self.plugin_instance.get_pool(ctx, pool_id)
+            self.assertEqual('ACTIVE', p['status'])
+
+    def test_update_status_health_monitor(self):
+        with contextlib.nested(
+            self.pool(),
+            self.health_monitor()
+        ) as (pool, hm):
+            pool_id = pool['pool']['id']
+            ctx = context.get_admin_context()
+            self.plugin_instance.create_pool_health_monitor(ctx, hm, pool_id)
+            hm_id = hm['health_monitor']['id']
+            h = self.plugin_instance.get_pool_health_monitor(ctx, hm_id,
+                                                             pool_id)
+            self.assertEqual('PENDING_CREATE', h['status'])
+            self.callbacks.update_status(
+                ctx, 'health_monitor',
+                {'monitor_id': hm_id, 'pool_id': pool_id}, 'ACTIVE')
+            h = self.plugin_instance.get_pool_health_monitor(ctx, hm_id,
+                                                             pool_id)
+            self.assertEqual('ACTIVE', h['status'])
+
 
 class TestLoadBalancerAgentApi(base.BaseTestCase):
     def setUp(self):
@@ -321,45 +382,72 @@ class TestLoadBalancerAgentApi(base.BaseTestCase):
     def test_init(self):
         self.assertEqual(self.api.topic, 'topic')
 
-    def _call_test_helper(self, method_name):
-        rv = getattr(self.api, method_name)(mock.sentinel.context, 'test',
-                                            'host')
-        self.assertEqual(rv, self.mock_cast.return_value)
-        self.mock_cast.assert_called_once_with(
-            mock.sentinel.context,
-            self.mock_msg.return_value,
-            topic='topic.host'
-        )
-
-        self.mock_msg.assert_called_once_with(
-            method_name,
-            pool_id='test',
-            host='host'
-        )
-
-    def test_reload_pool(self):
-        self._call_test_helper('reload_pool')
-
-    def test_destroy_pool(self):
-        self._call_test_helper('destroy_pool')
-
-    def test_modify_pool(self):
-        self._call_test_helper('modify_pool')
-
-    def test_agent_updated(self):
-        rv = self.api.agent_updated(mock.sentinel.context, True, 'host')
+    def _call_test_helper(self, method_name, method_args):
+        rv = getattr(self.api, method_name)(mock.sentinel.context,
+                                            host='host',
+                                            **method_args)
         self.assertEqual(rv, self.mock_cast.return_value)
         self.mock_cast.assert_called_once_with(
             mock.sentinel.context,
             self.mock_msg.return_value,
             topic='topic.host',
-            version='1.1'
+            version=None
         )
 
+        if method_name == 'agent_updated':
+            method_args = {'payload': method_args}
         self.mock_msg.assert_called_once_with(
-            'agent_updated',
-            payload={'admin_state_up': True}
+            method_name,
+            **method_args
         )
+
+    def test_agent_updated(self):
+        self._call_test_helper('agent_updated', {'admin_state_up': 'test'})
+
+    def test_create_pool(self):
+        self._call_test_helper('create_pool', {'pool': 'test',
+                                               'driver_name': 'dummy'})
+
+    def test_update_pool(self):
+        self._call_test_helper('update_pool', {'old_pool': 'test',
+                                               'pool': 'test'})
+
+    def test_delete_pool(self):
+        self._call_test_helper('delete_pool', {'pool': 'test'})
+
+    def test_create_vip(self):
+        self._call_test_helper('create_vip', {'vip': 'test'})
+
+    def test_update_vip(self):
+        self._call_test_helper('update_vip', {'old_vip': 'test',
+                                              'vip': 'test'})
+
+    def test_delete_vip(self):
+        self._call_test_helper('delete_vip', {'vip': 'test'})
+
+    def test_create_member(self):
+        self._call_test_helper('create_member', {'member': 'test'})
+
+    def test_update_member(self):
+        self._call_test_helper('update_member', {'old_member': 'test',
+                                                 'member': 'test'})
+
+    def test_delete_member(self):
+        self._call_test_helper('delete_member', {'member': 'test'})
+
+    def test_create_monitor(self):
+        self._call_test_helper('create_pool_health_monitor',
+                               {'health_monitor': 'test', 'pool_id': 'test'})
+
+    def test_update_monitor(self):
+        self._call_test_helper('update_pool_health_monitor',
+                               {'old_health_monitor': 'test',
+                                'health_monitor': 'test',
+                                'pool_id': 'test'})
+
+    def test_delete_monitor(self):
+        self._call_test_helper('delete_pool_health_monitor',
+                               {'health_monitor': 'test', 'pool_id': 'test'})
 
 
 class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
@@ -370,16 +458,10 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
         super(TestLoadBalancerPluginNotificationWrapper, self).setUp()
         self.mock_api = api_cls.return_value
 
-        # mocking plugin_driver create_pool() as it does nothing more than
-        # pool scheduling which is beyond the scope of this test case
-        mock.patch('neutron.services.loadbalancer.drivers.haproxy'
-                   '.plugin_driver.HaproxyOnHostPluginDriver'
-                   '.create_pool').start()
-
         self.mock_get_driver = mock.patch.object(self.plugin_instance,
                                                  '_get_driver')
         self.mock_get_driver.return_value = (plugin_driver.
-                                             HaproxyOnHostPluginDriver(
+                                             AgentBasedPluginDriver(
                                                  self.plugin_instance
                                              ))
 
@@ -389,9 +471,9 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
         with self.subnet() as subnet:
             with self.pool(subnet=subnet) as pool:
                 with self.vip(pool=pool, subnet=subnet) as vip:
-                    self.mock_api.reload_pool.assert_called_once_with(
+                    self.mock_api.create_vip.assert_called_once_with(
                         mock.ANY,
-                        vip['vip']['pool_id'],
+                        vip['vip'],
                         'host'
                     )
 
@@ -399,8 +481,8 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
         with self.subnet() as subnet:
             with self.pool(subnet=subnet) as pool:
                 with self.vip(pool=pool, subnet=subnet) as vip:
-                    self.mock_api.reset_mock()
                     ctx = context.get_admin_context()
+                    old_vip = vip['vip'].copy()
                     vip['vip'].pop('status')
                     new_vip = self.plugin_instance.update_vip(
                         ctx,
@@ -408,9 +490,10 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                         vip
                     )
 
-                    self.mock_api.reload_pool.assert_called_once_with(
+                    self.mock_api.update_vip.assert_called_once_with(
                         mock.ANY,
-                        vip['vip']['pool_id'],
+                        old_vip,
+                        new_vip,
                         'host'
                     )
 
@@ -423,51 +506,55 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
         with self.subnet() as subnet:
             with self.pool(subnet=subnet) as pool:
                 with self.vip(pool=pool, subnet=subnet, no_delete=True) as vip:
-                    self.mock_api.reset_mock()
                     ctx = context.get_admin_context()
                     self.plugin_instance.delete_vip(ctx, vip['vip']['id'])
-                    self.mock_api.destroy_pool.assert_called_once_with(
+                    vip['vip']['status'] = 'PENDING_DELETE'
+                    self.mock_api.delete_vip.assert_called_once_with(
                         mock.ANY,
-                        vip['vip']['pool_id'],
+                        vip['vip'],
                         'host'
                     )
 
     def test_create_pool(self):
-        with self.pool():
-            self.assertFalse(self.mock_api.reload_pool.called)
-            self.assertFalse(self.mock_api.modify_pool.called)
-            self.assertFalse(self.mock_api.destroy_pool.called)
+        with self.pool() as pool:
+            self.mock_api.create_pool.assert_called_once_with(
+                mock.ANY,
+                pool['pool'],
+                mock.ANY,
+                'dummy'
+            )
 
     def test_update_pool_non_active(self):
         with self.pool() as pool:
             pool['pool']['status'] = 'INACTIVE'
             ctx = context.get_admin_context()
+            orig_pool = pool['pool'].copy()
             del pool['pool']['provider']
             self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
-            self.mock_api.destroy_pool.assert_called_once_with(
-                mock.ANY, pool['pool']['id'], 'host')
-            self.assertFalse(self.mock_api.reload_pool.called)
-            self.assertFalse(self.mock_api.modify_pool.called)
+            self.mock_api.delete_pool.assert_called_once_with(
+                mock.ANY, orig_pool, 'host')
 
     def test_update_pool_no_vip_id(self):
         with self.pool() as pool:
             ctx = context.get_admin_context()
+            orig_pool = pool['pool'].copy()
             del pool['pool']['provider']
-            self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
-            self.assertFalse(self.mock_api.destroy_pool.called)
-            self.assertFalse(self.mock_api.reload_pool.called)
-            self.assertFalse(self.mock_api.modify_pool.called)
+            updated = self.plugin_instance.update_pool(
+                ctx, pool['pool']['id'], pool)
+            self.mock_api.update_pool.assert_called_once_with(
+                mock.ANY, orig_pool, updated, 'host')
 
     def test_update_pool_with_vip_id(self):
         with self.pool() as pool:
-            with self.vip(pool=pool):
+            with self.vip(pool=pool) as vip:
                 ctx = context.get_admin_context()
+                old_pool = pool['pool'].copy()
+                old_pool['vip_id'] = vip['vip']['id']
                 del pool['pool']['provider']
-                self.plugin_instance.update_pool(ctx, pool['pool']['id'], pool)
-                self.mock_api.reload_pool.assert_called_once_with(
-                    mock.ANY, pool['pool']['id'], 'host')
-                self.assertFalse(self.mock_api.destroy_pool.called)
-                self.assertFalse(self.mock_api.modify_pool.called)
+                updated = self.plugin_instance.update_pool(
+                    ctx, pool['pool']['id'], pool)
+                self.mock_api.update_pool.assert_called_once_with(
+                    mock.ANY, old_pool, updated, 'host')
 
     def test_delete_pool(self):
         with self.pool(no_delete=True) as pool:
@@ -475,26 +562,26 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                                           pool['pool']['id'])
             res = req.get_response(self.ext_api)
             self.assertEqual(res.status_int, exc.HTTPNoContent.code)
-            self.mock_api.destroy_pool.assert_called_once_with(
-                mock.ANY, pool['pool']['id'], 'host')
+            pool['pool']['status'] = 'PENDING_DELETE'
+            self.mock_api.delete_pool.assert_called_once_with(
+                mock.ANY, pool['pool'], 'host')
 
     def test_create_member(self):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
-            with self.member(pool_id=pool_id):
-                self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id, 'host')
+            with self.member(pool_id=pool_id) as member:
+                self.mock_api.create_member.assert_called_once_with(
+                    mock.ANY, member['member'], 'host')
 
     def test_update_member(self):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
             with self.member(pool_id=pool_id) as member:
                 ctx = context.get_admin_context()
-                self.mock_api.modify_pool.reset_mock()
-                self.plugin_instance.update_member(
+                updated = self.plugin_instance.update_member(
                     ctx, member['member']['id'], member)
-                self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id, 'host')
+                self.mock_api.update_member.assert_called_once_with(
+                    mock.ANY, member['member'], updated, 'host')
 
     def test_update_member_new_pool(self):
         with self.pool() as pool1:
@@ -502,89 +589,105 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
             with self.pool() as pool2:
                 pool2_id = pool2['pool']['id']
                 with self.member(pool_id=pool1_id) as member:
+                    self.mock_api.create_member.reset_mock()
                     ctx = context.get_admin_context()
-                    self.mock_api.modify_pool.reset_mock()
+                    old_member = member['member'].copy()
                     member['member']['pool_id'] = pool2_id
-                    self.plugin_instance.update_member(ctx,
-                                                       member['member']['id'],
-                                                       member)
-                    self.assertEqual(2, self.mock_api.modify_pool.call_count)
-                    self.mock_api.modify_pool.assert_has_calls(
-                        [mock.call(mock.ANY, pool1_id, 'host'),
-                         mock.call(mock.ANY, pool2_id, 'host')])
+                    updated = self.plugin_instance.update_member(
+                        ctx, member['member']['id'], member)
+                    self.mock_api.delete_member.assert_called_once_with(
+                        mock.ANY, old_member, 'host')
+                    self.mock_api.create_member.assert_called_once_with(
+                        mock.ANY, updated, 'host')
 
     def test_delete_member(self):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
             with self.member(pool_id=pool_id,
                              no_delete=True) as member:
-                self.mock_api.modify_pool.reset_mock()
                 req = self.new_delete_request('members',
                                               member['member']['id'])
                 res = req.get_response(self.ext_api)
                 self.assertEqual(res.status_int, exc.HTTPNoContent.code)
-                self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id, 'host')
+                member['member']['status'] = 'PENDING_DELETE'
+                self.mock_api.delete_member.assert_called_once_with(
+                    mock.ANY, member['member'], 'host')
 
     def test_create_pool_health_monitor(self):
-        with self.pool() as pool:
+        with contextlib.nested(
+            self.pool(),
+            self.health_monitor()
+        ) as (pool, hm):
             pool_id = pool['pool']['id']
-            with self.health_monitor() as hm:
-                ctx = context.get_admin_context()
-                self.plugin_instance.create_pool_health_monitor(ctx,
-                                                                hm,
-                                                                pool_id)
-                self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id, 'host')
+            ctx = context.get_admin_context()
+            self.plugin_instance.create_pool_health_monitor(ctx, hm, pool_id)
+            # hm now has a ref to the pool with which it is associated
+            hm = self.plugin.get_health_monitor(
+                ctx, hm['health_monitor']['id'])
+            self.mock_api.create_pool_health_monitor.assert_called_once_with(
+                mock.ANY, hm, pool_id, 'host')
 
     def test_delete_pool_health_monitor(self):
-        with self.pool() as pool:
+        with contextlib.nested(
+            self.pool(),
+            self.health_monitor()
+        ) as (pool, hm):
             pool_id = pool['pool']['id']
-            with self.health_monitor() as hm:
-                ctx = context.get_admin_context()
-                self.plugin_instance.create_pool_health_monitor(ctx,
-                                                                hm,
-                                                                pool_id)
-                self.mock_api.modify_pool.reset_mock()
-                self.plugin_instance.delete_pool_health_monitor(
-                    ctx, hm['health_monitor']['id'], pool_id)
-                self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY, pool_id, 'host')
+            ctx = context.get_admin_context()
+            self.plugin_instance.create_pool_health_monitor(ctx, hm, pool_id)
+            # hm now has a ref to the pool with which it is associated
+            hm = self.plugin.get_health_monitor(
+                ctx, hm['health_monitor']['id'])
+            hm['pools'][0]['status'] = 'PENDING_DELETE'
+            self.plugin_instance.delete_pool_health_monitor(
+                ctx, hm['id'], pool_id)
+            self.mock_api.delete_pool_health_monitor.assert_called_once_with(
+                mock.ANY, hm, pool_id, 'host')
 
     def test_update_health_monitor_associated_with_pool(self):
-        with self.health_monitor(type='HTTP') as monitor:
-            with self.pool() as pool:
-                data = {
-                    'health_monitor': {
-                        'id': monitor['health_monitor']['id'],
-                        'tenant_id': self._tenant_id
-                    }
+        with contextlib.nested(
+            self.health_monitor(type='HTTP'),
+            self.pool()
+        ) as (monitor, pool):
+            data = {
+                'health_monitor': {
+                    'id': monitor['health_monitor']['id'],
+                    'tenant_id': self._tenant_id
                 }
-                req = self.new_create_request(
-                    'pools',
-                    data,
-                    fmt=self.fmt,
-                    id=pool['pool']['id'],
-                    subresource='health_monitors')
-                res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, exc.HTTPCreated.code)
-                self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY,
-                    pool['pool']['id'],
-                    'host'
-                )
+            }
+            req = self.new_create_request(
+                'pools',
+                data,
+                fmt=self.fmt,
+                id=pool['pool']['id'],
+                subresource='health_monitors')
+            res = req.get_response(self.ext_api)
+            self.assertEqual(res.status_int, exc.HTTPCreated.code)
+            # hm now has a ref to the pool with which it is associated
+            ctx = context.get_admin_context()
+            hm = self.plugin.get_health_monitor(
+                ctx, monitor['health_monitor']['id'])
+            self.mock_api.create_pool_health_monitor.assert_called_once_with(
+                mock.ANY,
+                hm,
+                pool['pool']['id'],
+                'host'
+            )
 
-                self.mock_api.reset_mock()
-                data = {'health_monitor': {'delay': 20,
-                                           'timeout': 20,
-                                           'max_retries': 2,
-                                           'admin_state_up': False}}
-                req = self.new_update_request("health_monitors",
-                                              data,
-                                              monitor['health_monitor']['id'])
-                req.get_response(self.ext_api)
-                self.mock_api.modify_pool.assert_called_once_with(
-                    mock.ANY,
-                    pool['pool']['id'],
-                    'host'
-                )
+            self.mock_api.reset_mock()
+            data = {'health_monitor': {'delay': 20,
+                                       'timeout': 20,
+                                       'max_retries': 2,
+                                       'admin_state_up': False}}
+            updated = hm.copy()
+            updated.update(data['health_monitor'])
+            req = self.new_update_request("health_monitors",
+                                          data,
+                                          monitor['health_monitor']['id'])
+            req.get_response(self.ext_api)
+            self.mock_api.update_pool_health_monitor.assert_called_once_with(
+                mock.ANY,
+                hm,
+                updated,
+                pool['pool']['id'],
+                'host')
