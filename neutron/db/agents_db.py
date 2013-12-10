@@ -60,6 +60,10 @@ class Agent(model_base.BASEV2, models_v2.HasId):
     # configurations: a json dict string, I think 4095 is enough
     configurations = sa.Column(sa.String(4095), nullable=False)
 
+    @property
+    def is_active(self):
+        return not AgentDbMixin.is_agent_down(self.heartbeat_timestamp)
+
 
 class AgentDbMixin(ext_agent.AgentPluginBase):
     """Mixin class to add agent extension to db_plugin_base_v2."""
