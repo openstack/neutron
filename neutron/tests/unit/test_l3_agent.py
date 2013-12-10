@@ -360,7 +360,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                       'subnet': {'cidr': '19.4.4.0/24',
                                  'gateway_ip': '19.4.4.1'}}
         int_ports = []
-        for i in range(0, num_internal_ports):
+        for i in range(num_internal_ports):
             int_ports.append({'id': _uuid(),
                               'network_id': _uuid(),
                               'admin_state_up': True,

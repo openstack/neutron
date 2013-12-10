@@ -95,7 +95,7 @@ class TestVarmourRouter(base.BaseTestCase):
 
     def _add_internal_ports(self, router, port_count=1):
         self._del_all_internal_ports(router)
-        for i in range(0, port_count):
+        for i in range(port_count):
             port = {'id': _uuid(),
                     'network_id': _uuid(),
                     'admin_state_up': True,
@@ -114,7 +114,7 @@ class TestVarmourRouter(base.BaseTestCase):
 
     def _add_floating_ips(self, router, port_count=1):
         self._del_all_floating_ips(router)
-        for i in range(0, port_count):
+        for i in range(port_count):
             fip = {'id': _uuid(),
                    'port_id': router['gw_port']['id'],
                    'floating_ip_address': '172.24.4.%s' % (100 + i),

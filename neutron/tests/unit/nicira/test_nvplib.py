@@ -594,7 +594,7 @@ class TestNvplibLogicalRouters(NvplibTestCase):
     def test_get_lrouters(self):
         lrouter_uuids = [nvplib.create_lrouter(
             self.fake_cluster, 'pippo', 'fake-lrouter-%s' % k,
-            '10.0.0.1')['uuid'] for k in range(0, 3)]
+            '10.0.0.1')['uuid'] for k in range(3)]
         routers = nvplib.get_lrouters(self.fake_cluster, 'pippo')
         for router in routers:
             self.assertIn(router['uuid'], lrouter_uuids)
@@ -691,7 +691,7 @@ class TestNvplibLogicalRouters(NvplibTestCase):
             self.fake_cluster, lrouter['uuid'], 'pippo',
             'qp_id_%s' % k, 'port-%s' % k, True,
             ['192.168.0.%s' % k], '00:11:22:33:44:55')['uuid']
-            for k in range(0, 3)]
+            for k in range(3)]
         ports = nvplib.query_lrouter_lports(self.fake_cluster, lrouter['uuid'])
         self.assertEqual(len(ports), 3)
         for res_port in ports:
@@ -1402,7 +1402,7 @@ class TestNvplibLogicalPorts(NvplibTestCase):
             nvplib.create_lport(
                 self.fake_cluster, lswitch['uuid'], 'pippo', 'qportid-%s' % k,
                 'port-%s' % k, 'deviceid-%s' % k, True)['uuid']
-            for k in range(0, 2)]
+            for k in range(2)]
         switch_port_uuids.append(lport['uuid'])
         ports = nvplib.query_lswitch_lports(self.fake_cluster, lswitch['uuid'])
         self.assertEqual(len(ports), 3)
