@@ -180,7 +180,7 @@ def dict2str(dic):
 
 def str2dict(string):
     res_dict = {}
-    for keyvalue in string.split(',', 1):
+    for keyvalue in string.split(','):
         (key, value) = keyvalue.split('=', 1)
         res_dict[key] = value
     return res_dict

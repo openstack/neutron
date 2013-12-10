@@ -287,3 +287,30 @@ class TestParseVlanRangeList(UtilTestParseVlanRanges):
                                       (1000, 1099)],
                              "net2": [(200, 299)]}
         self.assertEqual(self.parse_list(config_list), expected_networks)
+
+
+class TestDictUtils(base.BaseTestCase):
+    def test_dict2str(self):
+        dic = {"key1": "value1", "key2": "value2", "key3": "value3"}
+        expected = "key1=value1,key2=value2,key3=value3"
+        self.assertEqual(utils.dict2str(dic), expected)
+
+    def test_str2dict(self):
+        string = "key1=value1,key2=value2,key3=value3"
+        expected = {"key1": "value1", "key2": "value2", "key3": "value3"}
+        self.assertEqual(utils.str2dict(string), expected)
+
+    def test_dict_str_conversion(self):
+        dic = {"key1": "value1", "key2": "value2"}
+        self.assertEqual(utils.str2dict(utils.dict2str(dic)), dic)
+
+    def test_diff_list_of_dict(self):
+        old_list = [{"key1": "value1"},
+                    {"key2": "value2"},
+                    {"key3": "value3"}]
+        new_list = [{"key1": "value1"},
+                    {"key2": "value2"},
+                    {"key4": "value4"}]
+        added, removed = utils.diff_list_of_dict(old_list, new_list)
+        self.assertEqual(added, [dict(key4="value4")])
+        self.assertEqual(removed, [dict(key3="value3")])
