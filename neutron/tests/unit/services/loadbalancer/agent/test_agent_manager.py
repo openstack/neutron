@@ -21,9 +21,7 @@ import contextlib
 import mock
 
 from neutron.plugins.common import constants
-from neutron.services.loadbalancer.drivers.haproxy import (
-    agent_manager as manager
-)
+from neutron.services.loadbalancer.agent import agent_manager as manager
 from neutron.tests import base
 
 
@@ -38,8 +36,7 @@ class TestManager(base.BaseTestCase):
         self.mock_importer = mock.patch.object(manager, 'importutils').start()
 
         rpc_mock_cls = mock.patch(
-            'neutron.services.loadbalancer.drivers'
-            '.haproxy.agent_api.LbaasAgentApi'
+            'neutron.services.loadbalancer.agent.agent_api.LbaasAgentApi'
         ).start()
 
         self.mgr = manager.LbaasAgentManager(mock_conf)

@@ -22,12 +22,10 @@ from oslo.config import cfg
 from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.common import legacy
+from neutron.common import topics
 from neutron.openstack.common.rpc import service as rpc_service
 from neutron.openstack.common import service
-from neutron.services.loadbalancer.drivers.haproxy import (
-    agent_manager as manager,
-    plugin_driver
-)
+from neutron.services.loadbalancer.agent import agent_manager as manager
 
 OPTS = [
     cfg.IntOpt(
@@ -65,7 +63,7 @@ def main():
     mgr = manager.LbaasAgentManager(cfg.CONF)
     svc = LbaasAgentService(
         host=cfg.CONF.host,
-        topic=plugin_driver.TOPIC_LOADBALANCER_AGENT,
+        topic=topics.LOADBALANCER_AGENT,
         manager=mgr
     )
     service.launch(svc).wait()

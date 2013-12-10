@@ -30,8 +30,8 @@ from neutron.common import utils as n_utils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
+from neutron.services.loadbalancer.agent import agent_device_driver
 from neutron.services.loadbalancer import constants as lb_const
-from neutron.services.loadbalancer.drivers import agent_device_driver
 from neutron.services.loadbalancer.drivers.haproxy import cfg as hacfg
 
 LOG = logging.getLogger(__name__)

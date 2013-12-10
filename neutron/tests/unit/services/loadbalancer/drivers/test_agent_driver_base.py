@@ -30,9 +30,7 @@ from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
-from neutron.services.loadbalancer.drivers.haproxy import (
-    plugin_driver
-)
+from neutron.services.loadbalancer.drivers.common import agent_driver_base
 from neutron.tests import base
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
 from neutron.tests.unit import testlib_api
@@ -43,20 +41,20 @@ class TestLoadBalancerPluginBase(
 
     def setUp(self):
         def reset_device_driver():
-            plugin_driver.AgentBasedPluginDriver.device_driver = None
+            agent_driver_base.AgentDriverBase.device_driver = None
         self.addCleanup(reset_device_driver)
 
         self.mock_importer = mock.patch.object(
-            plugin_driver, 'importutils').start()
+            agent_driver_base, 'importutils').start()
         self.addCleanup(mock.patch.stopall)
 
         # needed to reload provider configuration
         st_db.ServiceTypeManager._instance = None
-        plugin_driver.AgentBasedPluginDriver.device_driver = 'dummy'
+        agent_driver_base.AgentDriverBase.device_driver = 'dummy'
         super(TestLoadBalancerPluginBase, self).setUp(
             lbaas_provider=('LOADBALANCER:lbaas:neutron.services.'
-                            'loadbalancer.drivers.haproxy.plugin_driver.'
-                            'AgentBasedPluginDriver:default'))
+                            'loadbalancer.drivers.common.agent_driver_base.'
+                            'AgentDriverBase:default'))
 
         # we need access to loaded plugins to modify models
         loaded_plugins = manager.NeutronManager().get_service_plugins()
@@ -68,7 +66,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
     def setUp(self):
         super(TestLoadBalancerCallbacks, self).setUp()
 
-        self.callbacks = plugin_driver.LoadBalancerCallbacks(
+        self.callbacks = agent_driver_base.LoadBalancerCallbacks(
             self.plugin_instance
         )
         get_lbaas_agents_patcher = mock.patch(
@@ -400,7 +398,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
             self.assertEqual('ACTIVE', p['status'])
 
     def test_update_status_pool_deleted_already(self):
-        with mock.patch.object(plugin_driver, 'LOG') as mock_log:
+        with mock.patch.object(agent_driver_base, 'LOG') as mock_log:
             pool_id = 'deleted_pool'
             ctx = context.get_admin_context()
             self.assertRaises(loadbalancer.PoolNotFound,
@@ -433,7 +431,7 @@ class TestLoadBalancerAgentApi(base.BaseTestCase):
         super(TestLoadBalancerAgentApi, self).setUp()
         self.addCleanup(mock.patch.stopall)
 
-        self.api = plugin_driver.LoadBalancerAgentApi('topic')
+        self.api = agent_driver_base.LoadBalancerAgentApi('topic')
         self.mock_cast = mock.patch.object(self.api, 'cast').start()
         self.mock_msg = mock.patch.object(self.api, 'make_msg').start()
 
@@ -510,16 +508,16 @@ class TestLoadBalancerAgentApi(base.BaseTestCase):
 
 class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
     def setUp(self):
-        self.log = mock.patch.object(plugin_driver, 'LOG')
-        api_cls = mock.patch.object(plugin_driver,
+        self.log = mock.patch.object(agent_driver_base, 'LOG')
+        api_cls = mock.patch.object(agent_driver_base,
                                     'LoadBalancerAgentApi').start()
         super(TestLoadBalancerPluginNotificationWrapper, self).setUp()
         self.mock_api = api_cls.return_value
 
         self.mock_get_driver = mock.patch.object(self.plugin_instance,
                                                  '_get_driver')
-        self.mock_get_driver.return_value = (plugin_driver.
-                                             AgentBasedPluginDriver(
+        self.mock_get_driver.return_value = (agent_driver_base.
+                                             AgentDriverBase(
                                                  self.plugin_instance
                                              ))
 
