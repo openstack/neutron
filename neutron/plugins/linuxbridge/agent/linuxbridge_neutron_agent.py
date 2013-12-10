@@ -991,11 +991,11 @@ def main():
 
     polling_interval = cfg.CONF.AGENT.polling_interval
     root_helper = cfg.CONF.AGENT.root_helper
-    plugin = LinuxBridgeNeutronAgentRPC(interface_mappings,
-                                        polling_interval,
-                                        root_helper)
+    agent = LinuxBridgeNeutronAgentRPC(interface_mappings,
+                                       polling_interval,
+                                       root_helper)
     LOG.info(_("Agent initialized successfully, now running... "))
-    plugin.daemon_loop()
+    agent.daemon_loop()
     sys.exit(0)
 
 

@@ -1285,11 +1285,11 @@ def main():
         # commands target xen dom0 rather than domU.
         cfg.CONF.set_default('ip_lib_force_root', True)
 
-    plugin = OVSNeutronAgent(**agent_config)
+    agent = OVSNeutronAgent(**agent_config)
 
     # Start everything.
     LOG.info(_("Agent initialized successfully, now running... "))
-    plugin.daemon_loop()
+    agent.daemon_loop()
     sys.exit(0)
 
 
