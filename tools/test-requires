@@ -12,7 +12,7 @@ nosexcover
 openstack.nose_plugin
 pep8==1.3.3
 python-subunit
-sphinx>=1.1.2
+sphinx>=1.1.2,<1.2
 testrepository>=0.0.13
 testtools>=0.9.27
 webtest==1.3.3
