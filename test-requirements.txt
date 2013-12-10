@@ -6,7 +6,7 @@ discover
 fixtures>=0.3.14
 mock>=1.0
 python-subunit
-sphinx>=1.1.2
+sphinx>=1.1.2,<1.2
 testrepository>=0.0.17
 testtools>=0.9.32
 WebTest>=2.0
