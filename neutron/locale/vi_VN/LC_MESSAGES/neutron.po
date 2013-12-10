@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-12-09 06:31+0000\n"
+"POT-Creation-Date: 2013-12-10 06:32+0000\n"
 "PO-Revision-Date: 2013-05-13 06:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Vietnamese (Viet Nam) "
@@ -2530,11 +2530,11 @@ msgstr ""
 msgid "Removed routes are %s"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:35
+#: neutron/db/l3_agentschedulers_db.py:36
 msgid "Driver to use for scheduling router to a default L3 agent"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:38
+#: neutron/db/l3_agentschedulers_db.py:39
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr ""
 
@@ -11764,27 +11764,27 @@ msgstr ""
 msgid "No non-hosted networks"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:57
+#: neutron/scheduler/l3_agent_scheduler.py:65
 #, python-format
 msgid "No enabled L3 agent on host %s"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:62
+#: neutron/scheduler/l3_agent_scheduler.py:70
 #, python-format
 msgid "L3 agent %s is not active"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:70
-#: neutron/scheduler/l3_agent_scheduler.py:128
+#: neutron/scheduler/l3_agent_scheduler.py:78
+#: neutron/scheduler/l3_agent_scheduler.py:129
 #, python-format
 msgid "Router %(router_id)s has already been hosted by L3 agent %(agent_id)s"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:89
+#: neutron/scheduler/l3_agent_scheduler.py:97
 msgid "No non-hosted routers"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:103
+#: neutron/scheduler/l3_agent_scheduler.py:111
 #, python-format
 msgid "No routers compatible with L3 agent configuration on host %s"
 msgstr ""
@@ -11798,7 +11798,7 @@ msgstr ""
 msgid "No L3 agents can host the router %s"
 msgstr ""
 
-#: neutron/scheduler/l3_agent_scheduler.py:151
+#: neutron/scheduler/l3_agent_scheduler.py:155
 #, python-format
 msgid "Router %(router_id)s is scheduled to L3 agent %(agent_id)s"
 msgstr ""

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-12-09 06:31+0000\n"
+"POT-Creation-Date: 2013-12-10 06:32+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -2537,11 +2537,11 @@ msgstr ""
 msgid "Removed routes are %s"
 msgstr ""
 
-#: neutron/db/l3_agentschedulers_db.py:35
+#: neutron/db/l3_agentschedulers_db.py:36
 msgid "Driver to use for scheduling router to a default L3 agent"
 msgstr "用於將路由器排程到預設 L3 代理程式的驅動程式"
 
-#: neutron/db/l3_agentschedulers_db.py:38
+#: neutron/db/l3_agentschedulers_db.py:39
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr ""
 
@@ -11815,27 +11815,27 @@ msgstr "DHCP 代理程式 %s 不在作用中"
 msgid "No non-hosted networks"
 msgstr "不存在未管理的網路"
 
-#: neutron/scheduler/l3_agent_scheduler.py:57
+#: neutron/scheduler/l3_agent_scheduler.py:65
 #, python-format
 msgid "No enabled L3 agent on host %s"
 msgstr "主機 %s 上不存在已啟用的 L3 代理程式"
 
-#: neutron/scheduler/l3_agent_scheduler.py:62
+#: neutron/scheduler/l3_agent_scheduler.py:70
 #, python-format
 msgid "L3 agent %s is not active"
 msgstr "L3 代理程式 %s 不在作用中"
 
-#: neutron/scheduler/l3_agent_scheduler.py:70
-#: neutron/scheduler/l3_agent_scheduler.py:128
+#: neutron/scheduler/l3_agent_scheduler.py:78
+#: neutron/scheduler/l3_agent_scheduler.py:129
 #, python-format
 msgid "Router %(router_id)s has already been hosted by L3 agent %(agent_id)s"
 msgstr "路由器 %(router_id)s 已由 L3 代理程式 %(agent_id)s 進行管理"
 
-#: neutron/scheduler/l3_agent_scheduler.py:89
+#: neutron/scheduler/l3_agent_scheduler.py:97
 msgid "No non-hosted routers"
 msgstr "不存在未管理的路由器"
 
-#: neutron/scheduler/l3_agent_scheduler.py:103
+#: neutron/scheduler/l3_agent_scheduler.py:111
 #, python-format
 msgid "No routers compatible with L3 agent configuration on host %s"
 msgstr "主機 %s 上不存在與 L3 代理程式配置相容的路由器"
@@ -11849,7 +11849,7 @@ msgstr "不存在作用中的 L3 代理程式"
 msgid "No L3 agents can host the router %s"
 msgstr "不存在可以管理路由器 %s 的 L3 代理程式"
 
-#: neutron/scheduler/l3_agent_scheduler.py:151
+#: neutron/scheduler/l3_agent_scheduler.py:155
 #, python-format
 msgid "Router %(router_id)s is scheduled to L3 agent %(agent_id)s"
 msgstr "路由器 %(router_id)s 已排程到 L3 代理程式 %(agent_id)s"
