@@ -17,7 +17,7 @@
 from oslo.config import cfg
 
 from neutron.agent.common import config
-
+from neutron.agent.linux import ovs_lib  # noqa
 
 ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int',
