@@ -84,8 +84,6 @@ def get_rule_mock(chain_id, action, id=None, tenant_id='test-tenant',
              'inv_dl_type': 'get_inv_dl_type',
              'inv_nw_dst': 'get_inv_nw_dst',
              'inv_nw_src': 'get_inv_nw_src',
-             'ip_addr_group_dst': 'get_ip_addr_group_dst',
-             'ip_addr_group_src': 'get_ip_addr_group_src',
              'jump_chain_id': 'get_jump_chain_id',
              'jump_chain_name': 'get_jump_chain_name',
              'match_forward_flow': 'is_match_forward_flow',
@@ -95,6 +93,8 @@ def get_rule_mock(chain_id, action, id=None, tenant_id='test-tenant',
              'nw_proto': 'get_nw_proto',
              'nw_src_addr': 'get_nw_src_address',
              'nw_src_length': 'get_nw_src_length',
+             'port_group_dst': 'get_port_group_dst',
+             'port_group_src': 'get_port_group_src',
              'position': None,
              'properties': None,
              'tp_dst': 'get_tp_dst',
@@ -110,15 +110,15 @@ def get_rule_mock(chain_id, action, id=None, tenant_id='test-tenant',
     return r
 
 
-def get_ip_addr_group_mock(id=None, tenant_id='test-tenant', name='ipg'):
+def get_port_group_mock(id=None, tenant_id='test-tenant', name='pg'):
     if id is None:
         id = str(uuid.uuid4())
 
-    ip_addr_group = mock.Mock()
-    ip_addr_group.get_id.return_value = id
-    ip_addr_group.get_tenant_id.return_value = tenant_id
-    ip_addr_group.get_name.return_value = name
-    return ip_addr_group
+    port_group = mock.Mock()
+    port_group.get_id.return_value = id
+    port_group.get_tenant_id.return_value = tenant_id
+    port_group.get_name.return_value = name
+    return port_group
 
 
 def get_router_mock(id=None, **kwargs):
@@ -206,7 +206,7 @@ class MidoClientMockConfig():
         self.inst = inst
         self.chains = {}
         self.rules = {}
-        self.ip_addr_groups_in = None
+        self.port_groups_in = None
 
     def _get_query_tenant_id(self, query):
         if query is not None and query['tenant_id']:
@@ -268,17 +268,17 @@ class MidoClientMockConfig():
         else:
             raise Exception("Attempted to delete non-existing rule.")
 
-    def _get_ip_addr_groups(self, query=None):
-        if not self.ip_addr_groups_in:
+    def _get_port_groups(self, query=None):
+        if not self.port_groups_in:
             return []
 
         tenant_id = self._get_query_tenant_id(query)
-        ip_addr_groups_out = []
-        for ip_addr_group in self.ip_addr_groups_in:
-            ip_addr_groups_out.append(get_ip_addr_group_mock(
-                id=ip_addr_group['id'], name=ip_addr_group['name'],
+        port_groups_out = []
+        for port_group in self.port_groups_in:
+            port_groups_out.append(get_port_group_mock(
+                id=port_group['id'], name=port_group['name'],
                 tenant_id=tenant_id))
-        return ip_addr_groups_out
+        return port_groups_out
 
     def _get_router(self, id):
         return get_router_mock(id=id)
@@ -294,6 +294,6 @@ class MidoClientMockConfig():
         self.inst.get_chain.side_effect = self._get_chain
         self.inst.get_chain_by_name = self._get_chain_by_name
         self.inst.get_chains.side_effect = self._get_chains
-        self.inst.get_ip_addr_groups.side_effect = self._get_ip_addr_groups
+        self.inst.get_port_groups.side_effect = self._get_port_groups
         self.inst.get_router.side_effect = self._get_router
         self.inst.remove_chain_rule.side_effect = self._remove_chain_rule

@@ -312,14 +312,14 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
     def _verify_ingress_chain(self, chain):
         rules = chain.get_rules()
 
-        # Accept all IPv6 traffic from a particular IP address group.
+        # Accept all IPv6 traffic from a particular port group.
         self.assertEqual("accept", rules[0].get_flow_action())
         self.assertEqual(ETHERTYPE_IP6, rules[0].get_dl_type())
-        self.assertIsNotNone(rules[0].get_ip_addr_group_src())
+        self.assertIsNotNone(rules[0].get_port_group_src())
         self.assertFalse(rules[0].is_match_forward_flow())
 
         self.assertEqual("accept", rules[1].get_flow_action())
         self.assertEqual(ETHERTYPE_IP4, rules[1].get_dl_type())
-        self.assertIsNotNone(rules[1].get_ip_addr_group_src())
+        self.assertIsNotNone(rules[1].get_port_group_src())
         self.assertFalse(rules[1].is_match_forward_flow())
 

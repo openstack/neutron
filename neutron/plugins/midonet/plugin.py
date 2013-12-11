@@ -64,7 +64,7 @@ PORT_OUTBOUND_CHAIN_NAME = "OS_PORT_%s_OUTBOUND"
 POST_ROUTING_CHAIN_NAME = "OS_POST_ROUTING_%s"
 SG_INGRESS_CHAIN_NAME = "OS_SG_%s_INGRESS"
 SG_EGRESS_CHAIN_NAME = "OS_SG_%s_EGRESS"
-SG_IP_ADDR_GROUP_NAME = "OS_IPG_%s"
+SG_PORT_GROUP_NAME = "OS_PG_%s"
 SNAT_RULE = 'SNAT'
 
 ETHERTYPE_ARP = 0x0806
@@ -120,12 +120,12 @@ def _port_chain_names(port_id):
     return {'inbound': inbound, 'outbound': outbound}
 
 
-def _sg_ip_addr_group_name(sg_id):
-    """Get the IP address group name for security group..
+def _sg_port_group_name(sg_id):
+    """Get the port group name for security group..
 
-    Associates a security group with a MidoNet IP address group.
+    This name is used to associate a security group to MidoNet  port groups.
     """
-    return SG_IP_ADDR_GROUP_NAME % sg_id
+    return SG_PORT_GROUP_NAME % sg_id
 
 
 def _rule_direction(sg_direction):
@@ -350,9 +350,6 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                  position=len(port_chain.get_rules()))
 
     def _remove_sg_jumps_from_port_chains(self, port):
-        """Removes from each of the port's chains (inbound and outbound)
-        the jump rules to each of the port's security groups' chains.
-        """
         tenant_id = port["tenant_id"]
         port_inbound, port_outbound = self._get_port_chains(port)
         for sg_id in port["security_groups"]:
@@ -364,31 +361,15 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                             r.get_jump_chain_name() == sg_chain.get_name()):
                         self.client.remove_chain_rule(r.get_id())
 
-    def _unbind_port_from_sgs(self, context, port):
-        """Unbinds port from all of its security groups. This includes
-        deleting the Neutron bindings, removing the port's IP addresses
-        from the associated IP address groups, and removing the jump
-        rules from the port's rule chains.
-        """
-        sg_bindings = self._get_port_security_group_bindings(
-            context, filters={"port_id": [port["id"]]})
-        for sg_binding in sg_bindings:
-            sg_id = sg_binding["security_group_id"]
-            for ip_addr in port["fixed_ips"]:
-                self.client.remove_ip_addr_from_ip_addr_group(
-                    ip_addr["ip_address"], sg_id)
-        self._delete_port_security_group_bindings(context, port["id"])
-        self._remove_sg_jumps_from_port_chains(port)
-
     def _bind_port_to_sgs(self, context, port, sg_ids):
         self._process_port_create_security_group(context, port, sg_ids)
         if sg_ids is not None:
             tenant_id = port["tenant_id"]
             in_chain, out_chain = self._get_port_chains(port)
             for sg_id in sg_ids:
-                for ip_addr in port["fixed_ips"]:
-                    self.client.add_ip_addr_to_ip_addr_group(
-                        sg_id, ip_addr["ip_address"])
+                pg_name = _sg_port_group_name(sg_id)
+                self.client.add_port_to_port_group_by_name(
+                    port["tenant_id"], pg_name, port["id"])
 
                 # If the port chains don't exist yet, the port is still
                 # being created, and we can skip adding jump rules now
@@ -398,6 +379,11 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         tenant_id, sg_id)
                     self._add_sg_jumps_to_port_chains(
                         in_chain, out_chain, egress_chain, ingress_chain)
+
+    def _unbind_port_from_sgs(self, context, port):
+        self._delete_port_security_group_bindings(context, port["id"])
+        self.client.remove_port_from_port_groups(port["id"])
+        self._remove_sg_jumps_from_port_chains(port)
 
     def _get_port_chains(self, port):
         tenant_id = port["tenant_id"]
@@ -419,33 +405,40 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def _create_accept_chain_rule(self, context, sg_rule, chain=None):
         direction = sg_rule["direction"]
         tenant_id = sg_rule["tenant_id"]
-        chain_name = _sg_chain_names(sg_rule["security_group_id"])[direction]
+        sg_id = sg_rule["security_group_id"]
+        chain_name = _sg_chain_names(sg_id)[direction]
 
         if chain is None:
             chain = self.client.get_chain_by_name(tenant_id, chain_name)
 
+        pg_id = None
+        if sg_rule["remote_group_id"] is not None:
+            pg_name = _sg_port_group_name(sg_id)
+            pg = self.client.get_port_group_by_name(tenant_id, pg_name)
+            pg_id = pg.get_id()
+
         props = {OS_SG_RULE_KEY: str(sg_rule["id"])}
 
         # Determine source or destination address by looking at direction
-        src_ipg_id = dst_ipg_id = None
+        src_pg_id = dst_pg_id = None
         src_addr = dst_addr = None
-        src_port_from = None
-        src_port_to = None
+        src_port_to = dst_port_to = None
+        src_port_from = dst_port_from = None
         dst_port_from = sg_rule["port_range_min"]
         dst_port_to = sg_rule["port_range_max"]
         if direction == "egress":
-            dst_ipg_id = sg_rule["remote_group_id"]
+            dst_pg_id = pg_id
             dst_addr = sg_rule["remote_ip_prefix"]
             match_forward_flow = True
         else:
-            src_ipg_id = sg_rule["remote_group_id"]
+            src_pg_id = pg_id
             src_addr = sg_rule["remote_ip_prefix"]
             match_forward_flow = False
 
         return self._add_chain_rule(
             chain, action='accept', properties=props,
             match_forward_flow=match_forward_flow,
-            ip_addr_group_src=src_ipg_id, ip_addr_group_dst=dst_ipg_id,
+            port_group_src=src_pg_id, port_group_dst=dst_pg_id,
             src_addr=src_addr, dst_addr=dst_addr,
             src_port_from=src_port_from, src_port_to=src_port_to,
             dst_port_from=dst_port_from, dst_port_to=dst_port_to,
@@ -813,8 +806,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if (self._check_update_deletes_security_groups(port) or
                     self._check_update_has_security_groups(port)):
                 self._unbind_port_from_sgs(context, p)
-                new_sg_ids = self._get_security_groups_on_port(context, port)
-                self._bind_port_to_sgs(context, p, new_sg_ids)
+                sg_ids = self._get_security_groups_on_port(context, port)
+                self._bind_port_to_sgs(context, p, sg_ids)
 
         return p
 
@@ -1248,7 +1241,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         Create a new security group, including the default security group.
         In MidoNet, this means creating a pair of chains, inbound and outbound,
-        as well as a new IP address group.
+        as well as a new port group.
         """
         LOG.debug(_("MidonetPluginV2.create_security_group called: "
                     "security_group=%(security_group)s "
@@ -1266,9 +1259,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         try:
             # Process the MidoNet side
-            sg_id = sg["id"]
-            self.client.create_ip_addr_group(sg_id,
-                                             _sg_ip_addr_group_name(sg_id))
+            self.client.create_port_group(tenant_id,
+                                          _sg_port_group_name(sg["id"]))
             chain_names = _sg_chain_names(sg["id"])
             chains = {}
             for direction, chain_name in chain_names.iteritems():
@@ -1309,12 +1301,13 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     context, filters):
                 raise ext_sg.SecurityGroupInUse(id=sg_id)
 
-            # Delete MidoNet Chains and IP address group for the SG
+            # Delete MidoNet Chains and portgroup for the SG
             tenant_id = sg['tenant_id']
             self.client.delete_chains_by_names(
                 tenant_id, _sg_chain_names(sg["id"]).values())
 
-            self.client.delete_ip_addr_group(sg["id"])
+            self.client.delete_port_group_by_name(
+                tenant_id, _sg_port_group_name(sg["id"]))
 
             super(MidonetPluginV2, self).delete_security_group(context, id)
 
