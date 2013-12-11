@@ -57,6 +57,7 @@ from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
+from neutron.openstack.common import lockutils
 from neutron.plugins.common import constants as plugin_const
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
@@ -641,6 +642,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                    'router_id': router_id,
                    'nvp_port_id': lr_port['uuid']})
 
+    @lockutils.synchronized('nicira', 'neutron-')
     def _nvp_delete_ext_gw_port(self, context, port_data):
         lr_port = self._find_router_gw_port(context, port_data)
         # TODO(salvatore-orlando): Handle NVP resource
@@ -1549,28 +1551,58 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def delete_router(self, context, router_id):
         with context.session.begin(subtransactions=True):
-            # Ensure metadata access network is detached and destroyed
-            # This will also destroy relevant objects on NVP platform.
-            # NOTE(salvatore-orlando): A failure in this operation will
-            # cause the router delete operation to fail too.
+            # TODO(salv-orlando): This call should have no effect on delete
+            # router, but if it does, it should not happen within a
+            # transaction, and it should be restored on rollback
             self.handle_router_metadata_access(
                 context, router_id, do_create=False)
+            # Pre-delete checks
+            # NOTE(salv-orlando): These checks will be repeated anyway when
+            # calling the superclass. This is wasteful, but is the simplest
+            # way of ensuring a consistent removal of the router both in
+            # the neutron Database and in the NVP backend.
+            # TODO(salv-orlando): split pre-delete checks and actual
+            # deletion in superclass.
+
+            # Ensure that the router is not used
+            fips = self.get_floatingips_count(
+                context.elevated(), filters={'router_id': [router_id]})
+            if fips:
+                raise l3.RouterInUse(router_id=router_id)
+
+            device_filter = {'device_id': [router_id],
+                             'device_owner': [l3_db.DEVICE_OWNER_ROUTER_INTF]}
+            ports = self._core_plugin.get_ports_count(context.elevated(),
+                                                      filters=device_filter)
+            if ports:
+                raise l3.RouterInUse(router_id=router_id)
+
+        # It is safe to remove the router from the database, so remove it
+        # from the backend
+        try:
+            self._delete_lrouter(context, router_id)
+        except q_exc.NotFound:
+            # This is not a fatal error, but needs to be logged
+            LOG.warning(_("Logical router '%s' not found "
+                        "on NVP Platform"), router_id)
+        except NvpApiClient.NvpApiException:
+            raise nvp_exc.NvpPluginException(
+                err_msg=(_("Unable to delete logical router '%s' "
+                           "on NVP Platform") % router_id))
+
+        # Perform the actual delete on the Neutron DB
+        try:
             super(NvpPluginV2, self).delete_router(context, router_id)
-            # If removal is successful in Neutron it should be so on
-            # the NVP platform too - otherwise the transaction should
-            # be automatically aborted
-            # TODO(salvatore-orlando): Extend the object models in order to
-            # allow an extra field for storing the cluster information
-            # together with the resource
-            try:
-                self._delete_lrouter(context, router_id)
-            except q_exc.NotFound:
-                LOG.warning(_("Logical router '%s' not found "
-                              "on NVP Platform"), router_id)
-            except NvpApiClient.NvpApiException:
-                raise nvp_exc.NvpPluginException(
-                    err_msg=(_("Unable to delete logical router '%s' "
-                               "on NVP Platform") % router_id))
+        except Exception:
+            # NOTE(salv-orlando): Broad catching as the following action
+            # needs to be performed for every exception.
+            # Put the router in ERROR status
+            LOG.exception(_("Failure while removing router:%s from database. "
+                            "The router will be put in ERROR status"),
+                          router_id)
+            with context.session.begin(subtransactions=True):
+                router_db = self._get_router(context, router_id)
+                router_db['status'] = constants.NET_STATUS_ERROR
 
     def _add_subnet_snat_rule(self, router, subnet):
         gw_port = router.gw_port
