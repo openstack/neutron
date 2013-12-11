@@ -142,9 +142,8 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                '',
                                wrap=False),
                  call.add_rule('neutron-meter-r-eeef45da-c60',
-                               '-i qg-7d411f48-ec -d 20.0.0.0/24 -j '
-                               'neutron-meter-l-eeef45da-c60',
-                               wrap=False, top=False)]
+                               '-i qg-7d411f48-ec -d 20.0.0.0/24 -j RETURN',
+                               wrap=False, top=True)]
 
         self.v4filter_inst.assert_has_calls(calls)
 
@@ -194,9 +193,8 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                wrap=False, top=False),
                  call.empty_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
                  call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-o qg-6d411f48-ec -d 10.0.0.0/24 -j '
-                               'neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False),
+                               '-o qg-6d411f48-ec -d 10.0.0.0/24 -j RETURN',
+                               wrap=False, top=True),
                  call.add_rule('neutron-meter-r-c5df2fe5-c60',
                                '-i qg-6d411f48-ec -d 20.0.0.0/24 -j '
                                'neutron-meter-l-c5df2fe5-c60',
@@ -358,9 +356,8 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                '',
                                wrap=False),
                  call.add_rule('neutron-meter-r-eeef45da-c60',
-                               '-i qg-7d411f48-ec -d 20.0.0.0/24 -j '
-                               'neutron-meter-l-eeef45da-c60',
-                               wrap=False, top=False),
+                               '-i qg-7d411f48-ec -d 20.0.0.0/24 -j RETURN',
+                               wrap=False, top=True),
                  call.remove_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
                  call.remove_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
                  call.add_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
