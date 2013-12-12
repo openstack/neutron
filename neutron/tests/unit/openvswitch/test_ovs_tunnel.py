@@ -496,23 +496,23 @@ class TunnelTest(base.BaseTestCase):
 
     def test_daemon_loop(self):
         reply2 = {'current': set(['tap0']),
-                  'added': set([]),
+                  'added': set(['tap2']),
                   'removed': set([])}
 
         reply3 = {'current': set(['tap2']),
                   'added': set([]),
-                  'removed': set([])}
+                  'removed': set(['tap0'])}
 
         with contextlib.nested(
             mock.patch.object(log.ContextAdapter, 'exception'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
-                              'update_ports'),
+                              'scan_ports'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
                               'process_network_ports')
-        ) as (log_exception, update_ports, process_network_ports):
+        ) as (log_exception, scan_ports, process_network_ports):
             log_exception.side_effect = Exception(
                 'Fake exception to get out of the loop')
-            update_ports.side_effect = [reply2, reply3]
+            scan_ports.side_effect = [reply2, reply3]
             process_network_ports.side_effect = [
                 False, Exception('Fake exception to get out of the loop')]
 
@@ -531,17 +531,19 @@ class TunnelTest(base.BaseTestCase):
             except Exception:
                 pass
 
-        log_exception.assert_called_once_with("Error in agent event loop")
-        update_ports.assert_has_calls([
-            mock.call(set()),
-            mock.call(set(['tap0']))
+        # FIXME(salv-orlando): There should not be assertions on log messages
+        log_exception.assert_called_once_with(
+            "Error while processing VIF ports")
+        scan_ports.assert_has_calls([
+            mock.call(set(), set()),
+            mock.call(set(['tap0']), set())
         ])
         process_network_ports.assert_has_calls([
             mock.call({'current': set(['tap0']),
                        'removed': set([]),
-                       'added': set([])}),
+                       'added': set(['tap2'])}),
             mock.call({'current': set(['tap2']),
-                       'removed': set([]),
+                       'removed': set(['tap0']),
                        'added': set([])})
         ])
         self._verify_mock_calls()
