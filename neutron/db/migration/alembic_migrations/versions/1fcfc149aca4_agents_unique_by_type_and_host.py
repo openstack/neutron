@@ -28,7 +28,12 @@ revision = '1fcfc149aca4'
 down_revision = 'e197124d4b9'
 
 migration_for_plugins = [
-    '*'
+    'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
+    'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
+    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
+    'neutron.plugins.nec.nec_plugin.NECPluginV2',
+    'neutron.plugins.brocade.NeutronPlugin.BrocadePluginV2',
+    'neutron.services.loadbalancer.plugin.LoadBalancerPlugin',
 ]
 
 from alembic import op
