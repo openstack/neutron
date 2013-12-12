@@ -47,7 +47,7 @@ STATS_MAP = {
     constants.STATS_RESPONSE_ERRORS: 'eresp'
 }
 
-ACTIVE = qconstants.ACTIVE
+ACTIVE_PENDING = qconstants.ACTIVE_PENDING
 INACTIVE = qconstants.INACTIVE
 
 
@@ -138,7 +138,9 @@ def _build_backend(config):
 
     # add the members
     for member in config['members']:
-        if member['status'] in (ACTIVE, INACTIVE) and member['admin_state_up']:
+        if ((member['status'] in ACTIVE_PENDING or
+             member['status'] == INACTIVE)
+            and member['admin_state_up']):
             server = (('server %(id)s %(address)s:%(protocol_port)s '
                        'weight %(weight)s') % member) + server_addon
             if _has_http_cookie_persistence(config):

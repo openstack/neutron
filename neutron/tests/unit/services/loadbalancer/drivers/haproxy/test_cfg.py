@@ -110,6 +110,12 @@ class TestHaproxyCfg(base.BaseTestCase):
                                     'id': 'member2_id',
                                     'address': '10.0.0.4',
                                     'protocol_port': 80,
+                                    'weight': 1},
+                                   {'status': 'PENDING_CREATE',
+                                    'admin_state_up': True,
+                                    'id': 'member3_id',
+                                    'address': '10.0.0.5',
+                                    'protocol_port': 80,
                                     'weight': 1}],
                        'healthmonitors': [{'admin_state_up': True,
                                            'delay': 3,
@@ -126,7 +132,9 @@ class TestHaproxyCfg(base.BaseTestCase):
                          '\tserver member1_id 10.0.0.3:80 weight 1 '
                          'check inter 3s fall 4 cookie 0',
                          '\tserver member2_id 10.0.0.4:80 weight 1 '
-                         'check inter 3s fall 4 cookie 1']
+                         'check inter 3s fall 4 cookie 1',
+                         '\tserver member3_id 10.0.0.5:80 weight 1 '
+                         'check inter 3s fall 4 cookie 2']
         opts = cfg._build_backend(test_config)
         self.assertEqual(expected_opts, list(opts))
 

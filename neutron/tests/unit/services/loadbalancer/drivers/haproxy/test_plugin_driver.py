@@ -261,6 +261,54 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                     self.assertEqual([member['member']],
                                      logical_config['members'])
 
+    def test_get_logical_device_pending_create_member(self):
+        with self.pool() as pool:
+            with self.vip(pool=pool) as vip:
+                with self.member(pool_id=vip['vip']['pool_id']) as member:
+                    ctx = context.get_admin_context()
+                    self.plugin_instance.update_status(ctx, ldb.Pool,
+                                                       pool['pool']['id'],
+                                                       'ACTIVE')
+                    self.plugin_instance.update_status(ctx, ldb.Vip,
+                                                       vip['vip']['id'],
+                                                       'ACTIVE')
+
+                    member = self.plugin_instance.get_member(
+                        ctx, member['member']['id'])
+                    self.assertEqual('PENDING_CREATE',
+                                     member['status'])
+                    logical_config = self.callbacks.get_logical_device(
+                        ctx, pool['pool']['id'])
+
+                    self.assertEqual([member], logical_config['members'])
+
+    def test_get_logical_device_pending_create_health_monitor(self):
+        with self.pool() as pool:
+            with self.vip(pool=pool) as vip:
+                with self.health_monitor() as monitor:
+                    ctx = context.get_admin_context()
+                    self.plugin_instance.update_status(ctx, ldb.Pool,
+                                                       pool['pool']['id'],
+                                                       'ACTIVE')
+                    self.plugin_instance.update_status(ctx, ldb.Vip,
+                                                       vip['vip']['id'],
+                                                       'ACTIVE')
+                    self.plugin_instance.create_pool_health_monitor(
+                        ctx, monitor, pool['pool']['id'])
+                    pool = self.plugin_instance.get_pool(
+                        ctx, pool['pool']['id'])
+                    monitor = self.plugin_instance.get_health_monitor(
+                        ctx, monitor['health_monitor']['id'])
+
+                    self.assertEqual(
+                        'PENDING_CREATE',
+                        pool['health_monitors_status'][0]['status'])
+                    logical_config = self.callbacks.get_logical_device(
+                        ctx, pool['id'])
+
+                    self.assertEqual([monitor],
+                                     logical_config['healthmonitors'])
+
     def _update_port_test_helper(self, expected, func, **kwargs):
         core = self.plugin_instance._core_plugin
 
