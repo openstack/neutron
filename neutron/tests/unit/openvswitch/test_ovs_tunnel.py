@@ -100,7 +100,6 @@ class TunnelTest(base.BaseTestCase):
         self.mock_int_bridge = self.ovs_bridges[self.INT_BRIDGE]
         self.mock_int_bridge.get_local_port_mac.return_value = '000000000001'
         self.mock_int_bridge_expected = [
-            mock.call.get_local_port_mac(),
             mock.call.delete_port('patch-tun'),
             mock.call.remove_all_flows(),
             mock.call.add_flow(priority=1, actions='normal'),
@@ -217,6 +216,8 @@ class TunnelTest(base.BaseTestCase):
         self.execute = mock.patch('neutron.agent.linux.utils.execute').start()
         self.execute_expected = [mock.call(['/sbin/udevadm', 'settle',
                                             '--timeout=10'])]
+        self.mock_int_bridge_expected += [
+            mock.call.get_local_port_mac()]
 
     def _verify_mock_call(self, mock_obj, expected):
         mock_obj.assert_has_calls(expected)
