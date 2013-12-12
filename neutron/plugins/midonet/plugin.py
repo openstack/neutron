@@ -31,6 +31,7 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import api as db
@@ -517,6 +518,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       'had been deleted'), id)
             raise
 
+    @utils.synchronized('port-critical-section', external=True)
     def create_port(self, context, port):
         """Create a L2 port in Neutron/MidoNet."""
         LOG.debug(_("MidonetPluginV2.create_port called: port=%r"), port)
@@ -629,6 +631,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                        fields)
         return ports
 
+    @utils.synchronized('port-critical-section', external=True)
     def delete_port(self, context, id, l3_port_check=True):
         """Delete a neutron port and corresponding MidoNet bridge port."""
         LOG.debug(_("MidonetPluginV2.delete_port called: id=%(id)s "
