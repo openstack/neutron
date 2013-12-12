@@ -97,9 +97,9 @@ class MetadataProxyHandler(object):
         try:
             LOG.debug(_("Request: %s"), req)
 
-            instance_id = self._get_instance_id(req)
+            instance_id, tenant_id = self._get_instance_and_tenant_id(req)
             if instance_id:
-                return self._proxy_request(instance_id, req)
+                return self._proxy_request(instance_id, tenant_id, req)
             else:
                 return webob.exc.HTTPNotFound()
 
@@ -109,7 +109,7 @@ class MetadataProxyHandler(object):
                     'Please try your request again.')
             return webob.exc.HTTPInternalServerError(explanation=unicode(msg))
 
-    def _get_instance_id(self, req):
+    def _get_instance_and_tenant_id(self, req):
         qclient = self._get_neutron_client()
 
         remote_address = req.headers.get('X-Forwarded-For')
@@ -130,14 +130,15 @@ class MetadataProxyHandler(object):
             fixed_ips=['ip_address=%s' % remote_address])['ports']
 
         self.auth_info = qclient.get_auth_info()
-
         if len(ports) == 1:
-            return ports[0]['device_id']
+            return ports[0]['device_id'], ports[0]['tenant_id']
+        return None, None
 
-    def _proxy_request(self, instance_id, req):
+    def _proxy_request(self, instance_id, tenant_id, req):
         headers = {
             'X-Forwarded-For': req.headers.get('X-Forwarded-For'),
             'X-Instance-ID': instance_id,
+            'X-Tenant-ID': tenant_id,
             'X-Instance-ID-Signature': self._sign_instance_id(instance_id)
         }
 
