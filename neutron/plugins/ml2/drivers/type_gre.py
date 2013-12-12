@@ -120,10 +120,10 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
                         LOG.debug(_("Releasing gre tunnel %s to pool"),
                                   gre_id)
                         break
-                    else:
-                        session.delete(alloc)
-                        LOG.debug(_("Releasing gre tunnel %s outside pool"),
-                                  gre_id)
+                else:
+                    session.delete(alloc)
+                    LOG.debug(_("Releasing gre tunnel %s outside pool"),
+                              gre_id)
             except sa_exc.NoResultFound:
                 LOG.warning(_("gre_id %s not found"), gre_id)
 

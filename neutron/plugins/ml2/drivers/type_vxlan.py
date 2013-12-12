@@ -128,10 +128,10 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
                         LOG.debug(_("Releasing vxlan tunnel %s to pool"),
                                   vxlan_vni)
                         break
-                    else:
-                        session.delete(alloc)
-                        LOG.debug(_("Releasing vxlan tunnel %s outside pool"),
-                                  vxlan_vni)
+                else:
+                    session.delete(alloc)
+                    LOG.debug(_("Releasing vxlan tunnel %s outside pool"),
+                              vxlan_vni)
             except sa_exc.NoResultFound:
                 LOG.warning(_("vxlan_vni %s not found"), vxlan_vni)
 
