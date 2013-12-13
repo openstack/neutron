@@ -79,7 +79,7 @@ class IPAllocationPool(model_base.BASEV2, HasId):
     available_ranges = orm.relationship(IPAvailabilityRange,
                                         backref='ipallocationpool',
                                         lazy="joined",
-                                        cascade='delete')
+                                        cascade='all, delete-orphan')
 
     def __repr__(self):
         return "%s - %s" % (self.first_ip, self.last_ip)
