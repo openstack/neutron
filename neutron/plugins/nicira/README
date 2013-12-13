@@ -18,15 +18,14 @@ NVP Plugin configuration
     - retry_interval: Gap between connection attempts (default 2 seconds)
     2) NVP (general)
     - max_lp_per_bridged_ls: Maximum number of ports of a logical switch on a
-    bridged transport zone (default 64)
+    bridged transport zone (default 5000)
     - concurrent_connections: Number of connects to each controller node
-    (default 3)
+    (default 10)
     - nvp_gen_timout: Number of seconds a generation id should be valid for
     (default -1 meaning do not time out)
     3) NVP cluster
     By default the Neutron NVP plugin can talk to multiple controllers in a
-    single cluster. In the future (Havana+) support for multiple clusters
-    will be added.
+    single cluster.
     The following parameters can be configured:
     - default_tz_uuid: This is uuid of the default NVP Transport zone that
       will be used for creating tunneled isolated "Neutron" networks. It
@@ -38,6 +37,5 @@ Neutron Configuration
 
     Modify your Neutron configuration for using the NVP Plugin:
 
-    core_plugin =
-        neutron.plugins.nicira.neutronPlugin.NvpPluginV2
+    core_plugin = neutron.plugins.nicira.NeutronPlugin.NvpPluginV2
 
