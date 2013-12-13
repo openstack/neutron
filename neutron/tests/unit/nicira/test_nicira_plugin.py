@@ -1377,6 +1377,41 @@ class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
             # Assert Neutron name is not truncated
             self.assertEqual(nw_gw[self.resource]['name'], name)
 
+    def test_update_network_gateway_with_name_calls_backend(self):
+        with mock.patch.object(
+            nvplib, 'update_l2_gw_service') as mock_update_gw:
+            with self._network_gateway(name='cavani') as nw_gw:
+                nw_gw_id = nw_gw[self.resource]['id']
+                self._update(nvp_networkgw.COLLECTION_NAME, nw_gw_id,
+                             {self.resource: {'name': 'higuain'}})
+                mock_update_gw.assert_called_once_with(
+                    mock.ANY, nw_gw_id, 'higuain')
+
+    def test_update_network_gateway_without_name_does_not_call_backend(self):
+        with mock.patch.object(
+            nvplib, 'update_l2_gw_service') as mock_update_gw:
+            with self._network_gateway(name='something') as nw_gw:
+                nw_gw_id = nw_gw[self.resource]['id']
+                self._update(nvp_networkgw.COLLECTION_NAME, nw_gw_id,
+                             {self.resource: {}})
+                self.assertEqual(mock_update_gw.call_count, 0)
+
+    def test_update_network_gateway_name_exceeds_40_chars(self):
+        new_name = 'this_is_a_gateway_whose_name_is_longer_than_40_chars'
+        with self._network_gateway(name='something') as nw_gw:
+            nw_gw_id = nw_gw[self.resource]['id']
+            self._update(nvp_networkgw.COLLECTION_NAME, nw_gw_id,
+                         {self.resource: {'name': new_name}})
+            req = self.new_show_request(nvp_networkgw.COLLECTION_NAME,
+                                        nw_gw_id)
+            res = self.deserialize('json', req.get_response(self.ext_api))
+            # Assert Neutron name is not truncated
+            self.assertEqual(new_name, res[self.resource]['name'])
+            # Assert NVP name is truncated
+            self.assertEqual(
+                new_name[:40],
+                self.fc._fake_gatewayservice_dict[nw_gw_id]['display_name'])
+
     def test_create_network_gateway_nvp_error_returns_500(self):
         def raise_nvp_api_exc(*args, **kwargs):
             raise NvpApiClient.NvpApiException
