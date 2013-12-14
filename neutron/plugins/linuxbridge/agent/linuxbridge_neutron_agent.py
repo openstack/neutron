@@ -792,10 +792,8 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
             'agent_type': constants.AGENT_TYPE_LINUXBRIDGE,
             'start_flag': True}
 
-        self.init_firewall()
-        # Perform rpc initialization only once all other configuration
-        # is complete
         self.setup_rpc(interface_mappings.values())
+        self.init_firewall()
 
     def _report_state(self):
         try:
