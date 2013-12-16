@@ -34,6 +34,7 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common.rpc import dispatcher
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.mlnx.agent import utils
 from neutron.plugins.mlnx.common import config  # noqa
 from neutron.plugins.mlnx.common import constants
@@ -102,7 +103,7 @@ class EswitchManager(object):
         net_map = self.network_map[network_id]
         net_map['ports'].append({'port_id': port_id, 'port_mac': port_mac})
 
-        if network_type in (constants.TYPE_VLAN,
+        if network_type in (p_const.TYPE_VLAN,
                             constants.TYPE_IB):
             LOG.info(_('Binding Segmentation ID %(seg_id)s'
                        'to eSwitch for vNIC mac_address %(mac)s'),
@@ -129,7 +130,7 @@ class EswitchManager(object):
                           network_id, network_type,
                           physical_network, segmentation_id):
         LOG.info(_("Provisioning network %s"), network_id)
-        if network_type == constants.TYPE_VLAN:
+        if network_type == p_const.TYPE_VLAN:
             LOG.debug(_("Creating VLAN Network"))
         elif network_type == constants.TYPE_IB:
             LOG.debug(_("Creating IB Network"))

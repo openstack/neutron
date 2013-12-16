@@ -26,6 +26,7 @@ from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.openstack.common.rpc import common as rpc_common
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
 from neutron.plugins.openvswitch.common import constants
 from neutron.tests import base
@@ -44,11 +45,11 @@ class CreateAgentConfigMap(base.BaseTestCase):
         self.addCleanup(cfg.CONF.reset)
         # An ip address is required for tunneling but there is no default,
         # verify this for both gre and vxlan tunnels.
-        cfg.CONF.set_override('tunnel_types', [constants.TYPE_GRE],
+        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE],
                               group='AGENT')
         with testtools.ExpectedException(ValueError):
             ovs_neutron_agent.create_agent_config_map(cfg.CONF)
-        cfg.CONF.set_override('tunnel_types', [constants.TYPE_VXLAN],
+        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_VXLAN],
                               group='AGENT')
         with testtools.ExpectedException(ValueError):
             ovs_neutron_agent.create_agent_config_map(cfg.CONF)
@@ -60,7 +61,7 @@ class CreateAgentConfigMap(base.BaseTestCase):
         cfg.CONF.set_override('enable_tunneling', True, group='OVS')
         cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
         cfgmap = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
-        self.assertEqual(cfgmap['tunnel_types'], [constants.TYPE_GRE])
+        self.assertEqual(cfgmap['tunnel_types'], [p_const.TYPE_GRE])
 
     def test_create_agent_config_map_fails_no_local_ip(self):
         self.addCleanup(cfg.CONF.reset)
@@ -78,11 +79,11 @@ class CreateAgentConfigMap(base.BaseTestCase):
     def test_create_agent_config_map_multiple_tunnel_types(self):
         self.addCleanup(cfg.CONF.reset)
         cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
-        cfg.CONF.set_override('tunnel_types', [constants.TYPE_GRE,
-                              constants.TYPE_VXLAN], group='AGENT')
+        cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE,
+                              p_const.TYPE_VXLAN], group='AGENT')
         cfgmap = ovs_neutron_agent.create_agent_config_map(cfg.CONF)
         self.assertEqual(cfgmap['tunnel_types'],
-                         [constants.TYPE_GRE, constants.TYPE_VXLAN])
+                         [p_const.TYPE_GRE, p_const.TYPE_VXLAN])
 
 
 class TestOvsNeutronAgent(base.BaseTestCase):
@@ -599,13 +600,13 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(ovs_neutron_agent.LOG, 'error')
         ) as (add_tunnel_port_fn, log_error_fn):
             ofport = self.agent.setup_tunnel_port(
-                'gre-1', 'remote_ip', constants.TYPE_GRE)
+                'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
-                'gre-1', 'remote_ip', self.agent.local_ip, constants.TYPE_GRE,
+                'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
                 self.agent.vxlan_udp_port)
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
-                {'type': constants.TYPE_GRE, 'ip': 'remote_ip'})
+                {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
             self.assertEqual(ofport, 0)
 
     def test_setup_tunnel_port_error_not_int(self):
@@ -616,16 +617,16 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(ovs_neutron_agent.LOG, 'error')
         ) as (add_tunnel_port_fn, log_exc_fn, log_error_fn):
             ofport = self.agent.setup_tunnel_port(
-                'gre-1', 'remote_ip', constants.TYPE_GRE)
+                'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
-                'gre-1', 'remote_ip', self.agent.local_ip, constants.TYPE_GRE,
+                'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
                 self.agent.vxlan_udp_port)
             log_exc_fn.assert_called_once_with(
                 _("ofport should have a value that can be "
                   "interpreted as an integer"))
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
-                {'type': constants.TYPE_GRE, 'ip': 'remote_ip'})
+                {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
             self.assertEqual(ofport, 0)
 
 

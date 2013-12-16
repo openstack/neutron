@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron.plugins.common import constants as p_const
+
+
 # Special vlan_id value in ovs_vlan_allocations table indicating flat network
 FLAT_VLAN_ID = -1
 
@@ -20,12 +23,6 @@ FLAT_VLAN_ID = -1
 TUNNEL = 'tunnel'
 
 # Values for network_type
-TYPE_FLAT = 'flat'
-TYPE_VLAN = 'vlan'
-TYPE_GRE = 'gre'
-TYPE_LOCAL = 'local'
-TYPE_VXLAN = 'vxlan'
-TYPE_NONE = 'none'
 VXLAN_UDP_PORT = 4789
 
 # Name prefixes for veth device pair linking the integration bridge
@@ -37,7 +34,7 @@ VETH_PHYSICAL_PREFIX = 'phy-'
 MINIMUM_OVS_VXLAN_VERSION = "1.10"
 
 # The different types of tunnels
-TUNNEL_NETWORK_TYPES = [TYPE_GRE, TYPE_VXLAN]
+TUNNEL_NETWORK_TYPES = [p_const.TYPE_GRE, p_const.TYPE_VXLAN]
 
 # Various tables for tunneling flows
 PATCH_LV_TO_TUN = 1
@@ -47,7 +44,8 @@ LEARN_FROM_TUN = 10
 UCAST_TO_TUN = 20
 FLOOD_TO_TUN = 21
 # Map tunnel types to tables number
-TUN_TABLE = {TYPE_GRE: GRE_TUN_TO_LV, TYPE_VXLAN: VXLAN_TUN_TO_LV}
+TUN_TABLE = {p_const.TYPE_GRE: GRE_TUN_TO_LV,
+             p_const.TYPE_VXLAN: VXLAN_TUN_TO_LV}
 
 # The default respawn interval for the ovsdb monitor
 DEFAULT_OVSDBMON_RESPAWN = 30

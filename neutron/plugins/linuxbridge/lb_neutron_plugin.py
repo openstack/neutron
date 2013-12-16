@@ -261,9 +261,9 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self._parse_network_vlan_ranges()
         db.sync_network_states(self.network_vlan_ranges)
         self.tenant_network_type = cfg.CONF.VLANS.tenant_network_type
-        if self.tenant_network_type not in [constants.TYPE_LOCAL,
-                                            constants.TYPE_VLAN,
-                                            constants.TYPE_NONE]:
+        if self.tenant_network_type not in [svc_constants.TYPE_LOCAL,
+                                            svc_constants.TYPE_VLAN,
+                                            svc_constants.TYPE_NONE]:
             LOG.error(_("Invalid tenant_network_type: %s. "
                         "Service terminated!"),
                       self.tenant_network_type)
@@ -316,15 +316,15 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def _extend_network_dict_provider(self, context, network):
         binding = db.get_network_binding(context.session, network['id'])
         if binding.vlan_id == constants.FLAT_VLAN_ID:
-            network[provider.NETWORK_TYPE] = constants.TYPE_FLAT
+            network[provider.NETWORK_TYPE] = svc_constants.TYPE_FLAT
             network[provider.PHYSICAL_NETWORK] = binding.physical_network
             network[provider.SEGMENTATION_ID] = None
         elif binding.vlan_id == constants.LOCAL_VLAN_ID:
-            network[provider.NETWORK_TYPE] = constants.TYPE_LOCAL
+            network[provider.NETWORK_TYPE] = svc_constants.TYPE_LOCAL
             network[provider.PHYSICAL_NETWORK] = None
             network[provider.SEGMENTATION_ID] = None
         else:
-            network[provider.NETWORK_TYPE] = constants.TYPE_VLAN
+            network[provider.NETWORK_TYPE] = svc_constants.TYPE_VLAN
             network[provider.PHYSICAL_NETWORK] = binding.physical_network
             network[provider.SEGMENTATION_ID] = binding.vlan_id
 
@@ -344,13 +344,13 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if not network_type_set:
             msg = _("provider:network_type required")
             raise q_exc.InvalidInput(error_message=msg)
-        elif network_type == constants.TYPE_FLAT:
+        elif network_type == svc_constants.TYPE_FLAT:
             if segmentation_id_set:
                 msg = _("provider:segmentation_id specified for flat network")
                 raise q_exc.InvalidInput(error_message=msg)
             else:
                 segmentation_id = constants.FLAT_VLAN_ID
-        elif network_type == constants.TYPE_VLAN:
+        elif network_type == svc_constants.TYPE_VLAN:
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
                 raise q_exc.InvalidInput(error_message=msg)
@@ -360,7 +360,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                        {'min_id': q_const.MIN_VLAN_TAG,
                         'max_id': q_const.MAX_VLAN_TAG})
                 raise q_exc.InvalidInput(error_message=msg)
-        elif network_type == constants.TYPE_LOCAL:
+        elif network_type == svc_constants.TYPE_LOCAL:
             if physical_network_set:
                 msg = _("provider:physical_network specified for local "
                         "network")
@@ -377,7 +377,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             msg = _("provider:network_type %s not supported") % network_type
             raise q_exc.InvalidInput(error_message=msg)
 
-        if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
+        if network_type in [svc_constants.TYPE_VLAN, svc_constants.TYPE_FLAT]:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
                     msg = (_("Unknown provider:physical_network %s") %
@@ -406,15 +406,16 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if not network_type:
                 # tenant network
                 network_type = self.tenant_network_type
-                if network_type == constants.TYPE_NONE:
+                if network_type == svc_constants.TYPE_NONE:
                     raise q_exc.TenantNetworksDisabled()
-                elif network_type == constants.TYPE_VLAN:
+                elif network_type == svc_constants.TYPE_VLAN:
                     physical_network, vlan_id = db.reserve_network(session)
                 else:  # TYPE_LOCAL
                     vlan_id = constants.LOCAL_VLAN_ID
             else:
                 # provider network
-                if network_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
+                if network_type in [svc_constants.TYPE_VLAN,
+                                    svc_constants.TYPE_FLAT]:
                     db.reserve_specific_network(session, physical_network,
                                                 vlan_id)
                 # no reservation needed for TYPE_LOCAL

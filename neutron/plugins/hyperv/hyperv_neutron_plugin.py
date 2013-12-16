@@ -173,10 +173,10 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
 
     def _set_tenant_network_type(self):
         tenant_network_type = cfg.CONF.HYPERV.tenant_network_type
-        if tenant_network_type not in [constants.TYPE_LOCAL,
-                                       constants.TYPE_FLAT,
-                                       constants.TYPE_VLAN,
-                                       constants.TYPE_NONE]:
+        if tenant_network_type not in [svc_constants.TYPE_LOCAL,
+                                       svc_constants.TYPE_FLAT,
+                                       svc_constants.TYPE_VLAN,
+                                       svc_constants.TYPE_NONE]:
             msg = _(
                 "Invalid tenant_network_type: %s. "
                 "Agent terminated!") % tenant_network_type
@@ -210,16 +210,16 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
 
     def _create_network_providers_map(self):
         self._network_providers_map = {
-            constants.TYPE_LOCAL: LocalNetworkProvider(),
-            constants.TYPE_FLAT: FlatNetworkProvider(),
-            constants.TYPE_VLAN: VlanNetworkProvider()
+            svc_constants.TYPE_LOCAL: LocalNetworkProvider(),
+            svc_constants.TYPE_FLAT: FlatNetworkProvider(),
+            svc_constants.TYPE_VLAN: VlanNetworkProvider()
         }
 
     def _process_provider_create(self, context, session, attrs):
         network_type = attrs.get(provider.NETWORK_TYPE)
         network_type_set = attributes.is_attr_set(network_type)
         if not network_type_set:
-            if self._tenant_network_type == constants.TYPE_NONE:
+            if self._tenant_network_type == svc_constants.TYPE_NONE:
                 raise q_exc.TenantNetworksDisabled()
             network_type = self._tenant_network_type
             attrs[provider.NETWORK_TYPE] = network_type

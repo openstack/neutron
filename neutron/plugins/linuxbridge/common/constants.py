@@ -17,15 +17,11 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 
+from neutron.plugins.common import constants as p_const
+
+
 FLAT_VLAN_ID = -1
 LOCAL_VLAN_ID = -2
-
-# Values for network_type
-TYPE_FLAT = 'flat'
-TYPE_VLAN = 'vlan'
-TYPE_VXLAN = 'vxlan'
-TYPE_LOCAL = 'local'
-TYPE_NONE = 'none'
 
 # Supported VXLAN features
 VXLAN_NONE = 'not_supported'
@@ -42,8 +38,8 @@ MIN_VXLAN_KVER = {VXLAN_MCAST: '3.8', VXLAN_UCAST: '3.11'}
 def interpret_vlan_id(vlan_id):
     """Return (network_type, segmentation_id) tuple for encoded vlan_id."""
     if vlan_id == LOCAL_VLAN_ID:
-        return (TYPE_LOCAL, None)
+        return (p_const.TYPE_LOCAL, None)
     elif vlan_id == FLAT_VLAN_ID:
-        return (TYPE_FLAT, None)
+        return (p_const.TYPE_FLAT, None)
     else:
-        return (TYPE_VLAN, vlan_id)
+        return (p_const.TYPE_VLAN, vlan_id)

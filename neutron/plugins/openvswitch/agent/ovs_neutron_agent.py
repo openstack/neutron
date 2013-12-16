@@ -47,6 +47,7 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common.rpc import dispatcher
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.common import config  # noqa
 from neutron.plugins.openvswitch.common import constants
 
@@ -204,8 +205,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.setup_integration_br()
         self.setup_physical_bridges(bridge_mappings)
         self.local_vlan_map = {}
-        self.tun_br_ofports = {constants.TYPE_GRE: {},
-                               constants.TYPE_VXLAN: {}}
+        self.tun_br_ofports = {p_const.TYPE_GRE: {},
+                               p_const.TYPE_VXLAN: {}}
 
         self.polling_interval = polling_interval
         self.minimize_polling = minimize_polling
@@ -232,7 +233,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.iter_num = 0
 
     def _check_ovs_version(self):
-        if constants.TYPE_VXLAN in self.tunnel_types:
+        if p_const.TYPE_VXLAN in self.tunnel_types:
             check_ovs_version(constants.MINIMUM_OVS_VXLAN_VERSION,
                               self.root_helper)
 
@@ -490,7 +491,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                           "net-id=%(net_uuid)s - tunneling disabled"),
                           {'network_type': network_type,
                            'net_uuid': net_uuid})
-        elif network_type == constants.TYPE_FLAT:
+        elif network_type == p_const.TYPE_FLAT:
             if physical_network in self.phys_brs:
                 # outbound
                 br = self.phys_brs[physical_network]
@@ -510,7 +511,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                             "physical_network %(physical_network)s"),
                           {'net_uuid': net_uuid,
                            'physical_network': physical_network})
-        elif network_type == constants.TYPE_VLAN:
+        elif network_type == p_const.TYPE_VLAN:
             if physical_network in self.phys_brs:
                 # outbound
                 br = self.phys_brs[physical_network]
@@ -530,7 +531,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                             "physical_network %(physical_network)s"),
                           {'net_uuid': net_uuid,
                            'physical_network': physical_network})
-        elif network_type == constants.TYPE_LOCAL:
+        elif network_type == p_const.TYPE_LOCAL:
             # no flows needed for local networks
             pass
         else:
@@ -565,7 +566,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     # Try to remove tunnel ports if not used by other networks
                     for ofport in lvm.tun_ofports:
                         self.cleanup_tunnel_port(ofport, lvm.network_type)
-        elif lvm.network_type == constants.TYPE_FLAT:
+        elif lvm.network_type == p_const.TYPE_FLAT:
             if lvm.physical_network in self.phys_brs:
                 # outbound
                 br = self.phys_brs[lvm.physical_network]
@@ -576,7 +577,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 br = self.int_br
                 br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
                                 dl_vlan=0xffff)
-        elif lvm.network_type == constants.TYPE_VLAN:
+        elif lvm.network_type == p_const.TYPE_VLAN:
             if lvm.physical_network in self.phys_brs:
                 # outbound
                 br = self.phys_brs[lvm.physical_network]
@@ -587,7 +588,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 br = self.int_br
                 br.delete_flows(in_port=self.int_ofports[lvm.physical_network],
                                 dl_vlan=lvm.segmentation_id)
-        elif lvm.network_type == constants.TYPE_LOCAL:
+        elif lvm.network_type == p_const.TYPE_LOCAL:
             # no flows needed for local networks
             pass
         else:
@@ -1252,7 +1253,7 @@ def create_agent_config_map(config):
 
     # If enable_tunneling is TRUE, set tunnel_type to default to GRE
     if config.OVS.enable_tunneling and not kwargs['tunnel_types']:
-        kwargs['tunnel_types'] = [constants.TYPE_GRE]
+        kwargs['tunnel_types'] = [p_const.TYPE_GRE]
 
     # Verify the tunnel_types specified are valid
     for tun in kwargs['tunnel_types']:

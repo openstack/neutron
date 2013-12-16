@@ -19,11 +19,10 @@ import sqlalchemy as sa
 from neutron.common import exceptions as exc
 from neutron.db import model_base
 from neutron.openstack.common import log
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
-
-TYPE_FLAT = 'flat'
 
 flat_opts = [
     cfg.ListOpt('flat_networks',
@@ -75,7 +74,7 @@ class FlatTypeDriver(api.TypeDriver):
                      self.flat_networks)
 
     def get_type(self):
-        return TYPE_FLAT
+        return p_const.TYPE_FLAT
 
     def initialize(self):
         LOG.info(_("ML2 FlatTypeDriver initialization complete"))
