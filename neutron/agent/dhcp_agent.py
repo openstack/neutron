@@ -163,7 +163,7 @@ class DhcpAgent(manager.Manager):
                                     'network %s'), deleted_id)
 
             for network in active_networks:
-                pool.spawn_n(self.safe_configure_dhcp_for_network, network)
+                pool.spawn(self.safe_configure_dhcp_for_network, network)
             pool.waitall()
             LOG.info(_('Synchronizing state complete'))
 
