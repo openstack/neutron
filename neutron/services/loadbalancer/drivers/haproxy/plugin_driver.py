@@ -166,12 +166,20 @@ class LoadBalancerCallbacks(object):
         }
         if obj_type not in model_mapping:
             raise q_exc.Invalid(_('Unknown object type: %s') % obj_type)
-        elif obj_type == 'health_monitor':
-            self.plugin.update_pool_health_monitor(
-                context, obj_id['monitor_id'], obj_id['pool_id'], status)
-        else:
-            self.plugin.update_status(
-                context, model_mapping[obj_type], obj_id, status)
+        try:
+            if obj_type == 'health_monitor':
+                self.plugin.update_pool_health_monitor(
+                    context, obj_id['monitor_id'], obj_id['pool_id'], status)
+            else:
+                self.plugin.update_status(
+                    context, model_mapping[obj_type], obj_id, status)
+        except q_exc.NotFound:
+            # update_status may come from agent on an object which was
+            # already deleted from db with other request
+            LOG.warning(_('Cannot update status: %(obj_type)s %(obj_id)s '
+                          'not found in the DB, it was probably deleted '
+                          'concurrently'),
+                        {'obj_type': obj_type, 'obj_id': obj_id})
 
     def pool_destroyed(self, context, pool_id=None):
         """Agent confirmation hook that a pool has been destroyed.
