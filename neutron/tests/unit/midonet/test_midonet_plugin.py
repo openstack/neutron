@@ -103,6 +103,12 @@ class TestMidonetL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase,
                     self._add_external_gateway_to_router(
                         r['router']['id'],
                         public_sub['subnet']['network_id'])
+
+                    # Check that get_link_port was called - if not, Source NAT
+                    # will not be set up correctly on the MidoNet side
+                    self.assertTrue(
+                        self.instance.return_value.get_link_port.called)
+
                     self._router_interface_action('add', r['router']['id'],
                                                   private_sub['subnet']['id'],
                                                   None)
