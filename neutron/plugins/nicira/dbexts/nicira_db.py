@@ -47,26 +47,30 @@ def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
     return binding
 
 
-def add_neutron_nvp_port_mapping(session, neutron_id, nvp_id):
+def add_neutron_nsx_port_mapping(session, neutron_id,
+                                 nsx_switch_id, nsx_port_id):
     with session.begin(subtransactions=True):
-        mapping = nicira_models.NeutronNvpPortMapping(neutron_id, nvp_id)
+        mapping = nicira_models.NeutronNsxPortMapping(
+            neutron_id, nsx_switch_id, nsx_port_id)
         session.add(mapping)
         return mapping
 
 
-def get_nvp_port_id(session, neutron_id):
+def get_nsx_switch_and_port_id(session, neutron_id):
     try:
-        mapping = (session.query(nicira_models.NeutronNvpPortMapping).
-                   filter_by(quantum_id=neutron_id).
+        mapping = (session.query(nicira_models.NeutronNsxPortMapping).
+                   filter_by(neutron_id=neutron_id).
                    one())
-        return mapping['nvp_id']
+        return mapping['nsx_switch_id'], mapping['nsx_port_id']
     except exc.NoResultFound:
-        return
+        LOG.debug(_("NSX identifiers for neutron port %s not yet "
+                    "stored in Neutron DB"), neutron_id)
+        return None, None
 
 
-def delete_neutron_nvp_port_mapping(session, neutron_id):
-    return (session.query(nicira_models.NeutronNvpPortMapping).
-            filter_by(quantum_id=neutron_id).delete())
+def delete_neutron_nsx_port_mapping(session, neutron_id):
+    return (session.query(nicira_models.NeutronNsxPortMapping).
+            filter_by(neutron_id=neutron_id).delete())
 
 
 def unset_default_network_gateways(session):

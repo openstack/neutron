@@ -243,7 +243,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
                 self._verify_no_orphan_left(net_id)
 
     def test_create_port_neutron_error_no_orphan_left(self):
-        with mock.patch.object(nicira_db, 'add_neutron_nvp_port_mapping',
+        with mock.patch.object(nicira_db, 'add_neutron_nsx_port_mapping',
                                side_effect=ntn_exc.NeutronException):
             with self.network() as net:
                 net_id = net['network']['id']

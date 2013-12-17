@@ -26,6 +26,7 @@ from neutron.openstack.common import log
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import timeutils
 from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import nsx_utils
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
@@ -375,12 +376,12 @@ class NvpSynchronizer():
         if not lswitchport:
             # Try to get port from nvp
             try:
-                lp_uuid = self._plugin._nvp_get_port_id(
-                    context, self._cluster, neutron_port_data)
+                ls_uuid, lp_uuid = nsx_utils.get_nsx_switch_and_port_id(
+                    context.session, self._cluster, neutron_port_data['id'])
                 if lp_uuid:
                     lswitchport = nvplib.get_port(
-                        self._cluster, neutron_port_data['network_id'],
-                        lp_uuid, relations='LogicalPortStatus')
+                        self._cluster, ls_uuid, lp_uuid,
+                        relations='LogicalPortStatus')
             except (exceptions.PortNotFoundOnNetwork):
                 # NOTE(salv-orlando): We should be catching
                 # NvpApiClient.ResourceNotFound here instead
