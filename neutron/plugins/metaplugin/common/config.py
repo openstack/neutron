@@ -31,6 +31,8 @@ meta_plugin_opts = [
                help=_("Supported extension aliases")),
     cfg.StrOpt('extension_map', default='',
                help=_("A list of extensions, per plugin, to load.")),
+    cfg.StrOpt('rpc_flavor', default='',
+               help=_("Flavor of which plugin handles RPC")),
 ]
 
 proxy_plugin_opts = [
