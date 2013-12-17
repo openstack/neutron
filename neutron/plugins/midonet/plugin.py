@@ -889,14 +889,16 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 if (l3_db.EXTERNAL_GW_INFO in r and
                         r[l3_db.EXTERNAL_GW_INFO] is not None):
                     # Gateway created
-                    gw_port = self._get_port(context.elevated(),
+                    gw_port_neutron = self._get_port(context.elevated(),
                                              r["gw_port_id"])
-                    gw_ip = gw_port['fixed_ips'][0]['ip_address']
+                    gw_ip = gw_port_neutron['fixed_ips'][0]['ip_address']
 
                     # First link routers and set up the routes
                     self._set_router_gateway(r["id"],
                                              self._get_provider_router(),
                                              gw_ip)
+                    gw_port_midonet = self.client.get_link_port(
+                        self._get_provider_router(), r["id"])
 
                     # Get the NAT chains and add dynamic SNAT rules.
                     chain_names = _nat_chain_names(r["id"])
@@ -904,7 +906,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     self.client.add_dynamic_snat(tenant_id,
                                                  chain_names['pre-routing'],
                                                  chain_names['post-routing'],
-                                                 gw_ip, gw_port["id"], **props)
+                                                 gw_ip, gw_port_midonet.get_id(), **props)
 
             self.client.update_router(id, **router_data)
 
