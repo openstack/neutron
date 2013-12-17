@@ -1179,6 +1179,37 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
 
+    def test_create_security_group_rule_allow_all_ipv4(self):
+        with self.security_group() as sg:
+            rule = {'security_group_id': sg['security_group']['id'],
+                    'direction': 'ingress',
+                    'ethertype': 'IPv4',
+                    'tenant_id': 'test_tenant'}
+
+            res = self._create_security_group_rule(
+                self.fmt, {'security_group_rule': rule})
+            rule = self.deserialize(self.fmt, res)
+            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+
+    def test_create_security_group_rule_allow_all_ipv4_v6_bulk(self):
+        if self._skip_native_bulk:
+            self.skipTest("Plugin does not support native bulk "
+                          "security_group_rule create")
+        with self.security_group() as sg:
+            rule_v4 = {'security_group_id': sg['security_group']['id'],
+                       'direction': 'ingress',
+                       'ethertype': 'IPv4',
+                       'tenant_id': 'test_tenant'}
+            rule_v6 = {'security_group_id': sg['security_group']['id'],
+                       'direction': 'ingress',
+                       'ethertype': 'IPv6',
+                       'tenant_id': 'test_tenant'}
+
+            rules = {'security_group_rules': [rule_v4, rule_v6]}
+            res = self._create_security_group_rule(self.fmt, rules)
+            self.deserialize(self.fmt, res)
+            self.assertEqual(res.status_int, webob.exc.HTTPCreated.code)
+
     def test_create_security_group_rule_duplicate_rule_in_post(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk "
