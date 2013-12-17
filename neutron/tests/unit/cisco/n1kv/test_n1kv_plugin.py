@@ -547,7 +547,11 @@ class TestN1kvNetworks(test_plugin.TestNetworksV2,
 class TestN1kvSubnets(test_plugin.TestSubnetsV2,
                       N1kvPluginTestCase):
 
-    pass
+    def setUp(self):
+        super(TestN1kvSubnets, self).setUp()
+
+        # Create some of the database entries that we require.
+        self._make_test_policy_profile(name='dhcp_pp')
 
 
 class TestN1kvL3Test(test_l3_plugin.L3NatExtensionTestCase):
