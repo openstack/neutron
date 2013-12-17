@@ -622,20 +622,25 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
             nvplib, 'create_lrouter', new=obsolete_response):
             self._test_router_create_with_distributed(None, False, '2.2')
 
+    def _create_router_with_gw_info_for_test(self, subnet):
+        data = {'router': {'tenant_id': 'whatever',
+                           'name': 'router1',
+                           'external_gateway_info':
+                           {'network_id': subnet['subnet']['network_id']}}}
+        router_req = self.new_create_request(
+            'routers', data, self.fmt)
+        return router_req.get_response(self.ext_api)
+
     def test_router_create_nvp_error_returns_500(self, vlan_id=None):
         with mock.patch.object(nvplib,
                                'create_router_lport',
                                side_effect=NvpApiClient.NvpApiException):
             with self._create_l3_ext_network(vlan_id) as net:
                 with self.subnet(network=net) as s:
-                    data = {'router': {'tenant_id': 'whatever'}}
-                    data['router']['name'] = 'router1'
-                    data['router']['external_gateway_info'] = {
-                        'network_id': s['subnet']['network_id']}
-                    router_req = self.new_create_request(
-                        'routers', data, self.fmt)
-                    res = router_req.get_response(self.ext_api)
-                    self.assertEqual(500, res.status_int)
+                    res = self._create_router_with_gw_info_for_test(s)
+                    self.assertEqual(
+                        webob.exc.HTTPInternalServerError.code,
+                        res.status_int)
 
     def test_router_add_gateway_invalid_network_returns_404(self):
         # NOTE(salv-orlando): This unit test has been overriden
@@ -646,6 +651,41 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                 r['router']['id'],
                 uuidutils.generate_uuid(),
                 expected_code=webob.exc.HTTPNotFound.code)
+
+    def _verify_router_rollback(self):
+        # Check that nothing is left on DB
+        # TODO(salv-orlando): Verify whehter this is thread-safe
+        # w.r.t. sqllite and parallel testing
+        self._test_list_resources('router', [])
+        # Check that router is not in NVP
+        self.assertFalse(self.fc._fake_lrouter_dict)
+
+    def test_router_create_with_gw_info_neutron_fail_does_rollback(self):
+        # Simulate get subnet error while building list of ips with prefix
+        with mock.patch.object(self._plugin_class,
+                               '_build_ip_address_list',
+                               side_effect=ntn_exc.SubnetNotFound(
+                                   subnet_id='xxx')):
+            with self._create_l3_ext_network() as net:
+                with self.subnet(network=net) as s:
+                    res = self._create_router_with_gw_info_for_test(s)
+                    self.assertEqual(
+                        webob.exc.HTTPNotFound.code,
+                        res.status_int)
+                    self._verify_router_rollback()
+
+    def test_router_create_with_gw_info_nvp_fail_does_rollback(self):
+        # Simulate error while fetching nvp router gw port
+        with mock.patch.object(self._plugin_class,
+                               '_find_router_gw_port',
+                               side_effect=NvpApiClient.NvpApiException):
+            with self._create_l3_ext_network() as net:
+                with self.subnet(network=net) as s:
+                    res = self._create_router_with_gw_info_for_test(s)
+                    self.assertEqual(
+                        webob.exc.HTTPInternalServerError.code,
+                        res.status_int)
+                    self._verify_router_rollback()
 
     def _test_router_update_gateway_on_l3_ext_net(self, vlan_id=None,
                                                   validate_ext_gw=True):
