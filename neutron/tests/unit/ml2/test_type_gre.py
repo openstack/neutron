@@ -40,6 +40,7 @@ class GreTypeTest(base.BaseTestCase):
         self.driver.gre_id_ranges = TUNNEL_RANGES
         self.driver._sync_gre_allocations()
         self.session = db.get_session()
+        self.addCleanup(db.clear_db)
 
     def test_validate_provider_segment(self):
         segment = {api.NETWORK_TYPE: 'gre',
