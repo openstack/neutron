@@ -308,7 +308,10 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         super(TestUnixDomainMetadataProxy, self).setUp()
         self.cfg_p = mock.patch.object(agent, 'cfg')
         self.cfg = self.cfg_p.start()
-        self.addCleanup(self.cfg_p.stop)
+        looping_call_p = mock.patch(
+            'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
+        self.looping_mock = looping_call_p.start()
+        self.addCleanup(mock.patch.stopall)
         self.cfg.CONF.metadata_proxy_socket = '/the/path'
 
     def test_init_doesnot_exists(self):
@@ -393,13 +396,11 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                             )
 
     def test_init_state_reporting(self):
-        with mock.patch('neutron.openstack.common.loopingcall.'
-                        'FixedIntervalLoopingCall') as loop_call:
-            with mock.patch('os.makedirs'):
-                proxy = agent.UnixDomainMetadataProxy(mock.Mock())
-                loop_call.assert_called_once_with(proxy._report_state)
-                loop_call.return_value.start.assert_called_once_with(
-                    interval=mock.ANY)
+        with mock.patch('os.makedirs'):
+            proxy = agent.UnixDomainMetadataProxy(mock.Mock())
+            self.looping_mock.assert_called_once_with(proxy._report_state)
+            self.looping_mock.return_value.start.assert_called_once_with(
+                interval=mock.ANY)
 
     def test_report_state(self):
         with mock.patch('neutron.agent.rpc.PluginReportStateAPI') as state_api:
