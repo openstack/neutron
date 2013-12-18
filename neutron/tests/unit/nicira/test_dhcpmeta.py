@@ -36,10 +36,12 @@ class LsnManagerTestCase(base.BaseTestCase):
         self.lsn_id = 'foo_lsn_id'
         self.mac = 'aa:bb:cc:dd:ee:ff'
         self.lsn_port_id = 'foo_lsn_port_id'
+        self.tenant_id = 'foo_tenant_id'
         self.manager = nvp.LsnManager(mock.Mock())
         self.mock_lsn_api_p = mock.patch.object(nvp, 'lsn_api')
         self.mock_lsn_api = self.mock_lsn_api_p.start()
         nvp.register_dhcp_opts(cfg)
+        nvp.register_metadata_opts(cfg)
         self.addCleanup(cfg.CONF.reset)
         self.addCleanup(self.mock_lsn_api_p.stop)
 
@@ -290,6 +292,86 @@ class LsnManagerTestCase(base.BaseTestCase):
         self._test_lsn_port_dhcp_configure_with_subnet(
             expected, routes=['8.8.8.8', '9.9.9.9'])
 
+    def _test_lsn_metadata_configure(self, is_enabled):
+        with mock.patch.object(self.manager, 'lsn_port_dispose') as f:
+            self.manager.plugin.get_subnet.return_value = (
+                {'network_id': self.net_id})
+            self.manager.lsn_metadata_configure(mock.ANY,
+                                                self.sub_id, is_enabled)
+            expected = {
+                'metadata_server_port': 8775,
+                'metadata_server_ip': '127.0.0.1',
+                'metadata_proxy_shared_secret': ''
+            }
+            self.mock_lsn_api.lsn_metadata_configure.assert_called_once_with(
+                mock.ANY, mock.ANY, is_enabled, expected)
+            if is_enabled:
+                self.assertEqual(
+                    1, self.mock_lsn_api.lsn_port_by_subnet_get.call_count)
+            else:
+                self.assertEqual(1, f.call_count)
+
+    def test_lsn_metadata_configure_enabled(self):
+        self._test_lsn_metadata_configure(True)
+
+    def test_lsn_metadata_configure_disabled(self):
+        self._test_lsn_metadata_configure(False)
+
+    def test_lsn_metadata_configure_not_found(self):
+        self.mock_lsn_api.lsn_metadata_configure.side_effect = (
+            p_exc.LsnNotFound(entity='lsn', entity_id=self.lsn_id))
+        self.manager.plugin.get_subnet.return_value = (
+            {'network_id': self.net_id})
+        self.assertRaises(p_exc.NvpPluginException,
+                          self.manager.lsn_metadata_configure,
+                          mock.ANY, self.sub_id, True)
+
+    def test_lsn_port_metadata_setup(self):
+        subnet = {
+            'cidr': '0.0.0.0/0',
+            'id': self.sub_id,
+            'network_id': self.net_id,
+            'tenant_id': self.tenant_id
+        }
+        with mock.patch.object(nvp.nvplib, 'create_lport') as f:
+            f.return_value = {'uuid': self.port_id}
+            self.manager.lsn_port_metadata_setup(mock.ANY, self.lsn_id, subnet)
+            self.assertEqual(1, self.mock_lsn_api.lsn_port_create.call_count)
+            self.mock_lsn_api.lsn_port_plug_network.assert_called_once_with(
+                mock.ANY, self.lsn_id, mock.ANY, self.port_id)
+
+    def test_lsn_port_metadata_setup_raise_not_found(self):
+        subnet = {
+            'cidr': '0.0.0.0/0',
+            'id': self.sub_id,
+            'network_id': self.net_id,
+            'tenant_id': self.tenant_id
+        }
+        with mock.patch.object(nvp.nvplib, 'create_lport') as f:
+            f.side_effect = n_exc.NotFound
+            self.assertRaises(p_exc.PortConfigurationError,
+                              self.manager.lsn_port_metadata_setup,
+                              mock.ANY, self.lsn_id, subnet)
+
+    def test_lsn_port_metadata_setup_raise_conflict(self):
+        subnet = {
+            'cidr': '0.0.0.0/0',
+            'id': self.sub_id,
+            'network_id': self.net_id,
+            'tenant_id': self.tenant_id
+        }
+        with mock.patch.object(nvp.nvplib, 'create_lport') as f:
+            with mock.patch.object(nvp.nvplib, 'delete_port') as g:
+                f.return_value = {'uuid': self.port_id}
+                self.mock_lsn_api.lsn_port_plug_network.side_effect = (
+                    p_exc.LsnConfigurationConflict(lsn_id=self.lsn_id))
+                self.assertRaises(p_exc.PortConfigurationError,
+                                  self.manager.lsn_port_metadata_setup,
+                                  mock.ANY, self.lsn_id, subnet)
+                self.assertEqual(1,
+                                 self.mock_lsn_api.lsn_port_delete.call_count)
+                self.assertEqual(1, g.call_count)
+
     def _test_lsn_port_dispose_with_values(self, lsn_id, lsn_port_id, count):
         with mock.patch.object(self.manager,
                                'lsn_port_get_by_mac',
@@ -301,6 +383,17 @@ class LsnManagerTestCase(base.BaseTestCase):
     def test_lsn_port_dispose(self):
         self._test_lsn_port_dispose_with_values(
             self.lsn_id, self.lsn_port_id, 1)
+
+    def test_lsn_port_dispose_meta_mac(self):
+        self.mac = nvp.METADATA_MAC
+        with mock.patch.object(nvp.nvplib, 'get_port_by_neutron_tag') as f:
+            with mock.patch.object(nvp.nvplib, 'delete_port') as g:
+                f.return_value = {'uuid': self.port_id}
+                self._test_lsn_port_dispose_with_values(
+                    self.lsn_id, self.lsn_port_id, 1)
+                f.assert_called_once_with(
+                    mock.ANY, self.net_id, nvp.METADATA_PORT_ID)
+                g.assert_called_once_with(mock.ANY, self.net_id, self.port_id)
 
     def test_lsn_port_dispose_lsn_not_found(self):
         self._test_lsn_port_dispose_with_values(None, None, 0)
@@ -334,6 +427,33 @@ class LsnManagerTestCase(base.BaseTestCase):
                               self.manager._lsn_port_host_conf, mock.ANY,
                               self.net_id, self.sub_id, mock.ANY, mock.Mock())
 
+    def _test_lsn_port_update(self, dhcp=None, meta=None):
+        self.manager.lsn_port_update(
+            mock.ANY, self.net_id, self.sub_id, dhcp, meta)
+        count = 1 if dhcp else 0
+        count = count + 1 if meta else count
+        self.assertEqual(count, (self.mock_lsn_api.
+                                 lsn_port_host_entries_update.call_count))
+
+    def test_lsn_port_update(self):
+        self._test_lsn_port_update()
+
+    def test_lsn_port_update_dhcp_meta(self):
+        self._test_lsn_port_update(mock.ANY, mock.ANY)
+
+    def test_lsn_port_update_dhcp_and_nometa(self):
+        self._test_lsn_port_update(mock.ANY, None)
+
+    def test_lsn_port_update_nodhcp_and_nmeta(self):
+        self._test_lsn_port_update(None, mock.ANY)
+
+    def test_lsn_port_update_raise_error(self):
+        self.mock_lsn_api.lsn_port_host_entries_update.side_effect = (
+            NvpApiException)
+        self.assertRaises(p_exc.PortConfigurationError,
+                          self.manager.lsn_port_update,
+                          mock.ANY, mock.ANY, mock.ANY, mock.ANY)
+
 
 class DhcpAgentNotifyAPITestCase(base.BaseTestCase):
 
@@ -342,6 +462,107 @@ class DhcpAgentNotifyAPITestCase(base.BaseTestCase):
         self.notifier = nvp.DhcpAgentNotifyAPI(mock.Mock(), mock.Mock())
         self.plugin = self.notifier.plugin
         self.lsn_manager = self.notifier.lsn_manager
+
+    def _test_notify_port_update(
+        self, ports, expected_count, expected_args=None):
+        port = {
+            'id': 'foo_port_id',
+            'network_id': 'foo_network_id',
+            'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
+        }
+        self.notifier.plugin.get_ports.return_value = ports
+        self.notifier.notify(mock.ANY, {'port': port}, 'port.update.end')
+        self.lsn_manager.lsn_port_update.assert_has_calls(expected_args)
+
+    def test_notify_ports_update_no_ports(self):
+        self._test_notify_port_update(None, 0, [])
+        self._test_notify_port_update([], 0, [])
+
+    def test_notify_ports_update_one_port(self):
+        ports = [{
+            'fixed_ips': [{'subnet_id': 'foo_subnet_id',
+                           'ip_address': '1.2.3.4'}],
+            'device_id': 'foo_device_id',
+            'device_owner': 'foo_device_owner',
+            'mac_address': 'fa:16:3e:da:1d:46'
+        }]
+        call_args = mock.call(
+            mock.ANY, 'foo_network_id', 'foo_subnet_id',
+            dhcp=[{'ip_address': '1.2.3.4',
+                   'mac_address': 'fa:16:3e:da:1d:46'}],
+            meta=[{'instance_id': 'foo_device_id',
+                   'ip_address': '1.2.3.4'}])
+        self._test_notify_port_update(ports, 1, call_args)
+
+    def test_notify_ports_update_ports_with_empty_device_id(self):
+        ports = [{
+            'fixed_ips': [{'subnet_id': 'foo_subnet_id',
+                           'ip_address': '1.2.3.4'}],
+            'device_id': '',
+            'device_owner': 'foo_device_owner',
+            'mac_address': 'fa:16:3e:da:1d:46'
+        }]
+        call_args = mock.call(
+            mock.ANY, 'foo_network_id', 'foo_subnet_id',
+            dhcp=[{'ip_address': '1.2.3.4',
+                   'mac_address': 'fa:16:3e:da:1d:46'}],
+            meta=[]
+        )
+        self._test_notify_port_update(ports, 1, call_args)
+
+    def test_notify_ports_update_ports_with_no_fixed_ips(self):
+        ports = [{
+            'fixed_ips': [],
+            'device_id': 'foo_device_id',
+            'device_owner': 'foo_device_owner',
+            'mac_address': 'fa:16:3e:da:1d:46'
+        }]
+        call_args = mock.call(
+            mock.ANY, 'foo_network_id', 'foo_subnet_id', dhcp=[], meta=[])
+        self._test_notify_port_update(ports, 1, call_args)
+
+    def test_notify_ports_update_ports_with_no_fixed_ips_and_no_device(self):
+        ports = [{
+            'fixed_ips': [],
+            'device_id': '',
+            'device_owner': 'foo_device_owner',
+            'mac_address': 'fa:16:3e:da:1d:46'
+        }]
+        call_args = mock.call(
+            mock.ANY, 'foo_network_id', 'foo_subnet_id', dhcp=[], meta=[])
+        self._test_notify_port_update(ports, 0, call_args)
+
+    def test_notify_ports_update_with_special_ports(self):
+        ports = [{'fixed_ips': [],
+                  'device_id': '',
+                  'device_owner': 'network:dhcp',
+                  'mac_address': 'fa:16:3e:da:1d:46'},
+                 {'fixed_ips': [{'subnet_id': 'foo_subnet_id',
+                                 'ip_address': '1.2.3.4'}],
+                  'device_id': 'foo_device_id',
+                  'device_owner': 'network:router_gateway',
+                  'mac_address': 'fa:16:3e:da:1d:46'}]
+        call_args = mock.call(
+            mock.ANY, 'foo_network_id', 'foo_subnet_id', dhcp=[], meta=[])
+        self._test_notify_port_update(ports, 0, call_args)
+
+    def test_notify_ports_update_many_ports(self):
+        ports = [{'fixed_ips': [],
+                  'device_id': '',
+                  'device_owner': 'foo_device_owner',
+                  'mac_address': 'fa:16:3e:da:1d:46'},
+                 {'fixed_ips': [{'subnet_id': 'foo_subnet_id',
+                                 'ip_address': '1.2.3.4'}],
+                  'device_id': 'foo_device_id',
+                  'device_owner': 'foo_device_owner',
+                  'mac_address': 'fa:16:3e:da:1d:46'}]
+        call_args = mock.call(
+            mock.ANY, 'foo_network_id', 'foo_subnet_id',
+            dhcp=[{'ip_address': '1.2.3.4',
+                   'mac_address': 'fa:16:3e:da:1d:46'}],
+            meta=[{'instance_id': 'foo_device_id',
+                   'ip_address': '1.2.3.4'}])
+        self._test_notify_port_update(ports, 1, call_args)
 
     def _test_notify_subnet_action(self, action):
         with mock.patch.object(self.notifier, '_subnet_%s' % action) as f:
@@ -631,3 +852,148 @@ class DhcpTestCase(base.BaseTestCase):
     def test_handle_delete_user_port_no_fixed_ips(self):
         self._test_handle_user_port_no_fixed_ips(
             'delete_port', self.plugin.lsn_manager.lsn_port_dhcp_host_remove)
+
+
+class MetadataTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(MetadataTestCase, self).setUp()
+        self.plugin = mock.Mock()
+        self.plugin.lsn_manager = mock.Mock()
+
+    def _test_handle_port_metadata_access_special_owners(
+        self, owner, dev_id='foo_device_id', ips=None):
+        port = {
+            'id': 'foo_port_id',
+            'device_owner': owner,
+            'device_id': dev_id,
+            'fixed_ips': ips or []
+        }
+        nvp.handle_port_metadata_access(self.plugin, mock.ANY, port, mock.ANY)
+        self.assertFalse(
+            self.plugin.lsn_manager.lsn_port_meta_host_add.call_count)
+        self.assertFalse(
+            self.plugin.lsn_manager.lsn_port_meta_host_remove.call_count)
+
+    def test_handle_port_metadata_access_external_network(self):
+        port = {
+            'id': 'foo_port_id',
+            'device_owner': 'foo_device_owner',
+            'device_id': 'foo_device_id',
+            'network_id': 'foo_network_id',
+            'fixed_ips': [{'subnet_id': 'foo_subnet'}]
+        }
+        self.plugin.get_network.return_value = {'router:external': True}
+        nvp.handle_port_metadata_access(self.plugin, mock.ANY, port, mock.ANY)
+        self.assertFalse(
+            self.plugin.lsn_manager.lsn_port_meta_host_add.call_count)
+        self.assertFalse(
+            self.plugin.lsn_manager.lsn_port_meta_host_remove.call_count)
+
+    def test_handle_port_metadata_access_dhcp_port(self):
+        self._test_handle_port_metadata_access_special_owners(
+            'network:dhcp', [{'subnet_id': 'foo_subnet'}])
+
+    def test_handle_port_metadata_access_router_port(self):
+        self._test_handle_port_metadata_access_special_owners(
+            'network:router_interface', [{'subnet_id': 'foo_subnet'}])
+
+    def test_handle_port_metadata_access_no_device_id(self):
+        self._test_handle_port_metadata_access_special_owners(
+            'network:dhcp', '')
+
+    def test_handle_port_metadata_access_no_fixed_ips(self):
+        self._test_handle_port_metadata_access_special_owners(
+            'foo', 'foo', None)
+
+    def _test_handle_port_metadata_access(self, is_delete, raise_exc=False):
+        port = {
+            'id': 'foo_port_id',
+            'device_owner': 'foo_device_id',
+            'network_id': 'foo_network_id',
+            'device_id': 'foo_device_id',
+            'tenant_id': 'foo_tenant_id',
+            'fixed_ips': [
+                {'subnet_id': 'foo_subnet_id', 'ip_address': '1.2.3.4'}
+            ]
+        }
+        meta = {
+            'instance_id': port['device_id'],
+            'tenant_id': port['tenant_id'],
+            'ip_address': port['fixed_ips'][0]['ip_address']
+        }
+        self.plugin.get_network.return_value = {'router:external': False}
+        if is_delete:
+            mock_func = self.plugin.lsn_manager.lsn_port_meta_host_remove
+        else:
+            mock_func = self.plugin.lsn_manager.lsn_port_meta_host_add
+        if raise_exc:
+            mock_func.side_effect = p_exc.PortConfigurationError(
+                lsn_id='foo_lsn_id', net_id='foo_net_id', port_id=None)
+            with mock.patch.object(nvp.db_base_plugin_v2.NeutronDbPluginV2,
+                                   'delete_port') as d:
+                self.assertRaises(p_exc.PortConfigurationError,
+                                  nvp.handle_port_metadata_access,
+                                  self.plugin, mock.ANY, port,
+                                  is_delete=is_delete)
+                if not is_delete:
+                    d.assert_called_once_with(mock.ANY, mock.ANY, port['id'])
+                else:
+                    self.assertFalse(d.call_count)
+        else:
+            nvp.handle_port_metadata_access(
+                self.plugin, mock.ANY, port, is_delete=is_delete)
+        mock_func.assert_called_once_with(mock.ANY, mock.ANY, mock.ANY, meta)
+
+    def test_handle_port_metadata_access_on_delete_true(self):
+        self._test_handle_port_metadata_access(True)
+
+    def test_handle_port_metadata_access_on_delete_false(self):
+        self._test_handle_port_metadata_access(False)
+
+    def test_handle_port_metadata_access_on_delete_true_raise(self):
+        self._test_handle_port_metadata_access(True, raise_exc=True)
+
+    def test_handle_port_metadata_access_on_delete_false_raise(self):
+        self._test_handle_port_metadata_access(False, raise_exc=True)
+
+    def _test_handle_router_metadata_access(
+        self, is_port_found, raise_exc=False):
+        subnet = {
+            'id': 'foo_subnet_id',
+            'network_id': 'foo_network_id'
+        }
+        interface = {
+            'subnet_id': subnet['id'],
+            'port_id': 'foo_port_id'
+        }
+        mock_func = self.plugin.lsn_manager.lsn_metadata_configure
+        if not is_port_found:
+            self.plugin.get_port.side_effect = n_exc.NotFound
+        if raise_exc:
+            with mock.patch.object(nvp.l3_db.L3_NAT_db_mixin,
+                                   'remove_router_interface') as d:
+                mock_func.side_effect = p_exc.NvpPluginException(err_msg='')
+                self.assertRaises(p_exc.NvpPluginException,
+                                  nvp.handle_router_metadata_access,
+                                  self.plugin, mock.ANY, 'foo_router_id',
+                                  interface)
+                d.assert_called_once_with(mock.ANY, mock.ANY, 'foo_router_id',
+                                          interface)
+        else:
+            nvp.handle_router_metadata_access(
+                self.plugin, mock.ANY, 'foo_router_id', interface)
+            mock_func.assert_called_once_with(
+                mock.ANY, subnet['id'], is_port_found)
+
+    def test_handle_router_metadata_access_add_interface(self):
+        self._test_handle_router_metadata_access(True)
+
+    def test_handle_router_metadata_access_delete_interface(self):
+        self._test_handle_router_metadata_access(False)
+
+    def test_handle_router_metadata_access_raise_error_on_add(self):
+        self._test_handle_router_metadata_access(True, raise_exc=True)
+
+    def test_handle_router_metadata_access_raise_error_on_delete(self):
+        self._test_handle_router_metadata_access(True, raise_exc=False)

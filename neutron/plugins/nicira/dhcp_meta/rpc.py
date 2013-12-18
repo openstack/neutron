@@ -80,7 +80,7 @@ def handle_port_dhcp_access(plugin, context, port_data, action):
         _notify_rpc_agent(context, {'subnet': subnet}, 'subnet.update.end')
 
 
-def handle_port_metadata_access(context, port, is_delete=False):
+def handle_port_metadata_access(plugin, context, port, is_delete=False):
     if (cfg.CONF.NVP.metadata_mode == config.MetadataModes.INDIRECT and
         port.get('device_owner') == const.DEVICE_OWNER_DHCP):
         if port.get('fixed_ips', []) or is_delete:
@@ -112,7 +112,7 @@ def handle_port_metadata_access(context, port, is_delete=False):
                 context.session.add(route)
 
 
-def handle_router_metadata_access(plugin, context, router_id, do_create=True):
+def handle_router_metadata_access(plugin, context, router_id, interface=None):
     if cfg.CONF.NVP.metadata_mode != config.MetadataModes.DIRECT:
         LOG.debug(_("Metadata access network is disabled"))
         return
@@ -128,7 +128,7 @@ def handle_router_metadata_access(plugin, context, router_id, do_create=True):
         plugin, ctx_elevated, filters=device_filter)
     try:
         if ports:
-            if (do_create and
+            if (interface and
                 not _find_metadata_port(plugin, ctx_elevated, ports)):
                 _create_metadata_access_network(
                     plugin, ctx_elevated, router_id)

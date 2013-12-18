@@ -33,6 +33,7 @@ HTTP_PUT = "PUT"
 SERVICECLUSTER_RESOURCE = "service-cluster"
 LSERVICESNODE_RESOURCE = "lservices-node"
 LSERVICESNODEPORT_RESOURCE = "lport/%s" % LSERVICESNODE_RESOURCE
+SUPPORTED_METADATA_OPTIONS = ['metadata_proxy_shared_secret']
 
 LOG = log.getLogger(__name__)
 
@@ -79,6 +80,18 @@ def lsn_delete(cluster, lsn_id):
     do_request(HTTP_DELETE,
                _build_uri_path(LSERVICESNODE_RESOURCE,
                                resource_id=lsn_id),
+               cluster=cluster)
+
+
+def lsn_port_host_entries_update(
+    cluster, lsn_id, lsn_port_id, conf, hosts_data):
+    hosts_obj = {'hosts': hosts_data}
+    do_request(HTTP_PUT,
+               _build_uri_path(LSERVICESNODEPORT_RESOURCE,
+                               parent_resource_id=lsn_id,
+                               resource_id=lsn_port_id,
+                               extra_action=conf),
+               json.dumps(hosts_obj),
                cluster=cluster)
 
 
@@ -151,6 +164,18 @@ def lsn_port_plug_network(cluster, lsn_id, lsn_port_id, lswitch_port_id):
         raise nvp_exc.LsnConfigurationConflict(lsn_id=lsn_id)
 
 
+def _lsn_configure_action(
+    cluster, lsn_id, action, is_enabled, obj):
+    lsn_obj = {"enabled": is_enabled}
+    lsn_obj.update(obj)
+    do_request(HTTP_PUT,
+               _build_uri_path(LSERVICESNODE_RESOURCE,
+                               resource_id=lsn_id,
+                               extra_action=action),
+               json.dumps(lsn_obj),
+               cluster=cluster)
+
+
 def _lsn_port_configure_action(
     cluster, lsn_id, lsn_port_id, action, is_enabled, obj):
     do_request(HTTP_PUT,
@@ -179,6 +204,22 @@ def lsn_port_dhcp_configure(
         cluster, lsn_id, lsn_port_id, 'dhcp', is_enabled, dhcp_obj)
 
 
+def lsn_metadata_configure(
+        cluster, lsn_id, is_enabled=True, metadata_info=None):
+    opts = [
+        "%s=%s" % (opt, metadata_info[opt])
+        for opt in SUPPORTED_METADATA_OPTIONS
+        if metadata_info.get(opt)
+    ]
+    meta_obj = {
+        'metadata_server_ip': metadata_info['metadata_server_ip'],
+        'metadata_server_port': metadata_info['metadata_server_port'],
+        'misc_options': opts
+    }
+    _lsn_configure_action(
+        cluster, lsn_id, 'metadata-proxy', is_enabled, meta_obj)
+
+
 def _lsn_port_host_action(
     cluster, lsn_id, lsn_port_id, host_obj, extra_action, action):
     do_request(HTTP_POST,
@@ -199,3 +240,13 @@ def lsn_port_dhcp_host_add(cluster, lsn_id, lsn_port_id, host_data):
 def lsn_port_dhcp_host_remove(cluster, lsn_id, lsn_port_id, host_data):
     _lsn_port_host_action(
         cluster, lsn_id, lsn_port_id, host_data, 'dhcp', 'remove_host')
+
+
+def lsn_port_metadata_host_add(cluster, lsn_id, lsn_port_id, host_data):
+    _lsn_port_host_action(
+        cluster, lsn_id, lsn_port_id, host_data, 'metadata-proxy', 'add_host')
+
+
+def lsn_port_metadata_host_remove(cluster, lsn_id, lsn_port_id, host_data):
+    _lsn_port_host_action(cluster, lsn_id, lsn_port_id,
+                          host_data, 'metadata-proxy', 'remove_host')
