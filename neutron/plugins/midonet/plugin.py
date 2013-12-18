@@ -41,8 +41,8 @@ from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db
-from neutron.extensions import l3
 from neutron.extensions import external_net as ext_net
+from neutron.extensions import l3
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
@@ -366,7 +366,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             dl_type=net_util.get_ethertype_value(sg_rule["ethertype"]),
             properties=props)
 
-    def _remove_nat_rules(self, context, fip):
+    def _remove_nat_rules(self, fip):
         router = self.client.get_router(fip["router_id"])
         self.client.remove_static_route(self._get_provider_router(),
                                         fip["floating_ip_address"])
@@ -756,9 +756,23 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         mido_router = self.client.create_router(**r)
         mido_router_id = mido_router.get_id()
 
+        # Create router chains
+        chain_names = _nat_chain_names(mido_router_id)
+        try:
+            self.client.add_router_chains(mido_router,
+                                          chain_names["pre-routing"],
+                                          chain_names["post-routing"])
+        except Exception:
+            # Set the router status to Error
+            with context.session.begin(subtransactions=True):
+                r = self._get_router(context, mido_router_id)
+                r['status'] = constants.NET_STATUS_ERROR
+                context.session.add(r)
+            return r
+
         try:
             has_gw_info = False
-            if EXTERNAL_GW_INFO in r:
+            if EXTERNAL_GW_INFO in r and r[EXTERNAL_GW_INFO]:
                 has_gw_info = True
                 gw_info = r.pop(EXTERNAL_GW_INFO)
             with context.session.begin(subtransactions=True):
@@ -773,6 +787,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 if has_gw_info:
                     self._update_router_gw_info(context, router_db['id'],
                                                 gw_info)
+                    updated_router_db = self._get_router(context,
+                                                         router_db['id'])
+                    self._set_up_gateway(context, updated_router_db)
 
             router_data = self._make_router_dict(router_db,
                                                  process_extensions=False)
@@ -781,20 +798,6 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # Try removing the midonet router
             with excutils.save_and_reraise_exception():
                 self.client.delete_router(mido_router_id)
-
-        # Create router chains
-        chain_names = _nat_chain_names(mido_router_id)
-        try:
-            self.client.add_router_chains(mido_router,
-                                          chain_names["pre-routing"],
-                                          chain_names["post-routing"])
-        except Exception:
-            # Set the router status to Error
-            with context.session.begin(subtransactions=True):
-                r = self._get_router(context, router_data["id"])
-                router_data['status'] = constants.NET_STATUS_ERROR
-                r['status'] = router_data['status']
-                context.session.add(r)
 
         LOG.debug(_("MidonetPluginV2.create_router exiting: "
                     "router_data=%(router_data)s."),
@@ -870,6 +873,28 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     r.get_dst_network_length() == 0):
                 self.client.delete_route(r.get_id())
 
+    def _set_up_gateway(self, context, router_db):
+        # Gateway created
+        tenant_id = router_db["tenant_id"]
+        gw_port_neutron = self._get_port(context.elevated(),
+                                         router_db["gw_port_id"])
+        gw_ip = gw_port_neutron['fixed_ips'][0]['ip_address']
+
+        # First link routers and set up the routes
+        self._set_router_gateway(router_db["id"],
+                                 self._get_provider_router(),
+                                 gw_ip)
+        gw_port_midonet = self.client.get_link_port(
+            self._get_provider_router(), router_db["id"])
+
+        # Get the NAT chains and add dynamic SNAT rules.
+        chain_names = _nat_chain_names(router_db["id"])
+        props = {OS_TENANT_ROUTER_RULE_KEY: SNAT_RULE}
+        self.client.add_dynamic_snat(tenant_id,
+                                     chain_names['pre-routing'],
+                                     chain_names['post-routing'],
+                                     gw_ip, gw_port_midonet.get_id(), **props)
+
     def update_router(self, context, id, router):
         """Handle router updates."""
         LOG.debug(_("MidonetPluginV2.update_router called: id=%(id)s "
@@ -884,29 +909,10 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # Update the Neutron DB
             r = super(MidonetPluginV2, self).update_router(context, id,
                                                            router)
-            tenant_id = r["tenant_id"]
             if gw_updated:
                 if (l3_db.EXTERNAL_GW_INFO in r and
                         r[l3_db.EXTERNAL_GW_INFO] is not None):
-                    # Gateway created
-                    gw_port_neutron = self._get_port(context.elevated(),
-                                             r["gw_port_id"])
-                    gw_ip = gw_port_neutron['fixed_ips'][0]['ip_address']
-
-                    # First link routers and set up the routes
-                    self._set_router_gateway(r["id"],
-                                             self._get_provider_router(),
-                                             gw_ip)
-                    gw_port_midonet = self.client.get_link_port(
-                        self._get_provider_router(), r["id"])
-
-                    # Get the NAT chains and add dynamic SNAT rules.
-                    chain_names = _nat_chain_names(r["id"])
-                    props = {OS_TENANT_ROUTER_RULE_KEY: SNAT_RULE}
-                    self.client.add_dynamic_snat(tenant_id,
-                                                 chain_names['pre-routing'],
-                                                 chain_names['post-routing'],
-                                                 gw_ip, gw_port_midonet.get_id(), **props)
+                    self._set_up_gateway(context, r)
 
             self.client.update_router(id, **router_data)
 
@@ -1094,15 +1100,13 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _assoc_fip(self, fip):
         router = self.client.get_router(fip["router_id"])
-        link_port = self.client.get_link_port(
-            self._get_provider_router(), router.get_id())
-        self.client.add_router_route(
-            self._get_provider_router(),
-            src_network_addr='0.0.0.0',
-            src_network_length=0,
-            dst_network_addr=fip["floating_ip_address"],
-            dst_network_length=32,
-            next_hop_port=link_port.get_peer_id())
+        self._add_route_to_provider(router, fip['floating_ip_address'])
+        link_port = self.client.get_link_port(self._get_provider_router(),
+                                              router.get_id())
+        self._add_nat_rules(router, link_port, fip)
+
+    def _add_nat_rules(self, router, link_port, fip):
+        router = self.client.get_router(fip["router_id"])
         props = {OS_FLOATING_IP_RULE_KEY: fip['id']}
         tenant_id = router.get_tenant_id()
         chain_names = _nat_chain_names(router.get_id())
@@ -1116,6 +1120,10 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                        target_ip,
                                        link_port.get_id(),
                                        nat_type, **props)
+
+    def _disassoc_fip(self, fip):
+        self._remove_route_from_provider(fip["floating_ip_address"])
+        self._remove_nat_rules(fip)
 
     def create_floatingip(self, context, floatingip):
         session = context.session
@@ -1134,32 +1142,46 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         session = context.session
         with session.begin(subtransactions=True):
-            if floatingip['floatingip']['port_id']:
-                fip = super(MidonetPluginV2, self).update_floatingip(
-                    context, id, floatingip)
+            old_fip = super(MidonetPluginV2, self).get_floatingip(context, id)
+            new_fip = super(MidonetPluginV2,
+                            self).update_floatingip(context, id, floatingip)
 
-                self._assoc_fip(fip)
+            old_fip_port = old_fip['port_id']
+            new_fip_port = new_fip['port_id']
 
-            # disassociate floating IP
-            elif floatingip['floatingip']['port_id'] is None:
-                fip = super(MidonetPluginV2, self).get_floatingip(context, id)
-                self._remove_nat_rules(context, fip)
-                super(MidonetPluginV2, self).update_floatingip(context, id,
-                                                               floatingip)
+            # getting rid of the port association
+            if old_fip_port and not new_fip_port:
+                self._disassoc_fip(old_fip)
+            # adding a port association
+            elif not old_fip_port and new_fip_port:
+                self._assoc_fip(new_fip)
+            # changing the port association
+            elif old_fip_port and new_fip_port:
+                if old_fip_port != new_fip_port:
+                    self._disassoc_fip(old_fip)
+                    self._assoc_fip(new_fip)
 
-        LOG.debug(_("MidonetPluginV2.update_floating_ip exiting: fip=%s"), fip)
-        return fip
+        LOG.debug(_("MidonetPluginV2.update_floating_ip exiting: new_fip=%s"),
+                  new_fip)
+        return new_fip
 
     def disassociate_floatingips(self, context, port_id):
         """Disassociate floating IPs (if any) from this port."""
         try:
             fip_qry = context.session.query(l3_db.FloatingIP)
             fip_db = fip_qry.filter_by(fixed_port_id=port_id).one()
-            self._remove_nat_rules(context, fip_db)
+            if fip_db and fip_db['fixed_port_id']:
+                self._disassoc_fip(fip_db)
         except sa_exc.NoResultFound:
             pass
 
         super(MidonetPluginV2, self).disassociate_floatingips(context, port_id)
+
+    def delete_floatingip(self, context, id):
+        floatingip = super(MidonetPluginV2, self).get_floatingip(context, id)
+        if floatingip['port_id']:
+            self._disassoc_fip(floatingip)
+        super(MidonetPluginV2, self).delete_floatingip(context, id)
 
     def create_security_group(self, context, security_group, default_sg=False):
         """Create security group.
