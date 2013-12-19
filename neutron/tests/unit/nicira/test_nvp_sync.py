@@ -350,14 +350,14 @@ class NvpSyncTestCase(base.BaseTestCase):
         networks = []
         ports = []
         routers = []
-        for i in range(0, net_size):
+        for i in range(net_size):
             net = self._plugin.create_network(ctx, network(i))
             networks.append(net)
             self._plugin.create_subnet(ctx, subnet(i, net['id']))
-            for j in range(0, port_size):
+            for j in range(port_size):
                 ports.append(self._plugin.create_port(
                     ctx, port("%s-%s" % (i, j), net['id'])))
-        for i in range(0, router_size):
+        for i in range(router_size):
             routers.append(self._plugin.create_router(ctx, router(i)))
         # Do not return anything as the user does need the actual
         # data created
@@ -627,7 +627,7 @@ class NvpSyncTestCase(base.BaseTestCase):
             NvpApiClient.RequestTimeout)
         # chunk size won't matter here
         sp = sync.SyncParameters(999)
-        for i in range(0, 10):
+        for i in range(10):
             self.assertEqual(
                 min(64, 2 ** i),
                 self._plugin._synchronizer._synchronize_state(sp))

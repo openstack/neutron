@@ -95,7 +95,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
         # add 3 pools and 2 vips directly to DB
         # to create 2 "ready" devices and one pool without vip
         pools = []
-        for i in xrange(0, 3):
+        for i in xrange(3):
             pools.append(ldb.Pool(id=uuidutils.generate_uuid(),
                                   subnet_id=self._subnet_id,
                                   protocol="HTTP",

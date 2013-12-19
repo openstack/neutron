@@ -476,7 +476,7 @@ class NvpSynchronizer():
             results, cursor, total_size = nvplib.get_single_query_page(
                 uri, self._cluster, cursor,
                 min(page_size, nvplib.MAX_PAGE_SIZE))
-            for _req in range(0, num_requests - 1):
+            for _req in range(num_requests - 1):
                 # If no cursor is returned break the cycle as there is no
                 # actual need to perform multiple requests (all fetched)
                 # This happens when the overall size of resources exceeds

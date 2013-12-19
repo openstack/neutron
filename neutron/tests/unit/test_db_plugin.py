@@ -266,7 +266,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         """Creates a bulk request for any kind of resource."""
         objects = []
         collection = "%ss" % resource
-        for i in range(0, number):
+        for i in range(number):
             obj = copy.deepcopy(data)
             obj[resource]['name'] = "%s_%s" % (name, i)
             if 'override' in kwargs and i in kwargs['override']:
@@ -344,9 +344,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                 'tenant_id': self._tenant_id}}
         # auto-generate cidrs as they should not overlap
         overrides = dict((k, v)
-                         for (k, v) in zip(range(0, number),
+                         for (k, v) in zip(range(number),
                                            [{'cidr': "10.0.%s.0/24" % num}
-                                            for num in range(0, number)]))
+                                            for num in range(number)]))
         kwargs.update({'override': overrides})
         return self._create_bulk(fmt, number, 'subnet', base_data, **kwargs)
 
