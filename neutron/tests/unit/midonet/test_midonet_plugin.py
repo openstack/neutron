@@ -27,6 +27,7 @@ import sys
 import neutron.common.test_lib as test_lib
 import neutron.tests.unit.midonet.mock_lib as mock_lib
 import neutron.tests.unit.test_db_plugin as test_plugin
+import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
 import neutron.tests.unit.test_extension_security_group as sg
 import neutron.tests.unit.test_l3_plugin as test_l3_plugin
 import webob.exc
@@ -210,3 +211,8 @@ class TestMidonetPortsV2(test_plugin.TestPortsV2,
 
     def test_requested_subnet_id_v4_and_v6(self):
         pass
+
+
+class TestMidonetExtGwMode(MidonetPluginV2TestCase,
+                           test_ext_gw_mode.ExtGwModeIntTestCase):
+    pass

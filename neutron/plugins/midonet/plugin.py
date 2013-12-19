@@ -39,6 +39,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import l3_db
+from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import external_net as ext_net
@@ -204,12 +205,14 @@ class MidonetPluginException(n_exc.NeutronException):
 
 class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       external_net_db.External_net_db_mixin,
-                      l3_db.L3_NAT_db_mixin,
+                      l3_gwmode_db.L3_NAT_db_mixin,
                       agentschedulers_db.DhcpAgentSchedulerDbMixin,
                       securitygroups_db.SecurityGroupDbMixin):
 
-    supported_extension_aliases = ['external-net', 'router', 'security-group',
-                                   'agent' 'dhcp_agent_scheduler']
+    supported_extension_aliases = ['ext_gw_mode', 'external-net', 'router',
+                                   'security-group', 'agent',
+                                   'dhcp_agent_scheduler']
+
     __native_bulk_support = True
 
     def __init__(self):
@@ -787,12 +790,10 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 if has_gw_info:
                     self._update_router_gw_info(context, router_db['id'],
                                                 gw_info)
-                    updated_router_db = self._get_router(context,
-                                                         router_db['id'])
-                    self._set_up_gateway(context, updated_router_db)
-
-            router_data = self._make_router_dict(router_db,
-                                                 process_extensions=False)
+                    router_data = self._make_router_dict(router_db)
+                    self._set_up_gateway(context, router_data)
+                else:
+                    router_data = self._make_router_dict(router_db)
 
         except Exception:
             # Try removing the midonet router
@@ -888,12 +889,15 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._get_provider_router(), router_db["id"])
 
         # Get the NAT chains and add dynamic SNAT rules.
-        chain_names = _nat_chain_names(router_db["id"])
-        props = {OS_TENANT_ROUTER_RULE_KEY: SNAT_RULE}
-        self.client.add_dynamic_snat(tenant_id,
-                                     chain_names['pre-routing'],
-                                     chain_names['post-routing'],
-                                     gw_ip, gw_port_midonet.get_id(), **props)
+        gw_info = router_db[EXTERNAL_GW_INFO]
+        if gw_info.get('enable_snat', True):
+            chain_names = _nat_chain_names(router_db["id"])
+            props = {OS_TENANT_ROUTER_RULE_KEY: SNAT_RULE}
+            self.client.add_dynamic_snat(tenant_id,
+                                         chain_names['pre-routing'],
+                                         chain_names['post-routing'],
+                                         gw_ip, gw_port_midonet.get_id(),
+                                         **props)
 
     def update_router(self, context, id, router):
         """Handle router updates."""
