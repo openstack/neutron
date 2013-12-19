@@ -117,7 +117,7 @@ class OVSSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         self.context = context
         self.plugin_rpc = plugin_rpc
         self.root_helper = root_helper
-        self.init_firewall()
+        self.init_firewall(defer_refresh_firewall=True)
 
 
 class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
@@ -1019,14 +1019,16 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def process_network_ports(self, port_info):
         resync_a = False
         resync_b = False
+        # TODO(salv-orlando): consider a solution for ensuring notifications
+        # are processed exactly in the same order in which they were
+        # received. This is tricky because there are two notification
+        # sources: the neutron server, and the ovs db monitor process
         # If there is an exception while processing security groups ports
         # will not be wired anyway, and a resync will be triggered
-        self.sg_agent.prepare_devices_filter(port_info.get('added', set()))
-        # TODO(salv-orlando): Optimize by avoiding unnecessary applying
-        # filters twice to the same ports, and unnecessary calls to the
-        # plugin (eg: when there are no IP address changes)
-        if port_info.get('updated'):
-            self.sg_agent.refresh_firewall()
+        # TODO(salv-orlando): Optimize avoiding applying filters unnecessarily
+        # (eg: when there are no IP address changes)
+        self.sg_agent.setup_port_filters(port_info.get('added', set()),
+                                         port_info.get('updated', set()))
         # VIF wiring needs to be performed always for 'new' devices.
         # For updated ports, re-wiring is not needed in most cases, but needs
         # to be performed anyway when the admin state of a device is changed.
@@ -1101,7 +1103,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def _agent_has_updates(self, polling_manager):
         return (polling_manager.is_polling_required or
-                self.updated_ports)
+                self.updated_ports or
+                self.sg_agent.firewall_refresh_needed())
 
     def _port_info_has_changes(self, port_info):
         return (port_info.get('added') or
@@ -1159,8 +1162,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                 "Elapsed:%(elapsed).3f"),
                               {'iter_num': self.iter_num,
                                'elapsed': time.time() - start})
-                    # notify plugin about port deltas
-                    if self._port_info_has_changes(port_info):
+                    # Secure and wire/unwire VIFs and update their status
+                    # on Neutron server
+                    if (self._port_info_has_changes(port_info) or
+                        self.sg_agent.firewall_refresh_needed()):
                         LOG.debug(_("Starting to process devices in:%s"),
                                   port_info)
                         # If treat devices fails - must resync with plugin
