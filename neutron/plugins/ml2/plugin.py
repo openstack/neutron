@@ -203,7 +203,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding = mech_context._binding
         port = mech_context.current
         self._update_port_dict_binding(port, binding)
-
         host = attrs and attrs.get(portbindings.HOST_ID)
         host_set = attributes.is_attr_set(host)
 
@@ -214,6 +213,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.unbind_port(mech_context)
             self._update_port_dict_binding(port, binding)
 
+        # Return True only if an agent notification is needed.
+        # This will happen if a new host was specified and that host
+        # differs from the current one. Note that host_set is True
+        # even if the host is an empty string
+        ret_value = host_set and binding.get('host') != host
         if host_set:
             binding.host = host
             port[portbindings.HOST_ID] = host
@@ -222,7 +226,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.bind_port(mech_context)
             self._update_port_dict_binding(port, binding)
 
-        return True
+        return ret_value
 
     def _update_port_dict_binding(self, port, binding):
         port[portbindings.HOST_ID] = binding.host

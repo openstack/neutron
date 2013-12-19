@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
+from neutron import context
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.ml2 import config as config
@@ -76,3 +79,43 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self._test_port_binding("host-bridge-filter",
                                 portbindings.VIF_TYPE_BRIDGE,
                                 True, True)
+
+    def _test_update_port_binding(self, host, new_host=None):
+        with mock.patch.object(self.plugin,
+                               '_notify_port_updated') as notify_mock:
+            host_arg = {portbindings.HOST_ID: host}
+            update_body = {'name': 'test_update'}
+            if new_host is not None:
+                update_body[portbindings.HOST_ID] = new_host
+            with self.port(name='name', arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port:
+                neutron_context = context.get_admin_context()
+                updated_port = self._update('ports', port['port']['id'],
+                                            {'port': update_body},
+                                            neutron_context=neutron_context)
+                port_data = updated_port['port']
+                if new_host is not None:
+                    self.assertEqual(port_data['binding:host_id'], new_host)
+                else:
+                    self.assertEqual(port_data['binding:host_id'], host)
+                if new_host is not None and new_host != host:
+                    notify_mock.assert_called_once_with(mock.ANY)
+                else:
+                    self.assertFalse(notify_mock.called)
+
+    def test_update_with_new_host_binding_notifies_agent(self):
+        self._test_update_port_binding('host-ovs-no-filter',
+                                       'host-bridge-no-filter')
+
+    def test_update_with_same_host_binding_does_not_notify(self):
+        self._test_update_port_binding('host-ovs-no-filter',
+                                       'host-ovs-no-filter')
+
+    def test_update_without_binding_does_not_notify(self):
+        self._test_update_port_binding('host-ovs-no-filter')
+
+    def testt_update_from_empty_to_host_binding_notifies_agent(self):
+        self._test_update_port_binding('', 'host-ovs-no-filter')
+
+    def test_update_from_host_to_empty_binding_notifies_agent(self):
+        self._test_update_port_binding('host-ovs-no-filter', '')
