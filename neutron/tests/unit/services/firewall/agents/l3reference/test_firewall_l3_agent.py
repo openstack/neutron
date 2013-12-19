@@ -32,6 +32,7 @@ from neutron import context
 from neutron.plugins.common import constants
 from neutron.services.firewall.agents.l3reference import firewall_l3_agent
 from neutron.tests import base
+from neutron.tests.unit.services.firewall.agents import test_firewall_agent_api
 
 
 class FWaasHelper(object):
@@ -55,6 +56,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
         agent_config.register_root_helper(self.conf)
         self.conf.root_helper = 'sudo'
         self.api = FWaasAgent(self.conf)
+        self.api.fwaas_driver = test_firewall_agent_api.NoopFwaasDriver()
 
     def test_create_firewall(self):
         fake_firewall = {'id': 0}
