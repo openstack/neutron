@@ -18,6 +18,7 @@
 from oslo.config import cfg
 
 from neutron.common import exceptions as exc
+from neutron import context as neutron_context
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
@@ -40,6 +41,11 @@ LOG = logging.getLogger(__name__)
 def _meta_network_model_hook(context, original_model, query):
     return query.outerjoin(NetworkFlavor,
                            NetworkFlavor.network_id == models_v2.Network.id)
+
+
+def _meta_port_model_hook(context, original_model, query):
+    return query.join(NetworkFlavor,
+                      NetworkFlavor.network_id == models_v2.Port.network_id)
 
 
 def _meta_flavor_filter_hook(query, filters):
@@ -126,7 +132,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         # Register hooks.
         # The hooks are applied for each target plugin instance when
-        # calling the base class to get networks so that only records
+        # calling the base class to get networks/ports so that only records
         # which belong to the plugin are selected.
         #NOTE: Doing registration here (within __init__()) is to avoid
         # registration when merely importing this file. This is only
@@ -135,6 +141,12 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             models_v2.Network,
             'metaplugin_net',
             _meta_network_model_hook,
+            None,
+            _meta_flavor_filter_hook)
+        db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+            models_v2.Port,
+            'metaplugin_port',
+            _meta_port_model_hook,
             None,
             _meta_flavor_filter_hook)
 
@@ -255,16 +267,44 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         return plugin.create_port(context, port)
 
     def update_port(self, context, id, port):
-        port_in_db = self.get_port(context, id)
+        port_in_db = self._get_port(context, id)
         plugin = self._get_plugin_by_network_id(context,
                                                 port_in_db['network_id'])
         return plugin.update_port(context, id, port)
 
     def delete_port(self, context, id, l3_port_check=True):
-        port_in_db = self.get_port(context, id)
+        port_in_db = self._get_port(context, id)
         plugin = self._get_plugin_by_network_id(context,
                                                 port_in_db['network_id'])
         return plugin.delete_port(context, id, l3_port_check)
+
+    # This is necessary since there is a case that
+    # NeutronManager.get_plugin()._make_port_dict is called.
+    def _make_port_dict(self, port):
+        context = neutron_context.get_admin_context()
+        plugin = self._get_plugin_by_network_id(context,
+                                                port['network_id'])
+        return plugin._make_port_dict(port)
+
+    def get_port(self, context, id, fields=None):
+        port_in_db = self._get_port(context, id)
+        plugin = self._get_plugin_by_network_id(context,
+                                                port_in_db['network_id'])
+        return plugin.get_port(context, id, fields)
+
+    def get_ports(self, context, filters=None, fields=None):
+        all_ports = []
+        for flavor, plugin in self.plugins.items():
+            if filters:
+                #NOTE: copy each time since a target plugin may modify
+                # plugin_filters.
+                plugin_filters = filters.copy()
+            else:
+                plugin_filters = {}
+            plugin_filters[FLAVOR_NETWORK] = [flavor]
+            ports = plugin.get_ports(context, plugin_filters, fields)
+            all_ports += ports
+        return all_ports
 
     def create_subnet(self, context, subnet):
         s = subnet['subnet']
