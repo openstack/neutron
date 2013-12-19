@@ -16,7 +16,6 @@
 #
 
 import fixtures
-import testtools
 
 import mock
 from oslo.config import cfg
@@ -30,6 +29,7 @@ from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.nsxlib import lsn as lsnlib
 from neutron.plugins.nicira import nvp_cluster
 from neutron.plugins.nicira import NvpApiClient as nvp_client
+from neutron.tests import base
 from neutron.tests.unit.nicira import get_fake_conf
 from neutron.tests.unit.nicira import PLUGIN_NAME
 
@@ -40,7 +40,7 @@ NSX_INI_AGENTLESS_PATH = get_fake_conf('nsx.ini.agentless.test')
 NVP_INI_DEPR_PATH = get_fake_conf('nvp.ini.full.test')
 
 
-class NSXClusterTest(testtools.TestCase):
+class NSXClusterTest(base.BaseTestCase):
 
     cluster_opts = {'default_tz_uuid': uuidutils.generate_uuid(),
                     'default_l2_gw_service_uuid': uuidutils.generate_uuid(),
@@ -53,10 +53,6 @@ class NSXClusterTest(testtools.TestCase):
                     'redirects': 23,
                     'default_interface_name': 'baz',
                     'nsx_controllers': ['1.1.1.1:443']}
-
-    def setUp(self):
-        super(NSXClusterTest, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
 
     def test_create_cluster(self):
         cluster = nvp_cluster.NVPCluster(**self.cluster_opts)
@@ -77,11 +73,10 @@ class NSXClusterTest(testtools.TestCase):
                           nvp_cluster.NVPCluster, **opts)
 
 
-class ConfigurationTest(testtools.TestCase):
+class ConfigurationTest(base.BaseTestCase):
 
     def setUp(self):
         super(ConfigurationTest, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         self.useFixture(fixtures.MonkeyPatch(
                         'neutron.manager.NeutronManager._instance',
                         None))
@@ -206,11 +201,10 @@ class ConfigurationTest(testtools.TestCase):
                       plugin.supported_extension_aliases)
 
 
-class OldNVPConfigurationTest(testtools.TestCase):
+class OldNVPConfigurationTest(base.BaseTestCase):
 
     def setUp(self):
         super(OldNVPConfigurationTest, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         self.useFixture(fixtures.MonkeyPatch(
                         'neutron.manager.NeutronManager._instance',
                         None))
