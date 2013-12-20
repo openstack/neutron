@@ -212,7 +212,6 @@ class VxlanTypeMultiRangeTest(base.BaseTestCase):
         self.driver.vxlan_vni_ranges = self.TUNNEL_MULTI_RANGES
         self.driver._sync_vxlan_allocations()
         self.session = db.get_session()
-        self.addCleanup(cfg.CONF.reset)
         self.addCleanup(db.clear_db)
 
     def test_release_segment(self):
