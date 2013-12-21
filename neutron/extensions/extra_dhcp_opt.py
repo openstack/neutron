@@ -26,8 +26,7 @@ class ExtraDhcpOptNotFound(exceptions.NotFound):
 
 
 class ExtraDhcpOptBadData(exceptions.InvalidInput):
-    message = _("Invalid data format for extra-dhcp-opt, "
-                "provide a list of dicts: %(data)s")
+    message = _("Invalid data format for extra-dhcp-opt: %(data)s")
 
 
 def _validate_list_of_dict_or_none(data, key_specs=None):
@@ -38,6 +37,7 @@ def _validate_list_of_dict_or_none(data, key_specs=None):
             msg = attr._validate_dict(d, key_specs)
             if msg:
                 raise ExtraDhcpOptBadData(data=msg)
+
 
 attr.validators['type:list_of_dict_or_none'] = _validate_list_of_dict_or_none
 
@@ -54,8 +54,9 @@ EXTENDED_ATTRIBUTES_2_0 = {
          'validate': {
              'type:list_of_dict_or_none': {
                  'id': {'type:uuid': None, 'required': False},
-                 'opt_name': {'type:string': None, 'required': True},
-                 'opt_value': {'type:string_or_none': None,
+                 'opt_name': {'type:not_empty_string': None,
+                              'required': True},
+                 'opt_value': {'type:not_empty_string_or_none': None,
                                'required': True}}}}}}
 
 
