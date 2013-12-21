@@ -991,8 +991,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
             filters = {'network_id': [id]}
             # NOTE(armando-migliaccio): stick with base plugin
-            ports = self._get_ports_query(
-                context, filters=filters).with_lockmode('update')
+            query = context.session.query(
+                models_v2.Port).enable_eagerloads(False)
+            ports = self._apply_filters_to_query(
+                query, models_v2.Port, filters).with_lockmode('update')
 
             # check if there are any tenant owned ports in-use
             only_auto_del = all(p['device_owner'] in AUTO_DELETE_PORT_OWNERS
