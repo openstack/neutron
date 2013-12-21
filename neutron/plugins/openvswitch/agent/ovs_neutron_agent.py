@@ -594,11 +594,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                       physical_network, segmentation_id)
         lvm = self.local_vlan_map[net_uuid]
         lvm.vif_ports[port.vif_id] = port
-
-        self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                     str(lvm.vlan))
-        if int(port.ofport) != -1:
-            self.int_br.delete_flows(in_port=port.ofport)
+        # Do not bind a port if it's already bound
+        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+        if cur_tag != str(lvm.vlan):
+            self.int_br.set_db_attribute("Port", port.port_name, "tag",
+                                         str(lvm.vlan))
+            if int(port.ofport) != -1:
+                self.int_br.delete_flows(in_port=port.ofport)
 
     def port_unbound(self, vif_id, net_uuid=None):
         '''Unbind port.
@@ -628,9 +630,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         :param port: a ovs_lib.VifPort object.
         '''
-        self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                     DEAD_VLAN_TAG)
-        self.int_br.add_flow(priority=2, in_port=port.ofport, actions="drop")
+        # Don't kill a port if it's already dead
+        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+        if cur_tag != DEAD_VLAN_TAG:
+            self.int_br.set_db_attribute("Port", port.port_name, "tag",
+                                         DEAD_VLAN_TAG)
+            self.int_br.add_flow(priority=2, in_port=port.ofport,
+                                 actions="drop")
 
     def setup_integration_br(self):
         '''Setup the integration bridge.
@@ -1024,8 +1030,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # VIF wiring needs to be performed always for 'new' devices.
         # For updated ports, re-wiring is not needed in most cases, but needs
         # to be performed anyway when the admin state of a device is changed.
-        # TODO(salv-orlando): Optimize for avoiding unnecessary VIF
-        # processing for updated ports whose admin state is left unchanged
         # A device might be both in the 'added' and 'updated'
         # list at the same time; avoid processing it twice.
         devices_added_updated = (port_info.get('added', set()) |
