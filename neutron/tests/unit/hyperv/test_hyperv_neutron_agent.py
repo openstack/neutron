@@ -27,6 +27,10 @@ from neutron.plugins.hyperv.agent import hyperv_neutron_agent
 from neutron.plugins.hyperv.agent import utilsfactory
 from neutron.tests import base
 
+cfg.CONF.import_opt('enable_metrics_collection',
+                    'neutron.plugins.hyperv.agent.hyperv_neutron_agent',
+                    'AGENT')
+
 
 class TestHyperVNeutronAgent(base.BaseTestCase):
 
@@ -65,14 +69,28 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
             'start_flag': True}
         self.agent_state = fake_agent_state
 
-    def test_port_bound(self):
-        port = mock.Mock()
+    def test_port_bound_enable_metrics(self):
+        cfg.CONF.set_override('enable_metrics_collection', True, 'AGENT')
+        self._test_port_bound(True)
+
+    def test_port_bound_no_metrics(self):
+        cfg.CONF.set_override('enable_metrics_collection', False, 'AGENT')
+        self._test_port_bound(False)
+
+    def _test_port_bound(self, enable_metrics):
+        port = mock.MagicMock()
+        mock_enable_metrics = mock.MagicMock()
         net_uuid = 'my-net-uuid'
-        with mock.patch.object(
-                self.agent._utils, 'connect_vnic_to_vswitch'):
-            with mock.patch.object(
-                    self.agent._utils, 'set_vswitch_port_vlan_id'):
-                    self.agent._port_bound(port, net_uuid, 'vlan', None, None)
+
+        with mock.patch.multiple(
+                self.agent._utils,
+                connect_vnic_to_vswitch=mock.MagicMock(),
+                set_vswitch_port_vlan_id=mock.MagicMock(),
+                enable_port_metrics_collection=mock_enable_metrics):
+
+            self.agent._port_bound(port, net_uuid, 'vlan', None, None)
+
+            self.assertEqual(enable_metrics, mock_enable_metrics.called)
 
     def test_port_unbound(self):
         map = {
