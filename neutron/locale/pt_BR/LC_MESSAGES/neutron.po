@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-12-18 06:35+0000\n"
+"POT-Creation-Date: 2013-12-23 06:37+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Portuguese (Brazil) "
@@ -894,7 +894,7 @@ msgstr ""
 msgid "Location to store DHCP server config files"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:48 neutron/plugins/nicira/dhcp_meta/nvp.py:41
+#: neutron/agent/linux/dhcp.py:48 neutron/plugins/nicira/dhcp_meta/nvp.py:53
 msgid "Domain to use for building the hostnames"
 msgstr ""
 
@@ -1248,6 +1248,7 @@ msgid "TCP Port used by Nova metadata server."
 msgstr ""
 
 #: neutron/agent/metadata/agent.py:73
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:67
 msgid "Shared secret to sign instance-id request"
 msgstr ""
 
@@ -1506,152 +1507,157 @@ msgstr ""
 msgid "'%(data)s' is not in %(valid_values)s"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:84
+#: neutron/api/v2/attributes.py:87
+#, python-format
+msgid "'%s' Blank strings are not permitted"
+msgstr ""
+
+#: neutron/api/v2/attributes.py:97
 #, python-format
 msgid "'%s' is not a valid string"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:89
+#: neutron/api/v2/attributes.py:102
 #, python-format
 msgid "'%(data)s' exceeds maximum length of %(max_len)s"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:99
+#: neutron/api/v2/attributes.py:112
 #, python-format
 msgid "'%s' is not a valid boolean value"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:118 neutron/api/v2/attributes.py:418
+#: neutron/api/v2/attributes.py:131 neutron/api/v2/attributes.py:431
 #, python-format
 msgid "'%s' is not an integer"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:122
+#: neutron/api/v2/attributes.py:135
 #, python-format
 msgid "'%(data)s' is too small - must be at least '%(limit)d'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:127
+#: neutron/api/v2/attributes.py:140
 #, python-format
 msgid "'%(data)s' is too large - must be no larger than '%(limit)d'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:136
+#: neutron/api/v2/attributes.py:149
 #, python-format
 msgid "'%s' contains whitespace"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:146
+#: neutron/api/v2/attributes.py:159
 #, python-format
 msgid "'%s' is not a valid MAC address"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:155
+#: neutron/api/v2/attributes.py:168
 #, python-format
 msgid "'%s' is not a valid IP address"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:166
+#: neutron/api/v2/attributes.py:179
 #, python-format
 msgid "Invalid data format for IP pool: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:185 neutron/api/v2/attributes.py:192
+#: neutron/api/v2/attributes.py:198 neutron/api/v2/attributes.py:205
 #, python-format
 msgid "Invalid data format for fixed IP: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:200
+#: neutron/api/v2/attributes.py:213
 #, python-format
 msgid "Duplicate IP address '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:216
+#: neutron/api/v2/attributes.py:229
 #, python-format
 msgid "Invalid data format for nameserver: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:227
+#: neutron/api/v2/attributes.py:240
 #, python-format
 msgid "'%s' is not a valid nameserver"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:231
+#: neutron/api/v2/attributes.py:244
 #, python-format
 msgid "Duplicate nameserver '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:239
+#: neutron/api/v2/attributes.py:252
 #, python-format
 msgid "Invalid data format for hostroute: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:259
+#: neutron/api/v2/attributes.py:272
 #, python-format
 msgid "Duplicate hostroute '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:276 neutron/tests/unit/test_attributes.py:434
-#: neutron/tests/unit/test_attributes.py:443
-#: neutron/tests/unit/test_attributes.py:452
+#: neutron/api/v2/attributes.py:289 neutron/tests/unit/test_attributes.py:452
 #: neutron/tests/unit/test_attributes.py:461
+#: neutron/tests/unit/test_attributes.py:470
+#: neutron/tests/unit/test_attributes.py:479
 #, python-format
 msgid "'%(data)s' isn't a recognized IP subnet cidr, '%(cidr)s' is recommended"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:282
+#: neutron/api/v2/attributes.py:295
 #, python-format
 msgid "'%s' is not a valid IP subnet"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:290 neutron/api/v2/attributes.py:331
+#: neutron/api/v2/attributes.py:303 neutron/api/v2/attributes.py:344
 #, python-format
 msgid "'%s' is not a list"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:295 neutron/api/v2/attributes.py:342
+#: neutron/api/v2/attributes.py:308 neutron/api/v2/attributes.py:355
 #, python-format
 msgid "Duplicate items in the list: '%s'"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:312
+#: neutron/api/v2/attributes.py:325
 #, python-format
 msgid "'%s' is not a valid input"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:319
+#: neutron/api/v2/attributes.py:332
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:637
 #, python-format
 msgid "'%s' is not a valid UUID"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:362
+#: neutron/api/v2/attributes.py:375
 #, python-format
 msgid "Validator '%s' does not exist."
 msgstr ""
 
-#: neutron/api/v2/attributes.py:372
+#: neutron/api/v2/attributes.py:385
 #, python-format
 msgid "'%s' is not a dictionary"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:423
+#: neutron/api/v2/attributes.py:436
 #, python-format
 msgid "'%s' should be non-negative"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:442
+#: neutron/api/v2/attributes.py:455
 #, python-format
 msgid "'%s' cannot be converted to boolean"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:450
+#: neutron/api/v2/attributes.py:463
 #: neutron/plugins/nec/extensions/packetfilter.py:48
 #, python-format
 msgid "'%s' is not a integer"
 msgstr ""
 
-#: neutron/api/v2/attributes.py:463
+#: neutron/api/v2/attributes.py:476
 #, python-format
 msgid "'%s' is not of the form <key>=[value]"
 msgstr ""
@@ -2613,7 +2619,7 @@ msgid ""
 "assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:576 neutron/plugins/nicira/NeutronPlugin.py:1778
+#: neutron/db/l3_db.py:576 neutron/plugins/nicira/NeutronPlugin.py:1780
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
@@ -2943,7 +2949,7 @@ msgstr ""
 
 #: neutron/extensions/extra_dhcp_opt.py:29
 #, python-format
-msgid "Invalid data format for extra-dhcp-opt, provide a list of dicts: %(data)s"
+msgid "Invalid data format for extra-dhcp-opt: %(data)s"
 msgstr ""
 
 #: neutron/extensions/extraroute.py:25
@@ -6242,7 +6248,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/utils.py:207
-#: neutron/plugins/hyperv/agent/utilsv2.py:95
+#: neutron/plugins/hyperv/agent/utilsv2.py:101
 #, python-format
 msgid "VSwitch not found: %s"
 msgstr ""
@@ -6260,7 +6266,7 @@ msgstr ""
 msgid "Loading class: %(module_name)s.%(class_name)s"
 msgstr ""
 
-#: neutron/plugins/hyperv/agent/utilsv2.py:118
+#: neutron/plugins/hyperv/agent/utilsv2.py:124
 #, python-format
 msgid "Port Alloc not found: %s"
 msgstr ""
@@ -7189,88 +7195,88 @@ msgstr ""
 msgid "MidonetPluginV2.update_router called: id=%(id)s router=%(router)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:892
+#: neutron/plugins/midonet/plugin.py:896
 #, python-format
 msgid "MidonetPluginV2.update_router exiting: router=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:903
+#: neutron/plugins/midonet/plugin.py:907
 #, python-format
 msgid "MidonetPluginV2.delete_router called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1003
+#: neutron/plugins/midonet/plugin.py:1007
 #, python-format
 msgid ""
 "MidonetPluginV2.add_router_interface called: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1027
+#: neutron/plugins/midonet/plugin.py:1031
 msgid ""
 "DHCP agent is not working correctly. No port to reach the Metadata server"
 " on this network"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1036
+#: neutron/plugins/midonet/plugin.py:1040
 #, python-format
 msgid ""
 "Failed to create MidoNet resources to add router interface. "
 "info=%(info)s, router_id=%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1043
+#: neutron/plugins/midonet/plugin.py:1047
 #, python-format
 msgid "MidonetPluginV2.add_router_interface exiting: info=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1083
+#: neutron/plugins/midonet/plugin.py:1087
 #, python-format
 msgid ""
 "MidonetPluginV2.update_floatingip called: id=%(id)s "
 "floatingip=%(floatingip)s "
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1102
+#: neutron/plugins/midonet/plugin.py:1106
 #, python-format
 msgid "MidonetPluginV2.update_floating_ip exiting: fip=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1123
+#: neutron/plugins/midonet/plugin.py:1127
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group called: "
 "security_group=%(security_group)s default_sg=%(default_sg)s "
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1152
+#: neutron/plugins/midonet/plugin.py:1156
 #, python-format
 msgid "Failed to create MidoNet resources for sg %(sg)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1159
+#: neutron/plugins/midonet/plugin.py:1163
 #, python-format
 msgid "MidonetPluginV2.create_security_group exiting: sg=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1165
+#: neutron/plugins/midonet/plugin.py:1169
 #, python-format
 msgid "MidonetPluginV2.delete_security_group called: id=%s"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1197
+#: neutron/plugins/midonet/plugin.py:1201
 #, python-format
 msgid ""
 "MidonetPluginV2.create_security_group_rule called: "
 "security_group_rule=%(security_group_rule)r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1207
+#: neutron/plugins/midonet/plugin.py:1211
 #, python-format
 msgid "MidonetPluginV2.create_security_group_rule exiting: rule=%r"
 msgstr ""
 
-#: neutron/plugins/midonet/plugin.py:1217
+#: neutron/plugins/midonet/plugin.py:1221
 #, python-format
 msgid "MidonetPluginV2.delete_security_group_rule called: sg_rule_id=%s"
 msgstr ""
@@ -7452,101 +7458,101 @@ msgstr ""
 msgid "Network %s has no segments"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:278
+#: neutron/plugins/ml2/plugin.py:282
 #, python-format
 msgid ""
 "In _notify_port_updated(), no bound segment for port %(port_id)s on "
 "network %(network_id)s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:320
+#: neutron/plugins/ml2/plugin.py:324
 #, python-format
 msgid "mechanism_manager.create_network_postcommit failed, deleting network '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:380
+#: neutron/plugins/ml2/plugin.py:384
 #, python-format
 msgid "Deleting network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:390 neutron/plugins/ml2/plugin.py:510
+#: neutron/plugins/ml2/plugin.py:394 neutron/plugins/ml2/plugin.py:514
 #, python-format
 msgid "Ports to auto-delete: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:396 neutron/plugins/ml2/plugin.py:516
+#: neutron/plugins/ml2/plugin.py:400 neutron/plugins/ml2/plugin.py:520
 msgid "Tenant-owned ports exist"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:404
+#: neutron/plugins/ml2/plugin.py:408
 #, python-format
 msgid "Subnets to auto-delete: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:415
+#: neutron/plugins/ml2/plugin.py:419
 #, python-format
 msgid "Deleting network record %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:423 neutron/plugins/ml2/plugin.py:529
+#: neutron/plugins/ml2/plugin.py:427 neutron/plugins/ml2/plugin.py:533
 msgid "Committing transaction"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:427
+#: neutron/plugins/ml2/plugin.py:431
 msgid "A concurrent port creation has occurred"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:437 neutron/plugins/ml2/plugin.py:536
+#: neutron/plugins/ml2/plugin.py:441 neutron/plugins/ml2/plugin.py:540
 #, python-format
 msgid "Exception auto-deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:445
+#: neutron/plugins/ml2/plugin.py:449
 #, python-format
 msgid "Exception auto-deleting subnet %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:455
+#: neutron/plugins/ml2/plugin.py:459
 msgid "mechanism_manager.delete_network_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:469
+#: neutron/plugins/ml2/plugin.py:473
 #, python-format
 msgid "mechanism_manager.create_subnet_postcommit failed, deleting subnet '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:499
+#: neutron/plugins/ml2/plugin.py:503
 #, python-format
 msgid "Deleting subnet %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:525
+#: neutron/plugins/ml2/plugin.py:529
 msgid "Deleting subnet record"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:546
+#: neutron/plugins/ml2/plugin.py:550
 msgid "mechanism_manager.delete_subnet_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:575
+#: neutron/plugins/ml2/plugin.py:579
 #, python-format
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:630
+#: neutron/plugins/ml2/plugin.py:634
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:647
+#: neutron/plugins/ml2/plugin.py:651
 msgid "Calling base delete_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:656
+#: neutron/plugins/ml2/plugin.py:660
 msgid "mechanism_manager.delete_port_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:665
+#: neutron/plugins/ml2/plugin.py:669
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -9050,13 +9056,13 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/nicira/NeutronPlugin.py:674
-#: neutron/plugins/nicira/NeutronPlugin.py:1718
+#: neutron/plugins/nicira/NeutronPlugin.py:1720
 #, python-format
 msgid "Logical router resource %s not found on NVP platform"
 msgstr ""
 
 #: neutron/plugins/nicira/NeutronPlugin.py:678
-#: neutron/plugins/nicira/NeutronPlugin.py:1722
+#: neutron/plugins/nicira/NeutronPlugin.py:1724
 msgid "Unable to update logical routeron NVP Platform"
 msgstr ""
 
@@ -9241,62 +9247,62 @@ msgid ""
 " ERROR status"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1658
+#: neutron/plugins/nicira/NeutronPlugin.py:1659
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1750
+#: neutron/plugins/nicira/NeutronPlugin.py:1752
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1756
+#: neutron/plugins/nicira/NeutronPlugin.py:1758
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1883
+#: neutron/plugins/nicira/NeutronPlugin.py:1885
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1889
+#: neutron/plugins/nicira/NeutronPlugin.py:1891
 msgid "Failed to update NAT rules for floatingip update"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1920
+#: neutron/plugins/nicira/NeutronPlugin.py:1922
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1923
+#: neutron/plugins/nicira/NeutronPlugin.py:1925
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1950
+#: neutron/plugins/nicira/NeutronPlugin.py:1952
 #, python-format
 msgid "Unable to create l2_gw_service for: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1972
+#: neutron/plugins/nicira/NeutronPlugin.py:1974
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2002
+#: neutron/plugins/nicira/NeutronPlugin.py:2004
 #, python-format
 msgid "Unable to update name on NVP backend for network gateway: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2070
+#: neutron/plugins/nicira/NeutronPlugin.py:2072
 #, python-format
 msgid "Port values not valid for protocol: %s"
 msgstr ""
@@ -9574,12 +9580,12 @@ msgstr ""
 msgid "The request has timed out."
 msgstr ""
 
-#: neutron/plugins/nicira/dhcpmeta_modes.py:92
+#: neutron/plugins/nicira/dhcpmeta_modes.py:93
 #, python-format
 msgid "Unable to run Neutron with config option '%s', as NVP does not support it"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcpmeta_modes.py:95
+#: neutron/plugins/nicira/dhcpmeta_modes.py:96
 #, python-format
 msgid "Unmet dependency for config option '%s'"
 msgstr ""
@@ -10458,95 +10464,145 @@ msgstr ""
 msgid "Monitor Resource binding with id:%s not found!"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:37
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:49
 msgid "Comma separated list of additional domain name servers"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:43
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:55
 msgid "Default DHCP lease time"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:67
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:61
+msgid "IP address used by Metadata server."
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:64
+msgid "TCP Port used by Metadata server."
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:96
 #, python-format
 msgid "Unable to find Logical Service Node for network %s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:78
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:107
 #, python-format
 msgid "Unable to create LSN for network %s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:86
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:115
 #, python-format
 msgid "Unable to delete Logical Service Node %s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:103
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:132
 #, python-format
 msgid ""
 "Unable to find Logical Service Node Port for LSN %(lsn_id)s and subnet "
 "%(subnet_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:125
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:154
 #, python-format
 msgid ""
 "Unable to find Logical Service Node Port for LSN %(lsn_id)s and mac "
 "address %(mac)s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:145
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:174
 #, python-format
 msgid "Unable to create port for LSN  %s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:153
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:182
 #, python-format
 msgid "Unable to delete LSN Port %s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:211
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:202
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:206
+#, python-format
+msgid "Metadata port not found while attempting to delete it from network %s"
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:209
+#, python-format
+msgid "Unable to find Logical Services Node Port with MAC %s"
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:288
 #, python-format
 msgid ""
 "Unable to configure dhcp for Logical Service Node %(lsn_id)s and port "
 "%(lsn_port_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:225
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:309
+#, python-format
+msgid "Unable to configure metadata access for subnet %s"
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:332
 #, python-format
 msgid "Error while configuring LSN port %s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:274
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:436
 #, python-format
 msgid ""
 "Error while creating subnet %(cidr)s for network %(network)s. Please, "
 "contact administrator"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:333
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:348
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:506
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:521
 #, python-format
 msgid "Performing DHCP %(action)s for resource: %(resource)s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:343
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:516
 #, python-format
 msgid "Logical Services Node for network %s configured successfully"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:365
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:538
 #, python-format
 msgid "Error while configuring DHCP for port %s"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:377
-msgid "DHCP is disabled: nothing to do"
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:550
+#, python-format
+msgid "DHCP is disabled for subnet %s: nothing to do"
 msgstr ""
 
-#: neutron/plugins/nicira/dhcp_meta/nvp.py:395
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:569
 #, python-format
 msgid "DHCP for port %s configured successfully"
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:577
+#, python-format
+msgid "Network %s is external: nothing to do"
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:585
+#, python-format
+msgid "Configuring metadata entry for port %s"
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:597
+#, python-format
+msgid "Metadata for port %s configured successfully"
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:601
+#, python-format
+msgid "Handle metadata access via router: %(r)s and interface %(i)s"
+msgstr ""
+
+#: neutron/plugins/nicira/dhcp_meta/nvp.py:618
+#, python-format
+msgid "Metadata for router %s handled successfully"
 msgstr ""
 
 #: neutron/plugins/nicira/dhcp_meta/rpc.py:117
@@ -10631,7 +10687,7 @@ msgstr ""
 msgid "'%s' must be a non negative integer."
 msgstr ""
 
-#: neutron/plugins/nicira/nsxlib/lsn.py:146
+#: neutron/plugins/nicira/nsxlib/lsn.py:159
 #, python-format
 msgid ""
 "Attempt to plug Logical Services Node %(lsn)s into network with port "
@@ -13829,5 +13885,14 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "A nvp lport identifier was not found for neutron port '%s'"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Invalid data format for extra-dhcp-"
+#~ "opt, provide a list of dicts: "
+#~ "%(data)s"
+#~ msgstr ""
+
+#~ msgid "DHCP is disabled: nothing to do"
 #~ msgstr ""
 
