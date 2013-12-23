@@ -43,12 +43,11 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
         super(DhcpAgentNotifyAPI, self).__init__(
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
 
-    def _get_dhcp_agents(self, context, network_id):
+    def _get_enabled_dhcp_agents(self, context, network_id):
+        """Return enabled dhcp agents associated with the given network."""
         plugin = manager.NeutronManager.get_plugin()
-        dhcp_agents = plugin.get_dhcp_agents_hosting_networks(
-            context, [network_id], active=True)
-        return [(dhcp_agent.host, dhcp_agent.topic) for
-                dhcp_agent in dhcp_agents]
+        agents = plugin.get_dhcp_agents_hosting_networks(context, [network_id])
+        return [x for x in agents if x.admin_state_up]
 
     def _notification_host(self, context, method, payload, host):
         """Notify the agent on host."""
@@ -76,11 +75,33 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
                             context, 'network_create_end',
                             {'network': {'id': network_id}},
                             agent['host'])
-            for (host, topic) in self._get_dhcp_agents(context, network_id):
+            agents = self._get_enabled_dhcp_agents(context, network_id)
+            if not agents:
+                LOG.error(_("No DHCP agents are associated with network "
+                            "'%(net_id)s'. Unable to send notification "
+                            "for '%(method)s' with payload: %(payload)s"),
+                          {
+                              'net_id': network_id,
+                              'method': method,
+                              'payload': payload,
+                          })
+                return
+            active_agents = [x for x in agents if x.is_active]
+            if active_agents != agents:
+                LOG.warning(_("Only %(active)d of %(total)d DHCP agents "
+                              "associated with network '%(net_id)s' are "
+                              "marked as active, so notifications may "
+                              "be sent to inactive agents."),
+                            {
+                                'active': len(active_agents),
+                                'total': len(agents),
+                                'net_id': network_id,
+                            })
+            for agent in agents:
                 self.cast(
                     context, self.make_msg(method,
                                            payload=payload),
-                    topic='%s.%s' % (topic, host))
+                    topic='%s.%s' % (agent.topic, agent.host))
         else:
             # besides the non-agentscheduler plugin,
             # There is no way to query who is hosting the network
