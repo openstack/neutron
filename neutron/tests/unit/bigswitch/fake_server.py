@@ -17,6 +17,12 @@
 # @author: Kevin Benton, <kevin.benton@bigswitch.com>
 #
 
+import json
+
+from neutron.openstack.common import log as logging
+
+LOG = logging.getLogger(__name__)
+
 
 class HTTPResponseMock():
     status = 200
@@ -50,7 +56,7 @@ class HTTPResponseMock500(HTTPResponseMock):
         return "{'status': '%s'}" % self.errmsg
 
 
-class HTTPConnectionMock():
+class HTTPConnectionMock(object):
 
     def __init__(self, server, port, timeout):
         self.response = None
@@ -62,6 +68,10 @@ class HTTPConnectionMock():
             self.response = HTTPResponseMock500(None, errmsg=errmsg)
 
     def request(self, action, uri, body, headers):
+        LOG.debug(_("Request: action=%(action)s, uri=%(uri)r, "
+                    "body=%(body)s, headers=%(headers)s"),
+                  {'action': action, 'uri': uri,
+                   'body': body, 'headers': headers})
         if self.broken and "ExceptOnBadServer" in uri:
             raise Exception("Broken server got an unexpected request")
         if self.response:
@@ -94,3 +104,27 @@ class HTTPConnectionMock500(HTTPConnectionMock):
     def __init__(self, server, port, timeout):
         self.response = HTTPResponseMock500(None)
         self.broken = True
+
+
+class VerifyMultiTenantFloatingIP(HTTPConnectionMock):
+
+    def request(self, action, uri, body, headers):
+        # Only handle network update requests
+        if 'network' in uri and 'tenant' in uri and 'ports' not in uri:
+            req = json.loads(body)
+            if 'network' not in req or 'floatingips' not in req['network']:
+                msg = _("No floating IPs in request"
+                        "uri=%(uri)s, body=%(body)s") % {'uri': uri,
+                                                         'body': body}
+                raise Exception(msg)
+            distinct_tenants = []
+            for flip in req['network']['floatingips']:
+                if flip['tenant_id'] not in distinct_tenants:
+                    distinct_tenants.append(flip['tenant_id'])
+            if len(distinct_tenants) < 2:
+                msg = _("Expected floating IPs from multiple tenants."
+                        "uri=%(uri)s, body=%(body)s") % {'uri': uri,
+                                                         'body': body}
+                raise Exception(msg)
+        super(VerifyMultiTenantFloatingIP,
+              self).request(action, uri, body, headers)
