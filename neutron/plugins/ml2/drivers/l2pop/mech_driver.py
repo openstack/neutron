@@ -143,17 +143,17 @@ class L2populationMechanismDriver(api.MechanismDriver,
         network_id = port_context['network_id']
 
         session = db_api.get_session()
-        agent_ports = self.get_agent_network_port_count(session, agent_host,
-                                                        network_id)
+        agent_active_ports = self.get_agent_network_active_port_count(
+            session, agent_host, network_id)
 
         other_fdb_entries = {network_id:
                              {'segment_id': segment['segmentation_id'],
                               'network_type': segment['network_type'],
                               'ports': {agent_ip: []}}}
 
-        if agent_ports == 1 or (
+        if agent_active_ports == 1 or (
                 self.get_agent_uptime(agent) < cfg.CONF.l2pop.agent_boot_time):
-            # First port plugged on current agent in this network,
+            # First port activated on current agent in this network,
             # we have to provide it with the whole list of fdb entries
             agent_fdb_entries = {network_id:
                                  {'segment_id': segment['segmentation_id'],
@@ -203,16 +203,16 @@ class L2populationMechanismDriver(api.MechanismDriver,
         network_id = port_context['network_id']
 
         session = db_api.get_session()
-        agent_ports = self.get_agent_network_port_count(session, agent_host,
-                                                        network_id)
+        agent_active_ports = self.get_agent_network_active_port_count(
+            session, agent_host, network_id)
 
         other_fdb_entries = {network_id:
                              {'segment_id': segment['segmentation_id'],
                               'network_type': segment['network_type'],
                               'ports': {agent_ip: []}}}
 
-        if agent_ports == 1:
-            # Agent is removing its last port in this network,
+        if agent_active_ports == 1:
+            # Agent is removing its last activated port in this network,
             # other agents needs to be notified to delete their flooding entry.
             other_fdb_entries[network_id]['ports'][agent_ip].append(
                 const.FLOODING_ENTRY)

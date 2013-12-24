@@ -17,6 +17,7 @@
 # @author: Francois Eleouet, Orange
 # @author: Mathieu Rohon, Orange
 
+from neutron.common import constants as const
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as base_db
 from neutron.db import models_v2
@@ -67,11 +68,14 @@ class L2populationDbMixin(base_db.CommonDbMixin):
                                      l2_const.SUPPORTED_AGENT_TYPES))
             return query
 
-    def get_agent_network_port_count(self, session, agent_host, network_id):
+    def get_agent_network_active_port_count(self, session, agent_host,
+                                            network_id):
         with session.begin(subtransactions=True):
             query = session.query(models_v2.Port)
 
             query = query.join(ml2_models.PortBinding)
             query = query.filter(models_v2.Port.network_id == network_id,
+                                 models_v2.Port.status ==
+                                 const.PORT_STATUS_ACTIVE,
                                  ml2_models.PortBinding.host == agent_host)
             return query.count()
