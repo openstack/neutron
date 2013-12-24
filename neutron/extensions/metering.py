@@ -20,9 +20,8 @@ import six
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
-from neutron.api.v2 import base
+from neutron.api.v2 import resource_helper
 from neutron.common import exceptions as qexception
-from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services import service_base
@@ -112,31 +111,16 @@ class Metering(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Ext Resources."""
-        my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
-        attr.PLURALS.update(dict(my_plurals))
-        exts = []
-        plugin = manager.NeutronManager.get_service_plugins()[
-            constants.METERING]
-        for resource_name in ['metering_label', 'metering_label_rule']:
-            collection_name = resource_name + "s"
-
-            collection_name = collection_name.replace('_', '-')
-            params = RESOURCE_ATTRIBUTE_MAP.get(resource_name + "s", dict())
-
-            controller = base.create_resource(collection_name,
-                                              resource_name,
-                                              plugin, params, allow_bulk=True,
-                                              allow_pagination=True,
-                                              allow_sorting=True)
-
-            ex = extensions.ResourceExtension(
-                collection_name,
-                controller,
-                path_prefix=constants.COMMON_PREFIXES[constants.METERING],
-                attr_map=params)
-            exts.append(ex)
-
-        return exts
+        plural_mappings = resource_helper.build_plural_mappings(
+            {}, RESOURCE_ATTRIBUTE_MAP)
+        attr.PLURALS.update(plural_mappings)
+        # PCM: Metering sets pagination and sorting to True. Do we have cfg
+        # entries for these so can be read? Else, must pass in.
+        return resource_helper.build_resource_info(plural_mappings,
+                                                   RESOURCE_ATTRIBUTE_MAP,
+                                                   constants.METERING,
+                                                   translate_name=True,
+                                                   allow_bulk=True)
 
     def update_attributes_map(self, attributes):
         super(Metering, self).update_attributes_map(

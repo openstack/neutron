@@ -17,12 +17,12 @@
 
 import abc
 
-from oslo.config import cfg
 import six
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
+from neutron.api.v2 import resource_helper
 from neutron.common import exceptions as qexception
 from neutron import manager
 from neutron.plugins.common import constants
@@ -315,36 +315,17 @@ class Loadbalancer(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
-        my_plurals.append(('health_monitors_status', 'health_monitor_status'))
-        attr.PLURALS.update(dict(my_plurals))
-        resources = []
+        plural_mappings = resource_helper.build_plural_mappings(
+            {}, RESOURCE_ATTRIBUTE_MAP)
+        plural_mappings['health_monitors_status'] = 'health_monitor_status'
+        attr.PLURALS.update(plural_mappings)
+        action_map = {'pool': {'stats': 'GET'}}
+        resources = resource_helper.build_resource_info(plural_mappings,
+                                                        RESOURCE_ATTRIBUTE_MAP,
+                                                        constants.LOADBALANCER,
+                                                        action_map=action_map)
         plugin = manager.NeutronManager.get_service_plugins()[
             constants.LOADBALANCER]
-        for collection_name in RESOURCE_ATTRIBUTE_MAP:
-            # Special handling needed for resources with 'y' ending
-            # (e.g. proxies -> proxy)
-            resource_name = collection_name[:-1]
-            params = RESOURCE_ATTRIBUTE_MAP[collection_name]
-
-            member_actions = {}
-            if resource_name == 'pool':
-                member_actions = {'stats': 'GET'}
-
-            controller = base.create_resource(
-                collection_name, resource_name, plugin, params,
-                member_actions=member_actions,
-                allow_pagination=cfg.CONF.allow_pagination,
-                allow_sorting=cfg.CONF.allow_sorting)
-
-            resource = extensions.ResourceExtension(
-                collection_name,
-                controller,
-                path_prefix=constants.COMMON_PREFIXES[constants.LOADBALANCER],
-                member_actions=member_actions,
-                attr_map=params)
-            resources.append(resource)
-
         for collection_name in SUB_RESOURCE_ATTRIBUTE_MAP:
             # Special handling needed for sub-resources with 'y' ending
             # (e.g. proxies -> proxy)
