@@ -290,6 +290,9 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._aliases = aliases
         return self._aliases
 
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        attributes.NETWORKS, ['_extend_network_dict_provider_ovs'])
+
     def __init__(self, configfile=None):
         self.base_binding_dict = {
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
@@ -374,9 +377,11 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 sys.exit(1)
         LOG.info(_("Tunnel ID ranges: %s"), self.tunnel_id_ranges)
 
-    def _extend_network_dict_provider(self, context, network):
-        binding = ovs_db_v2.get_network_binding(context.session,
-                                                network['id'])
+    def _extend_network_dict_provider_ovs(self, network, net_db,
+                                          net_binding=None):
+        # this method used in two cases: when binding is provided explicitly
+        # and when it is a part of db model object
+        binding = net_db.binding if net_db else net_binding
         network[provider.NETWORK_TYPE] = binding.network_type
         if binding.network_type in constants.TUNNEL_NETWORK_TYPES:
             network[provider.PHYSICAL_NETWORK] = None
@@ -501,11 +506,14 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 # no reservation needed for TYPE_LOCAL
             net = super(OVSNeutronPluginV2, self).create_network(context,
                                                                  network)
-            ovs_db_v2.add_network_binding(session, net['id'], network_type,
-                                          physical_network, segmentation_id)
+            binding = ovs_db_v2.add_network_binding(session, net['id'],
+                                                    network_type,
+                                                    physical_network,
+                                                    segmentation_id)
 
             self._process_l3_create(context, net, network['network'])
-            self._extend_network_dict_provider(context, net)
+            # passing None as db model to use binding object
+            self._extend_network_dict_provider_ovs(net, None, binding)
             # note - exception will rollback entire transaction
         LOG.debug(_("Created network: %s"), net['id'])
         return net
@@ -518,7 +526,6 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             net = super(OVSNeutronPluginV2, self).update_network(context, id,
                                                                  network)
             self._process_l3_update(context, net, network['network'])
-            self._extend_network_dict_provider(context, net)
         return net
 
     def delete_network(self, context, id):
@@ -543,7 +550,6 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             net = super(OVSNeutronPluginV2, self).get_network(context,
                                                               id, None)
-            self._extend_network_dict_provider(context, net)
         return self._fields(net, fields)
 
     def get_networks(self, context, filters=None, fields=None,
@@ -554,8 +560,6 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             nets = super(OVSNeutronPluginV2,
                          self).get_networks(context, filters, None, sorts,
                                             limit, marker, page_reverse)
-            for net in nets:
-                self._extend_network_dict_provider(context, net)
 
         return [self._fields(net, fields) for net in nets]
 
