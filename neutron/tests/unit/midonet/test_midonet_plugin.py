@@ -202,6 +202,38 @@ class TestMidonetSubnetsV2(test_plugin.TestSubnetsV2,
             enable_dhcp=False)
         self.assertFalse(self.instance.return_value.create_dhcp.called)
 
+    def test_update_subnet_change_dhcp_info(self):
+        with self.subnet(enable_dhcp=True) as subnet:
+            dns_servers1 = [u'10.10.10.10']
+            dns_servers2 = [u'11.11.11.11']
+
+            data = {'subnet': {'enable_dhcp': True,
+                               'dns_nameservers': dns_servers1}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            req.get_response(self.api)
+            verify_create = self.instance.return_value.create_dhcp
+            verify_create.assert_called_with(mock.ANY, mock.ANY, mock.ANY,
+                                             host_rts=[],
+                                             dns_servers=dns_servers1)
+
+            data = {'subnet': {'enable_dhcp': True,
+                               'dns_nameservers': dns_servers2}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            req.get_response(self.api)
+            verify_create.assert_called_with(mock.ANY, mock.ANY, mock.ANY,
+                                             host_rts=[],
+                                             dns_servers=dns_servers2)
+
+            data = {'subnet': {'enable_dhcp': False,
+                               'dns_nameservers': dns_servers2}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            req.get_response(self.api)
+            verify_delete = self.instance.return_value.delete_dhcp
+            verify_delete.assert_called_with(mock.ANY, mock.ANY)
+
 
 class TestMidonetPortsV2(test_plugin.TestPortsV2,
                          MidonetPluginV2TestCase):
