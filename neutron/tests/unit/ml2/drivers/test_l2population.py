@@ -164,7 +164,8 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                 {'fdb_entries':
                                  {p1['network_id']:
                                   {'ports':
-                                   {'20.0.0.1': [[p1['mac_address'],
+                                   {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                                 [p1['mac_address'],
                                                   p1_ips[0]]]},
                                    'network_type': 'vxlan',
                                    'segment_id': 1}}},
@@ -396,7 +397,8 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                             {'fdb_entries':
                              {p1['network_id']:
                               {'ports':
-                               {'20.0.0.1': [[p1['mac_address'],
+                               {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                             [p1['mac_address'],
                                               p1_ips[0]]]},
                                'network_type': 'vxlan',
                                'segment_id': 1}}},
