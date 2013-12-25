@@ -1,0 +1,49 @@
+hostname csr
+
+alias interface ns no shutdown
+alias interface i do show ip interface brief
+alias interface s do show running-config
+alias configure i do show ip interface brief
+alias configure s do show running-config
+alias exec s sh run
+alias exec c conf t
+alias exec i sh ip int brie
+alias exec sr sh ip ro
+
+line con 0
+ logging synchronous
+ transport preferred none
+
+line vty 0 4
+ login local
+ transport preferred none
+ transport input ssh
+
+username stack priv 15 secret cisco
+
+ip domain name mydomain.org
+crypto key generate rsa modulus 1024
+
+ip ssh version 2
+ip ssh pubkey-chain
+username stack
+key-string
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDipwLBYeYbqBLpmQ8gIO65Dx23SGcRR7W+ixnh14qORWNYiXih1zUGGbBcCAFuTkySSt/aQqMCx3AA47SKnqjSuaudHcoFLCAWTvPYMJIXvsCFMqs3BPR/3t0ak5J3ZDpqL8V+Bcw8crdl7SyAHm/k6ShHHZXNxVMUAtDVu5PDCZVIy7qo2GBEMIynaDrRQXp6vWZkK53Y5lHLCELYWilMv5XYgf/qDXXrJg2wxnIxGa02wek36h+39SMPY1jKsYIF+Tjp36jmf0iyRasiXGEvyGkKSQzKlkDV66zgNu+QQ/W1fTfbx7pIQjQplmv/b6vyRWjyObIza6wjYUhHrLQ1 stack@openstack1
+exit
+
+netconf max-sessions 16
+netconf ssh
+
+
+interface GigabitEthernet1
+ ip address <ip> <mask>
+ no shutdown
+
+ip route 0.0.0.0 0.0.0.0 GigabitEthernet1 <gw>
+ip name-server <name_server>
+
+license accept end user agreement
+license boot level premium
+
+
+
