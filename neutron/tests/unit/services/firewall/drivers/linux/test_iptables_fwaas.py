@@ -158,23 +158,32 @@ class IptablesFwaasTestCase(base.BaseTestCase):
         self.firewall.create_firewall(apply_list, firewall)
         invalid_rule = '-m state --state INVALID -j DROP'
         est_rule = '-m state --state ESTABLISHED,RELATED -j ACCEPT'
-        ingress_chain = ('iv4%s' % firewall['id'])
-        egress_chain = ('ov4%s' % firewall['id'])
         bname = fwaas.iptables_manager.binary_name
-        calls = [call.ensure_remove_chain('iv4fake-fw-uuid'),
-                 call.ensure_remove_chain('ov4fake-fw-uuid'),
-                 call.ensure_remove_chain('fwaas-default-policy'),
-                 call.add_chain('fwaas-default-policy'),
-                 call.add_rule('fwaas-default-policy', '-j DROP'),
-                 call.add_chain(ingress_chain),
-                 call.add_rule(ingress_chain, invalid_rule),
-                 call.add_rule(ingress_chain, est_rule),
-                 call.add_chain(egress_chain),
-                 call.add_rule(egress_chain, invalid_rule),
-                 call.add_rule(egress_chain, est_rule),
-                 call.add_rule('FORWARD', '-o qr-+ -j %s-fwaas-defau' % bname),
-                 call.add_rule('FORWARD', '-i qr-+ -j %s-fwaas-defau' % bname)]
-        apply_list[0].iptables_manager.ipv4['filter'].assert_has_calls(calls)
+
+        for ip_version in (4, 6):
+            ingress_chain = ('iv%s%s' % (ip_version, firewall['id']))
+            egress_chain = ('ov%s%s' % (ip_version, firewall['id']))
+            calls = [call.ensure_remove_chain('iv%sfake-fw-uuid' % ip_version),
+                     call.ensure_remove_chain('ov%sfake-fw-uuid' % ip_version),
+                     call.ensure_remove_chain('fwaas-default-policy'),
+                     call.add_chain('fwaas-default-policy'),
+                     call.add_rule('fwaas-default-policy', '-j DROP'),
+                     call.add_chain(ingress_chain),
+                     call.add_rule(ingress_chain, invalid_rule),
+                     call.add_rule(ingress_chain, est_rule),
+                     call.add_chain(egress_chain),
+                     call.add_rule(egress_chain, invalid_rule),
+                     call.add_rule(egress_chain, est_rule),
+                     call.add_rule('FORWARD',
+                                   '-o qr-+ -j %s-fwaas-defau' % bname),
+                     call.add_rule('FORWARD',
+                                   '-i qr-+ -j %s-fwaas-defau' % bname)]
+            if ip_version == 4:
+                v4filter_inst = apply_list[0].iptables_manager.ipv4['filter']
+                v4filter_inst.assert_has_calls(calls)
+            else:
+                v6filter_inst = apply_list[0].iptables_manager.ipv6['filter']
+                v6filter_inst.assert_has_calls(calls)
 
     def test_create_firewall_with_rules(self):
         self._setup_firewall_with_rules(self.firewall.create_firewall)
