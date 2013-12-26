@@ -391,6 +391,24 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
 
+    def _build_dhcp_info(self, bridge, subnet):
+        dns_nameservers = None
+        host_routes = None
+        gateway_ip = subnet['gateway_ip']
+        cidr = subnet['cidr']
+        if subnet['dns_nameservers'] is not attributes.ATTR_NOT_SPECIFIED:
+            dns_nameservers = subnet['dns_nameservers']
+
+        if subnet['host_routes'] is not attributes.ATTR_NOT_SPECIFIED:
+            host_routes = subnet['host_routes']
+
+        self.client.create_dhcp(bridge, gateway_ip, cidr,
+                                host_rts=host_routes,
+                                dns_servers=dns_nameservers)
+
+    def _destroy_dhcp_info(self, bridge, subnet):
+        self.client.delete_dhcp(bridge, subnet['cidr'])
+
     def create_subnet(self, context, subnet):
         """Create Neutron subnet.
 
@@ -408,28 +426,37 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                                   subnet)
             bridge = self.client.get_bridge(sn_entry['network_id'])
 
-            gateway_ip = s['gateway_ip']
-            cidr = s['cidr']
             if s['enable_dhcp']:
-                dns_nameservers = None
-                host_routes = None
-                if s['dns_nameservers'] is not attributes.ATTR_NOT_SPECIFIED:
-                    dns_nameservers = s['dns_nameservers']
-
-                if s['host_routes'] is not attributes.ATTR_NOT_SPECIFIED:
-                    host_routes = s['host_routes']
-
-                self.client.create_dhcp(bridge, gateway_ip, cidr,
-                                        host_rts=host_routes,
-                                        dns_servers=dns_nameservers)
+                self._build_dhcp_info(bridge, s)
 
             # For external network, link the bridge to the provider router.
             if net[ext_net.EXTERNAL]:
-                self._link_to_provider_router(bridge, gateway_ip, cidr)
+                self._link_to_provider_router(bridge, s['gateway_ip'],
+                                              s['cidr'])
 
         LOG.debug(_("MidonetPluginV2.create_subnet exiting: sn_entry=%r"),
                   sn_entry)
         return sn_entry
+
+    def update_subnet(self, context, id, subnet):
+        """Update the subnet with new info.
+        """
+        old_subnet = super(MidonetPluginV2,
+                           self).get_subnet(context, id,
+                                            fields=None)
+        new_subnet = super(MidonetPluginV2,
+                           self).update_subnet(context, id, subnet)
+
+        bridge = self.client.get_bridge(old_subnet['network_id'])
+        if old_subnet['enable_dhcp'] and not new_subnet['enable_dhcp']:
+            self._destroy_dhcp_info(bridge, old_subnet)
+        elif not old_subnet['enable_dhcp'] and new_subnet['enable_dhcp']:
+            self._build_dhcp_info(bridge, new_subnet)
+        elif old_subnet['enable_dhcp'] and new_subnet['enable_dhcp']:
+            self._destroy_dhcp_info(bridge, old_subnet)
+            self._build_dhcp_info(bridge, new_subnet)
+
+        return new_subnet
 
     def delete_subnet(self, context, id):
         """Delete Neutron subnet.
@@ -448,7 +475,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             super(MidonetPluginV2, self).delete_subnet(context, id)
             bridge = self.client.get_bridge(subnet['network_id'])
             if subnet['enable_dhcp']:
-                self.client.delete_dhcp(bridge, subnet['cidr'])
+                self._destroy_dhcp_info(bridge, subnet)
 
             # If the network is external, clean up routes, links, ports
             if net[ext_net.EXTERNAL]:
