@@ -35,6 +35,7 @@ class TestLbaasService(base.BaseTestCase):
         ) as mock_start:
 
             mgr = mock.Mock()
+            cfg.CONF.periodic_interval = mock.Mock(return_value=10)
             agent_service = agent.LbaasAgentService('host', 'topic', mgr)
             agent_service.start()
 
