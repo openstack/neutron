@@ -20,8 +20,8 @@ from neutron.plugins.nicira.api_client import client
 from neutron.plugins.nicira.dbexts import db as nsx_db
 from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira.nsxlib import router as routerlib
+from neutron.plugins.nicira.nsxlib import secgroup as secgrouplib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
-
 
 LOG = log.getLogger(__name__)
 
@@ -125,23 +125,39 @@ def get_nsx_switch_and_port_id(session, cluster, neutron_port_id):
     return nsx_switch_id, nsx_port_id
 
 
-def create_nsx_cluster(cluster_opts, concurrent_connections, gen_timeout):
-    cluster = nsx_cluster.NSXCluster(**cluster_opts)
+def get_nsx_security_group_id(session, cluster, neutron_id):
+    """Return the NSX sec profile uuid for a given neutron sec group.
 
-    def _ctrl_split(x, y):
-        return (x, int(y), True)
-
-    api_providers = [_ctrl_split(*ctrl.split(':'))
-                     for ctrl in cluster.nsx_controllers]
-    cluster.api_client = client.NsxApiClient(
-        api_providers, cluster.nsx_user, cluster.nsx_password,
-        concurrent_connections=concurrent_connections,
-        gen_timeout=gen_timeout,
-        request_timeout=cluster.req_timeout,
-        http_timeout=cluster.http_timeout,
-        retries=cluster.retries,
-        redirects=cluster.redirects)
-    return cluster
+    First, look up the Neutron database. If not found, execute
+    a query on NSX platform as the mapping might be missing.
+    NOTE: Security groups are called 'security profiles' on the NSX backend.
+    """
+    nsx_id = nsx_db.get_nsx_security_group_id(session, neutron_id)
+    if not nsx_id:
+        # Find security profile on backend.
+        # This is a rather expensive query, but it won't be executed
+        # more than once for each security group in Neutron's lifetime
+        nsx_sec_profiles = secgrouplib.query_security_profiles(
+            cluster, '*',
+            filters={'tag': neutron_id,
+                     'tag_scope': 'q_sec_group_id'})
+        # Only one result expected
+        # NOTE(salv-orlando): Not handling the case where more than one
+        # security profile is found with the same neutron port tag
+        if not nsx_sec_profiles:
+            LOG.warn(_("Unable to find NSX security profile for Neutron "
+                       "security group %s"), neutron_id)
+            return
+        elif len(nsx_sec_profiles) > 1:
+            LOG.warn(_("Multiple NSX security profiles found for Neutron "
+                       "security group %s"), neutron_id)
+        nsx_sec_profile = nsx_sec_profiles[0]
+        nsx_id = nsx_sec_profile['uuid']
+        with session.begin(subtransactions=True):
+            # Create DB mapping
+            nsx_db.add_neutron_nsx_security_group_mapping(
+                session, neutron_id, nsx_id)
+    return nsx_id
 
 
 def get_nsx_router_id(session, cluster, neutron_router_id):
@@ -176,3 +192,22 @@ def get_nsx_router_id(session, cluster, neutron_router_id):
                 neutron_router_id,
                 nsx_router_id)
     return nsx_router_id
+
+
+def create_nsx_cluster(cluster_opts, concurrent_connections, gen_timeout):
+    cluster = nsx_cluster.NSXCluster(**cluster_opts)
+
+    def _ctrl_split(x, y):
+        return (x, int(y), True)
+
+    api_providers = [_ctrl_split(*ctrl.split(':'))
+                     for ctrl in cluster.nsx_controllers]
+    cluster.api_client = client.NsxApiClient(
+        api_providers, cluster.nsx_user, cluster.nsx_password,
+        request_timeout=cluster.req_timeout,
+        http_timeout=cluster.http_timeout,
+        retries=cluster.retries,
+        redirects=cluster.redirects,
+        concurrent_connections=concurrent_connections,
+        gen_timeout=gen_timeout)
+    return cluster

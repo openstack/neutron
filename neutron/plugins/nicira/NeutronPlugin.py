@@ -65,7 +65,7 @@ from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import nsx_utils
-from neutron.plugins.nicira.common import securitygroups as nvp_sec
+from neutron.plugins.nicira.common import securitygroups as sg_utils
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.dbexts import db as nsx_db
 from neutron.plugins.nicira.dbexts import distributedrouter as dist_rtr
@@ -112,7 +112,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                   l3_gwmode_db.L3_NAT_db_mixin,
                   mac_db.MacLearningDbMixin,
                   networkgw_db.NetworkGatewayMixin,
-                  nvp_sec.NVPSecurityGroups,
                   portbindings_db.PortBindingMixin,
                   portsecurity_db.PortSecurityDbMixin,
                   qos_db.NVPQoSDbMixin,
@@ -410,16 +409,25 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             LOG.exception(err_desc)
             raise nvp_exc.NvpPluginException(err_msg=err_desc)
 
-    def _nvp_create_port_helper(self, cluster, ls_uuid, port_data,
+    def _nvp_create_port_helper(self, session, ls_uuid, port_data,
                                 do_port_security=True):
-        return switchlib.create_lport(cluster, ls_uuid, port_data['tenant_id'],
-                                      port_data['id'], port_data['name'],
+        # Convert Neutron security groups identifiers into NSX security
+        # profiles identifiers
+        nsx_sec_profile_ids = [
+            nsx_utils.get_nsx_security_group_id(
+                session, self.cluster, neutron_sg_id) for
+            neutron_sg_id in (port_data[ext_sg.SECURITYGROUPS] or [])]
+        return switchlib.create_lport(self.cluster,
+                                      ls_uuid,
+                                      port_data['tenant_id'],
+                                      port_data['id'],
+                                      port_data['name'],
                                       port_data['device_id'],
                                       port_data['admin_state_up'],
                                       port_data['mac_address'],
                                       port_data['fixed_ips'],
                                       port_data[psec.PORTSECURITY],
-                                      port_data[ext_sg.SECURITYGROUPS],
+                                      nsx_sec_profile_ids,
                                       port_data.get(qos.QUEUE),
                                       port_data.get(mac_ext.MAC_LEARNING),
                                       port_data.get(addr_pair.ADDRESS_PAIRS))
@@ -458,7 +466,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         try:
             selected_lswitch = self._nvp_find_lswitch_for_port(context,
                                                                port_data)
-            lport = self._nvp_create_port_helper(self.cluster,
+            lport = self._nvp_create_port_helper(context.session,
                                                  selected_lswitch['uuid'],
                                                  port_data,
                                                  True)
@@ -565,7 +573,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 context, port_data)
             # Do not apply port security here!
             ls_port = self._nvp_create_port_helper(
-                self.cluster, selected_lswitch['uuid'],
+                context.session, selected_lswitch['uuid'],
                 port_data, False)
             # Assuming subnet being attached is on first fixed ip
             # element in port data
@@ -708,7 +716,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             selected_lswitch = self._nvp_find_lswitch_for_port(
                 context, port_data)
             lport = self._nvp_create_port_helper(
-                self.cluster,
+                context.session,
                 selected_lswitch['uuid'],
                 port_data,
                 True)
@@ -2107,12 +2115,19 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         tenant_id = self._get_tenant_id_for_create(context, s)
         if not default_sg:
             self._ensure_default_security_group(context, tenant_id)
-
-        nsx_secgroup = secgrouplib.create_security_profile(self.cluster,
-                                                           tenant_id, s)
-        security_group['security_group']['id'] = nsx_secgroup['uuid']
-        return super(NvpPluginV2, self).create_security_group(
-            context, security_group, default_sg)
+        # NOTE(salv-orlando): Pre-generating Neutron ID for security group.
+        neutron_id = str(uuid.uuid4())
+        nvp_secgroup = secgrouplib.create_security_profile(
+            self.cluster, neutron_id, tenant_id, s)
+        with context.session.begin(subtransactions=True):
+            s['id'] = neutron_id
+            sec_group = super(NvpPluginV2, self).create_security_group(
+                context, security_group, default_sg)
+            context.session.flush()
+            # Add mapping between neutron and nsx identifiers
+            nsx_db.add_neutron_nsx_security_group_mapping(
+                context.session, neutron_id, nvp_secgroup['uuid'])
+        return sec_group
 
     def delete_security_group(self, context, security_group_id):
         """Delete a security group.
@@ -2132,12 +2147,32 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             if super(NvpPluginV2, self)._get_port_security_group_bindings(
                 context, filters):
                 raise ext_sg.SecurityGroupInUse(id=security_group['id'])
+            nsx_sec_profile_id = nsx_utils.get_nsx_security_group_id(
+                context.session, self.cluster, security_group_id)
+
             try:
                 secgrouplib.delete_security_profile(
-                    self.cluster, security_group['id'])
+                    self.cluster, nsx_sec_profile_id)
             except q_exc.NotFound:
-                LOG.info(_("Security group: %s was already deleted "
-                           "from backend"), security_group_id)
+                # The security profile was not found on the backend
+                # do not fail in this case.
+                LOG.warning(_("The NSX security profile %(sec_profile_id)s, "
+                              "associated with the Neutron security group "
+                              "%(sec_group_id)s was not found on the backend"),
+                            {'sec_profile_id': nsx_sec_profile_id,
+                             'sec_group_id': security_group_id})
+            except api_exc.NsxApiException:
+                # Raise and fail the operation, as there is a problem which
+                # prevented the sec group from being removed from the backend
+                LOG.exception(_("An exception occurred while removing the "
+                                "NSX security profile %(sec_profile_id)s, "
+                                "associated with Netron security group "
+                                "%(sec_group_id)s"),
+                              {'sec_profile_id': nsx_sec_profile_id,
+                               'sec_group_id': security_group_id})
+                raise nvp_exc.NvpPluginException(
+                    _("Unable to remove security group %s from backend"),
+                    security_group['id'])
             return super(NvpPluginV2, self).delete_security_group(
                 context, security_group_id)
 
@@ -2175,7 +2210,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._ensure_default_security_group(context, tenant_id)
             security_group_id = self._validate_security_group_rules(
                 context, security_group_rule)
-
             # Check to make sure security group exists
             security_group = super(NvpPluginV2, self).get_security_group(
                 context, security_group_id)
@@ -2185,11 +2219,15 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Check for duplicate rules
             self._check_for_duplicate_rules(context, s)
             # gather all the existing security group rules since we need all
-            # of them to PUT to NVP.
-            combined_rules = self._merge_security_group_rules_with_current(
-                context, s, security_group['id'])
+            # of them to PUT to NSX.
+            existing_rules = self.get_security_group_rules(
+                context, {'security_group_id': [security_group['id']]})
+            combined_rules = sg_utils.merge_security_group_rules_with_current(
+                context.session, self.cluster, s, existing_rules)
+            nsx_sec_profile_id = nsx_utils.get_nsx_security_group_id(
+                context.session, self.cluster, security_group_id)
             secgrouplib.update_security_group_rules(self.cluster,
-                                                    security_group['id'],
+                                                    nsx_sec_profile_id,
                                                     combined_rules)
             return super(
                 NvpPluginV2, self).create_security_group_rule_bulk_native(
@@ -2208,13 +2246,17 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 raise ext_sg.SecurityGroupRuleNotFound(id=sgrid)
 
             sgid = security_group_rule['security_group_id']
-            current_rules = self._get_security_group_rules_nvp_format(
-                context, sgid, True)
+            current_rules = self.get_security_group_rules(
+                context, {'security_group_id': [sgid]})
+            current_rules_nsx = sg_utils.get_security_group_rules_nsx_format(
+                context.session, self.cluster, current_rules, True)
 
-            self._remove_security_group_with_id_and_id_field(
-                current_rules, sgrid)
+            sg_utils.remove_security_group_with_id_and_id_field(
+                current_rules_nsx, sgrid)
+            nsx_sec_profile_id = nsx_utils.get_nsx_security_group_id(
+                context.session, self.cluster, sgid)
             secgrouplib.update_security_group_rules(
-                self.cluster, sgid, current_rules)
+                self.cluster, nsx_sec_profile_id, current_rules_nsx)
             return super(NvpPluginV2, self).delete_security_group_rule(context,
                                                                        sgrid)
 

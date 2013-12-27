@@ -19,13 +19,17 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.openstack.common import log
 from neutron.plugins.nicira.common import utils
+from neutron.plugins.nicira.nvplib import _build_uri_path
 from neutron.plugins.nicira.nvplib import do_request
 from neutron.plugins.nicira.nvplib import format_exception
+from neutron.plugins.nicira.nvplib import get_all_query_pages
 
 HTTP_GET = "GET"
 HTTP_POST = "POST"
 HTTP_DELETE = "DELETE"
 HTTP_PUT = "PUT"
+
+SECPROF_RESOURCE = "security-profile"
 
 LOG = log.getLogger(__name__)
 
@@ -39,7 +43,23 @@ def mk_body(**kwargs):
     return json.dumps(kwargs, ensure_ascii=False)
 
 
-def create_security_profile(cluster, tenant_id, security_profile):
+def query_security_profiles(cluster, fields=None, filters=None):
+    return get_all_query_pages(
+        _build_uri_path(SECPROF_RESOURCE,
+                        fields=fields,
+                        filters=filters),
+        cluster)
+
+
+def create_security_profile(cluster, tenant_id, neutron_id, security_profile):
+    """Create a security profile on the NSX backend.
+
+    :param cluster: a NSX cluster object reference
+    :param tenant_id: identifier of the Neutron tenant
+    :param neutron_id: neutron security group identifier
+    :param security_profile: dictionary with data for
+    configuring the NSX security profile.
+    """
     path = "/ws.v1/security-profile"
     # Allow all dhcp responses and all ingress traffic
     hidden_rules = {'logical_port_egress_rules':
@@ -52,8 +72,11 @@ def create_security_profile(cluster, tenant_id, security_profile):
                     [{'ethertype': 'IPv4'},
                      {'ethertype': 'IPv6'}]}
     display_name = utils.check_and_truncate(security_profile.get('name'))
+    # NOTE(salv-orlando): neutron-id tags are prepended with 'q' for
+    # historical reasons
     body = mk_body(
-        tags=utils.get_tags(os_tid=tenant_id), display_name=display_name,
+        tags=utils.get_tags(os_tid=tenant_id, q_sec_group_id=neutron_id),
+        display_name=display_name,
         logical_port_ingress_rules=(
             hidden_rules['logical_port_ingress_rules']),
         logical_port_egress_rules=hidden_rules['logical_port_egress_rules']

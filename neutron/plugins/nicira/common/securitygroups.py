@@ -17,112 +17,122 @@
 #
 # @author: Aaron Rosen, Nicira Networks, Inc.
 
-from neutron.extensions import securitygroup as ext_sg
+from neutron.openstack.common import log
+from neutron.plugins.nicira.common import nsx_utils
 
+LOG = log.getLogger(__name__)
 # Protocol number look up for supported protocols
 protocol_num_look_up = {'tcp': 6, 'icmp': 1, 'udp': 17}
 
 
-class NVPSecurityGroups(object):
+def _convert_to_nsx_rule(session, cluster, rule, with_id=False):
+    """Converts a Neutron security group rule to the NSX format.
 
-    def _convert_to_nvp_rule(self, rule, with_id=False):
-        """Converts Neutron API security group rule to NVP API."""
-        nvp_rule = {}
-        params = ['remote_ip_prefix', 'protocol',
-                  'remote_group_id', 'port_range_min',
-                  'port_range_max', 'ethertype']
+    This routine also replaces Neutron IDs with NSX UUIDs.
+    """
+    nsx_rule = {}
+    params = ['remote_ip_prefix', 'protocol',
+              'remote_group_id', 'port_range_min',
+              'port_range_max', 'ethertype']
+    if with_id:
+        params.append('id')
+
+    for param in params:
+        value = rule.get(param)
+        if param not in rule:
+            nsx_rule[param] = value
+        elif not value:
+            pass
+        elif param == 'remote_ip_prefix':
+            nsx_rule['ip_prefix'] = rule['remote_ip_prefix']
+        elif param == 'remote_group_id':
+            nsx_rule['profile_uuid'] = nsx_utils.get_nsx_security_group_id(
+                session, cluster, rule['remote_group_id'])
+
+        elif param == 'protocol':
+            try:
+                nsx_rule['protocol'] = int(rule['protocol'])
+            except (ValueError, TypeError):
+                nsx_rule['protocol'] = (
+                    protocol_num_look_up[rule['protocol']])
+        else:
+            nsx_rule[param] = value
+    return nsx_rule
+
+
+def _convert_to_nsx_rules(session, cluster, rules, with_id=False):
+    """Converts a list of Neutron security group rules to the NSX format."""
+    nsx_rules = {'logical_port_ingress_rules': [],
+                 'logical_port_egress_rules': []}
+    for direction in ['logical_port_ingress_rules',
+                      'logical_port_egress_rules']:
+        for rule in rules[direction]:
+            nsx_rules[direction].append(
+                _convert_to_nsx_rule(session, cluster, rule, with_id))
+    return nsx_rules
+
+
+def get_security_group_rules_nsx_format(session, cluster,
+                                        security_group_rules, with_id=False):
+    """Convert neutron security group rules into NSX format.
+
+    This routine splits Neutron security group rules into two lists, one
+    for ingress rules and the other for egress rules.
+    """
+
+    def fields(rule):
+        _fields = ['remote_ip_prefix', 'remote_group_id', 'protocol',
+                   'port_range_min', 'port_range_max', 'protocol', 'ethertype']
         if with_id:
-            params.append('id')
+            _fields.append('id')
+        return dict((k, v) for k, v in rule.iteritems() if k in _fields)
 
-        for param in params:
-            value = rule.get(param)
-            if param not in rule:
-                nvp_rule[param] = value
-            elif not value:
-                pass
-            elif param == 'remote_ip_prefix':
-                nvp_rule['ip_prefix'] = rule['remote_ip_prefix']
-            elif param == 'remote_group_id':
-                nvp_rule['profile_uuid'] = rule['remote_group_id']
-            elif param == 'protocol':
-                try:
-                    nvp_rule['protocol'] = int(rule['protocol'])
-                except (ValueError, TypeError):
-                    nvp_rule['protocol'] = (
-                        protocol_num_look_up[rule['protocol']])
+    ingress_rules = []
+    egress_rules = []
+    for rule in security_group_rules:
+        if rule.get('souce_group_id'):
+            rule['remote_group_id'] = nsx_utils.get_nsx_security_group_id(
+                session, cluster, rule['remote_group_id'])
+
+        if rule['direction'] == 'ingress':
+            ingress_rules.append(fields(rule))
+        elif rule['direction'] == 'egress':
+            egress_rules.append(fields(rule))
+    rules = {'logical_port_ingress_rules': egress_rules,
+             'logical_port_egress_rules': ingress_rules}
+    return _convert_to_nsx_rules(session, cluster, rules, with_id)
+
+
+def merge_security_group_rules_with_current(session, cluster,
+                                            new_rules, current_rules):
+    merged_rules = get_security_group_rules_nsx_format(
+        session, cluster, current_rules)
+    for new_rule in new_rules:
+        rule = new_rule['security_group_rule']
+        if rule['direction'] == 'ingress':
+            merged_rules['logical_port_egress_rules'].append(
+                _convert_to_nsx_rule(session, cluster, rule))
+        elif rule['direction'] == 'egress':
+            merged_rules['logical_port_ingress_rules'].append(
+                _convert_to_nsx_rule(session, cluster, rule))
+    return merged_rules
+
+
+def remove_security_group_with_id_and_id_field(rules, rule_id):
+    """Remove rule by rule_id.
+
+    This function receives all of the current rule associated with a
+    security group and then removes the rule that matches the rule_id. In
+    addition it removes the id field in the dict with each rule since that
+    should not be passed to nvp.
+    """
+    for rule_direction in rules.values():
+        item_to_remove = None
+        for port_rule in rule_direction:
+            if port_rule['id'] == rule_id:
+                item_to_remove = port_rule
             else:
-                nvp_rule[param] = value
-        return nvp_rule
-
-    def _convert_to_nvp_rules(self, rules, with_id=False):
-        """Converts a list of Neutron API security group rules to NVP API."""
-        nvp_rules = {'logical_port_ingress_rules': [],
-                     'logical_port_egress_rules': []}
-        for direction in ['logical_port_ingress_rules',
-                          'logical_port_egress_rules']:
-            for rule in rules[direction]:
-                nvp_rules[direction].append(
-                    self._convert_to_nvp_rule(rule, with_id))
-        return nvp_rules
-
-    def _get_security_group_rules_nvp_format(self, context, security_group_id,
-                                             with_id=False):
-        """Query neutron db for security group rules."""
-        fields = ['remote_ip_prefix', 'remote_group_id', 'protocol',
-                  'port_range_min', 'port_range_max', 'protocol', 'ethertype']
-        if with_id:
-            fields.append('id')
-
-        filters = {'security_group_id': [security_group_id],
-                   'direction': ['ingress']}
-        ingress_rules = self.get_security_group_rules(context, filters, fields)
-        filters = {'security_group_id': [security_group_id],
-                   'direction': ['egress']}
-        egress_rules = self.get_security_group_rules(context, filters, fields)
-        rules = {'logical_port_ingress_rules': egress_rules,
-                 'logical_port_egress_rules': ingress_rules}
-        return self._convert_to_nvp_rules(rules, with_id)
-
-    def _get_profile_uuid(self, context, remote_group_id):
-        """Return profile id from novas group id."""
-        security_group = self.get_security_group(context, remote_group_id)
-        if not security_group:
-            raise ext_sg.SecurityGroupNotFound(id=remote_group_id)
-        return security_group['id']
-
-    def _merge_security_group_rules_with_current(self, context, new_rules,
-                                                 security_group_id):
-        merged_rules = self._get_security_group_rules_nvp_format(
-            context, security_group_id)
-        for new_rule in new_rules:
-            rule = new_rule['security_group_rule']
-            rule['security_group_id'] = security_group_id
-            if rule.get('souce_group_id'):
-                rule['remote_group_id'] = self._get_profile_uuid(
-                    context, rule['remote_group_id'])
-            if rule['direction'] == 'ingress':
-                merged_rules['logical_port_egress_rules'].append(
-                    self._convert_to_nvp_rule(rule))
-            elif rule['direction'] == 'egress':
-                merged_rules['logical_port_ingress_rules'].append(
-                    self._convert_to_nvp_rule(rule))
-        return merged_rules
-
-    def _remove_security_group_with_id_and_id_field(self, rules, rule_id):
-        """Remove rule by rule_id.
-
-        This function receives all of the current rule associated with a
-        security group and then removes the rule that matches the rule_id. In
-        addition it removes the id field in the dict with each rule since that
-        should not be passed to nvp.
-        """
-        for rule_direction in rules.values():
-            item_to_remove = None
-            for port_rule in rule_direction:
-                if port_rule['id'] == rule_id:
-                    item_to_remove = port_rule
-                else:
-                    # remove key from dictionary for NVP
-                    del port_rule['id']
-            if item_to_remove:
-                rule_direction.remove(item_to_remove)
+                # remove key from dictionary for NVP
+                del port_rule['id']
+        if item_to_remove:
+            rule_direction.remove(item_to_remove)

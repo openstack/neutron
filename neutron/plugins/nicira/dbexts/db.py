@@ -89,6 +89,20 @@ def add_neutron_nsx_router_mapping(session, neutron_id, nsx_router_id):
         return mapping
 
 
+def add_neutron_nsx_security_group_mapping(session, neutron_id, nsx_id):
+    """Map a Neutron security group to a NSX security profile.
+
+    :param session: a valid database session object
+    :param neutron_id: a neutron security group identifier
+    :param nsx_id: a nsx security profile identifier
+    """
+    with session.begin(subtransactions=True):
+        mapping = models.NeutronNsxSecurityGroupMapping(
+            neutron_id=neutron_id, nsx_id=nsx_id)
+        session.add(mapping)
+        return mapping
+
+
 def get_nsx_switch_ids(session, neutron_id):
     # This function returns a list of NSX switch identifiers because of
     # the possibility of chained logical switches
@@ -117,6 +131,22 @@ def get_nsx_router_id(session, neutron_id):
     except exc.NoResultFound:
         LOG.debug(_("NSX identifiers for neutron router %s not yet "
                     "stored in Neutron DB"), neutron_id)
+
+
+def get_nsx_security_group_id(session, neutron_id):
+    """Return the id of a security group in the NSX backend.
+
+    Note: security groups are called 'security profiles' in NSX
+    """
+    try:
+        mapping = (session.query(models.NeutronNsxSecurityGroupMapping).
+                   filter_by(neutron_id=neutron_id).
+                   one())
+        return mapping['nsx_id']
+    except exc.NoResultFound:
+        LOG.debug(_("NSX identifiers for neutron security group %s not yet "
+                    "stored in Neutron DB"), neutron_id)
+        return None
 
 
 def _delete_by_neutron_id(session, model, neutron_id):

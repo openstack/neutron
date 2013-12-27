@@ -17,14 +17,17 @@
 from neutron.common import exceptions
 from neutron.plugins.nicira.nsxlib import secgroup as secgrouplib
 from neutron.plugins.nicira import nvplib as nsx_utils
+from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
+
+_uuid = test_api_v2._uuid
 
 
 class SecurityProfileTestCase(base.NsxlibTestCase):
 
     def test_create_and_get_security_profile(self):
         sec_prof = secgrouplib.create_security_profile(
-            self.fake_cluster, 'pippo', {'name': 'test'})
+            self.fake_cluster, _uuid(), 'pippo', {'name': 'test'})
         sec_prof_res = secgrouplib.do_request(
             secgrouplib.HTTP_GET,
             nsx_utils._build_uri_path('security-profile',
@@ -37,7 +40,7 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
 
     def test_create_and_get_default_security_profile(self):
         sec_prof = secgrouplib.create_security_profile(
-            self.fake_cluster, 'pippo', {'name': 'default'})
+            self.fake_cluster, _uuid(), 'pippo', {'name': 'default'})
         sec_prof_res = nsx_utils.do_request(
             secgrouplib.HTTP_GET,
             nsx_utils._build_uri_path('security-profile',
@@ -50,7 +53,7 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
 
     def test_update_security_profile_rules(self):
         sec_prof = secgrouplib.create_security_profile(
-            self.fake_cluster, 'pippo', {'name': 'test'})
+            self.fake_cluster, _uuid(), 'pippo', {'name': 'test'})
         ingress_rule = {'ethertype': 'IPv4'}
         egress_rule = {'ethertype': 'IPv4', 'profile_uuid': 'xyz'}
         new_rules = {'logical_port_egress_rules': [egress_rule],
@@ -73,7 +76,7 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
 
     def test_update_security_profile_rules_noingress(self):
         sec_prof = secgrouplib.create_security_profile(
-            self.fake_cluster, 'pippo', {'name': 'test'})
+            self.fake_cluster, _uuid(), 'pippo', {'name': 'test'})
         hidden_ingress_rule = {'ethertype': 'IPv4',
                                'ip_prefix': '127.0.0.1/32'}
         egress_rule = {'ethertype': 'IPv4', 'profile_uuid': 'xyz'}
@@ -104,7 +107,7 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
 
     def test_delete_security_profile(self):
         sec_prof = secgrouplib.create_security_profile(
-            self.fake_cluster, 'pippo', {'name': 'test'})
+            self.fake_cluster, _uuid(), 'pippo', {'name': 'test'})
         secgrouplib.delete_security_profile(
             self.fake_cluster, sec_prof['uuid'])
         self.assertRaises(exceptions.NotFound,

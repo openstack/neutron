@@ -272,6 +272,47 @@ class NsxUtilsTestCase(base.BaseTestCase):
                      par_id, child_res, res_id, 'doh'))
         self.assertEqual(expected, result)
 
+    def _mock_sec_group_mapping_db_calls(self, ret_value):
+        mock.patch(nsx_method('get_nsx_security_group_id',
+                              module_name='dbexts.db'),
+                   return_value=ret_value).start()
+        mock.patch(nsx_method('add_neutron_nsx_security_group_mapping',
+                              module_name='dbexts.db')).start()
+        self.addCleanup(mock.patch.stopall)
+
+    def _verify_get_nsx_sec_profile_id(self, exp_sec_prof_uuid):
+        # The nvplib and db calls are  mocked, therefore the cluster
+        # and the neutron_id parameters can be set to None
+        sec_prof_uuid = nsx_utils.get_nsx_security_group_id(
+            db_api.get_session(), None, None)
+        self.assertEqual(exp_sec_prof_uuid, sec_prof_uuid)
+
+    def test_get_nsx_sec_profile_id_from_db_mappings(self):
+        # This test is representative of the 'standard' case in which the
+        # security group mapping was stored in the neutron db
+        exp_sec_prof_uuid = uuidutils.generate_uuid()
+        self._mock_sec_group_mapping_db_calls(exp_sec_prof_uuid)
+        self._verify_get_nsx_sec_profile_id(exp_sec_prof_uuid)
+
+    def test_get_nsx_sec_profile_id_no_db_mapping(self):
+        # This test is representative of the case where db mappings where not
+        # found for a given security profile identifier
+        exp_sec_prof_uuid = uuidutils.generate_uuid()
+        self._mock_sec_group_mapping_db_calls(None)
+        with mock.patch(nsx_method('query_security_profiles',
+                                   module_name='nsxlib.secgroup'),
+                        return_value=[{'uuid': exp_sec_prof_uuid}]):
+            self._verify_get_nsx_sec_profile_id(exp_sec_prof_uuid)
+
+    def test_get_nsx_sec_profile_id_no_mapping_returns_None(self):
+        # This test verifies that the function returns None if the mapping
+        # are not found both in the db and in the backend
+        self._mock_sec_group_mapping_db_calls(None)
+        with mock.patch(nsx_method('query_security_profiles',
+                                   module_name='nsxlib.secgroup'),
+                        return_value=[]):
+            self._verify_get_nsx_sec_profile_id(None)
+
 
 class ClusterManagementTestCase(nsx_base.NsxlibTestCase):
 
