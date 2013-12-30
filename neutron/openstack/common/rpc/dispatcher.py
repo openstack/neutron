@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2012 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -83,6 +81,8 @@ On the client side, the same changes should be made as in example 1.  The
 minimum version that supports the new parameter should be specified.
 """
 
+import six
+
 from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common.rpc import serializer as rpc_serializer
 
@@ -121,7 +121,7 @@ class RpcDispatcher(object):
         :returns: A new set of deserialized args
         """
         new_kwargs = dict()
-        for argname, arg in kwargs.iteritems():
+        for argname, arg in six.iteritems(kwargs):
             new_kwargs[argname] = self.serializer.deserialize_entity(context,
                                                                      arg)
         return new_kwargs

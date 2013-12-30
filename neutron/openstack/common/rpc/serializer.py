@@ -16,10 +16,12 @@
 
 import abc
 
+import six
 
+
+@six.add_metaclass(abc.ABCMeta)
 class Serializer(object):
     """Generic (de-)serialization definition base class."""
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def serialize_entity(self, context, entity):

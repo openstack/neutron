@@ -168,7 +168,7 @@ class ResourceTestCase(base.BaseTestCase):
         self.assertEqual(wsgi.XMLDeserializer().deserialize(res.body),
                          expected_res)
 
-    @mock.patch('neutron.openstack.common.gettextutils.get_localized_message')
+    @mock.patch('neutron.openstack.common.gettextutils.translate')
     def test_unmapped_neutron_error_localized(self, mock_translation):
         gettextutils.install('blaa', lazy=True)
         msg_translation = 'Translated error'
@@ -238,7 +238,7 @@ class ResourceTestCase(base.BaseTestCase):
         self.assertEqual(wsgi.XMLDeserializer().deserialize(res.body),
                          expected_res)
 
-    @mock.patch('neutron.openstack.common.gettextutils.get_localized_message')
+    @mock.patch('neutron.openstack.common.gettextutils.translate')
     def test_mapped_neutron_error_localized(self, mock_translation):
         gettextutils.install('blaa', lazy=True)
         msg_translation = 'Translated error'

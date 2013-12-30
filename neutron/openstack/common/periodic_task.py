@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -17,6 +15,7 @@ import datetime
 import time
 
 from oslo.config import cfg
+import six
 
 from neutron.openstack.common.gettextutils import _
 from neutron.openstack.common import log as logging
@@ -83,14 +82,14 @@ def periodic_task(*args, **kwargs):
         return f
 
     # NOTE(sirp): The `if` is necessary to allow the decorator to be used with
-    # and without parens.
+    # and without parents.
     #
-    # In the 'with-parens' case (with kwargs present), this function needs to
+    # In the 'with-parents' case (with kwargs present), this function needs to
     # return a decorator function since the interpreter will invoke it like:
     #
     #   periodic_task(*args, **kwargs)(f)
     #
-    # In the 'without-parens' case, the original function will be passed
+    # In the 'without-parents' case, the original function will be passed
     # in as the first argument, like:
     #
     #   periodic_task(f)
@@ -150,8 +149,8 @@ class _PeriodicTasksMeta(type):
                 cls._periodic_last_run[name] = task._periodic_last_run
 
 
+@six.add_metaclass(_PeriodicTasksMeta)
 class PeriodicTasks(object):
-    __metaclass__ = _PeriodicTasksMeta
 
     def run_periodic_tasks(self, context, raise_on_error=False):
         """Tasks to be run at a periodic interval."""
@@ -173,7 +172,8 @@ class PeriodicTasks(object):
             if spacing is not None:
                 idle_for = min(idle_for, spacing)
 
-            LOG.debug(_("Running periodic task %(full_task_name)s"), locals())
+            LOG.debug(_("Running periodic task %(full_task_name)s"),
+                      {"full_task_name": full_task_name})
             self._periodic_last_run[task_name] = timeutils.utcnow()
 
             try:
@@ -182,7 +182,7 @@ class PeriodicTasks(object):
                 if raise_on_error:
                     raise
                 LOG.exception(_("Error during %(full_task_name)s: %(e)s"),
-                              locals())
+                              {"full_task_name": full_task_name, "e": e})
             time.sleep(0)
 
         return idle_for
