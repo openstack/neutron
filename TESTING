@@ -62,3 +62,39 @@ Development process
     fixed!  In addition, before proposing for merge, all of the
     current tests should be passing.
 
+Debugging
+
+    By default, calls to pdb.set_trace() will be ignored when tests
+    are run.  For pdb statements to work, invoke run_tests as follows:
+
+    $ ./run_tests.sh -d [test module path]
+
+    It's possible to debug tests in a tox environment:
+
+    $ tox -e venv -- python -m testtools.run [test module path]
+
+    Tox-created virtual environments (venv's) can also be activated
+    after a tox run and reused for debugging:
+
+    $ tox -e venv
+    $ . .tox/venv/bin/activate
+    $ python -m testtools.run [test module path]
+
+    Tox packages and installs the neutron source tree in a given venv
+    on every invocation, but if modifications need to be made between
+    invocation (e.g. adding more pdb statements), it is recommended
+    that the source tree be installed in the venv in editable mode:
+
+    # run this only after activating the venv
+    $ pip install --editable .
+
+    Editable mode ensures that changes made to the source tree are
+    automatically reflected in the venv, and that such changes are not
+    overwritten during the next tox run.
+
+Post-mortem debugging
+
+    Setting OS_POST_MORTEM_DEBUG=1 in the shell environment will ensure
+    that pdb.post_mortem() will be invoked on test failure:
+
+    $ OS_POST_MORTEM_DEBUG=1 ./run_tests.sh -d [test module path]
