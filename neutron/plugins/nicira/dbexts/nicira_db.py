@@ -18,6 +18,7 @@
 from sqlalchemy.orm import exc
 
 import neutron.db.api as db
+from neutron.openstack.common.db import exception as d_exc
 from neutron.openstack.common import log as logging
 from neutron.plugins.nicira.dbexts import nicira_models
 from neutron.plugins.nicira.dbexts import nicira_networkgw_db
@@ -49,11 +50,24 @@ def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
 
 def add_neutron_nsx_port_mapping(session, neutron_id,
                                  nsx_switch_id, nsx_port_id):
-    with session.begin(subtransactions=True):
+    session.begin(subtransactions=True)
+    try:
         mapping = nicira_models.NeutronNsxPortMapping(
             neutron_id, nsx_switch_id, nsx_port_id)
         session.add(mapping)
-        return mapping
+        session.commit()
+    except d_exc.DBDuplicateEntry:
+        session.rollback()
+        # do not complain if the same exact mapping is being added, otherwise
+        # re-raise because even though it is possible for the same neutron
+        # port to map to different back-end ports over time, this should not
+        # occur whilst a mapping already exists
+        current = get_nsx_switch_and_port_id(session, neutron_id)
+        if current[1] == nsx_port_id:
+            LOG.debug(_("Port mapping for %s already available"), neutron_id)
+        else:
+            raise
+    return mapping
 
 
 def get_nsx_switch_and_port_id(session, neutron_id):
