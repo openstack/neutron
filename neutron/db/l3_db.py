@@ -196,13 +196,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if fip_count:
                 raise l3.RouterExternalGatewayInUseByFloatingIp(
                     router_id=router_id, net_id=gw_port['network_id'])
-            if gw_port and gw_port['network_id'] != network_id:
-                with context.session.begin(subtransactions=True):
-                    router.gw_port = None
-                    context.session.add(router)
-                self._core_plugin.delete_port(context.elevated(),
-                                              gw_port['id'],
-                                              l3_port_check=False)
+            with context.session.begin(subtransactions=True):
+                router.gw_port = None
+                context.session.add(router)
+            self._core_plugin.delete_port(context.elevated(),
+                                          gw_port['id'],
+                                          l3_port_check=False)
 
         if network_id is not None and (gw_port is None or
                                        gw_port['network_id'] != network_id):
