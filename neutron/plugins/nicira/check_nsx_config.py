@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2013 Nicira, Inc.
+# Copyright 2013 VMware, Inc.
 # All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,9 +14,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-#
-# @author: Aaron Rosen, VMware
 
 from __future__ import print_function
 
@@ -33,21 +30,41 @@ config.setup_logging(cfg.CONF)
 
 
 def help(name):
-    print("Usage: %s path/to/nvp.ini" % name)
+    print("Usage: %s path/to/neutron/plugin/ini/config/file" % name)
     sys.exit(1)
+
+
+def get_nsx_controllers(cluster):
+    return cluster.nvp_controllers
+
+
+def config_helper(config_entity, cluster):
+    try:
+        return nvplib.do_request('GET',
+                                 "/ws.v1/%s?fields=uuid" % config_entity,
+                                 cluster=cluster).get('results', [])
+    except Exception as e:
+        msg = (_("Error '%(err)s' when connecting to controller(s): %(ctl)s.")
+               % {'err': str(e),
+                  'ctl': ', '.join(get_nsx_controllers(cluster))})
+        raise Exception(msg)
+
+
+def get_control_cluster_nodes(cluster):
+    return config_helper("control-cluster/node", cluster)
 
 
 def get_gateway_services(cluster):
     ret_gw_services = {"L2GatewayServiceConfig": [],
                        "L3GatewayServiceConfig": []}
-    gw_services = nvplib.get_gateway_services(cluster).get('results', [])
+    gw_services = config_helper("gateway-service", cluster)
     for gw_service in gw_services:
         ret_gw_services[gw_service['type']].append(gw_service['uuid'])
     return ret_gw_services
 
 
 def get_transport_zones(cluster):
-    transport_zones = nvplib.get_transport_zones(cluster).get('results')
+    transport_zones = config_helper("transport-zone", cluster)
     return [transport_zone['uuid'] for transport_zone in transport_zones]
 
 
@@ -61,8 +78,8 @@ def main():
     print("\tconnection: %s" % cfg.CONF.database.connection)
     print("\tretry_interval: %d" % cfg.CONF.database.retry_interval)
     print("\tmax_retries: %d" % cfg.CONF.database.max_retries)
-    print("-----------------------    NVP Options   -----------------------")
-    print("\tNVP Generation Timeout %d" % cfg.CONF.NVP.nvp_gen_timeout)
+    print("-----------------------    NSX Options   -----------------------")
+    print("\tNSX Generation Timeout %d" % cfg.CONF.NVP.nvp_gen_timeout)
     print("\tNumber of concurrent connections to each controller %d" %
           cfg.CONF.NVP.concurrent_connections)
     print("\tmax_lp_per_bridged_ls: %s" % cfg.CONF.NVP.max_lp_per_bridged_ls)
@@ -76,15 +93,16 @@ def main():
         cfg.CONF,
         cfg.CONF.NVP.concurrent_connections,
         cfg.CONF.NVP.nvp_gen_timeout)
-    num_controllers = len(cluster.nvp_controllers)
+    nsx_controllers = get_nsx_controllers(cluster)
+    num_controllers = len(nsx_controllers)
     print("Number of controllers found: %s" % num_controllers)
     if num_controllers == 0:
         print("You must specify at least one controller!")
         sys.exit(1)
 
-    for controller in cluster.nvp_controllers:
+    get_control_cluster_nodes(cluster)
+    for controller in nsx_controllers:
         print("\tController endpoint: %s" % controller)
-        nvplib.check_cluster_connectivity(cluster)
         gateway_services = get_gateway_services(cluster)
         default_gateways = {
             "L2GatewayServiceConfig": cfg.CONF.default_l2_gw_service_uuid,
@@ -94,9 +112,9 @@ def main():
             for uuid in gateway_services[svc_type]:
                 print("\t\tGateway(%s) uuid: %s" % (svc_type, uuid))
             if (default_gateways[svc_type] and
-                default_gateways[svc_type] not in gateway_services):
+                default_gateways[svc_type] not in gateway_services[svc_type]):
                 print("\t\t\tError: specified default %s gateway (%s) is "
-                      "missing from NVP Gateway Services!" % (
+                      "missing from NSX Gateway Services!" % (
                           svc_type,
                           default_gateways[svc_type]))
                 errors += 1
@@ -104,7 +122,7 @@ def main():
         print("\tTransport zones: %s" % transport_zones)
         if cfg.CONF.default_tz_uuid not in transport_zones:
             print("\t\tError: specified default transport zone "
-                  "(%s) is missing from NVP transport zones!"
+                  "(%s) is missing from NSX transport zones!"
                   % cfg.CONF.default_tz_uuid)
             errors += 1
 
