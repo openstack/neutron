@@ -1415,36 +1415,3 @@ def delete_lqueue(cluster, id):
         # FIXME(salv-orlando): This should not raise QauntumException
         LOG.exception(_("Failed to delete logical queue"))
         raise exception.NeutronException()
-
-
-# -----------------------------------------------------------------------------
-# NVP API Calls for check_nvp_config utility
-# -----------------------------------------------------------------------------
-def config_helper(http_method, http_uri, cluster):
-    try:
-        return do_request(http_method,
-                          http_uri,
-                          cluster=cluster)
-    except Exception as e:
-        msg = (_("Error '%(err)s' when connecting to controller(s): %(ctl)s.")
-               % {'err': str(e), 'ctl': ', '.join(cluster.nvp_controllers)})
-        raise Exception(msg)
-
-
-def check_cluster_connectivity(cluster):
-    """Make sure that we can issue a request to each of the cluster nodes."""
-    return config_helper(HTTP_GET,
-                         "/ws.v1/control-cluster",
-                         cluster)
-
-
-def get_gateway_services(cluster):
-    return config_helper(HTTP_GET,
-                         "/ws.v1/gateway-service?fields=uuid",
-                         cluster)
-
-
-def get_transport_zones(cluster):
-    return config_helper(HTTP_GET,
-                         "/ws.v1/transport-zone?fields=uuid",
-                         cluster)
