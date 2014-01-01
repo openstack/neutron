@@ -94,7 +94,7 @@ def main():
             for uuid in gateway_services[svc_type]:
                 print("\t\tGateway(%s) uuid: %s" % (svc_type, uuid))
             if (default_gateways[svc_type] and
-                default_gateways[svc_type] not in gateway_services):
+                default_gateways[svc_type] not in gateway_services[svc_type]):
                 print("\t\t\tError: specified default %s gateway (%s) is "
                       "missing from NVP Gateway Services!" % (svc_type,
                       default_gateways[svc_type]))
