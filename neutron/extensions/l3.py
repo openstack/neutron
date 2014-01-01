@@ -139,12 +139,12 @@ RESOURCE_ATTRIBUTE_MAP = {
 l3_quota_opts = [
     cfg.IntOpt('quota_router',
                default=10,
-               help=_('Number of routers allowed per tenant, -1 for '
-                      'unlimited')),
+               help=_('Number of routers allowed per tenant. '
+                      'A negative value means unlimited.')),
     cfg.IntOpt('quota_floatingip',
                default=50,
-               help=_('Number of floating IPs allowed per tenant, '
-                      '-1 for unlimited')),
+               help=_('Number of floating IPs allowed per tenant. '
+                      'A negative value means unlimited.')),
 ]
 cfg.CONF.register_opts(l3_quota_opts, 'QUOTAS')
 

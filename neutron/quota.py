@@ -38,20 +38,20 @@ quota_opts = [
                        'features')),
     cfg.IntOpt('default_quota',
                default=-1,
-               help=_('Default number of resource allowed per tenant, '
-                      'minus for unlimited')),
+               help=_('Default number of resource allowed per tenant. '
+                      'A negative value means unlimited.')),
     cfg.IntOpt('quota_network',
                default=10,
-               help=_('Number of networks allowed per tenant,'
-                      'minus for unlimited')),
+               help=_('Number of networks allowed per tenant.'
+                      'A negative value means unlimited.')),
     cfg.IntOpt('quota_subnet',
                default=10,
                help=_('Number of subnets allowed per tenant, '
-                      'minus for unlimited')),
+                      'A negative value means unlimited.')),
     cfg.IntOpt('quota_port',
                default=50,
-               help=_('Number of ports allowed per tenant, minus for '
-                      'unlimited')),
+               help=_('Number of ports allowed per tenant. '
+                      'A negative value means unlimited.')),
     cfg.StrOpt('quota_driver',
                default=QUOTA_DB_DRIVER,
                help=_('Default driver to use for quota checks')),
