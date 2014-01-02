@@ -26,7 +26,6 @@ Installation script for Neutron's development virtualenv
 from __future__ import print_function
 
 import os
-import subprocess
 import sys
 
 import install_venv_common as install_venv
