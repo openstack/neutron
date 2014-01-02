@@ -336,9 +336,9 @@ class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
             port_id = port['id']
             # now deallocate and recycle ip from the port
             for fixed_ip in port.get('fixed_ips', []):
-                self._recycle_ip(context, network_id,
-                                 fixed_ip['subnet_id'],
-                                 fixed_ip['ip_address'])
+                self._delete_ip_allocation(context, network_id,
+                                           fixed_ip['subnet_id'],
+                                           fixed_ip['ip_address'])
             LOG.debug(_("Ensured no Ip addresses are configured on port %s"),
                       port_id)
             return {'connection_info':
