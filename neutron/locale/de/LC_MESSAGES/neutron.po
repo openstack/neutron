@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-12-23 06:37+0000\n"
+"POT-Creation-Date: 2014-01-02 06:32+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -177,19 +177,21 @@ msgid "Resource name(s) that are supported in quota features"
 msgstr "In Quotenfunktionen unterstütze Ressourcennamen"
 
 #: neutron/quota.py:41
-msgid "Default number of resource allowed per tenant, minus for unlimited"
-msgstr "Standardanzahl an zulässigen Ressourcen pro Nutzer, Minus für unbegrenzt"
+msgid ""
+"Default number of resource allowed per tenant. A negative value means "
+"unlimited."
+msgstr ""
 
 #: neutron/quota.py:45
-msgid "Number of networks allowed per tenant,minus for unlimited"
-msgstr "Anzahl an zulässigen Netzen pro Nutzer, Minus für unbegrenzt"
+msgid "Number of networks allowed per tenant.A negative value means unlimited."
+msgstr ""
 
 #: neutron/quota.py:49
-msgid "Number of subnets allowed per tenant, minus for unlimited"
-msgstr "Anzahl an zulässigen Teilnetzen pro Nutzer, Minus für unbegrenzt"
+msgid "Number of subnets allowed per tenant, A negative value means unlimited."
+msgstr ""
 
 #: neutron/quota.py:53
-msgid "Number of ports allowed per tenant, minus for unlimited"
+msgid "Number of ports allowed per tenant. A negative value means unlimited."
 msgstr ""
 
 #: neutron/quota.py:57
@@ -623,7 +625,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr "Routerport %s verfügt über keine IP-Adresse"
 
-#: neutron/agent/l3_agent.py:375 neutron/db/l3_db.py:832
+#: neutron/agent/l3_agent.py:375 neutron/db/l3_db.py:831
 #: neutron/services/firewall/agents/varmour/varmour_router.py:103
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
@@ -1484,6 +1486,21 @@ msgstr "Geladene Plug-ins implementieren Schnittstelle für Erweiterung %s nicht
 msgid "Unknown API version specified"
 msgstr ""
 
+#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:80
+#, python-format
+msgid ""
+"No DHCP agents are associated with network '%(net_id)s'. Unable to send "
+"notification for '%(method)s' with payload: %(payload)s"
+msgstr ""
+
+#: neutron/api/rpc/agentnotifiers/dhcp_rpc_agent_api.py:91
+#, python-format
+msgid ""
+"Only %(active)d of %(total)d DHCP agents associated with network "
+"'%(net_id)s' are marked as active, so notifications may be sent to "
+"inactive agents."
+msgstr ""
+
 #: neutron/api/rpc/agentnotifiers/l3_rpc_agent_api.py:38
 #, python-format
 msgid "Nofity agent at %(host)s the message %(method)s"
@@ -2314,14 +2331,14 @@ msgid ""
 "report_interval, to be sure the agent is down for good."
 msgstr ""
 
-#: neutron/db/agents_db.py:89
+#: neutron/db/agents_db.py:93
 #, python-format
 msgid "Configuration for agent %(agent_type)s on host %(host)s is invalid."
 msgstr ""
 "Die Konfiguration des Agenten %(agent_type)s auf Host %(host)s ist "
 "ungültig."
 
-#: neutron/db/agents_db.py:208
+#: neutron/db/agents_db.py:212
 msgid "Message with invalid timestamp received"
 msgstr "Nachricht mit ungültiger Zeitmarke empfangen"
 
@@ -2670,17 +2687,17 @@ msgstr ""
 msgid "No IPs available for external network %s"
 msgstr "Keine IP-Adressen für externes Netz %s verfügbar"
 
-#: neutron/db/l3_db.py:188 neutron/db/l3_db.py:608
+#: neutron/db/l3_db.py:188 neutron/db/l3_db.py:607
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr "Netz %s ist kein gültiges externes Netz"
 
-#: neutron/db/l3_db.py:283
+#: neutron/db/l3_db.py:282
 #, python-format
 msgid "Router already has a port on subnet %s"
 msgstr "Router verfügt bereits über einen Port auf Teilnetz %s"
 
-#: neutron/db/l3_db.py:297
+#: neutron/db/l3_db.py:296
 #, python-format
 msgid ""
 "Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s "
@@ -2689,34 +2706,34 @@ msgstr ""
 "Überschneidungen zwischen CIDR %(subnet_cidr)s von Teilnetz %(subnet_id)s"
 " und CIDR %(cidr)s von Teilnetz %(sub_id)s"
 
-#: neutron/db/l3_db.py:306 neutron/db/l3_db.py:383
+#: neutron/db/l3_db.py:305 neutron/db/l3_db.py:382
 #: neutron/plugins/bigswitch/plugin.py:1003
 #: neutron/plugins/bigswitch/plugin.py:1012
 msgid "Either subnet_id or port_id must be specified"
 msgstr "Entweder 'subnet_id' oder 'port_id' muss angegeben sein"
 
-#: neutron/db/l3_db.py:313
+#: neutron/db/l3_db.py:312
 msgid "Cannot specify both subnet-id and port-id"
 msgstr "Angabe sowohl von Teilnetz-ID als auch von Port-ID nicht möglich"
 
-#: neutron/db/l3_db.py:324
+#: neutron/db/l3_db.py:323
 msgid "Router port must have exactly one fixed IP"
 msgstr "Routerport muss über genau eine statische IP-Adresse verfügen"
 
-#: neutron/db/l3_db.py:339
+#: neutron/db/l3_db.py:338
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 "Teilnetz für Routerschnittstelle muss über eine Gateway-IP-Adresse "
 "verfügen"
 
-#: neutron/db/l3_db.py:468 neutron/plugins/nec/nec_router.py:197
+#: neutron/db/l3_db.py:467 neutron/plugins/nec/nec_router.py:197
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 "Dynamische IP-Adresse kann nicht zu Port auf Teilnetz %s ohne "
 "'gateway_ip' hinzugefügt werden"
 
-#: neutron/db/l3_db.py:507
+#: neutron/db/l3_db.py:506
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
@@ -2725,26 +2742,26 @@ msgstr ""
 "Port %(port_id)s ist einem anderen Nutzer zugeordnet als die dynamische "
 "IP-Adresse %(floatingip_id)s und kann daher nicht gebunden werden."
 
-#: neutron/db/l3_db.py:511
+#: neutron/db/l3_db.py:510
 #, python-format
 msgid ""
 "Cannnot create floating IP and bind it to Port %s, since that port is "
 "owned by a different tenant."
 msgstr ""
 
-#: neutron/db/l3_db.py:523
+#: neutron/db/l3_db.py:522
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "Port %(id)s verfügt nicht über statische IP-Adresse %(address)s"
 
-#: neutron/db/l3_db.py:530
+#: neutron/db/l3_db.py:529
 #, python-format
 msgid "Cannot add floating IP to port %s that hasno fixed IP addresses"
 msgstr ""
 "Dynamische IP-Adresse kann nicht zu Port %s hinzugefügt werden, der über "
 "keine statischen IP-Adressen verfügt"
 
-#: neutron/db/l3_db.py:534
+#: neutron/db/l3_db.py:533
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPs.  Must provide a specific IP when "
@@ -2754,11 +2771,11 @@ msgstr ""
 "bestimmten IP-Adresse bei Zuweisung einer dynamischen IP-Adresse "
 "erforderlich"
 
-#: neutron/db/l3_db.py:576 neutron/plugins/nicira/NeutronPlugin.py:1780
+#: neutron/db/l3_db.py:575 neutron/plugins/nicira/NeutronPlugin.py:1780
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "'fixed_ip_address' kann nicht ohne 'port_id' angegeben werden"
 
-#: neutron/db/l3_db.py:732
+#: neutron/db/l3_db.py:731
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
@@ -2767,12 +2784,12 @@ msgstr ""
 "Port %(port_id)s hat Eigentümer %(port_owner)s, aber keine IP-Adresse und"
 " kann daher gelöscht werden"
 
-#: neutron/db/l3_db.py:750
+#: neutron/db/l3_db.py:749
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr "Mehrere dynamische IP-Adressen für Port %s gefunden"
 
-#: neutron/db/l3_db.py:838
+#: neutron/db/l3_db.py:837
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr "Port %s wird übersprungen, da keine IP-Adresse auf ihm konfiguriert ist"
@@ -3216,15 +3233,19 @@ msgid "%(msg_ip)s and %(msg_subnet)s"
 msgstr ""
 
 #: neutron/extensions/firewall.py:286
-msgid "Number of firewalls allowed per tenant, -1 for unlimited"
+msgid "Number of firewalls allowed per tenant. A negative value means unlimited."
 msgstr ""
 
 #: neutron/extensions/firewall.py:290
-msgid "Number of firewall policies allowed per tenant, -1 for unlimited"
+msgid ""
+"Number of firewall policies allowed per tenant. A negative value means "
+"unlimited."
 msgstr ""
 
 #: neutron/extensions/firewall.py:294
-msgid "Number of firewall rules allowed per tenant, -1 for unlimited"
+msgid ""
+"Number of firewall rules allowed per tenant. A negative value means "
+"unlimited."
 msgstr ""
 
 #: neutron/extensions/l3.py:36
@@ -3307,12 +3328,14 @@ msgstr ""
 "Adressen erforderlich ist. "
 
 #: neutron/extensions/l3.py:142
-msgid "Number of routers allowed per tenant, -1 for unlimited"
-msgstr "Anzahl an zulässigen Routern pro Nutzer, -1 für unbegrenzt"
+msgid "Number of routers allowed per tenant. A negative value means unlimited."
+msgstr ""
 
 #: neutron/extensions/l3.py:146
-msgid "Number of floating IPs allowed per tenant, -1 for unlimited"
-msgstr "Anzahl an zulässigen dynamischen IP-Adressen pro Nutzer, -1 für unbegrenzt"
+msgid ""
+"Number of floating IPs allowed per tenant. A negative value means "
+"unlimited."
+msgstr ""
 
 #: neutron/extensions/l3_ext_gw_mode.py:28
 #, python-format
@@ -3585,12 +3608,16 @@ msgid "'%s' is not an integer or uuid"
 msgstr "'%s' ist keine Ganzzahl und keine UUID"
 
 #: neutron/extensions/securitygroup.py:229
-msgid "Number of security groups allowed per tenant,-1 for unlimited"
-msgstr "Anzahl an zulässigen Sicherheitsgruppen pro Nutzer, -1 für unbegrenzt"
+msgid ""
+"Number of security groups allowed per tenant. A negative value means "
+"unlimited."
+msgstr ""
 
 #: neutron/extensions/securitygroup.py:233
-msgid "Number of security rules allowed per tenant, -1 for unlimited"
-msgstr "Anzahl an zulässigen Sicherheitsregeln pro Nutzer, -1 für unbegrenzt"
+msgid ""
+"Number of security rules allowed per tenant. A negative value means "
+"unlimited."
+msgstr ""
 
 #: neutron/extensions/servicetype.py:54
 msgid "Neutron Service Type Management"
@@ -4680,42 +4707,42 @@ msgstr ""
 msgid "NeutronRestProxyV2: create_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1044
+#: neutron/plugins/bigswitch/plugin.py:1041
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1050
+#: neutron/plugins/bigswitch/plugin.py:1047
 msgid "NeutronRestProxyV2: update_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1065
+#: neutron/plugins/bigswitch/plugin.py:1059
 msgid "NeutronRestProxyV2: delete_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1080
+#: neutron/plugins/bigswitch/plugin.py:1069
 msgid "NeutronRestProxyV2: diassociate_floatingips() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1095
+#: neutron/plugins/bigswitch/plugin.py:1087
 msgid "NeutronRestProxyV2: too many external networks"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1157
+#: neutron/plugins/bigswitch/plugin.py:1149
 #, python-format
 msgid "Unable to update remote topology: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1173
+#: neutron/plugins/bigswitch/plugin.py:1165
 msgid "Adding host route: "
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1174
+#: neutron/plugins/bigswitch/plugin.py:1166
 #, python-format
 msgid "Destination:%(dst)s nexthop:%(next)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1249
+#: neutron/plugins/bigswitch/plugin.py:1241
 #, python-format
 msgid ""
 "Setting admin_state_up=False is not supported in this plugin version. "
@@ -4724,7 +4751,7 @@ msgstr ""
 "In dieser Plug-in-Version wird das Einstellen von 'admin_state_up=False' "
 "nicht unterstützt. Einstellungen werden ignoriert für Ressource: %s"
 
-#: neutron/plugins/bigswitch/plugin.py:1255
+#: neutron/plugins/bigswitch/plugin.py:1247
 #, python-format
 msgid ""
 "Operational status is internally set by the plugin. Ignoring setting "
@@ -4733,7 +4760,7 @@ msgstr ""
 "Der Betriebsstatus wird intern vom Plug-in eingestellt. Die Einstellung "
 "'status=%s' wird ignoriert."
 
-#: neutron/plugins/bigswitch/plugin.py:1282
+#: neutron/plugins/bigswitch/plugin.py:1274
 #, python-format
 msgid "Unrecognized vif_type in configuration [%s]. Defaulting to ovs. "
 msgstr ""
@@ -9941,6 +9968,11 @@ msgstr ""
 msgid "The request has timed out."
 msgstr "Die Anforderung hat das zulässige Zeitlimit überschritten."
 
+#: neutron/plugins/nicira/check_nsx_config.py:47
+#, python-format
+msgid "Error '%(err)s' when connecting to controller(s): %(ctl)s."
+msgstr ""
+
 #: neutron/plugins/nicira/dhcpmeta_modes.py:93
 #, python-format
 msgid "Unable to run Neutron with config option '%s', as NVP does not support it"
@@ -10138,11 +10170,6 @@ msgstr "Fehler beim Erstellen der logischen Warteschlange"
 #: neutron/plugins/nicira/nvplib.py:1416
 msgid "Failed to delete logical queue"
 msgstr "Fehler beim Löschen der logischen Warteschlange"
-
-#: neutron/plugins/nicira/nvplib.py:1429
-#, python-format
-msgid "Error '%(err)s' when connecting to controller(s): %(ctl)s."
-msgstr ""
 
 #: neutron/plugins/nicira/api_client/client.py:116
 #, python-format
@@ -10706,7 +10733,12 @@ msgstr ""
 "Angegebener Name: '%s' überschreitet die maximale Länge. Er wird auf NVP "
 "abgeschnitten"
 
-#: neutron/plugins/nicira/dbexts/nicira_db.py:66
+#: neutron/plugins/nicira/dbexts/nicira_db.py:67
+#, python-format
+msgid "Port mapping for %s already available"
+msgstr ""
+
+#: neutron/plugins/nicira/dbexts/nicira_db.py:80
 #, python-format
 msgid "NSX identifiers for neutron port %s not yet stored in Neutron DB"
 msgstr ""
@@ -13224,6 +13256,23 @@ msgstr ""
 msgid "Unmapped error"
 msgstr ""
 
+#: neutron/tests/unit/bigswitch/fake_server.py:71
+#, python-format
+msgid ""
+"Request: action=%(action)s, uri=%(uri)r, body=%(body)s, "
+"headers=%(headers)s"
+msgstr ""
+
+#: neutron/tests/unit/bigswitch/fake_server.py:116
+#, python-format
+msgid "No floating IPs in requesturi=%(uri)s, body=%(body)s"
+msgstr ""
+
+#: neutron/tests/unit/bigswitch/fake_server.py:125
+#, python-format
+msgid "Expected floating IPs from multiple tenants.uri=%(uri)s, body=%(body)s"
+msgstr ""
+
 #: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:227
 #: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:251
 #: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:272
@@ -14345,12 +14394,43 @@ msgstr ""
 #~ msgid "A nvp lport identifier was not found for neutron port '%s'"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Invalid data format for extra-dhcp-"
-#~ "opt, provide a list of dicts: "
-#~ "%(data)s"
-#~ msgstr ""
-
 #~ msgid "DHCP is disabled: nothing to do"
 #~ msgstr ""
+
+#~ msgid "Default number of resource allowed per tenant, minus for unlimited"
+#~ msgstr ""
+#~ "Standardanzahl an zulässigen Ressourcen pro"
+#~ " Nutzer, Minus für unbegrenzt"
+
+#~ msgid "Number of networks allowed per tenant,minus for unlimited"
+#~ msgstr "Anzahl an zulässigen Netzen pro Nutzer, Minus für unbegrenzt"
+
+#~ msgid "Number of subnets allowed per tenant, minus for unlimited"
+#~ msgstr "Anzahl an zulässigen Teilnetzen pro Nutzer, Minus für unbegrenzt"
+
+#~ msgid "Number of ports allowed per tenant, minus for unlimited"
+#~ msgstr ""
+
+#~ msgid "Number of firewalls allowed per tenant, -1 for unlimited"
+#~ msgstr ""
+
+#~ msgid "Number of firewall policies allowed per tenant, -1 for unlimited"
+#~ msgstr ""
+
+#~ msgid "Number of firewall rules allowed per tenant, -1 for unlimited"
+#~ msgstr ""
+
+#~ msgid "Number of routers allowed per tenant, -1 for unlimited"
+#~ msgstr "Anzahl an zulässigen Routern pro Nutzer, -1 für unbegrenzt"
+
+#~ msgid "Number of floating IPs allowed per tenant, -1 for unlimited"
+#~ msgstr ""
+#~ "Anzahl an zulässigen dynamischen IP-"
+#~ "Adressen pro Nutzer, -1 für unbegrenzt"
+
+#~ msgid "Number of security groups allowed per tenant,-1 for unlimited"
+#~ msgstr "Anzahl an zulässigen Sicherheitsgruppen pro Nutzer, -1 für unbegrenzt"
+
+#~ msgid "Number of security rules allowed per tenant, -1 for unlimited"
+#~ msgstr "Anzahl an zulässigen Sicherheitsregeln pro Nutzer, -1 für unbegrenzt"
 
