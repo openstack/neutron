@@ -103,7 +103,7 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
               plugin=PLUGIN_NAME,
               ext_mgr=None,
               service_plugins=None):
-        test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
+        test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
         self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
@@ -122,7 +122,7 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         plugin = plugin or PLUGIN_NAME
         super(NiciraPluginV2TestCase, self).setUp(plugin=plugin,
                                                   ext_mgr=ext_mgr)
-        cfg.CONF.set_override('metadata_mode', None, 'NVP')
+        cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(mock.patch.stopall)
 
@@ -172,7 +172,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
     HAS_PORT_FILTER = True
 
     def test_exhaust_ports_overlay_network(self):
-        cfg.CONF.set_override('max_lp_per_overlay_ls', 1, group='NVP')
+        cfg.CONF.set_override('max_lp_per_overlay_ls', 1, group='NSX')
         with self.network(name='testnet',
                           arg_list=(pnet.NETWORK_TYPE,
                                     pnet.PHYSICAL_NETWORK,
@@ -183,7 +183,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
                     self._create_port('json', net['network']['id'], 400)
 
     def test_exhaust_ports_bridged_network(self):
-        cfg.CONF.set_override('max_lp_per_bridged_ls', 1, group="NVP")
+        cfg.CONF.set_override('max_lp_per_bridged_ls', 1, group="NSX")
         providernet_args = {pnet.NETWORK_TYPE: 'flat',
                             pnet.PHYSICAL_NETWORK: 'tzuuid'}
         with self.network(name='testnet',
@@ -375,7 +375,7 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
 class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
 
     def setUp(self):
-        test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
+        test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
         self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
@@ -408,7 +408,7 @@ class TestNiciraAllowedAddressPairs(test_addr_pair.TestAllowedAddressPairs,
 class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
 
     def setUp(self):
-        test_lib.test_config['config_files'] = [get_fake_conf('nvp.ini.test')]
+        test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
         # mock nvp api client
         fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
         self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
@@ -747,10 +747,10 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
         self._test_floatingip_with_invalid_create_port(self._plugin_name)
 
     def _nvp_metadata_setup(self):
-        cfg.CONF.set_override('metadata_mode', 'access_network', 'NVP')
+        cfg.CONF.set_override('metadata_mode', 'access_network', 'NSX')
 
     def _nvp_metadata_teardown(self):
-        cfg.CONF.set_override('metadata_mode', None, 'NVP')
+        cfg.CONF.set_override('metadata_mode', None, 'NSX')
 
     def test_create_router_name_exceeds_40_chars(self):
         name = 'this_is_a_router_whose_name_is_longer_than_40_chars'
@@ -942,7 +942,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
         self._nvp_metadata_teardown()
 
     def test_metadata_dhcp_host_route(self):
-        cfg.CONF.set_override('metadata_mode', 'dhcp_host_route', 'NVP')
+        cfg.CONF.set_override('metadata_mode', 'dhcp_host_route', 'NSX')
         subnets = self._list('subnets')['subnets']
         with self.subnet() as s:
             with self.port(subnet=s, device_id='1234',

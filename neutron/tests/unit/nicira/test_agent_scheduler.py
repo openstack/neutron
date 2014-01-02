@@ -34,7 +34,7 @@ class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
 
     def setUp(self):
         test_config['plugin_name_v2'] = PLUGIN_NAME
-        test_config['config_files'] = [get_fake_conf('nvp.ini.full.test')]
+        test_config['config_files'] = [get_fake_conf('nsx.ini.full.test')]
 
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
@@ -82,7 +82,7 @@ class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
         return host_calls
 
     def _test_gateway_subnet_notification(self, gateway='10.0.0.1'):
-        cfg.CONF.set_override('metadata_mode', 'dhcp_host_route', 'NVP')
+        cfg.CONF.set_override('metadata_mode', 'dhcp_host_route', 'NSX')
         hosts = ['hosta']
         [mock_dhcp, net, subnet, port] = self._network_port_create(
             hosts, gateway=gateway, owner=constants.DEVICE_OWNER_DHCP)

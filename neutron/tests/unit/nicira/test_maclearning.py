@@ -58,7 +58,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         self.adminContext = context.get_admin_context()
-        test_config['config_files'] = [get_fake_conf('nvp.ini.full.test')]
+        test_config['config_files'] = [get_fake_conf('nsx.ini.full.test')]
         test_config['plugin_name_v2'] = PLUGIN_NAME
         cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
         # Save the original RESOURCE_ATTRIBUTE_MAP
@@ -81,7 +81,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         # Emulate tests against NVP 2.x
         instance.return_value.get_nvp_version.return_value = NVPVersion("3.0")
         instance.return_value.request.side_effect = _fake_request
-        cfg.CONF.set_override('metadata_mode', None, 'NVP')
+        cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.mock_nvpapi.stop)
         self.addCleanup(patch_sync.stop)

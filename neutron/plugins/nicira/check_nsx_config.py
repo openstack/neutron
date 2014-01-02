@@ -22,7 +22,7 @@ import sys
 from oslo.config import cfg
 
 from neutron.common import config
-from neutron.plugins.nicira.common import config as nvp_cfg  # noqa
+from neutron.plugins.nicira.common import config as nsx_config  # noqa
 from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import nvplib
 
@@ -35,7 +35,7 @@ def help(name):
 
 
 def get_nsx_controllers(cluster):
-    return cluster.nvp_controllers
+    return cluster.nsx_controllers
 
 
 def config_helper(config_entity, cluster):
@@ -79,11 +79,11 @@ def main():
     print("\tretry_interval: %d" % cfg.CONF.database.retry_interval)
     print("\tmax_retries: %d" % cfg.CONF.database.max_retries)
     print("-----------------------    NSX Options   -----------------------")
-    print("\tNSX Generation Timeout %d" % cfg.CONF.NVP.nvp_gen_timeout)
+    print("\tNSX Generation Timeout %d" % cfg.CONF.NSX.nsx_gen_timeout)
     print("\tNumber of concurrent connections to each controller %d" %
-          cfg.CONF.NVP.concurrent_connections)
-    print("\tmax_lp_per_bridged_ls: %s" % cfg.CONF.NVP.max_lp_per_bridged_ls)
-    print("\tmax_lp_per_overlay_ls: %s" % cfg.CONF.NVP.max_lp_per_overlay_ls)
+          cfg.CONF.NSX.concurrent_connections)
+    print("\tmax_lp_per_bridged_ls: %s" % cfg.CONF.NSX.max_lp_per_bridged_ls)
+    print("\tmax_lp_per_overlay_ls: %s" % cfg.CONF.NSX.max_lp_per_overlay_ls)
     print("-----------------------  Cluster Options -----------------------")
     print("\trequested_timeout: %s" % cfg.CONF.req_timeout)
     print("\tretries: %s" % cfg.CONF.retries)
@@ -91,8 +91,8 @@ def main():
     print("\thttp_timeout: %s" % cfg.CONF.http_timeout)
     cluster = NeutronPlugin.create_nvp_cluster(
         cfg.CONF,
-        cfg.CONF.NVP.concurrent_connections,
-        cfg.CONF.NVP.nvp_gen_timeout)
+        cfg.CONF.NSX.concurrent_connections,
+        cfg.CONF.NSX.nsx_gen_timeout)
     nsx_controllers = get_nsx_controllers(cluster)
     num_controllers = len(nsx_controllers)
     print("Number of controllers found: %s" % num_controllers)

@@ -1,5 +1,0 @@
-[DEFAULT]
-default_tz_uuid = fake_tz_uuid
-nvp_controllers=fake_1,fake_2
-nvp_user=foo
-nvp_password=bar

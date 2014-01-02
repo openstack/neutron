@@ -26,13 +26,13 @@ from neutron.plugins.nicira.common import exceptions
 LOG = logging.getLogger(__name__)
 DEFAULT_PORT = 443
 # Raise if one of those attributes is not specified
-REQUIRED_ATTRIBUTES = ['default_tz_uuid', 'nvp_user',
-                       'nvp_password', 'nvp_controllers']
+REQUIRED_ATTRIBUTES = ['default_tz_uuid', 'nsx_user',
+                       'nsx_password', 'nsx_controllers']
 # Emit a INFO log if one of those attributes is not specified
 IMPORTANT_ATTRIBUTES = ['default_l3_gw_service_uuid']
 # Deprecated attributes
 DEPRECATED_ATTRIBUTES = ['metadata_dhcp_host_route',
-                         'nvp_controller_connection']
+                         'nvp_user', 'nvp_password', 'nvp_controllers']
 
 
 class NVPCluster(object):
@@ -93,38 +93,13 @@ class NVPCluster(object):
         else:
             LOG.debug(_("Attribute:%s is empty or null"), attribute)
 
-    def _process_nvp_controllers(self):
+    def _process_nsx_controllers(self):
         # If this raises something is not right, so let it bubble up
         # TODO(salvatore-orlando): Also validate attribute here
-        for i, ctrl in enumerate(self.nvp_controllers or []):
+        for i, ctrl in enumerate(self.nsx_controllers or []):
             if len(ctrl.split(':')) == 1:
-                self.nvp_controllers[i] = '%s:%s' % (ctrl, DEFAULT_PORT)
+                self.nsx_controllers[i] = '%s:%s' % (ctrl, DEFAULT_PORT)
 
-    def _process_nvp_controller_connection(self, connections):
-
-        def parse_conn_str(ip, port, user, password, req_timeout,
-                           http_timeout, retries, redirects):
-            # TODO(salvatore-orlando): Set the attributes only
-            # if correspondent non-deprecated options have been
-            # explicitly specified in the ini file
-            # TODO(salvatore-orlando): Validate data to avoid ugly ValueError
-            self.nvp_user = user
-            self._process_attribute('nvp_user')
-            self.nvp_password = password
-            self._process_attribute('nvp_password')
-            self.req_timeout = int(req_timeout)
-            self._process_attribute('req_timeout')
-            self.http_timeout = int(http_timeout)
-            self._process_attribute('http_timeout')
-            self.retries = int(retries)
-            self._process_attribute('retries')
-            self.redirects = int(redirects)
-            self._process_attribute('redirects')
-            try:
-                nvp_controllers = getattr(self, 'nvp_controllers')
-                nvp_controllers.append('%s:%s' % (ip, port))
-            except AttributeError:
-                self.nvp_controllers = ['%s:%s' % (ip, port)]
-                self._process_attribute('nvp_controllers')
-        for conn in connections:
-            parse_conn_str(*conn.split(':'))
+    def _process_nvp_controllers(self):
+        self.nsx_controllers = self.nvp_controllers
+        self._process_nsx_controllers()
