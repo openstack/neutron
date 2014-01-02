@@ -77,17 +77,46 @@ WIN2k3_STATIC_DNS = 249
 NS_PREFIX = 'qdhcp-'
 
 
-class DictModel(object):
+class DictModel(dict):
     """Convert dict into an object that provides attribute access to values."""
-    def __init__(self, d):
-        for key, value in d.iteritems():
-            if isinstance(value, list):
-                value = [DictModel(item) if isinstance(item, dict) else item
-                         for item in value]
-            elif isinstance(value, dict):
-                value = DictModel(value)
 
-            setattr(self, key, value)
+    def __init__(self, *args, **kwargs):
+        """Convert dict values to DictModel values."""
+        super(DictModel, self).__init__(*args, **kwargs)
+
+        def needs_upgrade(item):
+            """Check if `item` is a dict and needs to be changed to DictModel.
+            """
+            return isinstance(item, dict) and not isinstance(item, DictModel)
+
+        def upgrade(item):
+            """Upgrade item if it needs to be upgraded."""
+            if needs_upgrade(item):
+                return DictModel(item)
+            else:
+                return item
+
+        for key, value in self.iteritems():
+            if isinstance(value, (list, tuple)):
+                # Keep the same type but convert dicts to DictModels
+                self[key] = type(value)(
+                    (upgrade(item) for item in value)
+                )
+            elif needs_upgrade(value):
+                # Change dict instance values to DictModel instance values
+                self[key] = DictModel(value)
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError as e:
+            raise AttributeError(e)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __delattr__(self, name):
+        del self[name]
 
 
 class NetModel(DictModel):
