@@ -20,7 +20,9 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.schema import UniqueConstraint
 
+from neutron.db import models_v2
 from neutron.db.models_v2 import model_base
+from sqlalchemy import orm
 
 
 class VlanAllocation(model_base.BASEV2):
@@ -69,6 +71,11 @@ class NetworkBinding(model_base.BASEV2):
     network_type = Column(String(32), nullable=False)
     physical_network = Column(String(64))
     segmentation_id = Column(Integer)  # tunnel_id or vlan_id
+
+    network = orm.relationship(
+        models_v2.Network,
+        backref=orm.backref("binding", lazy='joined',
+                            uselist=False, cascade='delete'))
 
     def __init__(self, network_id, network_type, physical_network,
                  segmentation_id):

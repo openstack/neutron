@@ -55,6 +55,7 @@ def add_network_binding(session, network_id, network_type,
                                                physical_network,
                                                segmentation_id)
         session.add(binding)
+    return binding
 
 
 def sync_vlan_allocations(network_vlan_ranges):
