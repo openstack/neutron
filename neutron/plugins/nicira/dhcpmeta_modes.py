@@ -36,10 +36,10 @@ class DhcpMetadataAccess(object):
 
     def setup_dhcpmeta_access(self):
         """Initialize support for DHCP and Metadata services."""
-        if cfg.CONF.NVP.agent_mode == config.AgentModes.AGENT:
+        if cfg.CONF.NSX.agent_mode == config.AgentModes.AGENT:
             self._setup_rpc_dhcp_metadata()
             mod = nvp_rpc
-        elif cfg.CONF.NVP.agent_mode == config.AgentModes.AGENTLESS:
+        elif cfg.CONF.NSX.agent_mode == config.AgentModes.AGENTLESS:
             self._setup_nvp_dhcp_metadata()
             mod = nvp_svc
         self.handle_network_dhcp_access_delegate = (
@@ -90,7 +90,7 @@ class DhcpMetadataAccess(object):
             error = None
             nvp_svc.check_services_requirements(self.cluster)
         except nvp_exc.NvpInvalidVersion:
-            error = _("Unable to run Neutron with config option '%s', as NVP "
+            error = _("Unable to run Neutron with config option '%s', as NSX "
                       "does not support it") % config.AgentModes.AGENTLESS
         except nvp_exc.ServiceClusterUnavailable:
             error = _("Unmet dependency for config option "

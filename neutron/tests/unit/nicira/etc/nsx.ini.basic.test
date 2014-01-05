@@ -1,0 +1,5 @@
+[DEFAULT]
+default_tz_uuid = fake_tz_uuid
+nsx_controllers=fake_1,fake_2
+nsx_user=foo
+nsx_password=bar

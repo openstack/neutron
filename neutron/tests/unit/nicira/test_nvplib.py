@@ -56,11 +56,11 @@ class NvplibTestCase(base.BaseTestCase):
 
         instance.return_value.request.side_effect = _fake_request
         self.fake_cluster = nvp_cluster.NVPCluster(
-            name='fake-cluster', nvp_controllers=['1.1.1.1:999'],
-            default_tz_uuid=_uuid(), nvp_user='foo', nvp_password='bar')
+            name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
+            default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
         self.fake_cluster.api_client = NvpApiClient.NVPApiHelper(
             ('1.1.1.1', '999', True),
-            self.fake_cluster.nvp_user, self.fake_cluster.nvp_password,
+            self.fake_cluster.nsx_user, self.fake_cluster.nsx_password,
             self.fake_cluster.req_timeout, self.fake_cluster.http_timeout,
             self.fake_cluster.retries, self.fake_cluster.redirects)
 
@@ -122,11 +122,11 @@ class NvplibNegativeTests(base.BaseTestCase):
 
         instance.return_value.request.side_effect = _faulty_request
         self.fake_cluster = nvp_cluster.NVPCluster(
-            name='fake-cluster', nvp_controllers=['1.1.1.1:999'],
-            default_tz_uuid=_uuid(), nvp_user='foo', nvp_password='bar')
+            name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
+            default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
         self.fake_cluster.api_client = NvpApiClient.NVPApiHelper(
             ('1.1.1.1', '999', True),
-            self.fake_cluster.nvp_user, self.fake_cluster.nvp_password,
+            self.fake_cluster.nsx_user, self.fake_cluster.nsx_password,
             self.fake_cluster.req_timeout, self.fake_cluster.http_timeout,
             self.fake_cluster.retries, self.fake_cluster.redirects)
 

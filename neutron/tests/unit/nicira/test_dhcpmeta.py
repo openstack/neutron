@@ -261,32 +261,32 @@ class LsnManagerTestCase(base.BaseTestCase):
     def test_lsn_port_dhcp_configure(self):
         expected = {
             'routers': '127.0.0.1',
-            'default_lease_time': cfg.CONF.NVP_DHCP.default_lease_time,
-            'domain_name': cfg.CONF.NVP_DHCP.domain_name
+            'default_lease_time': cfg.CONF.NSX_DHCP.default_lease_time,
+            'domain_name': cfg.CONF.NSX_DHCP.domain_name
         }
         self._test_lsn_port_dhcp_configure_with_subnet(
             expected, dns=[], gw='127.0.0.1', routes=[])
 
     def test_lsn_port_dhcp_configure_gatewayless(self):
         expected = {
-            'default_lease_time': cfg.CONF.NVP_DHCP.default_lease_time,
-            'domain_name': cfg.CONF.NVP_DHCP.domain_name
+            'default_lease_time': cfg.CONF.NSX_DHCP.default_lease_time,
+            'domain_name': cfg.CONF.NSX_DHCP.domain_name
         }
         self._test_lsn_port_dhcp_configure_with_subnet(expected, gw=None)
 
     def test_lsn_port_dhcp_configure_with_extra_dns_servers(self):
         expected = {
-            'default_lease_time': cfg.CONF.NVP_DHCP.default_lease_time,
+            'default_lease_time': cfg.CONF.NSX_DHCP.default_lease_time,
             'domain_name_servers': '8.8.8.8,9.9.9.9',
-            'domain_name': cfg.CONF.NVP_DHCP.domain_name
+            'domain_name': cfg.CONF.NSX_DHCP.domain_name
         }
         self._test_lsn_port_dhcp_configure_with_subnet(
             expected, dns=['8.8.8.8', '9.9.9.9'])
 
     def test_lsn_port_dhcp_configure_with_host_routes(self):
         expected = {
-            'default_lease_time': cfg.CONF.NVP_DHCP.default_lease_time,
-            'domain_name': cfg.CONF.NVP_DHCP.domain_name,
+            'default_lease_time': cfg.CONF.NSX_DHCP.default_lease_time,
+            'domain_name': cfg.CONF.NSX_DHCP.domain_name,
             'classless_static_routes': '8.8.8.8,9.9.9.9'
         }
         self._test_lsn_port_dhcp_configure_with_subnet(

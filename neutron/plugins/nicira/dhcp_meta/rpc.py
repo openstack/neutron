@@ -71,7 +71,7 @@ def handle_port_dhcp_access(plugin, context, port_data, action):
         net = plugin.get_network(context, port_data['network_id'])
         plugin.schedule_network(context, net)
 
-    active_port = (cfg.CONF.NVP.metadata_mode == config.MetadataModes.INDIRECT
+    active_port = (cfg.CONF.NSX.metadata_mode == config.MetadataModes.INDIRECT
                    and port_data.get('device_owner') == const.DEVICE_OWNER_DHCP
                    and port_data.get('fixed_ips', []))
     if active_port:
@@ -81,7 +81,7 @@ def handle_port_dhcp_access(plugin, context, port_data, action):
 
 
 def handle_port_metadata_access(plugin, context, port, is_delete=False):
-    if (cfg.CONF.NVP.metadata_mode == config.MetadataModes.INDIRECT and
+    if (cfg.CONF.NSX.metadata_mode == config.MetadataModes.INDIRECT and
         port.get('device_owner') == const.DEVICE_OWNER_DHCP):
         if port.get('fixed_ips', []) or is_delete:
             fixed_ip = port['fixed_ips'][0]
@@ -113,7 +113,7 @@ def handle_port_metadata_access(plugin, context, port, is_delete=False):
 
 
 def handle_router_metadata_access(plugin, context, router_id, interface=None):
-    if cfg.CONF.NVP.metadata_mode != config.MetadataModes.DIRECT:
+    if cfg.CONF.NSX.metadata_mode != config.MetadataModes.DIRECT:
         LOG.debug(_("Metadata access network is disabled"))
         return
     if not cfg.CONF.allow_overlapping_ips:
@@ -141,7 +141,7 @@ def handle_router_metadata_access(plugin, context, router_id, interface=None):
                         "No metadata access network should be "
                         "created or destroyed"), router_id)
     # TODO(salvatore-orlando): A better exception handling in the
-    # NVP plugin would allow us to improve error handling here
+    # NSX plugin would allow us to improve error handling here
     except (ntn_exc.NeutronException, nvp_exc.NvpPluginException,
             NvpApiClient.NvpApiException):
         # Any exception here should be regarded as non-fatal
@@ -161,7 +161,7 @@ def _find_metadata_port(plugin, context, ports):
 
 def _create_metadata_access_network(plugin, context, router_id):
     # Add network
-    # Network name is likely to be truncated on NVP
+    # Network name is likely to be truncated on NSX
     net_data = {'name': 'meta-%s' % router_id,
                 'tenant_id': '',  # intentionally not set
                 'admin_state_up': True,

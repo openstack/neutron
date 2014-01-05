@@ -45,24 +45,31 @@ SPECIAL_OWNERS = (const.DEVICE_OWNER_DHCP,
 
 dhcp_opts = [
     cfg.ListOpt('extra_domain_name_servers',
+                deprecated_group='NVP_DHCP',
                 default=[],
                 help=_('Comma separated list of additional '
                        'domain name servers')),
     cfg.StrOpt('domain_name',
+               deprecated_group='NVP_DHCP',
                default='openstacklocal',
                help=_('Domain to use for building the hostnames')),
     cfg.IntOpt('default_lease_time', default=43200,
+               deprecated_group='NVP_DHCP',
                help=_("Default DHCP lease time")),
 ]
 
 
 metadata_opts = [
-    cfg.StrOpt('metadata_server_address', default='127.0.0.1',
+    cfg.StrOpt('metadata_server_address',
+               deprecated_group='NVP_METADATA',
+               default='127.0.0.1',
                help=_("IP address used by Metadata server.")),
     cfg.IntOpt('metadata_server_port',
+               deprecated_group='NVP_METADATA',
                default=8775,
                help=_("TCP Port used by Metadata server.")),
     cfg.StrOpt('metadata_shared_secret',
+               deprecated_group='NVP_METADATA',
                default='',
                help=_('Shared secret to sign instance-id request'),
                secret=True)
@@ -70,11 +77,11 @@ metadata_opts = [
 
 
 def register_dhcp_opts(config):
-    config.CONF.register_opts(dhcp_opts, "NVP_DHCP")
+    config.CONF.register_opts(dhcp_opts, group="NSX_DHCP")
 
 
 def register_metadata_opts(config):
-    config.CONF.register_opts(metadata_opts, "NVP_METADATA")
+    config.CONF.register_opts(metadata_opts, group="NSX_METADATA")
 
 
 class LsnManager(object):
@@ -268,10 +275,10 @@ class LsnManager(object):
         """Enable/disable dhcp services with the given config options."""
         is_enabled = subnet["enable_dhcp"]
         dhcp_options = {
-            "domain_name": cfg.CONF.NVP_DHCP.domain_name,
-            "default_lease_time": cfg.CONF.NVP_DHCP.default_lease_time,
+            "domain_name": cfg.CONF.NSX_DHCP.domain_name,
+            "default_lease_time": cfg.CONF.NSX_DHCP.default_lease_time,
         }
-        dns_servers = cfg.CONF.NVP_DHCP.extra_domain_name_servers
+        dns_servers = cfg.CONF.NSX_DHCP.extra_domain_name_servers
         dns_servers.extend(subnet["dns_nameservers"])
         if subnet['gateway_ip']:
             dhcp_options["routers"] = subnet["gateway_ip"]
@@ -295,7 +302,7 @@ class LsnManager(object):
         """Configure metadata service for the specified subnet."""
         subnet = self.plugin.get_subnet(context, subnet_id)
         network_id = subnet['network_id']
-        meta_conf = cfg.CONF.NVP_METADATA
+        meta_conf = cfg.CONF.NSX_METADATA
         metadata_options = {
             'metadata_server_ip': meta_conf.metadata_server_address,
             'metadata_server_port': meta_conf.metadata_server_port,
@@ -492,7 +499,7 @@ def is_user_port(p, check_dev_id=False):
 
 def check_services_requirements(cluster):
     ver = cluster.api_client.get_nvp_version()
-    # It sounds like 4.1 is the first one where DHCP in NSX/NVP
+    # It sounds like 4.1 is the first one where DHCP in NSX
     # will have the experimental feature
     if ver.major >= 4 and ver.minor >= 1:
         cluster_id = cfg.CONF.default_service_cluster_uuid
