@@ -915,3 +915,35 @@ class OVS_Lib_Test(base.BaseTestCase):
         min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
         self._check_ovs_vxlan_version(min_vxlan_ver, min_vxlan_ver,
                                       min_kernel_ver, expecting_ok=True)
+
+    def test_ofctl_arg_supported(self):
+        with mock.patch('neutron.common.utils.get_random_string') as utils:
+            utils.return_value = 'test'
+            supported = ovs_lib.ofctl_arg_supported(self.root_helper, 'cmd',
+                                                    ['args'])
+            self.execute.assert_has_calls([
+                mock.call(['ovs-vsctl', self.TO, '--', '--if-exists', 'del-br',
+                           'br-test-test'], root_helper=self.root_helper),
+                mock.call(['ovs-vsctl', self.TO, '--', '--may-exist', 'add-br',
+                           'br-test-test'], root_helper=self.root_helper),
+                mock.call(['ovs-ofctl', 'cmd', 'br-test-test', 'args'],
+                          root_helper=self.root_helper),
+                mock.call(['ovs-vsctl', self.TO, '--', '--if-exists', 'del-br',
+                           'br-test-test'], root_helper=self.root_helper)
+            ])
+            self.assertTrue(supported)
+
+            self.execute.side_effect = Exception
+            supported = ovs_lib.ofctl_arg_supported(self.root_helper, 'cmd',
+                                                    ['args'])
+            self.execute.assert_has_calls([
+                mock.call(['ovs-vsctl', self.TO, '--', '--if-exists', 'del-br',
+                           'br-test-test'], root_helper=self.root_helper),
+                mock.call(['ovs-vsctl', self.TO, '--', '--may-exist', 'add-br',
+                           'br-test-test'], root_helper=self.root_helper),
+                mock.call(['ovs-ofctl', 'cmd', 'br-test-test', 'args'],
+                          root_helper=self.root_helper),
+                mock.call(['ovs-vsctl', self.TO, '--', '--if-exists', 'del-br',
+                           'br-test-test'], root_helper=self.root_helper)
+            ])
+            self.assertFalse(supported)

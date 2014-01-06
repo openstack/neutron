@@ -1,0 +1,41 @@
+Neutron ML2 l2 population Mechanism Drivers
+
+l2 population (l2pop) mechanism drivers implements the ML2 driver to improve
+open source plugins overlay implementations (VXLAN with Linux bridge and
+GRE/VXLAN with OVS). This mechanism driver is implemented in ML2 to propagate
+the forwarding information among agents using a common RPC API.
+
+More informations could be found on the wiki page [1].
+
+VXLAN Linux kernel:
+-------------------
+The VXLAN Linux kernel module provide all necessary functionalities to populate
+the forwarding table and local ARP responder tables. This module appears on
+release 3.7 of the vanilla Linux kernel in experimental:
+- 3.8: first stable release, no edge replication (multicast necessary),
+- 3.9: edge replication only for the broadcasted packets,
+- 3.11: edge replication for broadcast, multicast and unknown packets.
+
+Note: Some distributions (like RHEL) have backported this module on precedent
+      kernel version.
+
+OpenvSwitch:
+------------
+The OVS OpenFlow tables provide all of the necessary functionality to populate
+the forwarding table and local ARP responder tables.
+A wiki page describe how the flow tables did evolve on OVS agents:
+- [2] without local ARP responder
+- [3] with local ARP responder. /!\ This functionality is only available since
+                                    the development branch 2.1. It's possible
+                                    to disable (enable by default) it through
+                                    the flag 'arp_responder'. /!\
+
+
+Note: A difference persists between the LB and OVS agents when they are used
+      with the l2-pop mechanism driver (and local ARP responder available). The
+      LB agent will drop unknown unicast (VXLAN bridge mode), whereas the OVS
+      agent will flood it.
+
+[1] https://wiki.openstack.org/wiki/L2population_blueprint
+[2] https://wiki.openstack.org/wiki/Ovs-flow-logic#OVS_flows_logic
+[3] https://wiki.openstack.org/wiki/Ovs-flow-logic#OVS_flows_logic_with_local_ARP_responder
