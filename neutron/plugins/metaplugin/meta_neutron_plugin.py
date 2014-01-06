@@ -52,9 +52,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def __init__(self, configfile=None):
         super(MetaPluginV2, self).__init__()
         LOG.debug(_("Start initializing metaplugin"))
-        self.supported_extension_aliases = ['flavor', 'external-net',
-                                            'router', 'ext-gw-mode',
-                                            'extraroute']
+        self.supported_extension_aliases = ['flavor', 'external-net']
         if cfg.CONF.META.supported_extension_aliases:
             cfg_aliases = cfg.CONF.META.supported_extension_aliases.split(',')
             self.supported_extension_aliases += cfg_aliases
@@ -80,25 +78,30 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self.plugins[flavor] = self._load_plugin(plugin_provider)
 
         self.l3_plugins = {}
-        l3_plugin_list = [plugin_set.split(':')
-                          for plugin_set
-                          in cfg.CONF.META.l3_plugin_list.split(',')]
-        for flavor, plugin_provider in l3_plugin_list:
-            if flavor in self.plugins:
-                self.l3_plugins[flavor] = self.plugins[flavor]
-            else:
-                # For l3 only plugin
-                self.l3_plugins[flavor] = self._load_plugin(plugin_provider)
+        if cfg.CONF.META.l3_plugin_list:
+            l3_plugin_list = [plugin_set.split(':')
+                              for plugin_set
+                              in cfg.CONF.META.l3_plugin_list.split(',')]
+            for flavor, plugin_provider in l3_plugin_list:
+                if flavor in self.plugins:
+                    self.l3_plugins[flavor] = self.plugins[flavor]
+                else:
+                    # For l3 only plugin
+                    self.l3_plugins[flavor] = self._load_plugin(
+                        plugin_provider)
 
         self.default_flavor = cfg.CONF.META.default_flavor
         if self.default_flavor not in self.plugins:
             raise exc.Invalid(_('default_flavor %s is not plugin list') %
                               self.default_flavor)
 
-        self.default_l3_flavor = cfg.CONF.META.default_l3_flavor
-        if self.default_l3_flavor not in self.l3_plugins:
-            raise exc.Invalid(_('default_l3_flavor %s is not plugin list') %
-                              self.default_l3_flavor)
+        if self.l3_plugins:
+            self.default_l3_flavor = cfg.CONF.META.default_l3_flavor
+            if self.default_l3_flavor not in self.l3_plugins:
+                raise exc.Invalid(_('default_l3_flavor %s is not plugin list')
+                                  % self.default_l3_flavor)
+            self.supported_extension_aliases += ['router', 'ext-gw-mode',
+                                                 'extraroute']
 
         self.extension_map = {}
         if not cfg.CONF.META.extension_map == '':
@@ -107,8 +110,6 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                               in cfg.CONF.META.extension_map.split(',')]
             for method_name, flavor in extension_list:
                 self.extension_map[method_name] = flavor
-
-        self.default_flavor = cfg.CONF.META.default_flavor
 
     def _load_plugin(self, plugin_provider):
         LOG.debug(_("Plugin location: %s"), plugin_provider)
@@ -146,11 +147,6 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         flavor = self._get_flavor_by_network_id(context, network['id'])
         network[FLAVOR_NETWORK] = flavor
 
-    def _is_l3_plugin(self, plugin):
-        if hasattr(plugin, 'supported_extension_aliases'):
-            return 'router' in plugin.supported_extension_aliases
-        return False
-
     def create_network(self, context, network):
         n = network['network']
         flavor = n.get(FLAVOR_NETWORK)
@@ -159,8 +155,6 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         plugin = self._get_plugin(flavor)
         with context.session.begin(subtransactions=True):
             net = plugin.create_network(context, network)
-            if not self._is_l3_plugin(plugin):
-                self._process_l3_create(context, net, network['network'])
             LOG.debug(_("Created network: %(net_id)s with flavor "
                         "%(flavor)s"), {'net_id': net['id'], 'flavor': flavor})
             try:
@@ -178,11 +172,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def update_network(self, context, id, network):
         flavor = meta_db_v2.get_flavor_by_network(context.session, id)
         plugin = self._get_plugin(flavor)
-        with context.session.begin(subtransactions=True):
-            net = plugin.update_network(context, id, network)
-            if not self._is_l3_plugin(plugin):
-                self._process_l3_update(context, net, network['network'])
-        return net
+        return plugin.update_network(context, id, network)
 
     def delete_network(self, context, id):
         flavor = meta_db_v2.get_flavor_by_network(context.session, id)
@@ -251,9 +241,6 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         port_in_db = self.get_port(context, id)
         plugin = self._get_plugin_by_network_id(context,
                                                 port_in_db['network_id'])
-        if l3_port_check:
-            self.prevent_l3_port_deletion(context, id)
-            self.disassociate_floatingips(context, id)
         return plugin.delete_port(context, id, l3_port_check)
 
     def create_subnet(self, context, subnet):
