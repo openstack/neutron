@@ -430,7 +430,7 @@ class NeutronRestProxyV2(db_base_plugin_v2.NeutronDbPluginV2,
                          agentschedulers_db.DhcpAgentSchedulerDbMixin):
 
     supported_extension_aliases = ["external-net", "router", "binding",
-                                   "router_rules", "extra_dhcp_opt",
+                                   "router_rules", "extra_dhcp_opt", "quotas",
                                    "dhcp_agent_scheduler", "agent"]
 
     def __init__(self, server_timeout=None):
