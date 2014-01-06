@@ -24,6 +24,7 @@ import logging
 import os
 
 from oslo.config import cfg
+from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 import webob.exc
 
@@ -56,6 +57,7 @@ from neutron.extensions import portbindings as pbin
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as ext_sg
+from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import excutils
 from neutron.openstack.common import lockutils
 from neutron.plugins.common import constants as plugin_const
@@ -490,6 +492,22 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 context, port_data['id'],
                 selected_lswitch and selected_lswitch['uuid'],
                 lport and lport['uuid'])
+        except db_exc.DBError as e:
+            if (port_data['device_owner'] == constants.DEVICE_OWNER_DHCP and
+                isinstance(e.inner_exception, sql_exc.IntegrityError)):
+                msg = (_("Concurrent network deletion detected; Back-end Port "
+                         "%(nsx_id)s creation to be rolled back for Neutron "
+                         "port: %(neutron_id)s")
+                       % {'nsx_id': lport['uuid'],
+                          'neutron_id': port_data['id']})
+                LOG.warning(msg)
+                if selected_lswitch and lport:
+                    try:
+                        nvplib.delete_port(self.cluster,
+                                           selected_lswitch['uuid'],
+                                           lport['uuid'])
+                    except q_exc.NotFound:
+                        LOG.debug(_("NSX Port %s already gone"), lport['uuid'])
 
     def _nvp_delete_port(self, context, port_data):
         # FIXME(salvatore-orlando): On the NVP platform we do not really have

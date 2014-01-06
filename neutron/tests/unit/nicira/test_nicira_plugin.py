@@ -20,6 +20,7 @@ import contextlib
 import mock
 import netaddr
 from oslo.config import cfg
+from sqlalchemy import exc as sql_exc
 import webob.exc
 
 from neutron.api.v2 import attributes
@@ -36,6 +37,7 @@ from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as secgrp
 from neutron import manager
 from neutron.manager import NeutronManager
+from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import sync
@@ -250,6 +252,17 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
                 self._create_port(self.fmt, net_id,
                                   webob.exc.HTTPInternalServerError.code)
                 self._verify_no_orphan_left(net_id)
+
+    def test_create_port_db_error_no_orphan_left(self):
+        db_exception = db_exc.DBError(
+            inner_exception=sql_exc.IntegrityError(mock.ANY,
+                                                   mock.ANY,
+                                                   mock.ANY))
+        with mock.patch.object(nicira_db, 'add_neutron_nsx_port_mapping',
+                               side_effect=db_exception):
+            with self.network() as net:
+                with self.port(device_owner='network:dhcp'):
+                    self._verify_no_orphan_left(net['network']['id'])
 
     def test_create_port_maintenance_returns_503(self):
         with self.network() as net:
