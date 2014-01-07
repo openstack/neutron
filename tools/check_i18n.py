@@ -59,7 +59,8 @@ class Visitor(object):
                 if checker(node):
                     print('%s:%d %s: %s Error: %s' %
                           (self.filename, node.lineno,
-                           self.lines[node.lineno - 1][:-1], msg),
+                           self.lines[node.lineno - 1][:-1],
+                           checker.__name__, msg),
                            file=sys.stderr)
                     self.error = 1
                     return
@@ -81,7 +82,8 @@ class Visitor(object):
                     elif action == 'error':
                         print('%s:%d %s: %s Error: %s' %
                               (self.filename, node.lineno,
-                               self.lines[node.lineno - 1][:-1], msg),
+                               self.lines[node.lineno - 1][:-1],
+                               predicate.__name__, msg),
                                file=sys.stderr)
                         self.error = 1
                         return
