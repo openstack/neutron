@@ -88,7 +88,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         self.label_tenant_id = {}
         self.routers = {}
         self.metering_infos = {}
-        super(MeteringAgent, self).__init__(host=self.conf.host)
+        super(MeteringAgent, self).__init__(host=host)
 
     def _load_drivers(self):
         """Loads plugin-driver from configuration."""
