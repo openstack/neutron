@@ -29,11 +29,13 @@ from neutron import context
 from neutron.db import api as qdbapi
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
+from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.manager import NeutronManager
+from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.notifier import test_notifier
 from neutron.openstack.common import uuidutils
@@ -280,6 +282,27 @@ class TestL3NatServicePlugin(db_base_plugin_v2.CommonDbMixin,
 
     def get_plugin_description(self):
         return "L3 Routing Service Plugin for testing"
+
+
+# A L3 routing with L3 agent scheduling service plugin class for tests with
+# plugins that delegate away L3 routing functionality
+class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
+                                            l3_agentschedulers_db.
+                                            L3AgentSchedulerDbMixin):
+
+    supported_extension_aliases = ["router", "l3_agent_scheduler"]
+
+
+# This plugin class is for tests with plugin that integrates L3 and L3 agent
+# scheduling.
+class TestL3NatIntAgentSchedulingPlugin(TestL3NatIntPlugin,
+                                        l3_agentschedulers_db.
+                                        L3AgentSchedulerDbMixin):
+
+    supported_extension_aliases = ["external-net", "router",
+                                   "l3_agent_scheduler"]
+    router_scheduler = importutils.import_object(
+        cfg.CONF.router_scheduler_driver)
 
 
 class L3NatTestCaseMixin(object):
