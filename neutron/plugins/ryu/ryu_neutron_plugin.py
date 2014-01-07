@@ -98,7 +98,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     _supported_extension_aliases = ["external-net", "router", "ext-gw-mode",
                                     "extraroute", "security-group",
-                                    "binding"]
+                                    "binding", "quotas"]
 
     @property
     def supported_extension_aliases(self):
