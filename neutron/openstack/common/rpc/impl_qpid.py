@@ -23,6 +23,7 @@ import eventlet
 import greenlet
 from oslo.config import cfg
 
+from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _
 from neutron.openstack.common import importutils
 from neutron.openstack.common import jsonutils
@@ -679,6 +680,7 @@ class Connection(object):
 
     def consume_in_thread(self):
         """Consumer from all queues/consumers in a greenthread."""
+        @excutils.forever_retry_uncaught_exceptions
         def _consumer_thread():
             try:
                 self.consume()
