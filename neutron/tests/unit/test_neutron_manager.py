@@ -23,7 +23,6 @@ import fixtures
 from oslo.config import cfg
 
 from neutron.common import config
-from neutron.common.test_lib import test_config
 from neutron.manager import NeutronManager
 from neutron.manager import validate_post_plugin_load
 from neutron.manager import validate_pre_plugin_load
@@ -65,9 +64,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
             fixtures.MonkeyPatch('neutron.manager.NeutronManager._instance'))
 
     def test_service_plugin_is_loaded(self):
-        cfg.CONF.set_override("core_plugin",
-                              test_config.get('plugin_name_v2',
-                                              DB_PLUGIN_KLASS))
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         cfg.CONF.set_override("service_plugins",
                               ["neutron.tests.unit.dummy_plugin."
                                "DummyServicePlugin"])
@@ -85,9 +82,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
                                "DummyServicePlugin",
                                "neutron.tests.unit.dummy_plugin."
                                "DummyServicePlugin"])
-        cfg.CONF.set_override("core_plugin",
-                              test_config.get('plugin_name_v2',
-                                              DB_PLUGIN_KLASS))
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         self.assertRaises(ValueError, NeutronManager.get_instance)
 
     def test_service_plugin_conflicts_with_core_plugin(self):

@@ -20,7 +20,6 @@
 
 import contextlib
 import copy
-import os
 
 from mock import patch
 from oslo.config import cfg
@@ -30,8 +29,6 @@ from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.extensions import l3
 from neutron.manager import NeutronManager
-from neutron.openstack.common.notifier import api as notifier_api
-from neutron.openstack.common.notifier import test_notifier
 from neutron.openstack.common import uuidutils
 from neutron.plugins.bigswitch.extensions import routerrule
 from neutron.tests.unit.bigswitch import fake_server
@@ -42,25 +39,6 @@ from neutron.tests.unit import test_l3_plugin
 
 
 _uuid = uuidutils.generate_uuid
-
-
-def new_L3_setUp(self):
-    test_config['plugin_name_v2'] = (
-        'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2')
-    etc_path = os.path.join(os.path.dirname(__file__), 'etc')
-    rp_conf_file = os.path.join(etc_path, 'restproxy.ini.test')
-    test_config['config_files'] = [rp_conf_file]
-    cfg.CONF.set_default('allow_overlapping_ips', False)
-    ext_mgr = RouterRulesTestExtensionManager()
-    test_config['extension_manager'] = ext_mgr
-    super(test_l3_plugin.L3BaseForIntTests, self).setUp()
-
-    # Set to None to reload the drivers
-    notifier_api._drivers = None
-    cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
-
-
-origSetUp = test_l3_plugin.L3NatDBIntTestCase.setUp
 
 
 class RouterRulesTestExtensionManager(object):
@@ -92,15 +70,16 @@ class RouterDBTestCase(test_base.BigSwitchTestBase,
 
     def setUp(self):
         self.setup_patches()
-        test_l3_plugin.L3NatDBIntTestCase.setUp = new_L3_setUp
-        super(RouterDBTestCase, self).setUp()
+        self.setup_config_files()
+        ext_mgr = RouterRulesTestExtensionManager()
+        super(RouterDBTestCase, self).setUp(plugin=self._plugin_name,
+                                            ext_mgr=ext_mgr)
+        cfg.CONF.set_default('allow_overlapping_ips', False)
         self.plugin_obj = NeutronManager.get_plugin()
 
     def tearDown(self):
         super(RouterDBTestCase, self).tearDown()
-        del test_config['plugin_name_v2']
         del test_config['config_files']
-        test_l3_plugin.L3NatDBIntTestCase.setUp = origSetUp
 
     def test_router_remove_router_interface_wrong_subnet_returns_400(self):
         with self.router() as r:

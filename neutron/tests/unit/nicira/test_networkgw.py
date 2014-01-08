@@ -25,7 +25,6 @@ from neutron.api import extensions
 from neutron.api.extensions import PluginAwareExtensionManager
 from neutron.api.v2 import attributes
 from neutron.common import config
-from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
@@ -246,13 +245,14 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
 class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     """Unit tests for Network Gateway DB support."""
 
-    def setUp(self):
-        test_config['plugin_name_v2'] = '%s.%s' % (
-            __name__, TestNetworkGatewayPlugin.__name__)
-        ext_mgr = TestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
+    def setUp(self, plugin=None, ext_mgr=None):
+        if not plugin:
+            plugin = '%s.%s' % (__name__, TestNetworkGatewayPlugin.__name__)
+        if not ext_mgr:
+            ext_mgr = TestExtensionManager()
         self.resource = networkgw.RESOURCE_NAME.replace('-', '_')
-        super(NetworkGatewayDbTestCase, self).setUp()
+        super(NetworkGatewayDbTestCase, self).setUp(plugin=plugin,
+                                                    ext_mgr=ext_mgr)
 
     def _create_network_gateway(self, fmt, tenant_id, name=None,
                                 devices=None, arg_list=None, **kwargs):

@@ -24,7 +24,6 @@ from oslo.config import cfg
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants
-from neutron.common.test_lib import test_config
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.db import agents_db
@@ -78,12 +77,9 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
                           test_l3_plugin.L3NatTestCaseMixin):
 
     def setUp(self):
-        test_config['plugin_name_v2'] = DB_PLUGIN_KLASS
-
         ext_mgr = L3SchedulerTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-
-        super(L3SchedulerTestCase, self).setUp()
+        super(L3SchedulerTestCase, self).setUp(plugin=DB_PLUGIN_KLASS,
+                                               ext_mgr=ext_mgr)
 
         self.adminContext = q_context.get_admin_context()
         self.plugin = manager.NeutronManager.get_plugin()

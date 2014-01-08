@@ -15,7 +15,6 @@
 
 
 from neutron.api.v2 import attributes as attr
-from neutron.common.test_lib import test_config
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
@@ -29,8 +28,8 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.test_extension_allowedaddresspairs.'
 
 
 class AllowedAddressPairTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
-    def setUp(self, plugin=None):
-        super(AllowedAddressPairTestCase, self).setUp()
+    def setUp(self, plugin=None, ext_mgr=None):
+        super(AllowedAddressPairTestCase, self).setUp(plugin)
 
         # Check if a plugin supports security groups
         plugin_obj = NeutronManager.get_plugin()
@@ -90,13 +89,10 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
 
 
 class AllowedAddressPairDBTestCase(AllowedAddressPairTestCase):
-    def setUp(self, plugin=None):
-        test_config['plugin_name_v2'] = DB_PLUGIN_KLASS
-        super(AllowedAddressPairDBTestCase, self).setUp()
-
-    def tearDown(self):
-        del test_config['plugin_name_v2']
-        super(AllowedAddressPairDBTestCase, self).tearDown()
+    def setUp(self, plugin=None, ext_mgr=None):
+        plugin = plugin or DB_PLUGIN_KLASS
+        super(AllowedAddressPairDBTestCase,
+              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
 
 class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):

@@ -17,7 +17,6 @@
 import mock
 
 from neutron.api.v2 import attributes as attr
-from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db
@@ -67,11 +66,12 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
 
     def setUp(self):
         service_plugins = {'metering_plugin_name': DB_METERING_PLUGIN_KLASS}
-        test_config['plugin_name_v2'] = ('neutron.tests.unit.test_l3_plugin.'
-                                         'TestL3NatIntPlugin')
+        plugin = 'neutron.tests.unit.test_l3_plugin.TestL3NatIntPlugin'
         ext_mgr = MeteringTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
-        super(TestMeteringPlugin, self).setUp(service_plugins=service_plugins)
+        super(TestMeteringPlugin, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
+                                              service_plugins=service_plugins)
+
+        self.addCleanup(mock.patch.stopall)
 
         self.uuid = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'
 
@@ -91,14 +91,6 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
         self.mock_context = self.context_patch.start()
 
         self.topic = 'metering_agent'
-
-    def tearDown(self):
-        self.uuid_patch.stop()
-        self.fanout_patch.stop()
-        self.context_patch.stop()
-        del test_config['extension_manager']
-        del test_config['plugin_name_v2']
-        super(TestMeteringPlugin, self).tearDown()
 
     def test_add_metering_label_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
@@ -278,17 +270,16 @@ class TestMeteringPluginL3AgentScheduler(
 
     def setUp(self):
         service_plugins = {'metering_plugin_name': DB_METERING_PLUGIN_KLASS}
-
         plugin_str = ('neutron.tests.unit.services.metering.'
                       'test_metering_plugin.TestRouteIntPlugin')
-        test_config['plugin_name_v2'] = plugin_str
-
         ext_mgr = MeteringTestExtensionManager()
-        test_config['extension_manager'] = ext_mgr
         super(TestMeteringPluginL3AgentScheduler,
-              self).setUp(service_plugins=service_plugins)
+              self).setUp(plugin=plugin_str, ext_mgr=ext_mgr,
+                          service_plugins=service_plugins)
 
         self.uuid = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'
+
+        self.addCleanup(mock.patch.stopall)
 
         uuid = 'neutron.openstack.common.uuidutils.generate_uuid'
         self.uuid_patch = mock.patch(uuid, return_value=self.uuid)
@@ -309,15 +300,6 @@ class TestMeteringPluginL3AgentScheduler(
         self.l3routers_mock = self.l3routers_patch.start()
 
         self.topic = 'metering_agent'
-
-    def tearDown(self):
-        self.uuid_patch.stop()
-        self.cast_patch.stop()
-        self.context_patch.stop()
-        self.l3routers_patch.stop()
-        del test_config['extension_manager']
-        del test_config['plugin_name_v2']
-        super(TestMeteringPluginL3AgentScheduler, self).tearDown()
 
     def test_add_metering_label_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'

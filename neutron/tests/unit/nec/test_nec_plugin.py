@@ -100,12 +100,13 @@ class NecPluginV2TestCase(NecPluginV2TestCaseBase,
                   'port_added': added, 'port_removed': removed}
         self.callback_nec.update_ports(self.context, **kwargs)
 
-    def setUp(self):
+    def setUp(self, plugin=None, ext_mgr=None):
         self.addCleanup(mock.patch.stopall)
 
         self._set_nec_ini()
         self.addCleanup(self._clean_nec_ini)
-        super(NecPluginV2TestCase, self).setUp(self._plugin_name)
+        plugin = plugin or self._plugin_name
+        super(NecPluginV2TestCase, self).setUp(plugin, ext_mgr=ext_mgr)
 
         self.plugin = manager.NeutronManager.get_plugin()
         self.plugin.ofc = fake_ofc_manager.patch_ofc_manager()

@@ -19,7 +19,6 @@ import mock
 import webob.exc
 
 from neutron.api.v2 import attributes
-from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.extensions import packetfilter
@@ -54,8 +53,8 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
     _nec_ini = NEC_PLUGIN_PF_INI
 
     def setUp(self):
-        test_config['extension_manager'] = PacketfilterExtensionManager()
-        super(TestNecPluginPacketFilter, self).setUp()
+        ext_mgr = PacketfilterExtensionManager()
+        super(TestNecPluginPacketFilter, self).setUp(ext_mgr=ext_mgr)
 
     def _create_packet_filter(self, fmt, net_id, expected_res_status=None,
                               arg_list=None, **kwargs):

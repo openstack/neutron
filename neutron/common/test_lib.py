@@ -37,15 +37,8 @@
 #    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 #    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from neutron.common import constants
-
-
 # describes parameters used by different unit/functional tests
 # a plugin-specific testing mechanism should import this dictionary
 # and override the values in it if needed (e.g., run_tests.py in
 # neutron/plugins/openvswitch/ )
-test_config = {
-    "plugin_name": "",
-    "default_net_op_status": constants.NET_STATUS_ACTIVE,
-    "default_port_op_status": constants.PORT_STATUS_ACTIVE,
-}
+test_config = {}

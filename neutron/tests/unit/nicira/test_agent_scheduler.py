@@ -33,7 +33,6 @@ class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
     plugin_str = PLUGIN_NAME
 
     def setUp(self):
-        test_config['plugin_name_v2'] = PLUGIN_NAME
         test_config['config_files'] = [get_fake_conf('nsx.ini.full.test')]
 
         # mock nvp api client

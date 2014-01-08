@@ -119,7 +119,6 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.mock_instance.return_value.get_nvp_version.return_value = (
             NVPVersion("2.9"))
         self.mock_instance.return_value.request.side_effect = _fake_request
-        plugin = plugin or PLUGIN_NAME
         super(NiciraPluginV2TestCase, self).setUp(plugin=plugin,
                                                   ext_mgr=ext_mgr)
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
@@ -400,8 +399,8 @@ class TestNiciraPortSecurity(NiciraPortSecurityTestCase,
         pass
 
 
-class TestNiciraAllowedAddressPairs(test_addr_pair.TestAllowedAddressPairs,
-                                    NiciraPluginV2TestCase):
+class TestNiciraAllowedAddressPairs(NiciraPluginV2TestCase,
+                                    test_addr_pair.TestAllowedAddressPairs):
     pass
 
 
@@ -480,7 +479,7 @@ class NiciraL3NatTest(test_l3_plugin.L3BaseForIntTests,
     def _restore_l3_attribute_map(self):
         l3.RESOURCE_ATTRIBUTE_MAP = self._l3_attribute_map_bk
 
-    def setUp(self, plugin=None, ext_mgr=None, service_plugins=None):
+    def setUp(self, plugin=PLUGIN_NAME, ext_mgr=None, service_plugins=None):
         self._l3_attribute_map_bk = {}
         for item in l3.RESOURCE_ATTRIBUTE_MAP:
             self._l3_attribute_map_bk[item] = (
@@ -1248,8 +1247,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
 
     def setUp(self):
         ext_mgr = test_l3_plugin.L3TestExtensionManager()
-        test_lib.test_config['extension_manager'] = ext_mgr
-        super(NiciraNeutronNVPOutOfSync, self).setUp()
+        super(NiciraNeutronNVPOutOfSync, self).setUp(ext_mgr=ext_mgr)
 
     def test_delete_network_not_in_nvp(self):
         res = self._create_network('json', 'net1', True)
@@ -1404,12 +1402,13 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
                          constants.NET_STATUS_ERROR)
 
 
-class TestNiciraNetworkGateway(test_l2_gw.NetworkGatewayDbTestCase,
-                               NiciraPluginV2TestCase):
+class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
+                               test_l2_gw.NetworkGatewayDbTestCase):
 
-    def setUp(self):
+    def setUp(self, plugin=PLUGIN_NAME, ext_mgr=None):
         cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
-        super(TestNiciraNetworkGateway, self).setUp()
+        super(TestNiciraNetworkGateway,
+              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def test_create_network_gateway_name_exceeds_40_chars(self):
         name = 'this_is_a_gateway_whose_name_is_longer_than_40_chars'
