@@ -161,6 +161,13 @@ class PortSecurityDbMixin(object):
         if (psec.PORTSECURITY in port and
             isinstance(port[psec.PORTSECURITY], bool)):
             port_security_enabled = port[psec.PORTSECURITY]
+
+        # If port has an ip and security_groups are passed in
+        # conveniently set port_security_enabled to true this way
+        # user doesn't also have to pass in port_security_enabled=True
+        # when creating ports.
+        elif (has_ip and attrs.is_attr_set('security_groups')):
+            port_security_enabled = True
         else:
             port_security_enabled = self._get_network_security_binding(
                 context, port['network_id'])
