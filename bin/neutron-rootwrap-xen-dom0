@@ -26,6 +26,7 @@ from __future__ import print_function
 import ConfigParser
 import json
 import os
+import select
 import sys
 import traceback
 
@@ -107,13 +108,14 @@ def filter_command(exec_name, filters_path, user_args, exec_dirs):
         sys.exit(RC_UNAUTHORIZED)
 
 
-def run_command(url, username, password, user_args):
+def run_command(url, username, password, user_args, cmd_input):
     try:
         session = XenAPI.Session(url)
         session.login_with_password(username, password)
         host = session.xenapi.session.get_this_host(session.handle)
         result = session.xenapi.host.call_plugin(
-            host, 'netwrap', 'run_command', {'cmd': json.dumps(user_args)})
+            host, 'netwrap', 'run_command',
+            {'cmd': json.dumps(user_args), 'cmd_input': json.dumps(cmd_input)})
         return json.loads(result)
     except Exception as e:
         traceback.print_exc()
@@ -124,8 +126,15 @@ def main():
     exec_name, config_file, user_args = parse_args()
     config = load_configuration(exec_name, config_file)
     filter_command(exec_name, config['filters_path'], user_args, config['exec_dirs'])
+
+    # If data is available on the standard input, we need to pass it to the
+    # command executed in dom0
+    cmd_input = None
+    if select.select([sys.stdin,],[],[],0.0)[0]:
+        cmd_input = "".join(sys.stdin)
+
     return run_command(config['url'], config['username'], config['password'],
-                       user_args)
+                       user_args, cmd_input)
 
 
 if __name__ == '__main__':

@@ -44,8 +44,7 @@ class PluginError(Exception):
     def __init__(self, *args):
         Exception.__init__(self, *args)
 
-
-def _run_command(cmd):
+def _run_command(cmd, cmd_input):
     """Abstracts out the basics of issuing system commands. If the command
     returns anything in stderr, a PluginError is raised with that information.
     Otherwise, the output from stdout is returned.
@@ -53,11 +52,11 @@ def _run_command(cmd):
     pipe = subprocess.PIPE
     proc = subprocess.Popen(cmd, shell=False, stdin=pipe, stdout=pipe,
                             stderr=pipe, close_fds=True)
-    proc.wait()
-    err = proc.stderr.read()
+    (out, err) = proc.communicate(cmd_input)
+
     if err:
         raise PluginError(err)
-    return proc.stdout.read()
+    return out
 
 
 def run_command(session, args):
@@ -65,7 +64,7 @@ def run_command(session, args):
     if cmd and cmd[0] not in ALLOWED_CMDS:
         msg = _("Dom0 execution of '%s' is not permitted") % cmd[0]
         raise PluginError(msg)
-    result = _run_command(cmd)
+    result = _run_command(cmd, json.loads(args.get('cmd_input', 'null')))
     return json.dumps(result)
 
 
