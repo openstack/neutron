@@ -44,26 +44,37 @@ def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    # Update table for port/lswitchport mappings
-    op.rename_table('neutron_nvp_port_mapping', 'neutron_nsx_port_mappings')
-    op.add_column(
-        'neutron_nsx_port_mappings',
-        sa.Column('nsx_switch_id', sa.String(length=36), nullable=True))
-    op.alter_column(
-        'neutron_nsx_port_mappings', 'nvp_id',
-        new_column_name='nsx_port_id',
-        existing_nullable=True,
-        existing_type=sa.String(length=36))
+    op.create_table('neutron_nsx_port_mappings',
+                    sa.Column('neutron_id', sa.String(length=36),
+                              nullable=False),
+                    sa.Column('nsx_port_id', sa.String(length=36),
+                              nullable=False),
+                    sa.Column('nsx_switch_id', sa.String(length=36),
+                              nullable=True),
+                    sa.ForeignKeyConstraint(['neutron_id'], ['ports.id'],
+                                            ondelete='CASCADE'),
+                    sa.PrimaryKeyConstraint('neutron_id'))
+
+    op.execute("INSERT INTO neutron_nsx_port_mappings SELECT quantum_id as "
+               "neutron_id, nvp_id as nsx_port_id, null as nsx_switch_id from"
+               " quantum_nvp_port_mapping")
+    op.drop_table('quantum_nvp_port_mapping')
 
 
 def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
+
     # Restore table to pre-icehouse version
-    op.drop_column('neutron_nsx_port_mappings', 'nsx_switch_id')
-    op.alter_column(
-        'neutron_nsx_port_mappings', 'nsx_port_id',
-        new_column_name='nvp_id',
-        existing_nullable=True,
-        existing_type=sa.String(length=36))
-    op.rename_table('neutron_nsx_port_mappings', 'neutron_nvp_port_mapping')
+    op.create_table('quantum_nvp_port_mapping',
+                    sa.Column('quantum_id', sa.String(length=36),
+                              nullable=False),
+                    sa.Column('nvp_id', sa.String(length=36),
+                              nullable=False),
+                    sa.ForeignKeyConstraint(['quantum_id'], ['ports.id'],
+                                            ondelete='CASCADE'),
+                    sa.PrimaryKeyConstraint('quantum_id'))
+    op.execute("INSERT INTO quantum_nvp_port_mapping SELECT neutron_id as "
+               "quantum_id, nsx_port_id as nvp_id from"
+               " neutron_nsx_port_mappings")
+    op.drop_table('neutron_nsx_port_mappings')
