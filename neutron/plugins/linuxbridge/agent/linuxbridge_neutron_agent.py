@@ -22,9 +22,7 @@
 # Neutron OpenVSwitch Plugin.
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
-import distutils.version as dist_version
 import os
-import platform
 import sys
 import time
 
@@ -38,6 +36,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as logging_config
 from neutron.common import constants
+from neutron.common import exceptions
 from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
@@ -514,29 +513,74 @@ class LinuxBridgeManager:
                 devices.add(device)
         return devices
 
-    def check_vxlan_support(self):
-        kernel_version = dist_version.LooseVersion(platform.release())
-        if cfg.CONF.VXLAN.l2_population and (
-                kernel_version > dist_version.LooseVersion(
-                lconst.MIN_VXLAN_KVER[lconst.VXLAN_UCAST])) and (
-                ip_lib.iproute_arg_supported(['bridge', 'fdb'],
-                                             'append', self.root_helper)):
-            self.vxlan_mode = lconst.VXLAN_UCAST
-        elif (kernel_version > dist_version.LooseVersion(
-                lconst.MIN_VXLAN_KVER[lconst.VXLAN_MCAST])) and (
-                ip_lib.iproute_arg_supported(['ip', 'link', 'add',
-                                              'type', 'vxlan'], 'proxy',
-                                             self.root_helper)):
-            if cfg.CONF.VXLAN.vxlan_group:
-                self.vxlan_mode = lconst.VXLAN_MCAST
-            else:
-                self.vxlan_mode = lconst.VXLAN_NONE
-                LOG.warning(_('VXLAN muticast group must be provided in '
-                              'vxlan_group option to enable VXLAN'))
+    def vxlan_ucast_supported(self):
+        if not cfg.CONF.VXLAN.l2_population:
+            return False
+        if not ip_lib.iproute_arg_supported(
+                ['bridge', 'fdb'], 'append', self.root_helper):
+            LOG.warning(_('Option "%(option)s" must be supported by command '
+                          '"%(command)s" to enable %(mode)s mode') %
+                        {'option': 'append',
+                         'command': 'bridge fdb',
+                         'mode': 'VXLAN UCAST'})
+            return False
+        for segmentation_id in range(1, constants.MAX_VXLAN_VNI + 1):
+            if not self.device_exists(
+                    self.get_vxlan_device_name(segmentation_id)):
+                break
         else:
-            self.vxlan_mode = lconst.VXLAN_NONE
-            LOG.warning(_('Unable to use VXLAN, it requires at least 3.8 '
-                          'linux kernel and iproute2 3.8'))
+            LOG.error(_('No valid Segmentation ID to perform UCAST test.'))
+            return False
+
+        test_iface = self.ensure_vxlan(segmentation_id)
+        try:
+            utils.execute(
+                cmd=['bridge', 'fdb', 'append', constants.FLOODING_ENTRY[0],
+                     'dev', test_iface, 'dst', '1.1.1.1'],
+                root_helper=self.root_helper)
+            return True
+        except RuntimeError:
+            return False
+        finally:
+            self.delete_vxlan(test_iface)
+
+    def vxlan_mcast_supported(self):
+        if not cfg.CONF.VXLAN.vxlan_group:
+            LOG.warning(_('VXLAN muticast group must be provided in '
+                          'vxlan_group option to enable VXLAN MCAST mode'))
+            return False
+        if not ip_lib.iproute_arg_supported(
+                ['ip', 'link', 'add', 'type', 'vxlan'],
+                'proxy', self.root_helper):
+            LOG.warning(_('Option "%(option)s" must be supported by command '
+                          '"%(command)s" to enable %(mode)s mode') %
+                        {'option': 'proxy',
+                         'command': 'ip link add type vxlan',
+                         'mode': 'VXLAN MCAST'})
+
+            return False
+        return True
+
+    def vxlan_module_supported(self):
+        try:
+            utils.execute(cmd=['modinfo', 'vxlan'])
+            return True
+        except RuntimeError:
+            return False
+
+    def check_vxlan_support(self):
+        self.vxlan_mode = lconst.VXLAN_NONE
+        if not self.vxlan_module_supported():
+            LOG.error(_('Linux kernel vxlan module and iproute2 3.8 or above '
+                        'are required to enable VXLAN.'))
+            raise exceptions.VxlanNetworkUnsupported()
+
+        if self.vxlan_ucast_supported():
+            self.vxlan_mode = lconst.VXLAN_UCAST
+        elif self.vxlan_mcast_supported():
+            self.vxlan_mode = lconst.VXLAN_MCAST
+        else:
+            raise exceptions.VxlanNetworkUnsupported()
         LOG.debug(_('Using %s VXLAN mode'), self.vxlan_mode)
 
     def fdb_ip_entry_exists(self, mac, ip, interface):

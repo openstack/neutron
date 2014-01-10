@@ -24,6 +24,7 @@ import testtools
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants
+from neutron.common import exceptions
 from neutron.openstack.common.rpc import common as rpc_common
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.linuxbridge.agent import linuxbridge_neutron_agent
@@ -646,59 +647,107 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                               "removed": set(["dev3"])
                               })
 
-    def _check_vxlan_support(self, kernel_version, vxlan_proxy_supported,
-                             fdb_append_supported, l2_population,
-                             expected_mode):
-        def iproute_supported_side_effect(*args):
-            if args[1] == 'proxy':
-                return vxlan_proxy_supported
-            elif args[1] == 'append':
-                return fdb_append_supported
-
+    def _check_vxlan_support(self, expected, vxlan_module_supported,
+                             vxlan_ucast_supported, vxlan_mcast_supported):
         with contextlib.nested(
-            mock.patch("platform.release", return_value=kernel_version),
-            mock.patch.object(ip_lib, 'iproute_arg_supported',
-                              side_effect=iproute_supported_side_effect),
-        ) as (kver_fn, ip_arg_fn):
-            self.lbm.check_vxlan_support()
-            self.assertEqual(self.lbm.vxlan_mode, expected_mode)
+            mock.patch.object(self.lbm, 'vxlan_module_supported',
+                              return_value=vxlan_module_supported),
+            mock.patch.object(self.lbm, 'vxlan_ucast_supported',
+                              return_value=vxlan_ucast_supported),
+            mock.patch.object(self.lbm, 'vxlan_mcast_supported',
+                              return_value=vxlan_mcast_supported)):
+            if expected == lconst.VXLAN_NONE:
+                self.assertRaises(exceptions.VxlanNetworkUnsupported,
+                                  self.lbm.check_vxlan_support)
+                self.assertEqual(expected, self.lbm.vxlan_mode)
+            else:
+                self.lbm.check_vxlan_support()
+                self.assertEqual(expected, self.lbm.vxlan_mode)
 
-    def test_vxlan_mode_ucast(self):
-        self._check_vxlan_support(kernel_version='3.12',
-                                  vxlan_proxy_supported=True,
-                                  fdb_append_supported=True,
-                                  l2_population=True,
-                                  expected_mode=lconst.VXLAN_MCAST)
+    def test_check_vxlan_support(self):
+        self._check_vxlan_support(expected=lconst.VXLAN_UCAST,
+                                  vxlan_module_supported=True,
+                                  vxlan_ucast_supported=True,
+                                  vxlan_mcast_supported=True)
+        self._check_vxlan_support(expected=lconst.VXLAN_MCAST,
+                                  vxlan_module_supported=True,
+                                  vxlan_ucast_supported=False,
+                                  vxlan_mcast_supported=True)
 
-    def test_vxlan_mode_mcast(self):
-        self._check_vxlan_support(kernel_version='3.12',
-                                  vxlan_proxy_supported=True,
-                                  fdb_append_supported=False,
-                                  l2_population=True,
-                                  expected_mode=lconst.VXLAN_MCAST)
-        self._check_vxlan_support(kernel_version='3.10',
-                                  vxlan_proxy_supported=True,
-                                  fdb_append_supported=True,
-                                  l2_population=True,
-                                  expected_mode=lconst.VXLAN_MCAST)
+        self._check_vxlan_support(expected=lconst.VXLAN_NONE,
+                                  vxlan_module_supported=False,
+                                  vxlan_ucast_supported=False,
+                                  vxlan_mcast_supported=False)
+        self._check_vxlan_support(expected=lconst.VXLAN_NONE,
+                                  vxlan_module_supported=True,
+                                  vxlan_ucast_supported=False,
+                                  vxlan_mcast_supported=False)
 
-    def test_vxlan_mode_unsupported(self):
-        self._check_vxlan_support(kernel_version='3.7',
-                                  vxlan_proxy_supported=True,
-                                  fdb_append_supported=True,
-                                  l2_population=False,
-                                  expected_mode=lconst.VXLAN_NONE)
-        self._check_vxlan_support(kernel_version='3.10',
-                                  vxlan_proxy_supported=False,
-                                  fdb_append_supported=False,
-                                  l2_population=False,
-                                  expected_mode=lconst.VXLAN_NONE)
-        cfg.CONF.set_override('vxlan_group', '', 'VXLAN')
-        self._check_vxlan_support(kernel_version='3.12',
-                                  vxlan_proxy_supported=True,
-                                  fdb_append_supported=True,
-                                  l2_population=True,
-                                  expected_mode=lconst.VXLAN_NONE)
+    def _check_vxlan_module_supported(self, expected, execute_side_effect):
+        with mock.patch.object(
+                utils, 'execute',
+                side_effect=execute_side_effect):
+            self.assertEqual(expected, self.lbm.vxlan_module_supported())
+
+    def test_vxlan_module_supported(self):
+        self._check_vxlan_module_supported(
+            expected=True,
+            execute_side_effect=None)
+        self._check_vxlan_module_supported(
+            expected=False,
+            execute_side_effect=RuntimeError())
+
+    def _check_vxlan_ucast_supported(
+            self, expected, l2_population, iproute_arg_supported, fdb_append):
+        cfg.CONF.set_override('l2_population', l2_population, 'VXLAN')
+        with contextlib.nested(
+                mock.patch.object(
+                    self.lbm, 'device_exists', return_value=False),
+                mock.patch.object(self.lbm, 'delete_vxlan', return_value=None),
+                mock.patch.object(self.lbm, 'ensure_vxlan', return_value=None),
+                mock.patch.object(
+                    utils, 'execute',
+                    side_effect=None if fdb_append else RuntimeError()),
+                mock.patch.object(
+                    ip_lib, 'iproute_arg_supported',
+                    return_value=iproute_arg_supported)):
+                self.assertEqual(expected, self.lbm.vxlan_ucast_supported())
+
+    def test_vxlan_ucast_supported(self):
+        self._check_vxlan_ucast_supported(
+            expected=False,
+            l2_population=False, iproute_arg_supported=True, fdb_append=True)
+        self._check_vxlan_ucast_supported(
+            expected=False,
+            l2_population=True, iproute_arg_supported=False, fdb_append=True)
+        self._check_vxlan_ucast_supported(
+            expected=False,
+            l2_population=True, iproute_arg_supported=True, fdb_append=False)
+        self._check_vxlan_ucast_supported(
+            expected=True,
+            l2_population=True, iproute_arg_supported=True, fdb_append=True)
+
+    def _check_vxlan_mcast_supported(
+            self, expected, vxlan_group, iproute_arg_supported):
+        cfg.CONF.set_override('vxlan_group', vxlan_group, 'VXLAN')
+        with mock.patch.object(
+                ip_lib, 'iproute_arg_supported',
+                return_value=iproute_arg_supported):
+            self.assertEqual(expected, self.lbm.vxlan_mcast_supported())
+
+    def test_vxlan_mcast_supported(self):
+        self._check_vxlan_mcast_supported(
+            expected=False,
+            vxlan_group='',
+            iproute_arg_supported=True)
+        self._check_vxlan_mcast_supported(
+            expected=False,
+            vxlan_group='224.0.0.1',
+            iproute_arg_supported=False)
+        self._check_vxlan_mcast_supported(
+            expected=True,
+            vxlan_group='224.0.0.1',
+            iproute_arg_supported=True)
 
 
 class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):

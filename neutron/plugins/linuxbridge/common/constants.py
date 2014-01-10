@@ -28,9 +28,6 @@ VXLAN_NONE = 'not_supported'
 VXLAN_MCAST = 'multicast_flooding'
 VXLAN_UCAST = 'unicast_flooding'
 
-# Corresponding minimal kernel versions requirements
-MIN_VXLAN_KVER = {VXLAN_MCAST: '3.8', VXLAN_UCAST: '3.11'}
-
 
 # TODO(rkukura): Eventually remove this function, which provides
 # temporary backward compatibility with pre-Havana RPC and DB vlan_id
