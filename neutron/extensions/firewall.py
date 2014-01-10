@@ -24,9 +24,8 @@ import six
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
-from neutron.api.v2 import base
+from neutron.api.v2 import resource_helper
 from neutron.common import exceptions as qexception
-from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.service_base import ServicePluginBase
@@ -321,46 +320,16 @@ class Firewall(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_resources(cls):
-        my_plurals = []
-        for plural in RESOURCE_ATTRIBUTE_MAP:
-            if plural == 'firewall_policies':
-                singular = 'firewall_policy'
-            else:
-                singular = plural[:-1]
-            my_plurals.append((plural, singular))
-        attr.PLURALS.update(dict(my_plurals))
-        resources = []
-        plugin = manager.NeutronManager.get_service_plugins()[
-            constants.FIREWALL]
-        for collection_name in RESOURCE_ATTRIBUTE_MAP:
-            # Special handling needed for resources with 'y' ending
-            if collection_name == 'firewall_policies':
-                resource_name = 'firewall_policy'
-            else:
-                resource_name = collection_name[:-1]
-
-            params = RESOURCE_ATTRIBUTE_MAP[collection_name]
-
-            member_actions = {}
-            if resource_name == 'firewall_policy':
-                member_actions = {'insert_rule': 'PUT',
-                                  'remove_rule': 'PUT'}
-
-            controller = base.create_resource(
-                collection_name, resource_name, plugin, params,
-                member_actions=member_actions,
-                allow_pagination=cfg.CONF.allow_pagination,
-                allow_sorting=cfg.CONF.allow_sorting)
-
-            resource = extensions.ResourceExtension(
-                collection_name,
-                controller,
-                path_prefix=constants.COMMON_PREFIXES[constants.FIREWALL],
-                member_actions=member_actions,
-                attr_map=params)
-            resources.append(resource)
-
-        return resources
+        special_mappings = {'firewall_policies': 'firewall_policy'}
+        plural_mappings = resource_helper.build_plural_mappings(
+            special_mappings, RESOURCE_ATTRIBUTE_MAP)
+        attr.PLURALS.update(plural_mappings)
+        action_map = {'firewall_policy': {'insert_rule': 'PUT',
+                                          'remove_rule': 'PUT'}}
+        return resource_helper.build_resource_info(plural_mappings,
+                                                   RESOURCE_ATTRIBUTE_MAP,
+                                                   constants.FIREWALL,
+                                                   action_map=action_map)
 
     @classmethod
     def get_plugin_interface(cls):

@@ -24,11 +24,9 @@ from oslo.config import cfg
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
-from neutron.api.v2 import base
+from neutron.api.v2 import resource_helper
 from neutron.common import exceptions as qexception
-from neutron import manager
 from neutron.plugins.common import constants
-from neutron import quota
 
 
 # L3 Exceptions
@@ -176,35 +174,16 @@ class L3(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Ext Resources."""
-        my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
-        attr.PLURALS.update(dict(my_plurals))
-        exts = []
-        plugin = manager.NeutronManager.get_service_plugins()[
-            constants.L3_ROUTER_NAT]
-        for resource_name in ['router', 'floatingip']:
-            collection_name = resource_name + "s"
-            params = RESOURCE_ATTRIBUTE_MAP.get(collection_name, dict())
-
-            member_actions = {}
-            if resource_name == 'router':
-                member_actions = {'add_router_interface': 'PUT',
-                                  'remove_router_interface': 'PUT'}
-
-            quota.QUOTAS.register_resource_by_name(resource_name)
-
-            controller = base.create_resource(
-                collection_name, resource_name, plugin, params,
-                member_actions=member_actions,
-                allow_pagination=cfg.CONF.allow_pagination,
-                allow_sorting=cfg.CONF.allow_sorting)
-
-            ex = extensions.ResourceExtension(collection_name,
-                                              controller,
-                                              member_actions=member_actions,
-                                              attr_map=params)
-            exts.append(ex)
-
-        return exts
+        plural_mappings = resource_helper.build_plural_mappings(
+            {}, RESOURCE_ATTRIBUTE_MAP)
+        attr.PLURALS.update(plural_mappings)
+        action_map = {'router': {'add_router_interface': 'PUT',
+                                 'remove_router_interface': 'PUT'}}
+        return resource_helper.build_resource_info(plural_mappings,
+                                                   RESOURCE_ATTRIBUTE_MAP,
+                                                   constants.L3_ROUTER_NAT,
+                                                   action_map=action_map,
+                                                   register_quota=True)
 
     def update_attributes_map(self, attributes):
         super(L3, self).update_attributes_map(
