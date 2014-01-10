@@ -20,13 +20,8 @@
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attrs
-from neutron.common import exceptions as qexception
 from neutron.extensions import l3
 
-
-class RouterDNatDisabled(qexception.BadRequest):
-    message = _("DNat is disabled for the router %(router_id)s. Floating IPs "
-                "cannot be associated.")
 
 EXTENDED_ATTRIBUTES_2_0 = {
     'routers': {l3.EXTERNAL_GW_INFO:
@@ -56,7 +51,7 @@ class L3_ext_gw_mode(extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return ("Extension of the router abstraction for specifying whether "
-                "SNAT, DNAT or both should occur on the external gateway")
+                "SNAT should occur on the external gateway")
 
     @classmethod
     def get_namespace(cls):
