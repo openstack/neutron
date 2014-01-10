@@ -44,16 +44,16 @@ def upgrade(active_plugins=None, options=None):
         return
 
     op.create_table(
-        'neutron_nvp_port_mapping',
-        sa.Column('neutron_id', sa.String(length=36), nullable=False),
+        'quantum_nvp_port_mapping',
+        sa.Column('quantum_id', sa.String(length=36), nullable=False),
         sa.Column('nvp_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['neutron_id'], ['ports.id'],
+        sa.ForeignKeyConstraint(['quantum_id'], ['ports.id'],
                                 ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('neutron_id'))
+        sa.PrimaryKeyConstraint('quantum_id'))
 
 
 def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.drop_table('neutron_nvp_port_mapping')
+    op.drop_table('quantum_nvp_port_mapping')
