@@ -76,12 +76,35 @@ class NeutronManagerTestCase(base.BaseTestCase):
                        (dummy_plugin.DummyServicePlugin, types.ClassType)),
             "loaded plugin should be of type neutronDummyPlugin")
 
+    def test_service_plugin_by_name_is_loaded(self):
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
+        cfg.CONF.set_override("service_plugins", ["dummy"])
+        mgr = NeutronManager.get_instance()
+        plugin = mgr.get_service_plugins()[constants.DUMMY]
+
+        self.assertTrue(
+            isinstance(plugin,
+                       (dummy_plugin.DummyServicePlugin, types.ClassType)),
+            "loaded plugin should be of type neutronDummyPlugin")
+
     def test_multiple_plugins_specified_for_service_type(self):
         cfg.CONF.set_override("service_plugins",
                               ["neutron.tests.unit.dummy_plugin."
                                "DummyServicePlugin",
                                "neutron.tests.unit.dummy_plugin."
                                "DummyServicePlugin"])
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
+        self.assertRaises(ValueError, NeutronManager.get_instance)
+
+    def test_multiple_plugins_by_name_specified_for_service_type(self):
+        cfg.CONF.set_override("service_plugins", ["dummy", "dummy"])
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
+        self.assertRaises(ValueError, NeutronManager.get_instance)
+
+    def test_multiple_plugins_mixed_specified_for_service_type(self):
+        cfg.CONF.set_override("service_plugins",
+                              ["neutron.tests.unit.dummy_plugin."
+                               "DummyServicePlugin", "dummy"])
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         self.assertRaises(ValueError, NeutronManager.get_instance)
 
