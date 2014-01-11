@@ -23,14 +23,20 @@ from neutron.extensions import portsecurity as psec
 from neutron.extensions import securitygroup as ext_sg
 from neutron.manager import NeutronManager
 from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit import test_extension_security_group
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.test_extension_portsecurity.'
                    'PortSecurityTestPlugin')
 
 
-class PortSecurityTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
+class PortSecurityTestCase(
+    test_extension_security_group.SecurityGroupsTestCase,
+    test_db_plugin.NeutronDbPluginV2TestCase):
+
     def setUp(self, plugin=None):
-        super(PortSecurityTestCase, self).setUp(plugin)
+        ext_mgr = (
+            test_extension_security_group.SecurityGroupTestExtensionManager())
+        super(PortSecurityTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
         # Check if a plugin supports security groups
         plugin_obj = NeutronManager.get_plugin()
@@ -229,6 +235,22 @@ class TestPortSecurity(PortSecurityDBTestCase):
         port = self.deserialize('json', res)
         self.assertEqual(port['port'][psec.PORTSECURITY], True)
         self._delete('ports', port['port']['id'])
+
+    def test_create_port_fails_with_secgroup_and_port_security_false(self):
+        if self._skip_security_group:
+            self.skipTest("Plugin does not support security groups")
+        with self.network() as net:
+            with self.subnet(network=net):
+                security_group = self.deserialize(
+                    'json',
+                    self._create_security_group(self.fmt, 'asdf', 'asdf'))
+                security_group_id = security_group['security_group']['id']
+                res = self._create_port('json', net['network']['id'],
+                                        arg_list=('security_groups',
+                                                  'port_security_enabled'),
+                                        security_groups=[security_group_id],
+                                        port_security_enabled=False)
+                self.assertEqual(res.status_int, 400)
 
     def test_create_port_with_default_security_group(self):
         if self._skip_security_group:
