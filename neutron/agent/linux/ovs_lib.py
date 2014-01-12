@@ -42,7 +42,7 @@ class VifPort:
     def __str__(self):
         return ("iface-id=" + self.vif_id + ", vif_mac=" +
                 self.vif_mac + ", port_name=" + self.port_name +
-                ", ofport=" + str(self.ofport) + ", bridge_name =" +
+                ", ofport=" + str(self.ofport) + ", bridge_name=" +
                 self.switch.br_name)
 
 
