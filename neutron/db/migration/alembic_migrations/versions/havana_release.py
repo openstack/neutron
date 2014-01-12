@@ -18,14 +18,14 @@
 """havana
 
 Revision ID: havana
-Revises: 49f5e553f61f
+Revises: 40b0aff0302e
 Create Date: 2013-10-02 00:00:00.000000
 
 """
 
 # revision identifiers, used by Alembic.
 revision = 'havana'
-down_revision = '49f5e553f61f'
+down_revision = '40b0aff0302e'
 
 # Change to ['*'] if this migration applies to all plugins
 

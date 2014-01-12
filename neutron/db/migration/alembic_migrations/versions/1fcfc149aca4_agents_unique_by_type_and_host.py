@@ -39,6 +39,7 @@ migration_for_plugins = [
     'neutron.services.loadbalancer.plugin.LoadBalancerPlugin',
     'neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2',
     'neutron.plugins.oneconvergence.plugin.OneConvergencePluginV2',
+    'neutron.plugins.mlnx.mlnx_plugin.MellanoxEswitchPlugin',
 ]
 
 from alembic import op
