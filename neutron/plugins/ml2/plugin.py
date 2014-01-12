@@ -589,7 +589,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         changed_fixed_ips = 'fixed_ips' in port['port']
         with session.begin(subtransactions=True):
-            original_port = super(Ml2Plugin, self).get_port(context, id)
+            port_db = (session.query(models_v2.Port).
+                       enable_eagerloads(False).
+                       filter_by(id=id).with_lockmode('update').one())
+            original_port = self._make_port_dict(port_db)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
                                                               port)
             if self.is_address_pairs_attribute_updated(original_port, port):
@@ -641,7 +644,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             if l3plugin:
                 l3plugin.disassociate_floatingips(context, id)
-            port = self.get_port(context, id)
+            port_db = (session.query(models_v2.Port).
+                       enable_eagerloads(False).
+                       filter_by(id=id).with_lockmode('update').one())
+            port = self._make_port_dict(port_db)
+
             network = self.get_network(context, port['network_id'])
             mech_context = driver_context.PortContext(self, context, port,
                                                       network)
