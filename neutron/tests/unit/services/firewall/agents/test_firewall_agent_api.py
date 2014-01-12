@@ -23,7 +23,28 @@ import contextlib
 import mock
 
 from neutron.services.firewall.agents import firewall_agent_api as api
+from neutron.services.firewall.drivers import fwaas_base as base_driver
 from neutron.tests import base
+
+
+class NoopFwaasDriver(base_driver.FwaasDriverBase):
+    """Noop Fwaas Driver.
+
+    Firewall driver which does nothing.
+    This driver is for disabling Fwaas functionality.
+    """
+
+    def create_firewall(self, apply_list, firewall):
+        pass
+
+    def delete_firewall(self, apply_list, firewall):
+        pass
+
+    def update_firewall(self, apply_list, firewall):
+        pass
+
+    def apply_default_policy(self, apply_list, firewall):
+        pass
 
 
 class TestFWaaSAgentApi(base.BaseTestCase):

@@ -29,8 +29,7 @@ LOG = logging.getLogger(__name__)
 FWaaSOpts = [
     cfg.StrOpt(
         'driver',
-        default=('neutron.services.firewall.drivers.fwaas_base.'
-                 'NoopFwaasDriver'),
+        default='',
         help=_("Name of the FWaaS Driver")),
     cfg.BoolOpt(
         'enabled',

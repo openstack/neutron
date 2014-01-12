@@ -98,23 +98,3 @@ class FwaasDriverBase(object):
         interfaces.
         """
         pass
-
-
-class NoopFwaasDriver(FwaasDriverBase):
-    """Noop Fwaas Driver.
-
-    Firewall driver which does nothing.
-    This driver is for disabling Fwaas functionality.
-    """
-
-    def create_firewall(self, apply_list, firewall):
-        pass
-
-    def delete_firewall(self, apply_list, firewall):
-        pass
-
-    def update_firewall(self, apply_list, firewall):
-        pass
-
-    def apply_default_policy(self, apply_list, firewall):
-        pass
