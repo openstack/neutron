@@ -589,9 +589,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         changed_fixed_ips = 'fixed_ips' in port['port']
         with session.begin(subtransactions=True):
-            port_db = (session.query(models_v2.Port).
-                       enable_eagerloads(False).
-                       filter_by(id=id).with_lockmode('update').one())
+            try:
+                port_db = (session.query(models_v2.Port).
+                           enable_eagerloads(False).
+                           filter_by(id=id).with_lockmode('update').one())
+            except sql_exc.NoResultFound:
+                raise exc.PortNotFound(port_id=id)
             original_port = self._make_port_dict(port_db)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
                                                               port)
@@ -644,9 +647,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             if l3plugin:
                 l3plugin.disassociate_floatingips(context, id)
-            port_db = (session.query(models_v2.Port).
-                       enable_eagerloads(False).
-                       filter_by(id=id).with_lockmode('update').one())
+            try:
+                port_db = (session.query(models_v2.Port).
+                           enable_eagerloads(False).
+                           filter_by(id=id).with_lockmode('update').one())
+            except sql_exc.NoResultFound:
+                # the port existed when l3plugin.prevent_l3_port_deletion
+                # was called but now is already gone
+                LOG.debug(_("The port '%s' was deleted"), id)
+                return
             port = self._make_port_dict(port_db)
 
             network = self.get_network(context, port['network_id'])
