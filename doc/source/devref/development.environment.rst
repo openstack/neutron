@@ -22,8 +22,8 @@ This page describes how to setup a working Python development
 environment that can be used in developing Neutron on Ubuntu, Fedora or
 Mac OS X. These instructions assume you're already familiar with
 Git and Gerrit, which is a code repository mirror and code review toolset
-, however if you aren't please see `this Git tutorial_` for an introduction
-to using Git and `this wiki page_` for a tutorial on using Gerrit and Git for
+, however if you aren't please see `this Git tutorial`_ for an introduction
+to using Git and `this wiki page`_ for a tutorial on using Gerrit and Git for
 code contribution to Openstack projects.
 
 .. _this Git tutorial: http://git-scm.com/book/en/Getting-Started
@@ -31,8 +31,8 @@ code contribution to Openstack projects.
 
 Following these instructions will allow you to run the Neutron unit
 tests. If you want to be able to run Neutron in a full OpenStack environment,
-you can use the excellent `DevStack_` project to do so. There is a wiki page
-that describes `setting up Neutron using DevStack_`.
+you can use the excellent `DevStack`_ project to do so. There is a wiki page
+that describes `setting up Neutron using DevStack`_.
 
 .. _DevStack: https://github.com/openstack-dev/devstack
 .. _setting up Neutron using Devstack: https://wiki.openstack.org/wiki/NeutronDevstack
@@ -40,7 +40,7 @@ that describes `setting up Neutron using DevStack_`.
 Virtual environments
 --------------------
 
-Testing OpenStack projects, including Neutron, is made easier with `DevStack_`.
+Testing OpenStack projects, including Neutron, is made easier with `DevStack`_.
 
 Create a machine (such as a VM or Vagrant box) running a distribution supported
 by DevStack and install DevStack there. For example, there is a Vagrant script
@@ -74,11 +74,11 @@ tests in a virtualenv:
 With `tox`
 ~~~~~~~~~~
 
-Neutron, like other OpenStack projects, uses `tox_` for managing the virtual
-environments for running test cases. It uses `Testr_` for managing the running
+Neutron, like other OpenStack projects, uses `tox`_ for managing the virtual
+environments for running test cases. It uses `Testr`_ for managing the running
 of the test cases.
 
-Tox handles the creation of a series of `virtualenvs_` that target specific
+Tox handles the creation of a series of `virtualenvs`_ that target specific
 versions of Python (2.6, 2.7, 3.3, etc).
 
 Testr handles the parallel execution of series of test cases as well as
