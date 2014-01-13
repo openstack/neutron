@@ -20,6 +20,8 @@
 
 import re
 
+from oslo.config import cfg
+
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.openstack.common import jsonutils
@@ -27,6 +29,15 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as p_const
 #  TODO(JLH) Should we remove the explicit include of the ovs plugin here
 from neutron.plugins.openvswitch.common import constants
+
+# Default timeout for ovs-vsctl command
+DEFAULT_OVS_VSCTL_TIMEOUT = 10
+OPTS = [
+    cfg.IntOpt('ovs_vsctl_timeout',
+               default=DEFAULT_OVS_VSCTL_TIMEOUT,
+               help=_('Timeout in seconds for ovs-vsctl commands')),
+]
+cfg.CONF.register_opts(OPTS)
 
 LOG = logging.getLogger(__name__)
 
@@ -50,9 +61,10 @@ class BaseOVS(object):
 
     def __init__(self, root_helper):
         self.root_helper = root_helper
+        self.vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
 
     def run_vsctl(self, args, check_error=False):
-        full_args = ["ovs-vsctl", "--timeout=2"] + args
+        full_args = ["ovs-vsctl", "--timeout=%d" % self.vsctl_timeout] + args
         try:
             return utils.execute(full_args, root_helper=self.root_helper)
         except Exception as e:
@@ -393,7 +405,8 @@ class OVSBridge(BaseOVS):
 
 
 def get_bridge_for_iface(root_helper, iface):
-    args = ["ovs-vsctl", "--timeout=2", "iface-to-br", iface]
+    args = ["ovs-vsctl", "--timeout=%d" % cfg.CONF.ovs_vsctl_timeout,
+            "iface-to-br", iface]
     try:
         return utils.execute(args, root_helper=root_helper).strip()
     except Exception:
@@ -402,7 +415,8 @@ def get_bridge_for_iface(root_helper, iface):
 
 
 def get_bridges(root_helper):
-    args = ["ovs-vsctl", "--timeout=2", "list-br"]
+    args = ["ovs-vsctl", "--timeout=%d" % cfg.CONF.ovs_vsctl_timeout,
+            "list-br"]
     try:
         return utils.execute(args, root_helper=root_helper).strip().split("\n")
     except Exception as e:
