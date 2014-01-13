@@ -438,8 +438,10 @@ class OVS_Lib_Test(base.BaseTestCase):
                     ovs_row.append(cell)
                 elif isinstance(cell, dict):
                     ovs_row.append(["map", cell.items()])
+                elif isinstance(cell, set):
+                    ovs_row.append(["set", cell])
                 else:
-                    raise TypeError('%r not int, str, list or dict' %
+                    raise TypeError('%r not int, str, list, set or dict' %
                                     type(cell))
         return jsonutils.dumps(r)
 
@@ -535,6 +537,39 @@ class OVS_Lib_Test(base.BaseTestCase):
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
         self.assertRaises(RuntimeError, self.br.get_vif_port_set)
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
+
+    def test_get_port_tag_dict(self):
+        headings = ['name', 'tag']
+        data = [
+            ['int-br-eth2', set()],
+            ['patch-tun', set()],
+            ['qr-76d9e6b6-21', 1],
+            ['tapce5318ff-78', 1],
+            ['tape1400310-e6', 1],
+        ]
+
+        # Each element is a tuple of (expected mock call, return_value)
+        expected_calls_and_values = [
+            (mock.call(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
+                       root_helper=self.root_helper),
+             '\n'.join((iface for iface, tag in data))),
+            (mock.call(["ovs-vsctl", self.TO, "--format=json",
+                        "--", "--columns=name,tag",
+                        "list", "Port"],
+                       root_helper=self.root_helper),
+             self._encode_ovs_json(headings, data)),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+
+        port_tags = self.br.get_port_tag_dict()
+        self.assertEqual(
+            port_tags,
+            {u'int-br-eth2': [],
+             u'patch-tun': [],
+             u'qr-76d9e6b6-21': 1,
+             u'tapce5318ff-78': 1,
+             u'tape1400310-e6': 1}
+        )
 
     def test_clear_db_attribute(self):
         pname = "tap77"
