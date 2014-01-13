@@ -738,9 +738,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                      'port_range_max': '22',
                      'tenant_id': "bad_tenant"}}
 
-        res = self._create_security_group_rule(self.fmt, rule)
-        self.deserialize(self.fmt, res)
-        self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
+            res = self._create_security_group_rule(self.fmt, rule,
+                                                   tenant_id='bad_tenant',
+                                                   set_context=True)
+            self.deserialize(self.fmt, res)
+            self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
 
     def test_create_security_group_rule_bad_tenant_remote_group_id(self):
         with self.security_group() as sg:
