@@ -441,12 +441,15 @@ class OVS_Lib_Test(base.BaseTestCase):
             ovs_row = []
             r["data"].append(ovs_row)
             for cell in row:
-                if isinstance(cell, str):
+                if isinstance(cell, (str, int)):
                     ovs_row.append(cell)
                 elif isinstance(cell, dict):
                     ovs_row.append(["map", cell.items()])
+                elif isinstance(cell, set):
+                    ovs_row.append(["set", cell])
                 else:
-                    raise TypeError('%r not str or dict' % type(cell))
+                    raise TypeError(
+                        '%r not int, str, set or dict' % type(cell))
         return jsonutils.dumps(r)
 
     def _test_get_vif_port_set(self, is_xen):
@@ -517,6 +520,38 @@ class OVS_Lib_Test(base.BaseTestCase):
                       root_helper=self.root_helper).AndRaise(RuntimeError())
         self.mox.ReplayAll()
         self.assertEqual(set(), self.br.get_vif_port_set())
+        self.mox.VerifyAll()
+
+    def test_get_port_tag_dict(self):
+        headings = ['name', 'tag']
+        data = [
+            ['int-br-eth2', set()],
+            ['patch-tun', set()],
+            ['qr-76d9e6b6-21', 1],
+            ['tapce5318ff-78', 1],
+            ['tape1400310-e6', 1],
+        ]
+
+        # Each element is a tuple of (expected mock call, return_value)
+        utils.execute(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
+                      root_helper=self.root_helper).AndReturn(
+                          '\n'.join((iface for iface, tag in data)))
+        utils.execute(["ovs-vsctl", self.TO, "--format=json",
+                       "--", "--columns=name,tag",
+                       "list", "Port"],
+                      root_helper=self.root_helper).AndReturn(
+                          self._encode_ovs_json(headings, data))
+
+        self.mox.ReplayAll()
+        port_tags = self.br.get_port_tag_dict()
+        self.assertEqual(
+            port_tags,
+            {u'int-br-eth2': [],
+             u'patch-tun': [],
+             u'qr-76d9e6b6-21': 1,
+             u'tapce5318ff-78': 1,
+             u'tape1400310-e6': 1}
+        )
         self.mox.VerifyAll()
 
     def test_clear_db_attribute(self):
