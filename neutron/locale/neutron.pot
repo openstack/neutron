@@ -7,9 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: neutron "
-"jenkins.neutron.propose.translation.update.201\n"
+"jenkins.neutron.propose.translation.update.202\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-12 06:33+0000\n"
+"POT-Creation-Date: 2014-01-13 06:32+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3496,29 +3496,44 @@ msgstr ""
 msgid "Original exception being dropped: %s"
 msgstr ""
 
-#: neutron/openstack/common/lockutils.py:102
+#: neutron/openstack/common/lockutils.py:103
 #, python-format
 msgid "Could not release the acquired lock `%s`"
 msgstr ""
 
-#: neutron/openstack/common/lockutils.py:189
+#: neutron/openstack/common/lockutils.py:168
 #, python-format
-msgid "Got semaphore \"%(lock)s\" for method \"%(method)s\"..."
+msgid "Got semaphore \"%(lock)s\""
 msgstr ""
 
-#: neutron/openstack/common/lockutils.py:200
+#: neutron/openstack/common/lockutils.py:177
 #, python-format
-msgid "Attempting to grab file lock \"%(lock)s\" for method \"%(method)s\"..."
+msgid "Attempting to grab file lock \"%(lock)s\""
 msgstr ""
 
-#: neutron/openstack/common/lockutils.py:227
+#: neutron/openstack/common/lockutils.py:187
 #, python-format
-msgid "Got file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
+msgid "Created lock path: %s"
 msgstr ""
 
-#: neutron/openstack/common/lockutils.py:235
+#: neutron/openstack/common/lockutils.py:205
 #, python-format
-msgid "Released file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
+msgid "Got file lock \"%(lock)s\" at %(path)s"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:209
+#, python-format
+msgid "Released file lock \"%(lock)s\" at %(path)s"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:247
+#, python-format
+msgid "Got semaphore / lock \"%(function)s\""
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:251
+#, python-format
+msgid "Semaphore / lock released \"%(function)s\""
 msgstr ""
 
 #: neutron/openstack/common/log.py:251
@@ -7559,20 +7574,20 @@ msgstr ""
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:634
+#: neutron/plugins/ml2/plugin.py:637
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:651
+#: neutron/plugins/ml2/plugin.py:658
 msgid "Calling base delete_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:660
+#: neutron/plugins/ml2/plugin.py:667
 msgid "mechanism_manager.delete_port_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:669
+#: neutron/plugins/ml2/plugin.py:676
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-12 06:33+0000\n"
+"POT-Creation-Date: 2014-01-13 06:32+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -3511,30 +3511,45 @@ msgstr ""
 msgid "Original exception being dropped: %s"
 msgstr "正在捨棄原始異常狀況：%s"
 
-#: neutron/openstack/common/lockutils.py:102
+#: neutron/openstack/common/lockutils.py:103
 #, python-format
 msgid "Could not release the acquired lock `%s`"
 msgstr "無法釋放獲得的鎖定 `%s`"
 
-#: neutron/openstack/common/lockutils.py:189
+#: neutron/openstack/common/lockutils.py:168
 #, python-format
-msgid "Got semaphore \"%(lock)s\" for method \"%(method)s\"..."
-msgstr "已取得方法 \"%(method)s\" 的號誌 \"%(lock)s\"..."
+msgid "Got semaphore \"%(lock)s\""
+msgstr ""
 
-#: neutron/openstack/common/lockutils.py:200
+#: neutron/openstack/common/lockutils.py:177
 #, python-format
-msgid "Attempting to grab file lock \"%(lock)s\" for method \"%(method)s\"..."
-msgstr "正在嘗試抓取方法 \"%(method)s\" 的檔案鎖定 \"%(lock)s\"..."
+msgid "Attempting to grab file lock \"%(lock)s\""
+msgstr ""
 
-#: neutron/openstack/common/lockutils.py:227
+#: neutron/openstack/common/lockutils.py:187
 #, python-format
-msgid "Got file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
-msgstr "已在 %(path)s 處取得方法 \"%(method)s\" 的檔案鎖定 \"%(lock)s\"..."
+msgid "Created lock path: %s"
+msgstr ""
 
-#: neutron/openstack/common/lockutils.py:235
+#: neutron/openstack/common/lockutils.py:205
 #, python-format
-msgid "Released file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
-msgstr "已釋放方法 \"%(method)s\" 在 %(path)s 處的檔案鎖定 \"%(lock)s\"..."
+msgid "Got file lock \"%(lock)s\" at %(path)s"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:209
+#, python-format
+msgid "Released file lock \"%(lock)s\" at %(path)s"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:247
+#, python-format
+msgid "Got semaphore / lock \"%(function)s\""
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:251
+#, python-format
+msgid "Semaphore / lock released \"%(function)s\""
+msgstr ""
 
 #: neutron/openstack/common/log.py:251
 #, python-format
@@ -7593,20 +7608,20 @@ msgstr ""
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:634
+#: neutron/plugins/ml2/plugin.py:637
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:651
+#: neutron/plugins/ml2/plugin.py:658
 msgid "Calling base delete_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:660
+#: neutron/plugins/ml2/plugin.py:667
 msgid "mechanism_manager.delete_port_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:669
+#: neutron/plugins/ml2/plugin.py:676
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -13102,7 +13117,7 @@ msgstr ""
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr ""
+#~ msgstr "「NVP L2 閘道」服務的唯一 ID，依預設，此服務將由網路閘道使用"
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -14016,31 +14031,7 @@ msgstr ""
 #~ msgid "Number of security rules allowed per tenant, -1 for unlimited"
 #~ msgstr "每個 Tenant 所容許的安全規則數目，-1 表示無限制"
 
-#~ msgid ""
-#~ "DNat is disabled for the router "
-#~ "%(router_id)s. Floating IPs cannot be "
-#~ "associated."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Unable to run Neutron with config "
-#~ "option '%s', as NVP does not "
-#~ "support it"
-#~ msgstr ""
-
 #~ msgid "Maximum concurrent connections to each NVP controller."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Minimum delay, in seconds, between two"
-#~ " state synchronization queries to NVP. "
-#~ "It must not exceed state_sync_interval"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Minimum number of resources to be "
-#~ "retrieved from NVP during state "
-#~ "synchronization"
 #~ msgstr ""
 
 #~ msgid "User name for NVP controllers in this cluster"
@@ -14052,25 +14043,17 @@ msgstr ""
 #~ msgid "Lists the NVP controllers in this cluster"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "This is uuid of the default NVP"
-#~ " Transport zone that will be used "
-#~ "for creating tunneled isolated \"Neutron\" "
-#~ "networks. It needs to be created "
-#~ "in NVP before starting Neutron with "
-#~ "the nvp plugin."
-#~ msgstr ""
+#~ msgid "Got semaphore \"%(lock)s\" for method \"%(method)s\"..."
+#~ msgstr "已取得方法 \"%(method)s\" 的號誌 \"%(lock)s\"..."
+
+#~ msgid "Attempting to grab file lock \"%(lock)s\" for method \"%(method)s\"..."
+#~ msgstr "正在嘗試抓取方法 \"%(method)s\" 的檔案鎖定 \"%(lock)s\"..."
+
+#~ msgid "Got file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
+#~ msgstr "已在 %(path)s 處取得方法 \"%(method)s\" 的檔案鎖定 \"%(lock)s\"..."
 
 #~ msgid ""
-#~ "Unique identifier of the NVP L3 "
-#~ "Gateway service which will be used "
-#~ "for implementing routers and floating "
-#~ "IPs"
-#~ msgstr "「NVP L3 閘道」服務的唯一 ID，此服務將用於實作路由器及浮動 IP"
-
-#~ msgid ""
-#~ "Unique identifier of the NVP L2 "
-#~ "Gateway service which will be used "
-#~ "by default for network gateways"
-#~ msgstr "「NVP L2 閘道」服務的唯一 ID，依預設，此服務將由網路閘道使用"
+#~ "Released file lock \"%(lock)s\" at "
+#~ "%(path)s for method \"%(method)s\"..."
+#~ msgstr "已釋放方法 \"%(method)s\" 在 %(path)s 處的檔案鎖定 \"%(lock)s\"..."
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-12 06:33+0000\n"
+"POT-Creation-Date: 2014-01-13 06:32+0000\n"
 "PO-Revision-Date: 2013-05-22 08:17+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: German "
@@ -3690,34 +3690,45 @@ msgstr ""
 msgid "Original exception being dropped: %s"
 msgstr "Ursprüngliche Ausnahme wird gelöscht: %s"
 
-#: neutron/openstack/common/lockutils.py:102
+#: neutron/openstack/common/lockutils.py:103
 #, python-format
 msgid "Could not release the acquired lock `%s`"
 msgstr "Angeforderte Sperre '%s' konnte nicht freigegeben werden"
 
-#: neutron/openstack/common/lockutils.py:189
+#: neutron/openstack/common/lockutils.py:168
 #, python-format
-msgid "Got semaphore \"%(lock)s\" for method \"%(method)s\"..."
-msgstr "Semaphor \"%(lock)s\" für Methode \"%(method)s\" erhalten..."
-
-#: neutron/openstack/common/lockutils.py:200
-#, python-format
-msgid "Attempting to grab file lock \"%(lock)s\" for method \"%(method)s\"..."
-msgstr "Versuch, Dateisperre \"%(lock)s\" für Methode \"%(method)s\" zu greifen..."
-
-#: neutron/openstack/common/lockutils.py:227
-#, python-format
-msgid "Got file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
+msgid "Got semaphore \"%(lock)s\""
 msgstr ""
-"Dateisperre \"%(lock)s\" unter %(path)s für Methode \"%(method)s\" "
-"erhalten..."
 
-#: neutron/openstack/common/lockutils.py:235
+#: neutron/openstack/common/lockutils.py:177
 #, python-format
-msgid "Released file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
+msgid "Attempting to grab file lock \"%(lock)s\""
 msgstr ""
-"Dateisperre \"%(lock)s\" unter %(path)s für Methode \"%(method)s\" "
-"freigegeben..."
+
+#: neutron/openstack/common/lockutils.py:187
+#, python-format
+msgid "Created lock path: %s"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:205
+#, python-format
+msgid "Got file lock \"%(lock)s\" at %(path)s"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:209
+#, python-format
+msgid "Released file lock \"%(lock)s\" at %(path)s"
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:247
+#, python-format
+msgid "Got semaphore / lock \"%(function)s\""
+msgstr ""
+
+#: neutron/openstack/common/lockutils.py:251
+#, python-format
+msgid "Semaphore / lock released \"%(function)s\""
+msgstr ""
 
 #: neutron/openstack/common/log.py:251
 #, python-format
@@ -7860,20 +7871,20 @@ msgstr ""
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:634
+#: neutron/plugins/ml2/plugin.py:637
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:651
+#: neutron/plugins/ml2/plugin.py:658
 msgid "Calling base delete_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:660
+#: neutron/plugins/ml2/plugin.py:667
 msgid "mechanism_manager.delete_port_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:669
+#: neutron/plugins/ml2/plugin.py:676
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -14419,31 +14430,7 @@ msgstr ""
 #~ msgid "Number of security rules allowed per tenant, -1 for unlimited"
 #~ msgstr "Anzahl an zulässigen Sicherheitsregeln pro Nutzer, -1 für unbegrenzt"
 
-#~ msgid ""
-#~ "DNat is disabled for the router "
-#~ "%(router_id)s. Floating IPs cannot be "
-#~ "associated."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Unable to run Neutron with config "
-#~ "option '%s', as NVP does not "
-#~ "support it"
-#~ msgstr ""
-
 #~ msgid "Maximum concurrent connections to each NVP controller."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Minimum delay, in seconds, between two"
-#~ " state synchronization queries to NVP. "
-#~ "It must not exceed state_sync_interval"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Minimum number of resources to be "
-#~ "retrieved from NVP during state "
-#~ "synchronization"
 #~ msgstr ""
 
 #~ msgid "User name for NVP controllers in this cluster"
@@ -14455,32 +14442,23 @@ msgstr ""
 #~ msgid "Lists the NVP controllers in this cluster"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "This is uuid of the default NVP"
-#~ " Transport zone that will be used "
-#~ "for creating tunneled isolated \"Neutron\" "
-#~ "networks. It needs to be created "
-#~ "in NVP before starting Neutron with "
-#~ "the nvp plugin."
+#~ msgid "Got semaphore \"%(lock)s\" for method \"%(method)s\"..."
+#~ msgstr "Semaphor \"%(lock)s\" für Methode \"%(method)s\" erhalten..."
+
+#~ msgid "Attempting to grab file lock \"%(lock)s\" for method \"%(method)s\"..."
 #~ msgstr ""
+#~ "Versuch, Dateisperre \"%(lock)s\" für Methode"
+#~ " \"%(method)s\" zu greifen..."
+
+#~ msgid "Got file lock \"%(lock)s\" at %(path)s for method \"%(method)s\"..."
+#~ msgstr ""
+#~ "Dateisperre \"%(lock)s\" unter %(path)s für"
+#~ " Methode \"%(method)s\" erhalten..."
 
 #~ msgid ""
-#~ "Unique identifier of the NVP L3 "
-#~ "Gateway service which will be used "
-#~ "for implementing routers and floating "
-#~ "IPs"
+#~ "Released file lock \"%(lock)s\" at "
+#~ "%(path)s for method \"%(method)s\"..."
 #~ msgstr ""
-#~ "Eindeutige ID des L3-Gateway-Service von"
-#~ " NVP, die für die Implementierung von"
-#~ " Routern und dynamischen IP-Adressen "
-#~ "verwendet wird"
-
-#~ msgid ""
-#~ "Unique identifier of the NVP L2 "
-#~ "Gateway service which will be used "
-#~ "by default for network gateways"
-#~ msgstr ""
-#~ "Eindeutige ID des L2-Gateway-Service von"
-#~ " NVP, die standardmäßig für Netzgateways"
-#~ " verwendet wird"
+#~ "Dateisperre \"%(lock)s\" unter %(path)s für"
+#~ " Methode \"%(method)s\" freigegeben..."
 
