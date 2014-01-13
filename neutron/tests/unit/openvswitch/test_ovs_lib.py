@@ -408,12 +408,13 @@ class OVS_Lib_Test(base.BaseTestCase):
             ovs_row = []
             r["data"].append(ovs_row)
             for cell in row:
-                if isinstance(cell, str):
+                if isinstance(cell, (str, int, list)):
                     ovs_row.append(cell)
                 elif isinstance(cell, dict):
                     ovs_row.append(["map", cell.items()])
                 else:
-                    raise TypeError('%r not str or dict' % type(cell))
+                    raise TypeError('%r not int, str, list or dict' %
+                                    type(cell))
         return jsonutils.dumps(r)
 
     def _test_get_vif_port_set(self, is_xen):
@@ -425,11 +426,17 @@ class OVS_Lib_Test(base.BaseTestCase):
         headings = ['name', 'external_ids']
         data = [
             # A vif port on this bridge:
-            ['tap99', {id_key: 'tap99id', 'attached-mac': 'tap99mac'}],
+            ['tap99', {id_key: 'tap99id', 'attached-mac': 'tap99mac'}, 1],
+            # A vif port on this bridge not yet configured
+            ['tap98', {id_key: 'tap98id', 'attached-mac': 'tap98mac'}, []],
+            # Another vif port on this bridge not yet configured
+            ['tap97', {id_key: 'tap97id', 'attached-mac': 'tap97mac'},
+             ['set', []]],
+
             # A vif port on another bridge:
-            ['tap88', {id_key: 'tap88id', 'attached-mac': 'tap88id'}],
+            ['tap88', {id_key: 'tap88id', 'attached-mac': 'tap88id'}, 1],
             # Non-vif port on this bridge:
-            ['tun22', {}],
+            ['tun22', {}, 2],
         ]
 
         # Each element is a tuple of (expected mock call, return_value)
@@ -438,7 +445,7 @@ class OVS_Lib_Test(base.BaseTestCase):
                        root_helper=self.root_helper),
              'tap99\ntun22'),
             (mock.call(["ovs-vsctl", self.TO, "--format=json",
-                        "--", "--columns=name,external_ids",
+                        "--", "--columns=name,external_ids,ofport",
                         "list", "Interface"],
                        root_helper=self.root_helper),
              self._encode_ovs_json(headings, data)),
@@ -494,7 +501,7 @@ class OVS_Lib_Test(base.BaseTestCase):
                        root_helper=self.root_helper),
              'tap99\n'),
             (mock.call(["ovs-vsctl", self.TO, "--format=json",
-                        "--", "--columns=name,external_ids",
+                        "--", "--columns=name,external_ids,ofport",
                         "list", "Interface"],
                        root_helper=self.root_helper),
              RuntimeError()),
@@ -615,3 +622,36 @@ class OVS_Lib_Test(base.BaseTestCase):
                         return_value=mock.Mock(address=None)):
             with testtools.ExpectedException(Exception):
                 self.br.get_local_port_mac()
+
+    def _test_get_vif_port_by_id(self, ofport=None):
+        expected_output = ('external_ids : {attached-mac="aa:bb:cc:dd:ee:ff", '
+                           'iface-id="tap99id",'
+                           'iface-status=active, '
+                           'vm-uuid="tap99vm"}'
+                           '\nname : "tap99"\nofport : %(ofport)s\n')
+
+        # Each element is a tuple of (expected mock call, return_value)
+        expected_calls_and_values = [
+            (mock.call(["ovs-vsctl", self.TO,
+                        "--", "--columns=external_ids,name,ofport",
+                        "find", "Interface",
+                        'external_ids:iface-id="tap99id"'],
+                       root_helper=self.root_helper),
+             expected_output % {'ofport': ofport or '[]'}),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+
+        vif_port = self.br.get_vif_port_by_id('tap99id')
+        self.assertEqual(vif_port.vif_id, 'tap99id')
+        self.assertEqual(vif_port.vif_mac, 'aa:bb:cc:dd:ee:ff')
+        self.assertEqual(vif_port.port_name, 'tap99')
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
+        return vif_port
+
+    def test_get_vif_by_port_id_with_ofport(self):
+        vif_port = self._test_get_vif_port_by_id('1')
+        self.assertEqual(vif_port.ofport, 1)
+
+    def test_get_vif_by_port_id_without_ofport(self):
+        vif_port = self._test_get_vif_port_by_id()
+        self.assertIsNone(vif_port.ofport)

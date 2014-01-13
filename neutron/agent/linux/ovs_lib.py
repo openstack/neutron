@@ -118,7 +118,7 @@ class OVSBridge(BaseOVS):
         mac = 'attached-mac="(?P<vif_mac>([a-fA-F\d]{2}:){5}([a-fA-F\d]{2}))"'
         iface = 'iface-id="(?P<vif_id>[^"]+)"'
         name = 'name\s*:\s"(?P<port_name>[^"]*)"'
-        port = 'ofport\s*:\s(?P<ofport>-?\d+)'
+        port = 'ofport\s*:\s(?P<ofport>(-?\d+|\[\]))'
         _re = ('%(external)s:\s{ ( %(mac)s,? | %(iface)s,? | . )* }'
                ' \s+ %(name)s \s+ %(port)s' % {'external': external,
                                                'mac': mac,
@@ -356,7 +356,7 @@ class OVSBridge(BaseOVS):
     def get_vif_port_set(self):
         port_names = self.get_port_name_list()
         edge_ports = set()
-        args = ['--format=json', '--', '--columns=name,external_ids',
+        args = ['--format=json', '--', '--columns=name,external_ids,ofport',
                 'list', 'Interface']
         result = self.run_vsctl(args, check_error=True)
         if not result:
@@ -366,14 +366,29 @@ class OVSBridge(BaseOVS):
             if name not in port_names:
                 continue
             external_ids = dict(row[1][1])
-            if "iface-id" in external_ids and "attached-mac" in external_ids:
-                edge_ports.add(external_ids['iface-id'])
-            elif ("xs-vif-uuid" in external_ids and
-                  "attached-mac" in external_ids):
-                # if this is a xenserver and iface-id is not automatically
-                # synced to OVS from XAPI, we grab it from XAPI directly
-                iface_id = self.get_xapi_iface_id(external_ids["xs-vif-uuid"])
-                edge_ports.add(iface_id)
+            # Do not consider VIFs which aren't yet ready
+            # This can happen when ofport values are either [] or ["set", []]
+            # We will therefore consider only integer values for ofport
+            ofport = row[2]
+            try:
+                int_ofport = int(ofport)
+            except (ValueError, TypeError):
+                LOG.warn(_("Found not yet ready openvswitch port: %s"), row)
+            else:
+                if int_ofport > 0:
+                    if ("iface-id" in external_ids and
+                        "attached-mac" in external_ids):
+                        edge_ports.add(external_ids['iface-id'])
+                    elif ("xs-vif-uuid" in external_ids and
+                          "attached-mac" in external_ids):
+                        # if this is a xenserver and iface-id is not
+                        # automatically synced to OVS from XAPI, we grab it
+                        # from XAPI directly
+                        iface_id = self.get_xapi_iface_id(
+                            external_ids["xs-vif-uuid"])
+                        edge_ports.add(iface_id)
+                else:
+                    LOG.warn(_("Found failed openvswitch port: %s"), row)
         return edge_ports
 
     def get_vif_port_by_id(self, port_id):
@@ -383,12 +398,24 @@ class OVSBridge(BaseOVS):
         result = self.run_vsctl(args)
         if not result:
             return
+        # TODO(salv-orlando): consider whether it would be possible to use
+        # JSON formatting rather than doing regex parsing.
         match = self.re_id.search(result)
         try:
             vif_mac = match.group('vif_mac')
             vif_id = match.group('vif_id')
             port_name = match.group('port_name')
-            ofport = int(match.group('ofport'))
+            # Tolerate ports which might not have an ofport as they are not
+            # ready yet
+            # NOTE(salv-orlando): Consider returning None when ofport is not
+            # available.
+            try:
+                ofport = int(match.group('ofport'))
+            except ValueError:
+                LOG.warn(_("ofport for vif: %s is not a valid integer. "
+                           "The port has not yet been configured by OVS"),
+                         vif_id)
+                ofport = None
             return VifPort(port_name, ofport, vif_id, vif_mac, self)
         except Exception as e:
             LOG.info(_("Unable to parse regex results. Exception: %s"), e)
