@@ -300,17 +300,28 @@ class NexusPlugin(L2DevicePluginBase):
             nxos_db.remove_nexusport_binding(row.port_id, row.vlan_id,
                                              row.switch_ip,
                                              row.instance_id)
-            # Check for any other bindings with the same vlan_id and switch_ip
+            # Check whether there are any remaining instances using this
+            # vlan on this Nexus port.
             try:
-                nxos_db.get_nexusvlan_binding(row.vlan_id, row.switch_ip)
+                nxos_db.get_port_vlan_switch_binding(row.port_id,
+                                                     row.vlan_id,
+                                                     row.switch_ip)
             except cisco_exc.NexusPortBindingNotFound:
                 try:
-                    # Delete this vlan from this switch
                     if nexus_port and auto_untrunk:
+                        # Untrunk the vlan from this Nexus interface
                         self._client.disable_vlan_on_trunk_int(
                             switch_ip, row.vlan_id, etype, nexus_port)
+
+                    # Check whether there are any remaining instances
+                    # using this vlan on the Nexus switch.
                     if auto_delete:
-                        self._client.delete_vlan(switch_ip, row.vlan_id)
+                        try:
+                            nxos_db.get_nexusvlan_binding(row.vlan_id,
+                                                          row.switch_ip)
+                        except cisco_exc.NexusPortBindingNotFound:
+                            # Delete this vlan from this switch
+                            self._client.delete_vlan(switch_ip, row.vlan_id)
                 except Exception:
                     # The delete vlan operation on the Nexus failed,
                     # so this delete_port request has failed. For

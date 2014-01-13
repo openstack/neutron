@@ -41,6 +41,22 @@ from neutron.tests.unit import test_db_plugin
 
 LOG = logging.getLogger(__name__)
 NEXUS_PLUGIN = 'neutron.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin'
+COMP_HOST_NAME = 'testhost'
+COMP_HOST_NAME_2 = 'testhost_2'
+NEXUS_IP_ADDR = '1.1.1.1'
+NEXUS_DEV_ID = 'NEXUS_SWITCH'
+NEXUS_USERNAME = 'admin'
+NEXUS_PASSWORD = 'mySecretPassword'
+NEXUS_SSH_PORT = 22
+NEXUS_INTF = '1/1'
+NEXUS_INTF_2 = '1/2'
+NETWORK_NAME = 'test_network'
+NETWORK_NAME_2 = 'test_network_2'
+CIDR_1 = '10.0.0.0/24'
+CIDR_2 = '10.0.1.0/24'
+DEVICE_ID_1 = '11111111-1111-1111-1111-111111111111'
+DEVICE_ID_2 = '22222222-2222-2222-2222-222222222222'
+DEVICE_OWNER = 'compute:None'
 
 
 class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
@@ -95,7 +111,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         - Configure the OVS plugin to use VLANs in the range of 1000-1100.
         - Configure the Cisco plugin model to use the real Nexus driver.
         - Configure the Nexus sub-plugin to use an imaginary switch
-          at 1.1.1.1.
+          at NEXUS_IP_ADDR.
 
         """
         self.addCleanup(mock.patch.stopall)
@@ -128,13 +144,12 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
             self.addCleanup(module.cfg.CONF.reset)
 
         # TODO(Henry): add tests for other devices
-        self.dev_id = 'NEXUS_SWITCH'
-        self.switch_ip = '1.1.1.1'
         nexus_config = {
-            (self.dev_id, self.switch_ip, 'username'): 'admin',
-            (self.dev_id, self.switch_ip, 'password'): 'mySecretPassword',
-            (self.dev_id, self.switch_ip, 'ssh_port'): 22,
-            (self.dev_id, self.switch_ip, 'testhost'): '1/1',
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, 'username'): NEXUS_USERNAME,
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, 'password'): NEXUS_PASSWORD,
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, 'ssh_port'): NEXUS_SSH_PORT,
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, COMP_HOST_NAME): NEXUS_INTF,
+            (NEXUS_DEV_ID, NEXUS_IP_ADDR, COMP_HOST_NAME_2): NEXUS_INTF_2,
         }
         mock.patch.dict(cisco_config.device_dictionary, nexus_config).start()
 
@@ -160,9 +175,38 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         config = {attr: None}
         self.mock_ncclient.configure_mock(**config)
 
+    def _is_in_nexus_cfg(self, words):
+        """Check if any config sent to Nexus contains all words in a list."""
+        for call in (self.mock_ncclient.manager.connect.return_value.
+                     edit_config.mock_calls):
+            configlet = call[2]['config']
+            if all(word in configlet for word in words):
+                return True
+        return False
+
+    def _is_in_last_nexus_cfg(self, words):
+        """Check if last config sent to Nexus contains all words in a list."""
+        last_cfg = (self.mock_ncclient.manager.connect.return_value.
+                    edit_config.mock_calls[-1][2]['config'])
+        return all(word in last_cfg for word in words)
+
+    def _is_vlan_configured(self, vlan_creation_expected=True,
+                            add_keyword_expected=False):
+        vlan_created = self._is_in_nexus_cfg(['vlan', 'vlan-name'])
+        add_appears = self._is_in_last_nexus_cfg(['add'])
+        return (self._is_in_last_nexus_cfg(['allowed', 'vlan']) and
+                vlan_created == vlan_creation_expected and
+                add_appears == add_keyword_expected)
+
+    def _is_vlan_unconfigured(self, vlan_deletion_expected=True):
+        vlan_deleted = self._is_in_last_nexus_cfg(
+            ['no', 'vlan', 'vlan-id-create-delete'])
+        return (self._is_in_nexus_cfg(['allowed', 'vlan', 'remove']) and
+                vlan_deleted == vlan_deletion_expected)
+
     @contextlib.contextmanager
-    def _create_port_res(self, name='myname', cidr='1.0.0.0/24',
-                         do_delete=True, host_id='testhost'):
+    def _create_port_res(self, name=NETWORK_NAME, cidr=CIDR_1,
+                         do_delete=True, host_id=COMP_HOST_NAME):
         """Create a network, subnet, and port and yield the result.
 
         Create a network, subnet, and port, yield the result,
@@ -181,7 +225,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 args = (portbindings.HOST_ID, 'device_id', 'device_owner')
                 port_dict = {portbindings.HOST_ID: host_id,
                              'device_id': 'testdev',
-                             'device_owner': 'compute:None'}
+                             'device_owner': DEVICE_OWNER}
                 res = self._create_port(self.fmt, net_id, arg_list=args,
                                         context=ctx, **port_dict)
                 port = self.deserialize(self.fmt, res)
@@ -207,11 +251,6 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         else:
             expected_http = wexc.HTTPInternalServerError.code
         self.assertEqual(status, expected_http)
-
-    def _is_in_last_nexus_cfg(self, words):
-        last_cfg = (self.mock_ncclient.manager.connect().
-                    edit_config.mock_calls[-1][2]['config'])
-        return all(word in last_cfg for word in words)
 
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -278,14 +317,64 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
     def test_nexus_enable_vlan_cmd(self):
         """Verify the syntax of the command to enable a vlan on an intf."""
+
         # First vlan should be configured without 'add' keyword
-        with self._create_port_res(name='net1', cidr='1.0.0.0/24'):
-            self.assertTrue(self._is_in_last_nexus_cfg(['allowed', 'vlan']))
-            self.assertFalse(self._is_in_last_nexus_cfg(['add']))
+        with self._create_port_res(name=NETWORK_NAME, cidr=CIDR_1):
+            self.assertTrue(self._is_vlan_configured(
+                vlan_creation_expected=True,
+                add_keyword_expected=False))
+            self.mock_ncclient.reset_mock()
+
             # Second vlan should be configured with 'add' keyword
-            with self._create_port_res(name='net2', cidr='1.0.1.0/24'):
-                self.assertTrue(
-                    self._is_in_last_nexus_cfg(['allowed', 'vlan', 'add']))
+            with self._create_port_res(name=NETWORK_NAME_2, cidr=CIDR_2):
+                self.assertTrue(self._is_vlan_configured(
+                    vlan_creation_expected=True,
+                    add_keyword_expected=True))
+
+    def test_nexus_vlan_config_two_hosts(self):
+        """Verify config/unconfig of vlan on two compute hosts."""
+
+        @contextlib.contextmanager
+        def _create_port_check_vlan(comp_host_name, device_id,
+                                    vlan_creation_expected=True):
+            arg_list = (portbindings.HOST_ID,)
+            port_dict = {portbindings.HOST_ID: comp_host_name,
+                         'device_id': device_id,
+                         'device_owner': DEVICE_OWNER}
+            with self.port(subnet=subnet, fmt=self.fmt,
+                           arg_list=arg_list, **port_dict):
+                self.assertTrue(self._is_vlan_configured(
+                    vlan_creation_expected=vlan_creation_expected,
+                    add_keyword_expected=False))
+                self.mock_ncclient.reset_mock()
+                yield
+
+        # Create network and subnet
+        with self.network(name=NETWORK_NAME) as network:
+            with self.subnet(network=network, cidr=CIDR_1) as subnet:
+
+                # Create an instance on first compute host
+                with _create_port_check_vlan(
+                    COMP_HOST_NAME, DEVICE_ID_1, vlan_creation_expected=True):
+
+                    # Create an instance on second compute host
+                    with _create_port_check_vlan(
+                        COMP_HOST_NAME_2, DEVICE_ID_2,
+                        vlan_creation_expected=False):
+                        pass
+
+                    # Instance on second host is now terminated.
+                    # Vlan should be untrunked from port, but vlan should
+                    # still exist on the switch.
+                    self.assertTrue(self._is_vlan_unconfigured(
+                        vlan_deletion_expected=False))
+                    self.mock_ncclient.reset_mock()
+
+                # Instance on first host is now terminated.
+                # Vlan should be untrunked from port and vlan should have
+                # been deleted from the switch.
+                self.assertTrue(self._is_vlan_unconfigured(
+                    vlan_deletion_expected=True))
 
     def test_nexus_connect_fail(self):
         """Test failure to connect to a Nexus switch.
@@ -332,7 +421,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config_a):
-            with self._create_port_res(name='myname') as res:
+            with self._create_port_res() as res:
                 self.assertEqual(res.status_int, wexc.HTTPCreated.code)
 
         def mock_edit_config_b(target, config):
@@ -342,7 +431,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config_b):
-            with self._create_port_res(name='myname') as res:
+            with self._create_port_res() as res:
                 self.assertEqual(res.status_int, wexc.HTTPCreated.code)
 
     def test_nexus_vlan_config_rollback(self):
@@ -360,7 +449,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         with self._patch_ncclient(
             'manager.connect.return_value.edit_config.side_effect',
             mock_edit_config):
-            with self._create_port_res(name='myname', do_delete=False) as res:
+            with self._create_port_res(do_delete=False) as res:
                 # Confirm that the last configuration sent to the Nexus
                 # switch was deletion of the VLAN.
                 self.assertTrue(
@@ -445,7 +534,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 if orig_port['port']['device_id'] == device_id:
                     device_id = "600df00d-e4a8-4a3a-8906-feed600df00d"
                 data = {'port': {'device_id': device_id,
-                                 portbindings.HOST_ID: 'testhost'}}
+                                 portbindings.HOST_ID: COMP_HOST_NAME}}
                 port_id = orig_port['port']['id']
                 req = self.new_update_request('ports', data, port_id)
                 res = req.get_response(self.api)
@@ -474,7 +563,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
             # vlan/nexus switch.
             port = self.deserialize(self.fmt, res)
             start_rows = nexus_db_v2.get_nexusvlan_binding(self.vlan_start,
-                                                           self.switch_ip)
+                                                           NEXUS_IP_ADDR)
             self.assertEqual(len(start_rows), 1)
 
             # Inject an exception in the OVS plugin delete_port
@@ -490,7 +579,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
             # Confirm that the Cisco model plugin has restored
             # the nexus configuration for this port after deletion failure.
             end_rows = nexus_db_v2.get_nexusvlan_binding(self.vlan_start,
-                                                         self.switch_ip)
+                                                         NEXUS_IP_ADDR)
             self.assertEqual(start_rows, end_rows)
 
     def test_nexus_delete_port_rollback(self):
@@ -508,7 +597,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
             # Check that there is only one binding in the nexus database
             # for this VLAN/nexus switch.
             start_rows = nexus_db_v2.get_nexusvlan_binding(self.vlan_start,
-                                                           self.switch_ip)
+                                                           NEXUS_IP_ADDR)
             self.assertEqual(len(start_rows), 1)
 
             # Simulate a Nexus switch configuration error during
@@ -521,7 +610,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
             # Confirm that the binding has been restored (rolled back).
             end_rows = nexus_db_v2.get_nexusvlan_binding(self.vlan_start,
-                                                         self.switch_ip)
+                                                         NEXUS_IP_ADDR)
             self.assertEqual(start_rows, end_rows)
 
 
