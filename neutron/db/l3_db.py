@@ -68,6 +68,11 @@ class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     fixed_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
     fixed_ip_address = sa.Column(sa.String(64))
     router_id = sa.Column(sa.String(36), sa.ForeignKey('routers.id'))
+    # Additional attribute for keeping track of the router where the floating
+    # ip was associated in order to be able to ensure consistency even if an
+    # aysnchronous backend is unavailable when the floating IP is disassociated
+    last_known_router_id = sa.Column(sa.String(36))
+    status = sa.Column(sa.String(16))
 
 
 class L3_NAT_db_mixin(l3.RouterPluginBase):
@@ -450,7 +455,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                'floating_network_id': floatingip['floating_network_id'],
                'router_id': floatingip['router_id'],
                'port_id': floatingip['fixed_port_id'],
-               'fixed_ip_address': floatingip['fixed_ip_address']}
+               'fixed_ip_address': floatingip['fixed_ip_address'],
+               'status': floatingip['status']}
         return self._fields(res, fields)
 
     def _get_router_for_floatingip(self, context, internal_port,
@@ -564,6 +570,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         return (fip['port_id'], internal_ip_address, router_id)
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
+        previous_router_id = floatingip_db.router_id
         port_id = internal_ip_address = router_id = None
         if (('fixed_ip_address' in fip and fip['fixed_ip_address']) and
             not ('port_id' in fip and fip['port_id'])):
@@ -590,9 +597,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 pass
         floatingip_db.update({'fixed_ip_address': internal_ip_address,
                               'fixed_port_id': port_id,
-                              'router_id': router_id})
+                              'router_id': router_id,
+                              'last_known_router_id': previous_router_id})
 
-    def create_floatingip(self, context, floatingip):
+    def create_floatingip(
+        self, context, floatingip,
+        initial_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
         fip = floatingip['floatingip']
         tenant_id = self._get_tenant_id_for_create(context, fip)
         fip_id = uuidutils.generate_uuid()
@@ -625,6 +635,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             floatingip_db = FloatingIP(
                 id=fip_id,
                 tenant_id=tenant_id,
+                status=initial_status,
                 floating_network_id=fip['floating_network_id'],
                 floating_ip_address=floating_ip_address,
                 floating_port_id=external_port['id'])
@@ -663,6 +674,13 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             self.l3_rpc_notifier.routers_updated(
                 context, router_ids, 'update_floatingip')
         return self._make_floatingip_dict(floatingip_db)
+
+    def update_floatingip_status(self, context, floatingip_id, status):
+        """Update operational status for floating IP in neutron DB."""
+        # TODO(salv-orlando): Optimize avoiding fetch before update
+        with context.session.begin(subtransactions=True):
+            floatingip_db = self._get_floatingip(context, floatingip_id)
+            floatingip_db['status'] = status
 
     def delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)

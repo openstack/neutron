@@ -37,8 +37,7 @@ from neutron.plugins.common import constants
 
 class L3RouterPluginRpcCallbacks(l3_rpc_base.L3RpcCallbackMixin):
 
-    # Set RPC API version to 1.0 by default.
-    RPC_API_VERSION = '1.0'
+    RPC_API_VERSION = '1.1'
 
     def create_rpc_dispatcher(self):
         """Get the rpc dispatcher for this manager.
@@ -91,3 +90,18 @@ class L3RouterPlugin(db_base_plugin_v2.CommonDbMixin,
         return ("L3 Router Service Plugin for basic L3 forwarding"
                 " between (L2) Neutron networks and access to external"
                 " networks via a NAT gateway.")
+
+    def create_floatingip(self, context, floatingip):
+        """Create floating IP.
+
+        :param context: Neutron request context
+        :param floatingip: data fo the floating IP being created
+        :returns: A floating IP object on success
+
+        AS the l3 router plugin aysnchrounously creates floating IPs
+        leveraging tehe l3 agent, the initial status fro the floating
+        IP object will be DOWN.
+        """
+        return super(L3RouterPlugin, self).create_floatingip(
+            context, floatingip,
+            initial_status=q_const.FLOATINGIP_STATUS_DOWN)

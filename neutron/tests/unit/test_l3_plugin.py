@@ -1195,7 +1195,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   private_sub['subnet']['id'],
                                                   None)
 
-    def test_floatingip_update(self):
+    def test_floatingip_update(
+        self, expected_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):
         with self.port() as p:
             private_sub = {'subnet': {'id':
                                       p['port']['fixed_ips'][0]['subnet_id']}}
@@ -1203,6 +1204,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 body = self._show('floatingips', fip['floatingip']['id'])
                 self.assertIsNone(body['floatingip']['port_id'])
                 self.assertIsNone(body['floatingip']['fixed_ip_address'])
+                self.assertEqual(body['floatingip']['status'], expected_status)
 
                 port_id = p['port']['id']
                 ip_address = p['port']['fixed_ips'][0]['ip_address']
