@@ -48,18 +48,6 @@ class Events:
     SET_NAT_RULE = "set_nat_rule"
     RESET_NAT_RULE = "reset_nat_rule"
 
-operation_filter = {
-    Status.ACTIVE: [Events.DELETE_ROUTER, Events.GROW_ROUTER_IF,
-                    Events.SHRINK_ROUTER_IF, Events.UPDATE_ROUTER,
-                    Events.SET_NAT_RULE, Events.RESET_NAT_RULE],
-    Status.READY: [Events.DELETE_ROUTER, Events.GROW_ROUTER_IF,
-                   Events.SHRINK_ROUTER_IF, Events.UPDATE_ROUTER],
-    Status.ERROR: [Events.DELETE_ROUTER, Events.SHRINK_ROUTER_IF],
-    Status.UPDATING: [Events.DELETE_ROUTER, Events.SHRINK_ROUTER_IF,
-                      Events.RESET_NAT_RULE],
-    Status.CREATING: [Events.DELETE_ROUTER, Events.CREATE_ROUTER],
-    Status.DELETING: [Events.DELETE_ROUTER]}
-
 _DVA_PENDING_ERROR_MSG = _("Dva is pending for the following reason: %s")
 _DVA_NOT_FOUNT_ERROR_MSG = _("Dva can't be found to execute the operation, "
                              "probably was cancelled through the heleos UI")
