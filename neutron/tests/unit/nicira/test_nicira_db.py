@@ -77,3 +77,12 @@ class NiciraDBTestCase(base.BaseTestCase):
                           nicira_db.add_neutron_nsx_port_mapping,
                           self.ctx.session, neutron_port_id,
                           nsx_switch_id, nsx_port_id_2)
+
+    def test_add_neutron_nsx_port_mapping_raise_integrity_constraint(self):
+        neutron_port_id = 'foo_neutron_port_id'
+        nsx_port_id = 'foo_nsx_port_id'
+        nsx_switch_id = 'foo_nsx_switch_id'
+        self.assertRaises(d_exc.DBError,
+                          nicira_db.add_neutron_nsx_port_mapping,
+                          self.ctx.session, neutron_port_id,
+                          nsx_switch_id, nsx_port_id)

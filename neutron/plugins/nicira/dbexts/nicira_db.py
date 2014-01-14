@@ -67,6 +67,10 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
             LOG.debug(_("Port mapping for %s already available"), neutron_id)
         else:
             raise
+    except d_exc.DBError:
+        # rollback for any other db error
+        session.rollback()
+        raise
     return mapping
 
 
