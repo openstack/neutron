@@ -1393,8 +1393,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             LOG.exception(msg)
             raise q_exc.BadRequest(resource='router', msg=msg)
         except NvpApiClient.NvpApiException:
-            raise nvp_exc.NvpPluginException(
-                err_msg=_("Unable to create logical router on NVP Platform"))
+            err_msg = _("Unable to create logical router on NVP Platform")
+            LOG.exception(err_msg)
+            raise nvp_exc.NvpPluginException(err_msg=err_msg)
 
         # Create the port here - and update it later if we have gw_info
         try:
