@@ -25,7 +25,5 @@ def setup_hook(config):
     if sys.platform == 'win32':
         requires.append('pywin32')
         requires.append('wmi')
-    elif sys.platform.startswith('linux'):
-        requires.append('pyudev')
     metadata['requires_dist'] = "\n".join(requires)
     config['metadata'] = metadata
