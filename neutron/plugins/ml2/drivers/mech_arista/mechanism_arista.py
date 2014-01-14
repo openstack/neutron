@@ -268,15 +268,21 @@ class AristaRPCWrapper(object):
                 self.keystone_conf.admin_user,
                 self.keystone_conf.admin_password)]
 
-        self._run_openstack_cmds(cmds)
+        log_cmds = ['auth url %s user %s password ******' %
+                     (self._keystone_url(),
+                     self.keystone_conf.admin_user)]
 
-    def _run_openstack_cmds(self, commands, deleteRegion=None):
+        self._run_openstack_cmds(cmds, commands_to_log=log_cmds)
+
+    def _run_openstack_cmds(self, commands, commands_to_log=None, deleteRegion=None):
         """Execute/sends a CAPI (Command API) command to EOS.
 
         In this method, list of commands is appended with prefix and
         postfix commands - to make is understandble by EOS.
 
         :param commands : List of command to be executed on EOS.
+        :param commands_to_logs : This should be set to the command that is logged.
+                                  If it is None, then the commands param is logged.
         :param deleteRegion : True/False - to delte entire region from EOS
         """
         command_start = ['enable', 'configure', 'management openstack']
@@ -286,8 +292,11 @@ class AristaRPCWrapper(object):
             command_start.append('region %s' % self.region)
         command_end = ['exit', 'exit']
         full_command = command_start + commands + command_end
+        full_log_command = full_command
+        if commands_to_log:
+           full_log_command = command_start + commands_to_log + command_end
 
-        LOG.info(_('Executing command on Arista EOS: %s'), full_command)
+        LOG.info(_('Executing command on Arista EOS: %s'), full_log_command)
 
         try:
             # this returns array of return values for every command in
@@ -301,7 +310,7 @@ class AristaRPCWrapper(object):
             host = cfg.CONF.ml2_arista.eapi_host
             msg = (_('Error %(err)s while trying to execute '
                      'commands %(cmd)s on EOS %(host)s') %
-                   {'err': error, 'cmd': full_command, 'host': host})
+                   {'err': error, 'cmd': full_log_command, 'host': host})
             LOG.exception(msg)
             raise arista_exc.AristaRpcError(msg=msg)
 
