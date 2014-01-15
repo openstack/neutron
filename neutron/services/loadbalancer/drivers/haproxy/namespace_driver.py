@@ -26,6 +26,7 @@ from neutron.agent.common import config
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
+from neutron.common import utils as n_utils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -116,6 +117,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         # remember the pool<>port mapping
         self.pool_to_port_id[pool_id] = logical_config['vip']['port']['id']
 
+    @n_utils.synchronized('haproxy-driver')
     def undeploy_instance(self, pool_id):
         namespace = get_ns_name(pool_id)
         ns = ip_lib.IPWrapper(self.root_helper, namespace)
@@ -266,6 +268,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         interface_name = self.vif_driver.get_device_name(Wrap(port_stub))
         self.vif_driver.unplug(interface_name, namespace=namespace)
 
+    @n_utils.synchronized('haproxy-driver')
     def deploy_instance(self, logical_config):
         # do actual deploy only if vip is configured and active
         if ('vip' not in logical_config or
