@@ -33,6 +33,9 @@ class rpcApiTestCase(base.BaseTestCase):
                        expected_msg=None, **kwargs):
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if method == 'call' else None
+        expected_kwargs = {'topic': topic}
+        if 'version' in kwargs:
+            expected_kwargs['version'] = kwargs.pop('version')
         if not expected_msg:
             expected_msg = rpcapi.make_msg(method, **kwargs)
         if rpc_method == 'cast' and method == 'run_instance':
@@ -55,7 +58,6 @@ class rpcApiTestCase(base.BaseTestCase):
 
         self.assertEqual(expected_retval, retval)
         expected_args = [ctxt, expected_msg]
-        expected_kwargs = {'topic': topic}
 
         # skip the first argument which is 'self'
         for arg, expected_arg in zip(self.fake_args[1:], expected_args):
@@ -135,6 +137,14 @@ class rpcApiTestCase(base.BaseTestCase):
                             'get_device_details', rpc_method='call',
                             device='fake_device',
                             agent_id='fake_agent_id')
+
+    def test_devices_details_list(self):
+        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
+        self._test_mlnx_api(rpcapi, topics.PLUGIN,
+                            'get_devices_details_list', rpc_method='call',
+                            devices=['fake_device1', 'fake_device1'],
+                            agent_id='fake_agent_id',
+                            version='1.2')
 
     def test_update_device_down(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)

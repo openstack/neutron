@@ -357,21 +357,21 @@ class HyperVNeutronAgent(n_rpc.RpcCallback):
             LOG.debug(_("No port %s defined on agent."), port_id)
 
     def _treat_devices_added(self, devices):
-        resync = False
-        for device in devices:
+        try:
+            devices_details_list = self.plugin_rpc.get_devices_details_list(
+                self.context,
+                devices,
+                self.agent_id)
+        except Exception as e:
+            LOG.debug("Unable to get ports details for "
+                      "devices %(devices)s: %(e)s",
+                      {'devices': devices, 'e': e})
+            # resync is needed
+            return True
+
+        for device_details in devices_details_list:
+            device = device_details['device']
             LOG.info(_("Adding port %s"), device)
-            try:
-                device_details = self.plugin_rpc.get_device_details(
-                    self.context,
-                    device,
-                    self.agent_id)
-            except Exception as e:
-                LOG.debug(
-                    _("Unable to get port details for "
-                      "device %(device)s: %(e)s"),
-                    {'device': device, 'e': e})
-                resync = True
-                continue
             if 'port_id' in device_details:
                 LOG.info(
                     _("Port %(device)s updated. Details: %(device_details)s"),
@@ -395,7 +395,7 @@ class HyperVNeutronAgent(n_rpc.RpcCallback):
                                                  device,
                                                  self.agent_id,
                                                  cfg.CONF.host)
-        return resync
+        return False
 
     def _treat_devices_removed(self, devices):
         resync = False

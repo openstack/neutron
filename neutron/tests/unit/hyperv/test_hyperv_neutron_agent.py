@@ -145,7 +145,7 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
         self.assertNotIn(self._FAKE_PORT_ID, self.agent._port_metric_retries)
 
     def test_treat_devices_added_returns_true_for_missing_device(self):
-        attrs = {'get_device_details.side_effect': Exception()}
+        attrs = {'get_devices_details_list.side_effect': Exception()}
         self.agent.plugin_rpc.configure_mock(**attrs)
         self.assertTrue(self.agent._treat_devices_added([{}]))
 
@@ -156,7 +156,7 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
         :param func_name: the function that should be called
         :returns: whether the named function was called
         """
-        attrs = {'get_device_details.return_value': details}
+        attrs = {'get_devices_details_list.return_value': [details]}
         self.agent.plugin_rpc.configure_mock(**attrs)
         with mock.patch.object(self.agent, func_name) as func:
             self.assertFalse(self.agent._treat_devices_added([{}]))

@@ -41,10 +41,11 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                    sg_db_rpc.SecurityGroupServerRpcCallbackMixin,
                    type_tunnel.TunnelRpcCallbackMixin):
 
-    RPC_API_VERSION = '1.1'
+    RPC_API_VERSION = '1.2'
     # history
     #   1.0 Initial version (from openvswitch/linuxbridge)
     #   1.1 Support Security Group RPC
+    #   1.2 Support get_devices_details_list
 
     # FIXME(ihrachys): we can't use n_rpc.RpcCallback here due to
     # inheritance problems
@@ -148,6 +149,16 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                      'physical_network': segment[api.PHYSICAL_NETWORK]}
             LOG.debug(_("Returning: %s"), entry)
             return entry
+
+    def get_devices_details_list(self, rpc_context, **kwargs):
+        return [
+            self.get_device_details(
+                rpc_context,
+                device=device,
+                **kwargs
+            )
+            for device in kwargs.pop('devices', [])
+        ]
 
     def _find_segment(self, segments, segment_id):
         for segment in segments:

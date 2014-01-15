@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from oslo import messaging
 
 from neutron.agent import rpc
 from neutron.openstack.common import context
@@ -36,6 +37,21 @@ class AgentRPCPluginApi(base.BaseTestCase):
 
     def test_get_device_details(self):
         self._test_rpc_call('get_device_details')
+
+    def test_get_devices_details_list(self):
+        self._test_rpc_call('get_devices_details_list')
+
+    def test_devices_details_list_unsupported(self):
+        agent = rpc.PluginApi('fake_topic')
+        ctxt = context.RequestContext('fake_user', 'fake_project')
+        expect_val_get_device_details = 'foo'
+        expect_val = [expect_val_get_device_details]
+        with mock.patch('neutron.common.rpc.RpcProxy.call') as rpc_call:
+            rpc_call.side_effect = [messaging.UnsupportedVersion('1.2'),
+                                    expect_val_get_device_details]
+            func_obj = getattr(agent, 'get_devices_details_list')
+            actual_val = func_obj(ctxt, ['fake_device'], 'fake_agent_id')
+        self.assertEqual(actual_val, expect_val)
 
     def test_update_device_down(self):
         self._test_rpc_call('update_device_down')

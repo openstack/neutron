@@ -1078,9 +1078,19 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                     self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
 
     def treat_devices_added_or_updated(self, devices, ovs_restarted):
-        resync = False
-        for device in devices:
-            LOG.debug(_("Processing port %s"), device)
+        try:
+            devices_details_list = self.plugin_rpc.get_devices_details_list(
+                self.context,
+                devices,
+                self.agent_id)
+        except Exception as e:
+            LOG.debug("Unable to get port details for %(devices)s: %(e)s",
+                      {'devices': devices, 'e': e})
+            # resync is needed
+            return True
+        for details in devices_details_list:
+            device = details['device']
+            LOG.debug("Processing port: %s", device)
             port = self.int_br.get_vif_port_by_id(device)
             if not port:
                 # The port has disappeared and should not be processed
@@ -1089,18 +1099,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 LOG.info(_("Port %s was not found on the integration bridge "
                            "and will therefore not be processed"), device)
                 continue
-            try:
-                # TODO(salv-orlando): Provide bulk API for retrieving
-                # details for all devices in one call
-                details = self.plugin_rpc.get_device_details(self.context,
-                                                             device,
-                                                             self.agent_id)
-            except Exception as e:
-                LOG.debug(_("Unable to get port details for "
-                            "%(device)s: %(e)s"),
-                          {'device': device, 'e': e})
-                resync = True
-                continue
+
             if 'port_id' in details:
                 LOG.info(_("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': details})
@@ -1125,28 +1124,30 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 LOG.warn(_("Device %s not defined on plugin"), device)
                 if (port and port.ofport != -1):
                     self.port_dead(port)
-        return resync
+        return False
 
     def treat_ancillary_devices_added(self, devices):
-        resync = False
-        for device in devices:
+        try:
+            devices_details_list = self.plugin_rpc.get_devices_details_list(
+                self.context,
+                devices,
+                self.agent_id)
+        except Exception as e:
+            LOG.debug("Unable to get port details for "
+                      "%(devices)s: %(e)s", {'devices': devices, 'e': e})
+            # resync is needed
+            return True
+
+        for details in devices_details_list:
+            device = details['device']
             LOG.info(_("Ancillary Port %s added"), device)
-            try:
-                self.plugin_rpc.get_device_details(self.context, device,
-                                                   self.agent_id)
-            except Exception as e:
-                LOG.debug(_("Unable to get port details for "
-                            "%(device)s: %(e)s"),
-                          {'device': device, 'e': e})
-                resync = True
-                continue
 
             # update plugin about port status
             self.plugin_rpc.update_device_up(self.context,
                                              device,
                                              self.agent_id,
                                              cfg.CONF.host)
-        return resync
+        return False
 
     def treat_devices_removed(self, devices):
         resync = False
