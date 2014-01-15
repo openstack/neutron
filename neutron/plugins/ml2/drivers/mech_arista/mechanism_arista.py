@@ -248,15 +248,6 @@ class AristaRPCWrapper(object):
         cmds = ['no tenant %s' % tenant_id, 'exit']
         self._run_openstack_cmds(cmds)
 
-    def delete_this_region(self):
-        """Deletes this entire region from EOS.
-
-        This is equivalent of unregistering this Neurtron stack from EOS
-        All networks for all tenants are removed.
-        """
-        cmds = []
-        self._run_openstack_cmds(cmds, deleteRegion=True)
-
     def _register_with_eos(self):
         """This is the registration request with EOS.
 
@@ -363,18 +354,6 @@ class SyncService(object):
             return
 
         db_tenants = db.get_tenants()
-
-        if not db_tenants and eos_tenants:
-            # No tenants configured in Neutron. Clear all EOS state
-            try:
-                self._rpc.delete_this_region()
-                msg = _('No Tenants configured in Neutron DB. But %d '
-                        'tenants disovered in EOS during synchronization.'
-                        'Enitre EOS region is cleared') % len(eos_tenants)
-            except arista_exc.AristaRpcError:
-                msg = _('EOS is not available, failed to delete this region')
-            LOG.warning(msg)
-            return
 
         # EOS and Neutron has matching set of tenants. Now check
         # to ensure that networks and VMs match on both sides for
