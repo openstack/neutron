@@ -28,7 +28,7 @@ from neutron.common import config
 from neutron import service
 
 from neutron.openstack.common import gettextutils
-gettextutils.install('neutron', lazy=False)
+gettextutils.install('neutron', lazy=True)
 
 
 def main():
