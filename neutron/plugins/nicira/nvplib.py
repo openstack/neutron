@@ -1408,29 +1408,3 @@ def get_function_by_version(func_name, nvp_ver):
         msg = _('NVP version is not set. Unable to complete request '
                 'correctly. Check log for NVP communication errors.')
         raise NvpApiClient.ServiceUnavailable(message=msg)
-
-
-# -----------------------------------------------------------------------------
-# QOS API Calls
-# -----------------------------------------------------------------------------
-def create_lqueue(cluster, lqueue):
-    uri = _build_uri_path(LQUEUE_RESOURCE)
-    lqueue['tags'] = [{'tag': NEUTRON_VERSION, 'scope': 'quantum'}]
-    try:
-        return do_request(HTTP_POST, uri, json.dumps(lqueue),
-                          cluster=cluster)['uuid']
-    except NvpApiClient.NvpApiException:
-        # FIXME(salv-orlando): This should not raise QauntumException
-        LOG.exception(_("Failed to create logical queue"))
-        raise exception.NeutronException()
-
-
-def delete_lqueue(cluster, id):
-    try:
-        do_request(HTTP_DELETE, _build_uri_path(LQUEUE_RESOURCE,
-                                                resource_id=id),
-                   cluster=cluster)
-    except Exception:
-        # FIXME(salv-orlando): This should not raise QauntumException
-        LOG.exception(_("Failed to delete logical queue"))
-        raise exception.NeutronException()

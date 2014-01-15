@@ -42,11 +42,12 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.dbexts import nicira_db
-from neutron.plugins.nicira.dbexts import nicira_qos_db as qos_db
+from neutron.plugins.nicira.dbexts import qos_db
 from neutron.plugins.nicira.extensions import distributedrouter as dist_router
 from neutron.plugins.nicira.extensions import nvp_networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
 from neutron.plugins.nicira import NeutronPlugin
+from neutron.plugins.nicira import nsxlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.plugins.nicira import nvplib
@@ -1041,11 +1042,11 @@ class NvpQoSTestExtensionManager(object):
         return []
 
 
-class TestNiciraQoSQueue(NiciraPluginV2TestCase):
+class TestQoSQueue(NiciraPluginV2TestCase):
 
     def setUp(self, plugin=None):
         cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
-        super(TestNiciraQoSQueue, self).setUp()
+        super(TestQoSQueue, self).setUp()
         ext_mgr = NvpQoSTestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
@@ -1073,7 +1074,6 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
             body['qos_queue']['dscp'] = dscp
         if default:
             body['qos_queue']['default'] = default
-
         res = self._create_qos_queue('json', body)
         qos_queue = self.deserialize('json', res)
         if res.status_int >= 400:
@@ -1096,7 +1096,7 @@ class TestNiciraQoSQueue(NiciraPluginV2TestCase):
 
     def test_create_trusted_qos_queue(self):
         with mock.patch.object(qos_db.LOG, 'info') as log:
-            with mock.patch.object(nvplib, 'do_request',
+            with mock.patch.object(nsxlib.queue, 'do_request',
                                    return_value={"uuid": "fake_queue"}):
                 with self.qos_queue(name='fake_lqueue', min=34, max=44,
                                     qos_marking='trusted', default=False) as q:
