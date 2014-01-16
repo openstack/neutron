@@ -1454,49 +1454,6 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                                         "with id: %s!"), id)
         return hm
 
-    def delete_health_monitor(self, context, id):
-        with context.session.begin(subtransactions=True):
-            qry = context.session.query(
-                loadbalancer_db.PoolMonitorAssociation
-            ).filter_by(monitor_id=id)
-            for assoc in qry:
-                pool_id = assoc['pool_id']
-                super(NsxAdvancedPlugin,
-                      self).delete_pool_health_monitor(context,
-                                                       id,
-                                                       pool_id)
-                pool = self.get_pool(context, pool_id)
-                if not pool.get('vip_id'):
-                    continue
-                edge_id = self._get_edge_id_by_vip_id(
-                    context, pool['vip_id'])
-                self._resource_set_status(
-                    context, loadbalancer_db.Pool,
-                    pool_id, service_constants.PENDING_UPDATE)
-                try:
-                    self._vcns_update_pool(context, pool)
-                except Exception:
-                    with excutils.save_and_reraise_exception():
-                        LOG.exception(_("Failed to update pool with monitor!"))
-                self._resource_set_status(
-                    context, loadbalancer_db.Pool,
-                    pool_id, service_constants.ACTIVE)
-                try:
-                    self.vcns_driver.delete_health_monitor(
-                        context, id, edge_id)
-                except Exception:
-                    with excutils.save_and_reraise_exception():
-                        LOG.exception(_("Failed to delete monitor "
-                                        "with id: %s!"), id)
-                        super(NsxAdvancedPlugin,
-                              self).delete_health_monitor(context, id)
-                        self._delete_resource_router_id_binding(
-                            context, id, loadbalancer_db.HealthMonitor)
-
-        super(NsxAdvancedPlugin, self).delete_health_monitor(context, id)
-        self._delete_resource_router_id_binding(
-            context, id, loadbalancer_db.HealthMonitor)
-
     def create_pool_health_monitor(self, context,
                                    health_monitor, pool_id):
         monitor_id = health_monitor['health_monitor']['id']
