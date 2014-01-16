@@ -149,7 +149,7 @@ def translate(translatable, locale):
     :returns: the translated object, or the object as-is if it
               was not translated
     """
-    localize = gettextutils.get_localized_message
+    localize = gettextutils.translate
     if isinstance(translatable, exceptions.NeutronException):
         translatable.msg = localize(translatable.msg, locale)
     elif isinstance(translatable, webob.exc.HTTPError):

@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -19,6 +17,7 @@
 System-level utilities and helper functions.
 """
 
+import logging as stdlib_logging
 import os
 import random
 import shlex
@@ -81,7 +80,7 @@ def execute(*cmd, **kwargs):
     :param cmd:             Passed to subprocess.Popen.
     :type cmd:              string
     :param process_input:   Send to opened process.
-    :type proces_input:     string
+    :type process_input:    string
     :param check_exit_code: Single bool, int, or list of allowed exit
                             codes.  Defaults to [0].  Raise
                             :class:`ProcessExecutionError` unless
@@ -102,6 +101,9 @@ def execute(*cmd, **kwargs):
     :param shell:           whether or not there should be a shell used to
                             execute this command. Defaults to false.
     :type shell:            boolean
+    :param loglevel:        log level for execute commands.
+    :type loglevel:         int.  (Should be stdlib_logging.DEBUG or
+                            stdlib_logging.INFO)
     :returns:               (stdout, stderr) from process execution
     :raises:                :class:`UnknownArgumentError` on
                             receiving unknown arguments
@@ -116,6 +118,7 @@ def execute(*cmd, **kwargs):
     run_as_root = kwargs.pop('run_as_root', False)
     root_helper = kwargs.pop('root_helper', '')
     shell = kwargs.pop('shell', False)
+    loglevel = kwargs.pop('loglevel', stdlib_logging.DEBUG)
 
     if isinstance(check_exit_code, bool):
         ignore_exit_code = not check_exit_code
@@ -127,7 +130,7 @@ def execute(*cmd, **kwargs):
         raise UnknownArgumentError(_('Got unknown keyword args '
                                      'to utils.execute: %r') % kwargs)
 
-    if run_as_root and os.geteuid() != 0:
+    if run_as_root and hasattr(os, 'geteuid') and os.geteuid() != 0:
         if not root_helper:
             raise NoRootWrapSpecified(
                 message=('Command requested root, but did not specify a root '
@@ -139,7 +142,7 @@ def execute(*cmd, **kwargs):
     while attempts > 0:
         attempts -= 1
         try:
-            LOG.debug(_('Running cmd (subprocess): %s'), ' '.join(cmd))
+            LOG.log(loglevel, _('Running cmd (subprocess): %s'), ' '.join(cmd))
             _PIPE = subprocess.PIPE  # pylint: disable=E1101
 
             if os.name == 'nt':
@@ -163,20 +166,19 @@ def execute(*cmd, **kwargs):
                 result = obj.communicate()
             obj.stdin.close()  # pylint: disable=E1101
             _returncode = obj.returncode  # pylint: disable=E1101
-            if _returncode:
-                LOG.debug(_('Result was %s') % _returncode)
-                if not ignore_exit_code and _returncode not in check_exit_code:
-                    (stdout, stderr) = result
-                    raise ProcessExecutionError(exit_code=_returncode,
-                                                stdout=stdout,
-                                                stderr=stderr,
-                                                cmd=' '.join(cmd))
+            LOG.log(loglevel, _('Result was %s') % _returncode)
+            if not ignore_exit_code and _returncode not in check_exit_code:
+                (stdout, stderr) = result
+                raise ProcessExecutionError(exit_code=_returncode,
+                                            stdout=stdout,
+                                            stderr=stderr,
+                                            cmd=' '.join(cmd))
             return result
         except ProcessExecutionError:
             if not attempts:
                 raise
             else:
-                LOG.debug(_('%r failed. Retrying.'), cmd)
+                LOG.log(loglevel, _('%r failed. Retrying.'), cmd)
                 if delay_on_retry:
                     greenthread.sleep(random.randint(20, 200) / 100.0)
         finally:

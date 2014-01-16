@@ -45,7 +45,7 @@ class Versions(object):
         if req.path != '/':
             language = req.best_match_language()
             msg = _('Unknown API version specified')
-            msg = gettextutils.get_localized_message(msg, language)
+            msg = gettextutils.translate(msg, language)
             return webob.exc.HTTPNotFound(explanation=msg)
 
         builder = versions_view.get_view_builder(req)

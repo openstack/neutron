@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 OpenStack Foundation.
 # All Rights Reserved.
 #
@@ -21,8 +19,10 @@ Time related utilities and helper functions.
 
 import calendar
 import datetime
+import time
 
 import iso8601
+import six
 
 
 # ISO 8601 extended time format with microseconds
@@ -48,9 +48,9 @@ def parse_isotime(timestr):
     try:
         return iso8601.parse_date(timestr)
     except iso8601.ParseError as e:
-        raise ValueError(e.message)
+        raise ValueError(six.text_type(e))
     except TypeError as e:
-        raise ValueError(e.message)
+        raise ValueError(six.text_type(e))
 
 
 def strtime(at=None, fmt=PERFECT_TIME_FORMAT):
@@ -75,20 +75,31 @@ def normalize_time(timestamp):
 
 def is_older_than(before, seconds):
     """Return True if before is older than seconds."""
-    if isinstance(before, basestring):
+    if isinstance(before, six.string_types):
         before = parse_strtime(before).replace(tzinfo=None)
+    else:
+        before = before.replace(tzinfo=None)
+
     return utcnow() - before > datetime.timedelta(seconds=seconds)
 
 
 def is_newer_than(after, seconds):
     """Return True if after is newer than seconds."""
-    if isinstance(after, basestring):
+    if isinstance(after, six.string_types):
         after = parse_strtime(after).replace(tzinfo=None)
+    else:
+        after = after.replace(tzinfo=None)
+
     return after - utcnow() > datetime.timedelta(seconds=seconds)
 
 
 def utcnow_ts():
     """Timestamp version of our utcnow function."""
+    if utcnow.override_time is None:
+        # NOTE(kgriffs): This is several times faster
+        # than going through calendar.timegm(...)
+        return int(time.time())
+
     return calendar.timegm(utcnow().timetuple())
 
 
@@ -110,12 +121,15 @@ def iso8601_from_timestamp(timestamp):
 utcnow.override_time = None
 
 
-def set_time_override(override_time=datetime.datetime.utcnow()):
+def set_time_override(override_time=None):
     """Overrides utils.utcnow.
 
     Make it return a constant time or a list thereof, one at a time.
+
+    :param override_time: datetime instance or list thereof. If not
+                          given, defaults to the current UTC time.
     """
-    utcnow.override_time = override_time
+    utcnow.override_time = override_time or datetime.datetime.utcnow()
 
 
 def advance_time_delta(timedelta):
@@ -168,6 +182,15 @@ def delta_seconds(before, after):
     datetime objects (as a float, to microsecond resolution).
     """
     delta = after - before
+    return total_seconds(delta)
+
+
+def total_seconds(delta):
+    """Return the total seconds of datetime.timedelta object.
+
+    Compute total seconds of datetime.timedelta, datetime.timedelta
+    doesn't have method total_seconds in Python2.6, calculate it manually.
+    """
     try:
         return delta.total_seconds()
     except AttributeError:
@@ -178,8 +201,8 @@ def delta_seconds(before, after):
 def is_soon(dt, window):
     """Determines if time is going to happen in the next window seconds.
 
-    :params dt: the time
-    :params window: minimum seconds to remain to consider the time not soon
+    :param dt: the time
+    :param window: minimum seconds to remain to consider the time not soon
 
     :return: True if expiration is within the given duration
     """

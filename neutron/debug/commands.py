@@ -30,8 +30,8 @@ class ProbeCommand(NeutronCommand):
         return self.app.debug_agent
 
     def run(self, parsed_args):
-        self.log.debug('run(%s)' % parsed_args)
-        self.app.stdout.write(_('Unimplemented commands') + '\n')
+        self.log.debug('run(%s)', parsed_args)
+        self.log.info(_('Unimplemented commands'))
 
 
 class CreateProbe(ProbeCommand):
@@ -55,7 +55,7 @@ class CreateProbe(ProbeCommand):
         debug_agent = self.get_debug_agent()
         port = debug_agent.create_probe(parsed_args.id,
                                         parsed_args.device_owner)
-        self.app.stdout.write(_('Probe created : %s ') % port.id + '\n')
+        self.log.info(_('Probe created : %s '), port.id)
 
 
 class DeleteProbe(ProbeCommand):
@@ -74,7 +74,7 @@ class DeleteProbe(ProbeCommand):
         self.log.debug('run(%s)' % parsed_args)
         debug_agent = self.get_debug_agent()
         debug_agent.delete_probe(parsed_args.id)
-        self.app.stdout.write(_('Probe %s deleted') % parsed_args.id + '\n')
+        self.log.info(_('Probe %s deleted'), parsed_args.id)
 
 
 class ListProbe(NeutronCommand, lister.Lister):
@@ -105,7 +105,7 @@ class ClearProbe(ProbeCommand):
         self.log.debug('run(%s)' % parsed_args)
         debug_agent = self.get_debug_agent()
         debug_agent.clear_probe()
-        self.app.stdout.write(_('All Probes deleted ') + '\n')
+        self.log.info(_('All Probes deleted '))
 
 
 class ExecProbe(ProbeCommand):

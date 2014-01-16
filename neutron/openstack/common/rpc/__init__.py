@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2010 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
 # All Rights Reserved.
@@ -56,13 +54,12 @@ rpc_opts = [
                help='Seconds to wait before a cast expires (TTL). '
                     'Only supported by impl_zmq.'),
     cfg.ListOpt('allowed_rpc_exception_modules',
-                default=['neutron.openstack.common.exception',
-                         'nova.exception',
+                default=['nova.exception',
                          'cinder.exception',
                          'exceptions',
                          ],
                 help='Modules of exceptions that are permitted to be recreated'
-                     'upon receiving exception data from an rpc call.'),
+                     ' upon receiving exception data from an rpc call.'),
     cfg.BoolOpt('fake_rabbit',
                 default=False,
                 help='If passed, use a fake RabbitMQ provider'),
@@ -228,7 +225,7 @@ def notify(context, topic, msg, envelope=False):
 
 
 def cleanup():
-    """Clean up resoruces in use by implementation.
+    """Clean up resources in use by implementation.
 
     Clean up any resources that have been allocated by the RPC implementation.
     This is typically open connections to a messaging service.  This function

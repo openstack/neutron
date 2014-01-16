@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 #    Copyright 2011 OpenStack Foundation
 #    Copyright 2011 - 2012, Red Hat, Inc.
 #
@@ -22,7 +20,9 @@ import time
 import eventlet
 import greenlet
 from oslo.config import cfg
+import six
 
+from neutron.openstack.common import excutils
 from neutron.openstack.common.gettextutils import _
 from neutron.openstack.common import importutils
 from neutron.openstack.common import jsonutils
@@ -149,10 +149,17 @@ class ConsumerBase(object):
 
         self.address = "%s ; %s" % (node_name, jsonutils.dumps(addr_opts))
 
-        self.reconnect(session)
+        self.connect(session)
+
+    def connect(self, session):
+        """Declare the receiver on connect."""
+        self._declare_receiver(session)
 
     def reconnect(self, session):
         """Re-declare the receiver after a qpid reconnect."""
+        self._declare_receiver(session)
+
+    def _declare_receiver(self, session):
         self.session = session
         self.receiver = session.receiver(self.address)
         self.receiver.capacity = 1
@@ -183,10 +190,14 @@ class ConsumerBase(object):
         except Exception:
             LOG.exception(_("Failed to process message... skipping it."))
         finally:
+            # TODO(sandy): Need support for optional ack_on_error.
             self.session.acknowledge(message)
 
     def get_receiver(self):
         return self.receiver
+
+    def get_node_name(self):
+        return self.address.split(';')[0]
 
 
 class DirectConsumer(ConsumerBase):
@@ -263,6 +274,7 @@ class FanoutConsumer(ConsumerBase):
         'topic' is the topic to listen on
         'callback' is the callback to call when messages are received
         """
+        self.conf = conf
 
         link_opts = {"exclusive": True}
 
@@ -371,7 +383,7 @@ class DirectPublisher(Publisher):
 class TopicPublisher(Publisher):
     """Publisher class for 'topic'."""
     def __init__(self, conf, session, topic):
-        """init a 'topic' publisher.
+        """Init a 'topic' publisher.
         """
         exchange_name = rpc_amqp.get_control_exchange(conf)
 
@@ -388,7 +400,7 @@ class TopicPublisher(Publisher):
 class FanoutPublisher(Publisher):
     """Publisher class for 'fanout'."""
     def __init__(self, conf, session, topic):
-        """init a 'fanout' publisher.
+        """Init a 'fanout' publisher.
         """
 
         if conf.qpid_topology_version == 1:
@@ -407,7 +419,7 @@ class FanoutPublisher(Publisher):
 class NotifyPublisher(Publisher):
     """Publisher class for notifications."""
     def __init__(self, conf, session, topic):
-        """init a 'topic' publisher.
+        """Init a 'topic' publisher.
         """
         exchange_name = rpc_amqp.get_control_exchange(conf)
         node_opts = {"durable": True}
@@ -515,7 +527,7 @@ class Connection(object):
             consumers = self.consumers
             self.consumers = {}
 
-            for consumer in consumers.itervalues():
+            for consumer in six.itervalues(consumers):
                 consumer.reconnect(self.session)
                 self._register_consumer(consumer)
 
@@ -673,12 +685,13 @@ class Connection(object):
         it = self.iterconsume(limit=limit)
         while True:
             try:
-                it.next()
+                six.next(it)
             except StopIteration:
                 return
 
     def consume_in_thread(self):
         """Consumer from all queues/consumers in a greenthread."""
+        @excutils.forever_retry_uncaught_exceptions
         def _consumer_thread():
             try:
                 self.consume()
@@ -719,7 +732,7 @@ class Connection(object):
         return consumer
 
     def join_consumer_pool(self, callback, pool_name, topic,
-                           exchange_name=None):
+                           exchange_name=None, ack_on_error=True):
         """Register as a member of a group of consumers for a given topic from
         the specified exchange.
 
@@ -733,6 +746,7 @@ class Connection(object):
             callback=callback,
             connection_pool=rpc_amqp.get_connection_pool(self.conf,
                                                          Connection),
+            wait_for_consumers=not ack_on_error
         )
         self.proxy_callbacks.append(callback_wrapper)
 
