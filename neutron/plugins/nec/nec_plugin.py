@@ -96,7 +96,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def supported_extension_aliases(self):
         if not hasattr(self, '_aliases'):
             aliases = self._supported_extension_aliases[:]
-            sg_rpc.disable_security_group_extension_if_noop_driver(aliases)
+            sg_rpc.disable_security_group_extension_by_config(aliases)
             self.remove_packet_filter_extension_if_disabled(aliases)
             self._aliases = aliases
         return self._aliases

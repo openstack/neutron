@@ -28,22 +28,49 @@ SG_RPC_VERSION = "1.1"
 security_group_opts = [
     cfg.StrOpt(
         'firewall_driver',
-        default='neutron.agent.firewall.NoopFirewallDriver',
-        help=_('Driver for Security Groups Firewall'))
+        default=None,
+        help=_('Driver for security groups firewall in the L2 agent')),
+    cfg.BoolOpt(
+        'enable_security_group',
+        default=True,
+        help=_(
+            'Controls whether the neutron security group API is enabled '
+            'in the server. It should be false when using no security '
+            'groups or using the nova security group API.'))
 ]
 cfg.CONF.register_opts(security_group_opts, 'SECURITYGROUP')
 
 
+#This is backward compatibility check for Havana
+def _is_valid_driver_combination():
+    return ((cfg.CONF.SECURITYGROUP.enable_security_group and
+             cfg.CONF.SECURITYGROUP.firewall_driver !=
+             'neutron.agent.firewall.NoopFirewallDriver') or
+            (not cfg.CONF.SECURITYGROUP.enable_security_group and
+             (cfg.CONF.SECURITYGROUP.firewall_driver ==
+             'neutron.agent.firewall.NoopFirewallDriver' or
+              cfg.CONF.SECURITYGROUP.firewall_driver == None)
+             ))
+
+
 def is_firewall_enabled():
-    return (cfg.CONF.SECURITYGROUP.firewall_driver !=
-            'neutron.agent.firewall.NoopFirewallDriver')
+    if not _is_valid_driver_combination():
+        LOG.warn("Driver configuration don't match with enable_security_group")
+
+    return cfg.CONF.SECURITYGROUP.enable_security_group
 
 
-def disable_security_group_extension_if_noop_driver(
-    supported_extension_aliases):
+def _disable_extension(extension, aliases):
+    if extension in aliases:
+        aliases.remove(extension)
+
+
+def disable_security_group_extension_by_config(aliases):
     if not is_firewall_enabled():
-        LOG.debug(_('Disabled security-group extension.'))
-        supported_extension_aliases.remove('security-group')
+        LOG.info(_('Disabled security-group extension.'))
+        _disable_extension('security-group', aliases)
+        LOG.info(_('Disabled allowed-address-pairs extension.'))
+        _disable_extension('allowed-address-pairs', aliases)
 
 
 class SecurityGroupServerRpcApiMixin(object):

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.config import cfg
 from webob import exc
 
 from neutron.extensions import portbindings
@@ -54,7 +55,14 @@ class TestMlnxNetworksV2(test_plugin.TestNetworksV2, MlnxPluginV2TestCase):
 class TestMlnxPortBinding(MlnxPluginV2TestCase,
                           test_bindings.PortBindingsTestCase):
     VIF_TYPE = constants.VIF_TYPE_DIRECT
+    ENABLE_SG = False
     HAS_PORT_FILTER = False
+
+    def setUp(self, firewall_driver=None):
+        cfg.CONF.set_override(
+            'enable_security_group', self.ENABLE_SG,
+            group='SECURITYGROUP')
+        super(TestMlnxPortBinding, self).setUp()
 
     def _check_default_port_binding_profole(self, port,
                                             expected_vif_type=None):
@@ -98,6 +106,7 @@ class TestMlnxPortBinding(MlnxPluginV2TestCase,
 
 class TestMlnxPortBindingNoSG(TestMlnxPortBinding):
     HAS_PORT_FILTER = False
+    ENABLE_SG = False
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
 

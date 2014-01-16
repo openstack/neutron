@@ -24,6 +24,7 @@ from oslo.config import cfg
 from testtools import matchers
 import webob.exc
 
+from neutron.agent.common import config
 from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import iptables_manager
 from neutron.agent import rpc as agent_rpc
@@ -53,6 +54,9 @@ class FakeSGCallback(sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
 class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
     def setUp(self, plugin=None):
+        cfg.CONF.set_default('firewall_driver',
+                             'neutron.agent.firewall.NoopFirewallDriver',
+                             group='SECURITYGROUP')
         super(SGServerRpcCallBackMixinTestCase, self).setUp(plugin)
         self.rpc = FakeSGCallback()
 
@@ -504,6 +508,9 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
 class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
     def setUp(self, defer_refresh_firewall=False):
         super(SecurityGroupAgentRpcTestCase, self).setUp()
+        cfg.CONF.set_default('firewall_driver',
+                             'neutron.agent.firewall.NoopFirewallDriver',
+                             group='SECURITYGROUP')
         self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
         self.agent.context = None
         mock.patch('neutron.agent.linux.iptables_manager').start()
@@ -1432,6 +1439,10 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
     def setUp(self, defer_refresh_firewall=False):
         super(TestSecurityGroupAgentWithIptables, self).setUp()
+        config.register_root_helper(cfg.CONF)
+        cfg.CONF.set_override(
+            'lock_path',
+            '$state_path/lock')
         cfg.CONF.set_override(
             'firewall_driver',
             self.FIREWALL_DRIVER,
@@ -1683,24 +1694,65 @@ class TestSecurityGroupAgentWithOVSIptables(
 
 
 class TestSecurityGroupExtensionControl(base.BaseTestCase):
-    def test_firewall_enabled_noop_driver(self):
-        set_firewall_driver(FIREWALL_NOOP_DRIVER)
-        self.assertFalse(sg_rpc.is_firewall_enabled())
-
-    def test_firewall_enabled_iptables_driver(self):
-        set_firewall_driver(FIREWALL_IPTABLES_DRIVER)
-        self.assertTrue(sg_rpc.is_firewall_enabled())
-
-    def test_disable_security_group_extension_noop_driver(self):
-        set_firewall_driver(FIREWALL_NOOP_DRIVER)
+    def test_disable_security_group_extension_by_config(self):
+        cfg.CONF.set_override(
+            'enable_security_group', False,
+            group='SECURITYGROUP')
         exp_aliases = ['dummy1', 'dummy2']
         ext_aliases = ['dummy1', 'security-group', 'dummy2']
-        sg_rpc.disable_security_group_extension_if_noop_driver(ext_aliases)
+        sg_rpc.disable_security_group_extension_by_config(ext_aliases)
         self.assertEqual(ext_aliases, exp_aliases)
 
-    def test_disable_security_group_extension_iptables_driver(self):
-        set_firewall_driver(FIREWALL_IPTABLES_DRIVER)
+    def test_enable_security_group_extension_by_config(self):
+        cfg.CONF.set_override(
+            'enable_security_group', True,
+            group='SECURITYGROUP')
         exp_aliases = ['dummy1', 'security-group', 'dummy2']
         ext_aliases = ['dummy1', 'security-group', 'dummy2']
-        sg_rpc.disable_security_group_extension_if_noop_driver(ext_aliases)
+        sg_rpc.disable_security_group_extension_by_config(ext_aliases)
         self.assertEqual(ext_aliases, exp_aliases)
+
+    def test_is_invalid_drvier_combination_sg_enabled(self):
+        cfg.CONF.set_override(
+            'enable_security_group', True,
+            group='SECURITYGROUP')
+        cfg.CONF.set_override(
+            'firewall_driver', 'neutron.agent.firewall.NoopFirewallDriver',
+            group='SECURITYGROUP')
+        self.assertFalse(sg_rpc._is_valid_driver_combination())
+
+    def test_is_invalid_drvier_combination_sg_disabled(self):
+        cfg.CONF.set_override(
+            'enable_security_group', False,
+            group='SECURITYGROUP')
+        cfg.CONF.set_override(
+            'firewall_driver', 'NonNoopDriver',
+            group='SECURITYGROUP')
+        self.assertFalse(sg_rpc._is_valid_driver_combination())
+
+    def test_is_valid_drvier_combination_sg_enabled(self):
+        cfg.CONF.set_override(
+            'enable_security_group', True,
+            group='SECURITYGROUP')
+        cfg.CONF.set_override(
+            'firewall_driver', 'NonNoopDriver',
+            group='SECURITYGROUP')
+        self.assertTrue(sg_rpc._is_valid_driver_combination())
+
+    def test_is_valid_drvier_combination_sg_disabled(self):
+        cfg.CONF.set_override(
+            'enable_security_group', False,
+            group='SECURITYGROUP')
+        cfg.CONF.set_override(
+            'firewall_driver', 'neutron.agent.firewall.NoopFirewallDriver',
+            group='SECURITYGROUP')
+        self.assertTrue(sg_rpc._is_valid_driver_combination())
+
+    def test_is_valid_drvier_combination_sg_disabled_with_none(self):
+        cfg.CONF.set_override(
+            'enable_security_group', False,
+            group='SECURITYGROUP')
+        cfg.CONF.set_override(
+            'firewall_driver', None,
+            group='SECURITYGROUP')
+        self.assertTrue(sg_rpc._is_valid_driver_combination())

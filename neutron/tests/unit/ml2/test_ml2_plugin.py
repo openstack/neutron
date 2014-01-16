@@ -125,10 +125,14 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     # to bind port
     VIF_TYPE = portbindings.VIF_TYPE_UNBOUND
     HAS_PORT_FILTER = False
+    ENABLE_SG = True
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_HYBRID_DRIVER
 
     def setUp(self, firewall_driver=None):
         test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
+        config.cfg.CONF.set_override(
+            'enable_security_group', self.ENABLE_SG,
+            group='SECURITYGROUP')
         super(TestMl2PortBinding, self).setUp()
 
     def _check_port_binding_profile(self, port, profile=None):
@@ -171,6 +175,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):
     HAS_PORT_FILTER = False
+    ENABLE_SG = False
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
 

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.config import cfg
+
 from neutron.extensions import portbindings
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
@@ -58,15 +60,20 @@ class TestOpenvswitchPortBinding(OpenvswitchPluginV2TestCase,
                                  test_bindings.PortBindingsTestCase):
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = True
+    ENABLE_SG = True
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_HYBRID_DRIVER
 
     def setUp(self, firewall_driver=None):
         test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
+        cfg.CONF.set_override(
+            'enable_security_group', self.ENABLE_SG,
+            group='SECURITYGROUP')
         super(TestOpenvswitchPortBinding, self).setUp()
 
 
 class TestOpenvswitchPortBindingNoSG(TestOpenvswitchPortBinding):
     HAS_PORT_FILTER = False
+    ENABLE_SG = False
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
 

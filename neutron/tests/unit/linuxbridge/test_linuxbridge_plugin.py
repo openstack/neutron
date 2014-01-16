@@ -16,6 +16,7 @@
 import contextlib
 
 import mock
+from oslo.config import cfg
 
 from neutron.common import constants as q_const
 from neutron.extensions import portbindings
@@ -65,15 +66,20 @@ class TestLinuxBridgePortBinding(LinuxBridgePluginV2TestCase,
                                  test_bindings.PortBindingsTestCase):
     VIF_TYPE = portbindings.VIF_TYPE_BRIDGE
     HAS_PORT_FILTER = True
+    ENABLE_SG = True
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_IPTABLES_DRIVER
 
     def setUp(self):
         test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
+        cfg.CONF.set_override(
+            'enable_security_group', self.ENABLE_SG,
+            group='SECURITYGROUP')
         super(TestLinuxBridgePortBinding, self).setUp()
 
 
 class TestLinuxBridgePortBindingNoSG(TestLinuxBridgePortBinding):
     HAS_PORT_FILTER = False
+    ENABLE_SG = False
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
 

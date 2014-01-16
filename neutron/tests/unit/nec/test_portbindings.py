@@ -17,6 +17,7 @@
 #
 # @author: Akihiro Motoki, NEC Corporation
 
+from oslo.config import cfg
 from testtools import matchers
 from webob import exc
 
@@ -32,15 +33,20 @@ class TestNecPortBinding(test_bindings.PortBindingsTestCase,
                          test_nec_plugin.NecPluginV2TestCase):
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = True
+    ENABLE_SG = True
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_HYBRID_DRIVER
 
     def setUp(self):
         test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
+        cfg.CONF.set_override(
+            'enable_security_group', self.ENABLE_SG,
+            group='SECURITYGROUP')
         super(TestNecPortBinding, self).setUp()
 
 
 class TestNecPortBindingNoSG(TestNecPortBinding):
     HAS_PORT_FILTER = False
+    ENABLE_SG = False
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
 
