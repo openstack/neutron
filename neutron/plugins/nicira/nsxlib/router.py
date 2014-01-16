@@ -19,13 +19,13 @@ from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import utils
+from neutron.plugins.nicira.nsxlib.switch import get_port
 from neutron.plugins.nicira.nsxlib.versioning import DEFAULT_VERSION
 from neutron.plugins.nicira.nsxlib.versioning import versioned
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.nvplib import _build_uri_path
 from neutron.plugins.nicira.nvplib import do_request
 from neutron.plugins.nicira.nvplib import get_all_query_pages
-from neutron.plugins.nicira.nvplib import get_port
 
 HTTP_GET = "GET"
 HTTP_POST = "POST"

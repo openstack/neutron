@@ -37,6 +37,7 @@ from neutron.plugins.nicira.dbexts import vcns_models
 from neutron.plugins.nicira.extensions import servicerouter as sr
 from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira.nsxlib import router as routerlib
+from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 from neutron.plugins.nicira.vshield.common import (
@@ -109,12 +110,12 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         # load the vCNS driver
         self._load_vcns_drivers()
 
-        # nvplib's create_lswitch needs to be replaced in order to proxy
+        # switchlib's create_lswitch needs to be replaced in order to proxy
         # logical switch create requests to vcns
         self._set_create_lswitch_proxy()
 
     def _set_create_lswitch_proxy(self):
-        NeutronPlugin.nvplib.create_lswitch = self._proxy_create_lswitch
+        NeutronPlugin.switchlib.create_lswitch = self._proxy_create_lswitch
 
     def _proxy_create_lswitch(self, *args, **kwargs):
         name, tz_config, tags = (
@@ -412,7 +413,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                                           lrouter, lswitch):
         # create logic switch port
         try:
-            ls_port = nvplib.create_lport(
+            ls_port = switchlib.create_lport(
                 self.cluster, lswitch['uuid'], tenant_id,
                 '', '', lrouter['uuid'], True)
         except NvpApiClient.NvpApiException:
@@ -433,7 +434,8 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         except NvpApiClient.NvpApiException:
             msg = (_("Unable to create port on NVP logical router %s") % name)
             LOG.exception(msg)
-            nvplib.delete_port(self.cluster, lswitch['uuid'], ls_port['uuid'])
+            switchlib.delete_port(
+                self.cluster, lswitch['uuid'], ls_port['uuid'])
             raise q_exc.NeutronException(message=msg)
 
         # attach logic router port to switch port
@@ -443,7 +445,8 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 'PatchAttachment', ls_port['uuid'], None)
         except NvpApiClient.NvpApiException as e:
             # lr_port should have been deleted
-            nvplib.delete_port(self.cluster, lswitch['uuid'], ls_port['uuid'])
+            switchlib.delete_port(
+                self.cluster, lswitch['uuid'], ls_port['uuid'])
             raise e
 
     def _create_lrouter(self, context, router, nexthop):

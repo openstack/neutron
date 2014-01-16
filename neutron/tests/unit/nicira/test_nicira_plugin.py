@@ -197,8 +197,8 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
                 with self.port(subnet=sub):
                     with self.port(subnet=sub):
                         plugin = manager.NeutronManager.get_plugin()
-                        ls = nvplib.get_lswitches(plugin.cluster,
-                                                  net['network']['id'])
+                        ls = nsxlib.switch.get_lswitches(plugin.cluster,
+                                                         net['network']['id'])
                         self.assertEqual(len(ls), 2)
 
     def test_update_port_delete_ip(self):
@@ -236,7 +236,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
         self.assertFalse(self.fc._fake_lswitch_lport_dict)
 
     def test_create_port_nvp_error_no_orphan_left(self):
-        with mock.patch.object(nvplib, 'create_lport',
+        with mock.patch.object(nsxlib.switch, 'create_lport',
                                side_effect=NvpApiClient.NvpApiException):
             with self.network() as net:
                 net_id = net['network']['id']
@@ -1473,7 +1473,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
 
     def test_update_network_gateway_with_name_calls_backend(self):
         with mock.patch.object(
-            nvplib, 'update_l2_gw_service') as mock_update_gw:
+            nsxlib.l2gateway, 'update_l2_gw_service') as mock_update_gw:
             with self._network_gateway(name='cavani') as nw_gw:
                 nw_gw_id = nw_gw[self.resource]['id']
                 self._update(nvp_networkgw.COLLECTION_NAME, nw_gw_id,
@@ -1483,7 +1483,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
 
     def test_update_network_gateway_without_name_does_not_call_backend(self):
         with mock.patch.object(
-            nvplib, 'update_l2_gw_service') as mock_update_gw:
+            nsxlib.l2gateway, 'update_l2_gw_service') as mock_update_gw:
             with self._network_gateway(name='something') as nw_gw:
                 nw_gw_id = nw_gw[self.resource]['id']
                 self._update(nvp_networkgw.COLLECTION_NAME, nw_gw_id,
@@ -1510,7 +1510,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
         def raise_nvp_api_exc(*args, **kwargs):
             raise NvpApiClient.NvpApiException
 
-        with mock.patch.object(nvplib,
+        with mock.patch.object(nsxlib.l2gateway,
                                'create_l2_gw_service',
                                new=raise_nvp_api_exc):
             res = self._create_network_gateway(
@@ -1519,7 +1519,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
             self.assertEqual(500, res.status_int)
 
     def test_create_network_gateway_nvp_error_returns_409(self):
-        with mock.patch.object(nvplib,
+        with mock.patch.object(nsxlib.l2gateway,
                                'create_l2_gw_service',
                                side_effect=NvpApiClient.Conflict):
             res = self._create_network_gateway(

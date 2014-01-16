@@ -435,7 +435,8 @@ class LsnManagerTestCase(base.BaseTestCase):
         self.mock_lsn_api.lsn_port_create.return_value = self.lsn_port_id
         with mock.patch.object(
             self.manager, 'lsn_get', return_value=self.lsn_id):
-            with mock.patch.object(lsn_man.nsxlib, 'get_port_by_neutron_tag'):
+            with mock.patch.object(lsn_man.switch_api,
+                                   'get_port_by_neutron_tag'):
                 expected = self.manager.lsn_port_dhcp_setup(
                     mock.ANY, mock.ANY, mock.ANY, mock.ANY, subnet_config=sub)
                 self.assertEqual(
@@ -453,7 +454,8 @@ class LsnManagerTestCase(base.BaseTestCase):
             self.assertEqual(1, f.call_count)
 
     def test_lsn_port_dhcp_setup_with_not_found(self):
-        with mock.patch.object(lsn_man.nsxlib, 'get_port_by_neutron_tag') as f:
+        with mock.patch.object(lsn_man.switch_api,
+                               'get_port_by_neutron_tag') as f:
             f.side_effect = n_exc.NotFound
             self.assertRaises(p_exc.PortConfigurationError,
                               self.manager.lsn_port_dhcp_setup,
@@ -462,7 +464,7 @@ class LsnManagerTestCase(base.BaseTestCase):
     def test_lsn_port_dhcp_setup_with_conflict(self):
         self.mock_lsn_api.lsn_port_plug_network.side_effect = (
             p_exc.LsnConfigurationConflict(lsn_id=self.lsn_id))
-        with mock.patch.object(lsn_man.nsxlib, 'get_port_by_neutron_tag'):
+        with mock.patch.object(lsn_man.switch_api, 'get_port_by_neutron_tag'):
             with mock.patch.object(self.manager, 'lsn_port_delete') as g:
                 self.assertRaises(p_exc.PortConfigurationError,
                                   self.manager.lsn_port_dhcp_setup,
@@ -558,7 +560,7 @@ class LsnManagerTestCase(base.BaseTestCase):
             'network_id': self.net_id,
             'tenant_id': self.tenant_id
         }
-        with mock.patch.object(lsn_man.nsxlib, 'create_lport') as f:
+        with mock.patch.object(lsn_man.switch_api, 'create_lport') as f:
             f.return_value = {'uuid': self.port_id}
             self.manager.lsn_port_metadata_setup(mock.ANY, self.lsn_id, subnet)
             self.assertEqual(1, self.mock_lsn_api.lsn_port_create.call_count)
@@ -572,7 +574,7 @@ class LsnManagerTestCase(base.BaseTestCase):
             'network_id': self.net_id,
             'tenant_id': self.tenant_id
         }
-        with mock.patch.object(lsn_man.nsxlib, 'create_lport') as f:
+        with mock.patch.object(lsn_man.switch_api, 'create_lport') as f:
             f.side_effect = n_exc.NotFound
             self.assertRaises(p_exc.PortConfigurationError,
                               self.manager.lsn_port_metadata_setup,
@@ -585,8 +587,8 @@ class LsnManagerTestCase(base.BaseTestCase):
             'network_id': self.net_id,
             'tenant_id': self.tenant_id
         }
-        with mock.patch.object(lsn_man.nsxlib, 'create_lport') as f:
-            with mock.patch.object(lsn_man.nsxlib, 'delete_port') as g:
+        with mock.patch.object(lsn_man.switch_api, 'create_lport') as f:
+            with mock.patch.object(lsn_man.switch_api, 'delete_port') as g:
                 f.return_value = {'uuid': self.port_id}
                 self.mock_lsn_api.lsn_port_plug_network.side_effect = (
                     p_exc.LsnConfigurationConflict(lsn_id=self.lsn_id))
@@ -611,8 +613,9 @@ class LsnManagerTestCase(base.BaseTestCase):
 
     def test_lsn_port_dispose_meta_mac(self):
         self.mac = constants.METADATA_MAC
-        with mock.patch.object(lsn_man.nsxlib, 'get_port_by_neutron_tag') as f:
-            with mock.patch.object(lsn_man.nsxlib, 'delete_port') as g:
+        with mock.patch.object(lsn_man.switch_api,
+                               'get_port_by_neutron_tag') as f:
+            with mock.patch.object(lsn_man.switch_api, 'delete_port') as g:
                 f.return_value = {'uuid': self.port_id}
                 self._test_lsn_port_dispose_with_values(
                     self.lsn_id, self.lsn_port_id, 1)

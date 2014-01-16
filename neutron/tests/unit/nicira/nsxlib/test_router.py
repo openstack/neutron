@@ -20,6 +20,7 @@ from neutron.common import exceptions
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.nsxlib import router as routerlib
+from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 from neutron.tests.unit.nicira.test_nvplib import NsxlibNegativeBaseTestCase
@@ -688,13 +689,13 @@ class TestLogicalRouters(NvplibTestCase):
         tenant_id = 'pippo'
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
-        lswitch = nvplib.create_lswitch(self.fake_cluster,
-                                        _uuid(),
-                                        tenant_id, 'fake-switch',
-                                        transport_zones_config)
-        lport = nvplib.create_lport(self.fake_cluster, lswitch['uuid'],
-                                    tenant_id, 'xyz',
-                                    'name', 'device_id', True)
+        lswitch = switchlib.create_lswitch(self.fake_cluster,
+                                           _uuid(),
+                                           tenant_id, 'fake-switch',
+                                           transport_zones_config)
+        lport = switchlib.create_lport(self.fake_cluster, lswitch['uuid'],
+                                       tenant_id, 'xyz',
+                                       'name', 'device_id', True)
         lrouter = routerlib.create_lrouter(self.fake_cluster,
                                            uuidutils.generate_uuid(),
                                            tenant_id,

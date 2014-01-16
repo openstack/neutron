@@ -102,7 +102,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         exp_lp_uuid = uuidutils.generate_uuid()
         ret_value = None, exp_lp_uuid
         self._mock_port_mapping_db_calls(ret_value)
-        with mock.patch(nicira_method('query_lswitch_lports'),
+        with mock.patch(nicira_method('query_lswitch_lports',
+                                      module_name='nsxlib.switch'),
                         return_value=[{'uuid': exp_lp_uuid,
                                        '_relations': {
                                            'LogicalSwitchConfig': {
@@ -117,7 +118,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         exp_lp_uuid = uuidutils.generate_uuid()
         ret_value = None, None
         self._mock_port_mapping_db_calls(ret_value)
-        with mock.patch(nicira_method('query_lswitch_lports'),
+        with mock.patch(nicira_method('query_lswitch_lports',
+                                      module_name='nsxlib.switch'),
                         return_value=[{'uuid': exp_lp_uuid,
                                        '_relations': {
                                            'LogicalSwitchConfig': {
@@ -130,7 +132,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # mappings are not found both in the db and the backend
         ret_value = None, None
         self._mock_port_mapping_db_calls(ret_value)
-        with mock.patch(nicira_method('query_lswitch_lports'),
+        with mock.patch(nicira_method('query_lswitch_lports',
+                                      module_name='nsxlib.switch'),
                         return_value=[]):
             self._verify_get_nsx_switch_and_port_id(None, None)
 
@@ -146,7 +149,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # found for a given network identifier
         exp_ls_uuids = [uuidutils.generate_uuid()]
         self._mock_network_mapping_db_calls(None)
-        with mock.patch(nicira_method('get_lswitches'),
+        with mock.patch(nicira_method('get_lswitches',
+                                      module_name='nsxlib.switch'),
                         return_value=[{'uuid': uuid}
                                       for uuid in exp_ls_uuids]):
             self._verify_get_nsx_switch_ids(exp_ls_uuids)
@@ -155,7 +159,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # This test verifies that the function returns None if the mappings
         # are not found both in the db and in the backend
         self._mock_network_mapping_db_calls(None)
-        with mock.patch(nicira_method('get_lswitches'),
+        with mock.patch(nicira_method('get_lswitches',
+                                      module_name='nsxlib.switch'),
                         return_value=[]):
             self._verify_get_nsx_switch_ids(None)
 
