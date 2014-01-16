@@ -336,7 +336,7 @@ class TestBridgeInterfaceDriver(TestBase):
 
     def test_plug_dev_exists(self):
         self.device_exists.return_value = True
-        with mock.patch('neutron.agent.linux.interface.LOG.warn') as log:
+        with mock.patch('neutron.agent.linux.interface.LOG.info') as log:
             br = interface.BridgeInterfaceDriver(self.conf)
             br.plug('01234567-1234-1234-99',
                     'port-1234',

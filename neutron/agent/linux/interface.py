@@ -162,11 +162,11 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         if not bridge:
             bridge = self.conf.ovs_integration_bridge
 
-        self.check_bridge_exists(bridge)
-
         if not ip_lib.device_exists(device_name,
                                     self.root_helper,
                                     namespace=namespace):
+
+            self.check_bridge_exists(bridge)
 
             ip = ip_lib.IPWrapper(self.root_helper)
             tap_name = self._get_tap_name(device_name, prefix)
@@ -199,7 +199,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             if self.conf.ovs_use_veth:
                 root_dev.link.set_up()
         else:
-            LOG.warn(_("Device %s already exists"), device_name)
+            LOG.info(_("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
@@ -253,14 +253,17 @@ class MidonetInterfaceDriver(LinuxInterfaceDriver):
             utils.execute(cmd, self.root_helper)
 
         else:
-            LOG.warn(_("Device %s already exists"), device_name)
+            LOG.info(_("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         # the port will be deleted by the dhcp agent that will call the plugin
         device = ip_lib.IPDevice(device_name,
                                  self.root_helper,
                                  namespace)
-        device.link.delete()
+        try:
+            device.link.delete()
+        except RuntimeError:
+            LOG.error(_("Failed unplugging interface '%s'"), device_name)
         LOG.debug(_("Unplugged interface '%s'"), device_name)
 
         ip_lib.IPWrapper(
@@ -312,7 +315,7 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
             ns_dev.link.set_up()
             root_dev.link.set_up()
         else:
-            LOG.warn(_("Device %s already exists"), device_name)
+            LOG.info(_("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
@@ -361,7 +364,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
             ns_veth.link.set_up()
 
         else:
-            LOG.warn(_("Device %s already exists"), device_name)
+            LOG.info(_("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""

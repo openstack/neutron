@@ -602,15 +602,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def external_gateway_added(self, ri, ex_gw_port,
                                interface_name, internal_cidrs):
 
-        if not ip_lib.device_exists(interface_name,
-                                    root_helper=self.root_helper,
-                                    namespace=ri.ns_name()):
-            self.driver.plug(ex_gw_port['network_id'],
-                             ex_gw_port['id'], interface_name,
-                             ex_gw_port['mac_address'],
-                             bridge=self.conf.external_network_bridge,
-                             namespace=ri.ns_name(),
-                             prefix=EXTERNAL_DEV_PREFIX)
+        self.driver.plug(ex_gw_port['network_id'],
+                         ex_gw_port['id'], interface_name,
+                         ex_gw_port['mac_address'],
+                         bridge=self.conf.external_network_bridge,
+                         namespace=ri.ns_name(),
+                         prefix=EXTERNAL_DEV_PREFIX)
 
         # Compute a list of addresses this router is supposed to have.
         # This avoids unnecessarily removing those addresses and
@@ -639,13 +636,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def external_gateway_removed(self, ri, ex_gw_port,
                                  interface_name, internal_cidrs):
 
-        if ip_lib.device_exists(interface_name,
-                                root_helper=self.root_helper,
-                                namespace=ri.ns_name()):
-            self.driver.unplug(interface_name,
-                               bridge=self.conf.external_network_bridge,
-                               namespace=ri.ns_name(),
-                               prefix=EXTERNAL_DEV_PREFIX)
+        self.driver.unplug(interface_name,
+                           bridge=self.conf.external_network_bridge,
+                           namespace=ri.ns_name(),
+                           prefix=EXTERNAL_DEV_PREFIX)
 
     def metadata_filter_rules(self):
         rules = []
