@@ -17,14 +17,13 @@
 from neutron.plugins.nicira.nsxlib import l2gateway as l2gwlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import nvplib
-from neutron.tests.unit.nicira.test_nvplib import NsxlibNegativeBaseTestCase
-from neutron.tests.unit.nicira.test_nvplib import NvplibTestCase
+from neutron.tests.unit.nicira.nsxlib import base
 from neutron.tests.unit import test_api_v2
 
 _uuid = test_api_v2._uuid
 
 
-class L2GatewayNegativeTestCase(NsxlibNegativeBaseTestCase):
+class L2GatewayNegativeTestCase(base.NsxlibNegativeBaseTestCase):
 
     def test_create_l2_gw_service_on_failure(self):
         self.assertRaises(nvplib.NvpApiClient.NvpApiException,
@@ -55,7 +54,7 @@ class L2GatewayNegativeTestCase(NsxlibNegativeBaseTestCase):
                           'pluto')
 
 
-class L2GatewayTestCase(NvplibTestCase):
+class L2GatewayTestCase(base.NsxlibTestCase):
 
     def _create_gw_service(self, node_uuid, display_name,
                            tenant_id='fake_tenant'):

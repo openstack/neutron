@@ -32,6 +32,11 @@ from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
+# Maximum page size for a single request
+# NOTE(salv-orlando): This might become a version-dependent map should the
+# limit be raised in future versions
+MAX_PAGE_SIZE = 5000
+
 LOG = log.getLogger(__name__)
 
 
@@ -466,7 +471,7 @@ class NvpSynchronizer():
             # API. In this case the request should be split in multiple
             # requests. This is not ideal, and therefore a log warning will
             # be emitted.
-            num_requests = page_size / (nvplib.MAX_PAGE_SIZE + 1) + 1
+            num_requests = page_size / (MAX_PAGE_SIZE + 1) + 1
             if num_requests > 1:
                 LOG.warn(_("Requested page size is %(cur_chunk_size)d."
                            "It might be necessary to do %(num_requests)d "
@@ -475,12 +480,12 @@ class NvpSynchronizer():
                            "is less than %(max_page_size)d"),
                          {'cur_chunk_size': page_size,
                           'num_requests': num_requests,
-                          'max_page_size': nvplib.MAX_PAGE_SIZE})
+                          'max_page_size': MAX_PAGE_SIZE})
             # Only the first request might return the total size,
             # subsequent requests will definetely not
             results, cursor, total_size = nvplib.get_single_query_page(
                 uri, self._cluster, cursor,
-                min(page_size, nvplib.MAX_PAGE_SIZE))
+                min(page_size, MAX_PAGE_SIZE))
             for _req in range(num_requests - 1):
                 # If no cursor is returned break the cycle as there is no
                 # actual need to perform multiple requests (all fetched)
@@ -491,7 +496,7 @@ class NvpSynchronizer():
                     break
                 req_results, cursor = nvplib.get_single_query_page(
                     uri, self._cluster, cursor,
-                    min(page_size, nvplib.MAX_PAGE_SIZE))[:2]
+                    min(page_size, MAX_PAGE_SIZE))[:2]
                 results.extend(req_results)
             # reset cursor before returning if we queried just to
             # know the number of entities

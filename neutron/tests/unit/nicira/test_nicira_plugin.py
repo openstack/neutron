@@ -50,7 +50,6 @@ from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import nsxlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
-from neutron.plugins.nicira import nvplib
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.nicira import fake_nvpapiclient
 from neutron.tests.unit.nicira import get_fake_conf
@@ -266,7 +265,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
 
     def test_create_port_maintenance_returns_503(self):
         with self.network() as net:
-            with mock.patch.object(nvplib, 'do_request',
+            with mock.patch.object(nsxlib.switch, 'do_request',
                                    side_effect=nvp_exc.MaintenanceInProgress):
                 data = {'port': {'network_id': net['network']['id'],
                                  'admin_state_up': False,
@@ -368,7 +367,7 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
         data = {'network': {'name': 'foo',
                             'admin_state_up': True,
                             'tenant_id': self._tenant_id}}
-        with mock.patch.object(nvplib, 'do_request',
+        with mock.patch.object(nsxlib.switch, 'do_request',
                                side_effect=nvp_exc.MaintenanceInProgress):
             net_req = self.new_create_request('networks', data, self.fmt)
             res = net_req.get_response(self.api)

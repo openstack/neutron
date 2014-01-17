@@ -462,7 +462,7 @@ class NvpSyncTestCase(base.BaseTestCase):
         with self._populate_data(ctx, net_size=net_size,
                                  port_size=port_size,
                                  router_size=router_size):
-            with mock.patch.object(nvplib, 'MAX_PAGE_SIZE', 15):
+            with mock.patch.object(sync, 'MAX_PAGE_SIZE', 15):
                 # The following mock is just for counting calls,
                 # but we will still run the actual function
                 with mock.patch.object(

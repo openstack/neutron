@@ -19,9 +19,14 @@ import mock
 
 from neutron.db import api as db_api
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import nsx_utils
+from neutron.plugins.nicira.common import utils
+from neutron.plugins.nicira import NvpApiClient
+from neutron.plugins.nicira import nvplib
 from neutron.tests import base
 from neutron.tests.unit.nicira import nicira_method
+from neutron.tests.unit.nicira.nsxlib import base as nsx_base
 
 
 class NsxUtilsTestCase(base.BaseTestCase):
@@ -189,3 +194,98 @@ class NsxUtilsTestCase(base.BaseTestCase):
                                       module_name='nsxlib.router'),
                         return_value=[]):
             self._verify_get_nsx_router_id(None)
+
+    def test_check_and_truncate_name_with_none(self):
+        name = None
+        result = utils.check_and_truncate(name)
+        self.assertEqual('', result)
+
+    def test_check_and_truncate_name_with_short_name(self):
+        name = 'foo_port_name'
+        result = utils.check_and_truncate(name)
+        self.assertEqual(name, result)
+
+    def test_check_and_truncate_name_long_name(self):
+        name = 'this_is_a_port_whose_name_is_longer_than_40_chars'
+        result = utils.check_and_truncate(name)
+        self.assertEqual(len(result), utils.MAX_DISPLAY_NAME_LEN)
+
+    def test_build_uri_path_plain(self):
+        result = nvplib._build_uri_path('RESOURCE')
+        self.assertEqual("%s/%s" % (nvplib.URI_PREFIX, 'RESOURCE'), result)
+
+    def test_build_uri_path_with_field(self):
+        result = nvplib._build_uri_path('RESOURCE', fields='uuid')
+        expected = "%s/%s?fields=uuid" % (nvplib.URI_PREFIX, 'RESOURCE')
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_filters(self):
+        filters = {"tag": 'foo', "tag_scope": "scope_foo"}
+        result = nvplib._build_uri_path('RESOURCE', filters=filters)
+        expected = (
+            "%s/%s?tag_scope=scope_foo&tag=foo" %
+            (nvplib.URI_PREFIX, 'RESOURCE'))
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_resource_id(self):
+        res = 'RESOURCE'
+        res_id = 'resource_id'
+        result = nvplib._build_uri_path(res, resource_id=res_id)
+        expected = "%s/%s/%s" % (nvplib.URI_PREFIX, res, res_id)
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_parent_and_resource_id(self):
+        parent_res = 'RESOURCE_PARENT'
+        child_res = 'RESOURCE_CHILD'
+        res = '%s/%s' % (child_res, parent_res)
+        par_id = 'parent_resource_id'
+        res_id = 'resource_id'
+        result = nvplib._build_uri_path(
+            res, parent_resource_id=par_id, resource_id=res_id)
+        expected = ("%s/%s/%s/%s/%s" %
+                    (nvplib.URI_PREFIX, parent_res, par_id, child_res, res_id))
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_attachment(self):
+        parent_res = 'RESOURCE_PARENT'
+        child_res = 'RESOURCE_CHILD'
+        res = '%s/%s' % (child_res, parent_res)
+        par_id = 'parent_resource_id'
+        res_id = 'resource_id'
+        result = nvplib._build_uri_path(res, parent_resource_id=par_id,
+                                        resource_id=res_id, is_attachment=True)
+        expected = ("%s/%s/%s/%s/%s/%s" %
+                    (nvplib.URI_PREFIX, parent_res,
+                     par_id, child_res, res_id, 'attachment'))
+        self.assertEqual(expected, result)
+
+    def test_build_uri_path_with_extra_action(self):
+        parent_res = 'RESOURCE_PARENT'
+        child_res = 'RESOURCE_CHILD'
+        res = '%s/%s' % (child_res, parent_res)
+        par_id = 'parent_resource_id'
+        res_id = 'resource_id'
+        result = nvplib._build_uri_path(res, parent_resource_id=par_id,
+                                        resource_id=res_id, extra_action='doh')
+        expected = ("%s/%s/%s/%s/%s/%s" %
+                    (nvplib.URI_PREFIX, parent_res,
+                     par_id, child_res, res_id, 'doh'))
+        self.assertEqual(expected, result)
+
+
+class ClusterManagementTestCase(nsx_base.NsxlibTestCase):
+
+    def test_cluster_in_readonly_mode(self):
+        with mock.patch.object(self.fake_cluster.api_client,
+                               'request',
+                               side_effect=NvpApiClient.ReadOnlyMode):
+            self.assertRaises(nvp_exc.MaintenanceInProgress,
+                              nvplib.do_request, cluster=self.fake_cluster)
+
+    def test_cluster_method_not_implemented(self):
+        self.assertRaises(NvpApiClient.NvpApiException,
+                          nvplib.do_request,
+                          nvplib.HTTP_GET,
+                          nvplib._build_uri_path('MY_FAKE_RESOURCE',
+                                                 resource_id='foo'),
+                          cluster=self.fake_cluster)
