@@ -19,6 +19,7 @@
 
 from heleosapi import info as h_info
 
+from neutron.common import constants
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
 
@@ -47,7 +48,8 @@ def retrieve_ip_allocation_info(context, neutron_port):
         return
     subnet = retrieve_subnet(context, subnet_id)
     allocated_ip = neutron_port["fixed_ips"][0]["ip_address"]
-    is_gw_port = neutron_port["device_owner"] == "network:router_gateway"
+    is_gw_port = (neutron_port["device_owner"] ==
+                  constants.DEVICE_OWNER_ROUTER_GW)
     gateway_ip = subnet["gateway_ip"]
 
     ip_allocation_info = h_info.IpAllocationInfo(

@@ -191,7 +191,7 @@ class DhcpRpcCallbackMixin(object):
                 tenant_id=network['tenant_id'],
                 mac_address=attributes.ATTR_NOT_SPECIFIED,
                 name='',
-                device_owner='network:dhcp',
+                device_owner=constants.DEVICE_OWNER_DHCP,
                 fixed_ips=[dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
 
             retval = self._port_action(plugin, context, {'port': port_dict},

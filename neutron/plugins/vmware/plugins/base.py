@@ -1028,7 +1028,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Before deleting ports, ensure the peer of a NSX logical
         # port with a patch attachment is removed too
         port_filter = {'network_id': [id],
-                       'device_owner': ['network:router_interface']}
+                       'device_owner': [constants.DEVICE_OWNER_ROUTER_INTF]}
         router_iface_ports = self.get_ports(context, filters=port_filter)
         for port in router_iface_ports:
             nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(

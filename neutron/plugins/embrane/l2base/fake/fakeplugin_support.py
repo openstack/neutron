@@ -19,6 +19,7 @@
 
 from heleosapi import info as h_info
 
+from neutron.common import constants
 from neutron import manager
 from neutron.plugins.embrane.l2base import support_base as base
 
@@ -32,7 +33,8 @@ class FakePluginSupport(base.SupportBase):
         plugin = manager.NeutronManager.get_plugin()
         network_id = neutron_port["network_id"]
         network = plugin._get_network(context, network_id)
-        is_gw = neutron_port["device_owner"] == "network:router_gateway"
+        is_gw = (neutron_port["device_owner"] ==
+                 constants.DEVICE_OWNER_ROUTER_GW)
         result = h_info.UtifInfo(vlan=0,
                                  network_name=network["name"],
                                  network_id=network["id"],

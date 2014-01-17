@@ -23,6 +23,7 @@ from oslo.config import cfg
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp
 from neutron.common import config as base_config
+from neutron.common import constants
 from neutron.openstack.common import log as logging
 from neutron.tests import base
 
@@ -80,7 +81,7 @@ class FakePort3:
 class FakeRouterPort:
     id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
     admin_state_up = True
-    device_owner = 'network:router_interface'
+    device_owner = constants.DEVICE_OWNER_ROUTER_INTF
     fixed_ips = [FakeIPAllocation('192.168.0.1',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
     mac_address = '00:00:0f:rr:rr:rr'
@@ -92,7 +93,7 @@ class FakeRouterPort:
 class FakePortMultipleAgents1:
     id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
     admin_state_up = True
-    device_owner = 'network:dhcp'
+    device_owner = constants.DEVICE_OWNER_DHCP
     fixed_ips = [FakeIPAllocation('192.168.0.5',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
     mac_address = '00:00:0f:dd:dd:dd'
@@ -104,7 +105,7 @@ class FakePortMultipleAgents1:
 class FakePortMultipleAgents2:
     id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     admin_state_up = True
-    device_owner = 'network:dhcp'
+    device_owner = constants.DEVICE_OWNER_DHCP
     fixed_ips = [FakeIPAllocation('192.168.0.6',
                                   'dddddddd-dddd-dddd-dddd-dddddddddddd')]
     mac_address = '00:00:0f:ee:ee:ee'

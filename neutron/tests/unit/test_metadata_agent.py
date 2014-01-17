@@ -23,6 +23,7 @@ import testtools
 import webob
 
 from neutron.agent.metadata import agent
+from neutron.common import constants
 from neutron.common import utils
 from neutron.tests import base
 
@@ -112,7 +113,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             expected.append(
                 mock.call().list_ports(
                     device_id=router_id,
-                    device_owner='network:router_interface'
+                    device_owner=constants.DEVICE_OWNER_ROUTER_INTF
                 )
             )
 

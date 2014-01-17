@@ -38,8 +38,6 @@ from neutron.openstack.common import uuidutils
 
 LOG = logging.getLogger(__name__)
 
-AGENT_OWNER_PREFIX = 'network:'
-
 # Ports with the following 'device_owner' values will not prevent
 # network deletion.  If delete_network() finds that all ports on a
 # network have these owners, it will explicitly delete each port
@@ -47,7 +45,7 @@ AGENT_OWNER_PREFIX = 'network:'
 # finds out that all existing IP Allocations are associated with ports
 # with these owners, it will allow subnet deletion to proceed with the
 # IP allocations being cleaned up by cascade.
-AUTO_DELETE_PORT_OWNERS = ['network:dhcp']
+AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
 
 
 class CommonDbMixin(object):

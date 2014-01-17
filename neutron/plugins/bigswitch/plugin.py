@@ -221,7 +221,7 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
                 interfaces = []
                 mapped_router = self._map_state_and_status(router)
                 router_filter = {
-                    'device_owner': ["network:router_interface"],
+                    'device_owner': [const.DEVICE_OWNER_ROUTER_INTF],
                     'device_id': [router.get('id')]
                 }
                 router_ports = self.get_ports(admin_context,
@@ -642,7 +642,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         net = super(NeutronRestProxyV2,
                     self).get_network(context, new_port["network_id"])
         if self.add_meta_server_route:
-            if new_port['device_owner'] == 'network:dhcp':
+            if new_port['device_owner'] == const.DEVICE_OWNER_DHCP:
                 destination = METADATA_SERVER_IP + '/32'
                 self._add_host_route(context, destination, new_port)
 

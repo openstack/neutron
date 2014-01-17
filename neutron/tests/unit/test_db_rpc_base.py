@@ -15,6 +15,7 @@
 
 import mock
 
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.db import dhcp_rpc_base
 from neutron.openstack.common.db import exception as db_exc
@@ -54,7 +55,7 @@ class TestDhcpRpcCallbackMixin(base.BaseTestCase):
     def _test__port_action_with_failures(self, exc=None, action=None):
         port = {
             'network_id': 'foo_network_id',
-            'device_owner': 'network:dhcp',
+            'device_owner': constants.DEVICE_OWNER_DHCP,
             'fixed_ips': [{'subnet_id': 'foo_subnet_id'}]
         }
         self.plugin.create_port.side_effect = exc
@@ -187,7 +188,7 @@ class TestDhcpRpcCallbackMixin(base.BaseTestCase):
         create_spec = dict(tenant_id='tenantid', device_id='devid',
                            network_id='netid', name='',
                            admin_state_up=True,
-                           device_owner='network:dhcp',
+                           device_owner=constants.DEVICE_OWNER_DHCP,
                            mac_address=mock.ANY)
         create_retval = create_spec.copy()
         create_retval['id'] = 'port_id'
