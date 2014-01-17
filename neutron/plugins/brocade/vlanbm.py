@@ -21,6 +21,7 @@
 
 
 """A Vlan Bitmap class to handle allocation/de-allocation of vlan ids."""
+from six.moves import xrange
 
 from neutron.common import constants
 from neutron.plugins.brocade.db import models as brocade_db

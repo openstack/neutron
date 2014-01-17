@@ -18,6 +18,7 @@
 import sys
 
 import mock
+from six.moves import xrange
 
 from neutron.tests import base
 from neutron.tests import post_mortem_debug

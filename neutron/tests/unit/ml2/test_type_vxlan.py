@@ -15,6 +15,7 @@
 # @author: Kyle Mestery, Cisco Systems, Inc.
 
 from oslo.config import cfg
+from six.moves import xrange
 import testtools
 from testtools import matchers
 

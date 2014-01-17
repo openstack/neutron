@@ -23,6 +23,7 @@ import copy
 
 from mock import patch
 from oslo.config import cfg
+from six.moves import xrange
 from webob import exc
 
 from neutron.common.test_lib import test_config

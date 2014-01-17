@@ -27,6 +27,7 @@ from __future__ import print_function
 import json
 import re
 
+from six.moves import xrange
 from wsgiref.simple_server import make_server
 
 

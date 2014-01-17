@@ -21,6 +21,7 @@ import time
 
 import mock
 from oslo.config import cfg
+from six.moves import xrange
 import testtools
 
 from neutron.agent.linux import ovs_lib

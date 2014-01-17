@@ -17,6 +17,7 @@
 # @author: Mark McClain, DreamHost
 
 import itertools
+from six.moves import xrange
 
 from neutron.agent.linux import utils
 from neutron.plugins.common import constants as qconstants

@@ -21,6 +21,7 @@
 
 import netaddr
 import re
+from six.moves import xrange
 from sqlalchemy.orm import exc
 from sqlalchemy.sql import and_
 

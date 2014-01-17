@@ -21,6 +21,7 @@ import time
 import eventlet
 import netaddr
 from oslo.config import cfg
+from six.moves import xrange
 
 from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
