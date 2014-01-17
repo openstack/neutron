@@ -26,6 +26,7 @@ import os
 
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
+from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -351,8 +352,19 @@ class IptablesManager(object):
 
         self._apply()
 
-    @utils.synchronized('iptables', external=True)
     def _apply(self):
+        lock_name = 'iptables'
+        if self.namespace:
+            lock_name += '-' + self.namespace
+
+        try:
+            with lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX, True):
+                LOG.debug(_('Got semaphore / lock "%s"'), lock_name)
+                return self._apply_synchronized()
+        finally:
+            LOG.debug(_('Semaphore / lock released "%s"'), lock_name)
+
+    def _apply_synchronized(self):
         """Apply the current in-memory set of iptables rules.
 
         This will blow away any rules left over from previous runs of the
