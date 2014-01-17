@@ -193,10 +193,11 @@ class Message(six.text_type):
         # When we mod a Message we want the actual operation to be performed
         # by the parent class (i.e. unicode()), the only thing  we do here is
         # save the original msgid and the parameters in case of a translation
-        unicode_mod = super(Message, self).__mod__(other)
+        params = self._sanitize_mod_params(other)
+        unicode_mod = super(Message, self).__mod__(params)
         modded = Message(self.msgid,
                          msgtext=unicode_mod,
-                         params=self._sanitize_mod_params(other),
+                         params=params,
                          domain=self.domain)
         return modded
 
@@ -235,8 +236,17 @@ class Message(six.text_type):
             params = self._copy_param(dict_param)
         else:
             params = {}
+            # Save our existing parameters as defaults to protect
+            # ourselves from losing values if we are called through an
+            # (erroneous) chain that builds a valid Message with
+            # arguments, and then does something like "msg % kwds"
+            # where kwds is an empty dictionary.
+            src = {}
+            if isinstance(self.params, dict):
+                src.update(self.params)
+            src.update(dict_param)
             for key in keys:
-                params[key] = self._copy_param(dict_param[key])
+                params[key] = self._copy_param(src[key])
 
         return params
 
