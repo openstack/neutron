@@ -68,6 +68,23 @@ def get_transport_zones(cluster):
     return [transport_zone['uuid'] for transport_zone in transport_zones]
 
 
+def get_transport_nodes(cluster):
+    transport_nodes = config_helper("transport-node", cluster)
+    return [transport_node['uuid'] for transport_node in transport_nodes]
+
+
+def is_transport_node_connected(cluster, node_uuid):
+    try:
+        return nvplib.do_request('GET',
+                                 "/ws.v1/transport-node/%s/status" % node_uuid,
+                                 cluster=cluster)['connection']['connected']
+    except Exception as e:
+        msg = (_("Error '%(err)s' when connecting to controller(s): %(ctl)s.")
+               % {'err': str(e),
+                  'ctl': ', '.join(get_nsx_controllers(cluster))})
+        raise Exception(msg)
+
+
 def main():
     if len(sys.argv) != 2:
         help(sys.argv[0])
@@ -125,10 +142,22 @@ def main():
                   "(%s) is missing from NSX transport zones!"
                   % cfg.CONF.default_tz_uuid)
             errors += 1
+        transport_nodes = get_transport_nodes(cluster)
+        print("\tTransport nodes: %s" % transport_nodes)
+        node_errors = []
+        for node in transport_nodes:
+            if not is_transport_node_connected(cluster, node):
+                node_errors.append(node)
 
-    if errors:
+    # Use different exit codes, so that we can distinguish
+    # between config and runtime errors
+    if len(node_errors):
+        print("\nThere are one or mode transport nodes that are "
+              "not connected: %s. Please, revise!" % node_errors)
+        sys.exit(10)
+    elif errors:
         print("\nThere are %d errors with your configuration. "
-              " Please, revise!" % errors)
-        sys.exit(1)
+              "Please, revise!" % errors)
+        sys.exit(12)
     else:
         print("Done.")
