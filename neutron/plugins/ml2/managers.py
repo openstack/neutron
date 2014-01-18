@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 from oslo.config import cfg
 import stevedore
 
@@ -46,16 +44,16 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def _register_types(self):
         for ext in self:
-            type = ext.obj.get_type()
-            if type in self.drivers:
+            network_type = ext.obj.get_type()
+            if network_type in self.drivers:
                 LOG.error(_("Type driver '%(new_driver)s' ignored because type"
                             " driver '%(old_driver)s' is already registered"
                             " for type '%(type)s'"),
                           {'new_driver': ext.name,
-                           'old_driver': self.drivers[type].name,
-                           'type': type})
+                           'old_driver': self.drivers[network_type].name,
+                           'type': network_type})
             else:
-                self.drivers[type] = ext
+                self.drivers[network_type] = ext
         LOG.info(_("Registered types: %s"), self.drivers.keys())
 
     def _check_tenant_network_types(self, types):
@@ -64,15 +62,15 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             if network_type in self.drivers:
                 self.tenant_network_types.append(network_type)
             else:
-                LOG.error(_("No type driver for tenant network_type: %s. "
-                            "Service terminated!"),
-                          network_type)
-                sys.exit(1)
+                msg = _("No type driver for tenant network_type: %s. "
+                        "Service terminated!") % network_type
+                LOG.error(msg)
+                raise SystemExit(msg)
         LOG.info(_("Tenant network_types: %s"), self.tenant_network_types)
 
     def initialize(self):
-        for type, driver in self.drivers.iteritems():
-            LOG.info(_("Initializing driver for type '%s'"), type)
+        for network_type, driver in self.drivers.iteritems():
+            LOG.info(_("Initializing driver for type '%s'"), network_type)
             driver.obj.initialize()
 
     def validate_provider_segment(self, segment):
