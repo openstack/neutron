@@ -1818,6 +1818,17 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertTrue(res['network']['shared'])
 
+    def test_update_network_set_shared_owner_returns_404(self):
+        with self.network(shared=False) as network:
+            net_owner = network['network']['tenant_id']
+            data = {'network': {'shared': True}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            req.environ['neutron.context'] = context.Context('u', net_owner)
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
+
     def test_update_network_with_subnet_set_shared(self):
         with self.network(shared=False) as network:
             with self.subnet(network=network) as subnet:

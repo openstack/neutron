@@ -35,6 +35,7 @@
     "create_network:provider:segmentation_id": "rule:admin_only",
     "update_network": "rule:admin_or_owner",
     "update_network:segments": "rule:admin_only",
+    "update_network:shared": "rule:admin_only",
     "update_network:provider:network_type": "rule:admin_only",
     "update_network:provider:physical_network": "rule:admin_only",
     "update_network:provider:segmentation_id": "rule:admin_only",
