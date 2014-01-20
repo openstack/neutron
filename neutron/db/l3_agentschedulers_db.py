@@ -23,12 +23,14 @@ from sqlalchemy import func
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import joinedload
+from sqlalchemy import sql
 
 from neutron.common import constants
 from neutron.common import utils as n_utils
 from neutron import context as n_ctx
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
+from neutron.db import l3_attrs_db
 from neutron.db import model_base
 from neutron.extensions import l3agentscheduler
 from neutron import manager
@@ -114,7 +116,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             context.session.query(RouterL3AgentBinding).
             join(agents_db.Agent).
             filter(agents_db.Agent.heartbeat_timestamp < cutoff,
-                   agents_db.Agent.admin_state_up))
+                   agents_db.Agent.admin_state_up).
+            outerjoin(l3_attrs_db.RouterExtraAttributes,
+                      l3_attrs_db.RouterExtraAttributes.router_id ==
+                      RouterL3AgentBinding.router_id).
+            filter(sa.or_(l3_attrs_db.RouterExtraAttributes.ha == sql.false(),
+                          l3_attrs_db.RouterExtraAttributes.ha == sql.null())))
+
         for binding in down_bindings:
             LOG.warn(_LW("Rescheduling router %(router)s from agent %(agent)s "
                          "because the agent did not report to the server in "

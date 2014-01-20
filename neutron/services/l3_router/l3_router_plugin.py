@@ -27,6 +27,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
+from neutron.db import l3_hascheduler_db
 from neutron.openstack.common import importutils
 from neutron.plugins.common import constants
 
@@ -35,7 +36,8 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
                      l3_gwmode_db.L3_NAT_db_mixin,
                      l3_dvrscheduler_db.L3_DVRsch_db_mixin,
-                     l3_hamode_db.L3_HA_NAT_db_mixin):
+                     l3_hamode_db.L3_HA_NAT_db_mixin,
+                     l3_hascheduler_db.L3_HA_scheduler_db_mixin):
 
     """Implementation of the Neutron L3 Router Service Plugin.
 
