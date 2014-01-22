@@ -566,7 +566,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             # If the network is external, clean up routes, links, ports
             if net[ext_net.EXTERNAL]:
-                self._unlink_from_provider_router(bridge)
+                self._unlink_from_provider_router(bridge, subnet)
 
             LOG.debug(_("MidonetPluginV2.delete_subnet exiting"))
 
@@ -627,6 +627,19 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def delete_network(self, context, id):
         """Delete a network and its corresponding MidoNet bridge."""
         LOG.debug(_("MidonetPluginV2.delete_network called: id=%r"), id)
+        net = super(MidonetPluginV2, self).get_network(context, id,
+                                                       fields=None)
+
+        # if the network is external, it may need to have its bridges
+        # unplugged from the provider router.
+        if net[ext_net.EXTERNAL]:
+            # we currently only support one subnet in a network, so this
+            # loop will only execute 0 or 1 times currently.
+            for subnet_id in net['subnets']:
+                subnet = self._get_subnet(context, subnet_id)
+                bridge = self.client.get_bridge(id)
+                self._unlink_from_provider_router(bridge, subnet)
+
         self.client.delete_bridge(id)
         try:
             super(MidonetPluginV2, self).delete_network(context, id)
@@ -1107,7 +1120,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                      dst_network_length=net_len,
                                      weight=100)
 
-    def _unlink_from_provider_router(self, bridge):
+    def _unlink_from_provider_router(self, bridge, subnet):
         """Unlink a bridge from the provider router
 
         :param bridge: bridge to unlink
@@ -1116,6 +1129,10 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         provider_router = self._get_provider_router()
         # Delete routes and unlink the router and the bridge.
         routes = self.client.get_router_routes(provider_router.get_id())
+        subnet_routes = self.client.filter_routes(routes, cidr=subnet['cidr'])
+        # delete routes on the provider router that point to this subnet
+        for r in subnet_routes:
+            self.client.delete_route(r.get_id())
 
         bridge_ports_to_delete = [
             p for p in provider_router.get_peer_ports()
@@ -1123,10 +1140,11 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         for p in bridge.get_peer_ports():
             if p.get_device_id() == provider_router.get_id():
-                # delete the routes going to the bridge
-                for r in routes:
-                    if r.get_next_hop_port() == p.get_id():
-                        self.client.delete_route(r.get_id())
+                # delete the routes using this subnet as the next hop
+                filtered_routes = self.client.filter_routes(
+                    routes, port_id=p.get_id())
+                for r in filtered_routes:
+                    self.client.delete_route(r.get_id())
                 self.client.unlink(p)
                 self.client.delete_port(p.get_id())
 

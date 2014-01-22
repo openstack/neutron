@@ -299,6 +299,27 @@ class MidoClient:
                     "kwargs=%(kwargs)s"), {'kwargs': kwargs})
         return self._create_dto(self.mido_api.add_router(), kwargs)
 
+    def filter_routes(self, routes, cidr=None, port_id=None):
+        """Filter the list of routes given according to the optional params.
+
+        If a parameter is None, it will not be used in the filter.
+
+        :param cidr: the cidr of the route to be included.
+        :param port_id: the next_hop_port of the route to be included.
+        :returns: filtered list of routes
+        """
+        if cidr is not None:
+            net_addr, net_len = net_util.net_addr(cidr)
+            route_filter = lambda r: (r.get_dst_network_addr() == net_addr and
+                                      r.get_dst_network_length() == net_len)
+            routes = filter(route_filter, routes)
+
+        if port_id is not None:
+            route_filter = lambda r: r.get_next_hop_port() == port_id
+            routes = filter(route_filter, routes)
+
+        return routes
+
     @handle_api_error
     def delete_router(self, id):
         """Delete a router

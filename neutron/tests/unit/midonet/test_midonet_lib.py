@@ -177,6 +177,35 @@ class MidoClientTestCase(testtools.TestCase):
         self.assertEqual(bridge.get_id(), port.get_bridge_id())
         self.assertTrue(port.get_admin_state_up())
 
+    def test_filter_routes(self):
+        port_id = uuidutils.generate_uuid()
+
+        r1 = mock.Mock()
+        r1.get_dst_network_addr.return_value = '10.0.0.0'
+        r1.get_dst_network_length.return_value = 24
+        r1.get_next_hop_port.return_value = port_id
+
+        r2 = mock.Mock()
+        r2.get_dst_network_addr.return_value = '10.0.0.0'
+        r2.get_dst_network_length.return_value = 24
+        r2.get_next_hop_port.return_value = None
+
+        r3 = mock.Mock()
+        r3.get_dst_network_addr.return_value = '12.0.0.1'
+        r3.get_dst_network_length.return_value = 24
+        r3.get_next_hop_port.return_value = port_id
+
+        route_list = [r1, r2, r3]
+        filtered_list = self.client.filter_routes(
+            route_list, port_id=port_id)
+        self.assertTrue(len(filtered_list) == 2)
+        filtered_list = self.client.filter_routes(
+            route_list, cidr='10.0.0.0/24')
+        self.assertTrue(len(filtered_list) == 2)
+        filtered_list = self.client.filter_routes(
+            filtered_list, port_id=port_id)
+        self.assertTrue(len(filtered_list) == 1)
+
     def test_get_router(self):
         router_id = uuidutils.generate_uuid()
 
