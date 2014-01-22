@@ -75,7 +75,6 @@ from neutron.plugins.nicira import dhcpmeta_modes
 from neutron.plugins.nicira.extensions import maclearning as mac_ext
 from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
-from neutron.plugins.nicira import nvp_cluster
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
@@ -98,26 +97,6 @@ class NetworkTypes:
     FLAT = 'flat'
     VLAN = 'vlan'
     BRIDGE = 'bridge'
-
-
-def create_nvp_cluster(cluster_opts, concurrent_connections,
-                       nsx_gen_timeout):
-    cluster = nvp_cluster.NVPCluster(**cluster_opts)
-
-    def _ctrl_split(x, y):
-        return (x, int(y), True)
-
-    api_providers = [_ctrl_split(*ctrl.split(':'))
-                     for ctrl in cluster.nsx_controllers]
-    cluster.api_client = NvpApiClient.NVPApiHelper(
-        api_providers, cluster.nsx_user, cluster.nsx_password,
-        request_timeout=cluster.req_timeout,
-        http_timeout=cluster.http_timeout,
-        retries=cluster.retries,
-        redirects=cluster.redirects,
-        concurrent_connections=concurrent_connections,
-        nvp_gen_timeout=nsx_gen_timeout)
-    return cluster
 
 
 class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
@@ -195,9 +174,10 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         neutron_extensions.append_api_extensions_path([NVP_EXT_PATH])
         self.nvp_opts = cfg.CONF.NSX
         self.nvp_sync_opts = cfg.CONF.NSX_SYNC
-        self.cluster = create_nvp_cluster(cfg.CONF,
-                                          self.nvp_opts.concurrent_connections,
-                                          self.nvp_opts.nsx_gen_timeout)
+        self.cluster = nsx_utils.create_nsx_cluster(
+            cfg.CONF,
+            self.nvp_opts.concurrent_connections,
+            self.nvp_opts.nsx_gen_timeout)
 
         self.base_binding_dict = {
             pbin.VIF_TYPE: pbin.VIF_TYPE_OVS,

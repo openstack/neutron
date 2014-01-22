@@ -26,8 +26,8 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions
 from neutron.plugins.nicira.common import sync
+from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira.nsxlib import lsn as lsnlib
-from neutron.plugins.nicira import nvp_cluster
 from neutron.plugins.nicira import NvpApiClient as nvp_client
 from neutron.tests import base
 from neutron.tests.unit.nicira import get_fake_conf
@@ -55,14 +55,14 @@ class NSXClusterTest(base.BaseTestCase):
                     'nsx_controllers': ['1.1.1.1:443']}
 
     def test_create_cluster(self):
-        cluster = nvp_cluster.NVPCluster(**self.cluster_opts)
+        cluster = nsx_cluster.NSXCluster(**self.cluster_opts)
         for (k, v) in self.cluster_opts.iteritems():
             self.assertEqual(v, getattr(cluster, k))
 
     def test_create_cluster_default_port(self):
         opts = self.cluster_opts.copy()
         opts['nsx_controllers'] = ['1.1.1.1']
-        cluster = nvp_cluster.NVPCluster(**opts)
+        cluster = nsx_cluster.NSXCluster(**opts)
         for (k, v) in self.cluster_opts.iteritems():
             self.assertEqual(v, getattr(cluster, k))
 
@@ -70,7 +70,7 @@ class NSXClusterTest(base.BaseTestCase):
         opts = self.cluster_opts.copy()
         opts.pop('default_tz_uuid')
         self.assertRaises(exceptions.NvpInvalidClusterConfiguration,
-                          nvp_cluster.NVPCluster, **opts)
+                          nsx_cluster.NSXCluster, **opts)
 
 
 class ConfigurationTest(base.BaseTestCase):

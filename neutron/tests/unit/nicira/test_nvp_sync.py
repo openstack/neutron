@@ -29,7 +29,7 @@ from neutron import context
 from neutron.openstack.common import jsonutils as json
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira import NeutronPlugin
-from neutron.plugins.nicira import nvp_cluster
+from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 from neutron.tests import base
@@ -274,7 +274,7 @@ class NvpSyncTestCase(base.BaseTestCase):
             return self.fc.fake_request(*args, **kwargs)
 
         self.mock_nvpapi.return_value.request.side_effect = _fake_request
-        self.fake_cluster = nvp_cluster.NVPCluster(
+        self.fake_cluster = nsx_cluster.NSXCluster(
             name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
             default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
         self.fake_cluster.api_client = NvpApiClient.NVPApiHelper(

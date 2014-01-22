@@ -25,7 +25,7 @@ from neutron.common import exceptions
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira import nvp_cluster
+from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 from neutron.tests import base
@@ -55,7 +55,7 @@ class NvplibTestCase(base.BaseTestCase):
             return self.fc.fake_request(*args, **kwargs)
 
         instance.return_value.request.side_effect = _fake_request
-        self.fake_cluster = nvp_cluster.NVPCluster(
+        self.fake_cluster = nsx_cluster.NSXCluster(
             name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
             default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
         self.fake_cluster.api_client = NvpApiClient.NVPApiHelper(
@@ -121,7 +121,7 @@ class NvplibNegativeTests(base.BaseTestCase):
             raise nvplib.NvpApiClient.NvpApiException
 
         instance.return_value.request.side_effect = _faulty_request
-        self.fake_cluster = nvp_cluster.NVPCluster(
+        self.fake_cluster = nsx_cluster.NSXCluster(
             name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
             default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
         self.fake_cluster.api_client = NvpApiClient.NVPApiHelper(
