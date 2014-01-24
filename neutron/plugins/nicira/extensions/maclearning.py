@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright 2013 Nicira Networks, Inc.  All rights reserved.
+# Copyright 2013 VMware, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -43,7 +43,7 @@ class Maclearning(object):
 
     @classmethod
     def get_description(cls):
-        return "Provides mac learning capabilities"
+        return "Provides MAC learning capabilities."
 
     @classmethod
     def get_namespace(cls):

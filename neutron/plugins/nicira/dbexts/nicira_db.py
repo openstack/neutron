@@ -20,8 +20,8 @@ from sqlalchemy.orm import exc
 import neutron.db.api as db
 from neutron.openstack.common.db import exception as d_exc
 from neutron.openstack.common import log as logging
+from neutron.plugins.nicira.dbexts import networkgw_db
 from neutron.plugins.nicira.dbexts import nicira_models
-from neutron.plugins.nicira.dbexts import nicira_networkgw_db
 
 LOG = logging.getLogger(__name__)
 
@@ -136,13 +136,13 @@ def delete_neutron_nsx_router_mapping(session, neutron_id):
 
 def unset_default_network_gateways(session):
     with session.begin(subtransactions=True):
-        session.query(nicira_networkgw_db.NetworkGateway).update(
-            {nicira_networkgw_db.NetworkGateway.default: False})
+        session.query(networkgw_db.NetworkGateway).update(
+            {networkgw_db.NetworkGateway.default: False})
 
 
 def set_default_network_gateway(session, gw_id):
     with session.begin(subtransactions=True):
-        gw = (session.query(nicira_networkgw_db.NetworkGateway).
+        gw = (session.query(networkgw_db.NetworkGateway).
               filter_by(id=gw_id).one())
         gw['default'] = True
 

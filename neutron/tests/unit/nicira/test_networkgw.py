@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2012 Nicira Networks, Inc.  All rights reserved.
+# Copyright 2012 VMware, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -29,8 +29,8 @@ from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron import manager
-from neutron.plugins.nicira.dbexts import nicira_networkgw_db
-from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
+from neutron.plugins.nicira.dbexts import networkgw_db
+from neutron.plugins.nicira.extensions import networkgw
 from neutron.plugins.nicira.NeutronPlugin import NVP_EXT_PATH
 from neutron import quota
 from neutron.tests import base
@@ -52,7 +52,7 @@ class TestExtensionManager(object):
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             networkgw.RESOURCE_ATTRIBUTE_MAP)
-        return networkgw.Nvp_networkgw.get_resources()
+        return networkgw.Networkgw.get_resources()
 
     def get_actions(self):
         return []
@@ -357,8 +357,8 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             pass
         # Verify nothing left on db
         session = db_api.get_session()
-        gw_query = session.query(nicira_networkgw_db.NetworkGateway)
-        dev_query = session.query(nicira_networkgw_db.NetworkGatewayDevice)
+        gw_query = session.query(networkgw_db.NetworkGateway)
+        dev_query = session.query(networkgw_db.NetworkGatewayDevice)
         self.assertEqual(exp_gw_count, gw_query.count())
         self.assertEqual(0, dev_query.count())
 
@@ -595,7 +595,7 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
 
 class TestNetworkGatewayPlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                               nicira_networkgw_db.NetworkGatewayMixin):
+                               networkgw_db.NetworkGatewayMixin):
     """Simple plugin class for testing db support for network gateway ext."""
 
     supported_extension_aliases = ["network-gateway"]

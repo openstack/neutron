@@ -25,7 +25,7 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
+from neutron.plugins.nicira.extensions import qos
 
 
 LOG = log.getLogger(__name__)
@@ -73,7 +73,7 @@ class NetworkQueueMapping(model_base.BASEV2):
                             cascade='delete', lazy='joined'))
 
 
-class NVPQoSDbMixin(ext_qos.QueuePluginBase):
+class NVPQoSDbMixin(qos.QueuePluginBase):
     """Mixin class to add queues."""
 
     def create_qos_queue(self, context, qos_queue):
@@ -98,7 +98,7 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
         try:
             return self._get_by_id(context, QoSQueue, queue_id)
         except exc.NoResultFound:
-            raise ext_qos.QueueNotFound(id=queue_id)
+            raise qos.QueueNotFound(id=queue_id)
 
     def get_qos_queues(self, context, filters=None, fields=None):
         return self._get_collection(context, QoSQueue,
@@ -111,7 +111,7 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
             context.session.delete(qos_queue)
 
     def _process_port_queue_mapping(self, context, port_data, queue_id):
-        port_data[ext_qos.QUEUE] = queue_id
+        port_data[qos.QUEUE] = queue_id
         if not queue_id:
             return
         with context.session.begin(subtransactions=True):
@@ -136,7 +136,7 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
             context.session.delete(binding)
 
     def _process_network_queue_mapping(self, context, net_data, queue_id):
-        net_data[ext_qos.QUEUE] = queue_id
+        net_data[qos.QUEUE] = queue_id
         if not queue_id:
             return
         with context.session.begin(subtransactions=True):
@@ -159,7 +159,7 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
     def _extend_dict_qos_queue(self, obj_res, obj_db):
         queue_mapping = obj_db['qos_queue']
         if queue_mapping:
-            obj_res[ext_qos.QUEUE] = queue_mapping.get('queue_id')
+            obj_res[qos.QUEUE] = queue_mapping.get('queue_id')
         return obj_res
 
     def _extend_port_dict_qos_queue(self, port_res, port_db):
@@ -265,8 +265,8 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
 
         # create the queue
         tenant_id = self._get_tenant_id_for_create(context, port)
-        if port.get(ext_qos.RXTX_FACTOR) and queue_to_create.get('max'):
-            queue_to_create['max'] *= int(port[ext_qos.RXTX_FACTOR])
+        if port.get(qos.RXTX_FACTOR) and queue_to_create.get('max'):
+            queue_to_create['max'] *= int(port[qos.RXTX_FACTOR])
         queue = {'qos_queue': {'name': queue_to_create.get('name'),
                                'min': queue_to_create.get('min'),
                                'max': queue_to_create.get('max'),
@@ -280,9 +280,9 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
         if qos_queue.get('default'):
             if context.is_admin:
                 if self.get_qos_queues(context, filters={'default': [True]}):
-                    raise ext_qos.DefaultQueueAlreadyExists()
+                    raise qos.DefaultQueueAlreadyExists()
             else:
-                raise ext_qos.DefaultQueueCreateNotAdmin()
+                raise qos.DefaultQueueCreateNotAdmin()
         if qos_queue.get('qos_marking') == 'trusted':
             dscp = qos_queue.pop('dscp')
             LOG.info(_("DSCP value (%s) will be ignored with 'trusted' "
@@ -291,4 +291,4 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
         min = qos_queue.get('min')
         # Max can be None
         if max and min > max:
-            raise ext_qos.QueueMinGreaterMax()
+            raise qos.QueueMinGreaterMax()

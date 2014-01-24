@@ -14,8 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: Kaiwei Fan, VMware, Inc
-
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
@@ -44,11 +42,11 @@ class Servicerouter(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_description(cls):
-        return "Provides service router"
+        return "Provides service router."
 
     @classmethod
     def get_namespace(cls):
-        return ""
+        return "http://docs.openstack.org/ext/service-router/api/v1.0"
 
     @classmethod
     def get_updated(cls):

@@ -44,8 +44,8 @@ from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira.dbexts import qos_db
 from neutron.plugins.nicira.extensions import distributedrouter as dist_router
-from neutron.plugins.nicira.extensions import nvp_networkgw
-from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
+from neutron.plugins.nicira.extensions import networkgw
+from neutron.plugins.nicira.extensions import qos
 from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import nsxlib
 from neutron.plugins.nicira import NvpApiClient
@@ -1036,7 +1036,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
 class NvpQoSTestExtensionManager(object):
 
     def get_resources(self):
-        return ext_qos.Nvp_qos.get_resources()
+        return qos.Qos.get_resources()
 
     def get_actions(self):
         return []
@@ -1127,28 +1127,28 @@ class TestQoSQueue(NiciraPluginV2TestCase):
     def test_create_port_with_queue(self):
         with self.qos_queue(default=True) as q1:
             res = self._create_network('json', 'net1', True,
-                                       arg_list=(ext_qos.QUEUE,),
+                                       arg_list=(qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
             net1 = self.deserialize('json', res)
-            self.assertEqual(net1['network'][ext_qos.QUEUE],
+            self.assertEqual(net1['network'][qos.QUEUE],
                              q1['qos_queue']['id'])
             device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
             with self.port(device_id=device_id, do_delete=False) as p:
-                self.assertEqual(len(p['port'][ext_qos.QUEUE]), 36)
+                self.assertEqual(len(p['port'][qos.QUEUE]), 36)
 
     def test_create_shared_queue_networks(self):
         with self.qos_queue(default=True, no_delete=True) as q1:
             res = self._create_network('json', 'net1', True,
-                                       arg_list=(ext_qos.QUEUE,),
+                                       arg_list=(qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
             net1 = self.deserialize('json', res)
-            self.assertEqual(net1['network'][ext_qos.QUEUE],
+            self.assertEqual(net1['network'][qos.QUEUE],
                              q1['qos_queue']['id'])
             res = self._create_network('json', 'net2', True,
-                                       arg_list=(ext_qos.QUEUE,),
+                                       arg_list=(qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
             net2 = self.deserialize('json', res)
-            self.assertEqual(net1['network'][ext_qos.QUEUE],
+            self.assertEqual(net1['network'][qos.QUEUE],
                              q1['qos_queue']['id'])
             device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
             res = self._create_port('json', net1['network']['id'],
@@ -1157,8 +1157,8 @@ class TestQoSQueue(NiciraPluginV2TestCase):
             res = self._create_port('json', net2['network']['id'],
                                     device_id=device_id)
             port2 = self.deserialize('json', res)
-            self.assertEqual(port1['port'][ext_qos.QUEUE],
-                             port2['port'][ext_qos.QUEUE])
+            self.assertEqual(port1['port'][qos.QUEUE],
+                             port2['port'][qos.QUEUE])
 
             self._delete('ports', port1['port']['id'])
             self._delete('ports', port2['port']['id'])
@@ -1166,40 +1166,40 @@ class TestQoSQueue(NiciraPluginV2TestCase):
     def test_remove_queue_in_use_fail(self):
         with self.qos_queue(no_delete=True) as q1:
             res = self._create_network('json', 'net1', True,
-                                       arg_list=(ext_qos.QUEUE,),
+                                       arg_list=(qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
             net1 = self.deserialize('json', res)
             device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
             res = self._create_port('json', net1['network']['id'],
                                     device_id=device_id)
             port = self.deserialize('json', res)
-            self._delete('qos-queues', port['port'][ext_qos.QUEUE], 409)
+            self._delete('qos-queues', port['port'][qos.QUEUE], 409)
 
     def test_update_network_new_queue(self):
         with self.qos_queue() as q1:
             res = self._create_network('json', 'net1', True,
-                                       arg_list=(ext_qos.QUEUE,),
+                                       arg_list=(qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
             net1 = self.deserialize('json', res)
             with self.qos_queue() as new_q:
-                data = {'network': {ext_qos.QUEUE: new_q['qos_queue']['id']}}
+                data = {'network': {qos.QUEUE: new_q['qos_queue']['id']}}
                 req = self.new_update_request('networks', data,
                                               net1['network']['id'])
                 res = req.get_response(self.api)
                 net1 = self.deserialize('json', res)
-                self.assertEqual(net1['network'][ext_qos.QUEUE],
+                self.assertEqual(net1['network'][qos.QUEUE],
                                  new_q['qos_queue']['id'])
 
     def test_update_port_adding_device_id(self):
         with self.qos_queue(no_delete=True) as q1:
             res = self._create_network('json', 'net1', True,
-                                       arg_list=(ext_qos.QUEUE,),
+                                       arg_list=(qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
             net1 = self.deserialize('json', res)
             device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
             res = self._create_port('json', net1['network']['id'])
             port = self.deserialize('json', res)
-            self.assertIsNone(port['port'][ext_qos.QUEUE])
+            self.assertIsNone(port['port'][qos.QUEUE])
 
             data = {'port': {'device_id': device_id}}
             req = self.new_update_request('ports', data,
@@ -1207,7 +1207,7 @@ class TestQoSQueue(NiciraPluginV2TestCase):
 
             res = req.get_response(self.api)
             port = self.deserialize('json', res)
-            self.assertEqual(len(port['port'][ext_qos.QUEUE]), 36)
+            self.assertEqual(len(port['port'][qos.QUEUE]), 36)
 
     def test_get_port_with_qos_not_admin(self):
         body = {'qos_queue': {'tenant_id': 'not_admin',
@@ -1215,16 +1215,16 @@ class TestQoSQueue(NiciraPluginV2TestCase):
         res = self._create_qos_queue('json', body, tenant_id='not_admin')
         q1 = self.deserialize('json', res)
         res = self._create_network('json', 'net1', True,
-                                   arg_list=(ext_qos.QUEUE, 'tenant_id',),
+                                   arg_list=(qos.QUEUE, 'tenant_id',),
                                    queue_id=q1['qos_queue']['id'],
                                    tenant_id="not_admin")
         net1 = self.deserialize('json', res)
-        self.assertEqual(len(net1['network'][ext_qos.QUEUE]), 36)
+        self.assertEqual(len(net1['network'][qos.QUEUE]), 36)
         res = self._create_port('json', net1['network']['id'],
                                 tenant_id='not_admin', set_context=True)
 
         port = self.deserialize('json', res)
-        self.assertNotIn(ext_qos.QUEUE, port['port'])
+        self.assertNotIn(qos.QUEUE, port['port'])
 
     def test_dscp_value_out_of_range(self):
         body = {'qos_queue': {'tenant_id': 'admin', 'dscp': '64',
@@ -1245,7 +1245,7 @@ class TestQoSQueue(NiciraPluginV2TestCase):
         res = self._create_qos_queue('json', body, tenant_id='not_admin')
         q1 = self.deserialize('json', res)
         res = self._create_network('json', 'net1', True,
-                                   arg_list=(ext_qos.QUEUE,),
+                                   arg_list=(qos.QUEUE,),
                                    tenant_id='not_admin',
                                    queue_id=q1['qos_queue']['id'])
 
@@ -1258,21 +1258,21 @@ class TestQoSQueue(NiciraPluginV2TestCase):
         neutron_context = context.Context('', 'not_admin')
         port = self._update('ports', port['port']['id'], data,
                             neutron_context=neutron_context)
-        self.assertNotIn(ext_qos.QUEUE, port['port'])
+        self.assertNotIn(qos.QUEUE, port['port'])
 
     def test_rxtx_factor(self):
         with self.qos_queue(max=10) as q1:
 
             res = self._create_network('json', 'net1', True,
-                                       arg_list=(ext_qos.QUEUE,),
+                                       arg_list=(qos.QUEUE,),
                                        queue_id=q1['qos_queue']['id'])
             net1 = self.deserialize('json', res)
             res = self._create_port('json', net1['network']['id'],
-                                    arg_list=(ext_qos.RXTX_FACTOR,),
+                                    arg_list=(qos.RXTX_FACTOR,),
                                     rxtx_factor=2, device_id='1')
             port = self.deserialize('json', res)
             req = self.new_show_request('qos-queues',
-                                        port['port'][ext_qos.QUEUE])
+                                        port['port'][qos.QUEUE])
             res = req.get_response(self.ext_api)
             queue = self.deserialize('json', res)
             self.assertEqual(queue['qos_queue']['max'], 20)
@@ -1475,7 +1475,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
             nsxlib.l2gateway, 'update_l2_gw_service') as mock_update_gw:
             with self._network_gateway(name='cavani') as nw_gw:
                 nw_gw_id = nw_gw[self.resource]['id']
-                self._update(nvp_networkgw.COLLECTION_NAME, nw_gw_id,
+                self._update(networkgw.COLLECTION_NAME, nw_gw_id,
                              {self.resource: {'name': 'higuain'}})
                 mock_update_gw.assert_called_once_with(
                     mock.ANY, nw_gw_id, 'higuain')
@@ -1485,7 +1485,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
             nsxlib.l2gateway, 'update_l2_gw_service') as mock_update_gw:
             with self._network_gateway(name='something') as nw_gw:
                 nw_gw_id = nw_gw[self.resource]['id']
-                self._update(nvp_networkgw.COLLECTION_NAME, nw_gw_id,
+                self._update(networkgw.COLLECTION_NAME, nw_gw_id,
                              {self.resource: {}})
                 self.assertEqual(mock_update_gw.call_count, 0)
 
@@ -1493,9 +1493,9 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
         new_name = 'this_is_a_gateway_whose_name_is_longer_than_40_chars'
         with self._network_gateway(name='something') as nw_gw:
             nw_gw_id = nw_gw[self.resource]['id']
-            self._update(nvp_networkgw.COLLECTION_NAME, nw_gw_id,
+            self._update(networkgw.COLLECTION_NAME, nw_gw_id,
                          {self.resource: {'name': new_name}})
-            req = self.new_show_request(nvp_networkgw.COLLECTION_NAME,
+            req = self.new_show_request(networkgw.COLLECTION_NAME,
                                         nw_gw_id)
             res = self.deserialize('json', req.get_response(self.ext_api))
             # Assert Neutron name is not truncated
@@ -1529,7 +1529,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
     def test_list_network_gateways(self):
         with self._network_gateway(name='test-gw-1') as gw1:
             with self._network_gateway(name='test_gw_2') as gw2:
-                req = self.new_list_request(nvp_networkgw.COLLECTION_NAME)
+                req = self.new_list_request(networkgw.COLLECTION_NAME)
                 res = self.deserialize('json', req.get_response(self.ext_api))
                 # We expect the default gateway too
                 key = self.resource + 's'
@@ -1551,7 +1551,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
 
     def test_show_network_gateway_nvp_error_returns_404(self):
         invalid_id = 'b5afd4a9-eb71-4af7-a082-8fc625a35b61'
-        req = self.new_show_request(nvp_networkgw.COLLECTION_NAME, invalid_id)
+        req = self.new_show_request(networkgw.COLLECTION_NAME, invalid_id)
         res = req.get_response(self.ext_api)
         self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
