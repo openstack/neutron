@@ -23,6 +23,7 @@
 # @author: Kyle Mestery, Cisco Systems, Inc.
 
 import distutils.version as dist_version
+import signal
 import sys
 import time
 
@@ -1253,6 +1254,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.rpc_loop(polling_manager=pm)
 
 
+def handle_sigterm(signum, frame):
+    sys.exit(1)
+
+
 def check_ovs_version(min_required_version, root_helper):
     LOG.debug(_("Checking OVS version for VXLAN support"))
     installed_klm_version = ovs_lib.get_installed_ovs_klm_version()
@@ -1351,6 +1356,7 @@ def main():
         cfg.CONF.set_default('ip_lib_force_root', True)
 
     agent = OVSNeutronAgent(**agent_config)
+    signal.signal(signal.SIGTERM, handle_sigterm)
 
     # Start everything.
     LOG.info(_("Agent initialized successfully, now running... "))
