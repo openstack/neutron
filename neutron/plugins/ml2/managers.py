@@ -133,9 +133,13 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                  [driver.name for driver in self.ordered_mech_drivers])
 
     def initialize(self):
+        # For ML2 to support bulk operations, each driver must support them
+        self.native_bulk_support = True
         for driver in self.ordered_mech_drivers:
             LOG.info(_("Initializing mechanism driver '%s'"), driver.name)
             driver.obj.initialize()
+            self.native_bulk_support &= getattr(driver.obj,
+                                                'native_bulk_support', True)
 
     def _call_on_drivers(self, method_name, context,
                          continue_on_failure=False):

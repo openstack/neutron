@@ -103,6 +103,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         db.initialize()
         self.type_manager.initialize()
         self.mechanism_manager.initialize()
+        # bulk support depends on the underlying drivers
+        self.__native_bulk_support = self.mechanism_manager.native_bulk_support
 
         self._setup_rpc()
 
