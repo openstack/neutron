@@ -75,7 +75,7 @@ def _get_handler(resource):
 
 
 def _delete_handler(resource):
-    return 202, '', '', {'message': 'Not Found'}
+    return 404, '', '', {'message': 'Not Found'}
 
 
 def _post_handler(resource, binary):
@@ -149,7 +149,9 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
         """Test the rest call failure handling by Exception raising."""
         with self.network(do_delete=False) as network:
             with self.subnet(network=network, do_delete=False) as subnet:
-                with self.pool(no_delete=True, provider='radware') as pool:
+                with self.pool(no_delete=True,
+                               provider='radware',
+                               subnet_id=subnet['subnet']['id']) as pool:
                     vip_data = {
                         'name': 'vip1',
                         'subnet_id': subnet['subnet']['id'],
@@ -174,7 +176,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
     def test_create_vip(self):
         with self.subnet() as subnet:
-            with self.pool(provider='radware') as pool:
+            with self.pool(provider='radware',
+                           subnet_id=subnet['subnet']['id']) as pool:
                 vip_data = {
                     'name': 'vip1',
                     'subnet_id': subnet['subnet']['id'],
@@ -248,9 +251,95 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                 self.driver_rest_call_mock.assert_has_calls(
                     calls, any_order=True)
 
+    def test_create_vip_2_leg(self):
+        """Test creation of a VIP where Alteon VIP and PIP are different."""
+
+        with self.subnet(cidr='10.0.0.0/24') as subnet:
+            with self.subnet(cidr='10.0.1.0/24') as pool_sub:
+                with self.pool(provider='radware',
+                               subnet_id=pool_sub['subnet']['id']) as pool:
+                    vip_data = {
+                        'name': 'vip1',
+                        'subnet_id': subnet['subnet']['id'],
+                        'pool_id': pool['pool']['id'],
+                        'description': '',
+                        'protocol_port': 80,
+                        'protocol': 'HTTP',
+                        'connection_limit': -1,
+                        'admin_state_up': True,
+                        'status': constants.PENDING_CREATE,
+                        'tenant_id': self._tenant_id,
+                        'session_persistence': ''
+                    }
+
+                    vip = self.plugin_instance.create_vip(
+                        context.get_admin_context(), {'vip': vip_data})
+                    name_suffix = '%s_%s' % (subnet['subnet']['network_id'],
+                                             pool_sub['subnet']['network_id'])
+                    # Test creation REST calls
+                    calls = [
+                        mock.call('GET', '/api/workflowTemplate', None, None),
+                        mock.call('GET', '/api/service/srv_' + name_suffix,
+                                  None, None),
+                        mock.call('POST', '/api/service?name=srv_' +
+                                  name_suffix, mock.ANY,
+                                  driver.CREATE_SERVICE_HEADER),
+                        mock.call('POST', 'someuri',
+                                  None, driver.PROVISION_HEADER),
+                        mock.call('GET', '/api/workflow/l2_l3_' + name_suffix,
+                                  None, None),
+                        mock.call('POST', '/api/workflowTemplate/' +
+                                  'openstack_l2_l3' +
+                                  '?name=l2_l3_' + name_suffix,
+                                  mock.ANY,
+                                  driver.TEMPLATE_HEADER),
+                        mock.call('POST', '/api/workflow/l2_l3_' +
+                                  name_suffix + '/action/setup_l2_l3',
+                                  mock.ANY, driver.TEMPLATE_HEADER),
+                        mock.call('GET', '/api/workflow/' +
+                                  pool['pool']['id'], None, None),
+                        mock.call('POST', '/api/workflowTemplate/' +
+                                  'openstack_l4' +
+                                  '?name=' + pool['pool']['id'],
+                                  mock.ANY,
+                                  driver.TEMPLATE_HEADER),
+                        mock.call('POST', '/api/workflow/' +
+                                  pool['pool']['id'] + '/action/BaseCreate',
+                                  mock.ANY, driver.TEMPLATE_HEADER)
+                    ]
+                    self.driver_rest_call_mock.assert_has_calls(calls)
+                    #Test DB
+                    new_vip = self.plugin_instance.get_vip(
+                        context.get_admin_context(),
+                        vip['id']
+                    )
+                    self.assertEqual(new_vip['status'], constants.ACTIVE)
+
+                    # Test that PIP neutron port was created
+                    pip_port_filter = {
+                        'name': ['pip_' + vip['id']],
+                    }
+                    plugin = manager.NeutronManager.get_plugin()
+                    num_ports = plugin.get_ports_count(
+                        context.get_admin_context(), filters=pip_port_filter)
+                    self.assertTrue(num_ports > 0)
+
+                    # Delete VIP
+                    self.plugin_instance.delete_vip(
+                        context.get_admin_context(), vip['id'])
+
+                    # Test deletion REST calls
+                    calls = [
+                        mock.call('DELETE', u'/api/workflow/' +
+                                  pool['pool']['id'], None, None)
+                    ]
+                    self.driver_rest_call_mock.assert_has_calls(calls)
+
     def test_update_vip(self):
         with self.subnet() as subnet:
-            with self.pool(provider='radware', no_delete=True) as pool:
+            with self.pool(provider='radware',
+                           no_delete=True,
+                           subnet_id=subnet['subnet']['id']) as pool:
                 vip_data = {
                     'name': 'vip1',
                     'subnet_id': subnet['subnet']['id'],
@@ -290,12 +379,58 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                 self.plugin_instance.delete_vip(
                     context.get_admin_context(), vip['id'])
 
+    def test_update_vip_2_leg(self):
+        """Test update of a VIP where Alteon VIP and PIP are different."""
+
+        with self.subnet(cidr='10.0.0.0/24') as subnet:
+            with self.subnet(cidr='10.0.1.0/24') as pool_subnet:
+                with self.pool(provider='radware',
+                               subnet_id=pool_subnet['subnet']['id']) as pool:
+                    vip_data = {
+                        'name': 'vip1',
+                        'subnet_id': subnet['subnet']['id'],
+                        'pool_id': pool['pool']['id'],
+                        'description': '',
+                        'protocol_port': 80,
+                        'protocol': 'HTTP',
+                        'connection_limit': -1,
+                        'admin_state_up': True,
+                        'status': constants.PENDING_CREATE,
+                        'tenant_id': self._tenant_id,
+                        'session_persistence': ''
+                    }
+
+                    vip = self.plugin_instance.create_vip(
+                        context.get_admin_context(), {'vip': vip_data})
+
+                    self.plugin_instance.update_vip(
+                        context.get_admin_context(),
+                        vip['id'], {'vip': vip_data})
+
+                    # Test REST calls
+                    calls = [
+                        mock.call('POST', '/api/workflow/' +
+                                  pool['pool']['id'] + '/action/BaseCreate',
+                                  mock.ANY, driver.TEMPLATE_HEADER),
+                    ]
+                    self.driver_rest_call_mock.assert_has_calls(calls)
+
+                    updated_vip = self.plugin_instance.get_vip(
+                        context.get_admin_context(), vip['id'])
+                    self.assertEqual(updated_vip['status'], constants.ACTIVE)
+
+                    # delete VIP
+                    self.plugin_instance.delete_vip(
+                        context.get_admin_context(), vip['id'])
+
     def test_delete_vip_failure(self):
         plugin = self.plugin_instance
 
         with self.network(do_delete=False) as network:
             with self.subnet(network=network, do_delete=False) as subnet:
-                with self.pool(no_delete=True, provider='radware') as pool:
+                with self.pool(no_delete=True,
+                               provider='radware',
+                               subnet_id=subnet['subnet']['id']) as pool:
                     with contextlib.nested(
                         self.member(pool_id=pool['pool']['id'],
                                     no_delete=True),
@@ -336,7 +471,9 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
     def test_delete_vip(self):
         with self.subnet() as subnet:
-            with self.pool(provider='radware', no_delete=True) as pool:
+            with self.pool(provider='radware',
+                           no_delete=True,
+                           subnet_id=subnet['subnet']['id']) as pool:
                 vip_data = {
                     'name': 'vip1',
                     'subnet_id': subnet['subnet']['id'],
@@ -368,6 +505,54 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                                   self.plugin_instance.get_vip,
                                   context.get_admin_context(), vip['id'])
 
+    def test_delete_vip_2_leg(self):
+        """Test deletion of a VIP where Alteon VIP and PIP are different."""
+
+        self.driver_rest_call_mock.reset_mock()
+        with self.subnet(cidr='10.0.0.0/24') as subnet:
+            with self.subnet(cidr='10.0.1.0/24') as pool_subnet:
+                with self.pool(provider='radware',
+                               no_delete=True,
+                               subnet_id=pool_subnet['subnet']['id']) as pool:
+                    vip_data = {
+                        'name': 'vip1',
+                        'subnet_id': subnet['subnet']['id'],
+                        'pool_id': pool['pool']['id'],
+                        'description': '',
+                        'protocol_port': 80,
+                        'protocol': 'HTTP',
+                        'connection_limit': -1,
+                        'admin_state_up': True,
+                        'status': constants.PENDING_CREATE,
+                        'tenant_id': self._tenant_id,
+                        'session_persistence': ''
+                    }
+
+                    vip = self.plugin_instance.create_vip(
+                        context.get_admin_context(), {'vip': vip_data})
+
+                    self.plugin_instance.delete_vip(
+                        context.get_admin_context(), vip['id'])
+
+                    calls = [
+                        mock.call('DELETE', '/api/workflow/' +
+                                  pool['pool']['id'], None, None)
+                    ]
+                    self.driver_rest_call_mock.assert_has_calls(calls)
+
+                    # Test that PIP neutron port was deleted
+                    pip_port_filter = {
+                        'name': ['pip_' + vip['id']],
+                    }
+                    plugin = manager.NeutronManager.get_plugin()
+                    num_ports = plugin.get_ports_count(
+                        context.get_admin_context(), filters=pip_port_filter)
+                    self.assertTrue(num_ports == 0)
+
+                    self.assertRaises(loadbalancer.VipNotFound,
+                                      self.plugin_instance.get_vip,
+                                      context.get_admin_context(), vip['id'])
+
     def test_update_pool(self):
         with self.subnet():
             with self.pool() as pool:
@@ -382,7 +567,9 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
     def test_delete_pool_with_vip(self):
         with self.subnet() as subnet:
-            with self.pool(provider='radware', no_delete=True) as pool:
+            with self.pool(provider='radware',
+                           no_delete=True,
+                           subnet_id=subnet['subnet']['id']) as pool:
                 with self.vip(pool=pool, subnet=subnet):
                     self.assertRaises(loadbalancer.PoolInUse,
                                       self.plugin_instance.delete_pool,
@@ -391,7 +578,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
     def test_create_member_with_vip(self):
         with self.subnet() as subnet:
-            with self.pool(provider='radware') as p:
+            with self.pool(provider='radware',
+                           subnet_id=subnet['subnet']['id']) as p:
                 with self.vip(pool=p, subnet=subnet):
                     with self.member(pool_id=p['pool']['id']):
                         calls = [
@@ -411,7 +599,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
     def test_update_member_with_vip(self):
         with self.subnet() as subnet:
-            with self.pool(provider='radware') as p:
+            with self.pool(provider='radware',
+                           subnet_id=subnet['subnet']['id']) as p:
                 with self.member(pool_id=p['pool']['id']) as member:
                     with self.vip(pool=p, subnet=subnet):
                         self.plugin_instance.update_member(
@@ -459,7 +648,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
 
     def test_delete_member_with_vip(self):
         with self.subnet() as subnet:
-            with self.pool(provider='radware') as p:
+            with self.pool(provider='radware',
+                           subnet_id=subnet['subnet']['id']) as p:
                 with self.member(pool_id=p['pool']['id'],
                                  no_delete=True) as m:
                     with self.vip(pool=p, subnet=subnet):
@@ -514,7 +704,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
     def test_create_hm_with_vip(self):
         with self.subnet() as subnet:
             with self.health_monitor() as hm:
-                with self.pool(provider='radware') as pool:
+                with self.pool(provider='radware',
+                               subnet_id=subnet['subnet']['id']) as pool:
                     with self.vip(pool=pool, subnet=subnet):
 
                         self.plugin_instance.create_pool_health_monitor(
@@ -547,7 +738,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
     def test_delete_pool_hm_with_vip(self):
         with self.subnet() as subnet:
             with self.health_monitor(no_delete=True) as hm:
-                with self.pool(provider='radware') as pool:
+                with self.pool(provider='radware',
+                               subnet_id=subnet['subnet']['id']) as pool:
                     with self.vip(pool=pool, subnet=subnet):
                         self.plugin_instance.create_pool_health_monitor(
                             context.get_admin_context(),

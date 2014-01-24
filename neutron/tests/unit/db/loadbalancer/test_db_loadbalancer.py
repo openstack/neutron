@@ -156,7 +156,7 @@ class LoadBalancerTestMixin(object):
                          'protocol': protocol,
                          'admin_state_up': admin_state_up,
                          'tenant_id': self._tenant_id}}
-        for arg in ('description', 'provider'):
+        for arg in ('description', 'provider', 'subnet_id'):
             if arg in kwargs and kwargs[arg] is not None:
                 data['pool'][arg] = kwargs[arg]
         pool_req = self.new_create_request('pools', data, fmt)
