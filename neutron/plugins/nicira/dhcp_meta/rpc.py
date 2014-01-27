@@ -58,19 +58,10 @@ class NVPRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
 
 def handle_network_dhcp_access(plugin, context, network, action):
-    # TODO(armando-migliaccio): revise the implementation of this
-    # method in the context bug #1212555; a potential fix might be
-    # as simple as a 'pass', but keeping the hook might be useful
-    # in other agent modes.
-    if action == 'create_network':
-        plugin.schedule_network(context, network)
+    pass
 
 
 def handle_port_dhcp_access(plugin, context, port_data, action):
-    if action == 'create_port':
-        net = plugin.get_network(context, port_data['network_id'])
-        plugin.schedule_network(context, net)
-
     active_port = (cfg.CONF.NSX.metadata_mode == config.MetadataModes.INDIRECT
                    and port_data.get('device_owner') == const.DEVICE_OWNER_DHCP
                    and port_data.get('fixed_ips', []))
@@ -92,6 +83,8 @@ def handle_port_metadata_access(plugin, context, port, is_delete=False):
             # route. This is done via the enable_isolated_metadata
             # option if desired.
             if not subnet.get('gateway_ip'):
+                LOG.info(_('Subnet %s does not have a gateway, the metadata '
+                           'route will not be created'), subnet['id'])
                 return
             metadata_routes = [r for r in subnet.routes
                                if r['destination'] == METADATA_DHCP_ROUTE]
