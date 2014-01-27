@@ -18,14 +18,14 @@
 """ryu plugin quota
 
 Revision ID: 8f682276ee4
-Revises: 49f5e553f61f
+Revises: ed93525fd003
 Create Date: 2014-01-07 15:47:17.349425
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '8f682276ee4'
-down_revision = '49f5e553f61f'
+down_revision = 'ed93525fd003'
 
 # Change to ['*'] if this migration applies to all plugins
 
