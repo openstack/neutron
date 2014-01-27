@@ -501,7 +501,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         Creates a Neutron subnet and a DHCP entry in MidoNet bridge.
         """
-        LOG.debug(_("MidonetPluginV2.create_subnet called: subnet=%r"), subnet)
+        LOG.info(_("MidonetPluginV2.create_subnet called: subnet=%r"), subnet)
 
         s = subnet["subnet"]
         net = super(MidonetPluginV2, self).get_network(
@@ -521,8 +521,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self._link_to_provider_router(bridge, s['gateway_ip'],
                                               s['cidr'])
 
-        LOG.debug(_("MidonetPluginV2.create_subnet exiting: sn_entry=%r"),
-                  sn_entry)
+        LOG.info(_("MidonetPluginV2.create_subnet exiting: sn_entry=%r"),
+                 sn_entry)
         return sn_entry
 
     def update_subnet(self, context, id, subnet):
@@ -550,7 +550,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         Delete neutron network and its corresponding MidoNet bridge.
         """
-        LOG.debug(_("MidonetPluginV2.delete_subnet called: id=%s"), id)
+        LOG.info(_("MidonetPluginV2.delete_subnet called: id=%s"), id)
         subnet = super(MidonetPluginV2, self).get_subnet(context, id,
                                                          fields=None)
         net = super(MidonetPluginV2, self).get_network(context,
@@ -568,15 +568,15 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if net[ext_net.EXTERNAL]:
                 self._unlink_from_provider_router(bridge, subnet)
 
-            LOG.debug(_("MidonetPluginV2.delete_subnet exiting"))
+            LOG.info(_("MidonetPluginV2.delete_subnet exiting"))
 
     def create_network(self, context, network):
         """Create Neutron network.
 
         Create a new Neutron network and its corresponding MidoNet bridge.
         """
-        LOG.debug(_('MidonetPluginV2.create_network called: network=%r'),
-                  network)
+        LOG.info(_('MidonetPluginV2.create_network called: network=%r'),
+                 network)
         net_data = network['network']
         tenant_id = self._get_tenant_id_for_create(context, net_data)
         net_data['tenant_id'] = tenant_id
@@ -590,7 +590,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             net = super(MidonetPluginV2, self).create_network(context, network)
             self._process_l3_create(context, net, net_data)
 
-        LOG.debug(_("MidonetPluginV2.create_network exiting: net=%r"), net)
+        LOG.info(_("MidonetPluginV2.create_network exiting: net=%r"), net)
         return net
 
     def update_network(self, context, id, network):
@@ -599,8 +599,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         Update an existing Neutron network and its corresponding MidoNet
         bridge.
         """
-        LOG.debug(_("MidonetPluginV2.update_network called: id=%(id)r, "
-                    "network=%(network)r"), {'id': id, 'network': network})
+        LOG.info(_("MidonetPluginV2.update_network called: id=%(id)r, "
+                   "network=%(network)r"), {'id': id, 'network': network})
         session = context.session
         with session.begin(subtransactions=True):
             net = super(MidonetPluginV2, self).update_network(
@@ -608,7 +608,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_l3_update(context, net, network['network'])
             self.client.update_bridge(id, **network['network'])
 
-        LOG.debug(_("MidonetPluginV2.update_network exiting: net=%r"), net)
+        LOG.info(_("MidonetPluginV2.update_network exiting: net=%r"), net)
         return net
 
     def get_network(self, context, id, fields=None):
@@ -626,7 +626,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def delete_network(self, context, id):
         """Delete a network and its corresponding MidoNet bridge."""
-        LOG.debug(_("MidonetPluginV2.delete_network called: id=%r"), id)
+        LOG.info(_("MidonetPluginV2.delete_network called: id=%r"), id)
         net = super(MidonetPluginV2, self).get_network(context, id,
                                                        fields=None)
 
@@ -651,7 +651,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.synchronized('port-critical-section', external=True)
     def create_port(self, context, port):
         """Create a L2 port in Neutron/MidoNet."""
-        LOG.debug(_("MidonetPluginV2.create_port called: port=%r"), port)
+        LOG.info(_("MidonetPluginV2.create_port called: port=%r"), port)
         port_data = port['port']
 
         # Create a bridge port in MidoNet and set the bridge port ID as the
@@ -734,7 +734,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                           {"net_id": port_data["network_id"], "err": ex})
                 self.client.delete_port(bridge_port.get_id())
 
-        LOG.debug(_("MidonetPluginV2.create_port exiting: port=%r"), port_data)
+        LOG.info(_("MidonetPluginV2.create_port exiting: port=%r"), port_data)
         return port_data
 
     def get_port(self, context, id, fields=None):
@@ -765,9 +765,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.synchronized('port-critical-section', external=True)
     def delete_port(self, context, id, l3_port_check=True):
         """Delete a neutron port and corresponding MidoNet bridge port."""
-        LOG.debug(_("MidonetPluginV2.delete_port called: id=%(id)s "
-                    "l3_port_check=%(l3_port_check)r"),
-                  {'id': id, 'l3_port_check': l3_port_check})
+        LOG.info(_("MidonetPluginV2.delete_port called: id=%(id)s "
+                   "l3_port_check=%(l3_port_check)r"),
+                 {'id': id, 'l3_port_check': l3_port_check})
         # if needed, check to see if this is a port owned by
         # and l3-router.  If so, we should prevent deletion.
         if l3_port_check:
@@ -840,8 +840,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 bridge = self.client.get_bridge(net_id)
                 # If it's a DHCP port, add a route to reach the MD server
                 if _is_dhcp_port(p):
-                    for cidr, ip in self._metadata_subnets(
-                        context, new_ips):
+                    for cidr, ip in self._metadata_subnets(context, new_ips):
                         self.client.add_dhcp_route_option(
                             bridge, cidr, ip, METADATA_DEFAULT_IP)
                 else:
@@ -851,8 +850,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         self.client.remove_dhcp_host(
                             bridge, cidr, ip, mac)
 
-                    for cidr, ip, mac in self._dhcp_mappings(
-                        context, new_ips, mac):
+                    for cidr, ip, mac in self._dhcp_mappings(context, new_ips,
+                                                             mac):
                         self.client.add_dhcp_host(
                             bridge, cidr, ip, mac)
 
@@ -879,8 +878,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # this method in order to be able to use the MidoNet ID as Neutron ID
         # TODO(dcahill): Propose upstream patch for allowing
         # 3rd parties to specify IDs as we do with l2 plugin
-        LOG.debug(_("MidonetPluginV2.create_router called: router=%(router)s"),
-                  {"router": router})
+        LOG.info(_("MidonetPluginV2.create_router called: router=%(router)s"),
+                 {"router": router})
         r = router['router']
         tenant_id = self._get_tenant_id_for_create(context, r)
         r['tenant_id'] = tenant_id
@@ -928,9 +927,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             with excutils.save_and_reraise_exception():
                 self.client.delete_router(mido_router_id)
 
-        LOG.debug(_("MidonetPluginV2.create_router exiting: "
-                    "router_data=%(router_data)s."),
-                  {"router_data": router_data})
+        LOG.info(_("MidonetPluginV2.create_router exiting: "
+                   "router_data=%(router_data)s."),
+                 {"router_data": router_data})
         return router_data
 
     def _set_router_gateway(self, id, gw_router, gw_ip):
@@ -940,9 +939,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param gw_router: gateway router to link to
         :param gw_ip: gateway IP address
         """
-        LOG.debug(_("MidonetPluginV2.set_router_gateway called: id=%(id)s, "
-                    "gw_router=%(gw_router)s, gw_ip=%(gw_ip)s"),
-                  {'id': id, 'gw_router': gw_router, 'gw_ip': gw_ip}),
+        LOG.info(_("MidonetPluginV2.set_router_gateway called: id=%(id)s, "
+                   "gw_router=%(gw_router)s, gw_ip=%(gw_ip)s"),
+                 {'id': id, 'gw_router': gw_router, 'gw_ip': gw_ip}),
 
         router = self.client.get_router(id)
 
@@ -984,8 +983,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         :param ID: ID of the router
         """
-        LOG.debug(_("MidonetPluginV2.remove_router_gateway called: "
-                    "id=%(id)s"), {'id': id})
+        LOG.info(_("MidonetPluginV2.remove_router_gateway called: "
+                   "id=%(id)s"), {'id': id})
         router = self.client.get_router(id)
 
         # delete the port that is connected to the gateway router
@@ -1029,8 +1028,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def update_router(self, context, id, router):
         """Handle router updates."""
-        LOG.debug(_("MidonetPluginV2.update_router called: id=%(id)s "
-                    "router=%(router)r"), {"id": id, "router": router})
+        LOG.info(_("MidonetPluginV2.update_router called: id=%(id)s "
+                   "router=%(router)r"), {"id": id, "router": router})
 
         router_data = router["router"]
 
@@ -1048,7 +1047,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             self.client.update_router(id, **router_data)
 
-        LOG.debug(_("MidonetPluginV2.update_router exiting: router=%r"), r)
+        LOG.info(_("MidonetPluginV2.update_router exiting: router=%r"), r)
         return r
 
     def delete_router(self, context, id):
@@ -1059,7 +1058,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         :param id: router ID to remove
         """
-        LOG.debug(_("MidonetPluginV2.delete_router called: id=%s"), id)
+        LOG.info(_("MidonetPluginV2.delete_router called: id=%s"), id)
 
         self.client.delete_router_chains(id)
         self.client.delete_router(id)
@@ -1220,10 +1219,10 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def add_router_interface(self, context, router_id, interface_info):
         """Handle router linking with network."""
-        LOG.debug(_("MidonetPluginV2.add_router_interface called: "
-                    "router_id=%(router_id)s "
-                    "interface_info=%(interface_info)r"),
-                  {'router_id': router_id, 'interface_info': interface_info})
+        LOG.info(_("MidonetPluginV2.add_router_interface called: "
+                   "router_id=%(router_id)s "
+                   "interface_info=%(interface_info)r"),
+                 {'router_id': router_id, 'interface_info': interface_info})
 
         with context.session.begin(subtransactions=True):
             info = super(MidonetPluginV2, self).add_router_interface(
@@ -1257,8 +1256,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 with context.session.begin(subtransactions=True):
                     self.remove_router_interface(context, router_id, info)
 
-        LOG.debug(_("MidonetPluginV2.add_router_interface exiting: "
-                    "info=%r"), info)
+        LOG.info(_("MidonetPluginV2.add_router_interface exiting: "
+                   "info=%r"), info)
         return info
 
     def _assoc_fip(self, fip):
@@ -1299,9 +1298,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def update_floatingip(self, context, id, floatingip):
         """Handle floating IP assocation and disassociation."""
-        LOG.debug(_("MidonetPluginV2.update_floatingip called: id=%(id)s "
-                    "floatingip=%(floatingip)s "),
-                  {'id': id, 'floatingip': floatingip})
+        LOG.info(_("MidonetPluginV2.update_floatingip called: id=%(id)s "
+                   "floatingip=%(floatingip)s "),
+                 {'id': id, 'floatingip': floatingip})
 
         session = context.session
         with session.begin(subtransactions=True):
@@ -1324,8 +1323,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     self._disassoc_fip(old_fip)
                     self._assoc_fip(new_fip)
 
-        LOG.debug(_("MidonetPluginV2.update_floating_ip exiting: new_fip=%s"),
-                  new_fip)
+        LOG.info(_("MidonetPluginV2.update_floating_ip exiting: new_fip=%s"),
+                 new_fip)
         return new_fip
 
     def disassociate_floatingips(self, context, port_id):
@@ -1353,10 +1352,10 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         In MidoNet, this means creating a pair of chains, inbound and outbound,
         as well as a new IP address group.
         """
-        LOG.debug(_("MidonetPluginV2.create_security_group called: "
-                    "security_group=%(security_group)s "
-                    "default_sg=%(default_sg)s "),
-                  {'security_group': security_group, 'default_sg': default_sg})
+        LOG.info(_("MidonetPluginV2.create_security_group called: "
+                   "security_group=%(security_group)s "
+                   "default_sg=%(default_sg)s "),
+                 {'security_group': security_group, 'default_sg': default_sg})
 
         sg = security_group.get('security_group')
         tenant_id = self._get_tenant_id_for_create(context, sg)
@@ -1390,13 +1389,13 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     sg = self._get_security_group(context, sg["id"])
                     context.session.delete(sg)
 
-        LOG.debug(_("MidonetPluginV2.create_security_group exiting: sg=%r"),
-                  sg)
+        LOG.info(_("MidonetPluginV2.create_security_group exiting: sg=%r"),
+                 sg)
         return sg
 
     def delete_security_group(self, context, id):
         """Delete chains for Neutron security group."""
-        LOG.debug(_("MidonetPluginV2.delete_security_group called: id=%s"), id)
+        LOG.info(_("MidonetPluginV2.delete_security_group called: id=%s"), id)
 
         with context.session.begin(subtransactions=True):
             sg = super(MidonetPluginV2, self).get_security_group(context, id)
@@ -1432,9 +1431,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         Create multiple security group rules in the Neutron DB and
         corresponding MidoNet resources in its data store.
         """
-        LOG.debug(_("MidonetPluginV2.create_security_group_rule_bulk called: "
-                    "security_group_rule=%(security_group_rule)r"),
-                  {'security_group_rule': security_group_rule})
+        LOG.info(_("MidonetPluginV2.create_security_group_rule_bulk called: "
+                   "security_group_rule=%(security_group_rule)r"),
+                 {'security_group_rule': security_group_rule})
 
         with context.session.begin(subtransactions=True):
             rules = super(
@@ -1454,8 +1453,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         self.client.remove_chain_rule(rules[j]['id'])
                     raise
 
-            LOG.debug(_("MidonetPluginV2.create_security_group_rule_bulk "
-                        "exiting: rules=%r"), rules)
+            LOG.info(_("MidonetPluginV2.create_security_group_rule_bulk "
+                       "exiting: rules=%r"), rules)
             return rules
 
     def delete_security_group_rule(self, context, sg_rule_id):
@@ -1464,8 +1463,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         Delete a security group rule from the Neutron DB and corresponding
         MidoNet resources from its data store.
         """
-        LOG.debug(_("MidonetPluginV2.delete_security_group_rule called: "
-                    "sg_rule_id=%s"), sg_rule_id)
+        LOG.info(_("MidonetPluginV2.delete_security_group_rule called: "
+                   "sg_rule_id=%s"), sg_rule_id)
         with context.session.begin(subtransactions=True):
             rule = super(MidonetPluginV2, self).get_security_group_rule(
                 context, sg_rule_id)
