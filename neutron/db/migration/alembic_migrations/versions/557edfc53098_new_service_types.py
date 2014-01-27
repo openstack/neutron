@@ -50,9 +50,8 @@ def upgrade(active_plugins=None, options=None):
                   nullable=False, unique=True),
     )
 
-    # dropping unused tables
-    op.drop_table('servicedefinitions')
-    op.drop_table('servicetypes')
+    for table in ('servicedefinitions', 'servicetypes'):
+        op.execute("DROP TABLE IF EXISTS %s" % table)
 
 
 def downgrade(active_plugins=None, options=None):
