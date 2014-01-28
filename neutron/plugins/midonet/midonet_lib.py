@@ -381,12 +381,29 @@ class MidoClient:
             raise MidonetApiException(
                 msg=_("Tried to access non-existent DHCP"))
         prefix, length = dst_ip.split("/")
-        routes = [{'destinationPrefix': prefix, 'destinationLength': length,
-                   'gatewayAddr': gw_ip}]
+        route = [{'destinationPrefix': prefix,
+                  'destinationLength': int(length),
+                  'gatewayAddr': gw_ip}]
         cur_routes = subnet.get_opt121_routes()
         if cur_routes:
-            routes = routes + cur_routes
-        subnet.opt121_routes(routes).update()
+            duplicate = False
+            for r in cur_routes:
+                if (r['destinationPrefix'] == route[0]['destinationPrefix'] and
+                    r['destinationLength'] == route[0]['destinationLength']):
+                    LOG.debug("Duplicate, %s", r)
+                    duplicate = True
+                    break
+            if not duplicate:
+                LOG.debug(_("Adding opt121 route: route=%(route)s, "
+                            "bridge=%n(bridge)s"),
+                          {"route": route, "bridge": bridge})
+                route = route + cur_routes
+                subnet.opt121_routes(route).update()
+        else:
+            LOG.debug(_("Adding opt121 route: route=%(route)s, "
+                        "bridge=%(bridge)s"),
+                      {"route": route, "bridge": bridge})
+            subnet.opt121_routes(route).update()
 
     @handle_api_error
     def link(self, port, peer_id):
