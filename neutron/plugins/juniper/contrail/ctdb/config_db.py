@@ -1098,7 +1098,13 @@ class DBInterface(object):
         net_q_dict['status'] = constants.NET_STATUS_ACTIVE
 
         if net_repr == 'SHOW':
-            port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
+
+            # This code path is invoked on every port_create.
+            # Getting the backrefs can be an expensive operation.
+            # For now, just return instance_count of 0
+            #port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
+            port_back_refs = None
+
             #if port_back_refs:
             #    net_q_dict['ports'] = []
             #    for port_back_ref in port_back_refs:
