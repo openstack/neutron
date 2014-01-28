@@ -34,6 +34,7 @@ EOF
 
 DEB_ARGS=$(cat <<EOF
 --prefix /usr/lib/python2.7/dist-packages/neutron/plugins/midonet \
+--replaces 'python-neutron' \
 --provides 'python2.7-neutron-plugin-midonet' \
 --deb-priority 'optional'
 EOF
