@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+import testtools
 
 from neutron.common import exceptions as exc
 from neutron import context
@@ -21,6 +22,7 @@ from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
+from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
@@ -57,6 +59,8 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         super(Ml2PluginV2TestCase, self).setUp(PLUGIN_NAME,
                                                service_plugins=service_plugins)
         self.port_create_status = 'DOWN'
+        self.driver = ml2_plugin.Ml2Plugin()
+        self.context = context.get_admin_context()
 
 
 class TestMl2BulkToggle(Ml2PluginV2TestCase):
@@ -234,6 +238,38 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)
         self.assertEqual(res.status_int, 400)
+
+    def test_create_provider_fail(self):
+        segment = {pnet.NETWORK_TYPE: None,
+                   pnet.PHYSICAL_NETWORK: 'phys_net',
+                   pnet.SEGMENTATION_ID: None}
+        with testtools.ExpectedException(exc.InvalidInput):
+            self.driver._process_provider_create(segment)
+
+    def test_create_network_plugin(self):
+        data = {'network': {'name': 'net1',
+                            'admin_state_up': True,
+                            'shared': False,
+                            pnet.NETWORK_TYPE: 'vlan',
+                            pnet.PHYSICAL_NETWORK: 'physnet1',
+                            pnet.SEGMENTATION_ID: 1,
+                            'tenant_id': 'tenant_one'}}
+
+        def raise_mechanism_exc(*args, **kwargs):
+            raise ml2_exc.MechanismDriverError(
+                method='create_network_postcommit')
+
+        with mock.patch('neutron.plugins.ml2.managers.MechanismManager.'
+                        'create_network_precommit', new=raise_mechanism_exc):
+            with testtools.ExpectedException(ml2_exc.MechanismDriverError):
+                self.driver.create_network(self.context, data)
+
+    def test_extend_dictionary_no_segments(self):
+        network = dict(name='net_no_segment', id='5', tenant_id='tenant_one')
+        self.driver._extend_network_dict_provider(self.context, network)
+        self.assertIsNone(network[pnet.NETWORK_TYPE])
+        self.assertIsNone(network[pnet.PHYSICAL_NETWORK])
+        self.assertIsNone(network[pnet.SEGMENTATION_ID])
 
 
 class DHCPOptsTestCase(test_dhcpopts.TestExtraDhcpOpt):
