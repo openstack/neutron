@@ -8,17 +8,6 @@ else
     echo "Packaging with version number $pkgver"
 fi
 
-# Make a packaging dir
-orig_dir=neutron
-packaging_dir=packageneutron
-mkdir $packaging_dir
-
-# Copy necessary files there
-mkdir -p $packaging_dir/plugins/midonet
-mkdir -p $packaging_dir/db/migration/alembic_migrations/versions
-cp -r {$orig_dir,$packaging_dir}/plugins/midonet
-cp -r {$orig_dir,$packaging_dir}/db/migration/alembic_migrations/versions/128e042a2b68_ext_gw_mode.py
-
 # Common args for rpm and deb
 FPM_BASE_ARGS=$(cat <<EOF
 --name 'python-neutron-plugin-midonet' \
@@ -31,20 +20,20 @@ FPM_BASE_ARGS=$(cat <<EOF
   Neutron MidoNet plugin is a MidoNet virtual network service plugin for Openstack Neutron.' \
 -d 'python-neutron' \
 -s dir \
--C $packaging_dir \
+-C neutron/plugins/midonet/ \
 --version $pkgver
 EOF
 )
 
 RPM_ARGS=$(cat <<EOF
---prefix /usr/lib/python2.6/site-packages/neutron \
+--prefix /usr/lib/python2.6/site-packages/neutron/plugins/midonet \
 --provides 'python2.6-neutron-plugin-midonet' \
 --epoch 1
 EOF
 )
 
 DEB_ARGS=$(cat <<EOF
---prefix /usr/lib/python2.7/dist-packages/neutron \
+--prefix /usr/lib/python2.7/dist-packages/neutron/plugins/midonet \
 --provides 'python2.7-neutron-plugin-midonet' \
 --deb-priority 'optional'
 EOF
@@ -55,5 +44,3 @@ eval fpm $FPM_BASE_ARGS $RPM_ARGS -t rpm .
 
 # Package debian
 eval fpm $FPM_BASE_ARGS $DEB_ARGS -t deb .
-
-rm -rf $packaging_dir
