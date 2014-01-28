@@ -36,8 +36,13 @@ def put_port_hostid(context, port_id, host):
         LOG.warning(_("No host_id in port request to track port location."))
         return
     if port_id == '':
-        LOG.warning(_("Received an empty port ID for host '%s'"), host)
+        LOG.warning(_("Received an empty port ID for host_id '%s'"), host)
         return
+    if host == '':
+        LOG.debug(_("Received an empty host_id for port '%s'"), port_id)
+        return
+    LOG.debug(_("Logging port %(port)s on host_id %(host)s"),
+              {'port': port_id, 'host': host})
     with context.session.begin(subtransactions=True):
         location = portbindings_db.PortBindingPort(port_id=port_id, host=host)
         context.session.merge(location)
