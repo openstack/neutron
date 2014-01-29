@@ -24,7 +24,8 @@
 
 from midonetclient import api
 from oslo.config import cfg
-from sqlalchemy.orm import exc as sa_exc
+from sqlalchemy import exc as sa_exc
+from sqlalchemy.orm import exc as sao_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -187,6 +188,26 @@ def _check_resource_exists(func, id, name, raise_exc=False):
                   {"name": name, "id": id})
         if raise_exc:
             raise MidonetPluginException(msg=exc)
+
+
+def _enable_snat_col_if_missing(func):
+    """Repair the neutron database.
+
+    Our plugin requires that the routers table have the enable_snat column,
+    however it will not be added when initializing the database for havana.
+    This is because the migration scripts that update the neutron database
+    do not include this column for the midonet plugin. This function allows
+    us to update it on the fly.
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except sa_exc.OperationalError:
+            session = db.get_session()
+            session.execute('ALTER TABLE routers ADD COLUMN enable_snat BOOL')
+            session.execute('UPDATE routers SET enable_snat=True')
+            return func(*args, **kwargs)
+    return wrapper
 
 
 class MidoRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
@@ -863,6 +884,18 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         return p
 
+    @_enable_snat_col_if_missing
+    def get_routers_count(self, context, filters=None):
+        return super(MidonetPluginV2, self).get_routers_count(context, filters)
+
+    @_enable_snat_col_if_missing
+    def get_routers(self, context, filters=None, fields=None,
+                    sorts=None, limit=None, marker=None,
+                    page_reverse=False):
+        return super(MidonetPluginV2, self).get_routers(context, filters,
+                                                        fields, sorts, limit,
+                                                        marker, page_reverse)
+
     def create_router(self, context, router):
         """Handle router creation.
 
@@ -1334,7 +1367,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             fip_db = fip_qry.filter_by(fixed_port_id=port_id).one()
             if fip_db and fip_db['fixed_port_id']:
                 self._disassoc_fip(fip_db)
-        except sa_exc.NoResultFound:
+        except sao_exc.NoResultFound:
             pass
 
         super(MidonetPluginV2, self).disassociate_floatingips(context, port_id)
