@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import threading
+import time
 
 import jsonrpclib
 from oslo.config import cfg
@@ -31,6 +32,11 @@ LOG = logging.getLogger(__name__)
 
 EOS_UNREACHABLE_MSG = _('Unable to reach EOS')
 
+class AristaNetwork(object):
+   def __init__(self, network_id='', segmentation_id='', network_name=''):
+      self.network_id = network_id
+      self.segmentation_id = segmentation_id
+      self.network_name = network_name
 
 class AristaRPCWrapper(object):
     """Wraps Arista JSON RPC.
@@ -43,6 +49,7 @@ class AristaRPCWrapper(object):
         self._server = jsonrpclib.Server(self._eapi_host_url())
         self.keystone_conf = cfg.CONF.keystone_authtoken
         self.region = cfg.CONF.ml2_arista.region_name
+        self._region_updated_time = None
 
     def _keystone_url(self):
         keystone_auth_url = ('%s://%s:%s/v2.0/' %
@@ -58,7 +65,7 @@ class AristaRPCWrapper(object):
                   and VMs allocated per tenant
         """
         cmds = ['show openstack config region %s' % self.region]
-        command_output = self._run_openstack_cmds(cmds)
+        command_output = self._run_openstack_cmds(cmds,cmds)
         tenants = command_output[0]['tenants']
 
         return tenants
@@ -111,7 +118,7 @@ class AristaRPCWrapper(object):
                         (port_id, network_id))
         cmds.append('exit')
         cmds.append('exit')
-        self._run_openstack_cmds(cmds)
+        self._run_openstack_config_cmds(cmds)
 
     def plug_dhcp_port_into_network(self, dhcp_id, host, port_id,
                                     network_id, tenant_id, port_name):
@@ -133,7 +140,7 @@ class AristaRPCWrapper(object):
             cmds.append('dhcp id %s hostid %s port-id %s' %
                         (dhcp_id, host, port_id))
         cmds.append('exit')
-        self._run_openstack_cmds(cmds)
+        self._run_openstack_config_cmds(cmds)
 
     def unplug_host_from_network(self, vm_id, host, port_id,
                                  network_id, tenant_id):
@@ -150,7 +157,7 @@ class AristaRPCWrapper(object):
                 'no port id %s' % port_id,
                 'exit',
                 'exit']
-        self._run_openstack_cmds(cmds)
+        self._run_openstack_config_cmds(cmds)
 
     def unplug_dhcp_port_from_network(self, dhcp_id, host, port_id,
                                       network_id, tenant_id):
@@ -166,9 +173,9 @@ class AristaRPCWrapper(object):
                 'network id %s' % network_id,
                 'no dhcp id %s port-id %s' % (dhcp_id, port_id),
                 'exit']
-        self._run_openstack_cmds(cmds)
+        self._run_openstack_config_cmds(cmds)
 
-    def create_network(self, tenant_id, network_id, network_name, seg_id):
+    def create_networks(self, tenant_id, network_list ):
         """Creates a network on Arista Hardware
 
         :param tenant_id: globally unique neutron tenant identifier
@@ -177,23 +184,25 @@ class AristaRPCWrapper(object):
         :param seg_id: Segment ID of the network
         """
         cmds = ['tenant %s' % tenant_id]
-        if network_name:
-            cmds.append('network id %s name "%s"' %
-                        (network_id, network_name))
-        else:
-            cmds.append('network id %s' % network_id)
-        cmds.append('segment 1 type vlan id %d' % seg_id)
-        cmds.append('exit')
-        cmds.append('exit')
-        cmds.append('exit')
+        # Create a reference to function to avoid name lookups in the loop
+        append_cmd = cmds.append
+        for network in network_list:
+           if network.network_name:
+               append_cmd('network id %s name "%s"' %
+                           (network.network_id, network.network_name))
+           else:
+               append_cmd('network id %s' % network.network_id)
+           append_cmd('segment 1 type vlan id %d' % network.segmentation_id)
+        append_cmd( 'exit' )
+        append_cmd( 'exit' )
 
-        self._run_openstack_cmds(cmds)
+        self._run_openstack_config_cmds(cmds)
 
     def create_network_segments(self, tenant_id, network_id,
                                 network_name, segments):
         """Creates a network on Arista Hardware
 
-        Note: This method is not used at the moment. create_network()
+        Note: This method is not used at the moment. create_networks()
         is used instead. This will be used once the support for
         multiple segments is added in Neutron.
 
@@ -214,41 +223,74 @@ class AristaRPCWrapper(object):
             cmds.append('exit')  # exit for network mode
             cmds.append('exit')  # exit for tenant mode
 
-            self._run_openstack_cmds(cmds)
+            self._run_openstack_config_cmds(cmds)
 
-    def delete_network(self, tenant_id, network_id):
+    def delete_networks(self, tenant_id, network_id_list):
         """Deletes a specified network for a given tenant
 
         :param tenant_id: globally unique neutron tenant identifier
         :param network_id: globally unique neutron network identifier
         """
-        cmds = ['tenant %s' % tenant_id,
-                'no network id %s' % network_id,
-                'exit',
-                'exit']
-        self._run_openstack_cmds(cmds)
+        cmds = ['tenant %s' % tenant_id ]
+        for network_id in network_id_list:
+            cmds.append( 'no network id %s' % network_id )
+        cmds.append( 'exit' )
+        cmds.append( 'exit' )
+        self._run_openstack_config_cmds(cmds)
 
-    def delete_vm(self, tenant_id, vm_id):
+    def delete_vms(self, tenant_id, vm_id_list):
         """Deletes a VM from EOS for a given tenant
 
         :param tenant_id : globally unique neutron tenant identifier
         :param vm_id : id of a VM that needs to be deleted.
         """
-        cmds = ['tenant %s' % tenant_id,
-                'no vm id %s' % vm_id,
-                'exit',
-                'exit']
-        self._run_openstack_cmds(cmds)
+        cmds = ['tenant %s' % tenant_id]
+        for vm_id in vm_id_list:
+            cmds.append( 'no vm id %s' % vm_id )
+        cmds.append( 'exit' )
+        cmds.append( 'exit' )
+        self._run_openstack_config_cmds(cmds)
+
+    def create_vm_ports(self, tenant_id, vm_port_list, vms):
+       cmds = ['tenant %s' % tenant_id]
+       # Create a reference to function to avoid name lookups in the loop
+       append_cmd = cmds.append
+       for port in vm_port_list:
+          port_name = ''
+          try:
+             port_name = 'name "%s"' % port['name']
+          except KeyError:
+             port_name = ''
+
+          vm = vms[port['device_id']]
+          if port['device_owner'] == n_const.DEVICE_OWNER_DHCP:
+             append_cmd( 'network id %s' % port['network_id'] )
+             append_cmd( 'dhcp id %s hostid %s port-id %s %s' %
+                          (vm['vmId'], vm['host'], port['id'], port_name) )
+          elif port['device_owner'].startswith('compute'):
+             append_cmd('vm id %s hostid %s' % (vm['vmId'], vm['host']) )
+             append_cmd('port id %s %s network-id %s' %
+                         (port['id'], port_name, port['network_id']))
+          else:
+             continue
+       append_cmd('exit')
+       self._run_openstack_config_cmds(cmds)
 
     def delete_tenant(self, tenant_id):
         """Deletes a given tenant and all its networks and VMs from EOS.
 
         :param tenant_id: globally unique neutron tenant identifier
         """
-        cmds = ['no tenant %s' % tenant_id, 'exit']
-        self._run_openstack_cmds(cmds)
+        self.delete_tenants([tenant_id])
 
-    def _register_with_eos(self):
+    def delete_tenants(self, tenant_list):
+        cmds = []
+        for tenant in tenant_list:
+           cmds.append('no tenant %s' % tenant)
+        cmds.append('exit')
+        self._run_openstack_config_cmds(cmds)
+
+    def register_with_eos(self):
         """This is the registration request with EOS.
 
         This the initial handshake between Neutron and EOS.
@@ -263,9 +305,28 @@ class AristaRPCWrapper(object):
                      (self._keystone_url(),
                      self.keystone_conf.admin_user)]
 
-        self._run_openstack_cmds(cmds, commands_to_log=log_cmds)
+        self._run_openstack_config_cmds(cmds, commands_to_log=log_cmds)
 
-    def _run_openstack_cmds(self, commands, commands_to_log=None, deleteRegion=None):
+    def clear_region_updated_time(self):
+       self._region_updated_time = None
+
+    def region_in_sync(self):
+       eos_region_updated_times = self.get_region_updated_time()
+       if self._region_updated_time and \
+             self._region_updated_time[ 'regionTimestamp' ] == \
+                eos_region_updated_times[ 'regionTimestamp' ]:
+          return True
+       return False
+
+    def get_region_updated_time(self):
+       """ This method return the time at which any entities in the region were
+           updated.
+       """
+       cmds = [ 'show openstack timestamp %s' % self.region ]
+       region = self._run_openstack_cmds(commands=cmds, commands_to_log=cmds)[0]
+       return region
+
+    def _run_openstack_cmds(self, commands, commands_to_log=None):
         """Execute/sends a CAPI (Command API) command to EOS.
 
         In this method, list of commands is appended with prefix and
@@ -274,38 +335,50 @@ class AristaRPCWrapper(object):
         :param commands : List of command to be executed on EOS.
         :param commands_to_logs : This should be set to the command that is logged.
                                   If it is None, then the commands param is logged.
-        :param deleteRegion : True/False - to delte entire region from EOS
         """
-        command_start = ['enable', 'configure', 'management openstack']
-        if deleteRegion:
-            command_start.append('no region %s' % self.region)
-        else:
-            command_start.append('region %s' % self.region)
-        command_end = ['exit', 'exit']
-        full_command = command_start + commands + command_end
-        full_log_command = full_command
-        if commands_to_log:
-           full_log_command = command_start + commands_to_log + command_end
-
-        LOG.info(_('Executing command on Arista EOS: %s'), full_log_command)
+        LOG.info(_('Executing command on Arista EOS: %s'), commands_to_log)
+        LOG.info(_('Size of the command: %d'), len(commands))
 
         try:
             # this returns array of return values for every command in
             # full_command list
-            ret = self._server.runCmds(version=1, cmds=full_command)
-
-            # Remove return values for 'configure terminal',
-            # 'management openstack' and 'exit' commands
-            ret = ret[len(command_start):-len(command_end)]
+            startTime = time.time()
+            ret = self._server.runCmds(version=1, cmds=commands)
+            LOG.info(_('Time taken to run the command: %f' % ( time.time() - startTime )))
         except Exception as error:
             host = cfg.CONF.ml2_arista.eapi_host
             msg = (_('Error %(err)s while trying to execute '
                      'commands %(cmd)s on EOS %(host)s') %
-                   {'err': error, 'cmd': full_log_command, 'host': host})
+                   {'err': error, 'cmd': commands_to_log, 'host': host})
             LOG.exception(msg)
             raise arista_exc.AristaRpcError(msg=msg)
 
         return ret
+
+    def _run_openstack_config_cmds(self, commands, commands_to_log=None):
+        """Execute/sends a CAPI (Command API) command to EOS.
+
+        In this method, list of commands is appended with prefix and
+        postfix commands - to make is understandble by EOS.
+
+        :param commands : List of command to be executed on EOS.
+        :param commands_to_logs : This should be set to the command that is logged.
+                                  If it is None, then the commands param is logged.
+        """
+        command_start = ['enable', 'configure', 'management openstack']
+        command_start.append('region %s' % self.region)
+        command_timestamp = ['show openstack timestamp %s' % self.region]
+        command_end = ['exit', 'exit']
+        full_command = command_start + commands + command_timestamp + command_end
+        full_log_command = full_command
+        if commands_to_log:
+           full_log_command = command_start + commands_to_log + command_end
+
+        ret = self._run_openstack_cmds(full_command, full_log_command)
+        # Remove return values for 'configure terminal',
+        # 'management openstack' and 'exit' commands
+        ret = ret[len(command_start):-len(command_end)]
+        self._region_updated_time = ret[ -1 ]
 
     def _eapi_host_url(self):
         self._validate_config()
@@ -345,8 +418,20 @@ class SyncService(object):
 
         LOG.info(_('Syncing Neutron <-> EOS'))
         try:
+            # Get the time at which entities in the region were updated.
+            # If the times match, then ML2 is in sync with EOS. Otherwise
+            # perform a complete sync.
+            if self._rpc.region_in_sync():
+               LOG.info(_('Regions are in sync!'))
+               return
+        except arista_exc.AristaRpcError:
+            msg = _('EOS is not available, will try sync later')
+            LOG.warning(msg)
+            return
+
+        try:
             #Always register with EOS to ensure that it has correct credentials
-            self._rpc._register_with_eos()
+            self._rpc.register_with_eos()
             eos_tenants = self._rpc.get_tenants()
         except arista_exc.AristaRpcError:
             msg = _('EOS is not available, will try sync later')
@@ -355,94 +440,75 @@ class SyncService(object):
 
         db_tenants = db.get_tenants()
 
-        # EOS and Neutron has matching set of tenants. Now check
-        # to ensure that networks and VMs match on both sides for
-        # each tenant.
-        for tenant in eos_tenants.keys():
-            if tenant not in db_tenants:
-                #send delete tenant to EOS
-                try:
-                    self._rpc.delete_tenant(tenant)
-                    del eos_tenants[tenant]
-                except arista_exc.AristaRpcError:
-                    msg = _('EOS is not available, '
-                            'failed to delete tenant %s') % tenant
-                    LOG.warning(msg)
-
+        # Delete tenants that are in EOS, but not in the database
+        tenants_to_delete = \
+            frozenset(eos_tenants.keys()).difference(db_tenants.keys())
+        if len( tenants_to_delete ):
+            self._rpc.delete_tenants(tenants_to_delete)
+        
         for tenant in db_tenants:
             db_nets = db.get_networks(tenant)
             db_vms = db.get_vms(tenant)
             eos_nets = self._get_eos_networks(eos_tenants, tenant)
             eos_vms = self._get_eos_vms(eos_tenants, tenant)
 
-            # Check for the case if everything is already in sync.
-            if eos_nets == db_nets:
-                # Net list is same in both Neutron and EOS.
-                # check the vM list
-                if eos_vms == db_vms:
-                    # Nothing to do. Everything is in sync for this tenant
-                    continue
+            nets_to_delete = frozenset(eos_nets.keys()).difference(db_nets.keys())
+            vms_to_delete = frozenset(eos_vms.keys()).difference(db_vms.keys())
 
-            # Neutron DB and EOS reruires synchronization.
-            # First delete anything which should not be EOS
-            # delete VMs from EOS if it is not present in neutron DB
-            for vm_id in eos_vms:
-                if vm_id not in db_vms:
-                    try:
-                        self._rpc.delete_vm(tenant, vm_id)
-                    except arista_exc.AristaRpcError:
-                        msg = _('EOS is not available,'
-                                'failed to delete vm %s') % vm_id
-                        LOG.warning(msg)
+            nets_to_update = frozenset(db_nets.keys()).difference(eos_nets.keys())
+            vms_to_update = frozenset(db_vms.keys()).difference(eos_vms.keys())
 
-            # delete network from EOS if it is not present in neutron DB
-            for net_id in eos_nets:
-                if net_id not in db_nets:
-                    try:
-                        self._rpc.delete_network(tenant, net_id)
-                    except arista_exc.AristaRpcError:
-                        msg = _('EOS is not available,'
-                                'failed to delete network %s') % net_id
-                        LOG.warning(msg)
+            if len(vms_to_delete):
+                try:
+                    self._rpc.delete_vms(tenant, vms_to_delete)
+                except arista_exc.AristaRpcError:
+                    msg = _('EOS is not available,'
+                            'failed to delete vms') 
+                    LOG.warning(msg)
 
-            # update networks in EOS if it is present in neutron DB
-            for net_id in db_nets:
-                if net_id not in eos_nets:
-                    vlan_id = db_nets[net_id]['segmentationTypeId']
-                    net_name = self._ndb.get_network_name(tenant, net_id)
-                    try:
-                        self._rpc.create_network(tenant, net_id,
-                                                 net_name,
-                                                 vlan_id)
-                    except arista_exc.AristaRpcError:
-                        msg = _('EOS is not available, failed to create'
-                                'network id %s') % net_id
-                        LOG.warning(msg)
+            if len(nets_to_delete):
+                try:
+                   self._rpc.delete_networks(tenant, nets_to_delete)
+                except arista_exc.AristaRpcError:
+                   msg = _('EOS is not available,'
+                           'failed to delete networks') 
+                   LOG.warning(msg)
 
-            # Update VMs in EOS if it is present in neutron DB
-            for vm_id in db_vms:
-                if vm_id not in eos_vms:
-                    vm = db_vms[vm_id]
-                    ports = self._ndb.get_all_ports_for_vm(tenant, vm_id)
-                    for port in ports:
-                        port_id = port['id']
-                        net_id = port['network_id']
-                        port_name = port['name']
-                        device_owner = port['device_owner']
-                        vm_id = vm['vmId']
-                        host_id = vm['host']
-                        try:
-                            self._rpc.plug_port_into_network(vm_id,
-                                                             host_id,
-                                                             port_id,
-                                                             net_id,
-                                                             tenant,
-                                                             port_name,
-                                                             device_owner)
-                        except arista_exc.AristaRpcError:
-                            msg = _('EOS is not available, failed to create '
-                                    'vm id %s') % vm['vmId']
-                            LOG.warning(msg)
+            if len(nets_to_update):
+                try:
+                   neutron_nets = {}
+                   for network in self._ndb.get_all_networks_for_tenant(tenant):
+                      neutron_nets[network['id']] = network
+
+                   networks = []
+                   for net_id in nets_to_update:
+                      vlan_id = db_nets[net_id]['segmentationTypeId']
+                      net_name = ''
+                      if neutron_nets.has_key(net_id):
+                          net_name = neutron_nets[net_id]['name']
+                      network = AristaNetwork(network_id=net_id,
+                                        segmentation_id=vlan_id,
+                                        network_name=net_name)
+                      networks.append( network )
+                   self._rpc.create_networks(tenant, networks)
+                except arista_exc.AristaRpcError:
+                   msg = _('EOS is not available,'
+                           'failed to update networks') 
+                   LOG.warning(msg)
+
+            if len(vms_to_update):
+                try:
+                   all_vm_ports = self._ndb.get_all_ports_for_tenant(tenant)
+                   vm_ports = []
+                   vm_ids = frozenset(vms_to_update)
+                   for port in all_vm_ports:
+                       if port[ 'device_id' ] in vm_ids:
+                           vm_ports.append(port)
+                   self._rpc.create_vm_ports(tenant, vm_ports, db_vms)
+                except arista_exc.AristaRpcError:
+                   msg = _('EOS is not available,'
+                           'failed to update vms') 
+                   LOG.warning(msg)
 
     def _get_eos_networks(self, eos_tenants, tenant):
         networks = {}
@@ -480,8 +546,11 @@ class AristaDriver(driver_api.MechanismDriver):
         self.eos_sync_lock = threading.Lock()
 
     def initialize(self):
-        self.rpc._register_with_eos()
-        self._cleanupDb()
+        self.rpc.register_with_eos()
+        # Registring with EOS updates self.rpc.region_updated_time. Clear it to
+        # force an initial sync
+        self.rpc.clear_region_updated_time()
+        self._cleanup_db()
         self._synchronization_thread()
 
     def create_network_precommit(self, context):
@@ -510,10 +579,10 @@ class AristaDriver(driver_api.MechanismDriver):
         with self.eos_sync_lock:
             if db.is_network_provisioned(tenant_id, network_id):
                 try:
-                    self.rpc.create_network(tenant_id,
-                                            network_id,
-                                            network_name,
-                                            vlan_id)
+                    network = AristaNetwork(network_id=network_id,
+                                      segmentation_id=vlan_id,
+                                      network_name=network_name)
+                    self.rpc.create_networks(tenant_id, [network])
                 except arista_exc.AristaRpcError:
                     LOG.info(EOS_UNREACHABLE_MSG)
                     raise ml2_exc.MechanismDriverError()
@@ -551,10 +620,10 @@ class AristaDriver(driver_api.MechanismDriver):
             with self.eos_sync_lock:
                 if db.is_network_provisioned(tenant_id, network_id):
                     try:
-                        self.rpc.create_network(tenant_id,
-                                                network_id,
-                                                network_name,
-                                                vlan_id)
+                        network = AristaNetwork(network_id=network_id,
+                                          segmentation_id=vlan_id,
+                                          network_name=network_name)
+                        self.rpc.create_network(tenant_id, [network])
                     except arista_exc.AristaRpcError:
                         LOG.info(EOS_UNREACHABLE_MSG)
                         raise ml2_exc.MechanismDriverError()
@@ -585,7 +654,7 @@ class AristaDriver(driver_api.MechanismDriver):
             # EOS state will be updated by sync thread once EOS gets
             # alive.
             try:
-                self.rpc.delete_network(tenant_id, network_id)
+                self.rpc.delete_networks(tenant_id, [network_id])
             except arista_exc.AristaRpcError:
                 LOG.info(EOS_UNREACHABLE_MSG)
                 raise ml2_exc.MechanismDriverError()
@@ -787,7 +856,10 @@ class AristaDriver(driver_api.MechanismDriver):
 
     def _synchronization_thread(self):
         with self.eos_sync_lock:
+            t1 = time.clock()
             self.eos.synchronize()
+            t2 = time.clock()
+            LOG.debug(_("Time taken to synchronize: " + str( t2 - t1 )))
 
         self.timer = threading.Timer(self.sync_timeout,
                                      self._synchronization_thread)
@@ -798,7 +870,7 @@ class AristaDriver(driver_api.MechanismDriver):
             self.timer.cancel()
             self.timer = None
 
-    def _cleanupDb(self):
+    def _cleanup_db(self):
         """Clean up any uncessary entries in our DB."""
         db_tenants = db.get_tenants()
         for tenant in db_tenants:

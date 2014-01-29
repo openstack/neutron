@@ -17,22 +17,36 @@
 import mock
 from oslo.config import cfg
 
+from neutron.api.v2 import attributes
 import neutron.db.api as ndb
+from neutron.context import Context
+from neutron.db import db_base_plugin_v2
 from neutron.plugins.ml2.drivers.mech_arista import db
 from neutron.plugins.ml2.drivers.mech_arista import exceptions as arista_exc
 from neutron.plugins.ml2.drivers.mech_arista import mechanism_arista as arista
 from neutron.tests import base
 
+import time
+import random
 
-def setup_arista_wrapper_config(value=''):
+def setup_arista_wrapper_config(host='',user=''):
     cfg.CONF.keystone_authtoken = fake_keystone_info_class()
-    cfg.CONF.set_override('eapi_host', value, "ml2_arista")
-    cfg.CONF.set_override('eapi_username', value, "ml2_arista")
+    cfg.CONF.set_override('eapi_host', host, "ml2_arista")
+    cfg.CONF.set_override('eapi_username', user, "ml2_arista")
+    cfg.CONF.set_override('sync_interval',1000000, "ml2_arista")
 
 
 def setup_valid_config():
     # Config is not valid if value is not set
-    setup_arista_wrapper_config('value')
+    setup_arista_wrapper_config('host','user')
+
+def gen_mac_address():
+    def get_octect():
+        return random.randint(1,32)
+    mac = ""
+    for i in range(6):
+        mac += "%02x:" % get_octect()
+    return mac[:-1]
 
 
 class AristaProvisionedVlansStorageTestCase(base.BaseTestCase):
@@ -515,6 +529,158 @@ class RealNetStorageAristaDriverTestCase(base.BaseTestCase):
                 }
         return FakePortContext(port, port, network)
 
+#
+# Do not merge this to mainline
+#
+class AristaDriverScaleTestCase(base.BaseTestCase):
+    """Main test cases for Arista Mechanism driver.
+
+    Tests all mechanism driver APIs supported by Arista Driver. It invokes
+    all the APIs as they would be invoked in real world scenarios and
+    verifies the functionality.
+    """
+    def setUp(self):
+        super(AristaDriverScaleTestCase, self).setUp()
+        self.ndb = db_base_plugin_v2.NeutronDbPluginV2()
+        setup_arista_wrapper_config( host='', user='' )
+        self.drv = arista.AristaDriver()
+        # drv_clear is used to clear the regions. If the same driver instance is used then the
+        # timestamps will be overwritten.
+        self.drv_clear = arista.AristaDriver()
+
+    def tearDown(self):
+        super(AristaDriverScaleTestCase, self).tearDown()
+        self.drv.stop_synchronization_thread()
+
+    def test_create_and_delete_multiple_networks(self):
+        tenant_id = 'ten-1'
+        expected_num_nets = 100
+        num_vms = 10
+        num_ports_per_vm = 1
+        segmentation_id = 1
+        nets = ['id%s' % n for n in range(expected_num_nets)]
+        db_context = Context( user_id='user', tenant_id=tenant_id, is_admin=True )
+
+        clear_region = [ 'no region RegionOne' ]
+        self.drv_clear.rpc._run_openstack_config_cmds(clear_region)
+
+        startTime = time.time()
+        arista_nets = []
+        for net_id in nets:
+            network_context = self._get_network_context(tenant_id,
+                                                        net_id,
+                                                        segmentation_id)
+            segmentation_id += 1
+            self.ndb.create_network(db_context, network_context)
+            self.drv.create_network_precommit(network_context)
+            n = arista.AristaNetwork(network_id=net_id,
+                              segmentation_id=segmentation_id,
+                              network_name=network_context['name'])
+            arista_nets.append( n )
+
+        # Bulk create
+        self.drv.rpc.create_networks(tenant_id,arista_nets)
+
+        t1 = time.time()
+        ndb_create_port_time = 0
+        precommit_time = 0
+
+        # Add a bunch of ports to the network
+        vm_ids = []
+        net_count = 0
+        for vm in range( num_vms ):
+           vm_id = '%s-vm-id-%d' % ( tenant_id, vm )
+           vm_ids.append( vm_id )
+           for p in range( num_ports_per_vm ):
+              net_id = nets[ net_count ]
+              network_context = self._get_network_context(tenant_id,
+                                                          net_id,
+                                                          segmentation_id)
+              port_id = '%s-%s-port-%d' % ( tenant_id, vm_id, p )
+              port_context = self._get_port_context(port_id,
+                                                    tenant_id,
+                                                    net_id,
+                                                    vm_id,
+                                                    network_context)
+                                                    
+              t1_ndb = time.time()
+              self.ndb.create_port(db_context, port_context)
+              ndb_create_port_time += time.time() - t1_ndb
+      
+              t1_precommit = time.time()
+              self.drv.create_port_precommit(port_context)
+              precommit_time += time.time() - t1_precommit
+
+              net_count += 1
+              if net_count >= expected_num_nets:
+                  net_count = 0
+
+        print "*********"
+        print "NDB: ", ndb_create_port_time
+        print "Precommit: ", precommit_time
+        print "Time taken create ports: ", time.time() - t1
+        print "*********"
+
+        t1 = time.time()
+        all_vm_ports = db.NeutronNets().get_all_ports_for_tenant(tenant_id)
+        print "*********"
+        print "Time taken to query: ", time.time() - t1
+        print "*********"
+        vm_ports = []
+        vm_ids = frozenset(vm_ids)
+        t1 = time.time()
+        for port in all_vm_ports:
+            if port[ 'device_id' ] in vm_ids:
+                vm_ports.append(port)
+        print "*********"
+        print "Time taken to filter: ", time.time() - t1
+        print "*********"
+        db_vms = db.get_vms(tenant_id)
+        self.drv.rpc.create_vm_ports(tenant_id, vm_ports, db_vms)
+        
+
+        num_nets_provisioned = db.num_nets_provisioned(tenant_id)
+        self.assertEqual(expected_num_nets, num_nets_provisioned,
+                         'There should be %d nets, not %d' %
+                         (expected_num_nets, num_nets_provisioned))
+
+        timeTaken = time.time() - startTime
+        print "*********"
+        print "Time taken to setup: ", timeTaken
+        print "*********"
+
+        self.drv_clear.rpc._run_openstack_config_cmds(clear_region)
+
+        def do_synchronize():
+           startTime = time.time()
+           self.drv.eos.synchronize()
+           timeTaken = time.time() - startTime
+           print "Time taken to synchronize: ", timeTaken
+
+    def _get_network_context(self, tenant_id, net_id, seg_id):
+        network = {'id': net_id,
+                   'tenant_id': tenant_id,
+                   'name': 'network-%s-%s' % (tenant_id, net_id),
+                   'admin_state_up' : 1,
+                   'shared' : False,
+                   'status' : 'Active'  }
+        network_segments = [{'segmentation_id': seg_id}]
+        return FakeNetworkContext(network, network_segments, network)
+
+    def _get_port_context(self, port_id, tenant_id, net_id, vm_id, network):
+        port = {'device_id': vm_id,
+                'device_owner': 'compute',
+                'binding:host_id': 'ubuntu1',
+                'tenant_id': tenant_id,
+                'id': port_id,
+                'network_id': net_id,
+                'mac_address': gen_mac_address(),
+                'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                'name': 'port-%s' % port_id,
+                'admin_state_up' : 1
+                }
+        return FakePortContext(port, port, network)
+
 
 class fake_keystone_info_class(object):
     """To generate fake Keystone Authentification token information
@@ -537,6 +703,10 @@ class FakeNetworkContext(object):
         self._original_network = original_network
         self._segments = segments
 
+    def __getitem__( self, attribute ):
+        if attribute == 'network':
+            return self._network
+
     @property
     def current(self):
         return self._network
@@ -557,6 +727,10 @@ class FakePortContext(object):
         self._port = port
         self._original_port = original_port
         self._network_context = network
+
+    def __getitem__( self, attribute ):
+        if attribute == 'port':
+            return self._port
 
     @property
     def current(self):
