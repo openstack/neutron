@@ -99,7 +99,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
                 auth_url=FakeConf.auth_url,
                 password=FakeConf.admin_password,
                 auth_strategy=FakeConf.auth_strategy,
-                auth_token=None,
+                token=None,
                 endpoint_url=None,
                 endpoint_type=FakeConf.endpoint_type)
         ]
