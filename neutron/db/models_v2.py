@@ -18,6 +18,7 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 
+from neutron.common import constants
 from neutron.db import model_base
 from neutron.openstack.common import uuidutils
 
@@ -183,6 +184,14 @@ class Subnet(model_base.BASEV2, HasId, HasTenant):
                               backref='subnet',
                               cascade='all, delete, delete-orphan')
     shared = sa.Column(sa.Boolean)
+    ipv6_ra_mode = sa.Column(sa.Enum(constants.IPV6_SLAAC,
+                                     constants.DHCPV6_STATEFUL,
+                                     constants.DHCPV6_STATELESS,
+                                     name='ipv6_modes'), nullable=True)
+    ipv6_address_mode = sa.Column(sa.Enum(constants.IPV6_SLAAC,
+                                  constants.DHCPV6_STATEFUL,
+                                  constants.DHCPV6_STATELESS,
+                                  name='ipv6_modes'), nullable=True)
 
 
 class Network(model_base.BASEV2, HasId, HasTenant):
