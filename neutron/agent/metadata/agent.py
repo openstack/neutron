@@ -37,6 +37,7 @@ from neutron.common import utils
 from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
+from neutron.openstack.common import service
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
@@ -192,12 +193,34 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
                                             server)
 
 
+class WorkerService(wsgi.WorkerService):
+    def start(self):
+        self._server = self._service.pool.spawn(self._service._run,
+                                                self._application,
+                                                self._service._socket)
+
+
 class UnixDomainWSGIServer(wsgi.Server):
-    def start(self, application, file_socket, backlog=128):
-        sock = eventlet.listen(file_socket,
-                               family=socket.AF_UNIX,
-                               backlog=backlog)
-        self.pool.spawn_n(self._run, application, sock)
+    def __init__(self, name):
+        self._socket = None
+        self._launcher = None
+        self._server = None
+        super(UnixDomainWSGIServer, self).__init__(name)
+
+    def start(self, application, file_socket, workers, backlog=128):
+        self._socket = eventlet.listen(file_socket,
+                                       family=socket.AF_UNIX,
+                                       backlog=backlog)
+        if workers < 1:
+            # For the case where only one process is required.
+            self._server = self.pool.spawn_n(self._run, application,
+                                             self._socket)
+        else:
+            # Minimize the cost of checking for child exit by extending the
+            # wait interval past the default of 0.01s.
+            self._launcher = service.ProcessLauncher(wait_interval=1.0)
+            self._server = WorkerService(self, application)
+            self._launcher.launch_service(self._server, workers=workers)
 
     def _run(self, application, socket):
         """Start a WSGI service in a new green thread."""
@@ -213,7 +236,11 @@ class UnixDomainMetadataProxy(object):
     OPTS = [
         cfg.StrOpt('metadata_proxy_socket',
                    default='$state_path/metadata_proxy',
-                   help=_('Location for Metadata Proxy UNIX domain socket'))
+                   help=_('Location for Metadata Proxy UNIX domain socket')),
+        cfg.IntOpt('metadata_workers',
+                   default=0,
+                   help=_('Number of separate worker processes for metadata '
+                          'server'))
     ]
 
     def __init__(self, conf):
@@ -271,7 +298,8 @@ class UnixDomainMetadataProxy(object):
     def run(self):
         server = UnixDomainWSGIServer('neutron-metadata-agent')
         server.start(MetadataProxyHandler(self.conf),
-                     self.conf.metadata_proxy_socket)
+                     self.conf.metadata_proxy_socket,
+                     workers=self.conf.metadata_workers)
         server.wait()
 
 
