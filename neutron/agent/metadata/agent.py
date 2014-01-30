@@ -80,7 +80,7 @@ class MetadataProxyHandler(object):
             auth_url=self.conf.auth_url,
             auth_strategy=self.conf.auth_strategy,
             region_name=self.conf.auth_region,
-            auth_token=self.auth_info.get('auth_token'),
+            token=self.auth_info.get('auth_token'),
             endpoint_url=self.auth_info.get('endpoint_url'),
             endpoint_type=self.conf.endpoint_type
         )
