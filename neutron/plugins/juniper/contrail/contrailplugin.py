@@ -15,6 +15,7 @@ from neutron.manager import NeutronManager
 from neutron.common import exceptions as exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_base
+from neutron.db import l3_db
 from neutron.extensions import l3, securitygroup, vpcroutetable
 from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
@@ -62,10 +63,11 @@ def _read_cfg_boolean(cfg_parser, section, option, default):
 
 #TODO define ABC PluginBase for ipam and policy and derive mixin from them
 class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                     l3.RouterPluginBase,
+                     #l3.RouterPluginBase,
                      securitygroup.SecurityGroupPluginBase,
                      # vpcroutetable.RouteTablePluginBase,
-                     portbindings_base.PortBindingBaseMixin):
+                     portbindings_base.PortBindingBaseMixin,
+                     l3_db.L3_NAT_db_mixin):
     """
     .. attention::  TODO remove db. ref and replace ctdb. with db.
     """
@@ -642,6 +644,116 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             cgitb.Hook(format="text").handle(sys.exc_info())
             raise e
     #end get_policy_count
+
+    # Router API handlers
+    def create_router(self, context, router):
+        """
+        Creates a new Logical Router, and assigns it
+        a symbolic name.
+        """
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            router_info = cfgdb.router_create(router['router'])
+
+            # verify transformation is conforming to api
+            router_dict = self._make_router_dict(router_info['q_api_data'])
+
+            router_dict.update(router_info['q_extra_data'])
+
+            LOG.debug("create_router(): " + pformat(router_dict) + "\n")
+            return router_dict
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    #end create_router
+
+    def get_router(self, context, id, fields=None):
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            router_info = cfgdb.router_read(id, fields)
+
+            # verify transformation is conforming to api
+            if not fields:
+                # should return all fields
+                router_dict = self._make_router_dict(router_info['q_api_data'],
+                                                     fields)
+                router_dict.update(router_info['q_extra_data'])
+            else:
+                router_dict = net_info['q_api_data']
+
+            LOG.debug("get_router(): " + pformat(router_dict))
+            return self._fields(router_dict, fields)
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    #end get_router
+
+    def update_router(self, context, rtr_id, router):
+        """
+        Updates the attributes of a particular Logical Router.
+        """
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            router_info = cfgdb.router_update(rtr_id, router['router'])
+
+            # verify transformation is conforming to api
+            router_dict = self._make_router_dict(router_info['q_api_data'])
+
+            router_dict.update(router_info['q_extra_data'])
+
+            LOG.debug("update_router(): " + pformat(router_dict))
+            return router_dict
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    #end update_network
+
+    def delete_router(self, context, rtr_id):
+        """
+        Deletes the network with the specified router identifier
+        belonging to the specified tenant.
+        """
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            cfgdb.router_delete(rtr_id)
+            LOG.debug("delete_router(): " + pformat(rtr_id))
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    #end delete_network
+
+    def get_routers(self, context, filters=None, fields=None):
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            rtrs_info = cfgdb.router_list(filters)
+
+            rtrs_dicts = []
+            for r_info in rtrs_info:
+                # verify transformation is conforming to api
+                r_dict = self._make_router_dict(r_info['q_api_data'], fields)
+
+                r_dict.update(r_info['q_extra_data'])
+                rtrs_dicts.append(r_dict)
+
+            LOG.debug(
+                "get_routers(): filters: " + pformat(filters) + " data: "
+                + pformat(rtrs_dicts))
+            return rtrs_dicts
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    #end get_networks
+
+    def get_routers_count(self, context, filters=None):
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            rtrs_count = cfgdb.router_count(filters)
+            LOG.debug("get_routers_count(): " + str(rtrs_count))
+            return rtrs_count
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    #end get_networks_count
 
     # Floating IP API handlers
     def _make_floatingip_dict(self, floatingip, fields=None):

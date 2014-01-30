@@ -50,6 +50,7 @@ class DBInterface(object):
         self._db_cache['q_subnet_maps'] = {}
         self._db_cache['q_policies'] = {}
         self._db_cache['q_ipams'] = {}
+        self._db_cache['q_routers'] = {}
         self._db_cache['q_floatingips'] = {}
         self._db_cache['q_ports'] = {}
         self._db_cache['q_fixed_ip_to_subnet'] = {}
@@ -62,6 +63,7 @@ class DBInterface(object):
         self._db_cache['vnc_ports'] = {}
         self._db_cache['vnc_projects'] = {}
         self._db_cache['vnc_instance_ips'] = {}
+        self._db_cache['vnc_routers'] = {}
 
         # Retry till a api-server is up
         connected = False
@@ -555,6 +557,18 @@ class DBInterface(object):
         return resp_dict['virtual-networks']
     #end _network_list_project
 
+    # find router ids on a given project
+    def _router_list_project(self, project_id):
+        try:
+            project_uuid = str(uuid.UUID(project_id))
+        except Exception:
+            print "Error in converting uuid %s" % (project_id)
+
+        resp_dict = self._vnc_lib.logical_routers_list(parent_id=project_uuid)
+
+        return resp_dict['logical-routers']
+    #end _router_list_project
+
     def _ipam_list_project(self, project_id):
         try:
             project_uuid = str(uuid.UUID(project_id))
@@ -620,6 +634,63 @@ class DBInterface(object):
 
         return resp_dict['network-policys']
     #end _policy_list_project
+
+    def _logical_router_create(self, rtr_obj):
+        rtr_uuid = self._vnc_lib.logical_router_create(rtr_obj)
+
+        return rtr_uuid
+    #end _logical_router_create
+
+    def _logical_router_read(self, rtr_id=None, fq_name=None):
+        if rtr_id:
+            try:
+                # return self._db_cache['vnc_routers'][rtr_id]
+                raise KeyError
+            except KeyError:
+                rtr_obj = self._vnc_lib.logical_router_read(id=rtr_id)
+                fq_name_str = json.dumps(rtr_obj.get_fq_name())
+                self._db_cache['vnc_routers'][rtr_id] = rtr_obj
+                self._db_cache['vnc_routers'][fq_name_str] = rtr_obj
+                return rtr_obj
+
+        if fq_name:
+            fq_name_str = json.dumps(fq_name)
+            try:
+                # return self._db_cache['vnc_routers'][fq_name_str]
+                raise KeyError
+            except KeyError:
+                rtr_obj = self._vnc_lib.logical_router_read(fq_name=fq_name)
+                self._db_cache['vnc_routers'][fq_name_str] = rtr_obj
+                self._db_cache['vnc_routers'][rtr_obj.uuid] = rtr_obj
+                return rtr_obj
+
+    #end _logical_router_read
+
+    def _logical_router_update(self, rtr_obj):
+        self._vnc_lib.logical_router_update(rtr_obj)
+        fq_name_str = json.dumps(net_obj.get_fq_name())
+
+        self._db_cache['vnc_routers'][net_obj.uuid] = rtr_obj
+        self._db_cache['vnc_routers'][fq_name_str] = rtr_obj
+    #end _logical_router_update
+
+    def _logical_router_delete(self, rtr_id):
+        fq_name_str = None
+        try:
+            rtr_obj = self._db_cache['vnc_routers'][rtr_id]
+            fq_name_str = json.dumps(rtr_obj.get_fq_name())
+        except KeyError:
+            pass
+
+        self._vnc_lib.logical_router_delete(id=rtr_id)
+
+        try:
+            del self._db_cache['vnc_routers'][rtr_id]
+            if fq_name_str:
+                del self._db_cache['vnc_routers'][fq_name_str]
+        except KeyError:
+            pass
+    #end _logical_router_delete
 
     # find floating ip pools a project has access to
     def _fip_pool_refs_project(self, project_id):
@@ -1294,6 +1365,40 @@ class DBInterface(object):
                 'q_extra_data': {}}
     #end _policy_vnc_to_neutron
 
+    def _router_neutron_to_vnc(self, router_q, oper):
+        rtr_name = router_q.get('name', None)
+        if oper == CREATE:
+            project_id = str(uuid.UUID(router_q['tenant_id']))
+            project_obj = self._project_read(proj_id=project_id)
+            id_perms = IdPermsType(enable=True)
+            rtr_obj = LogicalRouter(rtr_name, project_obj, id_perms=id_perms)
+        else:  # READ/UPDATE/DELETE
+            rtr_obj = self._logical_router_read(rtr_id=router_q['id'])
+
+        id_perms = rtr_obj.get_id_perms()
+        if 'admin_state_up' in router_q:
+            id_perms.enable = router_q['admin_state_up']
+            rtr_obj.set_id_perms(id_perms)
+
+        return rtr_obj
+    #end _router_neutron_to_vnc
+
+    def _router_vnc_to_neutron(self, rtr_obj, rtr_repr='SHOW'):
+        rtr_q_dict = {}
+        extra_dict = {}
+
+        rtr_q_dict['id'] = rtr_obj.uuid
+        rtr_q_dict['name'] = rtr_obj.name
+        extra_dict['contrail:fq_name'] = rtr_obj.get_fq_name()
+        rtr_q_dict['tenant_id'] = rtr_obj.parent_uuid.replace('-', '')
+        rtr_q_dict['admin_state_up'] = rtr_obj.get_id_perms().enable
+        rtr_q_dict['shared'] = False
+        rtr_q_dict['status'] = constants.NET_STATUS_ACTIVE
+        rtr_q_dict['gw_port_id'] = None
+        return {'q_api_data': rtr_q_dict,
+                'q_extra_data': extra_dict}
+    #end _router_vnc_to_neutron
+
     def _floatingip_neutron_to_vnc(self, fip_q, oper):
         if oper == CREATE:
             # TODO for now create from default pool, later
@@ -1886,6 +1991,136 @@ class DBInterface(object):
         policy_info = self.policy_list(filters)
         return len(policy_info)
     #end policy_count
+
+    # router api handlers
+    def router_create(self, router_q):
+        #self._ensure_project_exists(router_q['tenant_id'])
+
+        rtr_obj = self._router_neutron_to_vnc(router_q, CREATE)
+        rtr_uuid = self._logical_router_create(rtr_obj)
+
+        ret_router_q = self._router_vnc_to_neutron(rtr_obj, rtr_repr='SHOW')
+        self._db_cache['q_routers'][rtr_uuid] = ret_router_q
+
+        return ret_router_q
+    #end router_create
+
+    def router_read(self, rtr_uuid, fields=None):
+        # see if we can return fast...
+        if fields and (len(fields) == 1) and fields[0] == 'tenant_id':
+            tenant_id = self._get_obj_tenant_id('router', rtr_uuid)
+            return {'q_api_data': {'id': rtr_uuid, 'tenant_id': tenant_id}}
+
+        try:
+            # return self._db_cache['q_routers']['rtr_uuid']
+            raise KeyError
+        except KeyError:
+            pass
+
+        try:
+            rtr_obj = self._logical_router_read(rtr_uuid)
+        except NoIdError:
+            raise exceptions.RouterNotFound(rtr_id=rtr_uuid)
+
+        return self._router_vnc_to_neutron(rtr_obj, rtr_repr='SHOW')
+    #end router_read
+
+    def router_update(self, rtr_id, router_q):
+        router_q['id'] = rtr_id
+        rtr_obj = self._router_neutron_to_vnc(router_q, UPDATE)
+        self._virtual_router_update(rtr_obj)
+
+        ret_router_q = self._router_vnc_to_neutron(rtr_obj, rtr_repr='SHOW')
+        self._db_cache['q_routers'][rtr_id] = ret_router_q
+
+        return ret_router_q
+    #end router_update
+
+    def router_delete(self, rtr_id):
+        self._logical_router_delete(rtr_id=rtr_id)
+        try:
+            del self._db_cache['q_routers'][rtr_id]
+        except KeyError:
+            pass
+    #end router_delete
+
+    # TODO request based on filter contents
+    def router_list(self, filters=None):
+        ret_list = []
+
+        if filters and 'shared' in filters:
+            if filters['shared'][0] == True:
+                # no support for shared routers
+                return ret_list
+
+        # collect phase
+        all_rtrs = []  # all n/ws in all projects
+        if filters and 'tenant_id' in filters:
+            # project-id is present
+            if 'id' in filters:
+                # required routers are also specified,
+                # just read and populate ret_list
+                # prune is skipped because all_rtrs is empty
+                for rtr_id in filters['id']:
+                    rtr_obj = self._logical_router_read(rtr_id)
+                    rtr_info = self._router_vnc_to_neutron(rtr_obj,
+                                                            rtr_repr='LIST')
+                    ret_list.append(rtr_info)
+            else:
+                # read all routers in project, and prune below
+                project_ids = filters['tenant_id']
+                for p_id in project_ids:
+                    if 'router:external' in filters:
+                        all_rtrs.append(self._fip_pool_ref_routers(p_id))
+                    else:
+                        project_rtrs = self._router_list_project(p_id)
+                        all_rtrs.append(project_rtrs)
+        elif filters and 'id' in filters:
+            # required routers are specified, just read and populate ret_list
+            # prune is skipped because all_rtrs is empty
+            for rtr_id in filters['id']:
+                rtr_obj = self._logical_router_read(rtr_id)
+                rtr_info = self._router_vnc_to_neutron(rtr_obj,
+                                                        rtr_repr='LIST')
+                ret_list.append(rtr_info)
+        else:
+            # read all routers in all projects
+            dom_projects = self._project_list_domain(None)
+            for project in dom_projects:
+                proj_id = project['uuid']
+                if filters and 'router:external' in filters:
+                    all_rtrs.append(self._fip_pool_ref_routers(proj_id))
+                else:
+                    project_rtrs = self._router_list_project(proj_id)
+                    all_rtrs.append(project_rtrs)
+
+        # prune phase
+        for project_rtrs in all_rtrs:
+            for proj_rtr in project_rtrs:
+                proj_rtr_id = proj_rtr['uuid']
+                if not self._filters_is_present(filters, 'id', proj_rtr_id):
+                    continue
+
+                proj_rtr_fq_name = unicode(proj_rtr['fq_name'])
+                if not self._filters_is_present(filters, 'contrail:fq_name',
+                                                proj_rtr_fq_name):
+                    continue
+
+                try:
+                    rtr_obj = self._logical_router_read(proj_rtr['uuid'])
+                    rtr_info = self._router_vnc_to_neutron(rtr_obj,
+                                                           rtr_repr='LIST')
+                except NoIdError:
+                    continue
+                ret_list.append(rtr_info)
+
+        return ret_list
+    #end router_list
+
+    def router_count(self, filters=None):
+        rtrs_info = self.router_list(filters)
+        return len(rtrs_info)
+    #end router_count
 
     # floatingip api handlers
     def floatingip_create(self, fip_q):
