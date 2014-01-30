@@ -1403,7 +1403,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             self._delete_port(context, id)
 
     def _delete_port(self, context, id):
-        port = self._get_port(context, id)
+        query = (context.session.query(models_v2.Port).
+                 enable_eagerloads(False).filter_by(id=id))
+        if not context.is_admin:
+            query = query.filter_by(tenant_id=context.tenant_id)
+        port = query.with_lockmode('update').one()
 
         allocated_qry = context.session.query(
             models_v2.IPAllocation).with_lockmode('update')

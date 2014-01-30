@@ -222,7 +222,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                return_value=details):
             with mock.patch.object(self.agent, 'port_unbound') as port_unbound:
                 self.assertFalse(self.agent.treat_devices_removed([{}]))
-        self.assertEqual(port_unbound.called, not port_exists)
+        self.assertTrue(port_unbound.called)
 
     def test_treat_devices_removed_unbinds_port(self):
         self._mock_treat_devices_removed(True)

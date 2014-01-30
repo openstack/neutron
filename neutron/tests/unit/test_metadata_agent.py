@@ -55,8 +55,9 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
     def test_call(self):
         req = mock.Mock()
-        with mock.patch.object(self.handler, '_get_instance_id') as get_id:
-            get_id.return_value = 'id'
+        with mock.patch.object(self.handler,
+                               '_get_instance_and_tenant_id') as get_ids:
+            get_ids.return_value = ('instance_id', 'tenant_id')
             with mock.patch.object(self.handler, '_proxy_request') as proxy:
                 proxy.return_value = 'value'
 
@@ -65,21 +66,23 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
     def test_call_no_instance_match(self):
         req = mock.Mock()
-        with mock.patch.object(self.handler, '_get_instance_id') as get_id:
-            get_id.return_value = None
+        with mock.patch.object(self.handler,
+                               '_get_instance_and_tenant_id') as get_ids:
+            get_ids.return_value = None, None
             retval = self.handler(req)
             self.assertIsInstance(retval, webob.exc.HTTPNotFound)
 
     def test_call_internal_server_error(self):
         req = mock.Mock()
-        with mock.patch.object(self.handler, '_get_instance_id') as get_id:
-            get_id.side_effect = Exception
+        with mock.patch.object(self.handler,
+                               '_get_instance_and_tenant_id') as get_ids:
+            get_ids.side_effect = Exception
             retval = self.handler(req)
             self.assertIsInstance(retval, webob.exc.HTTPInternalServerError)
             self.assertEqual(len(self.log.mock_calls), 2)
 
-    def _get_instance_id_helper(self, headers, list_ports_retval,
-                                networks=None, router_id=None):
+    def _get_instance_and_tenant_id_helper(self, headers, list_ports_retval,
+                                           networks=None, router_id=None):
         headers['X-Forwarded-For'] = '192.168.1.1'
         req = mock.Mock(headers=headers)
 
@@ -87,8 +90,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             return {'ports': list_ports_retval.pop(0)}
 
         self.qclient.return_value.list_ports.side_effect = mock_list_ports
-        retval = self.handler._get_instance_id(req)
-
+        instance_id, tenant_id = self.handler._get_instance_and_tenant_id(req)
         expected = [
             mock.call(
                 username=FakeConf.admin_user,
@@ -118,7 +120,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
         self.qclient.assert_has_calls(expected)
 
-        return retval
+        return (instance_id, tenant_id)
 
     def test_get_instance_id_router_id(self):
         router_id = 'the_id'
@@ -129,13 +131,14 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         networks = ['net1', 'net2']
         ports = [
             [{'network_id': 'net1'}, {'network_id': 'net2'}],
-            [{'device_id': 'device_id'}]
+            [{'device_id': 'device_id', 'tenant_id': 'tenant_id'}]
         ]
 
         self.assertEqual(
-            self._get_instance_id_helper(headers, ports, networks=networks,
-                                         router_id=router_id),
-            'device_id'
+            self._get_instance_and_tenant_id_helper(headers, ports,
+                                                    networks=networks,
+                                                    router_id=router_id),
+            ('device_id', 'tenant_id')
         )
 
     def test_get_instance_id_router_id_no_match(self):
@@ -149,10 +152,11 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             [{'network_id': 'net1'}, {'network_id': 'net2'}],
             []
         ]
-
-        self.assertIsNone(
-            self._get_instance_id_helper(headers, ports, networks=networks,
-                                         router_id=router_id),
+        self.assertEqual(
+            self._get_instance_and_tenant_id_helper(headers, ports,
+                                                    networks=networks,
+                                                    router_id=router_id),
+            (None, None)
         )
 
     def test_get_instance_id_network_id(self):
@@ -162,12 +166,14 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         }
 
         ports = [
-            [{'device_id': 'device_id'}]
+            [{'device_id': 'device_id',
+              'tenant_id': 'tenant_id'}]
         ]
 
         self.assertEqual(
-            self._get_instance_id_helper(headers, ports, networks=['the_id']),
-            'device_id'
+            self._get_instance_and_tenant_id_helper(headers, ports,
+                                                    networks=['the_id']),
+            ('device_id', 'tenant_id')
         )
 
     def test_get_instance_id_network_id_no_match(self):
@@ -178,8 +184,10 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
         ports = [[]]
 
-        self.assertIsNone(
-            self._get_instance_id_helper(headers, ports, networks=['the_id'])
+        self.assertEqual(
+            self._get_instance_and_tenant_id_helper(headers, ports,
+                                                    networks=['the_id']),
+            (None, None)
         )
 
     def _proxy_request_test_helper(self, response_code=200, method='GET'):
@@ -194,7 +202,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             with mock.patch('httplib2.Http') as mock_http:
                 mock_http.return_value.request.return_value = (resp, 'content')
 
-                retval = self.handler._proxy_request('the_id', req)
+                retval = self.handler._proxy_request('the_id', 'tenant_id',
+                                                     req)
                 mock_http.assert_has_calls([
                     mock.call().request(
                         'http://9.9.9.9:8775/the_path',
@@ -202,7 +211,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
                         headers={
                             'X-Forwarded-For': '8.8.8.8',
                             'X-Instance-ID-Signature': 'signed',
-                            'X-Instance-ID': 'the_id'
+                            'X-Instance-ID': 'the_id',
+                            'X-Tenant-ID': 'tenant_id'
                         },
                         body=body
                     )]

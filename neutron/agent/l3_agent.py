@@ -50,6 +50,7 @@ NS_PREFIX = 'qrouter-'
 INTERNAL_DEV_PREFIX = 'qr-'
 EXTERNAL_DEV_PREFIX = 'qg-'
 RPC_LOOP_INTERVAL = 1
+FLOATING_IP_CIDR_SUFFIX = '/32'
 
 
 class L3PluginApi(proxy.RpcProxy):
@@ -95,7 +96,6 @@ class RouterInfo(object):
         self._snat_enabled = None
         self._snat_action = None
         self.internal_ports = []
-        self.floating_ips = []
         self.root_helper = root_helper
         self.use_namespaces = use_namespaces
         # Invoke the setter for establishing initial SNAT action
@@ -409,7 +409,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                                internal_cidrs, interface_name)
 
         # Process DNAT rules for floating IPs
-        if ex_gw_port or ri.ex_gw_port:
+        if ex_gw_port:
             self.process_router_floating_ips(ri, ex_gw_port)
 
         ri.ex_gw_port = ex_gw_port
@@ -440,45 +440,46 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         ri.iptables_manager.apply()
 
     def process_router_floating_ips(self, ri, ex_gw_port):
-        floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
-        existing_floating_ip_ids = set([fip['id'] for fip in ri.floating_ips])
-        cur_floating_ip_ids = set([fip['id'] for fip in floating_ips])
+        """Configure the router's floating IPs
+        Configures floating ips in iptables and on the router's gateway device.
 
-        id_to_fip_map = {}
+        Cleans up floating ips that should not longer be configured.
+        """
+        interface_name = self.get_external_device_name(ex_gw_port['id'])
+        device = ip_lib.IPDevice(interface_name, self.root_helper,
+                                 namespace=ri.ns_name())
 
-        for fip in floating_ips:
-            if fip['port_id']:
-                if fip['id'] not in existing_floating_ip_ids:
-                    ri.floating_ips.append(fip)
-                    self.floating_ip_added(ri, ex_gw_port,
-                                           fip['floating_ip_address'],
-                                           fip['fixed_ip_address'])
+        # Clear out all iptables rules for floating ips
+        ri.iptables_manager.ipv4['nat'].clear_rules_by_tag('floating_ip')
 
-                # store to see if floatingip was remapped
-                id_to_fip_map[fip['id']] = fip
+        existing_cidrs = set([addr['cidr'] for addr in device.addr.list()])
+        new_cidrs = set()
 
-        floating_ip_ids_to_remove = (existing_floating_ip_ids -
-                                     cur_floating_ip_ids)
-        for fip in ri.floating_ips:
-            if fip['id'] in floating_ip_ids_to_remove:
-                ri.floating_ips.remove(fip)
-                self.floating_ip_removed(ri, ri.ex_gw_port,
-                                         fip['floating_ip_address'],
-                                         fip['fixed_ip_address'])
-            else:
-                # handle remapping of a floating IP
-                new_fip = id_to_fip_map[fip['id']]
-                new_fixed_ip = new_fip['fixed_ip_address']
-                existing_fixed_ip = fip['fixed_ip_address']
-                if (new_fixed_ip and existing_fixed_ip and
-                        new_fixed_ip != existing_fixed_ip):
-                    floating_ip = fip['floating_ip_address']
-                    self.floating_ip_removed(ri, ri.ex_gw_port,
-                                             floating_ip, existing_fixed_ip)
-                    self.floating_ip_added(ri, ri.ex_gw_port,
-                                           floating_ip, new_fixed_ip)
-                    ri.floating_ips.remove(fip)
-                    ri.floating_ips.append(new_fip)
+        # Loop once to ensure that floating ips are configured.
+        for fip in ri.router.get(l3_constants.FLOATINGIP_KEY, []):
+            fip_ip = fip['floating_ip_address']
+            ip_cidr = str(fip_ip) + FLOATING_IP_CIDR_SUFFIX
+
+            new_cidrs.add(ip_cidr)
+
+            if ip_cidr not in existing_cidrs:
+                net = netaddr.IPNetwork(ip_cidr)
+                device.addr.add(net.version, ip_cidr, str(net.broadcast))
+                self._send_gratuitous_arp_packet(ri, interface_name, fip_ip)
+
+            # Rebuild iptables rules for the floating ip.
+            fixed = fip['fixed_ip_address']
+            for chain, rule in self.floating_forward_rules(fip_ip, fixed):
+                ri.iptables_manager.ipv4['nat'].add_rule(chain, rule,
+                                                         tag='floating_ip')
+
+        ri.iptables_manager.apply()
+
+        # Clean up addresses that no longer belong on the gateway interface.
+        for ip_cidr in existing_cidrs - new_cidrs:
+            if ip_cidr.endswith(FLOATING_IP_CIDR_SUFFIX):
+                net = netaddr.IPNetwork(ip_cidr)
+                device.addr.delete(net.version, ip_cidr)
 
     def _get_ex_gw_port(self, ri):
         return ri.router.get('gw_port')
@@ -598,34 +599,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         rules = [('snat', '-s %s -j SNAT --to-source %s' %
                  (internal_cidr, ex_gw_ip))]
         return rules
-
-    def floating_ip_added(self, ri, ex_gw_port, floating_ip, fixed_ip):
-        ip_cidr = str(floating_ip) + '/32'
-        interface_name = self.get_external_device_name(ex_gw_port['id'])
-        device = ip_lib.IPDevice(interface_name, self.root_helper,
-                                 namespace=ri.ns_name())
-
-        if ip_cidr not in [addr['cidr'] for addr in device.addr.list()]:
-            net = netaddr.IPNetwork(ip_cidr)
-            device.addr.add(net.version, ip_cidr, str(net.broadcast))
-            self._send_gratuitous_arp_packet(ri, interface_name, floating_ip)
-
-        for chain, rule in self.floating_forward_rules(floating_ip, fixed_ip):
-            ri.iptables_manager.ipv4['nat'].add_rule(chain, rule)
-        ri.iptables_manager.apply()
-
-    def floating_ip_removed(self, ri, ex_gw_port, floating_ip, fixed_ip):
-        ip_cidr = str(floating_ip) + '/32'
-        net = netaddr.IPNetwork(ip_cidr)
-        interface_name = self.get_external_device_name(ex_gw_port['id'])
-
-        device = ip_lib.IPDevice(interface_name, self.root_helper,
-                                 namespace=ri.ns_name())
-        device.addr.delete(net.version, ip_cidr)
-
-        for chain, rule in self.floating_forward_rules(floating_ip, fixed_ip):
-            ri.iptables_manager.ipv4['nat'].remove_rule(chain, rule)
-        ri.iptables_manager.apply()
 
     def floating_forward_rules(self, floating_ip, fixed_ip):
         return [('PREROUTING', '-d %s -j DNAT --to %s' %

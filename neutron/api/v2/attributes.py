@@ -267,11 +267,10 @@ def _validate_subnet(data, valid_values=None):
     msg = None
     try:
         net = netaddr.IPNetwork(_validate_no_whitespace(data))
-        cidr = str(net.cidr)
-        if (cidr != data):
+        if ('/' not in data or net.network != net.ip):
             msg = _("'%(data)s' isn't a recognized IP subnet cidr,"
                     " '%(cidr)s' is recommended") % {"data": data,
-                                                     "cidr": cidr}
+                                                     "cidr": net.cidr}
         else:
             return
     except Exception:

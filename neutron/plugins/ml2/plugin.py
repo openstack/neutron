@@ -14,7 +14,7 @@
 #    under the License.
 
 from oslo.config import cfg
-from sqlalchemy import orm
+from sqlalchemy import exc as sql_exc
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -36,6 +36,7 @@ from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
+from neutron.openstack.common import db as os_db
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log
@@ -378,52 +379,60 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         LOG.debug(_("Deleting network %s"), id)
         session = context.session
-        filter = {'network_id': [id]}
         while True:
-            with session.begin(subtransactions=True):
-                # Get ports to auto-delete.
-                ports = (self._get_ports_query(context, filters=filter).
-                         all())
-                LOG.debug(_("Ports to auto-delete: %s"), ports)
-                only_auto_del = all(p.device_owner
-                                    in db_base_plugin_v2.
-                                    AUTO_DELETE_PORT_OWNERS
-                                    for p in ports)
-                if not only_auto_del:
-                    LOG.debug(_("Tenant-owned ports exist"))
-                    raise exc.NetworkInUse(net_id=id)
+            try:
+                with session.begin(subtransactions=True):
+                    # Get ports to auto-delete.
+                    ports = (session.query(models_v2.Port).
+                             enable_eagerloads(False).
+                             filter_by(network_id=id).
+                             with_lockmode('update').all())
+                    LOG.debug(_("Ports to auto-delete: %s"), ports)
+                    only_auto_del = all(p.device_owner
+                                        in db_base_plugin_v2.
+                                        AUTO_DELETE_PORT_OWNERS
+                                        for p in ports)
+                    if not only_auto_del:
+                        LOG.debug(_("Tenant-owned ports exist"))
+                        raise exc.NetworkInUse(net_id=id)
 
-                # Get subnets to auto-delete.
-                subnets = (session.query(models_v2.Subnet).
-                           filter_by(network_id=id).
-                           all())
-                LOG.debug(_("Subnets to auto-delete: %s"), subnets)
+                    # Get subnets to auto-delete.
+                    subnets = (session.query(models_v2.Subnet).
+                               enable_eagerloads(False).
+                               filter_by(network_id=id).
+                               with_lockmode('update').all())
+                    LOG.debug(_("Subnets to auto-delete: %s"), subnets)
 
-                if not (ports or subnets):
-                    network = self.get_network(context, id)
-                    mech_context = driver_context.NetworkContext(self,
-                                                                 context,
-                                                                 network)
-                    self.mechanism_manager.delete_network_precommit(
-                        mech_context)
+                    if not (ports or subnets):
+                        network = self.get_network(context, id)
+                        mech_context = driver_context.NetworkContext(self,
+                                                                     context,
+                                                                     network)
+                        self.mechanism_manager.delete_network_precommit(
+                            mech_context)
 
-                    LOG.debug(_("Deleting network record"))
-                    record = self._get_network(context, id)
-                    session.delete(record)
+                        record = self._get_network(context, id)
+                        LOG.debug(_("Deleting network record %s"), record)
+                        session.delete(record)
 
-                    for segment in mech_context.network_segments:
-                        self.type_manager.release_segment(session, segment)
+                        for segment in mech_context.network_segments:
+                            self.type_manager.release_segment(session, segment)
 
-                    # The segment records are deleted via cascade from the
-                    # network record, so explicit removal is not necessary.
-                    LOG.debug(_("Committing transaction"))
-                    break
+                        # The segment records are deleted via cascade from the
+                        # network record, so explicit removal is not necessary.
+                        LOG.debug(_("Committing transaction"))
+                        break
+            except os_db.exception.DBError as e:
+                if isinstance(e.inner_exception, sql_exc.IntegrityError):
+                    msg = _("A concurrent port creation has occurred")
+                    LOG.warning(msg)
+                    continue
+                else:
+                    raise
 
             for port in ports:
                 try:
                     self.delete_port(context, port.id)
-                except exc.PortNotFound:
-                    LOG.debug(_("Port %s concurrently deleted"), port.id)
                 except Exception:
                     LOG.exception(_("Exception auto-deleting port %s"),
                                   port.id)
@@ -432,8 +441,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             for subnet in subnets:
                 try:
                     self.delete_subnet(context, subnet.id)
-                except exc.SubnetNotFound:
-                    LOG.debug(_("Subnet %s concurrently deleted"), subnet.id)
                 except Exception:
                     LOG.exception(_("Exception auto-deleting subnet %s"),
                                   subnet.id)
@@ -493,11 +500,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         while True:
             with session.begin(subtransactions=True):
+                subnet = self.get_subnet(context, id)
                 # Get ports to auto-delete.
                 allocated = (session.query(models_v2.IPAllocation).
-                             options(orm.joinedload('ports')).
                              filter_by(subnet_id=id).
-                             all())
+                             join(models_v2.Port).
+                             filter_by(network_id=subnet['network_id']).
+                             with_lockmode('update').all())
                 LOG.debug(_("Ports to auto-delete: %s"), allocated)
                 only_auto_del = all(not a.port_id or
                                     a.ports.device_owner in db_base_plugin_v2.
@@ -508,7 +517,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     raise exc.SubnetInUse(subnet_id=id)
 
                 if not allocated:
-                    subnet = self.get_subnet(context, id)
                     mech_context = driver_context.SubnetContext(self, context,
                                                                 subnet)
                     self.mechanism_manager.delete_subnet_precommit(
@@ -524,8 +532,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             for a in allocated:
                 try:
                     self.delete_port(context, a.port_id)
-                except exc.PortNotFound:
-                    LOG.debug(_("Port %s concurrently deleted"), a.port_id)
                 except Exception:
                     LOG.exception(_("Exception auto-deleting port %s"),
                                   a.port_id)

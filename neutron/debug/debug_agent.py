@@ -65,7 +65,6 @@ class NeutronDebugAgent():
             bridge = self.conf.external_network_bridge
 
         port = self._create_port(network, device_owner)
-        port.network = network
         interface_name = self.driver.get_device_name(port)
         namespace = None
         if self.conf.use_namespaces:
@@ -186,13 +185,15 @@ class NeutronDebugAgent():
         return result
 
     def _create_port(self, network, device_owner):
-        body = dict(port=dict(
-            admin_state_up=True,
-            network_id=network.id,
-            device_id='%s' % socket.gethostname(),
-            device_owner='%s:probe' % device_owner,
-            tenant_id=network.tenant_id,
-            fixed_ips=[dict(subnet_id=s.id) for s in network.subnets]))
+        host = self.conf.host
+        body = {'port': {'admin_state_up': True,
+                         'network_id': network.id,
+                         'device_id': '%s' % socket.gethostname(),
+                         'device_owner': '%s:probe' % device_owner,
+                         'tenant_id': network.tenant_id,
+                         'binding:host_id': host,
+                         'fixed_ips': [dict(subnet_id=s.id)
+                                       for s in network.subnets]}}
         port_dict = self.client.create_port(body)['port']
         port = DictModel(port_dict)
         port.network = network
