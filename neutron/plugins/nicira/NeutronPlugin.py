@@ -103,7 +103,11 @@ def create_nvp_cluster(cluster_opts, concurrent_connections,
     config.register_deprecated(cfg.CONF)
     # ### END
     cluster = nvp_cluster.NVPCluster(**cluster_opts)
-    api_providers = [ctrl.split(':') + [True]
+
+    def _ctrl_split(x, y):
+        return (x, int(y), True)
+
+    api_providers = [_ctrl_split(*ctrl.split(':'))
                      for ctrl in cluster.nvp_controllers]
     cluster.api_client = NvpApiClient.NVPApiHelper(
         api_providers, cluster.nvp_user, cluster.nvp_password,
@@ -1710,28 +1714,24 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                        internal_ip, router_id,
                                        min_num_rules_expected=0):
         try:
+            # Remove DNAT rule for the floating IP
             nvplib.delete_nat_rules_by_match(
                 self.cluster, router_id, "DestinationNatRule",
                 max_num_expected=1,
                 min_num_expected=min_num_rules_expected,
                 destination_ip_addresses=floating_ip_address)
 
-            # Remove SNAT rule associated with the single fixed_ip
-            # to floating ip
+            # Remove SNAT rules for the floating IP
             nvplib.delete_nat_rules_by_match(
                 self.cluster, router_id, "SourceNatRule",
                 max_num_expected=1,
                 min_num_expected=min_num_rules_expected,
                 source_ip_addresses=internal_ip)
-
-            # Remove No-DNAT rule associated with the single fixed_ip
-            # to floating ip
             nvplib.delete_nat_rules_by_match(
-                self.cluster, router_id, "NoDestinationNatRule",
+                self.cluster, router_id, "SourceNatRule",
                 max_num_expected=1,
                 min_num_expected=min_num_rules_expected,
-                source_ip_addresses=internal_ip,
-                destination_ip_addresses=floating_ip_address)
+                destination_ip_addresses=internal_ip)
 
         except NvpApiClient.NvpApiException:
             LOG.exception(_("An error occurred while removing NAT rules "
@@ -1827,25 +1827,38 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Re-create NAT rules only if a port id is specified
             if fip.get('port_id'):
                 try:
-                    # Create new NAT rules
+                    # Setup DNAT rules for the floating IP
                     nvplib.create_lrouter_dnat_rule(
                         self.cluster, router_id, internal_ip,
                         order=NVP_FLOATINGIP_NAT_RULES_ORDER,
                         match_criteria={'destination_ip_addresses':
                                         floating_ip})
+                    # Setup SNAT rules for the floating IP
+                    # Create a SNAT rule for enabling connectivity to the
+                    # floating IP from the same network as the internal port
+                    # Find subnet id for internal_ip from fixed_ips
+                    internal_port = self._get_port(context, port_id)
+                    # Cchecks not needed on statements below since otherwise
+                    # _internal_fip_assoc_data would have raised
+                    subnet_ids = [ip['subnet_id'] for ip in
+                                  internal_port['fixed_ips'] if
+                                  ip['ip_address'] == internal_ip]
+                    internal_subnet_cidr = self._build_ip_address_list(
+                        context, internal_port['fixed_ips'],
+                        subnet_ids=subnet_ids)[0]
+                    nvplib.create_lrouter_snat_rule(
+                        self.cluster, router_id, floating_ip, floating_ip,
+                        order=NVP_NOSNAT_RULES_ORDER - 1,
+                        match_criteria={'source_ip_addresses':
+                                        internal_subnet_cidr,
+                                        'destination_ip_addresses':
+                                        internal_ip})
                     # setup snat rule such that src ip of a IP packet when
                     # using floating is the floating ip itself.
                     nvplib.create_lrouter_snat_rule(
                         self.cluster, router_id, floating_ip, floating_ip,
                         order=NVP_FLOATINGIP_NAT_RULES_ORDER,
                         match_criteria={'source_ip_addresses': internal_ip})
-                    # Add No-DNAT rule to allow fixed_ip to ping floatingip.
-                    nvplib.create_lrouter_nodnat_rule(
-                        self.cluster, router_id,
-                        order=NVP_FLOATINGIP_NAT_RULES_ORDER - 1,
-                        match_criteria={'source_ip_addresses': internal_ip,
-                                        'destination_ip_addresses':
-                                        floating_ip})
 
                     # Add Floating IP address to router_port
                     nvplib.update_lrouter_port_ips(self.cluster,
@@ -1965,6 +1978,16 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def update_network_gateway(self, context, id, network_gateway):
         # Ensure the default gateway in the config file is in sync with the db
         self._ensure_default_network_gateway()
+        # Update gateway on backend when there's a name change
+        name = network_gateway[networkgw.RESOURCE_NAME].get('name')
+        if name:
+            try:
+                nvplib.update_l2_gw_service(self.cluster, id, name)
+            except NvpApiClient.NvpApiException:
+                # Consider backend failures as non-fatal, but still warn
+                # because this might indicate something dodgy is going on
+                LOG.warn(_("Unable to update name on NVP backend "
+                           "for network gateway: %s"), id)
         return super(NvpPluginV2, self).update_network_gateway(
             context, id, network_gateway)
 

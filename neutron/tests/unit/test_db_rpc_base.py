@@ -15,6 +15,7 @@
 
 import mock
 
+from neutron.common import exceptions as n_exc
 from neutron.db import dhcp_rpc_base
 from neutron.tests import base
 
@@ -49,6 +50,11 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
 
         self.assertEqual(len(self.log.mock_calls), 1)
 
+    def test_get_network_info_return_none_on_not_found(self):
+        self.plugin.get_network.side_effect = n_exc.NetworkNotFound(net_id='a')
+        retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
+        self.assertIsNone(retval)
+
     def test_get_network_info(self):
         network_retval = dict(id='a')
 
@@ -74,7 +80,10 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
             self.plugin.get_ports.return_value = [port_retval]
         else:
             self.plugin.get_ports.return_value = []
-        self.plugin.update_port.return_value = update_port
+        if isinstance(update_port, n_exc.NotFound):
+            self.plugin.update_port.side_effect = update_port
+        else:
+            self.plugin.update_port.return_value = update_port
         self.plugin.create_port.return_value = create_port
 
         retval = self.callbacks.get_dhcp_port(mock.Mock(),
@@ -101,7 +110,35 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
                                         update_port=port_retval)
         self.assertEqual(len(self.log.mock_calls), 1)
 
-    def test_get_dhcp_port_create_new(self):
+    def _test_get_dhcp_port_with_failures(self,
+                                          raise_get_network=None,
+                                          raise_create_port=None):
+        self.plugin.update_port.return_value = None
+        if raise_get_network:
+            self.plugin.get_network.side_effect = raise_get_network
+        else:
+            self.plugin.get_network.return_value = {'tenant_id': 'foo_tenant'}
+        if raise_create_port:
+            self.plugin.create_port.side_effect = raise_create_port
+        retval = self.callbacks.get_dhcp_port(mock.Mock(),
+                                              network_id='netid',
+                                              device_id='devid',
+                                              host='host')
+        self.assertIsNone(retval)
+
+    def test_get_dhcp_port_catch_not_found_on_get_network(self):
+        self._test_get_dhcp_port_with_failures(
+            raise_get_network=n_exc.NetworkNotFound(net_id='a'))
+
+    def test_get_dhcp_port_catch_network_not_found_on_create_port(self):
+        self._test_get_dhcp_port_with_failures(
+            raise_create_port=n_exc.NetworkNotFound(net_id='a'))
+
+    def test_get_dhcp_port_catch_subnet_not_found_on_create_port(self):
+        self._test_get_dhcp_port_with_failures(
+            raise_create_port=n_exc.SubnetNotFound(subnet_id='b'))
+
+    def _test_get_dhcp_port_create_new(self, update_port=None):
         self.plugin.get_network.return_value = dict(tenant_id='tenantid')
         create_spec = dict(tenant_id='tenantid', device_id='devid',
                            network_id='netid', name='',
@@ -119,9 +156,17 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
             mock.call.create_port(mock.ANY, dict(port=create_spec))]
 
         retval = self._test_get_dhcp_port_helper(None, expectations,
+                                                 update_port=update_port,
                                                  create_port=create_retval)
         self.assertEqual(create_retval, retval)
         self.assertEqual(len(self.log.mock_calls), 2)
+
+    def test_get_dhcp_port_create_new(self):
+        self._test_get_dhcp_port_create_new()
+
+    def test_get_dhcp_port_create_new_with_failure_on_port_update(self):
+        self._test_get_dhcp_port_create_new(
+            update_port=n_exc.PortNotFound(port_id='foo'))
 
     def test_release_dhcp_port(self):
         port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])

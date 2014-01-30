@@ -47,6 +47,22 @@ class TestWSGIServer(base.BaseTestCase):
         server.stop()
         server.wait()
 
+    @mock.patch('neutron.wsgi.ProcessLauncher')
+    def test_start_multiple_workers(self, ProcessLauncher):
+        launcher = ProcessLauncher.return_value
+
+        server = wsgi.Server("test_multiple_processes")
+        server.start(None, 0, host="127.0.0.1", workers=2)
+        launcher.running = True
+        launcher.launch_service.assert_called_once_with(server._server,
+                                                        workers=2)
+
+        server.stop()
+        self.assertFalse(launcher.running)
+
+        server.wait()
+        launcher.wait.assert_called_once_with()
+
     def test_start_random_port_with_ipv6(self):
         server = wsgi.Server("test_random_port")
         server.start(None, 0, host="::1")

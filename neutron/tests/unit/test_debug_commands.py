@@ -119,6 +119,7 @@ class TestDebugCommands(base.BaseTestCase):
                      'admin_state_up': True,
                      'network_id': 'fake_net',
                      'tenant_id': 'fake_tenant',
+                     'binding:host_id': cfg.CONF.host,
                      'fixed_ips': [{'subnet_id': 'fake_subnet'}],
                      'device_id': socket.gethostname()}}
         namespace = 'qprobe-fake_port'
@@ -138,7 +139,7 @@ class TestDebugCommands(base.BaseTestCase):
                                                         namespace=namespace
                                                         )])
 
-    def test_create_newwork_probe(self):
+    def test_create_network_probe(self):
         self._test_create_probe(DEVICE_OWNER_NETWORK_PROBE)
 
     def test_create_nova_probe(self):
@@ -163,6 +164,7 @@ class TestDebugCommands(base.BaseTestCase):
                      'admin_state_up': True,
                      'network_id': 'fake_net',
                      'tenant_id': 'fake_tenant',
+                     'binding:host_id': cfg.CONF.host,
                      'fixed_ips': [{'subnet_id': 'fake_subnet'}],
                      'device_id': socket.gethostname()}}
         namespace = 'qprobe-fake_port'
@@ -313,6 +315,7 @@ class TestDebugCommands(base.BaseTestCase):
                      'admin_state_up': True,
                      'network_id': 'fake_net',
                      'tenant_id': 'fake_tenant',
+                     'binding:host_id': cfg.CONF.host,
                      'fixed_ips': [{'subnet_id': 'fake_subnet'}],
                      'device_id': socket.gethostname()}}
         expected = [mock.call.show_network('fake_net'),
