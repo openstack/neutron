@@ -773,16 +773,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             # This external port is never exposed to the tenant.
             # it is used purely for internal system and admin use when
             # managing floating IPs.
-            external_port = self._core_plugin.create_port(context.elevated(), {
-                'port':
-                {'tenant_id': '',  # tenant intentionally not set
-                 'network_id': f_net_id,
-                 'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                 'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
-                 'admin_state_up': True,
-                 'device_id': fip_id,
-                 'device_owner': DEVICE_OWNER_FLOATINGIP,
-                 'name': ''}})
+
+            port = {'tenant_id': '',  # tenant intentionally not set
+                    'network_id': f_net_id,
+                    'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                    'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                    'admin_state_up': True,
+                    'device_id': fip_id,
+                    'device_owner': DEVICE_OWNER_FLOATINGIP,
+                    'name': ''}
+
+            if fip.get('floating_ip_address'):
+                port['fixed_ips'] = [
+                    {'ip_address': fip['floating_ip_address']}]
+
+            external_port = self._core_plugin.create_port(context.elevated(),
+                                                          {'port': port})
+
             # Ensure IP addresses are allocated on external port
             if not external_port['fixed_ips']:
                 raise n_exc.ExternalIpAddressExhausted(net_id=f_net_id)
