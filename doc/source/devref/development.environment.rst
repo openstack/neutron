@@ -37,20 +37,6 @@ that describes `setting up Neutron using DevStack`_.
 .. _DevStack: https://github.com/openstack-dev/devstack
 .. _setting up Neutron using Devstack: https://wiki.openstack.org/wiki/NeutronDevstack
 
-Virtual environments
---------------------
-
-Testing OpenStack projects, including Neutron, is made easier with `DevStack`_.
-
-Create a machine (such as a VM or Vagrant box) running a distribution supported
-by DevStack and install DevStack there. For example, there is a Vagrant script
-for DevStack at https://github.com/jogo/DevstackUp.
-
- .. note::
-
-    If you prefer not to use DevStack, you can still check out source code on your local
-    machine and develop from there.
-
 Getting the code
 ----------------
 
@@ -60,48 +46,4 @@ Grab the code from GitHub::
     cd neutron
 
 
-Running unit tests
-------------------
-
-With `run_tests.sh`
-~~~~~~~~~~~~~~~~~~~
-
-You can use the `run_tests.sh` script in the root source directory to execute
-tests in a virtualenv:
-
-    ./run_tests -V
-
-With `tox`
-~~~~~~~~~~
-
-Neutron, like other OpenStack projects, uses `tox`_ for managing the virtual
-environments for running test cases. It uses `Testr`_ for managing the running
-of the test cases.
-
-Tox handles the creation of a series of `virtualenvs`_ that target specific
-versions of Python (2.6, 2.7, 3.3, etc).
-
-Testr handles the parallel execution of series of test cases as well as
-the tracking of long-running tests and other things.
-
-Running unit tests is as easy as executing this in the root directory of the
-Neutron source code::
-
-    tox
-
-For more information on the standard Tox-based test infrastructure used by
-OpenStack and how to do some common test/debugging procedures with Testr,
-see this wiki page:
-
-  https://wiki.openstack.org/wiki/Testr
-
-.. _Testr: https://wiki.openstack.org/wiki/Testr
-.. _tox: http://tox.readthedocs.org/en/latest/
-.. _virtualenvs: https://pypi.python.org/pypi/virtualenv
-
-
-Using a remote debugger
------------------------
-
-.. todo:: Beef up and add examples to content at
-  https://wiki.openstack.org/wiki/NeutronDevelopment#How_to_debug_Neutron_.28and_other_OpenStack_projects_probably_.29
+.. include:: ../../../TESTING.rst
