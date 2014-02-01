@@ -21,7 +21,6 @@
 
 import eventlet
 
-from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
@@ -36,11 +35,9 @@ from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import l3_rpc_base
-from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import providernet
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import uuidutils as uuidutils
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as c_cred
@@ -57,16 +54,12 @@ LOG = logging.getLogger(__name__)
 
 
 class N1kvRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
-                       l3_rpc_base.L3RpcCallbackMixin,
-                       sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
+                       l3_rpc_base.L3RpcCallbackMixin):
 
     """Class to handle agent RPC calls."""
 
     # Set RPC API version to 1.1 by default.
     RPC_API_VERSION = '1.1'
-
-    def __init__(self, notifier):
-        self.notifier = notifier
 
     def create_rpc_dispatcher(self):
         """Get the rpc dispatcher for this rpc manager.
@@ -76,54 +69,6 @@ class N1kvRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         """
         return q_rpc.PluginRpcDispatcher([self,
                                           agents_db.AgentExtRpcCallback()])
-
-
-class AgentNotifierApi(proxy.RpcProxy,
-                       sg_rpc.SecurityGroupAgentRpcApiMixin):
-
-    """Agent side of the N1kv rpc API.
-
-    API version history:
-        1.0 - Initial version.
-    """
-
-    BASE_RPC_API_VERSION = '1.0'
-
-    def __init__(self, topic):
-        super(AgentNotifierApi, self).__init__(
-            topic=topic, default_version=self.BASE_RPC_API_VERSION)
-        self.topic_network_delete = topics.get_topic_name(topic,
-                                                          topics.NETWORK,
-                                                          topics.DELETE)
-        self.topic_port_update = topics.get_topic_name(topic,
-                                                       topics.PORT,
-                                                       topics.UPDATE)
-        self.topic_vxlan_update = topics.get_topic_name(topic,
-                                                        c_const.TUNNEL,
-                                                        topics.UPDATE)
-
-    def network_delete(self, context, network_id):
-        self.fanout_cast(context,
-                         self.make_msg('network_delete',
-                                       network_id=network_id),
-                         topic=self.topic_network_delete)
-
-    def port_update(self, context, port, network_type, segmentation_id,
-                    physical_network):
-        self.fanout_cast(context,
-                         self.make_msg('port_update',
-                                       port=port,
-                                       network_type=network_type,
-                                       segmentation_id=segmentation_id,
-                                       physical_network=physical_network),
-                         topic=self.topic_port_update)
-
-    def vxlan_update(self, context, vxlan_ip, vxlan_id):
-        self.fanout_cast(context,
-                         self.make_msg('vxlan_update',
-                                       vxlan_ip=vxlan_ip,
-                                       vxlan_id=vxlan_id),
-                         topic=self.topic_vxlan_update)
 
 
 class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
@@ -168,14 +113,12 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.conn = rpc.create_connection(new=True)
-        self.notifier = AgentNotifierApi(topics.AGENT)
-        self.callbacks = N1kvRpcCallbacks(self.notifier)
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        self.dispatcher = N1kvRpcCallbacks().create_rpc_dispatcher()
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
-        # Consume from all consumers in a thread
         self.dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         self.l3_agent_notifier = l3_rpc_agent_api.L3AgentNotify
+        # Consume from all consumers in a thread
         self.conn.consume_in_thread()
 
     def _setup_vsm(self):
