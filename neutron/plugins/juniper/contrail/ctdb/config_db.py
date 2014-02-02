@@ -2175,9 +2175,19 @@ class DBInterface(object):
             return 0
 
         if 'tenant_id' in filters:
-            project_id = filters['tenant_id'][0]
+            if isinstance(filters['tenant_id'], list):
+                project_id = filters['tenant_id'][0]
+            else:
+                project_id = filters['tenant_id']
+
             try:
-                return self._db_cache['q_tenant_port_count'][project_id]
+                nports = self._db_cache['q_tenant_port_count'][project_id]
+                if nports < 0:
+                    # TBD Hack. fix in case of multiple q servers after 1.03
+                    nports = 0
+                    del self._db_cache['q_tenant_port_count'][project_id]
+
+                return nports
             except KeyError:
                 # do it the hard way but remember for next time
                 nports = len(self._port_list_project(project_id))
