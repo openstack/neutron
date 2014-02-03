@@ -20,82 +20,32 @@
 import copy
 
 import mock
-from oslo.config import cfg
 from webob import exc
-import webtest
 
-from neutron.api import extensions
-from neutron.api.v2 import attributes
-from neutron.common import config
 from neutron.extensions import vpnaas
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
-from neutron import quota
 from neutron.tests.unit import test_api_v2
-from neutron.tests.unit import test_extensions
-from neutron.tests.unit import testlib_api
+from neutron.tests.unit import test_api_v2_extension
 
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_api_v2._get_path
 
 
-class VpnaasTestExtensionManager(object):
-
-    def get_resources(self):
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            vpnaas.RESOURCE_ATTRIBUTE_MAP)
-        return vpnaas.Vpnaas.get_resources()
-
-    def get_actions(self):
-        return []
-
-    def get_request_extensions(self):
-        return []
-
-
-class VpnaasExtensionTestCase(testlib_api.WebTestCase):
+class VpnaasExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
     fmt = 'json'
 
     def setUp(self):
         super(VpnaasExtensionTestCase, self).setUp()
-        plugin = 'neutron.extensions.vpnaas.VPNPluginBase'
-
-        # Ensure existing ExtensionManager is not used
-        extensions.PluginAwareExtensionManager._instance = None
-
-        # Create the default configurations
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
-        config.parse(args)
-
-        #just stubbing core plugin with LoadBalancer plugin
-        self.setup_coreplugin(plugin)
-        cfg.CONF.set_override('service_plugins', [plugin])
-
-        self._plugin_patcher = mock.patch(plugin, autospec=True)
-        self.plugin = self._plugin_patcher.start()
-        instance = self.plugin.return_value
-        instance.get_plugin_type.return_value = constants.VPN
-
-        ext_mgr = VpnaasTestExtensionManager()
-        self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
-        self.api = webtest.TestApp(self.ext_mdw)
-        super(VpnaasExtensionTestCase, self).setUp()
-
-        quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
-                              group='QUOTAS')
-
-    def tearDown(self):
-        self._plugin_patcher.stop()
-        self.api = None
-        self.plugin = None
-        cfg.CONF.reset()
-        super(VpnaasExtensionTestCase, self).tearDown()
+        plural_mappings = {'ipsecpolicy': 'ipsecpolicies',
+                           'ikepolicy': 'ikepolicies',
+                           'ipsec_site_connection': 'ipsec-site-connections'}
+        self._setUpExtension(
+            'neutron.extensions.vpnaas.VPNPluginBase', constants.VPN,
+            vpnaas.RESOURCE_ATTRIBUTE_MAP, vpnaas.Vpnaas,
+            'vpn', plural_mappings=plural_mappings,
+            use_quota=True)
 
     def test_ikepolicy_create(self):
         """Test case to create an ikepolicy."""
@@ -421,20 +371,6 @@ class VpnaasExtensionTestCase(testlib_api.WebTestCase):
         res = self.deserialize(res)
         self.assertIn('vpnservice', res)
         self.assertEqual(res['vpnservice'], return_value)
-
-    def _test_entity_delete(self, entity):
-        """does the entity deletion based on naming convention."""
-        entity_id = _uuid()
-        path_map = {'ipsecpolicy': 'vpn/ipsecpolicies',
-                    'ikepolicy': 'vpn/ikepolicies',
-                    'ipsec_site_connection': 'vpn/ipsec-site-connections'}
-        path = path_map.get(entity, 'vpn/' + entity + 's')
-        res = self.api.delete(_get_path(path,
-                                        id=entity_id,
-                                        fmt=self.fmt))
-        delete_entity = getattr(self.plugin.return_value, "delete_" + entity)
-        delete_entity.assert_called_with(mock.ANY, entity_id)
-        self.assertEqual(res.status_int, exc.HTTPNoContent.code)
 
     def test_vpnservice_delete(self):
         """Test case to delete a vpnservice."""

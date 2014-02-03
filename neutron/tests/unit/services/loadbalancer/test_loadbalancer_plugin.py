@@ -18,83 +18,29 @@
 import copy
 
 import mock
-from oslo.config import cfg
 from webob import exc
-import webtest
 
-from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
-from neutron.common import config
 from neutron.extensions import loadbalancer
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
-from neutron import quota
 from neutron.tests.unit import test_api_v2
-from neutron.tests.unit import test_extensions
-from neutron.tests.unit import testlib_api
+from neutron.tests.unit import test_api_v2_extension
 
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_api_v2._get_path
 
 
-class LoadBalancerTestExtensionManager(object):
-
-    def get_resources(self):
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attr.RESOURCE_ATTRIBUTE_MAP.update(
-            loadbalancer.RESOURCE_ATTRIBUTE_MAP)
-        return loadbalancer.Loadbalancer.get_resources()
-
-    def get_actions(self):
-        return []
-
-    def get_request_extensions(self):
-        return []
-
-
-class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
+class LoadBalancerExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
     fmt = 'json'
 
     def setUp(self):
         super(LoadBalancerExtensionTestCase, self).setUp()
-        plugin = 'neutron.extensions.loadbalancer.LoadBalancerPluginBase'
-
-        # Ensure existing ExtensionManager is not used
-        extensions.PluginAwareExtensionManager._instance = None
-
-        # Create the default configurations
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
-        config.parse(args)
-
-        #just stubbing core plugin with LoadBalancer plugin
-        self.setup_coreplugin(plugin)
-        cfg.CONF.set_override('service_plugins', [plugin])
-
-        self._plugin_patcher = mock.patch(plugin, autospec=True)
-        self.plugin = self._plugin_patcher.start()
-        instance = self.plugin.return_value
-        instance.get_plugin_type.return_value = constants.LOADBALANCER
-
-        ext_mgr = LoadBalancerTestExtensionManager()
-        self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
-        self.api = webtest.TestApp(self.ext_mdw)
-
-        quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', quota.QUOTA_CONF_DRIVER,
-                              group='QUOTAS')
-
-        super(LoadBalancerExtensionTestCase, self).setUp()
-
-    def tearDown(self):
-        self._plugin_patcher.stop()
-        self.api = None
-        self.plugin = None
-        cfg.CONF.reset()
-        super(LoadBalancerExtensionTestCase, self).tearDown()
+        self._setUpExtension(
+            'neutron.extensions.loadbalancer.LoadBalancerPluginBase',
+            constants.LOADBALANCER, loadbalancer.RESOURCE_ATTRIBUTE_MAP,
+            loadbalancer.Loadbalancer, 'lb', use_quota=True)
 
     def test_vip_create(self):
         vip_id = _uuid()
@@ -181,15 +127,6 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
         res = self.deserialize(res)
         self.assertIn('vip', res)
         self.assertEqual(res['vip'], return_value)
-
-    def _test_entity_delete(self, entity):
-        """Does the entity deletion based on naming convention."""
-        entity_id = _uuid()
-        res = self.api.delete(_get_path('lb/' + entity + 's', id=entity_id,
-                                        fmt=self.fmt))
-        delete_entity = getattr(self.plugin.return_value, "delete_" + entity)
-        delete_entity.assert_called_with(mock.ANY, entity_id)
-        self.assertEqual(res.status_int, exc.HTTPNoContent.code)
 
     def test_vip_delete(self):
         self._test_entity_delete('vip')
