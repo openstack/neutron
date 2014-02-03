@@ -30,8 +30,8 @@ from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira.nsxlib import lsn as lsnlib
 from neutron.plugins.nicira import NvpApiClient as nvp_client
 from neutron.tests import base
-from neutron.tests.unit.nicira import get_fake_conf
-from neutron.tests.unit.nicira import PLUGIN_NAME
+from neutron.tests.unit.vmware import get_fake_conf
+from neutron.tests.unit.vmware import PLUGIN_NAME
 
 BASE_CONF_PATH = get_fake_conf('neutron.conf.test')
 NSX_INI_PATH = get_fake_conf('nsx.ini.basic.test')

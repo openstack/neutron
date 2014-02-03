@@ -17,7 +17,7 @@
 from neutron.common import exceptions
 from neutron.plugins.nicira.nsxlib import secgroup as secgrouplib
 from neutron.plugins.nicira import nvplib
-from neutron.tests.unit.nicira.nsxlib import base
+from neutron.tests.unit.vmware.nsxlib import base
 
 
 class SecurityProfileTestCase(base.NsxlibTestCase):

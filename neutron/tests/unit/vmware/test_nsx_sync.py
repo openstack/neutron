@@ -27,19 +27,18 @@ from neutron.common import config
 from neutron.common import constants
 from neutron import context
 from neutron.openstack.common import jsonutils as json
+from neutron.openstack.common import log
 from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
+from neutron.plugins.vmware import plugin
 from neutron.tests import base
-from neutron.tests.unit.nicira import fake_nvpapiclient
-from neutron.tests.unit.nicira import get_fake_conf
-from neutron.tests.unit.nicira import NVPAPI_NAME
-from neutron.tests.unit.nicira import STUBS_PATH
 from neutron.tests.unit import test_api_v2
-
-from neutron.openstack.common import log
+from neutron.tests.unit.vmware import fake_nvpapiclient
+from neutron.tests.unit.vmware import get_fake_conf
+from neutron.tests.unit.vmware import NSXAPI_NAME
+from neutron.tests.unit.vmware import STUBS_PATH
 
 LOG = log.getLogger(__name__)
 
@@ -259,7 +258,7 @@ class NvpSyncTestCase(base.BaseTestCase):
     def setUp(self):
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
+        mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
         # Avoid runs of the synchronizer looping call
         # These unit tests will excplicitly invoke synchronization
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
@@ -288,7 +287,7 @@ class NvpSyncTestCase(base.BaseTestCase):
                 '--config-file', get_fake_conf('nsx.ini.test')]
         config.parse(args=args)
         cfg.CONF.set_override('allow_overlapping_ips', True)
-        self._plugin = NeutronPlugin.NvpPluginV2()
+        self._plugin = plugin.NsxPlugin()
         # Mock neutron manager plugin load functions to speed up tests
         mock_nm_get_plugin = mock.patch('neutron.manager.NeutronManager.'
                                         'get_plugin')

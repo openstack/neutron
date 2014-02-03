@@ -26,13 +26,13 @@ from neutron import context
 from neutron.extensions import agent
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
-from neutron.tests.unit.nicira import fake_nvpapiclient
-from neutron.tests.unit.nicira import get_fake_conf
-from neutron.tests.unit.nicira import NVPAPI_NAME
-from neutron.tests.unit.nicira import NVPEXT_PATH
-from neutron.tests.unit.nicira import PLUGIN_NAME
-from neutron.tests.unit.nicira import STUBS_PATH
 from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit.vmware import fake_nvpapiclient
+from neutron.tests.unit.vmware import get_fake_conf
+from neutron.tests.unit.vmware import NSXAPI_NAME
+from neutron.tests.unit.vmware import NSXEXT_PATH
+from neutron.tests.unit.vmware import PLUGIN_NAME
+from neutron.tests.unit.vmware import STUBS_PATH
 
 
 class MacLearningExtensionManager(object):
@@ -59,7 +59,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
         self.adminContext = context.get_admin_context()
         test_config['config_files'] = [get_fake_conf('nsx.ini.full.test')]
-        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
         # Save the original RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
@@ -67,7 +67,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         ext_mgr = MacLearningExtensionManager()
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
+        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')

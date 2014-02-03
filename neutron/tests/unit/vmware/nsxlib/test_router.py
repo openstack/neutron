@@ -24,8 +24,8 @@ from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
-from neutron.tests.unit.nicira.nsxlib import base
 from neutron.tests.unit import test_api_v2
+from neutron.tests.unit.vmware.nsxlib import base
 
 _uuid = test_api_v2._uuid
 

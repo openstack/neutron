@@ -1,6 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2011 Nicira, Inc.
+# Copyright 2014 VMware, Inc.
+#
 # All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,24 +13,10 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
 
-import eventlet
-eventlet.monkey_patch()
-import logging
-import urllib2
+from neutron.plugins.nicira import NeutronPlugin
+from neutron.plugins.nicira import NeutronServicePlugin
 
-from neutron.tests import base
-
-logging.basicConfig(level=logging.DEBUG)
-lg = logging.getLogger("test_nvp_api_request")
-
-REQUEST_TIMEOUT = 1
-
-
-def fetch(url):
-    return urllib2.urlopen(url).read()
-
-
-class NvpApiRequestTest(base.BaseTestCase):
-
-    pass
+NsxPlugin = NeutronPlugin.NvpPluginV2
+NsxServicePlugin = NeutronServicePlugin.NvpAdvancedPlugin

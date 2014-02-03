@@ -51,13 +51,6 @@ from neutron.plugins.nicira import nsxlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
-from neutron.tests.unit.nicira import fake_nvpapiclient
-from neutron.tests.unit.nicira import get_fake_conf
-from neutron.tests.unit.nicira import NVPAPI_NAME
-from neutron.tests.unit.nicira import NVPEXT_PATH
-from neutron.tests.unit.nicira import PLUGIN_NAME
-from neutron.tests.unit.nicira import STUBS_PATH
-import neutron.tests.unit.nicira.test_networkgw as test_l2_gw
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_allowedaddresspairs as test_addr_pair
 import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
@@ -66,6 +59,13 @@ import neutron.tests.unit.test_extension_security_group as ext_sg
 from neutron.tests.unit import test_extensions
 import neutron.tests.unit.test_l3_plugin as test_l3_plugin
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit.vmware import fake_nvpapiclient
+from neutron.tests.unit.vmware import get_fake_conf
+from neutron.tests.unit.vmware import NSXAPI_NAME
+from neutron.tests.unit.vmware import NSXEXT_PATH
+from neutron.tests.unit.vmware import PLUGIN_NAME
+from neutron.tests.unit.vmware import STUBS_PATH
+import neutron.tests.unit.vmware.test_networkgw as test_l2_gw
 
 
 from neutron.openstack.common import log
@@ -108,7 +108,7 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
+        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
         self.mock_instance = self.mock_nvpapi.start()
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
@@ -390,7 +390,7 @@ class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
         test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
+        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
         instance.return_value.login.return_value = "the_cookie"
         # Avoid runs of the synchronizer looping call
@@ -423,7 +423,7 @@ class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
         test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
         # mock nvp api client
         fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
+        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
         instance.return_value.login.return_value = "the_cookie"
         # Avoid runs of the synchronizer looping call
@@ -521,7 +521,7 @@ class NiciraL3NatTest(test_l3_plugin.L3BaseForIntTests,
         for item in l3.RESOURCE_ATTRIBUTE_MAP:
             self._l3_attribute_map_bk[item] = (
                 l3.RESOURCE_ATTRIBUTE_MAP[item].copy())
-        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
         l3_attribute_map_bk = backup_l3_attribute_map()
         self.addCleanup(restore_l3_attribute_map, l3_attribute_map_bk)
         ext_mgr = ext_mgr or TestNiciraL3ExtensionManager()
@@ -1048,7 +1048,7 @@ class NvpQoSTestExtensionManager(object):
 class TestQoSQueue(NiciraPluginV2TestCase):
 
     def setUp(self, plugin=None):
-        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
         super(TestQoSQueue, self).setUp()
         ext_mgr = NvpQoSTestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
@@ -1460,7 +1460,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
                                test_l2_gw.NetworkGatewayDbTestCase):
 
     def setUp(self, plugin=PLUGIN_NAME, ext_mgr=None):
-        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
         super(TestNiciraNetworkGateway,
               self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
@@ -1559,7 +1559,7 @@ class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
 class TestNiciraMultiProviderNetworks(NiciraPluginV2TestCase):
 
     def setUp(self, plugin=None):
-        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
         super(TestNiciraMultiProviderNetworks, self).setUp()
 
     def test_create_network_provider(self):

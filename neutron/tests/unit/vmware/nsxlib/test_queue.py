@@ -19,7 +19,7 @@ import mock
 from neutron.common import exceptions
 from neutron.plugins.nicira.nsxlib import queue as queuelib
 from neutron.plugins.nicira import NvpApiClient
-from neutron.tests.unit.nicira.nsxlib import base
+from neutron.tests.unit.vmware.nsxlib import base
 
 
 class TestLogicalQueueLib(base.NsxlibTestCase):

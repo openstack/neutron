@@ -27,9 +27,9 @@ from neutron.plugins.nicira.vshield.tasks.constants import TaskStatus
 from neutron.plugins.nicira.vshield.tasks import tasks as ts
 from neutron.plugins.nicira.vshield import vcns_driver
 from neutron.tests import base
-from neutron.tests.unit.nicira import get_fake_conf
-from neutron.tests.unit.nicira import VCNS_NAME
-from neutron.tests.unit.nicira.vshield import fake_vcns
+from neutron.tests.unit.vmware import get_fake_conf
+from neutron.tests.unit.vmware import VCNS_NAME
+from neutron.tests.unit.vmware.vshield import fake_vcns
 
 VCNS_CONFIG_FILE = get_fake_conf("vcns.ini.test")
 
