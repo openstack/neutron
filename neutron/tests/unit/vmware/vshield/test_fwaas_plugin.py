@@ -27,7 +27,7 @@ from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as const
 from neutron.tests.unit.db.firewall import test_db_firewall
-from neutron.tests.unit.vmware import test_edge_router
+from neutron.tests.unit.vmware.vshield import test_edge_router
 
 _uuid = uuidutils.generate_uuid
 

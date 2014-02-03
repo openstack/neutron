@@ -19,15 +19,15 @@ from neutron import context
 from neutron.db import api as db
 from neutron.db import models_v2
 from neutron.openstack.common.db import exception as d_exc
-from neutron.plugins.nicira.dbexts import nicira_db
-from neutron.plugins.nicira.dbexts import nicira_models
+from neutron.plugins.nicira.dbexts import nicira_db as nsx_db
+from neutron.plugins.nicira.dbexts import nicira_models as models
 from neutron.tests import base
 
 
-class NiciraDBTestCase(base.BaseTestCase):
+class NsxDBTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(NiciraDBTestCase, self).setUp()
+        super(NsxDBTestCase, self).setUp()
         db.configure_db()
         self.ctx = context.get_admin_context()
         self.addCleanup(db.clear_db)
@@ -51,12 +51,12 @@ class NiciraDBTestCase(base.BaseTestCase):
         nsx_switch_id = 'foo_nsx_switch_id'
         self._setup_neutron_network_and_port(neutron_net_id, neutron_port_id)
 
-        nicira_db.add_neutron_nsx_port_mapping(
+        nsx_db.add_neutron_nsx_port_mapping(
             self.ctx.session, neutron_port_id, nsx_switch_id, nsx_port_id)
         # Call the method twice to trigger a db duplicate constraint error
-        nicira_db.add_neutron_nsx_port_mapping(
+        nsx_db.add_neutron_nsx_port_mapping(
             self.ctx.session, neutron_port_id, nsx_switch_id, nsx_port_id)
-        result = (self.ctx.session.query(nicira_models.NeutronNsxPortMapping).
+        result = (self.ctx.session.query(models.NeutronNsxPortMapping).
                   filter_by(neutron_id=neutron_port_id).one())
         self.assertEqual(nsx_port_id, result.nsx_port_id)
         self.assertEqual(neutron_port_id, result.neutron_id)
@@ -69,12 +69,12 @@ class NiciraDBTestCase(base.BaseTestCase):
         nsx_switch_id = 'foo_nsx_switch_id'
         self._setup_neutron_network_and_port(neutron_net_id, neutron_port_id)
 
-        nicira_db.add_neutron_nsx_port_mapping(
+        nsx_db.add_neutron_nsx_port_mapping(
             self.ctx.session, neutron_port_id, nsx_switch_id, nsx_port_id_1)
         # Call the method twice to trigger a db duplicate constraint error,
         # this time with a different nsx port id!
         self.assertRaises(d_exc.DBDuplicateEntry,
-                          nicira_db.add_neutron_nsx_port_mapping,
+                          nsx_db.add_neutron_nsx_port_mapping,
                           self.ctx.session, neutron_port_id,
                           nsx_switch_id, nsx_port_id_2)
 
@@ -83,6 +83,6 @@ class NiciraDBTestCase(base.BaseTestCase):
         nsx_port_id = 'foo_nsx_port_id'
         nsx_switch_id = 'foo_nsx_switch_id'
         self.assertRaises(d_exc.DBError,
-                          nicira_db.add_neutron_nsx_port_mapping,
+                          nsx_db.add_neutron_nsx_port_mapping,
                           self.ctx.session, neutron_port_id,
                           nsx_switch_id, nsx_port_id)

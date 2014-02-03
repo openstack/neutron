@@ -18,7 +18,7 @@ import mock
 
 from neutron.common import exceptions
 from neutron.plugins.nicira.nsxlib import queue as queuelib
-from neutron.plugins.nicira import NvpApiClient
+from neutron.plugins.nicira import NvpApiClient as api_client
 from neutron.tests.unit.vmware.nsxlib import base
 
 
@@ -44,7 +44,7 @@ class TestLogicalQueueLib(base.NsxlibTestCase):
 
     def test_create_lqueue_nsx_error_raises(self):
         def raise_nsx_exc(*args, **kwargs):
-            raise NvpApiClient.NvpApiException()
+            raise api_client.NvpApiException()
 
         with mock.patch.object(queuelib, 'do_request', new=raise_nsx_exc):
             self.assertRaises(

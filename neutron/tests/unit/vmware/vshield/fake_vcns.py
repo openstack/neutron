@@ -41,7 +41,7 @@ class FakeVcns(object):
         self._edge_idx = 0
         self._lswitches = {}
         self._unique_router_name = unique_router_name
-        self._fake_nvpapi = None
+        self._fake_nsx_api = None
         self.fake_firewall_dict = {}
         self.temp_firewall = {
             "firewallRules": {
@@ -54,8 +54,8 @@ class FakeVcns(object):
         self._fake_app_profiles_dict = {}
         self._fake_loadbalancer_config = {}
 
-    def set_fake_nvpapi(self, fake_nvpapi):
-        self._fake_nvpapi = fake_nvpapi
+    def set_fake_nsx_api(self, fake_nsx_api):
+        self._fake_nsx_api = fake_nsx_api
 
     def _validate_edge_name(self, name):
         for edge_id, edge in self._edges.iteritems():
@@ -237,10 +237,10 @@ class FakeVcns(object):
         return (header, response)
 
     def create_lswitch(self, lsconfig):
-        # The lswitch is created via VCNS API so the fake nvpapi wont
-        # see it. Added to fake nvpapi here.
-        if self._fake_nvpapi:
-            lswitch = self._fake_nvpapi._add_lswitch(json.dumps(lsconfig))
+        # The lswitch is created via VCNS API so the fake nsx_api will not
+        # see it. Added to fake nsx_api here.
+        if self._fake_nsx_api:
+            lswitch = self._fake_nsx_api._add_lswitch(json.dumps(lsconfig))
         else:
             lswitch = lsconfig
             lswitch['uuid'] = uuidutils.generate_uuid()
@@ -255,9 +255,9 @@ class FakeVcns(object):
         if id not in self._lswitches:
             raise Exception(_("Lswitch %s does not exist") % id)
         del self._lswitches[id]
-        if self._fake_nvpapi:
+        if self._fake_nsx_api:
             # TODO(fank): fix the hack
-            del self._fake_nvpapi._fake_lswitch_dict[id]
+            del self._fake_nsx_api._fake_lswitch_dict[id]
         header = {
             'status': 200
         }

@@ -19,7 +19,7 @@ import os
 
 import neutron.plugins.nicira.api_client.client_eventlet as client
 from neutron.plugins.nicira import extensions
-import neutron.plugins.nicira.NvpApiClient as nvpapi
+import neutron.plugins.nicira.NvpApiClient as nsxapi
 from neutron.plugins.nicira import nvplib
 from neutron.plugins.nicira.vshield.common import VcnsApiClient as vcnsapi
 from neutron.plugins.nicira.vshield import vcns
@@ -28,7 +28,7 @@ import neutron.plugins.vmware.plugin as neutron_plugin
 
 plugin = neutron_plugin.NsxPlugin
 service_plugin = neutron_plugin.NsxServicePlugin
-api_helper = nvpapi.NVPApiHelper
+api_helper = nsxapi.NVPApiHelper
 api_client = client.NvpApiClientEventlet
 vcns_class = vcns.Vcns
 vcns_driver = vcnsdriver.VcnsDriver

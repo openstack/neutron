@@ -27,7 +27,7 @@ from neutron.extensions import agent
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.tests.unit import test_db_plugin
-from neutron.tests.unit.vmware import fake_nvpapiclient
+from neutron.tests.unit.vmware.apiclient import fake
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import NSXAPI_NAME
 from neutron.tests.unit.vmware import NSXEXT_PATH
@@ -65,23 +65,20 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
             self.saved_attr_map[resource] = attrs.copy()
         ext_mgr = MacLearningExtensionManager()
-        # mock nvp api client
-        self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
-        instance = self.mock_nvpapi.start()
+        # mock api client
+        self.fc = fake.FakeClient(STUBS_PATH)
+        self.mock_nsx = mock.patch(NSXAPI_NAME, autospec=True)
+        instance = self.mock_nsx.start()
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
         patch_sync.start()
 
-        def _fake_request(*args, **kwargs):
-            return self.fc.fake_request(*args, **kwargs)
-
-        # Emulate tests against NVP 2.x
+        # Emulate tests against NSX 2.x
         instance.return_value.get_nvp_version.return_value = NVPVersion("3.0")
-        instance.return_value.request.side_effect = _fake_request
+        instance.return_value.request.side_effect = self.fc.fake_request
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
-        self.addCleanup(self.mock_nvpapi.stop)
+        self.addCleanup(self.mock_nsx.stop)
         self.addCleanup(patch_sync.stop)
         self.addCleanup(self.restore_resource_attribute_map)
         self.addCleanup(cfg.CONF.reset)

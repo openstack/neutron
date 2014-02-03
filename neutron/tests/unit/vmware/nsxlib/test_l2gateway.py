@@ -16,7 +16,7 @@
 
 from neutron.plugins.nicira.nsxlib import l2gateway as l2gwlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
-from neutron.plugins.nicira import nvplib
+from neutron.plugins.nicira import NvpApiClient as api_client
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
 
@@ -26,7 +26,7 @@ _uuid = test_api_v2._uuid
 class L2GatewayNegativeTestCase(base.NsxlibNegativeBaseTestCase):
 
     def test_create_l2_gw_service_on_failure(self):
-        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+        self.assertRaises(api_client.NvpApiException,
                           l2gwlib.create_l2_gw_service,
                           self.fake_cluster,
                           'fake-tenant',
@@ -35,19 +35,19 @@ class L2GatewayNegativeTestCase(base.NsxlibNegativeBaseTestCase):
                            'interface_name': 'xxx'}])
 
     def test_delete_l2_gw_service_on_failure(self):
-        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+        self.assertRaises(api_client.NvpApiException,
                           l2gwlib.delete_l2_gw_service,
                           self.fake_cluster,
                           'fake-gateway')
 
     def test_get_l2_gw_service_on_failure(self):
-        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+        self.assertRaises(api_client.NvpApiException,
                           l2gwlib.get_l2_gw_service,
                           self.fake_cluster,
                           'fake-gateway')
 
     def test_update_l2_gw_service_on_failure(self):
-        self.assertRaises(nvplib.NvpApiClient.NvpApiException,
+        self.assertRaises(api_client.NvpApiException,
                           l2gwlib.update_l2_gw_service,
                           self.fake_cluster,
                           'fake-gateway',
@@ -135,12 +135,12 @@ class L2GatewayTestCase(base.NsxlibTestCase):
         l2gwlib.plug_l2_gw_service(
             self.fake_cluster, lswitch['uuid'],
             lport['uuid'], gw_id)
-        uri = nvplib._build_uri_path(nvplib.LSWITCHPORT_RESOURCE,
-                                     lport['uuid'],
-                                     lswitch['uuid'],
-                                     is_attachment=True)
-        resp_obj = nvplib.do_request("GET", uri,
-                                     cluster=self.fake_cluster)
+        uri = l2gwlib._build_uri_path(switchlib.LSWITCHPORT_RESOURCE,
+                                      lport['uuid'],
+                                      lswitch['uuid'],
+                                      is_attachment=True)
+        resp_obj = l2gwlib.do_request("GET", uri,
+                                      cluster=self.fake_cluster)
         self.assertIn('LogicalPortAttachment', resp_obj)
         self.assertEqual(resp_obj['LogicalPortAttachment']['type'],
                          'L2GatewayAttachment')

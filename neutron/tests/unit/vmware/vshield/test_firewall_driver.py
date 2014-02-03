@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: linb, VMware
 
 import contextlib
 import mock
@@ -70,8 +69,7 @@ class VcnsDriverTestCase(test_db_firewall.FirewallPluginDbTestCase,
         self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)
         self.vcns_firewall_patch()
 
-        self.nvp_service_plugin_callback = mock.Mock()
-        self.driver = vcns_driver.VcnsDriver(self.nvp_service_plugin_callback)
+        self.driver = vcns_driver.VcnsDriver(mock.Mock())
 
         super(VcnsDriverTestCase, self).setUp()
         self.addCleanup(self.fc2.reset_all)

@@ -31,48 +31,39 @@ from neutron import context
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
-from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as secgrp
 from neutron import manager
 from neutron.manager import NeutronManager
 from neutron.openstack.common.db import exception as db_exc
+from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira.dbexts import nicira_db
-from neutron.plugins.nicira.dbexts import qos_db
+from neutron.plugins.nicira.dbexts import nicira_db as nsx_db
 from neutron.plugins.nicira.extensions import distributedrouter as dist_router
-from neutron.plugins.nicira.extensions import networkgw
-from neutron.plugins.nicira.extensions import qos
 from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import nsxlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 import neutron.tests.unit.test_db_plugin as test_plugin
-import neutron.tests.unit.test_extension_allowedaddresspairs as test_addr_pair
 import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
-import neutron.tests.unit.test_extension_portsecurity as psec
 import neutron.tests.unit.test_extension_security_group as ext_sg
-from neutron.tests.unit import test_extensions
 import neutron.tests.unit.test_l3_plugin as test_l3_plugin
 from neutron.tests.unit import testlib_api
-from neutron.tests.unit.vmware import fake_nvpapiclient
+from neutron.tests.unit.vmware.apiclient import fake
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import NSXAPI_NAME
 from neutron.tests.unit.vmware import NSXEXT_PATH
 from neutron.tests.unit.vmware import PLUGIN_NAME
 from neutron.tests.unit.vmware import STUBS_PATH
-import neutron.tests.unit.vmware.test_networkgw as test_l2_gw
 
-
-from neutron.openstack.common import log
 LOG = log.getLogger(__name__)
 
 
-class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
+class NsxPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def _create_network(self, fmt, name, admin_state_up,
                         arg_list=None, providernet_args=None, **kwargs):
@@ -106,68 +97,38 @@ class NiciraPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
               ext_mgr=None,
               service_plugins=None):
         test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
-        # mock nvp api client
-        self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
-        self.mock_instance = self.mock_nvpapi.start()
+        # mock api client
+        self.fc = fake.FakeClient(STUBS_PATH)
+        self.mock_nsx = mock.patch(NSXAPI_NAME, autospec=True)
+        self.mock_instance = self.mock_nsx.start()
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
         patch_sync.start()
 
-        def _fake_request(*args, **kwargs):
-            return self.fc.fake_request(*args, **kwargs)
-
-        # Emulate tests against NVP 2.x
+        # Emulate tests against NSX 2.x
         self.mock_instance.return_value.get_nvp_version.return_value = (
             NVPVersion("2.9"))
-        self.mock_instance.return_value.request.side_effect = _fake_request
-        super(NiciraPluginV2TestCase, self).setUp(plugin=plugin,
-                                                  ext_mgr=ext_mgr)
+        self.mock_instance.return_value.request.side_effect = (
+            self.fc.fake_request)
+        super(NsxPluginV2TestCase, self).setUp(plugin=plugin,
+                                               ext_mgr=ext_mgr)
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(mock.patch.stopall)
 
 
-class TestNiciraBasicGet(test_plugin.TestBasicGet, NiciraPluginV2TestCase):
+class TestBasicGet(test_plugin.TestBasicGet, NsxPluginV2TestCase):
     pass
 
 
-class TestNiciraV2HTTPResponse(test_plugin.TestV2HTTPResponse,
-                               NiciraPluginV2TestCase):
+class TestV2HTTPResponse(test_plugin.TestV2HTTPResponse, NsxPluginV2TestCase):
     pass
 
 
-class TestNiciraProvidernet(NiciraPluginV2TestCase):
-
-    def test_create_provider_network_default_physical_net(self):
-        data = {'network': {'name': 'net1',
-                            'admin_state_up': True,
-                            'tenant_id': 'admin',
-                            pnet.NETWORK_TYPE: 'vlan',
-                            pnet.SEGMENTATION_ID: 411}}
-        network_req = self.new_create_request('networks', data, self.fmt)
-        net = self.deserialize(self.fmt, network_req.get_response(self.api))
-        self.assertEqual(net['network'][pnet.NETWORK_TYPE], 'vlan')
-        self.assertEqual(net['network'][pnet.SEGMENTATION_ID], 411)
-
-    def test_create_provider_network(self):
-        data = {'network': {'name': 'net1',
-                            'admin_state_up': True,
-                            'tenant_id': 'admin',
-                            pnet.NETWORK_TYPE: 'vlan',
-                            pnet.SEGMENTATION_ID: 411,
-                            pnet.PHYSICAL_NETWORK: 'physnet1'}}
-        network_req = self.new_create_request('networks', data, self.fmt)
-        net = self.deserialize(self.fmt, network_req.get_response(self.api))
-        self.assertEqual(net['network'][pnet.NETWORK_TYPE], 'vlan')
-        self.assertEqual(net['network'][pnet.SEGMENTATION_ID], 411)
-        self.assertEqual(net['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
-
-
-class TestNiciraPortsV2(NiciraPluginV2TestCase,
-                        test_plugin.TestPortsV2,
-                        test_bindings.PortBindingsTestCase,
-                        test_bindings.PortBindingsHostTestCaseMixin):
+class TestPortsV2(NsxPluginV2TestCase,
+                  test_plugin.TestPortsV2,
+                  test_bindings.PortBindingsTestCase,
+                  test_bindings.PortBindingsHostTestCaseMixin):
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = True
@@ -201,7 +162,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
                         self.assertEqual(len(ls), 2)
 
     def test_update_port_delete_ip(self):
-        # This test case overrides the default because the nvp plugin
+        # This test case overrides the default because the nsx plugin
         # implements port_security/security groups and it is not allowed
         # to remove an ip address from a port unless the security group
         # is first removed.
@@ -230,11 +191,11 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
         query_params = "network_id=%s" % net_id
         self._test_list_resources('port', [],
                                   query_params=query_params)
-        # Also verify no orphan port was left on nvp
+        # Also verify no orphan port was left on nsx
         # no port should be there at all
         self.assertFalse(self.fc._fake_lswitch_lport_dict)
 
-    def test_create_port_nvp_error_no_orphan_left(self):
+    def test_create_port_nsx_error_no_orphan_left(self):
         with mock.patch.object(nsxlib.switch, 'create_lport',
                                side_effect=NvpApiClient.NvpApiException):
             with self.network() as net:
@@ -244,7 +205,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
                 self._verify_no_orphan_left(net_id)
 
     def test_create_port_neutron_error_no_orphan_left(self):
-        with mock.patch.object(nicira_db, 'add_neutron_nsx_port_mapping',
+        with mock.patch.object(nsx_db, 'add_neutron_nsx_port_mapping',
                                side_effect=ntn_exc.NeutronException):
             with self.network() as net:
                 net_id = net['network']['id']
@@ -257,7 +218,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
             inner_exception=sql_exc.IntegrityError(mock.ANY,
                                                    mock.ANY,
                                                    mock.ANY))
-        with mock.patch.object(nicira_db, 'add_neutron_nsx_port_mapping',
+        with mock.patch.object(nsx_db, 'add_neutron_nsx_port_mapping',
                                side_effect=db_exception):
             with self.network() as net:
                 with self.port(device_owner='network:dhcp'):
@@ -266,7 +227,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
     def test_create_port_maintenance_returns_503(self):
         with self.network() as net:
             with mock.patch.object(nsxlib.switch, 'do_request',
-                                   side_effect=nvp_exc.MaintenanceInProgress):
+                                   side_effect=nsx_exc.MaintenanceInProgress):
                 data = {'port': {'network_id': net['network']['id'],
                                  'admin_state_up': False,
                                  'fixed_ips': [],
@@ -280,8 +241,7 @@ class TestNiciraPortsV2(NiciraPluginV2TestCase,
                                      res.status_int)
 
 
-class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
-                           NiciraPluginV2TestCase):
+class TestNetworksV2(test_plugin.TestNetworksV2, NsxPluginV2TestCase):
 
     def _test_create_bridge_network(self, vlan_id=None):
         net_type = vlan_id and 'vlan' or 'flat'
@@ -317,7 +277,7 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
 
     def test_list_networks_filter_by_id(self):
         # We add this unit test to cover some logic specific to the
-        # nvp plugin
+        # nsx plugin
         with contextlib.nested(self.network(name='net1'),
                                self.network(name='net2')) as (net1, net2):
             query_params = 'id=%s' % net1['network']['id']
@@ -368,7 +328,7 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
                             'admin_state_up': True,
                             'tenant_id': self._tenant_id}}
         with mock.patch.object(nsxlib.switch, 'do_request',
-                               side_effect=nvp_exc.MaintenanceInProgress):
+                               side_effect=nsx_exc.MaintenanceInProgress):
             net_req = self.new_create_request('networks', data, self.fmt)
             res = net_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPServiceUnavailable.code,
@@ -384,63 +344,26 @@ class TestNiciraNetworksV2(test_plugin.TestNetworksV2,
                               net['network']['id'], data)
 
 
-class NiciraPortSecurityTestCase(psec.PortSecurityDBTestCase):
+class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
 
     def setUp(self):
         test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
-        # mock nvp api client
-        self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
-        instance = self.mock_nvpapi.start()
+        # mock nsx api client
+        self.fc = fake.FakeClient(STUBS_PATH)
+        self.mock_nsx = mock.patch(NSXAPI_NAME, autospec=True)
+        instance = self.mock_nsx.start()
         instance.return_value.login.return_value = "the_cookie"
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
         patch_sync.start()
 
-        def _fake_request(*args, **kwargs):
-            return self.fc.fake_request(*args, **kwargs)
-
-        instance.return_value.request.side_effect = _fake_request
-        super(NiciraPortSecurityTestCase, self).setUp(PLUGIN_NAME)
-        self.addCleanup(self.fc.reset_all)
-        self.addCleanup(self.mock_nvpapi.stop)
+        instance.return_value.request.side_effect = self.fc.fake_request
+        self.addCleanup(self.mock_nsx.stop)
         self.addCleanup(patch_sync.stop)
+        super(SecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
 
 
-class TestNiciraPortSecurity(NiciraPortSecurityTestCase,
-                             psec.TestPortSecurity):
-        pass
-
-
-class TestNiciraAllowedAddressPairs(NiciraPluginV2TestCase,
-                                    test_addr_pair.TestAllowedAddressPairs):
-    pass
-
-
-class NiciraSecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
-
-    def setUp(self):
-        test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
-        # mock nvp api client
-        fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
-        instance = self.mock_nvpapi.start()
-        instance.return_value.login.return_value = "the_cookie"
-        # Avoid runs of the synchronizer looping call
-        patch_sync = mock.patch.object(sync, '_start_loopingcall')
-        patch_sync.start()
-
-        def _fake_request(*args, **kwargs):
-            return fc.fake_request(*args, **kwargs)
-
-        instance.return_value.request.side_effect = _fake_request
-        self.addCleanup(self.mock_nvpapi.stop)
-        self.addCleanup(patch_sync.stop)
-        super(NiciraSecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
-
-
-class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
-                              NiciraSecurityGroupsTestCase):
+class TestSecurityGroup(ext_sg.TestSecurityGroups, SecurityGroupsTestCase):
 
     def test_create_security_group_name_exceeds_40_chars(self):
         name = 'this_is_a_secgroup_whose_name_is_longer_than_40_chars'
@@ -464,7 +387,7 @@ class TestNiciraSecurityGroup(ext_sg.TestSecurityGroups,
             self.assertEqual(res.status_int, 400)
 
 
-class TestNiciraL3ExtensionManager(object):
+class TestL3ExtensionManager(object):
 
     def get_resources(self):
         # Simulate extension of L3 attribute map
@@ -486,14 +409,14 @@ class TestNiciraL3ExtensionManager(object):
         return []
 
 
-class TestNiciraL3SecGrpExtensionManager(TestNiciraL3ExtensionManager):
+class TestL3SecGrpExtensionManager(TestL3ExtensionManager):
     """A fake extension manager for L3 and Security Group extensions.
 
-    Includes also Nicira-specific L3 attributes.
+    Includes also NSX specific L3 attributes.
     """
 
     def get_resources(self):
-        resources = super(TestNiciraL3SecGrpExtensionManager,
+        resources = super(TestL3SecGrpExtensionManager,
                           self).get_resources()
         resources.extend(secgrp.Securitygroup.get_resources())
         return resources
@@ -510,8 +433,7 @@ def restore_l3_attribute_map(map_to_restore):
     l3.RESOURCE_ATTRIBUTE_MAP = map_to_restore
 
 
-class NiciraL3NatTest(test_l3_plugin.L3BaseForIntTests,
-                      NiciraPluginV2TestCase):
+class L3NatTest(test_l3_plugin.L3BaseForIntTests, NsxPluginV2TestCase):
 
     def _restore_l3_attribute_map(self):
         l3.RESOURCE_ATTRIBUTE_MAP = self._l3_attribute_map_bk
@@ -524,8 +446,8 @@ class NiciraL3NatTest(test_l3_plugin.L3BaseForIntTests,
         cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
         l3_attribute_map_bk = backup_l3_attribute_map()
         self.addCleanup(restore_l3_attribute_map, l3_attribute_map_bk)
-        ext_mgr = ext_mgr or TestNiciraL3ExtensionManager()
-        super(NiciraL3NatTest, self).setUp(
+        ext_mgr = ext_mgr or TestL3ExtensionManager()
+        super(L3NatTest, self).setUp(
             plugin=plugin, ext_mgr=ext_mgr, service_plugins=service_plugins)
         plugin_instance = NeutronManager.get_plugin()
         self._plugin_name = "%s.%s" % (
@@ -534,9 +456,9 @@ class NiciraL3NatTest(test_l3_plugin.L3BaseForIntTests,
         self._plugin_class = plugin_instance.__class__
 
 
-class TestNiciraL3NatTestCase(NiciraL3NatTest,
-                              test_l3_plugin.L3NatDBIntTestCase,
-                              NiciraPluginV2TestCase):
+class TestL3NatTestCase(L3NatTest,
+                        test_l3_plugin.L3NatDBIntTestCase,
+                        NsxPluginV2TestCase):
 
     def _create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
@@ -565,13 +487,13 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
             for k, v in expected:
                 self.assertEqual(net['network'][k], v)
 
-    def _nvp_validate_ext_gw(self, router_id, l3_gw_uuid, vlan_id):
-        """Verify data on fake NVP API client in order to validate
+    def _nsx_validate_ext_gw(self, router_id, l3_gw_uuid, vlan_id):
+        """Verify data on fake NSX API client in order to validate
         plugin did set them properly
         """
         # First find the NSX router ID
         ctx = context.get_admin_context()
-        nsx_router_id = nicira_db.get_nsx_router_id(ctx.session, router_id)
+        nsx_router_id = nsx_db.get_nsx_router_id(ctx.session, router_id)
         ports = [port for port in self.fc._fake_lrouter_lport_dict.values()
                  if (port['lr_uuid'] == nsx_router_id and
                      port['att_type'] == "L3GatewayAttachment")]
@@ -600,7 +522,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                         (router['router']['external_gateway_info']
                          ['network_id']))
                     if validate_ext_gw:
-                        self._nvp_validate_ext_gw(router['router']['id'],
+                        self._nsx_validate_ext_gw(router['router']['id'],
                                                   'l3_gw_uuid', vlan_id)
                 finally:
                     self._delete('routers', router['router']['id'])
@@ -636,7 +558,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
     def test_router_create_distributed_with_3_1(self):
         self._test_router_create_with_distributed(True, True)
 
-    def test_router_create_distributed_with_new_nvp_versions(self):
+    def test_router_create_distributed_with_new_nsx_versions(self):
         with mock.patch.object(nsxlib.router, 'create_explicit_route_lrouter'):
             self._test_router_create_with_distributed(True, True, '3.2')
             self._test_router_create_with_distributed(True, True, '4.0')
@@ -672,7 +594,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
             'routers', data, self.fmt)
         return router_req.get_response(self.ext_api)
 
-    def test_router_create_nvp_error_returns_500(self, vlan_id=None):
+    def test_router_create_nsx_error_returns_500(self, vlan_id=None):
         with mock.patch.object(nsxlib.router,
                                'create_router_lport',
                                side_effect=NvpApiClient.NvpApiException):
@@ -685,7 +607,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
 
     def test_router_add_gateway_invalid_network_returns_404(self):
         # NOTE(salv-orlando): This unit test has been overriden
-        # as the nicira plugin support the ext_gw_mode extension
+        # as the nsx plugin support the ext_gw_mode extension
         # which mandates a uuid for the external network identifier
         with self.router() as r:
             self._add_external_gateway_to_router(
@@ -698,7 +620,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
         # TODO(salv-orlando): Verify whehter this is thread-safe
         # w.r.t. sqllite and parallel testing
         self._test_list_resources('router', [])
-        # Check that router is not in NVP
+        # Check that router is not in NSX
         self.assertFalse(self.fc._fake_lrouter_dict)
 
     def test_router_create_with_gw_info_neutron_fail_does_rollback(self):
@@ -715,8 +637,8 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                         res.status_int)
                     self._verify_router_rollback()
 
-    def test_router_create_with_gw_info_nvp_fail_does_rollback(self):
-        # Simulate error while fetching nvp router gw port
+    def test_router_create_with_gw_info_nsx_fail_does_rollback(self):
+        # Simulate error while fetching nsx router gw port
         with mock.patch.object(self._plugin_class,
                                '_find_router_gw_port',
                                side_effect=NvpApiClient.NvpApiException):
@@ -755,7 +677,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                             self.assertEqual(net_id,
                                              s2['subnet']['network_id'])
                             if validate_ext_gw:
-                                self._nvp_validate_ext_gw(
+                                self._nsx_validate_ext_gw(
                                     body['router']['id'],
                                     'l3_gw_uuid', vlan_id)
                         finally:
@@ -787,10 +709,10 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
     def test_floatingip_with_invalid_create_port(self):
         self._test_floatingip_with_invalid_create_port(self._plugin_name)
 
-    def _nvp_metadata_setup(self):
+    def _metadata_setup(self):
         cfg.CONF.set_override('metadata_mode', 'access_network', 'NSX')
 
-    def _nvp_metadata_teardown(self):
+    def _metadata_teardown(self):
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
 
     def test_create_router_name_exceeds_40_chars(self):
@@ -800,47 +722,47 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
             self.assertEqual(rtr['router']['name'], name)
 
     def test_router_add_interface_subnet_with_metadata_access(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         self.test_router_add_interface_subnet()
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_router_add_interface_port_with_metadata_access(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         self.test_router_add_interface_port()
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_router_add_interface_dupsubnet_returns_400_with_metadata(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         self.test_router_add_interface_dup_subnet1_returns_400()
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_router_add_interface_overlapped_cidr_returns_400_with(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         self.test_router_add_interface_overlapped_cidr_returns_400()
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_router_remove_interface_inuse_returns_409_with_metadata(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         self.test_router_remove_interface_inuse_returns_409()
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_router_remove_iface_wrong_sub_returns_400_with_metadata(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         self.test_router_remove_interface_wrong_subnet_returns_400()
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_router_delete_with_metadata_access(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         self.test_router_delete()
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_router_delete_with_port_existed_returns_409_with_metadata(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         self.test_router_delete_with_port_existed_returns_409()
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_metadatata_network_created_with_router_interface_add(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         with self.router() as r:
             with self.subnet() as s:
                 self._router_interface_action('add',
@@ -860,10 +782,10 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                                               r['router']['id'],
                                               s['subnet']['id'],
                                               None)
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_metadata_network_create_rollback_on_create_subnet_failure(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         with self.router() as r:
             with self.subnet() as s:
                 # Raise a NeutronException (eg: NotFound)
@@ -880,10 +802,10 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                                               r['router']['id'],
                                               s['subnet']['id'],
                                               None)
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_metadata_network_create_rollback_on_add_rtr_iface_failure(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         with self.router() as r:
             with self.subnet() as s:
                 # Raise a NeutronException when adding metadata subnet
@@ -912,10 +834,10 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                                               r['router']['id'],
                                               s['subnet']['id'],
                                               None)
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_metadata_network_removed_with_router_interface_remove(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         with self.router() as r:
             with self.subnet() as s:
                 self._router_interface_action('add', r['router']['id'],
@@ -941,10 +863,10 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                            webob.exc.HTTPNotFound.code)
                 self._show('subnets', meta_sub_id,
                            webob.exc.HTTPNotFound.code)
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_metadata_network_remove_rollback_on_failure(self):
-        self._nvp_metadata_setup()
+        self._metadata_setup()
         with self.router() as r:
             with self.subnet() as s:
                 self._router_interface_action('add', r['router']['id'],
@@ -980,7 +902,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                            webob.exc.HTTPOk.code)
                 self._show('ports', meta_port_id,
                            webob.exc.HTTPOk.code)
-        self._nvp_metadata_teardown()
+        self._metadata_teardown()
 
     def test_metadata_dhcp_host_route(self):
         cfg.CONF.set_override('metadata_mode', 'dhcp_host_route', 'NSX')
@@ -1021,7 +943,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                 with mock.patch.object(
                     nsxlib.router,
                     'do_request',
-                    side_effect=nvp_exc.MaintenanceInProgress):
+                    side_effect=nsx_exc.MaintenanceInProgress):
                     data = {'router': {'tenant_id': 'whatever'}}
                     data['router']['name'] = 'router1'
                     data['router']['external_gateway_info'] = {
@@ -1033,267 +955,22 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
                                      res.status_int)
 
 
-class NvpQoSTestExtensionManager(object):
-
-    def get_resources(self):
-        return qos.Qos.get_resources()
-
-    def get_actions(self):
-        return []
-
-    def get_request_extensions(self):
-        return []
-
-
-class TestQoSQueue(NiciraPluginV2TestCase):
-
-    def setUp(self, plugin=None):
-        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
-        super(TestQoSQueue, self).setUp()
-        ext_mgr = NvpQoSTestExtensionManager()
-        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
-
-    def _create_qos_queue(self, fmt, body, **kwargs):
-        qos_queue = self.new_create_request('qos-queues', body)
-        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
-            # create a specific auth context for this request
-            qos_queue.environ['neutron.context'] = context.Context(
-                '', kwargs['tenant_id'])
-
-        return qos_queue.get_response(self.ext_api)
-
-    @contextlib.contextmanager
-    def qos_queue(self, name='foo', min='0', max='10',
-                  qos_marking=None, dscp='0', default=None, no_delete=False):
-
-        body = {'qos_queue': {'tenant_id': 'tenant',
-                              'name': name,
-                              'min': min,
-                              'max': max}}
-
-        if qos_marking:
-            body['qos_queue']['qos_marking'] = qos_marking
-        if dscp:
-            body['qos_queue']['dscp'] = dscp
-        if default:
-            body['qos_queue']['default'] = default
-        res = self._create_qos_queue('json', body)
-        qos_queue = self.deserialize('json', res)
-        if res.status_int >= 400:
-            raise webob.exc.HTTPClientError(code=res.status_int)
-        try:
-            yield qos_queue
-        finally:
-            if not no_delete:
-                self._delete('qos-queues',
-                             qos_queue['qos_queue']['id'])
-
-    def test_create_qos_queue(self):
-        with self.qos_queue(name='fake_lqueue', min=34, max=44,
-                            qos_marking='untrusted', default=False) as q:
-            self.assertEqual(q['qos_queue']['name'], 'fake_lqueue')
-            self.assertEqual(q['qos_queue']['min'], 34)
-            self.assertEqual(q['qos_queue']['max'], 44)
-            self.assertEqual(q['qos_queue']['qos_marking'], 'untrusted')
-            self.assertFalse(q['qos_queue']['default'])
-
-    def test_create_trusted_qos_queue(self):
-        with mock.patch.object(qos_db.LOG, 'info') as log:
-            with mock.patch.object(nsxlib.queue, 'do_request',
-                                   return_value={"uuid": "fake_queue"}):
-                with self.qos_queue(name='fake_lqueue', min=34, max=44,
-                                    qos_marking='trusted', default=False) as q:
-                    self.assertIsNone(q['qos_queue']['dscp'])
-                    self.assertTrue(log.called)
-
-    def test_create_qos_queue_name_exceeds_40_chars(self):
-        name = 'this_is_a_queue_whose_name_is_longer_than_40_chars'
-        with self.qos_queue(name=name) as queue:
-            # Assert Neutron name is not truncated
-            self.assertEqual(queue['qos_queue']['name'], name)
-
-    def test_create_qos_queue_default(self):
-        with self.qos_queue(default=True) as q:
-            self.assertTrue(q['qos_queue']['default'])
-
-    def test_create_qos_queue_two_default_queues_fail(self):
-        with self.qos_queue(default=True):
-            body = {'qos_queue': {'tenant_id': 'tenant',
-                                  'name': 'second_default_queue',
-                                  'default': True}}
-            res = self._create_qos_queue('json', body)
-            self.assertEqual(res.status_int, 409)
-
-    def test_create_port_with_queue(self):
-        with self.qos_queue(default=True) as q1:
-            res = self._create_network('json', 'net1', True,
-                                       arg_list=(qos.QUEUE,),
-                                       queue_id=q1['qos_queue']['id'])
-            net1 = self.deserialize('json', res)
-            self.assertEqual(net1['network'][qos.QUEUE],
-                             q1['qos_queue']['id'])
-            device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
-            with self.port(device_id=device_id, do_delete=False) as p:
-                self.assertEqual(len(p['port'][qos.QUEUE]), 36)
-
-    def test_create_shared_queue_networks(self):
-        with self.qos_queue(default=True, no_delete=True) as q1:
-            res = self._create_network('json', 'net1', True,
-                                       arg_list=(qos.QUEUE,),
-                                       queue_id=q1['qos_queue']['id'])
-            net1 = self.deserialize('json', res)
-            self.assertEqual(net1['network'][qos.QUEUE],
-                             q1['qos_queue']['id'])
-            res = self._create_network('json', 'net2', True,
-                                       arg_list=(qos.QUEUE,),
-                                       queue_id=q1['qos_queue']['id'])
-            net2 = self.deserialize('json', res)
-            self.assertEqual(net1['network'][qos.QUEUE],
-                             q1['qos_queue']['id'])
-            device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
-            res = self._create_port('json', net1['network']['id'],
-                                    device_id=device_id)
-            port1 = self.deserialize('json', res)
-            res = self._create_port('json', net2['network']['id'],
-                                    device_id=device_id)
-            port2 = self.deserialize('json', res)
-            self.assertEqual(port1['port'][qos.QUEUE],
-                             port2['port'][qos.QUEUE])
-
-            self._delete('ports', port1['port']['id'])
-            self._delete('ports', port2['port']['id'])
-
-    def test_remove_queue_in_use_fail(self):
-        with self.qos_queue(no_delete=True) as q1:
-            res = self._create_network('json', 'net1', True,
-                                       arg_list=(qos.QUEUE,),
-                                       queue_id=q1['qos_queue']['id'])
-            net1 = self.deserialize('json', res)
-            device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
-            res = self._create_port('json', net1['network']['id'],
-                                    device_id=device_id)
-            port = self.deserialize('json', res)
-            self._delete('qos-queues', port['port'][qos.QUEUE], 409)
-
-    def test_update_network_new_queue(self):
-        with self.qos_queue() as q1:
-            res = self._create_network('json', 'net1', True,
-                                       arg_list=(qos.QUEUE,),
-                                       queue_id=q1['qos_queue']['id'])
-            net1 = self.deserialize('json', res)
-            with self.qos_queue() as new_q:
-                data = {'network': {qos.QUEUE: new_q['qos_queue']['id']}}
-                req = self.new_update_request('networks', data,
-                                              net1['network']['id'])
-                res = req.get_response(self.api)
-                net1 = self.deserialize('json', res)
-                self.assertEqual(net1['network'][qos.QUEUE],
-                                 new_q['qos_queue']['id'])
-
-    def test_update_port_adding_device_id(self):
-        with self.qos_queue(no_delete=True) as q1:
-            res = self._create_network('json', 'net1', True,
-                                       arg_list=(qos.QUEUE,),
-                                       queue_id=q1['qos_queue']['id'])
-            net1 = self.deserialize('json', res)
-            device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
-            res = self._create_port('json', net1['network']['id'])
-            port = self.deserialize('json', res)
-            self.assertIsNone(port['port'][qos.QUEUE])
-
-            data = {'port': {'device_id': device_id}}
-            req = self.new_update_request('ports', data,
-                                          port['port']['id'])
-
-            res = req.get_response(self.api)
-            port = self.deserialize('json', res)
-            self.assertEqual(len(port['port'][qos.QUEUE]), 36)
-
-    def test_get_port_with_qos_not_admin(self):
-        body = {'qos_queue': {'tenant_id': 'not_admin',
-                              'name': 'foo', 'min': 20, 'max': 20}}
-        res = self._create_qos_queue('json', body, tenant_id='not_admin')
-        q1 = self.deserialize('json', res)
-        res = self._create_network('json', 'net1', True,
-                                   arg_list=(qos.QUEUE, 'tenant_id',),
-                                   queue_id=q1['qos_queue']['id'],
-                                   tenant_id="not_admin")
-        net1 = self.deserialize('json', res)
-        self.assertEqual(len(net1['network'][qos.QUEUE]), 36)
-        res = self._create_port('json', net1['network']['id'],
-                                tenant_id='not_admin', set_context=True)
-
-        port = self.deserialize('json', res)
-        self.assertNotIn(qos.QUEUE, port['port'])
-
-    def test_dscp_value_out_of_range(self):
-        body = {'qos_queue': {'tenant_id': 'admin', 'dscp': '64',
-                              'name': 'foo', 'min': 20, 'max': 20}}
-        res = self._create_qos_queue('json', body)
-        self.assertEqual(res.status_int, 400)
-
-    def test_non_admin_cannot_create_queue(self):
-        body = {'qos_queue': {'tenant_id': 'not_admin',
-                              'name': 'foo', 'min': 20, 'max': 20}}
-        res = self._create_qos_queue('json', body, tenant_id='not_admin',
-                                     set_context=True)
-        self.assertEqual(res.status_int, 403)
-
-    def test_update_port_non_admin_does_not_show_queue_id(self):
-        body = {'qos_queue': {'tenant_id': 'not_admin',
-                              'name': 'foo', 'min': 20, 'max': 20}}
-        res = self._create_qos_queue('json', body, tenant_id='not_admin')
-        q1 = self.deserialize('json', res)
-        res = self._create_network('json', 'net1', True,
-                                   arg_list=(qos.QUEUE,),
-                                   tenant_id='not_admin',
-                                   queue_id=q1['qos_queue']['id'])
-
-        net1 = self.deserialize('json', res)
-        res = self._create_port('json', net1['network']['id'],
-                                tenant_id='not_admin', set_context=True)
-        port = self.deserialize('json', res)
-        device_id = "00fff4d0-e4a8-4a3a-8906-4c4cdafb59f1"
-        data = {'port': {'device_id': device_id}}
-        neutron_context = context.Context('', 'not_admin')
-        port = self._update('ports', port['port']['id'], data,
-                            neutron_context=neutron_context)
-        self.assertNotIn(qos.QUEUE, port['port'])
-
-    def test_rxtx_factor(self):
-        with self.qos_queue(max=10) as q1:
-
-            res = self._create_network('json', 'net1', True,
-                                       arg_list=(qos.QUEUE,),
-                                       queue_id=q1['qos_queue']['id'])
-            net1 = self.deserialize('json', res)
-            res = self._create_port('json', net1['network']['id'],
-                                    arg_list=(qos.RXTX_FACTOR,),
-                                    rxtx_factor=2, device_id='1')
-            port = self.deserialize('json', res)
-            req = self.new_show_request('qos-queues',
-                                        port['port'][qos.QUEUE])
-            res = req.get_response(self.ext_api)
-            queue = self.deserialize('json', res)
-            self.assertEqual(queue['qos_queue']['max'], 20)
-
-
-class NiciraExtGwModeTestCase(NiciraPluginV2TestCase,
-                              test_ext_gw_mode.ExtGwModeIntTestCase):
+class ExtGwModeTestCase(NsxPluginV2TestCase,
+                        test_ext_gw_mode.ExtGwModeIntTestCase):
     pass
 
 
-class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
-                                test_l3_plugin.L3NatTestCaseMixin,
-                                ext_sg.SecurityGroupsTestCase):
+class NeutronNsxOutOfSync(NsxPluginV2TestCase,
+                          test_l3_plugin.L3NatTestCaseMixin,
+                          ext_sg.SecurityGroupsTestCase):
 
     def setUp(self):
         l3_attribute_map_bk = backup_l3_attribute_map()
         self.addCleanup(restore_l3_attribute_map, l3_attribute_map_bk)
-        super(NiciraNeutronNVPOutOfSync, self).setUp(
-            ext_mgr=TestNiciraL3SecGrpExtensionManager())
+        super(NeutronNsxOutOfSync, self).setUp(
+            ext_mgr=TestL3SecGrpExtensionManager())
 
-    def test_delete_network_not_in_nvp(self):
+    def test_delete_network_not_in_nsx(self):
         res = self._create_network('json', 'net1', True)
         net1 = self.deserialize('json', res)
         self.fc._fake_lswitch_dict.clear()
@@ -1301,7 +978,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 204)
 
-    def test_show_network_not_in_nvp(self):
+    def test_show_network_not_in_nsx(self):
         res = self._create_network('json', 'net1', True)
         net = self.deserialize('json', res)
         self.fc._fake_lswitch_dict.clear()
@@ -1311,7 +988,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         self.assertEqual(net['network']['status'],
                          constants.NET_STATUS_ERROR)
 
-    def test_delete_port_not_in_nvp(self):
+    def test_delete_port_not_in_nsx(self):
         res = self._create_network('json', 'net1', True)
         net1 = self.deserialize('json', res)
         res = self._create_port('json', net1['network']['id'])
@@ -1321,7 +998,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 204)
 
-    def test_show_port_not_in_nvp(self):
+    def test_show_port_not_in_nsx(self):
         res = self._create_network('json', 'net1', True)
         net1 = self.deserialize('json', res)
         res = self._create_port('json', net1['network']['id'])
@@ -1334,7 +1011,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         self.assertEqual(net['port']['status'],
                          constants.PORT_STATUS_ERROR)
 
-    def test_create_port_on_network_not_in_nvp(self):
+    def test_create_port_on_network_not_in_nsx(self):
         res = self._create_network('json', 'net1', True)
         net1 = self.deserialize('json', res)
         self.fc._fake_lswitch_dict.clear()
@@ -1342,7 +1019,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         port = self.deserialize('json', res)
         self.assertEqual(port['port']['status'], constants.PORT_STATUS_ERROR)
 
-    def test_update_port_not_in_nvp(self):
+    def test_update_port_not_in_nsx(self):
         res = self._create_network('json', 'net1', True)
         net1 = self.deserialize('json', res)
         res = self._create_port('json', net1['network']['id'])
@@ -1354,7 +1031,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         self.assertEqual(port['port']['status'], constants.PORT_STATUS_ERROR)
         self.assertEqual(port['port']['name'], 'error_port')
 
-    def test_delete_port_and_network_not_in_nvp(self):
+    def test_delete_port_and_network_not_in_nsx(self):
         res = self._create_network('json', 'net1', True)
         net1 = self.deserialize('json', res)
         res = self._create_port('json', net1['network']['id'])
@@ -1368,7 +1045,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, 204)
 
-    def test_delete_router_not_in_nvp(self):
+    def test_delete_router_not_in_nsx(self):
         res = self._create_router('json', 'tenant')
         router = self.deserialize('json', res)
         self.fc._fake_lrouter_dict.clear()
@@ -1376,7 +1053,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 204)
 
-    def test_show_router_not_in_nvp(self):
+    def test_show_router_not_in_nsx(self):
         res = self._create_router('json', 'tenant')
         router = self.deserialize('json', res)
         self.fc._fake_lrouter_dict.clear()
@@ -1397,7 +1074,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         sub = self.deserialize('json', sub_res)
         return net_id, sub['subnet']['id']
 
-    def test_clear_gateway_nat_rule_not_in_nvp(self):
+    def test_clear_gateway_nat_rule_not_in_nsx(self):
         # Create external network and subnet
         ext_net_id = self._create_network_and_subnet('1.1.1.0/24', True)[0]
         # Create internal network and subnet
@@ -1420,7 +1097,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
             router['router']['id'])
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 200)
-        # Delete NAT rule from NVP, clear gateway
+        # Delete NAT rule from NSX, clear gateway
         # and verify operation still succeeds
         self.fc._fake_lrouter_nat_dict.clear()
         req = self.new_update_request(
@@ -1430,7 +1107,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 200)
 
-    def test_update_router_not_in_nvp(self):
+    def test_update_router_not_in_nsx(self):
         res = self._create_router('json', 'tenant')
         router = self.deserialize('json', res)
         self.fc._fake_lrouter_dict.clear()
@@ -1445,7 +1122,7 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         self.assertEqual(router['router']['status'],
                          constants.NET_STATUS_ERROR)
 
-    def test_delete_security_group_not_in_nvp(self):
+    def test_delete_security_group_not_in_nsx(self):
         res = self._create_security_group('json', 'name', 'desc')
         sec_group = self.deserialize('json', res)
         self.fc._fake_securityprofile_dict.clear()
@@ -1454,205 +1131,3 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
             sec_group['security_group']['id'])
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 204)
-
-
-class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
-                               test_l2_gw.NetworkGatewayDbTestCase):
-
-    def setUp(self, plugin=PLUGIN_NAME, ext_mgr=None):
-        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
-        super(TestNiciraNetworkGateway,
-              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
-
-    def test_create_network_gateway_name_exceeds_40_chars(self):
-        name = 'this_is_a_gateway_whose_name_is_longer_than_40_chars'
-        with self._network_gateway(name=name) as nw_gw:
-            # Assert Neutron name is not truncated
-            self.assertEqual(nw_gw[self.resource]['name'], name)
-
-    def test_update_network_gateway_with_name_calls_backend(self):
-        with mock.patch.object(
-            nsxlib.l2gateway, 'update_l2_gw_service') as mock_update_gw:
-            with self._network_gateway(name='cavani') as nw_gw:
-                nw_gw_id = nw_gw[self.resource]['id']
-                self._update(networkgw.COLLECTION_NAME, nw_gw_id,
-                             {self.resource: {'name': 'higuain'}})
-                mock_update_gw.assert_called_once_with(
-                    mock.ANY, nw_gw_id, 'higuain')
-
-    def test_update_network_gateway_without_name_does_not_call_backend(self):
-        with mock.patch.object(
-            nsxlib.l2gateway, 'update_l2_gw_service') as mock_update_gw:
-            with self._network_gateway(name='something') as nw_gw:
-                nw_gw_id = nw_gw[self.resource]['id']
-                self._update(networkgw.COLLECTION_NAME, nw_gw_id,
-                             {self.resource: {}})
-                self.assertEqual(mock_update_gw.call_count, 0)
-
-    def test_update_network_gateway_name_exceeds_40_chars(self):
-        new_name = 'this_is_a_gateway_whose_name_is_longer_than_40_chars'
-        with self._network_gateway(name='something') as nw_gw:
-            nw_gw_id = nw_gw[self.resource]['id']
-            self._update(networkgw.COLLECTION_NAME, nw_gw_id,
-                         {self.resource: {'name': new_name}})
-            req = self.new_show_request(networkgw.COLLECTION_NAME,
-                                        nw_gw_id)
-            res = self.deserialize('json', req.get_response(self.ext_api))
-            # Assert Neutron name is not truncated
-            self.assertEqual(new_name, res[self.resource]['name'])
-            # Assert NVP name is truncated
-            self.assertEqual(
-                new_name[:40],
-                self.fc._fake_gatewayservice_dict[nw_gw_id]['display_name'])
-
-    def test_create_network_gateway_nvp_error_returns_500(self):
-        def raise_nvp_api_exc(*args, **kwargs):
-            raise NvpApiClient.NvpApiException
-
-        with mock.patch.object(nsxlib.l2gateway,
-                               'create_l2_gw_service',
-                               new=raise_nvp_api_exc):
-            res = self._create_network_gateway(
-                self.fmt, 'xxx', name='yyy',
-                devices=[{'id': uuidutils.generate_uuid()}])
-            self.assertEqual(500, res.status_int)
-
-    def test_create_network_gateway_nvp_error_returns_409(self):
-        with mock.patch.object(nsxlib.l2gateway,
-                               'create_l2_gw_service',
-                               side_effect=NvpApiClient.Conflict):
-            res = self._create_network_gateway(
-                self.fmt, 'xxx', name='yyy',
-                devices=[{'id': uuidutils.generate_uuid()}])
-            self.assertEqual(409, res.status_int)
-
-    def test_list_network_gateways(self):
-        with self._network_gateway(name='test-gw-1') as gw1:
-            with self._network_gateway(name='test_gw_2') as gw2:
-                req = self.new_list_request(networkgw.COLLECTION_NAME)
-                res = self.deserialize('json', req.get_response(self.ext_api))
-                # We expect the default gateway too
-                key = self.resource + 's'
-                self.assertEqual(len(res[key]), 3)
-                self.assertEqual(res[key][0]['default'],
-                                 True)
-                self.assertEqual(res[key][1]['name'],
-                                 gw1[self.resource]['name'])
-                self.assertEqual(res[key][2]['name'],
-                                 gw2[self.resource]['name'])
-
-    def test_list_network_gateway_with_multiple_connections(self):
-        self._test_list_network_gateway_with_multiple_connections(
-            expected_gateways=2)
-
-    def test_delete_network_gateway(self):
-        # The default gateway must still be there
-        self._test_delete_network_gateway(1)
-
-    def test_show_network_gateway_nvp_error_returns_404(self):
-        invalid_id = 'b5afd4a9-eb71-4af7-a082-8fc625a35b61'
-        req = self.new_show_request(networkgw.COLLECTION_NAME, invalid_id)
-        res = req.get_response(self.ext_api)
-        self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
-
-
-class TestNiciraMultiProviderNetworks(NiciraPluginV2TestCase):
-
-    def setUp(self, plugin=None):
-        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
-        super(TestNiciraMultiProviderNetworks, self).setUp()
-
-    def test_create_network_provider(self):
-        data = {'network': {'name': 'net1',
-                            pnet.NETWORK_TYPE: 'vlan',
-                            pnet.PHYSICAL_NETWORK: 'physnet1',
-                            pnet.SEGMENTATION_ID: 1,
-                            'tenant_id': 'tenant_one'}}
-        network_req = self.new_create_request('networks', data)
-        network = self.deserialize(self.fmt,
-                                   network_req.get_response(self.api))
-        self.assertEqual(network['network'][pnet.NETWORK_TYPE], 'vlan')
-        self.assertEqual(network['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
-        self.assertEqual(network['network'][pnet.SEGMENTATION_ID], 1)
-        self.assertNotIn(mpnet.SEGMENTS, network['network'])
-
-    def test_create_network_single_multiple_provider(self):
-        data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
-                            [{pnet.NETWORK_TYPE: 'vlan',
-                              pnet.PHYSICAL_NETWORK: 'physnet1',
-                              pnet.SEGMENTATION_ID: 1}],
-                            'tenant_id': 'tenant_one'}}
-        net_req = self.new_create_request('networks', data)
-        network = self.deserialize(self.fmt, net_req.get_response(self.api))
-        for provider_field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
-                               pnet.SEGMENTATION_ID]:
-            self.assertNotIn(provider_field, network['network'])
-        tz = network['network'][mpnet.SEGMENTS][0]
-        self.assertEqual(tz[pnet.NETWORK_TYPE], 'vlan')
-        self.assertEqual(tz[pnet.PHYSICAL_NETWORK], 'physnet1')
-        self.assertEqual(tz[pnet.SEGMENTATION_ID], 1)
-
-        # Tests get_network()
-        net_req = self.new_show_request('networks', network['network']['id'])
-        network = self.deserialize(self.fmt, net_req.get_response(self.api))
-        tz = network['network'][mpnet.SEGMENTS][0]
-        self.assertEqual(tz[pnet.NETWORK_TYPE], 'vlan')
-        self.assertEqual(tz[pnet.PHYSICAL_NETWORK], 'physnet1')
-        self.assertEqual(tz[pnet.SEGMENTATION_ID], 1)
-
-    def test_create_network_multprovider(self):
-        data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
-                            [{pnet.NETWORK_TYPE: 'vlan',
-                              pnet.PHYSICAL_NETWORK: 'physnet1',
-                              pnet.SEGMENTATION_ID: 1},
-                             {pnet.NETWORK_TYPE: 'stt',
-                              pnet.PHYSICAL_NETWORK: 'physnet1'}],
-                            'tenant_id': 'tenant_one'}}
-        network_req = self.new_create_request('networks', data)
-        network = self.deserialize(self.fmt,
-                                   network_req.get_response(self.api))
-        tz = network['network'][mpnet.SEGMENTS]
-        for tz in data['network'][mpnet.SEGMENTS]:
-            for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
-                          pnet.SEGMENTATION_ID]:
-                self.assertEqual(tz.get(field), tz.get(field))
-
-        # Tests get_network()
-        net_req = self.new_show_request('networks', network['network']['id'])
-        network = self.deserialize(self.fmt, net_req.get_response(self.api))
-        tz = network['network'][mpnet.SEGMENTS]
-        for tz in data['network'][mpnet.SEGMENTS]:
-            for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
-                          pnet.SEGMENTATION_ID]:
-                self.assertEqual(tz.get(field), tz.get(field))
-
-    def test_create_network_with_provider_and_multiprovider_fail(self):
-        data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
-                            [{pnet.NETWORK_TYPE: 'vlan',
-                              pnet.PHYSICAL_NETWORK: 'physnet1',
-                              pnet.SEGMENTATION_ID: 1}],
-                            pnet.NETWORK_TYPE: 'vlan',
-                            pnet.PHYSICAL_NETWORK: 'physnet1',
-                            pnet.SEGMENTATION_ID: 1,
-                            'tenant_id': 'tenant_one'}}
-
-        network_req = self.new_create_request('networks', data)
-        res = network_req.get_response(self.api)
-        self.assertEqual(res.status_int, 400)
-
-    def test_create_network_duplicate_segments(self):
-        data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
-                            [{pnet.NETWORK_TYPE: 'vlan',
-                              pnet.PHYSICAL_NETWORK: 'physnet1',
-                              pnet.SEGMENTATION_ID: 1},
-                             {pnet.NETWORK_TYPE: 'vlan',
-                              pnet.PHYSICAL_NETWORK: 'physnet1',
-                              pnet.SEGMENTATION_ID: 1}],
-                            'tenant_id': 'tenant_one'}}
-        network_req = self.new_create_request('networks', data)
-        res = network_req.get_response(self.api)
-        self.assertEqual(res.status_int, 400)

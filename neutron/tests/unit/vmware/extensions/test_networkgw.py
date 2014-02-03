@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2012 VMware, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,8 +13,8 @@
 #    under the License.
 
 import contextlib
-
 import mock
+
 from oslo.config import cfg
 from webob import exc
 import webtest
@@ -29,15 +27,19 @@ from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron import manager
+from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.dbexts import networkgw_db
 from neutron.plugins.nicira.extensions import networkgw
-from neutron.plugins.nicira.NeutronPlugin import NVP_EXT_PATH
+from neutron.plugins.nicira import nsxlib
+from neutron.plugins.nicira import NvpApiClient
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extensions
-
+from neutron.tests.unit.vmware import NSXEXT_PATH
+from neutron.tests.unit.vmware import PLUGIN_NAME
+from neutron.tests.unit.vmware.test_nsx_plugin import NsxPluginV2TestCase
 
 _uuid = test_api_v2._uuid
 _get_path = test_api_v2._get_path
@@ -594,6 +596,106 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                      'vlan', 555)
 
 
+class TestNetworkGateway(NsxPluginV2TestCase,
+                         NetworkGatewayDbTestCase):
+
+    def setUp(self, plugin=PLUGIN_NAME, ext_mgr=None):
+        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
+        super(TestNetworkGateway,
+              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+
+    def test_create_network_gateway_name_exceeds_40_chars(self):
+        name = 'this_is_a_gateway_whose_name_is_longer_than_40_chars'
+        with self._network_gateway(name=name) as nw_gw:
+            # Assert Neutron name is not truncated
+            self.assertEqual(nw_gw[self.resource]['name'], name)
+
+    def test_update_network_gateway_with_name_calls_backend(self):
+        with mock.patch.object(
+            nsxlib.l2gateway, 'update_l2_gw_service') as mock_update_gw:
+            with self._network_gateway(name='cavani') as nw_gw:
+                nw_gw_id = nw_gw[self.resource]['id']
+                self._update(networkgw.COLLECTION_NAME, nw_gw_id,
+                             {self.resource: {'name': 'higuain'}})
+                mock_update_gw.assert_called_once_with(
+                    mock.ANY, nw_gw_id, 'higuain')
+
+    def test_update_network_gateway_without_name_does_not_call_backend(self):
+        with mock.patch.object(
+            nsxlib.l2gateway, 'update_l2_gw_service') as mock_update_gw:
+            with self._network_gateway(name='something') as nw_gw:
+                nw_gw_id = nw_gw[self.resource]['id']
+                self._update(networkgw.COLLECTION_NAME, nw_gw_id,
+                             {self.resource: {}})
+                self.assertEqual(mock_update_gw.call_count, 0)
+
+    def test_update_network_gateway_name_exceeds_40_chars(self):
+        new_name = 'this_is_a_gateway_whose_name_is_longer_than_40_chars'
+        with self._network_gateway(name='something') as nw_gw:
+            nw_gw_id = nw_gw[self.resource]['id']
+            self._update(networkgw.COLLECTION_NAME, nw_gw_id,
+                         {self.resource: {'name': new_name}})
+            req = self.new_show_request(networkgw.COLLECTION_NAME,
+                                        nw_gw_id)
+            res = self.deserialize('json', req.get_response(self.ext_api))
+            # Assert Neutron name is not truncated
+            self.assertEqual(new_name, res[self.resource]['name'])
+            # Assert NSX name is truncated
+            self.assertEqual(
+                new_name[:40],
+                self.fc._fake_gatewayservice_dict[nw_gw_id]['display_name'])
+
+    def test_create_network_gateway_nsx_error_returns_500(self):
+        def raise_nsx_api_exc(*args, **kwargs):
+            raise NvpApiClient.NvpApiException
+
+        with mock.patch.object(nsxlib.l2gateway,
+                               'create_l2_gw_service',
+                               new=raise_nsx_api_exc):
+            res = self._create_network_gateway(
+                self.fmt, 'xxx', name='yyy',
+                devices=[{'id': uuidutils.generate_uuid()}])
+            self.assertEqual(500, res.status_int)
+
+    def test_create_network_gateway_nsx_error_returns_409(self):
+        with mock.patch.object(nsxlib.l2gateway,
+                               'create_l2_gw_service',
+                               side_effect=NvpApiClient.Conflict):
+            res = self._create_network_gateway(
+                self.fmt, 'xxx', name='yyy',
+                devices=[{'id': uuidutils.generate_uuid()}])
+            self.assertEqual(409, res.status_int)
+
+    def test_list_network_gateways(self):
+        with self._network_gateway(name='test-gw-1') as gw1:
+            with self._network_gateway(name='test_gw_2') as gw2:
+                req = self.new_list_request(networkgw.COLLECTION_NAME)
+                res = self.deserialize('json', req.get_response(self.ext_api))
+                # We expect the default gateway too
+                key = self.resource + 's'
+                self.assertEqual(len(res[key]), 3)
+                self.assertEqual(res[key][0]['default'],
+                                 True)
+                self.assertEqual(res[key][1]['name'],
+                                 gw1[self.resource]['name'])
+                self.assertEqual(res[key][2]['name'],
+                                 gw2[self.resource]['name'])
+
+    def test_list_network_gateway_with_multiple_connections(self):
+        self._test_list_network_gateway_with_multiple_connections(
+            expected_gateways=2)
+
+    def test_delete_network_gateway(self):
+        # The default gateway must still be there
+        self._test_delete_network_gateway(1)
+
+    def test_show_network_gateway_nsx_error_returns_404(self):
+        invalid_id = 'b5afd4a9-eb71-4af7-a082-8fc625a35b61'
+        req = self.new_show_request(networkgw.COLLECTION_NAME, invalid_id)
+        res = req.get_response(self.ext_api)
+        self.assertEqual(exc.HTTPNotFound.code, res.status_int)
+
+
 class TestNetworkGatewayPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                networkgw_db.NetworkGatewayMixin):
     """Simple plugin class for testing db support for network gateway ext."""
@@ -602,7 +704,7 @@ class TestNetworkGatewayPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self, **args):
         super(TestNetworkGatewayPlugin, self).__init__(**args)
-        extensions.append_api_extensions_path([NVP_EXT_PATH])
+        extensions.append_api_extensions_path([NSXEXT_PATH])
 
     def delete_port(self, context, id, nw_gw_port_check=True):
         if nw_gw_port_check:

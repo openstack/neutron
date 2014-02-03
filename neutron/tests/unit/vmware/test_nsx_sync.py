@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2013 Nicira Networks, Inc.
+# Copyright 2013 VMware, Inc.
 # All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -29,13 +29,13 @@ from neutron import context
 from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log
 from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira import nsx_cluster
+from neutron.plugins.nicira import nsx_cluster as cluster
 from neutron.plugins.nicira import NvpApiClient
-from neutron.plugins.nicira import nvplib
+from neutron.plugins.nicira import nvplib as nsx_utils
 from neutron.plugins.vmware import plugin
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
-from neutron.tests.unit.vmware import fake_nvpapiclient
+from neutron.tests.unit.vmware.apiclient import fake
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import NSXAPI_NAME
 from neutron.tests.unit.vmware import STUBS_PATH
@@ -51,60 +51,60 @@ LROUTERS = [{'uuid': _uuid(), 'name': 'lr-1'},
             {'uuid': _uuid(), 'name': 'lr-2'}]
 
 
-class NvpCacheTestCase(base.BaseTestCase):
-    """Test suite providing coverage for the NvpCache class."""
+class CacheTestCase(base.BaseTestCase):
+    """Test suite providing coverage for the Cache class."""
 
     def setUp(self):
-        self.nvp_cache = sync.NvpCache()
+        self.nsx_cache = sync.NvpCache()
         for lswitch in LSWITCHES:
-            self.nvp_cache._uuid_dict_mappings[lswitch['uuid']] = (
-                self.nvp_cache._lswitches)
-            self.nvp_cache._lswitches[lswitch['uuid']] = (
+            self.nsx_cache._uuid_dict_mappings[lswitch['uuid']] = (
+                self.nsx_cache._lswitches)
+            self.nsx_cache._lswitches[lswitch['uuid']] = (
                 {'data': lswitch,
                  'hash': hash(json.dumps(lswitch))})
         for lswitchport in LSWITCHPORTS:
-            self.nvp_cache._uuid_dict_mappings[lswitchport['uuid']] = (
-                self.nvp_cache._lswitchports)
-            self.nvp_cache._lswitchports[lswitchport['uuid']] = (
+            self.nsx_cache._uuid_dict_mappings[lswitchport['uuid']] = (
+                self.nsx_cache._lswitchports)
+            self.nsx_cache._lswitchports[lswitchport['uuid']] = (
                 {'data': lswitchport,
                  'hash': hash(json.dumps(lswitchport))})
         for lrouter in LROUTERS:
-            self.nvp_cache._uuid_dict_mappings[lrouter['uuid']] = (
-                self.nvp_cache._lrouters)
-            self.nvp_cache._lrouters[lrouter['uuid']] = (
+            self.nsx_cache._uuid_dict_mappings[lrouter['uuid']] = (
+                self.nsx_cache._lrouters)
+            self.nsx_cache._lrouters[lrouter['uuid']] = (
                 {'data': lrouter,
                  'hash': hash(json.dumps(lrouter))})
-        super(NvpCacheTestCase, self).setUp()
+        super(CacheTestCase, self).setUp()
 
     def test_get_lswitches(self):
-        ls_uuids = self.nvp_cache.get_lswitches()
+        ls_uuids = self.nsx_cache.get_lswitches()
         self.assertEqual(set(ls_uuids),
                          set([ls['uuid'] for ls in LSWITCHES]))
 
     def test_get_lswitchports(self):
-        lp_uuids = self.nvp_cache.get_lswitchports()
+        lp_uuids = self.nsx_cache.get_lswitchports()
         self.assertEqual(set(lp_uuids),
                          set([lp['uuid'] for lp in LSWITCHPORTS]))
 
     def test_get_lrouters(self):
-        lr_uuids = self.nvp_cache.get_lrouters()
+        lr_uuids = self.nsx_cache.get_lrouters()
         self.assertEqual(set(lr_uuids),
                          set([lr['uuid'] for lr in LROUTERS]))
 
     def test_get_lswitches_changed_only(self):
-        ls_uuids = self.nvp_cache.get_lswitches(changed_only=True)
+        ls_uuids = self.nsx_cache.get_lswitches(changed_only=True)
         self.assertEqual(0, len(ls_uuids))
 
     def test_get_lswitchports_changed_only(self):
-        lp_uuids = self.nvp_cache.get_lswitchports(changed_only=True)
+        lp_uuids = self.nsx_cache.get_lswitchports(changed_only=True)
         self.assertEqual(0, len(lp_uuids))
 
     def test_get_lrouters_changed_only(self):
-        lr_uuids = self.nvp_cache.get_lrouters(changed_only=True)
+        lr_uuids = self.nsx_cache.get_lrouters(changed_only=True)
         self.assertEqual(0, len(lr_uuids))
 
     def _verify_update(self, new_resource, changed=True, hit=True):
-        cached_resource = self.nvp_cache[new_resource['uuid']]
+        cached_resource = self.nsx_cache[new_resource['uuid']]
         self.assertEqual(new_resource, cached_resource['data'])
         self.assertEqual(hit, cached_resource.get('hit', False))
         self.assertEqual(changed,
@@ -113,68 +113,68 @@ class NvpCacheTestCase(base.BaseTestCase):
     def test_update_lswitch_new_item(self):
         new_switch_uuid = _uuid()
         new_switch = {'uuid': new_switch_uuid, 'name': 'new_switch'}
-        self.nvp_cache.update_lswitch(new_switch)
-        self.assertIn(new_switch_uuid, self.nvp_cache._lswitches.keys())
+        self.nsx_cache.update_lswitch(new_switch)
+        self.assertIn(new_switch_uuid, self.nsx_cache._lswitches.keys())
         self._verify_update(new_switch)
 
     def test_update_lswitch_existing_item(self):
         switch = LSWITCHES[0]
         switch['name'] = 'new_name'
-        self.nvp_cache.update_lswitch(switch)
-        self.assertIn(switch['uuid'], self.nvp_cache._lswitches.keys())
+        self.nsx_cache.update_lswitch(switch)
+        self.assertIn(switch['uuid'], self.nsx_cache._lswitches.keys())
         self._verify_update(switch)
 
     def test_update_lswitchport_new_item(self):
         new_switchport_uuid = _uuid()
         new_switchport = {'uuid': new_switchport_uuid,
                           'name': 'new_switchport'}
-        self.nvp_cache.update_lswitchport(new_switchport)
+        self.nsx_cache.update_lswitchport(new_switchport)
         self.assertIn(new_switchport_uuid,
-                      self.nvp_cache._lswitchports.keys())
+                      self.nsx_cache._lswitchports.keys())
         self._verify_update(new_switchport)
 
     def test_update_lswitchport_existing_item(self):
         switchport = LSWITCHPORTS[0]
         switchport['name'] = 'new_name'
-        self.nvp_cache.update_lswitchport(switchport)
+        self.nsx_cache.update_lswitchport(switchport)
         self.assertIn(switchport['uuid'],
-                      self.nvp_cache._lswitchports.keys())
+                      self.nsx_cache._lswitchports.keys())
         self._verify_update(switchport)
 
     def test_update_lrouter_new_item(self):
         new_router_uuid = _uuid()
         new_router = {'uuid': new_router_uuid,
                       'name': 'new_router'}
-        self.nvp_cache.update_lrouter(new_router)
+        self.nsx_cache.update_lrouter(new_router)
         self.assertIn(new_router_uuid,
-                      self.nvp_cache._lrouters.keys())
+                      self.nsx_cache._lrouters.keys())
         self._verify_update(new_router)
 
     def test_update_lrouter_existing_item(self):
         router = LROUTERS[0]
         router['name'] = 'new_name'
-        self.nvp_cache.update_lrouter(router)
+        self.nsx_cache.update_lrouter(router)
         self.assertIn(router['uuid'],
-                      self.nvp_cache._lrouters.keys())
+                      self.nsx_cache._lrouters.keys())
         self._verify_update(router)
 
     def test_process_updates_initial(self):
         # Clear cache content to simulate first-time filling
-        self.nvp_cache._lswitches.clear()
-        self.nvp_cache._lswitchports.clear()
-        self.nvp_cache._lrouters.clear()
-        self.nvp_cache.process_updates(LSWITCHES, LROUTERS, LSWITCHPORTS)
+        self.nsx_cache._lswitches.clear()
+        self.nsx_cache._lswitchports.clear()
+        self.nsx_cache._lrouters.clear()
+        self.nsx_cache.process_updates(LSWITCHES, LROUTERS, LSWITCHPORTS)
         for resource in LSWITCHES + LROUTERS + LSWITCHPORTS:
             self._verify_update(resource)
 
     def test_process_updates_no_change(self):
-        self.nvp_cache.process_updates(LSWITCHES, LROUTERS, LSWITCHPORTS)
+        self.nsx_cache.process_updates(LSWITCHES, LROUTERS, LSWITCHPORTS)
         for resource in LSWITCHES + LROUTERS + LSWITCHPORTS:
             self._verify_update(resource, changed=False)
 
     def test_process_updates_with_changes(self):
         LSWITCHES[0]['name'] = 'altered'
-        self.nvp_cache.process_updates(LSWITCHES, LROUTERS, LSWITCHPORTS)
+        self.nsx_cache.process_updates(LSWITCHES, LROUTERS, LSWITCHPORTS)
         for resource in LSWITCHES + LROUTERS + LSWITCHPORTS:
             changed = (True if resource['uuid'] == LSWITCHES[0]['uuid']
                        else False)
@@ -183,7 +183,7 @@ class NvpCacheTestCase(base.BaseTestCase):
     def _test_process_updates_with_removals(self):
         lswitches = LSWITCHES[:]
         lswitch = lswitches.pop()
-        self.nvp_cache.process_updates(lswitches, LROUTERS, LSWITCHPORTS)
+        self.nsx_cache.process_updates(lswitches, LROUTERS, LSWITCHPORTS)
         for resource in LSWITCHES + LROUTERS + LSWITCHPORTS:
             hit = (False if resource['uuid'] == lswitch['uuid']
                    else True)
@@ -195,12 +195,12 @@ class NvpCacheTestCase(base.BaseTestCase):
 
     def test_process_updates_cleanup_after_delete(self):
         deleted_lswitch, lswitches = self._test_process_updates_with_removals()
-        self.nvp_cache.process_deletes()
-        self.nvp_cache.process_updates(lswitches, LROUTERS, LSWITCHPORTS)
-        self.assertNotIn(deleted_lswitch['uuid'], self.nvp_cache._lswitches)
+        self.nsx_cache.process_deletes()
+        self.nsx_cache.process_updates(lswitches, LROUTERS, LSWITCHPORTS)
+        self.assertNotIn(deleted_lswitch['uuid'], self.nsx_cache._lswitches)
 
     def _verify_delete(self, resource, deleted=True, hit=True):
-        cached_resource = self.nvp_cache[resource['uuid']]
+        cached_resource = self.nsx_cache[resource['uuid']]
         data_field = 'data_bk' if deleted else 'data'
         self.assertEqual(resource, cached_resource[data_field])
         self.assertEqual(hit, cached_resource.get('hit', False))
@@ -214,23 +214,23 @@ class NvpCacheTestCase(base.BaseTestCase):
 
     def test_process_deletes_no_change(self):
         # Mark all resources as hit
-        self._set_hit(self.nvp_cache._lswitches.values())
-        self._set_hit(self.nvp_cache._lswitchports.values())
-        self._set_hit(self.nvp_cache._lrouters.values())
-        self.nvp_cache.process_deletes()
+        self._set_hit(self.nsx_cache._lswitches.values())
+        self._set_hit(self.nsx_cache._lswitchports.values())
+        self._set_hit(self.nsx_cache._lrouters.values())
+        self.nsx_cache.process_deletes()
         for resource in LSWITCHES + LROUTERS + LSWITCHPORTS:
             self._verify_delete(resource, hit=False, deleted=False)
 
     def test_process_deletes_with_removals(self):
         # Mark all resources but one as hit
         uuid_to_delete = LSWITCHPORTS[0]['uuid']
-        self._set_hit(self.nvp_cache._lswitches.values(),
+        self._set_hit(self.nsx_cache._lswitches.values(),
                       uuid_to_delete)
-        self._set_hit(self.nvp_cache._lswitchports.values(),
+        self._set_hit(self.nsx_cache._lswitchports.values(),
                       uuid_to_delete)
-        self._set_hit(self.nvp_cache._lrouters.values(),
+        self._set_hit(self.nsx_cache._lrouters.values(),
                       uuid_to_delete)
-        self.nvp_cache.process_deletes()
+        self.nsx_cache.process_deletes()
         for resource in LSWITCHES + LROUTERS + LSWITCHPORTS:
             deleted = resource['uuid'] == uuid_to_delete
             self._verify_delete(resource, hit=False, deleted=deleted)
@@ -253,27 +253,24 @@ class SyncLoopingCallTestCase(base.BaseTestCase):
             self.assertTrue(synchronizer._synchronize_state.call_count)
 
 
-class NvpSyncTestCase(base.BaseTestCase):
+class SyncTestCase(base.BaseTestCase):
 
     def setUp(self):
-        # mock nvp api client
-        self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
+        # mock api client
+        self.fc = fake.FakeClient(STUBS_PATH)
+        mock_api = mock.patch(NSXAPI_NAME, autospec=True)
         # Avoid runs of the synchronizer looping call
         # These unit tests will excplicitly invoke synchronization
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
-        self.mock_nvpapi = mock_nvpapi.start()
+        self.mock_api = mock_api.start()
         patch_sync.start()
-        self.mock_nvpapi.return_value.login.return_value = "the_cookie"
-        # Emulate tests against NVP 3.x
-        self.mock_nvpapi.return_value.get_nvp_version.return_value = (
+        self.mock_api.return_value.login.return_value = "the_cookie"
+        # Emulate tests against NSX 3.x
+        self.mock_api.return_value.get_nvp_version.return_value = (
             NvpApiClient.NVPVersion("3.1"))
 
-        def _fake_request(*args, **kwargs):
-            return self.fc.fake_request(*args, **kwargs)
-
-        self.mock_nvpapi.return_value.request.side_effect = _fake_request
-        self.fake_cluster = nsx_cluster.NSXCluster(
+        self.mock_api.return_value.request.side_effect = self.fc.fake_request
+        self.fake_cluster = cluster.NSXCluster(
             name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
             default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
         self.fake_cluster.api_client = NvpApiClient.NVPApiHelper(
@@ -296,16 +293,16 @@ class NvpSyncTestCase(base.BaseTestCase):
         self.mock_nm_get_plugin = mock_nm_get_plugin.start()
         self.mock_nm_get_plugin.return_value = self._plugin
         mock_nm_get_service_plugins.start()
-        super(NvpSyncTestCase, self).setUp()
+        super(SyncTestCase, self).setUp()
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(patch_sync.stop)
-        self.addCleanup(mock_nvpapi.stop)
+        self.addCleanup(mock_api.stop)
         self.addCleanup(mock_nm_get_plugin.stop)
         self.addCleanup(mock_nm_get_service_plugins.stop)
 
     def tearDown(self):
         cfg.CONF.reset()
-        super(NvpSyncTestCase, self).tearDown()
+        super(SyncTestCase, self).tearDown()
 
     @contextlib.contextmanager
     def _populate_data(self, ctx, net_size=2, port_size=2, router_size=2):
@@ -456,7 +453,7 @@ class NvpSyncTestCase(base.BaseTestCase):
     def _test_sync_with_chunk_larger_maxpagesize(
         self, net_size, port_size, router_size, chunk_size, exp_calls):
         ctx = context.get_admin_context()
-        real_func = nvplib.get_single_query_page
+        real_func = nsx_utils.get_single_query_page
         sp = sync.SyncParameters(chunk_size)
         with self._populate_data(ctx, net_size=net_size,
                                  port_size=port_size,
@@ -465,7 +462,7 @@ class NvpSyncTestCase(base.BaseTestCase):
                 # The following mock is just for counting calls,
                 # but we will still run the actual function
                 with mock.patch.object(
-                    nvplib, 'get_single_query_page',
+                    nsx_utils, 'get_single_query_page',
                     side_effect=real_func) as mock_get_page:
                     self._test_sync(
                         constants.NET_STATUS_ACTIVE,
@@ -491,7 +488,7 @@ class NvpSyncTestCase(base.BaseTestCase):
             chunk_size=48, exp_calls=6)
 
     def test_sync_multi_chunk(self):
-        # The fake NVP API client cannot be used for this test
+        # The fake NSX API client cannot be used for this test
         ctx = context.get_admin_context()
         # Generate 4 networks, 1 port per network, and 4 routers
         with self._populate_data(ctx, net_size=4, port_size=1, router_size=4):
@@ -633,8 +630,8 @@ class NvpSyncTestCase(base.BaseTestCase):
             q_rtr_data = self._plugin.get_router(ctx, q_rtr_id)
             self.assertEqual(constants.NET_STATUS_DOWN, q_rtr_data['status'])
 
-    def test_sync_nvp_failure_backoff(self):
-        self.mock_nvpapi.return_value.request.side_effect = (
+    def test_sync_nsx_failure_backoff(self):
+        self.mock_api.return_value.request.side_effect = (
             NvpApiClient.RequestTimeout)
         # chunk size won't matter here
         sp = sync.SyncParameters(999)

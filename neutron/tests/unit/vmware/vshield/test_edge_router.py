@@ -63,7 +63,7 @@ class ServiceRouterTestExtensionManager(object):
         return []
 
 
-class ServiceRouterTest(test_nsx_plugin.NiciraL3NatTest,
+class ServiceRouterTest(test_nsx_plugin.L3NatTest,
                         test_l3_plugin.L3NatTestCaseMixin):
 
     def vcns_patch(self):
@@ -115,7 +115,7 @@ class ServiceRouterTest(test_nsx_plugin.NiciraL3NatTest,
             service_plugins=service_plugins,
             ext_mgr=ext_mgr)
 
-        self.fc2.set_fake_nvpapi(self.fc)
+        self.fc2.set_fake_nsx_api(self.fc)
         self.addCleanup(self.fc2.reset_all)
         self.addCleanup(mock.patch.stopall)
 
@@ -158,7 +158,7 @@ class ServiceRouterTest(test_nsx_plugin.NiciraL3NatTest,
 
 
 class ServiceRouterTestCase(ServiceRouterTest,
-                            test_nsx_plugin.TestNiciraL3NatTestCase):
+                            test_nsx_plugin.TestL3NatTestCase):
 
     def test_router_create(self):
         name = 'router1'

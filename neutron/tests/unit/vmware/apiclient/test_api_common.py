@@ -21,7 +21,7 @@ import neutron.plugins.nicira.api_client.common as naco
 from neutron.tests import base
 
 
-class NvpApiCommonTest(base.BaseTestCase):
+class ApiCommonTest(base.BaseTestCase):
 
     def test_conn_str(self):
         conn = httplib.HTTPSConnection('localhost', 4242, timeout=0)
