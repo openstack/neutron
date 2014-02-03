@@ -1132,7 +1132,8 @@ class DBInterface(object):
 
         elif net_repr == 'LIST':
             extra_dict['contrail:instance_count'] = 0
-            port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
+            #port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
+            port_back_refs = None
             if port_back_refs:
                 extra_dict['contrail:instance_count'] = len(port_back_refs)
 
