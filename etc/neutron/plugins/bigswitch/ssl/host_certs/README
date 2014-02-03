@@ -1,0 +1,6 @@
+Certificates in this folder must match the name
+of the controller they should be used to authenticate
+with a .pem extension.
+
+For example, the certificate for the controller
+"192.168.0.1" should be named "192.168.0.1.pem".
