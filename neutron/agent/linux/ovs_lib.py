@@ -75,7 +75,6 @@ class BaseOVS(object):
 
     def add_bridge(self, bridge_name):
         self.run_vsctl(["--", "--may-exist", "add-br", bridge_name])
-        return OVSBridge(bridge_name, self.root_helper)
 
     def delete_bridge(self, bridge_name):
         self.run_vsctl(["--", "--if-exists", "del-br", bridge_name])
