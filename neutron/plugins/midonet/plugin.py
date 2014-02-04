@@ -1092,11 +1092,10 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param id: router ID to remove
         """
         LOG.info(_("MidonetPluginV2.delete_router called: id=%s"), id)
+        super(MidonetPluginV2, self).delete_router(context, id)
 
         self.client.delete_router_chains(id)
         self.client.delete_router(id)
-
-        super(MidonetPluginV2, self).delete_router(context, id)
 
     def _add_route_to_provider(self, bridge, ip):
         """Add a route to the given IP through the given bridge.
