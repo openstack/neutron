@@ -39,15 +39,19 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     HAS_PORT_FILTER = False
 
     def _check_response_portbindings(self, port):
-        self.assertEqual(port['binding:vif_type'], self.VIF_TYPE)
-        port_cap = port[portbindings.CAPABILITIES]
-        self.assertEqual(port_cap[portbindings.CAP_PORT_FILTER],
-                         self.HAS_PORT_FILTER)
+        self.assertEqual(port[portbindings.VIF_TYPE], self.VIF_TYPE)
+        vif_details = port[portbindings.VIF_DETAILS]
+        # REVISIT(rkukura): Consider reworking tests to enable ML2 to bind
+        if self.VIF_TYPE not in [portbindings.VIF_TYPE_UNBOUND,
+                                 portbindings.VIF_TYPE_BINDING_FAILED]:
+            # TODO(rkukura): Replace with new VIF security details
+            self.assertEqual(vif_details[portbindings.CAP_PORT_FILTER],
+                             self.HAS_PORT_FILTER)
 
     def _check_response_no_portbindings(self, port):
         self.assertIn('status', port)
         self.assertNotIn(portbindings.VIF_TYPE, port)
-        self.assertNotIn(portbindings.CAPABILITIES, port)
+        self.assertNotIn(portbindings.VIF_DETAILS, port)
 
     def _get_non_admin_context(self):
         return context.Context(user_id=None,

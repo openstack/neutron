@@ -66,8 +66,7 @@ def ensure_port_binding(session, port_id):
             record = models.PortBinding(
                 port_id=port_id,
                 host='',
-                vif_type=portbindings.VIF_TYPE_UNBOUND,
-                cap_port_filter=False)
+                vif_type=portbindings.VIF_TYPE_UNBOUND)
             session.add(record)
         return record
 

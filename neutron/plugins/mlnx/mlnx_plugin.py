@@ -102,7 +102,8 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.vnic_type = cfg.CONF.ESWITCH.vnic_type
         self.base_binding_dict = {
             portbindings.VIF_TYPE: self.vnic_type,
-            portbindings.CAPABILITIES: {
+            portbindings.VIF_DETAILS: {
+                # TODO(rkukura): Replace with new VIF security details
                 portbindings.CAP_PORT_FILTER:
                 'security-group' in self.supported_extension_aliases}}
         self._setup_rpc()

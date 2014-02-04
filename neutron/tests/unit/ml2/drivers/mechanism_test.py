@@ -116,9 +116,11 @@ class TestMechanismDriver(api.MechanismDriver):
         host = context.current.get(portbindings.HOST_ID, None)
         segment = context.network.network_segments[0][api.ID]
         if host == "host-ovs-no_filter":
-            context.set_binding(segment, portbindings.VIF_TYPE_OVS, False)
+            context.set_binding(segment, portbindings.VIF_TYPE_OVS,
+                                {portbindings.CAP_PORT_FILTER: False})
         elif host == "host-bridge-filter":
-            context.set_binding(segment, portbindings.VIF_TYPE_BRIDGE, True)
+            context.set_binding(segment, portbindings.VIF_TYPE_BRIDGE,
+                                {portbindings.CAP_PORT_FILTER: True})
 
     def validate_port_binding(self, context):
         self._check_port_context(context, False)

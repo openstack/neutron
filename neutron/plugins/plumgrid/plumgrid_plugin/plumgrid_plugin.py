@@ -545,7 +545,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _port_viftype_binding(self, context, port):
         port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_IOVISOR
-        port[portbindings.CAPABILITIES] = {
+        port[portbindings.VIF_DETAILS] = {
+            # TODO(rkukura): Replace with new VIF security details
             portbindings.CAP_PORT_FILTER:
             'security-group' in self.supported_extension_aliases}
         return port

@@ -22,7 +22,7 @@ from neutron.plugins.ml2.drivers import mech_agent
 LOG = log.getLogger(__name__)
 
 
-class LinuxbridgeMechanismDriver(mech_agent.AgentMechanismDriverBase):
+class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """Attach to networks using linuxbridge L2 agent.
 
     The LinuxbridgeMechanismDriver integrates the ml2 plugin with the
@@ -36,7 +36,7 @@ class LinuxbridgeMechanismDriver(mech_agent.AgentMechanismDriverBase):
         super(LinuxbridgeMechanismDriver, self).__init__(
             constants.AGENT_TYPE_LINUXBRIDGE,
             portbindings.VIF_TYPE_BRIDGE,
-            True)
+            {portbindings.CAP_PORT_FILTER: True})
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('interface_mappings', {})

@@ -41,17 +41,20 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.port_create_status = 'DOWN'
         self.plugin = manager.NeutronManager.get_plugin()
 
-    def _check_response(self, port, vif_type, has_port_filter):
-        self.assertEqual(port['binding:vif_type'], vif_type)
-        port_cap = port[portbindings.CAPABILITIES]
-        self.assertEqual(port_cap[portbindings.CAP_PORT_FILTER],
-                         has_port_filter)
+    def _check_response(self, port, vif_type, has_port_filter, bound):
+        self.assertEqual(port[portbindings.VIF_TYPE], vif_type)
+        vif_details = port[portbindings.VIF_DETAILS]
+        if bound:
+            # TODO(rkukura): Replace with new VIF security details
+            self.assertEqual(vif_details[portbindings.CAP_PORT_FILTER],
+                             has_port_filter)
 
     def _test_port_binding(self, host, vif_type, has_port_filter, bound):
         host_arg = {portbindings.HOST_ID: host}
         with self.port(name='name', arg_list=(portbindings.HOST_ID,),
                        **host_arg) as port:
-            self._check_response(port['port'], vif_type, has_port_filter)
+            self._check_response(port['port'], vif_type, has_port_filter,
+                                 bound)
             port_id = port['port']['id']
             details = self.plugin.callbacks.get_device_details(
                 None, agent_id="theAgentId", device=port_id)
@@ -95,9 +98,10 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                             neutron_context=neutron_context)
                 port_data = updated_port['port']
                 if new_host is not None:
-                    self.assertEqual(port_data['binding:host_id'], new_host)
+                    self.assertEqual(port_data[portbindings.HOST_ID],
+                                     new_host)
                 else:
-                    self.assertEqual(port_data['binding:host_id'], host)
+                    self.assertEqual(port_data[portbindings.HOST_ID], host)
                 if new_host is not None and new_host != host:
                     notify_mock.assert_called_once_with(mock.ANY)
                 else:

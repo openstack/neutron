@@ -52,7 +52,7 @@
     "get_port": "rule:admin_or_owner",
     "get_port:queue_id": "rule:admin_only",
     "get_port:binding:vif_type": "rule:admin_only",
-    "get_port:binding:capabilities": "rule:admin_only",
+    "get_port:binding:vif_details": "rule:admin_only",
     "get_port:binding:host_id": "rule:admin_only",
     "get_port:binding:profile": "rule:admin_only",
     "get_port:binding:vnic_type": "rule:admin_or_owner",
