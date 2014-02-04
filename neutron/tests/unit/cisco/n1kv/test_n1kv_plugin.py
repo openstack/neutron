@@ -379,6 +379,12 @@ class TestN1kvNetworks(test_plugin.TestNetworksV2,
             self.assertEqual(res.status_int, 400)
 
 
+class TestN1kvSubnets(test_plugin.TestSubnetsV2,
+                      N1kvPluginTestCase):
+
+    pass
+
+
 class TestN1kvNonDbTest(base.BaseTestCase):
 
     """

@@ -875,8 +875,16 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_('_send_create_subnet_request: %s'), subnet['id'])
         n1kvclient = n1kv_client.Client()
         n1kvclient.create_ip_pool(subnet)
-        body = {'ipPool': subnet['id']}
-        n1kvclient.update_network_segment(subnet['network_id'], body=body)
+
+    def _send_update_subnet_request(self, subnet):
+        """
+        Send update subnet request to VSM.
+
+        :param subnet: subnet dictionary
+        """
+        LOG.debug(_('_send_update_subnet_request: %s'), subnet['name'])
+        n1kvclient = n1kv_client.Client()
+        n1kvclient.update_ip_pool(subnet)
 
     def _send_delete_subnet_request(self, context, subnet):
         """
@@ -1355,6 +1363,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         sub = super(N1kvNeutronPluginV2, self).update_subnet(context,
                                                              id,
                                                              subnet)
+        self._send_update_subnet_request(sub)
         return sub
 
     def delete_subnet(self, context, id):
