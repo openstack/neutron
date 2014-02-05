@@ -211,7 +211,9 @@ class Server(object):
             self._server = self.pool.spawn(self._run, application,
                                            self._socket)
         else:
-            self._launcher = ProcessLauncher()
+            # Minimize the cost of checking for child exit by extending the
+            # wait interval past the default of 0.01s.
+            self._launcher = ProcessLauncher(wait_interval=1.0)
             self._server = WorkerService(self, application)
             self._launcher.launch_service(self._server, workers=workers)
 
