@@ -126,32 +126,70 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.agent.tun_br = mock.Mock()
         self.agent.sg_agent = mock.Mock()
 
-    def _mock_port_bound(self, ofport=None):
+    def _mock_port_bound(self, ofport=None, new_local_vlan=None,
+                         old_local_vlan=None):
         port = mock.Mock()
         port.ofport = ofport
         net_uuid = 'my-net-uuid'
-        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
-                        'set_db_attribute',
-                        return_value=True):
-            with mock.patch.object(self.agent.int_br,
-                                   'delete_flows') as delete_flows_func:
-                self.agent.port_bound(port, net_uuid, 'local', None, None)
-        self.assertEqual(delete_flows_func.called, ofport != -1)
+        if old_local_vlan is not None:
+            self.agent.local_vlan_map[net_uuid] = (
+                ovs_neutron_agent.LocalVLANMapping(
+                    old_local_vlan, None, None, None))
+        with contextlib.nested(
+            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                       'set_db_attribute', return_value=True),
+            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                       'db_get_val', return_value=str(old_local_vlan)),
+            mock.patch.object(self.agent.int_br, 'delete_flows')
+        ) as (set_ovs_db_func, get_ovs_db_func, delete_flows_func):
+            self.agent.port_bound(port, net_uuid, 'local', None, None)
+        get_ovs_db_func.assert_called_once_with("Port", mock.ANY, "tag")
+        if new_local_vlan != old_local_vlan:
+            set_ovs_db_func.assert_called_once_with(
+                "Port", mock.ANY, "tag", str(new_local_vlan))
+            if ofport != -1:
+                delete_flows_func.assert_called_once_with(in_port=port.ofport)
+            else:
+                self.assertFalse(delete_flows_func.called)
+        else:
+            self.assertFalse(set_ovs_db_func.called)
+            self.assertFalse(delete_flows_func.called)
 
     def test_port_bound_deletes_flows_for_valid_ofport(self):
-        self._mock_port_bound(ofport=1)
+        self._mock_port_bound(ofport=1, new_local_vlan=1)
 
     def test_port_bound_ignores_flows_for_invalid_ofport(self):
-        self._mock_port_bound(ofport=-1)
+        self._mock_port_bound(ofport=-1, new_local_vlan=1)
+
+    def test_port_bound_does_not_rewire_if_already_bound(self):
+        self._mock_port_bound(ofport=-1, new_local_vlan=1, old_local_vlan=1)
+
+    def _test_port_dead(self, cur_tag=None):
+        port = mock.Mock()
+        port.ofport = 1
+        with contextlib.nested(
+            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                       'set_db_attribute', return_value=True),
+            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                       'db_get_val', return_value=cur_tag),
+            mock.patch.object(self.agent.int_br, 'add_flow')
+        ) as (set_ovs_db_func, get_ovs_db_func, add_flow_func):
+            self.agent.port_dead(port)
+        get_ovs_db_func.assert_called_once_with("Port", mock.ANY, "tag")
+        if cur_tag == ovs_neutron_agent.DEAD_VLAN_TAG:
+            self.assertFalse(set_ovs_db_func.called)
+            self.assertFalse(add_flow_func.called)
+        else:
+            set_ovs_db_func.assert_called_once_with(
+                "Port", mock.ANY, "tag", str(ovs_neutron_agent.DEAD_VLAN_TAG))
+            add_flow_func.assert_called_once_with(
+                priority=2, in_port=port.ofport, actions="drop")
 
     def test_port_dead(self):
-        with mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
-                        'set_db_attribute',
-                        return_value=True):
-            with mock.patch.object(self.agent.int_br,
-                                   'add_flow') as add_flow_func:
-                self.agent.port_dead(mock.Mock())
-        self.assertTrue(add_flow_func.called)
+        self._test_port_dead()
+
+    def test_port_dead_with_port_already_dead(self):
+        self._test_port_dead(ovs_neutron_agent.DEAD_VLAN_TAG)
 
     def mock_scan_ports(self, vif_port_set=None, registered_ports=None,
                         updated_ports=None):
