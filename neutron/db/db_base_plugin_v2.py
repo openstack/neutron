@@ -740,12 +740,12 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                              "subnet") %
                            {'cidr': new_subnet_cidr,
                             'network_id': network.id})
-                LOG.error(_("Validation for CIDR: %(new_cidr)s failed - "
-                            "overlaps with subnet %(subnet_id)s "
-                            "(CIDR: %(cidr)s)"),
-                          {'new_cidr': new_subnet_cidr,
-                           'subnet_id': subnet.id,
-                           'cidr': subnet.cidr})
+                LOG.info(_("Validation for CIDR: %(new_cidr)s failed - "
+                           "overlaps with subnet %(subnet_id)s "
+                           "(CIDR: %(cidr)s)"),
+                         {'new_cidr': new_subnet_cidr,
+                          'subnet_id': subnet.id,
+                          'cidr': subnet.cidr})
                 raise q_exc.InvalidInput(error_message=err_msg)
 
     def _validate_allocation_pools(self, ip_pools, subnet_cidr):
@@ -767,26 +767,26 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 start_ip = netaddr.IPAddress(ip_pool['start'])
                 end_ip = netaddr.IPAddress(ip_pool['end'])
             except netaddr.AddrFormatError:
-                LOG.error(_("Found invalid IP address in pool: "
-                            "%(start)s - %(end)s:"),
-                          {'start': ip_pool['start'],
-                           'end': ip_pool['end']})
+                LOG.info(_("Found invalid IP address in pool: "
+                           "%(start)s - %(end)s:"),
+                         {'start': ip_pool['start'],
+                          'end': ip_pool['end']})
                 raise q_exc.InvalidAllocationPool(pool=ip_pool)
             if (start_ip.version != subnet.version or
                     end_ip.version != subnet.version):
-                LOG.error(_("Specified IP addresses do not match "
-                            "the subnet IP version"))
+                LOG.info(_("Specified IP addresses do not match "
+                           "the subnet IP version"))
                 raise q_exc.InvalidAllocationPool(pool=ip_pool)
             if end_ip < start_ip:
-                LOG.error(_("Start IP (%(start)s) is greater than end IP "
-                            "(%(end)s)"),
-                          {'start': ip_pool['start'], 'end': ip_pool['end']})
+                LOG.info(_("Start IP (%(start)s) is greater than end IP "
+                           "(%(end)s)"),
+                         {'start': ip_pool['start'], 'end': ip_pool['end']})
                 raise q_exc.InvalidAllocationPool(pool=ip_pool)
             if start_ip < subnet_first_ip or end_ip > subnet_last_ip:
-                LOG.error(_("Found pool larger than subnet "
-                            "CIDR:%(start)s - %(end)s"),
-                          {'start': ip_pool['start'],
-                           'end': ip_pool['end']})
+                LOG.info(_("Found pool larger than subnet "
+                           "CIDR:%(start)s - %(end)s"),
+                         {'start': ip_pool['start'],
+                          'end': ip_pool['end']})
                 raise q_exc.OutOfBoundsAllocationPool(
                     pool=ip_pool,
                     subnet_cidr=subnet_cidr)
@@ -807,9 +807,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 if ip_sets[l_cursor] & ip_sets[r_cursor]:
                     l_range = ip_ranges[l_cursor]
                     r_range = ip_ranges[r_cursor]
-                    LOG.error(_("Found overlapping ranges: %(l_range)s and "
-                                "%(r_range)s"),
-                              {'l_range': l_range, 'r_range': r_range})
+                    LOG.info(_("Found overlapping ranges: %(l_range)s and "
+                               "%(r_range)s"),
+                             {'l_range': l_range, 'r_range': r_range})
                     raise q_exc.OverlappingAllocationPools(
                         pool_1=l_range,
                         pool_2=r_range,
