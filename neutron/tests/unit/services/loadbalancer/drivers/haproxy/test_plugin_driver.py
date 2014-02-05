@@ -25,6 +25,7 @@ from neutron.common import exceptions
 from neutron import context
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as st_db
+from neutron.extensions import loadbalancer
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import uuidutils
@@ -349,6 +350,15 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
             self.callbacks.update_status(ctx, 'pool', pool_id, 'ACTIVE')
             p = self.plugin_instance.get_pool(ctx, pool_id)
             self.assertEqual('ACTIVE', p['status'])
+
+    def test_update_status_pool_deleted_already(self):
+        with mock.patch.object(plugin_driver, 'LOG') as mock_log:
+            pool_id = 'deleted_pool'
+            ctx = context.get_admin_context()
+            self.assertRaises(loadbalancer.PoolNotFound,
+                              self.plugin_instance.get_pool, ctx, pool_id)
+            self.callbacks.update_status(ctx, 'pool', pool_id, 'ACTIVE')
+            self.assertTrue(mock_log.warning.called)
 
     def test_update_status_health_monitor(self):
         with contextlib.nested(
