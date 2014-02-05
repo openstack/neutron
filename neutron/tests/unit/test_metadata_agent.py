@@ -275,7 +275,7 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
     def test_start(self):
         mock_app = mock.Mock()
         with mock.patch.object(self.server, 'pool') as pool:
-            self.server.start(mock_app, '/the/path', workers=0)
+            self.server.start(mock_app, '/the/path', workers=0, backlog=128)
             self.eventlet.assert_has_calls([
                 mock.call.listen(
                     '/the/path',
@@ -294,7 +294,7 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
         launcher = process_launcher.return_value
 
         mock_app = mock.Mock()
-        self.server.start(mock_app, '/the/path', workers=2)
+        self.server.start(mock_app, '/the/path', workers=2, backlog=128)
         launcher.running = True
         launcher.launch_service.assert_called_once_with(self.server._server,
                                                         workers=2)
@@ -330,6 +330,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         self.addCleanup(mock.patch.stopall)
         self.cfg.CONF.metadata_proxy_socket = '/the/path'
         self.cfg.CONF.metadata_workers = 0
+        self.cfg.CONF.metadata_backlog = 128
 
     def test_init_doesnot_exists(self):
         with mock.patch('os.path.isdir') as isdir:
@@ -393,7 +394,8 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                         server.assert_has_calls([
                             mock.call('neutron-metadata-agent'),
                             mock.call().start(handler.return_value,
-                                              '/the/path', workers=0),
+                                              '/the/path', workers=0,
+                                              backlog=128),
                             mock.call().wait()]
                         )
 

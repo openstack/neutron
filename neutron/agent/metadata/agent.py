@@ -207,7 +207,7 @@ class UnixDomainWSGIServer(wsgi.Server):
         self._server = None
         super(UnixDomainWSGIServer, self).__init__(name)
 
-    def start(self, application, file_socket, workers, backlog=128):
+    def start(self, application, file_socket, workers, backlog):
         self._socket = eventlet.listen(file_socket,
                                        family=socket.AF_UNIX,
                                        backlog=backlog)
@@ -240,7 +240,11 @@ class UnixDomainMetadataProxy(object):
         cfg.IntOpt('metadata_workers',
                    default=0,
                    help=_('Number of separate worker processes for metadata '
-                          'server'))
+                          'server')),
+        cfg.IntOpt('metadata_backlog',
+                   default=128,
+                   help=_('Number of backlog requests to configure the '
+                          'metadata server socket with'))
     ]
 
     def __init__(self, conf):
@@ -299,7 +303,8 @@ class UnixDomainMetadataProxy(object):
         server = UnixDomainWSGIServer('neutron-metadata-agent')
         server.start(MetadataProxyHandler(self.conf),
                      self.conf.metadata_proxy_socket,
-                     workers=self.conf.metadata_workers)
+                     workers=self.conf.metadata_workers,
+                     backlog=self.conf.metadata_backlog)
         server.wait()
 
 
