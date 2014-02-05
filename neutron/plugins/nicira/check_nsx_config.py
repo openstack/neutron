@@ -23,7 +23,7 @@ from oslo.config import cfg
 
 from neutron.common import config
 from neutron.plugins.nicira.common import config as nsx_config  # noqa
-from neutron.plugins.nicira import NeutronPlugin
+from neutron.plugins.nicira.common import nsx_utils
 from neutron.plugins.nicira import nvplib
 
 config.setup_logging(cfg.CONF)
@@ -106,7 +106,7 @@ def main():
     print("\tretries: %s" % cfg.CONF.retries)
     print("\tredirects: %s" % cfg.CONF.redirects)
     print("\thttp_timeout: %s" % cfg.CONF.http_timeout)
-    cluster = NeutronPlugin.create_nvp_cluster(
+    cluster = nsx_utils.create_nsx_cluster(
         cfg.CONF,
         cfg.CONF.NSX.concurrent_connections,
         cfg.CONF.NSX.nsx_gen_timeout)

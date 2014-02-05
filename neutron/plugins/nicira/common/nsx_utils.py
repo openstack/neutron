@@ -17,6 +17,8 @@
 
 from neutron.openstack.common import log
 from neutron.plugins.nicira.dbexts import nicira_db
+from neutron.plugins.nicira import nsx_cluster
+from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
 
@@ -73,3 +75,22 @@ def get_nsx_switch_and_port_id(session, cluster, neutron_port_id):
                 session, neutron_port_id,
                 nvp_switch_id, nvp_port_id)
     return nvp_switch_id, nvp_port_id
+
+
+def create_nsx_cluster(cluster_opts, concurrent_connections, nsx_gen_timeout):
+    cluster = nsx_cluster.NSXCluster(**cluster_opts)
+
+    def _ctrl_split(x, y):
+        return (x, int(y), True)
+
+    api_providers = [_ctrl_split(*ctrl.split(':'))
+                     for ctrl in cluster.nsx_controllers]
+    cluster.api_client = NvpApiClient.NVPApiHelper(
+        api_providers, cluster.nsx_user, cluster.nsx_password,
+        request_timeout=cluster.req_timeout,
+        http_timeout=cluster.http_timeout,
+        retries=cluster.retries,
+        redirects=cluster.redirects,
+        concurrent_connections=concurrent_connections,
+        nvp_gen_timeout=nsx_gen_timeout)
+    return cluster
