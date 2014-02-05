@@ -39,7 +39,6 @@ from neutron.plugins.plumgrid.plumgrid_plugin.plugin_ver import VERSION
 
 LOG = logging.getLogger(__name__)
 PLUM_DRIVER = 'neutron.plugins.plumgrid.drivers.plumlib.Plumlib'
-ERR_MESSAGE = _('PLUMgrid Director communication failed')
 
 director_server_opts = [
     cfg.StrOpt('director_server', default='localhost',
@@ -115,9 +114,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_('PLUMgrid Library: create_network() called'))
                 self._plumlib.create_network(tenant_id, net_db)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # Return created network
         return net_db
@@ -142,9 +140,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: update_network() called"))
                 self._plumlib.update_network(tenant_id, net_id)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # Return updated network
         return net_db
@@ -168,9 +165,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: update_network() called"))
                 self._plumlib.delete_network(net_db, net_id)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def create_port(self, context, port):
         """Create Neutron port.
@@ -200,9 +196,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: create_port() called"))
                 self._plumlib.create_port(port_db, router_db)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # Plugin DB - Port Create and Return port
         return self._port_viftype_binding(context, port_db)
@@ -228,9 +223,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: create_port() called"))
                 self._plumlib.update_port(port_db, router_db)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # Plugin DB - Port Update
         return self._port_viftype_binding(context, port_db)
@@ -260,9 +254,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: delete_port() called"))
                 self._plumlib.delete_port(port_db, router_db)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def get_port(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
@@ -313,9 +306,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             try:
                 LOG.debug(_("PLUMgrid Library: create_subnet() called"))
                 self._plumlib.create_subnet(sub_db, net_db, ipnet)
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return sub_db
 
@@ -336,9 +328,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             try:
                 LOG.debug(_("PLUMgrid Library: delete_subnet() called"))
                 self._plumlib.delete_subnet(tenant_id, net_db, net_id)
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def update_subnet(self, context, subnet_id, subnet):
         """Update subnet core Neutron API."""
@@ -358,9 +349,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: update_network() called"))
                 self._plumlib.update_subnet(org_sub_db, new_sub_db, ipnet)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return new_sub_db
 
@@ -382,9 +372,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 # Add Router to VND
                 LOG.debug(_("PLUMgrid Library: create_router() called"))
                 self._plumlib.create_router(tenant_id, router_db)
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # Return created router
         return router_db
@@ -399,9 +388,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             try:
                 LOG.debug(_("PLUMgrid Library: update_router() called"))
                 self._plumlib.update_router(router_db, router_id)
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # Return updated router
         return router_db
@@ -420,9 +408,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: delete_router() called"))
                 self._plumlib.delete_router(tenant_id, router_id)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def add_router_interface(self, context, router_id, interface_info):
 
@@ -450,9 +437,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self._plumlib.add_router_interface(tenant_id, router_id,
                                                    port_db, ipnet)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return int_router
 
@@ -485,9 +471,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self._plumlib.remove_router_interface(tenant_id,
                                                       net_id, router_id)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return del_int_router
 
@@ -507,9 +492,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: create_floatingip() called"))
                 self._plumlib.create_floatingip(net_db, floating_ip)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return floating_ip
 
@@ -530,9 +514,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: update_floatingip() called"))
                 self._plumlib.update_floatingip(net_db, floating_ip, id)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return floating_ip
 
@@ -553,9 +536,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(_("PLUMgrid Library: delete_floatingip() called"))
                 self._plumlib.delete_floatingip(net_db, floating_ip_org, id)
 
-            except Exception:
-                LOG.error(ERR_MESSAGE)
-                raise plum_excep.PLUMgridException(err_msg=ERR_MESSAGE)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
     """
     Internal PLUMgrid Fuctions
@@ -581,7 +563,6 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                                   "setting for network %s"), network_name)
         except Exception:
             err_message = _("Network Admin State Validation Falied: ")
-            LOG.error(err_message)
             raise plum_excep.PLUMgridException(err_msg=err_message)
         return network
 
