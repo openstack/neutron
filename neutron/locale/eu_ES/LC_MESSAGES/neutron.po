@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-04 06:22+0000\n"
+"POT-Creation-Date: 2014-02-05 06:22+0000\n"
 "PO-Revision-Date: 2013-11-15 02:27+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Basque (Spain) "
@@ -3512,11 +3512,11 @@ msgstr ""
 msgid "Unexpected exception occurred %d time(s)... retrying."
 msgstr ""
 
-#: neutron/openstack/common/gettextutils.py:252
+#: neutron/openstack/common/gettextutils.py:262
 msgid "Message objects do not support addition."
 msgstr ""
 
-#: neutron/openstack/common/gettextutils.py:261
+#: neutron/openstack/common/gettextutils.py:271
 msgid ""
 "Message objects do not support str() because they may contain non-ascii "
 "characters. Please use unicode() or translate() instead."
@@ -11629,10 +11629,10 @@ msgstr ""
 
 #: neutron/plugins/plumgrid/common/exceptions.py:26
 #, python-format
-msgid "An unexpected error occurred in the PLUMgrid Plugin: %(err_msg)s"
+msgid "PLUMgrid Plugin Error: %(err_msg)s"
 msgstr ""
 
-#: neutron/plugins/plumgrid/common/exceptions.py:31
+#: neutron/plugins/plumgrid/common/exceptions.py:30
 #, python-format
 msgid "Connection failed with PLUMgrid Director: %(err_msg)s"
 msgstr ""
@@ -11650,178 +11650,174 @@ msgstr ""
 msgid "Python PLUMgrid Library Started "
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:42
-msgid "PLUMgrid Director communication failed"
-msgstr ""
-
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:46
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:45
 msgid "PLUMgrid Director server to connect to"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:48
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:47
 msgid "PLUMgrid Director server port to connect to"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:50
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:49
 msgid "PLUMgrid Director admin username"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:52
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:51
 msgid "PLUMgrid Director admin password"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:54
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:53
 msgid "PLUMgrid Director server timeout"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:71
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:70
 msgid "Neutron PLUMgrid Director: Starting Plugin"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:78
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:77
 msgid "Neutron PLUMgrid Director: Neutron server with PLUMgrid Plugin has started"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:90
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:89
 #, python-format
 msgid "Neutron PLUMgrid Director: %s"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:101
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:100
 msgid "Neutron PLUMgrid Director: create_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:115
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:114
 msgid "PLUMgrid Library: create_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:131
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:129
 msgid "Neutron PLUMgrid Director: update_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:142
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:168
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:358
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:140
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:165
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:349
 msgid "PLUMgrid Library: update_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:158
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:155
 msgid "Neutron PLUMgrid Director: delete_network() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:181
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:177
 msgid "Neutron PLUMgrid Director: create_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:200
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:228
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:196
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:223
 msgid "PLUMgrid Library: create_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:216
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:211
 msgid "Neutron PLUMgrid Director: update_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:245
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:239
 msgid "Neutron PLUMgrid Director: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:260
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:254
 msgid "PLUMgrid Library: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:290
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:283
 msgid "Neutron PLUMgrid Director: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:314
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:307
 msgid "PLUMgrid Library: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:325
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:317
 msgid "Neutron PLUMgrid Director: delete_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:337
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:329
 msgid "PLUMgrid Library: delete_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:346
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:337
 msgid "update_subnet() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:371
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:361
 msgid "Neutron PLUMgrid Director: create_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:383
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:373
 msgid "PLUMgrid Library: create_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:394
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:383
 msgid "Neutron PLUMgrid Director: update_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:400
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:389
 msgid "PLUMgrid Library: update_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:410
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:398
 msgid "Neutron PLUMgrid Director: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:420
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:408
 msgid "PLUMgrid Library: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:429
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:416
 msgid "Neutron PLUMgrid Director: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:449
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:436
 msgid "PLUMgrid Library: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:461
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:447
 msgid "Neutron PLUMgrid Director: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:483
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:469
 msgid "PLUMgrid Library: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:495
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:480
 msgid "Neutron PLUMgrid Director: create_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:507
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:492
 msgid "PLUMgrid Library: create_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:517
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:501
 msgid "Neutron PLUMgrid Director: update_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:530
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:514
 msgid "PLUMgrid Library: update_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:540
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:523
 msgid "Neutron PLUMgrid Director: delete_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:553
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:536
 msgid "PLUMgrid Library: delete_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:579
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:561
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not supported yet by this plugin. "
 "Ignoring setting for network %s"
 msgstr ""
 
-#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:583
+#: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:565
 msgid "Network Admin State Validation Falied: "
 msgstr ""
 
@@ -13333,12 +13329,6 @@ msgstr ""
 #~ msgid "Plugin not found. "
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Number of call waiters is greater "
-#~ "than warning threshhold: %d. There could"
-#~ " be a MulticallProxyWaiter leak."
-#~ msgstr ""
-
 #~ msgid "Failed to sanitize %(item)s. Key error %(err)s"
 #~ msgstr ""
 
@@ -13346,5 +13336,11 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "ROUTER RELAY-OUT %(data)s"
+#~ msgstr ""
+
+#~ msgid "An unexpected error occurred in the PLUMgrid Plugin: %(err_msg)s"
+#~ msgstr ""
+
+#~ msgid "PLUMgrid Director communication failed"
 #~ msgstr ""
 
