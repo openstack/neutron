@@ -44,9 +44,6 @@ class DhcpNoOpDriver(dhcp.DhcpLocalProcess):
             self.device_manager.destroy(self.network, self.interface_name)
         self._remove_config_files()
 
-    def release_lease(self, mac_address, removed_ips):
-        pass
-
     def reload_allocations(self):
         """Force the DHCP server to reload the assignment database."""
         pass

@@ -135,10 +135,6 @@ class DhcpBase(object):
         """Boolean representing the running state of the DHCP server."""
 
     @abc.abstractmethod
-    def release_lease(self, mac_address, removed_ips):
-        """Release a DHCP lease."""
-
-    @abc.abstractmethod
     def reload_allocations(self):
         """Force the DHCP server to reload the assignment database."""
 
@@ -378,9 +374,6 @@ class Dnsmasq(DhcpLocalProcess):
             # For normal sudo prepend the env vars before command
             cmd = ['%s=%s' % pair for pair in env.items()] + cmd
             utils.execute(cmd, self.root_helper)
-
-    def release_lease(self, mac_address, removed_ips):
-        pass
 
     def _release_lease(self, mac_address, ip):
         """Release a DHCP lease."""
