@@ -29,6 +29,7 @@ PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     _plugin_name = PLUGIN_NAME
+    _mechanism_drivers = ['logger', 'test']
 
     def setUp(self):
         # We need a L3 service plugin
@@ -39,7 +40,7 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         # we can successfully call through to all mechanism
         # driver apis.
         config.cfg.CONF.set_override('mechanism_drivers',
-                                     ['logger', 'test'],
+                                     self._mechanism_drivers,
                                      group='ml2')
         self.physnet = 'physnet1'
         self.vlan_range = '1:100'
@@ -50,6 +51,21 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         super(Ml2PluginV2TestCase, self).setUp(PLUGIN_NAME,
                                                service_plugins=service_plugins)
         self.port_create_status = 'DOWN'
+
+
+class TestMl2BulkToggle(Ml2PluginV2TestCase):
+
+    def test_bulk_disable_with_bulkless_driver(self):
+        self.tearDown()
+        self._mechanism_drivers = ['logger', 'test', 'bulkless']
+        self.setUp()
+        self.assertTrue(self._skip_native_bulk)
+
+    def test_bulk_enabled_with_bulk_drivers(self):
+        self.tearDown()
+        self._mechanism_drivers = ['logger', 'test']
+        self.setUp()
+        self.assertFalse(self._skip_native_bulk)
 
 
 class TestMl2BasicGet(test_plugin.TestBasicGet,
