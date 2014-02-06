@@ -216,6 +216,7 @@ def _destroy_metadata_access_network(plugin, context, router_id, ports):
     plugin.remove_router_interface(
         context, router_id, {'port_id': meta_port['id']})
     greenthread.sleep(0)  # yield
+    context.session.expunge_all()
     try:
         # Remove network (this will remove the subnet too)
         plugin.delete_network(context, meta_net_id)
