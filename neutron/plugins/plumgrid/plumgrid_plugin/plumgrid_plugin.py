@@ -562,7 +562,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                                   "supported yet by this plugin. Ignoring "
                                   "setting for network %s"), network_name)
         except Exception:
-            err_message = _("Network Admin State Validation Falied: ")
+            err_message = _("Network Admin State Validation Failed: ")
             raise plum_excep.PLUMgridException(err_msg=err_message)
         return network
 
