@@ -16,7 +16,6 @@
 #    under the License.
 
 import datetime
-import itertools
 import random
 
 import netaddr
@@ -325,92 +324,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         """Return an IP address to the pool of free IP's on the network
         subnet.
         """
-        # Grab all allocation pools for the subnet
-        allocation_pools = (context.session.query(
-            models_v2.IPAllocationPool).filter_by(subnet_id=subnet_id).
-            options(orm.joinedload('available_ranges', innerjoin=True)).
-            with_lockmode('update'))
-        # If there are no available ranges the previous query will return no
-        # results as it uses an inner join to avoid errors with the postgresql
-        # backend (see lp bug 1215350). In this case IP allocation pools must
-        # be loaded with a different query, which does not require lock for
-        # update as the allocation pools for a subnet are immutable.
-        # The 2nd query will be executed only if the first yields no results
-        unlocked_allocation_pools = (context.session.query(
-            models_v2.IPAllocationPool).filter_by(subnet_id=subnet_id))
-
-        # Find the allocation pool for the IP to recycle
-        pool_id = None
-
-        for allocation_pool in itertools.chain(allocation_pools,
-                                               unlocked_allocation_pools):
-            allocation_pool_range = netaddr.IPRange(
-                allocation_pool['first_ip'], allocation_pool['last_ip'])
-            if netaddr.IPAddress(ip_address) in allocation_pool_range:
-                pool_id = allocation_pool['id']
-                break
-        if not pool_id:
-            NeutronDbPluginV2._delete_ip_allocation(
-                context, network_id, subnet_id, ip_address)
-            return
-        # Two requests will be done on the database. The first will be to
-        # search if an entry starts with ip_address + 1 (r1). The second
-        # will be to see if an entry ends with ip_address -1 (r2).
-        # If 1 of the above holds true then the specific entry will be
-        # modified. If both hold true then the two ranges will be merged.
-        # If there are no entries then a single entry will be added.
-        range_qry = context.session.query(
-            models_v2.IPAvailabilityRange).with_lockmode('update')
-        ip_first = str(netaddr.IPAddress(ip_address) + 1)
-        ip_last = str(netaddr.IPAddress(ip_address) - 1)
-        LOG.debug(_("Recycle %s"), ip_address)
-        try:
-            r1 = range_qry.filter_by(allocation_pool_id=pool_id,
-                                     first_ip=ip_first).one()
-            LOG.debug(_("Recycle: first match for %(first_ip)s-%(last_ip)s"),
-                      {'first_ip': r1['first_ip'], 'last_ip': r1['last_ip']})
-        except exc.NoResultFound:
-            r1 = []
-        try:
-            r2 = range_qry.filter_by(allocation_pool_id=pool_id,
-                                     last_ip=ip_last).one()
-            LOG.debug(_("Recycle: last match for %(first_ip)s-%(last_ip)s"),
-                      {'first_ip': r2['first_ip'], 'last_ip': r2['last_ip']})
-        except exc.NoResultFound:
-            r2 = []
-
-        if r1 and r2:
-            # Merge the two ranges
-            ip_range = models_v2.IPAvailabilityRange(
-                allocation_pool_id=pool_id,
-                first_ip=r2['first_ip'],
-                last_ip=r1['last_ip'])
-            context.session.add(ip_range)
-            LOG.debug(_("Recycle: merged %(first_ip1)s-%(last_ip1)s and "
-                        "%(first_ip2)s-%(last_ip2)s"),
-                      {'first_ip1': r2['first_ip'], 'last_ip1': r2['last_ip'],
-                       'first_ip2': r1['first_ip'], 'last_ip2': r1['last_ip']})
-            context.session.delete(r1)
-            context.session.delete(r2)
-        elif r1:
-            # Update the range with matched first IP
-            r1['first_ip'] = ip_address
-            LOG.debug(_("Recycle: updated first %(first_ip)s-%(last_ip)s"),
-                      {'first_ip': r1['first_ip'], 'last_ip': r1['last_ip']})
-        elif r2:
-            # Update the range with matched last IP
-            r2['last_ip'] = ip_address
-            LOG.debug(_("Recycle: updated last %(first_ip)s-%(last_ip)s"),
-                      {'first_ip': r2['first_ip'], 'last_ip': r2['last_ip']})
-        else:
-            # Create a new range
-            ip_range = models_v2.IPAvailabilityRange(
-                allocation_pool_id=pool_id,
-                first_ip=ip_address,
-                last_ip=ip_address)
-            context.session.add(ip_range)
-            LOG.debug(_("Recycle: created new %(first_ip)s-%(last_ip)s"),
-                      {'first_ip': ip_address, 'last_ip': ip_address})
         NeutronDbPluginV2._delete_ip_allocation(context, network_id, subnet_id,
                                                 ip_address)
 
@@ -449,6 +362,15 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
     @staticmethod
     def _generate_ip(context, subnets):
+        try:
+            return NeutronDbPluginV2._try_generate_ip(context, subnets)
+        except q_exc.IpAddressGenerationFailure:
+            NeutronDbPluginV2._rebuild_availability_ranges(context, subnets)
+
+        return NeutronDbPluginV2._try_generate_ip(context, subnets)
+
+    @staticmethod
+    def _try_generate_ip(context, subnets):
         """Generate an IP address.
 
         The IP address will be generated from one of the subnets defined on
@@ -480,6 +402,51 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 range['first_ip'] = str(netaddr.IPAddress(ip_address) + 1)
             return {'ip_address': ip_address, 'subnet_id': subnet['id']}
         raise q_exc.IpAddressGenerationFailure(net_id=subnets[0]['network_id'])
+
+    @staticmethod
+    def _rebuild_availability_ranges(context, subnets):
+        ip_qry = context.session.query(
+            models_v2.IPAllocation).with_lockmode('update')
+        # PostgreSQL does not support select...for update with an outer join.
+        # No join is needed here.
+        pool_qry = context.session.query(
+            models_v2.IPAllocationPool).options(
+                orm.noload('available_ranges')).with_lockmode('update')
+        for subnet in sorted(subnets):
+            LOG.debug(_("Rebuilding availability ranges for subnet %s")
+                      % subnet)
+
+            # Create a set of all currently allocated addresses
+            ip_qry_results = ip_qry.filter_by(subnet_id=subnet['id'])
+            allocations = netaddr.IPSet([netaddr.IPAddress(i['ip_address'])
+                                        for i in ip_qry_results])
+
+            for pool in pool_qry.filter_by(subnet_id=subnet['id']):
+                # Create a set of all addresses in the pool
+                poolset = netaddr.IPSet(netaddr.iter_iprange(pool['first_ip'],
+                                                             pool['last_ip']))
+
+                # Use set difference to find free addresses in the pool
+                available = poolset - allocations
+
+                # Generator compacts an ip set into contiguous ranges
+                def ipset_to_ranges(ipset):
+                    first, last = None, None
+                    for cidr in ipset.iter_cidrs():
+                        if last and last + 1 != cidr.first:
+                            yield netaddr.IPRange(first, last)
+                            first = None
+                        first, last = first if first else cidr.first, cidr.last
+                    if first:
+                        yield netaddr.IPRange(first, last)
+
+                # Write the ranges to the db
+                for range in ipset_to_ranges(available):
+                    available_range = models_v2.IPAvailabilityRange(
+                        allocation_pool_id=pool['id'],
+                        first_ip=str(netaddr.IPAddress(range.first)),
+                        last_ip=str(netaddr.IPAddress(range.last)))
+                    context.session.add(available_range)
 
     @staticmethod
     def _allocate_specific_ip(context, subnet_id, ip_address):

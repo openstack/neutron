@@ -50,10 +50,11 @@ class IPAvailabilityRange(model_base.BASEV2):
     Allocation - first entry from the range will be allocated.
     If the first entry is equal to the last entry then this row
     will be deleted.
-    Recycling ips involves appending to existing ranges. This is
-    only done if the range is contiguous. If not, the first_ip will be
-    the same as the last_ip. When adjacent ips are recycled the ranges
-    will be merged.
+    Recycling ips involves reading the IPAllocationPool and IPAllocation tables
+    and inserting ranges representing available ips.  This happens after the
+    final allocation is pulled from this table and a new ip allocation is
+    requested.  Any contiguous ranges of available ips will be inserted as a
+    single range.
     """
 
     allocation_pool_id = sa.Column(sa.String(36),

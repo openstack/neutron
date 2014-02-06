@@ -521,35 +521,6 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                      'vlan', 555,
                                      expected_status=exc.HTTPBadRequest.code)
 
-    def test_connect_network_does_not_waste_ips(self):
-        # Ensure address is immediately recycled
-        cfg.CONF.set_override('dhcp_lease_duration', -1)
-        with self._network_gateway() as gw:
-            with self.network() as net:
-                with self.subnet(network=net) as sub:
-                    with self.port(subnet=sub) as port_1:
-                        expected_ips = port_1['port']['fixed_ips']
-                    # port_1 has now been deleted
-                    body = self._gateway_action('connect',
-                                                gw[self.resource]['id'],
-                                                net['network']['id'],
-                                                'flat')
-                    gw_port_id = body['connection_info']['port_id']
-                    gw_port_body = self._show('ports', gw_port_id)
-                    self.assertEqual(gw[self.resource]['id'],
-                                     gw_port_body['port']['device_id'])
-                    self.assertEqual([], gw_port_body['port']['fixed_ips'])
-                    # Verify a new port gets same address as port_1
-                    # This will confirm the gateway port did not waste an ip
-                    with self.port(subnet=sub) as port_2:
-                        self.assertEqual(expected_ips,
-                                         port_2['port']['fixed_ips'])
-                    # Clean up - otherwise delete will fail
-                    self._gateway_action('disconnect',
-                                         gw[self.resource]['id'],
-                                         net['network']['id'],
-                                         'flat')
-
     def test_disconnect_network_ambiguous_returns_409(self):
         with self._network_gateway() as gw:
             with self.network() as net_1:
