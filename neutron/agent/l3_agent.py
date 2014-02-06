@@ -428,14 +428,18 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         ri.perform_snat_action(self._handle_router_snat_rules,
                                internal_cidrs, interface_name)
 
-        # Process DNAT rules for floating IPs
+        # Process SNAT/DNAT rules for floating IPs
         if ex_gw_port:
-            self.process_router_floating_ips(ri, ex_gw_port)
+            self.process_router_floating_ip_nat_rules(ri)
 
         ri.ex_gw_port = ex_gw_port
         ri.enable_snat = ri.router.get('enable_snat')
         self.routes_updated(ri)
         ri.iptables_manager.defer_apply_off()
+        # Once NAT rules for floating IPs are safely in place
+        # configure their addresses on the external gateway port
+        if ex_gw_port:
+            self.process_router_floating_ip_addresses(ri, ex_gw_port)
 
     def _handle_router_snat_rules(self, ri, ex_gw_port, internal_cidrs,
                                   interface_name, action):
@@ -459,19 +463,34 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 ri.iptables_manager.ipv4['nat'].add_rule(*rule)
         ri.iptables_manager.apply()
 
-    def process_router_floating_ips(self, ri, ex_gw_port):
-        """Configure the router's floating IPs
-        Configures floating ips in iptables and on the router's gateway device.
+    def process_router_floating_ip_nat_rules(self, ri):
+        """Configure NAT rules for the router's floating IPs.
 
-        Cleans up floating ips that should not longer be configured.
+        Configures iptables rules for the floating ips of the given router
+        """
+        # Clear out all iptables rules for floating ips
+        ri.iptables_manager.ipv4['nat'].clear_rules_by_tag('floating_ip')
+
+        # Loop once to ensure that floating ips are configured.
+        for fip in ri.router.get(l3_constants.FLOATINGIP_KEY, []):
+            # Rebuild iptables rules for the floating ip.
+            fixed = fip['fixed_ip_address']
+            fip_ip = fip['floating_ip_address']
+            for chain, rule in self.floating_forward_rules(fip_ip, fixed):
+                ri.iptables_manager.ipv4['nat'].add_rule(chain, rule,
+                                                         tag='floating_ip')
+
+        ri.iptables_manager.apply()
+
+    def process_router_floating_ip_addresses(self, ri, ex_gw_port):
+        """Configure IP addresses on router's external gateway interface.
+
+        Ensures addresses for existing floating IPs and cleans up
+        those that should not longer be configured.
         """
         interface_name = self.get_external_device_name(ex_gw_port['id'])
         device = ip_lib.IPDevice(interface_name, self.root_helper,
                                  namespace=ri.ns_name())
-
-        # Clear out all iptables rules for floating ips
-        ri.iptables_manager.ipv4['nat'].clear_rules_by_tag('floating_ip')
-
         existing_cidrs = set([addr['cidr'] for addr in device.addr.list()])
         new_cidrs = set()
 
@@ -486,14 +505,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 net = netaddr.IPNetwork(ip_cidr)
                 device.addr.add(net.version, ip_cidr, str(net.broadcast))
                 self._send_gratuitous_arp_packet(ri, interface_name, fip_ip)
-
-            # Rebuild iptables rules for the floating ip.
-            fixed = fip['fixed_ip_address']
-            for chain, rule in self.floating_forward_rules(fip_ip, fixed):
-                ri.iptables_manager.ipv4['nat'].add_rule(chain, rule,
-                                                         tag='floating_ip')
-
-        ri.iptables_manager.apply()
 
         # Clean up addresses that no longer belong on the gateway interface.
         for ip_cidr in existing_cidrs - new_cidrs:
