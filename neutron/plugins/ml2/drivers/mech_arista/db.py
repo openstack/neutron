@@ -26,9 +26,6 @@ VLAN_SEGMENTATION = 'vlan'
 UUID_LEN = 36
 STR_LEN = 255
 
-from neutron.openstack.common import log as logging
-LOG = logging.getLogger(__name__)
-
 
 class AristaProvisionedNets(model_base.BASEV2, models_v2.HasId,
                             models_v2.HasTenant):

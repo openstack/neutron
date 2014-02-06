@@ -66,7 +66,7 @@ class AristaRPCWrapper(object):
                   and VMs allocated per tenant
         """
         cmds = ['show openstack config region %s' % self.region]
-        command_output = self._run_openstack_cmds(cmds, cmds)
+        command_output = self._run_openstack_cmds(cmds)
         tenants = command_output[0]['tenants']
 
         return tenants
@@ -411,7 +411,6 @@ class AristaRPCWrapper(object):
         ret = self._run_openstack_cmds(full_command, full_log_command)
         # Remove return values for 'configure terminal',
         # 'management openstack' and 'exit' commands
-        #ret = ret[len(command_start):-len(command_end)]
         self._region_updated_time = ret[-1]
 
     def _eapi_host_url(self):
