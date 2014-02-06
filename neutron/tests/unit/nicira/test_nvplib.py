@@ -638,6 +638,45 @@ class TestNvplibLogicalRouters(NvplibTestCase):
         self._verify_lrouter(res_lrouter, lrouter['uuid'],
                              '*' * 40, '10.0.0.1', 'pippo')
 
+    def _test_version_dependent_update_lrouter(self, version):
+        def foo(*args, **kwargs):
+            return version
+
+        foo_func_dict = {
+            'update_lrouter': {
+                2: {-1: foo},
+                3: {-1: foo, 2: foo}
+            }
+        }
+
+        with mock.patch.object(self.fake_cluster.api_client,
+                               'get_nvp_version',
+                               return_value=NvpApiClient.NVPVersion(version)):
+            with mock.patch.dict(nvplib.NVPLIB_FUNC_DICT,
+                                 foo_func_dict, clear=True):
+                return nvplib.update_lrouter(
+                    self.fake_cluster, 'foo_router_id', 'foo_router_name',
+                    'foo_nexthop', routes={'foo_destination': 'foo_address'})
+
+    def test_version_dependent_update_lrouter_old_versions(self):
+        self.assertRaises(nvp_exc.NvpInvalidVersion,
+                          self._test_version_dependent_update_lrouter,
+                          "2.9")
+        self.assertRaises(nvp_exc.NvpInvalidVersion,
+                          self._test_version_dependent_update_lrouter,
+                          "3.0")
+        self.assertRaises(nvp_exc.NvpInvalidVersion,
+                          self._test_version_dependent_update_lrouter,
+                          "3.1")
+
+    def test_version_dependent_update_lrouter_new_versions(self):
+        self.assertEqual("3.2",
+                         self._test_version_dependent_update_lrouter("3.2"))
+        self.assertEqual("4.0",
+                         self._test_version_dependent_update_lrouter("4.0"))
+        self.assertEqual("4.1",
+                         self._test_version_dependent_update_lrouter("4.1"))
+
     def test_update_lrouter_no_nexthop(self):
         lrouter = nvplib.create_lrouter(self.fake_cluster,
                                         'pippo',
