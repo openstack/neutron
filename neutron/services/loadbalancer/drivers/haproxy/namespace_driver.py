@@ -38,12 +38,6 @@ LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qlbaas-'
 DRIVER_NAME = 'haproxy_ns'
 
-ACTIVE_PENDING = (
-    constants.ACTIVE,
-    constants.PENDING_CREATE,
-    constants.PENDING_UPDATE
-)
-
 STATE_PATH_DEFAULT = '$state_path/lbaas'
 USER_GROUP_DEFAULT = 'nogroup'
 OPTS = [
@@ -272,7 +266,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
     def deploy_instance(self, logical_config):
         # do actual deploy only if vip is configured and active
         if ('vip' not in logical_config or
-            logical_config['vip']['status'] not in ACTIVE_PENDING or
+            logical_config['vip']['status'] not in constants.ACTIVE_PENDING or
             not logical_config['vip']['admin_state_up']):
             return
 
