@@ -36,8 +36,9 @@ from neutron.openstack.common import log as logging
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
+SYNCHRONIZED_PREFIX = 'neutron-'
 
-synchronized = lockutils.synchronized_with_prefix('neutron-')
+synchronized = lockutils.synchronized_with_prefix(SYNCHRONIZED_PREFIX)
 
 
 def read_cached_file(filename, cache_info, reload_func=None):
