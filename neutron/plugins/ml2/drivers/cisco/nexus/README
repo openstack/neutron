@@ -1,0 +1,19 @@
+Neutron ML2 Cisco Nexus Mechanism Driver README
+
+
+Notes:
+
+The initial version of this driver supports only a single physical
+network.
+
+For provider networks, extended configuration options are not
+currently supported.
+
+This driver's database may have duplicate entries also found in the
+core ML2 database. Since the Cisco Nexus DB code is a port from the
+plugins/cisco implementation this duplication will remain until the
+plugins/cisco code is deprecated.
+
+
+For more details on using Cisco Nexus switches under ML2 please refer to:
+http://wiki.openstack.org/wiki/Neutron/ML2/MechCiscoNexus

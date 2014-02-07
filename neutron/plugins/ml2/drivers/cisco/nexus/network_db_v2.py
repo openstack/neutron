@@ -19,9 +19,10 @@ from sqlalchemy.orm import exc
 from neutron.db import api as db
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
-from neutron.plugins.ml2.drivers.cisco import exceptions as c_exc
-from neutron.plugins.ml2.drivers.cisco import network_models_v2
-from neutron.plugins.ml2.drivers.cisco import nexus_models_v2  # noqa
+from neutron.plugins.ml2.drivers.cisco.nexus import constants as const
+from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as c_exc
+from neutron.plugins.ml2.drivers.cisco.nexus import network_models_v2
+from neutron.plugins.ml2.drivers.cisco.nexus import nexus_models_v2  # noqa
 
 
 LOG = logging.getLogger(__name__)
@@ -104,9 +105,9 @@ def update_credential(tenant_id, credential_id,
                 filter_by(tenant_id=tenant_id).
                 filter_by(credential_id=credential_id).one())
         if new_user_name:
-            cred["user_name"] = new_user_name
+            cred[const.CREDENTIAL_USERNAME] = new_user_name
         if new_password:
-            cred["password"] = new_password
+            cred[const.CREDENTIAL_PASSWORD] = new_password
         session.merge(cred)
         session.flush()
         return cred

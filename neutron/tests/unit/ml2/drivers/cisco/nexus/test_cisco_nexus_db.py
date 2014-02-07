@@ -17,8 +17,8 @@ import collections
 import testtools
 
 from neutron.db import api as db
-from neutron.plugins.ml2.drivers.cisco import exceptions
-from neutron.plugins.ml2.drivers.cisco import nexus_db_v2
+from neutron.plugins.ml2.drivers.cisco.nexus import exceptions
+from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2
 from neutron.tests import base
 
 

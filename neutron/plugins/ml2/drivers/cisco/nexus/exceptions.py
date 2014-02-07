@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Exceptions used by Cisco ML2 mechanism drivers."""
+"""Exceptions used by Cisco Nexus ML2 mechanism driver."""
 
 from neutron.common import exceptions
 

@@ -14,10 +14,10 @@
 #    under the License.
 #
 
-from neutron.plugins.ml2.drivers.cisco import config as config
-from neutron.plugins.ml2.drivers.cisco import constants as const
-from neutron.plugins.ml2.drivers.cisco import exceptions as cexc
-from neutron.plugins.ml2.drivers.cisco import network_db_v2 as cdb
+from neutron.plugins.ml2.drivers.cisco.nexus import config
+from neutron.plugins.ml2.drivers.cisco.nexus import constants as const
+from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as cexc
+from neutron.plugins.ml2.drivers.cisco.nexus import network_db_v2 as cdb
 
 
 TENANT = const.NETWORK_ADMIN
