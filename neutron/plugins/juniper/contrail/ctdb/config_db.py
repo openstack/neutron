@@ -1229,7 +1229,13 @@ class DBInterface(object):
         net_q_dict['status'] = constants.NET_STATUS_ACTIVE
 
         if net_repr == 'SHOW':
-            port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
+
+            # This code path is invoked on every port_create.
+            # Getting the backrefs can be an expensive operation.
+            # For now, just return instance_count of 0
+            #port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
+            port_back_refs = None
+
             #if port_back_refs:
             #    net_q_dict['ports'] = []
             #    for port_back_ref in port_back_refs:
@@ -1257,7 +1263,8 @@ class DBInterface(object):
 
         elif net_repr == 'LIST':
             extra_dict['contrail:instance_count'] = 0
-            port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
+            #port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
+            port_back_refs = None
             if port_back_refs:
                 extra_dict['contrail:instance_count'] = len(port_back_refs)
 
@@ -2639,8 +2646,15 @@ class DBInterface(object):
                 project_id = filters['tenant_id'][0]
             else:
                 project_id = filters['tenant_id']
+
             try:
-                return self._db_cache['q_tenant_port_count'][project_id]
+                nports = self._db_cache['q_tenant_port_count'][project_id]
+                if nports < 0:
+                    # TBD Hack. fix in case of multiple q servers after 1.03
+                    nports = 0
+                    del self._db_cache['q_tenant_port_count'][project_id]
+
+                return nports
             except KeyError:
                 # do it the hard way but remember for next time
                 nports = len(self._port_list_project(project_id))
