@@ -746,7 +746,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         profile = n1kv_db_v2.get_network_profile(
             db_session, network[n1kv.PROFILE_ID])
         n1kvclient = n1kv_client.Client()
-        body = {'publishName': network['name'],
+        body = {'description': network['name'],
                 'id': network['id'],
                 'networkSegmentPool': profile['id'],
                 'vlan': network[providernet.SEGMENTATION_ID],
@@ -1088,11 +1088,11 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                      net['id'], del_segments)
             self._extend_network_dict_provider(context, net)
             self._extend_network_dict_profile(context, net)
-        if binding.network_type not in [c_const.NETWORK_TYPE_MULTI_SEGMENT]:
-            self._send_update_network_request(context, net, add_segments,
-                                              del_segments)
-        LOG.debug(_("Updated network: %s"), net['id'])
-        return net
+            if binding.network_type != c_const.NETWORK_TYPE_MULTI_SEGMENT:
+                self._send_update_network_request(context, net, add_segments,
+                                                  del_segments)
+            LOG.debug(_("Updated network: %s"), net['id'])
+            return net
 
     def delete_network(self, context, id):
         """
@@ -1465,4 +1465,4 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                             net_profile_id,
                                             network_profile))
             self._send_update_network_profile_request(net_p)
-            return net_p
+        return net_p

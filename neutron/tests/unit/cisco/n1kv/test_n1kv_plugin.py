@@ -250,7 +250,9 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
             netp['network_profile']['physical_network'] = 'phys1'
         elif segment_type == 'overlay':
             netp['network_profile']['segment_range'] = '10000-10010'
-            netp['network_profile']['sub_type'] = 'enhanced'
+            netp['network_profile']['sub_type'] = 'enhanced' or 'native_vxlan'
+            netp['network_profile']['multicast_ip_range'] = ("224.1.1.1-"
+                                                             "224.1.1.10")
         return netp
 
     def test_create_network_profile_plugin(self):
@@ -288,6 +290,60 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
                                              net_p['network_profile']['id'])
         update_res = update_req.get_response(self.ext_api)
         self.assertEqual(update_res.status_int, 400)
+
+    def test_create_overlay_network_profile_invalid_multicast_fail(self):
+        net_p_dict = self._prepare_net_profile_data('overlay')
+        data = {'network_profile': {'sub_type': 'native_vxlan',
+                                    'multicast_ip_range': '1.1.1.1'}}
+        net_p_req = self.new_create_request('network_profiles', data,
+                                            net_p_dict)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_create_overlay_network_profile_no_multicast_fail(self):
+        net_p_dict = self._prepare_net_profile_data('overlay')
+        data = {'network_profile': {'sub_type': 'native_vxlan',
+                                    'multicast_ip_range': ''}}
+        net_p_req = self.new_create_request('network_profiles', data,
+                                            net_p_dict)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_create_overlay_network_profile_wrong_split_multicast_fail(self):
+        net_p_dict = self._prepare_net_profile_data('overlay')
+        data = {'network_profile': {
+                'sub_type': 'native_vxlan',
+                'multicast_ip_range': '224.1.1.1.224.1.1.3'}}
+        net_p_req = self.new_create_request('network_profiles', data,
+                                            net_p_dict)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_create_overlay_network_profile_invalid_minip_multicast_fail(self):
+        net_p_dict = self._prepare_net_profile_data('overlay')
+        data = {'network_profile': {
+                'sub_type': 'native_vxlan',
+                'multicast_ip_range': '10.0.0.1-224.1.1.3'}}
+        net_p_req = self.new_create_request('network_profiles', data,
+                                            net_p_dict)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_create_overlay_network_profile_invalid_maxip_multicast_fail(self):
+        net_p_dict = self._prepare_net_profile_data('overlay')
+        data = {'network_profile': {
+                'sub_type': 'native_vxlan',
+                'multicast_ip_range': '224.1.1.1-20.0.0.1'}}
+        net_p_req = self.new_create_request('network_profiles', data,
+                                            net_p_dict)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_create_overlay_network_profile_correct_multicast_pass(self):
+        data = self._prepare_net_profile_data('overlay')
+        net_p_req = self.new_create_request('network_profiles', data)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 201)
 
 
 class TestN1kvBasicGet(test_plugin.TestBasicGet,

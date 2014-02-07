@@ -199,7 +199,7 @@ class Client(object):
         :param network: network dict
         :param network_profile: network profile dict
         """
-        body = {'publishName': network['name'],
+        body = {'publishName': network['id'],
                 'description': network['name'],
                 'id': network['id'],
                 'tenantId': network['tenant_id'],
