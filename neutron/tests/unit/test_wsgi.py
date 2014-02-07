@@ -700,7 +700,7 @@ class RequestHeadersDeserializerTest(base.BaseTestCase):
         req = wsgi.Request.blank('/')
 
         self.assertEqual(
-            deserializer.deserialize(req, 'nonExistant'), {})
+            deserializer.deserialize(req, 'nonExistent'), {})
 
     def test_custom(self):
         class Deserializer(wsgi.RequestHeadersDeserializer):
@@ -857,11 +857,11 @@ class ServerTest(base.BaseTestCase):
 class MiddlewareTest(base.BaseTestCase):
     def test_process_response(self):
         def application(environ, start_response):
-            response = 'Sucess'
+            response = 'Success'
             return response
         response = application('test', 'fake')
         result = wsgi.Middleware(application).process_response(response)
-        self.assertEqual('Sucess', result)
+        self.assertEqual('Success', result)
 
 
 class FaultTest(base.BaseTestCase):

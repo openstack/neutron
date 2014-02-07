@@ -507,7 +507,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                          'tenant than Floating IP %(floatingip_id)s and '
                          'therefore cannot be bound.') % data)
             else:
-                msg = (_('Cannnot create floating IP and bind it to '
+                msg = (_('Cannot create floating IP and bind it to '
                          'Port %s, since that port is owned by a '
                          'different tenant.') % port_id)
             raise q_exc.BadRequest(resource='floatingip', msg=msg)

@@ -15,7 +15,7 @@
 #    under the License.
 #
 
-"""inital port security
+"""initial port security
 
 Revision ID: 1149d7de0cfa
 Revises: 1b693c095aa3
