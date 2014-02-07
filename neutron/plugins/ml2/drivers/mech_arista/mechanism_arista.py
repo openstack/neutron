@@ -354,7 +354,6 @@ class AristaRPCWrapper(object):
         return region
 
     def _run_openstack_cmds(self, commands, commands_to_log=None):
->>>>>>> 6570a919f38328a687ad3682d6de61467eecad61
         """Execute/sends a CAPI (Command API) command to EOS.
 
         In this method, list of commands is appended with prefix and
