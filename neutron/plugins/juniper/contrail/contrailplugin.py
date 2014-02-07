@@ -63,9 +63,7 @@ def _read_cfg_boolean(cfg_parser, section, option, default):
 
 #TODO define ABC PluginBase for ipam and policy and derive mixin from them
 class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                     #l3.RouterPluginBase,
                      securitygroup.SecurityGroupPluginBase,
-                     # vpcroutetable.RouteTablePluginBase,
                      portbindings_base.PortBindingBaseMixin,
                      l3_db.L3_NAT_db_mixin):
     """

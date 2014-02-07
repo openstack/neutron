@@ -480,65 +480,6 @@ class DBInterface(object):
             pass
     #end _virtual_machine_interface_delete
 
-    def _logical_router_interface_create(self, port_obj):
-        port_uuid = self._vnc_lib.logical_router_interface_create(port_obj)
-
-        return port_uuid
-    #end _logical_router_interface_create
-
-    def _logical_router_interface_read(self, port_id=None, fq_name=None):
-        if port_id:
-            try:
-                # return self._db_cache['vnc_ports'][port_id]
-                raise KeyError
-            except KeyError:
-                port_obj = self._vnc_lib.logical_router_interface_read(
-                    id=port_id)
-                fq_name_str = json.dumps(port_obj.get_fq_name())
-                self._db_cache['vnc_ports'][port_id] = port_obj
-                self._db_cache['vnc_ports'][fq_name_str] = port_obj
-                return port_obj
-
-        if fq_name:
-            fq_name_str = json.dumps(fq_name)
-            try:
-                # return self._db_cache['vnc_ports'][fq_name_str]
-                raise KeyError
-            except KeyError:
-                port_obj = self._vnc_lib.logical_router_interface_read(
-                    fq_name=fq_name)
-                self._db_cache['vnc_ports'][fq_name_str] = port_obj
-                self._db_cache['vnc_ports'][port_obj.uuid] = port_obj
-                return port_obj
-
-    #end _logical_router_interface_read
-
-    def _logical_router_interface_update(self, port_obj):
-        self._vnc_lib.logical_router_interface_update(port_obj)
-        fq_name_str = json.dumps(port_obj.get_fq_name())
-
-        self._db_cache['vnc_ports'][port_obj.uuid] = port_obj
-        self._db_cache['vnc_ports'][fq_name_str] = port_obj
-    #end _logical_router_interface_update
-
-    def _logical_router_interface_delete(self, port_id):
-        fq_name_str = None
-        try:
-            port_obj = self._db_cache['vnc_ports'][port_id]
-            fq_name_str = json.dumps(port_obj.get_fq_name())
-        except KeyError:
-            pass
-
-        self._vnc_lib.logical_router_interface_delete(id=port_id)
-
-        try:
-            del self._db_cache['vnc_ports'][port_id]
-            if fq_name_str:
-                del self._db_cache['vnc_ports'][fq_name_str]
-        except KeyError:
-            pass
-    #end _logical_router_interface_delete
-
     def _instance_ip_create(self, iip_obj):
         iip_uuid = self._vnc_lib.instance_ip_create(iip_obj)
 
@@ -2623,7 +2564,7 @@ class DBInterface(object):
             except NoIdError:
                 try:
                     router_obj = self._logical_router_read(id=dev_id)
-                    infs = router_obj.logical_router_interface_refs()
+                    infs = router_obj.virtual_machine_interface_refs()
                 except NoIdError:
                     continue
             
