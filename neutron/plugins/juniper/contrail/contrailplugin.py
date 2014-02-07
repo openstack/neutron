@@ -645,6 +645,26 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             raise e
     #end get_policy_count
 
+    def _make_router_dict(self, router, fields=None,
+                          process_extensions=True):
+        res = {'id': router['id'],
+               'name': router['name'],
+               'tenant_id': router['tenant_id'],
+               'admin_state_up': router['admin_state_up'],
+               'status': router['status'],
+               'external_gateway_info': None,
+               'gw_port_id': router['gw_port_id']}
+        if router['gw_port_id']:
+            nw_id = router['gw_port_id']['network_id']
+            res['external_gateway_info'] = {'network_id': nw_id}
+        # NOTE(salv-orlando): The following assumes this mixin is used in a
+        # class inheriting from CommonDbMixin, which is true for all existing
+        # plugins.
+        if process_extensions:
+            self._apply_dict_extend_functions(
+                l3.ROUTERS, res, router)
+        return self._fields(res, fields)
+
     # Router API handlers
     def create_router(self, context, router):
         """
@@ -679,7 +699,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                      fields)
                 router_dict.update(router_info['q_extra_data'])
             else:
-                router_dict = net_info['q_api_data']
+                router_dict = router_info['q_api_data']
 
             LOG.debug("get_router(): " + pformat(router_dict))
             return self._fields(router_dict, fields)
@@ -755,6 +775,47 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             raise e
     #end get_networks_count
 
+    def add_router_interface(self, context, router_id, interface_info):
+        if not interface_info:
+            msg = _("Either subnet_id or port_id must be specified")
+            raise exc.BadRequest(resource='router', msg=msg)
+
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            if 'port_id' in interface_info:
+                if 'subnet_id' in interface_info:
+                    msg = _("Cannot specify both subnet-id and port-id")
+                    raise exc.BadRequest(resource='router', msg=msg)
+
+                port_id = interface_info['port_id']
+                return cfgdb.add_router_interface(router_id, port_id=port_id)
+            elif 'subnet_id' in interface_info:
+                subnet_id = interface_info['subnet_id']
+                return cfgdb.add_router_interface(router_id,
+                                                  subnet_id=subnet_id)
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    # end add_router_interface
+
+    def remove_router_interface(self, context, router_id, interface_info):
+        if not interface_info:
+            msg = _("Either subnet_id or port_id must be specified")
+            raise exc.BadRequest(resource='router', msg=msg)
+        
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            if 'port_id' in interface_info:
+                port_id = interface_info['port_id']
+                return cfgdb.remove_router_interface(router_id, port_id=port_id)
+            elif 'subnet_id' in interface_info:
+                subnet_id = interface_info['subnet_id']
+                return cfgdb.remove_router_interface(router_id, subnet_id=subnet_id)
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    # end remove_router_interface
+    
     # Floating IP API handlers
     def _make_floatingip_dict(self, floatingip, fields=None):
         res = {'id': floatingip['id'],

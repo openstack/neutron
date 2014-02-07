@@ -12,6 +12,7 @@ import uuid
 import json
 import time
 import socket
+import netaddr
 from netaddr import IPNetwork, IPSet, IPAddress
 
 from neutron.common import constants
@@ -479,6 +480,65 @@ class DBInterface(object):
             pass
     #end _virtual_machine_interface_delete
 
+    def _logical_router_interface_create(self, port_obj):
+        port_uuid = self._vnc_lib.logical_router_interface_create(port_obj)
+
+        return port_uuid
+    #end _logical_router_interface_create
+
+    def _logical_router_interface_read(self, port_id=None, fq_name=None):
+        if port_id:
+            try:
+                # return self._db_cache['vnc_ports'][port_id]
+                raise KeyError
+            except KeyError:
+                port_obj = self._vnc_lib.logical_router_interface_read(
+                    id=port_id)
+                fq_name_str = json.dumps(port_obj.get_fq_name())
+                self._db_cache['vnc_ports'][port_id] = port_obj
+                self._db_cache['vnc_ports'][fq_name_str] = port_obj
+                return port_obj
+
+        if fq_name:
+            fq_name_str = json.dumps(fq_name)
+            try:
+                # return self._db_cache['vnc_ports'][fq_name_str]
+                raise KeyError
+            except KeyError:
+                port_obj = self._vnc_lib.logical_router_interface_read(
+                    fq_name=fq_name)
+                self._db_cache['vnc_ports'][fq_name_str] = port_obj
+                self._db_cache['vnc_ports'][port_obj.uuid] = port_obj
+                return port_obj
+
+    #end _logical_router_interface_read
+
+    def _logical_router_interface_update(self, port_obj):
+        self._vnc_lib.logical_router_interface_update(port_obj)
+        fq_name_str = json.dumps(port_obj.get_fq_name())
+
+        self._db_cache['vnc_ports'][port_obj.uuid] = port_obj
+        self._db_cache['vnc_ports'][fq_name_str] = port_obj
+    #end _logical_router_interface_update
+
+    def _logical_router_interface_delete(self, port_id):
+        fq_name_str = None
+        try:
+            port_obj = self._db_cache['vnc_ports'][port_id]
+            fq_name_str = json.dumps(port_obj.get_fq_name())
+        except KeyError:
+            pass
+
+        self._vnc_lib.logical_router_interface_delete(id=port_id)
+
+        try:
+            del self._db_cache['vnc_ports'][port_id]
+            if fq_name_str:
+                del self._db_cache['vnc_ports'][fq_name_str]
+        except KeyError:
+            pass
+    #end _logical_router_interface_delete
+
     def _instance_ip_create(self, iip_obj):
         iip_uuid = self._vnc_lib.instance_ip_create(iip_obj)
 
@@ -668,9 +728,9 @@ class DBInterface(object):
 
     def _logical_router_update(self, rtr_obj):
         self._vnc_lib.logical_router_update(rtr_obj)
-        fq_name_str = json.dumps(net_obj.get_fq_name())
+        fq_name_str = json.dumps(rtr_obj.get_fq_name())
 
-        self._db_cache['vnc_routers'][net_obj.uuid] = rtr_obj
+        self._db_cache['vnc_routers'][rtr_obj.uuid] = rtr_obj
         self._db_cache['vnc_routers'][fq_name_str] = rtr_obj
     #end _logical_router_update
 
@@ -1395,6 +1455,11 @@ class DBInterface(object):
         rtr_q_dict['shared'] = False
         rtr_q_dict['status'] = constants.NET_STATUS_ACTIVE
         rtr_q_dict['gw_port_id'] = None
+        try:
+            gw_info = self._vnc_lib.kv_retrieve(key='ext_gateway_info:'+rtr_obj.uuid)
+            rtr_q_dict['gw_port_id'] = {'network_id': gw_info}
+        except NoIdError:
+            pass
         return {'q_api_data': rtr_q_dict,
                 'q_extra_data': extra_dict}
     #end _router_vnc_to_neutron
@@ -1456,7 +1521,10 @@ class DBInterface(object):
     def _port_neutron_to_vnc(self, port_q, net_obj, oper):
         if oper == CREATE:
             port_name = str(uuid.uuid4())
-            instance_name = port_q['device_id']
+            if port_q['device_owner'] != constants.DEVICE_OWNER_ROUTER_INTF:
+                instance_name = port_q['device_id']
+            else:
+                instance_name = ''
             instance_obj = VirtualMachine(instance_name)
 
             id_perms = IdPermsType(enable=True)
@@ -1547,9 +1615,15 @@ class DBInterface(object):
 
         port_q_dict['admin_state_up'] = port_obj.get_id_perms().enable
         port_q_dict['status'] = constants.PORT_STATUS_ACTIVE
-        port_q_dict['device_id'] = port_obj.parent_name
-        port_q_dict['device_owner'] = 'TODO-device-owner'
-
+        
+        # port can be router interface or vm interface
+        router_refs = port_obj.get_logical_router_back_refs() 
+        if router_refs is not None:
+            port_q_dict['device_owner'] = constants.DEVICE_OWNER_ROUTER_INTF
+            port_q_dict['device_id'] = router_refs[0]['uuid']
+        else:
+            port_q_dict['device_id'] = port_obj.parent_name
+            port_q_dict['device_owner'] = 'TODO-device-owner'
         return {'q_api_data': port_q_dict,
                 'q_extra_data': sg_dict}
     #end _port_vnc_to_neutron
@@ -1999,6 +2073,11 @@ class DBInterface(object):
         rtr_obj = self._router_neutron_to_vnc(router_q, CREATE)
         rtr_uuid = self._logical_router_create(rtr_obj)
 
+        ext_gateway = router_q.get('external_gateway_info', None)
+        if ext_gateway:
+            network_id = ext_gateway.get('network_id')
+            if network_id:
+                 self._vnc_lib.kv_store('ext_gateway_info:'+rtr_uuid, network_id)
         ret_router_q = self._router_vnc_to_neutron(rtr_obj, rtr_repr='SHOW')
         self._db_cache['q_routers'][rtr_uuid] = ret_router_q
 
@@ -2028,7 +2107,7 @@ class DBInterface(object):
     def router_update(self, rtr_id, router_q):
         router_q['id'] = rtr_id
         rtr_obj = self._router_neutron_to_vnc(router_q, UPDATE)
-        self._virtual_router_update(rtr_obj)
+        self._logical_router_update(rtr_obj)
 
         ret_router_q = self._router_vnc_to_neutron(rtr_obj, rtr_repr='SHOW')
         self._db_cache['q_routers'][rtr_id] = ret_router_q
@@ -2038,6 +2117,7 @@ class DBInterface(object):
 
     def router_delete(self, rtr_id):
         self._logical_router_delete(rtr_id=rtr_id)
+        self._vnc_lib.kv_delete(key='ext_gateway_info:'+rtr_id)
         try:
             del self._db_cache['q_routers'][rtr_id]
         except KeyError:
@@ -2122,6 +2202,148 @@ class DBInterface(object):
         return len(rtrs_info)
     #end router_count
 
+    def _check_for_dup_router_subnet(self, router_id,
+                                     network_id, subnet_id, subnet_cidr):
+        try:
+            rports = self.port_list(filters={'device_id':[router_id]})
+            # It's possible these ports are on the same network, but
+            # different subnets.
+            new_ipnet = netaddr.IPNetwork(subnet_cidr)
+            for p in rports:
+                for ip in p['fixed_ips']:
+                    if ip['subnet_id'] == subnet_id:
+                        msg = (_("Router already has a port on subnet %s")
+                               % subnet_id)
+                        raise exc.BadRequest(resource='router', msg=msg)
+                    sub_id = ip['subnet_id']
+                    cidr = self._core_plugin._get_subnet(context.elevated(),
+                                                         sub_id)['cidr']
+                    ipnet = netaddr.IPNetwork(cidr)
+                    match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
+                    match2 = netaddr.all_matching_cidrs(ipnet, [subnet_cidr])
+                    if match1 or match2:
+                        data = {'subnet_cidr': subnet_cidr,
+                                'subnet_id': subnet_id,
+                                'cidr': cidr,
+                                'sub_id': sub_id}
+                        msg = (_("Cidr %(subnet_cidr)s of subnet "
+                                 "%(subnet_id)s overlaps with cidr %(cidr)s "
+                                 "of subnet %(sub_id)s") % data)
+                        raise exceptions.BadRequest(resource='router', msg=msg)
+        except exc.NoResultFound:
+            pass
+
+
+    def add_router_interface(self, router_id, port_id=None, subnet_id=None):
+        router_obj = self._logical_router_read(router_id)
+        if port_id:
+            port = self.port_read(port_id)['q_api_data']
+            if (port['device_owner'] == constants.DEVICE_OWNER_ROUTER_INTF and
+                    port['device_id']):
+                raise exceptions.PortInUse(net_id=port['network_id'],
+                                           port_id=port['id'],
+                                           device_id=port['device_id'])
+            fixed_ips = [ip for ip in port['fixed_ips']]
+            if len(fixed_ips) != 1:
+                msg = _('Router port must have exactly one fixed IP')
+                raise exceptions.BadRequest(resource='router', msg=msg)
+            subnet_id = fixed_ips[0]['subnet_id']
+            subnet = self.subnet_read(subnet_id)['q_api_data']
+            self._check_for_dup_router_subnet(router_id,
+                                              port['network_id'],
+                                              subnet['id'],
+                                              subnet['cidr'])
+            
+        elif subnet_id:
+            subnet = self.subnet_read(subnet_id)['q_api_data']
+            if not subnet['gateway_ip']:
+                msg = _('Subnet for router interface must have a gateway IP')
+                raise exceptions.BadRequest(resource='router', msg=msg)
+            self._check_for_dup_router_subnet(router_id,
+                                              subnet['network_id'],
+                                              subnet_id,
+                                              subnet['cidr'])
+
+            fixed_ip = {'ip_address': subnet['gateway_ip'],
+                        'subnet_id': subnet['id']}
+            port = self.port_create({'tenant_id': subnet['tenant_id'],
+                 'network_id': subnet['network_id'],
+                 'fixed_ips': [fixed_ip],
+                 'mac_address': attr.ATTR_NOT_SPECIFIED,
+                 'admin_state_up': True,
+                 'device_id': router_id,
+                 'device_owner': constants.DEVICE_OWNER_ROUTER_INTF,
+                 'name': ''})
+
+            port_id = port['q_api_data']['id']
+            
+        network_obj = self._virtual_network_read(subnet['network_id'])
+        network_obj.add_logical_router(router_obj)
+        self._virtual_network_update(network_obj)
+        vmi_obj = self._vnc_lib.virtual_machine_interface_read(id=port_id)
+        router_obj.add_virtual_machine_interface(vmi_obj)
+        self._logical_router_update(router_obj)
+        info = {'id': router_id,
+                'tenant_id': subnet['tenant_id'],
+                'port_id': port_id,
+                'subnet_id': subnet_id}
+        return info
+    # end add_router_interface
+
+    def remove_router_interface(self, router_id, port_id=None, subnet_id=None):
+        router_obj = self._logical_router_read(router_id)
+        subnet = None
+        if port_id:
+            port_db = self.port_read(port_id)['q_api_data']
+            if not (port_db['device_owner'] == constants.DEVICE_OWNER_ROUTER_INTF and
+                    port_db['device_id'] == router_id):
+                raise l3.RouterInterfaceNotFound(router_id=router_id,
+                                                 port_id=port_id)
+            port_subnet_id = port_db['fixed_ips'][0]['subnet_id']
+            if subnet_id and (port_subnet_id != subnet_id):
+                raise exceptions.SubnetMismatchForPort(port_id=port_id,
+                                                       subnet_id=subnet_id)
+            subnet_id = port_subnet_id
+            subnet = self.subnet_read(subnet_id)['q_api_data']
+            network_id = subnet['network_id']
+        elif subnet_id:
+            subnet = self.subnet_read(subnet_id)['q_api_data']
+            network_id = subnet['network_id']
+            
+            for intf in router_obj.get_virtual_machine_interface_refs() or []:
+                port_id = intf['uuid']
+                port_db = self.port_read(port_id)['q_api_data']
+                if subnet_id == port_db['fixed_ips'][0]['subnet_id']:
+                    break
+            else:
+                msg = _('Subnet %s not connected to router %s')%(subnet_id,
+                                                                 router_id)
+                raise exceptions.BadRequest(resource='router', msg=msg)
+            
+        port_obj = self._virtual_machine_interface_read(port_id)
+        router_obj.del_virtual_machine_interface(port_obj)
+        self._vnc_lib.logical_router_update(router_obj)
+        self.port_delete(port_id)
+        for intf in router_obj.get_virtual_machine_interface_refs() or []:
+            other_port_db=self.port_read(intf['uuid'])
+            other_subnet_id = other_port_db['fixed_ips'][0]['subnet_id']
+            if subnet_id == other_subnet_id:
+                break
+            other_subnet = self.subnet_read(other_subnet_id)['q_api_data']
+            if network_id == other_subnet['network_id']:
+                break
+        else:
+            network_obj = self._virtual_network_read(network_id)
+            network_obj.del_logical_router(router_obj)
+            self._virtual_network_update(network_obj)
+        info = {'id': router_id,
+            'tenant_id': subnet['tenant_id'],
+            'port_id': port_id,
+            'subnet_id': subnet_id}
+        return info
+    # end remove_router_interface
+
+        
     # floatingip api handlers
     def floatingip_create(self, fip_q):
         fip_obj = self._floatingip_neutron_to_vnc(fip_q, CREATE)
@@ -2202,7 +2424,8 @@ class DBInterface(object):
         net_obj = self._network_read(net_id)
         proj_id = net_obj.parent_uuid
 
-        self._ensure_instance_exists(port_q['device_id'])
+        if port_q['device_owner'] != constants.DEVICE_OWNER_ROUTER_INTF:
+            self._ensure_instance_exists(port_q['device_id'])
 
         # initialize port object
         port_obj = self._port_neutron_to_vnc(port_q, net_obj, CREATE)
@@ -2328,7 +2551,7 @@ class DBInterface(object):
         # delete instance if this was the last port
         inst_obj = self._vnc_lib.virtual_machine_read(id=instance_id)
         inst_intfs = inst_obj.get_virtual_machine_interfaces()
-        if not inst_intfs:
+        if inst_obj.name != 'default-virtual-machine' and not inst_intfs:
             self._vnc_lib.virtual_machine_delete(id=inst_obj.uuid)
 
         try:
@@ -2383,14 +2606,23 @@ class DBInterface(object):
             return ret_q_ports
 
         # Listing from parent to children
-        virtual_machine_ids = filters['device_id']
-        for vm_id in virtual_machine_ids:
-            resp_dict = self._vnc_lib.virtual_machine_interfaces_list(
-                parent_id=vm_id)
-            vm_intf_ids = resp_dict['virtual-machine-interfaces']
-            for vm_intf in vm_intf_ids:
+        device_ids = filters['device_id']
+        for dev_id in device_ids:
+            try:
+                vm_obj = self._vnc_lib.virtual_machine_read(id=dev_id)
+                resp_dict = self._vnc_lib.virtual_machine_interfaces_list(
+                    parent_id=dev_id)
+                intfs = resp_dict['virtual-machine-interfaces']
+            except NoIdError:
                 try:
-                    port_info = self.port_read(vm_intf['uuid'])
+                    router_obj = self._logical_router_read(id=dev_id)
+                    infs = router_obj.logical_router_interface_refs()
+                except NoIdError:
+                    continue
+            
+            for intf in intfs:
+                try:
+                    port_info = self.port_read(intf['uuid'])
                 except NoIdError:
                     continue
                 ret_q_ports.append(port_info)
@@ -2403,7 +2635,10 @@ class DBInterface(object):
             return 0
 
         if 'tenant_id' in filters:
-            project_id = filters['tenant_id'][0]
+            if isinstance(filters['tenant_id'], list):
+                project_id = filters['tenant_id'][0]
+            else:
+                project_id = filters['tenant_id']
             try:
                 return self._db_cache['q_tenant_port_count'][project_id]
             except KeyError:
