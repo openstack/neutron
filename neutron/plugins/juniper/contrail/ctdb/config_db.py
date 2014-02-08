@@ -2563,7 +2563,7 @@ class DBInterface(object):
                 intfs = resp_dict['virtual-machine-interfaces']
             except NoIdError:
                 try:
-                    router_obj = self._logical_router_read(id=dev_id)
+                    router_obj = self._logical_router_read(rtr_id=dev_id)
                     infs = router_obj.virtual_machine_interface_refs()
                 except NoIdError:
                     continue
