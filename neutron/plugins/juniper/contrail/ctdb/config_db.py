@@ -2273,7 +2273,7 @@ class DBInterface(object):
         self._vnc_lib.logical_router_update(router_obj)
         self.port_delete(port_id)
         for intf in router_obj.get_virtual_machine_interface_refs() or []:
-            other_port_db=self.port_read(intf['uuid'])
+            other_port_db=self.port_read(intf['uuid'])['q_api_data']
             other_subnet_id = other_port_db['fixed_ips'][0]['subnet_id']
             if subnet_id == other_subnet_id:
                 break
