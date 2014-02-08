@@ -542,7 +542,9 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
     def _check_router(self, context, router_id):
         l3_plugin = manager.NeutronManager.get_service_plugins().get(
             constants.L3_ROUTER_NAT)
-        l3_plugin.get_router(context, router_id)
+        router = l3_plugin.get_router(context, router_id)
+        if not router.get(l3_db.EXTERNAL_GW_INFO):
+            raise vpnaas.RouterIsNotExternal(router_id=router_id)
 
     def _check_subnet_id(self, context, router_id, subnet_id):
         core_plugin = manager.NeutronManager.get_plugin()
