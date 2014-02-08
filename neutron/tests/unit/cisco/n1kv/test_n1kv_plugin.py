@@ -40,6 +40,8 @@ from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.cisco.n1kv import fake_client
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import test_l3_plugin
+from neutron.tests.unit import test_l3_schedulers
 
 
 PHYS_NET = 'some-phys-net'
@@ -811,5 +813,15 @@ class TestN1kvNetworks(test_plugin.TestNetworksV2,
 
 class TestN1kvSubnets(test_plugin.TestSubnetsV2,
                       N1kvPluginTestCase):
+
+    pass
+
+
+class TestN1kvL3Test(test_l3_plugin.L3NatExtensionTestCase):
+
+    pass
+
+
+class TestN1kvL3SchedulersTest(test_l3_schedulers.L3SchedulerTestCase):
 
     pass
