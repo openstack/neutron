@@ -311,6 +311,11 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
                 return v
         return False
 
+    def _get_port_net_tenantid(self, context, port):
+        net = super(NeutronRestProxyV2Base,
+                    self).get_network(context, port["network_id"])
+        return net['tenant_id']
+
 
 class NeutronRestProxyV2(NeutronRestProxyV2Base,
                          extradhcpopt_db.ExtraDhcpOptMixin,
@@ -504,8 +509,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             self._process_port_create_extra_dhcp_opts(context, new_port,
                                                       dhcp_opts)
             new_port = self._extend_port_dict_binding(context, new_port)
-            net = super(NeutronRestProxyV2,
-                        self).get_network(context, new_port["network_id"])
+            net_tenant_id = self._get_port_net_tenantid(context, new_port)
             if self.add_meta_server_route:
                 if new_port['device_owner'] == 'network:dhcp':
                     destination = METADATA_SERVER_IP + '/32'
@@ -513,7 +517,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
             # create on network ctrl
             mapped_port = self._map_state_and_status(new_port)
-            self.servers.rest_create_port(net["tenant_id"],
+            self.servers.rest_create_port(net_tenant_id,
                                           new_port["network_id"],
                                           mapped_port)
         return new_port
@@ -588,9 +592,11 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                 ctrl_update_required = True
 
             if ctrl_update_required:
+                # tenant_id must come from network in case network is shared
+                net_tenant_id = self._get_port_net_tenantid(context, new_port)
                 new_port = self._extend_port_dict_binding(context, new_port)
                 mapped_port = self._map_state_and_status(new_port)
-                self.servers.rest_update_port(new_port["tenant_id"],
+                self.servers.rest_update_port(net_tenant_id,
                                               new_port["network_id"],
                                               mapped_port)
 
@@ -620,15 +626,14 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
     def _delete_port(self, context, port_id):
         port = super(NeutronRestProxyV2, self).get_port(context, port_id)
-        tenant_id = port['tenant_id']
-        net_id = port['network_id']
-        if tenant_id == '':
-            net = super(NeutronRestProxyV2, self).get_network(context, net_id)
-            tenant_id = net['tenant_id']
+
+        # Tenant ID must come from network in case the network is shared
+        tenant_id = self._get_port_net_tenantid(context, port)
+
         # Delete from DB
         ret_val = super(NeutronRestProxyV2,
                         self)._delete_port(context, port_id)
-        self.servers.rest_delete_port(tenant_id, net_id, port_id)
+        self.servers.rest_delete_port(tenant_id, port['network_id'], port_id)
         return ret_val
 
     def create_subnet(self, context, subnet):
