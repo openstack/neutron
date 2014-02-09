@@ -24,6 +24,7 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron import manager
 from neutron.openstack.common import log
 from neutron.openstack.common.rpc import proxy
+from neutron.openstack.common import uuidutils
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel
@@ -69,7 +70,13 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         if device.startswith(TAP_DEVICE_PREFIX):
             return device[TAP_DEVICE_PREFIX_LENGTH:]
         else:
-            return device
+            # REVISIT(irenab): Consider calling into bound MD to
+            # handle the get_device_details RPC, then remove the 'else' clause
+            if not uuidutils.is_uuid_like(device):
+                port = db.get_port_from_device_mac(device)
+                if port:
+                    return port.id
+        return device
 
     @classmethod
     def get_port_from_device(cls, device):

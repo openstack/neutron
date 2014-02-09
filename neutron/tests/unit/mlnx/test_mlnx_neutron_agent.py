@@ -91,7 +91,7 @@ class TestEswitchAgent(base.BaseTestCase):
 
     def test_treat_devices_added_updates_known_port_admin_down(self):
         details = {'port_id': '1234567890',
-                   'port_mac': '01:02:03:04:05:06',
+                   'device': '01:02:03:04:05:06',
                    'network_id': '123456789',
                    'network_type': 'vlan',
                    'physical_network': 'default',
