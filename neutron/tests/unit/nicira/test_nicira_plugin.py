@@ -486,6 +486,30 @@ class TestNiciraL3ExtensionManager(object):
         return []
 
 
+class TestNiciraL3SecGrpExtensionManager(TestNiciraL3ExtensionManager):
+    """A fake extension manager for L3 and Security Group extensions.
+
+    Includes also Nicira-specific L3 attributes.
+    """
+
+    def get_resources(self):
+        resources = super(TestNiciraL3SecGrpExtensionManager,
+                          self).get_resources()
+        resources.extend(secgrp.Securitygroup.get_resources())
+        return resources
+
+
+def backup_l3_attribute_map():
+    """Return a backup of the original l3 attribute map."""
+    return dict((res, attrs.copy()) for
+                (res, attrs) in l3.RESOURCE_ATTRIBUTE_MAP.iteritems())
+
+
+def restore_l3_attribute_map(map_to_restore):
+    """Ensure changes made by fake ext mgrs are reverted."""
+    l3.RESOURCE_ATTRIBUTE_MAP = map_to_restore
+
+
 class NiciraL3NatTest(test_l3_plugin.L3BaseForIntTests,
                       NiciraPluginV2TestCase):
 
@@ -498,7 +522,8 @@ class NiciraL3NatTest(test_l3_plugin.L3BaseForIntTests,
             self._l3_attribute_map_bk[item] = (
                 l3.RESOURCE_ATTRIBUTE_MAP[item].copy())
         cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
-        self.addCleanup(self._restore_l3_attribute_map)
+        l3_attribute_map_bk = backup_l3_attribute_map()
+        self.addCleanup(restore_l3_attribute_map, l3_attribute_map_bk)
         ext_mgr = ext_mgr or TestNiciraL3ExtensionManager()
         super(NiciraL3NatTest, self).setUp(
             plugin=plugin, ext_mgr=ext_mgr, service_plugins=service_plugins)
@@ -1256,11 +1281,14 @@ class NiciraExtGwModeTestCase(NiciraPluginV2TestCase,
 
 
 class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
-                                test_l3_plugin.L3NatTestCaseMixin):
+                                test_l3_plugin.L3NatTestCaseMixin,
+                                ext_sg.SecurityGroupsTestCase):
 
     def setUp(self):
-        ext_mgr = test_l3_plugin.L3TestExtensionManager()
-        super(NiciraNeutronNVPOutOfSync, self).setUp(ext_mgr=ext_mgr)
+        l3_attribute_map_bk = backup_l3_attribute_map()
+        self.addCleanup(restore_l3_attribute_map, l3_attribute_map_bk)
+        super(NiciraNeutronNVPOutOfSync, self).setUp(
+            ext_mgr=TestNiciraL3SecGrpExtensionManager())
 
     def test_delete_network_not_in_nvp(self):
         res = self._create_network('json', 'net1', True)
@@ -1413,6 +1441,16 @@ class NiciraNeutronNVPOutOfSync(NiciraPluginV2TestCase,
         router = self.deserialize('json', req.get_response(self.ext_api))
         self.assertEqual(router['router']['status'],
                          constants.NET_STATUS_ERROR)
+
+    def test_delete_security_group_not_in_nvp(self):
+        res = self._create_security_group('json', 'name', 'desc')
+        sec_group = self.deserialize('json', res)
+        self.fc._fake_securityprofile_dict.clear()
+        req = self.new_delete_request(
+            'security-groups',
+            sec_group['security_group']['id'])
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 204)
 
 
 class TestNiciraNetworkGateway(NiciraPluginV2TestCase,
