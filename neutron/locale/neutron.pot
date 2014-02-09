@@ -7,9 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: neutron "
-"jenkins.neutron.propose.translation.update.226\n"
+"jenkins.neutron.propose.translation.update.229\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-06 06:23+0000\n"
+"POT-Creation-Date: 2014-02-09 06:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -508,7 +508,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:570 neutron/agent/l3_agent.py:854
+#: neutron/agent/dhcp_agent.py:570 neutron/agent/l3_agent.py:865
 #: neutron/agent/metadata/agent.py:293
 #: neutron/services/metering/agents/metering_agent.py:272
 msgid ""
@@ -516,7 +516,7 @@ msgid ""
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:576 neutron/agent/l3_agent.py:859
+#: neutron/agent/dhcp_agent.py:576 neutron/agent/l3_agent.py:870
 #: neutron/agent/metadata/agent.py:298
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:807
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:257
@@ -527,7 +527,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:584 neutron/agent/l3_agent.py:864
+#: neutron/agent/dhcp_agent.py:584 neutron/agent/l3_agent.py:875
 #: neutron/services/metering/agents/metering_agent.py:280
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -622,83 +622,83 @@ msgstr ""
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:521
+#: neutron/agent/l3_agent.py:532
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:645
+#: neutron/agent/l3_agent.py:656
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:650
+#: neutron/agent/l3_agent.py:661
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:658
+#: neutron/agent/l3_agent.py:669
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:662
+#: neutron/agent/l3_agent.py:673
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:669
+#: neutron/agent/l3_agent.py:680
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:718
+#: neutron/agent/l3_agent.py:729
 #, python-format
 msgid "Starting RPC loop for %d updated routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:727
+#: neutron/agent/l3_agent.py:738
 msgid "RPC loop successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:729 neutron/agent/l3_agent.py:763
+#: neutron/agent/l3_agent.py:740 neutron/agent/l3_agent.py:774
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:747
+#: neutron/agent/l3_agent.py:758
 #, python-format
 msgid "Starting _sync_routers_task - fullsync:%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:758
+#: neutron/agent/l3_agent.py:769
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:761
+#: neutron/agent/l3_agent.py:772
 msgid "_sync_routers_task successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:767
+#: neutron/agent/l3_agent.py:778
 msgid "L3 agent started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:787
+#: neutron/agent/l3_agent.py:798
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:795
+#: neutron/agent/l3_agent.py:806
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:827
+#: neutron/agent/l3_agent.py:838
 msgid "Report state task started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:851
+#: neutron/agent/l3_agent.py:862
 msgid "Report state task successfully completed"
 msgstr ""
 
@@ -2289,201 +2289,171 @@ msgstr ""
 msgid "Database exception"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:137
+#: neutron/db/db_base_plugin_v2.py:136
 msgid "Cannot create resource for another tenant"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:299
+#: neutron/db/db_base_plugin_v2.py:298
 #, python-format
 msgid "Generated mac for network %(network_id)s is %(mac_address)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:305
+#: neutron/db/db_base_plugin_v2.py:304
 #, python-format
 msgid "Generated mac %(mac_address)s exists. Remaining attempts %(max_retries)s."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:309
+#: neutron/db/db_base_plugin_v2.py:308
 #, python-format
 msgid "Unable to generate mac address after %s attempts"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:366
-#, python-format
-msgid "Recycle %s"
-msgstr ""
-
-#: neutron/db/db_base_plugin_v2.py:370
-#, python-format
-msgid "Recycle: first match for %(first_ip)s-%(last_ip)s"
-msgstr ""
-
-#: neutron/db/db_base_plugin_v2.py:377
-#, python-format
-msgid "Recycle: last match for %(first_ip)s-%(last_ip)s"
-msgstr ""
-
-#: neutron/db/db_base_plugin_v2.py:389
-#, python-format
-msgid "Recycle: merged %(first_ip1)s-%(last_ip1)s and %(first_ip2)s-%(last_ip2)s"
-msgstr ""
-
-#: neutron/db/db_base_plugin_v2.py:398
-#, python-format
-msgid "Recycle: updated first %(first_ip)s-%(last_ip)s"
-msgstr ""
-
-#: neutron/db/db_base_plugin_v2.py:403
-#, python-format
-msgid "Recycle: updated last %(first_ip)s-%(last_ip)s"
-msgstr ""
-
-#: neutron/db/db_base_plugin_v2.py:412
-#, python-format
-msgid "Recycle: created new %(first_ip)s-%(last_ip)s"
-msgstr ""
-
-#: neutron/db/db_base_plugin_v2.py:431
+#: neutron/db/db_base_plugin_v2.py:344
 #, python-format
 msgid ""
 "No fixed IP found that matches the network %(network_id)s and ip address "
 "%(ip_address)s."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:440
+#: neutron/db/db_base_plugin_v2.py:353
 #, python-format
 msgid "Delete allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:463
+#: neutron/db/db_base_plugin_v2.py:385
 #, python-format
 msgid "All IPs from subnet %(subnet_id)s (%(cidr)s) allocated"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:468
+#: neutron/db/db_base_plugin_v2.py:390
 #, python-format
 msgid "Allocated IP - %(ip_address)s from %(first_ip)s to %(last_ip)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:475
+#: neutron/db/db_base_plugin_v2.py:397
 msgid "No more free IP's in slice. Deleting allocation pool."
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:581
+#: neutron/db/db_base_plugin_v2.py:416
+#, python-format
+msgid "Rebuilding availability ranges for subnet %s"
+msgstr ""
+
+#: neutron/db/db_base_plugin_v2.py:548
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:593
+#: neutron/db/db_base_plugin_v2.py:560
 #, python-format
 msgid "IP address %s is not a valid IP for the defined networks subnets"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:599
+#: neutron/db/db_base_plugin_v2.py:566
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:619
+#: neutron/db/db_base_plugin_v2.py:586
 #, python-format
 msgid "IP address %s is not a valid IP for the defined subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:628 neutron/db/db_base_plugin_v2.py:661
+#: neutron/db/db_base_plugin_v2.py:595 neutron/db/db_base_plugin_v2.py:628
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:676
+#: neutron/db/db_base_plugin_v2.py:643
 #, python-format
 msgid "Port update. Hold %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:683
+#: neutron/db/db_base_plugin_v2.py:650
 #, python-format
 msgid "Port update. Adding %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:738
+#: neutron/db/db_base_plugin_v2.py:705
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:743
+#: neutron/db/db_base_plugin_v2.py:710
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:763
+#: neutron/db/db_base_plugin_v2.py:730
 msgid "Performing IP validity checks on allocation pools"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:770
+#: neutron/db/db_base_plugin_v2.py:737
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:777
+#: neutron/db/db_base_plugin_v2.py:744
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:781
+#: neutron/db/db_base_plugin_v2.py:748
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:786
+#: neutron/db/db_base_plugin_v2.py:753
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:799
+#: neutron/db/db_base_plugin_v2.py:766
 msgid "Checking for overlaps among allocation pools and gateway ip"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:810
+#: neutron/db/db_base_plugin_v2.py:777
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:823 neutron/db/db_base_plugin_v2.py:827
+#: neutron/db/db_base_plugin_v2.py:790 neutron/db/db_base_plugin_v2.py:794
 #, python-format
 msgid "Invalid route: %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:947
+#: neutron/db/db_base_plugin_v2.py:914
 #, python-format
 msgid "An exception occurred while creating the %(resource)s:%(item)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1045
+#: neutron/db/db_base_plugin_v2.py:1012
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1069
+#: neutron/db/db_base_plugin_v2.py:1036
 msgid "Gateway is not valid on subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1089 neutron/db/db_base_plugin_v2.py:1103
+#: neutron/db/db_base_plugin_v2.py:1056 neutron/db/db_base_plugin_v2.py:1070
 msgid "new subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1096
+#: neutron/db/db_base_plugin_v2.py:1063
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1358
+#: neutron/db/db_base_plugin_v2.py:1325
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1450
+#: neutron/db/db_base_plugin_v2.py:1417
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
@@ -2849,7 +2819,7 @@ msgstr ""
 msgid "Available commands"
 msgstr ""
 
-#: neutron/db/vpn/vpn_db.py:659
+#: neutron/db/vpn/vpn_db.py:661
 #, python-format
 msgid "vpnservice %s in db is already deleted"
 msgstr ""
@@ -3513,6 +3483,11 @@ msgstr ""
 #: neutron/extensions/vpnaas.py:84
 #, python-format
 msgid "Subnet %(subnet_id)s is not connected to Router %(router_id)s"
+msgstr ""
+
+#: neutron/extensions/vpnaas.py:89
+#, python-format
+msgid "Router %(router_id)s has no external network gateway set"
 msgstr ""
 
 #: neutron/openstack/common/eventlet_backdoor.py:140
@@ -9439,7 +9414,12 @@ msgstr ""
 msgid "Unable to update name on NVP backend for network gateway: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2071
+#: neutron/plugins/nicira/NeutronPlugin.py:2062
+#, python-format
+msgid "Security group: %s was already deleted from backend"
+msgstr ""
+
+#: neutron/plugins/nicira/NeutronPlugin.py:2075
 #, python-format
 msgid "Port values not valid for protocol: %s"
 msgstr ""
@@ -9857,6 +9837,11 @@ msgstr ""
 #: neutron/plugins/nicira/nvplib.py:1139
 #, python-format
 msgid "Updated Security Profile: %s"
+msgstr ""
+
+#: neutron/plugins/nicira/nvplib.py:1149
+#, python-format
+msgid "Unable to find security profile %s on NSX backend"
 msgstr ""
 
 #: neutron/plugins/nicira/nvplib.py:1158
@@ -10446,7 +10431,7 @@ msgstr ""
 msgid "Port mapping for %s already available"
 msgstr ""
 
-#: neutron/plugins/nicira/dbexts/nicira_db.py:80
+#: neutron/plugins/nicira/dbexts/nicira_db.py:84
 #, python-format
 msgid "NSX identifiers for neutron port %s not yet stored in Neutron DB"
 msgstr ""
@@ -11869,7 +11854,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:565
-msgid "Network Admin State Validation Falied: "
+msgid "Network Admin State Validation Failed: "
 msgstr ""
 
 #: neutron/plugins/ryu/ryu_neutron_plugin.py:63
@@ -12576,70 +12561,70 @@ msgstr ""
 msgid "Agent_updated by server side %s!"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:53
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:47
 msgid "Location to store config and state files"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:59
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:53
 msgid "The user group"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:74
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:68
 #, python-format
 msgid "Error importing interface driver: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:165
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:159
 #, python-format
 msgid "Stats socket not found for pool %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:207
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:201
 #, python-format
 msgid "Error while connecting to stats socket: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:353
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:347
 #, python-format
 msgid "Unable to kill haproxy process: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:49
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:43
 msgid "Driver to use for scheduling pool to a default loadbalancer agent"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:61
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:55
 msgid "Device driver for agent should be specified in plugin driver."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:88
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:82
 #, python-format
 msgid "Multiple lbaas agents found on host %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:107
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:102
 msgid "Expected active pool"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:168
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:164
 #, python-format
 msgid "Unknown object type: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:179
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:175
 #, python-format
 msgid ""
 "Cannot update status: %(obj_type)s %(obj_id)s not found in the DB, it was"
 " probably deleted concurrently"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:202
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:198
 #, python-format
 msgid "Unable to find port %s to plug."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:226
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:243
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:222
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:239
 #, python-format
 msgid ""
 "Unable to find port %s to unplug.  This can occur when the Vip has been "

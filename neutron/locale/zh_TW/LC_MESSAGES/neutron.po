@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-06 06:23+0000\n"
+"POT-Creation-Date: 2014-02-09 06:21+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -508,7 +508,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr "在 meta 資料存取網路上找到 %(port_num)d 個路由器埠。將僅考量路由器 %(router_id)s 的埠 %(port_id)s"
 
-#: neutron/agent/dhcp_agent.py:570 neutron/agent/l3_agent.py:854
+#: neutron/agent/dhcp_agent.py:570 neutron/agent/l3_agent.py:865
 #: neutron/agent/metadata/agent.py:293
 #: neutron/services/metering/agents/metering_agent.py:272
 msgid ""
@@ -516,7 +516,7 @@ msgid ""
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:576 neutron/agent/l3_agent.py:859
+#: neutron/agent/dhcp_agent.py:576 neutron/agent/l3_agent.py:870
 #: neutron/agent/metadata/agent.py:298
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:807
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:257
@@ -527,7 +527,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr "無法報告狀態！"
 
-#: neutron/agent/dhcp_agent.py:584 neutron/agent/l3_agent.py:864
+#: neutron/agent/dhcp_agent.py:584 neutron/agent/l3_agent.py:875
 #: neutron/services/metering/agents/metering_agent.py:280
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -623,83 +623,83 @@ msgstr "路由器埠 %s 沒有 IP 位址"
 msgid "Ignoring multiple IPs on router port %s"
 msgstr "正在忽略路由器埠 %s 上的多個 IP"
 
-#: neutron/agent/l3_agent.py:521
+#: neutron/agent/l3_agent.py:532
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr "傳送無償 ARP 時失敗：%s"
 
-#: neutron/agent/l3_agent.py:645
+#: neutron/agent/l3_agent.py:656
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:650
+#: neutron/agent/l3_agent.py:661
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:658
+#: neutron/agent/l3_agent.py:669
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:662
+#: neutron/agent/l3_agent.py:673
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:669
+#: neutron/agent/l3_agent.py:680
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr "外部網路橋接器 '%s' 不存在"
 
-#: neutron/agent/l3_agent.py:718
+#: neutron/agent/l3_agent.py:729
 #, python-format
 msgid "Starting RPC loop for %d updated routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:727
+#: neutron/agent/l3_agent.py:738
 msgid "RPC loop successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:729 neutron/agent/l3_agent.py:763
+#: neutron/agent/l3_agent.py:740 neutron/agent/l3_agent.py:774
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr "同步路由器時失敗"
 
-#: neutron/agent/l3_agent.py:747
+#: neutron/agent/l3_agent.py:758
 #, python-format
 msgid "Starting _sync_routers_task - fullsync:%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:758
+#: neutron/agent/l3_agent.py:769
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:761
+#: neutron/agent/l3_agent.py:772
 msgid "_sync_routers_task successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:767
+#: neutron/agent/l3_agent.py:778
 msgid "L3 agent started"
 msgstr "已啟動 L3 代理程式"
 
-#: neutron/agent/l3_agent.py:787
+#: neutron/agent/l3_agent.py:798
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr "所新增的路徑項目是 '%s'"
 
-#: neutron/agent/l3_agent.py:795
+#: neutron/agent/l3_agent.py:806
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr "所移除的路徑項目是 '%s'"
 
-#: neutron/agent/l3_agent.py:827
+#: neutron/agent/l3_agent.py:838
 msgid "Report state task started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:851
+#: neutron/agent/l3_agent.py:862
 msgid "Report state task successfully completed"
 msgstr ""
 
@@ -2296,201 +2296,171 @@ msgstr "資料庫登錄異常狀況：%s"
 msgid "Database exception"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:137
+#: neutron/db/db_base_plugin_v2.py:136
 msgid "Cannot create resource for another tenant"
 msgstr "無法給另一個 Tenant 建立資源"
 
-#: neutron/db/db_base_plugin_v2.py:299
+#: neutron/db/db_base_plugin_v2.py:298
 #, python-format
 msgid "Generated mac for network %(network_id)s is %(mac_address)s"
 msgstr "給網路 %(network_id)s 產生的 MAC 位址是 %(mac_address)s"
 
-#: neutron/db/db_base_plugin_v2.py:305
+#: neutron/db/db_base_plugin_v2.py:304
 #, python-format
 msgid "Generated mac %(mac_address)s exists. Remaining attempts %(max_retries)s."
 msgstr "產生的 MAC 位址 %(mac_address)s 已存在。還可以嘗試 %(max_retries)s 次。"
 
-#: neutron/db/db_base_plugin_v2.py:309
+#: neutron/db/db_base_plugin_v2.py:308
 #, python-format
 msgid "Unable to generate mac address after %s attempts"
 msgstr "嘗試 %s 次之後仍無法產生 MAC 位址"
 
-#: neutron/db/db_base_plugin_v2.py:366
-#, python-format
-msgid "Recycle %s"
-msgstr "回收 %s"
-
-#: neutron/db/db_base_plugin_v2.py:370
-#, python-format
-msgid "Recycle: first match for %(first_ip)s-%(last_ip)s"
-msgstr "回收：%(first_ip)s-%(last_ip)s 的第一個相符項"
-
-#: neutron/db/db_base_plugin_v2.py:377
-#, python-format
-msgid "Recycle: last match for %(first_ip)s-%(last_ip)s"
-msgstr "回收：%(first_ip)s-%(last_ip)s 的最後一個相符項"
-
-#: neutron/db/db_base_plugin_v2.py:389
-#, python-format
-msgid "Recycle: merged %(first_ip1)s-%(last_ip1)s and %(first_ip2)s-%(last_ip2)s"
-msgstr "回收：已合併 %(first_ip1)s-%(last_ip1)s 及 %(first_ip2)s-%(last_ip2)s"
-
-#: neutron/db/db_base_plugin_v2.py:398
-#, python-format
-msgid "Recycle: updated first %(first_ip)s-%(last_ip)s"
-msgstr "回收：已更新第一個 %(first_ip)s-%(last_ip)s"
-
-#: neutron/db/db_base_plugin_v2.py:403
-#, python-format
-msgid "Recycle: updated last %(first_ip)s-%(last_ip)s"
-msgstr "回收：已更新最後一個 %(first_ip)s-%(last_ip)s"
-
-#: neutron/db/db_base_plugin_v2.py:412
-#, python-format
-msgid "Recycle: created new %(first_ip)s-%(last_ip)s"
-msgstr "回收：已建立新的 %(first_ip)s-%(last_ip)s"
-
-#: neutron/db/db_base_plugin_v2.py:431
+#: neutron/db/db_base_plugin_v2.py:344
 #, python-format
 msgid ""
 "No fixed IP found that matches the network %(network_id)s and ip address "
 "%(ip_address)s."
 msgstr "找不到與網路 %(network_id)s 及 IP 位址 %(ip_address)s 相符的固定 IP。"
 
-#: neutron/db/db_base_plugin_v2.py:440
+#: neutron/db/db_base_plugin_v2.py:353
 #, python-format
 msgid "Delete allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 msgstr "刪除所配置的 IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 
-#: neutron/db/db_base_plugin_v2.py:463
+#: neutron/db/db_base_plugin_v2.py:385
 #, python-format
 msgid "All IPs from subnet %(subnet_id)s (%(cidr)s) allocated"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:468
+#: neutron/db/db_base_plugin_v2.py:390
 #, python-format
 msgid "Allocated IP - %(ip_address)s from %(first_ip)s to %(last_ip)s"
 msgstr "已配置 IP - %(ip_address)s（從 %(first_ip)s 到 %(last_ip)s）"
 
-#: neutron/db/db_base_plugin_v2.py:475
+#: neutron/db/db_base_plugin_v2.py:397
 msgid "No more free IP's in slice. Deleting allocation pool."
 msgstr "截塊中沒有更多的可用 IP。正在刪除配置儲存區。"
 
-#: neutron/db/db_base_plugin_v2.py:581
+#: neutron/db/db_base_plugin_v2.py:416
+#, python-format
+msgid "Rebuilding availability ranges for subnet %s"
+msgstr ""
+
+#: neutron/db/db_base_plugin_v2.py:548
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr "IP 配置需要 subnet_id 或 ip_address"
 
-#: neutron/db/db_base_plugin_v2.py:593
+#: neutron/db/db_base_plugin_v2.py:560
 #, python-format
 msgid "IP address %s is not a valid IP for the defined networks subnets"
 msgstr "IP 位址 %s 不是所定義網路子網路的有效 IP"
 
-#: neutron/db/db_base_plugin_v2.py:599
+#: neutron/db/db_base_plugin_v2.py:566
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr "無法在網路 %(network_id)s 上建立埠，因為 fixed_ips 包含無效的子網路 %(subnet_id)s"
 
-#: neutron/db/db_base_plugin_v2.py:619
+#: neutron/db/db_base_plugin_v2.py:586
 #, python-format
 msgid "IP address %s is not a valid IP for the defined subnet"
 msgstr "IP 位址 %s 不是所定義子網路的有效 IP"
 
-#: neutron/db/db_base_plugin_v2.py:628 neutron/db/db_base_plugin_v2.py:661
+#: neutron/db/db_base_plugin_v2.py:595 neutron/db/db_base_plugin_v2.py:628
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr "已超出每個埠的固定 IP 數目上限"
 
-#: neutron/db/db_base_plugin_v2.py:676
+#: neutron/db/db_base_plugin_v2.py:643
 #, python-format
 msgid "Port update. Hold %s"
 msgstr "埠更新。保留 %s"
 
-#: neutron/db/db_base_plugin_v2.py:683
+#: neutron/db/db_base_plugin_v2.py:650
 #, python-format
 msgid "Port update. Adding %s"
 msgstr "埠更新。正在新增 %s"
 
-#: neutron/db/db_base_plugin_v2.py:738
+#: neutron/db/db_base_plugin_v2.py:705
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr "所要求的網路 %(network_id)s 子網路 (CIDR %(cidr)s) 與另一個子網路重疊"
 
-#: neutron/db/db_base_plugin_v2.py:743
+#: neutron/db/db_base_plugin_v2.py:710
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr "驗證 CIDR %(new_cidr)s 失敗 - 與子網路 %(subnet_id)s (CIDR %(cidr)s) 重疊"
 
-#: neutron/db/db_base_plugin_v2.py:763
+#: neutron/db/db_base_plugin_v2.py:730
 msgid "Performing IP validity checks on allocation pools"
 msgstr "正在對配置儲存區執行 IP 驗證檢查"
 
-#: neutron/db/db_base_plugin_v2.py:770
+#: neutron/db/db_base_plugin_v2.py:737
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr "在儲存區中發現無效的 IP 位址：%(start)s - %(end)s："
 
-#: neutron/db/db_base_plugin_v2.py:777
+#: neutron/db/db_base_plugin_v2.py:744
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr "指定的 IP 位址與子網路 IP 版本不符"
 
-#: neutron/db/db_base_plugin_v2.py:781
+#: neutron/db/db_base_plugin_v2.py:748
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "起始 IP (%(start)s) 大於結尾 IP (%(end)s)"
 
-#: neutron/db/db_base_plugin_v2.py:786
+#: neutron/db/db_base_plugin_v2.py:753
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr "找到的儲存區大於子網路 CIDR：%(start)s - %(end)s"
 
-#: neutron/db/db_base_plugin_v2.py:799
+#: neutron/db/db_base_plugin_v2.py:766
 msgid "Checking for overlaps among allocation pools and gateway ip"
 msgstr "正在檢查配置儲存區及閘道 IP 之間是否有重疊"
 
-#: neutron/db/db_base_plugin_v2.py:810
+#: neutron/db/db_base_plugin_v2.py:777
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr "發現重疊的範圍：%(l_range)s 及 %(r_range)s"
 
-#: neutron/db/db_base_plugin_v2.py:823 neutron/db/db_base_plugin_v2.py:827
+#: neutron/db/db_base_plugin_v2.py:790 neutron/db/db_base_plugin_v2.py:794
 #, python-format
 msgid "Invalid route: %s"
 msgstr "無效的路徑：%s"
 
-#: neutron/db/db_base_plugin_v2.py:947
+#: neutron/db/db_base_plugin_v2.py:914
 #, python-format
 msgid "An exception occurred while creating the %(resource)s:%(item)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1045
+#: neutron/db/db_base_plugin_v2.py:1012
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s '%(addr)s' 與 ip_version '%(ip_version)s' 不符"
 
-#: neutron/db/db_base_plugin_v2.py:1069
+#: neutron/db/db_base_plugin_v2.py:1036
 msgid "Gateway is not valid on subnet"
 msgstr "閘道在子網路上無效"
 
-#: neutron/db/db_base_plugin_v2.py:1089 neutron/db/db_base_plugin_v2.py:1103
+#: neutron/db/db_base_plugin_v2.py:1056 neutron/db/db_base_plugin_v2.py:1070
 msgid "new subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1096
+#: neutron/db/db_base_plugin_v2.py:1063
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr "剖析 DNS 位址 %s 時發生錯誤"
 
-#: neutron/db/db_base_plugin_v2.py:1358
+#: neutron/db/db_base_plugin_v2.py:1325
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr "已配置 IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 
-#: neutron/db/db_base_plugin_v2.py:1450
+#: neutron/db/db_base_plugin_v2.py:1417
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr "%(address)s (%(subnet_id)s) 未回收"
@@ -2860,7 +2830,7 @@ msgstr "必須提供修訂或相對差異"
 msgid "Available commands"
 msgstr "可用的指令"
 
-#: neutron/db/vpn/vpn_db.py:659
+#: neutron/db/vpn/vpn_db.py:661
 #, python-format
 msgid "vpnservice %s in db is already deleted"
 msgstr ""
@@ -3528,6 +3498,11 @@ msgstr ""
 #: neutron/extensions/vpnaas.py:84
 #, python-format
 msgid "Subnet %(subnet_id)s is not connected to Router %(router_id)s"
+msgstr ""
+
+#: neutron/extensions/vpnaas.py:89
+#, python-format
+msgid "Router %(router_id)s has no external network gateway set"
 msgstr ""
 
 #: neutron/openstack/common/eventlet_backdoor.py:140
@@ -9484,7 +9459,12 @@ msgstr "無法將閘道服務從 NVP 平台中移除 - 找不到資源"
 msgid "Unable to update name on NVP backend for network gateway: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2071
+#: neutron/plugins/nicira/NeutronPlugin.py:2062
+#, python-format
+msgid "Security group: %s was already deleted from backend"
+msgstr ""
+
+#: neutron/plugins/nicira/NeutronPlugin.py:2075
 #, python-format
 msgid "Port values not valid for protocol: %s"
 msgstr ""
@@ -9903,6 +9883,11 @@ msgstr "已建立安全設定檔：%s"
 #, python-format
 msgid "Updated Security Profile: %s"
 msgstr "已更新安全設定檔：%s"
+
+#: neutron/plugins/nicira/nvplib.py:1149
+#, python-format
+msgid "Unable to find security profile %s on NSX backend"
+msgstr ""
 
 #: neutron/plugins/nicira/nvplib.py:1158
 #, python-format
@@ -10491,7 +10476,7 @@ msgstr "所指定的名稱 '%s' 超出長度上限。將在 NVP 上截斷"
 msgid "Port mapping for %s already available"
 msgstr ""
 
-#: neutron/plugins/nicira/dbexts/nicira_db.py:80
+#: neutron/plugins/nicira/dbexts/nicira_db.py:84
 #, python-format
 msgid "NSX identifiers for neutron port %s not yet stored in Neutron DB"
 msgstr ""
@@ -11918,8 +11903,8 @@ msgid ""
 msgstr "此外掛程式尚不支援 admin_state_up = False 的網路。正在忽略對網路 %s 的設定"
 
 #: neutron/plugins/plumgrid/plumgrid_plugin/plumgrid_plugin.py:565
-msgid "Network Admin State Validation Falied: "
-msgstr "網路管理狀態驗證失敗："
+msgid "Network Admin State Validation Failed: "
+msgstr ""
 
 #: neutron/plugins/ryu/ryu_neutron_plugin.py:63
 #, python-format
@@ -12627,70 +12612,70 @@ msgstr ""
 msgid "Agent_updated by server side %s!"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:53
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:47
 msgid "Location to store config and state files"
 msgstr "配置檔及狀態檔的儲存位置"
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:59
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:53
 msgid "The user group"
 msgstr "使用者群組"
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:74
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:68
 #, python-format
 msgid "Error importing interface driver: %s"
 msgstr "匯入介面驅動程式時發生錯誤：%s"
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:165
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:159
 #, python-format
 msgid "Stats socket not found for pool %s"
 msgstr "找不到儲存區 %s 的統計資料 Socket"
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:207
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:201
 #, python-format
 msgid "Error while connecting to stats socket: %s"
 msgstr "連接至統計資料 Socket 時發生錯誤：%s"
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:353
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:347
 #, python-format
 msgid "Unable to kill haproxy process: %s"
 msgstr "無法結束 haproxy 處理程序：%s"
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:49
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:43
 msgid "Driver to use for scheduling pool to a default loadbalancer agent"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:61
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:55
 msgid "Device driver for agent should be specified in plugin driver."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:88
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:82
 #, python-format
 msgid "Multiple lbaas agents found on host %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:107
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:102
 msgid "Expected active pool"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:168
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:164
 #, python-format
 msgid "Unknown object type: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:179
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:175
 #, python-format
 msgid ""
 "Cannot update status: %(obj_type)s %(obj_id)s not found in the DB, it was"
 " probably deleted concurrently"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:202
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:198
 #, python-format
 msgid "Unable to find port %s to plug."
 msgstr "找不到要插入的埠 %s。"
 
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:226
-#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:243
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:222
+#: neutron/services/loadbalancer/drivers/haproxy/plugin_driver.py:239
 #, python-format
 msgid ""
 "Unable to find port %s to unplug.  This can occur when the Vip has been "
@@ -13256,7 +13241,7 @@ msgstr ""
 #~ msgstr "預設服務類型的文字說明"
 
 #~ msgid ""
-#~ msgstr "呼叫等待程式的數目大於警告臨界值：%d。可能有 MulticallProxyWaiter 洩漏。"
+#~ msgstr ""
 
 #~ msgid "Service type %(service_type_id)s could not be found "
 #~ msgstr "找不到服務類型 %(service_type_id)s"
@@ -14212,8 +14197,29 @@ msgstr ""
 #~ msgid "PLUMgrid Director communication failed"
 #~ msgstr ""
 
+#~ msgid "Recycle %s"
+#~ msgstr "回收 %s"
+
+#~ msgid "Recycle: first match for %(first_ip)s-%(last_ip)s"
+#~ msgstr "回收：%(first_ip)s-%(last_ip)s 的第一個相符項"
+
+#~ msgid "Recycle: last match for %(first_ip)s-%(last_ip)s"
+#~ msgstr "回收：%(first_ip)s-%(last_ip)s 的最後一個相符項"
+
 #~ msgid ""
-#~ "process_network_ports - iteration:%(iter_num)d "
-#~ "-treat_devices_added completed in %(elapsed).3f"
-#~ msgstr ""
+#~ "Recycle: merged %(first_ip1)s-%(last_ip1)s and "
+#~ "%(first_ip2)s-%(last_ip2)s"
+#~ msgstr "回收：已合併 %(first_ip1)s-%(last_ip1)s 及 %(first_ip2)s-%(last_ip2)s"
+
+#~ msgid "Recycle: updated first %(first_ip)s-%(last_ip)s"
+#~ msgstr "回收：已更新第一個 %(first_ip)s-%(last_ip)s"
+
+#~ msgid "Recycle: updated last %(first_ip)s-%(last_ip)s"
+#~ msgstr "回收：已更新最後一個 %(first_ip)s-%(last_ip)s"
+
+#~ msgid "Recycle: created new %(first_ip)s-%(last_ip)s"
+#~ msgstr "回收：已建立新的 %(first_ip)s-%(last_ip)s"
+
+#~ msgid "Network Admin State Validation Falied: "
+#~ msgstr "網路管理狀態驗證失敗："
 
