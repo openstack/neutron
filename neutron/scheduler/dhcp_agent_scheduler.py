@@ -22,6 +22,7 @@ from oslo.config import cfg
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
+from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log as logging
 
 
@@ -35,10 +36,17 @@ class ChanceScheduler(object):
     """
 
     def _schedule_bind_network(self, context, agent, network_id):
-        binding = agentschedulers_db.NetworkDhcpAgentBinding()
-        binding.dhcp_agent = agent
-        binding.network_id = network_id
-        context.session.add(binding)
+        try:
+            binding = agentschedulers_db.NetworkDhcpAgentBinding()
+            binding.dhcp_agent = agent
+            binding.network_id = network_id
+            context.session.add(binding)
+            # try to actually write the changes and catch integrity
+            # DBDuplicateEntry
+            context.session.flush()
+        except db_exc.DBDuplicateEntry:
+            # it's totally ok, someone just did our job!
+            pass
         LOG.debug(_('Network %(network_id)s is scheduled to be hosted by '
                     'DHCP agent %(agent_id)s'),
                   {'network_id': network_id,
