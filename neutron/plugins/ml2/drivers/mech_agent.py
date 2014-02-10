@@ -17,6 +17,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
+from neutron.extensions import portbindings
 from neutron.openstack.common import log
 from neutron.plugins.ml2 import driver_api as api
 
@@ -38,7 +39,8 @@ class AgentMechanismDriverBase(api.MechanismDriver):
     check_segment_for_agent().
     """
 
-    def __init__(self, agent_type, vif_type, cap_port_filter):
+    def __init__(self, agent_type, vif_type, cap_port_filter,
+                 supported_vnic_types=[portbindings.VNIC_NORMAL]):
         """Initialize base class for specific L2 agent type.
 
         :param agent_type: Constant identifying agent type in agents_db
@@ -47,6 +49,7 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         self.agent_type = agent_type
         self.vif_type = vif_type
         self.cap_port_filter = cap_port_filter
+        self.supported_vnic_types = supported_vnic_types
 
     def initialize(self):
         pass
@@ -56,6 +59,12 @@ class AgentMechanismDriverBase(api.MechanismDriver):
                     "network %(network)s"),
                   {'port': context.current['id'],
                    'network': context.network.current['id']})
+        vnic_type = context.current.get(portbindings.VNIC_TYPE,
+                                        portbindings.VNIC_NORMAL)
+        if vnic_type not in self.supported_vnic_types:
+            LOG.debug(_("Refusing to bind due to unsupported vnic_type: %s"),
+                      vnic_type)
+            return
         for agent in context.host_agents(self.agent_type):
             LOG.debug(_("Checking agent: %s"), agent)
             if agent['alive']:

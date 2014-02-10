@@ -71,6 +71,16 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
         binding_profile_set = attributes.is_attr_set(binding_profile)
         if not binding_profile_set and binding_profile is not None:
             del port[portbindings.PROFILE]
+
+        binding_vnic = port.get(portbindings.VNIC_TYPE)
+        binding_vnic_set = attributes.is_attr_set(binding_vnic)
+        if not binding_vnic_set and binding_vnic is not None:
+            del port[portbindings.VNIC_TYPE]
+        # REVISIT(irenab) Add support for vnic_type for plugins that
+        # can handle more than one type.
+        # Currently implemented for ML2 plugin that does not use
+        # PortBindingMixin.
+
         host = port_data.get(portbindings.HOST_ID)
         host_set = attributes.is_attr_set(host)
         with context.session.begin(subtransactions=True):

@@ -137,6 +137,11 @@ class TestMl2PortBindingHost(Ml2PluginV2TestCase,
     pass
 
 
+class TestMl2PortBindingVnicType(Ml2PluginV2TestCase,
+                                 test_bindings.PortBindingsVnicTestCaseMixin):
+    pass
+
+
 class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
     def setUp(self, plugin=None):

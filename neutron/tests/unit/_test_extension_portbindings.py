@@ -19,6 +19,7 @@
 #
 
 import contextlib
+import httplib
 
 from oslo.config import cfg
 from webob import exc
@@ -279,3 +280,89 @@ class PortBindingsHostTestCaseMixin(object):
             self._test_list_resources(
                 'port', (port1, port3),
                 query_params='%s=%s' % (portbindings.HOST_ID, self.hostname))
+
+
+class PortBindingsVnicTestCaseMixin(object):
+    fmt = 'json'
+    vnic_type = portbindings.VNIC_NORMAL
+
+    def _check_response_portbindings_vnic_type(self, port):
+        self.assertIn('status', port)
+        self.assertEqual(port[portbindings.VNIC_TYPE], self.vnic_type)
+
+    def test_port_vnic_type_non_admin(self):
+        with self.network(set_context=True,
+                          tenant_id='test') as net1:
+            with self.subnet(network=net1) as subnet1:
+                vnic_arg = {portbindings.VNIC_TYPE: self.vnic_type}
+                with self.port(subnet=subnet1,
+                               expected_res_status=httplib.CREATED,
+                               arg_list=(portbindings.VNIC_TYPE,),
+                               set_context=True,
+                               tenant_id='test',
+                               **vnic_arg) as port:
+                    # Check a response of create_port
+                    self._check_response_portbindings_vnic_type(port['port'])
+
+    def test_port_vnic_type(self):
+        vnic_arg = {portbindings.VNIC_TYPE: self.vnic_type}
+        with self.port(name='name', arg_list=(portbindings.VNIC_TYPE,),
+                       **vnic_arg) as port:
+            port_id = port['port']['id']
+            # Check a response of create_port
+            self._check_response_portbindings_vnic_type(port['port'])
+            # Check a response of get_port
+            ctx = context.get_admin_context()
+            port = self._show('ports', port_id, neutron_context=ctx)['port']
+            self._check_response_portbindings_vnic_type(port)
+            # By default user is admin - now test non admin user
+            ctx = context.Context(user_id=None,
+                                  tenant_id=self._tenant_id,
+                                  is_admin=False,
+                                  read_deleted="no")
+            non_admin_port = self._show(
+                'ports', port_id, neutron_context=ctx)['port']
+            self._check_response_portbindings_vnic_type(non_admin_port)
+
+    def test_ports_vnic_type(self):
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        vnic_arg = {portbindings.VNIC_TYPE: self.vnic_type}
+        with contextlib.nested(
+            self.port(name='name1',
+                      arg_list=(portbindings.VNIC_TYPE,),
+                      **vnic_arg),
+            self.port(name='name2')):
+            ctx = context.get_admin_context()
+            ports = self._list('ports', neutron_context=ctx)['ports']
+            self.assertEqual(2, len(ports))
+            for port in ports:
+                if port['name'] == 'name1':
+                    self._check_response_portbindings_vnic_type(port)
+                else:
+                    self.assertEqual(portbindings.VNIC_NORMAL,
+                                     port[portbindings.VNIC_TYPE])
+            # By default user is admin - now test non admin user
+            ctx = context.Context(user_id=None,
+                                  tenant_id=self._tenant_id,
+                                  is_admin=False,
+                                  read_deleted="no")
+            ports = self._list('ports', neutron_context=ctx)['ports']
+            self.assertEqual(2, len(ports))
+            for non_admin_port in ports:
+                self._check_response_portbindings_vnic_type(non_admin_port)
+
+    def test_ports_vnic_type_list(self):
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        vnic_arg = {portbindings.VNIC_TYPE: self.vnic_type}
+        with contextlib.nested(
+            self.port(name='name1',
+                      arg_list=(portbindings.VNIC_TYPE,),
+                      **vnic_arg),
+            self.port(name='name2'),
+            self.port(name='name3',
+                      arg_list=(portbindings.VNIC_TYPE,),
+                      **vnic_arg),) as (port1, port2, port3):
+            self._test_list_resources(
+                'port', (port1, port2, port3),
+                query_params='%s=%s' % (portbindings.VNIC_TYPE,
+                                        self.vnic_type))
