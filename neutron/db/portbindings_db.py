@@ -73,17 +73,17 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
             del port[portbindings.PROFILE]
         host = port_data.get(portbindings.HOST_ID)
         host_set = attributes.is_attr_set(host)
-        if not host_set:
-            self._extend_port_dict_binding_host(port, None)
-            return
         with context.session.begin(subtransactions=True):
             bind_port = context.session.query(
                 PortBindingPort).filter_by(port_id=port['id']).first()
-            if not bind_port:
-                context.session.add(PortBindingPort(port_id=port['id'],
-                                                    host=host))
+            if host_set:
+                if not bind_port:
+                    context.session.add(PortBindingPort(port_id=port['id'],
+                                                        host=host))
+                else:
+                    bind_port.host = host
             else:
-                bind_port.host = host
+                host = (bind_port and bind_port.host or None)
         self._extend_port_dict_binding_host(port, host)
 
     def get_port_host(self, context, port_id):
