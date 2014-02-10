@@ -13,10 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
+from neutron.common import exceptions as exc
+from neutron import context
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
+from neutron import manager
 from neutron.plugins.ml2 import config
+from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_extension_extradhcpopts as test_dhcpopts
@@ -89,6 +95,23 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         with self.port() as port:
             self.assertEqual(port['port']['status'], 'DOWN')
             self.assertEqual(self.port_create_status, 'DOWN')
+
+    def test_update_non_existent_port(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        data = {'port': {'admin_state_up': False}}
+        self.assertRaises(exc.PortNotFound, plugin.update_port, ctx,
+                          'invalid-uuid', data)
+
+    def test_delete_non_existent_port(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        with mock.patch.object(ml2_plugin.LOG, 'debug') as log_debug:
+            plugin.delete_port(ctx, 'invalid-uuid', l3_port_check=False)
+            log_debug.assert_has_calls([
+                mock.call(_("Deleting port %s"), 'invalid-uuid'),
+                mock.call(_("The port '%s' was deleted"), 'invalid-uuid')
+            ])
 
 
 class TestMl2PortBinding(Ml2PluginV2TestCase,

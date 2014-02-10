@@ -15,6 +15,7 @@
 
 from oslo.config import cfg
 from sqlalchemy import exc as sql_exc
+from sqlalchemy.orm import exc as sa_exc
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -595,7 +596,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port_db = (session.query(models_v2.Port).
                            enable_eagerloads(False).
                            filter_by(id=id).with_lockmode('update').one())
-            except sql_exc.NoResultFound:
+            except sa_exc.NoResultFound:
                 raise exc.PortNotFound(port_id=id)
             original_port = self._make_port_dict(port_db)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
@@ -653,7 +654,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port_db = (session.query(models_v2.Port).
                            enable_eagerloads(False).
                            filter_by(id=id).with_lockmode('update').one())
-            except sql_exc.NoResultFound:
+            except sa_exc.NoResultFound:
                 # the port existed when l3plugin.prevent_l3_port_deletion
                 # was called but now is already gone
                 LOG.debug(_("The port '%s' was deleted"), id)
