@@ -20,6 +20,7 @@ import webob.exc
 
 from neutron import context
 from neutron.openstack.common import log as logging
+from neutron.openstack.common.middleware import request_id
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
@@ -46,9 +47,13 @@ class NeutronKeystoneContext(wsgi.Middleware):
         tenant_name = req.headers.get('X_PROJECT_NAME')
         user_name = req.headers.get('X_USER_NAME')
 
+        # Use request_id if already set
+        req_id = req.environ.get(request_id.ENV_REQUEST_ID)
+
         # Create a context with the authentication data
         ctx = context.Context(user_id, tenant_id, roles=roles,
-                              user_name=user_name, tenant_name=tenant_name)
+                              user_name=user_name, tenant_name=tenant_name,
+                              request_id=req_id)
 
         # Inject the context...
         req.environ['neutron.context'] = ctx
