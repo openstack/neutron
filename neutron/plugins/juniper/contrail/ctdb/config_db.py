@@ -1473,6 +1473,7 @@ class DBInterface(object):
                 instance_name = port_q['device_id']
             else:
                 instance_name = ''
+            self._ensure_instance_exists(instance_name)
             instance_obj = VirtualMachine(instance_name)
 
             id_perms = IdPermsType(enable=True)
@@ -2371,9 +2372,6 @@ class DBInterface(object):
         net_id = port_q['network_id']
         net_obj = self._network_read(net_id)
         proj_id = net_obj.parent_uuid
-
-        if port_q['device_owner'] != constants.DEVICE_OWNER_ROUTER_INTF:
-            self._ensure_instance_exists(port_q['device_id'])
 
         # initialize port object
         port_obj = self._port_neutron_to_vnc(port_q, net_obj, CREATE)
