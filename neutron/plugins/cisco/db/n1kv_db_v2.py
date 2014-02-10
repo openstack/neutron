@@ -850,6 +850,13 @@ def get_policy_profile(db_session, id):
         raise c_exc.PolicyProfileIdNotFound(profile_id=id)
 
 
+def get_policy_profiles():
+    """Retrieve all policy profiles."""
+    db_session = db.get_session()
+    with db_session.begin(subtransactions=True):
+        return db_session.query(n1kv_models_v2.PolicyProfile)
+
+
 def create_profile_binding(db_session, tenant_id, profile_id, profile_type):
     """Create Network/Policy Profile association with a tenant."""
     db_session = db_session or db.get_session()
