@@ -24,6 +24,7 @@ from oslo.config import cfg
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as p_const
@@ -68,10 +69,12 @@ class BaseOVS(object):
         try:
             return utils.execute(full_args, root_helper=self.root_helper)
         except Exception as e:
-            LOG.error(_("Unable to execute %(cmd)s. Exception: %(exception)s"),
-                      {'cmd': full_args, 'exception': e})
-            if check_error:
-                raise
+            with excutils.save_and_reraise_exception() as ctxt:
+                LOG.error(_("Unable to execute %(cmd)s. "
+                            "Exception: %(exception)s"),
+                          {'cmd': full_args, 'exception': e})
+                if not check_error:
+                    ctxt.reraise = False
 
     def add_bridge(self, bridge_name):
         self.run_vsctl(["--", "--may-exist", "add-br", bridge_name])
@@ -84,17 +87,19 @@ class BaseOVS(object):
         try:
             self.run_vsctl(['br-exists', bridge_name], check_error=True)
         except RuntimeError as e:
-            if 'Exit code: 2\n' in str(e):
-                return False
-            raise
+            with excutils.save_and_reraise_exception() as ctxt:
+                if 'Exit code: 2\n' in str(e):
+                    ctxt.reraise = False
+                    return False
         return True
 
     def get_bridge_name_for_port_name(self, port_name):
         try:
             return self.run_vsctl(['port-to-br', port_name], check_error=True)
         except RuntimeError as e:
-            if 'Exit code: 1\n' not in str(e):
-                raise
+            with excutils.save_and_reraise_exception() as ctxt:
+                if 'Exit code: 1\n' in str(e):
+                    ctxt.reraise = False
 
     def port_exists(self, port_name):
         return bool(self.get_bridge_name_for_port_name(port_name))
@@ -282,15 +287,15 @@ class OVSBridge(BaseOVS):
                         "type=patch", "options:peer=%s" % remote_name])
         return self.get_port_ofport(local_name)
 
-    def db_get_map(self, table, record, column):
-        output = self.run_vsctl(["get", table, record, column])
+    def db_get_map(self, table, record, column, check_error=False):
+        output = self.run_vsctl(["get", table, record, column], check_error)
         if output:
             output_str = output.rstrip("\n\r")
             return self.db_str_to_map(output_str)
         return {}
 
-    def db_get_val(self, table, record, column):
-        output = self.run_vsctl(["get", table, record, column])
+    def db_get_val(self, table, record, column, check_error=False):
+        output = self.run_vsctl(["get", table, record, column], check_error)
         if output:
             return output.rstrip("\n\r")
 
@@ -305,7 +310,7 @@ class OVSBridge(BaseOVS):
         return ret
 
     def get_port_name_list(self):
-        res = self.run_vsctl(["list-ports", self.br_name])
+        res = self.run_vsctl(["list-ports", self.br_name], check_error=True)
         if res:
             return res.strip().split("\n")
         return []
@@ -319,16 +324,20 @@ class OVSBridge(BaseOVS):
         try:
             return utils.execute(args, root_helper=self.root_helper).strip()
         except Exception as e:
-            LOG.error(_("Unable to execute %(cmd)s. Exception: %(exception)s"),
-                      {'cmd': args, 'exception': e})
+            with excutils.save_and_reraise_exception():
+                LOG.error(_("Unable to execute %(cmd)s. "
+                            "Exception: %(exception)s"),
+                          {'cmd': args, 'exception': e})
 
     # returns a VIF object for each VIF port
     def get_vif_ports(self):
         edge_ports = []
         port_names = self.get_port_name_list()
         for name in port_names:
-            external_ids = self.db_get_map("Interface", name, "external_ids")
-            ofport = self.db_get_val("Interface", name, "ofport")
+            external_ids = self.db_get_map("Interface", name, "external_ids",
+                                           check_error=True)
+            ofport = self.db_get_val("Interface", name, "ofport",
+                                     check_error=True)
             if "iface-id" in external_ids and "attached-mac" in external_ids:
                 p = VifPort(name, ofport, external_ids["iface-id"],
                             external_ids["attached-mac"], self)
@@ -349,7 +358,7 @@ class OVSBridge(BaseOVS):
         edge_ports = set()
         args = ['--format=json', '--', '--columns=name,external_ids',
                 'list', 'Interface']
-        result = self.run_vsctl(args)
+        result = self.run_vsctl(args, check_error=True)
         if not result:
             return edge_ports
         for row in jsonutils.loads(result)['data']:
@@ -420,8 +429,8 @@ def get_bridges(root_helper):
     try:
         return utils.execute(args, root_helper=root_helper).strip().split("\n")
     except Exception as e:
-        LOG.exception(_("Unable to retrieve bridges. Exception: %s"), e)
-        return []
+        with excutils.save_and_reraise_exception():
+            LOG.exception(_("Unable to retrieve bridges. Exception: %s"), e)
 
 
 def get_installed_ovs_usr_version(root_helper):
