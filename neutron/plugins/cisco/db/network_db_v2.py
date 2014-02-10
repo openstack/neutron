@@ -25,7 +25,7 @@ from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_models_v2
 # Do NOT remove this import. It is required for all the models to be seen
-# by db.initalize() when called from VirtualPhysicalSwitchModelV2.__init__.
+# by db.initialize() when called from VirtualPhysicalSwitchModelV2.__init__.
 from neutron.plugins.cisco.db import nexus_models_v2  # noqa
 from neutron.plugins.openvswitch import ovs_models_v2
 
