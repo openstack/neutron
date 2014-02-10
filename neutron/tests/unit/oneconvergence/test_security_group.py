@@ -75,6 +75,18 @@ class TestOneConvergenceSGServerRpcCallBack(
     def test_security_group_rules_for_devices_ipv6_source_group(self):
         self.skipTest("NVSD Plugin does not support IPV6.")
 
+    def test_security_group_ra_rules_for_devices_ipv6_gateway_global(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_security_group_ra_rules_for_devices_ipv6_gateway_lla(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_security_group_ra_rules_for_devices_ipv6_no_gateway_port(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_security_group_rule_for_device_ipv6_multi_router_interfaces(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
 
 class TestOneConvergenceSGServerRpcCallBackXML(
     OneConvergenceSecurityGroupsTestCase,
@@ -86,6 +98,18 @@ class TestOneConvergenceSGServerRpcCallBackXML(
         self.skipTest("NVSD Plugin does not support IPV6.")
 
     def test_security_group_rules_for_devices_ipv6_source_group(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_security_group_ra_rules_for_devices_ipv6_gateway_global(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_security_group_ra_rules_for_devices_ipv6_gateway_lla(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_security_group_ra_rules_for_devices_ipv6_no_gateway_port(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_security_group_rule_for_device_ipv6_multi_router_interfaces(self):
         self.skipTest("NVSD Plugin does not support IPV6.")
 
 

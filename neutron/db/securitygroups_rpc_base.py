@@ -16,8 +16,10 @@
 #    under the License.
 
 import netaddr
+from sqlalchemy.orm import exc
 
 from neutron.common import constants as q_const
+from neutron.common import ipv6_utils as ipv6
 from neutron.common import utils
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
@@ -222,6 +224,67 @@ class SecurityGroupServerRpcCallbackMixin(object):
             ips[port['network_id']].append(ip)
         return ips
 
+    def _select_ra_ips_for_network_ids(self, context, network_ids):
+        """Select IP addresses to allow sending router advertisement from.
+
+        If OpenStack dnsmasq sends RA, get link local address of
+        gateway and allow RA from this Link Local address.
+        The gateway port link local address will only be obtained
+        when router is created before VM instance is booted and
+        subnet is attached to router.
+
+        If OpenStack doesn't send RA, allow RA from gateway IP.
+        Currently, the gateway IP needs to be link local to be able
+        to send RA to VM.
+        """
+        if not network_ids:
+            return {}
+        ips = {}
+        for network_id in network_ids:
+            ips[network_id] = set([])
+        query = context.session.query(models_v2.Subnet)
+        subnets = query.filter(models_v2.Subnet.network_id.in_(network_ids))
+        for subnet in subnets:
+            gateway_ip = subnet['gateway_ip']
+            if subnet['ip_version'] != 6 or not gateway_ip:
+                continue
+            # TODO(xuhanp): Figure out how to call the following code
+            # each time router is created or updated.
+            if not netaddr.IPAddress(gateway_ip).is_link_local():
+                if subnet['ipv6_ra_mode']:
+                    gateway_ip = self._get_lla_gateway_ip_for_subnet(context,
+                                                                     subnet)
+                else:
+                    # TODO(xuhanp):Figure out how to allow gateway IP from
+                    # existing device to be global address and figure out the
+                    # link local address by other method.
+                    continue
+            if gateway_ip:
+                ips[subnet['network_id']].add(gateway_ip)
+
+        return ips
+
+    def _get_lla_gateway_ip_for_subnet(self, context, subnet):
+        query = context.session.query(models_v2.Port)
+        query = query.join(models_v2.IPAllocation)
+        query = query.filter(
+            models_v2.IPAllocation.subnet_id == subnet['id'])
+        query = query.filter(
+            models_v2.IPAllocation.ip_address == subnet['gateway_ip'])
+        query = query.filter(models_v2.Port.device_owner ==
+                             q_const.DEVICE_OWNER_ROUTER_INTF)
+        try:
+            gateway_port = query.one()
+        except (exc.NoResultFound, exc.MultipleResultsFound):
+            LOG.warn(_('No valid gateway port on subnet %s is '
+                       'found for IPv6 RA'), subnet['id'])
+            return
+        mac_address = gateway_port['mac_address']
+        lla_ip = str(ipv6.get_ipv6_addr_by_EUI64(
+            q_const.IPV6_LLA_PREFIX,
+            mac_address))
+        return lla_ip
+
     def _convert_remote_group_id_to_ip_prefix(self, context, ports):
         remote_group_ids = self._select_remote_group_ids(ports)
         ips = self._select_ips_for_remote_group(context, remote_group_ids)
@@ -276,17 +339,18 @@ class SecurityGroupServerRpcCallbackMixin(object):
 
             ra_rule = {'direction': 'ingress',
                        'ethertype': q_const.IPv6,
-                       'protocol': 'icmp'}
-            ra_rule['source_ip_prefix'] = "%s/%s" % (ra_ip,
-                                                     IP_MASK[q_const.IPv6])
+                       'protocol': 'icmp',
+                       'source_ip_prefix': ra_ip,
+                       'source_port_range_min': q_const.ICMPV6_TYPE_RA}
             port['security_group_rules'].append(ra_rule)
 
     def _apply_provider_rule(self, context, ports):
         network_ids = self._select_network_ids(ports)
-        ips = self._select_dhcp_ips_for_network_ids(context, network_ids)
+        ips_dhcp = self._select_dhcp_ips_for_network_ids(context, network_ids)
+        ips_ra = self._select_ra_ips_for_network_ids(context, network_ids)
         for port in ports.values():
-            self._add_ingress_ra_rule(port, ips)
-            self._add_ingress_dhcp_rule(port, ips)
+            self._add_ingress_ra_rule(port, ips_ra)
+            self._add_ingress_dhcp_rule(port, ips_dhcp)
 
     def _security_group_rules_for_ports(self, context, ports):
         rules_in_db = self._select_rules_for_ports(context, ports)
