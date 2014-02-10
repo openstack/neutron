@@ -107,10 +107,18 @@ class SecurityGroupAgentRpcMixin(object):
     support in agent implementations.
     """
 
-    def init_firewall(self):
+    def init_firewall(self, defer_refresh_firewall=False):
         firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver
         LOG.debug(_("Init firewall settings (driver=%s)"), firewall_driver)
         self.firewall = importutils.import_object(firewall_driver)
+        # The following flag will be set to true if port filter must not be
+        # applied as soon as a rule or membership notification is received
+        self.defer_refresh_firewall = defer_refresh_firewall
+        # Stores devices for which firewall should be refreshed when
+        # deferred refresh is enabled.
+        self.devices_to_refilter = set()
+        # Flag raised when a global refresh is needed
+        self.global_refresh_firewall = False
 
     def prepare_devices_filter(self, device_ids):
         if not device_ids:
@@ -141,14 +149,24 @@ class SecurityGroupAgentRpcMixin(object):
         sec_grp_set = set(security_groups)
         for device in self.firewall.ports.values():
             if sec_grp_set & set(device.get(attribute, [])):
-                devices.append(device)
-
-        if devices:
+                devices.append(device['device'])
+        if self.defer_refresh_firewall:
+            LOG.debug(_("Adding %s devices to the list of devices "
+                        "for which firewall needs to be refreshed"),
+                      devices)
+            self.devices_to_refilter |= set(devices)
+        elif devices:
             self.refresh_firewall(devices)
 
     def security_groups_provider_updated(self):
         LOG.info(_("Provider rule updated"))
-        self.refresh_firewall()
+        if self.defer_refresh_firewall:
+            # NOTE(salv-orlando): A 'global refresh' might not be
+            # necessary if the subnet for which the provider rules
+            # were updated is known
+            self.global_refresh_firewall = True
+        else:
+            self.refresh_firewall()
 
     def remove_devices_filter(self, device_ids):
         if not device_ids:
@@ -161,22 +179,59 @@ class SecurityGroupAgentRpcMixin(object):
                     continue
                 self.firewall.remove_port_filter(device)
 
-    def refresh_firewall(self, devices=None):
+    def refresh_firewall(self, device_ids=None):
         LOG.info(_("Refresh firewall rules"))
-
-        if devices:
-            device_ids = [d['device'] for d in devices]
-        else:
-            device_ids = self.firewall.ports.keys()
         if not device_ids:
-            LOG.info(_("No ports here to refresh firewall"))
-            return
+            device_ids = self.firewall.ports.keys()
+            if not device_ids:
+                LOG.info(_("No ports here to refresh firewall"))
+                return
         devices = self.plugin_rpc.security_group_rules_for_devices(
             self.context, device_ids)
         with self.firewall.defer_apply():
             for device in devices.values():
                 LOG.debug(_("Update port filter for %s"), device['device'])
                 self.firewall.update_port_filter(device)
+
+    def firewall_refresh_needed(self):
+        return self.global_refresh_firewall or self.devices_to_refilter
+
+    def setup_port_filters(self, new_devices, updated_devices):
+        """Configure port filters for devices.
+
+        This routine applies filters for new devices and refreshes firewall
+        rules when devices have been updated, or when there are changes in
+        security group membership or rules.
+
+        :param new_devices: set containing identifiers for new devices
+        :param updated_devices: set containining identifiers for
+        updated devices
+        """
+        if new_devices:
+            LOG.debug(_("Preparing device filters for %d new devices"),
+                      len(new_devices))
+            self.prepare_devices_filter(new_devices)
+        # These data structures are cleared here in order to avoid
+        # losing updates occurring during firewall refresh
+        devices_to_refilter = self.devices_to_refilter
+        global_refresh_firewall = self.global_refresh_firewall
+        self.devices_to_refilter = set()
+        self.global_refresh_firewall = False
+        # TODO(salv-orlando): Avoid if possible ever performing the global
+        # refresh providing a precise list of devices for which firewall
+        # should be refreshed
+        if global_refresh_firewall:
+            LOG.debug(_("Refreshing firewall for all filtered devices"))
+            self.refresh_firewall()
+        else:
+            # If a device is both in new and updated devices
+            # avoid reprocessing it
+            updated_devices = ((updated_devices | devices_to_refilter) -
+                               new_devices)
+            if updated_devices:
+                LOG.debug(_("Refreshing firewall for %d devices"),
+                          len(updated_devices))
+                self.refresh_firewall(updated_devices)
 
 
 class SecurityGroupAgentRpcApiMixin(object):
