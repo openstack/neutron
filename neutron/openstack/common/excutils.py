@@ -22,6 +22,7 @@ Exception related utilities.
 import contextlib
 import logging
 import sys
+import time
 import traceback
 
 from neutron.openstack.common.gettextutils import _
@@ -49,3 +50,34 @@ def save_and_reraise_exception():
                       traceback.format_exception(type_, value, tb))
         raise
     raise type_, value, tb
+
+
+def forever_retry_uncaught_exceptions(infunc):
+    def inner_func(*args, **kwargs):
+        last_log_time = 0
+        last_exc_message = None
+        exc_count = 0
+        while True:
+            try:
+                return infunc(*args, **kwargs)
+            except Exception as exc:
+                this_exc_message = str(exc)
+                if this_exc_message == last_exc_message:
+                    exc_count += 1
+                else:
+                    exc_count = 1
+                # Do not log any more frequently than once a minute unless
+                # the exception message changes
+                cur_time = int(time.time())
+                if (cur_time - last_log_time > 60 or
+                        this_exc_message != last_exc_message):
+                    logging.exception(
+                        _('Unexpected exception occurred %d time(s)... '
+                          'retrying.') % exc_count)
+                    last_log_time = cur_time
+                    last_exc_message = this_exc_message
+                    exc_count = 0
+                # This should be a very rare event. In case it isn't, do
+                # a sleep.
+                time.sleep(1)
+    return inner_func
