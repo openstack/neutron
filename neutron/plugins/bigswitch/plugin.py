@@ -340,7 +340,7 @@ class ServerPool(object):
             ignore_codes = [404]
         resp = self.rest_call(action, resource, data, headers, ignore_codes)
         if self.server_failure(resp, ignore_codes):
-            LOG.error(_("NeutronRestProxyV2: ") + errstr, resp[2])
+            LOG.error(errstr, resp[2])
             raise RemoteRestError(reason=resp[2])
         if resp[0] in ignore_codes:
             LOG.warning(_("NeutronRestProxyV2: Received and ignored error "
