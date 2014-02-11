@@ -18,7 +18,6 @@ import eventlet
 import eventlet.event
 import eventlet.queue
 import eventlet.timeout
-import psutil
 
 from neutron.agent.linux import utils
 from neutron.openstack.common import log as logging
@@ -141,12 +140,18 @@ class AsyncProcess(object):
         # die is to target the child process directly.
         if self.root_helper:
             try:
-                # This assumes that there are not multiple children in any
-                # level of the process tree under the parent process.
-                pid = psutil.Process(
-                    self._process.pid).get_children(recursive=True)[-1].pid
-            except (psutil.NoSuchProcess, IndexError):
-                pid = None
+                pid = utils.find_child_pids(pid)[0]
+            except IndexError:
+                # Process is already dead
+                return None
+            while True:
+                try:
+                    # We shouldn't have more than one child per process
+                    # so keep getting the children of the first one
+                    pid = utils.find_child_pids(pid)[0]
+                except IndexError:
+                    # Last process in the tree, return it
+                    break
         return pid
 
     def _kill_process(self, pid):
