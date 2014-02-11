@@ -22,7 +22,6 @@ import webob.exc
 from neutron import context
 from neutron.extensions import portbindings
 from neutron.manager import NeutronManager
-from neutron.plugins.bigswitch.plugin import RemoteRestError
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.bigswitch import fake_server
 from neutron.tests.unit.bigswitch import test_base
@@ -33,9 +32,11 @@ import neutron.tests.unit.test_db_plugin as test_plugin
 class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,
                                      test_plugin.NeutronDbPluginV2TestCase):
 
-    def setUp(self):
+    def setUp(self, plugin_name=None):
         self.setup_config_files()
         self.setup_patches()
+        if plugin_name:
+            self._plugin_name = plugin_name
         super(BigSwitchProxyPluginV2TestCase,
               self).setUp(self._plugin_name)
 
@@ -86,29 +87,12 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
             #failure to create should result in no ports
             self.assertEqual(0, len(ports))
 
-    def test_rollback_on_port_attach(self):
-        with self.network() as n:
-            plugin_obj = NeutronManager.get_plugin()
-            with patch.object(plugin_obj.servers,
-                              'rest_plug_interface') as mock_plug_interface:
-                mock_plug_interface.side_effect = RemoteRestError(
-                    reason='fake error')
-                kwargs = {'device_id': 'somedevid',
-                          'tenant_id': n['network']['tenant_id']}
-                self._create_port('json', n['network']['id'],
-                                  expected_code=
-                                  webob.exc.HTTPInternalServerError.code,
-                                  **kwargs)
-                port = self._get_ports(n['network']['id'])[0]
-                # Attachment failure should leave created port in error state
-                self.assertEqual('ERROR', port['status'])
-                self._delete('ports', port['id'])
-
     def test_rollback_for_port_update(self):
         with self.network() as n:
-            with self.port(network_id=n['network']['id']) as port:
+            with self.port(network_id=n['network']['id'],
+                           device_id='66') as port:
                 port = self._get_ports(n['network']['id'])[0]
-                data = {'port': {'name': 'aNewName'}}
+                data = {'port': {'name': 'aNewName', 'device_id': '99'}}
                 self.httpPatch = patch('httplib.HTTPConnection', create=True,
                                        new=fake_server.HTTPConnectionMock500)
                 self.httpPatch.start()
@@ -120,7 +104,7 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
                 # name should have stayed the same
                 self.assertEqual(port['name'], uport['name'])
 
-    def test_rollback_for_port_detach(self):
+    def test_rollback_for_port_delete(self):
         with self.network() as n:
             with self.port(network_id=n['network']['id'],
                            device_id='somedevid') as port:
@@ -133,22 +117,6 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
                 self.httpPatch.stop()
                 port = self._get_ports(n['network']['id'])[0]
                 self.assertEqual('ACTIVE', port['status'])
-
-    def test_rollback_for_port_delete(self):
-        with self.network() as n:
-            with self.port(network_id=n['network']['id'],
-                           device_id='somdevid') as port:
-                plugin_obj = NeutronManager.get_plugin()
-                with patch.object(plugin_obj.servers,
-                                  'rest_delete_port'
-                                  ) as mock_plug_interface:
-                    mock_plug_interface.side_effect = RemoteRestError(
-                        reason='fake error')
-                    self._delete('ports', port['port']['id'],
-                                 expected_code=
-                                 webob.exc.HTTPInternalServerError.code)
-                    port = self._get_ports(n['network']['id'])[0]
-                    self.assertEqual('ERROR', port['status'])
 
 
 class TestBigSwitchProxyPortsV2IVS(test_plugin.TestPortsV2,
