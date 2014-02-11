@@ -25,10 +25,10 @@ from neutron.extensions import portbindings
 from neutron.manager import NeutronManager
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2 import config as ml2_config
-from neutron.plugins.ml2.drivers.cisco import config as cisco_config
-from neutron.plugins.ml2.drivers.cisco import exceptions as c_exc
-from neutron.plugins.ml2.drivers.cisco import mech_cisco_nexus
-from neutron.plugins.ml2.drivers.cisco import nexus_network_driver
+from neutron.plugins.ml2.drivers.cisco.nexus import config as cisco_config
+from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as c_exc
+from neutron.plugins.ml2.drivers.cisco.nexus import mech_cisco_nexus
+from neutron.plugins.ml2.drivers.cisco.nexus import nexus_network_driver
 from neutron.plugins.ml2.drivers import type_vlan as vlan_config
 from neutron.tests.unit import test_db_plugin
 

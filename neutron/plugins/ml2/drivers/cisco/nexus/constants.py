@@ -15,25 +15,6 @@
 #
 
 
-# Attachment attributes
-INSTANCE_ID = 'instance_id'
-TENANT_ID = 'tenant_id'
-TENANT_NAME = 'tenant_name'
-HOST_NAME = 'host_name'
-
-# Network attributes
-NET_ID = 'id'
-NET_NAME = 'name'
-NET_VLAN_ID = 'vlan_id'
-NET_VLAN_NAME = 'vlan_name'
-NET_PORTS = 'ports'
-
-# Network types
-NETWORK_TYPE_FLAT = 'flat'
-NETWORK_TYPE_LOCAL = 'local'
-NETWORK_TYPE_VLAN = 'vlan'
-NETWORK_TYPE_NONE = 'none'
-
 CREDENTIAL_USERNAME = 'user_name'
 CREDENTIAL_PASSWORD = 'password'
 
@@ -41,8 +22,3 @@ USERNAME = 'username'
 PASSWORD = 'password'
 
 NETWORK_ADMIN = 'network_admin'
-
-NETWORK = 'network'
-PORT = 'port'
-CONTEXT = 'context'
-SUBNET = 'subnet'

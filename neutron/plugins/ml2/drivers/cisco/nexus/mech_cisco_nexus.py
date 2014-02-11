@@ -22,12 +22,13 @@ from oslo.config import cfg
 from neutron.common import constants as n_const
 from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
-from neutron.plugins.ml2.drivers.cisco import config as conf
-from neutron.plugins.ml2.drivers.cisco import credentials_v2 as cred
-from neutron.plugins.ml2.drivers.cisco import exceptions as excep
-from neutron.plugins.ml2.drivers.cisco import nexus_db_v2 as nxos_db
-from neutron.plugins.ml2.drivers.cisco import nexus_network_driver
+from neutron.plugins.ml2.drivers.cisco.nexus import config as conf
+from neutron.plugins.ml2.drivers.cisco.nexus import credentials_v2 as cred
+from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as excep
+from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2 as nxos_db
+from neutron.plugins.ml2.drivers.cisco.nexus import nexus_network_driver
 
 LOG = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
 
     def _get_vlanid(self, context):
         segment = context.bound_segment
-        if (segment and segment[api.NETWORK_TYPE] == 'vlan' and
+        if (segment and segment[api.NETWORK_TYPE] == p_const.TYPE_VLAN and
             self._valid_network_segment(segment)):
             return context.bound_segment.get(api.SEGMENTATION_ID)
 

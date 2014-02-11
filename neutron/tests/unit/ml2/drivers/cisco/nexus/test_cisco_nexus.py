@@ -22,11 +22,11 @@ from neutron.db import api as db
 from neutron.extensions import portbindings
 from neutron.openstack.common import importutils
 from neutron.plugins.ml2 import driver_api as api
-from neutron.plugins.ml2.drivers.cisco import constants
-from neutron.plugins.ml2.drivers.cisco import exceptions
-from neutron.plugins.ml2.drivers.cisco import mech_cisco_nexus
-from neutron.plugins.ml2.drivers.cisco import nexus_db_v2
-from neutron.plugins.ml2.drivers.cisco import nexus_network_driver
+from neutron.plugins.ml2.drivers.cisco.nexus import constants
+from neutron.plugins.ml2.drivers.cisco.nexus import exceptions
+from neutron.plugins.ml2.drivers.cisco.nexus import mech_cisco_nexus
+from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2
+from neutron.plugins.ml2.drivers.cisco.nexus import nexus_network_driver
 from neutron.tests import base
 
 
@@ -48,7 +48,7 @@ DEVICE_OWNER = 'compute:test'
 NEXUS_SSH_PORT = '22'
 PORT_STATE = n_const.PORT_STATUS_ACTIVE
 NETWORK_TYPE = 'vlan'
-NEXUS_DRIVER = ('neutron.plugins.ml2.drivers.cisco.'
+NEXUS_DRIVER = ('neutron.plugins.ml2.drivers.cisco.nexus.'
                 'nexus_network_driver.CiscoNexusDriver')
 
 
