@@ -16,6 +16,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.openstack.common.rootwrap import cmd
+from oslo.rootwrap import cmd
 
 cmd.main()

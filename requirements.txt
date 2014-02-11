@@ -25,5 +25,6 @@ alembic>=0.4.1
 six>=1.4.1
 stevedore>=0.12
 oslo.config>=1.2.0
+oslo.rootwrap
 
 python-novaclient>=2.15.0
