@@ -58,6 +58,12 @@ class NexusPortBindingNotFound(exceptions.NeutronException):
         super(NexusPortBindingNotFound, self).__init__(filters=filters)
 
 
+class NexusMissingRequiredFields(exceptions.NeutronException):
+    """Missing required fields to configure nexus switch."""
+    message = _("Missing required field(s) to configure nexus switch: "
+                "%(fields)s")
+
+
 class NoNexusSviSwitch(exceptions.NeutronException):
     """No usable nexus switch found."""
     message = _("No usable Nexus switch found to create SVI interface.")
