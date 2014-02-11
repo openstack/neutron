@@ -45,9 +45,11 @@ on port-attach) on an additional PUT to do a bulk dump of all persistent data.
 """
 
 import copy
+import re
 
 from oslo.config import cfg
 
+from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import constants as const
@@ -57,15 +59,20 @@ from neutron.common import topics
 from neutron import context as qcontext
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
+from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import extradhcpopt_db
 from neutron.db import l3_db
+from neutron.db import models_v2
+from neutron.db import securitygroups_db as sg_db
+from neutron.db import securitygroups_rpc_base as sg_rpc_base
 from neutron.extensions import external_net
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import l3
 from neutron.extensions import portbindings
+from neutron import manager
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -84,13 +91,68 @@ SYNTAX_ERROR_MESSAGE = _('Syntax error in server config file, aborting plugin')
 METADATA_SERVER_IP = '169.254.169.254'
 
 
-class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
+class AgentNotifierApi(rpc.proxy.RpcProxy,
+                       sg_rpc.SecurityGroupAgentRpcApiMixin):
+
+    BASE_RPC_API_VERSION = '1.1'
+
+    def __init__(self, topic):
+        super(AgentNotifierApi, self).__init__(
+            topic=topic, default_version=self.BASE_RPC_API_VERSION)
+        self.topic_port_update = topics.get_topic_name(
+            topic, topics.PORT, topics.UPDATE)
+
+    def port_update(self, context, port):
+        self.fanout_cast(context,
+                         self.make_msg('port_update',
+                                       port=port),
+                         topic=self.topic_port_update)
+
+
+class RestProxyCallbacks(sg_rpc_base.SecurityGroupServerRpcCallbackMixin,
+                         dhcp_rpc_base.DhcpRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
 
     def create_rpc_dispatcher(self):
         return q_rpc.PluginRpcDispatcher([self,
                                           agents_db.AgentExtRpcCallback()])
+
+    def get_port_from_device(self, device):
+        port_id = re.sub(r"^tap", "", device)
+        port = self.get_port_and_sgs(port_id)
+        if port:
+            port['device'] = device
+        return port
+
+    def get_port_and_sgs(self, port_id):
+        """Get port from database with security group info."""
+
+        LOG.debug(_("get_port_and_sgs() called for port_id %s"), port_id)
+        session = db.get_session()
+        sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
+
+        with session.begin(subtransactions=True):
+            query = session.query(
+                models_v2.Port,
+                sg_db.SecurityGroupPortBinding.security_group_id
+            )
+            query = query.outerjoin(sg_db.SecurityGroupPortBinding,
+                                    models_v2.Port.id == sg_binding_port)
+            query = query.filter(models_v2.Port.id.startswith(port_id))
+            port_and_sgs = query.all()
+            if not port_and_sgs:
+                return
+            port = port_and_sgs[0][0]
+            plugin = manager.NeutronManager.get_plugin()
+            port_dict = plugin._make_port_dict(port)
+            port_dict['security_groups'] = [
+                sg_id for port_, sg_id in port_and_sgs if sg_id]
+            port_dict['security_group_rules'] = []
+            port_dict['security_group_source_groups'] = []
+            port_dict['fixed_ips'] = [ip['ip_address']
+                                      for ip in port['fixed_ips']]
+        return port_dict
 
 
 class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
@@ -320,11 +382,21 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
 
 class NeutronRestProxyV2(NeutronRestProxyV2Base,
                          extradhcpopt_db.ExtraDhcpOptMixin,
-                         agentschedulers_db.DhcpAgentSchedulerDbMixin):
+                         agentschedulers_db.DhcpAgentSchedulerDbMixin,
+                         sg_rpc_base.SecurityGroupServerRpcMixin):
 
-    supported_extension_aliases = ["external-net", "router", "binding",
-                                   "router_rules", "extra_dhcp_opt", "quotas",
-                                   "dhcp_agent_scheduler", "agent"]
+    _supported_extension_aliases = ["external-net", "router", "binding",
+                                    "router_rules", "extra_dhcp_opt", "quotas",
+                                    "dhcp_agent_scheduler", "agent",
+                                    "security-group"]
+
+    @property
+    def supported_extension_aliases(self):
+        if not hasattr(self, '_aliases'):
+            aliases = self._supported_extension_aliases[:]
+            sg_rpc.disable_security_group_extension_if_noop_driver(aliases)
+            self._aliases = aliases
+        return self._aliases
 
     def __init__(self, server_timeout=None):
         super(NeutronRestProxyV2, self).__init__()
@@ -340,26 +412,33 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         # init network ctrl connections
         self.servers = servermanager.ServerPool(server_timeout)
 
-        # init dhcp support
-        self.topic = topics.PLUGIN
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver
         )
+
+        # setup rpc for security and DHCP agents
+        self._setup_rpc()
+
+        if cfg.CONF.RESTPROXY.sync_data:
+            self._send_all_data()
+
+        LOG.debug(_("NeutronRestProxyV2: initialization done"))
+
+    def _setup_rpc(self):
+        self.conn = rpc.create_connection(new=True)
+        self.topic = topics.PLUGIN
+        self.notifier = AgentNotifierApi(topics.AGENT)
+        # init dhcp agent support
         self._dhcp_agent_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             self._dhcp_agent_notifier
         )
-        self.conn = rpc.create_connection(new=True)
-        self.callbacks = RpcProxy()
+        self.callbacks = RestProxyCallbacks()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
         # Consume from all consumers in a thread
         self.conn.consume_in_thread()
-        if cfg.CONF.RESTPROXY.sync_data:
-            self._send_all_data()
-
-        LOG.debug(_("NeutronRestProxyV2: initialization done"))
 
     def create_network(self, context, network):
         """Create a network.
@@ -390,6 +469,10 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         self._warn_on_state_status(network['network'])
 
         with context.session.begin(subtransactions=True):
+            self._ensure_default_security_group(
+                context,
+                network['network']["tenant_id"]
+            )
             # create network in DB
             new_net = super(NeutronRestProxyV2, self).create_network(context,
                                                                      network)
@@ -499,6 +582,8 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
         # Update DB in new session so exceptions rollback changes
         with context.session.begin(subtransactions=True):
+            self._ensure_default_security_group_on_port(context, port)
+            sgids = self._get_security_groups_on_port(context, port)
             dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
             new_port = super(NeutronRestProxyV2, self).create_port(context,
                                                                    port)
@@ -521,6 +606,8 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             self.servers.rest_create_port(net_tenant_id,
                                           new_port["network_id"],
                                           mapped_port)
+            self._process_port_create_security_group(context, new_port, sgids)
+        self.notify_security_groups_member_updated(context, new_port)
         return new_port
 
     def get_port(self, context, id, fields=None):
@@ -600,13 +687,16 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                 self.servers.rest_update_port(net_tenant_id,
                                               new_port["network_id"],
                                               mapped_port)
+            agent_update_required = self.update_security_group_on_port(
+                context, port_id, port, orig_port, new_port)
+        agent_update_required |= self.is_security_group_member_updated(
+            context, orig_port, new_port)
 
         # return new_port
         return new_port
 
     def delete_port(self, context, port_id, l3_port_check=True):
         """Delete a port.
-
         :param context: neutron api request context
         :param id: UUID representing the port to delete.
 
@@ -623,6 +713,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             self.prevent_l3_port_deletion(context, port_id)
         with context.session.begin(subtransactions=True):
             self.disassociate_floatingips(context, port_id)
+            self._delete_port_security_group_bindings(context, port_id)
             super(NeutronRestProxyV2, self).delete_port(context, port_id)
 
     def _delete_port(self, context, port_id):

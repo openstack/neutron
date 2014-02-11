@@ -24,6 +24,7 @@ This module manages configuration options
 
 from oslo.config import cfg
 
+from neutron.agent.common import config as agconfig
 from neutron.common import utils
 from neutron.extensions import portbindings
 
@@ -80,8 +81,20 @@ nova_opts.append(cfg.ListOpt('vif_types',
                              default=portbindings.VIF_TYPES,
                              help=_('List of allowed vif_type values.')))
 
+agent_opts = [
+    cfg.StrOpt('integration_bridge', default='br-int',
+               help=_('Name of integration bridge on compute '
+                      'nodes used for security group insertion.')),
+    cfg.IntOpt('polling_interval', default=5,
+               help=_('Seconds between agent checks for port changes')),
+    cfg.StrOpt('virtual_switch_type', default='ovs',
+               help=_('Virtual switch type.'))
+]
+
 
 def register_config():
     cfg.CONF.register_opts(restproxy_opts, "RESTPROXY")
     cfg.CONF.register_opts(router_opts, "ROUTER")
     cfg.CONF.register_opts(nova_opts, "NOVA")
+    cfg.CONF.register_opts(agent_opts, "RESTPROXYAGENT")
+    agconfig.register_root_helper(cfg.CONF)
