@@ -22,6 +22,7 @@ import contextlib
 import copy
 
 import mock
+import netaddr
 from oslo.config import cfg
 from webob import exc
 import webtest
@@ -444,11 +445,15 @@ class L3NatTestCaseMixin(object):
                          fip['floatingip']['id'])
 
     @contextlib.contextmanager
-    def floatingip_with_assoc(self, port_id=None, fmt=None,
+    def floatingip_with_assoc(self, port_id=None, fmt=None, fixed_ip=None,
                               set_context=False):
         with self.subnet(cidr='11.0.0.0/24') as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
-            with self.port() as private_port:
+            private_port = None
+            if port_id:
+                private_port = self._show('ports', port_id)
+            with test_db_plugin.optional_ctx(private_port,
+                                             self.port) as private_port:
                 with self.router() as r:
                     sid = private_port['port']['fixed_ips'][0]['subnet_id']
                     private_sub = {'subnet': {'id': sid}}
@@ -465,6 +470,7 @@ class L3NatTestCaseMixin(object):
                             fmt or self.fmt,
                             public_sub['subnet']['network_id'],
                             port_id=private_port['port']['id'],
+                            fixed_ip=fixed_ip,
                             set_context=False)
                         yield floatingip
                     finally:
@@ -1254,6 +1260,33 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertEqual(body['floatingip']['port_id'], port_id)
                 self.assertEqual(body['floatingip']['fixed_ip_address'],
                                  ip_address)
+
+    def test_floatingip_update_different_fixed_ip_same_port(self):
+        with self.subnet() as s:
+            ip_range = list(netaddr.IPNetwork(s['subnet']['cidr']))
+            fixed_ips = [{'ip_address': str(ip_range[-3])},
+                         {'ip_address': str(ip_range[-2])}]
+            with self.port(subnet=s, fixed_ips=fixed_ips) as p:
+                with self.floatingip_with_assoc(
+                    port_id=p['port']['id'],
+                    fixed_ip=str(ip_range[-3])) as fip:
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertEqual(fip['floatingip']['id'],
+                                     body['floatingip']['id'])
+                    self.assertEqual(fip['floatingip']['port_id'],
+                                     body['floatingip']['port_id'])
+                    self.assertEqual(str(ip_range[-3]),
+                                     body['floatingip']['fixed_ip_address'])
+                    self.assertIsNotNone(body['floatingip']['router_id'])
+                    body_2 = self._update(
+                        'floatingips', fip['floatingip']['id'],
+                        {'floatingip': {'port_id': p['port']['id'],
+                                        'fixed_ip_address': str(ip_range[-2])}
+                         })
+                    self.assertEqual(fip['floatingip']['port_id'],
+                                     body_2['floatingip']['port_id'])
+                    self.assertEqual(str(ip_range[-2]),
+                                     body_2['floatingip']['fixed_ip_address'])
 
     def test_floatingip_update_different_router(self):
         # Create subnet with different CIDRs to account for plugins which

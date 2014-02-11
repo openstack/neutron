@@ -1780,9 +1780,16 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             raise q_exc.BadRequest(resource='floatingip', msg=msg)
         port_id = internal_ip = router_id = None
         if 'port_id' in fip and fip['port_id']:
-            port_qry = context.session.query(l3_db.FloatingIP)
+            fip_qry = context.session.query(l3_db.FloatingIP)
+            port_id, internal_ip, router_id = self.get_assoc_data(
+                context,
+                fip,
+                floatingip_db['floating_network_id'])
             try:
-                port_qry.filter_by(fixed_port_id=fip['port_id']).one()
+                fip_qry.filter_by(
+                    fixed_port_id=fip['port_id'],
+                    floating_network_id=floatingip_db['floating_network_id'],
+                    fixed_ip_address=internal_ip).one()
                 raise l3.FloatingIPPortAlreadyAssociated(
                     port_id=fip['port_id'],
                     fip_id=floatingip_db['id'],
@@ -1791,10 +1798,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     net_id=floatingip_db['floating_network_id'])
             except sa_exc.NoResultFound:
                 pass
-            port_id, internal_ip, router_id = self.get_assoc_data(
-                context,
-                fip,
-                floatingip_db['floating_network_id'])
         return (port_id, internal_ip, router_id)
 
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
