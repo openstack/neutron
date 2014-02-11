@@ -50,9 +50,10 @@ OPTS = [
     cfg.StrOpt('dnsmasq_config_file',
                default='',
                help=_('Override the default dnsmasq settings with this file')),
-    cfg.StrOpt('dnsmasq_dns_server',
-               help=_('Use another DNS server before any in '
-                      '/etc/resolv.conf.')),
+    cfg.ListOpt('dnsmasq_dns_servers',
+                help=_('Comma-separated list of the DNS servers which will be '
+                       'used as forwarders.'),
+                deprecated_name='dnsmasq_dns_server'),
     cfg.BoolOpt('dhcp_delete_namespaces', default=False,
                 help=_("Delete namespace after removing a dhcp server.")),
     cfg.IntOpt(
@@ -361,8 +362,10 @@ class Dnsmasq(DhcpLocalProcess):
                    min(possible_leases, self.conf.dnsmasq_lease_max))
 
         cmd.append('--conf-file=%s' % self.conf.dnsmasq_config_file)
-        if self.conf.dnsmasq_dns_server:
-            cmd.append('--server=%s' % self.conf.dnsmasq_dns_server)
+        if self.conf.dnsmasq_dns_servers:
+            cmd.extend(
+                '--server=%s' % server
+                for server in self.conf.dnsmasq_dns_servers)
 
         if self.conf.dhcp_domain:
             cmd.append('--domain=%s' % self.conf.dhcp_domain)

@@ -717,9 +717,17 @@ class TestDnsmasq(TestBase):
         self._test_spawn(['--conf-file='])
 
     def test_spawn_cfg_dns_server(self):
-        self.conf.set_override('dnsmasq_dns_server', '8.8.8.8')
+        self.conf.set_override('dnsmasq_dns_servers', ['8.8.8.8'])
         self._test_spawn(['--conf-file=',
                           '--server=8.8.8.8',
+                          '--domain=openstacklocal'])
+
+    def test_spawn_cfg_multiple_dns_server(self):
+        self.conf.set_override('dnsmasq_dns_servers', ['8.8.8.8',
+                                                       '9.9.9.9'])
+        self._test_spawn(['--conf-file=',
+                          '--server=8.8.8.8',
+                          '--server=9.9.9.9',
                           '--domain=openstacklocal'])
 
     def test_spawn_max_leases_is_smaller_than_cap(self):
