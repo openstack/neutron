@@ -162,7 +162,7 @@ function run_pep8 {
 }
 
 
-TESTRTESTS="python setup.py testr"
+TESTRTESTS="python -m neutron.openstack.common.lockutils python setup.py testr"
 
 if [ $never_venv -eq 0 ]
 then
