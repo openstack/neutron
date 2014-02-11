@@ -97,7 +97,8 @@ class WorkerService(object):
                                                 self._service._socket)
 
     def wait(self):
-        self._service.pool.waitall()
+        if isinstance(self._server, eventlet.greenthread.GreenThread):
+            self._server.wait()
 
     def stop(self):
         if isinstance(self._server, eventlet.greenthread.GreenThread):
@@ -113,7 +114,6 @@ class Server(object):
         eventlet.wsgi.MAX_HEADER_LINE = CONF.max_header_line
         self.pool = eventlet.GreenPool(threads)
         self.name = name
-        self._launcher = None
         self._server = None
 
     def _get_socket(self, host, port, backlog):
@@ -205,17 +205,22 @@ class Server(object):
         self._socket = self._get_socket(self._host,
                                         self._port,
                                         backlog=backlog)
+
+        self._launch(application, workers)
+
+    def _launch(self, application, workers=0):
+        service = WorkerService(self, application)
         if workers < 1:
-            # For the case where only one process is required.
-            self._server = self.pool.spawn(self._run, application,
-                                           self._socket)
+            # The API service should run in the current process.
+            self._server = service
+            service.start()
             systemd.notify_once()
         else:
+            # The API service runs in a number of child processes.
             # Minimize the cost of checking for child exit by extending the
             # wait interval past the default of 0.01s.
-            self._launcher = common_service.ProcessLauncher(wait_interval=1.0)
-            self._server = WorkerService(self, application)
-            self._launcher.launch_service(self._server, workers=workers)
+            self._server = common_service.ProcessLauncher(wait_interval=1.0)
+            self._server.launch_service(service, workers=workers)
 
     @property
     def host(self):
@@ -226,19 +231,12 @@ class Server(object):
         return self._socket.getsockname()[1] if self._socket else self._port
 
     def stop(self):
-        if self._launcher:
-            # The process launcher does not support stop or kill.
-            self._launcher.running = False
-        else:
-            self._server.kill()
+        self._server.stop()
 
     def wait(self):
         """Wait until all servers have completed running."""
         try:
-            if self._launcher:
-                self._launcher.wait()
-            else:
-                self.pool.waitall()
+            self._server.wait()
         except KeyboardInterrupt:
             pass
 
