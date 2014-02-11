@@ -2009,8 +2009,11 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         network_mapping_info):
         # Ensure the default gateway in the config file is in sync with the db
         self._ensure_default_network_gateway()
-        return super(NvpPluginV2, self).connect_network(
-            context, network_gateway_id, network_mapping_info)
+        try:
+            return super(NvpPluginV2, self).connect_network(
+                context, network_gateway_id, network_mapping_info)
+        except NvpApiClient.Conflict:
+            raise nvp_exc.NvpL2GatewayAlreadyInUse(gateway=network_gateway_id)
 
     def disconnect_network(self, context, network_gateway_id,
                            network_mapping_info):
