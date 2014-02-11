@@ -174,7 +174,7 @@ class ConnectionContext(rpc_common.Connection):
                                            ack_on_error)
 
     def consume_in_thread(self):
-        self.connection.consume_in_thread()
+        return self.connection.consume_in_thread()
 
     def __getattr__(self, key):
         """Proxy all other calls to the Connection instance."""

@@ -51,6 +51,11 @@ class Ml2SecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
 class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                             test_sg.TestSecurityGroups,
                             test_sg_rpc.SGNotificationTestMixin):
+    def setUp(self):
+        super(TestMl2SecurityGroups, self).setUp()
+        plugin = manager.NeutronManager.get_plugin()
+        plugin.start_rpc_listener()
+
     def test_security_group_get_port_from_device(self):
         with self.network() as n:
             with self.subnet(n):
