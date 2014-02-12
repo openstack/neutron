@@ -1129,6 +1129,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # ATTR_NOT_SPECIFIED is for the case where a port is created on a
         # shared network that is not owned by the tenant.
         port_data = port['port']
+        # Set port status as 'DOWN'. This will be updated by backend sync.
+        port_data['status'] = constants.PORT_STATUS_DOWN
         with context.session.begin(subtransactions=True):
             # First we allocate port in neutron database
             neutron_db = super(NvpPluginV2, self).create_port(context, port)
