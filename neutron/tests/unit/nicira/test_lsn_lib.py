@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2013 VMware, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -198,6 +196,30 @@ class LSNTestCase(base.BaseTestCase):
         self.assertRaises(exceptions.NotFound,
                           lsnlib._lsn_port_get,
                           self.cluster, "lsn_id", None)
+
+    def test_lsn_port_info_get(self):
+        self.mock_request.return_value = {
+            "tags": [
+                {"scope": "n_mac_address", "tag": "fa:16:3e:27:fd:a0"},
+                {"scope": "n_subnet_id", "tag": "foo_subnet_id"},
+            ],
+            "mac_address": "aa:bb:cc:dd:ee:ff",
+            "ip_address": "0.0.0.0/0",
+            "uuid": "foo_lsn_port_id"
+        }
+        result = lsnlib.lsn_port_info_get(
+            self.cluster, 'foo_lsn_id', 'foo_lsn_port_id')
+        self.mock_request.assert_called_once_with(
+            'GET', '/ws.v1/lservices-node/foo_lsn_id/lport/foo_lsn_port_id',
+            cluster=self.cluster)
+        self.assertIn('subnet_id', result)
+        self.assertIn('mac_address', result)
+
+    def test_lsn_port_info_get_raise_not_found(self):
+        self.mock_request.side_effect = exceptions.NotFound
+        self.assertRaises(exceptions.NotFound,
+                          lsnlib.lsn_port_info_get,
+                          self.cluster, mock.ANY, mock.ANY)
 
     def test_lsn_port_plug_network(self):
         lsn_id = "foo_lsn_id"

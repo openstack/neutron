@@ -19,9 +19,8 @@ from oslo.config import cfg
 
 class AgentModes:
     AGENT = 'agent'
-    # TODO(armando-migliaccio): support to be added, maybe we could add a
-    # mixed mode to support no-downtime migrations?
     AGENTLESS = 'agentless'
+    COMBINED = 'combined'
 
 
 class MetadataModes:

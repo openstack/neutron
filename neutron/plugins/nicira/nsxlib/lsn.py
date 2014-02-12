@@ -141,6 +141,19 @@ def lsn_port_by_subnet_get(cluster, lsn_id, subnet_id):
     return _lsn_port_get(cluster, lsn_id, filters)
 
 
+def lsn_port_info_get(cluster, lsn_id, lsn_port_id):
+    result = do_request(HTTP_GET,
+                        _build_uri_path(LSERVICESNODEPORT_RESOURCE,
+                                        parent_resource_id=lsn_id,
+                                        resource_id=lsn_port_id),
+                        cluster=cluster)
+    for tag in result['tags']:
+        if tag['scope'] == 'n_subnet_id':
+            result['subnet_id'] = tag['tag']
+            break
+    return result
+
+
 def lsn_port_plug_network(cluster, lsn_id, lsn_port_id, lswitch_port_id):
     patch_obj = {
         "type": "PatchAttachment",

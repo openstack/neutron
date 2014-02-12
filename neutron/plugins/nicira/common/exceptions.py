@@ -105,5 +105,9 @@ class LsnPortNotFound(q_exc.NotFound):
                  'and %(entity)s %(entity_id)s'))
 
 
+class LsnMigrationConflict(q_exc.Conflict):
+    message = _("Unable to migrate network '%(net_id)s' to LSN: %(reason)s")
+
+
 class LsnConfigurationConflict(NvpPluginException):
     message = _("Configuration conflict on Logical Service Node %(lsn_id)s")
