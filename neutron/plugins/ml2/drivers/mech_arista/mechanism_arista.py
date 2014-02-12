@@ -44,6 +44,16 @@ class AristaRPCWrapper(object):
         self.keystone_conf = cfg.CONF.keystone_authtoken
         self.region = cfg.CONF.ml2_arista.region_name
         self._region_updated_time = None
+        self.cli_commands = {}
+        self._check_cli_commands()
+
+    def _check_cli_commands():
+       cmd = ['show openstack timestamp %s' % self.region]
+       try:
+          self._run_eos_cmds(cmd)
+          self.cli_commands['timestamp'] = cmd
+       except arista_exc.AristaRpcError:
+          self.cli_commands['timestamp'] = []
 
     def _keystone_url(self):
         keystone_auth_url = ('%s://%s:%s/v2.0/' %
@@ -366,9 +376,10 @@ class AristaRPCWrapper(object):
         """This method return the time at which any entities in the region were
            updated.
         """
-        cmds = ['show openstack timestamp %s' % self.region]
-        region = self._run_eos_cmds(commands=cmds)[0]
-        return region
+        if self.cli_commands['timestamp']:
+           region = self._run_eos_cmds(commands=self.cli_commands['timestamp'])[0]
+           return region
+        return None
 
     def _run_eos_cmds(self, commands, commands_to_log=None):
         """Execute/sends a CAPI (Command API) command to EOS.
@@ -415,15 +426,14 @@ class AristaRPCWrapper(object):
         """
         command_start = ['enable', 'configure', 'management openstack']
         command_start.append('region %s' % self.region)
-        command_timestamp = ['show openstack timestamp %s' % self.region]
         command_end = ['exit', 'exit']
         full_command = \
-            command_start + commands + command_end + command_timestamp
+            command_start + commands + command_end + self.cli_commands['timestamp']
         full_log_command = full_command
         if commands_to_log:
             full_log_command = \
                 command_start + commands_to_log + command_end + \
-                command_timestamp
+                self.cli_commands['timestamp']
 
         ret = self._run_eos_cmds(full_command, full_log_command)
         # Remove return values for 'configure terminal',
