@@ -20,12 +20,12 @@ from oslo.config import cfg
 from neutron.common import exceptions as n_exc
 from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log as logging
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import exceptions as p_exc
 from neutron.plugins.nicira.dbexts import lsn_db
 from neutron.plugins.nicira.dhcp_meta import constants as const
 from neutron.plugins.nicira.nsxlib import lsn as lsn_api
 from neutron.plugins.nicira.nsxlib import switch as switch_api
-from neutron.plugins.nicira import nvplib as nsxlib
 
 LOG = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class LsnManager(object):
         """Retrieve the LSN id associated to the network."""
         try:
             return lsn_api.lsn_for_network_get(self.cluster, network_id)
-        except (n_exc.NotFound, nsxlib.NvpApiClient.NvpApiException):
+        except (n_exc.NotFound, api_exc.NsxApiException):
             logger = raise_on_err and LOG.error or LOG.warn
             logger(_('Unable to find Logical Service Node for '
                      'network %s'), network_id)
@@ -76,7 +76,7 @@ class LsnManager(object):
         """Create a LSN associated to the network."""
         try:
             return lsn_api.lsn_for_network_create(self.cluster, network_id)
-        except nsxlib.NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             err_msg = _('Unable to create LSN for network %s') % network_id
             raise p_exc.NvpPluginException(err_msg=err_msg)
 
@@ -84,7 +84,7 @@ class LsnManager(object):
         """Delete a LSN given its id."""
         try:
             lsn_api.lsn_delete(self.cluster, lsn_id)
-        except (n_exc.NotFound, nsxlib.NvpApiClient.NvpApiException):
+        except (n_exc.NotFound, api_exc.NsxApiException):
             LOG.warn(_('Unable to delete Logical Service Node %s'), lsn_id)
 
     def lsn_delete_by_network(self, context, network_id):
@@ -100,7 +100,7 @@ class LsnManager(object):
             try:
                 lsn_port_id = lsn_api.lsn_port_by_subnet_get(
                     self.cluster, lsn_id, subnet_id)
-            except (n_exc.NotFound, nsxlib.NvpApiClient.NvpApiException):
+            except (n_exc.NotFound, api_exc.NsxApiException):
                 logger = raise_on_err and LOG.error or LOG.warn
                 logger(_('Unable to find Logical Service Node Port for '
                          'LSN %(lsn_id)s and subnet %(subnet_id)s')
@@ -122,7 +122,7 @@ class LsnManager(object):
             try:
                 lsn_port_id = lsn_api.lsn_port_by_mac_get(
                     self.cluster, lsn_id, mac)
-            except (n_exc.NotFound, nsxlib.NvpApiClient.NvpApiException):
+            except (n_exc.NotFound, api_exc.NsxApiException):
                 logger = raise_on_err and LOG.error or LOG.warn
                 logger(_('Unable to find Logical Service Node Port for '
                          'LSN %(lsn_id)s and mac address %(mac)s')
@@ -143,7 +143,7 @@ class LsnManager(object):
             return lsn_api.lsn_port_create(self.cluster, lsn_id, subnet_info)
         except n_exc.NotFound:
             raise p_exc.LsnNotFound(entity='', entity_id=lsn_id)
-        except nsxlib.NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             err_msg = _('Unable to create port for LSN  %s') % lsn_id
             raise p_exc.NvpPluginException(err_msg=err_msg)
 
@@ -151,7 +151,7 @@ class LsnManager(object):
         """Delete a LSN port from the Logical Service Node."""
         try:
             lsn_api.lsn_port_delete(self.cluster, lsn_id, lsn_port_id)
-        except (n_exc.NotFound, nsxlib.NvpApiClient.NvpApiException):
+        except (n_exc.NotFound, api_exc.NsxApiException):
             LOG.warn(_('Unable to delete LSN Port %s'), lsn_port_id)
 
     def lsn_port_dispose(self, context, network_id, mac_address):
@@ -168,7 +168,7 @@ class LsnManager(object):
                     switch_api.delete_port(
                         self.cluster, network_id, lswitch_port_id)
                 except (n_exc.PortNotFoundOnNetwork,
-                        switch_api.NvpApiClient.NvpApiException):
+                        api_exc.NsxApiException):
                     LOG.warn(_("Metadata port not found while attempting "
                                "to delete it from network %s"), network_id)
         else:
@@ -218,7 +218,7 @@ class LsnManager(object):
                 const.METADATA_DEVICE_ID, True)['uuid']
             lsn_port_id = self.lsn_port_create(self.cluster, lsn_id, data)
         except (n_exc.NotFound, p_exc.NvpPluginException,
-                nsxlib.NvpApiClient.NvpApiException):
+                api_exc.NsxApiException):
             raise p_exc.PortConfigurationError(
                 net_id=network_id, lsn_id=lsn_id, port_id=lswitch_port_id)
         else:
@@ -252,7 +252,7 @@ class LsnManager(object):
         try:
             lsn_api.lsn_port_dhcp_configure(
                 self.cluster, lsn_id, lsn_port_id, is_enabled, dhcp_options)
-        except (n_exc.NotFound, nsxlib.NvpApiClient.NvpApiException):
+        except (n_exc.NotFound, api_exc.NsxApiException):
             err_msg = (_('Unable to configure dhcp for Logical Service '
                          'Node %(lsn_id)s and port %(lsn_port_id)s')
                        % {'lsn_id': lsn_id, 'lsn_port_id': lsn_port_id})
@@ -273,7 +273,7 @@ class LsnManager(object):
             lsn_id = self.lsn_get(context, network_id)
             lsn_api.lsn_metadata_configure(
                 self.cluster, lsn_id, is_enabled, metadata_options)
-        except (p_exc.LsnNotFound, nsxlib.NvpApiClient.NvpApiException):
+        except (p_exc.LsnNotFound, api_exc.NsxApiException):
             err_msg = (_('Unable to configure metadata '
                          'for subnet %s') % subnet_id)
             LOG.error(err_msg)
@@ -296,7 +296,7 @@ class LsnManager(object):
             lsn_id, lsn_port_id = self.lsn_port_get(
                 context, network_id, subnet_id)
             hdlr(self.cluster, lsn_id, lsn_port_id, data)
-        except (n_exc.NotFound, nsxlib.NvpApiClient.NvpApiException):
+        except (n_exc.NotFound, api_exc.NsxApiException):
             LOG.error(_('Error while configuring LSN '
                         'port %s'), lsn_port_id)
             raise p_exc.PortConfigurationError(
@@ -336,7 +336,7 @@ class LsnManager(object):
             if meta and lsn_id and lsn_port_id:
                 lsn_api.lsn_port_host_entries_update(
                     self.cluster, lsn_id, lsn_port_id, META_CONF, meta)
-        except nsxlib.NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             raise p_exc.PortConfigurationError(
                 net_id=network_id, lsn_id=lsn_id, port_id=lsn_port_id)
 

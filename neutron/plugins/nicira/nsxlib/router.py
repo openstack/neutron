@@ -17,12 +17,12 @@ from neutron.common import exceptions as exception
 from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.nsxlib.switch import get_port
 from neutron.plugins.nicira.nsxlib.versioning import DEFAULT_VERSION
 from neutron.plugins.nicira.nsxlib.versioning import versioned
-from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.nvplib import _build_uri_path
 from neutron.plugins.nicira.nvplib import do_request
 from neutron.plugins.nicira.nvplib import get_all_query_pages
@@ -90,7 +90,7 @@ def create_implicit_routing_lrouter(cluster, neutron_router_id, tenant_id,
         the logical router is being created
         :param display_name: Descriptive name of this logical router
         :param nexthop: External gateway IP address for the logical router
-        :raise NvpApiException: if there is a problem while communicating
+        :raise NsxApiException: if there is a problem while communicating
         with the NSX controller
     """
     return _create_implicit_routing_lrouter(
@@ -109,7 +109,7 @@ def create_implicit_routing_lrouter_with_distribution(
     :param display_name: Descriptive name of this logical router
     :param nexthop: External gateway IP address for the logical router
     :param distributed: True for distributed logical routers
-    :raise NvpApiException: if there is a problem while communicating
+    :raise NsxApiException: if there is a problem while communicating
     with the NSX controller
     """
     return _create_implicit_routing_lrouter(
@@ -243,7 +243,7 @@ def update_explicit_routes_lrouter(cluster, router_id, routes):
                 uuid = create_explicit_route_lrouter(cluster,
                                                      router_id, route)
                 added_routes.append(uuid)
-    except NvpApiClient.NvpApiException:
+    except api_exc.NsxApiException:
         LOG.exception(_('Cannot update NSX routes %(routes)s for '
                         'router %(router_id)s'),
                       {'routes': routes, 'router_id': router_id})
@@ -598,7 +598,7 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
                  "%(lrouter_id)s") % data)
         LOG.exception(msg)
         raise nvp_exc.NvpPluginException(err_msg=msg)
-    except NvpApiClient.NvpApiException as e:
+    except api_exc.NsxApiException as e:
         msg = _("An exception occurred while updating IP addresses on a "
                 "router logical port:%s") % str(e)
         LOG.exception(msg)
@@ -636,7 +636,7 @@ ROUTER_FUNC_DICT = {
 @versioned(ROUTER_FUNC_DICT)
 def create_lrouter(cluster, *args, **kwargs):
     if kwargs.get('distributed', None):
-        v = cluster.api_client.get_nvp_version()
+        v = cluster.api_client.get_version()
         if (v.major, v.minor) < (3, 1):
             raise nvp_exc.NvpInvalidVersion(version=v)
         return v
@@ -650,7 +650,7 @@ def get_default_route_explicit_routing_lrouter(cluster, *args, **kwargs):
 @versioned(ROUTER_FUNC_DICT)
 def update_lrouter(cluster, *args, **kwargs):
     if kwargs.get('routes', None):
-        v = cluster.api_client.get_nvp_version()
+        v = cluster.api_client.get_version()
         if (v.major, v.minor) < (3, 2):
             raise nvp_exc.NvpInvalidVersion(version=v)
         return v

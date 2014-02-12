@@ -30,6 +30,7 @@ from neutron.extensions import routedserviceinsertion as rsi
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import utils
@@ -40,7 +41,6 @@ from neutron.plugins.nicira.extensions import servicerouter as sr
 from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
-from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.vshield.common import (
     constants as vcns_const)
 from neutron.plugins.nicira.vshield.common.constants import RouterStatus
@@ -417,7 +417,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             ls_port = switchlib.create_lport(
                 self.cluster, lswitch['uuid'], tenant_id,
                 '', '', lrouter['uuid'], True)
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             msg = (_("An exception occurred while creating a port "
                      "on lswitch %s") % lswitch['uuid'])
             LOG.exception(msg)
@@ -432,7 +432,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 self.cluster, lrouter['uuid'], tenant_id,
                 neutron_port_id, pname, admin_status_enabled,
                 [vcns_const.INTEGRATION_LR_IPADDRESS])
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             msg = (_("Unable to create port on NVP logical router %s") % name)
             LOG.exception(msg)
             switchlib.delete_port(
@@ -444,7 +444,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self._update_router_port_attachment(
                 self.cluster, None, lrouter['uuid'], {}, lr_port['uuid'],
                 'PatchAttachment', ls_port['uuid'], None)
-        except NvpApiClient.NvpApiException as e:
+        except api_exc.NsxApiException as e:
             # lr_port should have been deleted
             switchlib.delete_port(
                 self.cluster, lswitch['uuid'], ls_port['uuid'])

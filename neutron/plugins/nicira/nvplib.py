@@ -25,8 +25,8 @@ import json
 
 from neutron.common import exceptions as exception
 from neutron.openstack.common import log
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import exceptions as nvp_exc
-from neutron.plugins.nicira import NvpApiClient
 
 
 LOG = log.getLogger(__name__)
@@ -142,7 +142,7 @@ def do_request(*args, **kwargs):
         res = cluster.api_client.request(*args)
         if res:
             return json.loads(res)
-    except NvpApiClient.ResourceNotFound:
+    except api_exc.ResourceNotFound:
         raise exception.NotFound()
-    except NvpApiClient.ReadOnlyMode:
+    except api_exc.ReadOnlyMode:
         raise nvp_exc.MaintenanceInProgress()

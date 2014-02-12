@@ -20,7 +20,7 @@ import six.moves.urllib.parse as urlparse
 
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira import NvpApiClient as api_client
+from neutron.plugins.nicira.api_client import exception as api_exc
 
 
 LOG = logging.getLogger(__name__)
@@ -257,7 +257,7 @@ class FakeClient:
         try:
             fake_lrouter = self._fake_lrouter_dict[lr_uuid]
         except KeyError:
-            raise api_client.ResourceNotFound()
+            raise api_exc.ResourceNotFound()
         fake_lrouter['lport_count'] += 1
         fake_lport_status = fake_lport.copy()
         fake_lport_status['lr_tenant_id'] = fake_lrouter['tenant_id']
@@ -496,7 +496,7 @@ class FakeClient:
                      for res_uuid in res_dict if res_uuid == target_uuid]
             if items:
                 return json.dumps(items[0])
-            raise api_client.ResourceNotFound()
+            raise api_exc.ResourceNotFound()
 
     def handle_get(self, url):
         #TODO(salvatore-orlando): handle field selection
@@ -505,7 +505,7 @@ class FakeClient:
         relations = urlparse.parse_qs(parsedurl.query).get('relations')
         response_file = self.FAKE_GET_RESPONSES.get(res_type)
         if not response_file:
-            raise api_client.NvpApiException()
+            raise api_exc.NsxApiException()
         if 'lport' in res_type or 'nat' in res_type:
             if len(uuids) > 1:
                 return self._show(res_type, response_file, uuids[0],
@@ -569,7 +569,7 @@ class FakeClient:
             try:
                 resource = res_dict[uuids[-1]]
             except KeyError:
-                raise api_client.ResourceNotFound()
+                raise api_exc.ResourceNotFound()
             if not is_attachment:
                 edit_resource = getattr(self, '_build_%s' % res_type, None)
                 if edit_resource:
@@ -640,7 +640,7 @@ class FakeClient:
         try:
             del res_dict[uuids[-1]]
         except KeyError:
-            raise api_client.ResourceNotFound()
+            raise api_exc.ResourceNotFound()
         return ""
 
     def fake_request(self, *args, **kwargs):

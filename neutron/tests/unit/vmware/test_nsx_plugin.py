@@ -39,14 +39,14 @@ from neutron.manager import NeutronManager
 from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.api_client import exception as api_exc
+from neutron.plugins.nicira.api_client.version import Version
 from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.dbexts import db as nsx_db
 from neutron.plugins.nicira.extensions import distributedrouter as dist_router
 from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import nsxlib
-from neutron.plugins.nicira import NvpApiClient
-from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
@@ -106,8 +106,8 @@ class NsxPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         patch_sync.start()
 
         # Emulate tests against NSX 2.x
-        self.mock_instance.return_value.get_nvp_version.return_value = (
-            NVPVersion("2.9"))
+        self.mock_instance.return_value.get_version.return_value = (
+            Version("2.9"))
         self.mock_instance.return_value.request.side_effect = (
             self.fc.fake_request)
         super(NsxPluginV2TestCase, self).setUp(plugin=plugin,
@@ -197,7 +197,7 @@ class TestPortsV2(NsxPluginV2TestCase,
 
     def test_create_port_nsx_error_no_orphan_left(self):
         with mock.patch.object(nsxlib.switch, 'create_lport',
-                               side_effect=NvpApiClient.NvpApiException):
+                               side_effect=api_exc.NsxApiException):
             with self.network() as net:
                 net_id = net['network']['id']
                 self._create_port(self.fmt, net_id,
@@ -535,8 +535,8 @@ class TestL3NatTestCase(L3NatTest,
 
     def _test_router_create_with_distributed(self, dist_input, dist_expected,
                                              version='3.1', return_code=201):
-        self.mock_instance.return_value.get_nvp_version.return_value = (
-            NvpApiClient.NVPVersion(version))
+        self.mock_instance.return_value.get_version.return_value = (
+            Version(version))
 
         data = {'tenant_id': 'whatever'}
         data['name'] = 'router1'
@@ -597,7 +597,7 @@ class TestL3NatTestCase(L3NatTest,
     def test_router_create_nsx_error_returns_500(self, vlan_id=None):
         with mock.patch.object(nsxlib.router,
                                'create_router_lport',
-                               side_effect=NvpApiClient.NvpApiException):
+                               side_effect=api_exc.NsxApiException):
             with self._create_l3_ext_network(vlan_id) as net:
                 with self.subnet(network=net) as s:
                     res = self._create_router_with_gw_info_for_test(s)
@@ -641,7 +641,7 @@ class TestL3NatTestCase(L3NatTest,
         # Simulate error while fetching nsx router gw port
         with mock.patch.object(self._plugin_class,
                                '_find_router_gw_port',
-                               side_effect=NvpApiClient.NvpApiException):
+                               side_effect=api_exc.NsxApiException):
             with self._create_l3_ext_network() as net:
                 with self.subnet(network=net) as s:
                     res = self._create_router_with_gw_info_for_test(s)
@@ -819,7 +819,7 @@ class TestL3NatTestCase(L3NatTest,
                         # do the real thing
                         return real_func(plugin_instance, *args)
                     # otherwise raise
-                    raise NvpApiClient.NvpApiException()
+                    raise api_exc.NsxApiException()
 
                 with mock.patch.object(self._plugin_class,
                                        'add_router_interface',
@@ -890,7 +890,7 @@ class TestL3NatTestCase(L3NatTest,
                         # do the real thing
                         return real_func(plugin_instance, *args)
                     # otherwise raise
-                    raise NvpApiClient.NvpApiException()
+                    raise api_exc.NsxApiException()
 
                 with mock.patch.object(self._plugin_class,
                                        'remove_router_interface',

@@ -1,6 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2012 Nicira, Inc.
+# Copyright 2012 VMware, Inc.
+#
 # All Rights Reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,41 +14,34 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 #
-# @author: Aaron Rosen, Nicira Networks, Inc.
-
 
 from abc import ABCMeta
 from abc import abstractmethod
 import copy
 import eventlet
 import httplib
-import logging
 import time
 
 import six
 import six.moves.urllib.parse as urlparse
 
 from neutron.openstack.common import excutils
-from neutron.plugins.nicira.api_client.common import (
-    _conn_str)
+from neutron.openstack.common import log as logging
+from neutron.plugins.nicira.api_client import ctrl_conn_to_str
 
-
-logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
-# Default parameters.
 DEFAULT_REQUEST_TIMEOUT = 30
 DEFAULT_HTTP_TIMEOUT = 10
 DEFAULT_RETRIES = 2
 DEFAULT_REDIRECTS = 2
 DEFAULT_API_REQUEST_POOL_SIZE = 1000
 DEFAULT_MAXIMUM_REQUEST_ID = 4294967295
-DOWNLOAD_TIMEOUT = 180  # The UI code has a coorespoind 190 sec timeout
-                        # for downloads, see: django/nvp_console/views.py
+DOWNLOAD_TIMEOUT = 180
 
 
 @six.add_metaclass(ABCMeta)
-class NvpApiRequest(object):
+class ApiRequest(object):
     '''An abstract baseclass for all ApiRequest implementations.
 
     This defines the interface and property structure for both eventlet and
@@ -119,7 +111,7 @@ class NvpApiRequest(object):
                 if cookie:
                     headers["Cookie"] = cookie
 
-                gen = self._api_client.nvp_config_gen
+                gen = self._api_client.config_gen
                 if gen:
                     headers["X-Nvp-Wait-For-Config-Generation"] = gen
                     LOG.debug(_("Setting X-Nvp-Wait-For-Config-Generation "
@@ -147,9 +139,9 @@ class NvpApiRequest(object):
                 if new_gen:
                     LOG.debug(_("Reading X-Nvp-config-Generation response "
                                 "header: '%s'"), new_gen)
-                    if (self._api_client.nvp_config_gen is None or
-                        self._api_client.nvp_config_gen < int(new_gen)):
-                        self._api_client.nvp_config_gen = int(new_gen)
+                    if (self._api_client.config_gen is None or
+                        self._api_client.config_gen < int(new_gen)):
+                        self._api_client.config_gen = int(new_gen)
 
                 if response.status == httplib.UNAUTHORIZED:
 
@@ -292,4 +284,4 @@ class NvpApiRequest(object):
 
     def _request_str(self, conn, url):
         '''Return string representation of connection.'''
-        return "%s %s/%s" % (self._method, _conn_str(conn), url)
+        return "%s %s/%s" % (self._method, ctrl_conn_to_str(conn), url)

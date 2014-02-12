@@ -190,7 +190,7 @@ def is_user_port(p, check_dev_id=False):
 
 
 def check_services_requirements(cluster):
-    ver = cluster.api_client.get_nvp_version()
+    ver = cluster.api_client.get_version()
     # It sounds like 4.1 is the first one where DHCP in NSX
     # will have the experimental feature
     if ver.major >= 4 and ver.minor >= 1:

@@ -45,7 +45,7 @@ class DhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
         patch_sync.start()
 
         # Emulate tests against NSX 2.x
-        instance.return_value.get_nvp_version.return_value = "2.999"
+        instance.return_value.get_version.return_value = "2.999"
         instance.return_value.request.side_effect = self.fc.fake_request
         super(DhcpAgentNotifierTestCase, self).setUp()
         self.addCleanup(self.fc.reset_all)

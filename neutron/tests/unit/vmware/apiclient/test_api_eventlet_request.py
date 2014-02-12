@@ -24,8 +24,8 @@ from eventlet.green import urllib2
 from mock import Mock
 from mock import patch
 
-from neutron.plugins.nicira.api_client import client_eventlet as nace
-from neutron.plugins.nicira.api_client import request_eventlet as nare
+from neutron.plugins.nicira.api_client import eventlet_client as client
+from neutron.plugins.nicira.api_client import eventlet_request as request
 from neutron.tests import base
 from neutron.tests.unit.vmware import CLIENT_NAME
 
@@ -46,10 +46,10 @@ class ApiRequestEventletTest(base.BaseTestCase):
     def setUp(self):
 
         super(ApiRequestEventletTest, self).setUp()
-        self.client = nace.NvpApiClientEventlet(
+        self.client = client.EventletApiClient(
             [("127.0.0.1", 4401, True)], "admin", "admin")
         self.url = "/ws.v1/_debug"
-        self.req = nare.NvpApiRequestEventlet(self.client, self.url)
+        self.req = request.EventletApiRequest(self.client, self.url)
 
     def tearDown(self):
         self.client = None
@@ -57,7 +57,7 @@ class ApiRequestEventletTest(base.BaseTestCase):
         super(ApiRequestEventletTest, self).tearDown()
 
     def test_construct_eventlet_api_request(self):
-        e = nare.NvpApiRequestEventlet(self.client, self.url)
+        e = request.EventletApiRequest(self.client, self.url)
         self.assertIsNotNone(e)
 
     def test_apirequest_spawn(self):
@@ -66,18 +66,18 @@ class ApiRequestEventletTest(base.BaseTestCase):
             LOG.info('spawned: %d' % id)
 
         for i in range(10):
-            nare.NvpApiRequestEventlet._spawn(x, i)
+            request.EventletApiRequest._spawn(x, i)
 
     def test_apirequest_start(self):
         for i in range(10):
-            a = nare.NvpApiRequestEventlet(
+            a = request.EventletApiRequest(
                 self.client, self.url, request_timeout=0.1)
             a._handle_request = Mock()
             a.start()
             eventlet.greenthread.sleep(0.1)
             logging.info('_handle_request called: %s' %
                          a._handle_request.called)
-        nare.NvpApiRequestEventlet.joinall()
+        request.EventletApiRequest.joinall()
 
     def test_join_with_handle_request(self):
         self.req._handle_request = Mock()
@@ -116,7 +116,7 @@ class ApiRequestEventletTest(base.BaseTestCase):
 
         self.req._request_timeout = REQUEST_TIMEOUT
         self.req._handle_request = new.instancemethod(
-            my_handle_request, self.req, nare.NvpApiRequestEventlet)
+            my_handle_request, self.req, request.EventletApiRequest)
         self.req.start()
         self.assertIsNone(self.req.join())
 
@@ -290,13 +290,12 @@ class ApiRequestEventletTest(base.BaseTestCase):
         self.req.spawn = Mock(return_value=mywaiter)
         self.req._handle_request()
 
-    # NvpLoginRequestEventlet tests.
     def test_construct_eventlet_login_request(self):
-        r = nare.NvpLoginRequestEventlet(self.client, 'user', 'password')
+        r = request.LoginRequestEventlet(self.client, 'user', 'password')
         self.assertIsNotNone(r)
 
     def test_session_cookie_session_cookie_retrieval(self):
-        r = nare.NvpLoginRequestEventlet(self.client, 'user', 'password')
+        r = request.LoginRequestEventlet(self.client, 'user', 'password')
         r.successful = Mock()
         r.successful.return_value = True
         r.value = Mock()
@@ -305,7 +304,7 @@ class ApiRequestEventletTest(base.BaseTestCase):
         self.assertIsNotNone(r.session_cookie())
 
     def test_session_cookie_not_retrieved(self):
-        r = nare.NvpLoginRequestEventlet(self.client, 'user', 'password')
+        r = request.LoginRequestEventlet(self.client, 'user', 'password')
         r.successful = Mock()
         r.successful.return_value = False
         r.value = Mock()
@@ -313,18 +312,17 @@ class ApiRequestEventletTest(base.BaseTestCase):
         r.value.get_header.return_value = 'cool'
         self.assertIsNone(r.session_cookie())
 
-    # NvpGetApiProvidersRequestEventlet tests.
     def test_construct_eventlet_get_api_providers_request(self):
-        r = nare.NvpGetApiProvidersRequestEventlet(self.client)
+        r = request.GetApiProvidersRequestEventlet(self.client)
         self.assertIsNotNone(r)
 
     def test_api_providers_none_api_providers(self):
-        r = nare.NvpGetApiProvidersRequestEventlet(self.client)
+        r = request.GetApiProvidersRequestEventlet(self.client)
         r.successful = Mock(return_value=False)
         self.assertIsNone(r.api_providers())
 
     def test_api_providers_non_none_api_providers(self):
-        r = nare.NvpGetApiProvidersRequestEventlet(self.client)
+        r = request.GetApiProvidersRequestEventlet(self.client)
         r.value = Mock()
         r.value.body = """{
           "results": [

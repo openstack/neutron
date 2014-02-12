@@ -18,11 +18,12 @@ import mock
 
 from neutron.common import exceptions
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.api_client import exception as api_exc
+from neutron.plugins.nicira.api_client.version import Version
 from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
-from neutron.plugins.nicira import NvpApiClient as api_client
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
 
@@ -33,8 +34,8 @@ class TestNatRules(base.NsxlibTestCase):
 
     def _test_create_lrouter_dnat_rule(self, version):
         with mock.patch.object(self.fake_cluster.api_client,
-                               'get_nvp_version',
-                               new=lambda: api_client.NVPVersion(version)):
+                               'get_version',
+                               new=lambda: Version(version)):
             tenant_id = 'pippo'
             lrouter = routerlib.create_lrouter(self.fake_cluster,
                                                uuidutils.generate_uuid(),
@@ -196,8 +197,8 @@ class TestExplicitLRouters(base.NsxlibTestCase):
         with mock.patch.object(routerlib, 'get_explicit_routes_lrouter',
                                return_value=nsx_routes):
             with mock.patch.object(routerlib, 'create_explicit_route_lrouter',
-                                   side_effect=api_client.NvpApiException):
-                self.assertRaises(api_client.NvpApiException,
+                                   side_effect=api_exc.NsxApiException):
+                self.assertRaises(api_exc.NsxApiException,
                                   routerlib.update_explicit_routes_lrouter,
                                   self.fake_cluster, router_id, new_routes)
 
@@ -237,12 +238,12 @@ class TestExplicitLRouters(base.NsxlibTestCase):
         with mock.patch.object(routerlib, 'get_explicit_routes_lrouter',
                                return_value=nsx_routes):
             with mock.patch.object(routerlib, 'delete_explicit_route_lrouter',
-                                   side_effect=api_client.NvpApiException):
+                                   side_effect=api_exc.NsxApiException):
                 with mock.patch.object(
                     routerlib, 'create_explicit_route_lrouter',
                     return_value='fake_uuid'):
                     self.assertRaises(
-                        api_client.NvpApiException,
+                        api_exc.NsxApiException,
                         routerlib.update_explicit_routes_lrouter,
                         self.fake_cluster, router_id, new_routes)
 
@@ -250,7 +251,7 @@ class TestExplicitLRouters(base.NsxlibTestCase):
 class RouterNegativeTestCase(base.NsxlibNegativeBaseTestCase):
 
     def test_create_lrouter_on_failure(self):
-        self.assertRaises(api_client.NvpApiException,
+        self.assertRaises(api_exc.NsxApiException,
                           routerlib.create_lrouter,
                           self.fake_cluster,
                           uuidutils.generate_uuid(),
@@ -259,19 +260,19 @@ class RouterNegativeTestCase(base.NsxlibNegativeBaseTestCase):
                           'my_hop')
 
     def test_delete_lrouter_on_failure(self):
-        self.assertRaises(api_client.NvpApiException,
+        self.assertRaises(api_exc.NsxApiException,
                           routerlib.delete_lrouter,
                           self.fake_cluster,
                           'fake_router')
 
     def test_get_lrouter_on_failure(self):
-        self.assertRaises(api_client.NvpApiException,
+        self.assertRaises(api_exc.NsxApiException,
                           routerlib.get_lrouter,
                           self.fake_cluster,
                           'fake_router')
 
     def test_update_lrouter_on_failure(self):
-        self.assertRaises(api_client.NvpApiException,
+        self.assertRaises(api_exc.NsxApiException,
                           routerlib.update_lrouter,
                           self.fake_cluster,
                           'fake_router',
@@ -313,8 +314,8 @@ class TestLogicalRouters(base.NsxlibTestCase):
 
     def _create_lrouter(self, version, neutron_id=None, distributed=None):
         with mock.patch.object(
-            self.fake_cluster.api_client, 'get_nvp_version',
-            return_value=api_client.NVPVersion(version)):
+            self.fake_cluster.api_client, 'get_version',
+            return_value=Version(version)):
             if not neutron_id:
                 neutron_id = uuidutils.generate_uuid()
             lrouter = routerlib.create_lrouter(
@@ -374,8 +375,8 @@ class TestLogicalRouters(base.NsxlibTestCase):
         }
 
         with mock.patch.object(self.fake_cluster.api_client,
-                               'get_nvp_version',
-                               return_value=api_client.NVPVersion(version)):
+                               'get_version',
+                               return_value=Version(version)):
             with mock.patch.dict(routerlib.ROUTER_FUNC_DICT,
                                  foo_func_dict, clear=True):
                 return routerlib.update_lrouter(
@@ -671,7 +672,7 @@ class TestLogicalRouters(base.NsxlibTestCase):
             'name', True, ['192.168.0.1'], '00:11:22:33:44:55')
 
         def raise_nsx_exc(*args, **kwargs):
-            raise api_client.NvpApiException()
+            raise api_exc.NsxApiException()
 
         with mock.patch.object(routerlib, 'do_request', new=raise_nsx_exc):
             self.assertRaises(
@@ -763,8 +764,8 @@ class TestLogicalRouters(base.NsxlibTestCase):
                                            'fake-lrouter',
                                            '10.0.0.1')
         with mock.patch.object(self.fake_cluster.api_client,
-                               'get_nvp_version',
-                               new=lambda: api_client.NVPVersion(version)):
+                               'get_version',
+                               new=lambda: Version(version)):
             routerlib.create_lrouter_snat_rule(
                 self.fake_cluster, lrouter['uuid'],
                 '10.0.0.2', '10.0.0.2', order=200,
@@ -786,8 +787,8 @@ class TestLogicalRouters(base.NsxlibTestCase):
                                            'fake-lrouter',
                                            '10.0.0.1')
         with mock.patch.object(self.fake_cluster.api_client,
-                               'get_nvp_version',
-                               return_value=api_client.NVPVersion(version)):
+                               'get_version',
+                               return_value=Version(version)):
             routerlib.create_lrouter_dnat_rule(
                 self.fake_cluster, lrouter['uuid'], '192.168.0.2', order=200,
                 dest_port=dest_port,
@@ -817,7 +818,7 @@ class TestLogicalRouters(base.NsxlibTestCase):
                                            '10.0.0.1')
 
         with mock.patch.object(self.fake_cluster.api_client,
-                               'get_nvp_version',
+                               'get_version',
                                new=lambda: '2.0'):
             self.assertRaises(AttributeError,
                               routerlib.create_lrouter_snat_rule,
@@ -832,8 +833,8 @@ class TestLogicalRouters(base.NsxlibTestCase):
                                            'fake-lrouter',
                                            '10.0.0.1')
         with mock.patch.object(self.fake_cluster.api_client,
-                               'get_nvp_version',
-                               new=lambda: api_client.NVPVersion(version)):
+                               'get_version',
+                               new=lambda: Version(version)):
             routerlib.create_lrouter_nosnat_rule(
                 self.fake_cluster, lrouter['uuid'],
                 order=100,
@@ -857,8 +858,8 @@ class TestLogicalRouters(base.NsxlibTestCase):
                                            '10.0.0.1')
         # v2 or v3 makes no difference for this test
         with mock.patch.object(self.fake_cluster.api_client,
-                               'get_nvp_version',
-                               new=lambda: api_client.NVPVersion('2.0')):
+                               'get_version',
+                               new=lambda: Version('2.0')):
             routerlib.create_lrouter_snat_rule(
                 self.fake_cluster, lrouter['uuid'],
                 '10.0.0.2', '10.0.0.2', order=220,

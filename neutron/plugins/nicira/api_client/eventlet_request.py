@@ -1,6 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2012 Nicira, Inc.
+# Copyright 2012 VMware, Inc.
+#
 # All Rights Reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,29 +13,23 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-#
-# @author: Aaron Rosen, Nicira Networks, Inc.
-
 
 import eventlet
 import httplib
 import json
-import logging
 import urllib
 
+from neutron.openstack.common import log as logging
 from neutron.plugins.nicira.api_client import request
 
-eventlet.monkey_patch()
-logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
-USER_AGENT = "NVP Neutron eventlet client/2.0"
+USER_AGENT = "Neutron eventlet client/2.0"
 
 
-class NvpApiRequestEventlet(request.NvpApiRequest):
+class EventletApiRequest(request.ApiRequest):
     '''Eventlet-based ApiRequest class.
 
     This class will form the basis for eventlet-based ApiRequest classes
-    (e.g. those used by the Neutron NVP Plugin).
     '''
 
     # Maximum number of green threads present in the system at one time.
@@ -53,7 +46,7 @@ class NvpApiRequestEventlet(request.NvpApiRequest):
     # The request id for the next incoming request.
     CURRENT_REQUEST_ID = 0
 
-    def __init__(self, nvp_api_client, url, method="GET", body=None,
+    def __init__(self, client_obj, url, method="GET", body=None,
                  headers=None,
                  request_timeout=request.DEFAULT_REQUEST_TIMEOUT,
                  retries=request.DEFAULT_RETRIES,
@@ -61,7 +54,7 @@ class NvpApiRequestEventlet(request.NvpApiRequest):
                  redirects=request.DEFAULT_REDIRECTS,
                  http_timeout=request.DEFAULT_HTTP_TIMEOUT, client_conn=None):
         '''Constructor.'''
-        self._api_client = nvp_api_client
+        self._api_client = client_obj
         self._url = url
         self._method = method
         self._body = body
@@ -80,15 +73,13 @@ class NvpApiRequestEventlet(request.NvpApiRequest):
             self._headers["User-Agent"] = USER_AGENT
 
         self._green_thread = None
-
         # Retrieve and store this instance's unique request id.
-        self._request_id = NvpApiRequestEventlet.CURRENT_REQUEST_ID
-
+        self._request_id = self.CURRENT_REQUEST_ID
         # Update the class variable that tracks request id.
         # Request IDs wrap around at MAXIMUM_REQUEST_ID
         next_request_id = self._request_id + 1
-        next_request_id %= NvpApiRequestEventlet.MAXIMUM_REQUEST_ID
-        NvpApiRequestEventlet.CURRENT_REQUEST_ID = next_request_id
+        next_request_id %= self.MAXIMUM_REQUEST_ID
+        self.CURRENT_REQUEST_ID = next_request_id
 
     @classmethod
     def _spawn(cls, func, *args, **kwargs):
@@ -116,7 +107,7 @@ class NvpApiRequestEventlet(request.NvpApiRequest):
 
     def copy(self):
         '''Return a copy of this request instance.'''
-        return NvpApiRequestEventlet(
+        return EventletApiRequest(
             self._api_client, self._url, self._method, self._body,
             self._headers, self._request_timeout, self._retries,
             self._auto_login, self._redirects, self._http_timeout)
@@ -165,17 +156,17 @@ class NvpApiRequestEventlet(request.NvpApiRequest):
         return response
 
 
-class NvpLoginRequestEventlet(NvpApiRequestEventlet):
+class LoginRequestEventlet(EventletApiRequest):
     '''Process a login request.'''
 
-    def __init__(self, nvp_client, user, password, client_conn=None,
+    def __init__(self, client_obj, user, password, client_conn=None,
                  headers=None):
         if headers is None:
             headers = {}
         headers.update({"Content-Type": "application/x-www-form-urlencoded"})
         body = urllib.urlencode({"username": user, "password": password})
-        NvpApiRequestEventlet.__init__(
-            self, nvp_client, "/ws.v1/login", "POST", body, headers,
+        super(LoginRequestEventlet, self).__init__(
+            client_obj, "/ws.v1/login", "POST", body, headers,
             auto_login=False, client_conn=client_conn)
 
     def session_cookie(self):
@@ -184,13 +175,13 @@ class NvpLoginRequestEventlet(NvpApiRequestEventlet):
         return None
 
 
-class NvpGetApiProvidersRequestEventlet(NvpApiRequestEventlet):
-    '''Gej a list of API providers.'''
+class GetApiProvidersRequestEventlet(EventletApiRequest):
+    '''Get a list of API providers.'''
 
-    def __init__(self, nvp_client):
+    def __init__(self, client_obj):
         url = "/ws.v1/control-cluster/node?fields=roles"
-        NvpApiRequestEventlet.__init__(
-            self, nvp_client, url, "GET", auto_login=True)
+        super(GetApiProvidersRequestEventlet, self).__init__(
+            client_obj, url, "GET", auto_login=True)
 
     def api_providers(self):
         """Parse api_providers from response.
@@ -220,18 +211,18 @@ class NvpGetApiProvidersRequestEventlet(NvpApiRequestEventlet):
         return None
 
 
-class NvpGenericRequestEventlet(NvpApiRequestEventlet):
+class GenericRequestEventlet(EventletApiRequest):
     '''Handle a generic request.'''
 
-    def __init__(self, nvp_client, method, url, body, content_type,
+    def __init__(self, client_obj, method, url, body, content_type,
                  auto_login=False,
                  request_timeout=request.DEFAULT_REQUEST_TIMEOUT,
                  http_timeout=request.DEFAULT_HTTP_TIMEOUT,
                  retries=request.DEFAULT_RETRIES,
                  redirects=request.DEFAULT_REDIRECTS):
         headers = {"Content-Type": content_type}
-        NvpApiRequestEventlet.__init__(
-            self, nvp_client, url, method, body, headers,
+        super(GenericRequestEventlet, self).__init__(
+            client_obj, url, method, body, headers,
             request_timeout=request_timeout, retries=retries,
             auto_login=auto_login, redirects=redirects,
             http_timeout=http_timeout)
@@ -242,5 +233,4 @@ class NvpGenericRequestEventlet(NvpApiRequestEventlet):
         return None
 
 
-# Register subclasses
-request.NvpApiRequest.register(NvpApiRequestEventlet)
+request.ApiRequest.register(EventletApiRequest)

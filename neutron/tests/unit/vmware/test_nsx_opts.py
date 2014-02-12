@@ -23,12 +23,13 @@ from oslo.config import cfg
 from neutron.common import config as q_config
 from neutron.manager import NeutronManager
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.api_client import client
+from neutron.plugins.nicira.api_client import version
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira.nsxlib import lsn as lsnlib
-from neutron.plugins.nicira import NvpApiClient as api_client
 from neutron.tests import base
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import PLUGIN_NAME
@@ -150,9 +151,9 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual(config.AgentModes.AGENTLESS,
                          cfg.CONF.NSX.agent_mode)
         # The version returned from NSX does not really matter here
-        with mock.patch.object(api_client.NVPApiHelper,
-                               'get_nvp_version',
-                               return_value=api_client.NVPVersion("9.9")):
+        with mock.patch.object(client.NsxApiClient,
+                               'get_version',
+                               return_value=version.Version("9.9")):
             with mock.patch.object(lsnlib,
                                    'service_cluster_exists',
                                    return_value=True):
@@ -168,9 +169,9 @@ class ConfigurationTest(base.BaseTestCase):
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         self.assertEqual(config.AgentModes.AGENTLESS,
                          cfg.CONF.NSX.agent_mode)
-        with mock.patch.object(api_client.NVPApiHelper,
-                               'get_nvp_version',
-                               return_value=api_client.NVPVersion("3.2")):
+        with mock.patch.object(client.NsxApiClient,
+                               'get_version',
+                               return_value=version.Version("3.2")):
             self.assertRaises(exceptions.NvpPluginException, NeutronManager)
 
     def test_agentless_extensions_unmet_deps_fail(self):
@@ -179,9 +180,9 @@ class ConfigurationTest(base.BaseTestCase):
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         self.assertEqual(config.AgentModes.AGENTLESS,
                          cfg.CONF.NSX.agent_mode)
-        with mock.patch.object(api_client.NVPApiHelper,
-                               'get_nvp_version',
-                               return_value=api_client.NVPVersion("3.2")):
+        with mock.patch.object(client.NsxApiClient,
+                               'get_version',
+                               return_value=version.Version("3.2")):
             with mock.patch.object(lsnlib,
                                    'service_cluster_exists',
                                    return_value=False):

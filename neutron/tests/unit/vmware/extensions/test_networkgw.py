@@ -28,10 +28,10 @@ from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron import manager
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.dbexts import networkgw_db
 from neutron.plugins.nicira.extensions import networkgw
 from neutron.plugins.nicira import nsxlib
-from neutron.plugins.nicira import NvpApiClient
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
@@ -647,7 +647,7 @@ class TestNetworkGateway(NsxPluginV2TestCase,
 
     def test_create_network_gateway_nsx_error_returns_500(self):
         def raise_nsx_api_exc(*args, **kwargs):
-            raise NvpApiClient.NvpApiException
+            raise api_exc.NsxApiException
 
         with mock.patch.object(nsxlib.l2gateway,
                                'create_l2_gw_service',
@@ -660,7 +660,7 @@ class TestNetworkGateway(NsxPluginV2TestCase,
     def test_create_network_gateway_nsx_error_returns_409(self):
         with mock.patch.object(nsxlib.l2gateway,
                                'create_l2_gw_service',
-                               side_effect=NvpApiClient.Conflict):
+                               side_effect=api_exc.Conflict):
             res = self._create_network_gateway(
                 self.fmt, 'xxx', name='yyy',
                 devices=[{'id': uuidutils.generate_uuid()}])

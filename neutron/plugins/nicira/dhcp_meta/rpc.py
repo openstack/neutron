@@ -31,9 +31,9 @@ from neutron.db import dhcp_rpc_base
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import config
 from neutron.plugins.nicira.common import exceptions as nvp_exc
-from neutron.plugins.nicira import NvpApiClient
 
 LOG = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ def handle_router_metadata_access(plugin, context, router_id, interface=None):
     # TODO(salvatore-orlando): A better exception handling in the
     # NSX plugin would allow us to improve error handling here
     except (ntn_exc.NeutronException, nvp_exc.NvpPluginException,
-            NvpApiClient.NvpApiException):
+            api_exc.NsxApiException):
         # Any exception here should be regarded as non-fatal
         LOG.exception(_("An error occurred while operating on the "
                         "metadata access network for router:'%s'"),
@@ -189,7 +189,7 @@ def _create_metadata_access_network(plugin, context, router_id):
         greenthread.sleep(0)  # yield
     except (ntn_exc.NeutronException,
             nvp_exc.NvpPluginException,
-            NvpApiClient.NvpApiException):
+            api_exc.NsxApiException):
         # It is not necessary to explicitly delete the subnet
         # as it will be removed with the network
         plugin.delete_network(context, meta_net['id'])
@@ -215,7 +215,7 @@ def _destroy_metadata_access_network(plugin, context, router_id, ports):
         plugin.delete_network(context, meta_net_id)
         greenthread.sleep(0)  # yield
     except (ntn_exc.NeutronException, nvp_exc.NvpPluginException,
-            NvpApiClient.NvpApiException):
+            api_exc.NsxApiException):
         # must re-add the router interface
         plugin.add_router_interface(context, router_id,
                                     {'subnet_id': meta_sub_id})

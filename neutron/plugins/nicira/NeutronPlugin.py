@@ -61,6 +61,7 @@ from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import excutils
 from neutron.openstack.common import lockutils
 from neutron.plugins.common import constants as plugin_const
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import nsx_utils
@@ -80,7 +81,6 @@ from neutron.plugins.nicira.nsxlib import queue as queuelib
 from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import secgroup as secgrouplib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
-from neutron.plugins.nicira import NvpApiClient
 
 LOG = logging.getLogger("NeutronPlugin")
 
@@ -265,7 +265,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 port_data.get('admin_state_up', True), ip_addresses,
                 port_data.get('mac_address'))
             LOG.debug(_("Created NVP router port:%s"), lrouter_port['uuid'])
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             LOG.exception(_("Unable to create port on NVP logical router %s"),
                           nsx_router_id)
             raise nvp_exc.NvpPluginException(
@@ -349,7 +349,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                   attachment_vlan)
             LOG.debug(_("Attached %(att)s to NVP router port %(port)s"),
                       {'att': attachment, 'port': nsx_router_port_id})
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             # Must remove NVP logical port
             routerlib.delete_router_lport(cluster, nsx_router_id,
                                           nsx_router_port_id)
@@ -404,7 +404,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             return self._handle_lswitch_selection(
                 context, self.cluster, network, network_bindings,
                 max_ports, allow_extra_lswitches)
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             err_desc = _("An exception occurred while selecting logical "
                          "switch for the port")
             LOG.exception(err_desc)
@@ -472,7 +472,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             LOG.debug(_("_nvp_create_port completed for port %(name)s "
                         "on network %(network_id)s. The new port id is "
                         "%(id)s."), port_data)
-        except (NvpApiClient.NvpApiException, q_exc.NeutronException):
+        except (api_exc.NsxApiException, q_exc.NeutronException):
             self._handle_create_port_exception(
                 context, port_data['id'],
                 selected_lswitch and selected_lswitch['uuid'],
@@ -539,7 +539,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                nsx_router_id,
                                                nsx_switch_id,
                                                nsx_port_id)
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             # Do not raise because the issue might as well be that the
             # router has already been deleted, so there would be nothing
             # to do here
@@ -584,7 +584,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         "%(name)s on network %(network_id)s. The new "
                         "port id is %(id)s."),
                       port_data)
-        except (NvpApiClient.NvpApiException, q_exc.NeutronException):
+        except (api_exc.NsxApiException, q_exc.NeutronException):
             self._handle_create_port_exception(
                 context, port_data['id'],
                 selected_lswitch and selected_lswitch['uuid'],
@@ -677,11 +677,11 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 "L3GatewayAttachment",
                 self.cluster.default_l3_gw_service_uuid)
 
-        except NvpApiClient.ResourceNotFound:
+        except api_exc.ResourceNotFound:
             raise nvp_exc.NvpPluginException(
                 err_msg=_("Logical router resource %s not found "
                           "on NVP platform") % router_id)
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             raise nvp_exc.NvpPluginException(
                 err_msg=_("Unable to update logical router"
                           "on NVP Platform"))
@@ -1061,8 +1061,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                 port['id'])
 
             except (TypeError, KeyError,
-                    NvpApiClient.NvpApiException,
-                    NvpApiClient.ResourceNotFound):
+                    api_exc.NsxApiException,
+                    api_exc.ResourceNotFound):
                 # Do not raise because the issue might as well be that the
                 # router has already been deleted, so there would be nothing
                 # to do here
@@ -1406,7 +1406,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     "without specifying the 'distributed' attribute.")
             LOG.exception(msg)
             raise q_exc.BadRequest(resource='router', msg=msg)
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             err_msg = _("Unable to create logical router on NVP Platform")
             LOG.exception(err_msg)
             raise nvp_exc.NvpPluginException(err_msg=err_msg)
@@ -1501,7 +1501,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Set external gateway and remove router in case of failure
             try:
                 self._update_router_gw_info(context, router_db['id'], gw_info)
-            except (q_exc.NeutronException, NvpApiClient.NvpApiException):
+            except (q_exc.NeutronException, api_exc.NsxApiException):
                 with excutils.save_and_reraise_exception():
                     # As setting gateway failed, the router must be deleted
                     # in order to ensure atomicity
@@ -1569,7 +1569,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             raise nvp_exc.NvpPluginException(
                 err_msg=_("Logical router %s not found "
                           "on NVP Platform") % router_id)
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             raise nvp_exc.NvpPluginException(
                 err_msg=_("Unable to update logical router on NVP Platform"))
         except nvp_exc.NvpInvalidVersion:
@@ -1631,8 +1631,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         except q_exc.NotFound:
             # This is not a fatal error, but needs to be logged
             LOG.warning(_("Logical router '%s' not found "
-                        "on NVP Platform"), nsx_router_id)
-        except NvpApiClient.NvpApiException:
+                        "on NVP Platform"), router_id)
+        except api_exc.NsxApiException:
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Unable to delete logical router '%s' "
                            "on NVP Platform") % nsx_router_id))
@@ -1773,11 +1773,11 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 self.cluster, nsx_router_id, "NoSourceNatRule",
                 max_num_expected=1, min_num_expected=0,
                 destination_ip_addresses=subnet['cidr'])
-        except NvpApiClient.ResourceNotFound:
+        except api_exc.ResourceNotFound:
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Logical router resource %s not found "
                            "on NVP platform") % router_id))
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Unable to update logical router"
                            "on NVP Platform")))
@@ -1809,7 +1809,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 min_num_expected=min_num_rules_expected,
                 destination_ip_addresses=internal_ip)
 
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             LOG.exception(_("An error occurred while removing NAT rules "
                             "on the NVP platform for floating ip:%s"),
                           floating_ip_address)
@@ -1947,7 +1947,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     routerlib.update_lrouter_port_ips(
                         self.cluster, nsx_router_id, nsx_gw_port_id,
                         ips_to_add=nvp_floating_ips, ips_to_remove=[])
-                except NvpApiClient.NvpApiException:
+                except api_exc.NsxApiException:
                     LOG.exception(_("An error occurred while creating NAT "
                                     "rules on the NVP platform for floating "
                                     "ip:%(floating_ip)s mapped to "
@@ -2016,9 +2016,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             nsx_res = l2gwlib.create_l2_gw_service(
                 self.cluster, tenant_id, gw_data['name'], devices)
             nsx_uuid = nsx_res.get('uuid')
-        except NvpApiClient.Conflict:
+        except api_exc.Conflict:
             raise nvp_exc.NvpL2GatewayAlreadyInUse(gateway=gw_data['name'])
-        except NvpApiClient.NvpApiException:
+        except api_exc.NsxApiException:
             err_msg = _("Unable to create l2_gw_service for: %s") % gw_data
             LOG.exception(err_msg)
             raise nvp_exc.NvpPluginException(err_msg=err_msg)
@@ -2039,7 +2039,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 super(NvpPluginV2, self).delete_network_gateway(
                     context, gateway_id)
                 l2gwlib.delete_l2_gw_service(self.cluster, gateway_id)
-            except NvpApiClient.ResourceNotFound:
+            except api_exc.ResourceNotFound:
                 # Do not cause a 500 to be returned to the user if
                 # the corresponding NVP resource does not exist
                 LOG.exception(_("Unable to remove gateway service from "
@@ -2069,7 +2069,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         if name:
             try:
                 l2gwlib.update_l2_gw_service(self.cluster, id, name)
-            except NvpApiClient.NvpApiException:
+            except api_exc.NsxApiException:
                 # Consider backend failures as non-fatal, but still warn
                 # because this might indicate something dodgy is going on
                 LOG.warn(_("Unable to update name on NVP backend "
@@ -2084,7 +2084,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         try:
             return super(NvpPluginV2, self).connect_network(
                 context, network_gateway_id, network_mapping_info)
-        except NvpApiClient.Conflict:
+        except api_exc.Conflict:
             raise nvp_exc.NvpL2GatewayAlreadyInUse(gateway=network_gateway_id)
 
     def disconnect_network(self, context, network_gateway_id,

@@ -19,9 +19,9 @@ import json
 
 from neutron.common import exceptions as exception
 from neutron.openstack.common import log
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.nvplib import _build_uri_path
 from neutron.plugins.nicira.nvplib import do_request
 
@@ -167,7 +167,7 @@ def lsn_port_plug_network(cluster, lsn_id, lsn_port_id, lswitch_port_id):
                                    is_attachment=True),
                    json.dumps(patch_obj),
                    cluster=cluster)
-    except NvpApiClient.Conflict:
+    except api_exc.Conflict:
         # This restriction might be lifted at some point
         msg = (_("Attempt to plug Logical Services Node %(lsn)s into "
                  "network with port %(port)s failed. PatchAttachment "

@@ -18,8 +18,8 @@ from neutron.common import exceptions as exception
 from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.nvplib import _build_uri_path
 from neutron.plugins.nicira.nvplib import do_request
 
@@ -54,7 +54,7 @@ def create_lqueue(cluster, queue_data):
                           _build_uri_path(LQUEUE_RESOURCE),
                           jsonutils.dumps(queue_obj),
                           cluster=cluster)['uuid']
-    except NvpApiClient.NvpApiException:
+    except api_exc.NsxApiException:
         # FIXME(salv-orlando): This should not raise NeutronException
         with excutils.save_and_reraise_exception():
             raise exception.NeutronException()

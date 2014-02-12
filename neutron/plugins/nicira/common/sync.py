@@ -25,11 +25,11 @@ from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import timeutils
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import nsx_utils
 from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
-from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
 # Maximum page size for a single request
@@ -261,7 +261,7 @@ class NvpSynchronizer():
                     neutron_network_data['id'])
             except exceptions.NetworkNotFound:
                 # TODO(salv-orlando): We should be catching
-                # NvpApiClient.ResourceNotFound here
+                # api_exc.ResourceNotFound here
                 # The logical switch was not found
                 LOG.warning(_("Logical switch for neutron network %s not "
                               "found on NVP."), neutron_network_data['id'])
@@ -329,7 +329,7 @@ class NvpSynchronizer():
                     self._cluster, nsx_router_id)
             except exceptions.NotFound:
                 # NOTE(salv-orlando): We should be catching
-                # NvpApiClient.ResourceNotFound here
+                # api_exc.ResourceNotFound here
                 # The logical router was not found
                 LOG.warning(_("Logical router for neutron router %s not "
                               "found on NVP."), neutron_router_data['id'])
@@ -405,7 +405,7 @@ class NvpSynchronizer():
                         relations='LogicalPortStatus')
             except (exceptions.PortNotFoundOnNetwork):
                 # NOTE(salv-orlando): We should be catching
-                # NvpApiClient.ResourceNotFound here instead
+                # api_exc.ResourceNotFound here instead
                 # of PortNotFoundOnNetwork when the id exists but
                 # the logical switch port was not found
                 LOG.warning(_("Logical switch port for neutron port %s "
@@ -563,7 +563,7 @@ class NvpSynchronizer():
         try:
             (lswitches, lrouters, lswitchports) = (
                 self._fetch_nvp_data_chunk(sp))
-        except (NvpApiClient.RequestTimeout, NvpApiClient.NvpApiException):
+        except (api_exc.RequestTimeout, api_exc.NsxApiException):
             sleep_interval = self._sync_backoff
             # Cap max back off to 64 seconds
             self._sync_backoff = min(self._sync_backoff * 2, 64)

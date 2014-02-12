@@ -19,10 +19,10 @@ import mock
 
 from neutron.db import api as db_api
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import nsx_utils
 from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 from neutron.tests import base
 from neutron.tests.unit.vmware import nsx_method
@@ -278,12 +278,12 @@ class ClusterManagementTestCase(nsx_base.NsxlibTestCase):
     def test_cluster_in_readonly_mode(self):
         with mock.patch.object(self.fake_cluster.api_client,
                                'request',
-                               side_effect=NvpApiClient.ReadOnlyMode):
+                               side_effect=api_exc.ReadOnlyMode):
             self.assertRaises(nsx_exc.MaintenanceInProgress,
                               nvplib.do_request, cluster=self.fake_cluster)
 
     def test_cluster_method_not_implemented(self):
-        self.assertRaises(NvpApiClient.NvpApiException,
+        self.assertRaises(api_exc.NsxApiException,
                           nvplib.do_request,
                           nvplib.HTTP_GET,
                           nvplib._build_uri_path('MY_FAKE_RESOURCE',

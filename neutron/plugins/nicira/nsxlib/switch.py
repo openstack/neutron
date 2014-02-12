@@ -19,9 +19,9 @@ import json
 from neutron.common import constants
 from neutron.common import exceptions as exception
 from neutron.openstack.common import log
+from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.nvplib import _build_uri_path
 from neutron.plugins.nicira.nvplib import do_request
 from neutron.plugins.nicira.nvplib import get_all_query_pages
@@ -180,7 +180,7 @@ def delete_port(cluster, switch, port):
         LOG.exception(_("Port or Network not found"))
         raise exception.PortNotFoundOnNetwork(
             net_id=switch, port_id=port)
-    except NvpApiClient.NvpApiException:
+    except api_exc.NsxApiException:
         raise exception.NeutronException()
 
 

@@ -28,9 +28,11 @@ from neutron.common import constants
 from neutron import context
 from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log
+from neutron.plugins.nicira.api_client import client
+from neutron.plugins.nicira.api_client import exception as api_exc
+from neutron.plugins.nicira.api_client import version
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira import nsx_cluster as cluster
-from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib as nsx_utils
 from neutron.plugins.vmware import plugin
 from neutron.tests import base
@@ -243,7 +245,7 @@ class SyncLoopingCallTestCase(base.BaseTestCase):
         # the looping call
         with mock.patch.object(
             sync.NvpSynchronizer, '_synchronize_state', return_value=0.01):
-            synchronizer = sync.NvpSynchronizer(None, None,
+            synchronizer = sync.NvpSynchronizer(mock.ANY, mock.ANY,
                                                 100, 0, 0)
             time.sleep(0.03)
             # stop looping call before asserting
@@ -266,18 +268,20 @@ class SyncTestCase(base.BaseTestCase):
         patch_sync.start()
         self.mock_api.return_value.login.return_value = "the_cookie"
         # Emulate tests against NSX 3.x
-        self.mock_api.return_value.get_nvp_version.return_value = (
-            NvpApiClient.NVPVersion("3.1"))
+        self.mock_api.return_value.get_version.return_value = (
+            version.Version("3.1"))
 
         self.mock_api.return_value.request.side_effect = self.fc.fake_request
         self.fake_cluster = cluster.NSXCluster(
             name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
             default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
-        self.fake_cluster.api_client = NvpApiClient.NVPApiHelper(
+        self.fake_cluster.api_client = client.NsxApiClient(
             ('1.1.1.1', '999', True),
             self.fake_cluster.nsx_user, self.fake_cluster.nsx_password,
-            self.fake_cluster.req_timeout, self.fake_cluster.http_timeout,
-            self.fake_cluster.retries, self.fake_cluster.redirects)
+            request_timeout=self.fake_cluster.req_timeout,
+            http_timeout=self.fake_cluster.http_timeout,
+            retries=self.fake_cluster.retries,
+            redirects=self.fake_cluster.redirects)
         # Instantiate Neutron plugin
         # and setup needed config variables
         args = ['--config-file', get_fake_conf('neutron.conf.test'),
@@ -637,8 +641,7 @@ class SyncTestCase(base.BaseTestCase):
             self.assertEqual(constants.NET_STATUS_DOWN, q_rtr_data['status'])
 
     def test_sync_nsx_failure_backoff(self):
-        self.mock_api.return_value.request.side_effect = (
-            NvpApiClient.RequestTimeout)
+        self.mock_api.return_value.request.side_effect = api_exc.RequestTimeout
         # chunk size won't matter here
         sp = sync.SyncParameters(999)
         for i in range(10):

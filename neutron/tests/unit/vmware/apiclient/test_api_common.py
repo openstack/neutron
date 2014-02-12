@@ -1,6 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 VMware, Inc.
+#
 # All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -17,20 +16,20 @@
 
 import httplib
 
-import neutron.plugins.nicira.api_client.common as naco
+from neutron.plugins.nicira.api_client import ctrl_conn_to_str
 from neutron.tests import base
 
 
 class ApiCommonTest(base.BaseTestCase):
 
-    def test_conn_str(self):
+    def test_ctrl_conn_to_str(self):
         conn = httplib.HTTPSConnection('localhost', 4242, timeout=0)
         self.assertTrue(
-            naco._conn_str(conn) == 'https://localhost:4242')
+            ctrl_conn_to_str(conn) == 'https://localhost:4242')
 
         conn = httplib.HTTPConnection('localhost', 4242, timeout=0)
         self.assertTrue(
-            naco._conn_str(conn) == 'http://localhost:4242')
+            ctrl_conn_to_str(conn) == 'http://localhost:4242')
 
-        self.assertRaises(TypeError, naco._conn_str,
+        self.assertRaises(TypeError, ctrl_conn_to_str,
                           ('not an httplib.HTTPSConnection'))

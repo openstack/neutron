@@ -15,7 +15,7 @@
 
 import inspect
 
-from neutron.plugins.nicira import NvpApiClient
+from neutron.plugins.nicira.api_client import exception
 
 DEFAULT_VERSION = -1
 
@@ -30,7 +30,7 @@ def versioned(func_table):
             # run validation checks regarding versions. It
             # should return the NVP version
             v = (wrapped_func(cluster, *args, **kwargs) or
-                 cluster.api_client.get_nvp_version())
+                 cluster.api_client.get_version())
             func = get_function_by_version(func_table, func_name, v)
             func_kwargs = kwargs
             arg_spec = inspect.getargspec(func)
@@ -63,4 +63,4 @@ def get_function_by_version(func_table, func_name, ver):
     else:
         msg = _('NSX version is not set. Unable to complete request '
                 'correctly. Check log for NSX communication errors.')
-        raise NvpApiClient.ServiceUnavailable(message=msg)
+        raise exception.ServiceUnavailable(message=msg)

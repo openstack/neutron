@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 
+from neutron.plugins.nicira.api_client import exception
 from neutron.plugins.nicira.nsxlib import l2gateway as l2gwlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
-from neutron.plugins.nicira import NvpApiClient as api_client
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
 
@@ -26,7 +26,7 @@ _uuid = test_api_v2._uuid
 class L2GatewayNegativeTestCase(base.NsxlibNegativeBaseTestCase):
 
     def test_create_l2_gw_service_on_failure(self):
-        self.assertRaises(api_client.NvpApiException,
+        self.assertRaises(exception.NsxApiException,
                           l2gwlib.create_l2_gw_service,
                           self.fake_cluster,
                           'fake-tenant',
@@ -35,19 +35,19 @@ class L2GatewayNegativeTestCase(base.NsxlibNegativeBaseTestCase):
                            'interface_name': 'xxx'}])
 
     def test_delete_l2_gw_service_on_failure(self):
-        self.assertRaises(api_client.NvpApiException,
+        self.assertRaises(exception.NsxApiException,
                           l2gwlib.delete_l2_gw_service,
                           self.fake_cluster,
                           'fake-gateway')
 
     def test_get_l2_gw_service_on_failure(self):
-        self.assertRaises(api_client.NvpApiException,
+        self.assertRaises(exception.NsxApiException,
                           l2gwlib.get_l2_gw_service,
                           self.fake_cluster,
                           'fake-gateway')
 
     def test_update_l2_gw_service_on_failure(self):
-        self.assertRaises(api_client.NvpApiException,
+        self.assertRaises(exception.NsxApiException,
                           l2gwlib.update_l2_gw_service,
                           self.fake_cluster,
                           'fake-gateway',

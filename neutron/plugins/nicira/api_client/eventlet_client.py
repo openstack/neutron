@@ -1,6 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2012 Nicira, Inc.
+# Copyright 2012 VMware, Inc.
+#
 # All Rights Reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,29 +14,26 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 #
-# @author: Aaron Rosen, Nicira Networks, Inc.
-
 
 import eventlet
-import logging
 import time
 
-from neutron.plugins.nicira.api_client import client
-from neutron.plugins.nicira.api_client import request_eventlet
+from neutron.openstack.common import log as logging
+from neutron.plugins.nicira.api_client import base
+from neutron.plugins.nicira.api_client import eventlet_request
 
 eventlet.monkey_patch()
-
-logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
 
-class NvpApiClientEventlet(client.NvpApiClient):
-    '''Eventlet-based implementation of NvpApiClient ABC.'''
+class EventletApiClient(base.ApiClientBase):
+    """Eventlet-based implementation of NSX ApiClient ABC."""
 
     def __init__(self, api_providers, user, password,
-                 concurrent_connections=client.DEFAULT_CONCURRENT_CONNECTIONS,
-                 nvp_gen_timeout=client.GENERATION_ID_TIMEOUT, use_https=True,
-                 connect_timeout=client.DEFAULT_CONNECT_TIMEOUT):
+                 concurrent_connections=base.DEFAULT_CONCURRENT_CONNECTIONS,
+                 gen_timeout=base.GENERATION_ID_TIMEOUT,
+                 use_https=True,
+                 connect_timeout=base.DEFAULT_CONNECT_TIMEOUT):
         '''Constructor
 
         :param api_providers: a list of tuples of the form: (host, port,
@@ -47,13 +43,13 @@ class NvpApiClientEventlet(client.NvpApiClient):
         :param concurrent_connections: total number of concurrent connections.
         :param use_https: whether or not to use https for requests.
         :param connect_timeout: connection timeout in seconds.
-        :param nvp_gen_timeout controls how long the generation id is kept
+        :param gen_timeout controls how long the generation id is kept
             if set to -1 the generation id is never timed out
         '''
         if not api_providers:
             api_providers = []
         self._api_providers = set([tuple(p) for p in api_providers])
-        self._api_provider_data = {}  # tuple(semaphore, nvp_session_cookie)
+        self._api_provider_data = {}  # tuple(semaphore, session_cookie)
         for p in self._api_providers:
             self._set_provider_data(p, (eventlet.semaphore.Semaphore(1), None))
         self._user = user
@@ -61,22 +57,22 @@ class NvpApiClientEventlet(client.NvpApiClient):
         self._concurrent_connections = concurrent_connections
         self._use_https = use_https
         self._connect_timeout = connect_timeout
-        self._nvp_config_gen = None
-        self._nvp_config_gen_ts = None
-        self._nvp_gen_timeout = nvp_gen_timeout
+        self._config_gen = None
+        self._config_gen_ts = None
+        self._gen_timeout = gen_timeout
 
         # Connection pool is a list of queues.
         self._conn_pool = eventlet.queue.PriorityQueue()
         self._next_conn_priority = 1
         for host, port, is_ssl in api_providers:
-            for i in range(concurrent_connections):
+            for _ in range(concurrent_connections):
                 conn = self._create_connection(host, port, is_ssl)
                 self._conn_pool.put((self._next_conn_priority, conn))
                 self._next_conn_priority += 1
 
     def acquire_redirect_connection(self, conn_params, auto_login=True,
                                     headers=None):
-        """Check out or create connection to redirected NVP API server.
+        """Check out or create connection to redirected NSX API server.
 
         Args:
             conn_params: tuple specifying target of redirect, see
@@ -139,13 +135,13 @@ class NvpApiClientEventlet(client.NvpApiClient):
     def _login(self, conn=None, headers=None):
         '''Issue login request and update authentication cookie.'''
         cookie = None
-        g = request_eventlet.NvpLoginRequestEventlet(
+        g = eventlet_request.LoginRequestEventlet(
             self, self._user, self._password, conn, headers)
         g.start()
         ret = g.join()
         if ret:
             if isinstance(ret, Exception):
-                LOG.error(_('NvpApiClient: login error "%s"'), ret)
+                LOG.error(_('Login error "%s"'), ret)
                 raise ret
 
             cookie = ret.getheader("Set-Cookie")
@@ -155,4 +151,4 @@ class NvpApiClientEventlet(client.NvpApiClient):
         return cookie
 
 # Register as subclass.
-client.NvpApiClient.register(NvpApiClientEventlet)
+base.ApiClientBase.register(EventletApiClient)

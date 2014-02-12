@@ -18,9 +18,11 @@
 
 import mock
 
+from neutron.plugins.nicira.api_client import client
+from neutron.plugins.nicira.api_client import exception
+from neutron.plugins.nicira.api_client import version
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira import nsx_cluster as cluster
-from neutron.plugins.nicira import NvpApiClient as api_client
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.apiclient import fake
@@ -38,14 +40,14 @@ class NsxlibTestCase(base.BaseTestCase):
         instance = self.mock_nsxapi.start()
         instance.return_value.login.return_value = "the_cookie"
         fake_version = getattr(self, 'fake_version', "3.0")
-        instance.return_value.get_nvp_version.return_value = (
-            api_client.NVPVersion(fake_version))
+        instance.return_value.get_version.return_value = (
+            version.Version(fake_version))
 
         instance.return_value.request.side_effect = self.fc.fake_request
         self.fake_cluster = cluster.NSXCluster(
             name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
             default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
-        self.fake_cluster.api_client = api_client.NVPApiHelper(
+        self.fake_cluster.api_client = client.NsxApiClient(
             ('1.1.1.1', '999', True),
             self.fake_cluster.nsx_user, self.fake_cluster.nsx_password,
             self.fake_cluster.req_timeout, self.fake_cluster.http_timeout,
@@ -70,17 +72,17 @@ class NsxlibNegativeBaseTestCase(base.BaseTestCase):
         # Choose 3.0, but the version is irrelevant for the aim of
         # these tests as calls are throwing up errors anyway
         fake_version = getattr(self, 'fake_version', "3.0")
-        instance.return_value.get_nvp_version.return_value = (
-            api_client.NVPVersion(fake_version))
+        instance.return_value.get_version.return_value = (
+            version.Version(fake_version))
 
         def _faulty_request(*args, **kwargs):
-            raise api_client.NvpApiException
+            raise exception.NsxApiException
 
         instance.return_value.request.side_effect = _faulty_request
         self.fake_cluster = cluster.NSXCluster(
             name='fake-cluster', nsx_controllers=['1.1.1.1:999'],
             default_tz_uuid=_uuid(), nsx_user='foo', nsx_password='bar')
-        self.fake_cluster.api_client = api_client.NVPApiHelper(
+        self.fake_cluster.api_client = client.NsxApiClient(
             ('1.1.1.1', '999', True),
             self.fake_cluster.nsx_user, self.fake_cluster.nsx_password,
             self.fake_cluster.req_timeout, self.fake_cluster.http_timeout,

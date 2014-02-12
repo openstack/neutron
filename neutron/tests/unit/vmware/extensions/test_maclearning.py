@@ -24,8 +24,8 @@ from neutron.api.v2 import attributes
 from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.extensions import agent
+from neutron.plugins.nicira.api_client.version import Version
 from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira.NvpApiClient import NVPVersion
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit.vmware.apiclient import fake
 from neutron.tests.unit.vmware import get_fake_conf
@@ -74,7 +74,7 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         patch_sync.start()
 
         # Emulate tests against NSX 2.x
-        instance.return_value.get_nvp_version.return_value = NVPVersion("3.0")
+        instance.return_value.get_version.return_value = Version("3.0")
         instance.return_value.request.side_effect = self.fc.fake_request
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
