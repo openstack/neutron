@@ -45,6 +45,7 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
+from neutron.plugins.nec.common import utils as necutils
 from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec.db import router as rdb
 from neutron.plugins.nec import extensions
@@ -461,7 +462,8 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             portinfo = self._validate_portinfo(profile)
             portinfo_changed = 'ADD'
             if cur_portinfo:
-                if (portinfo['datapath_id'] == cur_portinfo.datapath_id and
+                if (necutils.cmp_dpid(portinfo['datapath_id'],
+                                      cur_portinfo.datapath_id) and
                     portinfo['port_no'] == cur_portinfo.port_no):
                     return
                 ndb.del_portinfo(context.session, port['id'])
@@ -707,7 +709,7 @@ class NECPluginV2RPCCallbacks(object):
             id = p['id']
             portinfo = ndb.get_portinfo(session, id)
             if portinfo:
-                if (portinfo.datapath_id == datapath_id and
+                if (necutils.cmp_dpid(portinfo.datapath_id, datapath_id) and
                     portinfo.port_no == p['port_no']):
                     LOG.debug(_("update_ports(): ignore unchanged portinfo in "
                                 "port_added message (port_id=%s)."), id)
@@ -732,7 +734,7 @@ class NECPluginV2RPCCallbacks(object):
                             "due to portinfo for port_id=%s was not "
                             "registered"), id)
                 continue
-            if portinfo.datapath_id != datapath_id:
+            if not necutils.cmp_dpid(portinfo.datapath_id, datapath_id):
                 LOG.debug(_("update_ports(): ignore port_removed message "
                             "received from different host "
                             "(registered_datapath_id=%(registered)s, "

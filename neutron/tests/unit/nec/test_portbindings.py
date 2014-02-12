@@ -213,6 +213,25 @@ class TestNecPortBindingPortInfo(test_nec_plugin.NecPluginV2TestCase):
             self.assertEqual(self.ofc.create_ofc_port.call_count, 1)
             self.assertEqual(self.ofc.delete_ofc_port.call_count, 0)
 
+    def test_port_update_for_existing_port_with_different_padding_dpid(self):
+        ctx = context.get_admin_context()
+        with self.port() as port:
+            port_id = port['port']['id']
+            portinfo = {'id': port_id, 'port_no': 123}
+            self.rpcapi_update_ports(datapath_id='0x000000000000abcd',
+                                     added=[portinfo])
+            self.assertEqual(1, self.ofc.create_ofc_port.call_count)
+            self.assertEqual(0, self.ofc.delete_ofc_port.call_count)
+
+            profile_arg = {portbindings.PROFILE:
+                           self._get_portinfo(datapath_id='0xabcd',
+                                              port_no=123)}
+            self._update('ports', port_id, {'port': profile_arg},
+                         neutron_context=ctx)
+            # Check create_ofc_port/delete_ofc_port are not called.
+            self.assertEqual(1, self.ofc.create_ofc_port.call_count)
+            self.assertEqual(0, self.ofc.delete_ofc_port.call_count)
+
     def test_port_create_portinfo_non_admin(self):
         with self.network(set_context=True, tenant_id='test') as net1:
             with self.subnet(network=net1) as subnet1:
