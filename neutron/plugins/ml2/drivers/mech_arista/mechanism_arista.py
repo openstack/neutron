@@ -48,7 +48,7 @@ class AristaRPCWrapper(object):
         self._check_cli_commands()
 
     def _check_cli_commands():
-       cmd = ['show openstack timestamp %s' % self.region]
+       cmd = ['show openstack config %s timestamp' % self.region]
        try:
           self._run_eos_cmds(cmd)
           self.cli_commands['timestamp'] = cmd
@@ -388,9 +388,9 @@ class AristaRPCWrapper(object):
         postfix commands - to make is understandble by EOS.
 
         :param commands : List of command to be executed on EOS.
-        :param commands_to_logs : This should be set to the command that is
-                                  logged. If it is None, then the commands
-                                  param is logged.
+        :param commands_to_log : This should be set to the command that is
+                                 logged. If it is None, then the commands
+                                 param is logged.
         """
 
         log_cmd = commands
@@ -438,7 +438,8 @@ class AristaRPCWrapper(object):
         ret = self._run_eos_cmds(full_command, full_log_command)
         # Remove return values for 'configure terminal',
         # 'management openstack' and 'exit' commands
-        self._region_updated_time = ret[-1]
+        if self.cli_commands['timestamp']:
+           self._region_updated_time = ret[-1]
 
     def _eapi_host_url(self):
         self._validate_config()
