@@ -297,17 +297,17 @@ class NvpSynchronizer():
             neutron_nvp_mappings[neutron_id] = (
                 neutron_nvp_mappings.get(neutron_id, []) +
                 [self._nvp_cache[ls_uuid]])
-        with ctx.session.begin(subtransactions=True):
-            # Fetch neutron networks from database
-            filters = {'router:external': [False]}
-            if not scan_missing:
-                filters['id'] = neutron_net_ids
-            # TODO(salv-orlando): Filter out external networks
-            for network in self._plugin._get_collection_query(
-                ctx, models_v2.Network, filters=filters):
-                lswitches = neutron_nvp_mappings.get(network['id'], [])
-                lswitches = [lswitch.get('data') for lswitch in lswitches]
-                self.synchronize_network(ctx, network, lswitches)
+        # Fetch neutron networks from database
+        filters = {'router:external': [False]}
+        if not scan_missing:
+            filters['id'] = neutron_net_ids
+        # TODO(salv-orlando): Filter out external networks
+        networks = self._plugin._get_collection_query(
+            ctx, models_v2.Network, filters=filters)
+        for network in networks:
+            lswitches = neutron_nvp_mappings.get(network['id'], [])
+            lswitches = [lswitch.get('data') for lswitch in lswitches]
+            self.synchronize_network(ctx, network, lswitches)
 
     def synchronize_router(self, context, neutron_router_data,
                            lrouter=None):
@@ -348,15 +348,15 @@ class NvpSynchronizer():
             return
         neutron_router_mappings = (
             dict((lr_uuid, self._nvp_cache[lr_uuid]) for lr_uuid in lr_uuids))
-        with ctx.session.begin(subtransactions=True):
-            # Fetch neutron routers from database
-            filters = ({} if scan_missing else
-                       {'id': neutron_router_mappings.keys()})
-            for router in self._plugin._get_collection_query(
-                ctx, l3_db.Router, filters=filters):
-                lrouter = neutron_router_mappings.get(router['id'])
-                self.synchronize_router(
-                    ctx, router, lrouter and lrouter.get('data'))
+        # Fetch neutron routers from database
+        filters = ({} if scan_missing else
+                   {'id': neutron_router_mappings.keys()})
+        routers = self._plugin._get_collection_query(
+            ctx, l3_db.Router, filters=filters)
+        for router in routers:
+            lrouter = neutron_router_mappings.get(router['id'])
+            self.synchronize_router(
+                ctx, router, lrouter and lrouter.get('data'))
 
     def synchronize_port(self, context, neutron_port_data,
                          lswitchport=None, ext_networks=None):
@@ -425,24 +425,24 @@ class NvpSynchronizer():
             if neutron_port_id:
                 neutron_port_mappings[neutron_port_id] = (
                     self._nvp_cache[lp_uuid])
-        with ctx.session.begin(subtransactions=True):
-            # Fetch neutron ports from database
-            # At the first sync we need to fetch all ports
-            filters = ({} if scan_missing else
-                       {'id': neutron_port_mappings.keys()})
-            # TODO(salv-orlando): Work out a solution for avoiding
-            # this query
-            ext_nets = [net['id'] for net in ctx.session.query(
-                models_v2.Network).join(
-                    external_net_db.ExternalNetwork,
-                    (models_v2.Network.id ==
-                     external_net_db.ExternalNetwork.network_id))]
-            for port in self._plugin._get_collection_query(
-                ctx, models_v2.Port, filters=filters):
-                lswitchport = neutron_port_mappings.get(port['id'])
-                self.synchronize_port(
-                    ctx, port, lswitchport and lswitchport.get('data'),
-                    ext_networks=ext_nets)
+        # Fetch neutron ports from database
+        # At the first sync we need to fetch all ports
+        filters = ({} if scan_missing else
+                   {'id': neutron_port_mappings.keys()})
+        # TODO(salv-orlando): Work out a solution for avoiding
+        # this query
+        ext_nets = [net['id'] for net in ctx.session.query(
+            models_v2.Network).join(
+                external_net_db.ExternalNetwork,
+                (models_v2.Network.id ==
+                 external_net_db.ExternalNetwork.network_id))]
+        ports = self._plugin._get_collection_query(
+            ctx, models_v2.Port, filters=filters)
+        for port in ports:
+            lswitchport = neutron_port_mappings.get(port['id'])
+            self.synchronize_port(
+                ctx, port, lswitchport and lswitchport.get('data'),
+                ext_networks=ext_nets)
 
     def _get_chunk_size(self, sp):
         # NOTE(salv-orlando): Try to use __future__ for this routine only?
