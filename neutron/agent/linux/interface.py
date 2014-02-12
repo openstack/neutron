@@ -90,6 +90,10 @@ class LinuxInterfaceDriver(object):
         for ip_cidr in ip_cidrs:
 
             net = netaddr.IPNetwork(ip_cidr)
+            # Convert to compact IPv6 address because the return values of
+            # "ip addr list" are compact.
+            if net.version == 6:
+                ip_cidr = str(net)
             if ip_cidr in previous:
                 del previous[ip_cidr]
                 continue
