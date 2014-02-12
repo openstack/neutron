@@ -17,7 +17,10 @@
 Utility methods for working with WSGI servers redux
 """
 
+import sys
+
 import netaddr
+import six
 import webob.dec
 import webob.exc
 
@@ -103,11 +106,12 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             kwargs = {'body': body, 'content_type': content_type}
             raise mapped_exc(**kwargs)
         except webob.exc.HTTPException as e:
+            type_, value, tb = sys.exc_info()
             LOG.exception(_('%s failed'), action)
             translate(e, language)
-            e.body = serializer.serialize({'NeutronError': e})
-            e.content_type = content_type
-            raise
+            value.body = serializer.serialize({'NeutronError': e})
+            value.content_type = content_type
+            six.reraise(type_, value, tb)
         except NotImplementedError as e:
             e = translate(e, language)
             # NOTE(armando-migliaccio): from a client standpoint
