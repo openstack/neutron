@@ -236,7 +236,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                       securitygroups_db.SecurityGroupDbMixin):
 
     supported_extension_aliases = ['ext_gw_mode', 'external-net', 'router',
-                                   'security-group']
+                                   'agent', 'security-group']
 
     __native_bulk_support = True
 
