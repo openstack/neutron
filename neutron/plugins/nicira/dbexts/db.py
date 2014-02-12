@@ -1,6 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2012 Nicira, Inc.
+# Copyright 2012 VMware, Inc.
+#
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -18,39 +17,39 @@
 from sqlalchemy.orm import exc
 
 import neutron.db.api as db
-from neutron.openstack.common.db import exception as d_exc
+from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log as logging
+from neutron.plugins.nicira.dbexts import models
 from neutron.plugins.nicira.dbexts import networkgw_db
-from neutron.plugins.nicira.dbexts import nicira_models
 
 LOG = logging.getLogger(__name__)
 
 
 def get_network_bindings(session, network_id):
     session = session or db.get_session()
-    return (session.query(nicira_models.NvpNetworkBinding).
+    return (session.query(models.TzNetworkBinding).
             filter_by(network_id=network_id).
             all())
 
 
 def get_network_bindings_by_vlanid(session, vlan_id):
     session = session or db.get_session()
-    return (session.query(nicira_models.NvpNetworkBinding).
+    return (session.query(models.TzNetworkBinding).
             filter_by(vlan_id=vlan_id).
             all())
 
 
 def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
     with session.begin(subtransactions=True):
-        binding = nicira_models.NvpNetworkBinding(network_id, binding_type,
-                                                  phy_uuid, vlan_id)
+        binding = models.TzNetworkBinding(network_id, binding_type,
+                                          phy_uuid, vlan_id)
         session.add(binding)
     return binding
 
 
 def add_neutron_nsx_network_mapping(session, neutron_id, nsx_switch_id):
     with session.begin(subtransactions=True):
-        mapping = nicira_models.NeutronNsxNetworkMapping(
+        mapping = models.NeutronNsxNetworkMapping(
             neutron_id=neutron_id, nsx_id=nsx_switch_id)
         session.add(mapping)
         return mapping
@@ -60,11 +59,11 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
                                  nsx_switch_id, nsx_port_id):
     session.begin(subtransactions=True)
     try:
-        mapping = nicira_models.NeutronNsxPortMapping(
+        mapping = models.NeutronNsxPortMapping(
             neutron_id, nsx_switch_id, nsx_port_id)
         session.add(mapping)
         session.commit()
-    except d_exc.DBDuplicateEntry:
+    except db_exc.DBDuplicateEntry:
         session.rollback()
         # do not complain if the same exact mapping is being added, otherwise
         # re-raise because even though it is possible for the same neutron
@@ -75,7 +74,7 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
             LOG.debug(_("Port mapping for %s already available"), neutron_id)
         else:
             raise
-    except d_exc.DBError:
+    except db_exc.DBError:
         # rollback for any other db error
         session.rollback()
         raise
@@ -84,7 +83,7 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
 
 def add_neutron_nsx_router_mapping(session, neutron_id, nsx_router_id):
     with session.begin(subtransactions=True):
-        mapping = nicira_models.NeutronNsxRouterMapping(
+        mapping = models.NeutronNsxRouterMapping(
             neutron_id=neutron_id, nsx_id=nsx_router_id)
         session.add(mapping)
         return mapping
@@ -94,13 +93,13 @@ def get_nsx_switch_ids(session, neutron_id):
     # This function returns a list of NSX switch identifiers because of
     # the possibility of chained logical switches
     return [mapping['nsx_id'] for mapping in
-            session.query(nicira_models.NeutronNsxNetworkMapping).filter_by(
+            session.query(models.NeutronNsxNetworkMapping).filter_by(
                 neutron_id=neutron_id)]
 
 
 def get_nsx_switch_and_port_id(session, neutron_id):
     try:
-        mapping = (session.query(nicira_models.NeutronNsxPortMapping).
+        mapping = (session.query(models.NeutronNsxPortMapping).
                    filter_by(neutron_id=neutron_id).
                    one())
         return mapping['nsx_switch_id'], mapping['nsx_port_id']
@@ -112,7 +111,7 @@ def get_nsx_switch_and_port_id(session, neutron_id):
 
 def get_nsx_router_id(session, neutron_id):
     try:
-        mapping = (session.query(nicira_models.NeutronNsxRouterMapping).
+        mapping = (session.query(models.NeutronNsxRouterMapping).
                    filter_by(neutron_id=neutron_id).one())
         return mapping['nsx_id']
     except exc.NoResultFound:
@@ -126,12 +125,12 @@ def _delete_by_neutron_id(session, model, neutron_id):
 
 def delete_neutron_nsx_port_mapping(session, neutron_id):
     return _delete_by_neutron_id(
-        session, nicira_models.NeutronNsxPortMapping, neutron_id)
+        session, models.NeutronNsxPortMapping, neutron_id)
 
 
 def delete_neutron_nsx_router_mapping(session, neutron_id):
     return _delete_by_neutron_id(
-        session, nicira_models.NeutronNsxRouterMapping, neutron_id)
+        session, models.NeutronNsxRouterMapping, neutron_id)
 
 
 def unset_default_network_gateways(session):
@@ -149,7 +148,7 @@ def set_default_network_gateway(session, gw_id):
 
 def set_multiprovider_network(session, network_id):
     with session.begin(subtransactions=True):
-        multiprovider_network = nicira_models.MultiProviderNetworks(
+        multiprovider_network = models.MultiProviderNetworks(
             network_id)
         session.add(multiprovider_network)
         return multiprovider_network
@@ -158,5 +157,5 @@ def set_multiprovider_network(session, network_id):
 def is_multiprovider_network(session, network_id):
     with session.begin(subtransactions=True):
         return bool(
-            session.query(nicira_models.MultiProviderNetworks).filter_by(
+            session.query(models.MultiProviderNetworks).filter_by(
                 network_id=network_id).first())

@@ -40,32 +40,32 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # This will allow for avoiding setting up the plugin
         # for creating db entries
         mock.patch(nsx_method('get_nsx_switch_and_port_id',
-                              module_name='dbexts.nicira_db'),
+                              module_name='dbexts.db'),
                    return_value=ret_value).start()
         mock.patch(nsx_method('add_neutron_nsx_port_mapping',
-                              module_name='dbexts.nicira_db')).start()
+                              module_name='dbexts.db')).start()
         mock.patch(nsx_method('delete_neutron_nsx_port_mapping',
-                              module_name='dbexts.nicira_db')).start()
+                              module_name='dbexts.db')).start()
 
     def _mock_network_mapping_db_calls(self, ret_value):
         # Mock relevant db calls
         # This will allow for avoiding setting up the plugin
         # for creating db entries
         mock.patch(nsx_method('get_nsx_switch_ids',
-                              module_name='dbexts.nicira_db'),
+                              module_name='dbexts.db'),
                    return_value=ret_value).start()
         mock.patch(nsx_method('add_neutron_nsx_network_mapping',
-                              module_name='dbexts.nicira_db')).start()
+                              module_name='dbexts.db')).start()
 
     def _mock_router_mapping_db_calls(self, ret_value):
         # Mock relevant db calls
         # This will allow for avoiding setting up the plugin
         # for creating db entries
         mock.patch(nsx_method('get_nsx_router_id',
-                              module_name='dbexts.nicira_db'),
+                              module_name='dbexts.db'),
                    return_value=ret_value).start()
         mock.patch(nsx_method('add_neutron_nsx_router_mapping',
-                              module_name='dbexts.nicira_db')).start()
+                              module_name='dbexts.db')).start()
 
     def _verify_get_nsx_switch_and_port_id(self, exp_ls_uuid, exp_lp_uuid):
         # The nvplib and db calls are  mocked, therefore the cluster

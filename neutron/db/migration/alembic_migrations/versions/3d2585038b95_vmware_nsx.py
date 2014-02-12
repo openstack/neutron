@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2013 OpenStack Foundation
+# Copyright 2014 OpenStack Foundation
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -15,17 +13,17 @@
 #    under the License.
 #
 
-"""nvp_netbinding
+"""VMware NSX rebranding
 
-Revision ID: 1d76643bcec4
-Revises: 3cb5d900c5de
-Create Date: 2013-01-15 07:36:10.024346
+Revision ID: 3d2585038b95
+Revises: 157a5d299379
+Create Date: 2014-02-11 18:18:34.319031
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1d76643bcec4'
-down_revision = '3cb5d900c5de'
+revision = '3d2585038b95'
+down_revision = '157a5d299379'
 
 # Change to ['*'] if this migration applies to all plugins
 
@@ -37,7 +35,6 @@ migration_for_plugins = [
 ]
 
 from alembic import op
-import sqlalchemy as sa
 
 from neutron.db import migration
 
@@ -46,22 +43,23 @@ def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.create_table(
-        'nvp_network_bindings',
-        sa.Column('network_id', sa.String(length=36), nullable=False),
-        sa.Column('binding_type',
-                  sa.Enum('flat', 'vlan', 'stt', 'gre',
-                          name='nvp_network_bindings_binding_type'),
-                  nullable=False),
-        sa.Column('tz_uuid', sa.String(length=36), nullable=True),
-        sa.Column('vlan_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('network_id'))
+    op.rename_table('nvp_network_bindings', 'tz_network_bindings')
+    op.rename_table('nvp_multi_provider_networks', 'multi_provider_networks')
+
+    engine = op.get_bind().engine
+    if engine.name == 'postgresql':
+        op.execute("ALTER TYPE nvp_network_bindings_binding_type "
+                   "RENAME TO tz_network_bindings_binding_type;")
 
 
 def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.drop_table('nvp_network_bindings')
+    engine = op.get_bind().engine
+    if engine.name == 'postgresql':
+        op.execute("ALTER TYPE tz_network_bindings_binding_type "
+                   "RENAME TO nvp_network_bindings_binding_type;")
+
+    op.rename_table('multi_provider_networks', 'nvp_multi_provider_networks')
+    op.rename_table('tz_network_bindings', 'nvp_network_bindings')

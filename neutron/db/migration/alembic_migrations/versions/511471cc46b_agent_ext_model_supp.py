@@ -30,12 +30,15 @@ down_revision = '363468ac592c'
 # Change to ['*'] if this migration applies to all plugins
 
 migration_for_plugins = [
-    'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
-    'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
-    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
-    'neutron.plugins.nec.nec_plugin.NECPluginV2',
     'neutron.plugins.brocade.NeutronPlugin.BrocadePluginV2',
-    'neutron.services.loadbalancer.plugin.LoadBalancerPlugin',
+    'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
+    'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
+    'neutron.plugins.nec.nec_plugin.NECPluginV2',
+    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
+    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
+    'neutron.plugins.vmware.plugin.NsxPlugin',
+    'neutron.plugins.vmware.plugin.NsxServicePlugin',
+    'neutron.services.loadbalancer.plugin.LoadBalancerPlugin'
 ]
 
 from alembic import op

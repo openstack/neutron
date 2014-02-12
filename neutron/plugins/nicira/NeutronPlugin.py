@@ -66,10 +66,10 @@ from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import nsx_utils
 from neutron.plugins.nicira.common import securitygroups as nvp_sec
 from neutron.plugins.nicira.common import sync
+from neutron.plugins.nicira.dbexts import db as nsx_db
 from neutron.plugins.nicira.dbexts import distributedrouter as dist_rtr
 from neutron.plugins.nicira.dbexts import maclearning as mac_db
 from neutron.plugins.nicira.dbexts import networkgw_db
-from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira.dbexts import qos_db
 from neutron.plugins.nicira import dhcpmeta_modes
 from neutron.plugins.nicira.extensions import maclearning as mac_ext
@@ -390,7 +390,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def _nvp_find_lswitch_for_port(self, context, port_data):
         network = self._get_network(context, port_data['network_id'])
-        network_bindings = nicira_db.get_network_bindings(
+        network_bindings = nsx_db.get_network_bindings(
             context.session, port_data['network_id'])
         max_ports = self.nvp_opts.max_lp_per_overlay_ls
         allow_extra_lswitches = False
@@ -434,8 +434,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 # Remove orphaned port from NSX
                 switchlib.delete_port(self.cluster, ls_uuid, lp_uuid)
             # rollback the neutron-nvp port mapping
-            nicira_db.delete_neutron_nsx_port_mapping(context.session,
-                                                      port_id)
+            nsx_db.delete_neutron_nsx_port_mapping(context.session,
+                                                   port_id)
             msg = (_("An exception occurred while creating the "
                      "quantum port %s on the NVP plaform") % port_id)
             LOG.exception(msg)
@@ -462,7 +462,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                  selected_lswitch['uuid'],
                                                  port_data,
                                                  True)
-            nicira_db.add_neutron_nsx_port_mapping(
+            nsx_db.add_neutron_nsx_port_mapping(
                 context.session, port_data['id'],
                 selected_lswitch['uuid'], lport['uuid'])
             if port_data['device_owner'] not in self.port_special_owners:
@@ -577,7 +577,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 self.cluster, context, nsx_router_id, port_data,
                 "PatchAttachment", ls_port['uuid'],
                 subnet_ids=[subnet_id])
-            nicira_db.add_neutron_nsx_port_mapping(
+            nsx_db.add_neutron_nsx_port_mapping(
                 context.session, port_data['id'],
                 selected_lswitch['uuid'], ls_port['uuid'])
             LOG.debug(_("_nvp_create_router_port completed for port "
@@ -712,7 +712,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 selected_lswitch['uuid'],
                 port_data,
                 True)
-            nicira_db.add_neutron_nsx_port_mapping(
+            nsx_db.add_neutron_nsx_port_mapping(
                 context.session, port_data['id'],
                 selected_lswitch['uuid'], lport['uuid'])
             l2gwlib.plug_l2_gw_service(
@@ -786,7 +786,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                 'max_id': constants.MAX_VLAN_TAG})
                 else:
                     # Verify segment is not already allocated
-                    bindings = nicira_db.get_network_bindings_by_vlanid(
+                    bindings = nsx_db.get_network_bindings_by_vlanid(
                         context.session, segmentation_id)
                     if bindings:
                         raise q_exc.VlanIdInUse(
@@ -813,11 +813,11 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def _extend_network_dict_provider(self, context, network,
                                       multiprovider=None, bindings=None):
         if not bindings:
-            bindings = nicira_db.get_network_bindings(context.session,
-                                                      network['id'])
+            bindings = nsx_db.get_network_bindings(context.session,
+                                                   network['id'])
         if not multiprovider:
-            multiprovider = nicira_db.is_multiprovider_network(context.session,
-                                                               network['id'])
+            multiprovider = nsx_db.is_multiprovider_network(context.session,
+                                                            network['id'])
         # With NVP plugin 'normal' overlay networks will have no binding
         # TODO(salvatore-orlando) make sure users can specify a distinct
         # phy_uuid as 'provider network' for STT net type
@@ -876,7 +876,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 transport_zone_config)
             # add a mapping between the neutron network and the newly
             # created logical switch
-            nicira_db.add_neutron_nsx_network_mapping(
+            nsx_db.add_neutron_nsx_network_mapping(
                 context.session, network.id, selected_lswitch['uuid'])
             return selected_lswitch
         else:
@@ -1006,21 +1006,21 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Add mapping between neutron network and NSX switch
             if (not attr.is_attr_set(external) or
                 attr.is_attr_set(external) and not external):
-                nicira_db.add_neutron_nsx_network_mapping(
+                nsx_db.add_neutron_nsx_network_mapping(
                     context.session, new_net['id'],
                     lswitch['uuid'])
             if (net_data.get(mpnet.SEGMENTS) and
                 isinstance(provider_type, bool)):
                 net_bindings = []
                 for tz in net_data[mpnet.SEGMENTS]:
-                    net_bindings.append(nicira_db.add_network_binding(
+                    net_bindings.append(nsx_db.add_network_binding(
                         context.session, new_net['id'],
                         tz.get(pnet.NETWORK_TYPE),
                         tz.get(pnet.PHYSICAL_NETWORK),
                         tz.get(pnet.SEGMENTATION_ID, 0)))
                 if provider_type:
-                    nicira_db.set_multiprovider_network(context.session,
-                                                        new_net['id'])
+                    nsx_db.set_multiprovider_network(context.session,
+                                                     new_net['id'])
                 self._extend_network_dict_provider(context, new_net,
                                                    provider_type,
                                                    net_bindings)
@@ -1490,7 +1490,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 # Ensure neutron router is moved into the transaction's buffer
                 context.session.flush()
                 # Add mapping between neutron and nsx identifiers
-                nicira_db.add_neutron_nsx_router_mapping(
+                nsx_db.add_neutron_nsx_router_mapping(
                     context.session, router_db['id'], lrouter['uuid'])
 
         if has_gw_info:
@@ -1640,7 +1640,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # a non-existent NSX router is not left in the DB in case of
         # failure while removing the router from the neutron DB
         try:
-            nicira_db.delete_neutron_nsx_router_mapping(
+            nsx_db.delete_neutron_nsx_router_mapping(
                 context.session, router_id)
         except db_exc.DBError as d_exc:
             # Do not make this error fatal

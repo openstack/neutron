@@ -1,6 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2012 Nicira, Inc.
+# Copyright 2013 VMware, Inc.
+#
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -23,13 +22,13 @@ from neutron.db import l3_db
 from neutron.db.models_v2 import model_base
 
 
-class NvpNetworkBinding(model_base.BASEV2):
+class TzNetworkBinding(model_base.BASEV2):
     """Represents a binding of a virtual network with a transport zone.
 
     This model class associates a Neutron network with a transport zone;
     optionally a vlan ID might be used if the binding type is 'bridge'
     """
-    __tablename__ = 'nvp_network_bindings'
+    __tablename__ = 'tz_network_bindings'
 
     # TODO(arosen) - it might be worth while refactoring the how this data
     # is stored later so every column does not need to be a primary key.
@@ -38,7 +37,7 @@ class NvpNetworkBinding(model_base.BASEV2):
                         primary_key=True)
     # 'flat', 'vlan', stt' or 'gre'
     binding_type = Column(Enum('flat', 'vlan', 'stt', 'gre', 'l3_ext',
-                               name='nvp_network_bindings_binding_type'),
+                               name='tz_network_bindings_binding_type'),
                           nullable=False, primary_key=True)
     phy_uuid = Column(String(36), primary_key=True, nullable=True)
     vlan_id = Column(Integer, primary_key=True, nullable=True,
@@ -96,9 +95,9 @@ class NeutronNsxRouterMapping(model_base.BASEV2):
 
 
 class MultiProviderNetworks(model_base.BASEV2):
-    """Networks that were provision through multiprovider extension."""
+    """Networks provisioned through multiprovider extension."""
 
-    __tablename__ = 'nvp_multi_provider_networks'
+    __tablename__ = 'multi_provider_networks'
     network_id = Column(String(36),
                         ForeignKey('networks.id', ondelete="CASCADE"),
                         primary_key=True)
@@ -108,7 +107,7 @@ class MultiProviderNetworks(model_base.BASEV2):
 
 
 class NSXRouterExtAttributes(model_base.BASEV2):
-    """Router attributes managed by Nicira plugin extensions."""
+    """Router attributes managed by NSX plugin extensions."""
     router_id = Column(String(36),
                        ForeignKey('routers.id', ondelete="CASCADE"),
                        primary_key=True)

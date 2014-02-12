@@ -41,7 +41,7 @@ from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira.dbexts import nicira_db as nsx_db
+from neutron.plugins.nicira.dbexts import db as nsx_db
 from neutron.plugins.nicira.extensions import distributedrouter as dist_router
 from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira import nsxlib

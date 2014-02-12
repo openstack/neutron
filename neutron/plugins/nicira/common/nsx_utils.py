@@ -16,7 +16,7 @@
 #    under the License.
 
 from neutron.openstack.common import log
-from neutron.plugins.nicira.dbexts import nicira_db
+from neutron.plugins.nicira.dbexts import db as nsx_db
 from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
@@ -50,7 +50,7 @@ def get_nsx_switch_ids(session, cluster, neutron_network_id):
     First lookup for mappings in Neutron database. If no mapping is
     found, query the NSX backend and add the mappings.
     """
-    nsx_switch_ids = nicira_db.get_nsx_switch_ids(
+    nsx_switch_ids = nsx_db.get_nsx_switch_ids(
         session, neutron_network_id)
     if not nsx_switch_ids:
         # Find logical switches from backend.
@@ -67,7 +67,7 @@ def get_nsx_switch_ids(session, cluster, neutron_network_id):
                 nsx_switch_id = nsx_switch['uuid']
                 nsx_switch_ids.append(nsx_switch_id)
                 # Create DB mapping
-                nicira_db.add_neutron_nsx_network_mapping(
+                nsx_db.add_neutron_nsx_network_mapping(
                     session,
                     neutron_network_id,
                     nsx_switch_id)
@@ -91,7 +91,7 @@ def get_nsx_switch_and_port_id(session, cluster, neutron_port_id):
     the backend logical switch identifier is equal to the neutron
     network identifier.
     """
-    nsx_switch_id, nsx_port_id = nicira_db.get_nsx_switch_and_port_id(
+    nsx_switch_id, nsx_port_id = nsx_db.get_nsx_switch_and_port_id(
         session, neutron_port_id)
     if not nsx_switch_id:
         # Find logical switch for port from backend
@@ -114,12 +114,12 @@ def get_nsx_switch_and_port_id(session, cluster, neutron_port_id):
                          ['LogicalSwitchConfig']['uuid'])
         if nsx_port_id:
             # Mapping already exists. Delete before recreating
-            nicira_db.delete_neutron_nsx_port_mapping(
+            nsx_db.delete_neutron_nsx_port_mapping(
                 session, neutron_port_id)
         else:
             nsx_port_id = nsx_port['uuid']
         # (re)Create DB mapping
-        nicira_db.add_neutron_nsx_port_mapping(
+        nsx_db.add_neutron_nsx_port_mapping(
             session, neutron_port_id,
             nsx_switch_id, nsx_port_id)
     return nsx_switch_id, nsx_port_id
@@ -150,7 +150,7 @@ def get_nsx_router_id(session, cluster, neutron_router_id):
     First, look up the Neutron database. If not found, execute
     a query on NSX platform as the mapping might be missing.
     """
-    nsx_router_id = nicira_db.get_nsx_router_id(
+    nsx_router_id = nsx_db.get_nsx_router_id(
         session, neutron_router_id)
     if not nsx_router_id:
         # Find logical router from backend.
@@ -171,7 +171,7 @@ def get_nsx_router_id(session, cluster, neutron_router_id):
         nsx_router_id = nsx_router['uuid']
         with session.begin(subtransactions=True):
             # Create DB mapping
-            nicira_db.add_neutron_nsx_router_mapping(
+            nsx_db.add_neutron_nsx_router_mapping(
                 session,
                 neutron_router_id,
                 nsx_router_id)
