@@ -150,13 +150,14 @@ class SecurityGroupAgentRpcMixin(object):
         for device in self.firewall.ports.values():
             if sec_grp_set & set(device.get(attribute, [])):
                 devices.append(device['device'])
-        if self.defer_refresh_firewall:
-            LOG.debug(_("Adding %s devices to the list of devices "
-                        "for which firewall needs to be refreshed"),
-                      devices)
-            self.devices_to_refilter |= set(devices)
-        elif devices:
-            self.refresh_firewall(devices)
+        if devices:
+            if self.defer_refresh_firewall:
+                LOG.debug(_("Adding %s devices to the list of devices "
+                            "for which firewall needs to be refreshed"),
+                          devices)
+                self.devices_to_refilter |= set(devices)
+            else:
+                self.refresh_firewall(devices)
 
     def security_groups_provider_updated(self):
         LOG.info(_("Provider rule updated"))
