@@ -27,6 +27,7 @@ from neutron.api.v2 import attributes
 from neutron.common import exceptions
 import neutron.common.utils as utils
 from neutron import manager
+from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import policy
@@ -274,8 +275,8 @@ class OwnerCheck(policy.Check):
                          fields=[parent_field])
                 target[self.target_field] = data[parent_field]
             except Exception:
-                LOG.exception(_('Policy check error while calling %s!'), f)
-                raise
+                with excutils.save_and_reraise_exception():
+                    LOG.exception(_('Policy check error while calling %s!'), f)
         match = self.match % target
         if self.kind in creds:
             return match == unicode(creds[self.kind])

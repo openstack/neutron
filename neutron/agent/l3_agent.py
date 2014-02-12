@@ -35,6 +35,7 @@ from neutron.common import topics
 from neutron.common import utils as common_utils
 from neutron import context
 from neutron import manager
+from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
@@ -302,14 +303,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         try:
             return self.plugin_rpc.get_external_network_id(self.context)
         except rpc_common.RemoteError as e:
-            if e.exc_type == 'TooManyExternalNetworks':
-                msg = _(
-                    "The 'gateway_external_network_id' option must be "
-                    "configured for this agent as Neutron has more than "
-                    "one external network.")
-                raise Exception(msg)
-            else:
-                raise
+            with excutils.save_and_reraise_exception():
+                if e.exc_type == 'TooManyExternalNetworks':
+                    msg = _(
+                        "The 'gateway_external_network_id' option must be "
+                        "configured for this agent as Neutron has more than "
+                        "one external network.")
+                    raise Exception(msg)
 
     def _router_added(self, router_id, router):
         ri = RouterInfo(router_id, self.root_helper,

@@ -40,6 +40,7 @@ from neutron.common import constants
 from neutron.common import exceptions as exception
 from neutron import context
 from neutron.openstack.common.db.sqlalchemy import session
+from neutron.openstack.common import excutils
 from neutron.openstack.common import gettextutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
@@ -176,9 +177,10 @@ class Server(object):
                     sock = wrap_ssl(sock)
 
             except socket.error as err:
-                if err.errno != errno.EADDRINUSE:
-                    raise
-                eventlet.sleep(0.1)
+                with excutils.save_and_reraise_exception() as ctxt:
+                    if err.errno == errno.EADDRINUSE:
+                        ctxt.reraise = False
+                        eventlet.sleep(0.1)
         if not sock:
             raise RuntimeError(_("Could not bind to %(host)s:%(port)s "
                                "after trying for %(time)d seconds") %
@@ -698,19 +700,18 @@ class XMLDeserializer(TextDeserializer):
                 return result
             return dict({root_tag: result}, **links)
         except Exception as e:
-            parseError = False
-            # Python2.7
-            if (hasattr(etree, 'ParseError') and
-                isinstance(e, getattr(etree, 'ParseError'))):
-                parseError = True
-            # Python2.6
-            elif isinstance(e, expat.ExpatError):
-                parseError = True
-            if parseError:
-                msg = _("Cannot understand XML")
-                raise exception.MalformedRequestBody(reason=msg)
-            else:
-                raise
+            with excutils.save_and_reraise_exception():
+                parseError = False
+                # Python2.7
+                if (hasattr(etree, 'ParseError') and
+                    isinstance(e, getattr(etree, 'ParseError'))):
+                    parseError = True
+                # Python2.6
+                elif isinstance(e, expat.ExpatError):
+                    parseError = True
+                if parseError:
+                    msg = _("Cannot understand XML")
+                    raise exception.MalformedRequestBody(reason=msg)
 
     def _from_xml_node(self, node, listnames):
         """Convert a minidom node to a simple Python type.
@@ -832,8 +833,9 @@ class RequestDeserializer(object):
         try:
             deserializer = self.get_body_deserializer(content_type)
         except exception.InvalidContentType:
-            LOG.debug(_("Unable to deserialize body as provided Content-Type"))
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.debug(_("Unable to deserialize body as provided "
+                            "Content-Type"))
 
         return deserializer.deserialize(request.body, action)
 

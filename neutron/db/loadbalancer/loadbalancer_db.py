@@ -30,6 +30,7 @@ from neutron.extensions import loadbalancer
 from neutron.extensions.loadbalancer import LoadBalancerPluginBase
 from neutron import manager
 from neutron.openstack.common.db import exception
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
@@ -204,16 +205,15 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         try:
             r = self._get_by_id(context, model, id)
         except exc.NoResultFound:
-            if issubclass(model, Vip):
-                raise loadbalancer.VipNotFound(vip_id=id)
-            elif issubclass(model, Pool):
-                raise loadbalancer.PoolNotFound(pool_id=id)
-            elif issubclass(model, Member):
-                raise loadbalancer.MemberNotFound(member_id=id)
-            elif issubclass(model, HealthMonitor):
-                raise loadbalancer.HealthMonitorNotFound(monitor_id=id)
-            else:
-                raise
+            with excutils.save_and_reraise_exception():
+                if issubclass(model, Vip):
+                    raise loadbalancer.VipNotFound(vip_id=id)
+                elif issubclass(model, Pool):
+                    raise loadbalancer.PoolNotFound(pool_id=id)
+                elif issubclass(model, Member):
+                    raise loadbalancer.MemberNotFound(member_id=id)
+                elif issubclass(model, HealthMonitor):
+                    raise loadbalancer.HealthMonitorNotFound(monitor_id=id)
         return r
 
     def assert_modification_allowed(self, obj):

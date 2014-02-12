@@ -22,6 +22,7 @@ from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common.db import exception as db_exc
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 
 
@@ -58,20 +59,22 @@ class DhcpRpcCallbackMixin(object):
                 raise n_exc.Invalid(message=msg)
         except (db_exc.DBError, n_exc.NetworkNotFound,
                 n_exc.SubnetNotFound, n_exc.IpAddressGenerationFailure) as e:
-            if isinstance(e, n_exc.IpAddressGenerationFailure):
-                # Check if the subnet still exists and if it does not, this is
-                # the reason why the ip address generation failed. In any other
-                # unlikely event re-raise
-                try:
-                    subnet_id = port['port']['fixed_ips'][0]['subnet_id']
-                    plugin.get_subnet(context, subnet_id)
-                except n_exc.SubnetNotFound:
-                    pass
-                else:
-                    raise
-            network_id = port['port']['network_id']
-            LOG.warn(_("Port for network %(net_id)s could not be created: "
-                       "%(reason)s") % {"net_id": network_id, 'reason': e})
+            with excutils.save_and_reraise_exception() as ctxt:
+                ctxt.reraise = False
+                if isinstance(e, n_exc.IpAddressGenerationFailure):
+                    # Check if the subnet still exists and if it does not,
+                    # this is the reason why the ip address generation failed.
+                    # In any other unlikely event re-raise
+                    try:
+                        subnet_id = port['port']['fixed_ips'][0]['subnet_id']
+                        plugin.get_subnet(context, subnet_id)
+                    except n_exc.SubnetNotFound:
+                        pass
+                    else:
+                        ctxt.reraise = True
+                network_id = port['port']['network_id']
+                LOG.warn(_("Port for network %(net_id)s could not be created: "
+                           "%(reason)s") % {"net_id": network_id, 'reason': e})
 
     def get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active network ids."""

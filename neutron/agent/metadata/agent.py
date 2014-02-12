@@ -35,6 +35,7 @@ from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import service
@@ -255,8 +256,9 @@ class UnixDomainMetadataProxy(object):
             try:
                 os.unlink(cfg.CONF.metadata_proxy_socket)
             except OSError:
-                if os.path.exists(cfg.CONF.metadata_proxy_socket):
-                    raise
+                with excutils.save_and_reraise_exception() as ctxt:
+                    if not os.path.exists(cfg.CONF.metadata_proxy_socket):
+                        ctxt.reraise = False
         else:
             os.makedirs(dirname, 0o755)
 

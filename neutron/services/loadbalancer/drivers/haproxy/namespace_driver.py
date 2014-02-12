@@ -27,6 +27,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.common import utils as n_utils
+from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -65,10 +66,10 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         try:
             vif_driver = importutils.import_object(conf.interface_driver, conf)
         except ImportError:
-            msg = (_('Error importing interface driver: %s')
-                   % conf.haproxy.interface_driver)
-            LOG.error(msg)
-            raise
+            with excutils.save_and_reraise_exception():
+                msg = (_('Error importing interface driver: %s')
+                       % conf.haproxy.interface_driver)
+                LOG.error(msg)
 
         self.vif_driver = vif_driver
         self.plugin_rpc = plugin_rpc

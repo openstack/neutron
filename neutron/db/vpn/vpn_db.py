@@ -32,6 +32,7 @@ from neutron.db import models_v2
 from neutron.extensions import vpnaas
 from neutron.extensions.vpnaas import VPNPluginBase
 from neutron import manager
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
@@ -178,18 +179,17 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
         try:
             r = self._get_by_id(context, model, v_id)
         except exc.NoResultFound:
-            if issubclass(model, IPsecSiteConnection):
-                raise vpnaas.IPsecSiteConnectionNotFound(
-                    ipsec_site_conn_id=v_id
-                )
-            elif issubclass(model, IKEPolicy):
-                raise vpnaas.IKEPolicyNotFound(ikepolicy_id=v_id)
-            elif issubclass(model, IPsecPolicy):
-                raise vpnaas.IPsecPolicyNotFound(ipsecpolicy_id=v_id)
-            elif issubclass(model, VPNService):
-                raise vpnaas.VPNServiceNotFound(vpnservice_id=v_id)
-            else:
-                raise
+            with excutils.save_and_reraise_exception():
+                if issubclass(model, IPsecSiteConnection):
+                    raise vpnaas.IPsecSiteConnectionNotFound(
+                        ipsec_site_conn_id=v_id
+                    )
+                elif issubclass(model, IKEPolicy):
+                    raise vpnaas.IKEPolicyNotFound(ikepolicy_id=v_id)
+                elif issubclass(model, IPsecPolicy):
+                    raise vpnaas.IPsecPolicyNotFound(ipsecpolicy_id=v_id)
+                elif issubclass(model, VPNService):
+                    raise vpnaas.VPNServiceNotFound(vpnservice_id=v_id)
         return r
 
     def assert_update_allowed(self, obj):
