@@ -20,12 +20,12 @@ import hashlib
 import hmac
 import os
 import socket
-import urlparse
 
 import eventlet
 import httplib2
 from neutronclient.v2_0 import client
 from oslo.config import cfg
+import six.moves.urllib.parse as urlparse
 import webob
 
 from neutron.agent.common import config as agent_conf

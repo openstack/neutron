@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import urlparse
-
 from oslo.config import cfg
 import routes as routes_mapper
+import six.moves.urllib.parse as urlparse
 import webob
 import webob.dec
 import webob.exc

@@ -24,9 +24,9 @@ import copy
 import httplib
 import logging
 import time
-import urlparse
 
 import six
+import six.moves.urllib.parse as urlparse
 
 from neutron.openstack.common import excutils
 from neutron.plugins.nicira.api_client.common import (
