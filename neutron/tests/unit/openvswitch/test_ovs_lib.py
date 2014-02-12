@@ -457,10 +457,10 @@ class OVS_Lib_Test(base.BaseTestCase):
             get_xapi_iface_id.assert_called_once_with('tap99id')
 
     def test_get_vif_ports_nonxen(self):
-        self._test_get_vif_ports(False)
+        self._test_get_vif_ports(is_xen=False)
 
     def test_get_vif_ports_xen(self):
-        self._test_get_vif_ports(True)
+        self._test_get_vif_ports(is_xen=True)
 
     def test_get_vif_port_set_nonxen(self):
         self._test_get_vif_port_set(False)
@@ -468,19 +468,24 @@ class OVS_Lib_Test(base.BaseTestCase):
     def test_get_vif_port_set_xen(self):
         self._test_get_vif_port_set(True)
 
+    def test_get_vif_ports_list_ports_error(self):
+        expected_calls_and_values = [
+            (mock.call(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
+                       root_helper=self.root_helper),
+             RuntimeError()),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+        self.assertRaises(RuntimeError, self.br.get_vif_ports)
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
+
     def test_get_vif_port_set_list_ports_error(self):
         expected_calls_and_values = [
             (mock.call(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
                        root_helper=self.root_helper),
              RuntimeError()),
-            (mock.call(["ovs-vsctl", self.TO, "--format=json",
-                        "--", "--columns=name,external_ids",
-                        "list", "Interface"],
-                       root_helper=self.root_helper),
-             self._encode_ovs_json(['name', 'external_ids'], []))
         ]
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
-        self.assertEqual(set(), self.br.get_vif_port_set())
+        self.assertRaises(RuntimeError, self.br.get_vif_port_set)
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_get_vif_port_set_list_interface_error(self):
@@ -495,7 +500,7 @@ class OVS_Lib_Test(base.BaseTestCase):
              RuntimeError()),
         ]
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
-        self.assertEqual(set(), self.br.get_vif_port_set())
+        self.assertRaises(RuntimeError, self.br.get_vif_port_set)
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_clear_db_attribute(self):
@@ -571,6 +576,16 @@ class OVS_Lib_Test(base.BaseTestCase):
             mock.call('tap1234'),
             mock.call('tap5678')
         ])
+
+    def test_delete_neutron_ports_list_error(self):
+        expected_calls_and_values = [
+            (mock.call(["ovs-vsctl", self.TO, "list-ports", self.BR_NAME],
+                       root_helper=self.root_helper),
+             RuntimeError()),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+        self.assertRaises(RuntimeError, self.br.delete_ports, all_ports=False)
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def _test_get_bridges(self, exp_timeout=None):
         bridges = ['br-int', 'br-ex']
