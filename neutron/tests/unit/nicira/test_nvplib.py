@@ -262,7 +262,7 @@ class TestNvplibL2Gateway(NvplibTestCase):
         node_uuid = _uuid()
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
-        lswitch = nvplib.create_lswitch(self.fake_cluster, tenant_id,
+        lswitch = nvplib.create_lswitch(self.fake_cluster, _uuid(), tenant_id,
                                         'fake-switch', transport_zones_config)
         gw_id = self._create_gw_service(node_uuid, 'fake-gw')['uuid']
         lport = nvplib.create_lport(self.fake_cluster,
@@ -294,6 +294,7 @@ class TestNvplibLogicalSwitches(NvplibTestCase):
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
         lswitch = nvplib.create_lswitch(self.fake_cluster,
+                                        _uuid(),
                                         tenant_id,
                                         'fake-switch',
                                         transport_zones_config)
@@ -309,6 +310,7 @@ class TestNvplibLogicalSwitches(NvplibTestCase):
                                    'transport_type': 'stt'}]
         lswitch = nvplib.create_lswitch(self.fake_cluster,
                                         tenant_id,
+                                        _uuid(),
                                         '*' * 50,
                                         transport_zones_config)
         res_lswitch = nvplib.get_lswitches(self.fake_cluster,
@@ -321,28 +323,36 @@ class TestNvplibLogicalSwitches(NvplibTestCase):
         tenant_id = 'pippo'
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
+        network_id = _uuid()
         main_lswitch = nvplib.create_lswitch(
-            self.fake_cluster, tenant_id, 'fake-switch',
-            transport_zones_config,
+            self.fake_cluster, network_id,
+            tenant_id, 'fake-switch', transport_zones_config,
             tags=[{'scope': 'multi_lswitch', 'tag': 'True'}])
         # Create secondary lswitch
-        nvplib.create_lswitch(
-            self.fake_cluster, tenant_id, 'fake-switch-2',
-            transport_zones_config,
-            neutron_net_id=main_lswitch['uuid'])
+        second_lswitch = nvplib.create_lswitch(
+            self.fake_cluster, network_id,
+            tenant_id, 'fake-switch-2', transport_zones_config)
         res_lswitch = nvplib.get_lswitches(self.fake_cluster,
-                                           main_lswitch['uuid'])
+                                           network_id)
         self.assertEqual(len(res_lswitch), 2)
-        self.assertEqual(res_lswitch[0]['uuid'],
-                         main_lswitch['uuid'])
-        switch_1_tags = self._build_tag_dict(res_lswitch[0]['tags'])
-        switch_2_tags = self._build_tag_dict(res_lswitch[1]['tags'])
-        self.assertIn('multi_lswitch', switch_1_tags)
-        self.assertNotIn('multi_lswitch', switch_2_tags)
-        self.assertNotIn('quantum_net_id', switch_1_tags)
-        self.assertIn('quantum_net_id', switch_2_tags)
-        self.assertEqual(switch_2_tags['quantum_net_id'],
-                         main_lswitch['uuid'])
+        switch_uuids = [ls['uuid'] for ls in res_lswitch]
+        self.assertIn(main_lswitch['uuid'], switch_uuids)
+        self.assertIn(second_lswitch['uuid'], switch_uuids)
+        for ls in res_lswitch:
+            if ls['uuid'] == main_lswitch['uuid']:
+                main_ls = ls
+            else:
+                second_ls = ls
+        main_ls_tags = self._build_tag_dict(main_ls['tags'])
+        second_ls_tags = self._build_tag_dict(second_ls['tags'])
+        self.assertIn('multi_lswitch', main_ls_tags)
+        self.assertNotIn('multi_lswitch', second_ls_tags)
+        self.assertIn('quantum_net_id', main_ls_tags)
+        self.assertIn('quantum_net_id', second_ls_tags)
+        self.assertEqual(main_ls_tags['quantum_net_id'],
+                         network_id)
+        self.assertEqual(second_ls_tags['quantum_net_id'],
+                         network_id)
 
     def test_update_lswitch(self):
         new_name = 'new-name'
@@ -350,6 +360,7 @@ class TestNvplibLogicalSwitches(NvplibTestCase):
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
         lswitch = nvplib.create_lswitch(self.fake_cluster,
+                                        _uuid(),
                                         'pippo',
                                         'fake-switch',
                                         transport_zones_config)
@@ -373,6 +384,7 @@ class TestNvplibLogicalSwitches(NvplibTestCase):
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
         lswitch = nvplib.create_lswitch(self.fake_cluster,
+                                        _uuid(),
                                         'pippo',
                                         'fake-switch',
                                         transport_zones_config)
@@ -933,6 +945,7 @@ class TestNvplibLogicalRouters(NvplibTestCase):
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
         lswitch = nvplib.create_lswitch(self.fake_cluster,
+                                        _uuid(),
                                         tenant_id, 'fake-switch',
                                         transport_zones_config)
         lport = nvplib.create_lport(self.fake_cluster, lswitch['uuid'],
@@ -1310,7 +1323,7 @@ class TestNvplibLogicalPorts(NvplibTestCase):
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
         lswitch = nvplib.create_lswitch(self.fake_cluster,
-                                        tenant_id, 'fake-switch',
+                                        _uuid(), tenant_id, 'fake-switch',
                                         transport_zones_config)
         lport = nvplib.create_lport(self.fake_cluster, lswitch['uuid'],
                                     tenant_id, neutron_port_id,
@@ -1349,7 +1362,7 @@ class TestNvplibLogicalPorts(NvplibTestCase):
         neutron_port_id = 'whatever'
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
-        lswitch = nvplib.create_lswitch(self.fake_cluster, tenant_id,
+        lswitch = nvplib.create_lswitch(self.fake_cluster, tenant_id, _uuid(),
                                         'fake-switch', transport_zones_config)
         lport = nvplib.get_port_by_neutron_tag(self.fake_cluster,
                                                lswitch['uuid'],

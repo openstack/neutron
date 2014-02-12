@@ -48,6 +48,14 @@ def add_network_binding(session, network_id, binding_type, phy_uuid, vlan_id):
     return binding
 
 
+def add_neutron_nsx_network_mapping(session, neutron_id, nsx_switch_id):
+    with session.begin(subtransactions=True):
+        mapping = nicira_models.NeutronNsxNetworkMapping(
+            neutron_id=neutron_id, nsx_id=nsx_switch_id)
+        session.add(mapping)
+        return mapping
+
+
 def add_neutron_nsx_port_mapping(session, neutron_id,
                                  nsx_switch_id, nsx_port_id):
     session.begin(subtransactions=True)
@@ -72,6 +80,14 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
         session.rollback()
         raise
     return mapping
+
+
+def get_nsx_switch_ids(session, neutron_id):
+    # This function returns a list of NSX switch identifiers because of
+    # the possibility of chained logical switches
+    return [mapping['nsx_id'] for mapping in
+            session.query(nicira_models.NeutronNsxNetworkMapping).filter_by(
+                neutron_id=neutron_id)]
 
 
 def get_nsx_switch_and_port_id(session, neutron_id):

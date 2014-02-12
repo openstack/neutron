@@ -379,7 +379,9 @@ class NvpSyncTestCase(base.BaseTestCase):
     def _test_sync(self, exp_net_status,
                    exp_port_status, exp_router_status,
                    action_callback=None, sp=None):
-        neutron_net_id = ls_uuid = self.fc._fake_lswitch_dict.keys()[0]
+        ls_uuid = self.fc._fake_lswitch_dict.keys()[0]
+        neutron_net_id = self._get_tag_dict(
+            self.fc._fake_lswitch_dict[ls_uuid]['tags'])['quantum_net_id']
         lp_uuid = self.fc._fake_lswitch_lport_dict.keys()[0]
         neutron_port_id = self._get_tag_dict(
             self.fc._fake_lswitch_lport_dict[lp_uuid]['tags'])['q_port_id']
@@ -540,7 +542,9 @@ class NvpSyncTestCase(base.BaseTestCase):
         ctx = context.get_admin_context()
         with self._populate_data(ctx):
             # Put a network down to verify synchronization
-            q_net_id = ls_uuid = self.fc._fake_lswitch_dict.keys()[0]
+            ls_uuid = self.fc._fake_lswitch_dict.keys()[0]
+            q_net_id = self._get_tag_dict(
+                self.fc._fake_lswitch_dict[ls_uuid]['tags'])['quantum_net_id']
             self.fc._fake_lswitch_dict[ls_uuid]['status'] = 'false'
             q_net_data = self._plugin._get_network(ctx, q_net_id)
             self._plugin._synchronizer.synchronize_network(ctx, q_net_data)
@@ -558,7 +562,9 @@ class NvpSyncTestCase(base.BaseTestCase):
         ctx = context.get_admin_context()
         with self._populate_data(ctx):
             # Put a network down to verify punctual synchronization
-            q_net_id = ls_uuid = self.fc._fake_lswitch_dict.keys()[0]
+            ls_uuid = self.fc._fake_lswitch_dict.keys()[0]
+            q_net_id = self._get_tag_dict(
+                self.fc._fake_lswitch_dict[ls_uuid]['tags'])['quantum_net_id']
             self.fc._fake_lswitch_dict[ls_uuid]['status'] = 'false'
             q_net_data = self._plugin.get_network(ctx, q_net_id)
             self.assertEqual(constants.NET_STATUS_DOWN, q_net_data['status'])
