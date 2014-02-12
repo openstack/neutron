@@ -23,6 +23,7 @@ from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.extensions import external_net
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.common import exceptions as p_exc
 from neutron.plugins.vmware.dhcp_meta import constants as d_const
@@ -261,10 +262,10 @@ def handle_port_dhcp_access(plugin, context, port, action):
             try:
                 handler(context, network_id, subnet_id, host_data)
             except p_exc.PortConfigurationError:
-                if action == 'create_port':
-                    db_base_plugin_v2.NeutronDbPluginV2.delete_port(
-                        plugin, context, port['id'])
-                raise
+                with excutils.save_and_reraise_exception():
+                    if action == 'create_port':
+                        db_base_plugin_v2.NeutronDbPluginV2.delete_port(
+                            plugin, context, port['id'])
     LOG.info(_("DHCP for port %s configured successfully"), port['id'])
 
 
@@ -289,10 +290,10 @@ def handle_port_metadata_access(plugin, context, port, is_delete=False):
         try:
             handler(context, network_id, subnet_id, host_data)
         except p_exc.PortConfigurationError:
-            if not is_delete:
-                db_base_plugin_v2.NeutronDbPluginV2.delete_port(
-                    plugin, context, port['id'])
-            raise
+            with excutils.save_and_reraise_exception():
+                if not is_delete:
+                    db_base_plugin_v2.NeutronDbPluginV2.delete_port(
+                        plugin, context, port['id'])
         LOG.info(_("Metadata for port %s configured successfully"), port['id'])
 
 
@@ -310,8 +311,8 @@ def handle_router_metadata_access(plugin, context, router_id, interface=None):
             plugin.lsn_manager.lsn_metadata_configure(
                 context, subnet_id, is_enabled)
         except p_exc.NsxPluginException:
-            if is_enabled:
-                l3_db.L3_NAT_db_mixin.remove_router_interface(
-                    plugin, context, router_id, interface)
-            raise
+            with excutils.save_and_reraise_exception():
+                if is_enabled:
+                    l3_db.L3_NAT_db_mixin.remove_router_interface(
+                        plugin, context, router_id, interface)
     LOG.info(_("Metadata for router %s handled successfully"), router_id)

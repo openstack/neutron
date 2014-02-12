@@ -67,8 +67,8 @@ class NOSdriver():
                                        username=username, password=password,
                                        unknown_host_cb=nos_unknown_host_cb)
         except Exception as e:
-            LOG.error(_("Connect failed to switch: %s"), e)
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.error(_("Connect failed to switch: %s"), e)
 
         LOG.debug(_("Connect success to host %(host)s:%(ssh_port)d"),
                   dict(host=host, ssh_port=SSH_PORT))

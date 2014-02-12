@@ -18,6 +18,7 @@ from sqlalchemy.orm import exc
 
 import neutron.db.api as db
 from neutron.openstack.common.db import exception as db_exc
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.dbexts import models
 from neutron.plugins.vmware.dbexts import networkgw_db
@@ -64,20 +65,21 @@ def add_neutron_nsx_port_mapping(session, neutron_id,
         session.add(mapping)
         session.commit()
     except db_exc.DBDuplicateEntry:
-        session.rollback()
-        # do not complain if the same exact mapping is being added, otherwise
-        # re-raise because even though it is possible for the same neutron
-        # port to map to different back-end ports over time, this should not
-        # occur whilst a mapping already exists
-        current = get_nsx_switch_and_port_id(session, neutron_id)
-        if current[1] == nsx_port_id:
-            LOG.debug(_("Port mapping for %s already available"), neutron_id)
-        else:
-            raise
+        with excutils.save_and_reraise_exception() as ctxt:
+            session.rollback()
+            # do not complain if the same exact mapping is being added,
+            # otherwise re-raise because even though it is possible for the
+            # same neutron port to map to different back-end ports over time,
+            # this should not occur whilst a mapping already exists
+            current = get_nsx_switch_and_port_id(session, neutron_id)
+            if current[1] == nsx_port_id:
+                LOG.debug(_("Port mapping for %s already available"),
+                          neutron_id)
+                ctxt.reraise = False
     except db_exc.DBError:
-        # rollback for any other db error
-        session.rollback()
-        raise
+        with excutils.save_and_reraise_exception():
+            # rollback for any other db error
+            session.rollback()
     return mapping
 
 

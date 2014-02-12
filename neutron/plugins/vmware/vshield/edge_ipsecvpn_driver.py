@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.vshield.common import (
     exceptions as vcns_exc)
@@ -131,9 +132,9 @@ class EdgeIPsecVpnDriver():
         try:
             self.vcns.update_ipsec_config(edge_id, ipsec_config)
         except vcns_exc.VcnsApiException:
-            LOG.exception(_("Failed to update ipsec vpn configuration "
-                            "with edge_id: %s"), edge_id)
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to update ipsec vpn configuration "
+                                "with edge_id: %s"), edge_id)
 
     def delete_ipsec_config(self, edge_id):
         try:
@@ -141,9 +142,9 @@ class EdgeIPsecVpnDriver():
         except vcns_exc.ResourceNotFound:
             LOG.warning(_("IPsec config not found on edge: %s"), edge_id)
         except vcns_exc.VcnsApiException:
-            LOG.exception(_("Failed to delete ipsec vpn configuration "
-                            "with edge_id: %s"), edge_id)
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to delete ipsec vpn configuration "
+                                "with edge_id: %s"), edge_id)
 
     def get_ipsec_config(self, edge_id):
         return self.vcns.get_ipsec_config(edge_id)

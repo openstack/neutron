@@ -37,6 +37,7 @@ from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import portbindings
+from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
@@ -384,11 +385,11 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self.ofc.delete_ofc_network(context, id, net_db)
         except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
-            reason = _("delete_network() failed due to %s") % exc
-            LOG.error(reason)
-            self._update_resource_status(context, "network", net_db['id'],
-                                         const.NET_STATUS_ERROR)
-            raise
+            with excutils.save_and_reraise_exception():
+                reason = _("delete_network() failed due to %s") % exc
+                LOG.error(reason)
+                self._update_resource_status(context, "network", net_db['id'],
+                                             const.NET_STATUS_ERROR)
 
         super(NECPluginV2, self).delete_network(context, id)
 
