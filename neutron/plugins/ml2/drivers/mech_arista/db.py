@@ -395,12 +395,6 @@ class NeutronNets(db_base_plugin_v2.NeutronDbPluginV2):
         return super(NeutronNets,
                      self).get_ports(self.admin_ctx, filters=filters) or []
 
-    def get_all_ports_for_vms(self, tenant_id, vm_id_list):
-        filters = {'tenant_id': [tenant_id],
-                   'device_id': vm_id_list}
-        return super(NeutronNets,
-                     self).get_ports(self.admin_ctx, filters=filters) or []
-
     def _get_network(self, tenant_id, network_id):
         filters = {'tenant_id': [tenant_id],
                    'id': [network_id]}

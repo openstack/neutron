@@ -47,13 +47,13 @@ class AristaRPCWrapper(object):
         self.cli_commands = {}
         self._check_cli_commands()
 
-    def _check_cli_commands():
-       cmd = ['show openstack config %s timestamp' % self.region]
-       try:
-          self._run_eos_cmds(cmd)
-          self.cli_commands['timestamp'] = cmd
-       except arista_exc.AristaRpcError:
-          self.cli_commands['timestamp'] = []
+    def _check_cli_commands(self):
+        cmd = ['show openstack config %s timestamp' % self.region]
+        try:
+            self._run_eos_cmds(cmd)
+            self.cli_commands['timestamp'] = cmd
+        except arista_exc.AristaRpcError:
+            self.cli_commands['timestamp'] = []
 
     def _keystone_url(self):
         keystone_auth_url = ('%s://%s:%s/v2.0/' %
@@ -186,7 +186,7 @@ class AristaRPCWrapper(object):
         :param network: dict containing network_id, network_name and
                         segmentation_id
         """
-        self.create_network_bulk(tenant_id, [network] )
+        self.create_network_bulk(tenant_id, [network])
 
     def create_network_bulk(self, tenant_id, network_list):
         """Creates a network on Arista Hardware
@@ -204,8 +204,9 @@ class AristaRPCWrapper(object):
                            (network['network_id'], network['network_name']))
             except KeyError:
                 append_cmd('network id %s' % network['network_id'])
-            # Enter segment mode without exiting out of network mode    
-            append_cmd('segment 1 type vlan id %d' % network['segmentation_id'])
+            # Enter segment mode without exiting out of network mode
+            append_cmd('segment 1 type vlan id %d' %
+                       network['segmentation_id'])
         # Exit segment mode
         append_cmd('exit')
         # Exit network mode
@@ -340,13 +341,13 @@ class AristaRPCWrapper(object):
         self._run_openstack_cmds(cmds)
 
     def delete_region(self):
-        """Deleted the region data from EOS"""
+        """Deleted the region data from EOS."""
         cmds = ['enable',
                 'configure',
                 'management openstack',
                 'no region %s' % self.region,
                 'exit',
-                'exit' ]
+                'exit']
         self._run_eos_cmds(cmds)
 
     def register_with_eos(self):
@@ -385,9 +386,10 @@ class AristaRPCWrapper(object):
         """This method return the time at which any entities in the region were
            updated.
         """
-        if self.cli_commands['timestamp']:
-           region = self._run_eos_cmds(commands=self.cli_commands['timestamp'])[0]
-           return region
+        timestamp_cmd = self.cli_commands['timestamp']
+        if timestamp_cmd:
+            region = self._run_eos_cmds(commands=timestamp_cmd)[0]
+            return region
         return None
 
     def _run_eos_cmds(self, commands, commands_to_log=None):
@@ -448,7 +450,7 @@ class AristaRPCWrapper(object):
         # Remove return values for 'configure terminal',
         # 'management openstack' and 'exit' commands
         if self.cli_commands['timestamp']:
-           self._region_updated_time = ret[-1]
+            self._region_updated_time = ret[-1]
 
     def _eapi_host_url(self):
         self._validate_config()
@@ -515,15 +517,15 @@ class SyncService(object):
             frozenset(eos_tenants.keys()).difference(db_tenants.keys())
 
         if tenants_to_delete and not db_tenants:
-           self._rpc.delete_region()
-           try:
-               # Re-register with EOS so that the timestamp is updated.
-               self._rpc.register_with_eos()
-           except arista_exc.AristaRpcError:
-               msg = _('EOS is not available, will try sync later')
-               LOG.warning(msg)
-           # Region has been completely cleaned. So there is nothing to sync
-           return
+            self._rpc.delete_region()
+            try:
+                 # Re-register with EOS so that the timestamp is updated.
+                 self._rpc.register_with_eos()
+            except arista_exc.AristaRpcError:
+                 msg = _('EOS is not available, will try sync later')
+                 LOG.warning(msg)
+            # Region has been completely cleaned. So there is nothing to sync
+            return
 
         if len(tenants_to_delete):
             self._rpc.delete_tenant_bulk(tenants_to_delete)
@@ -579,9 +581,9 @@ class SyncService(object):
                         if net_id in neutron_nets:
                             net_name = neutron_nets[net_id]['name']
                         network_dict = {
-                           'network_id': net_id,
-                           'segmentation_id': vlan_id,
-                           'network_name': net_name }
+                            'network_id': net_id,
+                            'segmentation_id': vlan_id,
+                            'network_name': net_name }
                         networks.append(network_dict)
                     self._rpc.create_network_bulk(tenant, networks)
                 except arista_exc.AristaRpcError:
@@ -675,9 +677,9 @@ class AristaDriver(driver_api.MechanismDriver):
             if db.is_network_provisioned(tenant_id, network_id):
                 try:
                     network_dict = {
-                        'network_id': net_id,
+                        'network_id': network_id,
                         'segmentation_id': vlan_id,
-                        'network_name': net_name }
+                        'network_name': network_name}
                     self.rpc.create_network(tenant_id, network_dict)
                 except arista_exc.AristaRpcError:
                     LOG.info(EOS_UNREACHABLE_MSG)
@@ -717,9 +719,9 @@ class AristaDriver(driver_api.MechanismDriver):
                 if db.is_network_provisioned(tenant_id, network_id):
                     try:
                         network_dict = {
-                           'network_id': net_id,
+                           'network_id': network_id,
                            'segmentation_id': vlan_id,
-                           'network_name': net_name }
+                           'network_name': network_name}
                         self.rpc.create_network(tenant_id, network_dict)
                     except arista_exc.AristaRpcError:
                         LOG.info(EOS_UNREACHABLE_MSG)
