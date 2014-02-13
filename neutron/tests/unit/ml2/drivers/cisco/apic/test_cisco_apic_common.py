@@ -23,7 +23,7 @@ from oslo.config import cfg
 from neutron.common import config as neutron_config
 from neutron.plugins.ml2 import config as ml2_config
 from neutron.plugins.ml2.drivers.cisco.apic import apic_client as apic
-from neutron.tests.unit import test_api_v2
+from neutron.tests import base
 
 
 OK = requests.codes.ok
@@ -169,7 +169,7 @@ class ConfigMixin(object):
 
     def set_up_mocks(self):
         # Mock the configuration file
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
+        args = ['--config-file', base.etcdir('neutron.conf.test')]
         neutron_config.parse(args=args)
 
         # Configure the ML2 mechanism drivers and network types
