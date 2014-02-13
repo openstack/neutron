@@ -71,11 +71,12 @@ from neutron.plugins.nicira.dbexts import distributedrouter as dist_rtr
 from neutron.plugins.nicira.dbexts import maclearning as mac_db
 from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira.dbexts import nicira_networkgw_db as networkgw_db
-from neutron.plugins.nicira.dbexts import nicira_qos_db as qos_db
+from neutron.plugins.nicira.dbexts import qos_db
 from neutron.plugins.nicira import dhcpmeta_modes
 from neutron.plugins.nicira.extensions import maclearning as mac_ext
 from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
+from neutron.plugins.nicira.nsxlib import queue as queuelib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
@@ -2170,17 +2171,16 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def create_qos_queue(self, context, qos_queue, check_policy=True):
         q = qos_queue.get('qos_queue')
         self._validate_qos_queue(context, q)
-        q['id'] = nvplib.create_lqueue(self.cluster,
-                                       self._nvp_lqueue(q))
+        q['id'] = queuelib.create_lqueue(self.cluster, q)
         return super(NvpPluginV2, self).create_qos_queue(context, qos_queue)
 
-    def delete_qos_queue(self, context, id, raise_in_use=True):
-        filters = {'queue_id': [id]}
+    def delete_qos_queue(self, context, queue_id, raise_in_use=True):
+        filters = {'queue_id': [queue_id]}
         queues = self._get_port_queue_bindings(context, filters)
         if queues:
             if raise_in_use:
                 raise ext_qos.QueueInUseByPort()
             else:
                 return
-        nvplib.delete_lqueue(self.cluster, id)
-        return super(NvpPluginV2, self).delete_qos_queue(context, id)
+        queuelib.delete_lqueue(self.cluster, queue_id)
+        return super(NvpPluginV2, self).delete_qos_queue(context, queue_id)

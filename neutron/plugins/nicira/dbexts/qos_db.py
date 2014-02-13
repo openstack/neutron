@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright 2013 Nicira Networks, Inc.  All rights reserved.
+# Copyright 2013 VMware, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: Aaron Rosen, Nicira, Inc
 
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -26,7 +25,6 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
 
 
@@ -92,23 +90,23 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
             context.session.add(qos_queue)
         return self._make_qos_queue_dict(qos_queue)
 
-    def get_qos_queue(self, context, id, fields=None):
+    def get_qos_queue(self, context, queue_id, fields=None):
         return self._make_qos_queue_dict(
-            self._get_qos_queue(context, id), fields)
+            self._get_qos_queue(context, queue_id), fields)
 
-    def _get_qos_queue(self, context, id):
+    def _get_qos_queue(self, context, queue_id):
         try:
-            return self._get_by_id(context, QoSQueue, id)
+            return self._get_by_id(context, QoSQueue, queue_id)
         except exc.NoResultFound:
-            raise ext_qos.QueueNotFound(id=id)
+            raise ext_qos.QueueNotFound(id=queue_id)
 
     def get_qos_queues(self, context, filters=None, fields=None):
         return self._get_collection(context, QoSQueue,
                                     self._make_qos_queue_dict,
                                     filters=filters, fields=fields)
 
-    def delete_qos_queue(self, context, id):
-        qos_queue = self._get_qos_queue(context, id)
+    def delete_qos_queue(self, context, queue_id):
+        qos_queue = self._get_qos_queue(context, queue_id)
         with context.session.begin(subtransactions=True):
             context.session.delete(qos_queue)
 
@@ -294,21 +292,3 @@ class NVPQoSDbMixin(ext_qos.QueuePluginBase):
         # Max can be None
         if max and min > max:
             raise ext_qos.QueueMinGreaterMax()
-
-    def _nvp_lqueue(self, queue):
-        """Convert fields to nvp fields."""
-        nvp_queue = {}
-        params = {'name': 'display_name',
-                  'qos_marking': 'qos_marking',
-                  'min': 'min_bandwidth_rate',
-                  'max': 'max_bandwidth_rate',
-                  'dscp': 'dscp'}
-        nvp_queue = dict(
-            (nvp_name, queue.get(api_name))
-            for api_name, nvp_name in params.iteritems()
-            if attr.is_attr_set(queue.get(api_name))
-        )
-        if 'display_name' in nvp_queue:
-            nvp_queue['display_name'] = utils.check_and_truncate(
-                nvp_queue['display_name'])
-        return nvp_queue

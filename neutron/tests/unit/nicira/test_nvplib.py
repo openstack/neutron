@@ -1269,52 +1269,6 @@ class TestNvplibSecurityProfile(NvplibTestCase):
                           self.fake_cluster, 'whatever')
 
 
-class TestNvplibLQueue(NvplibTestCase):
-
-    def test_create_and_get_lqueue(self):
-        queue_id = nvplib.create_lqueue(self.fake_cluster,
-                                        {'display_name': 'fake_queue',
-                                         'min_bandwidth_rate': 0,
-                                         'max_bandwidth_rate': 256,
-                                         'dscp': 0,
-                                         'qos_marking': False})
-        queue_res = nvplib.do_request(
-            nvplib.HTTP_GET,
-            nvplib._build_uri_path('lqueue', resource_id=queue_id),
-            cluster=self.fake_cluster)
-        self.assertEqual(queue_id, queue_res['uuid'])
-        self.assertEqual('fake_queue', queue_res['display_name'])
-
-    def test_create_lqueue_nvp_error_raises(self):
-        def raise_nvp_exc(*args, **kwargs):
-            raise NvpApiClient.NvpApiException()
-
-        with mock.patch.object(nvplib, 'do_request', new=raise_nvp_exc):
-            self.assertRaises(
-                exceptions.NeutronException, nvplib.create_lqueue,
-                self.fake_cluster, {})
-
-    def test_delete_lqueue(self):
-        queue_id = nvplib.create_lqueue(self.fake_cluster,
-                                        {'display_name': 'fake_queue',
-                                         'min_bandwidth_rate': 0,
-                                         'max_bandwidth_rate': 256,
-                                         'dscp': 0,
-                                         'qos_marking': False})
-        nvplib.delete_lqueue(self.fake_cluster, queue_id)
-        self.assertRaises(exceptions.NotFound,
-                          nvplib.do_request,
-                          nvplib.HTTP_GET,
-                          nvplib._build_uri_path(
-                              'lqueue', resource_id=queue_id),
-                          cluster=self.fake_cluster)
-
-    def test_delete_non_existing_lqueue_raises(self):
-        self.assertRaises(exceptions.NeutronException,
-                          nvplib.delete_lqueue,
-                          self.fake_cluster, 'whatever')
-
-
 class TestNvplibLogicalPorts(NvplibTestCase):
 
     def _create_switch_and_port(self, tenant_id='pippo',

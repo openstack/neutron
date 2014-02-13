@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api.v2.attributes import is_attr_set
 from neutron.openstack.common import log
 from neutron.version import version_info
 
@@ -32,7 +33,7 @@ def get_tags(**kwargs):
 
 
 def check_and_truncate(display_name):
-    if display_name and len(display_name) > MAX_DISPLAY_NAME_LEN:
+    if is_attr_set(display_name) and len(display_name) > MAX_DISPLAY_NAME_LEN:
         LOG.debug(_("Specified name:'%s' exceeds maximum length. "
                     "It will be truncated on NVP"), display_name)
         return display_name[:MAX_DISPLAY_NAME_LEN]
