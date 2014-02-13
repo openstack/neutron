@@ -907,11 +907,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 objects.append(obj_creator(context, item))
             context.session.commit()
         except Exception:
+            context.session.rollback()
             with excutils.save_and_reraise_exception():
                 LOG.error(_("An exception occured while creating "
                             "the %(resource)s:%(item)s"),
                           {'resource': resource, 'item': item})
-                context.session.rollback()
         return objects
 
     def create_network_bulk(self, context, networks):
