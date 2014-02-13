@@ -157,9 +157,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         cfg.StrOpt('external_network_bridge', default='br-ex',
                    help=_("Name of bridge used for external network "
                           "traffic.")),
-        cfg.StrOpt('interface_driver',
-                   help=_("The driver used to manage the virtual "
-                          "interface.")),
         cfg.IntOpt('metadata_port',
                    default=9697,
                    help=_("TCP Port used by Neutron metadata namespace "
@@ -168,8 +165,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                    default=0,
                    help=_("Send this many gratuitous ARPs for HA setup, if "
                           "less than or equal to 0, the feature is disabled")),
-        cfg.BoolOpt('use_namespaces', default=True,
-                    help=_("Allow overlapping IP.")),
         cfg.StrOpt('router_id', default='',
                    help=_("If namespaces is disabled, the l3 agent can only"
                           " configure a router that has the matching router "
@@ -906,6 +901,8 @@ def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
     eventlet.monkey_patch()
     conf = cfg.CONF
     conf.register_opts(L3NATAgent.OPTS)
+    config.register_interface_driver_opts_helper(conf)
+    config.register_use_namespaces_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
     config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)

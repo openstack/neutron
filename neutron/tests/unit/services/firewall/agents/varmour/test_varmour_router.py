@@ -44,6 +44,8 @@ class TestVarmourRouter(base.BaseTestCase):
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(varmour_router.vArmourL3NATAgent.OPTS)
+        agent_config.register_interface_driver_opts_helper(self.conf)
+        agent_config.register_use_namespaces_opts_helper(self.conf)
         agent_config.register_root_helper(self.conf)
         self.conf.register_opts(interface.OPTS)
         self.conf.set_override('interface_driver',

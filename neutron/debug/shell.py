@@ -74,6 +74,8 @@ class NeutronDebugShell(NeutronShell):
         client = self.client_manager.neutron
         cfg.CONF.register_opts(interface.OPTS)
         cfg.CONF.register_opts(NeutronDebugAgent.OPTS)
+        config.register_interface_driver_opts_helper(cfg.CONF)
+        config.register_use_namespaces_opts_helper(cfg.CONF)
         config.register_root_helper(cfg.CONF)
         cfg.CONF(['--config-file', self.options.config_file])
         config.setup_logging(cfg.CONF)

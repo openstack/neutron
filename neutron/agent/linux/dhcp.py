@@ -59,8 +59,6 @@ OPTS = [
         'dnsmasq_lease_max',
         default=(2 ** 24),
         help=_('Limit number of leases to prevent a denial-of-service.')),
-    cfg.StrOpt('interface_driver',
-               help=_("The driver used to manage the virtual interface.")),
 ]
 
 IPV4 = 4

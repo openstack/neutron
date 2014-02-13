@@ -156,6 +156,7 @@ class TestDhcpAgent(base.BaseTestCase):
                             'dhcp', '--config-file',
                             etcdir('neutron.conf.test')]
                         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
+                        config.register_interface_driver_opts_helper(cfg.CONF)
                         config.register_agent_state_opts_helper(cfg.CONF)
                         config.register_root_helper(cfg.CONF)
                         cfg.CONF.register_opts(dhcp.OPTS)
@@ -449,6 +450,7 @@ class TestLogArgs(base.BaseTestCase):
 class TestDhcpAgentEventHandler(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpAgentEventHandler, self).setUp()
+        config.register_interface_driver_opts_helper(cfg.CONF)
         cfg.CONF.register_opts(dhcp.OPTS)
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
@@ -1087,6 +1089,8 @@ class FakeV4NetworkNoGateway:
 class TestDeviceManager(base.BaseTestCase):
     def setUp(self):
         super(TestDeviceManager, self).setUp()
+        config.register_interface_driver_opts_helper(cfg.CONF)
+        config.register_use_namespaces_opts_helper(cfg.CONF)
         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
         cfg.CONF.register_opts(dhcp.OPTS)
         cfg.CONF.set_override('interface_driver',

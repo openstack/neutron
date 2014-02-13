@@ -39,10 +39,6 @@ OPTS = [
                  '.haproxy.namespace_driver.HaproxyNSDriver'],
         help=_('Drivers used to manage loadbalancing devices'),
     ),
-    cfg.StrOpt(
-        'interface_driver',
-        help=_('The driver used to manage the virtual interface')
-    ),
 ]
 
 

@@ -40,8 +40,10 @@ class TestDebugCommands(base.BaseTestCase):
         cfg.CONF.register_opts(interface.OPTS)
         cfg.CONF.register_opts(NeutronDebugAgent.OPTS)
         cfg.CONF(args=[], project='neutron')
-        cfg.CONF.set_override('use_namespaces', True)
+        config.register_interface_driver_opts_helper(cfg.CONF)
+        config.register_use_namespaces_opts_helper(cfg.CONF)
         config.register_root_helper(cfg.CONF)
+        cfg.CONF.set_override('use_namespaces', True)
 
         self.addCleanup(mock.patch.stopall)
         device_exists_p = mock.patch(

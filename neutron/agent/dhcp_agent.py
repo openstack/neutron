@@ -52,8 +52,6 @@ class DhcpAgent(manager.Manager):
         cfg.StrOpt('dhcp_driver',
                    default='neutron.agent.linux.dhcp.Dnsmasq',
                    help=_("The driver used to manage the DHCP server.")),
-        cfg.BoolOpt('use_namespaces', default=True,
-                    help=_("Allow overlapping IP.")),
         cfg.BoolOpt('enable_isolated_metadata', default=False,
                     help=_("Support Metadata requests on isolated networks.")),
         cfg.BoolOpt('enable_metadata_network', default=False,
@@ -589,6 +587,8 @@ class DhcpAgentWithStateReport(DhcpAgent):
 
 def register_options():
     cfg.CONF.register_opts(DhcpAgent.OPTS)
+    config.register_interface_driver_opts_helper(cfg.CONF)
+    config.register_use_namespaces_opts_helper(cfg.CONF)
     config.register_agent_state_opts_helper(cfg.CONF)
     config.register_root_helper(cfg.CONF)
     cfg.CONF.register_opts(dhcp.OPTS)

@@ -48,6 +48,8 @@ def setup_conf():
     conf.register_cli_opts(opts)
     conf.register_opts(l3_agent.L3NATAgent.OPTS)
     conf.register_opts(interface.OPTS)
+    agent_config.register_interface_driver_opts_helper(conf)
+    agent_config.register_use_namespaces_opts_helper(conf)
     agent_config.register_root_helper(conf)
     return conf
 

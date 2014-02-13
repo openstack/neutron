@@ -331,6 +331,8 @@ def main():
     eventlet.monkey_patch()
     conf = cfg.CONF
     conf.register_opts(vArmourL3NATAgent.OPTS)
+    config.register_interface_driver_opts_helper(conf)
+    config.register_use_namespaces_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
     config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)

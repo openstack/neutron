@@ -53,6 +53,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
+        agent_config.register_use_namespaces_opts_helper(self.conf)
         agent_config.register_root_helper(self.conf)
         self.conf.root_helper = 'sudo'
         self.api = FWaasAgent(self.conf)
