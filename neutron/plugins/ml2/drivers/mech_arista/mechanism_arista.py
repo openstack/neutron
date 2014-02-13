@@ -48,7 +48,7 @@ class AristaRPCWrapper(object):
         self._check_cli_commands()
 
     def _check_cli_commands(self):
-        cmd = ['show openstack config %s timestamp' % self.region]
+        cmd = ['show openstack config region %s timestamp' % self.region]
         try:
             self._run_eos_cmds(cmd)
             self.cli_commands['timestamp'] = cmd
