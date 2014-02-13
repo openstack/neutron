@@ -26,17 +26,32 @@ class HyperVUtilsV2(utils.HyperVUtils):
     _ETHERNET_SWITCH_PORT = 'Msvm_EthernetSwitchPort'
     _PORT_ALLOC_SET_DATA = 'Msvm_EthernetPortAllocationSettingData'
     _PORT_VLAN_SET_DATA = 'Msvm_EthernetSwitchPortVlanSettingData'
+    _PORT_SECURITY_SET_DATA = 'Msvm_EthernetSwitchPortSecuritySettingData'
     _PORT_ALLOC_ACL_SET_DATA = 'Msvm_EthernetSwitchPortAclSettingData'
+    _PORT_EXT_ACL_SET_DATA = _PORT_ALLOC_ACL_SET_DATA
     _LAN_ENDPOINT = 'Msvm_LANEndpoint'
     _STATE_DISABLED = 3
     _OPERATION_MODE_ACCESS = 1
 
     _ACL_DIR_IN = 1
     _ACL_DIR_OUT = 2
+
     _ACL_TYPE_IPV4 = 2
     _ACL_TYPE_IPV6 = 3
+
+    _ACL_ACTION_ALLOW = 1
+    _ACL_ACTION_DENY = 2
     _ACL_ACTION_METER = 3
+
     _ACL_APPLICABILITY_LOCAL = 1
+    _ACL_APPLICABILITY_REMOTE = 2
+
+    _ACL_DEFAULT = 'ANY'
+    _IPV4_ANY = '0.0.0.0/0'
+    _IPV6_ANY = '::/0'
+    _TCP_PROTOCOL = 'tcp'
+    _UDP_PROTOCOL = 'udp'
+    _MAX_WEIGHT = 65500
 
     _wmi_namespace = '//./root/virtualization/v2'
 
@@ -80,6 +95,12 @@ class HyperVUtilsV2(utils.HyperVUtils):
             element.path_(), [res_setting_data.GetText_(1)])
         self._check_job_status(ret_val, job_path)
 
+    def _remove_virt_feature(self, feature_resource):
+        vs_man_svc = self._conn.Msvm_VirtualSystemManagementService()[0]
+        (job_path, ret_val) = vs_man_svc.RemoveFeatureSettings(
+            FeatureSettings=[feature_resource.path_()])
+        self._check_job_status(ret_val, job_path)
+
     def disconnect_switch_port(
             self, vswitch_name, switch_port_name, delete_port):
         """Disconnects the switch port."""
@@ -121,7 +142,7 @@ class HyperVUtilsV2(utils.HyperVUtils):
         port_alloc, found = self._get_switch_port_allocation(switch_port_name)
         if not found:
             raise utils.HyperVException(
-                msg=_('Port Alloc not found: %s') % switch_port_name)
+                msg=_('Port Allocation not found: %s') % switch_port_name)
 
         vs_man_svc = self._conn.Msvm_VirtualSystemManagementService()[0]
         vlan_settings = self._get_vlan_setting_data_from_port_alloc(port_alloc)
@@ -196,3 +217,173 @@ class HyperVUtilsV2(utils.HyperVUtils):
                     acl.Action = self._ACL_ACTION_METER
                     acl.Applicability = self._ACL_APPLICABILITY_LOCAL
                     self._add_virt_feature(port, acl)
+
+    def create_security_rule(self, switch_port_name, direction, acl_type,
+                             local_port, protocol, remote_address):
+        port, found = self._get_switch_port_allocation(switch_port_name, False)
+        if not found:
+            return
+
+        # Add the ACLs only if they don't already exist
+        acls = port.associators(wmi_result_class=self._PORT_EXT_ACL_SET_DATA)
+        weight = self._get_new_weight(acls)
+        self._bind_security_rule(
+            port, direction, acl_type, self._ACL_ACTION_ALLOW, local_port,
+            protocol, remote_address, weight)
+
+    def remove_security_rule(self, switch_port_name, direction, acl_type,
+                             local_port, protocol, remote_address):
+        port, found = self._get_switch_port_allocation(switch_port_name, False)
+        if not found:
+            # Port not found. It happens when the VM was already deleted.
+            return
+
+        acls = port.associators(wmi_result_class=self._PORT_EXT_ACL_SET_DATA)
+        filtered_acls = self._filter_security_acls(
+            acls, self._ACL_ACTION_ALLOW, direction, acl_type, local_port,
+            protocol, remote_address)
+
+        for acl in filtered_acls:
+            self._remove_virt_feature(acl)
+
+    def create_default_reject_all_rules(self, switch_port_name):
+        port, found = self._get_switch_port_allocation(switch_port_name, False)
+        if not found:
+            raise utils.HyperVException(
+                msg=_('Port Allocation not found: %s') % switch_port_name)
+
+        acls = port.associators(wmi_result_class=self._PORT_EXT_ACL_SET_DATA)
+        filtered_acls = [v for v in acls if v.Action == self._ACL_ACTION_DENY]
+
+        # 2 directions x 2 address types x 2 protocols = 8 ACLs
+        if len(filtered_acls) >= 8:
+            return
+
+        for acl in filtered_acls:
+            self._remove_virt_feature(acl)
+
+        weight = 0
+        ipv4_pair = (self._ACL_TYPE_IPV4, self._IPV4_ANY)
+        ipv6_pair = (self._ACL_TYPE_IPV6, self._IPV6_ANY)
+        for direction in [self._ACL_DIR_IN, self._ACL_DIR_OUT]:
+            for acl_type, address in [ipv4_pair, ipv6_pair]:
+                for protocol in [self._TCP_PROTOCOL, self._UDP_PROTOCOL]:
+                    self._bind_security_rule(
+                        port, direction, acl_type, self._ACL_ACTION_DENY,
+                        self._ACL_DEFAULT, protocol, address, weight)
+                    weight += 1
+
+    def _bind_security_rule(self, port, direction, acl_type, action,
+                            local_port, protocol, remote_address, weight):
+        acls = port.associators(wmi_result_class=self._PORT_EXT_ACL_SET_DATA)
+        filtered_acls = self._filter_security_acls(
+            acls, action, direction, acl_type, local_port, protocol,
+            remote_address)
+
+        for acl in filtered_acls:
+            self._remove_virt_feature(acl)
+
+        acl = self._create_security_acl(
+            direction, acl_type, action, local_port, protocol, remote_address,
+            weight)
+
+        self._add_virt_feature(port, acl)
+
+    def _create_acl(self, direction, acl_type, action):
+        acl = self._get_default_setting_data(self._PORT_ALLOC_ACL_SET_DATA)
+        acl.set(Direction=direction,
+                AclType=acl_type,
+                Action=action,
+                Applicability=self._ACL_APPLICABILITY_LOCAL)
+        return acl
+
+    def _create_security_acl(self, direction, acl_type, action, local_port,
+                             protocol, remote_ip_address, weight):
+        acl = self._create_acl(direction, acl_type, action)
+        (remote_address, remote_prefix_length) = remote_ip_address.split('/')
+        acl.set(Applicability=self._ACL_APPLICABILITY_REMOTE,
+                RemoteAddress=remote_address,
+                RemoteAddressPrefixLength=remote_prefix_length)
+        return acl
+
+    def _filter_acls(self, acls, action, direction, acl_type, remote_addr=""):
+        return [v for v in acls
+                if v.Action == action and
+                v.Direction == direction and
+                v.AclType == acl_type and
+                v.RemoteAddress == remote_addr]
+
+    def _filter_security_acls(self, acls, acl_action, direction, acl_type,
+                              local_port, protocol, remote_addr=""):
+        (remote_address, remote_prefix_length) = remote_addr.split('/')
+        remote_prefix_length = int(remote_prefix_length)
+
+        return [v for v in acls
+                if v.Direction == direction and
+                v.Action in [self._ACL_ACTION_ALLOW, self._ACL_ACTION_DENY] and
+                v.AclType == acl_type and
+                v.RemoteAddress == remote_address and
+                v.RemoteAddressPrefixLength == remote_prefix_length]
+
+    def _get_new_weight(self, acls):
+        return 0
+
+
+class HyperVUtilsV2R2(HyperVUtilsV2):
+    _PORT_EXT_ACL_SET_DATA = 'Msvm_EthernetSwitchPortExtendedAclSettingData'
+    _MAX_WEIGHT = 65500
+
+    def create_security_rule(self, switch_port_name, direction, acl_type,
+                             local_port, protocol, remote_address):
+        protocols = [protocol]
+        if protocol is self._ACL_DEFAULT:
+            protocols = [self._TCP_PROTOCOL, self._UDP_PROTOCOL]
+
+        for proto in protocols:
+            super(HyperVUtilsV2R2, self).create_security_rule(
+                switch_port_name, direction, acl_type, local_port,
+                proto, remote_address)
+
+    def remove_security_rule(self, switch_port_name, direction, acl_type,
+                             local_port, protocol, remote_address):
+        protocols = [protocol]
+        if protocol is self._ACL_DEFAULT:
+            protocols = ['tcp', 'udp']
+
+        for proto in protocols:
+            super(HyperVUtilsV2R2, self).remove_security_rule(
+                switch_port_name, direction, acl_type,
+                local_port, proto, remote_address)
+
+    def _create_security_acl(self, direction, acl_type, action, local_port,
+                             protocol, remote_addr, weight):
+        acl = self._get_default_setting_data(self._PORT_EXT_ACL_SET_DATA)
+        acl.set(Direction=direction,
+                Action=action,
+                LocalPort=str(local_port),
+                Protocol=protocol,
+                RemoteIPAddress=remote_addr,
+                IdleSessionTimeout=0,
+                Weight=weight)
+        return acl
+
+    def _filter_security_acls(self, acls, action, direction, acl_type,
+                              local_port, protocol, remote_addr=""):
+        return [v for v in acls
+                if v.Action == action and
+                v.Direction == direction and
+                v.LocalPort in [str(local_port), self._ACL_DEFAULT] and
+                v.Protocol in [protocol] and
+                v.RemoteIPAddress == remote_addr]
+
+    def _get_new_weight(self, acls):
+        if not acls:
+            return self._MAX_WEIGHT - 1
+
+        weights = [a.Weight for a in acls]
+        min_weight = min(weights)
+        for weight in range(min_weight, self._MAX_WEIGHT):
+            if weight not in weights:
+                return weight
+
+        return min_weight - 1

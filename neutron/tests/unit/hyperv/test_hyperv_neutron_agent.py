@@ -57,6 +57,7 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
 
         self.agent = hyperv_neutron_agent.HyperVNeutronAgent()
         self.agent.plugin_rpc = mock.Mock()
+        self.agent.sec_groups_agent = mock.MagicMock()
         self.agent.context = mock.Mock()
         self.agent.agent_id = mock.Mock()
 
