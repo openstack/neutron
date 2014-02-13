@@ -100,6 +100,7 @@ class NvpApiRequest(object):
         issued_time = time.time()
         is_conn_error = False
         is_conn_service_unavail = False
+        response = None
         try:
             redirects = 0
             while (redirects <= self._redirects):
@@ -133,12 +134,13 @@ class NvpApiRequest(object):
                 response = conn.getresponse()
                 response.body = response.read()
                 response.headers = response.getheaders()
+                elapsed_time = time.time() - issued_time
                 LOG.debug(_("[%(rid)d] Completed request '%(conn)s': "
-                            "%(status)s (%(sec)0.2f seconds)"),
+                            "%(status)s (%(elapsed)s seconds)"),
                           {'rid': self._rid(),
                            'conn': self._request_str(conn, url),
                            'status': response.status,
-                           'sec': time.time() - issued_time})
+                           'elapsed': elapsed_time})
 
                 new_gen = response.getheader('X-Nvp-Config-Generation', None)
                 if new_gen:
@@ -204,10 +206,12 @@ class NvpApiRequest(object):
                 msg = (_("Invalid server response"))
             else:
                 msg = unicode(e)
+            if response is None:
+                elapsed_time = time.time() - issued_time
             LOG.warn(_("[%(rid)d] Failed request '%(conn)s': '%(msg)s' "
-                       "(%(sec)0.2f seconds)"),
+                       "(%(elapsed)s seconds)"),
                      {'rid': self._rid(), 'conn': self._request_str(conn, url),
-                      'msg': msg, 'sec': time.time() - issued_time})
+                      'msg': msg, 'elapsed': elapsed_time})
             self._request_error = e
             is_conn_error = True
             return e
