@@ -192,9 +192,8 @@ class AristaRPCWrapper(object):
         """Creates a network on Arista Hardware
 
         :param tenant_id: globally unique neutron tenant identifier
-        :param network_id: globally unique neutron network identifier
-        :param network_name: Network name - for display purposes
-        :param seg_id: Segment ID of the network
+        :param network_list: list of dicts containing network_id, network_name
+                             and segmentation_id
         """
         cmds = ['tenant %s' % tenant_id]
         # Create a reference to function to avoid name lookups in the loop
@@ -340,6 +339,16 @@ class AristaRPCWrapper(object):
         cmds.append('exit')
         self._run_openstack_cmds(cmds)
 
+    def delete_region(self):
+        """Deleted the region data from EOS"""
+        cmds = ['enable',
+                'configure',
+                'management openstack',
+                'no region %s' % self.region,
+                'exit',
+                'exit' ]
+        self._run_eos_cmds(cmds)
+
     def register_with_eos(self):
         """This is the registration request with EOS.
 
@@ -483,7 +492,7 @@ class SyncService(object):
             # If the times match, then ML2 is in sync with EOS. Otherwise
             # perform a complete sync.
             if self._rpc.region_in_sync():
-                LOG.info(_('Regions are in sync!'))
+                LOG.info(_('OpenStack and EOS are in sync!'))
                 return
         except arista_exc.AristaRpcError:
             msg = _('EOS is not available, will try sync later')
@@ -504,6 +513,18 @@ class SyncService(object):
         # Delete tenants that are in EOS, but not in the database
         tenants_to_delete = \
             frozenset(eos_tenants.keys()).difference(db_tenants.keys())
+
+        if tenants_to_delete and not db_tenants:
+           self._rpc.delete_region()
+           try:
+               # Re-register with EOS so that the timestamp is updated.
+               self._rpc.register_with_eos()
+           except arista_exc.AristaRpcError:
+               msg = _('EOS is not available, will try sync later')
+               LOG.warning(msg)
+           # Region has been completely cleaned. So there is nothing to sync
+           return
+
         if len(tenants_to_delete):
             self._rpc.delete_tenant_bulk(tenants_to_delete)
 
@@ -699,7 +720,7 @@ class AristaDriver(driver_api.MechanismDriver):
                            'network_id': net_id,
                            'segmentation_id': vlan_id,
                            'network_name': net_name }
-                        self.rpc.create_network(tenant_id, [network_dict])
+                        self.rpc.create_network(tenant_id, network_dict)
                     except arista_exc.AristaRpcError:
                         LOG.info(EOS_UNREACHABLE_MSG)
                         raise ml2_exc.MechanismDriverError()
