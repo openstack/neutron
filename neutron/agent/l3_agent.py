@@ -433,7 +433,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self.process_router_floating_ip_nat_rules(ri)
 
         ri.ex_gw_port = ex_gw_port
-        ri.enable_snat = ri.router.get('enable_snat')
         self.routes_updated(ri)
         ri.iptables_manager.defer_apply_off()
         # Once NAT rules for floating IPs are safely in place
