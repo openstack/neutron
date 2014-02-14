@@ -31,7 +31,7 @@ from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.api_client import version
 from neutron.plugins.vmware.common import sync
 from neutron.plugins.vmware import nsx_cluster as cluster
-from neutron.plugins.vmware import nvplib as nsx_utils
+from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware import plugin
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
@@ -461,7 +461,7 @@ class SyncTestCase(base.BaseTestCase):
     def _test_sync_with_chunk_larger_maxpagesize(
         self, net_size, port_size, router_size, chunk_size, exp_calls):
         ctx = context.get_admin_context()
-        real_func = nsx_utils.get_single_query_page
+        real_func = nsxlib.get_single_query_page
         sp = sync.SyncParameters(chunk_size)
         with self._populate_data(ctx, net_size=net_size,
                                  port_size=port_size,
@@ -470,7 +470,7 @@ class SyncTestCase(base.BaseTestCase):
                 # The following mock is just for counting calls,
                 # but we will still run the actual function
                 with mock.patch.object(
-                    nsx_utils, 'get_single_query_page',
+                    nsxlib, 'get_single_query_page',
                     side_effect=real_func) as mock_get_page:
                     self._test_sync(
                         constants.NET_STATUS_ACTIVE,

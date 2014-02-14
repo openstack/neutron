@@ -20,8 +20,8 @@ from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import utils
-from neutron.plugins.vmware.nvplib import _build_uri_path
-from neutron.plugins.vmware.nvplib import do_request
+from neutron.plugins.vmware.nsxlib import _build_uri_path
+from neutron.plugins.vmware.nsxlib import do_request
 
 HTTP_POST = "POST"
 HTTP_DELETE = "DELETE"

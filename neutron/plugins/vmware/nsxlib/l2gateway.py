@@ -18,10 +18,10 @@ import json
 
 from neutron.openstack.common import log
 from neutron.plugins.vmware.common import utils
+from neutron.plugins.vmware.nsxlib import _build_uri_path
+from neutron.plugins.vmware.nsxlib import do_request
+from neutron.plugins.vmware.nsxlib import get_all_query_pages
 from neutron.plugins.vmware.nsxlib import switch
-from neutron.plugins.vmware.nvplib import _build_uri_path
-from neutron.plugins.vmware.nvplib import do_request
-from neutron.plugins.vmware.nvplib import get_all_query_pages
 
 HTTP_GET = "GET"
 HTTP_POST = "POST"

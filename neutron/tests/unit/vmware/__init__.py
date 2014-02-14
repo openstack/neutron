@@ -19,7 +19,6 @@ import os
 from neutron.plugins.vmware.api_client import client as nsx_client
 from neutron.plugins.vmware.api_client import eventlet_client
 from neutron.plugins.vmware import extensions
-from neutron.plugins.vmware import nvplib
 import neutron.plugins.vmware.plugin as neutron_plugin
 from neutron.plugins.vmware.vshield.common import VcnsApiClient as vcnsapi
 from neutron.plugins.vmware.vshield import vcns
@@ -37,7 +36,6 @@ vcns_api_helper = vcnsapi.VcnsApiHelper
 STUBS_PATH = os.path.join(os.path.dirname(__file__), 'etc')
 NSXEXT_PATH = os.path.dirname(extensions.__file__)
 NSXAPI_NAME = '%s.%s' % (api_client.__module__, api_client.__name__)
-NSXLIB_NAME = nvplib.__name__
 PLUGIN_NAME = '%s.%s' % (plugin.__module__, plugin.__name__)
 SERVICE_PLUGIN_NAME = '%s.%s' % (service_plugin.__module__,
                                  service_plugin.__name__)
@@ -51,5 +49,5 @@ def get_fake_conf(filename):
     return os.path.join(STUBS_PATH, filename)
 
 
-def nsx_method(method_name, module_name='nvplib'):
+def nsx_method(method_name, module_name='nsxlib'):
     return '%s.%s.%s' % ('neutron.plugins.vmware', module_name, method_name)
