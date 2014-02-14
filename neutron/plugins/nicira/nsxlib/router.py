@@ -18,7 +18,7 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.nsxlib.switch import get_port
 from neutron.plugins.nicira.nsxlib.versioning import DEFAULT_VERSION
@@ -427,7 +427,7 @@ def plug_router_port_attachment(cluster, router_id, port_id,
         if attachment_vlan:
             attach_obj['vlan_id'] = attachment_vlan
     else:
-        raise nvp_exc.NvpInvalidAttachmentType(
+        raise nsx_exc.InvalidAttachmentType(
             attachment_type=nsx_attachment_type)
     return do_request(
         HTTP_PUT, uri, jsonutils.dumps(attach_obj), cluster=cluster)
@@ -556,9 +556,9 @@ def delete_nat_rules_by_match(cluster, router_id, rule_type,
             to_delete_ids.append(r['uuid'])
     if not (len(to_delete_ids) in
             range(min_num_expected, max_num_expected + 1)):
-        raise nvp_exc.NvpNatRuleMismatch(actual_rules=len(to_delete_ids),
-                                         min_rules=min_num_expected,
-                                         max_rules=max_num_expected)
+        raise nsx_exc.NatRuleMismatch(actual_rules=len(to_delete_ids),
+                                      min_rules=min_num_expected,
+                                      max_rules=max_num_expected)
 
     for rule_id in to_delete_ids:
         delete_router_nat_rule(cluster, router_id, rule_id)
@@ -597,12 +597,12 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         msg = (_("Router Port %(lport_id)s not found on router "
                  "%(lrouter_id)s") % data)
         LOG.exception(msg)
-        raise nvp_exc.NvpPluginException(err_msg=msg)
+        raise nsx_exc.NsxPluginException(err_msg=msg)
     except api_exc.NsxApiException as e:
         msg = _("An exception occurred while updating IP addresses on a "
                 "router logical port:%s") % str(e)
         LOG.exception(msg)
-        raise nvp_exc.NvpPluginException(err_msg=msg)
+        raise nsx_exc.NsxPluginException(err_msg=msg)
 
 
 ROUTER_FUNC_DICT = {
@@ -638,7 +638,7 @@ def create_lrouter(cluster, *args, **kwargs):
     if kwargs.get('distributed', None):
         v = cluster.api_client.get_version()
         if (v.major, v.minor) < (3, 1):
-            raise nvp_exc.NvpInvalidVersion(version=v)
+            raise nsx_exc.InvalidVersion(version=v)
         return v
 
 
@@ -652,7 +652,7 @@ def update_lrouter(cluster, *args, **kwargs):
     if kwargs.get('routes', None):
         v = cluster.api_client.get_version()
         if (v.major, v.minor) < (3, 2):
-            raise nvp_exc.NvpInvalidVersion(version=v)
+            raise nsx_exc.InvalidVersion(version=v)
         return v
 
 

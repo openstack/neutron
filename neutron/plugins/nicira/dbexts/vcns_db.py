@@ -17,7 +17,7 @@
 from sqlalchemy.orm import exc
 
 from neutron.openstack.common import log as logging
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.dbexts import vcns_models
 from neutron.plugins.nicira.vshield.common import (
     exceptions as vcns_exc)
@@ -75,7 +75,7 @@ def delete_vcns_edge_firewallrule_binding(session, id):
         if not (session.query(vcns_models.VcnsEdgeFirewallRuleBinding).
                 filter_by(rule_id=id).delete()):
             msg = _("Rule Resource binding with id:%s not found!") % id
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
 
 
 def get_vcns_edge_firewallrule_binding(session, id, edge_id):
@@ -92,7 +92,7 @@ def get_vcns_edge_firewallrule_binding_by_vseid(
                     filter_by(edge_id=edge_id, rule_vseid=rule_vseid).one())
         except exc.NoResultFound:
             msg = _("Rule Resource binding not found!")
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
 
 
 def cleanup_vcns_edge_firewallrule_binding(session, edge_id):
@@ -132,7 +132,7 @@ def delete_vcns_edge_vip_binding(session, id):
         if not qry.filter_by(vip_id=id).delete():
             msg = _("VIP Resource binding with id:%s not found!") % id
             LOG.exception(msg)
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
 
 
 def add_vcns_edge_pool_binding(session, map_info):
@@ -163,7 +163,7 @@ def get_vcns_edge_pool_binding_by_vseid(session, edge_id, pool_vseid):
                      "pool_vseid:%(pool_vseid)s not found!") %
                    {'edge_id': edge_id, 'pool_vseid': pool_vseid})
             LOG.exception(msg)
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
         return binding
 
 
@@ -173,7 +173,7 @@ def delete_vcns_edge_pool_binding(session, id, edge_id):
         if not qry.filter_by(pool_id=id, edge_id=edge_id).delete():
             msg = _("Pool Resource binding with id:%s not found!") % id
             LOG.exception(msg)
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
 
 
 def add_vcns_edge_monitor_binding(session, map_info):
@@ -199,4 +199,4 @@ def delete_vcns_edge_monitor_binding(session, id, edge_id):
         if not qry.filter_by(monitor_id=id, edge_id=edge_id).delete():
             msg = _("Monitor Resource binding with id:%s not found!") % id
             LOG.exception(msg)
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)

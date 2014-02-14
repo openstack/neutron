@@ -384,13 +384,13 @@ class TestLogicalRouters(base.NsxlibTestCase):
                     'foo_nexthop', routes={'foo_destination': 'foo_address'})
 
     def test_version_dependent_update_lrouter_old_versions(self):
-        self.assertRaises(nsx_exc.NvpInvalidVersion,
+        self.assertRaises(nsx_exc.InvalidVersion,
                           self._test_version_dependent_update_lrouter,
                           "2.9")
-        self.assertRaises(nsx_exc.NvpInvalidVersion,
+        self.assertRaises(nsx_exc.InvalidVersion,
                           self._test_version_dependent_update_lrouter,
                           "3.0")
-        self.assertRaises(nsx_exc.NvpInvalidVersion,
+        self.assertRaises(nsx_exc.InvalidVersion,
                           self._test_version_dependent_update_lrouter,
                           "3.1")
 
@@ -658,7 +658,7 @@ class TestLogicalRouters(base.NsxlibTestCase):
 
     def test_update_lrouter_port_ips_nonexistent_router_raises(self):
         self.assertRaises(
-            nsx_exc.NvpPluginException, routerlib.update_lrouter_port_ips,
+            nsx_exc.NsxPluginException, routerlib.update_lrouter_port_ips,
             self.fake_cluster, 'boo-router', 'boo-port', [], [])
 
     def test_update_lrouter_port_ips_nsx_exception_raises(self):
@@ -676,7 +676,7 @@ class TestLogicalRouters(base.NsxlibTestCase):
 
         with mock.patch.object(routerlib, 'do_request', new=raise_nsx_exc):
             self.assertRaises(
-                nsx_exc.NvpPluginException, routerlib.update_lrouter_port_ips,
+                nsx_exc.NsxPluginException, routerlib.update_lrouter_port_ips,
                 self.fake_cluster, lrouter['uuid'],
                 lrouter_port['uuid'], [], [])
 
@@ -752,7 +752,7 @@ class TestLogicalRouters(base.NsxlibTestCase):
         lrouter_port = routerlib.create_router_lport(
             self.fake_cluster, lrouter['uuid'], 'pippo', 'neutron_port_id',
             'name', True, ['192.168.0.1'], '00:11:22:33:44:55')
-        self.assertRaises(nsx_exc.NvpInvalidAttachmentType,
+        self.assertRaises(nsx_exc.InvalidAttachmentType,
                           routerlib.plug_router_port_attachment,
                           self.fake_cluster, lrouter['uuid'],
                           lrouter_port['uuid'], 'gw_att', 'BadType')
@@ -912,7 +912,7 @@ class TestLogicalRouters(base.NsxlibTestCase):
         rules = routerlib.query_nat_rules(self.fake_cluster, lrouter['uuid'])
         self.assertEqual(len(rules), 3)
         self.assertRaises(
-            nsx_exc.NvpNatRuleMismatch,
+            nsx_exc.NatRuleMismatch,
             routerlib.delete_nat_rules_by_match,
             self.fake_cluster, lrouter['uuid'],
             'SomeWeirdType', 1, 1)

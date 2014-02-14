@@ -53,7 +53,7 @@ class DhcpMetadataAccess(object):
         else:
             error = _("Invalid agent_mode: %s") % cfg.CONF.NSX.agent_mode
             LOG.error(error)
-            raise nsx_exc.NvpPluginException(err_msg=error)
+            raise nsx_exc.NsxPluginException(err_msg=error)
         self.handle_network_dhcp_access_delegate = (
             mod.handle_network_dhcp_access
         )
@@ -118,7 +118,7 @@ class DhcpMetadataAccess(object):
         try:
             error = None
             nsx_svc.check_services_requirements(self.cluster)
-        except nsx_exc.NvpInvalidVersion:
+        except nsx_exc.InvalidVersion:
             error = _("Unable to run Neutron with config option '%s', as NSX "
                       "does not support it") % cfg.CONF.NSX.agent_mode
         except nsx_exc.ServiceClusterUnavailable:
@@ -126,7 +126,7 @@ class DhcpMetadataAccess(object):
                       "'%s'") % cfg.CONF.NSX.agent_mode
         if error:
             LOG.exception(error)
-            raise nsx_exc.NvpPluginException(err_msg=error)
+            raise nsx_exc.NsxPluginException(err_msg=error)
 
     def get_lsn(self, context, network_id, fields=None):
         report = self.migration_manager.report(context, network_id)

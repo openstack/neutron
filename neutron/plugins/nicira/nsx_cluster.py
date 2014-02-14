@@ -60,7 +60,7 @@ class NSXCluster(object):
 
         # If everything went according to plan these two lists should be empty
         if self._required_attributes:
-            raise exceptions.NvpInvalidClusterConfiguration(
+            raise exceptions.InvalidClusterConfiguration(
                 invalid_attrs=self._required_attributes)
         if self._important_attributes:
             LOG.info(_("The following cluster attributes were "

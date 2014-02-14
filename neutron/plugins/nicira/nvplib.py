@@ -26,7 +26,7 @@ import json
 from neutron.common import exceptions as exception
 from neutron.openstack.common import log
 from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 
 
 LOG = log.getLogger(__name__)
@@ -145,4 +145,4 @@ def do_request(*args, **kwargs):
     except api_exc.ResourceNotFound:
         raise exception.NotFound()
     except api_exc.ReadOnlyMode:
-        raise nvp_exc.MaintenanceInProgress()
+        raise nsx_exc.MaintenanceInProgress()

@@ -42,7 +42,7 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
         :param display_name: Descriptive name of this gateway service
         :param devices: List of transport node uuids (and network
         interfaces on them) to use for the network gateway service
-        :raise NvpApiException: if there is a problem while communicating
+        :raise NsxApiException: if there is a problem while communicating
         with the NSX controller
     """
     # NOTE(salvatore-orlando): This is a little confusing, but device_id in
