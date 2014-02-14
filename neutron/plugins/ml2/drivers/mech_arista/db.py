@@ -92,13 +92,8 @@ def remember_tenant(tenant_id):
     """
     session = db.get_session()
     with session.begin():
-        tenant = (session.query(AristaProvisionedTenants).
-                  filter_by(tenant_id=tenant_id).first())
-
-        if not tenant:
-            tenant = AristaProvisionedTenants(
-                tenant_id=tenant_id)
-            session.add(tenant)
+        tenant = AristaProvisionedTenants(tenant_id=tenant_id)
+        session.add(tenant)
 
 
 def forget_tenant(tenant_id):
@@ -138,19 +133,13 @@ def remember_vm(vm_id, host_id, port_id, network_id, tenant_id):
     """
     session = db.get_session()
     with session.begin():
-        vm = (session.query(AristaProvisionedVms).
-              filter_by(vm_id=vm_id, host_id=host_id,
-                        port_id=port_id, tenant_id=tenant_id,
-                        network_id=network_id).first())
-
-        if not vm:
-            vm = AristaProvisionedVms(
-                vm_id=vm_id,
-                host_id=host_id,
-                port_id=port_id,
-                network_id=network_id,
-                tenant_id=tenant_id)
-            session.add(vm)
+        vm = AristaProvisionedVms(
+            vm_id=vm_id,
+            host_id=host_id,
+            port_id=port_id,
+            network_id=network_id,
+            tenant_id=tenant_id)
+        session.add(vm)
 
 
 def forget_vm(vm_id, host_id, port_id, network_id, tenant_id):
@@ -179,16 +168,11 @@ def remember_network(tenant_id, network_id, segmentation_id):
     """
     session = db.get_session()
     with session.begin():
-        net = (session.query(AristaProvisionedNets).
-               filter_by(tenant_id=tenant_id,
-                         network_id=network_id).first())
-
-        if not net:
-            net = AristaProvisionedNets(
-                tenant_id=tenant_id,
-                network_id=network_id,
-                segmentation_id=segmentation_id)
-            session.add(net)
+        net = AristaProvisionedNets(
+            tenant_id=tenant_id,
+            network_id=network_id,
+            segmentation_id=segmentation_id)
+        session.add(net)
 
 
 def forget_network(tenant_id, network_id):
@@ -408,12 +392,6 @@ class NeutronNets(db_base_plugin_v2.NeutronDbPluginV2):
 
     def get_all_ports_for_tenant(self, tenant_id):
         filters = {'tenant_id': [tenant_id]}
-        return super(NeutronNets,
-                     self).get_ports(self.admin_ctx, filters=filters) or []
-
-    def get_all_ports_for_vm(self, tenant_id, vm_id):
-        filters = {'tenant_id': [tenant_id],
-                   'device_id': [vm_id]}
         return super(NeutronNets,
                      self).get_ports(self.admin_ctx, filters=filters) or []
 
