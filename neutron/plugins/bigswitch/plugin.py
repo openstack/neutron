@@ -45,6 +45,7 @@ on port-attach) on an additional PUT to do a bulk dump of all persistent data.
 """
 
 import copy
+import httplib
 import re
 
 import eventlet
@@ -172,13 +173,8 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
         if not self.servers:
             LOG.warning(_("ServerPool not set!"))
 
-    def _send_all_data(self, send_ports=True, send_floating_ips=True,
-                       send_routers=True):
-        """Pushes all data to network ctrl (networks/ports, ports/attachments).
-
-        This gives the controller an option to re-sync it's persistent store
-        with neutron's current view of that data.
-        """
+    def _get_all_data(self, get_ports=True, get_floating_ips=True,
+                      get_routers=True):
         admin_context = qcontext.get_admin_context()
         networks = []
 
@@ -186,11 +182,11 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
         for net in all_networks:
             mapped_network = self._get_mapped_network_with_subnets(net)
             flips_n_ports = {}
-            if send_floating_ips:
+            if get_floating_ips:
                 flips_n_ports = self._get_network_with_floatingips(
                     mapped_network)
 
-            if send_ports:
+            if get_ports:
                 ports = []
                 net_filter = {'network_id': [net.get('id')]}
                 net_ports = self.get_ports(admin_context,
@@ -209,12 +205,9 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
             if flips_n_ports:
                 networks.append(flips_n_ports)
 
-        resource = '/topology'
-        data = {
-            'networks': networks,
-        }
+        data = {'networks': networks}
 
-        if send_routers:
+        if get_routers:
             routers = []
             all_routers = self.get_routers(admin_context) or []
             for router in all_routers:
@@ -238,9 +231,21 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
                 routers.append(mapped_router)
 
             data.update({'routers': routers})
+        return data
 
+    def _send_all_data(self, send_ports=True, send_floating_ips=True,
+                       send_routers=True, timeout=None,
+                       triggered_by_tenant=None):
+        """Pushes all data to network ctrl (networks/ports, ports/attachments).
+
+        This gives the controller an option to re-sync it's persistent store
+        with neutron's current view of that data.
+        """
+        data = self._get_all_data(send_ports, send_floating_ips, send_routers)
+        data['triggered_by_tenant'] = triggered_by_tenant
         errstr = _("Unable to update remote topology: %s")
-        return self.servers.rest_action('PUT', resource, data, errstr)
+        return self.servers.rest_action('PUT', servermanager.TOPOLOGY_PATH,
+                                        data, errstr, timeout=timeout)
 
     def _get_network_with_floatingips(self, network, context=None):
         if context is None:
@@ -386,15 +391,38 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self.servers.rest_create_port(tenant_id, net_id, port)
         except servermanager.RemoteRestError as e:
-            LOG.error(
-                _("NeutronRestProxyV2: Unable to create port: %s"), e)
-            try:
-                self._set_port_status(port['id'], const.PORT_STATUS_ERROR)
-            except exceptions.PortNotFound:
-                # If port is already gone from DB and there was an error
-                # creating on the backend, everything is already consistent
-                pass
-            return
+            # 404 should never be received on a port create unless
+            # there are inconsistencies between the data in neutron
+            # and the data in the backend.
+            # Run a sync to get it consistent.
+            if (cfg.CONF.RESTPROXY.auto_sync_on_failure and
+                e.status == httplib.NOT_FOUND and
+                servermanager.NXNETWORK in e.reason):
+                LOG.error(_("Iconsistency with backend controller "
+                            "triggering full synchronization."))
+                # args depend on if we are operating in ML2 driver
+                # or as the full plugin
+                topoargs = self.servers.get_topo_function_args
+                self._send_all_data(
+                    send_ports=topoargs['get_ports'],
+                    send_floating_ips=topoargs['get_floating_ips'],
+                    send_routers=topoargs['get_routers'],
+                    triggered_by_tenant=tenant_id
+                )
+                # If the full sync worked, the port will be created
+                # on the controller so it can be safely marked as active
+            else:
+                # Any errors that don't result in a successful auto-sync
+                # require that the port be placed into the error state.
+                LOG.error(
+                    _("NeutronRestProxyV2: Unable to create port: %s"), e)
+                try:
+                    self._set_port_status(port['id'], const.PORT_STATUS_ERROR)
+                except exceptions.PortNotFound:
+                    # If port is already gone from DB and there was an error
+                    # creating on the backend, everything is already consistent
+                    pass
+                return
         new_status = (const.PORT_STATUS_ACTIVE if port['state'] == 'UP'
                       else const.PORT_STATUS_DOWN)
         try:
@@ -448,6 +476,10 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
         # init network ctrl connections
         self.servers = servermanager.ServerPool(server_timeout)
+        self.servers.get_topo_function = self._get_all_data
+        self.servers.get_topo_function_args = {'get_ports': True,
+                                               'get_floating_ips': True,
+                                               'get_routers': True}
 
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver

@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mock import patch
+from contextlib import nested
+import mock
 from oslo.config import cfg
 import webob.exc
 
@@ -28,6 +29,8 @@ from neutron.tests.unit.bigswitch import test_base
 from neutron.tests.unit import test_api_v2
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_allowedaddresspairs as test_addr_pair
+
+patch = mock.patch
 
 
 class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,
@@ -149,6 +152,27 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
                                                   port['port']['id'])
                     res = req.get_response(self.api)
                     self.assertEqual(res.status_int, 200)
+
+    def test_create404_triggers_sync(self):
+        # allow async port thread for this patch
+        self.spawn_p.stop()
+        with nested(
+            self.subnet(),
+            patch('httplib.HTTPConnection', create=True,
+                  new=fake_server.HTTPConnectionMock404),
+            patch(test_base.RESTPROXY_PKG_PATH
+                  + '.NeutronRestProxyV2._send_all_data')
+        ) as (s, mock_http, mock_send_all):
+            with self.port(subnet=s, device_id='somedevid') as p:
+                # wait for the async port thread to finish
+                plugin = NeutronManager.get_plugin()
+                plugin.evpool.waitall()
+        call = mock.call(
+            send_routers=True, send_ports=True, send_floating_ips=True,
+            triggered_by_tenant=p['port']['tenant_id']
+        )
+        mock_send_all.assert_has_calls([call])
+        self.spawn_p.start()
 
 
 class TestBigSwitchProxyPortsV2IVS(test_plugin.TestPortsV2,

@@ -15,9 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from contextlib import nested
+import mock
 import webob.exc
 
 from neutron.extensions import portbindings
+from neutron.manager import NeutronManager
+from neutron.plugins.bigswitch import servermanager
 from neutron.plugins.ml2 import config as ml2_config
 from neutron.plugins.ml2.drivers import type_vlan as vlan_config
 import neutron.tests.unit.bigswitch.test_restproxy_plugin as trp
@@ -27,6 +31,9 @@ from neutron.tests.unit import test_db_plugin
 PHYS_NET = 'physnet1'
 VLAN_START = 1000
 VLAN_END = 1100
+SERVER_POOL = 'neutron.plugins.bigswitch.servermanager.ServerPool'
+DRIVER_MOD = 'neutron.plugins.ml2.drivers.mech_bigswitch.driver'
+DRIVER = DRIVER_MOD + '.BigSwitchMechanismDriver'
 
 
 class TestBigSwitchMechDriverBase(trp.BigSwitchProxyPluginV2TestCase):
@@ -93,3 +100,26 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
+
+    def test_create404_triggers_background_sync(self):
+        # allow the async background thread to run for this test
+        self.spawn_p.stop()
+        with nested(
+            mock.patch(SERVER_POOL + '.rest_create_port',
+                       side_effect=servermanager.RemoteRestError(
+                           reason=servermanager.NXNETWORK, status=404)),
+            mock.patch(DRIVER + '._send_all_data'),
+            self.port(**{'device_id': 'devid', 'binding:host_id': 'host'})
+        ) as (mock_http, mock_send_all, p):
+            # wait for thread to finish
+            mm = NeutronManager.get_plugin().mechanism_manager
+            bigdriver = mm.mech_drivers['bigswitch'].obj
+            bigdriver.evpool.waitall()
+            mock_send_all.assert_has_calls([
+                mock.call(
+                    send_routers=False, send_ports=True,
+                    send_floating_ips=False,
+                    triggered_by_tenant=p['port']['tenant_id']
+                )
+            ])
+        self.spawn_p.start()
