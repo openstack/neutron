@@ -358,7 +358,7 @@ class AristaRPCWrapper(object):
         cmds.append('exit')
         self._run_openstack_cmds(cmds)
 
-    def delete_region(self):
+    def delete_this_region(self):
         """Deleted the region data from EOS."""
         cmds = ['enable',
                 'configure',
@@ -534,23 +534,27 @@ class SyncService(object):
 
         db_tenants = db.get_tenants()
 
-        # Delete tenants that are in EOS, but not in the database
-        tenants_to_delete = \
-            frozenset(eos_tenants.keys()).difference(db_tenants.keys())
-
-        if tenants_to_delete and not db_tenants:
+        if not db_tenants and eos_tenants:
+            # No tenants configured in Neutron. Clear all EOS state
             try:
-                self._rpc.delete_region()
+                self._rpc.delete_this_region()
+                msg = _('No Tenants configured in Neutron DB. But %d '
+                        'tenants disovered in EOS during synchronization.'
+                        'Enitre EOS region is cleared') % len(eos_tenants)
                 # Re-register with EOS so that the timestamp is updated.
                 self._rpc.register_with_eos()
                 # Region has been completely cleaned. So there is nothing to
                 # syncronize
                 self._force_sync = False
             except arista_exc.AristaRpcError:
-                msg = _('EOS is not available, will try sync later')
+                msg = _('EOS is not available, failed to delete this region')
                 LOG.warning(msg)
                 self._force_sync = True
             return
+
+        # Delete tenants that are in EOS, but not in the database
+        tenants_to_delete = \
+            frozenset(eos_tenants.keys()).difference(db_tenants.keys())
 
         if len(tenants_to_delete):
             try:

@@ -23,28 +23,16 @@ from neutron.plugins.ml2.drivers.mech_arista import exceptions as arista_exc
 from neutron.plugins.ml2.drivers.mech_arista import mechanism_arista as arista
 from neutron.tests import base
 
-import random
 
-
-def setup_arista_wrapper_config(host='', user='', sync='180'):
+def setup_arista_wrapper_config(value=''):
     cfg.CONF.keystone_authtoken = fake_keystone_info_class()
-    cfg.CONF.set_override('eapi_host', host, "ml2_arista")
-    cfg.CONF.set_override('eapi_username', user, "ml2_arista")
-    cfg.CONF.set_override('sync_interval', sync, "ml2_arista")
+    cfg.CONF.set_override('eapi_host', value, "ml2_arista")
+    cfg.CONF.set_override('eapi_username', value, "ml2_arista")
 
 
 def setup_valid_config():
     # Config is not valid if value is not set
-    setup_arista_wrapper_config('host', 'user')
-
-
-def gen_mac_address():
-    def get_octect():
-        return random.randint(1, 32)
-    mac = ""
-    for i in range(6):
-        mac += "%02x:" % get_octect()
-    return mac[:-1]
+    setup_arista_wrapper_config('value')
 
 
 class AristaProvisionedVlansStorageTestCase(base.BaseTestCase):
@@ -550,10 +538,6 @@ class FakeNetworkContext(object):
         self._original_network = original_network
         self._segments = segments
 
-    def __getitem__(self, attribute):
-        if attribute == 'network':
-            return self._network
-
     @property
     def current(self):
         return self._network
@@ -574,10 +558,6 @@ class FakePortContext(object):
         self._port = port
         self._original_port = original_port
         self._network_context = network
-
-    def __getitem__(self, attribute):
-        if attribute == 'port':
-            return self._port
 
     @property
     def current(self):
