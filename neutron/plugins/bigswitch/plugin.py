@@ -842,7 +842,11 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
             # create floatingip on the network controller
             try:
-                self._send_floatingip_update(context)
+                if 'floatingip' in self.servers.get_capabilities():
+                    self.servers.rest_create_floatingip(
+                        new_fl_ip['tenant_id'], new_fl_ip)
+                else:
+                    self._send_floatingip_update(context)
             except servermanager.RemoteRestError as e:
                 with excutils.save_and_reraise_exception():
                     LOG.error(
@@ -860,7 +864,11 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                               self).update_floatingip(context, id, floatingip)
 
             # update network on network controller
-            self._send_floatingip_update(context)
+            if 'floatingip' in self.servers.get_capabilities():
+                self.servers.rest_update_floatingip(new_fl_ip['tenant_id'],
+                                                    new_fl_ip, id)
+            else:
+                self._send_floatingip_update(context)
             return new_fl_ip
 
     def delete_floatingip(self, context, id):
@@ -868,10 +876,15 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
         with context.session.begin(subtransactions=True):
             # delete floating IP in DB
+            old_fip = super(NeutronRestProxyV2, self).get_floatingip(context,
+                                                                     id)
             super(NeutronRestProxyV2, self).delete_floatingip(context, id)
 
             # update network on network controller
-            self._send_floatingip_update(context)
+            if 'floatingip' in self.servers.get_capabilities():
+                self.servers.rest_delete_floatingip(old_fip['tenant_id'], id)
+            else:
+                self._send_floatingip_update(context)
 
     def disassociate_floatingips(self, context, port_id):
         LOG.debug(_("NeutronRestProxyV2: diassociate_floatingips() called"))

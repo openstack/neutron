@@ -45,11 +45,13 @@ from neutron.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 # The following are used to invoke the API on the external controller
+CAPABILITIES_PATH = "/capabilities"
 NET_RESOURCE_PATH = "/tenants/%s/networks"
 PORT_RESOURCE_PATH = "/tenants/%s/networks/%s/ports"
 ROUTER_RESOURCE_PATH = "/tenants/%s/routers"
 ROUTER_INTF_OP_PATH = "/tenants/%s/routers/%s/interfaces"
 NETWORKS_PATH = "/tenants/%s/networks/%s"
+FLOATINGIPS_PATH = "/tenants/%s/floatingips/%s"
 PORTS_PATH = "/tenants/%s/networks/%s/ports/%s"
 ATTACHMENT_PATH = "/tenants/%s/networks/%s/ports/%s/attachment"
 ROUTERS_PATH = "/tenants/%s/routers/%s"
@@ -81,10 +83,23 @@ class ServerProxy(object):
         self.auth = None
         self.neutron_id = neutron_id
         self.failed = False
+        self.capabilities = []
         if auth:
             self.auth = 'Basic ' + base64.encodestring(auth).strip()
 
-    def rest_call(self, action, resource, data, headers):
+    def get_capabilities(self):
+        try:
+            body = self.rest_call('GET', CAPABILITIES_PATH)[3]
+            self.capabilities = json.loads(body)
+        except Exception:
+            LOG.error(_("Couldn't retrieve capabilities. "
+                        "Newer API calls won't be supported."))
+        LOG.info(_("The following capabilities were received "
+                   "for %(server)s: %(cap)s"), {'server': self.server,
+                                                'cap': self.capabilities})
+        return self.capabilities
+
+    def rest_call(self, action, resource, data='', headers=None):
         uri = self.base_uri + resource
         body = json.dumps(data)
         if not headers:
@@ -179,6 +194,19 @@ class ServerPool(object):
             for server, port in (s.rsplit(':', 1) for s in servers)
         ]
         LOG.debug(_("ServerPool: initialization done"))
+
+    def get_capabilities(self):
+        # lookup on first try
+        try:
+            return self.capabilities
+        except AttributeError:
+            # each server should return a list of capabilities it supports
+            # e.g. ['floatingip']
+            capabilities = [set(server.get_capabilities())
+                            for server in self.servers]
+            # Pool only supports what all of the servers support
+            self.capabilities = set.intersection(*capabilities)
+            return self.capabilities
 
     def server_proxy_for(self, server, port):
         return ServerProxy(server, port, self.ssl, self.auth, self.neutron_id,
@@ -318,3 +346,18 @@ class ServerPool(object):
         # Controller has no update operation for the port endpoint
         # the create PUT method will replace
         self.rest_create_port(tenant_id, net_id, port)
+
+    def rest_create_floatingip(self, tenant_id, floatingip):
+        resource = FLOATINGIPS_PATH % (tenant_id, floatingip['id'])
+        errstr = _("Unable to create floating IP: %s")
+        self.rest_action('PUT', resource, errstr=errstr)
+
+    def rest_update_floatingip(self, tenant_id, floatingip, oldid):
+        resource = FLOATINGIPS_PATH % (tenant_id, oldid)
+        errstr = _("Unable to update floating IP: %s")
+        self.rest_action('PUT', resource, errstr=errstr)
+
+    def rest_delete_floatingip(self, tenant_id, oldid):
+        resource = FLOATINGIPS_PATH % (tenant_id, oldid)
+        errstr = _("Unable to delete floating IP: %s")
+        self.rest_action('DELETE', resource, errstr=errstr)
