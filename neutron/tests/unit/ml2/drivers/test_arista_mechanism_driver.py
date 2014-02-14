@@ -302,10 +302,11 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
 
     def test_create_network(self):
         tenant_id = 'ten-1'
-        network_id = 'net-id'
-        network_name = 'net-name'
-        vlan_id = 123
-        self.drv.create_network(tenant_id, network_id, network_name, vlan_id)
+        network = {
+            'network_id': 'net-id',
+            'network_name': 'net-name',
+            'segmentation_id': 123}
+        self.drv.create_network(tenant_id, network)
         cmds = ['enable', 'configure', 'management openstack',
                 'region RegionOne',
                 'tenant ten-1', 'network id net-id name "net-name"',

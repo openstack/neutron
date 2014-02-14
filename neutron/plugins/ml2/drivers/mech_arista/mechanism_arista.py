@@ -44,10 +44,20 @@ class AristaRPCWrapper(object):
         self.keystone_conf = cfg.CONF.keystone_authtoken
         self.region = cfg.CONF.ml2_arista.region_name
         self._region_updated_time = None
+        # The cli_commands dict stores the mapping between the CLI command key
+        # and the actual CLI command.
         self.cli_commands = {}
-        self._check_cli_commands()
+        self.initialize_cli_commands()
 
-    def _check_cli_commands(self):
+    def initialize_cli_commands(self):
+        cli_command_keys = frozenset(['timestamp'])
+        for key in cli_command_keys:
+            self.cli_commands[key] = []
+
+    def check_cli_commands(self):
+        """This method should be called once the ML2 plugin successfully
+           registers itself with EOS.
+        """
         cmd = ['show openstack config region %s timestamp' % self.region]
         try:
             self._run_eos_cmds(cmd)
@@ -264,6 +274,14 @@ class AristaRPCWrapper(object):
         cmds.append('exit')
         cmds.append('exit')
         self._run_openstack_cmds(cmds)
+
+    def delete_vm(self, tenant_id, vm_id):
+        """Deletes a VM from EOS for a given tenant
+
+        :param tenant_id : globally unique neutron tenant identifier
+        :param vm_id : id of a VM that needs to be deleted.
+        """
+        self.delete_vm_bulk(tenant_id, [vm_id])
 
     def delete_vm_bulk(self, tenant_id, vm_id_list):
         """Deletes VMs from EOS for a given tenant
@@ -485,6 +503,7 @@ class SyncService(object):
     def __init__(self, rpc_wrapper, neutron_db):
         self._rpc = rpc_wrapper
         self._ndb = neutron_db
+        self._force_sync = True
 
     def synchronize(self):
         """Sends data to EOS which differs from neutron DB."""
@@ -494,12 +513,13 @@ class SyncService(object):
             # Get the time at which entities in the region were updated.
             # If the times match, then ML2 is in sync with EOS. Otherwise
             # perform a complete sync.
-            if self._rpc.region_in_sync():
+            if not self._force_sync and self._rpc.region_in_sync():
                 LOG.info(_('OpenStack and EOS are in sync!'))
                 return
         except arista_exc.AristaRpcError:
             msg = _('EOS is not available, will try sync later')
             LOG.warning(msg)
+            self._force_sync = True
             return
 
         try:
@@ -509,6 +529,7 @@ class SyncService(object):
         except arista_exc.AristaRpcError:
             msg = _('EOS is not available, will try sync later')
             LOG.warning(msg)
+            self._force_sync = True
             return
 
         db_tenants = db.get_tenants()
@@ -518,18 +539,31 @@ class SyncService(object):
             frozenset(eos_tenants.keys()).difference(db_tenants.keys())
 
         if tenants_to_delete and not db_tenants:
-            self._rpc.delete_region()
             try:
+                self._rpc.delete_region()
                 # Re-register with EOS so that the timestamp is updated.
                 self._rpc.register_with_eos()
+                # Region has been completely cleaned. So there is nothing to
+                # syncronize
+                self._force_sync = False
             except arista_exc.AristaRpcError:
                 msg = _('EOS is not available, will try sync later')
                 LOG.warning(msg)
-            # Region has been completely cleaned. So there is nothing to sync
+                self._force_sync = True
             return
 
         if len(tenants_to_delete):
-            self._rpc.delete_tenant_bulk(tenants_to_delete)
+            try:
+                self._rpc.delete_tenant_bulk(tenants_to_delete)
+            except arista_exc.AristaRpcError:
+                msg = _('EOS is not available, will try sync later')
+                LOG.warning(msg)
+                self._force_sync = True
+                return
+
+        # None of the commands have failed till now. But if subsequent
+        # operations fail, then force_sync is set to true
+        self._force_sync = False
 
         for tenant in db_tenants:
             db_nets = db.get_networks(tenant)
@@ -555,17 +589,17 @@ class SyncService(object):
                 try:
                     self._rpc.delete_vm_bulk(tenant, vms_to_delete)
                 except arista_exc.AristaRpcError:
-                    msg = _('EOS is not available,'
-                            'failed to delete vms')
+                    msg = _('EOS is not available, failed to delete vms')
                     LOG.warning(msg)
+                    self._force_sync = True
 
             if len(nets_to_delete):
                 try:
                     self._rpc.delete_network_bulk(tenant, nets_to_delete)
                 except arista_exc.AristaRpcError:
-                    msg = _('EOS is not available,'
-                            'failed to delete networks')
+                    msg = _('EOS is not available, failed to delete networks')
                     LOG.warning(msg)
+                    self._force_sync = True
 
             if len(nets_to_update):
                 try:
@@ -588,9 +622,9 @@ class SyncService(object):
                         networks.append(network_dict)
                     self._rpc.create_network_bulk(tenant, networks)
                 except arista_exc.AristaRpcError:
-                    msg = _('EOS is not available,'
-                            'failed to update networks')
+                    msg = _('EOS is not available, failed to update networks')
                     LOG.warning(msg)
+                    self._force_sync = True
 
             if len(vms_to_update):
                 try:
@@ -604,9 +638,9 @@ class SyncService(object):
                             vm_ports.append(port)
                     self._rpc.create_vm_port_bulk(tenant, vm_ports, db_vms)
                 except arista_exc.AristaRpcError:
-                    msg = _('EOS is not available,'
-                            'failed to update vms')
+                    msg = _('EOS is not available, failed to update vms')
                     LOG.warning(msg)
+                    self._force_sync = True
 
     def _get_eos_networks(self, eos_tenants, tenant):
         networks = {}
@@ -646,6 +680,7 @@ class AristaDriver(driver_api.MechanismDriver):
     def initialize(self):
         self.rpc.register_with_eos()
         self._cleanup_db()
+        self.rpc.check_cli_commands()
         # Registring with EOS updates self.rpc.region_updated_time. Clear it to
         # force an initial sync
         self.rpc.clear_region_updated_time()
