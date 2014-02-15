@@ -72,7 +72,7 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
     def __init__(self, root_helper=None, respawn_interval=None):
         super(SimpleInterfaceMonitor, self).__init__(
             'Interface',
-            columns=['name'],
+            columns=['name', 'ofport'],
             format='json',
             root_helper=root_helper,
             respawn_interval=respawn_interval,
