@@ -305,3 +305,6 @@ class TestProxyCreateLswitch(base.BaseTestCase):
                                                        tags=more_tags)
         expected = self.tags + more_tags
         self.assertEqual(expected, result[2])
+
+    def test_router_add_interface_subnet_with_port_from_other_tenant(self):
+        self.skip("Skipping this unit test until bug 1280035 is fixed")
