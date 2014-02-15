@@ -805,6 +805,27 @@ class ProfileBindingTests(testlib_api.SqlTestCase,
         except s_exc.NoResultFound:
             self.fail("Could not create Profile Binding")
 
+    def test_update_profile_binding(self):
+        test_tenant_id = "d434dd90-76ec-11e2-bcfd-0800200c9a66"
+        test_profile_id = "dd7b9741-76ec-11e2-bcfd-0800200c9a66"
+        test_profile_type = "network"
+        n1kv_db_v2.create_profile_binding(self.session,
+                                          test_tenant_id,
+                                          test_profile_id,
+                                          test_profile_type)
+        new_tenants = ['d434dd90-76ec-11e2-bcfd-0800200c9a67',
+                       'd434dd90-76ec-11e2-bcfd-0800200c9a68',
+                       'd434dd90-76ec-11e2-bcfd-0800200c9a69']
+        n1kv_db_v2.update_profile_binding(self.session,
+                                          test_profile_id,
+                                          new_tenants,
+                                          test_profile_type)
+
+        result = self.session.query(n1kv_models_v2.ProfileBinding).filter_by(
+            profile_type=test_profile_type,
+            profile_id=test_profile_id).all()
+        self.assertEqual(3, len(result))
+
     def test_get_profile_binding(self):
         test_tenant_id = "d434dd90-76ec-11e2-bcfd-0800200c9a66"
         test_profile_id = "dd7b9741-76ec-11e2-bcfd-0800200c9a66"
