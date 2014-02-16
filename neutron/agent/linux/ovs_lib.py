@@ -109,22 +109,8 @@ class OVSBridge(BaseOVS):
     def __init__(self, br_name, root_helper):
         super(OVSBridge, self).__init__(root_helper)
         self.br_name = br_name
-        self.re_id = self.re_compile_id()
         self.defer_apply_flows = False
         self.deferred_flows = {'add': '', 'mod': '', 'del': ''}
-
-    def re_compile_id(self):
-        external = 'external_ids\s*'
-        mac = 'attached-mac="(?P<vif_mac>([a-fA-F\d]{2}:){5}([a-fA-F\d]{2}))"'
-        iface = 'iface-id="(?P<vif_id>[^"]+)"'
-        name = 'name\s*:\s"(?P<port_name>[^"]*)"'
-        port = 'ofport\s*:\s(?P<ofport>(-?\d+|\[\]))'
-        _re = ('%(external)s:\s{ ( %(mac)s,? | %(iface)s,? | . )* }'
-               ' \s+ %(name)s \s+ %(port)s' % {'external': external,
-                                               'mac': mac,
-                                               'iface': iface, 'name': name,
-                                               'port': port})
-        return re.compile(_re, re.M | re.X)
 
     def create(self):
         self.add_bridge(self.br_name)
@@ -392,33 +378,39 @@ class OVSBridge(BaseOVS):
         return edge_ports
 
     def get_vif_port_by_id(self, port_id):
-        args = ['--', '--columns=external_ids,name,ofport',
+        args = ['--format=json', '--', '--columns=external_ids,name,ofport',
                 'find', 'Interface',
                 'external_ids:iface-id="%s"' % port_id]
         result = self.run_vsctl(args)
         if not result:
             return
-        # TODO(salv-orlando): consider whether it would be possible to use
-        # JSON formatting rather than doing regex parsing.
-        match = self.re_id.search(result)
+        json_result = jsonutils.loads(result)
         try:
-            vif_mac = match.group('vif_mac')
-            vif_id = match.group('vif_id')
-            port_name = match.group('port_name')
-            # Tolerate ports which might not have an ofport as they are not
-            # ready yet
-            # NOTE(salv-orlando): Consider returning None when ofport is not
-            # available.
-            try:
-                ofport = int(match.group('ofport'))
-            except ValueError:
-                LOG.warn(_("ofport for vif: %s is not a valid integer. "
-                           "The port has not yet been configured by OVS"),
-                         vif_id)
-                ofport = None
-            return VifPort(port_name, ofport, vif_id, vif_mac, self)
+            # Retrieve the indexes of the columns we're looking for
+            headings = json_result['headings']
+            ext_ids_idx = headings.index('external_ids')
+            name_idx = headings.index('name')
+            ofport_idx = headings.index('ofport')
+            # If data attribute is missing or empty the line below will raise
+            # an exeception which will be captured in this block.
+            # We won't deal with the possibility of ovs-vsctl return multiple
+            # rows since the interface identifier is unique
+            data = json_result['data'][0]
+            port_name = data[name_idx]
+            ofport = data[ofport_idx]
+            # ofport must be integer otherwise return None
+            if not isinstance(ofport, int) or ofport == -1:
+                LOG.warn(_("ofport: %(ofport)s for VIF: %(vif)s is not a"
+                           "positive integer"), {'ofport': ofport,
+                                                 'vif': port_id})
+                return
+            # Find VIF's mac address in external ids
+            ext_id_dict = dict((item[0], item[1]) for item in
+                               data[ext_ids_idx][1])
+            vif_mac = ext_id_dict['attached-mac']
+            return VifPort(port_name, ofport, port_id, vif_mac, self)
         except Exception as e:
-            LOG.info(_("Unable to parse regex results. Exception: %s"), e)
+            LOG.warn(_("Unable to parse interface details. Exception: %s"), e)
             return
 
     def delete_ports(self, all_ports=False):

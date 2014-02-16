@@ -517,21 +517,6 @@ class OVS_Lib_Test(base.BaseTestCase):
             ["ovs-vsctl", self.TO, "clear", "Port", pname, "tag"],
             root_helper=self.root_helper)
 
-    def test_port_id_regex(self):
-        result = ('external_ids        : {attached-mac="fa:16:3e:23:5b:f2",'
-                  ' iface-id="5c1321a7-c73f-4a77-95e6-9f86402e5c8f",'
-                  ' iface-status=active}\nname                :'
-                  ' "dhc5c1321a7-c7"\nofport              : 2\n')
-        match = self.br.re_id.search(result)
-        vif_mac = match.group('vif_mac')
-        vif_id = match.group('vif_id')
-        port_name = match.group('port_name')
-        ofport = int(match.group('ofport'))
-        self.assertEqual(vif_mac, 'fa:16:3e:23:5b:f2')
-        self.assertEqual(vif_id, '5c1321a7-c73f-4a77-95e6-9f86402e5c8f')
-        self.assertEqual(port_name, 'dhc5c1321a7-c7')
-        self.assertEqual(ofport, 2)
-
     def _test_iface_to_br(self, exp_timeout=None):
         iface = 'tap0'
         br = 'br-int'
@@ -623,35 +608,52 @@ class OVS_Lib_Test(base.BaseTestCase):
             with testtools.ExpectedException(Exception):
                 self.br.get_local_port_mac()
 
-    def _test_get_vif_port_by_id(self, ofport=None):
-        expected_output = ('external_ids : {attached-mac="aa:bb:cc:dd:ee:ff", '
-                           'iface-id="tap99id",'
-                           'iface-status=active, '
-                           'vm-uuid="tap99vm"}'
-                           '\nname : "tap99"\nofport : %(ofport)s\n')
-
+    def _test_get_vif_port_by_id(self, iface_id, data):
+        headings = ['external_ids', 'name', 'ofport']
         # Each element is a tuple of (expected mock call, return_value)
         expected_calls_and_values = [
-            (mock.call(["ovs-vsctl", self.TO,
+            (mock.call(["ovs-vsctl", self.TO, "--format=json",
                         "--", "--columns=external_ids,name,ofport",
                         "find", "Interface",
-                        'external_ids:iface-id="tap99id"'],
+                        'external_ids:iface-id="%s"' % iface_id],
                        root_helper=self.root_helper),
-             expected_output % {'ofport': ofport or '[]'}),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+             self._encode_ovs_json(headings, data))]
 
-        vif_port = self.br.get_vif_port_by_id('tap99id')
-        self.assertEqual(vif_port.vif_id, 'tap99id')
-        self.assertEqual(vif_port.vif_mac, 'aa:bb:cc:dd:ee:ff')
-        self.assertEqual(vif_port.port_name, 'tap99')
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+        vif_port = self.br.get_vif_port_by_id(iface_id)
+
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
         return vif_port
 
+    def _test_get_vif_port_by_id_with_data(self, ofport=None, mac=None):
+        external_ids = [["iface-id", "tap99id"],
+                        ["iface-status", "active"]]
+        if mac:
+            external_ids.append(["attached-mac", mac])
+        data = [[["map", external_ids], "tap99",
+                 ofport if ofport else '["set",[]]']]
+        vif_port = self._test_get_vif_port_by_id('tap99id', data)
+        if not ofport or ofport == -1 or not mac:
+            self.assertIsNone(vif_port)
+            return
+        self.assertEqual(vif_port.vif_id, 'tap99id')
+        self.assertEqual(vif_port.vif_mac, 'aa:bb:cc:dd:ee:ff')
+        self.assertEqual(vif_port.port_name, 'tap99')
+        self.assertEqual(vif_port.ofport, ofport)
+
     def test_get_vif_by_port_id_with_ofport(self):
-        vif_port = self._test_get_vif_port_by_id('1')
-        self.assertEqual(vif_port.ofport, 1)
+        self._test_get_vif_port_by_id_with_data(
+            ofport=1, mac="aa:bb:cc:dd:ee:ff")
 
     def test_get_vif_by_port_id_without_ofport(self):
-        vif_port = self._test_get_vif_port_by_id()
-        self.assertIsNone(vif_port.ofport)
+        self._test_get_vif_port_by_id_with_data(mac="aa:bb:cc:dd:ee:ff")
+
+    def test_get_vif_by_port_id_with_invalid_ofport(self):
+        self._test_get_vif_port_by_id_with_data(
+            ofport=-1, mac="aa:bb:cc:dd:ee:ff")
+
+    def test_get_vif_by_port_id_without_mac(self):
+        self._test_get_vif_port_by_id_with_data(ofport=1)
+
+    def test_get_vif_by_port_id_with_no_data(self):
+        self.assertIsNone(self._test_get_vif_port_by_id('whatever', []))
