@@ -258,7 +258,7 @@ class DirectPublisher(Publisher):
     def __init__(self, conf, session, msg_id):
         """Init a 'direct' publisher."""
         super(DirectPublisher, self).__init__(session, msg_id,
-                                              {"type": "Direct"})
+                                              {"type": "direct"})
 
 
 class TopicPublisher(Publisher):
