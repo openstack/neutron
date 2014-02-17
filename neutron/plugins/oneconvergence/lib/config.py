@@ -17,6 +17,8 @@
 
 from oslo.config import cfg
 
+from neutron.agent.common import config
+
 
 NVSD_OPT = [
     cfg.StrOpt('nvsd_ip',
@@ -38,4 +40,18 @@ NVSD_OPT = [
                help=_("Number of login retries to NVSD controller"))
 ]
 
+agent_opts = [
+    cfg.StrOpt('integration_bridge', default='br-int',
+               help=_("integration bridge")),
+    cfg.IntOpt('polling_interval', default=2,
+               help=_("The number of seconds the agent will wait between "
+                      "polling for local device changes.")),
+]
+
 cfg.CONF.register_opts(NVSD_OPT, "nvsd")
+cfg.CONF.register_opts(agent_opts, "AGENT")
+
+config.register_root_helper(cfg.CONF)
+
+CONF = cfg.CONF
+AGENT = cfg.CONF.AGENT

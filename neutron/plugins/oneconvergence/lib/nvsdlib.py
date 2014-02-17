@@ -35,6 +35,13 @@ GET_ALL_SUBNETS = "/pluginhandler/ocplugin/tenant/getallsubnets"
 PORTS_URI = NETWORK_URI + "/lport/"
 PORT_URI = PORTS_URI + "%s"
 
+EXT_URI = "/pluginhandler/ocplugin/ext/tenant/%s"
+FLOATING_IPS_URI = EXT_URI + "/floatingip/"
+FLOATING_IP_URI = FLOATING_IPS_URI + "%s"
+
+ROUTERS_URI = EXT_URI + "/lrouter/"
+ROUTER_URI = ROUTERS_URI + "%s"
+
 METHODS = {"POST": "create",
            "PUT": "update",
            "DELETE": "delete",
@@ -260,3 +267,86 @@ class NVSDApi(object):
                                      tenant_id=tenant_id)
 
         return response.json()
+
+    def create_floatingip(self, floating_ip):
+
+        tenant_id = floating_ip['tenant_id']
+
+        uri = FLOATING_IPS_URI % tenant_id
+
+        self.send_request("POST", uri, body=json.dumps(floating_ip),
+                          resource='floating_ip',
+                          tenant_id=tenant_id)
+
+        LOG.debug(_("Flatingip %(id)s created under tenant %(tenant_id)s"),
+                  {'id': floating_ip['id'], 'tenant_id': tenant_id})
+
+    def update_floatingip(self, floating_ip, floating_ip_update):
+
+        tenant_id = floating_ip['tenant_id']
+
+        floating_ip_id = floating_ip['id']
+
+        uri = FLOATING_IP_URI % (tenant_id, floating_ip_id)
+
+        self.send_request("PUT", uri,
+                          body=json.dumps(floating_ip_update['floatingip']),
+                          resource='floating_ip',
+                          tenant_id=tenant_id,
+                          resource_id=floating_ip_id)
+
+        LOG.debug(_("Flatingip %(id)s updated under tenant %(tenant_id)s"),
+                  {'id': floating_ip_id, 'tenant_id': tenant_id})
+
+    def delete_floatingip(self, floating_ip):
+
+        tenant_id = floating_ip['tenant_id']
+
+        floating_ip_id = floating_ip['id']
+
+        uri = FLOATING_IP_URI % (tenant_id, floating_ip_id)
+
+        self.send_request("DELETE", uri, resource='floating_ip',
+                          tenant_id=tenant_id, resource_id=floating_ip_id)
+
+        LOG.debug(_("Flatingip %(id)s deleted under tenant %(tenant_id)s"),
+                  {'id': floating_ip_id, 'tenant_id': tenant_id})
+
+    def create_router(self, router):
+
+        tenant_id = router['tenant_id']
+
+        uri = ROUTERS_URI % tenant_id
+
+        self.send_request("POST", uri, body=json.dumps(router),
+                          resource='router',
+                          tenant_id=tenant_id)
+
+        LOG.debug(_("Router %(id)s created under tenant %(tenant_id)s"),
+                  {'id': router['id'], 'tenant_id': tenant_id})
+
+    def update_router(self, router):
+
+        tenant_id = router['tenant_id']
+
+        router_id = router['id']
+
+        uri = ROUTER_URI % (tenant_id, router_id)
+
+        self.send_request("PUT", uri,
+                          body=json.dumps(router),
+                          resource='router', tenant_id=tenant_id,
+                          resource_id=router_id)
+
+        LOG.debug(_("Router %(id)s updated under tenant %(tenant_id)s"),
+                  {'id': router_id, 'tenant_id': tenant_id})
+
+    def delete_router(self, tenant_id, router_id):
+
+        uri = ROUTER_URI % (tenant_id, router_id)
+
+        self.send_request("DELETE", uri, resource='router',
+                          tenant_id=tenant_id, resource_id=router_id)
+
+        LOG.debug(_("Router %(id)s deleted under tenant %(tenant_id)s"),
+                  {'id': router_id, 'tenant_id': tenant_id})
