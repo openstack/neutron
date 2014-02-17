@@ -29,6 +29,7 @@ from neutron.db.firewall import firewall_db as fdb
 import neutron.extensions
 from neutron.extensions import firewall
 from neutron.openstack.common import importutils
+from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.tests.unit import test_db_plugin
 
@@ -477,7 +478,8 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
                                    self.firewall_rule(name='fwr2',
                                                       no_delete=True)) as fr:
                 fw_rule_ids = [r['firewall_rule']['id'] for r in fr]
-                fw_rule_ids.append('12345')  # non-existent rule
+                # appending non-existent rule
+                fw_rule_ids.append(uuidutils.generate_uuid())
                 data = {'firewall_policy':
                         {'firewall_rules': fw_rule_ids}}
                 req = self.new_update_request('firewall_policies', data,

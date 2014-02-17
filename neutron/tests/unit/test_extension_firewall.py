@@ -378,6 +378,17 @@ class FirewallExtensionTestCase(testlib_api.WebTestCase):
         self.assertIn('firewall_policy', res)
         self.assertEqual(res['firewall_policy'], return_value)
 
+    def test_firewall_policy_update_malformed_rules(self):
+        # emulating client request when no rule uuids are provided for
+        # --firewall_rules parameter
+        update_data = {'firewall_policy': {'firewall_rules': True}}
+        # have to check for generic AppError
+        self.assertRaises(
+            webtest.AppError,
+            self.api.put,
+            _get_path('fw/firewall_policies', id=_uuid(), fmt=self.fmt),
+            self.serialize(update_data))
+
     def test_firewall_policy_delete(self):
         self._test_entity_delete('firewall_policy')
 
