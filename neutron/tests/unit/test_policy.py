@@ -16,11 +16,11 @@
 """Test of Policy Engine For Neutron"""
 
 import json
-import StringIO
 import urllib2
 
 import fixtures
 import mock
+import six
 
 import neutron
 from neutron.api.v2 import attributes
@@ -120,7 +120,7 @@ class PolicyTestCase(base.BaseTestCase):
     def test_enforce_http_true(self):
 
         def fakeurlopen(url, post_data):
-            return StringIO.StringIO("True")
+            return six.StringIO("True")
 
         with mock.patch.object(urllib2, 'urlopen', new=fakeurlopen):
             action = "example:get_http"
@@ -131,7 +131,7 @@ class PolicyTestCase(base.BaseTestCase):
     def test_enforce_http_false(self):
 
         def fakeurlopen(url, post_data):
-            return StringIO.StringIO("False")
+            return six.StringIO("False")
 
         with mock.patch.object(urllib2, 'urlopen', new=fakeurlopen):
             action = "example:get_http"
