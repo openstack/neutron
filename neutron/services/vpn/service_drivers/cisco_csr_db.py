@@ -11,6 +11,8 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# @author: Paul Michali, Cisco Systems, Inc.
 
 import sqlalchemy as sa
 from sqlalchemy.orm import exc as sql_exc
@@ -105,8 +107,9 @@ def get_next_available_ipsec_policy_id(session):
 def find_conn_with_policy(policy_field, policy_id, conn_id, session):
     """Return ID of another conneciton (if any) that uses same policy ID."""
     qry = session.query(vpn_db.IPsecSiteConnection.id)
-    match = qry.filter(policy_field == policy_id,
-                       vpn_db.IPsecSiteConnection.id != conn_id).first()
+    match = qry.filter_request(
+        policy_field == policy_id,
+        vpn_db.IPsecSiteConnection.id != conn_id).first()
     if match:
         return match[0]
 
@@ -215,6 +218,7 @@ def create_tunnel_mapping(context, conn_info):
                                   csr_ipsec_policy_id=csr_ipsec_id)
         try:
             context.session.add(map_entry)
+            # Force committing to database
             context.session.flush()
         except db_exc.DBDuplicateEntry:
             msg = _("Attempt to create duplicate entry in Cisco CSR "
