@@ -33,6 +33,8 @@ APPEND = -1
 # error code
 VCNS_ERROR_CODE_EDGE_NOT_RUNNING = 10013
 
+SUFFIX_LENGTH = 8
+
 
 # router status by number
 class RouterStatus(object):

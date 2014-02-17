@@ -201,6 +201,31 @@ class TestLoadbalancerPlugin(
                 protocol='TCP',
                 session_persistence={'type': 'HTTP_COOKIE'})
 
+    def test_create_vips_with_same_names(self):
+        new_router_id = self._create_and_get_router()
+        with self.subnet() as subnet:
+            net_id = subnet['subnet']['network_id']
+            self._set_net_external(net_id)
+            with contextlib.nested(
+                self.vip(
+                    name='vip',
+                    router_id=new_router_id,
+                    subnet=subnet, protocol_port=80),
+                self.vip(
+                    name='vip',
+                    router_id=new_router_id,
+                    subnet=subnet, protocol_port=81),
+                self.vip(
+                    name='vip',
+                    router_id=new_router_id,
+                    subnet=subnet, protocol_port=82),
+            ) as (vip1, vip2, vip3):
+                req = self.new_list_request('vips')
+                res = self.deserialize(
+                    self.fmt, req.get_response(self.ext_api))
+                for index in range(len(res['vips'])):
+                    self.assertEqual(res['vips'][index]['name'], 'vip')
+
     def test_update_vip(self):
         name = 'new_vip'
         router_id = self._create_and_get_router()

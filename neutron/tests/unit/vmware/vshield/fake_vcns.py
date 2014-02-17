@@ -369,16 +369,24 @@ class FakeVcns(object):
                 break
         return self.return_helper(header, response)
 
+    def is_name_unique(self, objs_dict, name):
+        return name not in [obj_dict['name']
+                            for obj_dict in objs_dict.values()]
+
     def create_vip(self, edge_id, vip_new):
+        header = {'status': 403}
+        response = ""
         if not self._fake_virtualservers_dict.get(edge_id):
             self._fake_virtualservers_dict[edge_id] = {}
+        if not self.is_name_unique(self._fake_virtualservers_dict[edge_id],
+                                   vip_new['name']):
+            return self.return_helper(header, response)
         vip_vseid = uuidutils.generate_uuid()
         self._fake_virtualservers_dict[edge_id][vip_vseid] = vip_new
         header = {
             'status': 204,
             'location': "https://host/api/4.0/edges/edge_id"
                         "/loadbalancer/config/%s" % vip_vseid}
-        response = ""
         return self.return_helper(header, response)
 
     def get_vip(self, edge_id, vip_vseid):
@@ -413,15 +421,19 @@ class FakeVcns(object):
         return self.return_helper(header, response)
 
     def create_pool(self, edge_id, pool_new):
+        header = {'status': 403}
+        response = ""
         if not self._fake_pools_dict.get(edge_id):
             self._fake_pools_dict[edge_id] = {}
+        if not self.is_name_unique(self._fake_pools_dict[edge_id],
+                                   pool_new['name']):
+            return self.return_helper(header, response)
         pool_vseid = uuidutils.generate_uuid()
         self._fake_pools_dict[edge_id][pool_vseid] = pool_new
         header = {
             'status': 204,
             'location': "https://host/api/4.0/edges/edge_id"
                         "/loadbalancer/config/%s" % pool_vseid}
-        response = ""
         return self.return_helper(header, response)
 
     def get_pool(self, edge_id, pool_vseid):
