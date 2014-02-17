@@ -89,8 +89,6 @@ class NSXCluster(object):
             handler_func = getattr(self, '_process_%s' % attribute, None)
             if handler_func:
                 handler_func()
-        else:
-            LOG.debug(_("Attribute:%s is empty or null"), attribute)
 
     def _process_nsx_controllers(self):
         # If this raises something is not right, so let it bubble up
