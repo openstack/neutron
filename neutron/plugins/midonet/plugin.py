@@ -725,7 +725,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param router: Router information provided to create a new router.
         """
 
-        # NOTE(dcahill): Similar to the Nicira plugin, we completely override
+        # NOTE(dcahill): Similar to the NSX plugin, we completely override
         # this method in order to be able to use the MidoNet ID as Neutron ID
         # TODO(dcahill): Propose upstream patch for allowing
         # 3rd parties to specify IDs as we do with l2 plugin
