@@ -60,6 +60,7 @@ from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import nsx_utils
 from neutron.plugins.vmware.common import securitygroups as sg_utils
 from neutron.plugins.vmware.common import sync
+from neutron.plugins.vmware.common.utils import NetworkTypes
 from neutron.plugins.vmware.dbexts import db as nsx_db
 from neutron.plugins.vmware.dbexts import distributedrouter as dist_rtr
 from neutron.plugins.vmware.dbexts import maclearning as mac_db
@@ -81,17 +82,6 @@ NSX_NOSNAT_RULES_ORDER = 10
 NSX_FLOATINGIP_NAT_RULES_ORDER = 224
 NSX_EXTGW_NAT_RULES_ORDER = 255
 NSX_DEFAULT_NEXTHOP = '1.1.1.1'
-
-
-# Provider network extension - allowed network types for the NSX Plugin
-class NetworkTypes:
-    """Allowed provider network types for the NSX Plugin."""
-    L3_EXT = 'l3_ext'
-    STT = 'stt'
-    GRE = 'gre'
-    FLAT = 'flat'
-    VLAN = 'vlan'
-    BRIDGE = 'bridge'
 
 
 class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
@@ -205,7 +195,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 def_gw_data = {'id': def_l2_gw_uuid,
                                'name': 'default L2 gateway service',
                                'devices': []}
-                gw_res_name = networkgw.RESOURCE_NAME.replace('-', '_')
+                gw_res_name = networkgw.GATEWAY_RESOURCE_NAME.replace('-', '_')
                 def_network_gw = super(
                     NsxPluginV2, self).create_network_gateway(
                         ctx, {gw_res_name: def_gw_data})
@@ -2009,7 +1999,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Ensure the default gateway in the config file is in sync with the db
         self._ensure_default_network_gateway()
         # Need to re-do authZ checks here in order to avoid creation on NSX
-        gw_data = network_gateway[networkgw.RESOURCE_NAME.replace('-', '_')]
+        gw_data = network_gateway[networkgw.GATEWAY_RESOURCE_NAME]
         tenant_id = self._get_tenant_id_for_create(context, gw_data)
         devices = gw_data['devices']
         # Populate default physical network where not specified
@@ -2017,8 +2007,15 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             if not device.get('interface_name'):
                 device['interface_name'] = self.cluster.default_interface_name
         try:
+            # Replace Neutron device identifiers with NSX identifiers
+            # TODO(salv-orlando): Make this operation more efficient doing a
+            # single DB query for all devices
+            nsx_devices = [{'id': self._get_nsx_device_id(context,
+                                                          device['id']),
+                            'interface_name': device['interface_name']} for
+                           device in devices]
             nsx_res = l2gwlib.create_l2_gw_service(
-                self.cluster, tenant_id, gw_data['name'], devices)
+                self.cluster, tenant_id, gw_data['name'], nsx_devices)
             nsx_uuid = nsx_res.get('uuid')
         except api_exc.Conflict:
             raise nsx_exc.L2GatewayAlreadyInUse(gateway=gw_data['name'])
@@ -2027,8 +2024,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             LOG.exception(err_msg)
             raise nsx_exc.NsxPluginException(err_msg=err_msg)
         gw_data['id'] = nsx_uuid
-        return super(NsxPluginV2, self).create_network_gateway(context,
-                                                               network_gateway)
+        return super(NsxPluginV2, self).create_network_gateway(
+            context, network_gateway)
 
     def delete_network_gateway(self, context, gateway_id):
         """Remove a layer-2 network gateway.
@@ -2069,7 +2066,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Ensure the default gateway in the config file is in sync with the db
         self._ensure_default_network_gateway()
         # Update gateway on backend when there's a name change
-        name = network_gateway[networkgw.RESOURCE_NAME].get('name')
+        name = network_gateway[networkgw.GATEWAY_RESOURCE_NAME].get('name')
         if name:
             try:
                 l2gwlib.update_l2_gw_service(self.cluster, id, name)
@@ -2097,6 +2094,205 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         self._ensure_default_network_gateway()
         return super(NsxPluginV2, self).disconnect_network(
             context, network_gateway_id, network_mapping_info)
+
+    def _get_nsx_device_id(self, context, device_id):
+        return self._get_gateway_device(context, device_id)['nsx_id']
+
+    # TODO(salv-orlando): Handlers for Gateway device operations should be
+    # moved into the appropriate nsx_handlers package once the code for the
+    # blueprint nsx-async-backend-communication merges
+    def create_gateway_device_handler(self, context, gateway_device,
+                                      client_certificate):
+        neutron_id = gateway_device['id']
+        try:
+            nsx_res = l2gwlib.create_gateway_device(
+                self.cluster,
+                gateway_device['tenant_id'],
+                gateway_device['name'],
+                neutron_id,
+                self.cluster.default_tz_uuid,
+                gateway_device['connector_type'],
+                gateway_device['connector_ip'],
+                client_certificate)
+
+            # Fetch status (it needs another NSX API call)
+            device_status = nsx_utils.get_nsx_device_status(self.cluster,
+                                                            nsx_res['uuid'])
+
+            # set NSX GW device in neutron database and update status
+            with context.session.begin(subtransactions=True):
+                query = self._model_query(
+                    context, networkgw_db.NetworkGatewayDevice).filter(
+                        networkgw_db.NetworkGatewayDevice.id == neutron_id)
+                query.update({'status': device_status,
+                              'nsx_id': nsx_res['uuid']},
+                             synchronize_session=False)
+            LOG.debug(_("Neutron gateway device: %(neutron_id)s; "
+                        "NSX transport node identifier: %(nsx_id)s; "
+                        "Operational status: %(status)s."),
+                      {'neutron_id': neutron_id,
+                       'nsx_id': nsx_res['uuid'],
+                       'status': device_status})
+            return device_status
+        except api_exc.NsxApiException:
+            # Remove gateway device from neutron database
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Unable to create gateway device: %s on NSX "
+                                "backend."), neutron_id)
+                with context.session.begin(subtransactions=True):
+                    query = self._model_query(
+                        context, networkgw_db.NetworkGatewayDevice).filter(
+                            networkgw_db.NetworkGatewayDevice.id == neutron_id)
+                    query.delete(synchronize_session=False)
+
+    def update_gateway_device_handler(self, context, gateway_device,
+                                      old_gateway_device_data,
+                                      client_certificate):
+        nsx_id = gateway_device['nsx_id']
+        neutron_id = gateway_device['id']
+        try:
+            l2gwlib.update_gateway_device(
+                self.cluster,
+                nsx_id,
+                gateway_device['tenant_id'],
+                gateway_device['name'],
+                neutron_id,
+                self.cluster.default_tz_uuid,
+                gateway_device['connector_type'],
+                gateway_device['connector_ip'],
+                client_certificate)
+
+            # Fetch status (it needs another NSX API call)
+            device_status = nsx_utils.get_nsx_device_status(self.cluster,
+                                                            nsx_id)
+
+            # update status
+            with context.session.begin(subtransactions=True):
+                query = self._model_query(
+                    context, networkgw_db.NetworkGatewayDevice).filter(
+                        networkgw_db.NetworkGatewayDevice.id == neutron_id)
+                query.update({'status': device_status},
+                             synchronize_session=False)
+            LOG.debug(_("Neutron gateway device: %(neutron_id)s; "
+                        "NSX transport node identifier: %(nsx_id)s; "
+                        "Operational status: %(status)s."),
+                      {'neutron_id': neutron_id,
+                       'nsx_id': nsx_id,
+                       'status': device_status})
+            return device_status
+        except api_exc.NsxApiException:
+            # Rollback gateway device on neutron database
+            # As the NSX failure could be transient, we don't put the
+            # gateway device in error status here.
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Unable to update gateway device: %s on NSX "
+                                "backend."), neutron_id)
+                super(NsxPluginV2, self).update_gateway_device(
+                    context, neutron_id, old_gateway_device_data)
+        except n_exc.NotFound:
+            # The gateway device was probably deleted in the backend.
+            # The DB change should be rolled back and the status must
+            # be put in error
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Unable to update gateway device: %s on NSX "
+                                "backend, as the gateway was not found on "
+                                "the NSX backend."), neutron_id)
+            with context.session.begin(subtransactions=True):
+                super(NsxPluginV2, self).update_gateway_device(
+                    context, neutron_id, old_gateway_device_data)
+                query = self._model_query(
+                    context, networkgw_db.NetworkGatewayDevice).filter(
+                        networkgw_db.NetworkGatewayDevice.id == neutron_id)
+                query.update({'status': networkgw_db.ERROR},
+                             synchronize_session=False)
+
+    def get_gateway_device(self, context, device_id, fields=None):
+        # Get device from database
+        gw_device = super(NsxPluginV2, self).get_gateway_device(
+            context, device_id, fields, include_nsx_id=True)
+        # Fetch status from NSX
+        nsx_id = gw_device['nsx_id']
+        device_status = nsx_utils.get_nsx_device_status(self.cluster, nsx_id)
+        # TODO(salv-orlando): Asynchronous sync for gateway device status
+        # Update status in database
+        with context.session.begin(subtransactions=True):
+            query = self._model_query(
+                context, networkgw_db.NetworkGatewayDevice).filter(
+                    networkgw_db.NetworkGatewayDevice.id == device_id)
+            query.update({'status': device_status},
+                         synchronize_session=False)
+        gw_device['status'] = device_status
+        return gw_device
+
+    def get_gateway_devices(self, context, filters=None, fields=None):
+        # Get devices from database
+        devices = super(NsxPluginV2, self).get_gateway_devices(
+            context, filters, fields, include_nsx_id=True)
+        # Fetch operational status from NVP, filter by tenant tag
+        # TODO(salv-orlando): Asynchronous sync for gateway device status
+        tenant_id = context.tenant_id if not context.is_admin else None
+        nsx_statuses = nsx_utils.get_nsx_device_statuses(self.cluster,
+                                                         tenant_id)
+        # Update statuses in database
+        with context.session.begin(subtransactions=True):
+            for device in devices:
+                new_status = nsx_statuses.get(device['nsx_id'])
+                if new_status:
+                    device['status'] = new_status
+        return devices
+
+    def create_gateway_device(self, context, gateway_device):
+        # NOTE(salv-orlando): client-certificate will not be stored
+        # in the database
+        device_data = gateway_device[networkgw.DEVICE_RESOURCE_NAME]
+        client_certificate = device_data.pop('client_certificate')
+        gw_device = super(NsxPluginV2, self).create_gateway_device(
+            context, gateway_device)
+        # DB operation was successful, perform NSX operation
+        gw_device['status'] = self.create_gateway_device_handler(
+            context, gw_device, client_certificate)
+        return gw_device
+
+    def update_gateway_device(self, context, device_id,
+                              gateway_device):
+        # NOTE(salv-orlando): client-certificate will not be stored
+        # in the database
+        client_certificate = (
+            gateway_device[networkgw.DEVICE_RESOURCE_NAME].pop(
+                'client_certificate', None))
+        # Retrive current state from DB in case a rollback should be needed
+        old_gw_device_data = super(NsxPluginV2, self).get_gateway_device(
+            context, device_id, include_nsx_id=True)
+        gw_device = super(NsxPluginV2, self).update_gateway_device(
+            context, device_id, gateway_device, include_nsx_id=True)
+        # DB operation was successful, perform NSX operation
+        gw_device['status'] = self.update_gateway_device_handler(
+            context, gw_device, old_gw_device_data, client_certificate)
+        gw_device.pop('nsx_id')
+        return gw_device
+
+    def delete_gateway_device(self, context, device_id):
+        nsx_device_id = self._get_nsx_device_id(context, device_id)
+        super(NsxPluginV2, self).delete_gateway_device(
+            context, device_id)
+        # DB operation was successful, peform NSX operation
+        # TODO(salv-orlando): State consistency with neutron DB
+        # should be ensured even in case of backend failures
+        try:
+            l2gwlib.delete_gateway_device(self.cluster, nsx_device_id)
+        except n_exc.NotFound:
+            LOG.warn(_("Removal of gateway device: %(neutron_id)s failed on "
+                       "NSX backend (NSX id:%(nsx_id)s) because the NSX "
+                       "resource was not found"),
+                     {'neutron_id': device_id, 'nsx_id': nsx_device_id})
+        except api_exc.NsxApiException:
+            LOG.exception(_("Removal of gateway device: %(neutron_id)s "
+                            "failed on NSX backend (NSX id:%(nsx_id)s). "
+                            "Neutron and NSX states have diverged."),
+                          {'neutron_id': device_id,
+                           'nsx_id': nsx_device_id})
+            # In this case a 500 should be returned
+            raise
 
     def create_security_group(self, context, security_group, default_sg=False):
         """Create security group.

@@ -27,6 +27,17 @@ MAX_DISPLAY_NAME_LEN = 40
 NEUTRON_VERSION = version_info.release_string()
 
 
+# Allowed network types for the NSX Plugin
+class NetworkTypes:
+    """Allowed provider network types for the NSX Plugin."""
+    L3_EXT = 'l3_ext'
+    STT = 'stt'
+    GRE = 'gre'
+    FLAT = 'flat'
+    VLAN = 'vlan'
+    BRIDGE = 'bridge'
+
+
 def get_tags(**kwargs):
     tags = ([dict(tag=value, scope=key)
             for key, value in kwargs.iteritems()])

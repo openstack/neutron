@@ -15,10 +15,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import exceptions as n_exc
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import client
+from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.dbexts import db as nsx_db
+from neutron.plugins.vmware.dbexts import networkgw_db
 from neutron.plugins.vmware import nsx_cluster
+from neutron.plugins.vmware.nsxlib import l2gateway as l2gwlib
 from neutron.plugins.vmware.nsxlib import router as routerlib
 from neutron.plugins.vmware.nsxlib import secgroup as secgrouplib
 from neutron.plugins.vmware.nsxlib import switch as switchlib
@@ -211,3 +215,35 @@ def create_nsx_cluster(cluster_opts, concurrent_connections, gen_timeout):
         concurrent_connections=concurrent_connections,
         gen_timeout=gen_timeout)
     return cluster
+
+
+def get_nsx_device_status(cluster, nsx_uuid):
+    try:
+        status_up = l2gwlib.get_gateway_device_status(
+            cluster, nsx_uuid)
+        if status_up:
+            return networkgw_db.STATUS_ACTIVE
+        else:
+            return networkgw_db.STATUS_DOWN
+    except api_exc.NsxApiException:
+        return networkgw_db.STATUS_UNKNOWN
+    except n_exc.NotFound:
+        return networkgw_db.ERROR
+
+
+def get_nsx_device_statuses(cluster, tenant_id):
+    try:
+        status_dict = l2gwlib.get_gateway_devices_status(
+            cluster, tenant_id)
+        return dict((nsx_device_id,
+                     networkgw_db.STATUS_ACTIVE if connected
+                     else networkgw_db.STATUS_DOWN) for
+                    (nsx_device_id, connected) in status_dict.iteritems())
+    except api_exc.NsxApiException:
+        # Do not make a NSX API exception fatal
+        if tenant_id:
+            LOG.warn(_("Unable to retrieve operational status for gateway "
+                       "devices belonging to tenant: %s"), tenant_id)
+        else:
+            LOG.warn(_("Unable to retrieve operational status for "
+                       "gateway devices"))

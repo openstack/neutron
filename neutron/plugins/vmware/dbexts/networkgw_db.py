@@ -11,7 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
 
 import sqlalchemy as sa
 
@@ -37,6 +36,11 @@ SEGMENTATION_ID = 'segmentation_id'
 ALLOWED_CONNECTION_ATTRIBUTES = set((NETWORK_ID,
                                      SEGMENTATION_TYPE,
                                      SEGMENTATION_ID))
+# Constants for gateway device operational status
+STATUS_UNKNOWN = "UNKNOWN"
+STATUS_ERROR = "ERROR"
+STATUS_ACTIVE = "ACTIVE"
+STATUS_DOWN = "DOWN"
 
 
 class GatewayInUse(exceptions.InUse):
@@ -46,6 +50,15 @@ class GatewayInUse(exceptions.InUse):
 
 class GatewayNotFound(exceptions.NotFound):
     message = _("Network Gateway %(gateway_id)s could not be found")
+
+
+class GatewayDeviceInUse(exceptions.InUse):
+    message = _("Network Gateway Device '%(device_id)s' is still used by "
+                "one or more network gateways.")
+
+
+class GatewayDeviceNotFound(exceptions.NotFound):
+    message = _("Network Gateway Device %(device_id)s could not be found.")
 
 
 class NetworkGatewayPortInUse(exceptions.InUse):
@@ -104,12 +117,26 @@ class NetworkConnection(model_base.BASEV2, models_v2.HasTenant):
                         primary_key=True)
 
 
-class NetworkGatewayDevice(model_base.BASEV2):
+class NetworkGatewayDeviceReference(model_base.BASEV2):
     id = sa.Column(sa.String(36), primary_key=True)
     network_gateway_id = sa.Column(sa.String(36),
                                    sa.ForeignKey('networkgateways.id',
                                                  ondelete='CASCADE'))
     interface_name = sa.Column(sa.String(64))
+
+
+class NetworkGatewayDevice(model_base.BASEV2, models_v2.HasId,
+                           models_v2.HasTenant):
+    nsx_id = sa.Column(sa.String(36))
+    # Optional name for the gateway device
+    name = sa.Column(sa.String(255))
+    # Transport connector type. Not using enum as range of
+    # connector types might vary with backend version
+    connector_type = sa.Column(sa.String(10))
+    # Transport connector IP Address
+    connector_ip = sa.Column(sa.String(64))
+    # operational status
+    status = sa.Column(sa.String(16))
 
 
 class NetworkGateway(model_base.BASEV2, models_v2.HasId,
@@ -119,7 +146,7 @@ class NetworkGateway(model_base.BASEV2, models_v2.HasId,
     # Tenant id is nullable for this resource
     tenant_id = sa.Column(sa.String(36))
     default = sa.Column(sa.Boolean())
-    devices = orm.relationship(NetworkGatewayDevice,
+    devices = orm.relationship(NetworkGatewayDeviceReference,
                                backref='networkgateways',
                                cascade='all,delete')
     network_connections = orm.relationship(NetworkConnection, lazy='joined')
@@ -127,7 +154,8 @@ class NetworkGateway(model_base.BASEV2, models_v2.HasId,
 
 class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
 
-    resource = networkgw.RESOURCE_NAME.replace('-', '_')
+    gateway_resource = networkgw.GATEWAY_RESOURCE_NAME
+    device_resource = networkgw.DEVICE_RESOURCE_NAME
 
     def _get_network_gateway(self, context, gw_id):
         try:
@@ -222,7 +250,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                                           device_owner=port['device_owner'])
 
     def create_network_gateway(self, context, network_gateway):
-        gw_data = network_gateway[self.resource]
+        gw_data = network_gateway[self.gateway_resource]
         tenant_id = self._get_tenant_id_for_create(context, gw_data)
         with context.session.begin(subtransactions=True):
             gw_db = NetworkGateway(
@@ -230,14 +258,17 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                 tenant_id=tenant_id,
                 name=gw_data.get('name'))
             # Device list is guaranteed to be a valid list
-            gw_db.devices.extend([NetworkGatewayDevice(**device)
+            # TODO(salv-orlando): Enforce that gateway device identifiers
+            # in this list are among the tenant's NSX network gateway devices
+            # to avoid risk a tenant 'guessing' other tenant's network devices
+            gw_db.devices.extend([NetworkGatewayDeviceReference(**device)
                                   for device in gw_data['devices']])
             context.session.add(gw_db)
         LOG.debug(_("Created network gateway with id:%s"), gw_db['id'])
         return self._make_network_gateway_dict(gw_db)
 
     def update_network_gateway(self, context, id, network_gateway):
-        gw_data = network_gateway[self.resource]
+        gw_data = network_gateway[self.gateway_resource]
         with context.session.begin(subtransactions=True):
             gw_db = self._get_network_gateway(context, id)
             if gw_db.default:
@@ -363,9 +394,90 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                 raise MultipleGatewayConnections(
                     gateway_id=network_gateway_id)
             # Remove gateway port from network
-            # FIXME(salvatore-orlando): Ensure state of port in NSX is
+            # FIXME(salvatore-orlando): Ensure state of port in NVP is
             # consistent with outcome of transaction
             self.delete_port(context, net_connection['port_id'],
                              nw_gw_port_check=False)
             # Remove NetworkConnection record
             context.session.delete(net_connection)
+
+    def _make_gateway_device_dict(self, gateway_device, fields=None,
+                                  include_nsx_id=False):
+        res = {'id': gateway_device['id'],
+               'name': gateway_device['name'],
+               'status': gateway_device['status'],
+               'connector_type': gateway_device['connector_type'],
+               'connector_ip': gateway_device['connector_ip'],
+               'tenant_id': gateway_device['tenant_id']}
+        if include_nsx_id:
+            # Return the NSX mapping as well. This attribute will not be
+            # returned in the API response anyway. Ensure it will not be
+            # filtered out in field selection.
+            if fields:
+                fields.append('nsx_id')
+            res['nsx_id'] = gateway_device['nsx_id']
+        return self._fields(res, fields)
+
+    def _get_gateway_device(self, context, device_id):
+        try:
+            return self._get_by_id(context, NetworkGatewayDevice, device_id)
+        except sa_orm_exc.NoResultFound:
+            raise GatewayDeviceNotFound(device_id=device_id)
+
+    def _is_device_in_use(self, context, device_id):
+        query = self._get_collection_query(
+            context, NetworkGatewayDeviceReference, {'id': [device_id]})
+        return query.first()
+
+    def get_gateway_device(self, context, device_id, fields=None,
+                           include_nsx_id=False):
+        return self._make_gateway_device_dict(
+            self._get_gateway_device(context, device_id),
+            fields, include_nsx_id)
+
+    def get_gateway_devices(self, context, filters=None, fields=None,
+                            include_nsx_id=False):
+        query = self._get_collection_query(context,
+                                           NetworkGatewayDevice,
+                                           filters=filters)
+        return [self._make_gateway_device_dict(row, fields, include_nsx_id)
+                for row in query]
+
+    def create_gateway_device(self, context, gateway_device,
+                              initial_status=STATUS_UNKNOWN):
+        device_data = gateway_device[self.device_resource]
+        tenant_id = self._get_tenant_id_for_create(context, device_data)
+        with context.session.begin(subtransactions=True):
+            device_db = NetworkGatewayDevice(
+                id=device_data.get('id', uuidutils.generate_uuid()),
+                tenant_id=tenant_id,
+                name=device_data.get('name'),
+                connector_type=device_data['connector_type'],
+                connector_ip=device_data['connector_ip'],
+                status=initial_status)
+            context.session.add(device_db)
+        LOG.debug(_("Created network gateway device: %s"), device_db['id'])
+        return self._make_gateway_device_dict(device_db)
+
+    def update_gateway_device(self, context, gateway_device_id,
+                              gateway_device, include_nsx_id=False):
+        device_data = gateway_device[self.device_resource]
+        with context.session.begin(subtransactions=True):
+            device_db = self._get_gateway_device(context, gateway_device_id)
+            # Ensure there is something to update before doing it
+            if any([device_db[k] != device_data[k] for k in device_data]):
+                device_db.update(device_data)
+        LOG.debug(_("Updated network gateway device: %s"),
+                  gateway_device_id)
+        return self._make_gateway_device_dict(
+            device_db, include_nsx_id=include_nsx_id)
+
+    def delete_gateway_device(self, context, device_id):
+        with context.session.begin(subtransactions=True):
+            # A gateway device should not be deleted
+            # if it is used in any network gateway service
+            if self._is_device_in_use(context, device_id):
+                raise GatewayDeviceInUse(device_id=device_id)
+            device_db = self._get_gateway_device(context, device_id)
+            context.session.delete(device_db)
+        LOG.debug(_("Deleted network gateway device: %s."), device_id)
