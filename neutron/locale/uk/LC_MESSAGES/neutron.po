@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-16 06:27+0000\n"
+"POT-Creation-Date: 2014-02-18 06:24+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian "
@@ -5482,22 +5482,22 @@ msgstr ""
 msgid "Invalid input for CIDR"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:444
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:458
 #, python-format
 msgid "req: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:453
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:467
 #, python-format
 msgid "status_code %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:458
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:472
 #, python-format
 msgid "VSM: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:473
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:487
 #, python-format
 msgid "Unable to serialize object of type = '%s'"
 msgstr ""
@@ -5685,45 +5685,50 @@ msgstr ""
 msgid "_send_create_subnet_request: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:888
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:885
+#, python-format
+msgid "_send_update_subnet_request: %s"
+msgstr ""
+
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:896
 #, python-format
 msgid "_send_delete_subnet_request: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:904
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:912
 #, python-format
 msgid "_send_create_port_request: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:943
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:951
 #, python-format
 msgid "_send_update_port_request: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:958
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:966
 #, python-format
 msgid "_send_delete_port_request: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:999
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1007
 #, python-format
 msgid "Create network: profile_id=%s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1007
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1015
 #, python-format
 msgid ""
 "Physical_network %(phy_net)s, seg_type %(net_type)s, seg_id %(seg_id)s, "
 "multicast_ip %(multicast_ip)s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1019
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1029
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1027
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1037
 #, python-format
 msgid "Seg list %s "
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1072
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1080
 #: neutron/plugins/hyperv/hyperv_neutron_plugin.py:254
 #: neutron/plugins/metaplugin/meta_neutron_plugin.py:175
 #: neutron/plugins/mlnx/mlnx_plugin.py:333
@@ -5732,87 +5737,87 @@ msgstr ""
 msgid "Created network: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1130
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1138
 #, python-format
 msgid "Updated network: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1145
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1153
 #, python-format
 msgid "Cannot delete network '%s' that is member of a trunk segment"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1149
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1157
 #, python-format
 msgid "Cannot delete network '%s' that is a member of a multi-segment network"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1157
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1165
 msgid "Delete failed in VSM"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1168
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1176
 #, python-format
 msgid "Deleted network: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1178
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1186
 #, python-format
 msgid "Get network: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1200
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1208
 msgid "Get networks"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1243
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1251
 #, python-format
 msgid "Create port: profile_id=%s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1256
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1264
 #, python-format
 msgid "Created port: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1267
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1275
 #, python-format
 msgid "Update port: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1299
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1307
 #, python-format
 msgid "Get port: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1319
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1327
 msgid "Get ports"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1335
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1343
 msgid "Create subnet"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1343
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1351
 #, python-format
 msgid "Created subnet: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1354
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1362
 msgid "Update subnet"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1368
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1377
 #, python-format
 msgid "Delete subnet: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1383
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1392
 #, python-format
 msgid "Get subnet: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1403
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1412
 msgid "Get subnets"
 msgstr ""
 
@@ -9806,11 +9811,6 @@ msgstr ""
 #: neutron/plugins/nicira/nsx_cluster.py:66
 #, python-format
 msgid "The following cluster attributes were not specified: %s'"
-msgstr ""
-
-#: neutron/plugins/nicira/nsx_cluster.py:93
-#, python-format
-msgid "Attribute:%s is empty or null"
 msgstr ""
 
 #: neutron/plugins/nicira/nvplib.py:167
@@ -14384,28 +14384,10 @@ msgstr ""
 #~ msgid "Received an empty port ID for host '%s'"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Unable to create logical router port "
-#~ "for neutron port id %(port_id)s on "
-#~ "router %(router_id)s"
-#~ msgstr ""
-
 #~ msgid "The gateway port for the router %s was not found on the NVP backend"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "_nvp_delete_ext_gw_port completed on external "
-#~ "network %(ext_net_id)s, attached to "
-#~ "router:%(router_id)s"
-#~ msgstr ""
-
 #~ msgid "Unable to create router %s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Failure while removing router:%s from "
-#~ "database. The router will be put "
-#~ "in ERROR status"
 #~ msgstr ""
 
 #~ msgid "Failed to create logical queue"
@@ -14424,5 +14406,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Processing port:%s"
+#~ msgstr ""
+
+#~ msgid "Attribute:%s is empty or null"
 #~ msgstr ""
 
