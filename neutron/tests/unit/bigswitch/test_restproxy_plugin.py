@@ -39,6 +39,7 @@ class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,
             self._plugin_name = plugin_name
         super(BigSwitchProxyPluginV2TestCase,
               self).setUp(self._plugin_name)
+        self.port_create_status = 'BUILD'
 
 
 class TestBigSwitchProxyBasicGet(test_plugin.TestBasicGet,
@@ -67,25 +68,31 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = False
 
+    def test_update_port_status_build(self):
+        with self.port() as port:
+            self.assertEqual(port['port']['status'], 'BUILD')
+            self.assertEqual(self.port_create_status, 'BUILD')
+
     def _get_ports(self, netid):
         return self.deserialize('json',
                                 self._list_ports('json', netid=netid))['ports']
 
     def test_rollback_for_port_create(self):
-        with self.network(no_delete=True) as n:
+        plugin = NeutronManager.get_plugin()
+        with self.subnet() as s:
             self.httpPatch = patch('httplib.HTTPConnection', create=True,
                                    new=fake_server.HTTPConnectionMock500)
             self.httpPatch.start()
-            kwargs = {'device_id': 'somedevid',
-                      'tenant_id': n['network']['tenant_id']}
-            self._create_port('json', n['network']['id'],
-                              expected_code=
-                              webob.exc.HTTPInternalServerError.code,
-                              **kwargs)
-            self.httpPatch.stop()
-            ports = self._get_ports(n['network']['id'])
-            #failure to create should result in no ports
-            self.assertEqual(0, len(ports))
+            kwargs = {'device_id': 'somedevid'}
+            # allow thread spawns for this patch
+            self.spawn_p.stop()
+            with self.port(subnet=s, **kwargs):
+                self.spawn_p.start()
+                plugin.evpool.waitall()
+                self.httpPatch.stop()
+                ports = self._get_ports(s['subnet']['network_id'])
+                #failure to create should result in port in error state
+                self.assertEqual(ports[0]['status'], 'ERROR')
 
     def test_rollback_for_port_update(self):
         with self.network() as n:
@@ -116,7 +123,7 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
                              webob.exc.HTTPInternalServerError.code)
                 self.httpPatch.stop()
                 port = self._get_ports(n['network']['id'])[0]
-                self.assertEqual('ACTIVE', port['status'])
+                self.assertEqual('BUILD', port['status'])
 
     def test_correct_shared_net_tenant_id(self):
         # tenant_id in port requests should match network tenant_id instead

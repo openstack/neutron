@@ -47,6 +47,9 @@ restproxy_opts = [
     cfg.IntOpt('server_timeout', default=10,
                help=_("Maximum number of seconds to wait for proxy request "
                       "to connect and complete.")),
+    cfg.IntOpt('thread_pool_size', default=4,
+               help=_("Maximum number of threads to spawn to handle large "
+                      "volumes of port creations.")),
     cfg.StrOpt('neutron_id', default='neutron-' + utils.get_hostname(),
                deprecated_name='quantum_id',
                help=_("User defined identifier for this Neutron deployment")),
