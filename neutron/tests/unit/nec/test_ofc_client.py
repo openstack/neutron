@@ -72,6 +72,11 @@ class OFCClientTest(base.BaseTestCase):
         for status in [201, 202, 204]:
             self._test_do_request(status, None, None)
 
+    def test_do_request_returns_404(self):
+        resbody = ''
+        errmsg = _("The specified OFC resource (/somewhere) is not found.")
+        self._test_do_request(404, resbody, errmsg, nexc.OFCResourceNotFound)
+
     def test_do_request_error_no_body(self):
         errmsg = _("An OFC exception has occurred: Operation on OFC failed")
         exc_checks = {'status': 400, 'err_code': None, 'err_msg': None}

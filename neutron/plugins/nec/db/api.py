@@ -144,9 +144,8 @@ def get_ofc_id_lookup_both(session, resource, neutron_id):
         ofc_id = get_ofc_id(session, resource, neutron_id,
                             old_style=True)
     if not ofc_id:
-        reason = (_("NotFound %(resource)s for neutron_id=%(id)s.")
-                  % {'resource': resource, 'id': neutron_id})
-        raise nexc.OFCConsistencyBroken(reason=reason)
+        raise nexc.OFCMappingNotFound(resource=resource,
+                                      neutron_id=neutron_id)
     return ofc_id
 
 

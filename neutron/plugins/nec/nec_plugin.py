@@ -187,7 +187,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 else:
                     LOG.debug(_('_cleanup_ofc_tenant: No OFC tenant for %s'),
                               tenant_id)
-            except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+            except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
                 reason = _("delete_ofc_tenant() failed due to %s") % exc
                 LOG.warn(reason)
 
@@ -223,7 +223,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self.ofc.create_ofc_port(context, port['id'], port)
             port_status = const.PORT_STATUS_ACTIVE
-        except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+        except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
             LOG.error(_("create_ofc_port() failed due to %s"), exc)
             port_status = const.PORT_STATUS_ERROR
 
@@ -244,7 +244,23 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             self.ofc.delete_ofc_port(context, port['id'], port)
             port_status = const.PORT_STATUS_DOWN
-        except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+        except (nexc.OFCResourceNotFound, nexc.OFCMappingNotFound):
+            # There is a case where multiple delete_port operation are
+            # running concurrently. For example, delete_port from
+            # release_dhcp_port and deletion of network owned ports in
+            # delete_network. In such cases delete_ofc_port may receive
+            # 404 error from OFC.
+            # Also there is a case where neutron port is deleted
+            # between exists_ofc_port and get_ofc_id in delete_ofc_port.
+            # In this case OFCMappingNotFound is raised.
+            # These two cases are valid situations.
+            LOG.info(_("deactivate_port(): OFC port for port=%s is "
+                       "already removed."), port['id'])
+            # The port is already removed, so there is no need
+            # to update status in the database.
+            port['status'] = const.PORT_STATUS_DOWN
+            return port
+        except nexc.OFCException as exc:
             LOG.error(_("delete_ofc_port() failed due to %s"), exc)
             port_status = const.PORT_STATUS_ERROR
 
@@ -282,7 +298,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if not self.ofc.exists_ofc_tenant(context, tenant_id):
                 self.ofc.create_ofc_tenant(context, tenant_id)
             self.ofc.create_ofc_network(context, tenant_id, net_id, net_name)
-        except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+        except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
             LOG.error(_("Failed to create network id=%(id)s on "
                         "OFC: %(exc)s"), {'id': net_id, 'exc': exc})
             network['network']['status'] = const.NET_STATUS_ERROR
@@ -368,7 +384,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         try:
             self.ofc.delete_ofc_network(context, id, net_db)
-        except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+        except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
             reason = _("delete_network() failed due to %s") % exc
             LOG.error(reason)
             self._update_resource_status(context, "network", net_db['id'],

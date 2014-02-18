@@ -843,3 +843,40 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         ]
         self.ofc.assert_has_calls(expected)
         self.assertEqual(self.ofc.delete_ofc_port.call_count, 2)
+
+    def _test_delete_port_for_disappeared_ofc_port(self, raised_exc):
+        self.ofc.set_raise_exc('delete_ofc_port', raised_exc)
+
+        with self.port(no_delete=True) as port:
+            port_id = port['port']['id']
+
+            portinfo = {'id': port_id, 'port_no': 123}
+            self.rpcapi_update_ports(added=[portinfo])
+
+            self._delete('ports', port_id)
+
+            # Check the port on neutron db is deleted. NotFound for
+            # neutron port itself should be handled by called. It is
+            # consistent with ML2 behavior, but it may need to be
+            # revisit.
+            self._show('ports', port_id,
+                       expected_code=webob.exc.HTTPNotFound.code)
+
+        ctx = mock.ANY
+        port = mock.ANY
+        expected = [
+            mock.call.exists_ofc_port(ctx, port_id),
+            mock.call.create_ofc_port(ctx, port_id, port),
+            mock.call.exists_ofc_port(ctx, port_id),
+            mock.call.delete_ofc_port(ctx, port_id, port),
+        ]
+        self.ofc.assert_has_calls(expected)
+        self.assertEqual(self.ofc.delete_ofc_port.call_count, 1)
+
+    def test_delete_port_for_nonexist_ofc_port(self):
+        self._test_delete_port_for_disappeared_ofc_port(
+            nexc.OFCResourceNotFound(resource='ofc_port'))
+
+    def test_delete_port_for_noofcmap_ofc_port(self):
+        self._test_delete_port_for_disappeared_ofc_port(
+            nexc.OFCMappingNotFound(resource='port', neutron_id='port1'))
