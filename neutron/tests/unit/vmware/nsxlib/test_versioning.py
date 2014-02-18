@@ -14,10 +14,10 @@
 # limitations under the License.
 #
 
-from neutron.plugins.nicira.api_client import exception
-from neutron.plugins.nicira.api_client.version import Version
-from neutron.plugins.nicira.nsxlib import router as routerlib
-from neutron.plugins.nicira.nsxlib import versioning
+from neutron.plugins.vmware.api_client import exception
+from neutron.plugins.vmware.api_client.version import Version
+from neutron.plugins.vmware.nsxlib import router as routerlib
+from neutron.plugins.vmware.nsxlib import versioning
 from neutron.tests import base
 
 

@@ -17,8 +17,8 @@
 import mock
 
 from neutron.common import exceptions
-from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.nsxlib import queue as queuelib
+from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.nsxlib import queue as queuelib
 from neutron.tests.unit.vmware.nsxlib import base
 
 

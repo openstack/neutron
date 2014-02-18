@@ -16,14 +16,14 @@
 
 import os
 
-from neutron.plugins.nicira.api_client import client as nsx_client
-from neutron.plugins.nicira.api_client import eventlet_client
-from neutron.plugins.nicira import extensions
-from neutron.plugins.nicira import nvplib
-from neutron.plugins.nicira.vshield.common import VcnsApiClient as vcnsapi
-from neutron.plugins.nicira.vshield import vcns
-import neutron.plugins.nicira.vshield.vcns_driver as vcnsdriver
+from neutron.plugins.vmware.api_client import client as nsx_client
+from neutron.plugins.vmware.api_client import eventlet_client
+from neutron.plugins.vmware import extensions
+from neutron.plugins.vmware import nvplib
 import neutron.plugins.vmware.plugin as neutron_plugin
+from neutron.plugins.vmware.vshield.common import VcnsApiClient as vcnsapi
+from neutron.plugins.vmware.vshield import vcns
+import neutron.plugins.vmware.vshield.vcns_driver as vcnsdriver
 
 
 plugin = neutron_plugin.NsxPlugin
@@ -52,4 +52,4 @@ def get_fake_conf(filename):
 
 
 def nsx_method(method_name, module_name='nvplib'):
-    return '%s.%s.%s' % ('neutron.plugins.nicira', module_name, method_name)
+    return '%s.%s.%s' % ('neutron.plugins.vmware', module_name, method_name)

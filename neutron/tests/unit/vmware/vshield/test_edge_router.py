@@ -24,8 +24,8 @@ from neutron import context
 from neutron.extensions import l3
 from neutron.manager import NeutronManager
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira import NeutronServicePlugin as nsp
+from neutron.plugins.vmware.common import utils
+from neutron.plugins.vmware.plugins import service as nsp
 from neutron.tests import base
 from neutron.tests.unit import test_l3_plugin
 from neutron.tests.unit.vmware import NSXEXT_PATH

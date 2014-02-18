@@ -21,8 +21,8 @@ from neutron.common import config as n_config
 from neutron import context
 from neutron.db.firewall import firewall_db
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.vshield.common import exceptions as vcns_exc
-from neutron.plugins.nicira.vshield import vcns_driver
+from neutron.plugins.vmware.vshield.common import exceptions as vcns_exc
+from neutron.plugins.vmware.vshield import vcns_driver
 from neutron.tests.unit.db.firewall import test_db_firewall
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import VCNS_NAME

@@ -15,8 +15,8 @@
 #
 
 from neutron.common import exceptions
-from neutron.plugins.nicira.nsxlib import secgroup as secgrouplib
-from neutron.plugins.nicira import nvplib as nsx_utils
+from neutron.plugins.vmware.nsxlib import secgroup as secgrouplib
+from neutron.plugins.vmware import nvplib as nsx_utils
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
 

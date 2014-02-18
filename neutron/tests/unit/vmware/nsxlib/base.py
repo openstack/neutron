@@ -16,11 +16,11 @@
 
 import mock
 
-from neutron.plugins.nicira.api_client import client
-from neutron.plugins.nicira.api_client import exception
-from neutron.plugins.nicira.api_client import version
-from neutron.plugins.nicira.common import config  # noqa
-from neutron.plugins.nicira import nsx_cluster as cluster
+from neutron.plugins.vmware.api_client import client
+from neutron.plugins.vmware.api_client import exception
+from neutron.plugins.vmware.api_client import version
+from neutron.plugins.vmware.common import config  # noqa
+from neutron.plugins.vmware import nsx_cluster as cluster
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.apiclient import fake

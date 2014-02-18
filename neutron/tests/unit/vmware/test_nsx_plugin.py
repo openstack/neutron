@@ -37,14 +37,14 @@ from neutron.manager import NeutronManager
 from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.api_client.version import Version
-from neutron.plugins.nicira.common import exceptions as nsx_exc
-from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira.dbexts import db as nsx_db
-from neutron.plugins.nicira.extensions import distributedrouter as dist_router
-from neutron.plugins.nicira import NeutronPlugin
-from neutron.plugins.nicira import nsxlib
+from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.api_client.version import Version
+from neutron.plugins.vmware.common import exceptions as nsx_exc
+from neutron.plugins.vmware.common import sync
+from neutron.plugins.vmware.dbexts import db as nsx_db
+from neutron.plugins.vmware.extensions import distributedrouter as dist_router
+from neutron.plugins.vmware import nsxlib
+from neutron.plugins.vmware.plugins.base import NetworkTypes
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
@@ -462,7 +462,7 @@ class TestL3NatTestCase(L3NatTest,
 
     def _create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
-        net_type = NeutronPlugin.NetworkTypes.L3_EXT
+        net_type = NetworkTypes.L3_EXT
         providernet_args = {pnet.NETWORK_TYPE: net_type,
                             pnet.PHYSICAL_NETWORK: 'l3_gw_uuid'}
         if vlan_id:
@@ -476,7 +476,7 @@ class TestL3NatTestCase(L3NatTest,
 
     def _test_create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
-        net_type = NeutronPlugin.NetworkTypes.L3_EXT
+        net_type = NetworkTypes.L3_EXT
         expected = [('subnets', []), ('name', name), ('admin_state_up', True),
                     ('status', 'ACTIVE'), ('shared', False),
                     (external_net.EXTERNAL, True),

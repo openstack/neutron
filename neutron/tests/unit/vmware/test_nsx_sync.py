@@ -26,12 +26,12 @@ from neutron.common import constants
 from neutron import context
 from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log
-from neutron.plugins.nicira.api_client import client
-from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.api_client import version
-from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira import nsx_cluster as cluster
-from neutron.plugins.nicira import nvplib as nsx_utils
+from neutron.plugins.vmware.api_client import client
+from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.api_client import version
+from neutron.plugins.vmware.common import sync
+from neutron.plugins.vmware import nsx_cluster as cluster
+from neutron.plugins.vmware import nvplib as nsx_utils
 from neutron.plugins.vmware import plugin
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2

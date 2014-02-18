@@ -17,10 +17,10 @@ import json
 import mock
 
 from neutron.common import exceptions
-from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.common import exceptions as nsx_exc
-from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira.nsxlib import lsn as lsnlib
+from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.common import exceptions as nsx_exc
+from neutron.plugins.vmware.common import utils
+from neutron.plugins.vmware.nsxlib import lsn as lsnlib
 from neutron.tests import base
 
 

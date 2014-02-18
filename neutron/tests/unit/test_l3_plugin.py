@@ -649,7 +649,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         self.assertIn('tenant_id', payload)
                         stid = s['subnet']['tenant_id']
                         # tolerate subnet tenant deliberately to '' in the
-                        # nicira metadata access case
+                        # nsx metadata access case
                         self.assertIn(payload['tenant_id'], [stid, ''])
 
     def test_router_add_interface_subnet_with_bad_tenant_returns_404(self):

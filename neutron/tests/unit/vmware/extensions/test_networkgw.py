@@ -28,10 +28,10 @@ from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron import manager
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.dbexts import networkgw_db
-from neutron.plugins.nicira.extensions import networkgw
-from neutron.plugins.nicira import nsxlib
+from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.dbexts import networkgw_db
+from neutron.plugins.vmware.extensions import networkgw
+from neutron.plugins.vmware import nsxlib
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2

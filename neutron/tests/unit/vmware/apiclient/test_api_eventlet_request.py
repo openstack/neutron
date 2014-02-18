@@ -22,8 +22,8 @@ from eventlet.green import urllib2
 from mock import Mock
 from mock import patch
 
-from neutron.plugins.nicira.api_client import eventlet_client as client
-from neutron.plugins.nicira.api_client import eventlet_request as request
+from neutron.plugins.vmware.api_client import eventlet_client as client
+from neutron.plugins.vmware.api_client import eventlet_request as request
 from neutron.tests import base
 from neutron.tests.unit.vmware import CLIENT_NAME
 
