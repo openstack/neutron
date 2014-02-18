@@ -82,6 +82,8 @@ class TestL3GwModeMixin(base.BaseTestCase):
 
     def setUp(self):
         super(TestL3GwModeMixin, self).setUp()
+        plugin = __name__ + '.' + TestDbIntPlugin.__name__
+        self.setup_coreplugin(plugin)
         self.target_object = TestDbIntPlugin()
         # Patch the context
         ctx_patcher = mock.patch('neutron.context', autospec=True)

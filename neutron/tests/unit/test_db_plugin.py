@@ -78,8 +78,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
               ext_mgr=None):
         super(NeutronDbPluginV2TestCase, self).setUp()
 
-        # Make sure at each test a new instance of the plugin is returned
-        NeutronManager._instance = None
         # Make sure at each test according extensions for the plugin is loaded
         PluginAwareExtensionManager._instance = None
         # Save the attributes map in case the plugin will alter it
@@ -104,7 +102,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             args.extend(['--config-file', config_file])
         config.parse(args=args)
         # Update the plugin
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
         cfg.CONF.set_override(
             'service_plugins',
             [test_config.get(key, default)

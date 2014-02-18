@@ -58,8 +58,6 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         super(ProvidernetExtensionTestCase, self).setUp()
 
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
-        # Ensure 'stale' patched copies of the plugin are never returned
-        NeutronManager._instance = None
 
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
@@ -70,7 +68,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
             self.saved_attr_map[resource] = attrs.copy()
 
         # Update the plugin and extensions path
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
         cfg.CONF.set_override('allow_pagination', True)
         cfg.CONF.set_override('allow_sorting', True)
         self._plugin_patcher = mock.patch(plugin, autospec=True)

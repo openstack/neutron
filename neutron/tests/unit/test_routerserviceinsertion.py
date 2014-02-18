@@ -167,13 +167,10 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
         config.parse(args=args)
 
         #just stubbing core plugin with LoadBalancer plugin
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
         cfg.CONF.set_override('service_plugins', [])
         cfg.CONF.set_override('quota_router', -1, group='QUOTAS')
         self.addCleanup(cfg.CONF.reset)
-
-        # Ensure 'stale' patched copies of the plugin are never returned
-        neutron.manager.NeutronManager._instance = None
 
         # Ensure existing ExtensionManager is not used
 
