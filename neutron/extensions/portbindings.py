@@ -45,6 +45,7 @@ PROFILE = 'binding:profile'
 #                     strategy for OVS should be used
 CAP_PORT_FILTER = 'port_filter'
 OVS_HYBRID_PLUG = 'ovs_hybrid_plug'
+VIF_DETAILS_VLAN = 'vlan'
 
 VIF_TYPE_UNBOUND = 'unbound'
 VIF_TYPE_BINDING_FAILED = 'binding_failed'
@@ -58,11 +59,13 @@ VIF_TYPE_HYPERV = 'hyperv'
 VIF_TYPE_MIDONET = 'midonet'
 VIF_TYPE_MLNX_DIRECT = 'mlnx_direct'
 VIF_TYPE_MLNX_HOSTDEV = 'hostdev'
+VIF_TYPE_HW_VEB = 'hw_veb'
 VIF_TYPE_OTHER = 'other'
 VIF_TYPES = [VIF_TYPE_UNBOUND, VIF_TYPE_BINDING_FAILED, VIF_TYPE_OVS,
              VIF_TYPE_IVS, VIF_TYPE_BRIDGE, VIF_TYPE_802_QBG,
              VIF_TYPE_802_QBH, VIF_TYPE_HYPERV, VIF_TYPE_MIDONET,
-             VIF_TYPE_MLNX_DIRECT, VIF_TYPE_MLNX_HOSTDEV, VIF_TYPE_OTHER]
+             VIF_TYPE_MLNX_DIRECT, VIF_TYPE_MLNX_HOSTDEV, VIF_TYPE_HW_VEB,
+             VIF_TYPE_OTHER]
 
 VNIC_NORMAL = 'normal'
 VNIC_DIRECT = 'direct'
