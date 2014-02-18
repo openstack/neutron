@@ -61,6 +61,7 @@ from neutron.common import topics
 from neutron import context as qcontext
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
+from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
@@ -70,6 +71,7 @@ from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import securitygroups_rpc_base as sg_rpc_base
+from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import external_net
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import l3
@@ -414,6 +416,7 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
 
 
 class NeutronRestProxyV2(NeutronRestProxyV2Base,
+                         addr_pair_db.AllowedAddressPairsMixin,
                          extradhcpopt_db.ExtraDhcpOptMixin,
                          agentschedulers_db.DhcpAgentSchedulerDbMixin,
                          sg_rpc_base.SecurityGroupServerRpcMixin):
@@ -421,7 +424,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
     _supported_extension_aliases = ["external-net", "router", "binding",
                                     "router_rules", "extra_dhcp_opt", "quotas",
                                     "dhcp_agent_scheduler", "agent",
-                                    "security-group"]
+                                    "security-group", "allowed-address-pairs"]
 
     @property
     def supported_extension_aliases(self):
@@ -629,6 +632,10 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             host_id = port['port'][portbindings.HOST_ID]
             porttracker_db.put_port_hostid(context, new_port['id'],
                                            host_id)
+        new_port[addr_pair.ADDRESS_PAIRS] = (
+            self._process_create_allowed_address_pairs(
+                context, new_port,
+                port['port'].get(addr_pair.ADDRESS_PAIRS)))
         self._process_port_create_extra_dhcp_opts(context, new_port,
                                                   dhcp_opts)
         new_port = self._extend_port_dict_binding(context, new_port)
@@ -698,9 +705,16 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             # Update DB
             new_port = super(NeutronRestProxyV2,
                              self).update_port(context, port_id, port)
+            ctrl_update_required = False
+            if addr_pair.ADDRESS_PAIRS in port['port']:
+                ctrl_update_required |= (
+                    self.update_address_pairs_on_port(context, port_id, port,
+                                                      orig_port, new_port))
+            if 'fixed_ips' in port['port']:
+                self._check_fixed_ips_and_address_pairs_no_overlap(
+                    context, new_port)
             self._update_extra_dhcp_opts_on_port(context, port_id, port,
                                                  new_port)
-            ctrl_update_required = False
             old_host_id = porttracker_db.get_port_hostid(context,
                                                          orig_port['id'])
             if (portbindings.HOST_ID in port['port']

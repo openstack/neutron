@@ -27,6 +27,7 @@ from neutron.tests.unit.bigswitch import fake_server
 from neutron.tests.unit.bigswitch import test_base
 from neutron.tests.unit import test_api_v2
 import neutron.tests.unit.test_db_plugin as test_plugin
+import neutron.tests.unit.test_extension_allowedaddresspairs as test_addr_pair
 
 
 class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,
@@ -280,3 +281,8 @@ class TestBigSwitchProxySync(BigSwitchProxyPluginV2TestCase):
         plugin_obj = NeutronManager.get_plugin()
         result = plugin_obj._send_all_data()
         self.assertEqual(result[0], 200)
+
+
+class TestBigSwitchAddressPairs(BigSwitchProxyPluginV2TestCase,
+                                test_addr_pair.TestAllowedAddressPairs):
+    pass
