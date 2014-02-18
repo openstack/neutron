@@ -106,6 +106,8 @@ class TestL3GwModeMixin(base.BaseTestCase):
         super(TestL3GwModeMixin, self).setUp()
         stubout_fixture = self.useFixture(StuboutFixture())
         self.stubs = stubout_fixture.stubs
+        plugin = __name__ + '.' + TestDbIntPlugin.__name__
+        self.setup_coreplugin(plugin)
         self.target_object = TestDbIntPlugin()
         # Patch the context
         ctx_patcher = mock.patch('neutron.context', autospec=True)
