@@ -131,14 +131,13 @@ class BaseSwanProcess():
         self.conf = conf
         self.id = process_id
         self.root_helper = root_helper
-        self.vpnservice = vpnservice
         self.updated_pending_status = False
         self.namespace = namespace
         self.connection_status = {}
         self.config_dir = os.path.join(
             cfg.CONF.ipsec.config_base_dir, self.id)
         self.etc_dir = os.path.join(self.config_dir, 'etc')
-        self.translate_dialect()
+        self.update_vpnservice(vpnservice)
 
     def translate_dialect(self):
         if not self.vpnservice:
@@ -151,6 +150,10 @@ class BaseSwanProcess():
                         'pfs']:
                 self._dialect(ipsec_site_conn['ikepolicy'], key)
                 self._dialect(ipsec_site_conn['ipsecpolicy'], key)
+
+    def update_vpnservice(self, vpnservice):
+        self.vpnservice = vpnservice
+        self.translate_dialect()
 
     def _dialect(self, obj, key):
         obj[key] = self.DIALECT_MAP.get(obj[key], obj[key])
@@ -435,6 +438,8 @@ class OpenSwanProcess(BaseSwanProcess):
                        '--ctlbase', self.pid_path,
                        '--shutdown',
                        ])
+        #clean connection_status info
+        self.connection_status = {}
 
 
 class IPsecVpnDriverApi(proxy.RpcProxy):
@@ -555,6 +560,8 @@ class IPsecDriver(device_drivers.DeviceDriver):
                 vpnservice,
                 namespace)
             self.processes[process_id] = process
+        elif vpnservice:
+            process.update_vpnservice(vpnservice)
         return process
 
     def create_router(self, process_id):
