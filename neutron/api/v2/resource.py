@@ -84,17 +84,24 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
             result = method(request=request, **args)
         except (exceptions.NeutronException,
                 netaddr.AddrFormatError) as e:
-            LOG.exception(_('%s failed'), action)
+            for fault in faults:
+                if isinstance(e, fault):
+                    mapped_exc = faults[fault]
+                    break
+            else:
+                mapped_exc = webob.exc.HTTPInternalServerError
+            if 400 <= mapped_exc.code < 500:
+                LOG.info(_('%(action)s failed (client error): %(exc)s'),
+                         {'action': action, 'exc': e})
+            else:
+                LOG.exception(_('%s failed'), action)
             e = translate(e, language)
             # following structure is expected by python-neutronclient
             err_data = {'type': e.__class__.__name__,
                         'message': e, 'detail': ''}
             body = serializer.serialize({'NeutronError': err_data})
             kwargs = {'body': body, 'content_type': content_type}
-            for fault in faults:
-                if isinstance(e, fault):
-                    raise faults[fault](**kwargs)
-            raise webob.exc.HTTPInternalServerError(**kwargs)
+            raise mapped_exc(**kwargs)
         except webob.exc.HTTPException as e:
             LOG.exception(_('%s failed'), action)
             translate(e, language)
