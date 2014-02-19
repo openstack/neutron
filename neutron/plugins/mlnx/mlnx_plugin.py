@@ -95,7 +95,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self):
         """Start Mellanox Neutron Plugin."""
-        db.initialize()
+        super(MellanoxEswitchPlugin, self).__init__()
         self._parse_network_vlan_ranges()
         db.sync_network_states(self.network_vlan_ranges)
         self._set_tenant_network_type()

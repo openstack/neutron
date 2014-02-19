@@ -29,10 +29,6 @@ from neutron.plugins.linuxbridge.db import l2network_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def initialize():
-    db.configure_db()
-
-
 def sync_network_states(network_vlan_ranges):
     """Synchronize network_states table with current configured VLAN ranges."""
 

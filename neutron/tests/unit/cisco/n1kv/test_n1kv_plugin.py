@@ -395,4 +395,4 @@ class TestN1kvNonDbTest(base.BaseTestCase):
 
     """
     def test_db(self):
-        n1kv_db_v2.initialize()
+        db.configure_db()

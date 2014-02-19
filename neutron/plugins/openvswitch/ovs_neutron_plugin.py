@@ -294,12 +294,12 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         attributes.NETWORKS, ['_extend_network_dict_provider_ovs'])
 
     def __init__(self, configfile=None):
+        super(OVSNeutronPluginV2, self).__init__()
         self.base_binding_dict = {
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
             portbindings.CAPABILITIES: {
                 portbindings.CAP_PORT_FILTER:
                 'security-group' in self.supported_extension_aliases}}
-        ovs_db_v2.initialize()
         self._parse_network_vlan_ranges()
         ovs_db_v2.sync_vlan_allocations(self.network_vlan_ranges)
         self.tenant_network_type = cfg.CONF.OVS.tenant_network_type

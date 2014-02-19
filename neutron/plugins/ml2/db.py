@@ -28,10 +28,6 @@ from neutron.plugins.ml2 import models
 LOG = log.getLogger(__name__)
 
 
-def initialize():
-    db_api.configure_db()
-
-
 def add_network_segment(session, network_id, segment):
     with session.begin(subtransactions=True):
         record = models.NetworkSegment(

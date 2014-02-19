@@ -57,7 +57,6 @@ from neutron.common import topics
 from neutron import context as qcontext
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
@@ -102,6 +101,7 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
     servers = None
 
     def __init__(self, server_timeout=None):
+        super(NeutronRestProxyV2Base, self).__init__()
         # This base class is not intended to be instantiated directly.
         # Extending class should set ServerPool.
         if not self.servers:
@@ -321,11 +321,10 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                                    "dhcp_agent_scheduler", "agent"]
 
     def __init__(self, server_timeout=None):
+        super(NeutronRestProxyV2, self).__init__()
         LOG.info(_('NeutronRestProxy: Starting plugin. Version=%s'),
                  version_string_with_vcs())
         pl_config.register_config()
-        # init DB, proxy's persistent store defaults to in-memory sql-lite DB
-        db.configure_db()
 
         # Include the BigSwitch Extensions path in the api_extensions
         neutron_extensions.append_api_extensions_path(extensions.__path__)

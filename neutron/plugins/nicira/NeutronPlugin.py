@@ -38,7 +38,6 @@ from neutron.common import utils
 from neutron import context as q_context
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import extraroute_db
@@ -144,7 +143,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     novazone_cluster_map = {}
 
     def __init__(self):
-
+        super(NvpPluginV2, self).__init__()
         # TODO(salv-orlando): Replace These dicts with
         # collections.defaultdict for better handling of default values
         # Routines for managing logical ports in NVP
@@ -185,7 +184,6 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 pbin.CAP_PORT_FILTER:
                 'security-group' in self.supported_extension_aliases}}
 
-        db.configure_db()
         self._extend_fault_map()
         self.setup_dhcpmeta_access()
         # Set this flag to false as the default gateway has not

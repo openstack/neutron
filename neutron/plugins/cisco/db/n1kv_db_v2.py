@@ -35,11 +35,6 @@ from neutron.plugins.cisco.db import n1kv_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def initialize():
-    """Initialize the database."""
-    db.configure_db()
-
-
 def del_trunk_segment_binding(db_session, trunk_segment_id, segment_pairs):
     """
     Delete a trunk network binding.

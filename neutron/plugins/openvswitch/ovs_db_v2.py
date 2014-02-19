@@ -33,10 +33,6 @@ from neutron.plugins.openvswitch import ovs_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def initialize():
-    db.configure_db()
-
-
 def get_network_binding(session, network_id):
     session = session or db.get_session()
     try:

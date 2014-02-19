@@ -17,7 +17,6 @@
 
 from oslo.config import cfg
 
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_db
@@ -35,7 +34,7 @@ class ProxyPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = ["external-net", "router"]
 
     def __init__(self, configfile=None):
-        db.configure_db()
+        super(ProxyPluginV2, self).__init__()
         self.neutron = client.Client(
             username=cfg.CONF.PROXY.admin_user,
             password=cfg.CONF.PROXY.admin_password,

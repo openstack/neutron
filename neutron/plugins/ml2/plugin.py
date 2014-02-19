@@ -98,10 +98,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._aliases
 
     def __init__(self):
+        super(Ml2Plugin, self).__init__()
         # First load drivers, then initialize DB, then initialize drivers
         self.type_manager = managers.TypeManager()
         self.mechanism_manager = managers.MechanismManager()
-        db.initialize()
         self.type_manager.initialize()
         self.mechanism_manager.initialize()
         # bulk support depends on the underlying drivers

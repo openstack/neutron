@@ -56,10 +56,6 @@ def _get_resource_model(resource, old_style):
         return resource_map[resource]
 
 
-def initialize():
-    db.configure_db()
-
-
 def clear_db(base=model_base.BASEV2):
     db.clear_db(base)
 
