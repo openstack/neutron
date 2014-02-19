@@ -159,12 +159,16 @@ command_opt = cfg.SubCommandOpt('command',
 CONF.register_cli_opt(command_opt)
 
 
-def main():
-    config = alembic_config.Config(
-        os.path.join(os.path.dirname(__file__), 'alembic.ini')
-    )
+def get_alembic_config():
+    config = alembic_config.Config(os.path.join(os.path.dirname(__file__),
+                                                'alembic.ini'))
     config.set_main_option('script_location',
                            'neutron.db.migration:alembic_migrations')
+    return config
+
+
+def main():
+    config = get_alembic_config()
     # attach the Neutron conf to the Alembic conf
     config.neutron_config = CONF
 
