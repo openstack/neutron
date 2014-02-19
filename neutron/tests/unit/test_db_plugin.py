@@ -2430,6 +2430,22 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 msg = str(q_exc.SubnetInUse(subnet_id=id))
                 self.assertEqual(data['NeutronError']['message'], msg)
 
+    def test_delete_subnet_with_other_subnet_on_network_still_in_use(self):
+        with self.network() as network:
+            with contextlib.nested(
+                self.subnet(network=network),
+                self.subnet(network=network, cidr='10.0.1.0/24',
+                            do_delete=False)) as (subnet1, subnet2):
+                subnet1_id = subnet1['subnet']['id']
+                subnet2_id = subnet2['subnet']['id']
+                with self.port(
+                    subnet=subnet1,
+                    fixed_ips=[{'subnet_id': subnet1_id}]):
+                    req = self.new_delete_request('subnets', subnet2_id)
+                    res = req.get_response(self.api)
+                    self.assertEqual(res.status_int,
+                                     webob.exc.HTTPNoContent.code)
+
     def test_delete_network(self):
         gateway_ip = '10.0.0.1'
         cidr = '10.0.0.0/24'

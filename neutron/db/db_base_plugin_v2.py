@@ -1235,10 +1235,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         with context.session.begin(subtransactions=True):
             subnet = self._get_subnet(context, id)
             # Check if any tenant owned ports are using this subnet
-            allocated_qry = context.session.query(models_v2.IPAllocation)
-            allocated_qry = allocated_qry.join(models_v2.Port)
-            allocated = allocated_qry.filter_by(
-                network_id=subnet.network_id).with_lockmode('update')
+            allocated = (context.session.query(models_v2.IPAllocation).
+                         filter_by(subnet_id=subnet['id']).
+                         join(models_v2.Port).
+                         filter_by(network_id=subnet['network_id']).
+                         with_lockmode('update'))
 
             # remove network owned ports
             for a in allocated:
