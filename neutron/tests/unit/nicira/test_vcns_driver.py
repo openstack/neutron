@@ -45,6 +45,9 @@ class VcnsDriverTaskManagerTestCase(base.BaseTestCase):
 
     def tearDown(self):
         self.manager.stop()
+        # Task manager should not leave running threads around
+        # if _thread is None it means it was killed in stop()
+        self.assertIsNone(self.manager._thread)
         super(VcnsDriverTaskManagerTestCase, self).tearDown()
 
     def _test_task_manager_task_process_state(self, sync_exec=False):
@@ -222,6 +225,9 @@ class VcnsDriverTaskManagerTestCase(base.BaseTestCase):
 
         manager = ts.TaskManager().start(100)
         manager.stop()
+        # Task manager should not leave running threads around
+        # if _thread is None it means it was killed in stop()
+        self.assertIsNone(manager._thread)
         manager.start(100)
 
         alltasks = {}
@@ -236,6 +242,9 @@ class VcnsDriverTaskManagerTestCase(base.BaseTestCase):
 
         greenthread.sleep(stop_wait)
         manager.stop()
+        # Task manager should not leave running threads around
+        # if _thread is None it means it was killed in stop()
+        self.assertIsNone(manager._thread)
 
         for res, tasks in alltasks.iteritems():
             for task in tasks:
@@ -325,6 +334,9 @@ class VcnsDriverTestCase(base.BaseTestCase):
 
     def tearDown(self):
         self.vcns_driver.task_manager.stop()
+        # Task manager should not leave running threads around
+        # if _thread is None it means it was killed in stop()
+        self.assertIsNone(self.vcns_driver.task_manager._thread)
         super(VcnsDriverTestCase, self).tearDown()
 
     def _deploy_edge(self):
