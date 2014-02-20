@@ -852,7 +852,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             LOG.exception(msg)
             raise e
 
-        except exceptions.BadRequest as e:
+        except exceptions.VcnsBadRequest as e:
             self._firewall_set_status(
                 context, fw['id'], service_constants.ERROR)
             LOG.exception(_("Bad Firewall request Input"))

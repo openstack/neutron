@@ -141,6 +141,21 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
                 for k, v in attrs.iteritems():
                     self.assertEqual(fw['firewall'][k], v)
 
+    def test_create_firewall_without_policy(self):
+        name = "new_fw"
+        attrs = self._get_test_firewall_attrs(name)
+        attrs['router_id'] = self._create_and_get_router()
+
+        with self.firewall(name=name,
+                           router_id=attrs['router_id'],
+                           admin_state_up=
+                           test_db_firewall.ADMIN_STATE_UP,
+                           expected_res_status=201) as fw:
+            attrs = self._replace_firewall_status(
+                attrs, const.PENDING_CREATE, const.ACTIVE)
+            for k, v in attrs.iteritems():
+                self.assertEqual(fw['firewall'][k], v)
+
     def test_update_firewall(self):
         name = "new_fw"
         attrs = self._get_test_firewall_attrs(name)
