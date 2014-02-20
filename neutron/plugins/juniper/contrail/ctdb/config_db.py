@@ -842,7 +842,8 @@ class DBInterface(object):
         pfx = subnet_vnc.subnet.get_ip_prefix()
         pfx_len = subnet_vnc.subnet.get_ip_prefix_len()
 
-        return '%s %s/%s' % (net_id, pfx, pfx_len)
+        network = IPNetwork('%s/%s' % (pfx, pfx_len))
+        return '%s %s/%s' % (net_id, str(network.ip), pfx_len)
     #end _subnet_vnc_get_key
 
     def _subnet_read(self, net_uuid, subnet_key):
