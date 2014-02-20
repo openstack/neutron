@@ -144,7 +144,8 @@ class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
             manager.show_pending_tasks()
             raise Exception(_("Tasks not completed"))
         manager.stop()
-
+        # Ensure the manager thread has been stopped
+        self.assertIsNone(manager._thread)
         super(ServiceRouterTest, self).tearDown()
 
     def _create_router(self, fmt, tenant_id, name=None,

@@ -20,7 +20,6 @@ import uuid
 
 from eventlet import event
 from eventlet import greenthread
-from eventlet.support import greenlets as greenlet
 
 from neutron.common import exceptions
 from neutron.openstack.common import log as logging
@@ -295,12 +294,9 @@ class TaskManager():
         while True:
             try:
                 if self._stopped:
-                    # Somehow greenlet.GreenletExit exception is ignored
-                    # during unit-test when self._execute() is making db
-                    # access. This makes this thread not terminating and
-                    # stop() caller wait indefinitely. So we added a check
-                    # here before trying to do a block call on getting a
-                    # task from queue
+                    # Gracefully terminate this thread if the _stopped
+                    # attribute was set to true
+                    LOG.info(_("Stopping TaskManager"))
                     break
 
                 # get a task from queue, or timeout for periodic status check
@@ -324,16 +320,10 @@ class TaskManager():
                         self._result(task)
                     else:
                         self._enqueue(task)
-            except greenlet.GreenletExit:
-                break
             except Exception:
-                LOG.exception(_("TaskManager terminated"))
+                LOG.exception(_("TaskManager terminating because "
+                                "of an exception"))
                 break
-
-        self._monitor.stop()
-        if self._monitor_busy:
-            self._monitor.wait()
-        self._abort()
 
     def add(self, task):
         task.id = uuid.uuid1()
@@ -347,8 +337,13 @@ class TaskManager():
             return
         self._stopped = True
         self._thread.kill()
-        self._thread.wait()
         self._thread = None
+        # Stop looping call and abort running tasks
+        self._monitor.stop()
+        if self._monitor_busy:
+            self._monitor.wait()
+        self._abort()
+        LOG.info(_("TaskManager terminated"))
 
     def has_pending_task(self):
         if self._tasks_queue or self._tasks or self._main_thread_exec_task:
