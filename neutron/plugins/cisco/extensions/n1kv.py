@@ -19,6 +19,7 @@
 # @author: Aruna Kushwaha, Cisco Systems, Inc.
 # @author: Sergey Sudakovich, Cisco Systems, Inc.
 
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 
 
@@ -56,7 +57,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class N1kv_profile(object):
+class N1kv(extensions.ExtensionDescriptor):
 
     """Extension class supporting N1kv profiles.
 
@@ -80,11 +81,11 @@ class N1kv_profile(object):
 
     @classmethod
     def get_name(cls):
-        return "n1kv_profile"
+        return "n1kv"
 
     @classmethod
     def get_alias(cls):
-        return "n1kv_profile"
+        return "n1kv"
 
     @classmethod
     def get_description(cls):
@@ -92,7 +93,7 @@ class N1kv_profile(object):
 
     @classmethod
     def get_namespace(cls):
-        return "http://docs.openstack.org/ext/n1kv_profile/api/v2.0"
+        return "http://docs.openstack.org/ext/n1kv/api/v2.0"
 
     @classmethod
     def get_updated(cls):

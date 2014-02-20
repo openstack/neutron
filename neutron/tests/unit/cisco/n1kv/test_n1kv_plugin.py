@@ -27,7 +27,7 @@ import neutron.db.api as db
 from neutron.plugins.cisco.db import n1kv_db_v2
 from neutron.plugins.cisco.db import network_db_v2 as cdb
 from neutron.plugins.cisco import extensions
-from neutron.plugins.cisco.extensions import n1kv_profile
+from neutron.plugins.cisco.extensions import n1kv
 from neutron.plugins.cisco.extensions import network_profile
 from neutron.plugins.cisco.n1kv import n1kv_client
 from neutron.plugins.cisco.n1kv import n1kv_neutron_plugin
@@ -212,9 +212,9 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.saved_attr_map[resource] = attrs.copy()
         # Update the RESOURCE_ATTRIBUTE_MAP with n1kv specific extended attrs.
         attributes.RESOURCE_ATTRIBUTE_MAP["networks"].update(
-            n1kv_profile.EXTENDED_ATTRIBUTES_2_0["networks"])
+            n1kv.EXTENDED_ATTRIBUTES_2_0["networks"])
         attributes.RESOURCE_ATTRIBUTE_MAP["ports"].update(
-            n1kv_profile.EXTENDED_ATTRIBUTES_2_0["ports"])
+            n1kv.EXTENDED_ATTRIBUTES_2_0["ports"])
         self.addCleanup(self.restore_resource_attribute_map)
         self.addCleanup(db.clear_db)
         super(N1kvPluginTestCase, self).setUp(self._plugin_name,
@@ -307,32 +307,32 @@ class TestN1kvHTTPResponse(test_plugin.TestV2HTTPResponse,
 class TestN1kvPorts(test_plugin.TestPortsV2,
                     N1kvPluginTestCase):
 
-    def test_create_port_with_default_n1kv_profile_id(self):
+    def test_create_port_with_default_n1kv_policy_profile_id(self):
         """Test port create without passing policy profile id."""
         with self.port() as port:
             db_session = db.get_session()
             pp = n1kv_db_v2.get_policy_profile(
-                db_session, port['port'][n1kv_profile.PROFILE_ID])
+                db_session, port['port'][n1kv.PROFILE_ID])
             self.assertEqual(pp['name'], 'service_profile')
 
-    def test_create_port_with_n1kv_profile_id(self):
+    def test_create_port_with_n1kv_policy_profile_id(self):
         """Test port create with policy profile id."""
         profile_obj = self._make_test_policy_profile(name='test_profile')
         with self.network() as network:
-            data = {'port': {n1kv_profile.PROFILE_ID: profile_obj.id,
+            data = {'port': {n1kv.PROFILE_ID: profile_obj.id,
                              'tenant_id': self.tenant_id,
                              'network_id': network['network']['id']}}
             port_req = self.new_create_request('ports', data)
             port = self.deserialize(self.fmt,
                                     port_req.get_response(self.api))
-            self.assertEqual(port['port'][n1kv_profile.PROFILE_ID],
+            self.assertEqual(port['port'][n1kv.PROFILE_ID],
                              profile_obj.id)
             self._delete('ports', port['port']['id'])
 
-    def test_update_port_with_n1kv_profile_id(self):
+    def test_update_port_with_n1kv_policy_profile_id(self):
         """Test port update failure while updating policy profile id."""
         with self.port() as port:
-            data = {'port': {n1kv_profile.PROFILE_ID: 'some-profile-uuid'}}
+            data = {'port': {n1kv.PROFILE_ID: 'some-profile-uuid'}}
             port_req = self.new_update_request('ports',
                                                data,
                                                port['port']['id'])
@@ -346,31 +346,31 @@ class TestN1kvNetworks(test_plugin.TestNetworksV2,
 
     def _prepare_net_data(self, net_profile_id):
         return {'network': {'name': 'net1',
-                            n1kv_profile.PROFILE_ID: net_profile_id,
+                            n1kv.PROFILE_ID: net_profile_id,
                             'tenant_id': self.tenant_id}}
 
-    def test_create_network_with_default_n1kv_profile_id(self):
+    def test_create_network_with_default_n1kv_network_profile_id(self):
         """Test network create without passing network profile id."""
         with self.network() as network:
             db_session = db.get_session()
             np = n1kv_db_v2.get_network_profile(
-                db_session, network['network'][n1kv_profile.PROFILE_ID])
+                db_session, network['network'][n1kv.PROFILE_ID])
             self.assertEqual(np['name'], 'default_network_profile')
 
-    def test_create_network_with_n1kv_profile_id(self):
+    def test_create_network_with_n1kv_network_profile_id(self):
         """Test network create with network profile id."""
         profile_obj = self._make_test_profile(name='test_profile')
         data = self._prepare_net_data(profile_obj.id)
         network_req = self.new_create_request('networks', data)
         network = self.deserialize(self.fmt,
                                    network_req.get_response(self.api))
-        self.assertEqual(network['network'][n1kv_profile.PROFILE_ID],
+        self.assertEqual(network['network'][n1kv.PROFILE_ID],
                          profile_obj.id)
 
-    def test_update_network_with_n1kv_profile_id(self):
+    def test_update_network_with_n1kv_network_profile_id(self):
         """Test network update failure while updating network profile id."""
         with self.network() as network:
-            data = {'network': {n1kv_profile.PROFILE_ID: 'some-profile-uuid'}}
+            data = {'network': {n1kv.PROFILE_ID: 'some-profile-uuid'}}
             network_req = self.new_update_request('networks',
                                                   data,
                                                   network['network']['id'])
