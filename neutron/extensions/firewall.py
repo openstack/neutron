@@ -243,6 +243,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                    'is_visible': True, 'required_by_policy': True,
                    'enforce_policy': True},
         'firewall_rules': {'allow_post': True, 'allow_put': True,
+                           'validate': {'type:uuid_list': None},
                            'convert_to': attr.convert_none_to_empty_list,
                            'default': None, 'is_visible': True},
         'audited': {'allow_post': True, 'allow_put': True,
