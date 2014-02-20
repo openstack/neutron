@@ -344,8 +344,12 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
                                     dev_details['network_id'],
                                     dev_details['network_type'],
                                     dev_details['physical_network'],
-                                    dev_details['vlan_id'],
+                                    dev_details['segmentation_id'],
                                     dev_details['admin_state_up'])
+                if dev_details.get('admin_state_up'):
+                    self.plugin_rpc.update_device_up(self.context,
+                                                     device,
+                                                     self.agent_id)
             else:
                 LOG.debug(_("Device with mac_address %s not defined "
                           "on Neutron Plugin"), device)
