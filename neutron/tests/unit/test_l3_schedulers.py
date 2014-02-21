@@ -31,6 +31,7 @@ from neutron.db import l3_agentschedulers_db
 from neutron.extensions import l3 as ext_l3
 from neutron import manager
 from neutron.openstack.common import timeutils
+from neutron.scheduler import l3_agent_scheduler
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_l3_plugin
 
@@ -93,6 +94,7 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
         agent_db = self.plugin.get_agents_db(self.adminContext,
                                              filters={'host': [HOST]})
         self.agent_id1 = agent_db[0].id
+        self.agent1 = agent_db[0]
 
         callback.report_state(self.adminContext,
                               agent_state={'agent_state': SECOND_L3_AGENT},
@@ -123,6 +125,39 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
         self._remove_external_gateway_from_router(
             router['router']['id'], subnet['subnet']['network_id'])
         self._delete('routers', router['router']['id'])
+
+    def _test_schedule_bind_router(self, agent, router):
+        ctx = self.adminContext
+        session = ctx.session
+        db = l3_agentschedulers_db.RouterL3AgentBinding
+        scheduler = l3_agent_scheduler.ChanceScheduler()
+
+        rid = router['router']['id']
+        scheduler.bind_router(ctx, rid, agent)
+        results = (session.query(db).filter_by(router_id=rid).all())
+        self.assertTrue(len(results) > 0)
+        self.assertIn(agent.id, [bind.l3_agent_id for bind in results])
+
+    def test_bind_new_router(self):
+        router = self._make_router(self.fmt,
+                                   tenant_id=str(uuid.uuid4()),
+                                   name='r1')
+        with mock.patch.object(l3_agent_scheduler.LOG, 'debug') as flog:
+            self._test_schedule_bind_router(self.agent1, router)
+            self.assertEqual(1, flog.call_count)
+            args, kwargs = flog.call_args
+            self.assertIn('is scheduled', args[0])
+
+    def test_bind_existing_router(self):
+        router = self._make_router(self.fmt,
+                                   tenant_id=str(uuid.uuid4()),
+                                   name='r2')
+        self._test_schedule_bind_router(self.agent1, router)
+        with mock.patch.object(l3_agent_scheduler.LOG, 'debug') as flog:
+            self._test_schedule_bind_router(self.agent1, router)
+            self.assertEqual(1, flog.call_count)
+            args, kwargs = flog.call_args
+            self.assertIn('has already been scheduled', args[0])
 
 
 class L3AgentChanceSchedulerTestCase(L3SchedulerTestCase):

@@ -24,7 +24,6 @@ from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.extensions import l3agentscheduler
 
 
@@ -40,15 +39,16 @@ L3_AGENTS_SCHEDULER_OPTS = [
 cfg.CONF.register_opts(L3_AGENTS_SCHEDULER_OPTS)
 
 
-class RouterL3AgentBinding(model_base.BASEV2, models_v2.HasId):
+class RouterL3AgentBinding(model_base.BASEV2):
     """Represents binding between neutron routers and L3 agents."""
 
     router_id = sa.Column(sa.String(36),
-                          sa.ForeignKey("routers.id", ondelete='CASCADE'))
+                          sa.ForeignKey("routers.id", ondelete='CASCADE'),
+                          primary_key=True)
     l3_agent = orm.relation(agents_db.Agent)
     l3_agent_id = sa.Column(sa.String(36),
-                            sa.ForeignKey("agents.id",
-                                          ondelete='CASCADE'))
+                            sa.ForeignKey("agents.id", ondelete='CASCADE'),
+                            primary_key=True)
 
 
 class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
