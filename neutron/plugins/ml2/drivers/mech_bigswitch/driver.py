@@ -22,9 +22,10 @@ from oslo.config import cfg
 from neutron import context as ctx
 from neutron.extensions import portbindings
 from neutron.openstack.common import log
+from neutron.plugins.bigswitch import config as pl_config
 from neutron.plugins.bigswitch.db import porttracker_db
 from neutron.plugins.bigswitch.plugin import NeutronRestProxyV2Base
-from neutron.plugins.bigswitch.plugin import ServerPool
+from neutron.plugins.bigswitch.servermanager import ServerPool
 from neutron.plugins.ml2 import driver_api as api
 
 
@@ -43,6 +44,8 @@ class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
     def initialize(self, server_timeout=None):
         LOG.debug(_('Initializing driver'))
 
+        # register plugin config opts
+        pl_config.register_config()
         # backend doesn't support bulk operations yet
         self.native_bulk_support = False
 

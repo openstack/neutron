@@ -44,11 +44,7 @@ subset) with some additional parameters (gateway on network-create and macaddr
 on port-attach) on an additional PUT to do a bulk dump of all persistent data.
 """
 
-import base64
 import copy
-import httplib
-import json
-import socket
 
 from oslo.config import cfg
 
@@ -58,7 +54,6 @@ from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
-from neutron.common import utils
 from neutron import context as qcontext
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -76,347 +71,18 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
+from neutron.plugins.bigswitch import config as pl_config
 from neutron.plugins.bigswitch.db import porttracker_db
 from neutron.plugins.bigswitch import extensions
 from neutron.plugins.bigswitch import routerrule_db
+from neutron.plugins.bigswitch import servermanager
 from neutron.plugins.bigswitch.version import version_string_with_vcs
 
 LOG = logging.getLogger(__name__)
 
-restproxy_opts = [
-    cfg.StrOpt('servers', default='localhost:8800',
-               help=_("A comma separated list of BigSwitch or Floodlight "
-                      "servers and port numbers. The plugin proxies the "
-                      "requests to the BigSwitch/Floodlight server, "
-                      "which performs the networking configuration. Note that "
-                      "only one server is needed per deployment, but you may "
-                      "wish to deploy multiple servers to support failover.")),
-    cfg.StrOpt('server_auth', default=None, secret=True,
-               help=_("The username and password for authenticating against "
-                      " the BigSwitch or Floodlight controller.")),
-    cfg.BoolOpt('server_ssl', default=False,
-                help=_("If True, Use SSL when connecting to the BigSwitch or "
-                       "Floodlight controller.")),
-    cfg.BoolOpt('sync_data', default=False,
-                help=_("Sync data on connect")),
-    cfg.IntOpt('server_timeout', default=10,
-               help=_("Maximum number of seconds to wait for proxy request "
-                      "to connect and complete.")),
-    cfg.StrOpt('neutron_id', default='neutron-' + utils.get_hostname(),
-               deprecated_name='quantum_id',
-               help=_("User defined identifier for this Neutron deployment")),
-    cfg.BoolOpt('add_meta_server_route', default=True,
-                help=_("Flag to decide if a route to the metadata server "
-                       "should be injected into the VM")),
-]
 
-
-cfg.CONF.register_opts(restproxy_opts, "RESTPROXY")
-
-router_opts = [
-    cfg.MultiStrOpt('tenant_default_router_rule', default=['*:any:any:permit'],
-                    help=_("The default router rules installed in new tenant "
-                           "routers. Repeat the config option for each rule. "
-                           "Format is <tenant>:<source>:<destination>:<action>"
-                           " Use an * to specify default for all tenants.")),
-    cfg.IntOpt('max_router_rules', default=200,
-               help=_("Maximum number of router rules")),
-]
-
-cfg.CONF.register_opts(router_opts, "ROUTER")
-
-nova_opts = [
-    cfg.StrOpt('vif_type', default='ovs',
-               help=_("Virtual interface type to configure on "
-                      "Nova compute nodes")),
-]
-
-# Each VIF Type can have a list of nova host IDs that are fixed to that type
-for i in portbindings.VIF_TYPES:
-    opt = cfg.ListOpt('node_override_vif_' + i, default=[],
-                      help=_("Nova compute nodes to manually set VIF "
-                             "type to %s") % i)
-    nova_opts.append(opt)
-
-# Add the vif types for reference later
-nova_opts.append(cfg.ListOpt('vif_types',
-                             default=portbindings.VIF_TYPES,
-                             help=_('List of allowed vif_type values.')))
-
-cfg.CONF.register_opts(nova_opts, "NOVA")
-
-
-# The following are used to invoke the API on the external controller
-NET_RESOURCE_PATH = "/tenants/%s/networks"
-PORT_RESOURCE_PATH = "/tenants/%s/networks/%s/ports"
-ROUTER_RESOURCE_PATH = "/tenants/%s/routers"
-ROUTER_INTF_OP_PATH = "/tenants/%s/routers/%s/interfaces"
-NETWORKS_PATH = "/tenants/%s/networks/%s"
-PORTS_PATH = "/tenants/%s/networks/%s/ports/%s"
-ATTACHMENT_PATH = "/tenants/%s/networks/%s/ports/%s/attachment"
-ROUTERS_PATH = "/tenants/%s/routers/%s"
-ROUTER_INTF_PATH = "/tenants/%s/routers/%s/interfaces/%s"
-SUCCESS_CODES = range(200, 207)
-FAILURE_CODES = [0, 301, 302, 303, 400, 401, 403, 404, 500, 501, 502, 503,
-                 504, 505]
 SYNTAX_ERROR_MESSAGE = _('Syntax error in server config file, aborting plugin')
-BASE_URI = '/networkService/v1.1'
-ORCHESTRATION_SERVICE_ID = 'Neutron v2.0'
 METADATA_SERVER_IP = '169.254.169.254'
-
-
-class RemoteRestError(exceptions.NeutronException):
-    message = _("Error in REST call to remote network "
-                "controller: %(reason)s")
-
-
-class ServerProxy(object):
-    """REST server proxy to a network controller."""
-
-    def __init__(self, server, port, ssl, auth, neutron_id, timeout,
-                 base_uri, name):
-        self.server = server
-        self.port = port
-        self.ssl = ssl
-        self.base_uri = base_uri
-        self.timeout = timeout
-        self.name = name
-        self.success_codes = SUCCESS_CODES
-        self.auth = None
-        self.neutron_id = neutron_id
-        self.failed = False
-        if auth:
-            self.auth = 'Basic ' + base64.encodestring(auth).strip()
-
-    def rest_call(self, action, resource, data, headers):
-        uri = self.base_uri + resource
-        body = json.dumps(data)
-        if not headers:
-            headers = {}
-        headers['Content-type'] = 'application/json'
-        headers['Accept'] = 'application/json'
-        headers['NeutronProxy-Agent'] = self.name
-        headers['Instance-ID'] = self.neutron_id
-        headers['Orchestration-Service-ID'] = ORCHESTRATION_SERVICE_ID
-        if self.auth:
-            headers['Authorization'] = self.auth
-
-        LOG.debug(_("ServerProxy: server=%(server)s, port=%(port)d, "
-                    "ssl=%(ssl)r"),
-                  {'server': self.server, 'port': self.port, 'ssl': self.ssl})
-        LOG.debug(_("ServerProxy: resource=%(resource)s, action=%(action)s, "
-                    "data=%(data)r, headers=%(headers)r"),
-                  {'resource': resource, 'data': data, 'headers': headers,
-                   'action': action})
-
-        conn = None
-        if self.ssl:
-            conn = httplib.HTTPSConnection(
-                self.server, self.port, timeout=self.timeout)
-            if conn is None:
-                LOG.error(_('ServerProxy: Could not establish HTTPS '
-                            'connection'))
-                return 0, None, None, None
-        else:
-            conn = httplib.HTTPConnection(
-                self.server, self.port, timeout=self.timeout)
-            if conn is None:
-                LOG.error(_('ServerProxy: Could not establish HTTP '
-                            'connection'))
-                return 0, None, None, None
-
-        try:
-            conn.request(action, uri, body, headers)
-            response = conn.getresponse()
-            respstr = response.read()
-            respdata = respstr
-            if response.status in self.success_codes:
-                try:
-                    respdata = json.loads(respstr)
-                except ValueError:
-                    # response was not JSON, ignore the exception
-                    pass
-            ret = (response.status, response.reason, respstr, respdata)
-        except (socket.timeout, socket.error) as e:
-            LOG.error(_('ServerProxy: %(action)s failure, %(e)r'),
-                      {'action': action, 'e': e})
-            ret = 0, None, None, None
-        conn.close()
-        LOG.debug(_("ServerProxy: status=%(status)d, reason=%(reason)r, "
-                    "ret=%(ret)s, data=%(data)r"), {'status': ret[0],
-                                                    'reason': ret[1],
-                                                    'ret': ret[2],
-                                                    'data': ret[3]})
-        return ret
-
-
-class ServerPool(object):
-
-    def __init__(self, timeout=10,
-                 base_uri=BASE_URI, name='NeutronRestProxy'):
-        LOG.debug(_("ServerPool: initializing"))
-        # 'servers' is the list of network controller REST end-points
-        # (used in order specified till one succeeds, and it is sticky
-        # till next failure). Use 'server_auth' to encode api-key
-        servers = cfg.CONF.RESTPROXY.servers
-        self.auth = cfg.CONF.RESTPROXY.server_auth
-        self.ssl = cfg.CONF.RESTPROXY.server_ssl
-        self.neutron_id = cfg.CONF.RESTPROXY.neutron_id
-        self.base_uri = base_uri
-        self.name = name
-        timeout = cfg.CONF.RESTPROXY.server_timeout
-        if timeout is not None:
-            self.timeout = timeout
-
-        # validate config
-        if not servers:
-            raise cfg.Error(_('Servers not defined. Aborting plugin'))
-        if any((len(spl) != 2) for spl in [sp.split(':', 1)
-                                           for sp in servers.split(',')]):
-            raise cfg.Error(_('Servers must be defined as <ip>:<port>'))
-        self.servers = [
-            self.server_proxy_for(server, int(port))
-            for server, port in (s.rsplit(':', 1) for s in servers.split(','))
-        ]
-        LOG.debug(_("ServerPool: initialization done"))
-
-    def server_proxy_for(self, server, port):
-        return ServerProxy(server, port, self.ssl, self.auth, self.neutron_id,
-                           self.timeout, self.base_uri, self.name)
-
-    def server_failure(self, resp, ignore_codes=[]):
-        """Define failure codes as required.
-
-        Note: We assume 301-303 is a failure, and try the next server in
-        the server pool.
-        """
-        return (resp[0] in FAILURE_CODES and resp[0] not in ignore_codes)
-
-    def action_success(self, resp):
-        """Defining success codes as required.
-
-        Note: We assume any valid 2xx as being successful response.
-        """
-        return resp[0] in SUCCESS_CODES
-
-    @utils.synchronized('bsn-rest-call', external=True)
-    def rest_call(self, action, resource, data, headers, ignore_codes):
-        good_first = sorted(self.servers, key=lambda x: x.failed)
-        for active_server in good_first:
-            ret = active_server.rest_call(action, resource, data, headers)
-            if not self.server_failure(ret, ignore_codes):
-                active_server.failed = False
-                return ret
-            else:
-                LOG.error(_('ServerProxy: %(action)s failure for servers: '
-                            '%(server)r Response: %(response)s'),
-                          {'action': action,
-                           'server': (active_server.server,
-                                      active_server.port),
-                           'response': ret[3]})
-                LOG.error(_("ServerProxy: Error details: status=%(status)d, "
-                            "reason=%(reason)r, ret=%(ret)s, data=%(data)r"),
-                          {'status': ret[0], 'reason': ret[1], 'ret': ret[2],
-                           'data': ret[3]})
-                active_server.failed = True
-
-        # All servers failed, reset server list and try again next time
-        LOG.error(_('ServerProxy: %(action)s failure for all servers: '
-                    '%(server)r'),
-                  {'action': action,
-                   'server': tuple((s.server,
-                                    s.port) for s in self.servers)})
-        return (0, None, None, None)
-
-    def rest_action(self, action, resource, data='', errstr='%s',
-                    ignore_codes=[], headers=None):
-        """
-        Wrapper for rest_call that verifies success and raises a
-        RemoteRestError on failure with a provided error string
-        By default, 404 errors on DELETE calls are ignored because
-        they already do not exist on the backend.
-        """
-        if not ignore_codes and action == 'DELETE':
-            ignore_codes = [404]
-        resp = self.rest_call(action, resource, data, headers, ignore_codes)
-        if self.server_failure(resp, ignore_codes):
-            LOG.error(errstr, resp[2])
-            raise RemoteRestError(reason=resp[2])
-        if resp[0] in ignore_codes:
-            LOG.warning(_("NeutronRestProxyV2: Received and ignored error "
-                          "code %(code)s on %(action)s action to resource "
-                          "%(resource)s"),
-                        {'code': resp[2], 'action': action,
-                         'resource': resource})
-        return resp
-
-    def rest_create_router(self, tenant_id, router):
-        resource = ROUTER_RESOURCE_PATH % tenant_id
-        data = {"router": router}
-        errstr = _("Unable to create remote router: %s")
-        self.rest_action('POST', resource, data, errstr)
-
-    def rest_update_router(self, tenant_id, router, router_id):
-        resource = ROUTERS_PATH % (tenant_id, router_id)
-        data = {"router": router}
-        errstr = _("Unable to update remote router: %s")
-        self.rest_action('PUT', resource, data, errstr)
-
-    def rest_delete_router(self, tenant_id, router_id):
-        resource = ROUTERS_PATH % (tenant_id, router_id)
-        errstr = _("Unable to delete remote router: %s")
-        self.rest_action('DELETE', resource, errstr=errstr)
-
-    def rest_add_router_interface(self, tenant_id, router_id, intf_details):
-        resource = ROUTER_INTF_OP_PATH % (tenant_id, router_id)
-        data = {"interface": intf_details}
-        errstr = _("Unable to add router interface: %s")
-        self.rest_action('POST', resource, data, errstr)
-
-    def rest_remove_router_interface(self, tenant_id, router_id, interface_id):
-        resource = ROUTER_INTF_PATH % (tenant_id, router_id, interface_id)
-        errstr = _("Unable to delete remote intf: %s")
-        self.rest_action('DELETE', resource, errstr=errstr)
-
-    def rest_create_network(self, tenant_id, network):
-        resource = NET_RESOURCE_PATH % tenant_id
-        data = {"network": network}
-        errstr = _("Unable to create remote network: %s")
-        self.rest_action('POST', resource, data, errstr)
-
-    def rest_update_network(self, tenant_id, net_id, network):
-        resource = NETWORKS_PATH % (tenant_id, net_id)
-        data = {"network": network}
-        errstr = _("Unable to update remote network: %s")
-        self.rest_action('PUT', resource, data, errstr)
-
-    def rest_delete_network(self, tenant_id, net_id):
-        resource = NETWORKS_PATH % (tenant_id, net_id)
-        errstr = _("Unable to update remote network: %s")
-        self.rest_action('DELETE', resource, errstr=errstr)
-
-    def rest_create_port(self, tenant_id, net_id, port):
-        resource = ATTACHMENT_PATH % (tenant_id, net_id, port["id"])
-        data = {"port": port}
-        device_id = port.get("device_id")
-        if not port["mac_address"] or not device_id:
-            # controller only cares about ports attached to devices
-            LOG.warning(_("No device attached to port %s. "
-                          "Skipping notification to controller."), port["id"])
-            return
-        data["attachment"] = {"id": device_id,
-                              "mac": port["mac_address"]}
-        errstr = _("Unable to create remote port: %s")
-        self.rest_action('PUT', resource, data, errstr)
-
-    def rest_delete_port(self, tenant_id, network_id, port_id):
-        resource = ATTACHMENT_PATH % (tenant_id, network_id, port_id)
-        errstr = _("Unable to delete remote port: %s")
-        self.rest_action('DELETE', resource, errstr=errstr)
-
-    def rest_update_port(self, tenant_id, net_id, port):
-        # Controller has no update operation for the port endpoint
-        self.rest_create_port(tenant_id, net_id, port)
 
 
 class RpcProxy(dhcp_rpc_base.DhcpRpcCallbackMixin):
@@ -585,9 +251,7 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
 
         resource['state'] = ('UP' if resource.pop('admin_state_up',
                                                   True) else 'DOWN')
-
-        if 'status' in resource:
-            del resource['status']
+        resource.pop('status', None)
 
         return resource
 
@@ -659,7 +323,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
     def __init__(self, server_timeout=None):
         LOG.info(_('NeutronRestProxy: Starting plugin. Version=%s'),
                  version_string_with_vcs())
-
+        pl_config.register_config()
         # init DB, proxy's persistent store defaults to in-memory sql-lite DB
         db.configure_db()
 
@@ -669,7 +333,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         self.add_meta_server_route = cfg.CONF.RESTPROXY.add_meta_server_route
 
         # init network ctrl connections
-        self.servers = ServerPool(server_timeout, BASE_URI)
+        self.servers = servermanager.ServerPool(server_timeout)
 
         # init dhcp support
         self.topic = topics.PLUGIN
@@ -1180,7 +844,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             # create floatingip on the network controller
             try:
                 self._send_floatingip_update(context)
-            except RemoteRestError as e:
+            except servermanager.RemoteRestError as e:
                 with excutils.save_and_reraise_exception():
                     LOG.error(
                         _("NeutronRestProxyV2: Unable to create remote "
