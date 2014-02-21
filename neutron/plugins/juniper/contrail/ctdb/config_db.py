@@ -19,6 +19,7 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.api.v2 import attributes as attr
 from neutron.extensions import portbindings
+from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import log as logging
 
 from cfgm_common import exceptions as vnc_exc
@@ -2638,7 +2639,17 @@ class DBInterface(object):
     #end security_group_read
 
     def security_group_delete(self, sg_id):
-        self._security_group_delete(sg_id)
+        try:
+            sg_obj = self._vnc_lib.security_group_read(id=sg_id)
+            if sg_obj.name == 'default':
+                raise ext_sg.SecurityGroupCannotRemoveDefault()
+        except NoIdError:
+            return
+
+        try:
+            self._security_group_delete(sg_id)
+        except RefsExistError:
+            raise ext_sg.SecurityGroupInUse(id=sg_id)
         self._db_cache_flush('q_tenant_to_def_sg')
     #end security_group_delete
 
