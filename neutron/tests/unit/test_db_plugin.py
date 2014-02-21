@@ -77,8 +77,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def setUp(self, plugin=None, service_plugins=None,
               ext_mgr=None):
-        super(NeutronDbPluginV2TestCase, self).setUp()
 
+        super(NeutronDbPluginV2TestCase, self).setUp()
+        cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
         # Make sure at each test according extensions for the plugin is loaded
         PluginAwareExtensionManager._instance = None
         # Save the attributes map in case the plugin will alter it

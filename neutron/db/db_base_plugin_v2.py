@@ -19,6 +19,7 @@ import random
 
 import netaddr
 from oslo.config import cfg
+from sqlalchemy import event
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
@@ -29,6 +30,7 @@ from neutron.db import api as db
 from neutron.db import models_v2
 from neutron.db import sqlalchemyutils
 from neutron import neutron_plugin_base_v2
+from neutron.notifiers import nova
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
@@ -221,6 +223,16 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
     def __init__(self):
         db.configure_db()
+        if cfg.CONF.notify_nova_on_port_status_changes:
+            # NOTE(arosen) These event listners are here to hook into when
+            # port status changes and notify nova about their change.
+            self.nova_notifier = nova.Notifier()
+            event.listen(models_v2.Port, 'after_insert',
+                         self.nova_notifier.send_port_status)
+            event.listen(models_v2.Port, 'after_update',
+                         self.nova_notifier.send_port_status)
+            event.listen(models_v2.Port.status, 'set',
+                         self.nova_notifier.record_port_status_changed)
 
     @classmethod
     def register_dict_extend_funcs(cls, resource, funcs):

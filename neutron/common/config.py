@@ -81,6 +81,28 @@ core_opts = [
                help=_("The hostname Neutron is running on")),
     cfg.BoolOpt('force_gateway_on_subnet', default=False,
                 help=_("Ensure that configured gateway is on subnet")),
+    cfg.BoolOpt('notify_nova_on_port_status_changes', default=True,
+                help=_("Send notification to nova when port status changes")),
+    cfg.StrOpt('nova_url',
+               default='http://127.0.0.1:8774',
+               help=_('URL for connection to nova')),
+    cfg.StrOpt('nova_admin_username',
+               help=_('Username for connecting to nova in admin context')),
+    cfg.StrOpt('nova_admin_password',
+               help=_('Password for connection to nova in admin context'),
+               secret=True),
+    cfg.StrOpt('nova_admin_tenant_id',
+               help=_('The uuid of the admin nova tenant')),
+    cfg.StrOpt('nova_admin_auth_url',
+               default='http://localhost:5000/v2.0',
+               help=_('Authorization URL for connecting to nova in admin '
+                      'context')),
+    cfg.StrOpt('nova_region_name',
+               help=_('Name of nova region to use. Useful if keystone manages'
+                      ' more than one region.')),
+    cfg.IntOpt('send_events_interval', default=2,
+               help=_('Number of seconds between sending events to nova if '
+                      'there are any events to send.')),
 ]
 
 core_cli_opts = [
