@@ -319,14 +319,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             return True
         return False
 
-    @staticmethod
-    def _recycle_ip(context, network_id, subnet_id, ip_address):
-        """Return an IP address to the pool of free IP's on the network
-        subnet.
-        """
-        NeutronDbPluginV2._delete_ip_allocation(context, network_id, subnet_id,
-                                                ip_address)
-
     def update_fixed_ip_lease_expiration(self, context, network_id,
                                          ip_address, lease_remaining):
 
@@ -641,10 +633,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         to_add = self._test_fixed_ips_for_port(context, network_id, new_ips)
         for ip in original_ips:
             LOG.debug(_("Port update. Hold %s"), ip)
-            NeutronDbPluginV2._recycle_ip(context,
-                                          network_id,
-                                          ip['subnet_id'],
-                                          ip['ip_address'])
+            NeutronDbPluginV2._delete_ip_allocation(context,
+                                                    network_id,
+                                                    ip['subnet_id'],
+                                                    ip['ip_address'])
 
         if to_add:
             LOG.debug(_("Port update. Adding %s"), to_add)
@@ -1402,10 +1394,10 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             if NeutronDbPluginV2._check_ip_in_allocation_pool(
                 context, a['subnet_id'], subnet['gateway_ip'],
                 a['ip_address']):
-                NeutronDbPluginV2._recycle_ip(context,
-                                              a['network_id'],
-                                              a['subnet_id'],
-                                              a['ip_address'])
+                NeutronDbPluginV2._delete_ip_allocation(context,
+                                                        a['network_id'],
+                                                        a['subnet_id'],
+                                                        a['ip_address'])
             else:
                 # IPs out of allocation pool will not be recycled, but
                 # we do need to delete the allocation from the DB
