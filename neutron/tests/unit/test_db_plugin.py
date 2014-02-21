@@ -1073,10 +1073,10 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(port['port']['id'], sport['port']['id'])
 
     def test_delete_port(self):
-        with self.port() as port:
-            req = self.new_show_request('port', self.fmt, port['port']['id'])
-            res = req.get_response(self.api)
-            self.assertEqual(res.status_int, webob.exc.HTTPNotFound.code)
+        with self.port(no_delete=True) as port:
+            self._delete('ports', port['port']['id'])
+            self._show('ports', port['port']['id'],
+                       expected_code=webob.exc.HTTPNotFound.code)
 
     def test_delete_port_public_network(self):
         with self.network(shared=True) as network:
@@ -1087,9 +1087,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                          set_context=True)
 
             port = self.deserialize(self.fmt, port_res)
-            # delete the port
             self._delete('ports', port['port']['id'])
-            # Todo: verify!!!
+            self._show('ports', port['port']['id'],
+                       expected_code=webob.exc.HTTPNotFound.code)
 
     def test_update_port(self):
         with self.port() as port:
