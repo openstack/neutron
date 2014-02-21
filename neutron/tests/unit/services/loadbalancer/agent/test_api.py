@@ -18,9 +18,7 @@
 
 import mock
 
-from neutron.services.loadbalancer.drivers.haproxy import (
-    agent_api as api
-)
+from neutron.services.loadbalancer.agent import agent_api as api
 from neutron.tests import base
 
 

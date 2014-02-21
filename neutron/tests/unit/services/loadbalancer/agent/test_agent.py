@@ -20,7 +20,7 @@ import contextlib
 import mock
 from oslo.config import cfg
 
-from neutron.services.loadbalancer.drivers.haproxy import agent
+from neutron.services.loadbalancer.agent import agent
 from neutron.tests import base
 
 

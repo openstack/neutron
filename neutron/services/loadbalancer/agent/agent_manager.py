@@ -21,16 +21,14 @@ from oslo.config import cfg
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
+from neutron.common import topics
 from neutron import context
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.plugins.common import constants
-from neutron.services.loadbalancer.drivers.haproxy import (
-    agent_api,
-    plugin_driver
-)
+from neutron.services.loadbalancer.agent import agent_api
 
 LOG = logging.getLogger(__name__)
 
@@ -67,7 +65,7 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
         self.conf = conf
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_api.LbaasAgentApi(
-            plugin_driver.TOPIC_LOADBALANCER_PLUGIN,
+            topics.LOADBALANCER_PLUGIN,
             self.context,
             self.conf.host
         )
@@ -76,7 +74,7 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
         self.agent_state = {
             'binary': 'neutron-lbaas-agent',
             'host': conf.host,
-            'topic': plugin_driver.TOPIC_LOADBALANCER_AGENT,
+            'topic': topics.LOADBALANCER_AGENT,
             'configurations': {'device_drivers': self.device_drivers.keys()},
             'agent_type': n_const.AGENT_TYPE_LOADBALANCER,
             'start_flag': True}
@@ -109,7 +107,7 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
 
     def _setup_state_rpc(self):
         self.state_rpc = agent_rpc.PluginReportStateAPI(
-            plugin_driver.TOPIC_LOADBALANCER_PLUGIN)
+            topics.LOADBALANCER_PLUGIN)
         report_interval = self.conf.AGENT.report_interval
         if report_interval:
             heartbeat = loopingcall.FixedIntervalLoopingCall(
