@@ -393,9 +393,8 @@ class IpRouteCommand(IpDeviceCommandBase):
             gateway_index = 2
             parts = default_route_line.split()
             retval = dict(gateway=parts[gateway_index])
-            metric_index = 4
-            parts_has_metric = (len(parts) > metric_index)
-            if parts_has_metric:
+            if 'metric' in parts:
+                metric_index = parts.index('metric') + 1
                 retval.update(metric=int(parts[metric_index]))
 
         return retval

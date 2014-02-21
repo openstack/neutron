@@ -127,6 +127,14 @@ GATEWAY_SAMPLE4 = ("""
 default via 10.35.19.254
 """)
 
+GATEWAY_SAMPLE5 = ("""
+default via 192.168.99.1 proto static
+""")
+
+GATEWAY_SAMPLE6 = ("""
+default via 192.168.99.1 proto static metric 100
+""")
+
 DEVICE_ROUTE_SAMPLE = ("10.0.0.0/24  scope link  src 10.0.0.2")
 
 SUBNET_SAMPLE1 = ("10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1\n"
@@ -647,7 +655,12 @@ class TestIpRouteCommand(TestIPCmdBase):
                       {'sample': GATEWAY_SAMPLE3,
                        'expected': None},
                       {'sample': GATEWAY_SAMPLE4,
-                       'expected': {'gateway': '10.35.19.254'}}]
+                       'expected': {'gateway': '10.35.19.254'}},
+                      {'sample': GATEWAY_SAMPLE5,
+                       'expected': {'gateway': '192.168.99.1'}},
+                      {'sample': GATEWAY_SAMPLE6,
+                       'expected': {'gateway': '192.168.99.1',
+                                    'metric': 100}}]
         for test_case in test_cases:
             self.parent._run = mock.Mock(return_value=test_case['sample'])
             self.assertEqual(self.route_cmd.get_gateway(),
