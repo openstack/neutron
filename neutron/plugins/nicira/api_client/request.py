@@ -21,6 +21,7 @@
 from abc import ABCMeta
 from abc import abstractmethod
 import copy
+import eventlet
 import httplib
 import logging
 import time
@@ -186,7 +187,8 @@ class NvpApiRequest(object):
                 LOG.info(_("[%(rid)d] Redirecting request to: %(conn)s"),
                          {'rid': self._rid(),
                           'conn': self._request_str(conn, url)})
-
+                # yield here, just in case we are not out of the loop yet
+                eventlet.greenthread.sleep(0)
             # If we receive any of these responses, then
             # our server did not process our request and may be in an
             # errored state. Raise an exception, which will cause the
