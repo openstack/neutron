@@ -63,19 +63,6 @@ class ServiceRouterTestExtensionManager(object):
         return []
 
 
-class NvpRouterTestCase(test_nicira_plugin.TestNiciraL3NatTestCase):
-
-    def setUp(self, plugin=None, ext_mgr=None, service_plugins=None):
-        plugin = plugin or SERVICE_PLUGIN_NAME
-        # Disable the proxying in the tests but functionality will
-        # be covered separately
-        mock_proxy = mock.patch(
-            "%s.%s" % (SERVICE_PLUGIN_NAME, '_set_create_lswitch_proxy'))
-        mock_proxy.start()
-        super(NvpRouterTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
-                                             service_plugins=service_plugins)
-
-
 class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
                         test_l3_plugin.L3NatTestCaseMixin):
 
@@ -170,7 +157,8 @@ class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
         return router_req.get_response(self.ext_api)
 
 
-class ServiceRouterTestCase(ServiceRouterTest, NvpRouterTestCase):
+class ServiceRouterTestCase(ServiceRouterTest,
+                            test_nicira_plugin.TestNiciraL3NatTestCase):
 
     def test_router_create(self):
         name = 'router1'

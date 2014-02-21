@@ -379,7 +379,8 @@ class L3NatTestCaseMixin(object):
 
     def _router_interface_action(self, action, router_id, subnet_id, port_id,
                                  expected_code=exc.HTTPOk.code,
-                                 expected_body=None):
+                                 expected_body=None,
+                                 tenant_id=None):
         interface_data = {}
         if subnet_id:
             interface_data.update({'subnet_id': subnet_id})
@@ -388,6 +389,10 @@ class L3NatTestCaseMixin(object):
 
         req = self.new_action_request('routers', interface_data, router_id,
                                       "%s_router_interface" % action)
+        # if tenant_id was specified, create a tenant context for this request
+        if tenant_id:
+            req.environ['neutron.context'] = context.Context(
+                '', tenant_id)
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, expected_code)
         response = self.deserialize(self.fmt, res)
@@ -734,42 +739,37 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_add_interface_subnet_with_port_from_other_tenant(self):
         tenant_id = _uuid()
         other_tenant_id = _uuid()
-        tenant_context = context.Context(user_id=None, tenant_id=tenant_id)
-        admin_context = context.get_admin_context()
-        with mock.patch('neutron.context.Context') as ctx:
-            ctx.return_value = admin_context
+        with contextlib.nested(
+            self.router(tenant_id=tenant_id),
+            self.network(tenant_id=tenant_id),
+            self.network(tenant_id=other_tenant_id)) as (r, n1, n2):
             with contextlib.nested(
-                self.router(tenant_id=tenant_id),
-                self.network(tenant_id=tenant_id),
-                self.network(tenant_id=other_tenant_id)) as (r, n1, n2):
-                with contextlib.nested(
-                    self.subnet(network=n1, cidr='10.0.0.0/24'),
-                    self.subnet(network=n2, cidr='10.1.0.0/24')) as (s1, s2):
-                        ctx.return_value = admin_context
-                        body = self._router_interface_action(
-                            'add',
-                            r['router']['id'],
-                            s2['subnet']['id'],
-                            None)
-                        self.assertIn('port_id', body)
-                        ctx.return_value = tenant_context
-                        self._router_interface_action(
-                            'add',
-                            r['router']['id'],
-                            s1['subnet']['id'],
-                            None)
-                        self.assertIn('port_id', body)
-                        self._router_interface_action(
-                            'remove',
-                            r['router']['id'],
-                            s1['subnet']['id'],
-                            None)
-                        ctx.return_value = admin_context
-                        body = self._router_interface_action(
-                            'remove',
-                            r['router']['id'],
-                            s2['subnet']['id'],
-                            None)
+                self.subnet(network=n1, cidr='10.0.0.0/24'),
+                self.subnet(network=n2, cidr='10.1.0.0/24')) as (s1, s2):
+                    body = self._router_interface_action(
+                        'add',
+                        r['router']['id'],
+                        s2['subnet']['id'],
+                        None)
+                    self.assertIn('port_id', body)
+                    self._router_interface_action(
+                        'add',
+                        r['router']['id'],
+                        s1['subnet']['id'],
+                        None,
+                        tenant_id=tenant_id)
+                    self.assertIn('port_id', body)
+                    self._router_interface_action(
+                        'remove',
+                        r['router']['id'],
+                        s1['subnet']['id'],
+                        None,
+                        tenant_id=tenant_id)
+                    body = self._router_interface_action(
+                        'remove',
+                        r['router']['id'],
+                        s2['subnet']['id'],
+                        None)
 
     def test_router_add_interface_port(self):
         with self.router() as r:
