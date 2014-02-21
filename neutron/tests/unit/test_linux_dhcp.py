@@ -966,11 +966,11 @@ tag:44444444-4444-4444-4444-444444444444,option:bootfile-name,pxelinux3.0"""
         exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
                          '192.168.0.2\n'
                          '00:00:f3:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--2.'
-                         'openstacklocal,fdca:3ba5:a17a:4ba3::2\n'
+                         'openstacklocal,[fdca:3ba5:a17a:4ba3::2]\n'
                          '00:00:0f:aa:bb:cc,host-192-168-0-3.openstacklocal,'
                          '192.168.0.3\n'
                          '00:00:0f:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--3.'
-                         'openstacklocal,fdca:3ba5:a17a:4ba3::3\n'
+                         'openstacklocal,[fdca:3ba5:a17a:4ba3::3]\n'
                          '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal,'
                          '192.168.0.1\n').lstrip()
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
@@ -1015,11 +1015,11 @@ tag:tag1,249,%s,%s""".lstrip() % (fake_v6,
         exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2.openstacklocal,'
                          '192.168.0.2\n'
                          '00:00:f3:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--2.'
-                         'openstacklocal,fdca:3ba5:a17a:4ba3::2\n'
+                         'openstacklocal,[fdca:3ba5:a17a:4ba3::2]\n'
                          '00:00:0f:aa:bb:cc,host-192-168-0-3.openstacklocal,'
                          '192.168.0.3\n'
                          '00:00:0f:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--3.'
-                         'openstacklocal,fdca:3ba5:a17a:4ba3::3\n'
+                         'openstacklocal,[fdca:3ba5:a17a:4ba3::3]\n'
                          '00:00:0f:rr:rr:rr,host-192-168-0-1.openstacklocal,'
                          '192.168.0.1\n').lstrip()
         exp_host_data.replace('\n', '')

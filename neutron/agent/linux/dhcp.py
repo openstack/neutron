@@ -420,16 +420,22 @@ class Dnsmasq(DhcpLocalProcess):
                 name = 'host-%s.%s' % (r.sub('-', alloc.ip_address),
                                        self.conf.dhcp_domain)
                 set_tag = ''
+                # (dzyu) Check if it is legal ipv6 address, if so, need wrap
+                # it with '[]' to let dnsmasq to distinguish MAC address from
+                # IPv6 address.
+                ip_address = alloc.ip_address
+                if netaddr.valid_ipv6(ip_address):
+                    ip_address = '[%s]' % ip_address
                 if getattr(port, 'extra_dhcp_opts', False):
                     if self.version >= self.MINIMUM_VERSION:
                         set_tag = 'set:'
 
                     buf.write('%s,%s,%s,%s%s\n' %
-                              (port.mac_address, name, alloc.ip_address,
+                              (port.mac_address, name, ip_address,
                                set_tag, port.id))
                 else:
                     buf.write('%s,%s,%s\n' %
-                              (port.mac_address, name, alloc.ip_address))
+                              (port.mac_address, name, ip_address))
 
         name = self.get_conf_file_name('host')
         utils.replace_file(name, buf.getvalue())
