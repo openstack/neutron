@@ -26,7 +26,6 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.common import config
 from neutron.extensions import loadbalancer
-from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.tests.unit import test_api_v2
@@ -62,8 +61,6 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
     def setUp(self):
         super(LoadBalancerExtensionTestCase, self).setUp()
         plugin = 'neutron.extensions.loadbalancer.LoadBalancerPluginBase'
-        # Ensure 'stale' patched copies of the plugin are never returned
-        manager.NeutronManager._instance = None
 
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
@@ -73,7 +70,7 @@ class LoadBalancerExtensionTestCase(testlib_api.WebTestCase):
         config.parse(args)
 
         #just stubbing core plugin with LoadBalancer plugin
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
         cfg.CONF.set_override('service_plugins', [plugin])
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)

@@ -26,6 +26,7 @@ import fixtures
 from oslo.config import cfg
 import testtools
 
+from neutron import manager
 from neutron.tests import post_mortem_debug
 
 
@@ -39,6 +40,16 @@ def fake_use_fatal_exceptions(*args):
 
 
 class BaseTestCase(testtools.TestCase):
+
+    def _cleanup_coreplugin(self):
+        manager.NeutronManager._instance = self._saved_instance
+
+    def setup_coreplugin(self, core_plugin=None):
+        self._saved_instance = manager.NeutronManager._instance
+        self.addCleanup(self._cleanup_coreplugin)
+        manager.NeutronManager._instance = None
+        if core_plugin is not None:
+            cfg.CONF.set_override('core_plugin', core_plugin)
 
     def setUp(self):
         super(BaseTestCase, self).setUp()

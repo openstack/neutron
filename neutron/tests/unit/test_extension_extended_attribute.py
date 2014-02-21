@@ -80,9 +80,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
         config.parse(args=args)
 
-        cfg.CONF.set_override('core_plugin', plugin)
-
-        manager.NeutronManager._instance = None
+        self.setup_coreplugin(plugin)
 
         ext_mgr = extensions.PluginAwareExtensionManager(
             extensions_path,

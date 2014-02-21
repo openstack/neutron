@@ -29,7 +29,6 @@ from neutron.common import exceptions
 from neutron import context
 from neutron.db import api as db
 from neutron.db import quota_db
-from neutron import manager
 from neutron.plugins.linuxbridge.db import l2network_db_v2
 from neutron import quota
 from neutron.tests import base
@@ -47,9 +46,6 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
 
     def setUp(self):
         super(QuotaExtensionTestCase, self).setUp()
-        # Ensure 'stale' patched copies of the plugin are never returned
-        manager.NeutronManager._instance = None
-
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
@@ -63,7 +59,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         config.parse(args=args)
 
         # Update the plugin and extensions path
-        cfg.CONF.set_override('core_plugin', TARGET_PLUGIN)
+        self.setup_coreplugin(TARGET_PLUGIN)
         cfg.CONF.set_override(
             'quota_items',
             ['network', 'subnet', 'port', 'extra1'],

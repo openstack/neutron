@@ -58,7 +58,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
         args = ['--config-file', etcdir('neutron.conf.test')]
         # If test_config specifies some config-file, use it, as well
         config.parse(args=args)
-        NeutronManager._instance = None
+        self.setup_coreplugin()
         self.addCleanup(cfg.CONF.reset)
         self.useFixture(
             fixtures.MonkeyPatch('neutron.manager.NeutronManager._instance'))

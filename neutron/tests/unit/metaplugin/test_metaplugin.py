@@ -99,6 +99,8 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
         self.client_inst.delete_network.return_value = True
         self.client_inst.delete_port.return_value = True
         self.client_inst.delete_subnet.return_value = True
+        plugin = MetaPluginV2.__module__ + '.' + MetaPluginV2.__name__
+        self.setup_coreplugin(plugin)
         self.plugin = MetaPluginV2(configfile=None)
 
     def _fake_network(self, flavor):

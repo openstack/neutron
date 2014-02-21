@@ -68,8 +68,6 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
         plugin = '%s.%s' % (networkgw.__name__,
                             networkgw.NetworkGatewayPluginBase.__name__)
         self._resource = networkgw.RESOURCE_NAME.replace('-', '_')
-        # Ensure 'stale' patched copies of the plugin are never returned
-        manager.NeutronManager._instance = None
 
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
@@ -79,7 +77,7 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
         config.parse(args=args)
 
         # Update the plugin and extensions path
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
         self.addCleanup(cfg.CONF.reset)
 
         _plugin_patcher = mock.patch(plugin, autospec=True)
