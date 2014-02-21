@@ -781,7 +781,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
         self.root_helper = root_helper
         self.setup_linux_bridge(interface_mappings)
         configurations = {'interface_mappings': interface_mappings}
-        if self.br_mgr.vxlan_mode is not lconst.VXLAN_NONE:
+        if self.br_mgr.vxlan_mode != lconst.VXLAN_NONE:
             configurations['tunneling_ip'] = self.br_mgr.local_ip
             configurations['tunnel_types'] = [p_const.TYPE_VXLAN]
             configurations['l2_population'] = cfg.CONF.VXLAN.l2_population

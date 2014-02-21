@@ -136,7 +136,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             # Port security/IP was updated off. Need to check that no security
             # groups are on port.
-            if (ret_port[psec.PORTSECURITY] is not True or not has_ip):
+            if (ret_port[psec.PORTSECURITY] != True or not has_ip):
                 if has_security_groups:
                     raise psec.PortSecurityAndIPRequiredForSecurityGroups()
 

@@ -227,7 +227,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.error(_("create_ofc_port() failed due to %s"), exc)
             port_status = const.PORT_STATUS_ERROR
 
-        if port_status is not port['status']:
+        if port_status != port['status']:
             self._update_resource_status(context, "port", port['id'],
                                          port_status)
             port['status'] = port_status
@@ -248,7 +248,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.error(_("delete_ofc_port() failed due to %s"), exc)
             port_status = const.PORT_STATUS_ERROR
 
-        if port_status is not port['status']:
+        if port_status != port['status']:
             self._update_resource_status(context, "port", port['id'],
                                          port_status)
             port['status'] = port_status
@@ -313,7 +313,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                               network)
             self._process_l3_update(context, new_net, network['network'])
 
-        changed = (old_net['admin_state_up'] is not new_net['admin_state_up'])
+        changed = (old_net['admin_state_up'] != new_net['admin_state_up'])
         if changed and not new_net['admin_state_up']:
             # disable all active ports of the network
             filters = dict(network_id=[id], status=[const.PORT_STATUS_ACTIVE])

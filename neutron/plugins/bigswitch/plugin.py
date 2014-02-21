@@ -262,7 +262,7 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
                           "resource: %s"), resource)
 
         if 'status' in resource:
-            if resource['status'] is not const.NET_STATUS_ACTIVE:
+            if resource['status'] != const.NET_STATUS_ACTIVE:
                 LOG.warning(_("Operational status is internally set by the "
                               "plugin. Ignoring setting status=%s."),
                             resource['status'])

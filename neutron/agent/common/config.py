@@ -78,11 +78,11 @@ def register_agent_state_opts_helper(conf):
 
 def get_root_helper(conf):
     root_helper = conf.AGENT.root_helper
-    if root_helper is not 'sudo':
+    if root_helper != 'sudo':
         return root_helper
 
     root_helper = conf.root_helper
-    if root_helper is not 'sudo':
+    if root_helper != 'sudo':
         LOG.deprecated(_('DEFAULT.root_helper is deprecated! Please move '
                          'root_helper configuration to [AGENT] section.'))
         return root_helper
