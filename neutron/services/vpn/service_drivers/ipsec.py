@@ -47,7 +47,7 @@ class IPsecVpnDriverCallBack(object):
         return n_rpc.PluginRpcDispatcher([self])
 
     def get_vpn_services_on_host(self, context, host=None):
-        """Retuns the vpnservices on the host."""
+        """Returns the vpnservices on the host."""
         plugin = self.driver.service_plugin
         vpnservices = plugin._get_agent_hosting_vpn_services(
             context, host)
