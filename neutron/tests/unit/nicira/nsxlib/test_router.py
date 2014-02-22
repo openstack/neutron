@@ -19,18 +19,18 @@ import mock
 from neutron.common import exceptions
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
-from neutron.tests.unit.nicira.test_nvplib import NsxlibNegativeBaseTestCase
-from neutron.tests.unit.nicira.test_nvplib import NvplibTestCase
+from neutron.tests.unit.nicira.nsxlib import base
 from neutron.tests.unit import test_api_v2
 
 _uuid = test_api_v2._uuid
 
 
-class TestNatRules(NvplibTestCase):
+class TestNatRules(base.NsxlibTestCase):
 
     def _test_create_lrouter_dnat_rule(self, version):
         with mock.patch.object(self.fake_cluster.api_client,
@@ -61,7 +61,7 @@ class TestNatRules(NvplibTestCase):
         self._test_create_lrouter_dnat_rule('3.1')
 
 
-class TestExplicitLRouters(NvplibTestCase):
+class TestExplicitLRouters(base.NsxlibTestCase):
 
     def setUp(self):
         self.fake_version = '3.2'
@@ -72,8 +72,7 @@ class TestExplicitLRouters(NvplibTestCase):
 
         router = {'display_name': router_name,
                   'uuid': router_id,
-                  'tags': [{'scope': 'quantum', 'tag': nvplib.NEUTRON_VERSION},
-                           {'scope': 'os_tid', 'tag': '%s' % tenant_id}],
+                  'tags': utils.get_tags(os_tid=tenant_id),
                   'distributed': False,
                   'routing_config': {'type': 'RoutingTableRoutingConfig',
                                      '_schema': schema},
@@ -113,10 +112,8 @@ class TestExplicitLRouters(NvplibTestCase):
                         {'gateway_ip_address': 'fake_address',
                          'type': 'RouterNextHop'},
                         'type': 'SingleDefaultRouteImplicitRoutingConfig'},
-                    'tags': [{'scope': 'os_tid', 'tag': 'fake_tenant_id'},
-                             {'scope': 'q_router_id', 'tag': 'pipita_higuain'},
-                             {'scope': 'quantum',
-                              'tag': nvplib.NEUTRON_VERSION}],
+                    'tags': utils.get_tags(os_tid='fake_tenant_id',
+                                           q_router_id='pipita_higuain'),
                     'type': 'LogicalRouterConfig'}
         self.assertEqual(expected, body)
 
@@ -129,11 +126,8 @@ class TestExplicitLRouters(NvplibTestCase):
                                                tenant_id, router_type)
         expected = {'display_name': 'fake_router_name',
                     'routing_config': {'type': 'RoutingTableRoutingConfig'},
-                    'tags': [{'scope': 'os_tid', 'tag': 'fake_tenant_id'},
-                             {'scope': 'q_router_id',
-                              'tag': 'marekiaro_hamsik'},
-                             {'scope': 'quantum',
-                              'tag': nvplib.NEUTRON_VERSION}],
+                    'tags': utils.get_tags(os_tid='fake_tenant_id',
+                                           q_router_id='marekiaro_hamsik'),
                     'type': 'LogicalRouterConfig'}
         self.assertEqual(expected, body)
 
@@ -253,7 +247,7 @@ class TestExplicitLRouters(NvplibTestCase):
                         self.fake_cluster, router_id, new_routes)
 
 
-class RouterNegativeTestCase(NsxlibNegativeBaseTestCase):
+class RouterNegativeTestCase(base.NsxlibNegativeBaseTestCase):
 
     def test_create_lrouter_on_failure(self):
         self.assertRaises(nvplib.NvpApiClient.NvpApiException,
@@ -285,7 +279,7 @@ class RouterNegativeTestCase(NsxlibNegativeBaseTestCase):
                           'new_hop')
 
 
-class TestLogicalRouters(NvplibTestCase):
+class TestLogicalRouters(base.NsxlibTestCase):
 
     def _verify_lrouter(self, res_lrouter,
                         expected_uuid,

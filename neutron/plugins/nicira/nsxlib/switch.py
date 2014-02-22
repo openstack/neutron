@@ -23,7 +23,6 @@ from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira.nvplib import _build_uri_path
-from neutron.plugins.nicira.nvplib import _plug_interface
 from neutron.plugins.nicira.nvplib import do_request
 from neutron.plugins.nicira.nvplib import get_all_query_pages
 
@@ -369,11 +368,21 @@ def get_port_status(cluster, lswitch_id, port_id):
         return constants.PORT_STATUS_DOWN
 
 
-def plug_interface(cluster, lswitch_id, port, port_type, attachment=None):
+def plug_interface(cluster, lswitch_id, lport_id, att_obj):
+    return do_request(HTTP_PUT,
+                      _build_uri_path(LSWITCHPORT_RESOURCE,
+                                      lport_id, lswitch_id,
+                                      is_attachment=True),
+                      json.dumps(att_obj),
+                      cluster=cluster)
+
+
+def plug_vif_interface(
+    cluster, lswitch_id, port_id, port_type, attachment=None):
     """Plug a VIF Attachment object in a logical port."""
     lport_obj = {}
     if attachment:
         lport_obj["vif_uuid"] = attachment
 
     lport_obj["type"] = port_type
-    return _plug_interface(cluster, lswitch_id, port, lport_obj)
+    return plug_interface(cluster, lswitch_id, port_id, lport_obj)

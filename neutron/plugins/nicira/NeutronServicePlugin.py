@@ -31,6 +31,7 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.nicira.common import config  # noqa
 from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.dbexts import servicerouter as sr_db
 from neutron.plugins.nicira.dbexts import vcns_db
 from neutron.plugins.nicira.dbexts import vcns_models
@@ -39,7 +40,6 @@ from neutron.plugins.nicira import NeutronPlugin
 from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
-from neutron.plugins.nicira import nvplib
 from neutron.plugins.nicira.vshield.common import (
     constants as vcns_const)
 from neutron.plugins.nicira.vshield.common.constants import RouterStatus
@@ -1612,7 +1612,7 @@ class VcnsCallbacks(object):
 
 
 def _process_base_create_lswitch_args(*args, **kwargs):
-    tags = [{"tag": nvplib.NEUTRON_VERSION, "scope": "quantum"}]
+    tags = utils.get_tags()
     tags.append({"tag": args[1],
                  "scope": "quantum_net_id"})
     if args[2]:

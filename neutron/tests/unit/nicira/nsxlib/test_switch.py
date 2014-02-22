@@ -21,13 +21,13 @@ from neutron.common import constants
 from neutron.common import exceptions
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.nsxlib import switch as switchlib
-from neutron.tests.unit.nicira.test_nvplib import NvplibTestCase
+from neutron.tests.unit.nicira.nsxlib import base
 from neutron.tests.unit import test_api_v2
 
 _uuid = test_api_v2._uuid
 
 
-class LogicalSwitchesTestCase(NvplibTestCase):
+class LogicalSwitchesTestCase(base.NsxlibTestCase):
 
     def test_create_and_get_lswitches_single(self):
         tenant_id = 'pippo'
@@ -141,7 +141,7 @@ class LogicalSwitchesTestCase(NvplibTestCase):
                           self.fake_cluster, 'whatever', ['whatever'])
 
 
-class LogicalPortsTestCase(NvplibTestCase):
+class LogicalPortsTestCase(base.NsxlibTestCase):
 
     def _create_switch_and_port(self, tenant_id='pippo',
                                 neutron_port_id='whatever',
@@ -169,8 +169,8 @@ class LogicalPortsTestCase(NvplibTestCase):
 
     def test_plug_interface(self):
         lswitch, lport = self._create_switch_and_port()
-        switchlib.plug_interface(self.fake_cluster, lswitch['uuid'],
-                                 lport['uuid'], 'VifAttachment', 'fake')
+        switchlib.plug_vif_interface(self.fake_cluster, lswitch['uuid'],
+                                     lport['uuid'], 'VifAttachment', 'fake')
         lport_res = switchlib.get_port(self.fake_cluster,
                                        lswitch['uuid'], lport['uuid'])
         self.assertEqual(lport['uuid'], lport_res['uuid'])

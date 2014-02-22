@@ -26,8 +26,8 @@ from neutron import context
 from neutron.extensions import l3
 from neutron.manager import NeutronManager
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira import NeutronServicePlugin as nsp
-from neutron.plugins.nicira import nvplib
 from neutron.tests import base
 from neutron.tests.unit.nicira import NVPEXT_PATH
 from neutron.tests.unit.nicira import SERVICE_PLUGIN_NAME
@@ -246,11 +246,8 @@ class TestProxyCreateLswitch(base.BaseTestCase):
             {'zone_uuid': 'foo_zone',
              'transport_type': 'stt'}
         ]
-        self.tags = [
-            {'scope': 'quantum', 'tag': nvplib.NEUTRON_VERSION},
-            {'scope': 'quantum_net_id', 'tag': 'foo_id'},
-            {'scope': 'os_tid', 'tag': self.tenant_id}
-        ]
+        self.tags = utils.get_tags(quantum_net_id='foo_id',
+                                   os_tid=self.tenant_id)
         self.cluster = None
 
     def test_create_lswitch_with_basic_args(self):
@@ -261,7 +258,7 @@ class TestProxyCreateLswitch(base.BaseTestCase):
                                                        self.tz_config)
         self.assertEqual(self.display_name, result[0])
         self.assertEqual(self.tz_config, result[1])
-        self.assertEqual(self.tags, result[2])
+        self.assertEqual(sorted(self.tags), sorted(result[2]))
 
     def test_create_lswitch_with_shared_as_kwarg(self):
         result = nsp._process_base_create_lswitch_args(self.cluster,
@@ -271,7 +268,7 @@ class TestProxyCreateLswitch(base.BaseTestCase):
                                                        self.tz_config,
                                                        shared=True)
         expected = self.tags + [{'scope': 'shared', 'tag': 'true'}]
-        self.assertEqual(expected, result[2])
+        self.assertEqual(sorted(expected), sorted(result[2]))
 
     def test_create_lswitch_with_shared_as_arg(self):
         result = nsp._process_base_create_lswitch_args(self.cluster,
@@ -282,7 +279,7 @@ class TestProxyCreateLswitch(base.BaseTestCase):
                                                        True)
         additional_tags = [{'scope': 'shared', 'tag': 'true'}]
         expected = self.tags + additional_tags
-        self.assertEqual(expected, result[2])
+        self.assertEqual(sorted(expected), sorted(result[2]))
 
     def test_create_lswitch_with_additional_tags(self):
         more_tags = [{'scope': 'foo_scope', 'tag': 'foo_tag'}]
@@ -293,4 +290,4 @@ class TestProxyCreateLswitch(base.BaseTestCase):
                                                        self.tz_config,
                                                        tags=more_tags)
         expected = self.tags + more_tags
-        self.assertEqual(expected, result[2])
+        self.assertEqual(sorted(expected), sorted(result[2]))

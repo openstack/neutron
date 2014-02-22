@@ -79,10 +79,9 @@ from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
 from neutron.plugins.nicira.nsxlib import l2gateway as l2gwlib
 from neutron.plugins.nicira.nsxlib import queue as queuelib
 from neutron.plugins.nicira.nsxlib import router as routerlib
+from neutron.plugins.nicira.nsxlib import secgroup as secgrouplib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
-from neutron.plugins.nicira import nvplib
-
 
 LOG = logging.getLogger("NeutronPlugin")
 
@@ -467,7 +466,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 context.session, port_data['id'],
                 selected_lswitch['uuid'], lport['uuid'])
             if port_data['device_owner'] not in self.port_special_owners:
-                switchlib.plug_interface(
+                switchlib.plug_vif_interface(
                     self.cluster, selected_lswitch['uuid'],
                     lport['uuid'], "VifAttachment", port_data['id'])
             LOG.debug(_("_nvp_create_port completed for port %(name)s "
@@ -1692,8 +1691,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, port_id)
             # Unplug current attachment from lswitch port
-            switchlib.plug_interface(self.cluster, nsx_switch_id,
-                                     nsx_port_id, "NoAttachment")
+            switchlib.plug_vif_interface(self.cluster, nsx_switch_id,
+                                         nsx_port_id, "NoAttachment")
             # Create logical router port and plug patch attachment
             self._create_and_attach_router_port(
                 self.cluster, context, nsx_router_id, port_data,
@@ -2107,9 +2106,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         if not default_sg:
             self._ensure_default_security_group(context, tenant_id)
 
-        nvp_secgroup = nvplib.create_security_profile(self.cluster,
-                                                      tenant_id, s)
-        security_group['security_group']['id'] = nvp_secgroup['uuid']
+        nsx_secgroup = secgrouplib.create_security_profile(self.cluster,
+                                                           tenant_id, s)
+        security_group['security_group']['id'] = nsx_secgroup['uuid']
         return super(NvpPluginV2, self).create_security_group(
             context, security_group, default_sg)
 
@@ -2132,7 +2131,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 context, filters):
                 raise ext_sg.SecurityGroupInUse(id=security_group['id'])
             try:
-                nvplib.delete_security_profile(
+                secgrouplib.delete_security_profile(
                     self.cluster, security_group['id'])
             except q_exc.NotFound:
                 LOG.info(_("Security group: %s was already deleted "
@@ -2187,9 +2186,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # of them to PUT to NVP.
             combined_rules = self._merge_security_group_rules_with_current(
                 context, s, security_group['id'])
-            nvplib.update_security_group_rules(self.cluster,
-                                               security_group['id'],
-                                               combined_rules)
+            secgrouplib.update_security_group_rules(self.cluster,
+                                                    security_group['id'],
+                                                    combined_rules)
             return super(
                 NvpPluginV2, self).create_security_group_rule_bulk_native(
                     context, security_group_rule)
@@ -2212,7 +2211,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
             self._remove_security_group_with_id_and_id_field(
                 current_rules, sgrid)
-            nvplib.update_security_group_rules(
+            secgrouplib.update_security_group_rules(
                 self.cluster, sgid, current_rules)
             return super(NvpPluginV2, self).delete_security_group_rule(context,
                                                                        sgrid)

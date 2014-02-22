@@ -18,8 +18,8 @@ import json
 
 from neutron.openstack.common import log
 from neutron.plugins.nicira.common import utils
+from neutron.plugins.nicira.nsxlib import switch
 from neutron.plugins.nicira.nvplib import _build_uri_path
-from neutron.plugins.nicira.nvplib import _plug_interface
 from neutron.plugins.nicira.nvplib import do_request
 from neutron.plugins.nicira.nvplib import get_all_query_pages
 
@@ -69,7 +69,7 @@ def plug_l2_gw_service(cluster, lswitch_id, lport_id,
                'l2_gateway_service_uuid': gateway_id}
     if vlan_id:
         att_obj['vlan_id'] = vlan_id
-    return _plug_interface(cluster, lswitch_id, lport_id, att_obj)
+    return switch.plug_interface(cluster, lswitch_id, lport_id, att_obj)
 
 
 def get_l2_gw_service(cluster, gateway_id):
