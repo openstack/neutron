@@ -100,7 +100,7 @@ class VlanAllocationsTest(base.BaseTestCase):
 
     def setUp(self):
         super(VlanAllocationsTest, self).setUp()
-        n1kv_db_v2.initialize()
+        db.configure_db()
         self.session = db.get_session()
         n1kv_db_v2.sync_vlan_allocations(self.session, VLAN_RANGES)
 
@@ -284,7 +284,7 @@ class VxlanAllocationsTest(base.BaseTestCase,
 
     def setUp(self):
         super(VxlanAllocationsTest, self).setUp()
-        n1kv_db_v2.initialize()
+        db.configure_db()
         self.session = db.get_session()
         n1kv_db_v2.sync_vxlan_allocations(self.session, VXLAN_RANGES)
 
@@ -392,7 +392,7 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         super(NetworkBindingsTest, self).setUp()
-        n1kv_db_v2.initialize()
+        db.configure_db()
         self.session = db.get_session()
 
     def tearDown(self):
@@ -643,7 +643,7 @@ class NetworkProfileTests(base.BaseTestCase,
 
     def setUp(self):
         super(NetworkProfileTests, self).setUp()
-        n1kv_db_v2.initialize()
+        db.configure_db()
         self.session = db.get_session()
 
     def tearDown(self):
@@ -828,7 +828,7 @@ class PolicyProfileTests(base.BaseTestCase):
 
     def setUp(self):
         super(PolicyProfileTests, self).setUp()
-        n1kv_db_v2.initialize()
+        db.configure_db()
         self.session = db.get_session()
 
     def tearDown(self):
@@ -876,7 +876,7 @@ class ProfileBindingTests(base.BaseTestCase,
 
     def setUp(self):
         super(ProfileBindingTests, self).setUp()
-        n1kv_db_v2.initialize()
+        db.configure_db()
         self.session = db.get_session()
 
     def tearDown(self):

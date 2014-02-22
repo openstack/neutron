@@ -29,10 +29,6 @@ from neutron.plugins.mlnx.db import mlnx_models_v2
 LOG = logging.getLogger(__name__)
 
 
-def initialize():
-    db.configure_db()
-
-
 def _remove_non_allocatable_vlans(session, allocations,
                                   physical_network, vlan_ids):
     if physical_network in allocations:

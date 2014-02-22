@@ -38,7 +38,7 @@ PLUGIN_NAME = ('neutron.plugins.linuxbridge.'
 class NetworkStatesTest(base.BaseTestCase):
     def setUp(self):
         super(NetworkStatesTest, self).setUp()
-        lb_db.initialize()
+        db.configure_db()
         lb_db.sync_network_states(VLAN_RANGES)
         self.session = db.get_session()
         self.addCleanup(db.clear_db)
@@ -154,7 +154,7 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('network_vlan_ranges', ['physnet1:1000:2999'],
                               group='VLANS')
         super(NetworkBindingsTest, self).setUp(plugin=PLUGIN_NAME)
-        lb_db.initialize()
+        db.configure_db()
         self.session = db.get_session()
 
     def test_add_network_binding(self):

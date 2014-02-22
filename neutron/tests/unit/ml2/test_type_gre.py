@@ -18,7 +18,6 @@ from testtools import matchers
 
 from neutron.common import exceptions as exc
 import neutron.db.api as db
-from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_gre
 from neutron.tests import base
@@ -35,7 +34,7 @@ class GreTypeTest(base.BaseTestCase):
 
     def setUp(self):
         super(GreTypeTest, self).setUp()
-        ml2_db.initialize()
+        db.configure_db()
         self.driver = type_gre.GreTypeDriver()
         self.driver.gre_id_ranges = TUNNEL_RANGES
         self.driver._sync_gre_allocations()
@@ -187,7 +186,7 @@ class GreTypeMultiRangeTest(base.BaseTestCase):
 
     def setUp(self):
         super(GreTypeMultiRangeTest, self).setUp()
-        ml2_db.initialize()
+        db.configure_db()
         self.driver = type_gre.GreTypeDriver()
         self.driver.gre_id_ranges = self.TUNNEL_MULTI_RANGES
         self.driver._sync_gre_allocations()

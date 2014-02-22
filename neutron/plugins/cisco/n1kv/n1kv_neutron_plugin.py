@@ -102,7 +102,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         1. Initialize Nexus1000v and Credential DB
         2. Establish communication with Cisco Nexus1000V
         """
-        n1kv_db_v2.initialize()
+        super(N1kvNeutronPluginV2, self).__init__()
         c_cred.Store.initialize()
         self._initialize_network_ranges()
         self._setup_vsm()

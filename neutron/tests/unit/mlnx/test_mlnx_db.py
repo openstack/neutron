@@ -35,7 +35,7 @@ TEST_NETWORK_ID = 'abcdefghijklmnopqrstuvwxyz'
 class SegmentationIdAllocationTest(base.BaseTestCase):
     def setUp(self):
         super(SegmentationIdAllocationTest, self).setUp()
-        mlnx_db.initialize()
+        db.configure_db()
         mlnx_db.sync_network_states(VLAN_RANGES)
         self.session = db.get_session()
         self.addCleanup(db.clear_db)
@@ -158,7 +158,7 @@ class SegmentationIdAllocationTest(base.BaseTestCase):
 class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
         super(NetworkBindingsTest, self).setUp()
-        mlnx_db.initialize()
+        db.configure_db()
         self.session = db.get_session()
 
     def test_add_network_binding(self):

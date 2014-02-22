@@ -48,7 +48,7 @@ PLUGIN_NAME = ('neutron.plugins.openvswitch.'
 class VlanAllocationsTest(base.BaseTestCase):
     def setUp(self):
         super(VlanAllocationsTest, self).setUp()
-        ovs_db_v2.initialize()
+        db.configure_db()
         ovs_db_v2.sync_vlan_allocations(VLAN_RANGES)
         self.session = db.get_session()
         self.addCleanup(db.clear_db)
@@ -192,7 +192,7 @@ class VlanAllocationsTest(base.BaseTestCase):
 class TunnelAllocationsTest(base.BaseTestCase):
     def setUp(self):
         super(TunnelAllocationsTest, self).setUp()
-        ovs_db_v2.initialize()
+        db.configure_db()
         ovs_db_v2.sync_tunnel_allocations(TUNNEL_RANGES)
         self.session = db.get_session()
         self.addCleanup(db.clear_db)
@@ -302,7 +302,7 @@ class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('network_vlan_ranges', ['physnet1:1000:2999'],
                               group='OVS')
         super(NetworkBindingsTest, self).setUp(plugin=PLUGIN_NAME)
-        ovs_db_v2.initialize()
+        db.configure_db()
         self.session = db.get_session()
 
     def test_add_network_binding(self):

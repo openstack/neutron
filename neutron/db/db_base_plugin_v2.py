@@ -224,10 +224,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
     __native_sorting_support = True
 
     def __init__(self):
-        # NOTE(jkoelker) This is an incomplete implementation. Subclasses
-        #                must override __init__ and setup the database
-        #                and not call into this class's __init__.
-        #                This connection is setup as memory for the tests.
         db.configure_db()
 
     @classmethod

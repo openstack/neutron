@@ -25,7 +25,6 @@ import netaddr
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
-from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_db
@@ -69,9 +68,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
     def __init__(self):
         LOG.info(_('Neutron PLUMgrid Director: Starting Plugin'))
 
-        # Plugin DB initialization
-        db.configure_db()
-
+        super(NeutronPluginPLUMgridV2, self).__init__()
         self.plumgrid_init()
 
         LOG.debug(_('Neutron PLUMgrid Director: Neutron server with '

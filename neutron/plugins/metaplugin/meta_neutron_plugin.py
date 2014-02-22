@@ -50,6 +50,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                    extraroute_db.ExtraRoute_db_mixin):
 
     def __init__(self, configfile=None):
+        super(MetaPluginV2, self).__init__()
         LOG.debug(_("Start initializing metaplugin"))
         self.supported_extension_aliases = ['flavor', 'external-net',
                                             'router', 'ext-gw-mode',
@@ -98,8 +99,6 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if self.default_l3_flavor not in self.l3_plugins:
             raise exc.Invalid(_('default_l3_flavor %s is not plugin list') %
                               self.default_l3_flavor)
-
-        db.configure_db()
 
         self.extension_map = {}
         if not cfg.CONF.META.extension_map == '':

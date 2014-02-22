@@ -18,6 +18,7 @@
 import mock
 
 from neutron import context
+from neutron.db import api as db
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.db import api as ndb
@@ -44,9 +45,9 @@ class OFCManagerTestBase(base.BaseTestCase):
 
     def setUp(self):
         super(OFCManagerTestBase, self).setUp()
+        db.configure_db()
         driver = "neutron.tests.unit.nec.stub_ofc_driver.StubOFCDriver"
         config.CONF.set_override('driver', driver, 'OFC')
-        ndb.initialize()
         self.addCleanup(ndb.clear_db)
         self.ofc = ofc_manager.OFCManager()
         # NOTE: enable_autocheck() is a feature of StubOFCDriver

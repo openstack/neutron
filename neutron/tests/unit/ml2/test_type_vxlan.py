@@ -21,7 +21,6 @@ from testtools import matchers
 from neutron.common import exceptions as exc
 from neutron.db import api as db
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_vxlan
 from neutron.tests import base
@@ -42,7 +41,7 @@ VXLAN_UDP_PORT_TWO = 8888
 class VxlanTypeTest(base.BaseTestCase):
     def setUp(self):
         super(VxlanTypeTest, self).setUp()
-        ml2_db.initialize()
+        db.configure_db()
         cfg.CONF.set_override('vni_ranges', [TUNNEL_RANGES],
                               group='ml2_type_vxlan')
         cfg.CONF.set_override('vxlan_group', MULTICAST_GROUP,
@@ -207,7 +206,7 @@ class VxlanTypeMultiRangeTest(base.BaseTestCase):
 
     def setUp(self):
         super(VxlanTypeMultiRangeTest, self).setUp()
-        ml2_db.initialize()
+        db.configure_db()
         self.driver = type_vxlan.VxlanTypeDriver()
         self.driver.vxlan_vni_ranges = self.TUNNEL_MULTI_RANGES
         self.driver._sync_vxlan_allocations()
