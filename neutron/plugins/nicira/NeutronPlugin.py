@@ -77,6 +77,7 @@ from neutron.plugins.nicira.extensions import maclearning as mac_ext
 from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
 from neutron.plugins.nicira.nsxlib import queue as queuelib
+from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
@@ -257,7 +258,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                                     port_data['fixed_ips'],
                                                     subnet_ids))
         try:
-            lrouter_port = nvplib.create_router_lport(
+            lrouter_port = routerlib.create_router_lport(
                 cluster, nsx_router_id, port_data.get('tenant_id', 'fake'),
                 port_data.get('id', 'fake'), port_data.get('name', 'fake'),
                 port_data.get('admin_state_up', True), ip_addresses,
@@ -314,7 +315,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Be safe and concede NAT rules might not exist.
             # Therefore use min_num_expected=0
             for cidr in cidrs:
-                nvplib.delete_nat_rules_by_match(
+                routerlib.delete_nat_rules_by_match(
                     self.cluster, nsx_router_id, "SourceNatRule",
                     max_num_expected=1, min_num_expected=0,
                     source_ip_addresses=cidr)
@@ -324,7 +325,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Set the SNAT rule for each subnet (only first IP)
             for cidr in cidrs:
                 cidr_prefix = int(cidr.split('/')[1])
-                nvplib.create_lrouter_snat_rule(
+                routerlib.create_lrouter_snat_rule(
                     self.cluster, nsx_router_id,
                     ip_addresses[0].split('/')[0],
                     ip_addresses[0].split('/')[0],
@@ -333,34 +334,34 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def _update_router_port_attachment(self, cluster, context,
                                        nsx_router_id, port_data,
-                                       nvp_router_port_id,
+                                       nsx_router_port_id,
                                        attachment_type,
                                        attachment,
                                        attachment_vlan=None):
-        if not nvp_router_port_id:
-            nvp_router_port_id = self._find_router_gw_port(context, port_data)
+        if not nsx_router_port_id:
+            nsx_router_port_id = self._find_router_gw_port(context, port_data)
         try:
-            nvplib.plug_router_port_attachment(cluster, nsx_router_id,
-                                               nvp_router_port_id,
-                                               attachment,
-                                               attachment_type,
-                                               attachment_vlan)
+            routerlib.plug_router_port_attachment(cluster, nsx_router_id,
+                                                  nsx_router_port_id,
+                                                  attachment,
+                                                  attachment_type,
+                                                  attachment_vlan)
             LOG.debug(_("Attached %(att)s to NVP router port %(port)s"),
-                      {'att': attachment, 'port': nvp_router_port_id})
+                      {'att': attachment, 'port': nsx_router_port_id})
         except NvpApiClient.NvpApiException:
             # Must remove NVP logical port
-            nvplib.delete_router_lport(cluster, nsx_router_id,
-                                       nvp_router_port_id)
+            routerlib.delete_router_lport(cluster, nsx_router_id,
+                                          nsx_router_port_id)
             LOG.exception(_("Unable to plug attachment in NVP logical "
                             "router port %(r_port_id)s, associated with "
                             "Neutron %(q_port_id)s"),
-                          {'r_port_id': nvp_router_port_id,
+                          {'r_port_id': nsx_router_port_id,
                            'q_port_id': port_data.get('id')})
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Unable to plug attachment in router port "
                            "%(r_port_id)s for neutron port id %(q_port_id)s "
                            "on router %(router_id)s") %
-                         {'r_port_id': nvp_router_port_id,
+                         {'r_port_id': nsx_router_port_id,
                           'q_port_id': port_data.get('id'),
                           'router_id': nsx_router_id}))
 
@@ -525,9 +526,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Delete logical router port
         nsx_router_id = nsx_utils.get_nsx_router_id(
             context.session, self.cluster, port_data['device_id'])
-        nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+        nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
             context.session, self.cluster, port_data['id'])
-        if not nvp_port_id:
+        if not nsx_port_id:
             LOG.warn(_("Neutron port %(port_id)s not found on NVP backend. "
                        "Terminating delete operation. A dangling router port "
                        "might have been left on router %(router_id)s"),
@@ -535,17 +536,17 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                       'router_id': nsx_router_id})
             return
         try:
-            nvplib.delete_peer_router_lport(self.cluster,
-                                            nsx_router_id,
-                                            nvp_switch_id,
-                                            nvp_port_id)
+            routerlib.delete_peer_router_lport(self.cluster,
+                                               nsx_router_id,
+                                               nsx_switch_id,
+                                               nsx_port_id)
         except NvpApiClient.NvpApiException:
             # Do not raise because the issue might as well be that the
             # router has already been deleted, so there would be nothing
             # to do here
             LOG.exception(_("Ignoring exception as this means the peer "
                             "for port '%s' has already been deleted."),
-                          nvp_port_id)
+                          nsx_port_id)
 
         # Delete logical switch port
         self._nvp_delete_port(context, port_data)
@@ -599,8 +600,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    port_data['network_id'])
         nsx_router_id = nsx_utils.get_nsx_router_id(
             context.session, self.cluster, router_id)
-        lr_port = nvplib.find_router_gw_port(context, self.cluster,
-                                             nsx_router_id)
+        lr_port = routerlib.find_router_gw_port(context, self.cluster,
+                                                nsx_router_id)
         if not lr_port:
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("The gateway port for the NSX router %s "
@@ -624,14 +625,14 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # regardless of what the user specifies in neutron
         nsx_router_id = nsx_utils.get_nsx_router_id(
             context.session, self.cluster, port_data['device_id'])
-        nvplib.update_router_lport(self.cluster,
-                                   nsx_router_id,
-                                   lr_port['uuid'],
-                                   port_data['tenant_id'],
-                                   port_data['id'],
-                                   port_data['name'],
-                                   True,
-                                   ip_addresses)
+        routerlib.update_router_lport(self.cluster,
+                                      nsx_router_id,
+                                      lr_port['uuid'],
+                                      port_data['tenant_id'],
+                                      port_data['id'],
+                                      port_data['name'],
+                                      True,
+                                      ip_addresses)
         ext_network = self.get_network(context, port_data['network_id'])
         if ext_network.get(pnet.NETWORK_TYPE) == NetworkTypes.L3_EXT:
             # Update attachment
@@ -662,14 +663,14 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             router_id = port_data['device_id']
             nsx_router_id = nsx_utils.get_nsx_router_id(
                 context.session, self.cluster, router_id)
-            nvplib.update_router_lport(self.cluster,
-                                       nsx_router_id,
-                                       lr_port['uuid'],
-                                       port_data['tenant_id'],
-                                       port_data['id'],
-                                       port_data['name'],
-                                       True,
-                                       ['0.0.0.0/31'])
+            routerlib.update_router_lport(self.cluster,
+                                          nsx_router_id,
+                                          lr_port['uuid'],
+                                          port_data['tenant_id'],
+                                          port_data['id'],
+                                          port_data['name'],
+                                          True,
+                                          ['0.0.0.0/31'])
             # Reset attachment
             self._update_router_port_attachment(
                 self.cluster, context, nsx_router_id, port_data,
@@ -1036,7 +1037,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                        'device_owner': ['network:router_interface']}
         router_iface_ports = self.get_ports(context, filters=port_filter)
         for port in router_iface_ports:
-            nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+            nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, id)
         # Before removing entry from Neutron DB, retrieve NSX switch
         # identifiers for removing them from backend
@@ -1047,13 +1048,13 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # clean up network owned ports
         for port in router_iface_ports:
             try:
-                if nvp_port_id:
+                if nsx_port_id:
                     nsx_router_id = nsx_utils.get_nsx_router_id(
                         context.session, self.cluster, port['device_id'])
-                    nvplib.delete_peer_router_lport(self.cluster,
-                                                    nsx_router_id,
-                                                    nvp_switch_id,
-                                                    nvp_port_id)
+                    routerlib.delete_peer_router_lport(self.cluster,
+                                                       nsx_router_id,
+                                                       nsx_switch_id,
+                                                       nsx_port_id)
                 else:
                     LOG.warning(_("A nvp lport identifier was not found for "
                                   "neutron port '%s'. Unable to remove "
@@ -1068,7 +1069,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 # to do here
                 LOG.warning(_("Ignoring exception as this means the peer for "
                               "port '%s' has already been deleted."),
-                            nvp_port_id)
+                            nsx_port_id)
 
         # Do not go to NVP for external networks
         if not external:
@@ -1395,7 +1396,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         tenant_id = self._get_tenant_id_for_create(context, router)
         distributed = router.get('distributed')
         try:
-            lrouter = nvplib.create_lrouter(
+            lrouter = routerlib.create_lrouter(
                 self.cluster, router['id'],
                 tenant_id, router['name'], nexthop,
                 distributed=attr.is_attr_set(distributed) and distributed)
@@ -1424,7 +1425,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                            'def_l3_gw_svc':
                            self.cluster.default_l3_gw_service_uuid})
             # Try and remove logical router from NVP
-            nvplib.delete_lrouter(self.cluster, lrouter['uuid'])
+            routerlib.delete_lrouter(self.cluster, lrouter['uuid'])
             # Return user a 500 with an apter message
             raise nvp_exc.NvpPluginException(
                 err_msg=(_("Unable to create router %s on NSX backend") %
@@ -1517,14 +1518,14 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def _update_lrouter(self, context, router_id, name, nexthop, routes=None):
         nsx_router_id = nsx_utils.get_nsx_router_id(
             context.session, self.cluster, router_id)
-        return nvplib.update_lrouter(
+        return routerlib.update_lrouter(
             self.cluster, nsx_router_id, name,
             nexthop, routes=routes)
 
     def _update_lrouter_routes(self, context, router_id, routes):
         nsx_router_id = nsx_utils.get_nsx_router_id(
             context.session, self.cluster, router_id)
-        nvplib.update_explicit_routes_lrouter(
+        routerlib.update_explicit_routes_lrouter(
             self.cluster, nsx_router_id, routes)
 
     def update_router(self, context, router_id, router):
@@ -1591,7 +1592,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def _delete_lrouter(self, context, router_id, nsx_router_id):
         # The neutron router id (router_id) is ignored in this routine,
         # but used in plugins deriving from this one
-        nvplib.delete_lrouter(self.cluster, nsx_router_id)
+        routerlib.delete_lrouter(self.cluster, nsx_router_id)
 
     def delete_router(self, context, router_id):
         with context.session.begin(subtransactions=True):
@@ -1660,7 +1661,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 cidr_prefix = int(subnet['cidr'].split('/')[1])
                 nsx_router_id = nsx_utils.get_nsx_router_id(
                     context.session, self.cluster, router['id'])
-                nvplib.create_lrouter_snat_rule(
+                routerlib.create_lrouter_snat_rule(
                     self.cluster, nsx_router_id, snat_ip, snat_ip,
                     order=NVP_EXTGW_NAT_RULES_ORDER - cidr_prefix,
                     match_criteria={'source_ip_addresses': subnet['cidr']})
@@ -1670,7 +1671,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         if router.gw_port:
             nsx_router_id = nsx_utils.get_nsx_router_id(
                 context.session, self.cluster, router['id'])
-            nvplib.delete_nat_rules_by_match(
+            routerlib.delete_nat_rules_by_match(
                 self.cluster, nsx_router_id, "SourceNatRule",
                 max_num_expected=1, min_num_expected=1,
                 source_ip_addresses=subnet['cidr'])
@@ -1701,7 +1702,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Fetch router from DB
         router = self._get_router(context, router_id)
         self._add_subnet_snat_rule(context, router, subnet)
-        nvplib.create_lrouter_nosnat_rule(
+        routerlib.create_lrouter_nosnat_rule(
             self.cluster, nsx_router_id,
             order=NVP_NOSNAT_RULES_ORDER,
             match_criteria={'destination_ip_addresses': subnet['cidr']})
@@ -1768,7 +1769,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # do not exist in 2.x deployments
             nsx_router_id = nsx_utils.get_nsx_router_id(
                 context.session, self.cluster, router_id)
-            nvplib.delete_nat_rules_by_match(
+            routerlib.delete_nat_rules_by_match(
                 self.cluster, nsx_router_id, "NoSourceNatRule",
                 max_num_expected=1, min_num_expected=0,
                 destination_ip_addresses=subnet['cidr'])
@@ -1790,19 +1791,19 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # but used by derived classes
         try:
             # Remove DNAT rule for the floating IP
-            nvplib.delete_nat_rules_by_match(
+            routerlib.delete_nat_rules_by_match(
                 self.cluster, nsx_router_id, "DestinationNatRule",
                 max_num_expected=1,
                 min_num_expected=min_num_rules_expected,
                 destination_ip_addresses=floating_ip_address)
 
             # Remove SNAT rules for the floating IP
-            nvplib.delete_nat_rules_by_match(
+            routerlib.delete_nat_rules_by_match(
                 self.cluster, nsx_router_id, "SourceNatRule",
                 max_num_expected=1,
                 min_num_expected=min_num_rules_expected,
                 source_ip_addresses=internal_ip)
-            nvplib.delete_nat_rules_by_match(
+            routerlib.delete_nat_rules_by_match(
                 self.cluster, nsx_router_id, "SourceNatRule",
                 max_num_expected=1,
                 min_num_expected=min_num_rules_expected,
@@ -1824,17 +1825,17 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         router_id = fip_db.router_id
         nsx_router_id = nsx_utils.get_nsx_router_id(
             context.session, self.cluster, router_id)
-        nvp_gw_port_id = nvplib.find_router_gw_port(
+        nsx_gw_port_id = routerlib.find_router_gw_port(
             context, self.cluster, nsx_router_id)['uuid']
         ext_neutron_port_db = self._get_port(context.elevated(),
                                              fip_db.floating_port_id)
-        nvp_floating_ips = self._build_ip_address_list(
+        nsx_floating_ips = self._build_ip_address_list(
             context.elevated(), ext_neutron_port_db['fixed_ips'])
-        nvplib.update_lrouter_port_ips(self.cluster,
-                                       nsx_router_id,
-                                       nvp_gw_port_id,
-                                       ips_to_add=[],
-                                       ips_to_remove=nvp_floating_ips)
+        routerlib.update_lrouter_port_ips(self.cluster,
+                                          nsx_router_id,
+                                          nsx_gw_port_id,
+                                          ips_to_add=[],
+                                          ips_to_remove=nsx_floating_ips)
 
     def _get_fip_assoc_data(self, context, fip, floatingip_db):
         if (('fixed_ip_address' in fip and fip['fixed_ip_address']) and
@@ -1895,22 +1896,22 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                           'port_id': floatingip_db.fixed_port_id,
                           'fixed_ip_address': floatingip_db.fixed_ip_address,
                           'tenant_id': floatingip_db.tenant_id})
-            nvp_gw_port_id = nvplib.find_router_gw_port(
+            nsx_gw_port_id = routerlib.find_router_gw_port(
                 context, self.cluster, nsx_old_router_id)['uuid']
             self._retrieve_and_delete_nat_rules(
                 context, floating_ip, old_internal_ip, nsx_old_router_id)
-            nvplib.update_lrouter_port_ips(
-                self.cluster, nsx_old_router_id, nvp_gw_port_id,
+            routerlib.update_lrouter_port_ips(
+                self.cluster, nsx_old_router_id, nsx_gw_port_id,
                 ips_to_add=[], ips_to_remove=nvp_floating_ips)
 
         if router_id:
-            nvp_gw_port_id = nvplib.find_router_gw_port(
+            nsx_gw_port_id = routerlib.find_router_gw_port(
                 context, self.cluster, nsx_router_id)['uuid']
             # Re-create NAT rules only if a port id is specified
             if fip.get('port_id'):
                 try:
                     # Setup DNAT rules for the floating IP
-                    nvplib.create_lrouter_dnat_rule(
+                    routerlib.create_lrouter_dnat_rule(
                         self.cluster, nsx_router_id, internal_ip,
                         order=NVP_FLOATINGIP_NAT_RULES_ORDER,
                         match_criteria={'destination_ip_addresses':
@@ -1928,7 +1929,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     internal_subnet_cidr = self._build_ip_address_list(
                         context, internal_port['fixed_ips'],
                         subnet_ids=subnet_ids)[0]
-                    nvplib.create_lrouter_snat_rule(
+                    routerlib.create_lrouter_snat_rule(
                         self.cluster, nsx_router_id, floating_ip, floating_ip,
                         order=NVP_NOSNAT_RULES_ORDER - 1,
                         match_criteria={'source_ip_addresses':
@@ -1937,17 +1938,15 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                         internal_ip})
                     # setup snat rule such that src ip of a IP packet when
                     # using floating is the floating ip itself.
-                    nvplib.create_lrouter_snat_rule(
+                    routerlib.create_lrouter_snat_rule(
                         self.cluster, nsx_router_id, floating_ip, floating_ip,
                         order=NVP_FLOATINGIP_NAT_RULES_ORDER,
                         match_criteria={'source_ip_addresses': internal_ip})
 
                     # Add Floating IP address to router_port
-                    nvplib.update_lrouter_port_ips(self.cluster,
-                                                   nsx_router_id,
-                                                   nvp_gw_port_id,
-                                                   ips_to_add=nvp_floating_ips,
-                                                   ips_to_remove=[])
+                    routerlib.update_lrouter_port_ips(
+                        self.cluster, nsx_router_id, nsx_gw_port_id,
+                        ips_to_add=nvp_floating_ips, ips_to_remove=[])
                 except NvpApiClient.NvpApiException:
                     LOG.exception(_("An error occurred while creating NAT "
                                     "rules on the NVP platform for floating "

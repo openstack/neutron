@@ -36,6 +36,7 @@ from neutron.plugins.nicira.dbexts import vcns_db
 from neutron.plugins.nicira.dbexts import vcns_models
 from neutron.plugins.nicira.extensions import servicerouter as sr
 from neutron.plugins.nicira import NeutronPlugin
+from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 from neutron.plugins.nicira.vshield.common import (
@@ -425,7 +426,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             neutron_port_id = ''
             pname = name[:36] + '-lp'
             admin_status_enabled = True
-            lr_port = nvplib.create_router_lport(
+            lr_port = routerlib.create_router_lport(
                 self.cluster, lrouter['uuid'], tenant_id,
                 neutron_port_id, pname, admin_status_enabled,
                 [vcns_const.INTEGRATION_LR_IPADDRESS])
@@ -464,7 +465,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             msg = _("Unable to create integration logic switch "
                     "for router %s") % name
             LOG.exception(msg)
-            nvplib.delete_lrouter(self.cluster, lrouter['uuid'])
+            routerlib.delete_lrouter(self.cluster, lrouter['uuid'])
             raise q_exc.NeutronException(message=msg)
 
         try:
@@ -474,7 +475,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             msg = _("Unable to add router interface to integration lswitch "
                     "for router %s") % name
             LOG.exception(msg)
-            nvplib.delete_lrouter(self.cluster, lrouter['uuid'])
+            routerlib.delete_lrouter(self.cluster, lrouter['uuid'])
             raise q_exc.NeutronException(message=msg)
 
         try:
@@ -484,7 +485,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             msg = (_("Unable to create advance service router for %s") % name)
             LOG.exception(msg)
             self.vcns_driver.delete_lswitch(lswitch('uuid'))
-            nvplib.delete_lrouter(self.cluster, lrouter['uuid'])
+            routerlib.delete_lrouter(self.cluster, lrouter['uuid'])
             raise q_exc.NeutronException(message=msg)
 
         lrouter['status'] = service_constants.PENDING_CREATE
@@ -516,7 +517,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self.vcns_driver.delete_edge(router_id, edge_id, jobdata=jobdata)
 
             # delete NSX logical router
-            nvplib.delete_lrouter(self.cluster, nsx_router_id)
+            routerlib.delete_lrouter(self.cluster, nsx_router_id)
 
         if id in self._router_type:
             del self._router_type[router_id]
@@ -563,7 +564,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
     def _get_nvp_lrouter_status(self, id):
         try:
-            lrouter = nvplib.get_lrouter(self.cluster, id)
+            lrouter = routerlib.get_lrouter(self.cluster, id)
             lr_status = lrouter["_relations"]["LogicalRouterStatus"]
             if lr_status["fabric_status"]:
                 nvp_status = RouterStatus.ROUTER_STATUS_ACTIVE
@@ -587,9 +588,9 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
     def _get_all_nvp_lrouters_statuses(self, tenant_id, fields):
         # get nvp lrouters status
-        nvp_lrouters = nvplib.get_lrouters(self.cluster,
-                                           tenant_id,
-                                           fields)
+        nvp_lrouters = routerlib.get_lrouters(self.cluster,
+                                              tenant_id,
+                                              fields)
 
         nvp_status = {}
         for nvp_lrouter in nvp_lrouters:

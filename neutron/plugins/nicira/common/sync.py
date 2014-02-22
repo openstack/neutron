@@ -27,6 +27,7 @@ from neutron.openstack.common import loopingcall
 from neutron.openstack.common import timeutils
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import nsx_utils
+from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
@@ -191,7 +192,7 @@ class NvpSynchronizer():
         nvplib.LSWITCH_RESOURCE, fields='uuid,tags,fabric_status',
         relations='LogicalSwitchStatus')
     LR_URI = nvplib._build_uri_path(
-        nvplib.LROUTER_RESOURCE, fields='uuid,tags,fabric_status',
+        routerlib.LROUTER_RESOURCE, fields='uuid,tags,fabric_status',
         relations='LogicalRouterStatus')
     LP_URI = nvplib._build_uri_path(
         nvplib.LSWITCHPORT_RESOURCE,
@@ -319,7 +320,7 @@ class NvpSynchronizer():
                 # This query will return the logical router status too
                 nsx_router_id = nsx_utils.get_nsx_router_id(
                     context.session, self._cluster, neutron_router_data['id'])
-                lrouter = nvplib.get_lrouter(
+                lrouter = routerlib.get_lrouter(
                     self._cluster, nsx_router_id)
             except exceptions.NotFound:
                 # NOTE(salv-orlando): We should be catching

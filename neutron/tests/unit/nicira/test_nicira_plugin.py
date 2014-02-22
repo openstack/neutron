@@ -638,7 +638,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
         self._test_router_create_with_distributed(True, True)
 
     def test_router_create_distributed_with_new_nvp_versions(self):
-        with mock.patch.object(nvplib, 'create_explicit_route_lrouter'):
+        with mock.patch.object(nsxlib.router, 'create_explicit_route_lrouter'):
             self._test_router_create_with_distributed(True, True, '3.2')
             self._test_router_create_with_distributed(True, True, '4.0')
             self._test_router_create_with_distributed(True, True, '4.1')
@@ -655,12 +655,13 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
     def test_router_create_on_obsolete_platform(self):
 
         def obsolete_response(*args, **kwargs):
-            response = nvplib._create_implicit_routing_lrouter(*args, **kwargs)
+            response = (nsxlib.router.
+                        _create_implicit_routing_lrouter(*args, **kwargs))
             response.pop('distributed')
             return response
 
         with mock.patch.object(
-            nvplib, 'create_lrouter', new=obsolete_response):
+            nsxlib.router, 'create_lrouter', new=obsolete_response):
             self._test_router_create_with_distributed(None, False, '2.2')
 
     def _create_router_with_gw_info_for_test(self, subnet):
@@ -673,7 +674,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
         return router_req.get_response(self.ext_api)
 
     def test_router_create_nvp_error_returns_500(self, vlan_id=None):
-        with mock.patch.object(nvplib,
+        with mock.patch.object(nsxlib.router,
                                'create_router_lport',
                                side_effect=NvpApiClient.NvpApiException):
             with self._create_l3_ext_network(vlan_id) as net:
@@ -1019,7 +1020,7 @@ class TestNiciraL3NatTestCase(NiciraL3NatTest,
         with self._create_l3_ext_network() as net:
             with self.subnet(network=net) as s:
                 with mock.patch.object(
-                    nvplib,
+                    nsxlib.router,
                     'do_request',
                     side_effect=nvp_exc.MaintenanceInProgress):
                     data = {'router': {'tenant_id': 'whatever'}}

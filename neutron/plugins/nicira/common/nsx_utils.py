@@ -18,6 +18,7 @@
 from neutron.openstack.common import log
 from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira import nsx_cluster
+from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
@@ -155,7 +156,7 @@ def get_nsx_router_id(session, cluster, neutron_router_id):
         # Find logical router from backend.
         # This is a rather expensive query, but it won't be executed
         # more than once for each router in Neutron's lifetime
-        nsx_routers = nvplib.query_lrouters(
+        nsx_routers = routerlib.query_lrouters(
             cluster, '*',
             filters={'tag': neutron_router_id,
                      'tag_scope': 'q_router_id'})

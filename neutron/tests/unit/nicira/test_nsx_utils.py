@@ -171,7 +171,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # found for a given port identifier
         exp_lr_uuid = uuidutils.generate_uuid()
         self._mock_router_mapping_db_calls(None)
-        with mock.patch(nicira_method('query_lrouters'),
+        with mock.patch(nicira_method('query_lrouters',
+                                      module_name='nsxlib.router'),
                         return_value=[{'uuid': exp_lr_uuid}]):
             self._verify_get_nsx_router_id(exp_lr_uuid)
 
@@ -179,6 +180,7 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # This test verifies that the function returns None if the mapping
         # are not found both in the db and in the backend
         self._mock_router_mapping_db_calls(None)
-        with mock.patch(nicira_method('query_lrouters'),
+        with mock.patch(nicira_method('query_lrouters',
+                                      module_name='nsxlib.router'),
                         return_value=[]):
             self._verify_get_nsx_router_id(None)
