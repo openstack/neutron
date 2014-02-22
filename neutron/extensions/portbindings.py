@@ -18,7 +18,8 @@
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 
-
+# The type of vnic that this port should be attached to
+VNIC_TYPE = 'binding:vnic_type'
 # The service will return the vif type for the specific port.
 VIF_TYPE = 'binding:vif_type'
 # In some cases different implementations may be run on different hosts.
@@ -51,6 +52,10 @@ VIF_TYPES = [VIF_TYPE_UNBOUND, VIF_TYPE_BINDING_FAILED, VIF_TYPE_OVS,
              VIF_TYPE_802_QBH, VIF_TYPE_HYPERV, VIF_TYPE_MIDONET,
              VIF_TYPE_OTHER]
 
+VNIC_NORMAL = 'normal'
+VNIC_DIRECT = 'direct'
+VNIC_MACVTAP = 'macvtap'
+VNIC_TYPES = [VNIC_NORMAL, VNIC_DIRECT, VNIC_MACVTAP]
 
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
@@ -58,6 +63,11 @@ EXTENDED_ATTRIBUTES_2_0 = {
                    'default': attributes.ATTR_NOT_SPECIFIED,
                    'enforce_policy': True,
                    'is_visible': True},
+        VNIC_TYPE: {'allow_post': True, 'allow_put': True,
+                    'default': VNIC_NORMAL,
+                    'is_visible': True,
+                    'validate': {'type:values': VNIC_TYPES},
+                    'enforce_policy': True},
         HOST_ID: {'allow_post': True, 'allow_put': True,
                   'default': attributes.ATTR_NOT_SPECIFIED,
                   'is_visible': True,

@@ -14,6 +14,7 @@
 #    under the License.
 
 
+from neutron.extensions import portbindings
 from neutron.plugins.ml2 import driver_api as api
 from neutron.tests import base
 
@@ -45,6 +46,7 @@ class FakePortContext(api.PortContext):
         self._network_context = FakeNetworkContext(segments)
         self._bound_segment_id = None
         self._bound_vif_type = None
+        self._bound_vnic_type = portbindings.VNIC_NORMAL
         self._bound_cap_port_filter = None
 
     @property

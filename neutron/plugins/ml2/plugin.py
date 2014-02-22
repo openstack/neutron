@@ -208,22 +208,29 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._update_port_dict_binding(port, binding)
         host = attrs and attrs.get(portbindings.HOST_ID)
         host_set = attributes.is_attr_set(host)
+        vnic_type = attrs and attrs.get(portbindings.VNIC_TYPE)
+        vnic_type_set = attributes.is_attr_set(vnic_type)
 
         if binding.vif_type != portbindings.VIF_TYPE_UNBOUND:
-            if (not host_set and binding.segment and
+            if (not host_set and not vnic_type_set and binding.segment and
                 self.mechanism_manager.validate_port_binding(mech_context)):
                 return False
             self.mechanism_manager.unbind_port(mech_context)
             self._update_port_dict_binding(port, binding)
 
         # Return True only if an agent notification is needed.
-        # This will happen if a new host was specified and that host
+        # This will happen if a new host or vnic_type was specified that
         # differs from the current one. Note that host_set is True
         # even if the host is an empty string
-        ret_value = host_set and binding.get('host') != host
+        ret_value = ((host_set and binding.get('host') != host) or
+                     (vnic_type_set and binding.get('vnic_type') != vnic_type))
         if host_set:
             binding.host = host
             port[portbindings.HOST_ID] = host
+
+        if vnic_type_set:
+            binding.vnic_type = vnic_type
+            port[portbindings.VNIC_TYPE] = vnic_type
 
         if binding.host:
             self.mechanism_manager.bind_port(mech_context)
@@ -233,6 +240,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _update_port_dict_binding(self, port, binding):
         port[portbindings.HOST_ID] = binding.host
+        port[portbindings.VNIC_TYPE] = binding.vnic_type
         port[portbindings.VIF_TYPE] = binding.vif_type
         port[portbindings.CAPABILITIES] = {
             portbindings.CAP_PORT_FILTER: binding.cap_port_filter}
