@@ -76,8 +76,10 @@ from neutron.plugins.nicira import dhcpmeta_modes
 from neutron.plugins.nicira.extensions import maclearning as mac_ext
 from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
 from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
+from neutron.plugins.nicira.nsxlib import l2gateway as l2gwlib
 from neutron.plugins.nicira.nsxlib import queue as queuelib
 from neutron.plugins.nicira.nsxlib import router as routerlib
+from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
@@ -411,17 +413,17 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def _nvp_create_port_helper(self, cluster, ls_uuid, port_data,
                                 do_port_security=True):
-        return nvplib.create_lport(cluster, ls_uuid, port_data['tenant_id'],
-                                   port_data['id'], port_data['name'],
-                                   port_data['device_id'],
-                                   port_data['admin_state_up'],
-                                   port_data['mac_address'],
-                                   port_data['fixed_ips'],
-                                   port_data[psec.PORTSECURITY],
-                                   port_data[ext_sg.SECURITYGROUPS],
-                                   port_data.get(ext_qos.QUEUE),
-                                   port_data.get(mac_ext.MAC_LEARNING),
-                                   port_data.get(addr_pair.ADDRESS_PAIRS))
+        return switchlib.create_lport(cluster, ls_uuid, port_data['tenant_id'],
+                                      port_data['id'], port_data['name'],
+                                      port_data['device_id'],
+                                      port_data['admin_state_up'],
+                                      port_data['mac_address'],
+                                      port_data['fixed_ips'],
+                                      port_data[psec.PORTSECURITY],
+                                      port_data[ext_sg.SECURITYGROUPS],
+                                      port_data.get(ext_qos.QUEUE),
+                                      port_data.get(mac_ext.MAC_LEARNING),
+                                      port_data.get(addr_pair.ADDRESS_PAIRS))
 
     def _handle_create_port_exception(self, context, port_id,
                                       ls_uuid, lp_uuid):
@@ -430,8 +432,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # created on NVP. Should this command fail the original
             # exception will be raised.
             if lp_uuid:
-                # Remove orphaned port from NVP
-                nvplib.delete_port(self.cluster, ls_uuid, lp_uuid)
+                # Remove orphaned port from NSX
+                switchlib.delete_port(self.cluster, ls_uuid, lp_uuid)
             # rollback the neutron-nvp port mapping
             nicira_db.delete_neutron_nsx_port_mapping(context.session,
                                                       port_id)
@@ -465,9 +467,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 context.session, port_data['id'],
                 selected_lswitch['uuid'], lport['uuid'])
             if port_data['device_owner'] not in self.port_special_owners:
-                nvplib.plug_interface(self.cluster, selected_lswitch['uuid'],
-                                      lport['uuid'], "VifAttachment",
-                                      port_data['id'])
+                switchlib.plug_interface(
+                    self.cluster, selected_lswitch['uuid'],
+                    lport['uuid'], "VifAttachment", port_data['id'])
             LOG.debug(_("_nvp_create_port completed for port %(name)s "
                         "on network %(network_id)s. The new port id is "
                         "%(id)s."), port_data)
@@ -487,9 +489,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 LOG.warning(msg)
                 if selected_lswitch and lport:
                     try:
-                        nvplib.delete_port(self.cluster,
-                                           selected_lswitch['uuid'],
-                                           lport['uuid'])
+                        switchlib.delete_port(self.cluster,
+                                              selected_lswitch['uuid'],
+                                              lport['uuid'])
                     except q_exc.NotFound:
                         LOG.debug(_("NSX Port %s already gone"), lport['uuid'])
 
@@ -503,18 +505,16 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         "external networks. Port %s will be down."),
                       port_data['network_id'])
             return
-        nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+        nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
             context.session, self.cluster, port_data['id'])
-        if not nvp_port_id:
+        if not nsx_port_id:
             LOG.debug(_("Port '%s' was already deleted on NVP platform"), id)
             return
         # TODO(bgh): if this is a bridged network and the lswitch we just got
         # back will have zero ports after the delete we should garbage collect
         # the lswitch.
         try:
-            nvplib.delete_port(self.cluster,
-                               nvp_switch_id,
-                               nvp_port_id)
+            switchlib.delete_port(self.cluster, nsx_switch_id, nsx_port_id)
             LOG.debug(_("_nvp_delete_port completed for port %(port_id)s "
                         "on network %(net_id)s"),
                       {'port_id': port_data['id'],
@@ -716,7 +716,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             nicira_db.add_neutron_nsx_port_mapping(
                 context.session, port_data['id'],
                 selected_lswitch['uuid'], lport['uuid'])
-            nvplib.plug_l2_gw_service(
+            l2gwlib.plug_l2_gw_service(
                 self.cluster,
                 port_data['network_id'],
                 lport['uuid'],
@@ -725,9 +725,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         except Exception:
             with excutils.save_and_reraise_exception():
                 if lport:
-                    nvplib.delete_port(self.cluster,
-                                       selected_lswitch['uuid'],
-                                       lport['uuid'])
+                    switchlib.delete_port(self.cluster,
+                                          selected_lswitch['uuid'],
+                                          lport['uuid'])
         LOG.debug(_("_nvp_create_l2_gw_port completed for port %(name)s "
                     "on network %(network_id)s. The new port id "
                     "is %(id)s."), port_data)
@@ -864,14 +864,14 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 # The tag must therefore be added.
                 tags = main_ls['tags']
                 tags.append({'tag': 'True', 'scope': 'multi_lswitch'})
-                nvplib.update_lswitch(cluster,
-                                      main_ls['uuid'],
-                                      main_ls['display_name'],
-                                      network['tenant_id'],
-                                      tags=tags)
+                switchlib.update_lswitch(cluster,
+                                         main_ls['uuid'],
+                                         main_ls['display_name'],
+                                         network['tenant_id'],
+                                         tags=tags)
             transport_zone_config = self._convert_to_nvp_transport_zones(
                 cluster, network, bindings=network_bindings)
-            selected_lswitch = nvplib.create_lswitch(
+            selected_lswitch = switchlib.create_lswitch(
                 cluster, network.id, network.tenant_id,
                 "%s-ext-%s" % (network.name, len(lswitches)),
                 transport_zone_config)
@@ -983,7 +983,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         net_data['id'] = str(uuid.uuid4())
         if (not attr.is_attr_set(external) or
             attr.is_attr_set(external) and not external):
-            lswitch = nvplib.create_lswitch(
+            lswitch = switchlib.create_lswitch(
                 self.cluster, net_data['id'],
                 tenant_id, net_data.get('name'),
                 transport_zone_config,
@@ -1074,7 +1074,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Do not go to NVP for external networks
         if not external:
             try:
-                nvplib.delete_networks(self.cluster, id, lswitch_ids)
+                switchlib.delete_networks(self.cluster, id, lswitch_ids)
                 LOG.debug(_("delete_network completed for tenant: %s"),
                           context.tenant_id)
             except q_exc.NotFound:
@@ -1292,34 +1292,35 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._process_port_queue_mapping(context, ret_port,
                                              port_queue_id)
             LOG.warn(_("Update port request: %s"), port)
-            nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+            nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, id)
-            if nvp_port_id:
+            if nsx_port_id:
                 try:
-                    nvplib.update_port(self.cluster,
-                                       nvp_switch_id,
-                                       nvp_port_id, id, tenant_id,
-                                       ret_port['name'], ret_port['device_id'],
-                                       ret_port['admin_state_up'],
-                                       ret_port['mac_address'],
-                                       ret_port['fixed_ips'],
-                                       ret_port[psec.PORTSECURITY],
-                                       ret_port[ext_sg.SECURITYGROUPS],
-                                       ret_port[ext_qos.QUEUE],
-                                       ret_port.get(mac_ext.MAC_LEARNING),
-                                       ret_port.get(addr_pair.ADDRESS_PAIRS))
+                    switchlib.update_port(
+                        self.cluster,
+                        nsx_switch_id, nsx_port_id, id, tenant_id,
+                        ret_port['name'],
+                        ret_port['device_id'],
+                        ret_port['admin_state_up'],
+                        ret_port['mac_address'],
+                        ret_port['fixed_ips'],
+                        ret_port[psec.PORTSECURITY],
+                        ret_port[ext_sg.SECURITYGROUPS],
+                        ret_port[ext_qos.QUEUE],
+                        ret_port.get(mac_ext.MAC_LEARNING),
+                        ret_port.get(addr_pair.ADDRESS_PAIRS))
 
                     # Update the port status from nvp. If we fail here hide it
                     # since the port was successfully updated but we were not
                     # able to retrieve the status.
-                    ret_port['status'] = nvplib.get_port_status(
+                    ret_port['status'] = switchlib.get_port_status(
                         self.cluster, ret_port['network_id'],
-                        nvp_port_id)
+                        nsx_port_id)
                 # FIXME(arosen) improve exception handling.
                 except Exception:
                     ret_port['status'] = constants.PORT_STATUS_ERROR
                     LOG.exception(_("Unable to update port id: %s."),
-                                  nvp_port_id)
+                                  nsx_port_id)
 
             # If nvp_port_id is not in database or in nvp put in error state.
             else:
@@ -1688,15 +1689,15 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             context.session, self.cluster, router_id)
         if port_id:
             port_data = self._get_port(context, port_id)
-            nvp_switch_id, nvp_port_id = nsx_utils.get_nsx_switch_and_port_id(
+            nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, port_id)
             # Unplug current attachment from lswitch port
-            nvplib.plug_interface(self.cluster, nvp_switch_id,
-                                  nvp_port_id, "NoAttachment")
+            switchlib.plug_interface(self.cluster, nsx_switch_id,
+                                     nsx_port_id, "NoAttachment")
             # Create logical router port and plug patch attachment
             self._create_and_attach_router_port(
                 self.cluster, context, nsx_router_id, port_data,
-                "PatchAttachment", nvp_port_id, subnet_ids=[subnet_id])
+                "PatchAttachment", nsx_port_id, subnet_ids=[subnet_id])
         subnet = self._get_subnet(context, subnet_id)
         # If there is an external gateway we need to configure the SNAT rule.
         # Fetch router from DB
@@ -2013,20 +2014,20 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             if not device.get('interface_name'):
                 device['interface_name'] = self.cluster.default_interface_name
         try:
-            nvp_res = nvplib.create_l2_gw_service(self.cluster, tenant_id,
-                                                  gw_data['name'], devices)
-            nvp_uuid = nvp_res.get('uuid')
+            nsx_res = l2gwlib.create_l2_gw_service(
+                self.cluster, tenant_id, gw_data['name'], devices)
+            nsx_uuid = nsx_res.get('uuid')
         except NvpApiClient.Conflict:
             raise nvp_exc.NvpL2GatewayAlreadyInUse(gateway=gw_data['name'])
         except NvpApiClient.NvpApiException:
             err_msg = _("Unable to create l2_gw_service for: %s") % gw_data
             LOG.exception(err_msg)
             raise nvp_exc.NvpPluginException(err_msg=err_msg)
-        gw_data['id'] = nvp_uuid
+        gw_data['id'] = nsx_uuid
         return super(NvpPluginV2, self).create_network_gateway(context,
                                                                network_gateway)
 
-    def delete_network_gateway(self, context, id):
+    def delete_network_gateway(self, context, gateway_id):
         """Remove a layer-2 network gateway.
 
         Remove the gateway service from NVP platform and corresponding data
@@ -2036,8 +2037,9 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         self._ensure_default_network_gateway()
         with context.session.begin(subtransactions=True):
             try:
-                super(NvpPluginV2, self).delete_network_gateway(context, id)
-                nvplib.delete_l2_gw_service(self.cluster, id)
+                super(NvpPluginV2, self).delete_network_gateway(
+                    context, gateway_id)
+                l2gwlib.delete_l2_gw_service(self.cluster, gateway_id)
             except NvpApiClient.ResourceNotFound:
                 # Do not cause a 500 to be returned to the user if
                 # the corresponding NVP resource does not exist
@@ -2067,7 +2069,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         name = network_gateway[networkgw.RESOURCE_NAME].get('name')
         if name:
             try:
-                nvplib.update_l2_gw_service(self.cluster, id, name)
+                l2gwlib.update_l2_gw_service(self.cluster, id, name)
             except NvpApiClient.NvpApiException:
                 # Consider backend failures as non-fatal, but still warn
                 # because this might indicate something dodgy is going on

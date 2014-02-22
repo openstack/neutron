@@ -28,6 +28,7 @@ from neutron.openstack.common import timeutils
 from neutron.plugins.nicira.common import exceptions as nvp_exc
 from neutron.plugins.nicira.common import nsx_utils
 from neutron.plugins.nicira.nsxlib import router as routerlib
+from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 
@@ -383,7 +384,7 @@ class NvpSynchronizer():
                 ls_uuid, lp_uuid = nsx_utils.get_nsx_switch_and_port_id(
                     context.session, self._cluster, neutron_port_data['id'])
                 if lp_uuid:
-                    lswitchport = nvplib.get_port(
+                    lswitchport = switchlib.get_port(
                         self._cluster, ls_uuid, lp_uuid,
                         relations='LogicalPortStatus')
             except (exceptions.PortNotFoundOnNetwork):

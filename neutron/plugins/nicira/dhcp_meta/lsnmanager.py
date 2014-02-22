@@ -24,6 +24,7 @@ from neutron.plugins.nicira.common import exceptions as p_exc
 from neutron.plugins.nicira.dbexts import lsn_db
 from neutron.plugins.nicira.dhcp_meta import constants as const
 from neutron.plugins.nicira.nsxlib import lsn as lsn_api
+from neutron.plugins.nicira.nsxlib import switch as switch_api
 from neutron.plugins.nicira import nvplib as nsxlib
 
 LOG = logging.getLogger(__name__)
@@ -161,13 +162,13 @@ class LsnManager(object):
             self.lsn_port_delete(context, lsn_id, lsn_port_id)
             if mac_address == const.METADATA_MAC:
                 try:
-                    lswitch_port_id = nsxlib.get_port_by_neutron_tag(
+                    lswitch_port_id = switch_api.get_port_by_neutron_tag(
                         self.cluster, network_id,
                         const.METADATA_PORT_ID)['uuid']
-                    nsxlib.delete_port(
+                    switch_api.delete_port(
                         self.cluster, network_id, lswitch_port_id)
                 except (n_exc.PortNotFoundOnNetwork,
-                        nsxlib.NvpApiClient.NvpApiException):
+                        switch_api.NvpApiClient.NvpApiException):
                     LOG.warn(_("Metadata port not found while attempting "
                                "to delete it from network %s"), network_id)
         else:
@@ -179,7 +180,7 @@ class LsnManager(object):
         """Connect network to LSN via specified port and port_data."""
         try:
             lsn_id = None
-            lswitch_port_id = nsxlib.get_port_by_neutron_tag(
+            lswitch_port_id = switch_api.get_port_by_neutron_tag(
                 self.cluster, network_id, port_id)['uuid']
             lsn_id = self.lsn_get(context, network_id)
             lsn_port_id = self.lsn_port_create(context, lsn_id, port_data)
@@ -211,7 +212,7 @@ class LsnManager(object):
         tenant_id = subnet['tenant_id']
         lswitch_port_id = None
         try:
-            lswitch_port_id = nsxlib.create_lport(
+            lswitch_port_id = switch_api.create_lport(
                 self.cluster, network_id, tenant_id,
                 const.METADATA_PORT_ID, const.METADATA_PORT_NAME,
                 const.METADATA_DEVICE_ID, True)['uuid']
@@ -226,7 +227,8 @@ class LsnManager(object):
                     self.cluster, lsn_id, lsn_port_id, lswitch_port_id)
             except p_exc.LsnConfigurationConflict:
                 self.lsn_port_delete(self.cluster, lsn_id, lsn_port_id)
-                nsxlib.delete_port(self.cluster, network_id, lswitch_port_id)
+                switch_api.delete_port(
+                    self.cluster, network_id, lswitch_port_id)
                 raise p_exc.PortConfigurationError(
                     net_id=network_id, lsn_id=lsn_id, port_id=lsn_port_id)
 

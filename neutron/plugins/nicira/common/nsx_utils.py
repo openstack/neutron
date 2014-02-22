@@ -19,8 +19,8 @@ from neutron.openstack.common import log
 from neutron.plugins.nicira.dbexts import nicira_db
 from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira.nsxlib import router as routerlib
+from neutron.plugins.nicira.nsxlib import switch as switchlib
 from neutron.plugins.nicira import NvpApiClient
-from neutron.plugins.nicira import nvplib
 
 
 LOG = log.getLogger(__name__)
@@ -37,9 +37,9 @@ def fetch_nsx_switches(session, cluster, neutron_net_id):
     """
     nsx_switch_ids = get_nsx_switch_ids(session, cluster, neutron_net_id)
     if len(nsx_switch_ids) > 1:
-        lswitches = nvplib.get_lswitches(cluster, neutron_net_id)
+        lswitches = switchlib.get_lswitches(cluster, neutron_net_id)
     else:
-        lswitches = [nvplib.get_lswitch_by_id(
+        lswitches = [switchlib.get_lswitch_by_id(
             cluster, nsx_switch_ids[0])]
     return lswitches
 
@@ -56,7 +56,7 @@ def get_nsx_switch_ids(session, cluster, neutron_network_id):
         # Find logical switches from backend.
         # This is a rather expensive query, but it won't be executed
         # more than once for each network in Neutron's lifetime
-        nsx_switches = nvplib.get_lswitches(cluster, neutron_network_id)
+        nsx_switches = switchlib.get_lswitches(cluster, neutron_network_id)
         if not nsx_switches:
             LOG.warn(_("Unable to find NSX switches for Neutron network %s"),
                      neutron_network_id)
@@ -91,38 +91,38 @@ def get_nsx_switch_and_port_id(session, cluster, neutron_port_id):
     the backend logical switch identifier is equal to the neutron
     network identifier.
     """
-    nvp_switch_id, nvp_port_id = nicira_db.get_nsx_switch_and_port_id(
+    nsx_switch_id, nsx_port_id = nicira_db.get_nsx_switch_and_port_id(
         session, neutron_port_id)
-    if not nvp_switch_id:
+    if not nsx_switch_id:
         # Find logical switch for port from backend
         # This is a rather expensive query, but it won't be executed
         # more than once for each port in Neutron's lifetime
-        nvp_ports = nvplib.query_lswitch_lports(
+        nsx_ports = switchlib.query_lswitch_lports(
             cluster, '*', relations='LogicalSwitchConfig',
             filters={'tag': neutron_port_id,
                      'tag_scope': 'q_port_id'})
         # Only one result expected
         # NOTE(salv-orlando): Not handling the case where more than one
         # port is found with the same neutron port tag
-        if not nvp_ports:
-            LOG.warn(_("Unable to find NVP port for Neutron port %s"),
+        if not nsx_ports:
+            LOG.warn(_("Unable to find NSX port for Neutron port %s"),
                      neutron_port_id)
             # This method is supposed to return a tuple
             return None, None
-        nvp_port = nvp_ports[0]
-        nvp_switch_id = (nvp_port['_relations']
+        nsx_port = nsx_ports[0]
+        nsx_switch_id = (nsx_port['_relations']
                          ['LogicalSwitchConfig']['uuid'])
-        if nvp_port_id:
+        if nsx_port_id:
             # Mapping already exists. Delete before recreating
             nicira_db.delete_neutron_nsx_port_mapping(
                 session, neutron_port_id)
         else:
-            nvp_port_id = nvp_port['uuid']
+            nsx_port_id = nsx_port['uuid']
         # (re)Create DB mapping
         nicira_db.add_neutron_nsx_port_mapping(
             session, neutron_port_id,
-            nvp_switch_id, nvp_port_id)
-    return nvp_switch_id, nvp_port_id
+            nsx_switch_id, nsx_port_id)
+    return nsx_switch_id, nsx_port_id
 
 
 def create_nsx_cluster(cluster_opts, concurrent_connections, nsx_gen_timeout):
