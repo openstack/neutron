@@ -17,7 +17,6 @@
 import eventlet
 import eventlet.event
 import eventlet.queue
-import eventlet.timeout
 
 from neutron.agent.linux import utils
 from neutron.openstack.common import log as logging
