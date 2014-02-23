@@ -103,7 +103,6 @@ class TestLoadbalancerPlugin(
             lb_plugin=LBAAS_PLUGIN_CLASS)
         self.vcns_loadbalancer_patch()
         self.plugin = manager.NeutronManager.get_plugin()
-        self.router_id = None
 
     def tearDown(self):
         super(TestLoadbalancerPlugin, self).tearDown()
@@ -112,18 +111,16 @@ class TestLoadbalancerPlugin(
         self.ext_api = None
         self.plugin = None
 
-    def _fake_router_edge_mapping(self):
+    def _create_and_get_router(self):
         req = self._create_router(self.fmt, self._tenant_id)
         res = self.deserialize(self.fmt, req)
-        self.router_id = res['router']['id']
+        return res['router']['id']
 
     def _get_vip_optional_args(self):
         args = super(TestLoadbalancerPlugin, self)._get_vip_optional_args()
         return args + ('router_id',)
 
     def test_update_healthmonitor(self):
-        self._fake_router_edge_mapping()
-
         keys = [('type', "TCP"),
                 ('tenant_id', self._tenant_id),
                 ('delay', 20),
@@ -139,8 +136,8 @@ class TestLoadbalancerPlugin(
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             with self.vip(
-                router_id=self.router_id, pool=pool,
-                subnet=subnet):
+                router_id=self._create_and_get_router(),
+                pool=pool, subnet=subnet):
                     self.plugin.create_pool_health_monitor(
                         context.get_admin_context(),
                         health_mon, pool['pool']['id']
@@ -160,7 +157,6 @@ class TestLoadbalancerPlugin(
 
     def test_delete_healthmonitor(self):
         ctx = context.get_admin_context()
-        self._fake_router_edge_mapping()
         with contextlib.nested(
             self.subnet(),
             self.pool(),
@@ -169,8 +165,8 @@ class TestLoadbalancerPlugin(
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             with self.vip(
-                router_id=self.router_id, pool=pool,
-                subnet=subnet):
+                router_id=self._create_and_get_router(),
+                pool=pool, subnet=subnet):
                     self.plugin.create_pool_health_monitor(
                         context.get_admin_context(),
                         health_mon, pool['pool']['id']
@@ -185,7 +181,6 @@ class TestLoadbalancerPlugin(
             self.assertIsNone(qry.first())
 
     def test_create_vip(self, **extras):
-        self._fake_router_edge_mapping()
         expected = {
             'name': 'vip1',
             'description': '',
@@ -193,7 +188,8 @@ class TestLoadbalancerPlugin(
             'protocol': 'HTTP',
             'connection_limit': -1,
             'admin_state_up': True,
-            'status': 'PENDING_CREATE',
+            'status': 'ACTIVE',
+            'router_id': self._create_and_get_router(),
             'tenant_id': self._tenant_id,
         }
 
@@ -214,11 +210,10 @@ class TestLoadbalancerPlugin(
                 monitor, pool['pool']['id']
             )
             with self.vip(
-                router_id=self.router_id, name=name,
+                router_id=expected['router_id'], name=name,
                 pool=pool, subnet=subnet, **extras) as vip:
                 for k in ('id', 'address', 'port_id', 'pool_id'):
                     self.assertTrue(vip['vip'].get(k, None))
-                expected['status'] = 'ACTIVE'
                 self.assertEqual(
                     dict((k, v)
                          for k, v in vip['vip'].items() if k in expected),
@@ -226,9 +221,10 @@ class TestLoadbalancerPlugin(
                 )
 
     def test_update_vip(self):
-        self._fake_router_edge_mapping()
         name = 'new_vip'
-        keys = [('name', name),
+        router_id = self._create_and_get_router()
+        keys = [('router_id', router_id),
+                ('name', name),
                 ('address', "10.0.0.2"),
                 ('protocol_port', 80),
                 ('connection_limit', 100),
@@ -247,7 +243,7 @@ class TestLoadbalancerPlugin(
                 monitor, pool['pool']['id']
             )
             with self.vip(
-                router_id=self.router_id, name=name,
+                router_id=router_id, name=name,
                 pool=pool, subnet=subnet) as vip:
                 keys.append(('subnet_id', vip['vip']['subnet_id']))
                 data = {'vip': {'name': name,
@@ -264,7 +260,6 @@ class TestLoadbalancerPlugin(
                     self.assertEqual(res['vip'][k], v)
 
     def test_delete_vip(self):
-        self._fake_router_edge_mapping()
         with contextlib.nested(
             self.subnet(),
             self.pool(),
@@ -277,15 +272,83 @@ class TestLoadbalancerPlugin(
                 monitor, pool['pool']['id']
             )
             with self.vip(
-                router_id=self.router_id,
+                router_id=self._create_and_get_router(),
                 pool=pool, subnet=subnet, no_delete=True) as vip:
                 req = self.new_delete_request('vips',
                                               vip['vip']['id'])
                 res = req.get_response(self.ext_api)
                 self.assertEqual(res.status_int, 204)
 
+    def test_show_vip(self):
+        router_id = self._create_and_get_router()
+        name = "vip_show"
+        keys = [('name', name),
+                ('protocol_port', 80),
+                ('protocol', 'HTTP'),
+                ('connection_limit', -1),
+                ('admin_state_up', True),
+                ('status', 'ACTIVE'),
+                ('router_id', router_id)]
+
+        with contextlib.nested(
+            self.subnet(),
+            self.pool(),
+            self.health_monitor()
+        ) as (subnet, pool, monitor):
+            net_id = subnet['subnet']['network_id']
+            self._set_net_external(net_id)
+            self.plugin.create_pool_health_monitor(
+                context.get_admin_context(),
+                monitor, pool['pool']['id']
+            )
+            with self.vip(
+                router_id=router_id, name=name,
+                pool=pool, subnet=subnet) as vip:
+                req = self.new_show_request('vips',
+                                            vip['vip']['id'])
+                res = self.deserialize(
+                    self.fmt, req.get_response(self.ext_api))
+                for k, v in keys:
+                    self.assertEqual(res['vip'][k], v)
+
+    def test_list_vips(self):
+        keys_list = []
+        for i in range(3):
+            keys_list.append({'name': "vip" + str(i),
+                              'router_id': self._create_and_get_router(),
+                              'protocol_port': 80 + i,
+                              'protocol': "HTTP",
+                              'status': "ACTIVE",
+                              'admin_state_up': True})
+
+        with self.subnet() as subnet:
+            net_id = subnet['subnet']['network_id']
+            self._set_net_external(net_id)
+            with contextlib.nested(
+                self.vip(
+                    router_id=keys_list[0]['router_id'], name='vip0',
+                    subnet=subnet, protocol_port=80),
+                self.vip(
+                    router_id=keys_list[1]['router_id'], name='vip1',
+                    subnet=subnet, protocol_port=81),
+                self.vip(
+                    router_id=keys_list[2]['router_id'], name='vip2',
+                    subnet=subnet, protocol_port=82),
+            ) as (vip1, vip2, vip3):
+                self._test_list_with_sort(
+                    'vip',
+                    (vip1, vip3, vip2),
+                    [('protocol_port', 'asc'), ('name', 'desc')]
+                )
+                req = self.new_list_request('vips')
+                res = self.deserialize(
+                    self.fmt, req.get_response(self.ext_api))
+                self.assertEqual(len(res['vips']), 3)
+                for index in range(len(res['vips'])):
+                    for k, v in keys_list[index].items():
+                        self.assertEqual(res['vips'][index][k], v)
+
     def test_update_pool(self):
-        self._fake_router_edge_mapping()
         data = {'pool': {'name': "new_pool",
                          'admin_state_up': False}}
         with contextlib.nested(
@@ -300,7 +363,7 @@ class TestLoadbalancerPlugin(
                 monitor, pool['pool']['id']
             )
             with self.vip(
-                router_id=self.router_id,
+                router_id=self._create_and_get_router(),
                 pool=pool, subnet=subnet):
                 req = self.new_update_request(
                     'pools', data, pool['pool']['id'])
@@ -310,8 +373,7 @@ class TestLoadbalancerPlugin(
                     self.assertEqual(res['pool'][k], v)
 
     def test_create_member(self):
-        self._fake_router_edge_mapping()
-
+        router_id = self._create_and_get_router()
         with contextlib.nested(
             self.subnet(),
             self.pool(),
@@ -325,13 +387,13 @@ class TestLoadbalancerPlugin(
                 monitor, pool['pool']['id']
             )
             with self.vip(
-                router_id=self.router_id,
+                router_id=router_id,
                 pool=pool, subnet=subnet):
                 with contextlib.nested(
                     self.member(address='192.168.1.100',
                                 protocol_port=80,
                                 pool_id=pool_id),
-                    self.member(router_id=self.router_id,
+                    self.member(router_id=router_id,
                                 address='192.168.1.101',
                                 protocol_port=80,
                                 pool_id=pool_id)) as (member1, member2):
@@ -354,7 +416,6 @@ class TestLoadbalancerPlugin(
         return self.deserialize(self.fmt, res)
 
     def test_update_member(self):
-        self._fake_router_edge_mapping()
         with contextlib.nested(
             self.subnet(),
             self.pool(name="pool1"),
@@ -372,7 +433,7 @@ class TestLoadbalancerPlugin(
                 monitor, pool2['pool']['id']
             )
             with self.vip(
-                router_id=self.router_id,
+                router_id=self._create_and_get_router(),
                 pool=pool1, subnet=subnet):
                 keys = [('address', "192.168.1.100"),
                         ('tenant_id', self._tenant_id),
@@ -407,7 +468,6 @@ class TestLoadbalancerPlugin(
                     self.assertFalse(pool1_update['pool']['members'])
 
     def test_delete_member(self):
-        self._fake_router_edge_mapping()
         with contextlib.nested(
             self.subnet(),
             self.pool(),
@@ -421,7 +481,7 @@ class TestLoadbalancerPlugin(
                 monitor, pool['pool']['id']
             )
             with self.vip(
-                router_id=self.router_id,
+                router_id=self._create_and_get_router(),
                 pool=pool, subnet=subnet):
                 with self.member(pool_id=pool_id,
                                  no_delete=True) as member:
