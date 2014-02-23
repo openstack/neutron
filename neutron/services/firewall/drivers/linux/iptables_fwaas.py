@@ -210,7 +210,7 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
         bname = iptables_manager.binary_name
 
         for (ver, tbl) in [(IPV4, ipt_mgr.ipv4['filter']),
-                           (IPV6, ipt_mgr.ipv4['filter'])]:
+                           (IPV6, ipt_mgr.ipv6['filter'])]:
             for direction in [INGRESS_DIRECTION, EGRESS_DIRECTION]:
                 chain_name = self._get_chain_name(fwid, ver, direction)
                 chain_name = iptables_manager.get_chain_name(chain_name)
