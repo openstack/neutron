@@ -21,7 +21,6 @@ import os
 import re
 import shutil
 import socket
-import StringIO
 import sys
 import uuid
 
@@ -413,7 +412,7 @@ class Dnsmasq(DhcpLocalProcess):
     def _output_hosts_file(self):
         """Writes a dnsmasq compatible hosts file."""
         r = re.compile('[:.]')
-        buf = StringIO.StringIO()
+        buf = six.StringIO()
 
         for port in self.network.ports:
             for alloc in port.fixed_ips:
