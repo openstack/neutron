@@ -81,12 +81,6 @@ CONF.register_opts(socket_opts)
 LOG = logging.getLogger(__name__)
 
 
-def run_server(application, port):
-    """Run a WSGI server with the given application."""
-    sock = eventlet.listen(('0.0.0.0', port))
-    eventlet.wsgi.server(sock, application)
-
-
 class WorkerService(object):
     """Wraps a worker to be handled by ProcessLauncher"""
     def __init__(self, service, application):

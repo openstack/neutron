@@ -841,19 +841,6 @@ class ResourceTest(base.BaseTestCase):
         self.assertEqual(500, result.status_int)
 
 
-class ServerTest(base.BaseTestCase):
-
-    def test_run_server(self):
-        with mock.patch('eventlet.listen') as listen:
-            with mock.patch('eventlet.wsgi.server') as server:
-                wsgi.run_server(mock.sentinel.application, mock.sentinel.port)
-                server.assert_called_once_with(
-                    listen.return_value,
-                    mock.sentinel.application
-                )
-            listen.assert_called_once_with(('0.0.0.0', mock.sentinel.port))
-
-
 class MiddlewareTest(base.BaseTestCase):
     def test_process_response(self):
         def application(environ, start_response):
