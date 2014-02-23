@@ -1312,7 +1312,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     # since the port was successfully updated but we were not
                     # able to retrieve the status.
                     ret_port['status'] = switchlib.get_port_status(
-                        self.cluster, ret_port['network_id'],
+                        self.cluster, nsx_switch_id,
                         nsx_port_id)
                 # FIXME(arosen) improve exception handling.
                 except Exception:
