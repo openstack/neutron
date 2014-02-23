@@ -68,13 +68,13 @@ from neutron.plugins.nicira.common import securitygroups as nvp_sec
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.dbexts import distributedrouter as dist_rtr
 from neutron.plugins.nicira.dbexts import maclearning as mac_db
+from neutron.plugins.nicira.dbexts import networkgw_db
 from neutron.plugins.nicira.dbexts import nicira_db
-from neutron.plugins.nicira.dbexts import nicira_networkgw_db as networkgw_db
 from neutron.plugins.nicira.dbexts import qos_db
 from neutron.plugins.nicira import dhcpmeta_modes
 from neutron.plugins.nicira.extensions import maclearning as mac_ext
-from neutron.plugins.nicira.extensions import nvp_networkgw as networkgw
-from neutron.plugins.nicira.extensions import nvp_qos as ext_qos
+from neutron.plugins.nicira.extensions import networkgw
+from neutron.plugins.nicira.extensions import qos
 from neutron.plugins.nicira.nsxlib import l2gateway as l2gwlib
 from neutron.plugins.nicira.nsxlib import queue as queuelib
 from neutron.plugins.nicira.nsxlib import router as routerlib
@@ -134,6 +134,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    "nvp-qos",
                                    "port-security",
                                    "provider",
+                                   "qos-queue",
                                    "quotas",
                                    "external-net",
                                    "router",
@@ -418,7 +419,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                       port_data['fixed_ips'],
                                       port_data[psec.PORTSECURITY],
                                       port_data[ext_sg.SECURITYGROUPS],
-                                      port_data.get(ext_qos.QUEUE),
+                                      port_data.get(qos.QUEUE),
                                       port_data.get(mac_ext.MAC_LEARNING),
                                       port_data.get(addr_pair.ADDRESS_PAIRS))
 
@@ -995,7 +996,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # DB Operations for setting the network as external
             self._process_l3_create(context, new_net, net_data)
             # Process QoS queue extension
-            net_queue_id = net_data.get(ext_qos.QUEUE)
+            net_queue_id = net_data.get(qos.QUEUE)
             if net_queue_id:
                 # Raises if not found
                 self.get_qos_queue(context, net_queue_id)
@@ -1112,7 +1113,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             if psec.PORTSECURITY in network['network']:
                 self._process_network_port_security_update(
                     context, network['network'], net)
-            net_queue_id = network['network'].get(ext_qos.QUEUE)
+            net_queue_id = network['network'].get(qos.QUEUE)
             if net_queue_id:
                 self._delete_network_queue_mapping(context, id)
                 self._process_network_queue_mapping(context, net, net_queue_id)
@@ -1294,8 +1295,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             if nsx_port_id:
                 try:
                     switchlib.update_port(
-                        self.cluster,
-                        nsx_switch_id, nsx_port_id, id, tenant_id,
+                        self.cluster, nsx_switch_id, nsx_port_id,
+                        id, tenant_id,
                         ret_port['name'],
                         ret_port['device_id'],
                         ret_port['admin_state_up'],
@@ -1303,7 +1304,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         ret_port['fixed_ips'],
                         ret_port[psec.PORTSECURITY],
                         ret_port[ext_sg.SECURITYGROUPS],
-                        ret_port[ext_qos.QUEUE],
+                        ret_port[qos.QUEUE],
                         ret_port.get(mac_ext.MAC_LEARNING),
                         ret_port.get(addr_pair.ADDRESS_PAIRS))
 
@@ -2225,7 +2226,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         queues = self._get_port_queue_bindings(context, filters)
         if queues:
             if raise_in_use:
-                raise ext_qos.QueueInUseByPort()
+                raise qos.QueueInUseByPort()
             else:
                 return
         queuelib.delete_lqueue(self.cluster, queue_id)

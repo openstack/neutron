@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright 2013 Nicira Networks, Inc.  All rights reserved.
+# Copyright 2013 VMware, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -48,7 +48,7 @@ class Distributedrouter(object):
 
     @classmethod
     def get_description(cls):
-        return "Enables configuration of NSX Distributed routers"
+        return "Enables configuration of NSX Distributed routers."
 
     @classmethod
     def get_namespace(cls):

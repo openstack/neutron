@@ -30,7 +30,7 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.extensions import nvp_networkgw
+from neutron.plugins.nicira.extensions import networkgw
 
 
 LOG = logging.getLogger(__name__)
@@ -129,9 +129,9 @@ class NetworkGateway(model_base.BASEV2, models_v2.HasId,
     network_connections = orm.relationship(NetworkConnection, lazy='joined')
 
 
-class NetworkGatewayMixin(nvp_networkgw.NetworkGatewayPluginBase):
+class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
 
-    resource = nvp_networkgw.RESOURCE_NAME.replace('-', '_')
+    resource = networkgw.RESOURCE_NAME.replace('-', '_')
 
     def _get_network_gateway(self, context, gw_id):
         try:
