@@ -45,22 +45,25 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
                             'get_subnet', 'get_subnets', ]
 
     CISCO_FAULT_MAP = {
-        cexc.NetworkSegmentIDNotFound: wexc.HTTPNotFound,
-        cexc.NoMoreNics: wexc.HTTPBadRequest,
-        cexc.NetworkVlanBindingAlreadyExists: wexc.HTTPBadRequest,
-        cexc.VlanIDNotFound: wexc.HTTPNotFound,
-        cexc.VlanIDNotAvailable: wexc.HTTPNotFound,
-        cexc.QosNotFound: wexc.HTTPNotFound,
-        cexc.QosNameAlreadyExists: wexc.HTTPBadRequest,
-        cexc.CredentialNotFound: wexc.HTTPNotFound,
-        cexc.CredentialNameNotFound: wexc.HTTPNotFound,
         cexc.CredentialAlreadyExists: wexc.HTTPBadRequest,
+        cexc.CredentialNameNotFound: wexc.HTTPNotFound,
+        cexc.CredentialNotFound: wexc.HTTPNotFound,
+        cexc.NetworkSegmentIDNotFound: wexc.HTTPNotFound,
+        cexc.NetworkVlanBindingAlreadyExists: wexc.HTTPBadRequest,
         cexc.NexusComputeHostNotConfigured: wexc.HTTPNotFound,
-        cexc.NexusConnectFailed: wexc.HTTPServiceUnavailable,
         cexc.NexusConfigFailed: wexc.HTTPBadRequest,
+        cexc.NexusConnectFailed: wexc.HTTPServiceUnavailable,
         cexc.NexusPortBindingNotFound: wexc.HTTPNotFound,
+        cexc.NoMoreNics: wexc.HTTPBadRequest,
+        cexc.PortIdForNexusSvi: wexc.HTTPBadRequest,
         cexc.PortVnicBindingAlreadyExists: wexc.HTTPBadRequest,
-        cexc.PortVnicNotFound: wexc.HTTPNotFound}
+        cexc.PortVnicNotFound: wexc.HTTPNotFound,
+        cexc.QosNameAlreadyExists: wexc.HTTPBadRequest,
+        cexc.QosNotFound: wexc.HTTPNotFound,
+        cexc.SubnetNotSpecified: wexc.HTTPBadRequest,
+        cexc.VlanIDNotAvailable: wexc.HTTPNotFound,
+        cexc.VlanIDNotFound: wexc.HTTPNotFound,
+    }
 
     def __init__(self):
         """Load the model class."""

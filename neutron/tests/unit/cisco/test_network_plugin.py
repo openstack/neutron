@@ -212,6 +212,23 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         return (vlan_deleted == vlan_deletion_expected and
                 vlan_untrunked == vlan_untrunk_expected)
 
+    def _assertExpectedHTTP(self, status, exc):
+        """Confirm that an HTTP status corresponds to an expected exception.
+
+        Confirm that an HTTP status which has been returned for an
+        neutron API request matches the HTTP status corresponding
+        to an expected exception.
+
+        :param status: HTTP status
+        :param exc: Expected exception
+
+        """
+        if exc in base.FAULT_MAP:
+            expected_http = base.FAULT_MAP[exc].code
+        else:
+            expected_http = wexc.HTTPInternalServerError.code
+        self.assertEqual(status, expected_http)
+
 
 class TestCiscoBasicGet(CiscoNetworkPluginV2TestCase,
                         test_db_plugin.TestBasicGet):
@@ -258,23 +275,6 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 finally:
                     if do_delete:
                         self._delete('ports', port['port']['id'])
-
-    def _assertExpectedHTTP(self, status, exc):
-        """Confirm that an HTTP status corresponds to an expected exception.
-
-        Confirm that an HTTP status which has been returned for an
-        neutron API request matches the HTTP status corresponding
-        to an expected exception.
-
-        :param status: HTTP status
-        :param exc: Expected exception
-
-        """
-        if exc in base.FAULT_MAP:
-            expected_http = base.FAULT_MAP[exc].code
-        else:
-            expected_http = wexc.HTTPInternalServerError.code
-        self.assertEqual(status, expected_http)
 
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -911,23 +911,41 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                 'networks',
                 wexc.HTTPInternalServerError.code)
 
-    def test_create_provider_vlan_network(self):
+    @contextlib.contextmanager
+    def _provider_vlan_network(self, phys_net, segment_id, net_name):
         provider_attrs = {provider.NETWORK_TYPE: 'vlan',
-                          provider.PHYSICAL_NETWORK: PHYS_NET,
-                          provider.SEGMENTATION_ID: '1234'}
+                          provider.PHYSICAL_NETWORK: phys_net,
+                          provider.SEGMENTATION_ID: segment_id}
         arg_list = tuple(provider_attrs.keys())
-        res = self._create_network(self.fmt, 'pvnet1', True,
+        res = self._create_network(self.fmt, net_name, True,
                                    arg_list=arg_list, **provider_attrs)
-        net = self.deserialize(self.fmt, res)
-        expected = [('name', 'pvnet1'),
-                    ('admin_state_up', True),
-                    ('status', 'ACTIVE'),
-                    ('shared', False),
-                    (provider.NETWORK_TYPE, 'vlan'),
-                    (provider.PHYSICAL_NETWORK, PHYS_NET),
-                    (provider.SEGMENTATION_ID, 1234)]
-        for k, v in expected:
-            self.assertEqual(net['network'][k], v)
+        network = self.deserialize(self.fmt, res)['network']
+        try:
+            yield network
+        finally:
+            req = self.new_delete_request('networks', network['id'])
+            req.get_response(self.api)
+
+    def test_create_provider_vlan_network(self):
+        with self._provider_vlan_network(PHYS_NET, '1234',
+                                         'pvnet1') as network:
+            expected = [('name', 'pvnet1'),
+                        ('admin_state_up', True),
+                        ('status', 'ACTIVE'),
+                        ('shared', False),
+                        (provider.NETWORK_TYPE, 'vlan'),
+                        (provider.PHYSICAL_NETWORK, PHYS_NET),
+                        (provider.SEGMENTATION_ID, 1234)]
+            for k, v in expected:
+                self.assertEqual(network[k], v)
+            self.assertTrue(network_db_v2.is_provider_network(network['id']))
+
+    def test_delete_provider_vlan_network(self):
+        with self._provider_vlan_network(PHYS_NET, '1234',
+                                         'pvnet1') as network:
+            network_id = network['id']
+        # Provider network should now be deleted
+        self.assertFalse(network_db_v2.is_provider_network(network_id))
 
 
 class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
@@ -995,65 +1013,106 @@ class TestCiscoRouterInterfacesV2(CiscoNetworkPluginV2TestCase):
         super(TestCiscoRouterInterfacesV2, self).setUp()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
-
-    @contextlib.contextmanager
-    def _router(self, subnet):
-        """Create a virtual router, yield it for testing, then delete it."""
-        data = {'router': {'tenant_id': 'test_tenant_id'}}
-        router_req = self.new_create_request('routers', data, self.fmt)
-        res = router_req.get_response(self.ext_api)
-        router = self.deserialize(self.fmt, res)
-        try:
-            yield router
-        finally:
-            self._delete('routers', router['router']['id'])
-
-    @contextlib.contextmanager
-    def _router_interface(self, router, subnet):
-        """Create a router interface, yield for testing, then delete it."""
-        interface_data = {'subnet_id': subnet['subnet']['id']}
-        req = self.new_action_request('routers', interface_data,
-                                      router['router']['id'],
-                                      'add_router_interface')
-        req.get_response(self.ext_api)
-        try:
-            yield
-        finally:
-            req = self.new_action_request('routers', interface_data,
-                                          router['router']['id'],
-                                          'remove_router_interface')
-            req.get_response(self.ext_api)
-
-    def test_nexus_l3_enable_config(self):
-        """Verify proper operation of the Nexus L3 enable configuration."""
         self.addCleanup(cisco_config.CONF.reset)
+
+    @contextlib.contextmanager
+    def _network_subnet_router(self):
+        """Context mgr for creating/deleting a net, subnet, and router."""
         with self.network() as network:
             with self.subnet(network=network) as subnet:
-                with self._router(subnet) as router:
-                    # With 'nexus_l3_enable' configured to True, confirm that
-                    # a switched virtual interface (SVI) is created/deleted
-                    # on the Nexus switch when a virtual router interface is
-                    # created/deleted.
-                    cisco_config.CONF.set_override('nexus_l3_enable',
-                                                   True, 'CISCO')
-                    with self._router_interface(router, subnet):
-                        self.assertTrue(self._is_in_last_nexus_cfg(
-                            ['interface', 'vlan', 'ip', 'address']))
-                    self.assertTrue(self._is_in_nexus_cfg(
-                        ['no', 'interface', 'vlan']))
-                    self.assertTrue(self._is_in_last_nexus_cfg(
-                        ['no', 'vlan']))
+                data = {'router': {'tenant_id': 'test_tenant_id'}}
+                request = self.new_create_request('routers', data, self.fmt)
+                response = request.get_response(self.ext_api)
+                router = self.deserialize(self.fmt, response)
+                try:
+                    yield network, subnet, router
+                finally:
+                    self._delete('routers', router['router']['id'])
 
-                    # With 'nexus_l3_enable' configured to False, confirm
-                    # that no changes are made to the Nexus switch running
-                    # configuration when a virtual router interface is
-                    # created and then deleted.
-                    cisco_config.CONF.set_override('nexus_l3_enable',
-                                                   False, 'CISCO')
-                    self.mock_ncclient.reset_mock()
-                    self._router_interface(router, subnet)
-                    self.assertFalse(self.mock_ncclient.manager.connect.
-                                     return_value.edit_config.called)
+    @contextlib.contextmanager
+    def _router_interface(self, router, subnet, **kwargs):
+        """Create a router interface, yield the response, then delete it."""
+        interface_data = {}
+        if subnet:
+            interface_data['subnet_id'] = subnet['subnet']['id']
+        interface_data.update(kwargs)
+        request = self.new_action_request('routers', interface_data,
+                                          router['router']['id'],
+                                          'add_router_interface')
+        response = request.get_response(self.ext_api)
+        try:
+            yield response
+        finally:
+            # If router interface was created successfully, delete it now.
+            if response.status_int == wexc.HTTPOk.code:
+                request = self.new_action_request('routers', interface_data,
+                                                  router['router']['id'],
+                                                  'remove_router_interface')
+                request.get_response(self.ext_api)
+
+    @contextlib.contextmanager
+    def _network_subnet_router_interface(self, **kwargs):
+        """Context mgr for create/deleting a net, subnet, router and intf."""
+        with self._network_subnet_router() as (network, subnet, router):
+            with self._router_interface(router, subnet,
+                                        **kwargs) as response:
+                yield response
+
+    def test_add_remove_router_intf_with_nexus_l3_enabled(self):
+        """Verifies proper add/remove intf operation with Nexus L3 enabled.
+
+        With 'nexus_l3_enable' configured to True, confirm that a switched
+        virtual interface (SVI) is created/deleted on the Nexus switch when
+        a virtual router interface is created/deleted.
+        """
+        cisco_config.CONF.set_override('nexus_l3_enable', True, 'CISCO')
+        with self._network_subnet_router_interface():
+            self.assertTrue(self._is_in_last_nexus_cfg(
+                ['interface', 'vlan', 'ip', 'address']))
+            # Clear list of calls made to mock ncclient
+            self.mock_ncclient.reset()
+        # Router interface is now deleted. Confirm that SVI
+        # has been deleted from the Nexus switch.
+        self.assertTrue(self._is_in_nexus_cfg(['no', 'interface', 'vlan']))
+        self.assertTrue(self._is_in_last_nexus_cfg(['no', 'vlan']))
+
+    def test_add_remove_router_intf_with_nexus_l3_disabled(self):
+        """Verifies proper add/remove intf operation with Nexus L3 disabled.
+
+        With 'nexus_l3_enable' configured to False, confirm that no changes
+        are made to the Nexus switch running configuration when a virtual
+        router interface is created and then deleted.
+        """
+        cisco_config.CONF.set_override('nexus_l3_enable', False, 'CISCO')
+        with self._network_subnet_router_interface():
+            self.assertFalse(self.mock_ncclient.manager.connect.
+                             return_value.edit_config.called)
+
+    def test_create_svi_but_subnet_not_specified_exception(self):
+        """Tests raising of SubnetNotSpecified exception.
+
+         Tests that a SubnetNotSpecified exception is raised when an
+         add_router_interface request is made for creating a switch virtual
+         interface (SVI), but the request does not specify a subnet.
+         """
+        cisco_config.CONF.set_override('nexus_l3_enable', True, 'CISCO')
+        with self._network_subnet_router() as (network, subnet, router):
+            with self._router_interface(router, subnet=None) as response:
+                self._assertExpectedHTTP(response.status_int,
+                                         c_exc.SubnetNotSpecified)
+
+    def test_create_svi_but_port_id_included_exception(self):
+        """Tests raising of PortIdForNexusSvi exception.
+
+         Tests that a PortIdForNexusSvi exception is raised when an
+         add_router_interface request is made for creating a switch virtual
+         interface (SVI), but the request includes a virtual port ID.
+         """
+        cisco_config.CONF.set_override('nexus_l3_enable', True, 'CISCO')
+        with self._network_subnet_router_interface(
+            port_id='my_port_id') as response:
+            self._assertExpectedHTTP(response.status_int,
+                                     c_exc.PortIdForNexusSvi)
 
 
 class TestCiscoPortsV2XML(TestCiscoPortsV2):

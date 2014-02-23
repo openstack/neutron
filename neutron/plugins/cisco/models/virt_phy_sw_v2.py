@@ -49,7 +49,6 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
     """
     __native_bulk_support = True
     supported_extension_aliases = ["provider", "binding"]
-    _plugins = {}
     _methods_to_delegate = ['create_network_bulk',
                             'get_network', 'get_networks',
                             'create_port_bulk',
@@ -67,6 +66,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         """
         conf.CiscoConfigOptions()
 
+        self._plugins = {}
         for key in conf.CISCO_PLUGINS.keys():
             plugin_obj = conf.CISCO_PLUGINS[key]
             if plugin_obj is not None:
@@ -138,28 +138,12 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             LOG.info(_("No %s Plugin loaded"), plugin_key)
             LOG.info(_("%(plugin_key)s: %(function_name)s with args %(args)s "
                      "ignored"),
-                     {'plugin_key': plugin_key, 'function_name': function_name,
+                     {'plugin_key': plugin_key,
+                      'function_name': function_name,
                       'args': args})
-            return
-        return [self._invoke_plugin(plugin_key, function_name, args, kwargs)]
-
-    def _invoke_plugin(self, plugin_key, function_name, args, kwargs):
-        """Invoke plugin.
-
-        Invokes the relevant function on a device plugin's
-        implementation for completing this operation.
-        """
-        func = getattr(self._plugins[plugin_key], function_name)
-        func_args_len = int(inspect.getargspec(func).args.__len__()) - 1
-        if args.__len__() > func_args_len:
-            func_args = args[:func_args_len]
-            extra_args = args[func_args_len:]
-            for dict_arg in extra_args:
-                for k, v in dict_arg.iteritems():
-                    kwargs[k] = v
-            return func(*func_args, **kwargs)
         else:
-            return func(*args, **kwargs)
+            func = getattr(self._plugins[plugin_key], function_name)
+            return [func(*args, **kwargs)]
 
     def _get_segmentation_id(self, network_id):
         binding_seg_id = odb.get_network_binding(None, network_id)
@@ -243,12 +227,19 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         return ovs_output[0]
 
     def get_network(self, context, id, fields=None):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        """Get network. This method is delegated to the vswitch plugin.
 
-    def get_networks(self, context, filters=None, fields=None):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
+
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None, page_reverse=False):
+        """Get networks. This method is delegated to the vswitch plugin.
+
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
 
     def _invoke_nexus_for_net_create(self, context, tenant_id, net_id,
                                      instance_id, host_id):
@@ -328,12 +319,18 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         return ovs_output[0]
 
     def get_port(self, context, id, fields=None):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        """Get port. This method is delegated to the vswitch plugin.
+
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
 
     def get_ports(self, context, filters=None, fields=None):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        """Get ports. This method is delegated to the vswitch plugin.
+
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
 
     def _check_nexus_net_create_needed(self, new_port, old_port):
         """Check if nexus plugin should be invoked for net_create.
@@ -521,21 +518,37 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                                                   n_args)
 
     def create_subnet(self, context, subnet):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        """Create subnet. This method is delegated to the vswitch plugin.
+
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
 
     def update_subnet(self, context, id, subnet):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        """Update subnet. This method is delegated to the vswitch plugin.
+
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
 
     def get_subnet(self, context, id, fields=None):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        """Get subnet. This method is delegated to the vswitch plugin.
+
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
 
     def delete_subnet(self, context, id, kwargs):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        """Delete subnet. This method is delegated to the vswitch plugin.
 
-    def get_subnets(self, context, filters=None, fields=None):
-        """For this model this method will be delegated to vswitch plugin."""
-        pass
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
+
+    def get_subnets(self, context, filters=None, fields=None,
+                    sorts=None, limit=None, marker=None, page_reverse=False):
+        """Get subnets. This method is delegated to the vswitch plugin.
+
+        This method is included here to satisfy abstract method requirements.
+        """
+        pass  # pragma no cover
