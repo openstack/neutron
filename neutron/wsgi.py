@@ -58,6 +58,9 @@ socket_opts = [
     cfg.IntOpt('retry_until_window',
                default=30,
                help=_("Number of seconds to keep retrying to listen")),
+    cfg.IntOpt('max_header_line',
+               default=16384,
+               help=_("Max header line to accommodate large tokens")),
     cfg.BoolOpt('use_ssl',
                 default=False,
                 help=_('Enable SSL on the API server')),
@@ -110,6 +113,8 @@ class Server(object):
     """Server class to manage multiple WSGI sockets and applications."""
 
     def __init__(self, name, threads=1000):
+        # Raise the default from 8192 to accommodate large tokens
+        eventlet.wsgi.MAX_HEADER_LINE = CONF.max_header_line
         self.pool = eventlet.GreenPool(threads)
         self.name = name
         self._launcher = None
