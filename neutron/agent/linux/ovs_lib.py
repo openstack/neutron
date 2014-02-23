@@ -396,6 +396,13 @@ class OVSBridge(BaseOVS):
             # rows since the interface identifier is unique
             data = json_result['data'][0]
             port_name = data[name_idx]
+            switch = get_bridge_for_iface(self.root_helper, port_name)
+            if switch != self.br_name:
+                LOG.info(_("Port: %(port_name)s is on %(switch)s,"
+                           " not on %(br_name)s"), {'port_name': port_name,
+                                                    'switch': switch,
+                                                    'br_name': self.br_name})
+                return
             ofport = data[ofport_idx]
             # ofport must be integer otherwise return None
             if not isinstance(ofport, int) or ofport == -1:

@@ -605,7 +605,7 @@ class OVS_Lib_Test(base.BaseTestCase):
             with testtools.ExpectedException(Exception):
                 self.br.get_local_port_mac()
 
-    def _test_get_vif_port_by_id(self, iface_id, data):
+    def _test_get_vif_port_by_id(self, iface_id, data, br_name=None):
         headings = ['external_ids', 'name', 'ofport']
         # Each element is a tuple of (expected mock call, return_value)
         expected_calls_and_values = [
@@ -615,7 +615,15 @@ class OVS_Lib_Test(base.BaseTestCase):
                         'external_ids:iface-id="%s"' % iface_id],
                        root_helper=self.root_helper),
              self._encode_ovs_json(headings, data))]
+        if data:
+            if not br_name:
+                br_name = self.BR_NAME
 
+            expected_calls_and_values.append(
+                (mock.call(["ovs-vsctl", self.TO,
+                            "iface-to-br", data[0][headings.index('name')]],
+                           root_helper=self.root_helper),
+                 br_name))
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
         vif_port = self.br.get_vif_port_by_id(iface_id)
 
@@ -654,3 +662,10 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_get_vif_by_port_id_with_no_data(self):
         self.assertIsNone(self._test_get_vif_port_by_id('whatever', []))
+
+    def test_get_vif_by_port_id_different_bridge(self):
+        external_ids = [["iface-id", "tap99id"],
+                        ["iface-status", "active"]]
+        data = [[["map", external_ids], "tap99", 1]]
+        self.assertIsNone(self._test_get_vif_port_by_id('tap99id', data,
+                                                        "br-ext"))
