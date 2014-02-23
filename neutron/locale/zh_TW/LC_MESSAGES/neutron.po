@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-22 06:31+0000\n"
+"POT-Creation-Date: 2014-02-23 06:25+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -287,127 +287,127 @@ msgstr ""
 msgid "Private key file to use when starting the server securely"
 msgstr ""
 
-#: neutron/wsgi.py:137
+#: neutron/wsgi.py:131
 #, python-format
 msgid "Unable to listen on %(host)s:%(port)s"
 msgstr "無法在 %(host)s:%(port)s 上進行接聽"
 
-#: neutron/wsgi.py:143
+#: neutron/wsgi.py:137
 #, python-format
 msgid "Unable to find ssl_cert_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:147
+#: neutron/wsgi.py:141
 #, python-format
 msgid "Unable to find ssl_key_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:152
+#: neutron/wsgi.py:146
 #, python-format
 msgid "Unable to find ssl_ca_file : %s"
 msgstr ""
 
-#: neutron/wsgi.py:185
+#: neutron/wsgi.py:179
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
 msgstr ""
 
-#: neutron/wsgi.py:344
+#: neutron/wsgi.py:338
 msgid "Missing Content-Type"
 msgstr "遺漏了內容類型"
 
-#: neutron/wsgi.py:533
+#: neutron/wsgi.py:527
 #, python-format
 msgid "Data %(data)s type is %(type)s"
 msgstr "資料 %(data)s 類型為 %(type)s"
 
-#: neutron/wsgi.py:616
+#: neutron/wsgi.py:610
 msgid "Cannot understand JSON"
 msgstr "無法理解 JSON"
 
-#: neutron/wsgi.py:629 neutron/wsgi.py:632
+#: neutron/wsgi.py:623 neutron/wsgi.py:626
 msgid "Inline DTD forbidden"
 msgstr "已禁止行內 DTD"
 
-#: neutron/wsgi.py:713
+#: neutron/wsgi.py:707
 msgid "Cannot understand XML"
 msgstr "無法理解 XML"
 
-#: neutron/wsgi.py:822
+#: neutron/wsgi.py:816
 msgid "Unrecognized Content-Type provided in request"
 msgstr "無法辨識要求中所提供的內容類型"
 
-#: neutron/wsgi.py:826
+#: neutron/wsgi.py:820
 msgid "No Content-Type provided in request"
 msgstr "要求中未提供內容類型"
 
-#: neutron/wsgi.py:830
+#: neutron/wsgi.py:824
 msgid "Empty body provided in request"
 msgstr "要求中所提供主體是空的"
 
-#: neutron/wsgi.py:837
+#: neutron/wsgi.py:831
 msgid "Unable to deserialize body as provided Content-Type"
 msgstr "無法將主體解除序列化為提供的內容類型"
 
-#: neutron/wsgi.py:933
+#: neutron/wsgi.py:927
 msgid "You must implement __call__"
 msgstr "必須實作 __call__"
 
-#: neutron/wsgi.py:1026 neutron/api/v2/base.py:179 neutron/api/v2/base.py:301
+#: neutron/wsgi.py:1020 neutron/api/v2/base.py:179 neutron/api/v2/base.py:301
 #: neutron/api/v2/base.py:434 neutron/api/v2/base.py:485
 #: neutron/extensions/l3agentscheduler.py:51
 #: neutron/extensions/l3agentscheduler.py:89
 msgid "The resource could not be found."
 msgstr ""
 
-#: neutron/wsgi.py:1073
+#: neutron/wsgi.py:1067
 #, python-format
 msgid "%(method)s %(url)s"
 msgstr "%(method)s %(url)s"
 
-#: neutron/wsgi.py:1079
+#: neutron/wsgi.py:1073
 msgid "Unsupported Content-Type"
 msgstr "不支援的內容類型"
 
-#: neutron/wsgi.py:1080
+#: neutron/wsgi.py:1074
 #, python-format
 msgid "InvalidContentType: %s"
 msgstr "InvalidContentType：%s"
 
-#: neutron/wsgi.py:1084
+#: neutron/wsgi.py:1078
 msgid "Malformed request body"
 msgstr "要求內文的格式不正確"
 
-#: neutron/wsgi.py:1085
+#: neutron/wsgi.py:1079
 #, python-format
 msgid "MalformedRequestBody: %s"
 msgstr "MalformedRequestBody：%s"
 
-#: neutron/wsgi.py:1092
+#: neutron/wsgi.py:1086
 #, python-format
 msgid "HTTP exception thrown: %s"
 msgstr "已擲出 HTTP 異常狀況：%s"
 
-#: neutron/wsgi.py:1097
+#: neutron/wsgi.py:1091
 msgid "Internal error"
 msgstr "內部錯誤"
 
-#: neutron/wsgi.py:1112 neutron/wsgi.py:1214
+#: neutron/wsgi.py:1106 neutron/wsgi.py:1208
 #, python-format
 msgid "%(url)s returned with HTTP %(status)d"
 msgstr "%(url)s 傳回了 HTTP %(status)d"
 
-#: neutron/wsgi.py:1115
+#: neutron/wsgi.py:1109
 #, python-format
 msgid "%(url)s returned a fault: %(exception)s"
 msgstr "%(url)s 傳回了錯誤：%(exception)s"
 
-#: neutron/wsgi.py:1233
+#: neutron/wsgi.py:1227
 #, python-format
 msgid "The requested content type %s is invalid."
 msgstr ""
 
-#: neutron/wsgi.py:1292
+#: neutron/wsgi.py:1286
 msgid "Could not deserialize data"
 msgstr "無法解除序列化資料"
 
@@ -860,44 +860,44 @@ msgstr ""
 msgid "Top-level directory for maintaining dhcp state"
 msgstr "用於維護 DHCP 狀態的最上層目錄"
 
-#: neutron/agent/linux/async_process.py:69
+#: neutron/agent/linux/async_process.py:68
 msgid "respawn_interval must be >= 0 if provided."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:83
+#: neutron/agent/linux/async_process.py:82
 msgid "Process is already started"
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:85
+#: neutron/agent/linux/async_process.py:84
 #, python-format
 msgid "Launching async process [%s]."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:91
+#: neutron/agent/linux/async_process.py:90
 #, python-format
 msgid "Halting async process [%s]."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:94
+#: neutron/agent/linux/async_process.py:93
 msgid "Process is not running."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:166
+#: neutron/agent/linux/async_process.py:165
 #, python-format
 msgid "An error occurred while killing [%s]."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:173
+#: neutron/agent/linux/async_process.py:172
 #, python-format
 msgid "Halting async process [%s] in response to an error."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:179
+#: neutron/agent/linux/async_process.py:178
 #, python-format
 msgid "Respawning async process [%s]."
 msgstr ""
 
-#: neutron/agent/linux/async_process.py:188
+#: neutron/agent/linux/async_process.py:187
 #, python-format
 msgid "An error occurred while communicating with async process [%s]."
 msgstr ""
@@ -2476,7 +2476,7 @@ msgstr "發現重疊的範圍：%(l_range)s 及 %(r_range)s"
 msgid "Invalid route: %s"
 msgstr "無效的路徑：%s"
 
-#: neutron/db/db_base_plugin_v2.py:902
+#: neutron/db/db_base_plugin_v2.py:903
 #, python-format
 msgid "An exception occurred while creating the %(resource)s:%(item)s"
 msgstr ""
@@ -2683,7 +2683,7 @@ msgid ""
 "assigning a floating IP"
 msgstr "埠 %s 具有多個固定 IP。指派浮動 IP 時必須提供特定 IP"
 
-#: neutron/db/l3_db.py:575 neutron/plugins/nicira/NeutronPlugin.py:1841
+#: neutron/db/l3_db.py:575 neutron/plugins/nicira/NeutronPlugin.py:1842
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr "如果未指定 port_id，則無法指定 fixed_ip_address"
 
@@ -9164,103 +9164,103 @@ msgstr "正在載入 OFC 驅動程式：%s"
 msgid "Number of packet_filters allowed per tenant, -1 for unlimited"
 msgstr "每個 Tenant 所容許的 packet_filter 數目，-1 表示無限制"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:229
+#: neutron/plugins/nicira/NeutronPlugin.py:230
 #, python-format
 msgid "Unable to process default l2 gw service:%s"
 msgstr "無法處理預設 l2 gw 服務：%s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:265
+#: neutron/plugins/nicira/NeutronPlugin.py:266
 #, python-format
 msgid "Created NVP router port:%s"
 msgstr "已建立 NVP 路由器埠：%s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:267
+#: neutron/plugins/nicira/NeutronPlugin.py:268
 #: neutron/plugins/nicira/NeutronServicePlugin.py:435
 #, python-format
 msgid "Unable to create port on NVP logical router %s"
 msgstr "無法在 NVP 邏輯路由器 %s 上建立埠"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:270
+#: neutron/plugins/nicira/NeutronPlugin.py:271
 #, python-format
 msgid ""
 "Unable to create logical router port for neutron port id %(port_id)s on "
 "router %(nsx_router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:348
+#: neutron/plugins/nicira/NeutronPlugin.py:349
 #, python-format
 msgid "Attached %(att)s to NVP router port %(port)s"
 msgstr "已將 %(att)s 連接至 NVP 路由器埠 %(port)s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:354
+#: neutron/plugins/nicira/NeutronPlugin.py:355
 #, python-format
 msgid ""
 "Unable to plug attachment in NVP logical router port %(r_port_id)s, "
 "associated with Neutron %(q_port_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:360
+#: neutron/plugins/nicira/NeutronPlugin.py:361
 #, python-format
 msgid ""
 "Unable to plug attachment in router port %(r_port_id)s for neutron port "
 "id %(q_port_id)s on router %(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:406
+#: neutron/plugins/nicira/NeutronPlugin.py:407
 msgid "An exception occurred while selecting logical switch for the port"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:437
+#: neutron/plugins/nicira/NeutronPlugin.py:438
 #, python-format
 msgid ""
 "An exception occurred while creating the quantum port %s on the NVP "
 "plaform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:449
-#: neutron/plugins/nicira/NeutronPlugin.py:501
-#: neutron/plugins/nicira/NeutronPlugin.py:699
+#: neutron/plugins/nicira/NeutronPlugin.py:450
+#: neutron/plugins/nicira/NeutronPlugin.py:502
+#: neutron/plugins/nicira/NeutronPlugin.py:700
 #, python-format
 msgid ""
 "NVP plugin does not support regular VIF ports on external networks. Port "
 "%s will be down."
 msgstr "NVP 外掛程式不支援外部網路上的一般 VIF 埠。埠 %s 將關閉。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:470
+#: neutron/plugins/nicira/NeutronPlugin.py:471
 #, python-format
 msgid ""
 "_nvp_create_port completed for port %(name)s on network %(network_id)s. "
 "The new port id is %(id)s."
 msgstr "對網路 %(network_id)s 上埠 %(name)s 執行的 _nvp_create_port 已完成。新的埠 ID 為 %(id)s。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:481
+#: neutron/plugins/nicira/NeutronPlugin.py:482
 #, python-format
 msgid ""
 "Concurrent network deletion detected; Back-end Port %(nsx_id)s creation "
 "to be rolled back for Neutron port: %(neutron_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:493
+#: neutron/plugins/nicira/NeutronPlugin.py:494
 #, python-format
 msgid "NSX Port %s already gone"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:508
+#: neutron/plugins/nicira/NeutronPlugin.py:509
 #, python-format
 msgid "Port '%s' was already deleted on NVP platform"
 msgstr "已在 NVP 平台上刪除了埠 '%s'"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:515
+#: neutron/plugins/nicira/NeutronPlugin.py:516
 #, python-format
 msgid "_nvp_delete_port completed for port %(port_id)s on network %(net_id)s"
 msgstr "對網路 %(net_id)s 上埠 %(port_id)s 執行的 _nvp_delete_port 已完成"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:520
+#: neutron/plugins/nicira/NeutronPlugin.py:521
 #, python-format
 msgid "Port %s not found in NVP"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:529
+#: neutron/plugins/nicira/NeutronPlugin.py:530
 #, python-format
 msgid ""
 "Neutron port %(port_id)s not found on NVP backend. Terminating delete "
@@ -9268,41 +9268,41 @@ msgid ""
 "%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:544
-#: neutron/plugins/nicira/NeutronPlugin.py:1067
+#: neutron/plugins/nicira/NeutronPlugin.py:545
+#: neutron/plugins/nicira/NeutronPlugin.py:1068
 #, python-format
 msgid ""
 "Ignoring exception as this means the peer for port '%s' has already been "
 "deleted."
 msgstr "正在忽略異常狀況，因為這意味著埠 '%s' 的同層級已刪除。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:556
+#: neutron/plugins/nicira/NeutronPlugin.py:557
 #, python-format
 msgid ""
 "It is not allowed to create router interface ports on external networks "
 "as '%s'"
 msgstr "不容許在外部網路上建立路由器介面埠來作為 '%s'"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:581
+#: neutron/plugins/nicira/NeutronPlugin.py:582
 #, python-format
 msgid ""
 "_nvp_create_router_port completed for port %(name)s on network "
 "%(network_id)s. The new port id is %(id)s."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:594
+#: neutron/plugins/nicira/NeutronPlugin.py:595
 #, python-format
 msgid ""
 "device_id field must be populated in order to create an external gateway "
 "port for network %s"
 msgstr "必須將資料移入 device_id 欄位，才能給網路 %s 建立外部閘道埠"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:604
+#: neutron/plugins/nicira/NeutronPlugin.py:605
 #, python-format
 msgid "The gateway port for the NSX router %s was not found on the backend"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:645
+#: neutron/plugins/nicira/NeutronPlugin.py:646
 #, python-format
 msgid ""
 "_nvp_create_ext_gw_port completed on external network %(ext_net_id)s, "
@@ -9311,259 +9311,259 @@ msgstr ""
 "已在路由器 %(router_id)s 所連接的外部網路 %(ext_net_id)s 上完成 "
 "_nvp_create_ext_gw_port。NVP 埠 ID 為 %(nvp_port_id)s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:680
-#: neutron/plugins/nicira/NeutronPlugin.py:1776
+#: neutron/plugins/nicira/NeutronPlugin.py:681
+#: neutron/plugins/nicira/NeutronPlugin.py:1777
 #, python-format
 msgid "Logical router resource %s not found on NVP platform"
 msgstr "在 NVP 平台上找不到邏輯路由器資源 %s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:684
-#: neutron/plugins/nicira/NeutronPlugin.py:1780
+#: neutron/plugins/nicira/NeutronPlugin.py:685
+#: neutron/plugins/nicira/NeutronPlugin.py:1781
 msgid "Unable to update logical routeron NVP Platform"
 msgstr "無法在 NVP 平台上更新邏輯路由器"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:686
+#: neutron/plugins/nicira/NeutronPlugin.py:687
 #, python-format
 msgid ""
 "_nvp_delete_ext_gw_port completed on external network %(ext_net_id)s, "
 "attached to NSX router:%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:728
+#: neutron/plugins/nicira/NeutronPlugin.py:729
 #, python-format
 msgid ""
 "_nvp_create_l2_gw_port completed for port %(name)s on network "
 "%(network_id)s. The new port id is %(id)s."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:768
+#: neutron/plugins/nicira/NeutronPlugin.py:769
 #, python-format
 msgid "%s required"
 msgstr "需要 %s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:772
+#: neutron/plugins/nicira/NeutronPlugin.py:773
 msgid "Segmentation ID cannot be specified with flat network type"
 msgstr "無法使用平面網路類型來指定分段 ID"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:776
+#: neutron/plugins/nicira/NeutronPlugin.py:777
 msgid "Segmentation ID must be specified with vlan network type"
 msgstr "必須使用 VLAN 網路類型來指定分段 ID"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:780
-#: neutron/plugins/nicira/NeutronPlugin.py:796
+#: neutron/plugins/nicira/NeutronPlugin.py:781
+#: neutron/plugins/nicira/NeutronPlugin.py:797
 #, python-format
 msgid "%(segmentation_id)s out of range (%(min_id)s through %(max_id)s)"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:802
+#: neutron/plugins/nicira/NeutronPlugin.py:803
 #, python-format
 msgid "%(net_type_param)s %(net_type_value)s not supported"
 msgstr "不支援 %(net_type_param)s %(net_type_value)s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:847
+#: neutron/plugins/nicira/NeutronPlugin.py:848
 #, python-format
 msgid "No switch has available ports (%d checked)"
 msgstr "交換器沒有可用的埠（已檢查 %d 個）"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:881
+#: neutron/plugins/nicira/NeutronPlugin.py:882
 #, python-format
 msgid "Maximum number of logical ports reached for logical network %s"
 msgstr "已達到邏輯網路 %s 的邏輯埠數目上限"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:971
+#: neutron/plugins/nicira/NeutronPlugin.py:972
 #, python-format
 msgid ""
 "Network with admin_state_up=False are not yet supported by this plugin. "
 "Ignoring setting for network %s"
 msgstr "此外掛程式尚不支援 admin_state_up = False 的網路。正在忽略對網路 %s 的設定"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1056
+#: neutron/plugins/nicira/NeutronPlugin.py:1057
 #, python-format
 msgid ""
 "A nvp lport identifier was not found for neutron port '%s'. Unable to "
 "remove the peer router port for this switch port"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1075
+#: neutron/plugins/nicira/NeutronPlugin.py:1076
 #, python-format
 msgid "delete_network completed for tenant: %s"
 msgstr "已對 Tenant 完成 delete_network：%s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1078
+#: neutron/plugins/nicira/NeutronPlugin.py:1079
 #: neutron/plugins/nicira/NeutronServicePlugin.py:514
 #, python-format
 msgid "Did not found lswitch %s in NVP"
 msgstr "在 NVP 中找不到 lswitch %s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1108
+#: neutron/plugins/nicira/NeutronPlugin.py:1109
 msgid "admin_state_up=False networks are not supported."
 msgstr "不支援 admin_state_up = False 網路。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1174
+#: neutron/plugins/nicira/NeutronPlugin.py:1175
 #, python-format
 msgid "create_port completed on NVP for tenant %(tenant_id)s: (%(id)s)"
 msgstr "已對 Tenant %(tenant_id)s 的 NVP 完成 create_port：(%(id)s)"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1188
+#: neutron/plugins/nicira/NeutronPlugin.py:1189
 #, python-format
 msgid "Logical switch for network %s was not found in NVP."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1199
+#: neutron/plugins/nicira/NeutronPlugin.py:1200
 msgid "Unable to create port or set port attachment in NVP."
 msgstr "無法在 NVP 中建立埠或設定埠連接裝置。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1291
+#: neutron/plugins/nicira/NeutronPlugin.py:1292
 #, python-format
 msgid "Update port request: %s"
 msgstr "更新埠要求：%s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1319
+#: neutron/plugins/nicira/NeutronPlugin.py:1320
 #, python-format
 msgid "Unable to update port id: %s."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1402
+#: neutron/plugins/nicira/NeutronPlugin.py:1403
 msgid ""
 "Cannot create a distributed router with the NVP platform currently in "
 "execution. Please, try without specifying the 'distributed' attribute."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1408
+#: neutron/plugins/nicira/NeutronPlugin.py:1409
 msgid "Unable to create logical router on NVP Platform"
 msgstr "無法在 NVP 平台上建立邏輯路由器"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1419
+#: neutron/plugins/nicira/NeutronPlugin.py:1420
 #, python-format
 msgid ""
 "Unable to create L3GW port on logical router %(router_uuid)s. Verify "
 "Default Layer-3 Gateway service %(def_l3_gw_svc)s id is correct"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1429
+#: neutron/plugins/nicira/NeutronPlugin.py:1430
 #, python-format
 msgid "Unable to create router %s on NSX backend"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1458
-#: neutron/plugins/nicira/NeutronPlugin.py:1543
+#: neutron/plugins/nicira/NeutronPlugin.py:1459
+#: neutron/plugins/nicira/NeutronPlugin.py:1544
 #: neutron/plugins/nicira/NeutronServicePlugin.py:197
 #: neutron/plugins/nicira/NeutronServicePlugin.py:1175
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr "網路 '%s' 不是有效的外部網路"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1507
+#: neutron/plugins/nicira/NeutronPlugin.py:1508
 #, python-format
 msgid "Failed to set gateway info for router being created:%s - removing router"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1510
+#: neutron/plugins/nicira/NeutronPlugin.py:1511
 #, python-format
 msgid ""
 "Create router failed while setting external gateway. Router:%s has been "
 "removed from DB and backend"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1552
+#: neutron/plugins/nicira/NeutronPlugin.py:1553
 msgid ""
 "'routes' cannot contain route '0.0.0.0/0', this must be updated through "
 "the default gateway attribute"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1568
+#: neutron/plugins/nicira/NeutronPlugin.py:1569
 #, python-format
 msgid "Logical router %s not found on NVP Platform"
 msgstr "在 NVP 平台上找不到邏輯路由器 %s"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1572
+#: neutron/plugins/nicira/NeutronPlugin.py:1573
 msgid "Unable to update logical router on NVP Platform"
 msgstr "無法在 NVP 平台上更新邏輯路由器"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1574
+#: neutron/plugins/nicira/NeutronPlugin.py:1575
 msgid ""
 "Request cannot contain 'routes' with the NVP platform currently in "
 "execution. Please, try without specifying the static routes."
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1631
+#: neutron/plugins/nicira/NeutronPlugin.py:1632
 #, python-format
 msgid "Logical router '%s' not found on NVP Platform"
 msgstr "在 NVP 平台上找不到邏輯路由器 '%s'"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1635
+#: neutron/plugins/nicira/NeutronPlugin.py:1636
 #, python-format
 msgid "Unable to delete logical router '%s' on NVP Platform"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1645
+#: neutron/plugins/nicira/NeutronPlugin.py:1646
 #, python-format
 msgid ""
 "Unable to remove NSX mapping for Neutron router %(router_id)s because of "
 "the following exception:%(d_exc)s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1713
+#: neutron/plugins/nicira/NeutronPlugin.py:1714
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr "已對子網路 %(subnet_id)s 及路由器 %(router_id)s 完成 Add_router_interface"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1811
+#: neutron/plugins/nicira/NeutronPlugin.py:1812
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NVP platform for "
 "floating ip:%s"
 msgstr "在 NVP 平台上移除浮動 IP 的 NAT 規則時發生錯誤：%s。"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1817
+#: neutron/plugins/nicira/NeutronPlugin.py:1818
 msgid "An incorrect number of matching NAT rules was found on the NVP platform"
 msgstr "在 NVP 平台上找到的相符 NAT 規則數目不正確"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1949
+#: neutron/plugins/nicira/NeutronPlugin.py:1950
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NVP platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr "在 NVP 平台上給浮動 IP %(floating_ip)s（已對映到內部 IP %(internal_ip)s）建立 NAT 規則時發生錯誤"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1955
+#: neutron/plugins/nicira/NeutronPlugin.py:1956
 msgid "Failed to update NAT rules for floatingip update"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1990
+#: neutron/plugins/nicira/NeutronPlugin.py:1991
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr "埠 '%s' 未與浮動 IP 產生關聯"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:1993
+#: neutron/plugins/nicira/NeutronPlugin.py:1994
 #, python-format
 msgid "Nat rules not found in nvp for port: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2020
+#: neutron/plugins/nicira/NeutronPlugin.py:2021
 #, python-format
 msgid "Unable to create l2_gw_service for: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2043
+#: neutron/plugins/nicira/NeutronPlugin.py:2044
 msgid ""
 "Unable to remove gateway service from NVP plaform - the resource was not "
 "found"
 msgstr "無法將閘道服務從 NVP 平台中移除 - 找不到資源"
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2073
+#: neutron/plugins/nicira/NeutronPlugin.py:2074
 #, python-format
 msgid "Unable to update name on NVP backend for network gateway: %s"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2135
+#: neutron/plugins/nicira/NeutronPlugin.py:2136
 #, python-format
 msgid "Security group: %s was already deleted from backend"
 msgstr ""
 
-#: neutron/plugins/nicira/NeutronPlugin.py:2148
+#: neutron/plugins/nicira/NeutronPlugin.py:2149
 #, python-format
 msgid "Port values not valid for protocol: %s"
 msgstr ""
@@ -10439,6 +10439,120 @@ msgstr ""
 msgid "Unable to find Logical Service Node for network %s"
 msgstr ""
 
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:47
+#, python-format
+msgid ""
+"Network Gateway '%(gateway_id)s' still has active mappings with one or "
+"more neutron networks."
+msgstr ""
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:52
+#, python-format
+msgid "Network Gateway %(gateway_id)s could not be found"
+msgstr ""
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:56
+#, python-format
+msgid ""
+"Port '%(port_id)s' is owned by '%(device_owner)s' and therefore cannot be"
+" deleted directly via the port API."
+msgstr "埠 '%(port_id)s' 是由 '%(device_owner)s' 擁有，因此無法直接透過埠 API 來刪除。"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:61
+#, python-format
+msgid ""
+"The specified mapping '%(mapping)s' is already in use on network gateway "
+"'%(gateway_id)s'."
+msgstr "所指定的對映 '%(mapping)s' 已在網路閘道 '%(gateway_id)s' 上使用。"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:66
+#, python-format
+msgid ""
+"Multiple network connections found on '%(gateway_id)s' with provided "
+"criteria."
+msgstr "在 '%(gateway_id)s' 上找到多個符合所提供準則的網路連線。"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:71
+#, python-format
+msgid ""
+"The connection %(network_mapping_info)s was not found on the network "
+"gateway '%(network_gateway_id)s'"
+msgstr "在網路閘道 '%(network_gateway_id)s' 上找不到連線 %(network_mapping_info)s"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:76
+#, python-format
+msgid "The network gateway %(gateway_id)s cannot be updated or deleted"
+msgstr "無法更新或刪除網路閘道 %(gateway_id)s"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:175
+msgid ""
+"A network identifier must be specified when connecting a network to a "
+"network gateway. Unable to complete operation"
+msgstr "將網路連接至網路閘道時必須指定網路 ID。無法完成作業"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:181
+#, python-format
+msgid ""
+"Invalid keys found among the ones provided in request body: "
+"%(connection_attrs)s."
+msgstr "在要求內文 %(connection_attrs)s 所提供的索引鍵中找到無效的索引鍵。"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:187
+msgid ""
+"In order to specify a segmentation id the segmentation type must be "
+"specified as well"
+msgstr "必須同時指定分段類型才能指定分段 ID"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:191
+msgid "Cannot specify a segmentation id when the segmentation type is flat"
+msgstr "當分段類型為平面時，無法指定分段 ID"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:240
+#, python-format
+msgid "Created network gateway with id:%s"
+msgstr "已建立 ID 為 %s 的網路閘道"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:252
+#, python-format
+msgid "Updated network gateway with id:%s"
+msgstr "已更新 ID 為 %s 的網路閘道"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:267
+#, python-format
+msgid "Network gateway '%s' was destroyed."
+msgstr "已毀損網路閘道 '%s'。"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:277
+#, python-format
+msgid "Connecting network '%(network_id)s' to gateway '%(network_gateway_id)s'"
+msgstr "正在將網路 '%(network_id)s' 連接至閘道 '%(network_gateway_id)s'"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:318
+#, python-format
+msgid ""
+"Requested network '%(network_id)s' not found.Unable to create network "
+"connection on gateway '%(network_gateway_id)s"
+msgstr "找不到所要求的網路 '%(network_id)s'。無法在閘道 '%(network_gateway_id)s 上建立網路連線"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:326
+#, python-format
+msgid ""
+"Gateway port for '%(network_gateway_id)s' created on network "
+"'%(network_id)s':%(port_id)s"
+msgstr "已在網路 '%(network_id)s':%(port_id)s 上給 '%(network_gateway_id)s' 建立了閘道埠"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:342
+#, python-format
+msgid "Ensured no Ip addresses are configured on port %s"
+msgstr "已確定沒有在埠 %s 上配置 IP 位址"
+
+#: neutron/plugins/nicira/dbexts/networkgw_db.py:352
+#, python-format
+msgid ""
+"Disconnecting network '%(network_id)s' from gateway "
+"'%(network_gateway_id)s'"
+msgstr "正在切斷網路 '%(network_id)s' 與閘道 '%(network_gateway_id)s' 的連線"
+
 #: neutron/plugins/nicira/dbexts/nicira_db.py:75
 #, python-format
 msgid "Port mapping for %s already available"
@@ -10453,120 +10567,6 @@ msgstr ""
 #, python-format
 msgid "NSX identifiers for neutron router %s not yet stored in Neutron DB"
 msgstr ""
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:47
-#, python-format
-msgid ""
-"Network Gateway '%(gateway_id)s' still has active mappings with one or "
-"more neutron networks."
-msgstr ""
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:52
-#, python-format
-msgid "Network Gateway %(gateway_id)s could not be found"
-msgstr ""
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:56
-#, python-format
-msgid ""
-"Port '%(port_id)s' is owned by '%(device_owner)s' and therefore cannot be"
-" deleted directly via the port API."
-msgstr "埠 '%(port_id)s' 是由 '%(device_owner)s' 擁有，因此無法直接透過埠 API 來刪除。"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:61
-#, python-format
-msgid ""
-"The specified mapping '%(mapping)s' is already in use on network gateway "
-"'%(gateway_id)s'."
-msgstr "所指定的對映 '%(mapping)s' 已在網路閘道 '%(gateway_id)s' 上使用。"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:66
-#, python-format
-msgid ""
-"Multiple network connections found on '%(gateway_id)s' with provided "
-"criteria."
-msgstr "在 '%(gateway_id)s' 上找到多個符合所提供準則的網路連線。"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:71
-#, python-format
-msgid ""
-"The connection %(network_mapping_info)s was not found on the network "
-"gateway '%(network_gateway_id)s'"
-msgstr "在網路閘道 '%(network_gateway_id)s' 上找不到連線 %(network_mapping_info)s"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:76
-#, python-format
-msgid "The network gateway %(gateway_id)s cannot be updated or deleted"
-msgstr "無法更新或刪除網路閘道 %(gateway_id)s"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:175
-msgid ""
-"A network identifier must be specified when connecting a network to a "
-"network gateway. Unable to complete operation"
-msgstr "將網路連接至網路閘道時必須指定網路 ID。無法完成作業"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:181
-#, python-format
-msgid ""
-"Invalid keys found among the ones provided in request body: "
-"%(connection_attrs)s."
-msgstr "在要求內文 %(connection_attrs)s 所提供的索引鍵中找到無效的索引鍵。"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:187
-msgid ""
-"In order to specify a segmentation id the segmentation type must be "
-"specified as well"
-msgstr "必須同時指定分段類型才能指定分段 ID"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:191
-msgid "Cannot specify a segmentation id when the segmentation type is flat"
-msgstr "當分段類型為平面時，無法指定分段 ID"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:240
-#, python-format
-msgid "Created network gateway with id:%s"
-msgstr "已建立 ID 為 %s 的網路閘道"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:252
-#, python-format
-msgid "Updated network gateway with id:%s"
-msgstr "已更新 ID 為 %s 的網路閘道"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:267
-#, python-format
-msgid "Network gateway '%s' was destroyed."
-msgstr "已毀損網路閘道 '%s'。"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:277
-#, python-format
-msgid "Connecting network '%(network_id)s' to gateway '%(network_gateway_id)s'"
-msgstr "正在將網路 '%(network_id)s' 連接至閘道 '%(network_gateway_id)s'"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:318
-#, python-format
-msgid ""
-"Requested network '%(network_id)s' not found.Unable to create network "
-"connection on gateway '%(network_gateway_id)s"
-msgstr "找不到所要求的網路 '%(network_id)s'。無法在閘道 '%(network_gateway_id)s 上建立網路連線"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:326
-#, python-format
-msgid ""
-"Gateway port for '%(network_gateway_id)s' created on network "
-"'%(network_id)s':%(port_id)s"
-msgstr "已在網路 '%(network_id)s':%(port_id)s 上給 '%(network_gateway_id)s' 建立了閘道埠"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:342
-#, python-format
-msgid "Ensured no Ip addresses are configured on port %s"
-msgstr "已確定沒有在埠 %s 上配置 IP 位址"
-
-#: neutron/plugins/nicira/dbexts/nicira_networkgw_db.py:352
-#, python-format
-msgid ""
-"Disconnecting network '%(network_id)s' from gateway "
-"'%(network_gateway_id)s'"
-msgstr "正在切斷網路 '%(network_id)s' 與閘道 '%(network_gateway_id)s' 的連線"
 
 #: neutron/plugins/nicira/dbexts/nsxrouter.py:65
 #, python-format
@@ -10812,60 +10812,60 @@ msgid ""
 "router:'%s'"
 msgstr "對路由器的 meta 資料存取網路執行作業時發生錯誤：'%s'"
 
-#: neutron/plugins/nicira/extensions/nvp_networkgw.py:66
+#: neutron/plugins/nicira/extensions/networkgw.py:65
 msgid "Cannot create a gateway with an empty device list"
 msgstr "無法使用空的裝置清單來建立閘道"
 
-#: neutron/plugins/nicira/extensions/nvp_networkgw.py:82
+#: neutron/plugins/nicira/extensions/networkgw.py:81
 #, python-format
 msgid "Unexpected keys found in device description:%s"
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_networkgw.py:86
+#: neutron/plugins/nicira/extensions/networkgw.py:85
 #, python-format
 msgid "%s: provided data are not iterable"
 msgstr "%s：提供的資料無法反覆運算"
 
-#: neutron/plugins/nicira/extensions/nvp_networkgw.py:92
+#: neutron/plugins/nicira/extensions/networkgw.py:91
 msgid "Number of network gateways allowed per tenant, -1 for unlimited"
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:38
+#: neutron/plugins/nicira/extensions/qos.py:36
 msgid "Need to be admin in order to create queue called default"
 msgstr "必須成為管理者才能建立稱為 default 的佇列"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:42
+#: neutron/plugins/nicira/extensions/qos.py:40
 msgid "Default queue already exists."
 msgstr "預設佇列已存在。"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:46
+#: neutron/plugins/nicira/extensions/qos.py:44
 #, python-format
 msgid "Invalid value for dscp %(data)s must be integer value between 0 and 63."
 msgstr ""
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:51
+#: neutron/plugins/nicira/extensions/qos.py:49
 msgid "Invalid bandwidth rate, min greater than max."
 msgstr "頻寬速率無效，下限大於上限。"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:55
+#: neutron/plugins/nicira/extensions/qos.py:53
 #, python-format
 msgid "Invalid bandwidth rate, %(data)s must be a non negative integer."
 msgstr "無效的頻寬速率，%(data)s 必須為非負整數。"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:60
+#: neutron/plugins/nicira/extensions/qos.py:58
 #, python-format
 msgid "Queue %(id)s does not exist"
 msgstr "佇列 %(id)s 不存在"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:64
+#: neutron/plugins/nicira/extensions/qos.py:62
 msgid "Unable to delete queue attached to port."
 msgstr "無法刪除埠所連接的佇列。"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:68
+#: neutron/plugins/nicira/extensions/qos.py:66
 msgid "Port is not associated with lqueue"
 msgstr "埠未與 lqueue 產生關聯"
 
-#: neutron/plugins/nicira/extensions/nvp_qos.py:79
+#: neutron/plugins/nicira/extensions/qos.py:77
 #, python-format
 msgid "'%s' must be a non negative integer."
 msgstr "'%s' 必須為非負整數。"
@@ -14505,35 +14505,10 @@ msgstr ""
 #~ msgid "Attempting to bind port %(port)s on host %(host)s"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Bound port: %(port)s, host: %(host)s, "
-#~ "driver: %(driver)s, vif_type: %(vif_type)s, "
-#~ "cap_port_filter: %(cap_port_filter)s, segment: "
-#~ "%(segment)s"
-#~ msgstr ""
-
 #~ msgid "NVP controller cluster version: %s"
 #~ msgstr "NVP 控制器叢集版本：%s"
 
 #~ msgid "Cannot update NVP routes %(routes)s for router %(router_id)s"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "No SNAT rules cannot be applied as"
-#~ " they are not available in this "
-#~ "version of the NVP platform"
-#~ msgstr "無法套用 SNAT 規則，因為這些規則在此版本的 NVP 平台中無法使用"
-
-#~ msgid ""
-#~ "No DNAT rules cannot be applied as"
-#~ " they are not available in this "
-#~ "version of the NVP platform"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "NVP version is not set. Unable to"
-#~ " complete request correctly. Check log "
-#~ "for NVP communication errors."
 #~ msgstr ""
 
 #~ msgid "Unable to find NVP port for Neutron port %s"
