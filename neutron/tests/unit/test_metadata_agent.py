@@ -34,6 +34,8 @@ class FakeConf(object):
     auth_url = 'http://127.0.0.1'
     auth_strategy = 'keystone'
     auth_region = 'region'
+    auth_insecure = False
+    auth_ca_cert = None
     endpoint_type = 'adminURL'
     nova_metadata_ip = '9.9.9.9'
     nova_metadata_port = 8775
@@ -100,6 +102,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
                 password=FakeConf.admin_password,
                 auth_strategy=FakeConf.auth_strategy,
                 token=None,
+                insecure=FakeConf.auth_insecure,
+                ca_cert=FakeConf.auth_ca_cert,
                 endpoint_url=None,
                 endpoint_type=FakeConf.endpoint_type)
         ]

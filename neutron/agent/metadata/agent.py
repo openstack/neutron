@@ -61,6 +61,14 @@ class MetadataProxyHandler(object):
                    help=_("The type of authentication to use")),
         cfg.StrOpt('auth_region',
                    help=_("Authentication region")),
+        cfg.BoolOpt('auth_insecure',
+                    default=False,
+                    help=_("Turn off verification of the certificate for"
+                           " ssl")),
+        cfg.StrOpt('auth_ca_cert',
+                   default=None,
+                   help=_("Certificate Authority public key (CA cert) "
+                          "file for ssl")),
         cfg.StrOpt('endpoint_type',
                    default='adminURL',
                    help=_("Network service endpoint type to pull from "
@@ -89,6 +97,8 @@ class MetadataProxyHandler(object):
             auth_strategy=self.conf.auth_strategy,
             region_name=self.conf.auth_region,
             token=self.auth_info.get('auth_token'),
+            insecure=self.conf.auth_insecure,
+            ca_cert=self.conf.auth_ca_cert,
             endpoint_url=self.auth_info.get('endpoint_url'),
             endpoint_type=self.conf.endpoint_type
         )
