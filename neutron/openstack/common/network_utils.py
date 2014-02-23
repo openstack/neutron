@@ -17,7 +17,17 @@
 Network-related utilities and helper functions.
 """
 
-from neutron.openstack.common.py3kcompat import urlutils
+# TODO(jd) Use six.moves once
+# https://bitbucket.org/gutworth/six/pull-request/28
+# is merged
+try:
+    import urllib.parse
+    SplitResult = urllib.parse.SplitResult
+except ImportError:
+    import urlparse
+    SplitResult = urlparse.SplitResult
+
+from six.moves.urllib import parse
 
 
 def parse_host_port(address, default_port=None):
@@ -70,10 +80,10 @@ def urlsplit(url, scheme='', allow_fragments=True):
 
     The parameters are the same as urlparse.urlsplit.
     """
-    scheme, netloc, path, query, fragment = urlutils.urlsplit(
+    scheme, netloc, path, query, fragment = parse.urlsplit(
         url, scheme, allow_fragments)
     if allow_fragments and '#' in path:
         path, fragment = path.split('#', 1)
     if '?' in path:
         path, query = path.split('?', 1)
-    return urlutils.SplitResult(scheme, netloc, path, query, fragment)
+    return SplitResult(scheme, netloc, path, query, fragment)
