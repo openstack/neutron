@@ -31,7 +31,6 @@ from neutron.plugins.cisco.extensions import n1kv_profile
 from neutron.plugins.cisco.extensions import network_profile
 from neutron.plugins.cisco.n1kv import n1kv_client
 from neutron.plugins.cisco.n1kv import n1kv_neutron_plugin
-from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin as test_plugin
 
@@ -383,16 +382,3 @@ class TestN1kvSubnets(test_plugin.TestSubnetsV2,
                       N1kvPluginTestCase):
 
     pass
-
-
-class TestN1kvNonDbTest(base.BaseTestCase):
-
-    """
-    This test class here can be used to test the plugin directly,
-    without going through the DB plugin test cases.
-
-    None of the set-up done in N1kvPluginTestCase applies here.
-
-    """
-    def test_db(self):
-        db.configure_db()
