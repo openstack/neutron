@@ -15,7 +15,8 @@
 #    under the License.
 
 import json
-import urlparse
+
+import six.moves.urllib.parse as urlparse
 
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils

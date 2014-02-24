@@ -18,11 +18,12 @@
 
 import httplib
 import socket
-import urlparse
+
 
 import eventlet
 import httplib2
 from oslo.config import cfg
+import six.moves.urllib.parse as urlparse
 import webob
 
 from neutron.agent.linux import daemon
