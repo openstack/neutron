@@ -218,7 +218,7 @@ class PortContext(object):
 
     @abstractproperty
     def original(self):
-        """Return the original state of the port
+        """Return the original state of the port.
 
         Return the original state of the port, prior to a call to
         update_port. Method is only valid within calls to
@@ -234,6 +234,31 @@ class PortContext(object):
     @abstractproperty
     def bound_segment(self):
         """Return the currently bound segment dictionary."""
+        pass
+
+    @abstractproperty
+    def original_bound_segment(self):
+        """Return the original bound segment dictionary.
+
+        Return the original bound segment dictionary, prior to a call
+        to update_port.  Method is only valid within calls to
+        update_port_precommit and update_port_postcommit.
+        """
+        pass
+
+    @abstractproperty
+    def bound_driver(self):
+        """Return the currently bound mechanism driver name."""
+        pass
+
+    @abstractproperty
+    def original_bound_driver(self):
+        """Return the original bound mechanism driver name.
+
+        Return the original bound mechanism driver name, prior to a
+        call to update_port.  Method is only valid within calls to
+        update_port_precommit and update_port_postcommit.
+        """
         pass
 
     @abstractmethod

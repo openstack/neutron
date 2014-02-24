@@ -78,6 +78,12 @@ class PortContext(MechanismDriverContext, api.PortContext):
                                                network)
         self._binding = db.ensure_port_binding(plugin_context.session,
                                                port['id'])
+        if original_port:
+            self._original_bound_segment_id = self._binding.segment
+            self._original_bound_driver = self._binding.driver
+        else:
+            self._original_bound_segment_id = None
+            self._original_bound_driver = None
 
     @property
     def current(self):
@@ -98,6 +104,21 @@ class PortContext(MechanismDriverContext, api.PortContext):
             for segment in self._network_context.network_segments:
                 if segment[api.ID] == id:
                     return segment
+
+    @property
+    def original_bound_segment(self):
+        if self._original_bound_segment_id:
+            for segment in self._network_context.network_segments:
+                if segment[api.ID] == self._original_bound_segment_id:
+                    return segment
+
+    @property
+    def bound_driver(self):
+        return self._binding.driver
+
+    @property
+    def original_bound_driver(self):
+        return self._original_bound_driver
 
     def host_agents(self, agent_type):
         return self._plugin.get_agents(self._plugin_context,
