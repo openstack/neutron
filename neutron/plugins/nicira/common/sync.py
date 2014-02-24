@@ -300,7 +300,7 @@ class NvpSynchronizer():
             lswitch = (self._nvp_cache[ls_uuid].get('data') or
                        self._nvp_cache[ls_uuid].get('data_bk'))
             tags = self._get_tag_dict(lswitch['tags'])
-            neutron_id = tags.get('neutron_net_id', ls_uuid)
+            neutron_id = tags.get('quantum_net_id')
             neutron_net_ids.add(neutron_id)
             neutron_nvp_mappings[neutron_id] = (
                 neutron_nvp_mappings.get(neutron_id, []) +
@@ -309,7 +309,6 @@ class NvpSynchronizer():
         filters = {'router:external': [False]}
         if not scan_missing:
             filters['id'] = neutron_net_ids
-        # TODO(salv-orlando): Filter out external networks
         networks = self._plugin._get_collection_query(
             ctx, models_v2.Network, filters=filters)
         for network in networks:
@@ -356,8 +355,20 @@ class NvpSynchronizer():
     def _synchronize_lrouters(self, ctx, lr_uuids, scan_missing=False):
         if not lr_uuids and not scan_missing:
             return
-        neutron_router_mappings = (
-            dict((lr_uuid, self._nvp_cache[lr_uuid]) for lr_uuid in lr_uuids))
+        # TODO(salvatore-orlando): Deal with the case the tag
+        # has been tampered with
+        neutron_router_mappings = {}
+        for lr_uuid in lr_uuids:
+            lrouter = (self._nvp_cache[lr_uuid].get('data') or
+                       self._nvp_cache[lr_uuid].get('data_bk'))
+            tags = self._get_tag_dict(lrouter['tags'])
+            neutron_router_id = tags.get('q_router_id')
+            if neutron_router_id:
+                neutron_router_mappings[neutron_router_id] = (
+                    self._nvp_cache[lr_uuid])
+            else:
+                LOG.warn(_("Unable to find Neutron router id for "
+                           "NSX logical router: %s"), lr_uuid)
         # Fetch neutron routers from database
         filters = ({} if scan_missing else
                    {'id': neutron_router_mappings.keys()})
