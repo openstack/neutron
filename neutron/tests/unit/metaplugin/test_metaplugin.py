@@ -47,7 +47,7 @@ def etcdir(*p):
     return os.path.join(ETCDIR, *p)
 
 
-def setup_metaplugin_conf():
+def setup_metaplugin_conf(has_l3=True):
     cfg.CONF.set_override('auth_url', 'http://localhost:35357/v2.0',
                                       'PROXY')
     cfg.CONF.set_override('auth_region', 'RegionOne', 'PROXY')
@@ -55,7 +55,10 @@ def setup_metaplugin_conf():
     cfg.CONF.set_override('admin_password', 'password', 'PROXY')
     cfg.CONF.set_override('admin_tenant_name', 'service', 'PROXY')
     cfg.CONF.set_override('plugin_list', PLUGIN_LIST, 'META')
-    cfg.CONF.set_override('l3_plugin_list', L3_PLUGIN_LIST, 'META')
+    if has_l3:
+        cfg.CONF.set_override('l3_plugin_list', L3_PLUGIN_LIST, 'META')
+    else:
+        cfg.CONF.set_override('l3_plugin_list', "", 'META')
     cfg.CONF.set_override('default_flavor', 'fake2', 'META')
     cfg.CONF.set_override('default_l3_flavor', 'fake1', 'META')
     cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
@@ -68,6 +71,8 @@ def setup_metaplugin_conf():
 class MetaNeutronPluginV2Test(base.BaseTestCase):
     """Class conisting of MetaNeutronPluginV2 unit tests."""
 
+    has_l3 = True
+
     def setUp(self):
         super(MetaNeutronPluginV2Test, self).setUp()
         db._ENGINE = None
@@ -78,7 +83,7 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
         db.configure_db()
         self.addCleanup(db.clear_db)
 
-        setup_metaplugin_conf()
+        setup_metaplugin_conf(self.has_l3)
 
         self.client_cls_p = mock.patch('neutronclient.v2_0.client.Client')
         client_cls = self.client_cls_p.start()
@@ -303,3 +308,16 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
             self.fail("AttributeError Error is not raised")
 
         self.fail("No Error is not raised")
+
+
+class MetaNeutronPluginV2TestWithoutL3(MetaNeutronPluginV2Test):
+    """Tests without l3_plugin_list configration."""
+
+    has_l3 = False
+
+    def test_supported_extension_aliases(self):
+        self.assertEqual(self.plugin.supported_extension_aliases,
+                         ['flavor', 'external-net'])
+
+    def test_create_delete_router(self):
+        self.skipTest("Test case without router")

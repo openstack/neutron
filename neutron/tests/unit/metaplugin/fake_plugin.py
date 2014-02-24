@@ -58,6 +58,9 @@ class Fake1(db_base_plugin_v2.NeutronDbPluginV2,
         return port
 
     def delete_port(self, context, id, l3_port_check=True):
+        if l3_port_check:
+            self.prevent_l3_port_deletion(context, id)
+            self.disassociate_floatingips(context, id)
         return super(Fake1, self).delete_port(context, id)
 
 
