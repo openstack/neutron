@@ -168,7 +168,9 @@ class MetadataProxyHandler(object):
 
         if resp.status == 200:
             LOG.debug(str(resp))
-            return content
+            req.response.content_type = resp['content-type']
+            req.response.body = content
+            return req.response
         elif resp.status == 403:
             msg = _(
                 'The remote metadata server responded with Forbidden. This '

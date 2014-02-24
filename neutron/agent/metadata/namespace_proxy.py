@@ -19,7 +19,6 @@
 import httplib
 import socket
 
-
 import eventlet
 import httplib2
 from oslo.config import cfg
@@ -108,7 +107,11 @@ class NetworkMetadataProxyHandler(object):
         if resp.status == 200:
             LOG.debug(resp)
             LOG.debug(content)
-            return content
+            response = webob.Response()
+            response.status = resp.status
+            response.headers['Content-Type'] = resp['content-type']
+            response.body = content
+            return response
         elif resp.status == 404:
             return webob.exc.HTTPNotFound()
         elif resp.status == 409:
