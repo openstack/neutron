@@ -33,5 +33,6 @@ class EmbraneOvsPlugin(base.EmbranePlugin, l2.OVSNeutronPluginV2):
 
     def __init__(self):
         '''First run plugin specific initialization, then Embrane's.'''
+        self._supported_extension_aliases.remove("l3_agent_scheduler")
         l2.OVSNeutronPluginV2.__init__(self)
         self._run_embrane_config()

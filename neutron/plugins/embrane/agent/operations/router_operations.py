@@ -127,6 +127,8 @@ def _shrink_dva_iface(api, tenant_id, neutron_router, port_id):
     except h_exc.InterfaceNotFound:
         LOG.warning(_("Interface %s not found in the heleos back-end,"
                       "likely already deleted"), port_id)
+        return (p_con.Status.ACTIVE if neutron_router["admin_state_up"] else
+                p_con.Status.READY)
     except h_exc.PreliminaryOperationsFailed as ex:
         raise h_exc.BrokenInterface(err_msg=ex.message)
     state = api.extract_dva_state(dva)
