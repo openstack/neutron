@@ -58,10 +58,10 @@ class PoolStatistics(model_base.BASEV2):
 
     pool_id = sa.Column(sa.String(36), sa.ForeignKey("pools.id"),
                         primary_key=True)
-    bytes_in = sa.Column(sa.Integer, nullable=False)
-    bytes_out = sa.Column(sa.Integer, nullable=False)
-    active_connections = sa.Column(sa.Integer, nullable=False)
-    total_connections = sa.Column(sa.Integer, nullable=False)
+    bytes_in = sa.Column(sa.BigInteger, nullable=False)
+    bytes_out = sa.Column(sa.BigInteger, nullable=False)
+    active_connections = sa.Column(sa.BigInteger, nullable=False)
+    total_connections = sa.Column(sa.BigInteger, nullable=False)
 
     @validates('bytes_in', 'bytes_out',
                'active_connections', 'total_connections')
