@@ -57,7 +57,7 @@ class PortBinding(model_base.BASEV2):
     vnic_type = sa.Column(sa.String(64), nullable=False,
                           default=portbindings.VNIC_NORMAL)
     vif_type = sa.Column(sa.String(64), nullable=False)
-    cap_port_filter = sa.Column(sa.Boolean, nullable=False)
+    vif_details = sa.Column(sa.String(4095), nullable=False, default='')
     driver = sa.Column(sa.String(64))
     segment = sa.Column(sa.String(36),
                         sa.ForeignKey('ml2_network_segments.id',

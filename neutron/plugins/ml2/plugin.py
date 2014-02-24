@@ -40,6 +40,7 @@ from neutron import manager
 from neutron.openstack.common import db as os_db
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.openstack.common import rpc as c_rpc
 from neutron.plugins.common import constants as service_constants
@@ -242,8 +243,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port[portbindings.HOST_ID] = binding.host
         port[portbindings.VNIC_TYPE] = binding.vnic_type
         port[portbindings.VIF_TYPE] = binding.vif_type
-        port[portbindings.CAPABILITIES] = {
-            portbindings.CAP_PORT_FILTER: binding.cap_port_filter}
+        port[portbindings.VIF_DETAILS] = self._get_vif_details(binding)
+
+    def _get_vif_details(self, binding):
+        if binding.vif_details:
+            try:
+                return jsonutils.loads(binding.vif_details)
+            except Exception:
+                LOG.error(_("Serialized vif_details DB value '%(value)s' "
+                            "for port %(port)s is invalid"),
+                          {'value': binding.vif_details,
+                           'port': binding.port_id})
+        return {}
 
     def _delete_port_binding(self, mech_context):
         binding = mech_context._binding

@@ -246,12 +246,12 @@ class PortContext(object):
         pass
 
     @abstractmethod
-    def set_binding(self, segment_id, vif_type, cap_port_filter):
+    def set_binding(self, segment_id, vif_type, vif_details):
         """Set the binding for the port.
 
         :param segment_id: Network segment bound for the port.
         :param vif_type: The VIF type for the bound port.
-        :param cap_port_filter: True if the bound port filters.
+        :param vif_details: Dictionary with details for VIF driver.
 
         Called by MechanismDriver.bind_port to indicate success and
         specify binding details to use for port. The segment_id must

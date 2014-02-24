@@ -22,7 +22,7 @@ from neutron.plugins.ml2.drivers import mech_agent
 LOG = log.getLogger(__name__)
 
 
-class OpenvswitchMechanismDriver(mech_agent.AgentMechanismDriverBase):
+class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """Attach to networks using openvswitch L2 agent.
 
     The OpenvswitchMechanismDriver integrates the ml2 plugin with the
@@ -36,7 +36,7 @@ class OpenvswitchMechanismDriver(mech_agent.AgentMechanismDriverBase):
         super(OpenvswitchMechanismDriver, self).__init__(
             constants.AGENT_TYPE_OVS,
             portbindings.VIF_TYPE_OVS,
-            True)
+            {portbindings.CAP_PORT_FILTER: True})
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('bridge_mappings', {})

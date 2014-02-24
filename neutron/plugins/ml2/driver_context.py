@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.openstack.common import jsonutils
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
 
@@ -103,12 +104,8 @@ class PortContext(MechanismDriverContext, api.PortContext):
                                        filters={'agent_type': [agent_type],
                                                 'host': [self._binding.host]})
 
-    def set_binding(self, segment_id, vif_type, cap_port_filter):
-        # REVISIT(rkukura): Pass extensible list of capabilities? Move
-        # vif_type and capabilities to methods on the bound mechanism
-        # driver?
-
+    def set_binding(self, segment_id, vif_type, vif_details):
         # TODO(rkukura) Verify binding allowed, segment in network
         self._binding.segment = segment_id
         self._binding.vif_type = vif_type
-        self._binding.cap_port_filter = cap_port_filter
+        self._binding.vif_details = jsonutils.dumps(vif_details)

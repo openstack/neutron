@@ -24,7 +24,7 @@ from neutron.plugins.ml2.drivers import mech_agent
 LOG = log.getLogger(__name__)
 
 
-class HypervMechanismDriver(mech_agent.AgentMechanismDriverBase):
+class HypervMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """Attach to networks using hyperv L2 agent.
 
     The HypervMechanismDriver integrates the ml2 plugin with the
@@ -37,7 +37,7 @@ class HypervMechanismDriver(mech_agent.AgentMechanismDriverBase):
         super(HypervMechanismDriver, self).__init__(
             constants.AGENT_TYPE_HYPERV,
             portbindings.VIF_TYPE_HYPERV,
-            False)
+            {portbindings.CAP_PORT_FILTER: False})
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('vswitch_mappings', {})

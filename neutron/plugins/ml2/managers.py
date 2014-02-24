@@ -450,14 +450,14 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                     LOG.debug(_("Bound port: %(port)s, host: %(host)s, "
                                 "vnic_type: %(vnic_type)s, "
                                 "driver: %(driver)s, vif_type: %(vif_type)s, "
-                                "cap_port_filter: %(cap_port_filter)s, "
+                                "vif_details: %(vif_details)s, "
                                 "segment: %(segment)s"),
                               {'port': context._port['id'],
                                'host': binding.host,
+                               'vnic_type': binding.vnic_type,
                                'driver': binding.driver,
                                'vif_type': binding.vif_type,
-                               'vnic_type': binding.vnic_type,
-                               'cap_port_filter': binding.cap_port_filter,
+                               'vif_details': binding.vif_details,
                                'segment': binding.segment})
                     return
             except Exception:
@@ -509,6 +509,6 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                                 "unbind_port"),
                               driver.name)
         binding.vif_type = portbindings.VIF_TYPE_UNBOUND
-        binding.cap_port_filter = False
+        binding.vif_details = ''
         binding.driver = None
         binding.segment = None

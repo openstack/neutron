@@ -46,7 +46,7 @@ DEPRECATED_POLICY_MAP = {
     'extension:router':
     ['network:router:external'],
     'extension:port_binding':
-    ['port:binding:vif_type', 'port:binding:capabilities',
+    ['port:binding:vif_type', 'port:binding:vif_details',
      'port:binding:profile', 'port:binding:host_id']
 }
 DEPRECATED_ACTION_MAP = {

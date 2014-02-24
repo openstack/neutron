@@ -183,7 +183,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
         self.base_binding_dict = {
             pbin.VIF_TYPE: pbin.VIF_TYPE_OVS,
-            pbin.CAPABILITIES: {
+            pbin.VIF_DETAILS: {
+                # TODO(rkukura): Replace with new VIF security details
                 pbin.CAP_PORT_FILTER:
                 'security-group' in self.supported_extension_aliases}}
 

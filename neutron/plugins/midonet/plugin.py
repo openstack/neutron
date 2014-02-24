@@ -234,7 +234,8 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         self.base_binding_dict = {
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_MIDONET,
-            portbindings.CAPABILITIES: {
+            portbindings.VIF_DETAILS: {
+                # TODO(rkukura): Replace with new VIF security details
                 portbindings.CAP_PORT_FILTER:
                 'security-group' in self.supported_extension_aliases}}
 
