@@ -311,7 +311,7 @@ class ResourceTestCase(base.BaseTestCase):
         resource = webtest.TestApp(wsgi_resource.Resource(controller))
 
         environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
-        res = resource.get('', extra_environ=environ, expect_errors=True)
+        res = resource.get('', extra_environ=environ)
         self.assertEqual(res.status_int, 200)
 
     def test_status_204(self):
@@ -321,7 +321,7 @@ class ResourceTestCase(base.BaseTestCase):
         resource = webtest.TestApp(wsgi_resource.Resource(controller))
 
         environ = {'wsgiorg.routing_args': (None, {'action': 'delete'})}
-        res = resource.delete('', extra_environ=environ, expect_errors=True)
+        res = resource.delete('', extra_environ=environ)
         self.assertEqual(res.status_int, 204)
 
     def test_no_route_args(self):
@@ -341,5 +341,5 @@ class ResourceTestCase(base.BaseTestCase):
 
         environ = {'wsgiorg.routing_args': (None, {'action': 'test'})}
         res = resource.post('', params='{"key": "val"}',
-                            extra_environ=environ, expect_errors=True)
+                            extra_environ=environ)
         self.assertEqual(res.status_int, 200)
