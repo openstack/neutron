@@ -22,12 +22,12 @@ from neutron.common import constants
 from neutron.common.test_lib import test_config
 from neutron.plugins.nicira.common import sync
 from neutron.plugins.nicira.dhcp_meta import rpc
-from neutron.tests.unit.nicira import fake_nvpapiclient
-from neutron.tests.unit.nicira import get_fake_conf
-from neutron.tests.unit.nicira import NVPAPI_NAME
-from neutron.tests.unit.nicira import PLUGIN_NAME
-from neutron.tests.unit.nicira import STUBS_PATH
 from neutron.tests.unit.openvswitch import test_agent_scheduler as test_base
+from neutron.tests.unit.vmware import fake_nvpapiclient
+from neutron.tests.unit.vmware import get_fake_conf
+from neutron.tests.unit.vmware import NSXAPI_NAME
+from neutron.tests.unit.vmware import PLUGIN_NAME
+from neutron.tests.unit.vmware import STUBS_PATH
 
 
 class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
@@ -38,7 +38,7 @@ class NVPDhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
 
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nvpapi = mock.patch(NVPAPI_NAME, autospec=True)
+        self.mock_nvpapi = mock.patch(NSXAPI_NAME, autospec=True)
         instance = self.mock_nvpapi.start()
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')

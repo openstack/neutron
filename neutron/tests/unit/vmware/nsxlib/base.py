@@ -23,10 +23,10 @@ from neutron.plugins.nicira import nsx_cluster
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 from neutron.tests import base
-from neutron.tests.unit.nicira import fake_nvpapiclient
-from neutron.tests.unit.nicira import NVPAPI_NAME
-from neutron.tests.unit.nicira import STUBS_PATH
 from neutron.tests.unit import test_api_v2
+from neutron.tests.unit.vmware import fake_nvpapiclient
+from neutron.tests.unit.vmware import NSXAPI_NAME
+from neutron.tests.unit.vmware import STUBS_PATH
 
 _uuid = test_api_v2._uuid
 
@@ -36,7 +36,7 @@ class NsxlibTestCase(base.BaseTestCase):
     def setUp(self):
         # mock nvp api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nsxapi = mock.patch(NVPAPI_NAME, autospec=True)
+        self.mock_nsxapi = mock.patch(NSXAPI_NAME, autospec=True)
         instance = self.mock_nsxapi.start()
         instance.return_value.login.return_value = "the_cookie"
         fake_version = getattr(self, 'fake_version', "3.0")
@@ -70,7 +70,7 @@ class NsxlibNegativeBaseTestCase(base.BaseTestCase):
     def setUp(self):
         # mock nsx api client
         self.fc = fake_nvpapiclient.FakeClient(STUBS_PATH)
-        self.mock_nsxapi = mock.patch(NVPAPI_NAME, autospec=True)
+        self.mock_nsxapi = mock.patch(NSXAPI_NAME, autospec=True)
         instance = self.mock_nsxapi.start()
         instance.return_value.login.return_value = "the_cookie"
         # Choose 3.0, but the version is irrelevant for the aim of

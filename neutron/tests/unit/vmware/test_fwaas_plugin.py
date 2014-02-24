@@ -27,13 +27,11 @@ from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as const
 from neutron.tests.unit.db.firewall import test_db_firewall
-from neutron.tests.unit.nicira import test_edge_router
+from neutron.tests.unit.vmware import test_edge_router
 
 _uuid = uuidutils.generate_uuid
 
-FW_PLUGIN_CLASS = (
-    "neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin"
-)
+FW_PLUGIN_CLASS = "neutron.plugins.vmware.plugin.NsxServicePlugin"
 
 
 class FirewallTestExtensionManager(

@@ -29,12 +29,12 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira import NeutronServicePlugin as nsp
 from neutron.tests import base
-from neutron.tests.unit.nicira import NVPEXT_PATH
-from neutron.tests.unit.nicira import SERVICE_PLUGIN_NAME
-from neutron.tests.unit.nicira import test_nicira_plugin
-from neutron.tests.unit.nicira import VCNS_NAME
-from neutron.tests.unit.nicira.vshield import fake_vcns
 from neutron.tests.unit import test_l3_plugin
+from neutron.tests.unit.vmware import NSXEXT_PATH
+from neutron.tests.unit.vmware import SERVICE_PLUGIN_NAME
+from neutron.tests.unit.vmware import test_nsx_plugin
+from neutron.tests.unit.vmware import VCNS_NAME
+from neutron.tests.unit.vmware.vshield import fake_vcns
 
 _uuid = uuidutils.generate_uuid
 
@@ -63,7 +63,7 @@ class ServiceRouterTestExtensionManager(object):
         return []
 
 
-class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
+class ServiceRouterTest(test_nsx_plugin.NiciraL3NatTest,
                         test_l3_plugin.L3NatTestCaseMixin):
 
     def vcns_patch(self):
@@ -97,7 +97,7 @@ class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
             self.fc2.enable_service_loadbalancer)
 
     def setUp(self, ext_mgr=None, service_plugins=None):
-        cfg.CONF.set_override('api_extensions_path', NVPEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
         cfg.CONF.set_override('task_status_check_interval', 100, group="vcns")
 
         # vcns does not support duplicated router name, ignore router name
@@ -158,7 +158,7 @@ class ServiceRouterTest(test_nicira_plugin.NiciraL3NatTest,
 
 
 class ServiceRouterTestCase(ServiceRouterTest,
-                            test_nicira_plugin.TestNiciraL3NatTestCase):
+                            test_nsx_plugin.TestNiciraL3NatTestCase):
 
     def test_router_create(self):
         name = 'router1'

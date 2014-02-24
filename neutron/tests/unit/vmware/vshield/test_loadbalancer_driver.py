@@ -27,9 +27,9 @@ from neutron.plugins.nicira.vshield import (
 from neutron.plugins.nicira.vshield.common import (
     exceptions as vcns_exc)
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
-from neutron.tests.unit.nicira import get_fake_conf
-from neutron.tests.unit.nicira import VCNS_NAME
-from neutron.tests.unit.nicira.vshield import fake_vcns
+from neutron.tests.unit.vmware import get_fake_conf
+from neutron.tests.unit.vmware import VCNS_NAME
+from neutron.tests.unit.vmware.vshield import fake_vcns
 
 _uuid = uuidutils.generate_uuid
 

@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright (C) 2009-2012 Nicira Networks, Inc. All Rights Reserved.
+# Copyright (C) 2009-2012 VMware, Inc. All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -27,11 +27,11 @@ from mock import patch
 from neutron.plugins.nicira.api_client import client_eventlet as nace
 from neutron.plugins.nicira.api_client import request_eventlet as nare
 from neutron.tests import base
-from neutron.tests.unit.nicira import CLIENT_NAME
+from neutron.tests.unit.vmware import CLIENT_NAME
 
 
 logging.basicConfig(level=logging.DEBUG)
-LOG = logging.getLogger("test_nvp_api_request_eventlet")
+LOG = logging.getLogger("test_api_request_eventlet")
 
 
 REQUEST_TIMEOUT = 1
@@ -157,7 +157,6 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
         self.client.acquire_connection.return_value = None
 
         self.req._issue_request()
-        LOG.info('request_error: %s' % self.req._request_error)
         self.assertIsInstance(self.req._request_error, Exception)
         self.assertTrue(self.client.acquire_connection.called)
 

@@ -25,8 +25,8 @@ from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira import NvpApiClient
 from neutron.plugins.nicira import nvplib
 from neutron.tests import base
-from neutron.tests.unit.nicira import nicira_method
-from neutron.tests.unit.nicira.nsxlib import base as nsx_base
+from neutron.tests.unit.vmware import nsx_method
+from neutron.tests.unit.vmware.nsxlib import base as nsx_base
 
 
 class NsxUtilsTestCase(base.BaseTestCase):
@@ -39,33 +39,33 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # Mock relevant db calls
         # This will allow for avoiding setting up the plugin
         # for creating db entries
-        mock.patch(nicira_method('get_nsx_switch_and_port_id',
-                                 module_name='dbexts.nicira_db'),
+        mock.patch(nsx_method('get_nsx_switch_and_port_id',
+                              module_name='dbexts.nicira_db'),
                    return_value=ret_value).start()
-        mock.patch(nicira_method('add_neutron_nsx_port_mapping',
-                                 module_name='dbexts.nicira_db')).start()
-        mock.patch(nicira_method('delete_neutron_nsx_port_mapping',
-                                 module_name='dbexts.nicira_db')).start()
+        mock.patch(nsx_method('add_neutron_nsx_port_mapping',
+                              module_name='dbexts.nicira_db')).start()
+        mock.patch(nsx_method('delete_neutron_nsx_port_mapping',
+                              module_name='dbexts.nicira_db')).start()
 
     def _mock_network_mapping_db_calls(self, ret_value):
         # Mock relevant db calls
         # This will allow for avoiding setting up the plugin
         # for creating db entries
-        mock.patch(nicira_method('get_nsx_switch_ids',
-                                 module_name='dbexts.nicira_db'),
+        mock.patch(nsx_method('get_nsx_switch_ids',
+                              module_name='dbexts.nicira_db'),
                    return_value=ret_value).start()
-        mock.patch(nicira_method('add_neutron_nsx_network_mapping',
-                                 module_name='dbexts.nicira_db')).start()
+        mock.patch(nsx_method('add_neutron_nsx_network_mapping',
+                              module_name='dbexts.nicira_db')).start()
 
     def _mock_router_mapping_db_calls(self, ret_value):
         # Mock relevant db calls
         # This will allow for avoiding setting up the plugin
         # for creating db entries
-        mock.patch(nicira_method('get_nsx_router_id',
-                                 module_name='dbexts.nicira_db'),
+        mock.patch(nsx_method('get_nsx_router_id',
+                              module_name='dbexts.nicira_db'),
                    return_value=ret_value).start()
-        mock.patch(nicira_method('add_neutron_nsx_router_mapping',
-                                 module_name='dbexts.nicira_db')).start()
+        mock.patch(nsx_method('add_neutron_nsx_router_mapping',
+                              module_name='dbexts.nicira_db')).start()
 
     def _verify_get_nsx_switch_and_port_id(self, exp_ls_uuid, exp_lp_uuid):
         # The nvplib and db calls are  mocked, therefore the cluster
@@ -107,8 +107,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         exp_lp_uuid = uuidutils.generate_uuid()
         ret_value = None, exp_lp_uuid
         self._mock_port_mapping_db_calls(ret_value)
-        with mock.patch(nicira_method('query_lswitch_lports',
-                                      module_name='nsxlib.switch'),
+        with mock.patch(nsx_method('query_lswitch_lports',
+                                   module_name='nsxlib.switch'),
                         return_value=[{'uuid': exp_lp_uuid,
                                        '_relations': {
                                            'LogicalSwitchConfig': {
@@ -123,8 +123,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         exp_lp_uuid = uuidutils.generate_uuid()
         ret_value = None, None
         self._mock_port_mapping_db_calls(ret_value)
-        with mock.patch(nicira_method('query_lswitch_lports',
-                                      module_name='nsxlib.switch'),
+        with mock.patch(nsx_method('query_lswitch_lports',
+                                   module_name='nsxlib.switch'),
                         return_value=[{'uuid': exp_lp_uuid,
                                        '_relations': {
                                            'LogicalSwitchConfig': {
@@ -137,8 +137,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # mappings are not found both in the db and the backend
         ret_value = None, None
         self._mock_port_mapping_db_calls(ret_value)
-        with mock.patch(nicira_method('query_lswitch_lports',
-                                      module_name='nsxlib.switch'),
+        with mock.patch(nsx_method('query_lswitch_lports',
+                                   module_name='nsxlib.switch'),
                         return_value=[]):
             self._verify_get_nsx_switch_and_port_id(None, None)
 
@@ -154,8 +154,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # found for a given network identifier
         exp_ls_uuids = [uuidutils.generate_uuid()]
         self._mock_network_mapping_db_calls(None)
-        with mock.patch(nicira_method('get_lswitches',
-                                      module_name='nsxlib.switch'),
+        with mock.patch(nsx_method('get_lswitches',
+                                   module_name='nsxlib.switch'),
                         return_value=[{'uuid': uuid}
                                       for uuid in exp_ls_uuids]):
             self._verify_get_nsx_switch_ids(exp_ls_uuids)
@@ -164,8 +164,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # This test verifies that the function returns None if the mappings
         # are not found both in the db and in the backend
         self._mock_network_mapping_db_calls(None)
-        with mock.patch(nicira_method('get_lswitches',
-                                      module_name='nsxlib.switch'),
+        with mock.patch(nsx_method('get_lswitches',
+                                   module_name='nsxlib.switch'),
                         return_value=[]):
             self._verify_get_nsx_switch_ids(None)
 
@@ -181,8 +181,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # found for a given port identifier
         exp_lr_uuid = uuidutils.generate_uuid()
         self._mock_router_mapping_db_calls(None)
-        with mock.patch(nicira_method('query_lrouters',
-                                      module_name='nsxlib.router'),
+        with mock.patch(nsx_method('query_lrouters',
+                                   module_name='nsxlib.router'),
                         return_value=[{'uuid': exp_lr_uuid}]):
             self._verify_get_nsx_router_id(exp_lr_uuid)
 
@@ -190,8 +190,8 @@ class NsxUtilsTestCase(base.BaseTestCase):
         # This test verifies that the function returns None if the mapping
         # are not found both in the db and in the backend
         self._mock_router_mapping_db_calls(None)
-        with mock.patch(nicira_method('query_lrouters',
-                                      module_name='nsxlib.router'),
+        with mock.patch(nsx_method('query_lrouters',
+                                   module_name='nsxlib.router'),
                         return_value=[]):
             self._verify_get_nsx_router_id(None)
 

@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2011 Nicira, Inc.
+# Copyright 2011 VMware, Inc.
 # All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,10 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# System
 import httplib
 
-# Local
 import neutron.plugins.nicira.api_client.common as naco
 from neutron.tests import base
 
