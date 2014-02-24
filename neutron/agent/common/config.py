@@ -38,6 +38,16 @@ AGENT_STATE_OPTS = [
                         'is half or less than agent_down_time.')),
 ]
 
+INTERFACE_DRIVER_OPTS = [
+    cfg.StrOpt('interface_driver',
+               help=_("The driver used to manage the virtual interface.")),
+]
+
+USE_NAMESPACES_OPTS = [
+    cfg.BoolOpt('use_namespaces', default=True,
+                help=_("Allow overlapping IP.")),
+]
+
 
 def get_log_args(conf, log_file_name):
     cmd_args = []
@@ -74,6 +84,14 @@ def register_root_helper(conf):
 
 def register_agent_state_opts_helper(conf):
     conf.register_opts(AGENT_STATE_OPTS, 'AGENT')
+
+
+def register_interface_driver_opts_helper(conf):
+    conf.register_opts(INTERFACE_DRIVER_OPTS)
+
+
+def register_use_namespaces_opts_helper(conf):
+    conf.register_opts(USE_NAMESPACES_OPTS)
 
 
 def get_root_helper(conf):

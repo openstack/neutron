@@ -53,6 +53,7 @@ def main():
     cfg.CONF.register_opts(manager.OPTS)
     # import interface options just in case the driver uses namespaces
     cfg.CONF.register_opts(interface.OPTS)
+    config.register_interface_driver_opts_helper(cfg.CONF)
     config.register_agent_state_opts_helper(cfg.CONF)
     config.register_root_helper(cfg.CONF)
 

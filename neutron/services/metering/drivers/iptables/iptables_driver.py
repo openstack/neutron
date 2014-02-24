@@ -34,16 +34,10 @@ TOP_CHAIN = WRAP_NAME + "-FORWARD"
 RULE = '-r-'
 LABEL = '-l-'
 
-IptablesDriverOpts = [
-    cfg.StrOpt('interface_driver',
-               help=_("The driver used to manage the virtual "
-                      "interface.")),
-    cfg.BoolOpt('use_namespaces', default=True,
-                help=_("Allow overlapping IP."))
-]
+config.register_interface_driver_opts_helper(cfg.CONF)
+config.register_use_namespaces_opts_helper(cfg.CONF)
 config.register_root_helper(cfg.CONF)
 cfg.CONF.register_opts(interface.OPTS)
-cfg.CONF.register_opts(IptablesDriverOpts)
 
 
 class IptablesManagerTransaction(object):

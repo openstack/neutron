@@ -38,6 +38,7 @@ class TestDhcpNoOpDriver(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpNoOpDriver, self).setUp()
         self.conf = config.setup_conf()
+        config.register_interface_driver_opts_helper(self.conf)
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(dhcp.OPTS)
         self.conf.enable_isolated_metadata = True

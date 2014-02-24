@@ -63,6 +63,7 @@ def setup_conf():
     conf = cfg.CONF
     conf.register_cli_opts(cli_opts)
     conf.register_opts(opts)
+    agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_root_helper(conf)
     conf.register_opts(dhcp.OPTS)
     return conf

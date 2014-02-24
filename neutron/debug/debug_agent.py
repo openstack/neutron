@@ -39,11 +39,6 @@ class NeutronDebugAgent():
 
     OPTS = [
         # Needed for drivers
-        cfg.BoolOpt('use_namespaces', default=True,
-                    help=_("Use Linux network namespaces")),
-        cfg.StrOpt('interface_driver',
-                   help=_("The driver used to manage the virtual "
-                          "interface.")),
         cfg.StrOpt('external_network_bridge', default='br-ex',
                    help=_("Name of bridge used for external network "
                           "traffic.")),
