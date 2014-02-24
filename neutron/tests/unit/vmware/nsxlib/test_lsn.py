@@ -17,10 +17,10 @@ import json
 import mock
 
 from neutron.common import exceptions
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.nsxlib import lsn as lsnlib
-from neutron.plugins.nicira import NvpApiClient
+from neutron.plugins.nicira import NvpApiClient as api_client
 from neutron.tests import base
 
 
@@ -239,9 +239,9 @@ class LSNTestCase(base.BaseTestCase):
         lsn_id = "foo_lsn_id"
         lsn_port_id = "foo_lsn_port_id"
         lswitch_port_id = "foo_lswitch_port_id"
-        self.mock_request.side_effect = NvpApiClient.Conflict
+        self.mock_request.side_effect = api_client.Conflict
         self.assertRaises(
-            nvp_exc.LsnConfigurationConflict,
+            nsx_exc.LsnConfigurationConflict,
             lsnlib.lsn_port_plug_network,
             self.cluster, lsn_id, lsn_port_id, lswitch_port_id)
 

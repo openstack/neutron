@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: linb, VMware
 
 import contextlib
 
@@ -27,7 +26,7 @@ from neutron.extensions import loadbalancer as lb
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
-from neutron.tests.unit.vmware import test_edge_router
+from neutron.tests.unit.vmware.vshield import test_edge_router
 
 _uuid = uuidutils.generate_uuid
 

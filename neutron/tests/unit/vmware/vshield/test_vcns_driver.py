@@ -19,8 +19,7 @@ from eventlet import greenthread
 import mock
 
 from neutron.common import config as n_config
-from neutron.plugins.nicira.vshield.common import (
-    constants as vcns_const)
+from neutron.plugins.nicira.vshield.common import constants as vcns_const
 from neutron.plugins.nicira.vshield.common.constants import RouterStatus
 from neutron.plugins.nicira.vshield.tasks.constants import TaskState
 from neutron.plugins.nicira.vshield.tasks.constants import TaskStatus

@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2012 Nicira Networks, Inc.
+# Copyright 2012 VMware, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -20,7 +20,7 @@ import six.moves.urllib.parse as urlparse
 
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira import NvpApiClient
+from neutron.plugins.nicira import NvpApiClient as api_client
 
 
 LOG = logging.getLogger(__name__)
@@ -181,9 +181,9 @@ class FakeClient:
                 'gateway_ip_address', '0.0.0.0')
         else:
             fake_lrouter['default_next_hop'] = '0.0.0.0'
-        # NOTE(salv-orlando): We won't make the Fake NVP API client
-        # aware of NVP version. The long term plan is to replace it
-        # with behavioral mocking of NVP API requests
+        # NOTE(salv-orlando): We won't make the Fake NSX API client
+        # aware of NSX version. The long term plan is to replace it
+        # with behavioral mocking of NSX API requests
         if 'distributed' not in fake_lrouter:
             fake_lrouter['distributed'] = False
         distributed_json = ('"distributed": %s,' %
@@ -257,7 +257,7 @@ class FakeClient:
         try:
             fake_lrouter = self._fake_lrouter_dict[lr_uuid]
         except KeyError:
-            raise NvpApiClient.ResourceNotFound()
+            raise api_client.ResourceNotFound()
         fake_lrouter['lport_count'] += 1
         fake_lport_status = fake_lport.copy()
         fake_lport_status['lr_tenant_id'] = fake_lrouter['tenant_id']
@@ -496,7 +496,7 @@ class FakeClient:
                      for res_uuid in res_dict if res_uuid == target_uuid]
             if items:
                 return json.dumps(items[0])
-            raise NvpApiClient.ResourceNotFound()
+            raise api_client.ResourceNotFound()
 
     def handle_get(self, url):
         #TODO(salvatore-orlando): handle field selection
@@ -505,7 +505,7 @@ class FakeClient:
         relations = urlparse.parse_qs(parsedurl.query).get('relations')
         response_file = self.FAKE_GET_RESPONSES.get(res_type)
         if not response_file:
-            raise NvpApiClient.NvpApiException()
+            raise api_client.NvpApiException()
         if 'lport' in res_type or 'nat' in res_type:
             if len(uuids) > 1:
                 return self._show(res_type, response_file, uuids[0],
@@ -569,7 +569,7 @@ class FakeClient:
             try:
                 resource = res_dict[uuids[-1]]
             except KeyError:
-                raise NvpApiClient.ResourceNotFound()
+                raise api_client.ResourceNotFound()
             if not is_attachment:
                 edit_resource = getattr(self, '_build_%s' % res_type, None)
                 if edit_resource:
@@ -640,7 +640,7 @@ class FakeClient:
         try:
             del res_dict[uuids[-1]]
         except KeyError:
-            raise NvpApiClient.ResourceNotFound()
+            raise api_client.ResourceNotFound()
         return ""
 
     def fake_request(self, *args, **kwargs):

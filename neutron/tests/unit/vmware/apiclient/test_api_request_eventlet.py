@@ -41,11 +41,11 @@ def fetch(url):
     return urllib2.urlopen(url).read()
 
 
-class NvpApiRequestEventletTest(base.BaseTestCase):
+class ApiRequestEventletTest(base.BaseTestCase):
 
     def setUp(self):
 
-        super(NvpApiRequestEventletTest, self).setUp()
+        super(ApiRequestEventletTest, self).setUp()
         self.client = nace.NvpApiClientEventlet(
             [("127.0.0.1", 4401, True)], "admin", "admin")
         self.url = "/ws.v1/_debug"
@@ -54,7 +54,7 @@ class NvpApiRequestEventletTest(base.BaseTestCase):
     def tearDown(self):
         self.client = None
         self.req = None
-        super(NvpApiRequestEventletTest, self).tearDown()
+        super(ApiRequestEventletTest, self).tearDown()
 
     def test_construct_eventlet_api_request(self):
         e = nare.NvpApiRequestEventlet(self.client, self.url)

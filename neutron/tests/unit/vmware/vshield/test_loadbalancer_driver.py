@@ -22,10 +22,8 @@ from neutron.common import config as n_config
 from neutron import context
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nicira.dbexts import vcns_db
-from neutron.plugins.nicira.vshield import (
-    vcns_driver)
-from neutron.plugins.nicira.vshield.common import (
-    exceptions as vcns_exc)
+from neutron.plugins.nicira.vshield.common import exceptions as vcns_exc
+from neutron.plugins.nicira.vshield import vcns_driver
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import VCNS_NAME
@@ -85,8 +83,7 @@ class VcnsDriverTestCase(test_db_loadbalancer.LoadBalancerPluginDbTestCase):
         self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)
         self.vcns_loadbalancer_patch()
 
-        self.nvp_service_plugin_callback = mock.Mock()
-        self.driver = vcns_driver.VcnsDriver(self.nvp_service_plugin_callback)
+        self.driver = vcns_driver.VcnsDriver(mock.Mock())
 
         super(VcnsDriverTestCase, self).setUp()
         self.addCleanup(self.fc2.reset_all)
