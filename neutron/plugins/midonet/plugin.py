@@ -651,6 +651,13 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         net = super(MidonetPluginV2, self).get_network(context, id,
                                                        fields=None)
 
+        try:
+            super(MidonetPluginV2, self).delete_network(context, id)
+        except Exception:
+            LOG.error(_('Failed to delete neutron db, while Midonet bridge=%r'
+                      'had been deleted'), id)
+            raise
+
         # if the network is external, it may need to have its bridges
         # unplugged from the provider router.
         if net[ext_net.EXTERNAL]:
@@ -662,12 +669,6 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self._unlink_from_provider_router(bridge, subnet)
 
         self.client.delete_bridge(id)
-        try:
-            super(MidonetPluginV2, self).delete_network(context, id)
-        except Exception:
-            LOG.error(_('Failed to delete neutron db, while Midonet bridge=%r'
-                      'had been deleted'), id)
-            raise
 
     @utils.synchronized('port-critical-section', external=True)
     def create_port(self, context, port):
