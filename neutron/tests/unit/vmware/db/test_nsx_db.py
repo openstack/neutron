@@ -19,8 +19,8 @@ from neutron import context
 from neutron.db import api as db
 from neutron.db import models_v2
 from neutron.openstack.common.db import exception as d_exc
-from neutron.plugins.nicira.dbexts import nicira_db as nsx_db
-from neutron.plugins.nicira.dbexts import nicira_models as models
+from neutron.plugins.nicira.dbexts import db as nsx_db
+from neutron.plugins.nicira.dbexts import models
 from neutron.tests import base
 
 

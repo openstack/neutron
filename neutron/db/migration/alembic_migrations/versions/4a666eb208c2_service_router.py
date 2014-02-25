@@ -33,7 +33,9 @@ down_revision = '38fc1f6789f8'
 
 migration_for_plugins = [
     'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
-    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin'
+    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
+    'neutron.plugins.vmware.plugin.NsxPlugin',
+    'neutron.plugins.vmware.plugin.NsxServicePlugin'
 ]
 
 from alembic import op

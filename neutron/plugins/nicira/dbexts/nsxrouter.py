@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2013 Nicira Networks, Inc.  All rights reserved.
+# Copyright 2013 VMware, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,13 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-# @author: Salvatore Orlando, Nicira, Inc
-#
 
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import l3
 from neutron.openstack.common import log as logging
-from neutron.plugins.nicira.dbexts import nicira_models
+from neutron.plugins.nicira.dbexts import models
 
 LOG = logging.getLogger(__name__)
 
@@ -48,7 +44,7 @@ class NsxRouterMixin(object):
                 name = attr['name']
                 default = attr['default']
                 kwargs[name] = router_req.get(name, default)
-            nsx_attributes = nicira_models.NSXRouterExtAttributes(
+            nsx_attributes = models.NSXRouterExtAttributes(
                 router_id=router_db['id'], **kwargs)
             context.session.add(nsx_attributes)
             router_db['nsx_attributes'] = nsx_attributes
