@@ -207,24 +207,36 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding = mech_context._binding
         port = mech_context.current
         self._update_port_dict_binding(port, binding)
+
         host = attrs and attrs.get(portbindings.HOST_ID)
         host_set = attributes.is_attr_set(host)
+
         vnic_type = attrs and attrs.get(portbindings.VNIC_TYPE)
         vnic_type_set = attributes.is_attr_set(vnic_type)
 
+        # CLI can't send {}, so treat None as {}
+        profile = attrs and attrs.get(portbindings.PROFILE)
+        profile_set = profile is not attributes.ATTR_NOT_SPECIFIED
+        if profile_set and not profile:
+            profile = {}
+
         if binding.vif_type != portbindings.VIF_TYPE_UNBOUND:
-            if (not host_set and not vnic_type_set and binding.segment and
+            if (not host_set and not vnic_type_set and not profile_set and
+                binding.segment and
                 self.mechanism_manager.validate_port_binding(mech_context)):
                 return False
             self.mechanism_manager.unbind_port(mech_context)
             self._update_port_dict_binding(port, binding)
 
         # Return True only if an agent notification is needed.
-        # This will happen if a new host or vnic_type was specified that
-        # differs from the current one. Note that host_set is True
+        # This will happen if a new host, vnic_type, or profile was specified
+        # that differs from the current one. Note that host_set is True
         # even if the host is an empty string
         ret_value = ((host_set and binding.get('host') != host) or
-                     (vnic_type_set and binding.get('vnic_type') != vnic_type))
+                     (vnic_type_set and
+                      binding.get('vnic_type') != vnic_type) or
+                     (profile_set and self._get_profile(binding) != profile))
+
         if host_set:
             binding.host = host
             port[portbindings.HOST_ID] = host
@@ -233,6 +245,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.vnic_type = vnic_type
             port[portbindings.VNIC_TYPE] = vnic_type
 
+        if profile_set:
+            binding.profile = jsonutils.dumps(profile)
+            if len(binding.profile) > models.BINDING_PROFILE_LEN:
+                msg = _("binding:profile value too large")
+                raise exc.InvalidInput(error_message=msg)
+            port[portbindings.PROFILE] = profile
+
+        # To try to [re]bind if host is non-empty.
         if binding.host:
             self.mechanism_manager.bind_port(mech_context)
             self._update_port_dict_binding(port, binding)
@@ -242,6 +262,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _update_port_dict_binding(self, port, binding):
         port[portbindings.HOST_ID] = binding.host
         port[portbindings.VNIC_TYPE] = binding.vnic_type
+        port[portbindings.PROFILE] = self._get_profile(binding)
         port[portbindings.VIF_TYPE] = binding.vif_type
         port[portbindings.VIF_DETAILS] = self._get_vif_details(binding)
 
@@ -253,6 +274,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.error(_("Serialized vif_details DB value '%(value)s' "
                             "for port %(port)s is invalid"),
                           {'value': binding.vif_details,
+                           'port': binding.port_id})
+        return {}
+
+    def _get_profile(self, binding):
+        if binding.profile:
+            try:
+                return jsonutils.loads(binding.profile)
+            except Exception:
+                LOG.error(_("Serialized profile DB value '%(value)s' for "
+                            "port %(port)s is invalid"),
+                          {'value': binding.profile,
                            'port': binding.port_id})
         return {}
 

@@ -90,7 +90,7 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             for non_admin_port in ports:
                 self._check_response_no_portbindings(non_admin_port)
 
-    def _check_default_port_binding_profile(self, port):
+    def _check_port_binding_profile(self, port, profile=None):
         # For plugins which does not use binding:profile attr
         # we just check an operation for the port succeed.
         self.assertIn('id', port)
@@ -99,7 +99,10 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         profile_arg = {portbindings.PROFILE: profile}
         with self.port(arg_list=(portbindings.PROFILE,),
                        **profile_arg) as port:
-            self._check_default_port_binding_profile(port['port'])
+            port_id = port['port']['id']
+            self._check_port_binding_profile(port['port'], profile)
+            port = self._show('ports', port_id)
+            self._check_port_binding_profile(port['port'], profile)
 
     def test_create_port_binding_profile_none(self):
         self._test_create_port_binding_profile(None)
@@ -111,12 +114,14 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         profile_arg = {portbindings.PROFILE: profile}
         with self.port() as port:
             # print "(1) %s" % port
-            self._check_default_port_binding_profile(port['port'])
+            self._check_port_binding_profile(port['port'])
             port_id = port['port']['id']
             ctx = context.get_admin_context()
             port = self._update('ports', port_id, {'port': profile_arg},
                                 neutron_context=ctx)['port']
-            self._check_default_port_binding_profile(port)
+            self._check_port_binding_profile(port, profile)
+            port = self._show('ports', port_id)['port']
+            self._check_port_binding_profile(port, profile)
 
     def test_update_port_binding_profile_none(self):
         self._test_update_port_binding_profile(None)

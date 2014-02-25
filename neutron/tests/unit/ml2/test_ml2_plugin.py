@@ -15,6 +15,7 @@
 
 import mock
 import testtools
+import webob
 
 from neutron.common import exceptions as exc
 from neutron import context
@@ -129,6 +130,43 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def setUp(self, firewall_driver=None):
         test_sg_rpc.set_firewall_driver(self.FIREWALL_DRIVER)
         super(TestMl2PortBinding, self).setUp()
+
+    def _check_port_binding_profile(self, port, profile=None):
+        self.assertIn('id', port)
+        self.assertIn(portbindings.PROFILE, port)
+        value = port[portbindings.PROFILE]
+        self.assertEqual(profile or {}, value)
+
+    def test_create_port_binding_profile(self):
+        self._test_create_port_binding_profile({'a': 1, 'b': 2})
+
+    def test_update_port_binding_profile(self):
+        self._test_update_port_binding_profile({'c': 3})
+
+    def test_create_port_binding_profile_too_big(self):
+        s = 'x' * 5000
+        profile_arg = {portbindings.PROFILE: {'d': s}}
+        try:
+            with self.port(expected_res_status=400,
+                           arg_list=(portbindings.PROFILE,),
+                           **profile_arg):
+                pass
+        except webob.exc.HTTPClientError:
+            pass
+
+    def test_remove_port_binding_profile(self):
+        profile = {'e': 5}
+        profile_arg = {portbindings.PROFILE: profile}
+        with self.port(arg_list=(portbindings.PROFILE,),
+                       **profile_arg) as port:
+            self._check_port_binding_profile(port['port'], profile)
+            port_id = port['port']['id']
+            profile_arg = {portbindings.PROFILE: None}
+            port = self._update('ports', port_id,
+                                {'port': profile_arg})['port']
+            self._check_port_binding_profile(port)
+            port = self._show('ports', port_id)['port']
+            self._check_port_binding_profile(port)
 
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):

@@ -65,7 +65,6 @@ def ensure_port_binding(session, port_id):
         except exc.NoResultFound:
             record = models.PortBinding(
                 port_id=port_id,
-                host='',
                 vif_type=portbindings.VIF_TYPE_UNBOUND)
             session.add(record)
         return record

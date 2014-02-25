@@ -438,10 +438,11 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         """
         binding = context._binding
         LOG.debug(_("Attempting to bind port %(port)s on host %(host)s "
-                    "for vnic_type %(vnic_type)s"),
+                    "for vnic_type %(vnic_type)s with profile %(profile)s"),
                   {'port': context._port['id'],
                    'host': binding.host,
-                   'vnic_type': binding.vnic_type})
+                   'vnic_type': binding.vnic_type,
+                   'profile': binding.profile})
         for driver in self.ordered_mech_drivers:
             try:
                 driver.obj.bind_port(context)
@@ -449,12 +450,14 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                     binding.driver = driver.name
                     LOG.debug(_("Bound port: %(port)s, host: %(host)s, "
                                 "vnic_type: %(vnic_type)s, "
+                                "profile: %(profile)s"
                                 "driver: %(driver)s, vif_type: %(vif_type)s, "
                                 "vif_details: %(vif_details)s, "
                                 "segment: %(segment)s"),
                               {'port': context._port['id'],
                                'host': binding.host,
                                'vnic_type': binding.vnic_type,
+                               'profile': binding.profile,
                                'driver': binding.driver,
                                'vif_type': binding.vif_type,
                                'vif_details': binding.vif_details,
