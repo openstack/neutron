@@ -427,15 +427,17 @@ class LinuxBridgeManager:
                     continue
 
                 for physical_interface in self.interface_mappings.itervalues():
-                    if physical_interface == interface:
-                        # This is a flat network => return IP's from bridge to
-                        # interface
+                    if (interface.startswith(physical_interface)):
                         ips, gateway = self.get_interface_details(bridge_name)
-                        self.update_interface_ip_details(interface,
-                                                         bridge_name,
-                                                         ips, gateway)
-                    elif interface.startswith(physical_interface):
-                        self.delete_vlan(interface)
+                        if ips:
+                            # This is a flat network or a VLAN interface that
+                            # was setup outside of neutron => return IP's from
+                            # bridge to interface
+                            self.update_interface_ip_details(interface,
+                                                             bridge_name,
+                                                             ips, gateway)
+                        elif physical_interface != interface:
+                            self.delete_vlan(interface)
 
             LOG.debug(_("Deleting bridge %s"), bridge_name)
             if utils.execute(['ip', 'link', 'set', bridge_name, 'down'],
