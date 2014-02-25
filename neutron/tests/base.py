@@ -28,6 +28,8 @@ from oslo.config import cfg
 import testtools
 
 from neutron import manager
+from neutron.openstack.common.notifier import api as notifier_api
+from neutron.openstack.common.notifier import test_notifier
 from neutron.tests import post_mortem_debug
 
 
@@ -51,6 +53,18 @@ class BaseTestCase(testtools.TestCase):
         manager.NeutronManager._instance = None
         if core_plugin is not None:
             cfg.CONF.set_override('core_plugin', core_plugin)
+
+    def _cleanup_test_notifier(self):
+        test_notifier.NOTIFICATIONS = []
+
+    def setup_notification_driver(self, notification_driver=None):
+        # to reload the drivers
+        self.addCleanup(notifier_api._reset_drivers)
+        self.addCleanup(self._cleanup_test_notifier)
+        notifier_api._reset_drivers()
+        if notification_driver is None:
+            notification_driver = [test_notifier.__name__]
+        cfg.CONF.set_override("notification_driver", notification_driver)
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
