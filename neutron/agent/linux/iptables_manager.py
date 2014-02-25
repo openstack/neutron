@@ -195,14 +195,16 @@ class IptablesTable(object):
             raise LookupError(_('Unknown chain: %r') % chain)
 
         if '$' in rule:
-            rule = ' '.join(map(self._wrap_target_chain, rule.split(' ')))
+            rule = ' '.join(
+                self._wrap_target_chain(e, wrap) for e in rule.split(' '))
 
         self.rules.append(IptablesRule(chain, rule, wrap, top, self.wrap_name,
                                        tag))
 
-    def _wrap_target_chain(self, s):
+    def _wrap_target_chain(self, s, wrap):
         if s.startswith('$'):
-            return ('%s-%s' % (self.wrap_name, s[1:]))
+            s = ('%s-%s' % (self.wrap_name, get_chain_name(s[1:], wrap)))
+
         return s
 
     def remove_rule(self, chain, rule, wrap=True, top=False):
@@ -215,6 +217,10 @@ class IptablesTable(object):
         """
         chain = get_chain_name(chain, wrap)
         try:
+            if '$' in rule:
+                rule = ' '.join(
+                    self._wrap_target_chain(e, wrap) for e in rule.split(' '))
+
             self.rules.remove(IptablesRule(chain, rule, wrap, top,
                                            self.wrap_name))
             if not wrap:
