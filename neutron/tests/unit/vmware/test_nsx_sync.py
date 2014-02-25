@@ -425,9 +425,12 @@ class SyncTestCase(base.BaseTestCase):
         with self._populate_data(ctx):
             sp = sync.SyncParameters(100)
             self._plugin._synchronizer._synchronize_state(sp)
+            # Ensure the synchronizer performs a resync
+            sp.init_sync_performed = True
             self._test_sync(
                 constants.NET_STATUS_DOWN, constants.PORT_STATUS_DOWN,
-                constants.NET_STATUS_DOWN, self._action_callback_status_down)
+                constants.NET_STATUS_DOWN, self._action_callback_status_down,
+                sp=sp)
 
     def _action_callback_del_resource(self, ls_uuid, lp_uuid, lr_uuid):
         del self.fc._fake_lswitch_dict[ls_uuid]
@@ -446,9 +449,12 @@ class SyncTestCase(base.BaseTestCase):
         with self._populate_data(ctx):
             sp = sync.SyncParameters(100)
             self._plugin._synchronizer._synchronize_state(sp)
+            # Ensure the synchronizer performs a resync
+            sp.init_sync_performed = True
             self._test_sync(
                 constants.NET_STATUS_ERROR, constants.PORT_STATUS_ERROR,
-                constants.NET_STATUS_ERROR, self._action_callback_del_resource)
+                constants.NET_STATUS_ERROR, self._action_callback_del_resource,
+                sp=sp)
 
     def _test_sync_with_chunk_larger_maxpagesize(
         self, net_size, port_size, router_size, chunk_size, exp_calls):
