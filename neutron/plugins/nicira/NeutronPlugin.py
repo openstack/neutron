@@ -717,7 +717,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 selected_lswitch['uuid'], lport['uuid'])
             l2gwlib.plug_l2_gw_service(
                 self.cluster,
-                port_data['network_id'],
+                selected_lswitch['uuid'],
                 lport['uuid'],
                 port_data['device_id'],
                 int(port_data.get('gw:segmentation_id') or 0))
