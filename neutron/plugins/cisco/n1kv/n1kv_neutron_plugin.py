@@ -45,7 +45,7 @@ from neutron.plugins.cisco.common import cisco_exceptions
 from neutron.plugins.cisco.common import config as c_conf
 from neutron.plugins.cisco.db import n1kv_db_v2
 from neutron.plugins.cisco.db import network_db_v2
-from neutron.plugins.cisco.extensions import n1kv_profile
+from neutron.plugins.cisco.extensions import n1kv
 from neutron.plugins.cisco.n1kv import n1kv_client
 from neutron.plugins.common import constants as svc_constants
 
@@ -91,7 +91,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     # bulk operations.
     __native_bulk_support = False
     supported_extension_aliases = ["provider", "agent",
-                                   "n1kv_profile", "network_profile",
+                                   "n1kv", "network_profile",
                                    "policy_profile", "external-net", "router",
                                    "credential"]
 
@@ -231,18 +231,18 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if binding.network_type == c_const.NETWORK_TYPE_OVERLAY:
             network[providernet.PHYSICAL_NETWORK] = None
             network[providernet.SEGMENTATION_ID] = binding.segmentation_id
-            network[n1kv_profile.MULTICAST_IP] = binding.multicast_ip
+            network[n1kv.MULTICAST_IP] = binding.multicast_ip
         elif binding.network_type == c_const.NETWORK_TYPE_VLAN:
             network[providernet.PHYSICAL_NETWORK] = binding.physical_network
             network[providernet.SEGMENTATION_ID] = binding.segmentation_id
         elif binding.network_type == c_const.NETWORK_TYPE_TRUNK:
             network[providernet.PHYSICAL_NETWORK] = binding.physical_network
             network[providernet.SEGMENTATION_ID] = None
-            network[n1kv_profile.MULTICAST_IP] = None
+            network[n1kv.MULTICAST_IP] = None
         elif binding.network_type == c_const.NETWORK_TYPE_MULTI_SEGMENT:
             network[providernet.PHYSICAL_NETWORK] = None
             network[providernet.SEGMENTATION_ID] = None
-            network[n1kv_profile.MULTICAST_IP] = None
+            network[n1kv.MULTICAST_IP] = None
 
     def _process_provider_create(self, context, attrs):
         network_type = attrs.get(providernet.NETWORK_TYPE)
@@ -480,9 +480,9 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             member_dict = {'segment': net['name'],
                            'dot1qtag': dot1qtag}
             trunk_list.append(member_dict)
-        if oper == n1kv_profile.SEGMENT_ADD:
+        if oper == n1kv.SEGMENT_ADD:
             network['add_segment_list'] = trunk_list
-        elif oper == n1kv_profile.SEGMENT_DEL:
+        elif oper == n1kv.SEGMENT_DEL:
             network['del_segment_list'] = trunk_list
 
     def _parse_multi_segments(self, context, attrs, param):
@@ -592,23 +592,23 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         elif binding.network_type == c_const.NETWORK_TYPE_MULTI_SEGMENT:
             members = n1kv_db_v2.get_multi_segment_members(context.session,
                                                            network['id'])
-        network[n1kv_profile.MEMBER_SEGMENTS] = members
+        network[n1kv.MEMBER_SEGMENTS] = members
 
     def _extend_network_dict_profile(self, context, network):
         """Add the extended parameter network profile to the network."""
         binding = n1kv_db_v2.get_network_binding(context.session,
                                                  network['id'])
-        network[n1kv_profile.PROFILE_ID] = binding.profile_id
+        network[n1kv.PROFILE_ID] = binding.profile_id
 
     def _extend_port_dict_profile(self, context, port):
         """Add the extended parameter port profile to the port."""
         binding = n1kv_db_v2.get_port_binding(context.session,
                                               port['id'])
-        port[n1kv_profile.PROFILE_ID] = binding.profile_id
+        port[n1kv.PROFILE_ID] = binding.profile_id
 
     def _process_network_profile(self, context, network):
         """Validate network profile exists."""
-        profile_id = network.get(n1kv_profile.PROFILE_ID)
+        profile_id = network.get(n1kv.PROFILE_ID)
         profile_id_set = attributes.is_attr_set(profile_id)
         if not profile_id_set:
             profile_name = c_conf.CISCO_N1K.default_network_profile
@@ -620,7 +620,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _process_policy_profile(self, context, attrs):
         """Validates whether policy profile exists."""
-        profile_id = attrs.get(n1kv_profile.PROFILE_ID)
+        profile_id = attrs.get(n1kv.PROFILE_ID)
         profile_id_set = attributes.is_attr_set(profile_id)
         if not profile_id_set:
             msg = _("n1kv:profile_id does not exist")
@@ -698,13 +698,13 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         LOG.debug(_('_send_create_network_request: %s'), network['id'])
         profile = self.get_network_profile(context,
-                                           network[n1kv_profile.PROFILE_ID])
+                                           network[n1kv.PROFILE_ID])
         n1kvclient = n1kv_client.Client()
         if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_OVERLAY:
             n1kvclient.create_bridge_domain(network, profile['sub_type'])
         if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_TRUNK:
             self._populate_member_segments(context, network, segment_pairs,
-                                           n1kv_profile.SEGMENT_ADD)
+                                           n1kv.SEGMENT_ADD)
             network['del_segment_list'] = []
             if profile['sub_type'] == c_const.NETWORK_TYPE_OVERLAY:
                 encap_dict = {'name': (network['name'] +
@@ -731,7 +731,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_('_send_update_network_request: %s'), network['id'])
         db_session = context.session
         profile = n1kv_db_v2.get_network_profile(
-            db_session, network[n1kv_profile.PROFILE_ID])
+            db_session, network[n1kv.PROFILE_ID])
         n1kvclient = n1kv_client.Client()
         body = {'publishName': network['name'],
                 'id': network['id'],
@@ -743,9 +743,9 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 'delSegments': []}
         if network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_TRUNK:
             self._populate_member_segments(context, network, add_segments,
-                                           n1kv_profile.SEGMENT_ADD)
+                                           n1kv.SEGMENT_ADD)
             self._populate_member_segments(context, network, del_segments,
-                                           n1kv_profile.SEGMENT_DEL)
+                                           n1kv.SEGMENT_DEL)
             body['mode'] = c_const.NETWORK_TYPE_TRUNK
             body['segmentType'] = profile['sub_type']
             body['addSegments'] = network['add_segment_list']
@@ -783,7 +783,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             n1kvclient.delete_bridge_domain(name)
         elif network[providernet.NETWORK_TYPE] == c_const.NETWORK_TYPE_TRUNK:
             profile = self.get_network_profile(
-                context, network[n1kv_profile.PROFILE_ID])
+                context, network[n1kv.PROFILE_ID])
             if profile['sub_type'] == c_const.NETWORK_TYPE_OVERLAY:
                 profile_name = (network['id'] +
                                 c_const.ENCAPSULATION_PROFILE_SUFFIX)
@@ -856,18 +856,18 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             vm_network = n1kv_db_v2.get_vm_network(
                 context.session,
-                port[n1kv_profile.PROFILE_ID],
+                port[n1kv.PROFILE_ID],
                 port['network_id'])
         except cisco_exceptions.VMNetworkNotFound:
             policy_profile = n1kv_db_v2.get_policy_profile(
-                context.session, port[n1kv_profile.PROFILE_ID])
+                context.session, port[n1kv.PROFILE_ID])
             vm_network_name = (c_const.VM_NETWORK_NAME_PREFIX +
-                               str(port[n1kv_profile.PROFILE_ID]) +
+                               str(port[n1kv.PROFILE_ID]) +
                                "_" + str(port['network_id']))
             port_count = 1
             n1kv_db_v2.add_vm_network(context.session,
                                       vm_network_name,
-                                      port[n1kv_profile.PROFILE_ID],
+                                      port[n1kv.PROFILE_ID],
                                       port['network_id'],
                                       port_count)
             n1kvclient = n1kv_client.Client()
@@ -909,7 +909,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_('_send_delete_port_request: %s'), id)
         port = self.get_port(context, id)
         vm_network = n1kv_db_v2.get_vm_network(context.session,
-                                               port[n1kv_profile.PROFILE_ID],
+                                               port[n1kv.PROFILE_ID],
                                                port['network_id'])
         vm_network['port_count'] -= 1
         n1kv_db_v2.update_vm_network_port_count(
@@ -918,7 +918,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         n1kvclient.delete_n1kv_port(vm_network['name'], id)
         if vm_network['port_count'] == 0:
             n1kv_db_v2.delete_vm_network(context.session,
-                                         port[n1kv_profile.PROFILE_ID],
+                                         port[n1kv.PROFILE_ID],
                                          port['network_id'])
             n1kvclient.delete_vm_network(vm_network['name'])
 
@@ -966,14 +966,14 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 if network_type == c_const.NETWORK_TYPE_MULTI_SEGMENT:
                     segment_pairs = (
                         self._parse_multi_segments(context, network['network'],
-                                                   n1kv_profile.SEGMENT_ADD))
+                                                   n1kv.SEGMENT_ADD))
                     LOG.debug(_('Seg list %s '), segment_pairs)
                 elif network_type == c_const.NETWORK_TYPE_TRUNK:
                     network_profile = self.get_network_profile(context,
                                                                profile_id)
                     segment_pairs = (
                         self._parse_trunk_segments(context, network['network'],
-                                                   n1kv_profile.SEGMENT_ADD,
+                                                   n1kv.SEGMENT_ADD,
                                                    physical_network,
                                                    network_profile['sub_type']
                                                    ))
@@ -1044,12 +1044,12 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if binding.network_type == c_const.NETWORK_TYPE_MULTI_SEGMENT:
                 add_segments = (
                     self._parse_multi_segments(context, network['network'],
-                                               n1kv_profile.SEGMENT_ADD))
+                                               n1kv.SEGMENT_ADD))
                 n1kv_db_v2.add_multi_segment_binding(session,
                                                      net['id'], add_segments)
                 del_segments = (
                     self._parse_multi_segments(context, network['network'],
-                                               n1kv_profile.SEGMENT_DEL))
+                                               n1kv.SEGMENT_DEL))
                 self._send_add_multi_segment_request(context, net['id'],
                                                      add_segments)
                 self._send_del_multi_segment_request(context, net['id'],
@@ -1061,14 +1061,14 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                            binding.profile_id)
                 add_segments = (
                     self._parse_trunk_segments(context, network['network'],
-                                               n1kv_profile.SEGMENT_ADD,
+                                               n1kv.SEGMENT_ADD,
                                                binding.physical_network,
                                                network_profile['sub_type']))
                 n1kv_db_v2.add_trunk_segment_binding(session,
                                                      net['id'], add_segments)
                 del_segments = (
                     self._parse_trunk_segments(context, network['network'],
-                                               n1kv_profile.SEGMENT_DEL,
+                                               n1kv.SEGMENT_DEL,
                                                binding.physical_network,
                                                network_profile['sub_type']))
                 n1kv_db_v2.del_trunk_segment_binding(session,
@@ -1177,8 +1177,8 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 port['port']['n1kv:profile_id'] = p_profile['id']
 
         profile_id_set = False
-        if n1kv_profile.PROFILE_ID in port['port']:
-            profile_id = port['port'].get(n1kv_profile.PROFILE_ID)
+        if n1kv.PROFILE_ID in port['port']:
+            profile_id = port['port'].get(n1kv.PROFILE_ID)
             profile_id_set = attributes.is_attr_set(profile_id)
 
         if not profile_id_set:

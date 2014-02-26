@@ -28,7 +28,7 @@ from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as c_cred
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_db_v2
-from neutron.plugins.cisco.extensions import n1kv_profile
+from neutron.plugins.cisco.extensions import n1kv
 from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
@@ -180,7 +180,7 @@ class Client(object):
                 'subType': overlay_subtype,
                 'tenantId': network['tenant_id']}
         if overlay_subtype == c_const.NETWORK_SUBTYPE_NATIVE_VXLAN:
-            body['groupIp'] = network[n1kv_profile.MULTICAST_IP]
+            body['groupIp'] = network[n1kv.MULTICAST_IP]
         return self._post(self.bridge_domains_path,
                           body=body)
 
