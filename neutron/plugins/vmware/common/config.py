@@ -16,6 +16,8 @@
 
 from oslo.config import cfg
 
+from neutron.plugins.vmware.common import exceptions as nsx_exc
+
 
 class AgentModes:
     AGENT = 'agent'
@@ -26,6 +28,11 @@ class AgentModes:
 class MetadataModes:
     DIRECT = 'access_network'
     INDIRECT = 'dhcp_host_route'
+
+
+class ReplicationModes:
+    SERVICE = 'service'
+    SOURCE = 'source'
 
 
 base_opts = [
@@ -61,7 +68,12 @@ base_opts = [
                       "bridge, ipsec_gre, or ipsec_stt)")),
     cfg.StrOpt('agent_mode', default=AgentModes.AGENT,
                deprecated_group='NVP',
-               help=_("The mode used to implement DHCP/metadata services."))
+               help=_("The mode used to implement DHCP/metadata services.")),
+    cfg.StrOpt('replication_mode', default=ReplicationModes.SERVICE,
+               help=_("The default option leverages service nodes to perform"
+                      " packet replication though one could set to this to "
+                      "'source' to perform replication locally. This is useful"
+                      " if one does not want to deploy a service node(s)."))
 ]
 
 sync_opts = [
@@ -176,3 +188,11 @@ cfg.CONF.register_opts(cluster_opts)
 cfg.CONF.register_opts(vcns_opts, group="vcns")
 cfg.CONF.register_opts(base_opts, group="NSX")
 cfg.CONF.register_opts(sync_opts, group="NSX_SYNC")
+
+
+def validate_config_options():
+    if cfg.CONF.NSX.replication_mode not in (ReplicationModes.SERVICE,
+                                             ReplicationModes.SOURCE):
+        error = (_("Invalid replication_mode: %s") %
+                 cfg.CONF.NSX.replication_mode)
+        raise nsx_exc.NsxPluginException(err_msg=error)

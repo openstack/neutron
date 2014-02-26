@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
+
 from neutron.common import exceptions as exception
 from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
@@ -54,7 +56,8 @@ def _prepare_lrouter_body(name, neutron_router_id, tenant_id,
         "routing_config": {
             "type": router_type
         },
-        "type": "LogicalRouterConfig"
+        "type": "LogicalRouterConfig",
+        "replication_mode": cfg.CONF.NSX.replication_mode,
     }
     # add the distributed key only if not None (ie: True or False)
     if distributed is not None:

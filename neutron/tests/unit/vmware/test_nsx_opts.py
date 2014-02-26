@@ -121,6 +121,7 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual(10, cfg.CONF.NSX.concurrent_connections)
         self.assertEqual('access_network', cfg.CONF.NSX.metadata_mode)
         self.assertEqual('stt', cfg.CONF.NSX.default_transport_type)
+        self.assertEqual('service', cfg.CONF.NSX.replication_mode)
 
         self.assertIsNone(cfg.CONF.default_tz_uuid)
         self.assertEqual('admin', cfg.CONF.nsx_user)

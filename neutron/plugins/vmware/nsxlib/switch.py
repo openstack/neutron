@@ -16,6 +16,8 @@
 
 import json
 
+from oslo.config import cfg
+
 from neutron.common import constants
 from neutron.common import exceptions as exception
 from neutron.openstack.common import log
@@ -115,6 +117,7 @@ def create_lswitch(cluster, neutron_net_id, tenant_id, display_name,
     # historical reasons
     lswitch_obj = {"display_name": utils.check_and_truncate(display_name),
                    "transport_zones": transport_zones_config,
+                   "replication_mode": cfg.CONF.NSX.replication_mode,
                    "tags": utils.get_tags(os_tid=tenant_id,
                                           quantum_net_id=neutron_net_id)}
     # TODO(salv-orlando): Now that we have async status synchronization
