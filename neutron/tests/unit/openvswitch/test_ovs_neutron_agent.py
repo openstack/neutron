@@ -453,6 +453,59 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(utils, "execute"),
             mock.patch.object(ovs_lib.OVSBridge, "remove_all_flows"),
             mock.patch.object(ovs_lib.OVSBridge, "add_flow"),
+            mock.patch.object(ovs_lib.OVSBridge, "add_patch_port"),
+            mock.patch.object(ovs_lib.OVSBridge, "delete_port"),
+            mock.patch.object(ovs_lib.OVSBridge, "set_db_attribute"),
+            mock.patch.object(self.agent.int_br, "add_flow"),
+            mock.patch.object(self.agent.int_br, "add_patch_port"),
+            mock.patch.object(self.agent.int_br, "delete_port"),
+            mock.patch.object(self.agent.int_br, "set_db_attribute"),
+        ) as (devex_fn, sysexit_fn, utilsexec_fn, remflows_fn, ovs_add_flow_fn,
+              ovs_addpatch_port_fn, ovs_delport_fn, ovs_set_attr_fn,
+              br_add_flow_fn, br_addpatch_port_fn, br_delport_fn,
+              br_set_attr_fn):
+            devex_fn.return_value = True
+            parent = mock.MagicMock()
+            parent.attach_mock(ovs_addpatch_port_fn, 'phy_add_patch_port')
+            parent.attach_mock(ovs_add_flow_fn, 'phy_add_flow')
+            parent.attach_mock(ovs_set_attr_fn, 'phy_set_attr')
+            parent.attach_mock(br_addpatch_port_fn, 'int_add_patch_port')
+            parent.attach_mock(br_add_flow_fn, 'int_add_flow')
+            parent.attach_mock(br_set_attr_fn, 'int_set_attr')
+
+            ovs_addpatch_port_fn.return_value = "phy_ofport"
+            br_addpatch_port_fn.return_value = "int_ofport"
+            self.agent.setup_physical_bridges({"physnet1": "br-eth"})
+            expected_calls = [
+                mock.call.phy_add_flow(priority=1, actions='normal'),
+                mock.call.int_add_patch_port('int-br-eth',
+                                             constants.NONEXISTENT_PEER),
+                mock.call.phy_add_patch_port('phy-br-eth',
+                                             constants.NONEXISTENT_PEER),
+                mock.call.int_add_flow(priority=2, in_port='int_ofport',
+                                       actions='drop'),
+                mock.call.phy_add_flow(priority=2, in_port='phy_ofport',
+                                       actions='drop'),
+                mock.call.int_set_attr('Interface', 'int-br-eth',
+                                       'options:peer', 'phy-br-eth'),
+                mock.call.phy_set_attr('Interface', 'phy-br-eth',
+                                       'options:peer', 'int-br-eth'),
+
+            ]
+            parent.assert_has_calls(expected_calls)
+            self.assertEqual(self.agent.int_ofports["physnet1"],
+                             "int_ofport")
+            self.assertEqual(self.agent.phys_ofports["physnet1"],
+                             "phy_ofport")
+
+    def test_setup_physical_bridges_using_veth_interconnection(self):
+        self.agent.use_veth_interconnection = True
+        with contextlib.nested(
+            mock.patch.object(ip_lib, "device_exists"),
+            mock.patch.object(sys, "exit"),
+            mock.patch.object(utils, "execute"),
+            mock.patch.object(ovs_lib.OVSBridge, "remove_all_flows"),
+            mock.patch.object(ovs_lib.OVSBridge, "add_flow"),
             mock.patch.object(ovs_lib.OVSBridge, "add_port"),
             mock.patch.object(ovs_lib.OVSBridge, "delete_port"),
             mock.patch.object(self.agent.int_br, "add_port"),
@@ -486,15 +539,16 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.assertEqual(self.agent.phys_ofports["physnet1"],
                              "int_ofport")
 
-    def test_get_veth_name(self):
+    def test_get_peer_name(self):
             bridge1 = "A_REALLY_LONG_BRIDGE_NAME1"
             bridge2 = "A_REALLY_LONG_BRIDGE_NAME2"
-            self.assertEqual(len(self.agent.get_veth_name('int-', bridge1)),
+            self.agent.use_veth_interconnection = True
+            self.assertEqual(len(self.agent.get_peer_name('int-', bridge1)),
                              n_const.DEVICE_NAME_MAX_LEN)
-            self.assertEqual(len(self.agent.get_veth_name('int-', bridge2)),
+            self.assertEqual(len(self.agent.get_peer_name('int-', bridge2)),
                              n_const.DEVICE_NAME_MAX_LEN)
-            self.assertNotEqual(self.agent.get_veth_name('int-', bridge1),
-                                self.agent.get_veth_name('int-', bridge2))
+            self.assertNotEqual(self.agent.get_peer_name('int-', bridge1),
+                                self.agent.get_peer_name('int-', bridge2))
 
     def test_port_unbound(self):
         with mock.patch.object(self.agent, "reclaim_local_vlan") as reclvl_fn:

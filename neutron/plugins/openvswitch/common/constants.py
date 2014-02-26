@@ -25,10 +25,14 @@ TUNNEL = 'tunnel'
 # Values for network_type
 VXLAN_UDP_PORT = 4789
 
-# Name prefixes for veth device pair linking the integration bridge
-# with the physical bridge for a physical network
-VETH_INTEGRATION_PREFIX = 'int-'
-VETH_PHYSICAL_PREFIX = 'phy-'
+# Name prefixes for veth device or patch port pair linking the integration
+# bridge with the physical bridge for a physical network
+PEER_INTEGRATION_PREFIX = 'int-'
+PEER_PHYSICAL_PREFIX = 'phy-'
+
+# Nonexistent peer used to create patch ports without associating them, it
+# allows to define flows before association
+NONEXISTENT_PEER = 'nonexistent-peer'
 
 # The different types of tunnels
 TUNNEL_NETWORK_TYPES = [p_const.TYPE_GRE, p_const.TYPE_VXLAN]

@@ -54,6 +54,9 @@ ovs_opts = [
     cfg.StrOpt('tunnel_type', default='',
                help=_("The type of tunnels to use when utilizing tunnels, "
                       "either 'gre' or 'vxlan'")),
+    cfg.BoolOpt('use_veth_interconnection', default=False,
+                help=_("Use veths instead of patch ports to interconnect the "
+                       "integration bridge to physical bridges")),
 ]
 
 agent_opts = [
