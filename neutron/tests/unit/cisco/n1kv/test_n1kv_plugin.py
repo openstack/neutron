@@ -24,6 +24,7 @@ from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes
 from neutron import context
 import neutron.db.api as db
+from neutron.extensions import portbindings
 from neutron.plugins.cisco.db import n1kv_db_v2
 from neutron.plugins.cisco.db import network_db_v2 as cdb
 from neutron.plugins.cisco import extensions
@@ -31,6 +32,7 @@ from neutron.plugins.cisco.extensions import n1kv
 from neutron.plugins.cisco.extensions import network_profile
 from neutron.plugins.cisco.n1kv import n1kv_client
 from neutron.plugins.cisco.n1kv import n1kv_neutron_plugin
+from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin as test_plugin
 
@@ -304,7 +306,10 @@ class TestN1kvHTTPResponse(test_plugin.TestV2HTTPResponse,
 
 
 class TestN1kvPorts(test_plugin.TestPortsV2,
-                    N1kvPluginTestCase):
+                    N1kvPluginTestCase,
+                    test_bindings.PortBindingsTestCase):
+    VIF_TYPE = portbindings.VIF_TYPE_OVS
+    HAS_PORT_FILTER = False
 
     def test_create_port_with_default_n1kv_policy_profile_id(self):
         """Test port create without passing policy profile id."""
