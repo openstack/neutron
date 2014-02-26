@@ -584,16 +584,16 @@ class SyncTestCase(base.BaseTestCase):
             lp_uuid = self.fc._fake_lswitch_lport_dict.keys()[0]
             lport = self.fc._fake_lswitch_lport_dict[lp_uuid]
             q_port_id = self._get_tag_dict(lport['tags'])['q_port_id']
-            lport['status'] = 'false'
+            lport['status'] = 'true'
             q_port_data = self._plugin._get_port(ctx, q_port_id)
             self._plugin._synchronizer.synchronize_port(ctx, q_port_data)
             # Reload from db
             q_ports = self._plugin.get_ports(ctx)
             for q_port in q_ports:
                 if q_port['id'] == q_port_id:
-                    exp_status = constants.PORT_STATUS_DOWN
-                else:
                     exp_status = constants.PORT_STATUS_ACTIVE
+                else:
+                    exp_status = constants.PORT_STATUS_DOWN
                 self.assertEqual(exp_status, q_port['status'])
 
     def test_synchronize_port_on_get(self):

@@ -112,6 +112,8 @@ class NsxPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.fc.fake_request)
         super(NsxPluginV2TestCase, self).setUp(plugin=plugin,
                                                ext_mgr=ext_mgr)
+        # Newly created port's status is always 'DOWN' till NSX wires them.
+        self.port_create_status = constants.PORT_STATUS_DOWN
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(mock.patch.stopall)
