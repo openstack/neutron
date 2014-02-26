@@ -65,7 +65,7 @@ base_opts = [
 ]
 
 sync_opts = [
-    cfg.IntOpt('state_sync_interval', default=120,
+    cfg.IntOpt('state_sync_interval', default=10,
                deprecated_group='NVP_SYNC',
                help=_("Interval in seconds between runs of the state "
                       "synchronization task. Set it to 0 to disable it")),
@@ -74,7 +74,7 @@ sync_opts = [
                help=_("Maximum value for the additional random "
                       "delay in seconds between runs of the state "
                       "synchronization task")),
-    cfg.IntOpt('min_sync_req_delay', default=10,
+    cfg.IntOpt('min_sync_req_delay', default=1,
                deprecated_group='NVP_SYNC',
                help=_('Minimum delay, in seconds, between two state '
                       'synchronization queries to NSX. It must not '
