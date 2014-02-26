@@ -35,7 +35,6 @@ from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
-from neutron.extensions import portbindings
 
 
 def upgrade(active_plugins=None, options=None):
@@ -45,7 +44,7 @@ def upgrade(active_plugins=None, options=None):
     op.add_column('ml2_port_bindings',
                   sa.Column('vnic_type', sa.String(length=64),
                             nullable=False,
-                            server_default=portbindings.VNIC_NORMAL))
+                            server_default='normal'))
 
 
 def downgrade(active_plugins=None, options=None):
