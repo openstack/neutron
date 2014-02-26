@@ -21,7 +21,6 @@ import mock
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes as attr
-from neutron.common import config
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import context
@@ -287,7 +286,7 @@ class SyncTestCase(base.BaseTestCase):
         # and setup needed config variables
         args = ['--config-file', get_fake_conf('neutron.conf.test'),
                 '--config-file', get_fake_conf('nsx.ini.test')]
-        config.parse(args=args)
+        self.config_parse(args=args)
         cfg.CONF.set_override('allow_overlapping_ips', True)
         self._plugin = plugin.NsxPlugin()
         # Mock neutron manager plugin load functions to speed up tests

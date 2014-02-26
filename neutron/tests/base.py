@@ -20,6 +20,7 @@
 import contextlib
 import logging
 import os
+import os.path
 import sys
 
 import eventlet.timeout
@@ -28,10 +29,13 @@ import mock
 from oslo.config import cfg
 import testtools
 
+from neutron.common import config
 from neutron.common import constants as const
 from neutron import manager
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common.notifier import test_notifier
+from neutron.openstack.common import rpc
+from neutron.openstack.common.rpc import impl_fake
 from neutron.tests import post_mortem_debug
 
 
@@ -39,6 +43,13 @@ CONF = cfg.CONF
 CONF.import_opt('state_path', 'neutron.common.config')
 TRUE_STRING = ['True', '1']
 LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
+
+ROOTDIR = os.path.dirname(__file__)
+ETCDIR = os.path.join(ROOTDIR, 'etc')
+
+
+def etcdir(*p):
+    return os.path.join(ETCDIR, *p)
 
 
 def fake_use_fatal_exceptions(*args):
@@ -75,8 +86,24 @@ class BaseTestCase(testtools.TestCase):
             notification_driver = [test_notifier.__name__]
         cfg.CONF.set_override("notification_driver", notification_driver)
 
+    @staticmethod
+    def config_parse(conf=None, args=None):
+        """Create the default configurations."""
+        # neutron.conf.test includes rpc_backend which needs to be cleaned up
+        if args is None:
+            args = ['--config-file', etcdir('neutron.conf.test')]
+        if conf is None:
+            config.parse(args=args)
+        else:
+            conf(args)
+
+    def _cleanup_rpc_backend(self):
+        rpc._RPCIMPL = None
+        impl_fake.CONSUMERS.clear()
+
     def setUp(self):
         super(BaseTestCase, self).setUp()
+        self.addCleanup(self._cleanup_rpc_backend)
 
         # Configure this first to ensure pm debugging support for setUp()
         if os.environ.get('OS_POST_MORTEM_DEBUG') in TRUE_STRING:

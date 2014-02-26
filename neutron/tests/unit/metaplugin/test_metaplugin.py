@@ -15,8 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
 import mock
 from oslo.config import cfg
 import testtools
@@ -36,8 +34,6 @@ from neutron.plugins.metaplugin.meta_neutron_plugin import MetaPluginV2
 from neutron.tests import base
 
 CONF_FILE = ""
-ROOTDIR = os.path.dirname(os.path.dirname(__file__))
-ETCDIR = os.path.join(ROOTDIR, 'etc')
 META_PATH = "neutron.plugins.metaplugin"
 FAKE_PATH = "neutron.tests.unit.metaplugin"
 PROXY_PATH = "%s.proxy_neutron_plugin.ProxyPluginV2" % META_PATH
@@ -47,10 +43,6 @@ fake1:%s.fake_plugin.Fake1,fake2:%s.fake_plugin.Fake2,proxy:%s
 L3_PLUGIN_LIST = """
 fake1:%s.fake_plugin.Fake1,fake2:%s.fake_plugin.Fake2
 """.strip() % (FAKE_PATH, FAKE_PATH)
-
-
-def etcdir(*p):
-    return os.path.join(ETCDIR, *p)
 
 
 def setup_metaplugin_conf(has_l3=True):

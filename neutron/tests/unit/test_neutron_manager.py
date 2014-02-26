@@ -15,14 +15,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
 import types
 
 import fixtures
 
 from oslo.config import cfg
 
-from neutron.common import config
 from neutron.manager import NeutronManager
 from neutron.manager import validate_post_plugin_load
 from neutron.manager import validate_pre_plugin_load
@@ -34,12 +32,6 @@ from neutron.tests.unit import dummy_plugin
 
 LOG = logging.getLogger(__name__)
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-ROOTDIR = os.path.dirname(os.path.dirname(__file__))
-ETCDIR = os.path.join(ROOTDIR, 'etc')
-
-
-def etcdir(*p):
-    return os.path.join(ETCDIR, *p)
 
 
 class MultiServiceCorePlugin(object):
@@ -55,9 +47,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(NeutronManagerTestCase, self).setUp()
-        args = ['--config-file', etcdir('neutron.conf.test')]
-        # If test_config specifies some config-file, use it, as well
-        config.parse(args=args)
+        self.config_parse()
         self.setup_coreplugin()
         self.useFixture(
             fixtures.MonkeyPatch('neutron.manager.NeutronManager._instance'))

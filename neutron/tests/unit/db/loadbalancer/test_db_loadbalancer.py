@@ -15,7 +15,6 @@
 
 import contextlib
 import logging
-import os
 
 import mock
 from oslo.config import cfg
@@ -51,16 +50,10 @@ DB_LB_PLUGIN_KLASS = (
 )
 NOOP_DRIVER_KLASS = ('neutron.tests.unit.db.loadbalancer.test_db_loadbalancer.'
                      'NoopLbaaSDriver')
-ROOTDIR = os.path.dirname(__file__) + '../../../..'
-ETCDIR = os.path.join(ROOTDIR, 'etc')
 
 extensions_path = ':'.join(neutron.extensions.__path__)
 
 _subnet_id = "0c798ed8-33ba-11e2-8b28-000c291c4d14"
-
-
-def etcdir(*p):
-    return os.path.join(ETCDIR, *p)
 
 
 class NoopLbaaSDriver(abstract_driver.LoadBalancerAbstractDriver):

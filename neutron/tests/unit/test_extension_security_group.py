@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import contextlib
-import os
 
 import mock
 import webob.exc
@@ -31,12 +30,6 @@ from neutron.tests.unit import test_db_plugin
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.test_extension_security_group.'
                    'SecurityGroupTestPlugin')
-ROOTDIR = os.path.dirname(os.path.dirname(__file__))
-ETCDIR = os.path.join(ROOTDIR, 'etc')
-
-
-def etcdir(*p):
-    return os.path.join(ETCDIR, *p)
 
 
 class SecurityGroupTestExtensionManager(object):

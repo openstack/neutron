@@ -15,8 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
 import mock
 import routes
 import webob
@@ -37,14 +35,6 @@ from neutron import wsgi
 
 
 LOG = logging.getLogger(__name__)
-
-ROOTDIR = os.path.dirname(os.path.dirname(__file__))
-ETCDIR = os.path.join(ROOTDIR, 'etc')
-
-
-def etcdir(*p):
-    return os.path.join(ETCDIR, *p)
-
 extensions_path = ':'.join(neutron.tests.unit.extensions.__path__)
 
 
@@ -404,7 +394,7 @@ class RequestExtensionTest(base.BaseTestCase):
             res.body = jsonutils.dumps(data)
             return res
 
-        base_app = webtest.TestApp(setup_base_app())
+        base_app = webtest.TestApp(setup_base_app(self))
         response = base_app.put("/dummy_resources/1",
                                 {'uneditable': "new_value"})
         self.assertEqual(response.json['uneditable'], "original_value")
@@ -606,10 +596,8 @@ def app_factory(global_conf, **local_conf):
     return ExtensionsTestApp(conf)
 
 
-def setup_base_app():
-    config_file = 'neutron.conf.test'
-    args = ['--config-file', etcdir(config_file)]
-    config.parse(args=args)
+def setup_base_app(test):
+    base.BaseTestCase.config_parse()
     app = config.load_paste_app('extensions_test_app')
     return app
 
@@ -619,9 +607,7 @@ def setup_extensions_middleware(extension_manager=None):
                          extensions.PluginAwareExtensionManager(
                              extensions_path,
                              {constants.CORE: FakePluginWithExtension()}))
-    config_file = 'neutron.conf.test'
-    args = ['--config-file', etcdir(config_file)]
-    config.parse(args=args)
+    base.BaseTestCase.config_parse()
     app = config.load_paste_app('extensions_test_app')
     return extensions.ExtensionMiddleware(app, ext_mgr=extension_manager)
 

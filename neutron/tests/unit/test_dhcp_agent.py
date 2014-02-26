@@ -16,7 +16,6 @@
 #    under the License.
 
 import copy
-import os
 import sys
 import uuid
 
@@ -36,17 +35,11 @@ from neutron.openstack.common.rpc import common
 from neutron.tests import base
 
 
-ROOTDIR = os.path.dirname(os.path.dirname(__file__))
-ETCDIR = os.path.join(ROOTDIR, 'etc')
 HOSTNAME = 'hostname'
 dev_man = dhcp.DeviceManager
 rpc_api = dhcp_agent.DhcpPluginApi
 DEVICE_MANAGER = '%s.%s' % (dev_man.__module__, dev_man.__name__)
 DHCP_PLUGIN = '%s.%s' % (rpc_api.__module__, rpc_api.__name__)
-
-
-def etcdir(*p):
-    return os.path.join(ETCDIR, *p)
 
 
 fake_tenant_id = 'aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'
@@ -158,7 +151,7 @@ class TestDhcpAgent(base.BaseTestCase):
                     with mock.patch.object(sys, 'argv') as sys_argv:
                         sys_argv.return_value = [
                             'dhcp', '--config-file',
-                            etcdir('neutron.conf.test')]
+                            base.etcdir('neutron.conf.test')]
                         cfg.CONF.register_opts(dhcp_agent.DhcpAgent.OPTS)
                         config.register_interface_driver_opts_helper(cfg.CONF)
                         config.register_agent_state_opts_helper(cfg.CONF)
@@ -183,7 +176,7 @@ class TestDhcpAgent(base.BaseTestCase):
             with mock.patch.object(sys, 'argv') as sys_argv:
                 with mock.patch(launcher_str) as launcher:
                     sys_argv.return_value = ['dhcp', '--config-file',
-                                             etcdir('neutron.conf.test')]
+                                             base.etcdir('neutron.conf.test')]
                     dhcp_agent.main()
                     launcher.assert_has_calls(
                         [mock.call(), mock.call().launch_service(mock.ANY),

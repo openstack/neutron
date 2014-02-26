@@ -17,7 +17,6 @@ import contextlib
 import mock
 import webob.exc
 
-from neutron.common import config as n_config
 from neutron import context
 from neutron.db.firewall import firewall_db
 from neutron.openstack.common import uuidutils
@@ -61,7 +60,7 @@ class VcnsDriverTestCase(test_db_firewall.FirewallPluginDbTestCase,
 
     def setUp(self):
 
-        n_config.parse(['--config-file', VCNS_CONFIG_FILE])
+        self.config_parse(args=['--config-file', VCNS_CONFIG_FILE])
         # mock vcns
         self.fc2 = fake_vcns.FakeVcns(unique_router_name=False)
         self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)

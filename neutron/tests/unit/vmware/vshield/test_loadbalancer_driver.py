@@ -16,7 +16,6 @@
 
 import mock
 
-from neutron.common import config as n_config
 from neutron import context
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.dbexts import vcns_db
@@ -78,7 +77,7 @@ class VcnsDriverTestCase(test_db_loadbalancer.LoadBalancerPluginDbTestCase):
 
     def setUp(self):
 
-        n_config.parse(['--config-file', VCNS_CONFIG_FILE])
+        self.config_parse(args=['--config-file', VCNS_CONFIG_FILE])
         # mock vcns
         self.fc2 = fake_vcns.FakeVcns(unique_router_name=False)
         self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)

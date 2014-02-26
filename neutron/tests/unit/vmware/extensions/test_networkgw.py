@@ -22,7 +22,6 @@ import webtest
 from neutron.api import extensions
 from neutron.api.extensions import PluginAwareExtensionManager
 from neutron.api.v2 import attributes
-from neutron.common import config
 from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
@@ -77,8 +76,7 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
         extensions.PluginAwareExtensionManager._instance = None
 
         # Create the default configurations
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
-        config.parse(args=args)
+        self.config_parse()
 
         # Update the plugin and extensions path
         self.setup_coreplugin(plugin)

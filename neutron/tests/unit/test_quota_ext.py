@@ -32,7 +32,6 @@ from neutron.db import quota_db
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
-from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
 
 TARGET_PLUGIN = ('neutron.plugins.linuxbridge.lb_neutron_plugin'
@@ -54,8 +53,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
             self.saved_attr_map[resource] = attrs.copy()
 
         # Create the default configurations
-        args = ['--config-file', test_extensions.etcdir('neutron.conf.test')]
-        config.parse(args=args)
+        self.config_parse()
 
         # Update the plugin and extensions path
         self.setup_coreplugin(TARGET_PLUGIN)

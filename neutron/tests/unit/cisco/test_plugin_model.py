@@ -17,22 +17,19 @@ import sys
 
 import mock
 
-from neutron.common import config
 from neutron import context
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import config as cisco_config
 from neutron.plugins.cisco.models import virt_phy_sw_v2
 from neutron.plugins.cisco.nexus import cisco_nexus_plugin_v2
 from neutron.tests import base
-from neutron.tests.unit import test_api_v2
 
 
 class TestCiscoPluginModel(base.BaseTestCase):
 
     def setUp(self):
         # Point config file to: neutron/tests/etc/neutron.conf.test
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
-        config.parse(args=args)
+        self.config_parse()
 
         super(TestCiscoPluginModel, self).setUp()
 
