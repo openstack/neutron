@@ -20,7 +20,7 @@ import json
 from neutron.common import exceptions as exception
 from neutron.openstack.common import log
 from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.nvplib import _build_uri_path
 from neutron.plugins.nicira.nvplib import do_request
@@ -174,7 +174,7 @@ def lsn_port_plug_network(cluster, lsn_id, lsn_port_id, lswitch_port_id):
                  "already exists with another port") %
                {'lsn': lsn_id, 'port': lswitch_port_id})
         LOG.exception(msg)
-        raise nvp_exc.LsnConfigurationConflict(lsn_id=lsn_id)
+        raise nsx_exc.LsnConfigurationConflict(lsn_id=lsn_id)
 
 
 def _lsn_configure_action(

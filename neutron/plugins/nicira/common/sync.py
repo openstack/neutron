@@ -26,7 +26,7 @@ from neutron.openstack.common import log
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import timeutils
 from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import nsx_utils
 from neutron.plugins.nicira.nsxlib import router as routerlib
 from neutron.plugins.nicira.nsxlib import switch as switchlib
@@ -224,7 +224,7 @@ class NvpSynchronizer():
                        {'req_delay': self._req_delay,
                         'sync_interval': self._sync_interval})
             LOG.error(err_msg)
-            raise nvp_exc.NvpPluginException(err_msg=err_msg)
+            raise nsx_exc.NsxPluginException(err_msg=err_msg)
         # Backoff time in case of failures while fetching sync data
         self._sync_backoff = 1
         # Store the looping call in an instance variable to allow unit tests

@@ -198,7 +198,7 @@ def check_services_requirements(cluster):
         if not lsn_api.service_cluster_exists(cluster, cluster_id):
             raise p_exc.ServiceClusterUnavailable(cluster_id=cluster_id)
     else:
-        raise p_exc.NvpInvalidVersion(version=ver)
+        raise p_exc.InvalidVersion(version=ver)
 
 
 def handle_network_dhcp_access(plugin, context, network, action):
@@ -309,7 +309,7 @@ def handle_router_metadata_access(plugin, context, router_id, interface=None):
         try:
             plugin.lsn_manager.lsn_metadata_configure(
                 context, subnet_id, is_enabled)
-        except p_exc.NvpPluginException:
+        except p_exc.NsxPluginException:
             if is_enabled:
                 l3_db.L3_NAT_db_mixin.remove_router_interface(
                     plugin, context, router_id, interface)

@@ -32,7 +32,7 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.nicira.api_client import exception as api_exc
 from neutron.plugins.nicira.common import config  # noqa
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.dbexts import servicerouter as sr_db
 from neutron.plugins.nicira.dbexts import vcns_db
@@ -882,7 +882,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             context, firewall_db.Firewall, router_id=router_id):
             msg = _("A firewall is already associated with the router")
             LOG.error(msg)
-            raise nvp_exc.NvpServiceOverQuota(
+            raise nsx_exc.ServiceOverQuota(
                 overs='firewall', err_msg=msg)
 
         fw = super(NvpAdvancedPlugin, self).create_firewall(context, firewall)
@@ -1119,7 +1119,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                            {'model': model,
                             'id': id})
                     LOG.error(msg)
-                    raise nvp_exc.NvpServicePluginException(err_msg=msg)
+                    raise nsx_exc.NsxPluginException(err_msg=msg)
                 else:
                     res.status = status
             except sa_exc.NoResultFound:
@@ -1127,7 +1127,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
                        {'model': model,
                         'id': id})
                 LOG.exception(msg)
-                raise nvp_exc.NvpServicePluginException(err_msg=msg)
+                raise nsx_exc.NsxPluginException(err_msg=msg)
             if obj:
                 obj['status'] = status
 
@@ -1194,7 +1194,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         if not self._is_advanced_service_router(context, router_id):
             msg = _("router_id: %s is not an advanced router!") % router_id
             LOG.error(msg)
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
 
         #Check whether the vip port is an external port
         subnet_id = vip['vip']['subnet_id']
@@ -1203,7 +1203,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
         if not ext_net.external:
             msg = (_("Network '%s' is not a valid external "
                      "network") % network_id)
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
 
         v = super(NvpAdvancedPlugin, self).create_vip(context, vip)
         #Get edge_id for the resource
@@ -1504,7 +1504,7 @@ class NvpAdvancedPlugin(sr_db.ServiceRouter_mixin,
             msg = _("Vcns right now can only support "
                     "one monitor per pool")
             LOG.error(msg)
-            raise nvp_exc.NvpServicePluginException(err_msg=msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
         #Check whether the pool is already associated with the vip
         if not pool.get('vip_id'):
             res = super(NvpAdvancedPlugin,

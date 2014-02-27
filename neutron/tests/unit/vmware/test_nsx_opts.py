@@ -70,7 +70,7 @@ class NSXClusterTest(base.BaseTestCase):
     def test_create_cluster_missing_required_attribute_raises(self):
         opts = self.cluster_opts.copy()
         opts.pop('default_tz_uuid')
-        self.assertRaises(exceptions.NvpInvalidClusterConfiguration,
+        self.assertRaises(exceptions.InvalidClusterConfiguration,
                           nsx_cluster.NSXCluster, **opts)
 
 
@@ -172,7 +172,7 @@ class ConfigurationTest(base.BaseTestCase):
         with mock.patch.object(client.NsxApiClient,
                                'get_version',
                                return_value=version.Version("3.2")):
-            self.assertRaises(exceptions.NvpPluginException, NeutronManager)
+            self.assertRaises(exceptions.NsxPluginException, NeutronManager)
 
     def test_agentless_extensions_unmet_deps_fail(self):
         q_config.parse(['--config-file', BASE_CONF_PATH,
@@ -186,7 +186,7 @@ class ConfigurationTest(base.BaseTestCase):
             with mock.patch.object(lsnlib,
                                    'service_cluster_exists',
                                    return_value=False):
-                self.assertRaises(exceptions.NvpPluginException,
+                self.assertRaises(exceptions.NsxPluginException,
                                   NeutronManager)
 
     def test_agent_extensions(self):

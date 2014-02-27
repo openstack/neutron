@@ -20,7 +20,7 @@ from neutron.common import constants
 from neutron.common import exceptions as exception
 from neutron.openstack.common import log
 from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.common import exceptions as nvp_exc
+from neutron.plugins.nicira.common import exceptions as nsx_exc
 from neutron.plugins.nicira.common import utils
 from neutron.plugins.nicira.nvplib import _build_uri_path
 from neutron.plugins.nicira.nvplib import do_request
@@ -246,7 +246,7 @@ def get_ports(cluster, networks=None, devices=None, tenants=None):
     except Exception:
         err_msg = _("Unable to get ports")
         LOG.exception(err_msg)
-        raise nvp_exc.NvpPluginException(err_msg=err_msg)
+        raise nsx_exc.NsxPluginException(err_msg=err_msg)
     return nsx_lports
 
 

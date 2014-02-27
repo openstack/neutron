@@ -78,7 +78,7 @@ class LsnManager(object):
             return lsn_api.lsn_for_network_create(self.cluster, network_id)
         except api_exc.NsxApiException:
             err_msg = _('Unable to create LSN for network %s') % network_id
-            raise p_exc.NvpPluginException(err_msg=err_msg)
+            raise p_exc.NsxPluginException(err_msg=err_msg)
 
     def lsn_delete(self, context, lsn_id):
         """Delete a LSN given its id."""
@@ -145,7 +145,7 @@ class LsnManager(object):
             raise p_exc.LsnNotFound(entity='', entity_id=lsn_id)
         except api_exc.NsxApiException:
             err_msg = _('Unable to create port for LSN  %s') % lsn_id
-            raise p_exc.NvpPluginException(err_msg=err_msg)
+            raise p_exc.NsxPluginException(err_msg=err_msg)
 
     def lsn_port_delete(self, context, lsn_id, lsn_port_id):
         """Delete a LSN port from the Logical Service Node."""
@@ -184,7 +184,7 @@ class LsnManager(object):
                 self.cluster, network_id, port_id)['uuid']
             lsn_id = self.lsn_get(context, network_id)
             lsn_port_id = self.lsn_port_create(context, lsn_id, port_data)
-        except (n_exc.NotFound, p_exc.NvpPluginException):
+        except (n_exc.NotFound, p_exc.NsxPluginException):
             raise p_exc.PortConfigurationError(
                 net_id=network_id, lsn_id=lsn_id, port_id=port_id)
         else:
@@ -217,7 +217,7 @@ class LsnManager(object):
                 const.METADATA_PORT_ID, const.METADATA_PORT_NAME,
                 const.METADATA_DEVICE_ID, True)['uuid']
             lsn_port_id = self.lsn_port_create(self.cluster, lsn_id, data)
-        except (n_exc.NotFound, p_exc.NvpPluginException,
+        except (n_exc.NotFound, p_exc.NsxPluginException,
                 api_exc.NsxApiException):
             raise p_exc.PortConfigurationError(
                 net_id=network_id, lsn_id=lsn_id, port_id=lswitch_port_id)
@@ -257,7 +257,7 @@ class LsnManager(object):
                          'Node %(lsn_id)s and port %(lsn_port_id)s')
                        % {'lsn_id': lsn_id, 'lsn_port_id': lsn_port_id})
             LOG.error(err_msg)
-            raise p_exc.NvpPluginException(err_msg=err_msg)
+            raise p_exc.NsxPluginException(err_msg=err_msg)
 
     def lsn_metadata_configure(self, context, subnet_id, is_enabled):
         """Configure metadata service for the specified subnet."""
@@ -277,7 +277,7 @@ class LsnManager(object):
             err_msg = (_('Unable to configure metadata '
                          'for subnet %s') % subnet_id)
             LOG.error(err_msg)
-            raise p_exc.NvpPluginException(err_msg=err_msg)
+            raise p_exc.NsxPluginException(err_msg=err_msg)
         if is_enabled:
             try:
                 # test that the lsn port exists
@@ -369,14 +369,14 @@ class PersistentLsnManager(LsnManager):
         except db_exc.DBError:
             err_msg = _('Unable to save LSN for network %s') % network_id
             LOG.exception(err_msg)
-            raise p_exc.NvpPluginException(err_msg=err_msg)
+            raise p_exc.NsxPluginException(err_msg=err_msg)
 
     def lsn_create(self, context, network_id):
         lsn_id = super(PersistentLsnManager,
                        self).lsn_create(context, network_id)
         try:
             self.lsn_save(context, network_id, lsn_id)
-        except p_exc.NvpPluginException:
+        except p_exc.NsxPluginException:
             super(PersistentLsnManager, self).lsn_delete(context, lsn_id)
             raise
         return lsn_id
@@ -431,7 +431,7 @@ class PersistentLsnManager(LsnManager):
         except db_exc.DBError:
             err_msg = _('Unable to save LSN port for subnet %s') % subnet_id
             LOG.exception(err_msg)
-            raise p_exc.NvpPluginException(err_msg=err_msg)
+            raise p_exc.NsxPluginException(err_msg=err_msg)
 
     def lsn_port_create(self, context, lsn_id, subnet_info):
         lsn_port_id = super(PersistentLsnManager,
@@ -439,7 +439,7 @@ class PersistentLsnManager(LsnManager):
         try:
             self.lsn_port_save(context, lsn_port_id, subnet_info['subnet_id'],
                                subnet_info['mac_address'], lsn_id)
-        except p_exc.NvpPluginException:
+        except p_exc.NsxPluginException:
             super(PersistentLsnManager, self).lsn_port_delete(
                 context, lsn_id, lsn_port_id)
             raise

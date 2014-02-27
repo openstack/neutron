@@ -313,7 +313,7 @@ class LsnManagerTestCase(base.BaseTestCase):
 
     def test_lsn_create_raise_api_error(self):
         self.mock_lsn_api.lsn_for_network_create.side_effect = NsxApiException
-        self.assertRaises(p_exc.NvpPluginException,
+        self.assertRaises(p_exc.NsxPluginException,
                           self.manager.lsn_create,
                           mock.ANY, self.net_id)
         self.mock_lsn_api.lsn_for_network_create.assert_called_once_with(
@@ -412,7 +412,7 @@ class LsnManagerTestCase(base.BaseTestCase):
 
     def test_lsn_port_create_api_exception(self):
         self._test_lsn_port_create_with_exc(NsxApiException,
-                                            p_exc.NvpPluginException)
+                                            p_exc.NsxPluginException)
 
     def test_lsn_port_delete(self):
         self.manager.lsn_port_delete(mock.ANY, mock.ANY, mock.ANY)
@@ -549,7 +549,7 @@ class LsnManagerTestCase(base.BaseTestCase):
             p_exc.LsnNotFound(entity='lsn', entity_id=self.lsn_id))
         self.manager.plugin.get_subnet.return_value = (
             {'network_id': self.net_id})
-        self.assertRaises(p_exc.NvpPluginException,
+        self.assertRaises(p_exc.NsxPluginException,
                           self.manager.lsn_metadata_configure,
                           mock.ANY, self.sub_id, True)
 
@@ -745,8 +745,8 @@ class PersistentLsnManagerTestCase(base.BaseTestCase):
     def test_lsn_create_failure(self):
         with mock.patch.object(
             self.manager, 'lsn_save',
-            side_effect=p_exc.NvpPluginException(err_msg='')):
-            self.assertRaises(p_exc.NvpPluginException,
+            side_effect=p_exc.NsxPluginException(err_msg='')):
+            self.assertRaises(p_exc.NsxPluginException,
                               self.manager.lsn_create,
                               self.context, self.net_id)
             self.assertTrue(self.mock_lsn_api.lsn_delete.call_count)
@@ -831,8 +831,8 @@ class PersistentLsnManagerTestCase(base.BaseTestCase):
         subnet = {'subnet_id': self.sub_id, 'mac_address': self.mac}
         with mock.patch.object(
             self.manager, 'lsn_port_save',
-            side_effect=p_exc.NvpPluginException(err_msg='')):
-            self.assertRaises(p_exc.NvpPluginException,
+            side_effect=p_exc.NsxPluginException(err_msg='')):
+            self.assertRaises(p_exc.NsxPluginException,
                               self.manager.lsn_port_create,
                               self.context, self.net_id, subnet)
             self.assertTrue(self.mock_lsn_api.lsn_port_delete.call_count)
@@ -1378,8 +1378,8 @@ class MetadataTestCase(base.BaseTestCase):
         if raise_exc:
             with mock.patch.object(nsx.l3_db.L3_NAT_db_mixin,
                                    'remove_router_interface') as d:
-                mock_func.side_effect = p_exc.NvpPluginException(err_msg='')
-                self.assertRaises(p_exc.NvpPluginException,
+                mock_func.side_effect = p_exc.NsxPluginException(err_msg='')
+                self.assertRaises(p_exc.NsxPluginException,
                                   nsx.handle_router_metadata_access,
                                   self.plugin, mock.ANY, 'foo_router_id',
                                   interface)
