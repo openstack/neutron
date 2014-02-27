@@ -203,7 +203,7 @@ class NvpSynchronizer():
     LP_URI = nvplib._build_uri_path(
         nvplib.LSWITCHPORT_RESOURCE,
         parent_resource_id='*',
-        fields='uuid,tags,fabric_status,link_status_up',
+        fields='uuid,tags,fabric_status_up',
         relations='LogicalPortStatus')
 
     def __init__(self, plugin, cluster, state_sync_interval,
@@ -423,7 +423,7 @@ class NvpSynchronizer():
         if lswitchport:
             lp_status = (lswitchport['_relations']
                          ['LogicalPortStatus']
-                         ['link_status_up'])
+                         ['fabric_status_up'])
             status = (lp_status and
                       constants.PORT_STATUS_ACTIVE
                       or constants.PORT_STATUS_DOWN)
