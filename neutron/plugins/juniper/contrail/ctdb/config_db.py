@@ -1633,7 +1633,7 @@ class DBInterface(object):
     #end network_delete
 
     # TODO request based on filter contents
-    def network_list(self, filters=None):
+    def network_list(self, context=None, filters=None):
         ret_list = []
 
         if filters and 'shared' in filters:
@@ -1671,6 +1671,9 @@ class DBInterface(object):
                 net_info = self._network_vnc_to_neutron(net_obj,
                                                         net_repr='LIST')
                 ret_list.append(net_info)
+        elif filters and 'name' in filters and not context.is_admin:
+            project_nets = self._network_list_project(context.tenant)
+            all_nets.append(project_nets)
         else:
             # read all networks in all projects
             dom_projects = self._project_list_domain(None)
@@ -1693,6 +1696,9 @@ class DBInterface(object):
                 if not self._filters_is_present(filters, 'contrail:fq_name',
                                                 proj_net_fq_name):
                     continue
+                if not self._filters_is_present(filters, 'name',
+                                                proj_net['fq_name'][-1]):
+                    continue
 
                 try:
                     net_obj = self._network_read(proj_net['uuid'])
@@ -1706,7 +1712,7 @@ class DBInterface(object):
     #end network_list
 
     def network_count(self, filters=None):
-        nets_info = self.network_list(filters)
+        nets_info = self.network_list(filters=filters)
         return len(nets_info)
     #end network_count
 

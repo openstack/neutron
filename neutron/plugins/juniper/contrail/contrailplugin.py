@@ -297,7 +297,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def get_networks(self, context, filters=None, fields=None):
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
-            nets_info = cfgdb.network_list(filters)
+            nets_info = cfgdb.network_list(context, filters)
 
             nets_dicts = []
             for n_info in nets_info:
