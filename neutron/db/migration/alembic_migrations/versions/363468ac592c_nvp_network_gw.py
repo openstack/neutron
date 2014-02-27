@@ -30,7 +30,10 @@ down_revision = '1c33fa3cd1a1'
 # Change to ['*'] if this migration applies to all plugins
 
 migration_for_plugins = [
-    'neutron.plugins.nicira.NeutronPluginV2.NvpPluginV2'
+    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
+    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
+    'neutron.plugins.vmware.plugin.NsxPlugin',
+    'neutron.plugins.vmware.plugin.NsxServicePlugin'
 ]
 
 from alembic import op
@@ -48,7 +51,7 @@ def upgrade(active_plugins=None, options=None):
                     sa.Column('name', sa.String(length=255), nullable=True),
                     sa.Column('tenant_id', sa.String(length=36),
                               nullable=True),
-                    sa.Column('shared', sa.Boolean(), nullable=True),
+                    sa.Column('default', sa.Boolean(), nullable=True),
                     sa.PrimaryKeyConstraint('id'))
     op.create_table('networkgatewaydevices',
                     sa.Column('id', sa.String(length=36), nullable=False),
