@@ -20,94 +20,31 @@
 import copy
 
 import mock
-from oslo.config import cfg
 from webob import exc
 import webtest
 
-from neutron.api import extensions
-from neutron.api.v2 import attributes
-from neutron.common import config
 from neutron.extensions import firewall
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
-from neutron.tests.unit import test_extensions
-from neutron.tests.unit import testlib_api
+from neutron.tests.unit import test_api_v2_extension
 
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_api_v2._get_path
 
 
-class FirewallTestExtensionManager(object):
-
-    def get_resources(self):
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            firewall.RESOURCE_ATTRIBUTE_MAP)
-        return firewall.Firewall.get_resources()
-
-    def get_actions(self):
-        return []
-
-    def get_request_extensions(self):
-        return []
-
-
-class FirewallExtensionTestCase(testlib_api.WebTestCase):
+class FirewallExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
     fmt = 'json'
 
     def setUp(self):
         super(FirewallExtensionTestCase, self).setUp()
-        plugin = 'neutron.extensions.firewall.FirewallPluginBase'
-
-        # Ensure existing ExtensionManager is not used
-        extensions.PluginAwareExtensionManager._instance = None
-
-        # Create the default configurations
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
-        config.parse(args)
-
-        # Stubbing core plugin with Firewall plugin
-        self.setup_coreplugin(plugin)
-        cfg.CONF.set_override('service_plugins', [plugin])
-
-        self._plugin_patcher = mock.patch(plugin, autospec=True)
-        self.plugin = self._plugin_patcher.start()
-        instance = self.plugin.return_value
-        instance.get_plugin_type.return_value = constants.FIREWALL
-
-        ext_mgr = FirewallTestExtensionManager()
-        self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
-        self.api = webtest.TestApp(self.ext_mdw)
-        super(FirewallExtensionTestCase, self).setUp()
-
-    def tearDown(self):
-        self._plugin_patcher.stop()
-        self.api = None
-        self.plugin = None
-        cfg.CONF.reset()
-        super(FirewallExtensionTestCase, self).tearDown()
-
-    def _test_entity_delete(self, entity):
-        """Does the entity deletion based on naming convention."""
-        entity_id = _uuid()
-        path_prefix = 'fw/'
-
-        if entity == 'firewall_policy':
-            entity_plural = 'firewall_policies'
-        else:
-            entity_plural = entity + 's'
-
-        res = self.api.delete(_get_path(path_prefix + entity_plural,
-                                        id=entity_id, fmt=self.fmt))
-        delete_entity = getattr(self.plugin.return_value, "delete_" + entity)
-        delete_entity.assert_called_with(mock.ANY, entity_id)
-        self.assertEqual(res.status_int, exc.HTTPNoContent.code)
+        plural_mappings = {'firewall_policy': 'firewall_policies'}
+        self._setUpExtension(
+            'neutron.extensions.firewall.FirewallPluginBase',
+            constants.FIREWALL, firewall.RESOURCE_ATTRIBUTE_MAP,
+            firewall.Firewall, 'fw', plural_mappings=plural_mappings)
 
     def test_create_firewall(self):
         fw_id = _uuid()
