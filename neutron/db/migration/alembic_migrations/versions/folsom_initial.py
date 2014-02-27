@@ -37,6 +37,7 @@ PLUGINS = {
     'plumgrid': 'neutron.plugins.plumgrid.plumgrid_plugin.plumgrid_plugin.'
                 'NeutronPluginPLUMgridV2',
     'ryu': 'neutron.plugins.ryu.ryu_neutron_plugin.RyuNeutronPluginV2',
+    'ibm': 'neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2',
 }
 
 L3_CAPABLE = [
@@ -48,6 +49,7 @@ L3_CAPABLE = [
     PLUGINS['ryu'],
     PLUGINS['brocade'],
     PLUGINS['plumgrid'],
+    PLUGINS['ibm'],
 ]
 
 FOLSOM_QUOTA = [
