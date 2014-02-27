@@ -22,6 +22,7 @@ Test cases for  Neutron PLUMgrid Plug-in
 import mock
 
 from neutron.extensions import portbindings
+from neutron.extensions import providernet as provider
 from neutron.manager import NeutronManager
 from neutron.openstack.common import importutils
 from neutron.plugins.plumgrid.plumgrid_plugin import plumgrid_plugin
@@ -127,3 +128,23 @@ class TestPlumgridAllocationPool(PLUMgridPluginV2TestCase):
         plugin = NeutronManager.get_plugin()
         pool = plugin._allocate_pools_for_subnet(context, subnet)
         self.assertEqual(allocation_pool, pool)
+
+
+class TestPlumgridProvidernet(PLUMgridPluginV2TestCase):
+
+    def test_create_provider_network(self):
+        tenant_id = 'admin'
+        data = {'network': {'name': 'net1',
+                            'admin_state_up': True,
+                            'tenant_id': tenant_id,
+                            provider.NETWORK_TYPE: 'vlan',
+                            provider.SEGMENTATION_ID: 3333,
+                            provider.PHYSICAL_NETWORK: 'phy3333'}}
+
+        network_req = self.new_create_request('networks', data, self.fmt)
+        net = self.deserialize(self.fmt, network_req.get_response(self.api))
+        plumlib = importutils.import_object(PLUM_DRIVER)
+        plumlib.create_network(tenant_id, net, data)
+        self.assertEqual(net['network'][provider.NETWORK_TYPE], 'vlan')
+        self.assertEqual(net['network'][provider.SEGMENTATION_ID], 3333)
+        self.assertEqual(net['network'][provider.PHYSICAL_NETWORK], 'phy3333')
