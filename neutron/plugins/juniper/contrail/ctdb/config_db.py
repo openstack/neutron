@@ -2524,7 +2524,7 @@ class DBInterface(object):
         self._del_obj_tenant_id(port_id)
     #end port_delete
 
-    def port_list(self, filters=None):
+    def port_list(self, context=None, filters=None):
         project_obj = None
         ret_q_ports = []
         all_project_ids = []
@@ -2541,6 +2541,15 @@ class DBInterface(object):
                 all_project_ids = [project['uuid'] for project in all_projects]
             elif 'tenant_id' in filters:
                 all_project_ids = filters.get('tenant_id')
+            elif 'name' in filters:
+                all_project_ids = [context.tenant]
+            elif 'id' in filters:
+                for port_id in filters['id']:
+                    try:
+                        port_info = self.port_read(port_id)
+                    except NoIdError:
+                        continue
+                    ret_q_ports.append(port_info)
 
             for proj_id in all_project_ids:
                 proj_ports = self._port_list_project(proj_id)
@@ -2549,7 +2558,11 @@ class DBInterface(object):
                         port_info = self.port_read(port['id'])
                     except NoIdError:
                         continue
-                    ret_q_ports.append(port_info)
+                    if 'name' in filters:
+                        if port_info['q_api_data']['name'] in filters['name']:
+                            ret_q_ports.append(port_info)
+                    else:
+                        ret_q_ports.append(port_info) 
 
             for net_id in filters.get('network_id', []):
                 net_ports = self._port_list_network(net_id)
@@ -2609,7 +2622,7 @@ class DBInterface(object):
         else:
             # across all projects - TODO very expensive,
             # get only a count from api-server!
-            nports = len(self.port_list(filters))
+            nports = len(self.port_list(filters=filters))
 
         return nports
     #end port_count

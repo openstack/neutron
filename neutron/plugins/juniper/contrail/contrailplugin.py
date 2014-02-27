@@ -1008,7 +1008,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         """
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
-            ports_info = cfgdb.port_list(filters)
+            ports_info = cfgdb.port_list(context, filters)
 
             ports_dicts = []
             for p_info in ports_info:
