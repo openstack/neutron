@@ -282,9 +282,9 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                     self.assertEqual([member], logical_config['members'])
 
     def test_get_logical_device_pending_create_health_monitor(self):
-        with self.pool() as pool:
-            with self.vip(pool=pool) as vip:
-                with self.health_monitor() as monitor:
+        with self.health_monitor() as monitor:
+            with self.pool() as pool:
+                with self.vip(pool=pool) as vip:
                     ctx = context.get_admin_context()
                     self.plugin_instance.update_status(ctx, ldb.Pool,
                                                        pool['pool']['id'],
@@ -408,9 +408,9 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
 
     def test_update_status_health_monitor(self):
         with contextlib.nested(
-            self.pool(),
-            self.health_monitor()
-        ) as (pool, hm):
+            self.health_monitor(),
+            self.pool()
+        ) as (hm, pool):
             pool_id = pool['pool']['id']
             ctx = context.get_admin_context()
             self.plugin_instance.create_pool_health_monitor(ctx, hm, pool_id)
@@ -671,9 +671,9 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
 
     def test_create_pool_health_monitor(self):
         with contextlib.nested(
+            self.health_monitor(),
             self.pool(),
-            self.health_monitor()
-        ) as (pool, hm):
+        ) as (hm, pool):
             pool_id = pool['pool']['id']
             ctx = context.get_admin_context()
             self.plugin_instance.create_pool_health_monitor(ctx, hm, pool_id)

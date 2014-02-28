@@ -254,19 +254,6 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
     def _delete_db_health_monitor(self, context, id):
         super(LoadBalancerPlugin, self).delete_health_monitor(context, id)
 
-    def delete_health_monitor(self, context, id):
-        with context.session.begin(subtransactions=True):
-            hm = self.get_health_monitor(context, id)
-            qry = context.session.query(
-                ldb.PoolMonitorAssociation
-            ).filter_by(monitor_id=id).join(ldb.Pool)
-            for assoc in qry:
-                driver = self._get_driver_for_pool(context, assoc['pool_id'])
-                driver.delete_pool_health_monitor(context,
-                                                  hm,
-                                                  assoc['pool_id'])
-        super(LoadBalancerPlugin, self).delete_health_monitor(context, id)
-
     def create_pool_health_monitor(self, context, health_monitor, pool_id):
         retval = super(LoadBalancerPlugin, self).create_pool_health_monitor(
             context,

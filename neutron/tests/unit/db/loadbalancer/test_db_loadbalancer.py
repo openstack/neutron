@@ -1022,8 +1022,8 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             qry = qry.filter_by(id=monitor['health_monitor']['id'])
             self.assertIsNone(qry.first())
 
-    def test_delete_healthmonitor_cascade_deletion_of_associations(self):
-        with self.health_monitor(type='HTTP', no_delete=True) as monitor:
+    def test_delete_healthmonitor_with_associations_raises(self):
+        with self.health_monitor(type='HTTP') as monitor:
             with self.pool() as pool:
                 data = {
                     'health_monitor': {
@@ -1046,17 +1046,21 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                 qry = ctx.session.query(ldb.PoolMonitorAssociation)
                 qry = qry.filter_by(monitor_id=monitor['health_monitor']['id'])
                 self.assertTrue(qry.all())
-                # delete the HealthMonitor instance
+                # try to delete the HealthMonitor instance
                 req = self.new_delete_request(
                     'health_monitors',
                     monitor['health_monitor']['id']
                 )
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
-                # check if all corresponding Pool associations are deleted
+                self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
+
+                qry = ctx.session.query(ldb.HealthMonitor)
+                qry = qry.filter_by(id=monitor['health_monitor']['id'])
+                self.assertIsNotNone(qry.first())
+                # check if all corresponding Pool associations are not deleted
                 qry = ctx.session.query(ldb.PoolMonitorAssociation)
                 qry = qry.filter_by(monitor_id=monitor['health_monitor']['id'])
-                self.assertFalse(qry.all())
+                self.assertTrue(qry.all())
 
     def test_show_healthmonitor(self):
         with self.health_monitor() as monitor:
@@ -1363,6 +1367,15 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
                                  pool_updated['pool']['id'])
 
                 # clean up
+                # disassociate the health_monitor from the pool first
+                req = self.new_delete_request(
+                    "pools",
+                    fmt=self.fmt,
+                    id=pool['pool']['id'],
+                    subresource="health_monitors",
+                    sub_id=health_monitor['health_monitor']['id'])
+                res = req.get_response(self.ext_api)
+                self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
                 self._delete('health_monitors',
                              health_monitor['health_monitor']['id'])
                 self._delete('members', member1['member']['id'])
@@ -1370,10 +1383,10 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
 
     def test_create_pool_health_monitor(self):
         with contextlib.nested(
-            self.pool(name="pool"),
             self.health_monitor(),
-            self.health_monitor()
-        ) as (pool, health_mon1, health_mon2):
+            self.health_monitor(),
+            self.pool(name="pool")
+        ) as (health_mon1, health_mon2, pool):
                 res = self.plugin.create_pool_health_monitor(
                     context.get_admin_context(),
                     health_mon1, pool['pool']['id']
@@ -1401,9 +1414,9 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
         with mock.patch.object(self.plugin.drivers['lbaas'],
                                'create_pool_health_monitor') as driver_call:
             with contextlib.nested(
-                self.pool(),
-                self.health_monitor()
-            ) as (pool, hm):
+                self.health_monitor(),
+                self.pool()
+            ) as (hm, pool):
                 data = {'health_monitor': {
                         'id': hm['health_monitor']['id'],
                         'tenant_id': self._tenant_id}}
@@ -1420,10 +1433,10 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
 
     def test_pool_monitor_list_of_pools(self):
         with contextlib.nested(
-                self.pool(),
-                self.pool(),
-                self.health_monitor()
-        ) as (p1, p2, hm):
+            self.health_monitor(),
+            self.pool(),
+            self.pool()
+        ) as (hm, p1, p2):
             ctx = context.get_admin_context()
             data = {'health_monitor': {
                     'id': hm['health_monitor']['id'],
@@ -1455,9 +1468,9 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
 
     def test_create_pool_health_monitor_already_associated(self):
         with contextlib.nested(
-            self.pool(name="pool"),
             self.health_monitor(),
-        ) as (pool, hm):
+            self.pool(name="pool")
+        ) as (hm, pool):
             res = self.plugin.create_pool_health_monitor(
                 context.get_admin_context(),
                 hm, pool['pool']['id']
@@ -1501,33 +1514,35 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             self.assertFalse(updated_pool['status_description'])
 
     def test_update_pool_health_monitor(self):
-        with self.pool() as pool:
-            with self.health_monitor() as hm:
-                res = self.plugin.create_pool_health_monitor(
-                    context.get_admin_context(),
-                    hm, pool['pool']['id'])
-                self.assertEqual({'health_monitor':
-                                  [hm['health_monitor']['id']]},
-                                 res)
+        with contextlib.nested(
+            self.health_monitor(),
+            self.pool(name="pool")
+        ) as (hm, pool):
+            res = self.plugin.create_pool_health_monitor(
+                context.get_admin_context(),
+                hm, pool['pool']['id'])
+            self.assertEqual({'health_monitor':
+                              [hm['health_monitor']['id']]},
+                             res)
 
-                assoc = self.plugin.get_pool_health_monitor(
-                    context.get_admin_context(),
-                    hm['health_monitor']['id'],
-                    pool['pool']['id'])
-                self.assertEqual(assoc['status'], 'PENDING_CREATE')
-                self.assertIsNone(assoc['status_description'])
+            assoc = self.plugin.get_pool_health_monitor(
+                context.get_admin_context(),
+                hm['health_monitor']['id'],
+                pool['pool']['id'])
+            self.assertEqual(assoc['status'], 'PENDING_CREATE')
+            self.assertIsNone(assoc['status_description'])
 
-                self.plugin.update_pool_health_monitor(
-                    context.get_admin_context(),
-                    hm['health_monitor']['id'],
-                    pool['pool']['id'],
-                    'ACTIVE', 'ok')
-                assoc = self.plugin.get_pool_health_monitor(
-                    context.get_admin_context(),
-                    hm['health_monitor']['id'],
-                    pool['pool']['id'])
-                self.assertEqual(assoc['status'], 'ACTIVE')
-                self.assertEqual(assoc['status_description'], 'ok')
+            self.plugin.update_pool_health_monitor(
+                context.get_admin_context(),
+                hm['health_monitor']['id'],
+                pool['pool']['id'],
+                'ACTIVE', 'ok')
+            assoc = self.plugin.get_pool_health_monitor(
+                context.get_admin_context(),
+                hm['health_monitor']['id'],
+                pool['pool']['id'])
+            self.assertEqual(assoc['status'], 'ACTIVE')
+            self.assertEqual(assoc['status_description'], 'ok')
 
     def test_check_orphan_pool_associations(self):
         with contextlib.nested(
