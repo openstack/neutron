@@ -95,6 +95,10 @@ class OFCClient(object):
                               httplib.ACCEPTED,
                               httplib.NO_CONTENT):
                 return data
+            elif res.status == httplib.NOT_FOUND:
+                LOG.info(_("Specified resource %s does not exist on OFC "),
+                         action)
+                raise nexc.OFCResourceNotFound(resource=action)
             else:
                 LOG.warning(_("Operation on OFC failed: "
                               "status=%(status)s, detail=%(detail)s"),

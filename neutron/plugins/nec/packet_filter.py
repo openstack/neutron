@@ -127,7 +127,7 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
                 self.ofc.create_ofc_packet_filter(context, pf_id,
                                                   packet_filter)
                 pf_status = pf_db.PF_STATUS_ACTIVE
-            except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+            except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
                 LOG.error(_("Failed to create packet_filter id=%(id)s on "
                             "OFC: %(exc)s"), {'id': pf_id, 'exc': str(exc)})
                 pf_status = pf_db.PF_STATUS_ERROR
@@ -153,7 +153,7 @@ class PacketFilterMixin(pf_db.PacketFilterDbMixin):
             try:
                 self.ofc.delete_ofc_packet_filter(context, pf_id)
                 pf_status = pf_db.PF_STATUS_DOWN
-            except (nexc.OFCException, nexc.OFCConsistencyBroken) as exc:
+            except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
                 LOG.error(_("Failed to delete packet_filter id=%(id)s from "
                             "OFC: %(exc)s"), {'id': pf_id, 'exc': str(exc)})
                 pf_status = pf_db.PF_STATUS_ERROR

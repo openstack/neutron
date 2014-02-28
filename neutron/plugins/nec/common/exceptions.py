@@ -28,13 +28,18 @@ class OFCException(qexc.NeutronException):
         self.err_code = kwargs.get('err_code')
 
 
+class OFCResourceNotFound(qexc.NotFound):
+    message = _("The specified OFC resource (%(resource)s) is not found.")
+
+
 class NECDBException(qexc.NeutronException):
     message = _("An exception occurred in NECPluginV2 DB: %(reason)s")
 
 
-class OFCConsistencyBroken(qexc.NeutronException):
-    message = _("Consistency of neutron-OFC resource map is broken: "
-                "%(reason)s")
+class OFCMappingNotFound(qexc.NotFound):
+    message = _("Neutron-OFC resource mapping for "
+                "%(resource)s %(neutron_id)s is not found. "
+                "It may be deleted during processing.")
 
 
 class PortInfoNotFound(qexc.NotFound):
