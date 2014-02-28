@@ -18,7 +18,7 @@ Welcome to Neutron's developer documentation!
 =============================================
 
 Neutron is an OpenStack project to provide "network connectivity as a service"
-between interface devices (e.g., vNICs) managed by other Openstack services
+between interface devices (e.g., vNICs) managed by other OpenStack services
 (e.g., nova). It implements the `Neutron API`_.
 
 .. _`Neutron API`: http://docs.openstack.org/api/openstack-network/2.0/content/
