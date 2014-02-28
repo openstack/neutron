@@ -104,7 +104,7 @@ class NeutronManager(object):
 
         # NOTE(jkoelker) Testing for the subclass with the __subclasshook__
         #                breaks tach monitoring. It has been removed
-        #                intentianally to allow v2 plugins to be monitored
+        #                intentionally to allow v2 plugins to be monitored
         #                for performance metrics.
         plugin_provider = cfg.CONF.core_plugin
         LOG.info(_("Loading core plugin: %s"), plugin_provider)
