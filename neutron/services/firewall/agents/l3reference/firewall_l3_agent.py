@@ -129,7 +129,10 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
                 self.fwaas_driver.__getattribute__(func_name)(
                     router_info_list,
                     fw)
-                status = constants.ACTIVE
+                if fw['admin_state_up']:
+                    status = constants.ACTIVE
+                else:
+                    status = constants.DOWN
             except fw_ext.FirewallInternalDriverError:
                 LOG.error(_("Firewall Driver Error for %(func_name)s "
                             "for fw: %(fwid)s"),
@@ -137,7 +140,7 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
                 status = constants.ERROR
             # delete needs different handling
             if func_name == 'delete_firewall':
-                if status == constants.ACTIVE:
+                if status in [constants.ACTIVE, constants.DOWN]:
                     self.fwplugin_rpc.firewall_deleted(context, fw['id'])
             else:
                 self.fwplugin_rpc.set_firewall_status(
@@ -174,7 +177,10 @@ class FWaaSL3AgentRpcCallback(api.FWaaSAgentRpcCallbackMixin):
             # PENDING_UPDATE, PENDING_CREATE, ...
             try:
                 self.fwaas_driver.update_firewall(router_info_list, fw)
-                status = constants.ACTIVE
+                if fw['admin_state_up']:
+                    status = constants.ACTIVE
+                else:
+                    status = constants.DOWN
             except fw_ext.FirewallInternalDriverError:
                 LOG.error(_("Firewall Driver Error on fw state %(fwmsg)s "
                             "for fw: %(fwid)s"),

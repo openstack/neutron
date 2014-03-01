@@ -49,7 +49,9 @@ class FirewallCallbacks(object):
         LOG.debug(_("set_firewall_status() called"))
         with context.session.begin(subtransactions=True):
             fw_db = self.plugin._get_firewall(context, firewall_id)
-            if status in (const.ACTIVE, const.INACTIVE):
+            #TODO(xuhanp): Remove INACTIVE status and use DOWN to
+            # be consistent with other network resources
+            if status in (const.ACTIVE, const.INACTIVE, const.DOWN):
                 fw_db.status = status
                 return True
             else:
