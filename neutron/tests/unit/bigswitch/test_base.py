@@ -26,7 +26,9 @@ from neutron.plugins.bigswitch import config
 from neutron.tests.unit.bigswitch import fake_server
 
 RESTPROXY_PKG_PATH = 'neutron.plugins.bigswitch.plugin'
-NOTIFIER = 'neutron.plugins.bigswitch.plugin.RpcProxy'
+NOTIFIER = 'neutron.plugins.bigswitch.plugin.AgentNotifierApi'
+CALLBACKS = 'neutron.plugins.bigswitch.plugin.RestProxyCallbacks'
+CERTFETCH = 'neutron.plugins.bigswitch.servermanager.ServerPool._fetch_cert'
 HTTPCON = 'httplib.HTTPConnection'
 
 
@@ -45,7 +47,9 @@ class BigSwitchTestBase(object):
         self.httpPatch = mock.patch(HTTPCON, create=True,
                                     new=fake_server.HTTPConnectionMock)
         self.plugin_notifier_p = mock.patch(NOTIFIER)
+        self.callbacks_p = mock.patch(CALLBACKS)
         self.addCleanup(mock.patch.stopall)
         self.addCleanup(db.clear_db)
+        self.callbacks_p.start()
         self.plugin_notifier_p.start()
         self.httpPatch.start()
