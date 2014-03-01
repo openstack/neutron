@@ -1,0 +1,6 @@
+IBM SDN-VE Neutron Plugin
+
+This plugin implements Neutron v2 APIs.
+
+For more details on how to use it please refer to the following page:
+http://wiki.openstack.org/wiki/IBM-Neutron

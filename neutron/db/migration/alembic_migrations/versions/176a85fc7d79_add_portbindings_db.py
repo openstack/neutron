@@ -36,7 +36,8 @@ migration_for_plugins = [
     'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
     'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
     'neutron.plugins.vmware.plugin.NsxPlugin',
-    'neutron.plugins.vmware.plugin.NsxServicePlugin'
+    'neutron.plugins.vmware.plugin.NsxServicePlugin',
+    'neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2',
 ]
 
 from alembic import op
