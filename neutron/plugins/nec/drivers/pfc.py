@@ -27,7 +27,6 @@ from neutron.common import exceptions as qexc
 from neutron.common import log as call_log
 from neutron import manager
 from neutron.plugins.nec.common import ofc_client
-from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec.extensions import packetfilter as ext_pf
 from neutron.plugins.nec import ofc_driver_base
 
@@ -142,35 +141,6 @@ class PFCDriverBase(ofc_driver_base.OFCDriverBase):
 
     def delete_port(self, ofc_port_id):
         return self.client.delete(ofc_port_id)
-
-    def convert_ofc_tenant_id(self, context, ofc_tenant_id):
-        # If ofc_tenant_id starts with '/', it is already new-style
-        if ofc_tenant_id[0] == '/':
-            return ofc_tenant_id
-        return '/tenants/%s' % ofc_tenant_id
-
-    def convert_ofc_network_id(self, context, ofc_network_id, tenant_id):
-        # If ofc_network_id starts with '/', it is already new-style
-        if ofc_network_id[0] == '/':
-            return ofc_network_id
-
-        ofc_tenant_id = ndb.get_ofc_id_lookup_both(
-            context.session, 'ofc_tenant', tenant_id)
-        ofc_tenant_id = self.convert_ofc_tenant_id(context, ofc_tenant_id)
-        params = dict(tenant=ofc_tenant_id, network=ofc_network_id)
-        return '%(tenant)s/networks/%(network)s' % params
-
-    def convert_ofc_port_id(self, context, ofc_port_id, tenant_id, network_id):
-        # If ofc_port_id  starts with '/', it is already new-style
-        if ofc_port_id[0] == '/':
-            return ofc_port_id
-
-        ofc_network_id = ndb.get_ofc_id_lookup_both(
-            context.session, 'ofc_network', network_id)
-        ofc_network_id = self.convert_ofc_network_id(
-            context, ofc_network_id, tenant_id)
-        params = dict(network=ofc_network_id, port=ofc_port_id)
-        return '%(network)s/ports/%(port)s' % params
 
 
 class PFCFilterDriverMixin(object):

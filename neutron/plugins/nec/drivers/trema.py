@@ -18,7 +18,6 @@
 
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import ofc_client
-from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec import ofc_driver_base
 
 
@@ -60,20 +59,6 @@ class TremaDriverBase(ofc_driver_base.OFCDriverBase):
 
     def delete_network(self, ofc_network_id):
         return self.client.delete(ofc_network_id)
-
-    def convert_ofc_tenant_id(self, context, ofc_tenant_id):
-        # If ofc_network_id starts with '/', it is already new-style
-        if ofc_tenant_id[0] == '/':
-            return ofc_tenant_id
-        return self._get_tenant_id(ofc_tenant_id)
-
-    def convert_ofc_network_id(self, context, ofc_network_id, tenant_id):
-        # If ofc_network_id starts with '/', it is already new-style
-        if ofc_network_id[0] == '/':
-            return ofc_network_id
-        # Trema sliceable switch does not use tenant_id,
-        # so we can convert ofc_network_id from old id only
-        return self.network_path % ofc_network_id
 
 
 class TremaFilterDriverMixin(object):
@@ -170,12 +155,6 @@ class TremaFilterDriverMixin(object):
     def delete_filter(self, ofc_filter_id):
         return self.client.delete(ofc_filter_id)
 
-    def convert_ofc_filter_id(self, context, ofc_filter_id):
-        # If ofc_filter_id starts with '/', it is already new-style
-        if ofc_filter_id[0] == '/':
-            return ofc_filter_id
-        return self.filter_path % ofc_filter_id
-
 
 class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriverMixin):
     """Trema (Sliceable Switch) Driver for port base binding.
@@ -200,19 +179,6 @@ class TremaPortBaseDriver(TremaDriverBase, TremaFilterDriverMixin):
 
     def delete_port(self, ofc_port_id):
         return self.client.delete(ofc_port_id)
-
-    def convert_ofc_port_id(self, context, ofc_port_id,
-                            tenant_id, network_id):
-        # If ofc_port_id  starts with '/', it is already new-style
-        if ofc_port_id[0] == '/':
-            return ofc_port_id
-
-        ofc_network_id = ndb.get_ofc_id_lookup_both(
-            context.session, 'ofc_network', network_id)
-        ofc_network_id = self.convert_ofc_network_id(
-            context, ofc_network_id, tenant_id)
-        return self.port_path % {'network': ofc_network_id,
-                                 'port': ofc_port_id}
 
 
 class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriverMixin):
@@ -257,20 +223,6 @@ class TremaPortMACBaseDriver(TremaDriverBase, TremaFilterDriverMixin):
     def delete_port(self, ofc_port_id):
         return self.client.delete(ofc_port_id)
 
-    def convert_ofc_port_id(self, context, ofc_port_id, tenant_id, network_id):
-        # If ofc_port_id  starts with '/', it is already new-style
-        if ofc_port_id[0] == '/':
-            return ofc_port_id
-
-        ofc_network_id = ndb.get_ofc_id_lookup_both(
-            context.session, 'ofc_network', network_id)
-        ofc_network_id = self.convert_ofc_network_id(
-            context, ofc_network_id, tenant_id)
-        dummy_port_id = 'dummy-%s' % ofc_port_id
-        return self.attachment_path % {'network': ofc_network_id,
-                                       'port': dummy_port_id,
-                                       'attachment': ofc_port_id}
-
 
 class TremaMACBaseDriver(TremaDriverBase):
     """Trema (Sliceable Switch) Driver for mac base binding.
@@ -296,15 +248,3 @@ class TremaMACBaseDriver(TremaDriverBase):
 
     def delete_port(self, ofc_port_id):
         return self.client.delete(ofc_port_id)
-
-    def convert_ofc_port_id(self, context, ofc_port_id, tenant_id, network_id):
-        # If ofc_port_id  starts with '/', it is already new-style
-        if ofc_port_id[0] == '/':
-            return ofc_port_id
-
-        ofc_network_id = ndb.get_ofc_id_lookup_both(
-            context.session, 'ofc_network', network_id)
-        ofc_network_id = self.convert_ofc_network_id(
-            context, ofc_network_id, tenant_id)
-        return self.attachment_path % {'network': ofc_network_id,
-                                       'attachment': ofc_port_id}
