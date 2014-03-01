@@ -11,6 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 import logging
 
 from oslo.config import cfg
@@ -26,4 +27,4 @@ class PublishErrorsHandler(logging.Handler):
         notifier.api.notify(None, 'error.publisher',
                             'error_notification',
                             notifier.api.ERROR,
-                            dict(error=record.msg))
+                            dict(error=record.getMessage()))
