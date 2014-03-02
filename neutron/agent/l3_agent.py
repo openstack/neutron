@@ -37,6 +37,7 @@ from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
+from neutron.openstack.common import processutils
 from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import service
@@ -56,6 +57,7 @@ class L3PluginApi(proxy.RpcProxy):
 
     API version history:
         1.0 - Initial version.
+        1.1 - Floating IP operational status updates
 
     """
 
@@ -85,6 +87,15 @@ class L3PluginApi(proxy.RpcProxy):
                                        host=self.host),
                          topic=self.topic)
 
+    def update_floatingip_statuses(self, context, router_id, fip_statuses):
+        """Call the plugin update floating IPs's operational status."""
+        return self.call(context,
+                         self.make_msg('update_floatingip_statuses',
+                                       router_id=router_id,
+                                       fip_statuses=fip_statuses),
+                         topic=self.topic,
+                         version='1.1')
+
 
 class RouterInfo(object):
 
@@ -94,6 +105,7 @@ class RouterInfo(object):
         self._snat_enabled = None
         self._snat_action = None
         self.internal_ports = []
+        self.floating_ips = set()
         self.root_helper = root_helper
         self.use_namespaces = use_namespaces
         # Invoke the setter for establishing initial SNAT action
@@ -434,21 +446,41 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self.external_gateway_removed(ri, ri.ex_gw_port,
                                           interface_name, internal_cidrs)
 
+        # Process static routes for router
+        self.routes_updated(ri)
         # Process SNAT rules for external gateway
         ri.perform_snat_action(self._handle_router_snat_rules,
                                internal_cidrs, interface_name)
 
         # Process SNAT/DNAT rules for floating IPs
-        if ex_gw_port:
-            self.process_router_floating_ip_nat_rules(ri)
+        fip_statuses = {}
+        try:
+            if ex_gw_port:
+                existing_floating_ips = ri.floating_ips
+                self.process_router_floating_ip_nat_rules(ri)
+                ri.iptables_manager.defer_apply_off()
+                # Once NAT rules for floating IPs are safely in place
+                # configure their addresses on the external gateway port
+                fip_statuses = self.process_router_floating_ip_addresses(
+                    ri, ex_gw_port)
+        except Exception:
+            # TODO(salv-orlando): Less broad catching
+            # All floating IPs must be put in error state
+            for fip in ri.router.get(l3_constants.FLOATINGIP_KEY, []):
+                fip_statuses[fip] = l3_constants.FLOATINGIP_STATUS_ERROR
 
-        ri.ex_gw_port = ex_gw_port
-        self.routes_updated(ri)
-        ri.iptables_manager.defer_apply_off()
-        # Once NAT rules for floating IPs are safely in place
-        # configure their addresses on the external gateway port
         if ex_gw_port:
-            self.process_router_floating_ip_addresses(ri, ex_gw_port)
+            # Identify floating IPs which were disabled
+            ri.floating_ips = set(fip_statuses.keys())
+            for fip_id in existing_floating_ips - ri.floating_ips:
+                fip_statuses[fip_id] = l3_constants.FLOATINGIP_STATUS_DOWN
+            # Update floating IP status on the neutron server
+            self.plugin_rpc.update_floatingip_statuses(
+                self.context, ri.router_id, fip_statuses)
+
+        # Update ex_gw_port and enable_snat on the router info cache
+        ri.ex_gw_port = ex_gw_port
+        ri.enable_snat = ri.router.get('enable_snat')
 
     def _handle_router_snat_rules(self, ri, ex_gw_port, internal_cidrs,
                                   interface_name, action):
@@ -497,6 +529,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         Ensures addresses for existing floating IPs and cleans up
         those that should not longer be configured.
         """
+        fip_statuses = {}
         interface_name = self.get_external_device_name(ex_gw_port['id'])
         device = ip_lib.IPDevice(interface_name, self.root_helper,
                                  namespace=ri.ns_name())
@@ -512,14 +545,30 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
             if ip_cidr not in existing_cidrs:
                 net = netaddr.IPNetwork(ip_cidr)
-                device.addr.add(net.version, ip_cidr, str(net.broadcast))
-                self._send_gratuitous_arp_packet(ri, interface_name, fip_ip)
+                try:
+                    device.addr.add(net.version, ip_cidr, str(net.broadcast))
+                except (processutils.UnknownArgumentError,
+                        processutils.ProcessExecutionError):
+                    # any exception occurred here should cause the floating IP
+                    # to be set in error state
+                    fip_statuses[fip['id']] = (
+                        l3_constants.FLOATINGIP_STATUS_ERROR)
+                    LOG.warn(_("Unable to configure IP address for "
+                               "floating IP: %s"), fip['id'])
+                    continue
+                # As GARP is processed in a distinct thread the call below
+                # won't raise an exception to be handled.
+                self._send_gratuitous_arp_packet(
+                    ri, interface_name, fip_ip)
+            fip_statuses[fip['id']] = (
+                l3_constants.FLOATINGIP_STATUS_ACTIVE)
 
         # Clean up addresses that no longer belong on the gateway interface.
         for ip_cidr in existing_cidrs - new_cidrs:
             if ip_cidr.endswith(FLOATING_IP_CIDR_SUFFIX):
                 net = netaddr.IPNetwork(ip_cidr)
                 device.addr.delete(net.version, ip_cidr)
+        return fip_statuses
 
     def _get_ex_gw_port(self, ri):
         return ri.router.get('gw_port')

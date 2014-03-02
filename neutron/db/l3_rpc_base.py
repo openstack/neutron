@@ -94,3 +94,30 @@ class L3RpcCallbackMixin(object):
         LOG.debug(_("External network ID returned to l3 agent: %s"),
                   net_id)
         return net_id
+
+    def update_floatingip_statuses(self, context, router_id, fip_statuses):
+        """Update operational status for a floating IP."""
+        l3_plugin = manager.NeutronManager.get_service_plugins()[
+            plugin_constants.L3_ROUTER_NAT]
+        with context.session.begin(subtransactions=True):
+            for (floatingip_id, status) in fip_statuses.iteritems():
+                LOG.debug(_("New status for floating IP %(floatingip_id)s: "
+                            "%(status)s"), {'floatingip_id': floatingip_id,
+                                            'status': status})
+                l3_plugin.update_floatingip_status(context,
+                                                   floatingip_id,
+                                                   status)
+            # Find all floating IPs known to have been the given router
+            # for which an update was not received. Set them DOWN mercilessly
+            # This situation might occur for some asynchronous backends if
+            # notifications were missed
+            known_router_fips = l3_plugin.get_floatingips(
+                context, {'last_known_router_id': [router_id]})
+            # Consider only floating ips which were disassociated in the API
+            # FIXME(salv-orlando): Filtering in code should be avoided.
+            # the plugin should offer a way to specify a null filter
+            fips_to_disable = (fip['id'] for fip in known_router_fips
+                               if not fip['router_id'])
+            for fip_id in fips_to_disable:
+                l3_plugin.update_floatingip_status(
+                    context, fip_id, constants.FLOATINGIP_STATUS_DOWN)
