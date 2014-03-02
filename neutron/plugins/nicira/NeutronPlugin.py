@@ -685,7 +685,7 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         except api_exc.NsxApiException:
             raise nsx_exc.NsxPluginException(
                 err_msg=_("Unable to update logical router"
-                          "on NVP Platform"))
+                          " on NVP Platform"))
         LOG.debug(_("_nvp_delete_ext_gw_port completed on external network "
                     "%(ext_net_id)s, attached to NSX router:%(router_id)s"),
                   {'ext_net_id': port_data['network_id'],
