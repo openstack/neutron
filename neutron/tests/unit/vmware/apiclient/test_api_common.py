@@ -16,7 +16,7 @@
 
 import httplib
 
-from neutron.plugins.nicira.api_client import ctrl_conn_to_str
+from neutron.plugins.vmware.api_client import ctrl_conn_to_str
 from neutron.tests import base
 
 

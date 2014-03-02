@@ -67,7 +67,7 @@ def upgrade(active_plugins=None, options=None):
 
     # Copy network and port ids over to network|port(securitybindings) table
     # and set port_security_enabled to false as ip address pairs were not
-    # configured in NVP originally.
+    # configured in NVP/NSX originally.
     op.execute("INSERT INTO networksecuritybindings SELECT id as "
                "network_id, False as port_security_enabled from networks")
     op.execute("INSERT INTO portsecuritybindings SELECT id as port_id, "

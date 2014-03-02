@@ -18,8 +18,8 @@ from oslo.config import cfg
 
 from neutron.common import constants
 from neutron.common.test_lib import test_config
-from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira.dhcp_meta import rpc
+from neutron.plugins.vmware.common import sync
+from neutron.plugins.vmware.dhcp_meta import rpc
 from neutron.tests.unit.openvswitch import test_agent_scheduler as test_base
 from neutron.tests.unit.vmware.apiclient import fake
 from neutron.tests.unit.vmware import get_fake_conf

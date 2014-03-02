@@ -15,8 +15,8 @@
 #    under the License.
 #
 
-from neutron.plugins.nicira import NeutronPlugin
-from neutron.plugins.nicira import NeutronServicePlugin
+from neutron.plugins.vmware.plugins import base
+from neutron.plugins.vmware.plugins import service
 
-NsxPlugin = NeutronPlugin.NvpPluginV2
-NsxServicePlugin = NeutronServicePlugin.NvpAdvancedPlugin
+NsxPlugin = base.NsxPluginV2
+NsxServicePlugin = service.NsxAdvancedPlugin

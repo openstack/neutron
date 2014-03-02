@@ -22,8 +22,8 @@ from neutron.api.v2 import attributes
 from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.extensions import agent
-from neutron.plugins.nicira.api_client.version import Version
-from neutron.plugins.nicira.common import sync
+from neutron.plugins.vmware.api_client.version import Version
+from neutron.plugins.vmware.common import sync
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit.vmware.apiclient import fake
 from neutron.tests.unit.vmware import get_fake_conf

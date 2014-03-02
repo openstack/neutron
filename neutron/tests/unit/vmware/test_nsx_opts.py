@@ -21,13 +21,13 @@ from oslo.config import cfg
 from neutron.common import config as q_config
 from neutron.manager import NeutronManager
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.api_client import client
-from neutron.plugins.nicira.api_client import version
-from neutron.plugins.nicira.common import config  # noqa
-from neutron.plugins.nicira.common import exceptions
-from neutron.plugins.nicira.common import sync
-from neutron.plugins.nicira import nsx_cluster
-from neutron.plugins.nicira.nsxlib import lsn as lsnlib
+from neutron.plugins.vmware.api_client import client
+from neutron.plugins.vmware.api_client import version
+from neutron.plugins.vmware.common import config  # noqa
+from neutron.plugins.vmware.common import exceptions
+from neutron.plugins.vmware.common import sync
+from neutron.plugins.vmware import nsx_cluster
+from neutron.plugins.vmware.nsxlib import lsn as lsnlib
 from neutron.tests import base
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import PLUGIN_NAME

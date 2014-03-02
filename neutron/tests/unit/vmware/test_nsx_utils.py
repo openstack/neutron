@@ -17,11 +17,11 @@ import mock
 
 from neutron.db import api as db_api
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.common import exceptions as nsx_exc
-from neutron.plugins.nicira.common import nsx_utils
-from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira import nvplib
+from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.common import exceptions as nsx_exc
+from neutron.plugins.vmware.common import nsx_utils
+from neutron.plugins.vmware.common import utils
+from neutron.plugins.vmware import nvplib
 from neutron.tests import base
 from neutron.tests.unit.vmware import nsx_method
 from neutron.tests.unit.vmware.nsxlib import base as nsx_base

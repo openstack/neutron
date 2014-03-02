@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 
-from neutron.plugins.nicira.api_client import exception
-from neutron.plugins.nicira.nsxlib import l2gateway as l2gwlib
-from neutron.plugins.nicira.nsxlib import switch as switchlib
+from neutron.plugins.vmware.api_client import exception
+from neutron.plugins.vmware.nsxlib import l2gateway as l2gwlib
+from neutron.plugins.vmware.nsxlib import switch as switchlib
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
 

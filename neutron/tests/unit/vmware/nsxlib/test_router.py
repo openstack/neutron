@@ -18,12 +18,12 @@ import mock
 
 from neutron.common import exceptions
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.api_client import exception as api_exc
-from neutron.plugins.nicira.api_client.version import Version
-from neutron.plugins.nicira.common import exceptions as nsx_exc
-from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira.nsxlib import router as routerlib
-from neutron.plugins.nicira.nsxlib import switch as switchlib
+from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.api_client.version import Version
+from neutron.plugins.vmware.common import exceptions as nsx_exc
+from neutron.plugins.vmware.common import utils
+from neutron.plugins.vmware.nsxlib import router as routerlib
+from neutron.plugins.vmware.nsxlib import switch as switchlib
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
 

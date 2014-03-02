@@ -11,14 +11,12 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: linb, VMware
 
 import copy
 import json
 
 from neutron.openstack.common import uuidutils
-from neutron.plugins.nicira.vshield.common import exceptions
+from neutron.plugins.vmware.vshield.common import exceptions
 
 
 class FakeVcns(object):

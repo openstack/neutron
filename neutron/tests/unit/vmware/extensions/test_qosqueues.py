@@ -20,9 +20,9 @@ from oslo.config import cfg
 import webob.exc
 
 from neutron import context
-from neutron.plugins.nicira.dbexts import qos_db
-from neutron.plugins.nicira.extensions import qos as ext_qos
-from neutron.plugins.nicira import nsxlib
+from neutron.plugins.vmware.dbexts import qos_db
+from neutron.plugins.vmware.extensions import qos as ext_qos
+from neutron.plugins.vmware import nsxlib
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit.vmware import NSXEXT_PATH
 from neutron.tests.unit.vmware.test_nsx_plugin import NsxPluginV2TestCase

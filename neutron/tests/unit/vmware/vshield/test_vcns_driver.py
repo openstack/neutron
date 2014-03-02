@@ -17,12 +17,12 @@ from eventlet import greenthread
 import mock
 
 from neutron.common import config as n_config
-from neutron.plugins.nicira.vshield.common import constants as vcns_const
-from neutron.plugins.nicira.vshield.common.constants import RouterStatus
-from neutron.plugins.nicira.vshield.tasks.constants import TaskState
-from neutron.plugins.nicira.vshield.tasks.constants import TaskStatus
-from neutron.plugins.nicira.vshield.tasks import tasks as ts
-from neutron.plugins.nicira.vshield import vcns_driver
+from neutron.plugins.vmware.vshield.common import constants as vcns_const
+from neutron.plugins.vmware.vshield.common.constants import RouterStatus
+from neutron.plugins.vmware.vshield.tasks.constants import TaskState
+from neutron.plugins.vmware.vshield.tasks.constants import TaskStatus
+from neutron.plugins.vmware.vshield.tasks import tasks as ts
+from neutron.plugins.vmware.vshield import vcns_driver
 from neutron.tests import base
 from neutron.tests.unit.vmware import get_fake_conf
 from neutron.tests.unit.vmware import VCNS_NAME

@@ -19,8 +19,8 @@ import mock
 
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.plugins.nicira.common import utils
-from neutron.plugins.nicira.nsxlib import switch as switchlib
+from neutron.plugins.vmware.common import utils
+from neutron.plugins.vmware.nsxlib import switch as switchlib
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
 

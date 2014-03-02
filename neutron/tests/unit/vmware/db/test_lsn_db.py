@@ -17,8 +17,8 @@ from sqlalchemy import orm
 
 from neutron import context
 from neutron.db import api as db
-from neutron.plugins.nicira.common import exceptions as p_exc
-from neutron.plugins.nicira.dbexts import lsn_db
+from neutron.plugins.vmware.common import exceptions as p_exc
+from neutron.plugins.vmware.dbexts import lsn_db
 from neutron.tests import base
 
 
