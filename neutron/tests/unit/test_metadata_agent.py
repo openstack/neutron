@@ -200,10 +200,12 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
         req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs,
                         method=method, body=body)
-        resp = mock.Mock(status=response_code)
+        resp = mock.MagicMock(status=response_code)
+        req.response = resp
         with mock.patch.object(self.handler, '_sign_instance_id') as sign:
             sign.return_value = 'signed'
             with mock.patch('httplib2.Http') as mock_http:
+                resp.__getitem__.return_value = "text/plain"
                 mock_http.return_value.request.return_value = (resp, 'content')
 
                 retval = self.handler._proxy_request('the_id', 'tenant_id',
@@ -225,11 +227,14 @@ class TestMetadataProxyHandler(base.BaseTestCase):
                 return retval
 
     def test_proxy_request_post(self):
-        self.assertEqual('content',
-                         self._proxy_request_test_helper(method='POST'))
+        response = self._proxy_request_test_helper(method='POST')
+        self.assertEqual(response.content_type, "text/plain")
+        self.assertEqual(response.body, 'content')
 
     def test_proxy_request_200(self):
-        self.assertEqual('content', self._proxy_request_test_helper(200))
+        response = self._proxy_request_test_helper(200)
+        self.assertEqual(response.content_type, "text/plain")
+        self.assertEqual(response.body, 'content')
 
     def test_proxy_request_403(self):
         self.assertIsInstance(self._proxy_request_test_helper(403),

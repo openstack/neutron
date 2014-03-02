@@ -95,8 +95,9 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
     def test_proxy_request_router_200(self):
         self.handler.router_id = 'router_id'
 
-        resp = mock.Mock(status=200)
+        resp = mock.MagicMock(status=200)
         with mock.patch('httplib2.Http') as mock_http:
+            resp.__getitem__.return_value = "text/plain"
             mock_http.return_value.request.return_value = (resp, 'content')
 
             retval = self.handler._proxy_request('192.168.1.1',
@@ -118,14 +119,16 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                 )]
             )
 
-            self.assertEqual(retval, 'content')
+            self.assertEqual(retval.headers['Content-Type'], 'text/plain')
+            self.assertEqual(retval.body, 'content')
 
     def test_proxy_request_network_200(self):
         self.handler.network_id = 'network_id'
 
-        resp = mock.Mock(status=200)
+        resp = mock.MagicMock(status=200)
         with mock.patch('httplib2.Http') as mock_http:
-            mock_http.return_value.request.return_value = (resp, 'content')
+            resp.__getitem__.return_value = "application/json"
+            mock_http.return_value.request.return_value = (resp, '{}')
 
             retval = self.handler._proxy_request('192.168.1.1',
                                                  'GET',
@@ -146,7 +149,9 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
                 )]
             )
 
-            self.assertEqual(retval, 'content')
+            self.assertEqual(retval.headers['Content-Type'],
+                             'application/json')
+            self.assertEqual(retval.body, '{}')
 
     def test_proxy_request_network_404(self):
         self.handler.network_id = 'network_id'
