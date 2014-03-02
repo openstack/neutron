@@ -29,7 +29,6 @@ class TestEswitchAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestEswitchAgent, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         self.addCleanup(mock.patch.stopall)
         # Avoid rpc initialization for unit tests
         cfg.CONF.set_override('rpc_backend',
