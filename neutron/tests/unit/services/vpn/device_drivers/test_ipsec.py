@@ -14,6 +14,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import copy
 import mock
 
 from neutron.openstack.common import uuidutils
@@ -133,6 +134,44 @@ class TestIPsecDeviceDriver(base.BaseTestCase):
              'ipsec_site_connections': {},
              'updated_pending_status': True,
              'id': FAKE_VPN_SERVICE['id']}])
+
+    def fake_ensure_process(self, process_id, vpnservice=None):
+        process = self.driver.processes.get(process_id)
+        if not process:
+            process = mock.Mock()
+            process.vpnservice = FAKE_VPN_SERVICE
+            process.connection_status = {}
+            process.status = constants.ACTIVE
+            process.updated_pending_status = True
+            self.driver.processes[process_id] = process
+        elif vpnservice:
+            process.vpnservice = vpnservice
+            process.update_vpnservice(vpnservice)
+        return process
+
+    def test_sync_update_vpnservice(self):
+        with mock.patch.object(self.driver,
+                               'ensure_process') as ensure_process:
+            ensure_process.side_effect = self.fake_ensure_process
+            new_vpn_service = FAKE_VPN_SERVICE
+            updated_vpn_service = copy.deepcopy(new_vpn_service)
+            updated_vpn_service['ipsec_site_connections'].append(
+                {'peer_cidrs': ['60.0.0.0/24',
+                                '70.0.0.0/24']})
+            context = mock.Mock()
+            self.driver.process_status_cache = {}
+            self.driver.agent_rpc.get_vpn_services_on_host.return_value = [
+                new_vpn_service]
+            self.driver.sync(context, [])
+            process = self.driver.processes[FAKE_ROUTER_ID]
+            self.assertEqual(process.vpnservice, new_vpn_service)
+            self.driver.agent_rpc.get_vpn_services_on_host.return_value = [
+                updated_vpn_service]
+            self.driver.sync(context, [])
+            process = self.driver.processes[FAKE_ROUTER_ID]
+            process.update_vpnservice.assert_called_once_with(
+                updated_vpn_service)
+            self.assertEqual(process.vpnservice, updated_vpn_service)
 
     def test_sync_removed(self):
         self.driver.agent_rpc.get_vpn_services_on_host.return_value = []
