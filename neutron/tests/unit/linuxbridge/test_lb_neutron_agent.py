@@ -899,7 +899,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                            'dev', 'vxlan-1', 'dst', 'agent_ip'],
                           root_helper=self.root_helper,
                           check_exit_code=False),
-                mock.call(['ip', 'neigh', 'add', 'port_ip', 'lladdr',
+                mock.call(['ip', 'neigh', 'replace', 'port_ip', 'lladdr',
                            'port_mac', 'dev', 'vxlan-1', 'nud', 'permanent'],
                           root_helper=self.root_helper,
                           check_exit_code=False),
@@ -980,7 +980,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             self.lb_rpc.fdb_update(None, fdb_entries)
 
             expected = [
-                mock.call(['ip', 'neigh', 'add', 'port_ip_2', 'lladdr',
+                mock.call(['ip', 'neigh', 'replace', 'port_ip_2', 'lladdr',
                            'port_mac', 'dev', 'vxlan-1', 'nud', 'permanent'],
                           root_helper=self.root_helper,
                           check_exit_code=False),

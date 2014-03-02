@@ -566,7 +566,7 @@ class LinuxBridgeManager:
         return (agent_ip in entries and mac in entries)
 
     def add_fdb_ip_entry(self, mac, ip, interface):
-        utils.execute(['ip', 'neigh', 'add', ip, 'lladdr', mac,
+        utils.execute(['ip', 'neigh', 'replace', ip, 'lladdr', mac,
                        'dev', interface, 'nud', 'permanent'],
                       root_helper=self.root_helper,
                       check_exit_code=False)
