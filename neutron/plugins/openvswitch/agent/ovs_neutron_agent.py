@@ -1333,6 +1333,7 @@ def main():
     cfg.CONF.register_opts(ip_lib.OPTS)
     cfg.CONF(project='neutron')
     logging_config.setup_logging(cfg.CONF)
+    q_utils.log_opt_values(LOG)
     legacy.modernize_quantum_config(cfg.CONF)
 
     try:
