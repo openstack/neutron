@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
 import os
 
 import fixtures
@@ -127,7 +128,27 @@ class TestNecV2HTTPResponse(test_plugin.TestV2HTTPResponse,
 
 
 class TestNecPortsV2(test_plugin.TestPortsV2, NecPluginV2TestCase):
-    pass
+
+    def test_delete_ports(self):
+        with self.subnet() as subnet:
+            with contextlib.nested(
+                self.port(subnet=subnet, device_owner='test-owner',
+                          no_delete=True),
+                self.port(subnet=subnet, device_owner='test-owner',
+                          no_delete=True),
+                self.port(subnet=subnet, device_owner='other-owner'),
+            ) as (p1, p2, p3):
+                network_id = subnet['subnet']['network_id']
+                filters = {'network_id': [network_id],
+                           'device_owner': ['test-owner']}
+                self.plugin.delete_ports(self.context, filters)
+
+                self._show('ports', p1['port']['id'],
+                           expected_code=webob.exc.HTTPNotFound.code)
+                self._show('ports', p2['port']['id'],
+                           expected_code=webob.exc.HTTPNotFound.code)
+                self._show('ports', p3['port']['id'],
+                           expected_code=webob.exc.HTTPOk.code)
 
 
 class TestNecNetworksV2(test_plugin.TestNetworksV2, NecPluginV2TestCase):

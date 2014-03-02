@@ -31,6 +31,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
 from neutron.db import external_net_db
 from neutron.db import l3_rpc_base
+from neutron.db import models_v2
 from neutron.db import portbindings_base
 from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
@@ -645,6 +646,18 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._delete_port_security_group_bindings(context, id)
             super(NECPluginV2, self).delete_port(context, id)
         self.notify_security_groups_member_updated(context, port)
+
+    def delete_ports(self, context, filters):
+        # Note(amotoki): Override the superclass method to avoid
+        # a long transaction over external API calls.
+        # TODO(amotoki): Need to revisit after bug 1282925 is addressed.
+        query = context.session.query(
+            models_v2.Port).enable_eagerloads(False)
+        query = self._apply_filters_to_query(
+            query, models_v2.Port, filters)
+        port_ids = [p['id'] for p in query]
+        for port_id in port_ids:
+            self.delete_port(context, port_id)
 
 
 class NECPluginV2AgentNotifierApi(proxy.RpcProxy,
