@@ -39,6 +39,7 @@ class TestConfig(object):
     use_ssl = False
     key_file = None
     cert_file = None
+    insecure_ssl = False
 
 
 def _ofc(id):
