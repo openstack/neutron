@@ -934,15 +934,45 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
             self.br_mgr.remove_empty_bridges()
         return resync
 
-    def scan_devices(self, registered_devices, updated_devices):
-        curr_devices = self.br_mgr.get_tap_devices()
+    def scan_devices(self, previous, sync):
         device_info = {}
-        device_info['current'] = curr_devices
-        device_info['added'] = curr_devices - registered_devices
-        # we don't want to process updates for devices that don't exist
-        device_info['updated'] = updated_devices & curr_devices
-        # we need to clean up after devices are removed
-        device_info['removed'] = registered_devices - curr_devices
+
+        # Save and reinitialise the set variable that the port_update RPC uses.
+        # This should be thread-safe as the greenthread should not yield
+        # between these two statements.
+        updated_devices = self.updated_devices
+        self.updated_devices = set()
+
+        current_devices = self.br_mgr.get_tap_devices()
+        device_info['current'] = current_devices
+
+        if previous is None:
+            # This is the first iteration of daemon_loop().
+            previous = {'added': set(),
+                        'current': set(),
+                        'updated': set(),
+                        'removed': set()}
+
+        if sync:
+            # This is the first iteration, or the previous one had a problem.
+            # Re-add all existing devices.
+            device_info['added'] = current_devices
+
+            # Retry cleaning devices that may not have been cleaned properly.
+            # And clean any that disappeared since the previous iteration.
+            device_info['removed'] = (previous['removed'] | previous['current']
+                                      - current_devices)
+
+            # Retry updating devices that may not have been updated properly.
+            # And any that were updated since the previous iteration.
+            # Only update devices that currently exist.
+            device_info['updated'] = (previous['updated'] | updated_devices
+                                      & current_devices)
+        else:
+            device_info['added'] = current_devices - previous['current']
+            device_info['removed'] = previous['current'] - current_devices
+            device_info['updated'] = updated_devices & current_devices
+
         return device_info
 
     def _device_info_has_changes(self, device_info):
@@ -951,39 +981,27 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                 or device_info.get('removed'))
 
     def daemon_loop(self):
-        sync = True
-        devices = set()
-
         LOG.info(_("LinuxBridge Agent RPC Daemon Started!"))
+        device_info = None
+        sync = True
 
         while True:
             start = time.time()
+
+            device_info = self.scan_devices(previous=device_info, sync=sync)
+
             if sync:
                 LOG.info(_("Agent out of sync with plugin!"))
-                devices.clear()
                 sync = False
-            device_info = {}
-            # Save updated devices dict to perform rollback in case
-            # resync would be needed, and then clear self.updated_devices.
-            # As the greenthread should not yield between these
-            # two statements, this will should be thread-safe.
-            updated_devices_copy = self.updated_devices
-            self.updated_devices = set()
-            try:
-                device_info = self.scan_devices(devices, updated_devices_copy)
-                if self._device_info_has_changes(device_info):
-                    LOG.debug(_("Agent loop found changes! %s"), device_info)
-                    # If treat devices fails - indicates must resync with
-                    # plugin
+
+            if self._device_info_has_changes(device_info):
+                LOG.debug(_("Agent loop found changes! %s"), device_info)
+                try:
                     sync = self.process_network_devices(device_info)
-                    devices = device_info['current']
-            except Exception:
-                LOG.exception(_("Error in agent loop. Devices info: %s"),
-                              device_info)
-                sync = True
-                # Restore devices that were removed from this set earlier
-                # without overwriting ones that may have arrived since.
-                self.updated_devices |= updated_devices_copy
+                except Exception:
+                    LOG.exception(_("Error in agent loop. Devices info: %s"),
+                                  device_info)
+                    sync = True
 
             # sleep till end of polling interval
             elapsed = (time.time() - start)
