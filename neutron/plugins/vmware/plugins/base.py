@@ -1290,6 +1290,13 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             LOG.warn(_("Update port request: %s"), port)
             nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, id)
+            # Convert Neutron security groups identifiers into NSX security
+            # profiles identifiers
+            nsx_sec_profile_ids = [
+                nsx_utils.get_nsx_security_group_id(
+                    context.session, self.cluster, neutron_sg_id) for
+                neutron_sg_id in (ret_port[ext_sg.SECURITYGROUPS] or [])]
+
             if nsx_port_id:
                 try:
                     switchlib.update_port(
@@ -1301,7 +1308,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         ret_port['mac_address'],
                         ret_port['fixed_ips'],
                         ret_port[psec.PORTSECURITY],
-                        ret_port[ext_sg.SECURITYGROUPS],
+                        nsx_sec_profile_ids,
                         ret_port[qos.QUEUE],
                         ret_port.get(mac_ext.MAC_LEARNING),
                         ret_port.get(addr_pair.ADDRESS_PAIRS))
