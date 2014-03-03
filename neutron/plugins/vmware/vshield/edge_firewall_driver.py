@@ -41,7 +41,7 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
             return VSE_FWAAS_DENY
         else:
             msg = _("Invalid action value %s in a firewall rule") % action
-            raise vcns_exc.BadRequest(resource='firewall_rule', msg=msg)
+            raise vcns_exc.VcnsBadRequest(resource='firewall_rule', msg=msg)
 
     def _restore_firewall_action(self, action):
         if action == VSE_FWAAS_ALLOW:
@@ -51,7 +51,7 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
         else:
             msg = (_("Invalid action value %s in "
                      "a vshield firewall rule") % action)
-            raise vcns_exc.BadRequest(resource='firewall_rule', msg=msg)
+            raise vcns_exc.VcnsBadRequest(resource='firewall_rule', msg=msg)
 
     def _get_port_range_from_min_max_ports(self, min_port, max_port):
         if not min_port:
@@ -351,4 +351,4 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
         else:
             msg = _("Can't execute insert rule operation "
                     "without reference rule_id")
-            raise vcns_exc.BadRequest(resource='firewall_rule', msg=msg)
+            raise vcns_exc.VcnsBadRequest(resource='firewall_rule', msg=msg)
