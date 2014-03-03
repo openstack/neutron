@@ -1618,20 +1618,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             res = port_req.get_response(self.api)
             self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
-    def test_update_fixed_ip_lease_expiration_invalid_address(self):
-        cfg.CONF.set_override('dhcp_lease_duration', 10)
-        plugin = NeutronManager.get_plugin()
-        with self.subnet() as subnet:
-            with self.port(subnet=subnet) as port:
-                update_context = context.Context('', port['port']['tenant_id'])
-                with mock.patch.object(db_base_plugin_v2, 'LOG') as log:
-                    plugin.update_fixed_ip_lease_expiration(
-                        update_context,
-                        subnet['subnet']['network_id'],
-                        '255.255.255.0',
-                        120)
-                    self.assertTrue(log.mock_calls)
-
     def test_max_fixed_ips_exceeded(self):
         with self.subnet(gateway_ip='10.0.0.3',
                          cidr='10.0.0.0/24') as subnet:
@@ -2681,7 +2667,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  allocation_pools=allocation_pools)
 
     def test_subnet_with_allocation_range(self):
-        cfg.CONF.set_override('dhcp_lease_duration', 0)
         with self.network() as network:
             net_id = network['network']['id']
             data = {'subnet': {'network_id': net_id,
@@ -2711,7 +2696,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             port = self.deserialize(self.fmt, res)
             # delete the port
             self._delete('ports', port['port']['id'])
-        cfg.CONF.set_override('dhcp_lease_duration', 120)
 
     def test_create_subnet_with_none_gateway_allocation_pool(self):
         cidr = '10.0.0.0/24'
