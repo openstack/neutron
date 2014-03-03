@@ -16,6 +16,7 @@
 from neutron.extensions import portbindings
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import test_extension_allowedaddresspairs as test_pair
 from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
@@ -72,4 +73,9 @@ class TestOpenvswitchPortBindingNoSG(TestOpenvswitchPortBinding):
 class TestOpenvswitchPortBindingHost(
     OpenvswitchPluginV2TestCase,
     test_bindings.PortBindingsHostTestCaseMixin):
+    pass
+
+
+class TestOpenvswitchAllowedAddressPairs(OpenvswitchPluginV2TestCase,
+                                         test_pair.TestAllowedAddressPairs):
     pass

@@ -17,7 +17,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes as attr
-from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -126,13 +125,36 @@ class AllowedAddressPairsMixin(object):
     def is_address_pairs_attribute_updated(self, port, update_attrs):
         """Check if the address pairs attribute is being updated.
 
-        This method returns a flag which indicates whether there is an update
-        and therefore a port update notification should be sent to agents or
-        third party controllers.
+        Returns True if there is an update. This can be used to decide
+        if a port update notification should be sent to agents or third
+        party controllers.
         """
+
         new_pairs = update_attrs.get(addr_pair.ADDRESS_PAIRS)
-        if new_pairs and not utils.compare_elements(
-            port.get(addr_pair.ADDRESS_PAIRS), new_pairs):
-            return True
+        if new_pairs is None:
+            return False
+        old_pairs = port.get(addr_pair.ADDRESS_PAIRS)
+
         # Missing or unchanged address pairs in attributes mean no update
+        return new_pairs != old_pairs
+
+    def update_address_pairs_on_port(self, context, port_id, port,
+                                     original_port, updated_port):
+        """Update allowed address pairs on port.
+
+        Returns True if an update notification is required. Notification
+        is not done here because other changes on the port may need
+        notification. This method is expected to be called within
+        a transaction.
+        """
+        new_pairs = port['port'].get(addr_pair.ADDRESS_PAIRS)
+
+        if self.is_address_pairs_attribute_updated(original_port,
+                                                   port['port']):
+            updated_port[addr_pair.ADDRESS_PAIRS] = new_pairs
+            self._delete_allowed_address_pairs(context, port_id)
+            self._process_create_allowed_address_pairs(
+                context, updated_port, new_pairs)
+            return True
+
         return False
