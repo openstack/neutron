@@ -28,9 +28,9 @@ from neutron.openstack.common import timeutils
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import nsx_utils
+from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware.nsxlib import router as routerlib
 from neutron.plugins.vmware.nsxlib import switch as switchlib
-from neutron.plugins.vmware import nvplib
 
 # Maximum page size for a single request
 # NOTE(salv-orlando): This might become a version-dependent map should the
@@ -194,14 +194,14 @@ def _start_loopingcall(min_chunk_size, state_sync_interval, func):
 
 class NvpSynchronizer():
 
-    LS_URI = nvplib._build_uri_path(
-        nvplib.LSWITCH_RESOURCE, fields='uuid,tags,fabric_status',
+    LS_URI = nsxlib._build_uri_path(
+        switchlib.LSWITCH_RESOURCE, fields='uuid,tags,fabric_status',
         relations='LogicalSwitchStatus')
-    LR_URI = nvplib._build_uri_path(
+    LR_URI = nsxlib._build_uri_path(
         routerlib.LROUTER_RESOURCE, fields='uuid,tags,fabric_status',
         relations='LogicalRouterStatus')
-    LP_URI = nvplib._build_uri_path(
-        nvplib.LSWITCHPORT_RESOURCE,
+    LP_URI = nsxlib._build_uri_path(
+        switchlib.LSWITCHPORT_RESOURCE,
         parent_resource_id='*',
         fields='uuid,tags,fabric_status_up',
         relations='LogicalPortStatus')
@@ -494,7 +494,7 @@ class NvpSynchronizer():
                           'max_page_size': MAX_PAGE_SIZE})
             # Only the first request might return the total size,
             # subsequent requests will definetely not
-            results, cursor, total_size = nvplib.get_single_query_page(
+            results, cursor, total_size = nsxlib.get_single_query_page(
                 uri, self._cluster, cursor,
                 min(page_size, MAX_PAGE_SIZE))
             for _req in range(num_requests - 1):
@@ -505,7 +505,7 @@ class NvpSynchronizer():
                 # resource type is below this threshold
                 if not cursor:
                     break
-                req_results, cursor = nvplib.get_single_query_page(
+                req_results, cursor = nsxlib.get_single_query_page(
                     uri, self._cluster, cursor,
                     min(page_size, MAX_PAGE_SIZE))[:2]
                 results.extend(req_results)

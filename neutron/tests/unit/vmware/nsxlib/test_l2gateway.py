@@ -15,6 +15,7 @@
 #
 
 from neutron.plugins.vmware.api_client import exception
+from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware.nsxlib import l2gateway as l2gwlib
 from neutron.plugins.vmware.nsxlib import switch as switchlib
 from neutron.tests.unit import test_api_v2
@@ -135,12 +136,12 @@ class L2GatewayTestCase(base.NsxlibTestCase):
         l2gwlib.plug_l2_gw_service(
             self.fake_cluster, lswitch['uuid'],
             lport['uuid'], gw_id)
-        uri = l2gwlib._build_uri_path(switchlib.LSWITCHPORT_RESOURCE,
-                                      lport['uuid'],
-                                      lswitch['uuid'],
-                                      is_attachment=True)
-        resp_obj = l2gwlib.do_request("GET", uri,
-                                      cluster=self.fake_cluster)
+        uri = nsxlib._build_uri_path(switchlib.LSWITCHPORT_RESOURCE,
+                                     lport['uuid'],
+                                     lswitch['uuid'],
+                                     is_attachment=True)
+        resp_obj = nsxlib.do_request("GET", uri,
+                                     cluster=self.fake_cluster)
         self.assertIn('LogicalPortAttachment', resp_obj)
         self.assertEqual(resp_obj['LogicalPortAttachment']['type'],
                          'L2GatewayAttachment')

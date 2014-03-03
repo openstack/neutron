@@ -21,7 +21,7 @@ from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import nsx_utils
 from neutron.plugins.vmware.common import utils
-from neutron.plugins.vmware import nvplib
+from neutron.plugins.vmware import nsxlib
 from neutron.tests import base
 from neutron.tests.unit.vmware import nsx_method
 from neutron.tests.unit.vmware.nsxlib import base as nsx_base
@@ -66,7 +66,7 @@ class NsxUtilsTestCase(base.BaseTestCase):
                               module_name='dbexts.db')).start()
 
     def _verify_get_nsx_switch_and_port_id(self, exp_ls_uuid, exp_lp_uuid):
-        # The nvplib and db calls are  mocked, therefore the cluster
+        # The nsxlib and db calls are mocked, therefore the cluster
         # and the neutron_port_id parameters can be set to None
         ls_uuid, lp_uuid = nsx_utils.get_nsx_switch_and_port_id(
             db_api.get_session(), None, None)
@@ -74,7 +74,7 @@ class NsxUtilsTestCase(base.BaseTestCase):
         self.assertEqual(exp_lp_uuid, lp_uuid)
 
     def _verify_get_nsx_switch_ids(self, exp_ls_uuids):
-        # The nvplib and db calls are  mocked, therefore the cluster
+        # The nsxlib and db calls are mocked, therefore the cluster
         # and the neutron_router_id parameters can be set to None
         ls_uuids = nsx_utils.get_nsx_switch_ids(
             db_api.get_session(), None, None)
@@ -209,27 +209,27 @@ class NsxUtilsTestCase(base.BaseTestCase):
         self.assertEqual(len(result), utils.MAX_DISPLAY_NAME_LEN)
 
     def test_build_uri_path_plain(self):
-        result = nvplib._build_uri_path('RESOURCE')
-        self.assertEqual("%s/%s" % (nvplib.URI_PREFIX, 'RESOURCE'), result)
+        result = nsxlib._build_uri_path('RESOURCE')
+        self.assertEqual("%s/%s" % (nsxlib.URI_PREFIX, 'RESOURCE'), result)
 
     def test_build_uri_path_with_field(self):
-        result = nvplib._build_uri_path('RESOURCE', fields='uuid')
-        expected = "%s/%s?fields=uuid" % (nvplib.URI_PREFIX, 'RESOURCE')
+        result = nsxlib._build_uri_path('RESOURCE', fields='uuid')
+        expected = "%s/%s?fields=uuid" % (nsxlib.URI_PREFIX, 'RESOURCE')
         self.assertEqual(expected, result)
 
     def test_build_uri_path_with_filters(self):
         filters = {"tag": 'foo', "tag_scope": "scope_foo"}
-        result = nvplib._build_uri_path('RESOURCE', filters=filters)
+        result = nsxlib._build_uri_path('RESOURCE', filters=filters)
         expected = (
             "%s/%s?tag_scope=scope_foo&tag=foo" %
-            (nvplib.URI_PREFIX, 'RESOURCE'))
+            (nsxlib.URI_PREFIX, 'RESOURCE'))
         self.assertEqual(expected, result)
 
     def test_build_uri_path_with_resource_id(self):
         res = 'RESOURCE'
         res_id = 'resource_id'
-        result = nvplib._build_uri_path(res, resource_id=res_id)
-        expected = "%s/%s/%s" % (nvplib.URI_PREFIX, res, res_id)
+        result = nsxlib._build_uri_path(res, resource_id=res_id)
+        expected = "%s/%s/%s" % (nsxlib.URI_PREFIX, res, res_id)
         self.assertEqual(expected, result)
 
     def test_build_uri_path_with_parent_and_resource_id(self):
@@ -238,10 +238,10 @@ class NsxUtilsTestCase(base.BaseTestCase):
         res = '%s/%s' % (child_res, parent_res)
         par_id = 'parent_resource_id'
         res_id = 'resource_id'
-        result = nvplib._build_uri_path(
+        result = nsxlib._build_uri_path(
             res, parent_resource_id=par_id, resource_id=res_id)
         expected = ("%s/%s/%s/%s/%s" %
-                    (nvplib.URI_PREFIX, parent_res, par_id, child_res, res_id))
+                    (nsxlib.URI_PREFIX, parent_res, par_id, child_res, res_id))
         self.assertEqual(expected, result)
 
     def test_build_uri_path_with_attachment(self):
@@ -250,10 +250,10 @@ class NsxUtilsTestCase(base.BaseTestCase):
         res = '%s/%s' % (child_res, parent_res)
         par_id = 'parent_resource_id'
         res_id = 'resource_id'
-        result = nvplib._build_uri_path(res, parent_resource_id=par_id,
+        result = nsxlib._build_uri_path(res, parent_resource_id=par_id,
                                         resource_id=res_id, is_attachment=True)
         expected = ("%s/%s/%s/%s/%s/%s" %
-                    (nvplib.URI_PREFIX, parent_res,
+                    (nsxlib.URI_PREFIX, parent_res,
                      par_id, child_res, res_id, 'attachment'))
         self.assertEqual(expected, result)
 
@@ -263,10 +263,10 @@ class NsxUtilsTestCase(base.BaseTestCase):
         res = '%s/%s' % (child_res, parent_res)
         par_id = 'parent_resource_id'
         res_id = 'resource_id'
-        result = nvplib._build_uri_path(res, parent_resource_id=par_id,
+        result = nsxlib._build_uri_path(res, parent_resource_id=par_id,
                                         resource_id=res_id, extra_action='doh')
         expected = ("%s/%s/%s/%s/%s/%s" %
-                    (nvplib.URI_PREFIX, parent_res,
+                    (nsxlib.URI_PREFIX, parent_res,
                      par_id, child_res, res_id, 'doh'))
         self.assertEqual(expected, result)
 
@@ -319,12 +319,12 @@ class ClusterManagementTestCase(nsx_base.NsxlibTestCase):
                                'request',
                                side_effect=api_exc.ReadOnlyMode):
             self.assertRaises(nsx_exc.MaintenanceInProgress,
-                              nvplib.do_request, cluster=self.fake_cluster)
+                              nsxlib.do_request, cluster=self.fake_cluster)
 
     def test_cluster_method_not_implemented(self):
         self.assertRaises(api_exc.NsxApiException,
-                          nvplib.do_request,
-                          nvplib.HTTP_GET,
-                          nvplib._build_uri_path('MY_FAKE_RESOURCE',
+                          nsxlib.do_request,
+                          nsxlib.HTTP_GET,
+                          nsxlib._build_uri_path('MY_FAKE_RESOURCE',
                                                  resource_id='foo'),
                           cluster=self.fake_cluster)

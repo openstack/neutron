@@ -24,7 +24,7 @@ from oslo.config import cfg
 from neutron.common import config
 from neutron.plugins.vmware.common import config as nsx_config  # noqa
 from neutron.plugins.vmware.common import nsx_utils
-from neutron.plugins.vmware import nvplib
+from neutron.plugins.vmware import nsxlib
 
 config.setup_logging(cfg.CONF)
 
@@ -40,7 +40,7 @@ def get_nsx_controllers(cluster):
 
 def config_helper(config_entity, cluster):
     try:
-        return nvplib.do_request('GET',
+        return nsxlib.do_request('GET',
                                  "/ws.v1/%s?fields=uuid" % config_entity,
                                  cluster=cluster).get('results', [])
     except Exception as e:
@@ -75,7 +75,7 @@ def get_transport_nodes(cluster):
 
 def is_transport_node_connected(cluster, node_uuid):
     try:
-        return nvplib.do_request('GET',
+        return nsxlib.do_request('GET',
                                  "/ws.v1/transport-node/%s/status" % node_uuid,
                                  cluster=cluster)['connection']['connected']
     except Exception as e:

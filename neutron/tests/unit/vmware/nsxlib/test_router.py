@@ -22,6 +22,7 @@ from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.api_client.version import Version
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import utils
+from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware.nsxlib import router as routerlib
 from neutron.plugins.vmware.nsxlib import switch as switchlib
 from neutron.tests.unit import test_api_v2
@@ -46,11 +47,10 @@ class TestNatRules(base.NsxlibTestCase):
                 self.fake_cluster, lrouter['uuid'], '10.0.0.99',
                 match_criteria={'destination_ip_addresses':
                                 '192.168.0.5'})
-            uri = routerlib._build_uri_path(routerlib.LROUTERNAT_RESOURCE,
-                                            nat_rule['uuid'],
-                                            lrouter['uuid'])
-            resp_obj = routerlib.do_request(
-                "GET", uri, cluster=self.fake_cluster)
+            uri = nsxlib._build_uri_path(routerlib.LROUTERNAT_RESOURCE,
+                                         nat_rule['uuid'],
+                                         lrouter['uuid'])
+            resp_obj = nsxlib.do_request("GET", uri, cluster=self.fake_cluster)
             self.assertEqual('DestinationNatRule', resp_obj['type'])
             self.assertEqual('192.168.0.5',
                              resp_obj['match']['destination_ip_addresses'])

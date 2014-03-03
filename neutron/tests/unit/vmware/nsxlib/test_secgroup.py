@@ -15,8 +15,8 @@
 #
 
 from neutron.common import exceptions
+from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware.nsxlib import secgroup as secgrouplib
-from neutron.plugins.vmware import nvplib as nsx_utils
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit.vmware.nsxlib import base
 
@@ -28,10 +28,10 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
     def test_create_and_get_security_profile(self):
         sec_prof = secgrouplib.create_security_profile(
             self.fake_cluster, _uuid(), 'pippo', {'name': 'test'})
-        sec_prof_res = secgrouplib.do_request(
+        sec_prof_res = nsxlib.do_request(
             secgrouplib.HTTP_GET,
-            nsx_utils._build_uri_path('security-profile',
-                                      resource_id=sec_prof['uuid']),
+            nsxlib._build_uri_path('security-profile',
+                                   resource_id=sec_prof['uuid']),
             cluster=self.fake_cluster)
         self.assertEqual(sec_prof['uuid'], sec_prof_res['uuid'])
         # Check for builtin rules
@@ -41,10 +41,10 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
     def test_create_and_get_default_security_profile(self):
         sec_prof = secgrouplib.create_security_profile(
             self.fake_cluster, _uuid(), 'pippo', {'name': 'default'})
-        sec_prof_res = nsx_utils.do_request(
+        sec_prof_res = nsxlib.do_request(
             secgrouplib.HTTP_GET,
-            nsx_utils._build_uri_path('security-profile',
-                                      resource_id=sec_prof['uuid']),
+            nsxlib._build_uri_path('security-profile',
+                                   resource_id=sec_prof['uuid']),
             cluster=self.fake_cluster)
         self.assertEqual(sec_prof['uuid'], sec_prof_res['uuid'])
         # Check for builtin rules
@@ -60,10 +60,10 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
                      'logical_port_ingress_rules': [ingress_rule]}
         secgrouplib.update_security_group_rules(
             self.fake_cluster, sec_prof['uuid'], new_rules)
-        sec_prof_res = nsx_utils.do_request(
-            secgrouplib.HTTP_GET,
-            nsx_utils._build_uri_path('security-profile',
-                                      resource_id=sec_prof['uuid']),
+        sec_prof_res = nsxlib.do_request(
+            nsxlib.HTTP_GET,
+            nsxlib._build_uri_path('security-profile',
+                                   resource_id=sec_prof['uuid']),
             cluster=self.fake_cluster)
         self.assertEqual(sec_prof['uuid'], sec_prof_res['uuid'])
         # Check for builtin rules
@@ -84,10 +84,10 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
                      'logical_port_ingress_rules': []}
         secgrouplib.update_security_group_rules(
             self.fake_cluster, sec_prof['uuid'], new_rules)
-        sec_prof_res = nsx_utils.do_request(
-            nsx_utils.HTTP_GET,
-            nsx_utils._build_uri_path('security-profile',
-                                      resource_id=sec_prof['uuid']),
+        sec_prof_res = nsxlib.do_request(
+            nsxlib.HTTP_GET,
+            nsxlib._build_uri_path('security-profile',
+                                   resource_id=sec_prof['uuid']),
             cluster=self.fake_cluster)
         self.assertEqual(sec_prof['uuid'], sec_prof_res['uuid'])
         # Check for builtin rules
@@ -111,9 +111,9 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
         secgrouplib.delete_security_profile(
             self.fake_cluster, sec_prof['uuid'])
         self.assertRaises(exceptions.NotFound,
-                          secgrouplib.do_request,
-                          secgrouplib.HTTP_GET,
-                          nsx_utils._build_uri_path(
+                          nsxlib.do_request,
+                          nsxlib.HTTP_GET,
+                          nsxlib._build_uri_path(
                               'security-profile',
                               resource_id=sec_prof['uuid']),
                           cluster=self.fake_cluster)
