@@ -40,7 +40,8 @@ migration_for_plugins = [
     'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
     'neutron.plugins.ryu.ryu_neutron_plugin.RyuNeutronPluginV2',
     'neutron.plugins.vmware.plugin.NsxPlugin',
-    'neutron.plugins.vmware.plugin.NsxServicePlugin'
+    'neutron.plugins.vmware.plugin.NsxServicePlugin',
+    'neutron.plugins.embrane.plugins.embrane_ovs_plugin.EmbraneOvsPlugin'
 ]
 
 from alembic import op

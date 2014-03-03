@@ -37,6 +37,7 @@ migration_for_plugins = [
     'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
     'neutron.plugins.vmware.plugin.NsxPlugin',
     'neutron.plugins.vmware.plugin.NsxServicePlugin',
+    'neutron.plugins.embrane.plugins.embrane_ovs_plugin.EmbraneOvsPlugin'
 ]
 
 from neutron.db import migration
