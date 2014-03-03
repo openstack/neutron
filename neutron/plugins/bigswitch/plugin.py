@@ -47,7 +47,9 @@ on port-attach) on an additional PUT to do a bulk dump of all persistent data.
 import copy
 import re
 
+import eventlet
 from oslo.config import cfg
+from sqlalchemy.orm import exc as sqlexc
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api import extensions as neutron_extensions
@@ -85,7 +87,6 @@ from neutron.plugins.bigswitch import servermanager
 from neutron.plugins.bigswitch.version import version_string_with_vcs
 
 LOG = logging.getLogger(__name__)
-
 
 SYNTAX_ERROR_MESSAGE = _('Syntax error in server config file, aborting plugin')
 METADATA_SERVER_IP = '169.254.169.254'
@@ -379,6 +380,38 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
                     self).get_network(context, port["network_id"])
         return net['tenant_id']
 
+    def async_port_create(self, tenant_id, net_id, port):
+        try:
+            self.servers.rest_create_port(tenant_id, net_id, port)
+        except servermanager.RemoteRestError as e:
+            LOG.error(
+                _("NeutronRestProxyV2: Unable to create port: %s"), e)
+            try:
+                self._set_port_status(port['id'], const.PORT_STATUS_ERROR)
+            except exceptions.PortNotFound:
+                # If port is already gone from DB and there was an error
+                # creating on the backend, everything is already consistent
+                pass
+            return
+        new_status = (const.PORT_STATUS_ACTIVE if port['state'] == 'UP'
+                      else const.PORT_STATUS_DOWN)
+        try:
+            self._set_port_status(port['id'], new_status)
+        except exceptions.PortNotFound:
+            # This port was deleted before the create made it to the controller
+            # so it now needs to be deleted since the normal delete request
+            # would have deleted an non-existent port.
+            self.servers.rest_delete_port(tenant_id, net_id, port['id'])
+
+    def _set_port_status(self, port_id, status):
+        session = db.get_session()
+        try:
+            port = session.query(models_v2.Port).filter_by(id=port_id).one()
+            port['status'] = status
+            session.flush()
+        except sqlexc.NoResultFound:
+            raise exceptions.PortNotFound(port_id=port_id)
+
 
 class NeutronRestProxyV2(NeutronRestProxyV2Base,
                          extradhcpopt_db.ExtraDhcpOptMixin,
@@ -403,6 +436,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         LOG.info(_('NeutronRestProxy: Starting plugin. Version=%s'),
                  version_string_with_vcs())
         pl_config.register_config()
+        self.evpool = eventlet.GreenPool(cfg.CONF.RESTPROXY.thread_pool_size)
 
         # Include the BigSwitch Extensions path in the api_extensions
         neutron_extensions.append_api_extensions_path(extensions.__path__)
@@ -584,29 +618,31 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         with context.session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
+            # set port status to pending. updated after rest call completes
+            port['port']['status'] = const.PORT_STATUS_BUILD
             dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
             new_port = super(NeutronRestProxyV2, self).create_port(context,
                                                                    port)
-            if (portbindings.HOST_ID in port['port']
-                and 'id' in new_port):
-                host_id = port['port'][portbindings.HOST_ID]
-                porttracker_db.put_port_hostid(context, new_port['id'],
-                                               host_id)
-            self._process_port_create_extra_dhcp_opts(context, new_port,
-                                                      dhcp_opts)
-            new_port = self._extend_port_dict_binding(context, new_port)
-            net_tenant_id = self._get_port_net_tenantid(context, new_port)
-            if self.add_meta_server_route:
-                if new_port['device_owner'] == 'network:dhcp':
-                    destination = METADATA_SERVER_IP + '/32'
-                    self._add_host_route(context, destination, new_port)
-
-            # create on network ctrl
-            mapped_port = self._map_state_and_status(new_port)
-            self.servers.rest_create_port(net_tenant_id,
-                                          new_port["network_id"],
-                                          mapped_port)
             self._process_port_create_security_group(context, new_port, sgids)
+        if (portbindings.HOST_ID in port['port']
+            and 'id' in new_port):
+            host_id = port['port'][portbindings.HOST_ID]
+            porttracker_db.put_port_hostid(context, new_port['id'],
+                                           host_id)
+        self._process_port_create_extra_dhcp_opts(context, new_port,
+                                                  dhcp_opts)
+        new_port = self._extend_port_dict_binding(context, new_port)
+        net = super(NeutronRestProxyV2,
+                    self).get_network(context, new_port["network_id"])
+        if self.add_meta_server_route:
+            if new_port['device_owner'] == 'network:dhcp':
+                destination = METADATA_SERVER_IP + '/32'
+                self._add_host_route(context, destination, new_port)
+
+        # create on network ctrl
+        mapped_port = self._map_state_and_status(new_port)
+        self.evpool.spawn_n(self.async_port_create, net["tenant_id"],
+                            new_port["network_id"], mapped_port)
         self.notify_security_groups_member_updated(context, new_port)
         return new_port
 

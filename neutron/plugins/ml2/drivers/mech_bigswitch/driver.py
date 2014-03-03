@@ -16,7 +16,7 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
-
+import eventlet
 from oslo.config import cfg
 
 from neutron import context as ctx
@@ -46,6 +46,7 @@ class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
 
         # register plugin config opts
         pl_config.register_config()
+        self.evpool = eventlet.GreenPool(cfg.CONF.RESTPROXY.thread_pool_size)
         # backend doesn't support bulk operations yet
         self.native_bulk_support = False
 
@@ -70,8 +71,8 @@ class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
         # create port on the network controller
         port = self._prepare_port_for_controller(context)
         if port:
-            self.servers.rest_create_port(port["network"]["tenant_id"],
-                                          port["network"]["id"], port)
+            self.async_port_create(port["network"]["tenant_id"],
+                                   port["network"]["id"], port)
 
     def update_port_postcommit(self, context):
         # update port on the network controller

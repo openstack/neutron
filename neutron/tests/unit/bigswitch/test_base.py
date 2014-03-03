@@ -30,6 +30,7 @@ NOTIFIER = 'neutron.plugins.bigswitch.plugin.AgentNotifierApi'
 CALLBACKS = 'neutron.plugins.bigswitch.plugin.RestProxyCallbacks'
 CERTFETCH = 'neutron.plugins.bigswitch.servermanager.ServerPool._fetch_cert'
 HTTPCON = 'httplib.HTTPConnection'
+SPAWN = 'eventlet.GreenPool.spawn_n'
 
 
 class BigSwitchTestBase(object):
@@ -48,8 +49,10 @@ class BigSwitchTestBase(object):
                                     new=fake_server.HTTPConnectionMock)
         self.plugin_notifier_p = mock.patch(NOTIFIER)
         self.callbacks_p = mock.patch(CALLBACKS)
+        self.spawn_p = mock.patch(SPAWN)
         self.addCleanup(mock.patch.stopall)
         self.addCleanup(db.clear_db)
         self.callbacks_p.start()
         self.plugin_notifier_p.start()
         self.httpPatch.start()
+        self.spawn_p.start()
