@@ -18,8 +18,9 @@
 LOCAL_VLAN_ID = -2
 FLAT_VLAN_ID = -1
 
-# Values for network_type
+# Values for physical network_type
 TYPE_IB = 'ib'
+TYPE_ETH = 'eth'
 
 VIF_TYPE_DIRECT = 'mlnx_direct'
 VIF_TYPE_HOSTDEV = 'hostdev'
