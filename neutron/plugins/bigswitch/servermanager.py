@@ -227,7 +227,7 @@ class ServerPool(object):
         """
         return resp[0] in SUCCESS_CODES
 
-    @utils.synchronized('bsn-rest-call', external=True)
+    @utils.synchronized('bsn-rest-call')
     def rest_call(self, action, resource, data, headers, ignore_codes):
         good_first = sorted(self.servers, key=lambda x: x.failed)
         for active_server in good_first:
