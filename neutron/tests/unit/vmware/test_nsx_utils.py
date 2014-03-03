@@ -84,7 +84,7 @@ class NsxUtilsTestCase(base.BaseTestCase):
         self.assertFalse(exp_ls_uuids)
 
     def _verify_get_nsx_router_id(self, exp_lr_uuid):
-        # The nvplib and db calls are  mocked, therefore the cluster
+        # The nsxlib and db calls are  mocked, therefore the cluster
         # and the neutron_router_id parameters can be set to None
         lr_uuid = nsx_utils.get_nsx_router_id(db_api.get_session(), None, None)
         self.assertEqual(exp_lr_uuid, lr_uuid)
@@ -99,7 +99,7 @@ class NsxUtilsTestCase(base.BaseTestCase):
         self._verify_get_nsx_switch_and_port_id(exp_ls_uuid, exp_lp_uuid)
 
     def test_get_nsx_switch_and_port_id_only_port_db_mapping(self):
-        # This test is representative of the case in which a port with a nvp
+        # This test is representative of the case in which a port with a nsx
         # db mapping in the havana db was upgraded to icehouse
         exp_ls_uuid = uuidutils.generate_uuid()
         exp_lp_uuid = uuidutils.generate_uuid()
@@ -279,7 +279,7 @@ class NsxUtilsTestCase(base.BaseTestCase):
         self.addCleanup(mock.patch.stopall)
 
     def _verify_get_nsx_sec_profile_id(self, exp_sec_prof_uuid):
-        # The nvplib and db calls are  mocked, therefore the cluster
+        # The nsxlib and db calls are  mocked, therefore the cluster
         # and the neutron_id parameters can be set to None
         sec_prof_uuid = nsx_utils.get_nsx_security_group_id(
             db_api.get_session(), None, None)

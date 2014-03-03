@@ -55,7 +55,7 @@ class CacheTestCase(base.BaseTestCase):
     """Test suite providing coverage for the Cache class."""
 
     def setUp(self):
-        self.nsx_cache = sync.NvpCache()
+        self.nsx_cache = sync.NsxCache()
         for lswitch in LSWITCHES:
             self.nsx_cache._uuid_dict_mappings[lswitch['uuid']] = (
                 self.nsx_cache._lswitches)
@@ -242,8 +242,8 @@ class SyncLoopingCallTestCase(base.BaseTestCase):
         # Avoid runs of the synchronization process - just start
         # the looping call
         with mock.patch.object(
-            sync.NvpSynchronizer, '_synchronize_state', return_value=0.01):
-            synchronizer = sync.NvpSynchronizer(mock.ANY, mock.ANY,
+            sync.NsxSynchronizer, '_synchronize_state', return_value=0.01):
+            synchronizer = sync.NsxSynchronizer(mock.ANY, mock.ANY,
                                                 100, 0, 0)
             time.sleep(0.03)
             # stop looping call before asserting

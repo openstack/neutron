@@ -120,7 +120,7 @@ def remove_security_group_with_id_and_id_field(rules, rule_id):
     This function receives all of the current rule associated with a
     security group and then removes the rule that matches the rule_id. In
     addition it removes the id field in the dict with each rule since that
-    should not be passed to nvp.
+    should not be passed to nsx.
     """
     for rule_direction in rules.values():
         item_to_remove = None
@@ -128,7 +128,7 @@ def remove_security_group_with_id_and_id_field(rules, rule_id):
             if port_rule['id'] == rule_id:
                 item_to_remove = port_rule
             else:
-                # remove key from dictionary for NVP
+                # remove key from dictionary for NSX
                 del port_rule['id']
         if item_to_remove:
             rule_direction.remove(item_to_remove)

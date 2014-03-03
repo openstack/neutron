@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2014 VMware, Inc.
 # All Rights Reserved
 #
@@ -27,7 +25,7 @@ HTTP_GET = "GET"
 HTTP_POST = "POST"
 HTTP_DELETE = "DELETE"
 HTTP_PUT = "PUT"
-# Prefix to be used for all NVP API calls
+# Prefix to be used for all NSX API calls
 URI_PREFIX = "/ws.v1"
 NEUTRON_VERSION = version_info.release_string()
 

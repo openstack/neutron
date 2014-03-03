@@ -132,7 +132,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     novazone_cluster_map = {}
 
     def __init__(self):
-        super(NvpPluginV2, self).__init__()
+        super(NsxPluginV2, self).__init__()
         # TODO(salv-orlando): Replace These dicts with
         # collections.defaultdict for better handling of default values
         # Routines for managing logical ports in NSX
@@ -180,7 +180,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # been yet updated from the config file
         self._is_default_net_gw_in_sync = False
         # Create a synchronizer instance for backend sync
-        self._synchronizer = sync.NvpSynchronizer(
+        self._synchronizer = sync.NsxSynchronizer(
             self, self.cluster,
             self.nsx_sync_opts.state_sync_interval,
             self.nsx_sync_opts.min_sync_req_delay,
@@ -2104,7 +2104,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._ensure_default_security_group(context, tenant_id)
         # NOTE(salv-orlando): Pre-generating Neutron ID for security group.
         neutron_id = str(uuid.uuid4())
-        nvp_secgroup = secgrouplib.create_security_profile(
+        nsx_secgroup = secgrouplib.create_security_profile(
             self.cluster, neutron_id, tenant_id, s)
         with context.session.begin(subtransactions=True):
             s['id'] = neutron_id
@@ -2113,7 +2113,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             context.session.flush()
             # Add mapping between neutron and nsx identifiers
             nsx_db.add_neutron_nsx_security_group_mapping(
-                context.session, neutron_id, nvp_secgroup['uuid'])
+                context.session, neutron_id, nsx_secgroup['uuid'])
         return sec_group
 
     def delete_security_group(self, context, security_group_id):
