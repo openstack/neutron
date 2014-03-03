@@ -44,6 +44,11 @@ class FakeVcns(object):
                 "firewallRules": []
             }
         }
+        self.fake_ipsecvpn_dict = {}
+        self.temp_ipsecvpn = {
+            'featureType': "ipsec_4.0",
+            'enabled': True,
+            'sites': {'sites': []}}
         self._fake_virtualservers_dict = {}
         self._fake_pools_dict = {}
         self._fake_monitors_dict = {}
@@ -364,9 +369,6 @@ class FakeVcns(object):
                 break
         return self.return_helper(header, response)
 
-    #
-    #Fake Edge LBAAS call
-    #
     def create_vip(self, edge_id, vip_new):
         if not self._fake_virtualservers_dict.get(edge_id):
             self._fake_virtualservers_dict[edge_id] = {}
@@ -523,6 +525,27 @@ class FakeVcns(object):
         response = {'config': False}
         if self._fake_loadbalancer_config[edge_id]:
             response['config'] = self._fake_loadbalancer_config[edge_id]
+        return self.return_helper(header, response)
+
+    def update_ipsec_config(self, edge_id, ipsec_config):
+        self.fake_ipsecvpn_dict[edge_id] = ipsec_config
+        header = {'status': 204}
+        response = ""
+        return self.return_helper(header, response)
+
+    def delete_ipsec_config(self, edge_id):
+        header = {'status': 404}
+        if edge_id in self.fake_ipsecvpn_dict:
+            header = {'status': 204}
+            del self.fake_ipsecvpn_dict[edge_id]
+        response = ""
+        return self.return_helper(header, response)
+
+    def get_ipsec_config(self, edge_id):
+        if edge_id not in self.fake_ipsecvpn_dict:
+            self.fake_ipsecvpn_dict[edge_id] = self.temp_ipsecvpn
+        header = {'status': 204}
+        response = self.fake_ipsecvpn_dict[edge_id]
         return self.return_helper(header, response)
 
     def enable_service_loadbalancer(self, edge_id, config):

@@ -24,6 +24,7 @@ from neutron.db.firewall import firewall_db
 from neutron.db import l3_db
 from neutron.db.loadbalancer import loadbalancer_db
 from neutron.db import routedserviceinsertion_db as rsi_db
+from neutron.db.vpn import vpn_db
 from neutron.extensions import firewall as fw_ext
 from neutron.extensions import l3
 from neutron.extensions import routedserviceinsertion as rsi
@@ -79,7 +80,8 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                         base.NsxPluginV2,
                         rsi_db.RoutedServiceInsertionDbMixin,
                         firewall_db.Firewall_db_mixin,
-                        loadbalancer_db.LoadBalancerPluginDb
+                        loadbalancer_db.LoadBalancerPluginDb,
+                        vpn_db.VPNPluginDb
                         ):
 
     supported_extension_aliases = (
@@ -87,7 +89,8 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             "service-router",
             "routed-service-insertion",
             "fwaas",
-            "lbaas"
+            "lbaas",
+            "vpnaas"
         ])
 
     def __init__(self):
@@ -892,8 +895,8 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         }
         self._process_create_resource_router_id(
             context, res, firewall_db.Firewall)
-        #Since there is only one firewall per edge,
-        #here would be bulk configureation operation on firewall
+        # Since there is only one firewall per edge,
+        # here would be bulk configuration operation on firewall
         self._vcns_update_firewall(context, fw, router_id)
         self._firewall_set_status(
             context, fw['id'], service_constants.ACTIVE, fw)
@@ -1569,6 +1572,153 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self._resource_set_status(
                 context, loadbalancer_db.Pool,
                 pool_id, service_constants.ACTIVE)
+
+    def _vcns_update_ipsec_config(
+        self, context, vpnservice_id, removed_ipsec_conn_id=None):
+        sites = []
+        vpn_service = self._get_vpnservice(context, vpnservice_id)
+        edge_id = self._get_edge_id_by_vcns_edge_binding(
+            context, vpn_service.router_id)
+        if not vpn_service.router.gw_port:
+            msg = _("Failed to update ipsec vpn configuration on edge, since "
+                    "the router: %s does not have a gateway yet!"
+                    ) % vpn_service.router_id
+            LOG.error(msg)
+            raise exceptions.VcnsBadRequest(resource='router', msg=msg)
+
+        external_ip = vpn_service.router.gw_port['fixed_ips'][0]['ip_address']
+        subnet = self._make_subnet_dict(vpn_service.subnet)
+        for ipsec_site_conn in vpn_service.ipsec_site_connections:
+            if ipsec_site_conn.id != removed_ipsec_conn_id:
+                site = self._make_ipsec_site_connection_dict(ipsec_site_conn)
+                ikepolicy = self._make_ikepolicy_dict(
+                    ipsec_site_conn.ikepolicy)
+                ipsecpolicy = self._make_ipsecpolicy_dict(
+                    ipsec_site_conn.ipsecpolicy)
+                sites.append({'site': site,
+                              'ikepolicy': ikepolicy,
+                              'ipsecpolicy': ipsecpolicy,
+                              'subnet': subnet,
+                              'external_ip': external_ip})
+        try:
+            self.vcns_driver.update_ipsec_config(
+                edge_id, sites, enabled=vpn_service.admin_state_up)
+        except exceptions.VcnsBadRequest:
+            LOG.exception(_("Bad or unsupported Input request!"))
+            raise
+        except exceptions.VcnsApiException:
+            msg = (_("Failed to update ipsec VPN configuration "
+                     "with vpnservice: %(vpnservice_id)s on vShield Edge: "
+                     "%(edge_id)s") % {'vpnservice_id': vpnservice_id,
+                                       'edge_id': edge_id})
+            LOG.exception(msg)
+            raise
+
+    def create_vpnservice(self, context, vpnservice):
+        LOG.debug(_("create_vpnservice() called"))
+        router_id = vpnservice['vpnservice'].get('router_id')
+        if not self._is_advanced_service_router(context, router_id):
+            msg = _("router_id:%s is not an advanced router!") % router_id
+            LOG.warning(msg)
+            raise exceptions.VcnsBadRequest(resource='router', msg=msg)
+
+        if self.get_vpnservices(context, filters={'router_id': [router_id]}):
+            msg = _("a vpnservice is already associated with the router: %s"
+                    ) % router_id
+            LOG.warning(msg)
+            raise nsx_exc.ServiceOverQuota(
+                overs='vpnservice', err_msg=msg)
+
+        service = super(NvpAdvancedPlugin, self).create_vpnservice(
+            context, vpnservice)
+        self._resource_set_status(
+            context, vpn_db.VPNService,
+            service['id'], service_constants.ACTIVE, service)
+        return service
+
+    def update_vpnservice(self, context, vpnservice_id, vpnservice):
+        vpnservice['vpnservice']['status'] = service_constants.PENDING_UPDATE
+        service = super(NvpAdvancedPlugin, self).update_vpnservice(
+            context, vpnservice_id, vpnservice)
+        # Only admin_state_up attribute is configurable on Edge.
+        if vpnservice['vpnservice'].get('admin_state_up') is None:
+            self._resource_set_status(
+                context, vpn_db.VPNService,
+                service['id'], service_constants.ACTIVE, service)
+            return service
+        # Test whether there is one ipsec site connection attached to
+        # the vpnservice. If not, just return without updating ipsec
+        # config on edge side.
+        vpn_service_db = self._get_vpnservice(context, vpnservice_id)
+        if not vpn_service_db.ipsec_site_connections:
+            self._resource_set_status(
+                context, vpn_db.VPNService,
+                service['id'], service_constants.ACTIVE, service)
+            return service
+        try:
+            self._vcns_update_ipsec_config(context, service['id'])
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                self._resource_set_status(
+                    context, vpn_db.VPNService,
+                    service['id'], service_constants.ERROR, service)
+        self._resource_set_status(
+            context, vpn_db.VPNService,
+            service['id'], service_constants.ACTIVE, service)
+        return service
+
+    def create_ipsec_site_connection(self, context, ipsec_site_connection):
+        ipsec_site_conn = super(
+            NvpAdvancedPlugin, self).create_ipsec_site_connection(
+                context, ipsec_site_connection)
+        try:
+            self._vcns_update_ipsec_config(
+                context, ipsec_site_conn['vpnservice_id'])
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                super(NvpAdvancedPlugin, self).delete_ipsec_site_connection(
+                    context, ipsec_site_conn['id'])
+        self._resource_set_status(
+            context, vpn_db.IPsecSiteConnection,
+            ipsec_site_conn['id'], service_constants.ACTIVE, ipsec_site_conn)
+        return ipsec_site_conn
+
+    def update_ipsec_site_connection(self, context, ipsec_site_connection_id,
+                                     ipsec_site_connection):
+        ipsec_site_connection['ipsec_site_connection']['status'] = (
+            service_constants.PENDING_UPDATE)
+        ipsec_site_conn = super(
+            NvpAdvancedPlugin, self).update_ipsec_site_connection(
+                context, ipsec_site_connection_id, ipsec_site_connection)
+        try:
+            self._vcns_update_ipsec_config(
+                context, ipsec_site_conn['vpnservice_id'])
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                self._resource_set_status(
+                    context, vpn_db.IPsecSiteConnection, ipsec_site_conn['id'],
+                    service_constants.ERROR, ipsec_site_conn)
+        self._resource_set_status(
+            context, vpn_db.IPsecSiteConnection,
+            ipsec_site_conn['id'], service_constants.ACTIVE, ipsec_site_conn)
+        return ipsec_site_conn
+
+    def delete_ipsec_site_connection(self, context, ipsec_site_conn_id):
+        self._resource_set_status(
+            context, vpn_db.IPsecSiteConnection,
+            ipsec_site_conn_id, service_constants.PENDING_DELETE)
+        vpnservice_id = self.get_ipsec_site_connection(
+            context, ipsec_site_conn_id)['vpnservice_id']
+        try:
+            self._vcns_update_ipsec_config(
+                context, vpnservice_id, ipsec_site_conn_id)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                self._resource_set_status(
+                    context, vpn_db.IPsecSiteConnection, ipsec_site_conn_id,
+                    service_constants.ERROR)
+        super(NvpAdvancedPlugin, self).delete_ipsec_site_connection(
+            context, ipsec_site_conn_id)
 
 
 class VcnsCallbacks(object):

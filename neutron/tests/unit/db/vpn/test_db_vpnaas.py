@@ -32,6 +32,7 @@ from neutron.db.vpn import vpn_db
 from neutron import extensions
 from neutron.extensions import vpnaas
 from neutron import manager
+from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.vpn import plugin as vpn_plugin
@@ -55,33 +56,12 @@ class TestVpnCorePlugin(test_l3_plugin.TestL3NatIntPlugin,
         self.router_scheduler = l3_agent_scheduler.ChanceScheduler()
 
 
-class VPNPluginDbTestCase(test_l3_plugin.L3NatTestCaseMixin,
-                          test_db_plugin.NeutronDbPluginV2TestCase):
+class VPNTestMixin(object):
     resource_prefix_map = dict(
         (k.replace('_', '-'),
          constants.COMMON_PREFIXES[constants.VPN])
         for k in vpnaas.RESOURCE_ATTRIBUTE_MAP
     )
-
-    def setUp(self, core_plugin=None, vpnaas_plugin=DB_VPN_PLUGIN_KLASS):
-        service_plugins = {'vpnaas_plugin': vpnaas_plugin}
-        plugin_str = ('neutron.tests.unit.db.vpn.'
-                      'test_db_vpnaas.TestVpnCorePlugin')
-
-        super(VPNPluginDbTestCase, self).setUp(
-            plugin_str,
-            service_plugins=service_plugins
-        )
-        self._subnet_id = "0c798ed8-33ba-11e2-8b28-000c291c4d14"
-        self.core_plugin = TestVpnCorePlugin
-        self.plugin = vpn_plugin.VPNPlugin()
-        ext_mgr = PluginAwareExtensionManager(
-            extensions_path,
-            {constants.CORE: self.core_plugin,
-             constants.VPN: self.plugin}
-        )
-        app = config.load_paste_app('extensions_test_app')
-        self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
     def _create_ikepolicy(self, fmt,
                           name='ikepolicy1',
@@ -409,6 +389,53 @@ class VPNPluginDbTestCase(test_l3_plugin.L3NatTestCaseMixin,
                         ipsec_site_connection[
                             'ipsec_site_connection']['id']
                     )
+
+    def _check_ipsec_site_connection(self, ipsec_site_connection, keys, dpd):
+        self.assertEqual(
+            keys,
+            dict((k, v) for k, v
+                 in ipsec_site_connection.items()
+                 if k in keys))
+        self.assertEqual(
+            dpd,
+            dict((k, v) for k, v
+                 in ipsec_site_connection['dpd'].items()
+                 if k in dpd))
+
+    def _set_active(self, model, resource_id):
+        service_plugin = manager.NeutronManager.get_service_plugins()[
+            constants.VPN]
+        adminContext = context.get_admin_context()
+        with adminContext.session.begin(subtransactions=True):
+            resource_db = service_plugin._get_resource(
+                adminContext,
+                model,
+                resource_id)
+            resource_db.status = constants.ACTIVE
+
+
+class VPNPluginDbTestCase(VPNTestMixin,
+                          test_l3_plugin.L3NatTestCaseMixin,
+                          test_db_plugin.NeutronDbPluginV2TestCase):
+    def setUp(self, core_plugin=None, vpnaas_plugin=DB_VPN_PLUGIN_KLASS):
+        service_plugins = {'vpnaas_plugin': vpnaas_plugin}
+        plugin_str = ('neutron.tests.unit.db.vpn.'
+                      'test_db_vpnaas.TestVpnCorePlugin')
+
+        super(VPNPluginDbTestCase, self).setUp(
+            plugin_str,
+            service_plugins=service_plugins
+        )
+        self._subnet_id = uuidutils.generate_uuid()
+        self.core_plugin = TestVpnCorePlugin
+        self.plugin = vpn_plugin.VPNPlugin()
+        ext_mgr = PluginAwareExtensionManager(
+            extensions_path,
+            {constants.CORE: self.core_plugin,
+             constants.VPN: self.plugin}
+        )
+        app = config.load_paste_app('extensions_test_app')
+        self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
 
 class TestVpnaas(VPNPluginDbTestCase):
@@ -890,17 +917,6 @@ class TestVpnaas(VPNPluginDbTestCase):
                     self._delete('routers', router['router']['id'],
                                  expected_code=webob.exc.HTTPConflict.code)
 
-    def _set_active(self, model, resource_id):
-        service_plugin = manager.NeutronManager.get_service_plugins()[
-            constants.VPN]
-        adminContext = context.get_admin_context()
-        with adminContext.session.begin(subtransactions=True):
-            resource_db = service_plugin._get_resource(
-                adminContext,
-                model,
-                resource_id)
-            resource_db.status = constants.ACTIVE
-
     def test_update_vpnservice(self):
         """Test case to update a vpnservice."""
         name = 'new_vpnservice1'
@@ -1197,18 +1213,6 @@ class TestVpnaas(VPNPluginDbTestCase):
             key_overrides=ipv6_overrides,
             setup_overrides=ipv6_setup_params,
             expected_status_int=400)
-
-    def _check_ipsec_site_connection(self, ipsec_site_connection, keys, dpd):
-        self.assertEqual(
-            keys,
-            dict((k, v) for k, v
-                 in ipsec_site_connection.items()
-                 if k in keys))
-        self.assertEqual(
-            dpd,
-            dict((k, v) for k, v
-                 in ipsec_site_connection['dpd'].items()
-                 if k in dpd))
 
     def test_delete_ipsec_site_connection(self):
         """Test case to delete a ipsec_site_connection."""

@@ -455,11 +455,6 @@ class L3NatTest(test_l3_plugin.L3BaseForIntTests, NsxPluginV2TestCase):
             plugin_instance.__class__.__name__)
         self._plugin_class = plugin_instance.__class__
 
-
-class TestL3NatTestCase(L3NatTest,
-                        test_l3_plugin.L3NatDBIntTestCase,
-                        NsxPluginV2TestCase):
-
     def _create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
         net_type = NetworkTypes.L3_EXT
@@ -473,6 +468,11 @@ class TestL3NatTestCase(L3NatTest,
                             arg_list=(pnet.NETWORK_TYPE,
                                       pnet.PHYSICAL_NETWORK,
                                       pnet.SEGMENTATION_ID))
+
+
+class TestL3NatTestCase(L3NatTest,
+                        test_l3_plugin.L3NatDBIntTestCase,
+                        NsxPluginV2TestCase):
 
     def _test_create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'

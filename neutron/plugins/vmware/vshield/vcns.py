@@ -39,6 +39,9 @@ POOL_RESOURCE = "pools"
 MONITOR_RESOURCE = "monitors"
 APP_PROFILE_RESOURCE = "applicationprofiles"
 
+# IPsec VPNaaS Constants
+IPSEC_VPN_SERVICE = 'ipsec/config'
+
 
 class Vcns(object):
 
@@ -263,6 +266,18 @@ class Vcns(object):
             APP_PROFILE_RESOURCE,
             app_profileid)
         return self.do_request(HTTP_DELETE, uri)
+
+    def update_ipsec_config(self, edge_id, ipsec_config):
+        uri = self._build_uri_path(edge_id, IPSEC_VPN_SERVICE)
+        return self.do_request(HTTP_PUT, uri, ipsec_config)
+
+    def delete_ipsec_config(self, edge_id):
+        uri = self._build_uri_path(edge_id, IPSEC_VPN_SERVICE)
+        return self.do_request(HTTP_DELETE, uri)
+
+    def get_ipsec_config(self, edge_id):
+        uri = self._build_uri_path(edge_id, IPSEC_VPN_SERVICE)
+        return self.do_request(HTTP_GET, uri)
 
     def _build_uri_path(self, edge_id,
                         service,
