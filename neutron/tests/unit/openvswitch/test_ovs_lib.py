@@ -20,6 +20,7 @@ from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import uuidutils
+from neutron.plugins.openvswitch.common import constants
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -130,6 +131,37 @@ class OVS_Lib_Test(base.BaseTestCase):
 
         # test __str__
         str(port)
+
+    def test_set_controller(self):
+        controller_names = ['tcp:127.0.0.1:6633', 'tcp:172.17.16.10:5555']
+        self.br.set_controller(controller_names)
+        self.execute.assert_called_once_with(
+            ['ovs-vsctl', self.TO, '--', 'set-controller', self.BR_NAME,
+             'tcp:127.0.0.1:6633', 'tcp:172.17.16.10:5555'],
+            root_helper=self.root_helper)
+
+    def test_del_controller(self):
+        self.br.del_controller()
+        self.execute.assert_called_once_with(
+            ['ovs-vsctl', self.TO, '--', 'del-controller', self.BR_NAME],
+            root_helper=self.root_helper)
+
+    def test_get_controller(self):
+        self.execute.return_value = 'tcp:127.0.0.1:6633\ntcp:172.17.16.10:5555'
+        names = self.br.get_controller()
+        self.assertEqual(names,
+                         ['tcp:127.0.0.1:6633', 'tcp:172.17.16.10:5555'])
+        self.execute.assert_called_once_with(
+            ['ovs-vsctl', self.TO, '--', 'get-controller', self.BR_NAME],
+            root_helper=self.root_helper)
+
+    def test_set_protocols(self):
+        protocols = 'OpenFlow13'
+        self.br.set_protocols(protocols)
+        self.execute.assert_called_once_with(
+            ['ovs-vsctl', self.TO, '--', 'set', 'bridge', self.BR_NAME,
+             "protocols=%s" % protocols],
+            root_helper=self.root_helper)
 
     def test_create(self):
         self.br.add_bridge(self.BR_NAME)
@@ -666,3 +698,47 @@ class OVS_Lib_Test(base.BaseTestCase):
         data = [[["map", external_ids], "tap99", 1]]
         self.assertIsNone(self._test_get_vif_port_by_id('tap99id', data,
                                                         "br-ext"))
+
+    def _check_ovs_vxlan_version(self, installed_usr_version,
+                                 installed_klm_version,
+                                 expecting_ok):
+        with mock.patch(
+                'neutron.agent.linux.ovs_lib.get_installed_ovs_klm_version'
+        ) as klm_cmd:
+            with mock.patch(
+                'neutron.agent.linux.ovs_lib.get_installed_ovs_usr_version'
+            ) as usr_cmd:
+                try:
+                    klm_cmd.return_value = installed_klm_version
+                    usr_cmd.return_value = installed_usr_version
+                    ovs_lib.check_ovs_vxlan_version(root_helper='sudo')
+                    version_ok = True
+                except SystemError:
+                    version_ok = False
+            self.assertEqual(version_ok, expecting_ok)
+
+    def test_check_minimum_version(self):
+        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
+        self._check_ovs_vxlan_version(min_vxlan_ver, min_vxlan_ver,
+                                      expecting_ok=True)
+
+    def test_check_future_version(self):
+        install_ver = str(float(constants.MINIMUM_OVS_VXLAN_VERSION) + 0.01)
+        self._check_ovs_vxlan_version(install_ver, install_ver,
+                                      expecting_ok=True)
+
+    def test_check_fail_version(self):
+        install_ver = str(float(constants.MINIMUM_OVS_VXLAN_VERSION) - 0.01)
+        self._check_ovs_vxlan_version(install_ver, install_ver,
+                                      expecting_ok=False)
+
+    def test_check_fail_no_version(self):
+        self._check_ovs_vxlan_version(None, None,
+                                      expecting_ok=False)
+
+    def test_check_fail_klm_version(self):
+        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
+        install_ver = str(float(min_vxlan_ver) - 0.01)
+        self._check_ovs_vxlan_version(min_vxlan_ver,
+                                      install_ver,
+                                      expecting_ok=False)

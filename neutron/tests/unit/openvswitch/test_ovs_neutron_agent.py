@@ -468,7 +468,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.assertEqual(reclvl_fn.call_count, 2)
 
     def _check_ovs_vxlan_version(self, installed_usr_version,
-                                 installed_klm_version, min_vers,
+                                 installed_klm_version,
                                  expecting_ok):
         with mock.patch(
                 'neutron.agent.linux.ovs_lib.get_installed_ovs_klm_version'
@@ -480,8 +480,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                     klm_cmd.return_value = installed_klm_version
                     usr_cmd.return_value = installed_usr_version
                     self.agent.tunnel_types = 'vxlan'
-                    ovs_neutron_agent.check_ovs_version(min_vers,
-                                                        root_helper='sudo')
+                    self.agent._check_ovs_version()
                     version_ok = True
                 except SystemExit as e:
                     self.assertEqual(e.code, 1)
@@ -489,28 +488,28 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.assertEqual(version_ok, expecting_ok)
 
     def test_check_minimum_version(self):
-        self._check_ovs_vxlan_version('1.10', '1.10',
-                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
+        self._check_ovs_vxlan_version(min_vxlan_ver, min_vxlan_ver,
                                       expecting_ok=True)
 
     def test_check_future_version(self):
-        self._check_ovs_vxlan_version('1.11', '1.11',
-                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+        install_ver = str(float(constants.MINIMUM_OVS_VXLAN_VERSION) + 0.01)
+        self._check_ovs_vxlan_version(install_ver, install_ver,
                                       expecting_ok=True)
 
     def test_check_fail_version(self):
-        self._check_ovs_vxlan_version('1.9', '1.9',
-                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+        install_ver = str(float(constants.MINIMUM_OVS_VXLAN_VERSION) - 0.01)
+        self._check_ovs_vxlan_version(install_ver, install_ver,
                                       expecting_ok=False)
 
     def test_check_fail_no_version(self):
         self._check_ovs_vxlan_version(None, None,
-                                      constants.MINIMUM_OVS_VXLAN_VERSION,
                                       expecting_ok=False)
 
     def test_check_fail_klm_version(self):
-        self._check_ovs_vxlan_version('1.10', '1.9',
-                                      constants.MINIMUM_OVS_VXLAN_VERSION,
+        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
+        install_ver = str(float(min_vxlan_ver) - 0.01)
+        self._check_ovs_vxlan_version(min_vxlan_ver, install_ver,
                                       expecting_ok=False)
 
     def _prepare_l2_pop_ofports(self):

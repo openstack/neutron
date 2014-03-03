@@ -1,0 +1,21 @@
+This directory includes agent for OpenFlow Agent mechanism driver.
+
+# -- Installation
+
+For how to install/set up ML2 mechanism driver for OpenFlow Agent, please refer to
+https://github.com/osrg/ryu/wiki/OpenStack
+
+# -- Ryu General
+
+For general Ryu stuff, please refer to
+http://www.osrg.net/ryu/
+
+Ryu is available at github
+git://github.com/osrg/ryu.git
+https://github.com/osrg/ryu
+
+The mailing is at
+ryu-devel@lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/ryu-devel
+
+Enjoy!
