@@ -18,14 +18,14 @@
 """security_groups
 
 Revision ID: 49f5e553f61f
-Revises: ed93525fd003
+Revises: 27ef74513d33
 Create Date: 2013-12-21 19:58:17.071412
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '49f5e553f61f'
-down_revision = 'ed93525fd003'
+down_revision = '27ef74513d33'
 
 # Change to ['*'] if this migration applies to all plugins
 
