@@ -21,10 +21,10 @@ from neutron.openstack.common.db import exception as db_exc
 from neutron.tests import base
 
 
-class TestDhcpRpcCallackMixin(base.BaseTestCase):
+class TestDhcpRpcCallbackMixin(base.BaseTestCase):
 
     def setUp(self):
-        super(TestDhcpRpcCallackMixin, self).setUp()
+        super(TestDhcpRpcCallbackMixin, self).setUp()
         self.plugin_p = mock.patch('neutron.manager.NeutronManager.get_plugin')
         get_plugin = self.plugin_p.start()
         self.plugin = mock.MagicMock()
@@ -36,7 +36,7 @@ class TestDhcpRpcCallackMixin(base.BaseTestCase):
     def tearDown(self):
         self.log_p.stop()
         self.plugin_p.stop()
-        super(TestDhcpRpcCallackMixin, self).tearDown()
+        super(TestDhcpRpcCallbackMixin, self).tearDown()
 
     def test_get_active_networks(self):
         plugin_retval = [dict(id='a'), dict(id='b')]
