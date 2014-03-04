@@ -83,6 +83,9 @@ core_opts = [
                 help=_("Ensure that configured gateway is on subnet")),
     cfg.BoolOpt('notify_nova_on_port_status_changes', default=True,
                 help=_("Send notification to nova when port status changes")),
+    cfg.BoolOpt('notify_nova_on_port_data_changes', default=True,
+                help=_("Send notification to nova when port data (fixed_ips/"
+                       "floatingip) changes so nova can update its cache.")),
     cfg.StrOpt('nova_url',
                default='http://127.0.0.1:8774',
                help=_('URL for connection to nova')),

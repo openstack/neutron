@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import netaddr
 import webob.exc
 
@@ -26,6 +27,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as const
 from neutron.common import exceptions
+from neutron.notifiers import nova
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron import policy
@@ -75,6 +77,7 @@ class Controller(object):
             agent_notifiers.get(const.AGENT_TYPE_DHCP) or
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
+        self._nova_notifier = nova.Notifier()
         self._member_actions = member_actions
         self._primary_key = self._get_primary_key()
         if self._allow_pagination and self._native_pagination:
@@ -414,6 +417,9 @@ class Controller(object):
             else:
                 kwargs.update({self._resource: body})
                 obj = obj_creator(request.context, **kwargs)
+
+                self._nova_notifier.send_network_change(
+                    action, {}, {self._resource: obj})
                 return notify({self._resource: self._view(request.context,
                                                           obj)})
 
@@ -448,6 +454,7 @@ class Controller(object):
                             notifier_api.CONF.default_notification_level,
                             {self._resource + '_id': id})
         result = {self._resource: self._view(request.context, obj)}
+        self._nova_notifier.send_network_change(action, {}, result)
         self._send_dhcp_notification(request.context,
                                      result,
                                      notifier_method)
@@ -479,6 +486,7 @@ class Controller(object):
                           'default' not in value)]
         orig_obj = self._item(request, id, field_list=field_list,
                               parent_id=parent_id)
+        orig_object_copy = copy.copy(orig_obj)
         orig_obj.update(body[self._resource])
         try:
             policy.enforce(request.context,
@@ -505,6 +513,8 @@ class Controller(object):
         self._send_dhcp_notification(request.context,
                                      result,
                                      notifier_method)
+        self._nova_notifier.send_network_change(
+            action, orig_object_copy, result)
         return result
 
     @staticmethod

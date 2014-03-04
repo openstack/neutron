@@ -14,7 +14,10 @@
 #    under the License.
 
 
+import mock
 from sqlalchemy.orm import attributes as sql_attr
+
+from oslo.config import cfg
 
 from neutron.common import constants
 from neutron.db import models_v2
@@ -26,7 +29,13 @@ class TestNovaNotify(base.BaseTestCase):
     def setUp(self, plugin=None):
         super(TestNovaNotify, self).setUp()
 
+        class FakePlugin(object):
+            def get_port(self, context, port_id):
+                return {'device_id': 'instance_uuid',
+                        'device_owner': 'compute:None'}
+
         self.nova_notifier = nova.Notifier()
+        self.nova_notifier._plugin_ref = FakePlugin()
 
     def test_notify_port_status_all_values(self):
         states = [constants.PORT_STATUS_ACTIVE, constants.PORT_STATUS_DOWN,
@@ -102,3 +111,134 @@ class TestNovaNotify(base.BaseTestCase):
         event = {'server_uuid': 'device-uuid', 'status': status,
                  'name': event_name, 'tag': 'port-uuid'}
         self.assertEqual(event, port._notify_event)
+
+    def test_update_fixed_ip_changed(self):
+        returned_obj = {'port':
+                        {'device_owner': u'compute:dfd',
+                         'id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222',
+                         'device_id': u'instance_uuid'}}
+
+        expected_event = {'server_uuid': 'instance_uuid',
+                          'name': 'network-changed'}
+        event = self.nova_notifier.create_port_changed_event('update_port',
+                                                             {}, returned_obj)
+        self.assertEqual(event, expected_event)
+
+    def test_create_floatingip_notify(self):
+        returned_obj = {'floatingip':
+                        {'port_id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222'}}
+
+        expected_event = {'server_uuid': 'instance_uuid',
+                          'name': 'network-changed'}
+        event = self.nova_notifier.create_port_changed_event(
+            'create_floatingip', {}, returned_obj)
+        self.assertEqual(event, expected_event)
+
+    def test_create_floatingip_no_port_id_no_notify(self):
+        returned_obj = {'floatingip':
+                        {'port_id': None}}
+
+        event = self.nova_notifier.create_port_changed_event(
+            'create_floatingip', {}, returned_obj)
+        self.assertFalse(event, None)
+
+    def test_delete_floatingip_notify(self):
+        returned_obj = {'floatingip':
+                        {'port_id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222'}}
+
+        expected_event = {'server_uuid': 'instance_uuid',
+                          'name': 'network-changed'}
+        event = self.nova_notifier.create_port_changed_event(
+            'delete_floatingip', {}, returned_obj)
+        self.assertEqual(expected_event, event)
+
+    def test_delete_floatingip_no_port_id_no_notify(self):
+        returned_obj = {'floatingip':
+                        {'port_id': None}}
+
+        event = self.nova_notifier.create_port_changed_event(
+            'delete_floatingip', {}, returned_obj)
+        self.assertEqual(event, None)
+
+    def test_associate_floatingip_notify(self):
+        returned_obj = {'floatingip':
+                        {'port_id': u'5a39def4-3d3f-473d-9ff4-8e90064b9cc1'}}
+        original_obj = {'port_id': None}
+
+        expected_event = {'server_uuid': 'instance_uuid',
+                          'name': 'network-changed'}
+        event = self.nova_notifier.create_port_changed_event(
+            'update_floatingip', original_obj, returned_obj)
+        self.assertEqual(expected_event, event)
+
+    def test_disassociate_floatingip_notify(self):
+        returned_obj = {'floatingip': {'port_id': None}}
+        original_obj = {'port_id': '5a39def4-3d3f-473d-9ff4-8e90064b9cc1'}
+
+        expected_event = {'server_uuid': 'instance_uuid',
+                          'name': 'network-changed'}
+
+        event = self.nova_notifier.create_port_changed_event(
+            'update_floatingip', original_obj, returned_obj)
+        self.assertEqual(expected_event, event)
+
+    def test_no_notification_notify_nova_on_port_data_changes_false(self):
+        cfg.CONF.set_override('notify_nova_on_port_data_changes', False)
+
+        with mock.patch.object(self.nova_notifier,
+                               'send_events') as send_events:
+            self.nova_notifier.send_network_change('update_floatingip',
+                                                   {}, {})
+            self.assertFalse(send_events.called, False)
+
+    def test_nova_send_events_returns_bad_list(self):
+        with mock.patch.object(
+            self.nova_notifier.nclient.server_external_events,
+                'create') as nclient_create:
+            nclient_create.return_value = 'i am a string!'
+            self.nova_notifier.send_events()
+
+    def test_nova_send_events_raises(self):
+        with mock.patch.object(
+            self.nova_notifier.nclient.server_external_events,
+                'create') as nclient_create:
+            nclient_create.side_effect = Exception
+            self.nova_notifier.send_events()
+
+    def test_nova_send_events_returns_non_200(self):
+        with mock.patch.object(
+            self.nova_notifier.nclient.server_external_events,
+                'create') as nclient_create:
+            nclient_create.return_value = [{'code': 404,
+                                            'name': 'network-changed',
+                                            'server_uuid': 'uuid'}]
+            self.nova_notifier.pending_events.append(
+                {'name': 'network-changed', 'server_uuid': 'uuid'})
+            self.nova_notifier.send_events()
+
+    def test_nova_send_events_return_200(self):
+        with mock.patch.object(
+            self.nova_notifier.nclient.server_external_events,
+                'create') as nclient_create:
+            nclient_create.return_value = [{'code': 200,
+                                            'name': 'network-changed',
+                                            'server_uuid': 'uuid'}]
+            self.nova_notifier.pending_events.append(
+                {'name': 'network-changed', 'server_uuid': 'uuid'})
+            self.nova_notifier.send_events()
+
+    def test_nova_send_events_multiple(self):
+        with mock.patch.object(
+            self.nova_notifier.nclient.server_external_events,
+                'create') as nclient_create:
+            nclient_create.return_value = [{'code': 200,
+                                            'name': 'network-changed',
+                                            'server_uuid': 'uuid'},
+                                           {'code': 200,
+                                            'name': 'network-changed',
+                                            'server_uuid': 'uuid'}]
+            self.nova_notifier.pending_events.append(
+                {'name': 'network-changed', 'server_uuid': 'uuid'})
+            self.nova_notifier.pending_events.append(
+                {'name': 'network-changed', 'server_uuid': 'uuid'})
+            self.nova_notifier.send_events()

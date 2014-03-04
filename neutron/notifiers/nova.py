@@ -19,6 +19,8 @@ from oslo.config import cfg
 from sqlalchemy.orm import attributes as sql_attr
 
 from neutron.common import constants
+from neutron import context
+from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 
@@ -52,6 +54,67 @@ class Notifier(object):
         event_sender = loopingcall.FixedIntervalLoopingCall(self.send_events)
         event_sender.start(interval=cfg.CONF.send_events_interval)
 
+    def _is_compute_port(self, port):
+        try:
+            if (port['device_id'] and
+                    port['device_owner'].startswith('compute:')):
+                return True
+        except (KeyError, AttributeError):
+            pass
+        return False
+
+    def _get_network_changed_event(self, device_id):
+        return {'name': 'network-changed',
+                'server_uuid': device_id}
+
+    @property
+    def _plugin(self):
+        # NOTE(arosen): this cannot be set in __init__ currently since
+        # this class is initalized at the same time as NeutronManager()
+        # which is decorated with synchronized()
+        if not hasattr(self, '_plugin_ref'):
+            self._plugin_ref = manager.NeutronManager.get_plugin()
+        return self._plugin_ref
+
+    def send_network_change(self, action, original_obj,
+                            returned_obj):
+        """Called when a network change is made that nova cares about.
+
+        :param action: the event that occured.
+        :param original_obj: the previous value of resource before action.
+        :param returned_obj: the body returned to client as result of action.
+        """
+
+        if not cfg.CONF.notify_nova_on_port_data_changes:
+            return
+
+        event = self.create_port_changed_event(action, original_obj,
+                                               returned_obj)
+        if event:
+            self.pending_events.append(event)
+
+    def create_port_changed_event(self, action, original_obj, returned_obj):
+        port = None
+        if action == 'update_port':
+            port = returned_obj['port']
+
+        elif action in ['update_floatingip', 'create_floatingip',
+                        'delete_floatingip']:
+            # NOTE(arosen) if we are associating a floatingip the
+            # port_id is in the returned_obj. Otherwise on disassociate
+            # it's in the original_object
+            port_id = (returned_obj['floatingip'].get('port_id') or
+                       original_obj.get('port_id'))
+
+            if port_id is None:
+                return
+
+            ctx = context.get_admin_context()
+            port = self._plugin.get_port(ctx, port_id)
+
+        if port and self._is_compute_port(port):
+            return self._get_network_changed_event(port['device_id'])
+
     def record_port_status_changed(self, port, current_port_status,
                                    previous_port_status, initiator):
         """Determine if nova needs to be notified due to port status change.
@@ -69,14 +132,13 @@ class Notifier(object):
             return
 
         # We only want to notify about nova ports.
-        if (not port.device_owner or
-            not port.device_owner.startswith('compute:')):
+        if not self._is_compute_port(port):
             return
 
         # We notify nova when a vif is unplugged which only occurs when
         # the status goes from ACTIVE to DOWN.
         if (previous_port_status == constants.PORT_STATUS_ACTIVE and
-            current_port_status == constants.PORT_STATUS_DOWN):
+                current_port_status == constants.PORT_STATUS_DOWN):
             event_name = VIF_UNPLUGGED
 
         # We only notify nova when a vif is plugged which only occurs
@@ -133,10 +195,11 @@ class Notifier(object):
             response_error = False
             for event in response:
                 try:
-                    status = event['status']
+                    code = event['code']
                 except KeyError:
                     response_error = True
-                if status == 'failed':
+                    continue
+                if code != 200:
                     LOG.warning(_("Nova event: %s returned with failed "
                                   "status"), event)
                 else:
