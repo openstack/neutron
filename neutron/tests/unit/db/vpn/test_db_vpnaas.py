@@ -20,6 +20,7 @@
 import contextlib
 import os
 
+from oslo.config import cfg
 import webob.exc
 
 from neutron.api.extensions import ExtensionMiddleware
@@ -28,6 +29,7 @@ from neutron.common import config
 from neutron import context
 from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db
+from neutron.db import servicetype_db as sdb
 from neutron.db.vpn import vpn_db
 from neutron import extensions
 from neutron.extensions import vpnaas
@@ -417,7 +419,20 @@ class VPNTestMixin(object):
 class VPNPluginDbTestCase(VPNTestMixin,
                           test_l3_plugin.L3NatTestCaseMixin,
                           test_db_plugin.NeutronDbPluginV2TestCase):
-    def setUp(self, core_plugin=None, vpnaas_plugin=DB_VPN_PLUGIN_KLASS):
+    def setUp(self, core_plugin=None, vpnaas_plugin=DB_VPN_PLUGIN_KLASS,
+              vpnaas_provider=None):
+        if not vpnaas_provider:
+            vpnaas_provider = (
+                constants.VPN +
+                ':vpnaas:neutron.services.vpn.'
+                'service_drivers.ipsec.IPsecVPNDriver:default')
+
+        cfg.CONF.set_override('service_provider',
+                              [vpnaas_provider],
+                              'service_providers')
+        # force service type manager to reload configuration:
+        sdb.ServiceTypeManager._instance = None
+
         service_plugins = {'vpnaas_plugin': vpnaas_plugin}
         plugin_str = ('neutron.tests.unit.db.vpn.'
                       'test_db_vpnaas.TestVpnCorePlugin')
