@@ -452,18 +452,18 @@ class IpNetnsCommand(IpCommandBase):
     def execute(self, cmds, addl_env={}, check_exit_code=True):
         if not self._parent.root_helper:
             raise exceptions.SudoRequired()
-        elif not self._parent.namespace:
-            raise Exception(_('No namespace defined for parent'))
-        else:
-            env_params = []
-            if addl_env:
-                env_params = (['env'] +
-                              ['%s=%s' % pair for pair in addl_env.items()])
-            return utils.execute(
-                ['ip', 'netns', 'exec', self._parent.namespace] +
-                env_params + list(cmds),
-                root_helper=self._parent.root_helper,
-                check_exit_code=check_exit_code)
+        ns_params = []
+        if self._parent.namespace:
+            ns_params = ['ip', 'netns', 'exec', self._parent.namespace]
+
+        env_params = []
+        if addl_env:
+            env_params = (['env'] +
+                          ['%s=%s' % pair for pair in addl_env.items()])
+        return utils.execute(
+            ns_params + env_params + list(cmds),
+            root_helper=self._parent.root_helper,
+            check_exit_code=check_exit_code)
 
     def exists(self, name):
         output = self._as_root('list', options='o', use_root_namespace=True)

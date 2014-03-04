@@ -50,12 +50,8 @@ class ProcessManager(object):
         if not self.active:
             cmd = cmd_callback(self.get_pid_file_name(ensure_pids_dir=True))
 
-            if self.namespace:
-                ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
-                ip_wrapper.netns.execute(cmd)
-            else:
-                # For normal sudo prepend the env vars before command
-                utils.execute(cmd, self.root_helper)
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
+            ip_wrapper.netns.execute(cmd)
 
     def disable(self):
         pid = self.pid
