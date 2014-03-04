@@ -591,7 +591,7 @@ def update_lrouter_port_ips(cluster, lrouter_id, lport_id,
         # Set is not JSON serializable - convert to list
         port['ip_addresses'] = list(ip_address_set)
         do_request(HTTP_PUT, uri, jsonutils.dumps(port), cluster=cluster)
-    except exception.NotFound as e:
+    except exception.NotFound:
         # FIXME(salv-orlando):avoid raising different exception
         data = {'lport_id': lport_id, 'lrouter_id': lrouter_id}
         msg = (_("Router Port %(lport_id)s not found on router "
