@@ -27,10 +27,29 @@ Create Date: 2014-01-14 11:58:13.754747
 revision = '2eeaf963a447'
 down_revision = 'f44ab9871cd6'
 
-# Change to ['*'] if this migration applies to all plugins
+# This migration is applied to all L3 capable plugins
 
 migration_for_plugins = [
-    '*'
+    'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2',
+    'neutron.plugins.brocade.NeutronPlugin.BrocadePluginV2',
+    'neutron.plugins.cisco.network_plugin.PluginV2',
+    'neutron.plugins.cisco.n1kv.n1kv_neutron_plugin.N1kvNeutronPluginV2',
+    'neutron.plugins.hyperv.hyperv_neutron_plugin.HyperVNeutronPlugin',
+    'neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2'
+    'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
+    'neutron.plugins.metaplugin.meta_neutron_plugin.MetaPluginV2',
+    'neutron.plugins.mlnx.mlnx_plugin.MellanoxEswitchPlugin',
+    'neutron.plugins.midonet.plugin.MidonetPluginV2',
+    'neutron.plugins.ml2.plugin.Ml2Plugin',
+    'neutron.plugins.nec.nec_plugin.NECPluginV2',
+    'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2',
+    'neutron.plugins.nicira.NeutronServicePlugin.NvpAdvancedPlugin',
+    'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2',
+    'neutron.plugins.plumgrid.plumgrid_plugin.plumgrid_plugin.'
+    'NeutronPluginPLUMgridV2',
+    'neutron.plugins.ryu.ryu_neutron_plugin.RyuNeutronPluginV2',
+    'neutron.plugins.vmware.plugin.NsxPlugin',
+    'neutron.plugins.vmware.plugin.NsxServicePlugin',
 ]
 
 from alembic import op
