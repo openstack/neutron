@@ -40,8 +40,8 @@ MAX_PAGE_SIZE = 5000
 LOG = log.getLogger(__name__)
 
 
-class NvpCache(object):
-    """A simple Cache for NVP resources.
+class NsxCache(object):
+    """A simple Cache for NSX resources.
 
     Associates resource id with resource hash to rapidly identify
     updated resources.
@@ -57,7 +57,7 @@ class NvpCache(object):
     def __init__(self):
         # Maps a uuid to the dict containing it
         self._uuid_dict_mappings = {}
-        # Dicts for NVP cached resources
+        # Dicts for NSX cached resources
         self._lswitches = {}
         self._lswitchports = {}
         self._lrouters = {}
@@ -74,7 +74,7 @@ class NvpCache(object):
         # Clear the 'changed' attribute for all items
         for uuid, item in resources.items():
             if item.pop('changed', None) and not item.get('data'):
-                # The item is not anymore in NVP, so delete it
+                # The item is not anymore in NSX, so delete it
                 del resources[uuid]
                 del self._uuid_dict_mappings[uuid]
 
@@ -192,7 +192,7 @@ def _start_loopingcall(min_chunk_size, state_sync_interval, func):
     return state_synchronizer
 
 
-class NvpSynchronizer():
+class NsxSynchronizer():
 
     LS_URI = nsxlib._build_uri_path(
         switchlib.LSWITCH_RESOURCE, fields='uuid,tags,fabric_status',
@@ -209,7 +209,7 @@ class NvpSynchronizer():
     def __init__(self, plugin, cluster, state_sync_interval,
                  req_delay, min_chunk_size, max_rand_delay=0):
         random.seed()
-        self._nvp_cache = NvpCache()
+        self._nsx_cache = NsxCache()
         # Store parameters as instance members
         # NOTE(salv-orlando): apologies if it looks java-ish
         self._plugin = plugin
@@ -248,13 +248,13 @@ class NvpSynchronizer():
 
     def synchronize_network(self, context, neutron_network_data,
                             lswitches=None):
-        """Synchronize a Neutron network with its NVP counterpart.
+        """Synchronize a Neutron network with its NSX counterpart.
 
         This routine synchronizes a set of switches when a Neutron
         network is mapped to multiple lswitches.
         """
         if not lswitches:
-            # Try to get logical switches from nvp
+            # Try to get logical switches from nsx
             try:
                 lswitches = nsx_utils.fetch_nsx_switches(
                     context.session, self._cluster,
@@ -264,11 +264,11 @@ class NvpSynchronizer():
                 # api_exc.ResourceNotFound here
                 # The logical switch was not found
                 LOG.warning(_("Logical switch for neutron network %s not "
-                              "found on NVP."), neutron_network_data['id'])
+                              "found on NSX."), neutron_network_data['id'])
                 lswitches = []
             else:
                 for lswitch in lswitches:
-                    self._nvp_cache.update_lswitch(lswitch)
+                    self._nsx_cache.update_lswitch(lswitch)
         # By default assume things go wrong
         status = constants.NET_STATUS_ERROR
         # In most cases lswitches will contain a single element
@@ -292,19 +292,19 @@ class NvpSynchronizer():
         if not ls_uuids and not scan_missing:
             return
         neutron_net_ids = set()
-        neutron_nvp_mappings = {}
+        neutron_nsx_mappings = {}
         # TODO(salvatore-orlando): Deal with the case the tag
         # has been tampered with
         for ls_uuid in ls_uuids:
             # If the lswitch has been deleted, get backup copy of data
-            lswitch = (self._nvp_cache[ls_uuid].get('data') or
-                       self._nvp_cache[ls_uuid].get('data_bk'))
+            lswitch = (self._nsx_cache[ls_uuid].get('data') or
+                       self._nsx_cache[ls_uuid].get('data_bk'))
             tags = self._get_tag_dict(lswitch['tags'])
             neutron_id = tags.get('quantum_net_id')
             neutron_net_ids.add(neutron_id)
-            neutron_nvp_mappings[neutron_id] = (
-                neutron_nvp_mappings.get(neutron_id, []) +
-                [self._nvp_cache[ls_uuid]])
+            neutron_nsx_mappings[neutron_id] = (
+                neutron_nsx_mappings.get(neutron_id, []) +
+                [self._nsx_cache[ls_uuid]])
         # Fetch neutron networks from database
         filters = {'router:external': [False]}
         if not scan_missing:
@@ -312,15 +312,15 @@ class NvpSynchronizer():
         networks = self._plugin._get_collection_query(
             ctx, models_v2.Network, filters=filters)
         for network in networks:
-            lswitches = neutron_nvp_mappings.get(network['id'], [])
+            lswitches = neutron_nsx_mappings.get(network['id'], [])
             lswitches = [lswitch.get('data') for lswitch in lswitches]
             self.synchronize_network(ctx, network, lswitches)
 
     def synchronize_router(self, context, neutron_router_data,
                            lrouter=None):
-        """Synchronize a neutron router with its NVP counterpart."""
+        """Synchronize a neutron router with its NSX counterpart."""
         if not lrouter:
-            # Try to get router from nvp
+            # Try to get router from nsx
             try:
                 # This query will return the logical router status too
                 nsx_router_id = nsx_utils.get_nsx_router_id(
@@ -332,14 +332,14 @@ class NvpSynchronizer():
                 # api_exc.ResourceNotFound here
                 # The logical router was not found
                 LOG.warning(_("Logical router for neutron router %s not "
-                              "found on NVP."), neutron_router_data['id'])
+                              "found on NSX."), neutron_router_data['id'])
                 lrouter = None
             else:
                 # Update the cache
-                self._nvp_cache.update_lrouter(lrouter)
+                self._nsx_cache.update_lrouter(lrouter)
 
         # Note(salv-orlando): It might worth adding a check to verify neutron
-        # resource tag in nvp entity matches a Neutron id.
+        # resource tag in nsx entity matches a Neutron id.
         # By default assume things go wrong
         status = constants.NET_STATUS_ERROR
         if lrouter:
@@ -359,13 +359,13 @@ class NvpSynchronizer():
         # has been tampered with
         neutron_router_mappings = {}
         for lr_uuid in lr_uuids:
-            lrouter = (self._nvp_cache[lr_uuid].get('data') or
-                       self._nvp_cache[lr_uuid].get('data_bk'))
+            lrouter = (self._nsx_cache[lr_uuid].get('data') or
+                       self._nsx_cache[lr_uuid].get('data_bk'))
             tags = self._get_tag_dict(lrouter['tags'])
             neutron_router_id = tags.get('q_router_id')
             if neutron_router_id:
                 neutron_router_mappings[neutron_router_id] = (
-                    self._nvp_cache[lr_uuid])
+                    self._nsx_cache[lr_uuid])
             else:
                 LOG.warn(_("Unable to find Neutron router id for "
                            "NSX logical router: %s"), lr_uuid)
@@ -381,7 +381,7 @@ class NvpSynchronizer():
 
     def synchronize_port(self, context, neutron_port_data,
                          lswitchport=None, ext_networks=None):
-        """Synchronize a Neutron port with its NVP counterpart."""
+        """Synchronize a Neutron port with its NSX counterpart."""
         # Skip synchronization for ports on external networks
         if not ext_networks:
             ext_networks = [net['id'] for net in context.session.query(
@@ -395,7 +395,7 @@ class NvpSynchronizer():
                 return
 
         if not lswitchport:
-            # Try to get port from nvp
+            # Try to get port from nsx
             try:
                 ls_uuid, lp_uuid = nsx_utils.get_nsx_switch_and_port_id(
                     context.session, self._cluster, neutron_port_data['id'])
@@ -409,15 +409,15 @@ class NvpSynchronizer():
                 # of PortNotFoundOnNetwork when the id exists but
                 # the logical switch port was not found
                 LOG.warning(_("Logical switch port for neutron port %s "
-                              "not found on NVP."), neutron_port_data['id'])
+                              "not found on NSX."), neutron_port_data['id'])
                 lswitchport = None
             else:
                 # If lswitchport is not None, update the cache.
                 # It could be none if the port was deleted from the backend
                 if lswitchport:
-                    self._nvp_cache.update_lswitchport(lswitchport)
+                    self._nsx_cache.update_lswitchport(lswitchport)
         # Note(salv-orlando): It might worth adding a check to verify neutron
-        # resource tag in nvp entity matches Neutron id.
+        # resource tag in nsx entity matches Neutron id.
         # By default assume things go wrong
         status = constants.PORT_STATUS_ERROR
         if lswitchport:
@@ -439,13 +439,13 @@ class NvpSynchronizer():
         # has been tampered with
         neutron_port_mappings = {}
         for lp_uuid in lp_uuids:
-            lport = (self._nvp_cache[lp_uuid].get('data') or
-                     self._nvp_cache[lp_uuid].get('data_bk'))
+            lport = (self._nsx_cache[lp_uuid].get('data') or
+                     self._nsx_cache[lp_uuid].get('data_bk'))
             tags = self._get_tag_dict(lport['tags'])
             neutron_port_id = tags.get('q_port_id')
             if neutron_port_id:
                 neutron_port_mappings[neutron_port_id] = (
-                    self._nvp_cache[lp_uuid])
+                    self._nsx_cache[lp_uuid])
         # Fetch neutron ports from database
         # At the first sync we need to fetch all ports
         filters = ({} if scan_missing else
@@ -478,7 +478,7 @@ class NvpSynchronizer():
             if cursor == 'start':
                 cursor = None
             # Chunk size tuning might, in some conditions, make it larger
-            # than 5,000, which is the maximum page size allowed by the NVP
+            # than 5,000, which is the maximum page size allowed by the NSX
             # API. In this case the request should be split in multiple
             # requests. This is not ideal, and therefore a log warning will
             # be emitted.
@@ -486,7 +486,7 @@ class NvpSynchronizer():
             if num_requests > 1:
                 LOG.warn(_("Requested page size is %(cur_chunk_size)d."
                            "It might be necessary to do %(num_requests)d "
-                           "round-trips to NVP for fetching data. Please "
+                           "round-trips to NSX for fetching data. Please "
                            "tune sync parameters to ensure chunk size "
                            "is less than %(max_page_size)d"),
                          {'cur_chunk_size': page_size,
@@ -514,11 +514,11 @@ class NvpSynchronizer():
             return results, cursor if page_size else 'start', total_size
         return [], cursor, None
 
-    def _fetch_nvp_data_chunk(self, sp):
+    def _fetch_nsx_data_chunk(self, sp):
         base_chunk_size = sp.chunk_size
         chunk_size = base_chunk_size + sp.extra_chunk_size
         LOG.info(_("Fetching up to %s resources "
-                   "from NVP backend"), chunk_size)
+                   "from NSX backend"), chunk_size)
         fetched = ls_count = lr_count = lp_count = 0
         lswitches = lrouters = lswitchports = []
         if sp.ls_cursor or sp.ls_cursor == 'start':
@@ -559,19 +559,19 @@ class NvpSynchronizer():
             sp.ls_cursor = sp.lr_cursor = sp.lp_cursor = 'start'
         LOG.info(_("Running state synchronization task. Chunk: %s"),
                  sp.current_chunk)
-        # Fetch chunk_size data from NVP
+        # Fetch chunk_size data from NSX
         try:
             (lswitches, lrouters, lswitchports) = (
-                self._fetch_nvp_data_chunk(sp))
+                self._fetch_nsx_data_chunk(sp))
         except (api_exc.RequestTimeout, api_exc.NsxApiException):
             sleep_interval = self._sync_backoff
             # Cap max back off to 64 seconds
             self._sync_backoff = min(self._sync_backoff * 2, 64)
             LOG.exception(_("An error occurred while communicating with "
-                            "NVP backend. Will retry synchronization "
+                            "NSX backend. Will retry synchronization "
                             "in %d seconds"), sleep_interval)
             return sleep_interval
-        LOG.debug(_("Time elapsed querying NVP: %s"),
+        LOG.debug(_("Time elapsed querying NSX: %s"),
                   timeutils.utcnow() - start)
         if sp.total_size:
             num_chunks = ((sp.total_size / sp.chunk_size) +
@@ -579,20 +579,20 @@ class NvpSynchronizer():
         else:
             num_chunks = 1
         LOG.debug(_("Number of chunks: %d"), num_chunks)
-        # Find objects which have changed on NVP side and need
+        # Find objects which have changed on NSX side and need
         # to be synchronized
-        (ls_uuids, lr_uuids, lp_uuids) = self._nvp_cache.process_updates(
+        (ls_uuids, lr_uuids, lp_uuids) = self._nsx_cache.process_updates(
             lswitches, lrouters, lswitchports)
         # Process removed objects only at the last chunk
         scan_missing = (sp.current_chunk == num_chunks - 1 and
                         not sp.init_sync_performed)
         if sp.current_chunk == num_chunks - 1:
-            self._nvp_cache.process_deletes()
-            ls_uuids = self._nvp_cache.get_lswitches(
+            self._nsx_cache.process_deletes()
+            ls_uuids = self._nsx_cache.get_lswitches(
                 changed_only=not scan_missing)
-            lr_uuids = self._nvp_cache.get_lrouters(
+            lr_uuids = self._nsx_cache.get_lrouters(
                 changed_only=not scan_missing)
-            lp_uuids = self._nvp_cache.get_lswitchports(
+            lp_uuids = self._nsx_cache.get_lswitchports(
                 changed_only=not scan_missing)
         LOG.debug(_("Time elapsed hashing data: %s"),
                   timeutils.utcnow() - start)

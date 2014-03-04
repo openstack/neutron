@@ -1,7 +1,7 @@
 # Copyright 2014 Big Switch Networks, Inc.
 # All Rights Reserved.
 #
-# Copyright 2011 Nicira Networks, Inc.
+# Copyright 2011 VMware, Inc.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may

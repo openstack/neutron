@@ -941,7 +941,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             context, id, firewall_db.Firewall)
 
     def get_firewall(self, context, id, fields=None):
-        fw = super(NvpAdvancedPlugin, self).get_firewall(
+        fw = super(NsxAdvancedPlugin, self).get_firewall(
             context, id, fields)
         if fields and rsi.ROUTER_ID not in fields:
             return fw
@@ -952,7 +952,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         return fw
 
     def get_firewalls(self, context, filters=None, fields=None):
-        fws = super(NvpAdvancedPlugin, self).get_firewalls(
+        fws = super(NsxAdvancedPlugin, self).get_firewalls(
             context, filters, fields)
         if fields and rsi.ROUTER_ID not in fields:
             return fws
@@ -1303,7 +1303,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         self._update_interface(context, router, sync=True)
 
     def get_vip(self, context, id, fields=None):
-        vip = super(NvpAdvancedPlugin, self).get_vip(context, id, fields)
+        vip = super(NsxAdvancedPlugin, self).get_vip(context, id, fields)
         if fields and rsi.ROUTER_ID not in fields:
             return vip
 
@@ -1313,7 +1313,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         return vip
 
     def get_vips(self, context, filters=None, fields=None):
-        vips = super(NvpAdvancedPlugin, self).get_vips(
+        vips = super(NsxAdvancedPlugin, self).get_vips(
             context, filters, fields)
         if fields and rsi.ROUTER_ID not in fields:
             return vips
@@ -1629,7 +1629,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             raise nsx_exc.ServiceOverQuota(
                 overs='vpnservice', err_msg=msg)
 
-        service = super(NvpAdvancedPlugin, self).create_vpnservice(
+        service = super(NsxAdvancedPlugin, self).create_vpnservice(
             context, vpnservice)
         self._resource_set_status(
             context, vpn_db.VPNService,
@@ -1638,7 +1638,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
     def update_vpnservice(self, context, vpnservice_id, vpnservice):
         vpnservice['vpnservice']['status'] = service_constants.PENDING_UPDATE
-        service = super(NvpAdvancedPlugin, self).update_vpnservice(
+        service = super(NsxAdvancedPlugin, self).update_vpnservice(
             context, vpnservice_id, vpnservice)
         # Only admin_state_up attribute is configurable on Edge.
         if vpnservice['vpnservice'].get('admin_state_up') is None:
@@ -1669,14 +1669,14 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
 
     def create_ipsec_site_connection(self, context, ipsec_site_connection):
         ipsec_site_conn = super(
-            NvpAdvancedPlugin, self).create_ipsec_site_connection(
+            NsxAdvancedPlugin, self).create_ipsec_site_connection(
                 context, ipsec_site_connection)
         try:
             self._vcns_update_ipsec_config(
                 context, ipsec_site_conn['vpnservice_id'])
         except Exception:
             with excutils.save_and_reraise_exception():
-                super(NvpAdvancedPlugin, self).delete_ipsec_site_connection(
+                super(NsxAdvancedPlugin, self).delete_ipsec_site_connection(
                     context, ipsec_site_conn['id'])
         self._resource_set_status(
             context, vpn_db.IPsecSiteConnection,
@@ -1688,7 +1688,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         ipsec_site_connection['ipsec_site_connection']['status'] = (
             service_constants.PENDING_UPDATE)
         ipsec_site_conn = super(
-            NvpAdvancedPlugin, self).update_ipsec_site_connection(
+            NsxAdvancedPlugin, self).update_ipsec_site_connection(
                 context, ipsec_site_connection_id, ipsec_site_connection)
         try:
             self._vcns_update_ipsec_config(
@@ -1717,7 +1717,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 self._resource_set_status(
                     context, vpn_db.IPsecSiteConnection, ipsec_site_conn_id,
                     service_constants.ERROR)
-        super(NvpAdvancedPlugin, self).delete_ipsec_site_connection(
+        super(NsxAdvancedPlugin, self).delete_ipsec_site_connection(
             context, ipsec_site_conn_id)
 
 

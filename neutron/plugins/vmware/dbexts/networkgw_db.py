@@ -363,7 +363,7 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                 raise MultipleGatewayConnections(
                     gateway_id=network_gateway_id)
             # Remove gateway port from network
-            # FIXME(salvatore-orlando): Ensure state of port in NVP is
+            # FIXME(salvatore-orlando): Ensure state of port in NSX is
             # consistent with outcome of transaction
             self.delete_port(context, net_connection['port_id'],
                              nw_gw_port_check=False)
