@@ -23,7 +23,7 @@ import webob.exc as wexc
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import l3_db
@@ -623,7 +623,7 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
 
             # Inject an exception in the OVS plugin delete_port
             # processing, and attempt a port deletion.
-            inserted_exc = q_exc.Conflict
+            inserted_exc = n_exc.Conflict
             expected_http = base.FAULT_MAP[inserted_exc].code
             with mock.patch.object(l3_db.L3_NAT_db_mixin,
                                    'disassociate_floatingips',

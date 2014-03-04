@@ -18,7 +18,7 @@
 
 from sqlalchemy.orm import exc
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 import neutron.db.api as db_api
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
@@ -44,7 +44,7 @@ class HyperVPluginDB(object):
                            'physical_network': alloc.physical_network})
                 alloc.allocated = True
                 return (alloc.physical_network, alloc.vlan_id)
-        raise q_exc.NoNetworkAvailable()
+        raise n_exc.NoNetworkAvailable()
 
     def reserve_flat_net(self, session):
         with session.begin(subtransactions=True):
@@ -58,7 +58,7 @@ class HyperVPluginDB(object):
                           {'physical_network': alloc.physical_network})
                 alloc.allocated = True
                 return alloc.physical_network
-        raise q_exc.NoNetworkAvailable()
+        raise n_exc.NoNetworkAvailable()
 
     def reserve_specific_vlan(self, session, physical_network, vlan_id):
         with session.begin(subtransactions=True):
@@ -70,10 +70,10 @@ class HyperVPluginDB(object):
                 alloc = alloc_q.one()
                 if alloc.allocated:
                     if vlan_id == constants.FLAT_VLAN_ID:
-                        raise q_exc.FlatNetworkInUse(
+                        raise n_exc.FlatNetworkInUse(
                             physical_network=physical_network)
                     else:
-                        raise q_exc.VlanIdInUse(
+                        raise n_exc.VlanIdInUse(
                             vlan_id=vlan_id,
                             physical_network=physical_network)
                 LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
@@ -82,7 +82,7 @@ class HyperVPluginDB(object):
                            'physical_network': physical_network})
                 alloc.allocated = True
             except exc.NoResultFound:
-                raise q_exc.NoNetworkAvailable()
+                raise n_exc.NoNetworkAvailable()
 
     def reserve_specific_flat_net(self, session, physical_network):
         return self.reserve_specific_vlan(session, physical_network,
@@ -122,7 +122,7 @@ class HyperVPluginDB(object):
             session.merge(port)
             session.flush()
         except exc.NoResultFound:
-            raise q_exc.PortNotFound(port_id=port_id)
+            raise n_exc.PortNotFound(port_id=port_id)
 
     def release_vlan(self, session, physical_network, vlan_id):
         with session.begin(subtransactions=True):

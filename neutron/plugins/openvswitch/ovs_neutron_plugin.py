@@ -22,7 +22,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as q_const
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -404,64 +404,64 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         if not network_type_set:
             msg = _("provider:network_type required")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         elif network_type == svc_constants.TYPE_FLAT:
             if segmentation_id_set:
                 msg = _("provider:segmentation_id specified for flat network")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             else:
                 segmentation_id = constants.FLAT_VLAN_ID
         elif network_type == svc_constants.TYPE_VLAN:
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             if not utils.is_valid_vlan_tag(segmentation_id):
                 msg = (_("provider:segmentation_id out of range "
                          "(%(min_id)s through %(max_id)s)") %
                        {'min_id': q_const.MIN_VLAN_TAG,
                         'max_id': q_const.MAX_VLAN_TAG})
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
         elif network_type in constants.TUNNEL_NETWORK_TYPES:
             if not self.enable_tunneling:
                 msg = _("%s networks are not enabled") % network_type
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             if physical_network_set:
                 msg = _("provider:physical_network specified for %s "
                         "network") % network_type
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             else:
                 physical_network = None
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
         elif network_type == svc_constants.TYPE_LOCAL:
             if physical_network_set:
                 msg = _("provider:physical_network specified for local "
                         "network")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             else:
                 physical_network = None
             if segmentation_id_set:
                 msg = _("provider:segmentation_id specified for local "
                         "network")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             else:
                 segmentation_id = None
         else:
             msg = _("provider:network_type %s not supported") % network_type
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
 
         if network_type in [svc_constants.TYPE_VLAN, svc_constants.TYPE_FLAT]:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
                     msg = _("Unknown provider:physical_network "
                             "%s") % physical_network
-                    raise q_exc.InvalidInput(error_message=msg)
+                    raise n_exc.InvalidInput(error_message=msg)
             elif 'default' in self.network_vlan_ranges:
                 physical_network = 'default'
             else:
                 msg = _("provider:physical_network required")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
 
         return (network_type, physical_network, segmentation_id)
 
@@ -481,7 +481,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 # tenant network
                 network_type = self.tenant_network_type
                 if network_type == svc_constants.TYPE_NONE:
-                    raise q_exc.TenantNetworksDisabled()
+                    raise n_exc.TenantNetworksDisabled()
                 elif network_type == svc_constants.TYPE_VLAN:
                     (physical_network,
                      segmentation_id) = ovs_db_v2.reserve_vlan(session)

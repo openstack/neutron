@@ -18,7 +18,7 @@
 import sqlalchemy
 from sqlalchemy.orm.properties import RelationshipProperty
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.openstack.common import log as logging
 
 
@@ -72,13 +72,13 @@ def paginate_query(query, model, limit, sorts, marker_obj=None):
             # Extension attribute doesn't support for sorting. Because it
             # existed in attr_info, it will be catched at here
             msg = _("%s is invalid attribute for sort_key") % sort_key
-            raise q_exc.BadRequest(resource=model.__tablename__, msg=msg)
+            raise n_exc.BadRequest(resource=model.__tablename__, msg=msg)
         if isinstance(sort_key_attr.property, RelationshipProperty):
             msg = _("The attribute '%(attr)s' is reference to other "
                     "resource, can't used by sort "
                     "'%(resource)s'") % {'attr': sort_key,
                                          'resource': model.__tablename__}
-            raise q_exc.BadRequest(resource=model.__tablename__, msg=msg)
+            raise n_exc.BadRequest(resource=model.__tablename__, msg=msg)
         query = query.order_by(sort_dir_func(sort_key_attr))
 
     # Add pagination

@@ -17,7 +17,7 @@
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 
 
 NETWORK_TYPE = 'provider:network_type'
@@ -54,7 +54,7 @@ def _raise_if_updates_provider_attributes(attrs):
     immutable = (NETWORK_TYPE, PHYSICAL_NETWORK, SEGMENTATION_ID)
     if any(attributes.is_attr_set(attrs.get(a)) for a in immutable):
         msg = _("Plugin does not support updating provider attributes")
-        raise q_exc.InvalidInput(error_message=msg)
+        raise n_exc.InvalidInput(error_message=msg)
 
 
 class Providernet(extensions.ExtensionDescriptor):

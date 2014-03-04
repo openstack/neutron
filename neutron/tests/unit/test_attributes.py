@@ -18,7 +18,7 @@
 import testtools
 
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.tests import base
 
 
@@ -115,11 +115,11 @@ class TestAttributes(base.BaseTestCase):
         result = attributes._validate_no_whitespace(data)
         self.assertEqual(result, data)
 
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           attributes._validate_no_whitespace,
                           'i have whitespace')
 
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           attributes._validate_no_whitespace,
                           'i\thave\twhitespace')
 
@@ -670,7 +670,7 @@ class TestConvertToBoolean(base.BaseTestCase):
     def test_convert_to_boolean_int(self):
         self.assertIs(attributes.convert_to_boolean(0), False)
         self.assertIs(attributes.convert_to_boolean(1), True)
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           attributes.convert_to_boolean,
                           7)
 
@@ -681,7 +681,7 @@ class TestConvertToBoolean(base.BaseTestCase):
         self.assertIs(attributes.convert_to_boolean('false'), False)
         self.assertIs(attributes.convert_to_boolean('0'), False)
         self.assertIs(attributes.convert_to_boolean('1'), True)
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           attributes.convert_to_boolean,
                           '7')
 
@@ -696,12 +696,12 @@ class TestConvertToInt(base.BaseTestCase):
     def test_convert_to_int_str(self):
         self.assertEqual(attributes.convert_to_int('4'), 4)
         self.assertEqual(attributes.convert_to_int('6'), 6)
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           attributes.convert_to_int,
                           'garbage')
 
     def test_convert_to_int_none(self):
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           attributes.convert_to_int,
                           None)
 
@@ -736,11 +736,11 @@ class TestConvertKvp(base.BaseTestCase):
         self.assertEqual({'a': ['b'], 'c': ['d']}, result)
 
     def test_convert_kvp_str_to_list_fails_for_missing_key(self):
-        with testtools.ExpectedException(q_exc.InvalidInput):
+        with testtools.ExpectedException(n_exc.InvalidInput):
             attributes.convert_kvp_str_to_list('=a')
 
     def test_convert_kvp_str_to_list_fails_for_missing_equals(self):
-        with testtools.ExpectedException(q_exc.InvalidInput):
+        with testtools.ExpectedException(n_exc.InvalidInput):
             attributes.convert_kvp_str_to_list('a')
 
     def test_convert_kvp_str_to_list_succeeds_for_one_equals(self):

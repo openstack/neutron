@@ -25,7 +25,7 @@ import webob.exc as webexc
 import webtest
 
 from neutron.api import extensions
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as db_api
 from neutron.db import servicetype_db as st_db
@@ -66,7 +66,7 @@ class ServiceTypeManagerTestCase(base.BaseTestCase):
                 'default': False}
         self.manager._load_conf()
         self.assertRaises(
-            q_exc.Invalid, self.manager.conf.add_provider, prov)
+            n_exc.Invalid, self.manager.conf.add_provider, prov)
 
     def test_get_service_providers(self):
         cfg.CONF.set_override('service_provider',
@@ -99,7 +99,7 @@ class ServiceTypeManagerTestCase(base.BaseTestCase):
                                constants.LOADBALANCER +
                                ':lbaas2:driver_path:default'],
                               'service_providers')
-        self.assertRaises(q_exc.Invalid, self.manager._load_conf)
+        self.assertRaises(n_exc.Invalid, self.manager._load_conf)
 
     def test_get_default_provider(self):
         cfg.CONF.set_override('service_provider',

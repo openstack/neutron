@@ -15,7 +15,7 @@
 
 from testtools import matchers
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.db import api as db
 from neutron.plugins.mlnx.db import mlnx_db_v2 as mlnx_db
 from neutron.tests import base
@@ -113,7 +113,7 @@ class SegmentationIdAllocationTest(base.BaseTestCase):
             self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
             vlan_ids.add(vlan_id)
 
-        self.assertRaises(q_exc.NoNetworkAvailable,
+        self.assertRaises(n_exc.NoNetworkAvailable,
                           mlnx_db.reserve_network,
                           self.session)
         for vlan_id in vlan_ids:
@@ -128,7 +128,7 @@ class SegmentationIdAllocationTest(base.BaseTestCase):
         self.assertTrue(mlnx_db.get_network_state(PHYS_NET,
                                                   vlan_id).allocated)
 
-        self.assertRaises(q_exc.VlanIdInUse,
+        self.assertRaises(n_exc.VlanIdInUse,
                           mlnx_db.reserve_specific_network,
                           self.session,
                           PHYS_NET,
@@ -145,7 +145,7 @@ class SegmentationIdAllocationTest(base.BaseTestCase):
         self.assertTrue(mlnx_db.get_network_state(PHYS_NET,
                                                   vlan_id).allocated)
 
-        self.assertRaises(q_exc.VlanIdInUse,
+        self.assertRaises(n_exc.VlanIdInUse,
                           mlnx_db.reserve_specific_network,
                           self.session,
                           PHYS_NET,

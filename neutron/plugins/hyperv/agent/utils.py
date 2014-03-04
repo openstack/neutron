@@ -23,7 +23,7 @@ import time
 
 from oslo.config import cfg
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.openstack.common import log as logging
 
 # Check needed for unit testing on Unix
@@ -34,7 +34,7 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
-class HyperVException(q_exc.NeutronException):
+class HyperVException(n_exc.NeutronException):
     message = _('HyperVException: %(msg)s')
 
 WMI_JOB_STATE_STARTED = 4096

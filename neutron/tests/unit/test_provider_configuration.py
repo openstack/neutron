@@ -16,7 +16,7 @@
 
 from oslo.config import cfg
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 
 from neutron.plugins.common import constants
 from neutron.services import provider_configuration as provconf
@@ -84,7 +84,7 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
                                ':lbaas:driver_path',
                                'svc_type:name1:path1'],
                               'service_providers')
-        self.assertRaises(q_exc.Invalid, provconf.parse_service_provider_opt)
+        self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
 
     def test_parse_service_provider_invalid_format(self):
         cfg.CONF.set_override('service_provider',
@@ -92,13 +92,13 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
                                ':lbaas:driver_path',
                                'svc_type:name1:path1:def'],
                               'service_providers')
-        self.assertRaises(q_exc.Invalid, provconf.parse_service_provider_opt)
+        self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
         cfg.CONF.set_override('service_provider',
                               [constants.LOADBALANCER +
                                ':',
                                'svc_type:name1:path1:def'],
                               'service_providers')
-        self.assertRaises(q_exc.Invalid, provconf.parse_service_provider_opt)
+        self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
 
     def test_parse_service_provider_name_too_long(self):
         name = 'a' * 256
@@ -107,7 +107,7 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
                                ':' + name + ':driver_path',
                                'svc_type:name1:path1:def'],
                               'service_providers')
-        self.assertRaises(q_exc.Invalid, provconf.parse_service_provider_opt)
+        self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
 
 
 class ProviderConfigurationTestCase(base.BaseTestCase):
@@ -118,7 +118,7 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
         pconf = provconf.ProviderConfiguration([])
         pconf.providers[('svctype', 'name')] = {'driver': 'driver',
                                                 'default': True}
-        self.assertRaises(q_exc.Invalid,
+        self.assertRaises(n_exc.Invalid,
                           pconf._ensure_driver_unique, 'driver')
         self.assertIsNone(pconf._ensure_driver_unique('another_driver1'))
 
@@ -126,7 +126,7 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
         pconf = provconf.ProviderConfiguration([])
         pconf.providers[('svctype', 'name')] = {'driver': 'driver',
                                                 'default': True}
-        self.assertRaises(q_exc.Invalid,
+        self.assertRaises(n_exc.Invalid,
                           pconf._ensure_default_unique,
                           'svctype', True)
         self.assertIsNone(pconf._ensure_default_unique('svctype', False))
@@ -153,7 +153,7 @@ class ProviderConfigurationTestCase(base.BaseTestCase):
                 'driver': 'path',
                 'default': False}
         pconf.add_provider(prov)
-        self.assertRaises(q_exc.Invalid, pconf.add_provider, prov)
+        self.assertRaises(n_exc.Invalid, pconf.add_provider, prov)
         self.assertEqual(len(pconf.providers), 1)
 
     def test_get_service_providers(self):

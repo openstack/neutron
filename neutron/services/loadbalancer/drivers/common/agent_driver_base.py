@@ -21,7 +21,7 @@ import uuid
 from oslo.config import cfg
 
 from neutron.common import constants as q_const
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
 from neutron.db import agents_db
@@ -48,7 +48,7 @@ AGENT_SCHEDULER_OPTS = [
 cfg.CONF.register_opts(AGENT_SCHEDULER_OPTS)
 
 
-class DriverNotSpecified(q_exc.NeutronException):
+class DriverNotSpecified(n_exc.NeutronException):
     message = _("Device driver for agent should be specified "
                 "in plugin driver.")
 
@@ -96,7 +96,7 @@ class LoadBalancerCallbacks(object):
             pool = qry.one()
 
             if pool.status != constants.ACTIVE:
-                raise q_exc.Invalid(_('Expected active pool'))
+                raise n_exc.Invalid(_('Expected active pool'))
 
             retval = {}
             retval['pool'] = self.plugin._make_pool_dict(pool)
@@ -158,7 +158,7 @@ class LoadBalancerCallbacks(object):
             'health_monitor': loadbalancer_db.PoolMonitorAssociation
         }
         if obj_type not in model_mapping:
-            raise q_exc.Invalid(_('Unknown object type: %s') % obj_type)
+            raise n_exc.Invalid(_('Unknown object type: %s') % obj_type)
         try:
             if obj_type == 'health_monitor':
                 self.plugin.update_pool_health_monitor(
@@ -166,7 +166,7 @@ class LoadBalancerCallbacks(object):
             else:
                 self.plugin.update_status(
                     context, model_mapping[obj_type], obj_id, status)
-        except q_exc.NotFound:
+        except n_exc.NotFound:
             # update_status may come from agent on an object which was
             # already deleted from db with other request
             LOG.warning(_('Cannot update status: %(obj_type)s %(obj_id)s '
@@ -191,7 +191,7 @@ class LoadBalancerCallbacks(object):
                 context,
                 port_id
             )
-        except q_exc.PortNotFound:
+        except n_exc.PortNotFound:
             msg = _('Unable to find port %s to plug.')
             LOG.debug(msg, port_id)
             return
@@ -215,7 +215,7 @@ class LoadBalancerCallbacks(object):
                 context,
                 port_id
             )
-        except q_exc.PortNotFound:
+        except n_exc.PortNotFound:
             msg = _('Unable to find port %s to unplug.  This can occur when '
                     'the Vip has been deleted first.')
             LOG.debug(msg, port_id)
@@ -232,7 +232,7 @@ class LoadBalancerCallbacks(object):
                 {'port': port}
             )
 
-        except q_exc.PortNotFound:
+        except n_exc.PortNotFound:
             msg = _('Unable to find port %s to unplug.  This can occur when '
                     'the Vip has been deleted first.')
             LOG.debug(msg, port_id)

@@ -21,7 +21,7 @@ from sqlalchemy.orm import exc
 from sqlalchemy.orm import validates
 
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2 as base_db
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -340,7 +340,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                 pool = self._get_resource(context, Pool, v['pool_id'])
                 # validate that the pool has same tenant
                 if pool['tenant_id'] != tenant_id:
-                    raise q_exc.NotAuthorized()
+                    raise n_exc.NotAuthorized()
                 # validate that the pool has same protocol
                 if pool['protocol'] != v['protocol']:
                     raise loadbalancer.ProtocolMismatch(
@@ -420,7 +420,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
 
                         # check that the pool matches the tenant_id
                         if new_pool['tenant_id'] != vip_db['tenant_id']:
-                            raise q_exc.NotAuthorized()
+                            raise n_exc.NotAuthorized()
                         # validate that the pool has same protocol
                         if new_pool['protocol'] != vip_db['protocol']:
                             raise loadbalancer.ProtocolMismatch(

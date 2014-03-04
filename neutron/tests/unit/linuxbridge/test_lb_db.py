@@ -17,7 +17,7 @@ from oslo.config import cfg
 import testtools
 from testtools import matchers
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.db import api as db
 from neutron.plugins.linuxbridge.db import l2network_db_v2 as lb_db
 from neutron.tests import base
@@ -114,7 +114,7 @@ class NetworkStatesTest(base.BaseTestCase):
             self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
             vlan_ids.add(vlan_id)
 
-        with testtools.ExpectedException(q_exc.NoNetworkAvailable):
+        with testtools.ExpectedException(n_exc.NoNetworkAvailable):
             physical_network, vlan_id = lb_db.reserve_network(self.session)
 
         for vlan_id in vlan_ids:
@@ -128,7 +128,7 @@ class NetworkStatesTest(base.BaseTestCase):
         self.assertTrue(lb_db.get_network_state(PHYS_NET,
                                                 vlan_id).allocated)
 
-        with testtools.ExpectedException(q_exc.VlanIdInUse):
+        with testtools.ExpectedException(n_exc.VlanIdInUse):
             lb_db.reserve_specific_network(self.session, PHYS_NET, vlan_id)
 
         lb_db.release_network(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
@@ -142,7 +142,7 @@ class NetworkStatesTest(base.BaseTestCase):
         self.assertTrue(lb_db.get_network_state(PHYS_NET,
                                                 vlan_id).allocated)
 
-        with testtools.ExpectedException(q_exc.VlanIdInUse):
+        with testtools.ExpectedException(n_exc.VlanIdInUse):
             lb_db.reserve_specific_network(self.session, PHYS_NET, vlan_id)
 
         lb_db.release_network(self.session, PHYS_NET, vlan_id, VLAN_RANGES)

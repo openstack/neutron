@@ -19,7 +19,7 @@
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -77,14 +77,14 @@ class LocalNetworkProvider(BaseNetworkProvider):
         if attributes.is_attr_set(segmentation_id):
             msg = _("segmentation_id specified "
                     "for %s network") % network_type
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         attrs[provider.SEGMENTATION_ID] = None
 
         physical_network = attrs.get(provider.PHYSICAL_NETWORK)
         if attributes.is_attr_set(physical_network):
             msg = _("physical_network specified "
                     "for %s network") % network_type
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         attrs[provider.PHYSICAL_NETWORK] = None
 
     def extend_network_dict(self, network, binding):
@@ -99,7 +99,7 @@ class FlatNetworkProvider(BaseNetworkProvider):
         if attributes.is_attr_set(segmentation_id):
             msg = _("segmentation_id specified "
                     "for %s network") % network_type
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         segmentation_id = constants.FLAT_VLAN_ID
         attrs[provider.SEGMENTATION_ID] = segmentation_id
 
@@ -125,7 +125,7 @@ class VlanNetworkProvider(BaseNetworkProvider):
             physical_network = attrs.get(provider.PHYSICAL_NETWORK)
             if not attributes.is_attr_set(physical_network):
                 msg = _("physical_network not provided")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             self._db.reserve_specific_vlan(session, physical_network,
                                            segmentation_id)
         else:
@@ -180,7 +180,7 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
             msg = _(
                 "Invalid tenant_network_type: %s. "
                 "Agent terminated!") % tenant_network_type
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         self._tenant_network_type = tenant_network_type
 
     def _setup_rpc(self):
@@ -220,13 +220,13 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
         network_type_set = attributes.is_attr_set(network_type)
         if not network_type_set:
             if self._tenant_network_type == svc_constants.TYPE_NONE:
-                raise q_exc.TenantNetworksDisabled()
+                raise n_exc.TenantNetworksDisabled()
             network_type = self._tenant_network_type
             attrs[provider.NETWORK_TYPE] = network_type
 
         if network_type not in self._network_providers_map:
             msg = _("Network type %s not supported") % network_type
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         p = self._network_providers_map[network_type]
         # Provider specific network creation
         p.create_network(session, attrs)

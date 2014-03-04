@@ -21,7 +21,7 @@
 from sqlalchemy.orm import exc as s_exc
 from testtools import matchers
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
@@ -215,7 +215,7 @@ class VlanAllocationsTest(base.BaseTestCase):
             self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
             vlan_ids.add(vlan_id)
 
-        self.assertRaises(q_exc.NoNetworkAvailable,
+        self.assertRaises(n_exc.NoNetworkAvailable,
                           n1kv_db_v2.reserve_vlan,
                           self.session,
                           p)
@@ -243,7 +243,7 @@ class VlanAllocationsTest(base.BaseTestCase):
                                                        PHYS_NET,
                                                        vlan_id).allocated)
 
-        self.assertRaises(q_exc.VlanIdInUse,
+        self.assertRaises(n_exc.VlanIdInUse,
                           n1kv_db_v2.reserve_specific_vlan,
                           self.session,
                           PHYS_NET,
@@ -265,7 +265,7 @@ class VlanAllocationsTest(base.BaseTestCase):
         self.assertTrue(n1kv_db_v2.get_vlan_allocation(self.session, PHYS_NET,
                                                        vlan_id).allocated)
 
-        self.assertRaises(q_exc.VlanIdInUse,
+        self.assertRaises(n_exc.VlanIdInUse,
                           n1kv_db_v2.reserve_specific_vlan,
                           self.session,
                           PHYS_NET,
@@ -338,7 +338,7 @@ class VxlanAllocationsTest(base.BaseTestCase,
             self.assertThat(vxlan_id, matchers.LessThan(VXLAN_MAX + 1))
             vxlan_ids.add(vxlan_id)
 
-        self.assertRaises(q_exc.NoNetworkAvailable,
+        self.assertRaises(n_exc.NoNetworkAvailable,
                           n1kv_db_v2.reserve_vxlan,
                           self.session,
                           profile)
@@ -731,7 +731,7 @@ class NetworkProfileTests(base.BaseTestCase,
         TEST_NETWORK_PROFILE_2['name'] = 'net-profile-min-overlap'
         TEST_NETWORK_PROFILE_2['segment_range'] = SEGMENT_RANGE_MIN_OVERLAP
         test_net_profile = {'network_profile': TEST_NETWORK_PROFILE_2}
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           self.create_network_profile,
                           ctx,
                           test_net_profile)
@@ -739,7 +739,7 @@ class NetworkProfileTests(base.BaseTestCase,
         TEST_NETWORK_PROFILE_2['name'] = 'net-profile-max-overlap'
         TEST_NETWORK_PROFILE_2['segment_range'] = SEGMENT_RANGE_MAX_OVERLAP
         test_net_profile = {'network_profile': TEST_NETWORK_PROFILE_2}
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           self.create_network_profile,
                           ctx,
                           test_net_profile)
@@ -747,7 +747,7 @@ class NetworkProfileTests(base.BaseTestCase,
         TEST_NETWORK_PROFILE_2['name'] = 'net-profile-overlap'
         TEST_NETWORK_PROFILE_2['segment_range'] = SEGMENT_RANGE_OVERLAP
         test_net_profile = {'network_profile': TEST_NETWORK_PROFILE_2}
-        self.assertRaises(q_exc.InvalidInput,
+        self.assertRaises(n_exc.InvalidInput,
                           self.create_network_profile,
                           ctx,
                           test_net_profile)

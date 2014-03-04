@@ -18,7 +18,7 @@
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes as attr
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
@@ -196,7 +196,7 @@ class RouterMixin(extraroute_db.ExtraRoute_db_mixin,
         if not subnet_db['gateway_ip']:
             msg = (_('Cannot add floating IP to port on subnet %s '
                      'which has no gateway_ip') % internal_subnet_id)
-            raise q_exc.BadRequest(resource='floatingip', msg=msg)
+            raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
         # find router interface ports on this network
         router_intf_qry = context.session.query(models_v2.Port)

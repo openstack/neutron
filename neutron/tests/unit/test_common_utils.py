@@ -14,7 +14,7 @@
 
 import testtools
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.plugins.common import utils as plugin_utils
 from neutron.tests import base
@@ -109,7 +109,7 @@ class TestVlanRangeVerifyValid(UtilTestParseVlanRanges):
 
     def check_one_vlan_invalid(self, bad_range, which):
         expected_msg = self._vrange_invalid_vlan(bad_range, which)
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.verify_range, bad_range)
         self.assertEqual(str(err), expected_msg)
 
@@ -152,7 +152,7 @@ class TestVlanRangeVerifyValid(UtilTestParseVlanRanges):
     def test_range_reversed(self):
         bad_range = (95, 10)
         expected_msg = self._vrange_invalid(bad_range)
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.verify_range, bad_range)
         self.assertEqual(str(err), expected_msg)
 
@@ -174,28 +174,28 @@ class TestParseOneVlanRange(UtilTestParseVlanRanges):
     def test_parse_one_net_incomplete_range(self):
         config_str = "net1:100"
         expected_msg = self._range_too_few_err(config_str)
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
         self.assertEqual(str(err), expected_msg)
 
     def test_parse_one_net_range_too_many(self):
         config_str = "net1:100:150:200"
         expected_msg = self._range_too_many_err(config_str)
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
         self.assertEqual(str(err), expected_msg)
 
     def test_parse_one_net_vlan1_not_int(self):
         config_str = "net1:foo:199"
         expected_msg = self._vlan_not_int_err(config_str, 'foo')
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
         self.assertEqual(str(err), expected_msg)
 
     def test_parse_one_net_vlan2_not_int(self):
         config_str = "net1:100:bar"
         expected_msg = self._vlan_not_int_err(config_str, 'bar')
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
         self.assertEqual(str(err), expected_msg)
 
@@ -207,14 +207,14 @@ class TestParseOneVlanRange(UtilTestParseVlanRanges):
     def test_parse_one_net_range_bad_vlan1(self):
         config_str = "net1:9000:150"
         expected_msg = self._nrange_invalid_vlan(config_str, 1)
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
         self.assertEqual(str(err), expected_msg)
 
     def test_parse_one_net_range_bad_vlan2(self):
         config_str = "net1:4000:4999"
         expected_msg = self._nrange_invalid_vlan(config_str, 2)
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_one, config_str)
         self.assertEqual(str(err), expected_msg)
 
@@ -258,7 +258,7 @@ class TestParseVlanRangeList(UtilTestParseVlanRanges):
         config_list = ["net1:100",
                        "net2:200:299"]
         expected_msg = self._range_too_few_err(config_list[0])
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_list, config_list)
         self.assertEqual(str(err), expected_msg)
 
@@ -266,7 +266,7 @@ class TestParseVlanRangeList(UtilTestParseVlanRanges):
         config_list = ["net1:100:199",
                        "net2:200:0x200"]
         expected_msg = self._vlan_not_int_err(config_list[1], '0x200')
-        err = self.assertRaises(q_exc.NetworkVlanRangeError,
+        err = self.assertRaises(n_exc.NetworkVlanRangeError,
                                 self.parse_list, config_list)
         self.assertEqual(str(err), expected_msg)
 

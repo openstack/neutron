@@ -18,7 +18,7 @@ from sqlalchemy import exc as sa_exc
 from sqlalchemy import func
 from sqlalchemy.orm import exc as orm_exc
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 import neutron.db.api as db
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
@@ -191,7 +191,7 @@ class TunnelKey(object):
                 # if this happens too often, increase _TRANSACTION_RETRY_MAX
                 LOG.warn(_("Transaction retry exhausted (%d). "
                            "Abandoned tunnel key allocation."), count)
-                raise q_exc.ResourceExhausted()
+                raise n_exc.ResourceExhausted()
 
         return new_key
 
@@ -212,4 +212,4 @@ def set_port_status(session, port_id, status):
         session.merge(port)
         session.flush()
     except orm_exc.NoResultFound:
-        raise q_exc.PortNotFound(port_id=port_id)
+        raise n_exc.PortNotFound(port_id=port_id)

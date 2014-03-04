@@ -35,7 +35,7 @@ from neutron.agent.linux.ovs_lib import VifPort
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as logging_config
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
@@ -215,7 +215,7 @@ class OVSNeutronOFPRyuAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
         rest_api_addr = self.plugin_rpc.get_ofp_rest_api_addr(self.context)
         if not rest_api_addr:
-            raise q_exc.Invalid(_("Ryu rest API port isn't specified"))
+            raise n_exc.Invalid(_("Ryu rest API port isn't specified"))
         LOG.debug(_("Going to ofp controller mode %s"), rest_api_addr)
 
         ryu_rest_client = client.OFPClient(rest_api_addr)
