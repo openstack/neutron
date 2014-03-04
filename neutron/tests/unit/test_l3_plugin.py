@@ -24,7 +24,7 @@ from webob import exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_constants
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as qdbapi
 from neutron.db import db_base_plugin_v2
@@ -1137,7 +1137,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   None)
                     method = plugin_class + '._update_fip_assoc'
                     with mock.patch(method) as pl:
-                        pl.side_effect = q_exc.BadRequest(
+                        pl.side_effect = n_exc.BadRequest(
                             resource='floatingip',
                             msg='fake_error')
                         res = self._create_floatingip(
@@ -1175,7 +1175,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   None)
                     method = plugin_class + '._update_fip_assoc'
                     with mock.patch(method) as pl:
-                        pl.side_effect = q_exc.IpAddressGenerationFailure(
+                        pl.side_effect = n_exc.IpAddressGenerationFailure(
                             net_id='netid')
                         res = self._create_floatingip(
                             self.fmt,

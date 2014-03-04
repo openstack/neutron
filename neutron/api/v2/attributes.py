@@ -19,7 +19,7 @@ import netaddr
 import re
 
 from neutron.common import constants
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
@@ -108,7 +108,7 @@ def _validate_string(data, max_len=None):
 def _validate_boolean(data, valid_values=None):
     try:
         convert_to_boolean(data)
-    except q_exc.InvalidInput:
+    except n_exc.InvalidInput:
         msg = _("'%s' is not a valid boolean value") % data
         LOG.debug(msg)
         return msg
@@ -148,7 +148,7 @@ def _validate_no_whitespace(data):
     if len(data.split()) > 1:
         msg = _("'%s' contains whitespace") % data
         LOG.debug(msg)
-        raise q_exc.InvalidInput(error_message=msg)
+        raise n_exc.InvalidInput(error_message=msg)
     return data
 
 
@@ -453,7 +453,7 @@ def convert_to_boolean(data):
         elif data == 1:
             return True
     msg = _("'%s' cannot be converted to boolean") % data
-    raise q_exc.InvalidInput(error_message=msg)
+    raise n_exc.InvalidInput(error_message=msg)
 
 
 def convert_to_int(data):
@@ -461,26 +461,26 @@ def convert_to_int(data):
         return int(data)
     except (ValueError, TypeError):
         msg = _("'%s' is not a integer") % data
-        raise q_exc.InvalidInput(error_message=msg)
+        raise n_exc.InvalidInput(error_message=msg)
 
 
 def convert_kvp_str_to_list(data):
     """Convert a value of the form 'key=value' to ['key', 'value'].
 
-    :raises: q_exc.InvalidInput if any of the strings are malformed
+    :raises: n_exc.InvalidInput if any of the strings are malformed
                                 (e.g. do not contain a key).
     """
     kvp = [x.strip() for x in data.split('=', 1)]
     if len(kvp) == 2 and kvp[0]:
         return kvp
     msg = _("'%s' is not of the form <key>=[value]") % data
-    raise q_exc.InvalidInput(error_message=msg)
+    raise n_exc.InvalidInput(error_message=msg)
 
 
 def convert_kvp_list_to_dict(kvp_list):
     """Convert a list of 'key=value' strings to a dict.
 
-    :raises: q_exc.InvalidInput if any of the strings are malformed
+    :raises: n_exc.InvalidInput if any of the strings are malformed
                                 (e.g. do not contain a key) or if any
                                 of the keys appear more than once.
     """

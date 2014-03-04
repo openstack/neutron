@@ -24,7 +24,7 @@ from neutron.api import extensions
 from neutron.api.v2.attributes import convert_to_int
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.manager import NeutronManager
 from neutron.openstack.common import importutils
 from neutron import quota
@@ -79,7 +79,7 @@ class QuotaSetsController(wsgi.Controller):
         """Retrieve the tenant info in context."""
         context = request.context
         if not context.tenant_id:
-            raise q_exc.QuotaMissingTenant()
+            raise n_exc.QuotaMissingTenant()
         return {'tenant': {'tenant_id': context.tenant_id}}
 
     def show(self, request, id):
@@ -92,7 +92,7 @@ class QuotaSetsController(wsgi.Controller):
     def _check_admin(self, context,
                      reason=_("Only admin can view or configure quota")):
         if not context.is_admin:
-            raise q_exc.AdminRequired(reason=reason)
+            raise n_exc.AdminRequired(reason=reason)
 
     def delete(self, request, id):
         self._check_admin(request.context)

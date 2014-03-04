@@ -22,7 +22,7 @@ from sqlalchemy.sql import expression as expr
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_constants
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -152,6 +152,6 @@ class External_net_db_mixin(object):
     def get_external_network_id(self, context):
         nets = self.get_networks(context, {external_net.EXTERNAL: [True]})
         if len(nets) > 1:
-            raise q_exc.TooManyExternalNetworks()
+            raise n_exc.TooManyExternalNetworks()
         else:
             return nets[0]['id'] if nets else None

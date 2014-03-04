@@ -24,7 +24,7 @@ from sqlalchemy.orm import exc
 from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes
 from neutron.common import constants as os_constants
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
@@ -84,7 +84,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 msg = (_("%(resource)s with id %(resource_id)s does not "
                          "exist") % {'resource': resource,
                                      'resource_id': user_req[resource]})
-                raise q_exc.BadRequest(resource=for_resource, msg=msg)
+                raise n_exc.BadRequest(resource=for_resource, msg=msg)
         else:
             filter = {'name': [user_req[resource]]}
             obj_lister = getattr(self, "get_%ss" % resource)
@@ -94,13 +94,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                          "or you dont have credential to access it")
                        % {'resource': resource,
                           'req_resource': user_req[resource]})
-                raise q_exc.BadRequest(resource=for_resource, msg=msg)
+                raise n_exc.BadRequest(resource=for_resource, msg=msg)
             if len(found_resource) > 1:
                 msg = (_("More than one entry found for %(resource)s "
                          "%(req_resource)s. Use id instead")
                        % {'resource': resource,
                           'req_resource': user_req[resource]})
-                raise q_exc.BadRequest(resource=for_resource, msg=msg)
+                raise n_exc.BadRequest(resource=for_resource, msg=msg)
             found_resource = found_resource[0]
         return found_resource
 
@@ -207,13 +207,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                                 subnet_id)
                 if not subnet_mapping:
                     msg = (_("Subnet %s not found on VSD") % subnet_id)
-                    raise q_exc.BadRequest(resource='port', msg=msg)
+                    raise n_exc.BadRequest(resource='port', msg=msg)
                 port_mapping = nuagedb.get_port_mapping_by_id(session,
                                                               id)
                 if not port_mapping:
                     msg = (_("Port-Mapping for port %s not "
                              " found on VSD") % id)
-                    raise q_exc.BadRequest(resource='port', msg=msg)
+                    raise n_exc.BadRequest(resource='port', msg=msg)
                 if not port_mapping['nuage_vport_id']:
                     self._create_update_port(context, port,
                                              port_mapping, subnet_mapping)
@@ -323,7 +323,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         if not net_partition:
             msg = _('Either net_partition is not provided with subnet OR '
                     'default net_partition is not created at the start')
-            raise q_exc.BadRequest(resource='subnet', msg=msg)
+            raise n_exc.BadRequest(resource='subnet', msg=msg)
         return net_partition
 
     def _validate_create_subnet(self, subnet):
@@ -392,7 +392,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 msg = (_('Unable to complete operation on subnet %s.'
                          'One or more ports have an IP allocation '
                          'from this subnet.') % id)
-                raise q_exc.BadRequest(resource='subnet', msg=msg)
+                raise n_exc.BadRequest(resource='subnet', msg=msg)
         super(NuagePlugin, self).delete_subnet(context, id)
         if subnet_l2dom and not self._check_router_subnet_for_tenant(context):
             self.nuageclient.delete_user(subnet_l2dom['nuage_user_id'])
@@ -422,7 +422,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 msg = (_("Router %s does not hold default zone OR "
                          "net_partition mapping. Router-IF add failed")
                        % router_id)
-                raise q_exc.BadRequest(resource='router', msg=msg)
+                raise n_exc.BadRequest(resource='router', msg=msg)
 
             if not subnet_l2dom:
                 super(NuagePlugin,
@@ -431,7 +431,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                     interface_info)
                 msg = (_("Subnet %s does not hold Nuage VSD reference. "
                          "Router-IF add failed") % subnet_id)
-                raise q_exc.BadRequest(resource='subnet', msg=msg)
+                raise n_exc.BadRequest(resource='subnet', msg=msg)
 
             if (subnet_l2dom['net_partition_id'] !=
                 ent_rtr_mapping['net_partition_id']):
@@ -443,7 +443,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                          "different net_partition Router-IF add "
                          "not permitted") % {'subnet': subnet_id,
                                              'router': router_id})
-                raise q_exc.BadRequest(resource='subnet', msg=msg)
+                raise n_exc.BadRequest(resource='subnet', msg=msg)
             nuage_subnet_id = subnet_l2dom['nuage_subnet_id']
             nuage_l2dom_tmplt_id = subnet_l2dom['nuage_l2dom_tmplt_id']
             if self.nuageclient.vms_on_l2domain(nuage_subnet_id):
@@ -453,7 +453,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                     interface_info)
                 msg = (_("Subnet %s has one or more active VMs "
                        "Router-IF add not permitted") % subnet_id)
-                raise q_exc.BadRequest(resource='subnet', msg=msg)
+                raise n_exc.BadRequest(resource='subnet', msg=msg)
             self.nuageclient.delete_subnet(nuage_subnet_id,
                                            nuage_l2dom_tmplt_id)
             net = netaddr.IPNetwork(subn['cidr'])
@@ -499,18 +499,18 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             except exc.NoResultFound:
                 msg = (_("No router interface found for Router %s. "
                          "Router-IF delete failed") % router_id)
-                raise q_exc.BadRequest(resource='router', msg=msg)
+                raise n_exc.BadRequest(resource='router', msg=msg)
 
             if not found:
                 msg = (_("No router interface found for Router %s. "
                          "Router-IF delete failed") % router_id)
-                raise q_exc.BadRequest(resource='router', msg=msg)
+                raise n_exc.BadRequest(resource='router', msg=msg)
         elif 'port_id' in interface_info:
             port_db = self._get_port(context, interface_info['port_id'])
             if not port_db:
                 msg = (_("No router interface found for Router %s. "
                          "Router-IF delete failed") % router_id)
-                raise q_exc.BadRequest(resource='router', msg=msg)
+                raise n_exc.BadRequest(resource='router', msg=msg)
             subnet_id = port_db['fixed_ips'][0]['subnet_id']
 
         session = context.session
@@ -521,7 +521,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             if self.nuageclient.vms_on_l2domain(nuage_subn_id):
                 msg = (_("Subnet %s has one or more active VMs "
                          "Router-IF delete not permitted") % subnet_id)
-                raise q_exc.BadRequest(resource='subnet', msg=msg)
+                raise n_exc.BadRequest(resource='subnet', msg=msg)
 
             neutron_subnet = self.get_subnet(context, subnet_id)
             ent_rtr_mapping = nuagedb.get_ent_rtr_mapping_by_rtrid(
@@ -531,7 +531,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 msg = (_("Router %s does not hold net_partition "
                          "assoc on Nuage VSD. Router-IF delete failed")
                        % router_id)
-                raise q_exc.BadRequest(resource='router', msg=msg)
+                raise n_exc.BadRequest(resource='router', msg=msg)
             net = netaddr.IPNetwork(neutron_subnet['cidr'])
             net_part_id = ent_rtr_mapping['net_partition_id']
             net_partition = self.get_net_partition(context,
@@ -569,7 +569,7 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         if not net_partition:
             msg = _("Either net_partition is not provided with router OR "
                     "default net_partition is not created at the start")
-            raise q_exc.BadRequest(resource='router', msg=msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
         return net_partition
 
     def create_router(self, context, router):
@@ -670,11 +670,11 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         if ent_rtr_mapping:
             msg = (_("One or more router still attached to "
                      "net_partition %s.") % id)
-            raise q_exc.BadRequest(resource='net_partition', msg=msg)
+            raise n_exc.BadRequest(resource='net_partition', msg=msg)
         net_partition = nuagedb.get_net_partition_by_id(context.session, id)
         if not net_partition:
             msg = (_("NetPartition with %s does not exist") % id)
-            raise q_exc.BadRequest(resource='net_partition', msg=msg)
+            raise n_exc.BadRequest(resource='net_partition', msg=msg)
         l3dom_tmplt_id = net_partition['l3dom_tmplt_id']
         l2dom_tmplt_id = net_partition['l2dom_tmplt_id']
         self.nuageclient.delete_net_partition(net_partition['id'],

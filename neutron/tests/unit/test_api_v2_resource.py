@@ -23,7 +23,7 @@ from webob import exc
 import webtest
 
 from neutron.api.v2 import resource as wsgi_resource
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.openstack.common import gettextutils
 from neutron.tests import base
@@ -127,7 +127,7 @@ class ResourceTestCase(base.BaseTestCase):
     def test_unmapped_neutron_error_with_json(self):
         msg = u'\u7f51\u7edc'
 
-        class TestException(q_exc.NeutronException):
+        class TestException(n_exc.NeutronException):
             message = msg
         expected_res = {'body': {
             'NeutronError': {
@@ -149,7 +149,7 @@ class ResourceTestCase(base.BaseTestCase):
     def test_unmapped_neutron_error_with_xml(self):
         msg = u'\u7f51\u7edc'
 
-        class TestException(q_exc.NeutronException):
+        class TestException(n_exc.NeutronException):
             message = msg
         expected_res = {'body': {
             'NeutronError': {
@@ -175,7 +175,7 @@ class ResourceTestCase(base.BaseTestCase):
         mock_translation.return_value = msg_translation
         msg = _('Unmapped error')
 
-        class TestException(q_exc.NeutronException):
+        class TestException(n_exc.NeutronException):
             message = msg
 
         controller = mock.MagicMock()
@@ -193,7 +193,7 @@ class ResourceTestCase(base.BaseTestCase):
     def test_mapped_neutron_error_with_json(self):
         msg = u'\u7f51\u7edc'
 
-        class TestException(q_exc.NeutronException):
+        class TestException(n_exc.NeutronException):
             message = msg
         expected_res = {'body': {
             'NeutronError': {
@@ -217,7 +217,7 @@ class ResourceTestCase(base.BaseTestCase):
     def test_mapped_neutron_error_with_xml(self):
         msg = u'\u7f51\u7edc'
 
-        class TestException(q_exc.NeutronException):
+        class TestException(n_exc.NeutronException):
             message = msg
         expected_res = {'body': {
             'NeutronError': {
@@ -245,7 +245,7 @@ class ResourceTestCase(base.BaseTestCase):
         mock_translation.return_value = msg_translation
         msg = _('Unmapped error')
 
-        class TestException(q_exc.NeutronException):
+        class TestException(n_exc.NeutronException):
             message = msg
 
         controller = mock.MagicMock()
@@ -326,7 +326,7 @@ class ResourceTestCase(base.BaseTestCase):
 
     def _test_error_log_level(self, map_webob_exc, expect_log_info=False,
                               use_fault_map=True):
-        class TestException(q_exc.NeutronException):
+        class TestException(n_exc.NeutronException):
             message = 'Test Exception'
 
         controller = mock.MagicMock()

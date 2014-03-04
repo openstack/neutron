@@ -24,7 +24,7 @@ import eventlet
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -269,44 +269,44 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         if not network_type_set:
             msg = _("provider:network_type required")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         elif network_type == c_const.NETWORK_TYPE_VLAN:
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             if segmentation_id < 1 or segmentation_id > 4094:
                 msg = _("provider:segmentation_id out of range "
                         "(1 through 4094)")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
         elif network_type == c_const.NETWORK_TYPE_OVERLAY:
             if physical_network_set:
                 msg = _("provider:physical_network specified for Overlay "
                         "network")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             else:
                 physical_network = None
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             if segmentation_id < 5000:
                 msg = _("provider:segmentation_id out of range "
                         "(5000+)")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
         else:
             msg = _("provider:network_type %s not supported"), network_type
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
 
         if network_type == c_const.NETWORK_TYPE_VLAN:
             if physical_network_set:
                 if physical_network not in self.network_vlan_ranges:
                     msg = (_("Unknown provider:physical_network %s") %
                            physical_network)
-                    raise q_exc.InvalidInput(error_message=msg)
+                    raise n_exc.InvalidInput(error_message=msg)
             elif 'default' in self.network_vlan_ranges:
                 physical_network = 'default'
             else:
                 msg = _("provider:physical_network required")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
 
         return (network_type, physical_network, segmentation_id)
 
@@ -326,7 +326,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         # TBD : Need to handle provider network updates
         msg = _("Plugin does not support updating provider attributes")
-        raise q_exc.InvalidInput(error_message=msg)
+        raise n_exc.InvalidInput(error_message=msg)
 
     def _get_cluster(self, segment1, segment2, clusters):
         """
@@ -523,13 +523,13 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         binding2.network_type not in valid_seg_types or
                         binding1.network_type == binding2.network_type):
                     msg = _("Invalid pairing supplied")
-                    raise q_exc.InvalidInput(error_message=msg)
+                    raise n_exc.InvalidInput(error_message=msg)
                 else:
                     pair_list.append((segment1, segment2))
             else:
                 LOG.debug(_('Invalid UUID supplied in %s'), pair)
                 msg = _("Invalid UUID supplied")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
         return pair_list
 
     def _parse_trunk_segments(self, context, attrs, param, physical_network,
@@ -559,36 +559,36 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 if binding.network_type == c_const.NETWORK_TYPE_TRUNK:
                     msg = _("Cannot add a trunk segment '%s' as a member of "
                             "another trunk segment") % segment
-                    raise q_exc.InvalidInput(error_message=msg)
+                    raise n_exc.InvalidInput(error_message=msg)
                 elif binding.network_type == c_const.NETWORK_TYPE_VLAN:
                     if sub_type == c_const.NETWORK_TYPE_OVERLAY:
                         msg = _("Cannot add vlan segment '%s' as a member of "
                                 "a vxlan trunk segment") % segment
-                        raise q_exc.InvalidInput(error_message=msg)
+                        raise n_exc.InvalidInput(error_message=msg)
                     if not physical_network:
                         physical_network = binding.physical_network
                     elif physical_network != binding.physical_network:
                         msg = _("Network UUID '%s' belongs to a different "
                                 "physical network") % segment
-                        raise q_exc.InvalidInput(error_message=msg)
+                        raise n_exc.InvalidInput(error_message=msg)
                 elif binding.network_type == c_const.NETWORK_TYPE_OVERLAY:
                     if sub_type == c_const.NETWORK_TYPE_VLAN:
                         msg = _("Cannot add vxlan segment '%s' as a member of "
                                 "a vlan trunk segment") % segment
-                        raise q_exc.InvalidInput(error_message=msg)
+                        raise n_exc.InvalidInput(error_message=msg)
                     try:
                         if not utils.is_valid_vlan_tag(int(dot1qtag)):
                             msg = _("Vlan tag '%s' is out of range") % dot1qtag
-                            raise q_exc.InvalidInput(error_message=msg)
+                            raise n_exc.InvalidInput(error_message=msg)
                     except ValueError:
                         msg = _("Vlan tag '%s' is not an integer "
                                 "value") % dot1qtag
-                        raise q_exc.InvalidInput(error_message=msg)
+                        raise n_exc.InvalidInput(error_message=msg)
                 pair_list.append((segment, dot1qtag))
             else:
                 LOG.debug(_('%s is not a valid uuid'), segment)
                 msg = _("'%s' is not a valid UUID") % segment
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
         return pair_list
 
     def _extend_network_dict_member_segments(self, context, network):
@@ -634,10 +634,10 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         profile_id_set = attributes.is_attr_set(profile_id)
         if not profile_id_set:
             msg = _("n1kv:profile_id does not exist")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         if not self._policy_profile_exists(profile_id):
             msg = _("n1kv:profile_id does not exist")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
 
         return profile_id
 
@@ -990,7 +990,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     LOG.debug(_('Seg list %s '), segment_pairs)
                 else:
                     if not segmentation_id:
-                        raise q_exc.TenantNetworksDisabled()
+                        raise n_exc.TenantNetworksDisabled()
             else:
                 # provider network
                 if network_type == c_const.NETWORK_TYPE_VLAN:
@@ -1105,11 +1105,11 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             if n1kv_db_v2.is_trunk_member(session, id):
                 msg = _("Cannot delete network '%s' "
                         "that is member of a trunk segment") % network['name']
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             if n1kv_db_v2.is_multi_segment_member(session, id):
                 msg = _("Cannot delete network '%s' that is a member of a "
                         "multi-segment network") % network['name']
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
             if self.agent_vsm:
                 try:
                     self._send_delete_network_request(context, network)

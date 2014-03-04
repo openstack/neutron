@@ -30,7 +30,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
 from neutron.common import config
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.manager import NeutronManager
 from neutron.openstack.common.notifier import api as notifer_api
@@ -503,7 +503,7 @@ class APIv2TestCase(APIv2TestBase):
     def test_native_pagination_without_native_sorting(self):
         instance = self.plugin.return_value
         instance._NeutronPluginBaseV2__native_sorting_support = False
-        self.assertRaises(q_exc.Invalid, router.APIRouter)
+        self.assertRaises(n_exc.Invalid, router.APIRouter)
 
     def test_native_pagination_without_allow_sorting(self):
         cfg.CONF.set_override('allow_sorting', False)

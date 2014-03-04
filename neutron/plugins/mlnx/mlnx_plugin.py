@@ -24,7 +24,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as q_const
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import topics
 from neutron.common import utils
 from neutron.db import agentschedulers_db
@@ -216,7 +216,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if not network_type_set:
             msg = _("provider:network_type required")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         elif network_type == svc_constants.TYPE_FLAT:
             self._process_flat_net(segmentation_id_set)
             segmentation_id = constants.FLAT_VLAN_ID
@@ -232,7 +232,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         else:
             msg = _("provider:network_type %s not supported") % network_type
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         physical_network = self._process_net_type(network_type,
                                                   physical_network,
                                                   physical_network_set)
@@ -241,28 +241,28 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _process_flat_net(self, segmentation_id_set):
         if segmentation_id_set:
             msg = _("provider:segmentation_id specified for flat network")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
 
     def _process_vlan_net(self, segmentation_id, segmentation_id_set):
         if not segmentation_id_set:
             msg = _("provider:segmentation_id required")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         if not utils.is_valid_vlan_tag(segmentation_id):
             msg = (_("provider:segmentation_id out of range "
                      "(%(min_id)s through %(max_id)s)") %
                    {'min_id': q_const.MIN_VLAN_TAG,
                     'max_id': q_const.MAX_VLAN_TAG})
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
 
     def _process_local_net(self, physical_network_set, segmentation_id_set):
         if physical_network_set:
             msg = _("provider:physical_network specified for local "
                     "network")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
         if segmentation_id_set:
             msg = _("provider:segmentation_id specified for local "
                     "network")
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
 
     def _process_net_type(self, network_type,
                           physical_network,
@@ -273,12 +273,12 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 if physical_network not in self.network_vlan_ranges:
                     msg = _("Unknown provider:physical_network "
                             "%s") % physical_network
-                    raise q_exc.InvalidInput(error_message=msg)
+                    raise n_exc.InvalidInput(error_message=msg)
             elif 'default' in self.network_vlan_ranges:
                 physical_network = 'default'
             else:
                 msg = _("provider:physical_network required")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
         return physical_network
 
     def _check_port_binding_for_net_type(self, vnic_type, net_type):
@@ -319,7 +319,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 msg = _("Invalid vnic_type on port_create")
         else:
             msg = _("vnic_type is not defined in port profile")
-        raise q_exc.InvalidInput(error_message=msg)
+        raise n_exc.InvalidInput(error_message=msg)
 
     def create_network(self, context, network):
         (network_type, physical_network,
@@ -336,7 +336,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # tenant network
                 network_type = self.tenant_network_type
                 if network_type == svc_constants.TYPE_NONE:
-                    raise q_exc.TenantNetworksDisabled()
+                    raise n_exc.TenantNetworksDisabled()
                 elif network_type == svc_constants.TYPE_VLAN:
                     physical_network, vlan_id = db.reserve_network(session)
                 else:  # TYPE_LOCAL

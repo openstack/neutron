@@ -22,7 +22,7 @@ import functools
 from oslo.config import cfg
 
 from neutron.common import constants as q_const
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
 from neutron.db import agents_db
@@ -465,7 +465,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         processed_request = {}
         if not router['router'].get('admin_state_up', True):
-            raise q_exc.NotImplementedError(_('admin_state_up=False '
+            raise n_exc.NotImplementedError(_('admin_state_up=False '
                                               'routers are not '
                                               'supported.'))
 

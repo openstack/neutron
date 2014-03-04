@@ -119,7 +119,7 @@ class TestOVSNeutronOFPRyuAgent(RyuAgentTestCase):
         ])
 
     def test_invalid_rest_addr(self):
-        self.assertRaises(self.mod_agent.q_exc.Invalid,
+        self.assertRaises(self.mod_agent.n_exc.Invalid,
                           self.mock_rest_addr, (''))
 
     def mock_port_update(self, **kwargs):

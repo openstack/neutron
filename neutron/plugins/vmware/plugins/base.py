@@ -25,7 +25,7 @@ from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import constants
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron import context as q_context
 from neutron.db import agentschedulers_db
@@ -467,7 +467,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             LOG.debug(_("_nsx_create_port completed for port %(name)s "
                         "on network %(network_id)s. The new port id is "
                         "%(id)s."), port_data)
-        except (api_exc.NsxApiException, q_exc.NeutronException):
+        except (api_exc.NsxApiException, n_exc.NeutronException):
             self._handle_create_port_exception(
                 context, port_data['id'],
                 selected_lswitch and selected_lswitch['uuid'],
@@ -486,7 +486,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         switchlib.delete_port(self.cluster,
                                               selected_lswitch['uuid'],
                                               lport['uuid'])
-                    except q_exc.NotFound:
+                    except n_exc.NotFound:
                         LOG.debug(_("NSX Port %s already gone"), lport['uuid'])
 
     def _nsx_delete_port(self, context, port_data):
@@ -513,7 +513,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         "on network %(net_id)s"),
                       {'port_id': port_data['id'],
                        'net_id': port_data['network_id']})
-        except q_exc.NotFound:
+        except n_exc.NotFound:
             LOG.warning(_("Port %s not found in NSX"), port_data['id'])
 
     def _nsx_delete_router_port(self, context, port_data):
@@ -579,7 +579,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         "%(name)s on network %(network_id)s. The new "
                         "port id is %(id)s."),
                       port_data)
-        except (api_exc.NsxApiException, q_exc.NeutronException):
+        except (api_exc.NsxApiException, n_exc.NeutronException):
             self._handle_create_port_exception(
                 context, port_data['id'],
                 selected_lswitch and selected_lswitch['uuid'],
@@ -588,7 +588,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def _find_router_gw_port(self, context, port_data):
         router_id = port_data['device_id']
         if not router_id:
-            raise q_exc.BadRequest(_("device_id field must be populated in "
+            raise n_exc.BadRequest(_("device_id field must be populated in "
                                    "order to create an external gateway "
                                    "port for network %s"),
                                    port_data['network_id'])
@@ -784,7 +784,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     bindings = nsx_db.get_network_bindings_by_vlanid(
                         context.session, segmentation_id)
                     if bindings:
-                        raise q_exc.VlanIdInUse(
+                        raise n_exc.VlanIdInUse(
                             vlan_id=segmentation_id,
                             physical_network=physical_network)
             elif network_type == NetworkTypes.L3_EXT:
@@ -801,7 +801,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                            {'net_type_param': pnet.NETWORK_TYPE,
                             'net_type_value': network_type})
             if err_msg:
-                raise q_exc.InvalidInput(error_message=err_msg)
+                raise n_exc.InvalidInput(error_message=err_msg)
             # TODO(salvatore-orlando): Validate tranport zone uuid
             # which should be specified in physical_network
 
@@ -1071,7 +1071,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 switchlib.delete_networks(self.cluster, id, lswitch_ids)
                 LOG.debug(_("delete_network completed for tenant: %s"),
                           context.tenant_id)
-            except q_exc.NotFound:
+            except n_exc.NotFound:
                 LOG.warning(_("Did not found lswitch %s in NSX"), id)
         self.handle_network_dhcp_access(context, id, action='delete_network')
 
@@ -1183,7 +1183,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 port_data['device_owner'],
                 self._port_drivers['create']['default'])
             port_create_func(context, port_data)
-        except q_exc.NotFound:
+        except n_exc.NotFound:
             LOG.warning(_("Logical switch for network %s was not "
                           "found in NSX."), port_data['network_id'])
             # Put port in error on quantum DB
@@ -1402,7 +1402,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     "platform currently in execution. Please, try "
                     "without specifying the 'distributed' attribute.")
             LOG.exception(msg)
-            raise q_exc.BadRequest(resource='router', msg=msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
         except api_exc.NsxApiException:
             err_msg = _("Unable to create logical router on NSX Platform")
             LOG.exception(err_msg)
@@ -1456,7 +1456,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 if not ext_net.external:
                     msg = (_("Network '%s' is not a valid external "
                              "network") % network_id)
-                    raise q_exc.BadRequest(resource='router', msg=msg)
+                    raise n_exc.BadRequest(resource='router', msg=msg)
                 if ext_net.subnets:
                     ext_subnet = ext_net.subnets[0]
                     nexthop = ext_subnet.gateway_ip
@@ -1498,7 +1498,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Set external gateway and remove router in case of failure
             try:
                 self._update_router_gw_info(context, router_db['id'], gw_info)
-            except (q_exc.NeutronException, api_exc.NsxApiException):
+            except (n_exc.NeutronException, api_exc.NsxApiException):
                 with excutils.save_and_reraise_exception():
                     # As setting gateway failed, the router must be deleted
                     # in order to ensure atomicity
@@ -1541,7 +1541,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 if not ext_net.external:
                     msg = (_("Network '%s' is not a valid external "
                              "network") % network_id)
-                    raise q_exc.BadRequest(resource='router', msg=msg)
+                    raise n_exc.BadRequest(resource='router', msg=msg)
                 if ext_net.subnets:
                     ext_subnet = ext_net.subnets[0]
                     nexthop = ext_subnet.gateway_ip
@@ -1551,14 +1551,14 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     msg = _("'routes' cannot contain route '0.0.0.0/0', "
                             "this must be updated through the default "
                             "gateway attribute")
-                    raise q_exc.BadRequest(resource='router', msg=msg)
+                    raise n_exc.BadRequest(resource='router', msg=msg)
             previous_routes = self._update_lrouter(
                 context, router_id, r.get('name'),
                 nexthop, routes=r.get('routes'))
         # NOTE(salv-orlando): The exception handling below is not correct, but
         # unfortunately nsxlib raises a neutron notfound exception when an
         # object is not found in the underlying backend
-        except q_exc.NotFound:
+        except n_exc.NotFound:
             # Put the router in ERROR status
             with context.session.begin(subtransactions=True):
                 router_db = self._get_router(context, router_id)
@@ -1574,7 +1574,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                     "platform currently in execution. Please, try "
                     "without specifying the static routes.")
             LOG.exception(msg)
-            raise q_exc.BadRequest(resource='router', msg=msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
         try:
             return super(NsxPluginV2, self).update_router(context,
                                                           router_id, router)
@@ -1625,7 +1625,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # from the backend
         try:
             self._delete_lrouter(context, router_id, nsx_router_id)
-        except q_exc.NotFound:
+        except n_exc.NotFound:
             # This is not a fatal error, but needs to be logged
             LOG.warning(_("Logical router '%s' not found "
                         "on NSX Platform"), router_id)
@@ -1838,7 +1838,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         if (('fixed_ip_address' in fip and fip['fixed_ip_address']) and
             not ('port_id' in fip and fip['port_id'])):
             msg = _("fixed_ip_address cannot be specified without a port_id")
-            raise q_exc.BadRequest(resource='floatingip', msg=msg)
+            raise n_exc.BadRequest(resource='floatingip', msg=msg)
         port_id = internal_ip = router_id = None
         if 'port_id' in fip and fip['port_id']:
             fip_qry = context.session.query(l3_db.FloatingIP)
@@ -1988,7 +1988,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         except sa_exc.NoResultFound:
             LOG.debug(_("The port '%s' is not associated with floating IPs"),
                       port_id)
-        except q_exc.NotFound:
+        except n_exc.NotFound:
             LOG.warning(_("Nat rules not found in nsx for port: %s"), id)
 
         super(NsxPluginV2, self).disassociate_floatingips(context, port_id)
@@ -2140,7 +2140,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             try:
                 secgrouplib.delete_security_profile(
                     self.cluster, nsx_sec_profile_id)
-            except q_exc.NotFound:
+            except n_exc.NotFound:
                 # The security profile was not found on the backend
                 # do not fail in this case.
                 LOG.warning(_("The NSX security profile %(sec_profile_id)s, "
@@ -2173,7 +2173,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                  r['port_range_max'] is not None)):
                 msg = (_("Port values not valid for "
                          "protocol: %s") % r['protocol'])
-                raise q_exc.BadRequest(resource='security_group_rule',
+                raise n_exc.BadRequest(resource='security_group_rule',
                                        msg=msg)
         return super(NsxPluginV2, self)._validate_security_group_rules(context,
                                                                        rules)

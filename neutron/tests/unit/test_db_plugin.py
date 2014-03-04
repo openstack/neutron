@@ -31,7 +31,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2.attributes import ATTR_NOT_SPECIFIED
 from neutron.api.v2.router import APIRouter
 from neutron.common import config
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common.test_lib import test_config
 from neutron import context
 from neutron.db import api as db
@@ -480,7 +480,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _do_side_effect(self, patched_plugin, orig, *args, **kwargs):
         """Invoked by test cases for injecting failures in plugin."""
         def second_call(*args, **kwargs):
-            raise q_exc.NeutronException()
+            raise n_exc.NeutronException()
         patched_plugin.side_effect = second_call
         return orig(*args, **kwargs)
 
@@ -1155,7 +1155,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, id)
             data = self.deserialize(self.fmt, res)
-            msg = str(q_exc.IpAddressGenerationFailure(net_id=id))
+            msg = str(n_exc.IpAddressGenerationFailure(net_id=id))
             self.assertEqual(data['NeutronError']['message'], msg)
             self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
 
@@ -1281,7 +1281,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         # we just raise the exception that would result.
         @staticmethod
         def fake_gen_mac(context, net_id):
-            raise q_exc.MacAddressGenerationFailure(net_id=net_id)
+            raise n_exc.MacAddressGenerationFailure(net_id=net_id)
 
         with mock.patch.object(neutron.db.db_base_plugin_v2.NeutronDbPluginV2,
                                '_generate_mac', new=fake_gen_mac):
@@ -2425,7 +2425,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 res = req.get_response(self.api)
                 data = self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
-                msg = str(q_exc.SubnetInUse(subnet_id=id))
+                msg = str(n_exc.SubnetInUse(subnet_id=id))
                 self.assertEqual(data['NeutronError']['message'], msg)
 
     def test_delete_network(self):
@@ -3497,12 +3497,12 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_validate_subnet_dns_nameservers_exhausted(self):
         self._helper_test_validate_subnet(
             'max_dns_nameservers',
-            q_exc.DNSNameServersExhausted)
+            n_exc.DNSNameServersExhausted)
 
     def test_validate_subnet_host_routes_exhausted(self):
         self._helper_test_validate_subnet(
             'max_subnet_host_routes',
-            q_exc.HostRoutesExhausted)
+            n_exc.HostRoutesExhausted)
 
 
 class DbModelTestCase(base.BaseTestCase):
@@ -3541,7 +3541,7 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
             with mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2,
                                    '_rebuild_availability_ranges') as rebuild:
 
-                exception = q_exc.IpAddressGenerationFailure(net_id='n')
+                exception = n_exc.IpAddressGenerationFailure(net_id='n')
                 generate.side_effect = exception
 
                 # I want the side_effect to throw an exception once but I
@@ -3550,7 +3550,7 @@ class TestNeutronDbPluginV2(base.BaseTestCase):
                 # _try_generate_ip was called twice.
                 try:
                     db_base_plugin_v2.NeutronDbPluginV2._generate_ip('c', 's')
-                except q_exc.IpAddressGenerationFailure:
+                except n_exc.IpAddressGenerationFailure:
                     pass
 
         self.assertEqual(2, generate.call_count)

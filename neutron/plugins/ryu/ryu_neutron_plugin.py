@@ -22,7 +22,7 @@ from ryu.app import rest_nw_id
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
 from neutron.db import api as db
@@ -121,7 +121,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             cfg.CONF.OVS.tunnel_key_min, cfg.CONF.OVS.tunnel_key_max)
         self.ofp_api_host = cfg.CONF.OVS.openflow_rest_api
         if not self.ofp_api_host:
-            raise q_exc.Invalid(_('Invalid configuration. check ryu.ini'))
+            raise n_exc.Invalid(_('Invalid configuration. check ryu.ini'))
 
         self.client = client.OFPClient(self.ofp_api_host)
         self.tun_client = client.TunnelClient(self.ofp_api_host)

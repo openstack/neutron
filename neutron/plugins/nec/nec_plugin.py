@@ -21,7 +21,7 @@ from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes as attrs
 from neutron.common import constants as const
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
 from neutron.db import agents_db
@@ -365,7 +365,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                             db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS
                             for p in ports)
         if not only_auto_del:
-            raise q_exc.NetworkInUse(net_id=id)
+            raise n_exc.NetworkInUse(net_id=id)
 
         # Make sure auto-delete ports on OFC are deleted.
         _error_ports = []
@@ -421,7 +421,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         }
         msg = attrs._validate_dict_or_empty(profile, key_specs=key_specs)
         if msg:
-            raise q_exc.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
 
         datapath_id = profile.get('portinfo:datapath_id')
         port_no = profile.get('portinfo:port_no')
@@ -780,5 +780,5 @@ class NECPluginV2RPCCallbacks(object):
     def _get_port(self, context, port_id):
         try:
             return self.plugin.get_port(context, port_id)
-        except q_exc.PortNotFound:
+        except n_exc.PortNotFound:
             return None

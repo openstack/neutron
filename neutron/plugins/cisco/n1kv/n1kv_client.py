@@ -21,7 +21,7 @@ import base64
 import httplib2
 import netaddr
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.extensions import providernet
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_const
@@ -323,7 +323,7 @@ class Client(object):
                 network_address = str(ip.network)
             except netaddr.AddrFormatError:
                 msg = _("Invalid input for CIDR")
-                raise q_exc.InvalidInput(error_message=msg)
+                raise n_exc.InvalidInput(error_message=msg)
         else:
             netmask = network_address = ""
 

@@ -19,7 +19,7 @@
 import netaddr
 from oslo.config import cfg
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron.db.firewall import firewall_db
 from neutron.db import l3_db
 from neutron.db.loadbalancer import loadbalancer_db
@@ -199,7 +199,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 if not ext_net.external:
                     msg = (_("Network '%s' is not a valid external "
                              "network") % network_id)
-                    raise q_exc.BadRequest(resource='router', msg=msg)
+                    raise n_exc.BadRequest(resource='router', msg=msg)
                 if ext_net.subnets:
                     ext_subnet = ext_net.subnets[0]
                     netmask = str(netaddr.IPNetwork(ext_subnet.cidr).netmask)
@@ -423,7 +423,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             msg = (_("An exception occurred while creating a port "
                      "on lswitch %s") % lswitch['uuid'])
             LOG.exception(msg)
-            raise q_exc.NeutronException(message=msg)
+            raise n_exc.NeutronException(message=msg)
 
         # create logic router port
         try:
@@ -439,7 +439,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             LOG.exception(msg)
             switchlib.delete_port(
                 self.cluster, lswitch['uuid'], ls_port['uuid'])
-            raise q_exc.NeutronException(message=msg)
+            raise n_exc.NeutronException(message=msg)
 
         # attach logic router port to switch port
         try:
@@ -472,7 +472,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                     "for router %s") % name
             LOG.exception(msg)
             routerlib.delete_lrouter(self.cluster, lrouter['uuid'])
-            raise q_exc.NeutronException(message=msg)
+            raise n_exc.NeutronException(message=msg)
 
         try:
             self._add_router_integration_interface(tenant_id, name,
@@ -482,7 +482,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                     "for router %s") % name
             LOG.exception(msg)
             routerlib.delete_lrouter(self.cluster, lrouter['uuid'])
-            raise q_exc.NeutronException(message=msg)
+            raise n_exc.NeutronException(message=msg)
 
         try:
             self._create_advanced_service_router(
@@ -492,7 +492,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             LOG.exception(msg)
             self.vcns_driver.delete_lswitch(lswitch('uuid'))
             routerlib.delete_lrouter(self.cluster, lrouter['uuid'])
-            raise q_exc.NeutronException(message=msg)
+            raise n_exc.NeutronException(message=msg)
 
         lrouter['status'] = service_constants.PENDING_CREATE
         return lrouter
@@ -576,7 +576,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 nsx_status = RouterStatus.ROUTER_STATUS_ACTIVE
             else:
                 nsx_status = RouterStatus.ROUTER_STATUS_DOWN
-        except q_exc.NotFound:
+        except n_exc.NotFound:
             nsx_status = RouterStatus.ROUTER_STATUS_ERROR
 
         return nsx_status
@@ -875,11 +875,11 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         if not router_id:
             msg = _("router_id is not provided!")
             LOG.error(msg)
-            raise q_exc.BadRequest(resource='router', msg=msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
         if not self._is_advanced_service_router(context, router_id):
             msg = _("router_id:%s is not an advanced router!") % router_id
             LOG.error(msg)
-            raise q_exc.BadRequest(resource='router', msg=msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
         if self._get_resource_router_id_binding(
             context, firewall_db.Firewall, router_id=router_id):
             msg = _("A firewall is already associated with the router")
@@ -1191,7 +1191,7 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         if not router_id:
             msg = _("router_id is not provided!")
             LOG.error(msg)
-            raise q_exc.BadRequest(resource='router', msg=msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
 
         if not self._is_advanced_service_router(context, router_id):
             msg = _("router_id: %s is not an advanced router!") % router_id

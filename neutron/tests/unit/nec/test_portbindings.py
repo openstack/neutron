@@ -20,7 +20,7 @@
 from testtools import matchers
 from webob import exc
 
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.extensions import portbindings
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
@@ -303,7 +303,7 @@ class TestNecPortBindingValidatePortInfo(test_nec_plugin.NecPluginV2TestCase):
         self.assertEqual(portinfo['port_no'], 123)
 
     def _test_validate_exception(self, profile, expected_msg):
-        e = self.assertRaises(q_exc.InvalidInput,
+        e = self.assertRaises(n_exc.InvalidInput,
                               self.plugin._validate_portinfo, profile)
         self.assertThat(str(e), matchers.StartsWith(expected_msg))
 
