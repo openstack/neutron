@@ -635,7 +635,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertTrue(exec_fn.called)
 
     def test_update_devices(self):
-        with mock.patch.object(self.lbm, "udev_get_tap_devices") as gt_fn:
+        with mock.patch.object(self.lbm, "get_tap_devices") as gt_fn:
             gt_fn.return_value = set(["dev1"])
             self.assertIsNone(self.lbm.update_devices(set(["dev1"])))
 
@@ -746,7 +746,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             mock.patch.object(self.lb_rpc.agent.br_mgr,
                               "get_tap_device_name"),
             mock.patch.object(self.lb_rpc.agent.br_mgr,
-                              "udev_get_tap_devices"),
+                              "get_tap_devices"),
             mock.patch.object(self.lb_rpc.agent.br_mgr,
                               "get_bridge_name"),
             mock.patch.object(self.lb_rpc.agent.br_mgr,
@@ -756,10 +756,10 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                               "plugin_rpc", create=True),
             mock.patch.object(self.lb_rpc.sg_agent,
                               "refresh_firewall", create=True)
-        ) as (get_tap_fn, udev_fn, getbr_fn, remif_fn,
+        ) as (get_tap_fn, get_tap_devs_fn, getbr_fn, remif_fn,
               addif_fn, rpc_obj, reffw_fn):
             get_tap_fn.return_value = "tap123"
-            udev_fn.return_value = ["tap123", "tap124"]
+            get_tap_devs_fn.return_value = set(["tap123", "tap124"])
             port = {"admin_state_up": True,
                     "id": "1234-5678",
                     "network_id": "123-123"}
@@ -850,7 +850,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 mock.patch.object(self.lb_rpc.agent.br_mgr,
                                   "get_tap_device_name"),
                 mock.patch.object(self.lb_rpc.agent.br_mgr,
-                                  "udev_get_tap_devices"),
+                                  "get_tap_devices"),
                 mock.patch.object(self.lb_rpc.agent.br_mgr,
                                   "get_bridge_name"),
                 mock.patch.object(self.lb_rpc.agent.br_mgr,
@@ -861,9 +861,9 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 mock.patch.object(self.lb_rpc.agent,
                                   "plugin_rpc", create=True),
                 mock.patch.object(linuxbridge_neutron_agent.LOG, 'error'),
-        ) as (get_tap_fn, udev_fn, _, _, _, _, plugin_rpc, log):
+        ) as (get_tap_fn, get_tap_devs_fn, _, _, _, _, plugin_rpc, log):
             get_tap_fn.return_value = "tap123"
-            udev_fn.return_value = ["tap123", "tap124"]
+            get_tap_devs_fn.return_value = set(["tap123", "tap124"])
             port = {"admin_state_up": True,
                     "id": "1234-5678",
                     "network_id": "123-123"}

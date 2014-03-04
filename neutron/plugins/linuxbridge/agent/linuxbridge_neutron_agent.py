@@ -30,7 +30,6 @@ import time
 
 import eventlet
 from oslo.config import cfg
-import pyudev
 
 from neutron.agent import l2population_rpc as l2pop_rpc
 from neutron.agent.linux import ip_lib
@@ -87,10 +86,6 @@ class LinuxBridgeManager:
                               'must be provided'))
         # Store network mapping to segments
         self.network_map = {}
-
-        self.udev = pyudev.Context()
-        monitor = pyudev.Monitor.from_netlink(self.udev)
-        monitor.filter_by('net')
 
     def device_exists(self, device):
         """Check if ethernet device exists."""
@@ -503,7 +498,7 @@ class LinuxBridgeManager:
             LOG.debug(_("Done deleting vxlan interface %s"), interface)
 
     def update_devices(self, registered_devices):
-        devices = self.udev_get_tap_devices()
+        devices = self.get_tap_devices()
         if devices == registered_devices:
             return
         added = devices - registered_devices
@@ -512,19 +507,12 @@ class LinuxBridgeManager:
                 'added': added,
                 'removed': removed}
 
-    def udev_get_tap_devices(self):
+    def get_tap_devices(self):
         devices = set()
-        for device in self.udev.list_devices(subsystem='net'):
-            name = self.udev_get_name(device)
-            if self.is_tap_device(name):
-                devices.add(name)
+        for device in os.listdir(BRIDGE_FS):
+            if device.startswith(TAP_INTERFACE_PREFIX):
+                devices.add(device)
         return devices
-
-    def is_tap_device(self, name):
-        return name.startswith(TAP_INTERFACE_PREFIX)
-
-    def udev_get_name(self, device):
-        return device.sys_name
 
     def check_vxlan_support(self):
         kernel_version = dist_version.LooseVersion(platform.release())
@@ -635,7 +623,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Check port exists on node
         port = kwargs.get('port')
         tap_device_name = self.agent.br_mgr.get_tap_device_name(port['id'])
-        devices = self.agent.br_mgr.udev_get_tap_devices()
+        devices = self.agent.br_mgr.get_tap_devices()
         if tap_device_name not in devices:
             return
 
@@ -800,7 +788,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
 
     def _report_state(self):
         try:
-            devices = len(self.br_mgr.udev_get_tap_devices())
+            devices = len(self.br_mgr.get_tap_devices())
             self.agent_state.get('configurations')['devices'] = devices
             self.state_rpc.report_state(self.context,
                                         self.agent_state)
