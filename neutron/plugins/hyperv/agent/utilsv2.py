@@ -204,18 +204,12 @@ class HyperVUtilsV2(utils.HyperVUtils):
         acls = port.associators(wmi_result_class=self._PORT_ALLOC_ACL_SET_DATA)
         for acl_type in [self._ACL_TYPE_IPV4, self._ACL_TYPE_IPV6]:
             for acl_dir in [self._ACL_DIR_IN, self._ACL_DIR_OUT]:
-                acls = [v for v in acls
-                        if v.Action == self._ACL_ACTION_METER and
-                        v.Applicability == self._ACL_APPLICABILITY_LOCAL and
-                        v.Direction == acl_dir and
-                        v.AclType == acl_type]
-                if not acls:
-                    acl = self._get_default_setting_data(
-                        self._PORT_ALLOC_ACL_SET_DATA)
-                    acl.AclType = acl_type
-                    acl.Direction = acl_dir
-                    acl.Action = self._ACL_ACTION_METER
-                    acl.Applicability = self._ACL_APPLICABILITY_LOCAL
+                _acls = self._filter_acls(
+                    acls, self._ACL_ACTION_METER, acl_dir, acl_type)
+
+                if not _acls:
+                    acl = self._create_acl(
+                        acl_dir, acl_type, self._ACL_ACTION_METER)
                     self._add_virt_feature(port, acl)
 
     def create_security_rule(self, switch_port_name, direction, acl_type,

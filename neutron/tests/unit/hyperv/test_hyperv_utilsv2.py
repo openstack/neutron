@@ -88,83 +88,60 @@ class TestHyperVUtilsV2(base.BaseTestCase):
             self._utils._modify_virt_resource.assert_called_with(mock_port)
 
     def test_add_virt_resource(self):
-        mock_svc = self._utils._conn.Msvm_VirtualSystemManagementService()[0]
-        mock_svc.AddResourceSettings.return_value = (self._FAKE_JOB_PATH,
-                                                     mock.MagicMock(),
-                                                     self._FAKE_RET_VAL)
-        mock_res_setting_data = mock.MagicMock()
-        mock_res_setting_data.GetText_.return_value = self._FAKE_RES_DATA
-
-        mock_vm = mock.MagicMock()
-        mock_vm.path_.return_value = self._FAKE_VM_PATH
-
-        self._utils._check_job_status = mock.MagicMock()
-
-        self._utils._add_virt_resource(mock_vm, mock_res_setting_data)
-
-        mock_svc.AddResourceSettings.assert_called_with(self._FAKE_VM_PATH,
-                                                        [self._FAKE_RES_DATA])
+        self._test_virt_method('AddResourceSettings', 3, '_add_virt_resource',
+                               True, self._FAKE_VM_PATH, [self._FAKE_RES_DATA])
 
     def test_add_virt_feature(self):
-        mock_svc = self._utils._conn.Msvm_VirtualSystemManagementService()[0]
-        mock_svc.AddFeatureSettings.return_value = (self._FAKE_JOB_PATH,
-                                                    mock.MagicMock(),
-                                                    self._FAKE_RET_VAL)
-        mock_res_setting_data = mock.MagicMock()
-        mock_res_setting_data.GetText_.return_value = self._FAKE_RES_DATA
-
-        mock_vm = mock.MagicMock()
-        mock_vm.path_.return_value = self._FAKE_VM_PATH
-
-        self._utils._check_job_status = mock.MagicMock()
-
-        self._utils._add_virt_feature(mock_vm, mock_res_setting_data)
-
-        mock_svc.AddFeatureSettings.assert_called_once_with(
-            self._FAKE_VM_PATH, [self._FAKE_RES_DATA])
+        self._test_virt_method('AddFeatureSettings', 3, '_add_virt_feature',
+                               True, self._FAKE_VM_PATH, [self._FAKE_RES_DATA])
 
     def test_modify_virt_resource(self):
-        mock_svc = self._utils._conn.Msvm_VirtualSystemManagementService()[0]
-        mock_svc.ModifyResourceSettings.return_value = (self._FAKE_JOB_PATH,
-                                                        mock.MagicMock(),
-                                                        self._FAKE_RET_VAL)
-        mock_res_setting_data = mock.MagicMock()
-        mock_res_setting_data.GetText_.return_value = self._FAKE_RES_DATA
-
-        self._utils._check_job_status = mock.MagicMock()
-
-        self._utils._modify_virt_resource(mock_res_setting_data)
-
-        mock_svc.ModifyResourceSettings.assert_called_with(
-            ResourceSettings=[self._FAKE_RES_DATA])
+        self._test_virt_method('ModifyResourceSettings', 3,
+                               '_modify_virt_resource', False,
+                               ResourceSettings=[self._FAKE_RES_DATA])
 
     def test_remove_virt_resource(self):
+        self._test_virt_method('RemoveResourceSettings', 2,
+                               '_remove_virt_resource', False,
+                               ResourceSettings=[self._FAKE_RES_PATH])
+
+    def test_remove_virt_feature(self):
+        self._test_virt_method('RemoveFeatureSettings', 2,
+                               '_remove_virt_feature', False,
+                               FeatureSettings=[self._FAKE_RES_PATH])
+
+    def _test_virt_method(self, vsms_method_name, return_count,
+                          utils_method_name, with_mock_vm, *args, **kwargs):
         mock_svc = self._utils._conn.Msvm_VirtualSystemManagementService()[0]
-        mock_svc.RemoveResourceSettings.return_value = (self._FAKE_JOB_PATH,
-                                                        self._FAKE_RET_VAL)
+        vsms_method = getattr(mock_svc, vsms_method_name)
+        mock_rsd = self._mock_vsms_method(vsms_method, return_count)
+        if with_mock_vm:
+            mock_vm = mock.MagicMock()
+            mock_vm.path_.return_value = self._FAKE_VM_PATH
+            getattr(self._utils, utils_method_name)(mock_vm, mock_rsd)
+        else:
+            getattr(self._utils, utils_method_name)(mock_rsd)
+
+        if args:
+            vsms_method.assert_called_once_with(*args)
+        else:
+            vsms_method.assert_called_once_with(**kwargs)
+
+    def _mock_vsms_method(self, vsms_method, return_count):
+        args = None
+        if return_count == 3:
+            args = (self._FAKE_JOB_PATH, mock.MagicMock(), self._FAKE_RET_VAL)
+        else:
+            args = (self._FAKE_JOB_PATH, self._FAKE_RET_VAL)
+
+        vsms_method.return_value = args
         mock_res_setting_data = mock.MagicMock()
+        mock_res_setting_data.GetText_.return_value = self._FAKE_RES_DATA
         mock_res_setting_data.path_.return_value = self._FAKE_RES_PATH
 
         self._utils._check_job_status = mock.MagicMock()
 
-        self._utils._remove_virt_resource(mock_res_setting_data)
-
-        mock_svc.RemoveResourceSettings.assert_called_with(
-            ResourceSettings=[self._FAKE_RES_PATH])
-
-    @mock.patch('neutron.plugins.hyperv.agent.utilsv2.HyperVUtilsV2'
-                '._check_job_status')
-    def test_remove_virt_feature(self, mock_check_job_status):
-        mock_svc = self._utils._conn.Msvm_VirtualSystemManagementService()[0]
-        mock_svc.RemoveFeatureSettings.return_value = (self._FAKE_JOB_PATH,
-                                                       self._FAKE_RET_VAL)
-        mock_res_setting_data = mock.MagicMock()
-        mock_res_setting_data.path_.return_value = self._FAKE_RES_PATH
-
-        self._utils._remove_virt_feature(mock_res_setting_data)
-
-        mock_svc.RemoveFeatureSettings.assert_called_with(
-            FeatureSettings=[self._FAKE_RES_PATH])
+        return mock_res_setting_data
 
     def test_disconnect_switch_port_delete_port(self):
         self._test_disconnect_switch_port(True)
