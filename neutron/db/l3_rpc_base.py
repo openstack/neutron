@@ -18,6 +18,7 @@ from oslo.config import cfg
 from neutron.common import constants
 from neutron.common import utils
 from neutron import context as neutron_context
+from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import jsonutils
@@ -104,9 +105,13 @@ class L3RpcCallbackMixin(object):
                 LOG.debug(_("New status for floating IP %(floatingip_id)s: "
                             "%(status)s"), {'floatingip_id': floatingip_id,
                                             'status': status})
-                l3_plugin.update_floatingip_status(context,
-                                                   floatingip_id,
-                                                   status)
+                try:
+                    l3_plugin.update_floatingip_status(context,
+                                                       floatingip_id,
+                                                       status)
+                except l3.FloatingIPNotFound:
+                    LOG.debug(_("Floating IP: %s no longer present."),
+                              floatingip_id)
             # Find all floating IPs known to have been the given router
             # for which an update was not received. Set them DOWN mercilessly
             # This situation might occur for some asynchronous backends if
