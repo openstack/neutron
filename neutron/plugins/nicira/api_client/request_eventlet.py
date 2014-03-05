@@ -139,9 +139,10 @@ class NvpApiRequestEventlet(request.NvpApiRequest):
         attempt = 0
         response = None
         while response is None and attempt <= self._retries:
+            eventlet.greenthread.sleep(0)
             attempt += 1
 
-            req = self.spawn(self._issue_request).wait()
+            req = self._issue_request()
             # automatically raises any exceptions returned.
             if isinstance(req, httplib.HTTPResponse):
                 if attempt <= self._retries and not self._abort:
