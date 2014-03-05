@@ -701,8 +701,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         session = context.session
         with session.begin(subtransactions=True):
-            if l3plugin:
-                l3plugin.disassociate_floatingips(context, id)
             try:
                 port_db = (session.query(models_v2.Port).
                            enable_eagerloads(False).
@@ -721,6 +719,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._delete_port_binding(mech_context)
             self._delete_port_security_group_bindings(context, id)
             LOG.debug(_("Calling base delete_port"))
+            if l3plugin:
+                l3plugin.disassociate_floatingips(context, id)
+
             super(Ml2Plugin, self).delete_port(context, id)
 
         try:
