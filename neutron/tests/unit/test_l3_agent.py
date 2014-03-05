@@ -926,6 +926,39 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         agent._process_routers(routers)
         self.assertIn(routers[0]['id'], agent.router_info)
+        self.plugin_api.get_external_network_id.assert_called_with(
+            agent.context)
+
+    def test_process_routers_with_cached_ext_net(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.plugin_api.get_external_network_id.return_value = 'aaa'
+        agent.target_ex_net_id = 'aaa'
+
+        routers = [
+            {'id': _uuid(),
+             'routes': [],
+             'admin_state_up': True,
+             'external_gateway_info': {'network_id': 'aaa'}}]
+
+        agent._process_routers(routers)
+        self.assertIn(routers[0]['id'], agent.router_info)
+        self.assertFalse(self.plugin_api.get_external_network_id.called)
+
+    def test_process_routers_with_stale_cached_ext_net(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.plugin_api.get_external_network_id.return_value = 'aaa'
+        agent.target_ex_net_id = 'bbb'
+
+        routers = [
+            {'id': _uuid(),
+             'routes': [],
+             'admin_state_up': True,
+             'external_gateway_info': {'network_id': 'aaa'}}]
+
+        agent._process_routers(routers)
+        self.assertIn(routers[0]['id'], agent.router_info)
+        self.plugin_api.get_external_network_id.assert_called_with(
+            agent.context)
 
     def test_process_routers_with_no_ext_net_in_conf_and_two_net_plugin(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

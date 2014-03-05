@@ -229,6 +229,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         self.rpc_loop.start(interval=RPC_LOOP_INTERVAL)
         super(L3NATAgent, self).__init__(conf=self.conf)
 
+        self.target_ex_net_id = None
+
     def _check_config_params(self):
         """Check items in configuration files.
 
@@ -311,7 +313,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             ip_wrapper = ip_wrapper_root.ensure_namespace(ri.ns_name())
             ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
-    def _fetch_external_net_id(self):
+    def _fetch_external_net_id(self, force=False):
         """Find UUID of single external network for this agent."""
         if self.conf.gateway_external_network_id:
             return self.conf.gateway_external_network_id
@@ -322,8 +324,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         if not self.conf.external_network_bridge:
             return
 
+        if not force and self.target_ex_net_id:
+            return self.target_ex_net_id
+
         try:
-            return self.plugin_rpc.get_external_network_id(self.context)
+            self.target_ex_net_id = self.plugin_rpc.get_external_network_id(
+                self.context)
+            return self.target_ex_net_id
         except rpc_common.RemoteError as e:
             with excutils.save_and_reraise_exception():
                 if e.exc_type == 'TooManyExternalNetworks':
@@ -759,7 +766,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 continue
             if (target_ex_net_id and ex_net_id and
                 ex_net_id != target_ex_net_id):
-                continue
+                # Double check that our single external_net_id has not changed
+                # by forcing a check by RPC.
+                if (ex_net_id != self._fetch_external_net_id(force=True)):
+                    continue
             cur_router_ids.add(r['id'])
             if r['id'] not in self.router_info:
                 self._router_added(r['id'], r)
