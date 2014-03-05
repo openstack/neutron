@@ -36,6 +36,7 @@ from neutron.manager import NeutronManager
 from neutron.openstack.common.notifier import api as notifer_api
 from neutron.openstack.common import policy as common_policy
 from neutron.openstack.common import uuidutils
+from neutron import policy
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit import testlib_api
@@ -1058,6 +1059,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_get_keystone_strip_admin_only_attribute(self):
         tenant_id = _uuid()
         # Inject rule in policy engine
+        policy.init()
         common_policy._rules['get_network:name'] = common_policy.parse_rule(
             "rule:admin_only")
         res = self._test_get(tenant_id, tenant_id, 200)
