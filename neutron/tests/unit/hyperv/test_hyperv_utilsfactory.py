@@ -34,6 +34,9 @@ CONF = cfg.CONF
 
 class TestHyperVUtilsFactory(base.BaseTestCase):
 
+    def test_get_hypervutils_v2_r2(self):
+        self._test_returned_class(utilsv2.HyperVUtilsV2R2, True, '6.3.0')
+
     def test_get_hypervutils_v2(self):
         self._test_returned_class(utilsv2.HyperVUtilsV2, False, '6.2.0')
 
