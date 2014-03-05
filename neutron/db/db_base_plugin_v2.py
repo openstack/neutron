@@ -15,7 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
 import random
 
 import netaddr
@@ -32,7 +31,6 @@ from neutron.db import sqlalchemyutils
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
 
 
@@ -314,25 +312,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         except exc.NoResultFound:
             return True
         return False
-
-    def update_fixed_ip_lease_expiration(self, context, network_id,
-                                         ip_address, lease_remaining):
-
-        expiration = (timeutils.utcnow() +
-                      datetime.timedelta(seconds=lease_remaining))
-
-        query = context.session.query(models_v2.IPAllocation)
-        query = query.filter_by(network_id=network_id, ip_address=ip_address)
-
-        try:
-            with context.session.begin(subtransactions=True):
-                fixed_ip = query.one()
-                fixed_ip.expiration = expiration
-        except exc.NoResultFound:
-            LOG.debug(_("No fixed IP found that matches the network "
-                        "%(network_id)s and ip address %(ip_address)s."),
-                      {'network_id': network_id,
-                       'ip_address': ip_address})
 
     @staticmethod
     def _delete_ip_allocation(context, network_id, subnet_id, ip_address):
