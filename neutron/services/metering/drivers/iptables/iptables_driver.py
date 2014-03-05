@@ -77,7 +77,7 @@ class RouterWithMetering(object):
         self.router = router
         self.root_helper = config.get_root_helper(self.conf)
         self.iptables_manager = iptables_manager.IptablesManager(
-            root_helper=self.conf.root_helper,
+            root_helper=self.root_helper,
             namespace=self.ns_name(),
             binary_name=WRAP_NAME)
         self.metering_labels = {}
