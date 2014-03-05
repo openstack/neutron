@@ -161,6 +161,12 @@ def _validate_mac_address(data, valid_values=None):
         return msg
 
 
+def _validate_mac_address_or_none(data, valid_values=None):
+    if data is None:
+        return
+    return _validate_mac_address(data, valid_values)
+
+
 def _validate_ip_address(data, valid_values=None):
     try:
         netaddr.IPAddress(_validate_no_whitespace(data))
@@ -315,6 +321,12 @@ def _validate_subnet_list(data, valid_values=None):
             return msg
 
 
+def _validate_subnet_or_none(data, valid_values=None):
+    if data is None:
+        return
+    return _validate_subnet(data, valid_values)
+
+
 def _validate_regex(data, valid_values=None):
     try:
         if re.match(valid_values, data):
@@ -325,6 +337,12 @@ def _validate_regex(data, valid_values=None):
     msg = _("'%s' is not a valid input") % data
     LOG.debug(msg)
     return msg
+
+
+def _validate_regex_or_none(data, valid_values=None):
+    if data is None:
+        return
+    return _validate_regex(data, valid_values)
 
 
 def _validate_uuid(data, valid_values=None):
@@ -534,10 +552,12 @@ validators = {'type:dict': _validate_dict,
               'type:ip_address_or_none': _validate_ip_address_or_none,
               'type:ip_pools': _validate_ip_pools,
               'type:mac_address': _validate_mac_address,
+              'type:mac_address_or_none': _validate_mac_address_or_none,
               'type:nameservers': _validate_nameservers,
               'type:non_negative': _validate_non_negative,
               'type:range': _validate_range,
               'type:regex': _validate_regex,
+              'type:regex_or_none': _validate_regex_or_none,
               'type:string': _validate_string,
               'type:string_or_none': _validate_string_or_none,
               'type:not_empty_string': _validate_not_empty_string,
@@ -545,6 +565,7 @@ validators = {'type:dict': _validate_dict,
               _validate_not_empty_string_or_none,
               'type:subnet': _validate_subnet,
               'type:subnet_list': _validate_subnet_list,
+              'type:subnet_or_none': _validate_subnet_or_none,
               'type:uuid': _validate_uuid,
               'type:uuid_or_none': _validate_uuid_or_none,
               'type:uuid_list': _validate_uuid_list,

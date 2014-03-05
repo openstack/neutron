@@ -241,16 +241,29 @@ class TremaFilterDriverTest(TremaDriverTestBase):
 
         ofp_wildcards = ["%s:32" % _f if _f in ['nw_src', 'nw_dst'] else _f
                          for _f in all_wildcards_ofp if _f not in body]
-        body['ofp_wildcards'] = ','.join(ofp_wildcards)
+        body['ofp_wildcards'] = set(ofp_wildcards)
 
         non_ofp_wildcards = [_f for _f in all_wildcards_non_ofp
                              if _f not in body]
         if non_ofp_wildcards:
-            body['wildcards'] = ','.join(non_ofp_wildcards)
+            body['wildcards'] = set(non_ofp_wildcards)
 
         ret = self.driver.create_filter(net_path, f, p, f['id'])
-        self.do_request.assert_called_once_with("POST", "/filters", body=body)
+        # The content of 'body' is checked below.
+        self.do_request.assert_called_once_with("POST", "/filters",
+                                                body=mock.ANY)
         self.assertEqual(ret, '/filters/%s' % f['id'])
+
+        # ofp_wildcards and wildcards in body are comma-separated
+        # string but the order of elements are not considered,
+        # so we check these fields as set.
+        actual_body = self.do_request.call_args[1]['body']
+        if 'ofp_wildcards' in actual_body:
+            ofp_wildcards = actual_body['ofp_wildcards'].split(',')
+            actual_body['ofp_wildcards'] = set(ofp_wildcards)
+        if 'wildcards' in actual_body:
+            actual_body['wildcards'] = set(actual_body['wildcards'].split(','))
+        self.assertEqual(body, actual_body)
 
     def test_create_filter_accept(self):
         self._test_create_filter(filter_dict={'action': 'ACCEPT'})

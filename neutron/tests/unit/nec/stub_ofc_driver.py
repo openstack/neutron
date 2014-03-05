@@ -116,7 +116,7 @@ class StubOFCDriver(ofc_driver_base.OFCDriverBase):
         LOG.debug(_('delete_network: SUCCEED'))
 
     @call_log.log
-    def create_port(self, ofc_network_id, info, port_id=None):
+    def create_port(self, ofc_network_id, info, port_id=None, filters=None):
         ofc_id = "ofc-" + port_id[:-4]
         if self.autocheck:
             if ofc_network_id not in self.ofc_network_dict:
@@ -127,6 +127,8 @@ class StubOFCDriver(ofc_driver_base.OFCDriverBase):
                                 % ofc_id)
         self.ofc_port_dict[ofc_id] = {'network_id': ofc_network_id,
                                       'port_id': port_id}
+        if filters:
+            self.ofc_port_dict[ofc_id]['filters'] = filters
         return ofc_id
 
     @call_log.log
@@ -144,7 +146,7 @@ class StubOFCDriver(ofc_driver_base.OFCDriverBase):
         return True
 
     def create_filter(self, ofc_network_id, filter_dict,
-                      portinfo=None, filter_id=None):
+                      portinfo=None, filter_id=None, apply_ports=None):
         return "ofc-" + filter_id[:-4]
 
     def delete_filter(self, ofc_filter_id):

@@ -15,6 +15,8 @@
 #    under the License.
 # @author: Ryota MIBU
 
+# TODO(amotoki): bug 1287432: Rename quantum_id column in ID mapping tables.
+
 import sqlalchemy as sa
 
 from neutron.db import api as db
@@ -200,6 +202,21 @@ def del_portinfo(session, id):
     except sa.orm.exc.NoResultFound:
         LOG.warning(_("del_portinfo(): NotFound portinfo for "
                       "port_id: %s"), id)
+
+
+def get_active_ports_on_ofc(context, network_id, port_id=None):
+    """Retrieve ports on OFC on a given network.
+
+    It returns a list of tuple (neutron port_id, OFC id).
+    """
+    query = context.session.query(nmodels.OFCPortMapping)
+    query = query.join(models_v2.Port,
+                       nmodels.OFCPortMapping.quantum_id == models_v2.Port.id)
+    query = query.filter(models_v2.Port.network_id == network_id)
+    if port_id:
+        query = query.filter(nmodels.OFCPortMapping.quantum_id == port_id)
+
+    return [(p['quantum_id'], p['ofc_id']) for p in query]
 
 
 def get_port_from_device(port_id):

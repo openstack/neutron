@@ -23,6 +23,7 @@ from oslo.config import cfg
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
+from neutron.common import constants
 from neutron.common import exceptions
 from neutron.manager import NeutronManager
 from neutron import quota
@@ -37,7 +38,35 @@ quota_packet_filter_opts = [
 cfg.CONF.register_opts(quota_packet_filter_opts, 'QUOTAS')
 
 
-def convert_to_int(data):
+class PacketFilterNotFound(exceptions.NotFound):
+    message = _("PacketFilter %(id)s could not be found")
+
+
+class PacketFilterIpVersionNonSupported(exceptions.BadRequest):
+    message = _("IP version %(version)s is not supported for %(field)s "
+                "(%(value)s is specified)")
+
+
+class PacketFilterInvalidPriority(exceptions.BadRequest):
+    message = _("Packet Filter priority should be %(min)s-%(max)s (included)")
+
+
+class PacketFilterUpdateNotSupported(exceptions.BadRequest):
+    message = _("%(field)s field cannot be updated")
+
+
+class PacketFilterDuplicatedPriority(exceptions.BadRequest):
+    message = _("The backend does not support duplicated priority. "
+                "Priority %(priority)s is in use")
+
+
+class PacketFilterEtherTypeProtocolMismatch(exceptions.Conflict):
+    message = _("Ether Type '%(eth_type)s' conflicts with protocol "
+                "'%(protocol)s'. Update or clear protocol before "
+                "changing ether type.")
+
+
+def convert_to_int_dec_and_hex(data):
     try:
         return int(data, 0)
     except (ValueError, TypeError):
@@ -49,12 +78,27 @@ def convert_to_int(data):
         raise exceptions.InvalidInput(error_message=msg)
 
 
+def convert_to_int_or_none(data):
+    if data is None:
+        return
+    return convert_to_int_dec_and_hex(data)
+
+
+PROTO_NAME_ARP = 'arp'
+SUPPORTED_PROTOCOLS = [constants.PROTO_NAME_ICMP,
+                       constants.PROTO_NAME_TCP,
+                       constants.PROTO_NAME_UDP,
+                       PROTO_NAME_ARP]
+ALLOW_ACTIONS = ['allow', 'accept']
+DROP_ACTIONS = ['drop', 'deny']
+SUPPORTED_ACTIONS = ALLOW_ACTIONS + DROP_ACTIONS
+
 ALIAS = 'packet-filter'
 RESOURCE = 'packet_filter'
 COLLECTION = 'packet_filters'
-PACKET_FILTER_ACTION_REGEX = '(?i)^(allow|accept|drop|deny)$'
-PACKET_FILTER_PROTOCOL_REGEX = (
-    '(?i)^(icmp|tcp|udp|arp|0x[0-9a-fA-F]+|[0-9]+|)$')
+PACKET_FILTER_ACTION_REGEX = '(?i)^(%s)$' % '|'.join(SUPPORTED_ACTIONS)
+PACKET_FILTER_PROTOCOL_REGEX = ('(?i)^(%s|0x[0-9a-fA-F]+|[0-9]+|)$' %
+                                '|'.join(SUPPORTED_PROTOCOLS))
 PACKET_FILTER_ATTR_PARAMS = {
     'id': {'allow_post': False, 'allow_put': False,
            'validate': {'type:uuid': None},
@@ -79,7 +123,7 @@ PACKET_FILTER_ATTR_PARAMS = {
                'validate': {'type:regex': PACKET_FILTER_ACTION_REGEX},
                'is_visible': True},
     'priority': {'allow_post': True, 'allow_put': True,
-                 'convert_to': convert_to_int,
+                 'convert_to': convert_to_int_dec_and_hex,
                  'is_visible': True},
     'in_port': {'allow_post': True, 'allow_put': False,
                 'default': attributes.ATTR_NOT_SPECIFIED,
@@ -87,35 +131,36 @@ PACKET_FILTER_ATTR_PARAMS = {
                 'is_visible': True},
     'src_mac': {'allow_post': True, 'allow_put': True,
                 'default': attributes.ATTR_NOT_SPECIFIED,
-                'validate': {'type:mac_address': None},
+                'validate': {'type:mac_address_or_none': None},
                 'is_visible': True},
     'dst_mac': {'allow_post': True, 'allow_put': True,
                 'default': attributes.ATTR_NOT_SPECIFIED,
-                'validate': {'type:mac_address': None},
+                'validate': {'type:mac_address_or_none': None},
                 'is_visible': True},
     'eth_type': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'convert_to': convert_to_int,
+                 'convert_to': convert_to_int_or_none,
                  'is_visible': True},
     'src_cidr': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'validate': {'type:subnet': None},
+                 'validate': {'type:subnet_or_none': None},
                  'is_visible': True},
     'dst_cidr': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'validate': {'type:subnet': None},
+                 'validate': {'type:subnet_or_none': None},
                  'is_visible': True},
     'protocol': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'validate': {'type:regex': PACKET_FILTER_PROTOCOL_REGEX},
+                 'validate': {'type:regex_or_none':
+                              PACKET_FILTER_PROTOCOL_REGEX},
                  'is_visible': True},
     'src_port': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'convert_to': convert_to_int,
+                 'convert_to': convert_to_int_or_none,
                  'is_visible': True},
     'dst_port': {'allow_post': True, 'allow_put': True,
                  'default': attributes.ATTR_NOT_SPECIFIED,
-                 'convert_to': convert_to_int,
+                 'convert_to': convert_to_int_or_none,
                  'is_visible': True},
 }
 PACKET_FILTER_ATTR_MAP = {COLLECTION: PACKET_FILTER_ATTR_PARAMS}

@@ -21,7 +21,7 @@ import webob.exc
 from neutron.api.v2 import attributes
 from neutron import context
 from neutron.plugins.nec.common import exceptions as nexc
-from neutron.plugins.nec.extensions import packetfilter
+from neutron.plugins.nec.extensions import packetfilter as ext_pf
 from neutron.tests.unit.nec import test_nec_plugin
 from neutron.tests.unit import test_db_plugin as test_plugin
 
@@ -35,7 +35,7 @@ enable_packet_filter = True
 """
 
 
-class PacketfilterExtensionManager(packetfilter.Packetfilter):
+class PacketfilterExtensionManager(ext_pf.Packetfilter):
 
     @classmethod
     def get_resources(cls):
@@ -44,17 +44,17 @@ class PacketfilterExtensionManager(packetfilter.Packetfilter):
         # initialize the main API router which extends
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            {'packet_filters': packetfilter.PACKET_FILTER_ATTR_MAP})
+            {'packet_filters': ext_pf.PACKET_FILTER_ATTR_MAP})
         return super(PacketfilterExtensionManager, cls).get_resources()
 
 
-class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
+class TestNecPluginPacketFilterBase(test_nec_plugin.NecPluginV2TestCase):
 
     _nec_ini = NEC_PLUGIN_PF_INI
 
     def setUp(self):
         ext_mgr = PacketfilterExtensionManager()
-        super(TestNecPluginPacketFilter, self).setUp(ext_mgr=ext_mgr)
+        super(TestNecPluginPacketFilterBase, self).setUp(ext_mgr=ext_mgr)
 
     def _create_packet_filter(self, fmt, net_id, expected_res_status=None,
                               arg_list=None, **kwargs):
@@ -127,6 +127,17 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
                 if do_delete:
                     self._delete('packet_filters', pf['packet_filter']['id'])
 
+
+class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
+
+    def setUp(self):
+        super(TestNecPluginPacketFilter, self).setUp()
+        # Remove attributes explicitly from mock object to check
+        # a case where there are no update_filter and validate_*.
+        del self.ofc.driver.update_filter
+        del self.ofc.driver.validate_filter_create
+        del self.ofc.driver.validate_filter_update
+
     def test_list_packet_filters(self):
         self._list('packet_filters')
 
@@ -179,6 +190,34 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
         self.assertEqual(self.ofc.create_ofc_packet_filter.call_count, 1)
         self.assertEqual(self.ofc.delete_ofc_packet_filter.call_count, 1)
 
+    def _test_create_pf_with_protocol(self, protocol, expected_eth_type):
+        with self.packet_filter_on_network(protocol=protocol) as pf:
+            pf_data = pf['packet_filter']
+            self.assertEqual(protocol, pf_data['protocol'])
+            self.assertEqual(expected_eth_type, pf_data['eth_type'])
+
+    def test_create_pf_with_protocol_tcp(self):
+        self._test_create_pf_with_protocol('TCP', 0x800)
+
+    def test_create_pf_with_protocol_udp(self):
+        self._test_create_pf_with_protocol('UDP', 0x800)
+
+    def test_create_pf_with_protocol_icmp(self):
+        self._test_create_pf_with_protocol('ICMP', 0x800)
+
+    def test_create_pf_with_protocol_arp(self):
+        self._test_create_pf_with_protocol('ARP', 0x806)
+
+    def test_create_pf_with_inconsistent_protocol_and_eth_type(self):
+        with self.packet_filter_on_network(protocol='TCP') as pf:
+            pf_data = pf['packet_filter']
+            pf_id = pf_data['id']
+            self.assertEqual('TCP', pf_data['protocol'])
+            self.assertEqual(0x800, pf_data['eth_type'])
+            data = {'packet_filter': {'eth_type': 0x806}}
+            self._update('packet_filters', pf_id, data,
+                         expected_code=409)
+
     def test_create_pf_with_invalid_priority(self):
         with self.network() as net:
             net_id = net['network']['id']
@@ -186,7 +225,6 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
             self._create_packet_filter(self.fmt, net_id,
                                        webob.exc.HTTPBadRequest.code,
                                        **kwargs)
-
         self.assertFalse(self.ofc.create_ofc_packet_filter.called)
 
     def test_create_pf_with_ofc_creation_failure(self):
@@ -200,8 +238,8 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
 
             self.ofc.set_raise_exc('create_ofc_packet_filter', None)
 
-            # Retry deactivate packet_filter.
-            data = {'packet_filter': {'priority': 1000}}
+            # Retry activate packet_filter (even if there is no change).
+            data = {'packet_filter': {}}
             self._update('packet_filters', pf_id, data)
 
             pf_ref = self._show('packet_filters', pf_id)
@@ -243,7 +281,36 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
 
             # convert string to int.
             kwargs.update({'priority': 102, 'eth_type': 2048,
-                           'src_port': 35001, 'dst_port': 22})
+                           'src_port': 35001, 'dst_port': 22,
+                           'in_port': None})
+
+            self.assertEqual(pf_id, pf_ref['packet_filter']['id'])
+            for key in kwargs:
+                self.assertEqual(kwargs[key], pf_ref['packet_filter'][key])
+
+    def test_show_pf_on_network_with_wildcards(self):
+        kwargs = {
+            'name': 'test-pf-net',
+            'admin_state_up': False,
+            'action': 'DENY',
+            'priority': '102',
+        }
+
+        with self.packet_filter_on_network(**kwargs) as pf:
+            pf_id = pf['packet_filter']['id']
+            pf_ref = self._show('packet_filters', pf_id)
+
+            # convert string to int.
+            kwargs.update({'priority': 102,
+                           'in_port': None,
+                           'src_mac': None,
+                           'dst_mac': None,
+                           'eth_type': None,
+                           'src_cidr': None,
+                           'dst_cidr': None,
+                           'protocol': None,
+                           'src_port': None,
+                           'dst_port': None})
 
             self.assertEqual(pf_id, pf_ref['packet_filter']['id'])
             for key in kwargs:
@@ -270,9 +337,12 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
 
             # convert string to int.
             kwargs.update({'priority': 103, 'eth_type': 2048,
-                           'src_port': u'', 'dst_port': 80})
+                           'dst_port': 80,
+                           # wildcard field is None in a response.
+                           'src_port': None})
 
             self.assertEqual(pf_id, pf_ref['packet_filter']['id'])
+            self.assertTrue(pf_ref['packet_filter']['in_port'])
             for key in kwargs:
                 self.assertEqual(kwargs[key], pf_ref['packet_filter'][key])
 
@@ -497,3 +567,132 @@ class TestNecPluginPacketFilter(test_nec_plugin.NecPluginV2TestCase):
             self._update('ports', in_port_id, data)
             self.assertEqual(self.ofc.create_ofc_packet_filter.call_count, 1)
             self.assertEqual(self.ofc.delete_ofc_packet_filter.call_count, 0)
+
+
+class TestNecPluginPacketFilterWithValidate(TestNecPluginPacketFilterBase):
+
+    def setUp(self):
+        super(TestNecPluginPacketFilterWithValidate, self).setUp()
+        # Remove attributes explicitly from mock object to check
+        # a case where there are no update_filter.
+        del self.ofc.driver.update_filter
+        self.validate_create = self.ofc.driver.validate_filter_create
+        self.validate_update = self.ofc.driver.validate_filter_update
+
+    def test_create_pf_on_network(self):
+        with self.packet_filter_on_network() as pf:
+            pf_id = pf['packet_filter']['id']
+            self.assertEqual(pf['packet_filter']['status'], 'ACTIVE')
+
+        ctx = mock.ANY
+        pf_dict = mock.ANY
+        expected = [
+            mock.call.driver.validate_filter_create(ctx, pf_dict),
+            mock.call.exists_ofc_packet_filter(ctx, pf_id),
+            mock.call.create_ofc_packet_filter(ctx, pf_id, pf_dict),
+            mock.call.exists_ofc_packet_filter(ctx, pf_id),
+            mock.call.delete_ofc_packet_filter(ctx, pf_id),
+        ]
+        self.ofc.assert_has_calls(expected)
+        self.assertEqual(self.ofc.create_ofc_packet_filter.call_count, 1)
+        self.assertEqual(self.ofc.delete_ofc_packet_filter.call_count, 1)
+
+    def test_update_pf_on_network(self):
+        ctx = mock.ANY
+        pf_dict = mock.ANY
+        with self.packet_filter_on_network(admin_state_up=False) as pf:
+            pf_id = pf['packet_filter']['id']
+
+            self.assertFalse(self.ofc.create_ofc_packet_filter.called)
+            data = {'packet_filter': {'admin_state_up': True}}
+            self._update('packet_filters', pf_id, data)
+            self.ofc.create_ofc_packet_filter.assert_called_once_with(
+                ctx, pf_id, pf_dict)
+            self.ofc.driver.validate_filter_update.assert_called_once_with(
+                ctx, data['packet_filter'])
+
+            self.assertFalse(self.ofc.delete_ofc_packet_filter.called)
+            data = {'packet_filter': {'admin_state_up': False}}
+            self._update('packet_filters', pf_id, data)
+            self.ofc.delete_ofc_packet_filter.assert_called_once_with(
+                ctx, pf_id)
+            self.assertEqual(
+                2, self.ofc.driver.validate_filter_update.call_count)
+
+    def test_create_pf_on_network_with_validation_error(self):
+        self.validate_create.side_effect = ext_pf.PacketFilterInvalidPriority(
+            min=1, max=65535)
+        with self.network() as net:
+            net_id = net['network']['id']
+            e = self.assertRaises(webob.exc.HTTPClientError,
+                                  self._make_packet_filter,
+                                  self.fmt, net_id, expected_res_status=400)
+            self.assertEqual(400, e.status_int)
+
+    def test_update_pf_on_network_with_validation_error(self):
+        self.validate_update.side_effect = (
+            ext_pf.PacketFilterUpdateNotSupported(field='priority'))
+        with self.packet_filter_on_network() as pf:
+            pf_id = pf['packet_filter']['id']
+            pf_ref = self._show('packet_filters', pf_id)
+            self.assertEqual(pf_ref['packet_filter']['status'], 'ACTIVE')
+            data = {'packet_filter': {'priority': 1000}}
+            self._update('packet_filters', pf_id, data,
+                         expected_code=400)
+
+
+class TestNecPluginPacketFilterWithFilterUpdate(TestNecPluginPacketFilterBase):
+
+    def setUp(self):
+        super(TestNecPluginPacketFilterWithFilterUpdate, self).setUp()
+        # Remove attributes explicitly from mock object to check
+        # a case where there are no update_filter and validate_*.
+        del self.ofc.driver.validate_filter_create
+        del self.ofc.driver.validate_filter_update
+
+    def test_update_pf_toggle_admin_state(self):
+        ctx = mock.ANY
+        pf_dict = mock.ANY
+        with self.packet_filter_on_network(admin_state_up=False) as pf:
+            pf_id = pf['packet_filter']['id']
+
+            self.assertFalse(self.ofc.create_ofc_packet_filter.called)
+            data = {'packet_filter': {'admin_state_up': True}}
+            self._update('packet_filters', pf_id, data)
+            self.ofc.create_ofc_packet_filter.assert_called_once_with(
+                ctx, pf_id, pf_dict)
+
+            self.assertFalse(self.ofc.delete_ofc_packet_filter.called)
+            data = {'packet_filter': {'admin_state_up': False}}
+            self._update('packet_filters', pf_id, data)
+            self.ofc.delete_ofc_packet_filter.assert_called_once_with(
+                ctx, pf_id)
+
+    def test_update_pf_change_field(self):
+        ctx = mock.ANY
+        with self.packet_filter_on_network(admin_state_up=True) as pf:
+            pf_id = pf['packet_filter']['id']
+            self.assertTrue(self.ofc.create_ofc_packet_filter.called)
+
+            data = {'packet_filter': {'src_mac': '12:34:56:78:9a:bc'}}
+            self._update('packet_filters', pf_id, data)
+            self.ofc.update_ofc_packet_filter.assert_called_once_with(
+                ctx, pf_id, data['packet_filter'])
+            self.assertEqual(1, self.ofc.update_ofc_packet_filter.call_count)
+
+            self.assertFalse(self.ofc.delete_ofc_packet_filter.called)
+            data = {'packet_filter': {'admin_state_up': False}}
+            self._update('packet_filters', pf_id, data)
+            self.ofc.delete_ofc_packet_filter.assert_called_once_with(
+                ctx, pf_id)
+
+            data = {'packet_filter': {'src_mac': '11:22:33:44:55:66'}}
+            self._update('packet_filters', pf_id, data)
+            self.assertEqual(1, self.ofc.update_ofc_packet_filter.call_count)
+
+            data = {'packet_filter': {'admin_state_up': True}}
+            self._update('packet_filters', pf_id, data)
+
+            data = {'packet_filter': {'src_mac': '66:55:44:33:22:11'}}
+            self._update('packet_filters', pf_id, data)
+            self.assertEqual(2, self.ofc.update_ofc_packet_filter.call_count)

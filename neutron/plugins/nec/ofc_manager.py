@@ -39,8 +39,9 @@ class OFCManager(object):
     of the switch.  An ID named as 'ofc_*' is used to identify resource on OFC.
     """
 
-    def __init__(self):
+    def __init__(self, plugin):
         self.driver = drivers.get_driver(config.OFC.driver)(config.OFC)
+        self.plugin = plugin
 
     def _get_ofc_id(self, context, resource, neutron_id):
         return ndb.get_ofc_id_lookup_both(context.session,
@@ -107,7 +108,15 @@ class OFCManager(object):
         if not portinfo:
             raise nexc.PortInfoNotFound(id=port_id)
 
-        ofc_port_id = self.driver.create_port(ofc_net_id, portinfo, port_id)
+        # Associate packet filters
+        filters = self.plugin.get_packet_filters_for_port(context, port)
+        if filters is not None:
+            params = {'filters': filters}
+        else:
+            params = {}
+
+        ofc_port_id = self.driver.create_port(ofc_net_id, portinfo, port_id,
+                                              **params)
         self._add_ofc_item(context, "ofc_port", port_id, ofc_port_id)
 
     def exists_ofc_port(self, context, port_id):
@@ -132,9 +141,18 @@ class OFCManager(object):
             if not portinfo:
                 raise nexc.PortInfoNotFound(id=in_port_id)
 
+        # Collect ports to be associated with the filter
+        apply_ports = ndb.get_active_ports_on_ofc(
+            context, filter_dict['network_id'], in_port_id)
         ofc_pf_id = self.driver.create_filter(ofc_net_id,
-                                              filter_dict, portinfo, filter_id)
+                                              filter_dict, portinfo, filter_id,
+                                              apply_ports)
         self._add_ofc_item(context, "ofc_packet_filter", filter_id, ofc_pf_id)
+
+    def update_ofc_packet_filter(self, context, filter_id, filter_dict):
+        ofc_pf_id = self._get_ofc_id(context, "ofc_packet_filter", filter_id)
+        ofc_pf_id = self.driver.convert_ofc_filter_id(context, ofc_pf_id)
+        self.driver.update_filter(ofc_pf_id, filter_dict)
 
     def exists_ofc_packet_filter(self, context, filter_id):
         return self._exists_ofc_item(context, "ofc_packet_filter", filter_id)

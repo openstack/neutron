@@ -20,19 +20,18 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron.api.v2 import attributes
-from neutron.common import exceptions
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nec.db import models as nmodels
+from neutron.plugins.nec.extensions import packetfilter as ext_pf
 
 
 PF_STATUS_ACTIVE = 'ACTIVE'
 PF_STATUS_DOWN = 'DOWN'
 PF_STATUS_ERROR = 'ERROR'
 
-
-class PacketFilterNotFound(exceptions.NotFound):
-    message = _("PacketFilter %(id)s could not be found")
+INT_FIELDS = ('eth_type', 'src_port', 'dst_port')
 
 
 class PacketFilter(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -80,14 +79,15 @@ class PacketFilterDbMixin(object):
                'action': pf_entry['action'],
                'priority': pf_entry['priority'],
                'in_port': pf_entry['in_port'],
-               'src_mac': pf_entry['src_mac'],
-               'dst_mac': pf_entry['dst_mac'],
-               'eth_type': pf_entry['eth_type'],
-               'src_cidr': pf_entry['src_cidr'],
-               'dst_cidr': pf_entry['dst_cidr'],
-               'protocol': pf_entry['protocol'],
-               'src_port': pf_entry['src_port'],
-               'dst_port': pf_entry['dst_port'],
+               # "or None" ensure the filed is None if empty
+               'src_mac': pf_entry['src_mac'] or None,
+               'dst_mac': pf_entry['dst_mac'] or None,
+               'eth_type': pf_entry['eth_type'] or None,
+               'src_cidr': pf_entry['src_cidr'] or None,
+               'dst_cidr': pf_entry['dst_cidr'] or None,
+               'protocol': pf_entry['protocol'] or None,
+               'src_port': pf_entry['src_port'] or None,
+               'dst_port': pf_entry['dst_port'] or None,
                'admin_state_up': pf_entry['admin_state_up'],
                'status': pf_entry['status']}
         return self._fields(res, fields)
@@ -96,7 +96,7 @@ class PacketFilterDbMixin(object):
         try:
             pf_entry = self._get_by_id(context, PacketFilter, id)
         except sa_exc.NoResultFound:
-            raise PacketFilterNotFound(id=id)
+            raise ext_pf.PacketFilterNotFound(id=id)
         return pf_entry
 
     def get_packet_filter(self, context, id, fields=None):
@@ -109,6 +109,39 @@ class PacketFilterDbMixin(object):
                                     self._make_packet_filter_dict,
                                     filters=filters,
                                     fields=fields)
+
+    def _replace_unspecified_field(self, params, key):
+        if not attributes.is_attr_set(params[key]):
+            if key == 'in_port':
+                params[key] = None
+            elif key in INT_FIELDS:
+                # Integer field
+                params[key] = 0
+            else:
+                params[key] = ''
+
+    def _get_eth_type_for_protocol(self, protocol):
+        if protocol.upper() in ("ICMP", "TCP", "UDP"):
+            return 0x800
+        elif protocol.upper() == "ARP":
+            return 0x806
+
+    def _set_eth_type_from_protocol(self, filter_dict):
+        if filter_dict.get('protocol'):
+            eth_type = self._get_eth_type_for_protocol(filter_dict['protocol'])
+            if eth_type:
+                filter_dict['eth_type'] = eth_type
+
+    def _check_eth_type_and_protocol(self, new_filter, current_filter):
+        if 'protocol' in new_filter or 'eth_type' not in new_filter:
+            return
+        eth_type = self._get_eth_type_for_protocol(current_filter['protocol'])
+        if not eth_type:
+            return
+        if eth_type != new_filter['eth_type']:
+            raise ext_pf.PacketFilterEtherTypeProtocolMismatch(
+                eth_type=hex(new_filter['eth_type']),
+                protocol=current_filter['protocol'])
 
     def create_packet_filter(self, context, packet_filter):
         pf_dict = packet_filter['packet_filter']
@@ -138,12 +171,9 @@ class PacketFilterDbMixin(object):
                   'src_port': pf_dict['src_port'],
                   'dst_port': pf_dict['dst_port'],
                   'protocol': pf_dict['protocol']}
-        for key, default in params.items():
-            if params[key] == attributes.ATTR_NOT_SPECIFIED:
-                if key == 'in_port':
-                    params[key] = None
-                else:
-                    params[key] = ''
+        for key in params:
+            self._replace_unspecified_field(params, key)
+        self._set_eth_type_from_protocol(params)
 
         with context.session.begin(subtransactions=True):
             pf_entry = PacketFilter(**params)
@@ -152,13 +182,40 @@ class PacketFilterDbMixin(object):
         return self._make_packet_filter_dict(pf_entry)
 
     def update_packet_filter(self, context, id, packet_filter):
-        pf = packet_filter['packet_filter']
+        params = packet_filter['packet_filter']
+        for key in params:
+            self._replace_unspecified_field(params, key)
+        self._set_eth_type_from_protocol(params)
         with context.session.begin(subtransactions=True):
             pf_entry = self._get_packet_filter(context, id)
-            pf_entry.update(pf)
+            self._check_eth_type_and_protocol(params, pf_entry)
+            pf_entry.update(params)
         return self._make_packet_filter_dict(pf_entry)
 
     def delete_packet_filter(self, context, id):
         with context.session.begin(subtransactions=True):
             pf_entry = self._get_packet_filter(context, id)
             context.session.delete(pf_entry)
+
+    def get_packet_filters_for_port(self, context, port):
+        """Retrieve packet filters on OFC on a given port.
+
+        It returns a list of tuple (neutron filter_id, OFC id).
+        """
+        # TODO(amotoki): bug 1287432
+        # Rename quantum_id column in ID mapping tables.
+        query = (context.session.query(nmodels.OFCFilterMapping)
+                 .join(PacketFilter,
+                       nmodels.OFCFilterMapping.quantum_id == PacketFilter.id)
+                 .filter(PacketFilter.admin_state_up == True))
+
+        network_id = port['network_id']
+        net_pf_query = (query.filter(PacketFilter.network_id == network_id)
+                        .filter(PacketFilter.in_port == None))
+        net_filters = [(pf['quantum_id'], pf['ofc_id']) for pf in net_pf_query]
+
+        port_pf_query = query.filter(PacketFilter.in_port == port['id'])
+        port_filters = [(pf['quantum_id'], pf['ofc_id'])
+                        for pf in port_pf_query]
+
+        return net_filters + port_filters
