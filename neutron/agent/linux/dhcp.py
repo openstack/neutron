@@ -367,24 +367,16 @@ class Dnsmasq(DhcpLocalProcess):
         if self.conf.dhcp_domain:
             cmd.append('--domain=%s' % self.conf.dhcp_domain)
 
-        if self.network.namespace:
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          self.network.namespace)
-            ip_wrapper.netns.execute(cmd, addl_env=env)
-        else:
-            # For normal sudo prepend the env vars before command
-            cmd = ['%s=%s' % pair for pair in env.items()] + cmd
-            utils.execute(cmd, self.root_helper)
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                      self.network.namespace)
+        ip_wrapper.netns.execute(cmd, addl_env=env)
 
     def _release_lease(self, mac_address, ip):
         """Release a DHCP lease."""
         cmd = ['dhcp_release', self.interface_name, ip, mac_address]
-        if self.network.namespace:
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          self.network.namespace)
-            ip_wrapper.netns.execute(cmd)
-        else:
-            utils.execute(cmd, self.root_helper)
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                      self.network.namespace)
+        ip_wrapper.netns.execute(cmd)
 
     def reload_allocations(self):
         """Rebuild the dnsmasq config and signal the dnsmasq to reload."""

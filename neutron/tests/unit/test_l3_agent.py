@@ -211,13 +211,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
                       '-I', interface_name,
                       '-c', self.conf.send_arp_for_ha,
                       floating_ip]
-        if self.conf.use_namespaces:
-            self.mock_ip.netns.execute.assert_any_call(
-                arping_cmd, check_exit_code=True)
-        else:
-            self.utils_exec.assert_any_call(arping_cmd,
-                                            check_exit_code=True,
-                                            root_helper=self.conf.root_helper)
+        self.mock_ip.netns.execute.assert_any_call(
+            arping_cmd, check_exit_code=True)
 
     def test_arping_namespace(self):
         self._test_arping(namespace=True)
@@ -229,15 +224,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self._test_external_gateway_action('remove')
 
     def _check_agent_method_called(self, agent, calls, namespace):
-        if namespace:
-            self.mock_ip.netns.execute.assert_has_calls(
-                [mock.call(call, check_exit_code=False) for call in calls],
-                any_order=True)
-        else:
-            self.utils_exec.assert_has_calls([
-                mock.call(call, root_helper='sudo',
-                          check_exit_code=False) for call in calls],
-                any_order=True)
+        self.mock_ip.netns.execute.assert_has_calls(
+            [mock.call(call, check_exit_code=False) for call in calls],
+            any_order=True)
 
     def _test_routing_table_update(self, namespace):
         if not namespace:

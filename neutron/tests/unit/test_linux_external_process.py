@@ -44,7 +44,9 @@ class TestProcessManager(base.BaseTestCase):
                 manager.enable(callback)
                 callback.assert_called_once_with('pidfile')
                 name.assert_called_once_with(ensure_pids_dir=True)
-                self.execute.assert_called_once_with(['the', 'cmd'], 'sudo')
+                self.execute.assert_called_once_with(['the', 'cmd'],
+                                                     root_helper='sudo',
+                                                     check_exit_code=True)
 
     def test_enable_with_namespace(self):
         callback = mock.Mock()

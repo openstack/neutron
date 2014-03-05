@@ -23,7 +23,6 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ovs_lib  # noqa
-from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as l3_constants
 from neutron.common import legacy
@@ -586,13 +585,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                       '-c', self.conf.send_arp_for_ha,
                       ip_address]
         try:
-            if self.conf.use_namespaces:
-                ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                              namespace=ri.ns_name())
-                ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
-            else:
-                utils.execute(arping_cmd, check_exit_code=True,
-                              root_helper=self.root_helper)
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                          namespace=ri.ns_name())
+            ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
         except Exception as e:
             LOG.error(_("Failed sending gratuitous ARP: %s"), str(e))
 
@@ -632,13 +627,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         gw_ip = ex_gw_port['subnet']['gateway_ip']
         if ex_gw_port['subnet']['gateway_ip']:
             cmd = ['route', 'add', 'default', 'gw', gw_ip]
-            if self.conf.use_namespaces:
-                ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                              namespace=ri.ns_name())
-                ip_wrapper.netns.execute(cmd, check_exit_code=False)
-            else:
-                utils.execute(cmd, check_exit_code=False,
-                              root_helper=self.root_helper)
+            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                          namespace=ri.ns_name())
+            ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def external_gateway_removed(self, ri, ex_gw_port,
                                  interface_name, internal_cidrs):
@@ -851,14 +842,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def _update_routing_table(self, ri, operation, route):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
                'via', route['nexthop']]
-        #TODO(nati) move this code to iplib
-        if self.conf.use_namespaces:
-            ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
-                                          namespace=ri.ns_name())
-            ip_wrapper.netns.execute(cmd, check_exit_code=False)
-        else:
-            utils.execute(cmd, check_exit_code=False,
-                          root_helper=self.conf.root_helper)
+        ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+                                      namespace=ri.ns_name())
+        ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def routes_updated(self, ri):
         new_routes = ri.router['routes']
