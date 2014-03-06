@@ -43,7 +43,8 @@ class ExtraDhcpOpt(model_base.BASEV2, models_v2.HasId):
     opt_value = sa.Column(sa.String(255), nullable=False)
     __table_args__ = (sa.UniqueConstraint('port_id',
                                           'opt_name',
-                                          name='uidx_portid_optname'),)
+                                          name='uidx_portid_optname'),
+                      model_base.BASEV2.__table_args__,)
 
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
     # eagerly load extra_dhcp_opts bindings
