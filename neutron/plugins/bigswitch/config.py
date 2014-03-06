@@ -44,6 +44,14 @@ restproxy_opts = [
                        "Floodlight controller.")),
     cfg.BoolOpt('sync_data', default=False,
                 help=_("Sync data on connect")),
+    cfg.BoolOpt('auto_sync_on_failure', default=True,
+                help=_("If neutron fails to create a resource because "
+                       "the backend controller doesn't know of a dependency, "
+                       "automatically trigger a full data synchronization "
+                       "to the controller.")),
+    cfg.IntOpt('consistency_interval', default=60,
+               help=_("Time between verifications that the backend controller "
+                      "database is consistent with Neutron")),
     cfg.IntOpt('server_timeout', default=10,
                help=_("Maximum number of seconds to wait for proxy request "
                       "to connect and complete.")),

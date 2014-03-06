@@ -20,6 +20,7 @@
 import json
 
 from neutron.openstack.common import log as logging
+from neutron.plugins.bigswitch import servermanager
 
 LOG = logging.getLogger(__name__)
 
@@ -35,13 +36,16 @@ class HTTPResponseMock():
     def read(self):
         return "{'status': '200 OK'}"
 
+    def getheader(self, header):
+        return None
+
 
 class HTTPResponseMock404(HTTPResponseMock):
     status = 404
     reason = 'Not Found'
 
     def read(self):
-        return "{'status': '404 Not Found'}"
+        return "{'status': '%s 404 Not Found'}" % servermanager.NXNETWORK
 
 
 class HTTPResponseMock500(HTTPResponseMock):
@@ -97,6 +101,13 @@ class HTTPConnectionMock(object):
 
     def close(self):
         pass
+
+
+class HTTPConnectionMock404(HTTPConnectionMock):
+
+    def __init__(self, server, port, timeout):
+        self.response = HTTPResponseMock404(None)
+        self.broken = True
 
 
 class HTTPConnectionMock500(HTTPConnectionMock):

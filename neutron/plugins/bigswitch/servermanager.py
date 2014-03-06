@@ -34,13 +34,15 @@ import base64
 import httplib
 import json
 import socket
+import time
 
+import eventlet
 from oslo.config import cfg
 
 from neutron.common import exceptions
 from neutron.common import utils
 from neutron.openstack.common import log as logging
-
+from neutron.plugins.bigswitch.db import consistency_db as cdb
 
 LOG = logging.getLogger(__name__)
 
@@ -56,23 +58,34 @@ PORTS_PATH = "/tenants/%s/networks/%s/ports/%s"
 ATTACHMENT_PATH = "/tenants/%s/networks/%s/ports/%s/attachment"
 ROUTERS_PATH = "/tenants/%s/routers/%s"
 ROUTER_INTF_PATH = "/tenants/%s/routers/%s/interfaces/%s"
+TOPOLOGY_PATH = "/topology"
+HEALTH_PATH = "/health"
 SUCCESS_CODES = range(200, 207)
 FAILURE_CODES = [0, 301, 302, 303, 400, 401, 403, 404, 500, 501, 502, 503,
                  504, 505]
 BASE_URI = '/networkService/v1.1'
 ORCHESTRATION_SERVICE_ID = 'Neutron v2.0'
+HASH_MATCH_HEADER = 'X-BSN-BVS-HASH-MATCH'
+# error messages
+NXNETWORK = 'NXVNS'
 
 
 class RemoteRestError(exceptions.NeutronException):
     message = _("Error in REST call to remote network "
                 "controller: %(reason)s")
+    status = None
+
+    def __init__(self, **kwargs):
+        self.status = kwargs.pop('status', None)
+        self.reason = kwargs.get('reason')
+        super(RemoteRestError, self).__init__(**kwargs)
 
 
 class ServerProxy(object):
     """REST server proxy to a network controller."""
 
     def __init__(self, server, port, ssl, auth, neutron_id, timeout,
-                 base_uri, name):
+                 base_uri, name, mypool):
         self.server = server
         self.port = port
         self.ssl = ssl
@@ -84,6 +97,8 @@ class ServerProxy(object):
         self.neutron_id = neutron_id
         self.failed = False
         self.capabilities = []
+        # enable server to reference parent pool
+        self.mypool = mypool
         if auth:
             self.auth = 'Basic ' + base64.encodestring(auth).strip()
 
@@ -99,7 +114,7 @@ class ServerProxy(object):
                                                 'cap': self.capabilities})
         return self.capabilities
 
-    def rest_call(self, action, resource, data='', headers=None):
+    def rest_call(self, action, resource, data='', headers={}, timeout=None):
         uri = self.base_uri + resource
         body = json.dumps(data)
         if not headers:
@@ -109,6 +124,7 @@ class ServerProxy(object):
         headers['NeutronProxy-Agent'] = self.name
         headers['Instance-ID'] = self.neutron_id
         headers['Orchestration-Service-ID'] = ORCHESTRATION_SERVICE_ID
+        headers[HASH_MATCH_HEADER] = self.mypool.consistency_hash
         if self.auth:
             headers['Authorization'] = self.auth
 
@@ -121,16 +137,17 @@ class ServerProxy(object):
                    'action': action})
 
         conn = None
+        timeout = timeout or self.timeout
         if self.ssl:
             conn = httplib.HTTPSConnection(
-                self.server, self.port, timeout=self.timeout)
+                self.server, self.port, timeout=timeout)
             if conn is None:
                 LOG.error(_('ServerProxy: Could not establish HTTPS '
                             'connection'))
                 return 0, None, None, None
         else:
             conn = httplib.HTTPConnection(
-                self.server, self.port, timeout=self.timeout)
+                self.server, self.port, timeout=timeout)
             if conn is None:
                 LOG.error(_('ServerProxy: Could not establish HTTP '
                             'connection'))
@@ -139,6 +156,9 @@ class ServerProxy(object):
         try:
             conn.request(action, uri, body, headers)
             response = conn.getresponse()
+            newhash = response.getheader(HASH_MATCH_HEADER)
+            if newhash:
+                self._put_consistency_hash(newhash)
             respstr = response.read()
             respdata = respstr
             if response.status in self.success_codes:
@@ -160,6 +180,10 @@ class ServerProxy(object):
                                                     'data': ret[3]})
         return ret
 
+    def _put_consistency_hash(self, newhash):
+        self.mypool.consistency_hash = newhash
+        cdb.put_consistency_hash(newhash)
+
 
 class ServerPool(object):
 
@@ -179,6 +203,17 @@ class ServerPool(object):
         default_port = 8000
         if timeout is not None:
             self.timeout = timeout
+
+        # Function to use to retrieve topology for consistency syncs.
+        # Needs to be set by module that uses the servermanager.
+        self.get_topo_function = None
+        self.get_topo_function_args = {}
+
+        # Hash to send to backend with request as expected previous
+        # state to verify consistency.
+        self.consistency_hash = cdb.get_consistency_hash()
+        eventlet.spawn(self._consistency_watchdog,
+                       cfg.CONF.RESTPROXY.consistency_interval)
 
         if not servers:
             raise cfg.Error(_('Servers not defined. Aborting server manager.'))
@@ -210,7 +245,7 @@ class ServerPool(object):
 
     def server_proxy_for(self, server, port):
         return ServerProxy(server, port, self.ssl, self.auth, self.neutron_id,
-                           self.timeout, self.base_uri, self.name)
+                           self.timeout, self.base_uri, self.name, mypool=self)
 
     def server_failure(self, resp, ignore_codes=[]):
         """Define failure codes as required.
@@ -228,10 +263,27 @@ class ServerPool(object):
         return resp[0] in SUCCESS_CODES
 
     @utils.synchronized('bsn-rest-call')
-    def rest_call(self, action, resource, data, headers, ignore_codes):
+    def rest_call(self, action, resource, data, headers, ignore_codes,
+                  timeout=None):
         good_first = sorted(self.servers, key=lambda x: x.failed)
+        first_response = None
         for active_server in good_first:
-            ret = active_server.rest_call(action, resource, data, headers)
+            ret = active_server.rest_call(action, resource, data, headers,
+                                          timeout)
+            # If inconsistent, do a full synchronization
+            if ret[0] == httplib.CONFLICT:
+                if not self.get_topo_function:
+                    raise cfg.Error(_('Server requires synchronization, '
+                                      'but no topology function was defined.'))
+                data = self.get_topo_function(**self.get_topo_function_args)
+                active_server.rest_call('PUT', TOPOLOGY_PATH, data,
+                                        timeout=None)
+            # Store the first response as the error to be bubbled up to the
+            # user since it was a good server. Subsequent servers will most
+            # likely be cluster slaves and won't have a useful error for the
+            # user (e.g. 302 redirect to master)
+            if not first_response:
+                first_response = ret
             if not self.server_failure(ret, ignore_codes):
                 active_server.failed = False
                 return ret
@@ -254,10 +306,10 @@ class ServerPool(object):
                   {'action': action,
                    'server': tuple((s.server,
                                     s.port) for s in self.servers)})
-        return (0, None, None, None)
+        return first_response
 
     def rest_action(self, action, resource, data='', errstr='%s',
-                    ignore_codes=[], headers=None):
+                    ignore_codes=[], headers={}, timeout=None):
         """
         Wrapper for rest_call that verifies success and raises a
         RemoteRestError on failure with a provided error string
@@ -266,10 +318,11 @@ class ServerPool(object):
         """
         if not ignore_codes and action == 'DELETE':
             ignore_codes = [404]
-        resp = self.rest_call(action, resource, data, headers, ignore_codes)
+        resp = self.rest_call(action, resource, data, headers, ignore_codes,
+                              timeout)
         if self.server_failure(resp, ignore_codes):
             LOG.error(errstr, resp[2])
-            raise RemoteRestError(reason=resp[2])
+            raise RemoteRestError(reason=resp[2], status=resp[0])
         if resp[0] in ignore_codes:
             LOG.warning(_("NeutronRestProxyV2: Received and ignored error "
                           "code %(code)s on %(action)s action to resource "
@@ -361,3 +414,16 @@ class ServerPool(object):
         resource = FLOATINGIPS_PATH % (tenant_id, oldid)
         errstr = _("Unable to delete floating IP: %s")
         self.rest_action('DELETE', resource, errstr=errstr)
+
+    def _consistency_watchdog(self, polling_interval=60):
+        if 'consistency' not in self.get_capabilities():
+            LOG.warning(_("Backend server(s) do not support automated "
+                          "consitency checks."))
+            return
+        while True:
+            # If consistency is supported, all we have to do is make any
+            # rest call and the consistency header will be added. If it
+            # doesn't match, the backend will return a synchronization error
+            # that will be handled by the rest_call.
+            time.sleep(polling_interval)
+            self.servers.rest_call('GET', HEALTH_PATH)
