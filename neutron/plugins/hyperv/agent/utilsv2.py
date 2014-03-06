@@ -31,11 +31,20 @@ class HyperVUtilsV2(utils.HyperVUtils):
     _STATE_DISABLED = 3
     _OPERATION_MODE_ACCESS = 1
 
+    _VIRTUAL_SYSTEM_SETTING_DATA = 'Msvm_VirtualSystemSettingData'
+    _VM_SUMMARY_ENABLED_STATE = 100
+    _HYPERV_VM_STATE_ENABLED = 2
+
     _ACL_DIR_IN = 1
     _ACL_DIR_OUT = 2
     _ACL_TYPE_IPV4 = 2
     _ACL_TYPE_IPV6 = 3
     _ACL_ACTION_METER = 3
+
+    _METRIC_ENABLED = 2
+    _NET_IN_METRIC_NAME = 'Filtered Incoming Network Traffic'
+    _NET_OUT_METRIC_NAME = 'Filtered Outgoing Network Traffic'
+
     _ACL_APPLICABILITY_LOCAL = 1
 
     _wmi_namespace = '//./root/virtualization/v2'
@@ -205,3 +214,48 @@ class HyperVUtilsV2(utils.HyperVUtils):
                 v.Direction == direction and
                 v.AclType == acl_type and
                 v.RemoteAddress == remote_addr]
+
+    def enable_control_metrics(self, switch_port_name):
+        port, found = self._get_switch_port_allocation(switch_port_name, False)
+        if not found:
+            return
+
+        metric_svc = self._conn.Msvm_MetricService()[0]
+        metric_names = [self._NET_IN_METRIC_NAME, self._NET_OUT_METRIC_NAME]
+
+        for metric_name in metric_names:
+            metric_def = self._conn.CIM_BaseMetricDefinition(Name=metric_name)
+            if metric_def:
+                metric_svc.ControlMetrics(
+                    Subject=port.path_(),
+                    Definition=metric_def[0].path_(),
+                    MetricCollectionEnabled=self._METRIC_ENABLED)
+
+    def can_enable_control_metrics(self, switch_port_name):
+        port, found = self._get_switch_port_allocation(switch_port_name, False)
+        if not found:
+            return False
+
+        if not self._is_port_vm_started(port):
+            return False
+
+        # all 4 meter ACLs must be existent first. (2 x direction)
+        acls = port.associators(wmi_result_class=self._PORT_ALLOC_ACL_SET_DATA)
+        acls = [a for a in acls if a.Action == self._ACL_ACTION_METER]
+        if len(acls) < 2:
+            return False
+        return True
+
+    def _is_port_vm_started(self, port):
+        vs_man_svc = self._conn.Msvm_VirtualSystemManagementService()[0]
+        vmsettings = port.associators(
+            wmi_result_class=self._VIRTUAL_SYSTEM_SETTING_DATA)
+        #See http://msdn.microsoft.com/en-us/library/cc160706%28VS.85%29.aspx
+        (ret_val, summary_info) = vs_man_svc.GetSummaryInformation(
+            [self._VM_SUMMARY_ENABLED_STATE],
+            [v.path_() for v in vmsettings])
+        if ret_val or not summary_info:
+            raise utils.HyperVException(msg=_('Cannot get VM summary data '
+                                              'for: %s') % port.ElementName)
+
+        return summary_info[0].EnabledState is self._HYPERV_VM_STATE_ENABLED

@@ -30,6 +30,8 @@ from neutron.tests import base
 
 class TestHyperVNeutronAgent(base.BaseTestCase):
 
+    _FAKE_PORT_ID = 'fake_port_id'
+
     def setUp(self):
         super(TestHyperVNeutronAgent, self).setUp()
         self.addCleanup(cfg.CONF.reset)
@@ -89,6 +91,40 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
                     self.agent._utils,
                     'disconnect_switch_port'):
                 self.agent._port_unbound(net_uuid)
+
+    def test_port_enable_control_metrics_ok(self):
+        cfg.CONF.set_override('enable_metrics_collection', True, 'AGENT')
+        self.agent._port_metric_retries[self._FAKE_PORT_ID] = (
+            cfg.CONF.AGENT.metrics_max_retries)
+
+        with mock.patch.multiple(self.agent._utils,
+                                 can_enable_control_metrics=mock.MagicMock(),
+                                 enable_control_metrics=mock.MagicMock()):
+
+            self.agent._utils.can_enable_control_metrics.return_value = True
+            self.agent._port_enable_control_metrics()
+            self.agent._utils.enable_control_metrics.assert_called_with(
+                self._FAKE_PORT_ID)
+
+        self.assertNotIn(self._FAKE_PORT_ID, self.agent._port_metric_retries)
+
+    def test_port_enable_control_metrics_maxed(self):
+        cfg.CONF.set_override('enable_metrics_collection', True, 'AGENT')
+        cfg.CONF.set_override('metrics_max_retries', 3, 'AGENT')
+        self.agent._port_metric_retries[self._FAKE_PORT_ID] = (
+            cfg.CONF.AGENT.metrics_max_retries)
+
+        with mock.patch.multiple(self.agent._utils,
+                                 can_enable_control_metrics=mock.MagicMock(),
+                                 enable_control_metrics=mock.MagicMock()):
+
+            self.agent._utils.can_enable_control_metrics.return_value = False
+            for i in range(cfg.CONF.AGENT.metrics_max_retries + 1):
+                self.assertIn(self._FAKE_PORT_ID,
+                              self.agent._port_metric_retries)
+                self.agent._port_enable_control_metrics()
+
+        self.assertNotIn(self._FAKE_PORT_ID, self.agent._port_metric_retries)
 
     def test_treat_devices_added_returns_true_for_missing_device(self):
         attrs = {'get_device_details.side_effect': Exception()}
