@@ -39,9 +39,21 @@ restproxy_opts = [
     cfg.StrOpt('server_auth', default=None, secret=True,
                help=_("The username and password for authenticating against "
                       " the BigSwitch or Floodlight controller.")),
-    cfg.BoolOpt('server_ssl', default=False,
+    cfg.BoolOpt('server_ssl', default=True,
                 help=_("If True, Use SSL when connecting to the BigSwitch or "
                        "Floodlight controller.")),
+    cfg.BoolOpt('ssl_sticky', default=True,
+                help=_("Trust and store the first certificate received for "
+                       "each controller address and use it to validate future "
+                       "connections to that address.")),
+    cfg.BoolOpt('no_ssl_validation', default=False,
+                help=_("Disables SSL certificate validation for controllers")),
+    cfg.BoolOpt('cache_connections', default=True,
+                help=_("Re-use HTTP/HTTPS connections to the controller.")),
+    cfg.StrOpt('ssl_cert_directory',
+               default='/etc/neutron/plugins/bigswitch/ssl',
+               help=_("Directory containing ca_certs and host_certs "
+                      "certificate directories.")),
     cfg.BoolOpt('sync_data', default=False,
                 help=_("Sync data on connect")),
     cfg.BoolOpt('auto_sync_on_failure', default=True,

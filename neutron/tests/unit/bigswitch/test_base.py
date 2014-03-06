@@ -45,6 +45,12 @@ class BigSwitchTestBase(object):
                                                 'restproxy.ini.test')]
         self.addCleanup(cfg.CONF.reset)
         config.register_config()
+        # Only try SSL on SSL tests
+        cfg.CONF.set_override('server_ssl', False, 'RESTPROXY')
+        cfg.CONF.set_override('ssl_cert_directory',
+                              os.path.join(etc_path, 'ssl'), 'RESTPROXY')
+        # The mock interferes with HTTP(S) connection caching
+        cfg.CONF.set_override('cache_connections', False, 'RESTPROXY')
 
     def setup_patches(self):
         self.httpPatch = mock.patch(HTTPCON, create=True,
