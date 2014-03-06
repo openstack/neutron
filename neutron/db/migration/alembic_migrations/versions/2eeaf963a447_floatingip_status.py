@@ -35,7 +35,7 @@ migration_for_plugins = [
     'neutron.plugins.cisco.network_plugin.PluginV2',
     'neutron.plugins.cisco.n1kv.n1kv_neutron_plugin.N1kvNeutronPluginV2',
     'neutron.plugins.hyperv.hyperv_neutron_plugin.HyperVNeutronPlugin',
-    'neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2'
+    'neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2',
     'neutron.plugins.linuxbridge.lb_neutron_plugin.LinuxBridgePluginV2',
     'neutron.plugins.metaplugin.meta_neutron_plugin.MetaPluginV2',
     'neutron.plugins.mlnx.mlnx_plugin.MellanoxEswitchPlugin',
