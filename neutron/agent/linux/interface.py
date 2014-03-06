@@ -140,7 +140,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
 
     def _ovs_add_port(self, bridge, device_name, port_id, mac_address,
                       internal=True):
-        cmd = ['ovs-vsctl', '--', '--may-exist',
+        cmd = ['ovs-vsctl', '--', '--if-exists', 'del-port', device_name, '--',
                'add-port', bridge, device_name]
         if internal:
             cmd += ['--', 'set', 'Interface', device_name, 'type=internal']

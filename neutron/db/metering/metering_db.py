@@ -52,7 +52,8 @@ class MeteringLabel(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     routers = orm.relationship(
         l3_db.Router,
         primaryjoin="MeteringLabel.tenant_id==Router.tenant_id",
-        foreign_keys='Router.tenant_id')
+        foreign_keys='MeteringLabel.tenant_id',
+        uselist=True)
 
 
 class MeteringDbMixin(metering.MeteringPluginBase,

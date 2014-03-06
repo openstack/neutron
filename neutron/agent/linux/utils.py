@@ -34,8 +34,12 @@ from neutron.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-def execute(cmd, root_helper=None, process_input=None, addl_env=None,
-            check_exit_code=True, return_stderr=False):
+def create_process(cmd, root_helper=None, addl_env=None):
+    """Create a process object for the given command.
+
+    The return value will be a tuple of the process object and the
+    list of command arguments used to create it.
+    """
     if root_helper:
         cmd = shlex.split(root_helper) + cmd
     cmd = map(str, cmd)
@@ -44,12 +48,21 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
     env = os.environ.copy()
     if addl_env:
         env.update(addl_env)
+
+    obj = utils.subprocess_popen(cmd, shell=False,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 env=env)
+
+    return obj, cmd
+
+
+def execute(cmd, root_helper=None, process_input=None, addl_env=None,
+            check_exit_code=True, return_stderr=False):
     try:
-        obj = utils.subprocess_popen(cmd, shell=False,
-                                     stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
-                                     env=env)
+        obj, cmd = create_process(cmd, root_helper=root_helper,
+                                  addl_env=addl_env)
         _stdout, _stderr = (process_input and
                             obj.communicate(process_input) or
                             obj.communicate())
@@ -95,3 +108,17 @@ def replace_file(file_name, data):
     tmp_file.close()
     os.chmod(tmp_file.name, 0o644)
     os.rename(tmp_file.name, file_name)
+
+
+def find_child_pids(pid):
+    """Retrieve a list of the pids of child processes of the given pid."""
+    try:
+        raw_pids = execute(['ps', '--ppid', pid, '-o', 'pid='])
+    except RuntimeError as e:
+        # Exception has already been logged by execute
+        no_children_found = 'Exit code: 1' in str(e)
+        if no_children_found:
+            return []
+        # Unexpected errors are the responsibility of the caller
+        raise
+    return [x.strip() for x in raw_pids.split('\n') if x.strip()]

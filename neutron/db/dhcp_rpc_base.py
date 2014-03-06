@@ -14,13 +14,14 @@
 # limitations under the License.
 
 from oslo.config import cfg
-from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
+from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron import manager
+from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log as logging
 
 
@@ -82,8 +83,12 @@ class DhcpRpcCallbackMixin(object):
                     '%(host)s'), {'network_id': network_id,
                                   'host': host})
         plugin = manager.NeutronManager.get_plugin()
-        network = plugin.get_network(context, network_id)
-
+        try:
+            network = plugin.get_network(context, network_id)
+        except n_exc.NetworkNotFound:
+            LOG.warn(_("Network %s could not be found, it might have "
+                       "been deleted concurrently."), network_id)
+            return
         filters = dict(network_id=[network_id])
         network['subnets'] = plugin.get_subnets(context, filters=filters)
         network['ports'] = plugin.get_ports(context, filters=filters)
@@ -97,10 +102,6 @@ class DhcpRpcCallbackMixin(object):
         network state.
 
         """
-        # NOTE(arosen): This method is no longer used by the DHCP agent but is
-        # left so that neutron-dhcp-agents will still continue to work if
-        # neutron-server is upgraded and not the agent.
-
         host = kwargs.get('host')
         network_id = kwargs.get('network_id')
         device_id = kwargs.get('device_id')
@@ -136,8 +137,8 @@ class DhcpRpcCallbackMixin(object):
                 retval = plugin.update_port(context, port['id'],
                                             dict(port=port))
 
-        except exc.NoResultFound:
-            pass
+        except n_exc.NotFound as e:
+            LOG.warning(e)
 
         if retval is None:
             # No previous port exists, so create a new one.
@@ -146,8 +147,12 @@ class DhcpRpcCallbackMixin(object):
                       {'device_id': device_id,
                        'network_id': network_id,
                        'host': host})
-
-            network = plugin.get_network(context, network_id)
+            try:
+                network = plugin.get_network(context, network_id)
+            except n_exc.NetworkNotFound:
+                LOG.warn(_("Network %s could not be found, it might have "
+                           "been deleted concurrently."), network_id)
+                return
 
             port_dict = dict(
                 admin_state_up=True,
@@ -159,7 +164,14 @@ class DhcpRpcCallbackMixin(object):
                 device_owner='network:dhcp',
                 fixed_ips=[dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
 
-            retval = plugin.create_port(context, dict(port=port_dict))
+            try:
+                retval = plugin.create_port(context, dict(port=port_dict))
+            except (db_exc.DBError,
+                    n_exc.NetworkNotFound,
+                    n_exc.SubnetNotFound) as e:
+                LOG.warn(_("Port for network %(net_id)s could not be created: "
+                           "%(reason)s") % {"net_id": network_id, 'reason': e})
+                return
 
         # Convert subnet_id to subnet dict
         for fixed_ip in retval['fixed_ips']:

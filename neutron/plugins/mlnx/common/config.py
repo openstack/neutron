@@ -43,7 +43,7 @@ eswitch_opts = [
                help=_("Type of VM network interface: mlnx_direct or "
                       "hostdev")),
     cfg.StrOpt('daemon_endpoint',
-               default='tcp://127.0.0.1:5001',
+               default='tcp://127.0.0.1:60001',
                help=_('eswitch daemon end point')),
     cfg.IntOpt('request_timeout', default=3000,
                help=_("The number of milliseconds the agent will wait for "

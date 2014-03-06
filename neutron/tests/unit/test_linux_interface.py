@@ -119,7 +119,8 @@ class TestOVSInterfaceDriver(TestBase):
         def device_exists(dev, root_helper=None, namespace=None):
             return dev == bridge
 
-        vsctl_cmd = ['ovs-vsctl', '--', '--may-exist', 'add-port',
+        vsctl_cmd = ['ovs-vsctl', '--', '--if-exists', 'del-port',
+                     'tap0', '--', 'add-port',
                      bridge, 'tap0', '--', 'set', 'Interface', 'tap0',
                      'type=internal', '--', 'set', 'Interface', 'tap0',
                      'external-ids:iface-id=port-1234', '--', 'set',
@@ -206,7 +207,8 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
                     mock.call().add_veth('tap0', devname,
                                          namespace2=namespace)]
 
-        vsctl_cmd = ['ovs-vsctl', '--', '--may-exist', 'add-port',
+        vsctl_cmd = ['ovs-vsctl', '--', '--if-exists', 'del-port',
+                     'tap0', '--', 'add-port',
                      bridge, 'tap0', '--', 'set', 'Interface', 'tap0',
                      'external-ids:iface-id=port-1234', '--', 'set',
                      'Interface', 'tap0',
