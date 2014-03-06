@@ -24,13 +24,18 @@ from neutron import context
 from neutron.extensions import portbindings
 from neutron.manager import NeutronManager
 from neutron.openstack.common import log as logging
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config as ml2_config
+from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers.cisco.nexus import config as cisco_config
 from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as c_exc
 from neutron.plugins.ml2.drivers.cisco.nexus import mech_cisco_nexus
+from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_network_driver
 from neutron.plugins.ml2.drivers import type_vlan as vlan_config
 from neutron.tests.unit import test_db_plugin
+
 
 LOG = logging.getLogger(__name__)
 ML2_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -49,6 +54,12 @@ CIDR_2 = '10.0.1.0/24'
 DEVICE_ID_1 = '11111111-1111-1111-1111-111111111111'
 DEVICE_ID_2 = '22222222-2222-2222-2222-222222222222'
 DEVICE_OWNER = 'compute:None'
+BOUND_SEGMENT1 = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                  api.PHYSICAL_NETWORK: PHYS_NET,
+                  api.SEGMENTATION_ID: VLAN_START}
+BOUND_SEGMENT2 = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                  api.PHYSICAL_NETWORK: PHYS_NET,
+                  api.SEGMENTATION_ID: VLAN_START + 1}
 
 
 class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
@@ -102,23 +113,23 @@ class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                           '_import_ncclient',
                           return_value=self.mock_ncclient).start()
 
-        # Mock port values for 'status' and 'binding:segmentation_id'
+        # Mock port context values for bound_segments and 'status'.
+        self.mock_bound_segment = mock.patch.object(
+            driver_context.PortContext,
+            'bound_segment',
+            new_callable=mock.PropertyMock).start()
+        self.mock_bound_segment.return_value = BOUND_SEGMENT1
+
+        self.mock_original_bound_segment = mock.patch.object(
+            driver_context.PortContext,
+            'original_bound_segment',
+            new_callable=mock.PropertyMock).start()
+        self.mock_original_bound_segment.return_value = None
+
         mock_status = mock.patch.object(
             mech_cisco_nexus.CiscoNexusMechanismDriver,
             '_is_status_active').start()
         mock_status.return_value = n_const.PORT_STATUS_ACTIVE
-
-        def _mock_get_vlanid(context):
-            network = context.network.current
-            if network['name'] == NETWORK_NAME:
-                return VLAN_START
-            else:
-                return VLAN_START + 1
-
-        mock_vlanid = mock.patch.object(
-            mech_cisco_nexus.CiscoNexusMechanismDriver,
-            '_get_vlanid').start()
-        mock_vlanid.side_effect = _mock_get_vlanid
 
         super(CiscoML2MechanismTestCase, self).setUp(ML2_PLUGIN)
 
@@ -213,8 +224,7 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                                      'admin_state_up': True}}
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
-                    res = req.get_response(self.api)
-                    yield res.status_int
+                    yield req.get_response(self.api)
 
     def _assertExpectedHTTP(self, status, exc):
         """Confirm that an HTTP status corresponds to an expected exception.
@@ -313,6 +323,7 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                 vlan_creation_expected=True,
                 add_keyword_expected=False))
             self.mock_ncclient.reset_mock()
+            self.mock_bound_segment.return_value = BOUND_SEGMENT2
 
             # Second vlan should be configured with 'add' keyword
             with self._create_resources(name=NETWORK_NAME_2,
@@ -321,6 +332,9 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                 self.assertTrue(self._is_vlan_configured(
                     vlan_creation_expected=True,
                     add_keyword_expected=True))
+
+            # Return to first segment for delete port calls.
+            self.mock_bound_segment.return_value = BOUND_SEGMENT1
 
     def test_nexus_connect_fail(self):
         """Test failure to connect to a Nexus switch.
@@ -332,8 +346,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         """
         with self._patch_ncclient('connect.side_effect',
                                   AttributeError):
-            with self._create_resources() as result_status:
-                self._assertExpectedHTTP(result_status,
+            with self._create_resources() as result:
+                self._assertExpectedHTTP(result.status_int,
                                          c_exc.NexusConnectFailed)
 
     def test_nexus_vlan_config_two_hosts(self):
@@ -381,6 +395,62 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                 self.assertTrue(self._is_vlan_unconfigured(
                     vlan_deletion_expected=True))
 
+    def test_nexus_vm_migration(self):
+        """Verify VM (live) migration.
+
+        Simulate the following:
+        Nova informs neutron of live-migration with port-update(new host).
+        This should trigger two update_port_pre/postcommit() calls.
+
+        The first one should only change the current host_id and remove the
+        binding resulting in the mechanism drivers receiving:
+          PortContext.original['binding:host_id']: previous value
+          PortContext.original_bound_segment: previous value
+          PortContext.current['binding:host_id']: current (new) value
+          PortContext.bound_segment: None
+
+        The second one binds the new host resulting in the mechanism
+        drivers receiving:
+          PortContext.original['binding:host_id']: previous value
+          PortContext.original_bound_segment: None
+          PortContext.current['binding:host_id']: previous value
+          PortContext.bound_segment: new value
+        """
+
+        # Create network, subnet and port.
+        with self._create_resources() as result:
+            # Verify initial database entry.
+            # Use port_id to verify that 1st host name was used.
+            binding = nexus_db_v2.get_nexusvm_binding(VLAN_START, DEVICE_ID_1)
+            self.assertEqual(binding.port_id, NEXUS_INTERFACE)
+
+            port = self.deserialize(self.fmt, result)
+            port_id = port['port']['id']
+
+            # Trigger update event to unbind segment.
+            # Results in port being deleted from nexus DB and switch.
+            data = {'port': {portbindings.HOST_ID: COMP_HOST_NAME_2}}
+            self.mock_bound_segment.return_value = None
+            self.mock_original_bound_segment.return_value = BOUND_SEGMENT1
+            self.new_update_request('ports', data,
+                                    port_id).get_response(self.api)
+
+            # Verify that port entry has been deleted.
+            self.assertRaises(c_exc.NexusPortBindingNotFound,
+                              nexus_db_v2.get_nexusvm_binding,
+                              VLAN_START, DEVICE_ID_1)
+
+            # Trigger update event to bind segment with new host.
+            self.mock_bound_segment.return_value = BOUND_SEGMENT1
+            self.mock_original_bound_segment.return_value = None
+            self.new_update_request('ports', data,
+                                    port_id).get_response(self.api)
+
+            # Verify that port entry has been added using new host name.
+            # Use port_id to verify that 2nd host name was used.
+            binding = nexus_db_v2.get_nexusvm_binding(VLAN_START, DEVICE_ID_1)
+            self.assertEqual(binding.port_id, NEXUS_INTERFACE_2)
+
     def test_nexus_config_fail(self):
         """Test a Nexus switch configuration failure.
 
@@ -392,8 +462,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         with self._patch_ncclient(
             'connect.return_value.edit_config.side_effect',
             AttributeError):
-            with self._create_resources() as result_status:
-                self._assertExpectedHTTP(result_status,
+            with self._create_resources() as result:
+                self._assertExpectedHTTP(result.status_int,
                                          c_exc.NexusConfigFailed)
 
     def test_nexus_extended_vlan_range_failure(self):
@@ -412,8 +482,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         with self._patch_ncclient(
             'connect.return_value.edit_config.side_effect',
             mock_edit_config_a):
-            with self._create_resources() as result_status:
-                self.assertEqual(result_status, wexc.HTTPOk.code)
+            with self._create_resources() as result:
+                self.assertEqual(result.status_int, wexc.HTTPOk.code)
 
         def mock_edit_config_b(target, config):
             if all(word in config for word in ['no', 'shutdown']):
@@ -422,8 +492,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         with self._patch_ncclient(
             'connect.return_value.edit_config.side_effect',
             mock_edit_config_b):
-            with self._create_resources() as result_status:
-                self.assertEqual(result_status, wexc.HTTPOk.code)
+            with self._create_resources() as result:
+                self.assertEqual(result.status_int, wexc.HTTPOk.code)
 
     def test_nexus_vlan_config_rollback(self):
         """Test rollback following Nexus VLAN state config failure.
@@ -440,11 +510,11 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         with self._patch_ncclient(
             'connect.return_value.edit_config.side_effect',
             mock_edit_config):
-            with self._create_resources() as result_status:
+            with self._create_resources() as result:
                 # Confirm that the last configuration sent to the Nexus
                 # switch was deletion of the VLAN.
                 self.assertTrue(self._is_in_last_nexus_cfg(['<no>', '<vlan>']))
-                self._assertExpectedHTTP(result_status,
+                self._assertExpectedHTTP(result.status_int,
                                          c_exc.NexusConfigFailed)
 
     def test_nexus_host_not_configured(self):
@@ -454,8 +524,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         a fictitious host name during port creation.
 
         """
-        with self._create_resources(host_id='fake_host') as result_status:
-            self._assertExpectedHTTP(result_status,
+        with self._create_resources(host_id='fake_host') as result:
+            self._assertExpectedHTTP(result.status_int,
                                      c_exc.NexusComputeHostNotConfigured)
 
     def test_nexus_missing_fields(self):
@@ -465,8 +535,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         empty host_id and device_id values during port creation.
 
         """
-        with self._create_resources(device_id='', host_id='') as result_status:
-            self._assertExpectedHTTP(result_status,
+        with self._create_resources(device_id='', host_id='') as result:
+            self._assertExpectedHTTP(result.status_int,
                                      c_exc.NexusMissingRequiredFields)
 
 
