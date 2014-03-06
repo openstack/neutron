@@ -15,8 +15,6 @@
 #    under the License.
 # @author: Ryota MIBU
 
-# TODO(amotoki): bug 1287432: Rename quantum_id column in ID mapping tables.
-
 import sqlalchemy as sa
 
 from neutron.db import api as db
@@ -57,7 +55,7 @@ def get_ofc_item(session, resource, neutron_id):
     if not model:
         return
     try:
-        return session.query(model).filter_by(quantum_id=neutron_id).one()
+        return session.query(model).filter_by(neutron_id=neutron_id).one()
     except sa.orm.exc.NoResultFound:
         return
 
@@ -90,7 +88,7 @@ def find_ofc_item(session, resource, ofc_id):
 def add_ofc_item(session, resource, neutron_id, ofc_id):
     try:
         model = _get_resource_model(resource)
-        params = dict(quantum_id=neutron_id, ofc_id=ofc_id)
+        params = dict(neutron_id=neutron_id, ofc_id=ofc_id)
         item = model(**params)
         with session.begin(subtransactions=True):
             session.add(item)
@@ -105,7 +103,7 @@ def del_ofc_item(session, resource, neutron_id):
     try:
         model = _get_resource_model(resource)
         with session.begin(subtransactions=True):
-            item = session.query(model).filter_by(quantum_id=neutron_id).one()
+            item = session.query(model).filter_by(neutron_id=neutron_id).one()
             session.delete(item)
         return True
     except sa.orm.exc.NoResultFound:
@@ -154,12 +152,12 @@ def get_active_ports_on_ofc(context, network_id, port_id=None):
     """
     query = context.session.query(nmodels.OFCPortMapping)
     query = query.join(models_v2.Port,
-                       nmodels.OFCPortMapping.quantum_id == models_v2.Port.id)
+                       nmodels.OFCPortMapping.neutron_id == models_v2.Port.id)
     query = query.filter(models_v2.Port.network_id == network_id)
     if port_id:
-        query = query.filter(nmodels.OFCPortMapping.quantum_id == port_id)
+        query = query.filter(nmodels.OFCPortMapping.neutron_id == port_id)
 
-    return [(p['quantum_id'], p['ofc_id']) for p in query]
+    return [(p['neutron_id'], p['ofc_id']) for p in query]
 
 
 def get_port_from_device(port_id):
