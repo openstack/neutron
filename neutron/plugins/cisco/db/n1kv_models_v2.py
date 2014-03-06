@@ -39,6 +39,10 @@ class N1kvVlanAllocation(model_base.BASEV2):
     vlan_id = sa.Column(sa.Integer, nullable=False, primary_key=True,
                         autoincrement=False)
     allocated = sa.Column(sa.Boolean, nullable=False, default=False)
+    network_profile_id = sa.Column(sa.String(36),
+                                   sa.ForeignKey('cisco_network_profiles.id',
+                                                 ondelete="CASCADE"),
+                                   nullable=False)
 
 
 class N1kvVxlanAllocation(model_base.BASEV2):
@@ -49,6 +53,10 @@ class N1kvVxlanAllocation(model_base.BASEV2):
     vxlan_id = sa.Column(sa.Integer, nullable=False, primary_key=True,
                          autoincrement=False)
     allocated = sa.Column(sa.Boolean, nullable=False, default=False)
+    network_profile_id = sa.Column(sa.String(36),
+                                   sa.ForeignKey('cisco_network_profiles.id',
+                                                 ondelete="CASCADE"),
+                                   nullable=False)
 
 
 class N1kvPortBinding(model_base.BASEV2):

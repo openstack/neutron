@@ -38,13 +38,8 @@ PHYS_NET = 'physnet1'
 PHYS_NET_2 = 'physnet2'
 VLAN_MIN = 10
 VLAN_MAX = 19
-VLAN_RANGES = {PHYS_NET: [(VLAN_MIN, VLAN_MAX)]}
-UPDATED_VLAN_RANGES = {PHYS_NET: [(VLAN_MIN + 20, VLAN_MAX + 20)],
-                       PHYS_NET_2: [(VLAN_MIN + 40, VLAN_MAX + 40)]}
 VXLAN_MIN = 5000
 VXLAN_MAX = 5009
-VXLAN_RANGES = [(VXLAN_MIN, VXLAN_MAX)]
-UPDATED_VXLAN_RANGES = [(VXLAN_MIN + 20, VXLAN_MAX + 20)]
 SEGMENT_RANGE = '200-220'
 SEGMENT_RANGE_MIN_OVERLAP = '210-230'
 SEGMENT_RANGE_MAX_OVERLAP = '190-209'
@@ -103,7 +98,8 @@ class VlanAllocationsTest(base.BaseTestCase):
         super(VlanAllocationsTest, self).setUp()
         db.configure_db()
         self.session = db.get_session()
-        n1kv_db_v2.sync_vlan_allocations(self.session, VLAN_RANGES)
+        self.net_p = _create_test_network_profile_if_not_there(self.session)
+        n1kv_db_v2.sync_vlan_allocations(self.session, self.net_p)
         self.addCleanup(db.clear_db)
 
     def test_sync_vlan_allocations_outside_segment_range(self):
@@ -117,28 +113,6 @@ class VlanAllocationsTest(base.BaseTestCase):
                           self.session,
                           PHYS_NET,
                           VLAN_MAX + 1)
-        n1kv_db_v2.sync_vlan_allocations(self.session, UPDATED_VLAN_RANGES)
-        self.assertRaises(c_exc.VlanIDNotFound,
-                          n1kv_db_v2.get_vlan_allocation,
-                          self.session,
-                          PHYS_NET,
-                          VLAN_MIN + 20 - 1)
-        self.assertRaises(c_exc.VlanIDNotFound,
-                          n1kv_db_v2.get_vlan_allocation,
-                          self.session,
-                          PHYS_NET,
-                          VLAN_MAX + 20 + 1)
-        self.assertRaises(c_exc.VlanIDNotFound,
-                          n1kv_db_v2.get_vlan_allocation,
-                          self.session,
-                          PHYS_NET_2,
-                          VLAN_MIN + 40 - 1)
-        self.assertRaises(c_exc.VlanIDNotFound,
-                          n1kv_db_v2.get_vlan_allocation,
-                          self.session,
-                          PHYS_NET_2,
-                          VLAN_MAX + 40 + 1)
-        n1kv_db_v2.sync_vlan_allocations(self.session, VLAN_RANGES)
         self.assertRaises(c_exc.VlanIDNotFound,
                           n1kv_db_v2.get_vlan_allocation,
                           self.session,
@@ -170,45 +144,12 @@ class VlanAllocationsTest(base.BaseTestCase):
         self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
                                                         PHYS_NET,
                                                         VLAN_MAX).allocated)
-        n1kv_db_v2.sync_vlan_allocations(self.session, UPDATED_VLAN_RANGES)
-        self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
-                                                        PHYS_NET,
-                                                        VLAN_MIN + 20).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
-                                                        PHYS_NET,
-                                                        VLAN_MIN + 20 + 1).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
-                                                        PHYS_NET,
-                                                        VLAN_MAX + 20 - 1).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session, PHYS_NET,
-                                                        VLAN_MAX + 20).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
-                                                        PHYS_NET_2,
-                                                        VLAN_MIN + 40).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
-                                                        PHYS_NET_2,
-                                                        VLAN_MIN + 40 + 1).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
-                                                        PHYS_NET_2,
-                                                        VLAN_MAX + 40 - 1).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
-                                                        PHYS_NET_2,
-                                                        VLAN_MAX + 40).
-                         allocated)
 
     def test_vlan_pool(self):
         vlan_ids = set()
-        p = _create_test_network_profile_if_not_there(self.session)
         for x in xrange(VLAN_MIN, VLAN_MAX + 1):
             (physical_network, seg_type,
-             vlan_id, m_ip) = n1kv_db_v2.reserve_vlan(self.session, p)
+             vlan_id, m_ip) = n1kv_db_v2.reserve_vlan(self.session, self.net_p)
             self.assertEqual(physical_network, PHYS_NET)
             self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
             self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
@@ -217,20 +158,18 @@ class VlanAllocationsTest(base.BaseTestCase):
         self.assertRaises(n_exc.NoNetworkAvailable,
                           n1kv_db_v2.reserve_vlan,
                           self.session,
-                          p)
+                          self.net_p)
 
-        n1kv_db_v2.release_vlan(self.session, PHYS_NET, vlan_ids.pop(),
-                                VLAN_RANGES)
+        n1kv_db_v2.release_vlan(self.session, PHYS_NET, vlan_ids.pop())
         physical_network, seg_type, vlan_id, m_ip = (n1kv_db_v2.reserve_vlan(
-                                                     self.session, p))
+                                                     self.session, self.net_p))
         self.assertEqual(physical_network, PHYS_NET)
         self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
         self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
         vlan_ids.add(vlan_id)
 
         for vlan_id in vlan_ids:
-            n1kv_db_v2.release_vlan(self.session, PHYS_NET, vlan_id,
-                                    VLAN_RANGES)
+            n1kv_db_v2.release_vlan(self.session, PHYS_NET, vlan_id)
 
     def test_specific_vlan_inside_pool(self):
         vlan_id = VLAN_MIN + 5
@@ -248,7 +187,7 @@ class VlanAllocationsTest(base.BaseTestCase):
                           PHYS_NET,
                           vlan_id)
 
-        n1kv_db_v2.release_vlan(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
+        n1kv_db_v2.release_vlan(self.session, PHYS_NET, vlan_id)
         self.assertFalse(n1kv_db_v2.get_vlan_allocation(self.session,
                                                         PHYS_NET,
                                                         vlan_id).allocated)
@@ -260,19 +199,8 @@ class VlanAllocationsTest(base.BaseTestCase):
                           self.session,
                           PHYS_NET,
                           vlan_id)
-        n1kv_db_v2.reserve_specific_vlan(self.session, PHYS_NET, vlan_id)
-        self.assertTrue(n1kv_db_v2.get_vlan_allocation(self.session, PHYS_NET,
-                                                       vlan_id).allocated)
-
-        self.assertRaises(n_exc.VlanIdInUse,
+        self.assertRaises(c_exc.VlanIDOutsidePool,
                           n1kv_db_v2.reserve_specific_vlan,
-                          self.session,
-                          PHYS_NET,
-                          vlan_id)
-
-        n1kv_db_v2.release_vlan(self.session, PHYS_NET, vlan_id, VLAN_RANGES)
-        self.assertRaises(c_exc.VlanIDNotFound,
-                          n1kv_db_v2.get_vlan_allocation,
                           self.session,
                           PHYS_NET,
                           vlan_id)
@@ -285,19 +213,20 @@ class VxlanAllocationsTest(base.BaseTestCase,
         super(VxlanAllocationsTest, self).setUp()
         db.configure_db()
         self.session = db.get_session()
-        n1kv_db_v2.sync_vxlan_allocations(self.session, VXLAN_RANGES)
+        self.net_p = _create_test_network_profile_if_not_there(
+            self.session, TEST_NETWORK_PROFILE_VXLAN)
+        n1kv_db_v2.sync_vxlan_allocations(self.session, self.net_p)
         self.addCleanup(db.clear_db)
 
     def test_sync_vxlan_allocations_outside_segment_range(self):
-        self.assertIsNone(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                          VXLAN_MIN - 1))
-        self.assertIsNone(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                          VXLAN_MAX + 1))
-        n1kv_db_v2.sync_vxlan_allocations(self.session, UPDATED_VXLAN_RANGES)
-        self.assertIsNone(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                          VXLAN_MIN + 20 - 1))
-        self.assertIsNone(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                          VXLAN_MAX + 20 + 1))
+        self.assertRaises(c_exc.VxlanIDNotFound,
+                          n1kv_db_v2.get_vxlan_allocation,
+                          self.session,
+                          VXLAN_MIN - 1)
+        self.assertRaises(c_exc.VxlanIDNotFound,
+                          n1kv_db_v2.get_vxlan_allocation,
+                          self.session,
+                          VXLAN_MAX + 1)
 
     def test_sync_vxlan_allocations_unallocated_vxlans(self):
         self.assertFalse(n1kv_db_v2.get_vxlan_allocation(self.session,
@@ -310,26 +239,11 @@ class VxlanAllocationsTest(base.BaseTestCase,
                          allocated)
         self.assertFalse(n1kv_db_v2.get_vxlan_allocation(self.session,
                                                          VXLAN_MAX).allocated)
-        n1kv_db_v2.sync_vxlan_allocations(self.session, UPDATED_VXLAN_RANGES)
-        self.assertFalse(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                         VXLAN_MIN + 20).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                         VXLAN_MIN + 20 + 1).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                         VXLAN_MAX + 20 - 1).
-                         allocated)
-        self.assertFalse(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                         VXLAN_MAX + 20).
-                         allocated)
 
     def test_vxlan_pool(self):
         vxlan_ids = set()
-        profile = n1kv_db_v2.create_network_profile(self.session,
-                                                    TEST_NETWORK_PROFILE_VXLAN)
         for x in xrange(VXLAN_MIN, VXLAN_MAX + 1):
-            vxlan = n1kv_db_v2.reserve_vxlan(self.session, profile)
+            vxlan = n1kv_db_v2.reserve_vxlan(self.session, self.net_p)
             vxlan_id = vxlan[2]
             self.assertThat(vxlan_id, matchers.GreaterThan(VXLAN_MIN - 1))
             self.assertThat(vxlan_id, matchers.LessThan(VXLAN_MAX + 1))
@@ -338,17 +252,17 @@ class VxlanAllocationsTest(base.BaseTestCase,
         self.assertRaises(n_exc.NoNetworkAvailable,
                           n1kv_db_v2.reserve_vxlan,
                           self.session,
-                          profile)
-        n1kv_db_v2.release_vxlan(self.session, vxlan_ids.pop(), VXLAN_RANGES)
-        vxlan = n1kv_db_v2.reserve_vxlan(self.session, profile)
+                          self.net_p)
+        n1kv_db_v2.release_vxlan(self.session, vxlan_ids.pop())
+        vxlan = n1kv_db_v2.reserve_vxlan(self.session, self.net_p)
         vxlan_id = vxlan[2]
         self.assertThat(vxlan_id, matchers.GreaterThan(VXLAN_MIN - 1))
         self.assertThat(vxlan_id, matchers.LessThan(VXLAN_MAX + 1))
         vxlan_ids.add(vxlan_id)
 
         for vxlan_id in vxlan_ids:
-            n1kv_db_v2.release_vxlan(self.session, vxlan_id, VXLAN_RANGES)
-        n1kv_db_v2.delete_network_profile(self.session, profile.id)
+            n1kv_db_v2.release_vxlan(self.session, vxlan_id)
+        n1kv_db_v2.delete_network_profile(self.session, self.net_p.id)
 
     def test_specific_vxlan_inside_pool(self):
         vxlan_id = VXLAN_MIN + 5
@@ -358,31 +272,25 @@ class VxlanAllocationsTest(base.BaseTestCase,
         self.assertTrue(n1kv_db_v2.get_vxlan_allocation(self.session,
                                                         vxlan_id).allocated)
 
-        self.assertRaises(c_exc.VxlanIdInUse,
+        self.assertRaises(c_exc.VxlanIDInUse,
                           n1kv_db_v2.reserve_specific_vxlan,
                           self.session,
                           vxlan_id)
 
-        n1kv_db_v2.release_vxlan(self.session, vxlan_id, VXLAN_RANGES)
+        n1kv_db_v2.release_vxlan(self.session, vxlan_id)
         self.assertFalse(n1kv_db_v2.get_vxlan_allocation(self.session,
                                                          vxlan_id).allocated)
 
     def test_specific_vxlan_outside_pool(self):
         vxlan_id = VXLAN_MAX + 5
-        self.assertIsNone(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                          vxlan_id))
-        n1kv_db_v2.reserve_specific_vxlan(self.session, vxlan_id)
-        self.assertTrue(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                        vxlan_id).allocated)
-
-        self.assertRaises(c_exc.VxlanIdInUse,
+        self.assertRaises(c_exc.VxlanIDNotFound,
+                          n1kv_db_v2.get_vxlan_allocation,
+                          self.session,
+                          vxlan_id)
+        self.assertRaises(c_exc.VxlanIDOutsidePool,
                           n1kv_db_v2.reserve_specific_vxlan,
                           self.session,
                           vxlan_id)
-
-        n1kv_db_v2.release_vxlan(self.session, vxlan_id, VXLAN_RANGES)
-        self.assertIsNone(n1kv_db_v2.get_vxlan_allocation(self.session,
-                                                          vxlan_id))
 
 
 class NetworkBindingsTest(test_plugin.NeutronDbPluginV2TestCase):
@@ -943,8 +851,7 @@ class ProfileBindingTests(base.BaseTestCase,
                                           test_profile_id,
                                           test_profile_type)
         network_profile = {"network_profile": TEST_NETWORK_PROFILE}
-        test_network_profile = self.create_network_profile(ctx,
-                                                           network_profile)
+        self.create_network_profile(ctx, network_profile)
         binding = n1kv_db_v2.get_profile_binding(self.session,
                                                  ctx.tenant_id,
                                                  test_profile_id)
@@ -954,5 +861,3 @@ class ProfileBindingTests(base.BaseTestCase,
             test_profile_id))
         self.assertNotEqual(binding.tenant_id,
                             cisco_constants.TENANT_ID_NOT_SET)
-        n1kv_db_v2.delete_network_profile(self.session,
-                                          test_network_profile['id'])
