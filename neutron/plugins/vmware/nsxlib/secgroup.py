@@ -124,6 +124,15 @@ def update_security_group_rules(cluster, spid, rules):
     return rsp
 
 
+def update_security_profile(cluster, spid, name):
+    return do_request(HTTP_PUT,
+                      _build_uri_path(SECPROF_RESOURCE, resource_id=spid),
+                      json.dumps({
+                          "display_name": utils.check_and_truncate(name)
+                      }),
+                      cluster=cluster)
+
+
 def delete_security_profile(cluster, spid):
     path = "/ws.v1/security-profile/%s" % spid
 

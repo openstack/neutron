@@ -2319,6 +2319,28 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 context.session, neutron_id, nsx_secgroup['uuid'])
         return sec_group
 
+    def update_security_group(self, context, secgroup_id, security_group):
+        secgroup = (super(NsxPluginV2, self).
+                    update_security_group(context,
+                                          secgroup_id,
+                                          security_group))
+        if ('name' in security_group['security_group'] and
+            secgroup['name'] != 'default'):
+            nsx_sec_profile_id = nsx_utils.get_nsx_security_group_id(
+                context.session, self.cluster, secgroup_id)
+            try:
+                name = security_group['security_group']['name']
+                secgrouplib.update_security_profile(
+                    self.cluster, nsx_sec_profile_id, name)
+            except (n_exc.NotFound, api_exc.NsxApiException) as e:
+                # Reverting the DB change is not really worthwhile
+                # for a mismatch between names. It's the rules that
+                # we care about.
+                LOG.error(_('Error while updating security profile '
+                            '%(uuid)s with name %(name)s: %(error)s.')
+                          % {'uuid': secgroup_id, 'name': name, 'error': e})
+        return secgroup
+
     def delete_security_group(self, context, security_group_id):
         """Delete a security group.
 
