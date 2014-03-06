@@ -512,7 +512,7 @@ class Dnsmasq(DhcpLocalProcess):
             # provides all dnsmasq ip as dns-server if there is more than
             # one dnsmasq for a subnet and there is no dns-server submitted
             # by the server
-            if port.device_owner == 'network:dhcp':
+            if port.device_owner == constants.DEVICE_OWNER_DHCP:
                 for ip in port.fixed_ips:
                     i = subnet_idx_map.get(ip.subnet_id)
                     if i is None:

@@ -25,6 +25,7 @@ import netaddr
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
+from neutron.common import constants
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_db
@@ -184,7 +185,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             port_db = super(NeutronPluginPLUMgridV2, self).create_port(context,
                                                                        port)
             device_id = port_db["device_id"]
-            if port_db["device_owner"] == "network:router_gateway":
+            if port_db["device_owner"] == constants.DEVICE_OWNER_ROUTER_GW:
                 router_db = self._get_router(context, device_id)
             else:
                 router_db = None
@@ -212,7 +213,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             port_db = super(NeutronPluginPLUMgridV2, self).update_port(
                 context, port_id, port)
             device_id = port_db["device_id"]
-            if port_db["device_owner"] == "network:router_gateway":
+            if port_db["device_owner"] == constants.DEVICE_OWNER_ROUTER_GW:
                 router_db = self._get_router(context, device_id)
             else:
                 router_db = None
@@ -242,7 +243,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             self.disassociate_floatingips(context, port_id)
             super(NeutronPluginPLUMgridV2, self).delete_port(context, port_id)
 
-            if port_db["device_owner"] == "network:router_gateway":
+            if port_db["device_owner"] == constants.DEVICE_OWNER_ROUTER_GW:
                 device_id = port_db["device_id"]
                 router_db = self._get_router(context, device_id)
             else:

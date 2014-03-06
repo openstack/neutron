@@ -221,7 +221,7 @@ class TestPortsV2(NsxPluginV2TestCase,
         with mock.patch.object(nsx_db, 'add_neutron_nsx_port_mapping',
                                side_effect=db_exception):
             with self.network() as net:
-                with self.port(device_owner='network:dhcp'):
+                with self.port(device_owner=constants.DEVICE_OWNER_DHCP):
                     self._verify_no_orphan_left(net['network']['id'])
 
     def test_create_port_maintenance_returns_503(self):
@@ -909,7 +909,7 @@ class TestL3NatTestCase(L3NatTest,
         subnets = self._list('subnets')['subnets']
         with self.subnet() as s:
             with self.port(subnet=s, device_id='1234',
-                           device_owner='network:dhcp'):
+                           device_owner=constants.DEVICE_OWNER_DHCP):
                 subnets = self._list('subnets')['subnets']
                 self.assertEqual(len(subnets), 1)
                 self.assertEqual(subnets[0]['host_routes'][0]['nexthop'],

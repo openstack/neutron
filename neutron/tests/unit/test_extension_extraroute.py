@@ -19,6 +19,7 @@ import contextlib
 from oslo.config import cfg
 from webob import exc
 
+from neutron.common import constants
 from neutron.db import extraroute_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3
@@ -392,7 +393,6 @@ class ExtraRouteDBTestCaseBase(object):
                                                   p['port']['id'])
 
     def test_router_update_on_external_port(self):
-        DEVICE_OWNER_ROUTER_GW = "network:router_gateway"
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s:
                 self._set_net_external(s['subnet']['network_id'])
@@ -402,11 +402,12 @@ class ExtraRouteDBTestCaseBase(object):
                 body = self._show('routers', r['router']['id'])
                 net_id = body['router']['external_gateway_info']['network_id']
                 self.assertEqual(net_id, s['subnet']['network_id'])
-                port_res = self._list_ports('json',
-                                            200,
-                                            s['subnet']['network_id'],
-                                            tenant_id=r['router']['tenant_id'],
-                                            device_own=DEVICE_OWNER_ROUTER_GW)
+                port_res = self._list_ports(
+                    'json',
+                    200,
+                    s['subnet']['network_id'],
+                    tenant_id=r['router']['tenant_id'],
+                    device_own=constants.DEVICE_OWNER_ROUTER_GW)
                 port_list = self.deserialize('json', port_res)
                 self.assertEqual(len(port_list['ports']), 1)
 

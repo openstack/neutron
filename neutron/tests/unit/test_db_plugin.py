@@ -31,6 +31,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2.attributes import ATTR_NOT_SPECIFIED
 from neutron.api.v2.router import APIRouter
 from neutron.common import config
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common.test_lib import test_config
 from neutron import context
@@ -1132,7 +1133,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         network_id = network['network']['id']
-        self._create_port(self.fmt, network_id, device_owner='network:dhcp')
+        self._create_port(self.fmt, network_id,
+                          device_owner=constants.DEVICE_OWNER_DHCP)
         req = self.new_delete_request('networks', network_id)
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
@@ -2398,7 +2400,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    cidr, ip_version=4)
         self._create_port(self.fmt,
                           network['network']['id'],
-                          device_owner='network:dhcp')
+                          device_owner=constants.DEVICE_OWNER_DHCP)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)

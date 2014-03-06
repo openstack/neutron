@@ -43,8 +43,6 @@ from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
 
-DEVICE_OWNER_ROUTER_INTF = "network:router_interface"
-
 
 class MetadataProxyHandler(object):
     OPTS = [
@@ -133,7 +131,7 @@ class MetadataProxyHandler(object):
         else:
             internal_ports = qclient.list_ports(
                 device_id=router_id,
-                device_owner=DEVICE_OWNER_ROUTER_INTF)['ports']
+                device_owner=n_const.DEVICE_OWNER_ROUTER_INTF)['ports']
 
             networks = [p['network_id'] for p in internal_ports]
 

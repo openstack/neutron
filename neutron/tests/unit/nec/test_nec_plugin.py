@@ -585,11 +585,12 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
         with self.network() as network:
             with self.subnet(network=network):
                 net = network['network']
-                p = self._create_resource('port',
-                                          {'network_id': net['id'],
-                                           'tenant_id': net['tenant_id'],
-                                           'device_owner': 'network:dhcp',
-                                           'device_id': 'dhcp-port1'})
+                p = self._create_resource(
+                    'port',
+                    {'network_id': net['id'],
+                     'tenant_id': net['tenant_id'],
+                     'device_owner': constants.DEVICE_OWNER_DHCP,
+                     'device_id': 'dhcp-port1'})
                 # Make sure that the port is created on OFC.
                 portinfo = {'id': p['id'], 'port_no': 123}
                 self.rpcapi_update_ports(added=[portinfo])

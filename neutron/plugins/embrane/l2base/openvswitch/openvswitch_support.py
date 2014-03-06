@@ -19,6 +19,7 @@
 
 from heleosapi import info as h_info
 
+from neutron.common import constants
 from neutron import manager
 from neutron.plugins.embrane.l2base import support_base as base
 from neutron.plugins.embrane.l2base import support_exceptions as exc
@@ -45,7 +46,8 @@ class OpenvswitchSupport(base.SupportBase):
                 err_msg=_("No segmentation_id found for the network, "
                           "please be sure that tenant_network_type is vlan"))
         network = plugin._get_network(context, network_id)
-        is_gw = neutron_port["device_owner"] == "network:router_gateway"
+        is_gw = (neutron_port["device_owner"] ==
+                 constants.DEVICE_OWNER_ROUTER_GW)
         result = h_info.UtifInfo(vlan=network_binding["segmentation_id"],
                                  network_name=network["name"],
                                  network_id=network["id"],

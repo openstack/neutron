@@ -163,7 +163,7 @@ def _is_vif_port(port):
 def _is_dhcp_port(port):
     """Check whether the given port is a DHCP port."""
     device_owner = port['device_owner']
-    return device_owner.startswith('network:dhcp')
+    return device_owner.startswith(constants.DEVICE_OWNER_DHCP)
 
 
 def _check_resource_exists(func, id, name, raise_exc=False):
@@ -1024,7 +1024,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             rport_qry = context.session.query(models_v2.Port)
             dhcp_ports = rport_qry.filter_by(
                 network_id=subnet["network_id"],
-                device_owner='network:dhcp').all()
+                device_owner=constants.DEVICE_OWNER_DHCP).all()
             if dhcp_ports and dhcp_ports[0].fixed_ips:
                 metadata_gw_ip = dhcp_ports[0].fixed_ips[0].ip_address
             else:

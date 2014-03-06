@@ -1146,7 +1146,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             port_id=private_port['port']['id'])
                         self.assertEqual(res.status_int, 400)
                     for p in self._list('ports')['ports']:
-                        if p['device_owner'] == 'network:floatingip':
+                        if (p['device_owner'] ==
+                            l3_constants.DEVICE_OWNER_FLOATINGIP):
                             self.fail('garbage port is not deleted')
                     self._remove_external_gateway_from_router(
                         r['router']['id'],
@@ -1184,7 +1185,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         self.assertEqual(res.status_int, exc.HTTPConflict.code)
 
                     for p in self._list('ports')['ports']:
-                        if p['device_owner'] == 'network:floatingip':
+                        if (p['device_owner'] ==
+                            l3_constants.DEVICE_OWNER_FLOATINGIP):
                             self.fail('garbage port is not deleted')
 
                     self._remove_external_gateway_from_router(
@@ -1341,7 +1343,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         found = False
         with self.floatingip_with_assoc():
             for p in self._list('ports')['ports']:
-                if p['device_owner'] == 'network:floatingip':
+                if p['device_owner'] == l3_constants.DEVICE_OWNER_FLOATINGIP:
                     self._delete('ports', p['id'],
                                  expected_code=exc.HTTPConflict.code)
                     found = True
@@ -1524,7 +1526,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         found = False
         with self.floatingip_with_assoc():
             for p in self._list('ports')['ports']:
-                if p['device_owner'] == 'network:router_interface':
+                if p['device_owner'] == l3_constants.DEVICE_OWNER_ROUTER_INTF:
                     subnet_id = p['fixed_ips'][0]['subnet_id']
                     router_id = p['device_id']
                     self._router_interface_action(
@@ -1538,7 +1540,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         found = False
         with self.floatingip_with_assoc():
             for p in self._list('ports')['ports']:
-                if p['device_owner'] == 'network:router_interface':
+                if p['device_owner'] == l3_constants.DEVICE_OWNER_ROUTER_INTF:
                     router_id = p['device_id']
                     self._router_interface_action(
                         'remove', router_id, None, p['id'],

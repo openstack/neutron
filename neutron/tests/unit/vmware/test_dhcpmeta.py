@@ -17,6 +17,7 @@ import mock
 
 from oslo.config import cfg
 
+from neutron.common import constants as n_consts
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as db
@@ -940,12 +941,12 @@ class DhcpAgentNotifyAPITestCase(base.BaseTestCase):
     def test_notify_ports_update_with_special_ports(self):
         ports = [{'fixed_ips': [],
                   'device_id': '',
-                  'device_owner': 'network:dhcp',
+                  'device_owner': n_consts.DEVICE_OWNER_DHCP,
                   'mac_address': 'fa:16:3e:da:1d:46'},
                  {'fixed_ips': [{'subnet_id': 'foo_subnet_id',
                                  'ip_address': '1.2.3.4'}],
                   'device_id': 'foo_device_id',
-                  'device_owner': 'network:router_gateway',
+                  'device_owner': n_consts.DEVICE_OWNER_ROUTER_GW,
                   'mac_address': 'fa:16:3e:da:1d:46'}]
         call_args = mock.call(
             mock.ANY, 'foo_network_id', 'foo_subnet_id', dhcp=[], meta=[])
@@ -1014,7 +1015,7 @@ class DhcpAgentNotifyAPITestCase(base.BaseTestCase):
                     'admin_state_up': True,
                     'network_id': 'foo_network_id',
                     'tenant_id': 'foo_tenant_id',
-                    'device_owner': 'network:dhcp',
+                    'device_owner': n_consts.DEVICE_OWNER_DHCP,
                     'mac_address': mock.ANY,
                     'fixed_ips': [{'subnet_id': 'foo_subnet_id'}],
                     'device_id': ''
@@ -1102,7 +1103,7 @@ class DhcpAgentNotifyAPITestCase(base.BaseTestCase):
         self.notifier.notify(mock.ANY, {'subnet': subnet}, 'subnet.delete.end')
         filters = {
             'network_id': [subnet['network_id']],
-            'device_owner': ['network:dhcp']
+            'device_owner': [n_consts.DEVICE_OWNER_DHCP]
         }
         self.plugin.get_ports.assert_called_once_with(
             mock.ANY, filters=filters)
@@ -1149,7 +1150,7 @@ class DhcpTestCase(base.BaseTestCase):
         }
         port = {
             'id': 'foo_port_id',
-            'device_owner': 'network:dhcp',
+            'device_owner': n_consts.DEVICE_OWNER_DHCP,
             'mac_address': 'aa:bb:cc:dd:ee:ff',
             'network_id': 'foo_network_id',
             'fixed_ips': [{'subnet_id': subnet['id']}]
@@ -1184,7 +1185,7 @@ class DhcpTestCase(base.BaseTestCase):
     def test_handle_delete_dhcp_owner_port(self):
         port = {
             'id': 'foo_port_id',
-            'device_owner': 'network:dhcp',
+            'device_owner': n_consts.DEVICE_OWNER_DHCP,
             'network_id': 'foo_network_id',
             'fixed_ips': [],
             'mac_address': 'aa:bb:cc:dd:ee:ff'
@@ -1297,15 +1298,15 @@ class MetadataTestCase(base.BaseTestCase):
 
     def test_handle_port_metadata_access_dhcp_port(self):
         self._test_handle_port_metadata_access_special_owners(
-            'network:dhcp', [{'subnet_id': 'foo_subnet'}])
+            n_consts.DEVICE_OWNER_DHCP, [{'subnet_id': 'foo_subnet'}])
 
     def test_handle_port_metadata_access_router_port(self):
         self._test_handle_port_metadata_access_special_owners(
-            'network:router_interface', [{'subnet_id': 'foo_subnet'}])
+            n_consts.DEVICE_OWNER_ROUTER_INTF, [{'subnet_id': 'foo_subnet'}])
 
     def test_handle_port_metadata_access_no_device_id(self):
         self._test_handle_port_metadata_access_special_owners(
-            'network:dhcp', '')
+            n_consts.DEVICE_OWNER_DHCP, '')
 
     def test_handle_port_metadata_access_no_fixed_ips(self):
         self._test_handle_port_metadata_access_special_owners(
