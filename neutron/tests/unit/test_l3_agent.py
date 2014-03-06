@@ -15,6 +15,7 @@
 
 import contextlib
 import copy
+import datetime
 
 import mock
 import netaddr
@@ -35,6 +36,85 @@ from neutron.tests import base
 _uuid = uuidutils.generate_uuid
 HOSTNAME = 'myhost'
 FAKE_ID = _uuid()
+FAKE_ID_2 = _uuid()
+
+
+class TestExclusiveRouterProcessor(base.BaseTestCase):
+    def setUp(self):
+        super(TestExclusiveRouterProcessor, self).setUp()
+
+    def test_i_am_master(self):
+        master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        not_master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        master_2 = l3_agent.ExclusiveRouterProcessor(FAKE_ID_2)
+        not_master_2 = l3_agent.ExclusiveRouterProcessor(FAKE_ID_2)
+
+        self.assertTrue(master._i_am_master())
+        self.assertFalse(not_master._i_am_master())
+        self.assertTrue(master_2._i_am_master())
+        self.assertFalse(not_master_2._i_am_master())
+
+        master.__exit__(None, None, None)
+        master_2.__exit__(None, None, None)
+
+    def test_master(self):
+        master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        not_master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        master_2 = l3_agent.ExclusiveRouterProcessor(FAKE_ID_2)
+        not_master_2 = l3_agent.ExclusiveRouterProcessor(FAKE_ID_2)
+
+        self.assertEqual(master._master, master)
+        self.assertEqual(not_master._master, master)
+        self.assertEqual(master_2._master, master_2)
+        self.assertEqual(not_master_2._master, master_2)
+
+        master.__exit__(None, None, None)
+        master_2.__exit__(None, None, None)
+
+    def test__enter__(self):
+        self.assertFalse(FAKE_ID in l3_agent.ExclusiveRouterProcessor._masters)
+        master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        master.__enter__()
+        self.assertTrue(FAKE_ID in l3_agent.ExclusiveRouterProcessor._masters)
+        master.__exit__(None, None, None)
+
+    def test__exit__(self):
+        master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        not_master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        master.__enter__()
+        self.assertTrue(FAKE_ID in l3_agent.ExclusiveRouterProcessor._masters)
+        not_master.__enter__()
+        not_master.__exit__(None, None, None)
+        self.assertTrue(FAKE_ID in l3_agent.ExclusiveRouterProcessor._masters)
+        master.__exit__(None, None, None)
+        self.assertFalse(FAKE_ID in l3_agent.ExclusiveRouterProcessor._masters)
+
+    def test_data_fetched_since(self):
+        master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        self.assertEqual(master._get_router_data_timestamp(),
+                         datetime.datetime.min)
+
+        ts1 = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
+        ts2 = datetime.datetime.utcnow()
+
+        master.fetched_and_processed(ts2)
+        self.assertEqual(master._get_router_data_timestamp(), ts2)
+        master.fetched_and_processed(ts1)
+        self.assertEqual(master._get_router_data_timestamp(), ts2)
+
+        master.__exit__(None, None, None)
+
+    def test_updates(self):
+        master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+        not_master = l3_agent.ExclusiveRouterProcessor(FAKE_ID)
+
+        master.queue_update(l3_agent.RouterUpdate(FAKE_ID, 0))
+        not_master.queue_update(l3_agent.RouterUpdate(FAKE_ID, 0))
+
+        for update in not_master.updates():
+            raise Exception("Only the master should process a router")
+
+        self.assertEqual(2, len([i for i in master.updates()]))
 
 
 class TestBasicRouterOperations(base.BaseTestCase):
@@ -100,12 +180,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test__sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_routers.return_value = mock.ANY
+        self.plugin_api.get_routers.return_value = []
         with mock.patch.object(agent, '_cleanup_namespaces') as f:
-            with mock.patch.object(agent, '_process_routers') as g:
-                agent._sync_routers_task(agent.context)
+            agent._sync_routers_task(agent.context)
         self.assertTrue(f.called)
-        g.assert_called_with(mock.ANY, all_routers=True)
 
     def test_router_info_create(self):
         id = _uuid()
@@ -1024,27 +1102,27 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_router_deleted(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._queue = mock.Mock()
         agent.router_deleted(None, FAKE_ID)
-        # verify that will set fullsync
-        self.assertIn(FAKE_ID, agent.removed_routers)
+        agent._queue.add.assert_called_once()
 
     def test_routers_updated(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._queue = mock.Mock()
         agent.routers_updated(None, [FAKE_ID])
-        # verify that will set fullsync
-        self.assertIn(FAKE_ID, agent.updated_routers)
+        agent._queue.add.assert_called_once()
 
     def test_removed_from_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._queue = mock.Mock()
         agent.router_removed_from_agent(None, {'router_id': FAKE_ID})
-        # verify that will set fullsync
-        self.assertIn(FAKE_ID, agent.removed_routers)
+        agent._queue.add.assert_called_once()
 
     def test_added_to_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._queue = mock.Mock()
         agent.router_added_to_agent(None, [FAKE_ID])
-        # verify that will set fullsync
-        self.assertIn(FAKE_ID, agent.updated_routers)
+        agent._queue.add.assert_called_once()
 
     def test_process_router_delete(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1277,7 +1355,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
         pm.reset_mock()
 
         agent._destroy_router_namespace = mock.MagicMock()
-        agent._cleanup_namespaces(router_list)
+        ns_list = agent._list_namespaces()
+        agent._cleanup_namespaces(ns_list, [r['id'] for r in router_list])
 
         self.assertEqual(pm.disable.call_count, len(stale_namespace_list))
         self.assertEqual(agent._destroy_router_namespace.call_count,
