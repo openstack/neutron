@@ -84,11 +84,34 @@ class TestMechanismDriver(api.MechanismDriver):
         assert(isinstance(context, api.PortContext))
         assert(isinstance(context.current, dict))
         assert(context.current['id'] is not None)
+
+        vif_type = context.current.get(portbindings.VIF_TYPE)
+        assert(vif_type is not None)
+        if vif_type in (portbindings.VIF_TYPE_UNBOUND,
+                        portbindings.VIF_TYPE_BINDING_FAILED):
+            assert(context.bound_segment is None)
+            assert(context.bound_driver is None)
+        else:
+            assert(isinstance(context.bound_segment, dict))
+            assert(context.bound_driver == 'test')
+
         if original_expected:
             assert(isinstance(context.original, dict))
             assert(context.current['id'] == context.original['id'])
+            vif_type = context.original.get(portbindings.VIF_TYPE)
+            assert(vif_type is not None)
+            if vif_type in (portbindings.VIF_TYPE_UNBOUND,
+                            portbindings.VIF_TYPE_BINDING_FAILED):
+                assert(context.original_bound_segment is None)
+                assert(context.original_bound_driver is None)
+            else:
+                assert(isinstance(context.original_bound_segment, dict))
+                assert(context.original_bound_driver == 'test')
         else:
-            assert(not context.original)
+            assert(context.original is None)
+            assert(context.original_bound_segment is None)
+            assert(context.original_bound_driver is None)
+
         network_context = context.network
         assert(isinstance(network_context, api.NetworkContext))
         self._check_network_context(network_context, False)
@@ -112,7 +135,12 @@ class TestMechanismDriver(api.MechanismDriver):
         self._check_port_context(context, False)
 
     def bind_port(self, context):
-        self._check_port_context(context, False)
+        # REVISIT(rkukura): Currently, bind_port() is called as part
+        # of either a create or update transaction. The fix for bug
+        # 1276391 will change it to be called outside any transaction,
+        # so the context.original* will no longer be available.
+        self._check_port_context(context, context.original is not None)
+
         host = context.current.get(portbindings.HOST_ID, None)
         segment = context.network.network_segments[0][api.ID]
         if host == "host-ovs-no_filter":
@@ -123,8 +151,18 @@ class TestMechanismDriver(api.MechanismDriver):
                                 {portbindings.CAP_PORT_FILTER: True})
 
     def validate_port_binding(self, context):
-        self._check_port_context(context, False)
+        # REVISIT(rkukura): Currently, validate_port_binding() is
+        # called as part of either a create or update transaction. The
+        # fix for bug 1276391 will change it to be called outside any
+        # transaction (or eliminate it altogether), so the
+        # context.original* will no longer be available.
+        self._check_port_context(context, context.original is not None)
         return True
 
     def unbind_port(self, context):
-        self._check_port_context(context, False)
+        # REVISIT(rkukura): Currently, unbind_port() is called as part
+        # of either an update or delete transaction. The fix for bug
+        # 1276391 will change it to be called outside any transaction
+        # (or eliminate it altogether), so the context.original* will
+        # no longer be available.
+        self._check_port_context(context, context.original is not None)

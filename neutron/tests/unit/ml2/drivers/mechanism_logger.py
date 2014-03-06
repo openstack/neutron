@@ -83,11 +83,19 @@ class LoggerMechanismDriver(api.MechanismDriver):
     def _log_port_call(self, method_name, context):
         network_context = context.network
         LOG.info(_("%(method)s called with port settings %(current)s "
-                   "(original settings %(original)s) on network %(network)s"),
+                   "(original settings %(original)s) "
+                   "bound to segment %(segment)s "
+                   "(original segment %(original_segment)s) "
+                   "using driver %(driver)s "
+                   "(original driver %(original_driver)s) "
+                   "on network %(network)s"),
                  {'method': method_name,
                   'current': context.current,
                   'original': context.original,
                   'segment': context.bound_segment,
+                  'original_segment': context.original_bound_segment,
+                  'driver': context.bound_driver,
+                  'original_driver': context.original_bound_driver,
                   'network': network_context.current})
 
     def create_port_precommit(self, context):

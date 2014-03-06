@@ -70,6 +70,18 @@ class FakePortContext(api.PortContext):
                 if segment[api.ID] == self._bound_segment_id:
                     return segment
 
+    @property
+    def original_bound_segment(self):
+        return None
+
+    @property
+    def bound_driver(self):
+        return None
+
+    @property
+    def original_bound_driver(self):
+        return None
+
     def host_agents(self, agent_type):
         if agent_type == self._agent_type:
             return self._agents
