@@ -541,7 +541,10 @@ class ExtensionManager(object):
                 LOG.error(_("Extension path '%s' doesn't exist!"), path)
 
     def _load_all_extensions_from_path(self, path):
-        for f in os.listdir(path):
+        # Sorting the extension list makes the order in which they
+        # are loaded predictable across a cluster of load-balanced
+        # Neutron Servers
+        for f in sorted(os.listdir(path)):
             try:
                 LOG.info(_('Loading extension file: %s'), f)
                 mod_name, file_ext = os.path.splitext(os.path.split(f)[-1])
