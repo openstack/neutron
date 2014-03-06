@@ -40,6 +40,7 @@ migration_for_plugins = [
     'neutron.plugins.vmware.plugin.NsxServicePlugin',
     'neutron.services.loadbalancer.plugin.LoadBalancerPlugin',
     'neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2',
+    'neutron.plugins.oneconvergence.plugin.OneConvergencePluginV2',
 ]
 
 from alembic import op
