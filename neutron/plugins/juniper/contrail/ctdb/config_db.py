@@ -412,7 +412,10 @@ class DBInterface(object):
         except KeyError:
             pass
 
-        self._vnc_lib.virtual_network_delete(id=net_id)
+        try:
+            self._vnc_lib.virtual_network_delete(id=net_id)
+        except RefsExistError:
+            raise exceptions.NetworkInUse()
 
         try:
             del self._db_cache['vnc_networks'][net_id]
@@ -1028,8 +1031,8 @@ class DBInterface(object):
                 # TODO add security group specific exception
                 raise exceptions.NetworkNotFound(net_id=sg_id)
 
-        remote_cidr = ''
-        remote_sg_uuid = ''
+        remote_cidr = None
+        remote_sg_uuid = None
         saddr = sg_rule.get_src_addresses()[0]
         daddr = sg_rule.get_dst_addresses()[0]
         if saddr.get_security_group() == 'local':
