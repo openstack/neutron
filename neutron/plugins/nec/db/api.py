@@ -41,74 +41,56 @@ resource_map = {'ofc_tenant': nmodels.OFCTenantMapping,
                 'ofc_router': nmodels.OFCRouterMapping,
                 'ofc_packet_filter': nmodels.OFCFilterMapping}
 
-old_resource_map = {'ofc_tenant': nmodels.OFCTenant,
-                    'ofc_network': nmodels.OFCNetwork,
-                    'ofc_port': nmodels.OFCPort,
-                    'ofc_packet_filter': nmodels.OFCFilter}
-
 
 # utitlity methods
 
-def _get_resource_model(resource, old_style):
-    if old_style:
-        # NOTE: Some new resources are not defined in old_resource_map.
-        # In such case None is returned.
-        return old_resource_map.get(resource)
-    else:
-        return resource_map[resource]
+def _get_resource_model(resource):
+    return resource_map[resource]
 
 
 def clear_db(base=model_base.BASEV2):
     db.clear_db(base)
 
 
-def get_ofc_item(session, resource, neutron_id, old_style=False):
-    model = _get_resource_model(resource, old_style)
+def get_ofc_item(session, resource, neutron_id):
+    model = _get_resource_model(resource)
     if not model:
-        return None
+        return
     try:
         return session.query(model).filter_by(quantum_id=neutron_id).one()
     except sa.orm.exc.NoResultFound:
-        return None
+        return
 
 
-def get_ofc_id(session, resource, neutron_id, old_style=False):
-    ofc_item = get_ofc_item(session, resource, neutron_id, old_style)
+def get_ofc_id(session, resource, neutron_id):
+    ofc_item = get_ofc_item(session, resource, neutron_id)
     if ofc_item:
-        if old_style:
-            return ofc_item.id
-        else:
-            return ofc_item.ofc_id
+        return ofc_item.ofc_id
     else:
-        return None
+        raise nexc.OFCMappingNotFound(resource=resource,
+                                      neutron_id=neutron_id)
 
 
-def exists_ofc_item(session, resource, neutron_id, old_style=False):
-    if get_ofc_item(session, resource, neutron_id, old_style):
+def exists_ofc_item(session, resource, neutron_id):
+    if get_ofc_item(session, resource, neutron_id):
         return True
     else:
         return False
 
 
-def find_ofc_item(session, resource, ofc_id, old_style=False):
+def find_ofc_item(session, resource, ofc_id):
     try:
-        model = _get_resource_model(resource, old_style)
-        if old_style:
-            params = dict(id=ofc_id)
-        else:
-            params = dict(ofc_id=ofc_id)
+        model = _get_resource_model(resource)
+        params = dict(ofc_id=ofc_id)
         return (session.query(model).filter_by(**params).one())
     except sa.orm.exc.NoResultFound:
         return None
 
 
-def add_ofc_item(session, resource, neutron_id, ofc_id, old_style=False):
+def add_ofc_item(session, resource, neutron_id, ofc_id):
     try:
-        model = _get_resource_model(resource, old_style)
-        if old_style:
-            params = dict(quantum_id=neutron_id, id=ofc_id)
-        else:
-            params = dict(quantum_id=neutron_id, ofc_id=ofc_id)
+        model = _get_resource_model(resource)
+        params = dict(quantum_id=neutron_id, ofc_id=ofc_id)
         item = model(**params)
         with session.begin(subtransactions=True):
             session.add(item)
@@ -119,57 +101,18 @@ def add_ofc_item(session, resource, neutron_id, ofc_id, old_style=False):
     return item
 
 
-def del_ofc_item(session, resource, neutron_id, old_style=False,
-                 warning=True):
+def del_ofc_item(session, resource, neutron_id):
     try:
-        model = _get_resource_model(resource, old_style)
+        model = _get_resource_model(resource)
         with session.begin(subtransactions=True):
             item = session.query(model).filter_by(quantum_id=neutron_id).one()
             session.delete(item)
         return True
     except sa.orm.exc.NoResultFound:
-        if warning:
-            LOG.warning(_("_del_ofc_item(): NotFound item "
-                          "(model=%(model)s, id=%(id)s) "),
-                        {'model': model, 'id': neutron_id})
+        LOG.warning(_("del_ofc_item(): NotFound item "
+                      "(resource=%(resource)s, id=%(id)s) "),
+                    {'resource': resource, 'id': neutron_id})
         return False
-
-
-def get_ofc_id_lookup_both(session, resource, neutron_id):
-    ofc_id = get_ofc_id(session, resource, neutron_id)
-    # Lookup old style of OFC mapping table
-    if not ofc_id:
-        ofc_id = get_ofc_id(session, resource, neutron_id,
-                            old_style=True)
-    if not ofc_id:
-        raise nexc.OFCMappingNotFound(resource=resource,
-                                      neutron_id=neutron_id)
-    return ofc_id
-
-
-def exists_ofc_item_lookup_both(session, resource, neutron_id):
-    if exists_ofc_item(session, resource, neutron_id):
-        return True
-    # Check old style of OFC mapping table
-    if exists_ofc_item(session, resource, neutron_id,
-                       old_style=True):
-        return True
-    return False
-
-
-def del_ofc_item_lookup_both(session, resource, neutron_id):
-    # Delete the mapping from new style of OFC mapping table
-    if del_ofc_item(session, resource, neutron_id,
-                    old_style=False, warning=False):
-        return
-    # Delete old style of OFC mapping table
-    if del_ofc_item(session, resource, neutron_id,
-                    old_style=True, warning=False):
-        return
-    # The specified resource not found
-    LOG.warning(_("_del_ofc_item(): NotFound item "
-                  "(resource=%(resource)s, id=%(id)s) "),
-                {'resource': resource, 'id': neutron_id})
 
 
 def get_portinfo(session, id):

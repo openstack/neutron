@@ -104,35 +104,3 @@ class OFCDriverBase(object):
         :raises: neutron.plugin.nec.common.exceptions.OFCException
         """
         pass
-
-    @abstractmethod
-    def convert_ofc_tenant_id(self, context, ofc_tenant_id):
-        """Convert old-style ofc tenand id to new-style one.
-
-        :param context: neutron context object
-        :param ofc_tenant_id: ofc_tenant_id to be converted
-        """
-        pass
-
-    @abstractmethod
-    def convert_ofc_network_id(self, context, ofc_network_id,
-                               tenant_id):
-        """Convert old-style ofc network id to new-style one.
-
-        :param context: neutron context object
-        :param ofc_network_id: ofc_network_id to be converted
-        :param tenant_id: neutron tenant_id of the network
-        """
-        pass
-
-    @abstractmethod
-    def convert_ofc_port_id(self, context, ofc_port_id,
-                            tenant_id, network_id):
-        """Convert old-style ofc port id to new-style one.
-
-        :param context: neutron context object
-        :param ofc_port_id: ofc_port_id to be converted
-        :param tenant_id: neutron tenant_id of the port
-        :param network_id: neutron network_id of the port
-        """
-        pass

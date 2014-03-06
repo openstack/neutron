@@ -55,30 +55,6 @@ class OFCFilterMapping(model_base.BASEV2, NeutronId, OFCId):
     """Represents a Filter on OpenFlow Network/Controller."""
 
 
-"""Old mapping tables."""
-
-
-class HasNeutronId(object):
-    """Logical ID on Quantum."""
-    quantum_id = sa.Column(sa.String(36), nullable=False)
-
-
-class OFCTenant(model_base.BASEV2, models_v2.HasId, HasNeutronId):
-    """Represents a Tenant on OpenFlow Network/Controller."""
-
-
-class OFCNetwork(model_base.BASEV2, models_v2.HasId, HasNeutronId):
-    """Represents a Network on OpenFlow Network/Controller."""
-
-
-class OFCPort(model_base.BASEV2, models_v2.HasId, HasNeutronId):
-    """Represents a Port on OpenFlow Network/Controller."""
-
-
-class OFCFilter(model_base.BASEV2, models_v2.HasId, HasNeutronId):
-    """Represents a Filter on OpenFlow Network/Controller."""
-
-
 class PortInfo(model_base.BASEV2):
     """Represents a Virtual Interface."""
     id = sa.Column(sa.String(36),
