@@ -62,7 +62,14 @@ agent_opts = [
                        'Hyper-V\'s metric APIs. Collected data can by '
                        'retrieved by other apps and services, e.g.: '
                        'Ceilometer. Requires Hyper-V / Windows Server 2012 '
-                       'and above'))
+                       'and above')),
+    cfg.IntOpt('metrics_max_retries',
+               default=100,
+               help=_('Specifies the maximum number of retries to enable '
+                      'Hyper-V\'s port metrics collection. The agent will try '
+                      'to enable the feature once every polling_interval '
+                      'period for at most metrics_max_retries or until it '
+                      'succeedes.'))
 ]
 
 
@@ -119,6 +126,7 @@ class HyperVNeutronAgent(object):
         self._polling_interval = CONF.AGENT.polling_interval
         self._load_physical_network_mappings()
         self._network_vswitch_map = {}
+        self._port_metric_retries = {}
         self._set_agent_state()
         self._setup_rpc()
 
@@ -294,6 +302,7 @@ class HyperVNeutronAgent(object):
 
         if CONF.AGENT.enable_metrics_collection:
             self._utils.enable_port_metrics_collection(port_id)
+            self._port_metric_retries[port_id] = CONF.AGENT.metrics_max_retries
 
     def _port_unbound(self, port_id):
         (net_uuid, map) = self._get_network_vswitch_map_by_port_id(port_id)
@@ -307,6 +316,22 @@ class HyperVNeutronAgent(object):
 
         if not map['ports']:
             self._reclaim_local_network(net_uuid)
+
+    def _port_enable_control_metrics(self):
+        if not CONF.AGENT.enable_metrics_collection:
+            return
+
+        for port_id in self._port_metric_retries.keys():
+            if self._utils.can_enable_control_metrics(port_id):
+                self._utils.enable_control_metrics(port_id)
+                LOG.info(_('Port metrics enabled for port: %s'), port_id)
+                del self._port_metric_retries[port_id]
+            elif self._port_metric_retries[port_id] < 1:
+                self._utils.enable_control_metrics(port_id)
+                LOG.error(_('Port metrics raw enabling for port: %s'), port_id)
+                del self._port_metric_retries[port_id]
+            else:
+                self._port_metric_retries[port_id] -= 1
 
     def _update_ports(self, registered_ports):
         ports = self._utils.get_vnic_ids()
@@ -413,6 +438,8 @@ class HyperVNeutronAgent(object):
                     # If treat devices fails - must resync with plugin
                     sync = self._process_network_ports(port_info)
                     ports = port_info['current']
+
+                self._port_enable_control_metrics()
             except Exception as e:
                 LOG.exception(_("Error in agent event loop: %s"), e)
                 sync = True
