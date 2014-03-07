@@ -253,8 +253,9 @@ class ServerPool(object):
         servers = [s if len(s.rsplit(':', 1)) == 2
                    else "%s:%d" % (s, default_port)
                    for s in servers]
-        if any((len(spl) != 2)for spl in [sp.rsplit(':', 1)
-                                          for sp in servers]):
+        if any((len(spl) != 2 or not spl[1].isdigit())
+               for spl in [sp.rsplit(':', 1)
+                           for sp in servers]):
             raise cfg.Error(_('Servers must be defined as <ip>:<port>. '
                               'Configuration was %s') % servers)
         self.servers = [
