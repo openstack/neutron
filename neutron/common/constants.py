@@ -79,6 +79,7 @@ AGENT_TYPE_LOADBALANCER = 'Loadbalancer agent'
 AGENT_TYPE_MLNX = 'Mellanox plugin agent'
 AGENT_TYPE_METERING = 'Metering agent'
 AGENT_TYPE_METADATA = 'Metadata agent'
+AGENT_TYPE_SDNVE = 'IBM SDN-VE agent'
 L2_AGENT_TOPIC = 'N/A'
 
 PAGINATION_INFINITE = 'infinite'
