@@ -317,7 +317,7 @@ class ServerPool(object):
             self._combine_certs_to_file(certs, combined_cert)
         return combined_cert
 
-    def _combine_certs_to_file(certs, cfile):
+    def _combine_certs_to_file(self, certs, cfile):
         '''
         Concatenates the contents of each certificate in a list of
         certificate paths to one combined location for use with ssl
@@ -366,7 +366,7 @@ class ServerPool(object):
 
         return cert
 
-    def _file_put_contents(path, contents):
+    def _file_put_contents(self, path, contents):
         # Simple method to write to file.
         # Created for easy Mocking
         with open(path, 'w') as handle:

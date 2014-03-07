@@ -68,3 +68,32 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             pl.servers.capabilities = ['consistency']
             self.assertRaises(servermanager.RemoteRestError,
                               pl.servers._consistency_watchdog)
+
+    def test_file_put_contents(self):
+        pl = NeutronManager.get_plugin()
+        with mock.patch(SERVERMANAGER + '.open', create=True) as omock:
+            pl.servers._file_put_contents('somepath', 'contents')
+            omock.assert_has_calls([mock.call('somepath', 'w')])
+            omock.return_value.__enter__.return_value.assert_has_calls([
+                mock.call.write('contents')
+            ])
+
+    def test_combine_certs_to_file(self):
+        pl = NeutronManager.get_plugin()
+        with mock.patch(SERVERMANAGER + '.open', create=True) as omock:
+            omock.return_value.__enter__().read.return_value = 'certdata'
+            pl.servers._combine_certs_to_file(['cert1.pem', 'cert2.pem'],
+                                              'combined.pem')
+            # mock shared between read and write file handles so the calls
+            # are mixed together
+            omock.assert_has_calls([
+                mock.call('combined.pem', 'w'),
+                mock.call('cert1.pem', 'r'),
+                mock.call('cert2.pem', 'r'),
+            ], any_order=True)
+            omock.return_value.__enter__.return_value.assert_has_calls([
+                mock.call.read(),
+                mock.call.write('certdata'),
+                mock.call.read(),
+                mock.call.write('certdata')
+            ])
