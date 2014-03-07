@@ -323,6 +323,46 @@ class IptablesFirewallTestCase(base.BaseTestCase):
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
+    def test_filter_ipv4_egress_icmp_type(self):
+        prefix = FAKE_PREFIX['IPv4']
+        rule = {'ethertype': 'IPv4',
+                'direction': 'egress',
+                'protocol': 'icmp',
+                'source_port_range_min': 8,
+                'source_ip_prefix': prefix}
+        egress = call.add_rule(
+            'ofake_dev',
+            '-s %s -p icmp --icmp-type 8 -j RETURN' % prefix)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_egress_icmp_type_name(self):
+        prefix = FAKE_PREFIX['IPv4']
+        rule = {'ethertype': 'IPv4',
+                'direction': 'egress',
+                'protocol': 'icmp',
+                'source_port_range_min': 'echo-request',
+                'source_ip_prefix': prefix}
+        egress = call.add_rule(
+            'ofake_dev',
+            '-s %s -p icmp --icmp-type echo-request -j RETURN' % prefix)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_egress_icmp_type_code(self):
+        prefix = FAKE_PREFIX['IPv4']
+        rule = {'ethertype': 'IPv4',
+                'direction': 'egress',
+                'protocol': 'icmp',
+                'source_port_range_min': 8,
+                'source_port_range_max': 0,
+                'source_ip_prefix': prefix}
+        egress = call.add_rule(
+            'ofake_dev',
+            '-s %s -p icmp --icmp-type 8/0 -j RETURN' % prefix)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
     def test_filter_ipv4_egress_tcp_port(self):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
@@ -618,6 +658,46 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                 'source_ip_prefix': prefix}
         egress = call.add_rule(
             'ofake_dev', '-s %s -p icmpv6 -j RETURN' % prefix)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv6_egress_icmp_type(self):
+        prefix = FAKE_PREFIX['IPv6']
+        rule = {'ethertype': 'IPv6',
+                'direction': 'egress',
+                'protocol': 'icmp',
+                'source_port_range_min': 8,
+                'source_ip_prefix': prefix}
+        egress = call.add_rule(
+            'ofake_dev',
+            '-s %s -p icmpv6 --icmpv6-type 8 -j RETURN' % prefix)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv6_egress_icmp_type_name(self):
+        prefix = FAKE_PREFIX['IPv6']
+        rule = {'ethertype': 'IPv6',
+                'direction': 'egress',
+                'protocol': 'icmp',
+                'source_port_range_min': 'echo-request',
+                'source_ip_prefix': prefix}
+        egress = call.add_rule(
+            'ofake_dev',
+            '-s %s -p icmpv6 --icmpv6-type echo-request -j RETURN' % prefix)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv6_egress_icmp_type_code(self):
+        prefix = FAKE_PREFIX['IPv6']
+        rule = {'ethertype': 'IPv6',
+                'direction': 'egress',
+                'protocol': 'icmp',
+                'source_port_range_min': 8,
+                'source_port_range_max': 0,
+                'source_ip_prefix': prefix}
+        egress = call.add_rule(
+            'ofake_dev',
+            '-s %s -p icmpv6 --icmpv6-type 8/0 -j RETURN' % prefix)
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 

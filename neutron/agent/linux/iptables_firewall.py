@@ -325,10 +325,19 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return iptables_rule
 
     def _port_arg(self, direction, protocol, port_range_min, port_range_max):
-        if not (protocol in ['udp', 'tcp'] and port_range_min):
+        if (protocol not in ['udp', 'tcp', 'icmp', 'icmpv6']
+            or not port_range_min):
             return []
 
-        if port_range_min == port_range_max:
+        if protocol in ['icmp', 'icmpv6']:
+            # Note(xuhanp): port_range_min/port_range_max represent
+            # icmp type/code when protocal is icmp or icmpv6
+            # icmp code can be 0 so we cannot use "if port_range_max" here
+            if port_range_max is not None:
+                return ['--%s-type' % protocol,
+                        '%s/%s' % (port_range_min, port_range_max)]
+            return ['--%s-type' % protocol, '%s' % port_range_min]
+        elif port_range_min == port_range_max:
             return ['--%s' % direction, '%s' % (port_range_min,)]
         else:
             return ['-m', 'multiport',
