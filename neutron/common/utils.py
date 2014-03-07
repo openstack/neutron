@@ -25,6 +25,7 @@ import os
 import random
 import signal
 import socket
+import uuid
 
 from eventlet.green import subprocess
 from oslo.config import cfg
@@ -216,3 +217,12 @@ def get_random_string(length):
         rndstr += hashlib.sha224(str(random.random())).hexdigest()
 
     return rndstr[0:length]
+
+
+def get_dhcp_agent_device_id(network_id, host):
+    # Split host so as to always use only the hostname and
+    # not the domain name. This will guarantee consistentcy
+    # whether a local hostname or an fqdn is passed in.
+    local_hostname = host.split('.')[0]
+    host_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, str(local_hostname))
+    return 'dhcp%s-%s' % (host_uuid, network_id)

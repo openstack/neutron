@@ -576,6 +576,30 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(1, num_before_remove)
         self.assertEqual(0, num_after_remove)
 
+    def test_reserved_port_after_network_remove_from_dhcp_agent(self):
+        dhcp_hosta = {
+            'binary': 'neutron-dhcp-agent',
+            'host': DHCP_HOSTA,
+            'topic': 'DHCP_AGENT',
+            'configurations': {'dhcp_driver': 'dhcp_driver',
+                               'use_namespaces': True,
+                               },
+            'agent_type': constants.AGENT_TYPE_DHCP}
+        self._register_one_agent_state(dhcp_hosta)
+        hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                      DHCP_HOSTA)
+        with self.port(device_owner=constants.DEVICE_OWNER_DHCP,
+                       host=DHCP_HOSTA) as port1:
+            self._remove_network_from_dhcp_agent(hosta_id,
+                                                 port1['port']['network_id'])
+            port_res = self._list_ports(
+                'json',
+                200,
+                network_id=port1['port']['network_id'])
+            port_list = self.deserialize('json', port_res)
+            self.assertEqual(port_list['ports'][0]['device_id'],
+                             constants.DEVICE_ID_RESERVED_DHCP_PORT)
+
     def test_router_auto_schedule_with_invalid_router(self):
         with self.router() as router:
             l3_rpc = l3_rpc_base.L3RpcCallbackMixin()
