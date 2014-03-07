@@ -479,7 +479,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self.assertEqual(res.status_int, webob.exc.HTTPOk.code)
         return self.deserialize(fmt, res)
 
-    def _do_side_effect(self, patched_plugin, orig, *args, **kwargs):
+    def _fail_second_call(self, patched_plugin, orig, *args, **kwargs):
         """Invoked by test cases for injecting failures in plugin."""
         def second_call(*args, **kwargs):
             raise n_exc.NeutronException()
@@ -901,8 +901,8 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                                    'create_port') as patched_plugin:
 
                 def side_effect(*args, **kwargs):
-                    return self._do_side_effect(patched_plugin, orig,
-                                                *args, **kwargs)
+                    return self._fail_second_call(patched_plugin, orig,
+                                                  *args, **kwargs)
 
                 patched_plugin.side_effect = side_effect
                 with self.network() as net:
@@ -925,8 +925,8 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                                    'create_port') as patched_plugin:
 
                 def side_effect(*args, **kwargs):
-                    return self._do_side_effect(patched_plugin, orig,
-                                                *args, **kwargs)
+                    return self._fail_second_call(patched_plugin, orig,
+                                                  *args, **kwargs)
 
                 patched_plugin.side_effect = side_effect
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
@@ -1655,6 +1655,56 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPClientError.code)
 
+    def test_delete_ports_by_device_id(self):
+        plugin = NeutronManager.get_plugin()
+        ctx = context.get_admin_context()
+        with self.subnet() as subnet:
+            with contextlib.nested(
+                self.port(subnet=subnet, device_id='owner1', no_delete=True),
+                self.port(subnet=subnet, device_id='owner1', no_delete=True),
+                self.port(subnet=subnet, device_id='owner2'),
+            ) as (p1, p2, p3):
+                network_id = subnet['subnet']['network_id']
+                plugin.delete_ports_by_device_id(ctx, 'owner1',
+                                                 network_id)
+                self._show('ports', p1['port']['id'],
+                           expected_code=webob.exc.HTTPNotFound.code)
+                self._show('ports', p2['port']['id'],
+                           expected_code=webob.exc.HTTPNotFound.code)
+                self._show('ports', p3['port']['id'],
+                           expected_code=webob.exc.HTTPOk.code)
+
+    def _test_delete_ports_by_device_id_second_call_failure(self, plugin):
+        ctx = context.get_admin_context()
+        with self.subnet() as subnet:
+            with contextlib.nested(
+                self.port(subnet=subnet, device_id='owner1', no_delete=True),
+                self.port(subnet=subnet, device_id='owner1'),
+                self.port(subnet=subnet, device_id='owner2'),
+            ) as (p1, p2, p3):
+                orig = plugin.delete_port
+                with mock.patch.object(plugin, 'delete_port') as del_port:
+
+                    def side_effect(*args, **kwargs):
+                        return self._fail_second_call(del_port, orig,
+                                                      *args, **kwargs)
+
+                    del_port.side_effect = side_effect
+                    network_id = subnet['subnet']['network_id']
+                    self.assertRaises(n_exc.NeutronException,
+                                      plugin.delete_ports_by_device_id,
+                                      ctx, 'owner1', network_id)
+                self._show('ports', p1['port']['id'],
+                           expected_code=webob.exc.HTTPNotFound.code)
+                self._show('ports', p2['port']['id'],
+                           expected_code=webob.exc.HTTPOk.code)
+                self._show('ports', p3['port']['id'],
+                           expected_code=webob.exc.HTTPOk.code)
+
+    def test_delete_ports_by_device_id_second_call_failure(self):
+        plugin = NeutronManager.get_plugin()
+        self._test_delete_ports_by_device_id_second_call_failure(plugin)
+
 
 class TestNetworksV2(NeutronDbPluginV2TestCase):
     # NOTE(cerberus): successful network update and delete are
@@ -1915,8 +1965,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                                    'create_network') as patched_plugin:
 
                 def side_effect(*args, **kwargs):
-                    return self._do_side_effect(patched_plugin, orig,
-                                                *args, **kwargs)
+                    return self._fail_second_call(patched_plugin, orig,
+                                                  *args, **kwargs)
 
                 patched_plugin.side_effect = side_effect
                 res = self._create_network_bulk(self.fmt, 2, 'test', True)
@@ -1933,8 +1983,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                                'create_network') as patched_plugin:
 
             def side_effect(*args, **kwargs):
-                return self._do_side_effect(patched_plugin, orig,
-                                            *args, **kwargs)
+                return self._fail_second_call(patched_plugin, orig,
+                                              *args, **kwargs)
 
             patched_plugin.side_effect = side_effect
             res = self._create_network_bulk(self.fmt, 2, 'test', True)
@@ -2343,8 +2393,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    'create_subnet') as patched_plugin:
 
                 def side_effect(*args, **kwargs):
-                    self._do_side_effect(patched_plugin, orig,
-                                         *args, **kwargs)
+                    self._fail_second_call(patched_plugin, orig,
+                                           *args, **kwargs)
 
                 patched_plugin.side_effect = side_effect
                 with self.network() as net:
@@ -2363,8 +2413,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with mock.patch.object(NeutronManager._instance.plugin,
                                'create_subnet') as patched_plugin:
             def side_effect(*args, **kwargs):
-                return self._do_side_effect(patched_plugin, orig,
-                                            *args, **kwargs)
+                return self._fail_second_call(patched_plugin, orig,
+                                              *args, **kwargs)
 
             patched_plugin.side_effect = side_effect
             with self.network() as net:
