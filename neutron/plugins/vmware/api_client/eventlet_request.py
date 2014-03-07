@@ -128,17 +128,21 @@ class EventletApiRequest(request.ApiRequest):
     def _handle_request(self):
         '''First level request handling.'''
         attempt = 0
+        timeout = 0
         response = None
         while response is None and attempt <= self._retries:
-            eventlet.greenthread.sleep(0)
+            eventlet.greenthread.sleep(timeout)
             attempt += 1
 
             req = self._issue_request()
             # automatically raises any exceptions returned.
             if isinstance(req, httplib.HTTPResponse):
+                timeout = 0
                 if attempt <= self._retries and not self._abort:
-                    if (req.status == httplib.UNAUTHORIZED
-                        or req.status == httplib.FORBIDDEN):
+                    if req.status in (httplib.UNAUTHORIZED, httplib.FORBIDDEN):
+                        continue
+                    elif req.status == httplib.SERVICE_UNAVAILABLE:
+                        timeout = 0.5
                         continue
                     # else fall through to return the error code
 
