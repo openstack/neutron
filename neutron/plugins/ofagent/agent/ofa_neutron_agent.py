@@ -167,6 +167,7 @@ class OFANeutronAgentRyuApp(app_manager.RyuApp):
 
     def _agent_main(self, ryuapp):
         cfg.CONF.register_opts(ip_lib.OPTS)
+        n_utils.log_opt_values(LOG)
 
         try:
             agent_config = create_agent_config_map(cfg.CONF)
