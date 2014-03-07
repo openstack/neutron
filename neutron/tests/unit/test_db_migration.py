@@ -40,6 +40,8 @@ class TestCli(base.BaseTestCase):
         super(TestCli, self).setUp()
         self.do_alembic_cmd_p = mock.patch.object(cli, 'do_alembic_command')
         self.do_alembic_cmd = self.do_alembic_cmd_p.start()
+        self.mock_alembic_err = mock.patch('alembic.util.err').start()
+        self.mock_alembic_err.side_effect = SystemExit
         self.addCleanup(self.do_alembic_cmd_p.stop)
         self.addCleanup(cli.CONF.reset)
 
@@ -72,22 +74,28 @@ class TestCli(base.BaseTestCase):
         self._main_test_helper(['prog', 'history'], 'history')
 
     def test_check_migration(self):
-        self._main_test_helper(['prog', 'check_migration'], 'branches')
+        with mock.patch.object(cli, 'validate_head_file') as validate:
+            self._main_test_helper(['prog', 'check_migration'], 'branches')
+            validate.assert_called_once_with(mock.ANY)
 
     def test_database_sync_revision(self):
-        self._main_test_helper(
-            ['prog', 'revision', '--autogenerate', '-m', 'message'],
-            'revision',
-            (),
-            {'message': 'message', 'sql': False, 'autogenerate': True}
-        )
+        with mock.patch.object(cli, 'update_head_file') as update:
+            self._main_test_helper(
+                ['prog', 'revision', '--autogenerate', '-m', 'message'],
+                'revision',
+                (),
+                {'message': 'message', 'sql': False, 'autogenerate': True}
+            )
+            update.assert_called_once_with(mock.ANY)
 
-        self._main_test_helper(
-            ['prog', 'revision', '--sql', '-m', 'message'],
-            'revision',
-            (),
-            {'message': 'message', 'sql': True, 'autogenerate': False}
-        )
+            update.reset_mock()
+            self._main_test_helper(
+                ['prog', 'revision', '--sql', '-m', 'message'],
+                'revision',
+                (),
+                {'message': 'message', 'sql': True, 'autogenerate': False}
+            )
+            update.assert_called_once_with(mock.ANY)
 
     def test_upgrade(self):
         self._main_test_helper(
@@ -118,3 +126,61 @@ class TestCli(base.BaseTestCase):
             ('-2',),
             {'sql': False}
         )
+
+    def _test_validate_head_file_helper(self, heads, file_content=None):
+        with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
+            fc.return_value.get_heads.return_value = heads
+            fc.return_value.get_current_head.return_value = heads[0]
+            with mock.patch('__builtin__.open') as mock_open:
+                mock_open.return_value.__enter__ = lambda s: s
+                mock_open.return_value.__exit__ = mock.Mock()
+                mock_open.return_value.read.return_value = file_content
+
+                with mock.patch('os.path.isfile') as is_file:
+                    is_file.return_value = file_content is not None
+
+                    if file_content in heads:
+                        cli.validate_head_file(mock.sentinel.config)
+                    else:
+                        self.assertRaises(
+                            SystemExit,
+                            cli.validate_head_file,
+                            mock.sentinel.config
+                        )
+                        self.mock_alembic_err.assert_called_once_with(mock.ANY)
+            fc.assert_called_once_with(mock.sentinel.config)
+
+    def test_validate_head_file_multiple_heads(self):
+        self._test_validate_head_file_helper(['a', 'b'])
+
+    def test_validate_head_file_missing_file(self):
+        self._test_validate_head_file_helper(['a'])
+
+    def test_validate_head_file_wrong_contents(self):
+        self._test_validate_head_file_helper(['a'], 'b')
+
+    def test_validate_head_success(self):
+        self._test_validate_head_file_helper(['a'], 'a')
+
+    def test_update_head_file_multiple_heads(self):
+        with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
+            fc.return_value.get_heads.return_value = ['a', 'b']
+            self.assertRaises(
+                SystemExit,
+                cli.update_head_file,
+                mock.sentinel.config
+            )
+            self.mock_alembic_err.assert_called_once_with(mock.ANY)
+            fc.assert_called_once_with(mock.sentinel.config)
+
+    def test_update_head_file_success(self):
+        with mock.patch('alembic.script.ScriptDirectory.from_config') as fc:
+            fc.return_value.get_heads.return_value = ['a']
+            fc.return_value.get_current_head.return_value = 'a'
+            with mock.patch('__builtin__.open') as mock_open:
+                mock_open.return_value.__enter__ = lambda s: s
+                mock_open.return_value.__exit__ = mock.Mock()
+
+                cli.update_head_file(mock.sentinel.config)
+                mock_open.write.called_once_with('a')
+            fc.assert_called_once_with(mock.sentinel.config)
