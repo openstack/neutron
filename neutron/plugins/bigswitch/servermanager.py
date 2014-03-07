@@ -552,7 +552,7 @@ class ServerPool(object):
             # doesn't match, the backend will return a synchronization error
             # that will be handled by the rest_call.
             time.sleep(polling_interval)
-            self.servers.rest_call('GET', HEALTH_PATH)
+            self.rest_call('GET', HEALTH_PATH)
 
 
 class HTTPSConnectionWithValidation(httplib.HTTPSConnection):
