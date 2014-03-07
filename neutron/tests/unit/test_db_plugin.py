@@ -35,6 +35,7 @@ from neutron.common import config
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common.test_lib import test_config
+from neutron.common import utils
 from neutron import context
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
@@ -357,6 +358,13 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             # Arg must be present
             if arg in kwargs:
                 data['port'][arg] = kwargs[arg]
+        # create a dhcp port device id if one hasn't been supplied
+        if ('device_owner' in kwargs and
+            kwargs['device_owner'] == constants.DEVICE_OWNER_DHCP and
+            'host' in kwargs and
+            not 'device_id' in kwargs):
+            device_id = utils.get_dhcp_agent_device_id(net_id, kwargs['host'])
+            data['port']['device_id'] = device_id
         port_req = self.new_create_request('ports', data, fmt)
         if (kwargs.get('set_context') and 'tenant_id' in kwargs):
             # create a specific auth context for this request
