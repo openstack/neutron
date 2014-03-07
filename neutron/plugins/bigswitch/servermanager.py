@@ -191,17 +191,22 @@ class ServerProxy(object):
                     # response was not JSON, ignore the exception
                     pass
             ret = (response.status, response.reason, respstr, respdata)
-        except httplib.ImproperConnectionState:
+        except httplib.HTTPException:
             # If we were using a cached connection, try again with a new one.
             with excutils.save_and_reraise_exception() as ctxt:
-                if not reconnect:
-                    ctxt.reraise = False
-
-            if self.currentconn:
                 self.currentconn.close()
+                if reconnect:
+                    # if reconnect is true, this was on a fresh connection so
+                    # reraise since this server seems to be broken
+                    ctxt.reraise = True
+                else:
+                    # if reconnect is false, it was a cached connection so
+                    # try one more time before re-raising
+                    ctxt.reraise = False
             return self.rest_call(action, resource, data, headers,
                                   timeout=timeout, reconnect=True)
         except (socket.timeout, socket.error) as e:
+            self.currentconn.close()
             LOG.error(_('ServerProxy: %(action)s failure, %(e)r'),
                       {'action': action, 'e': e})
             ret = 0, None, None, None
