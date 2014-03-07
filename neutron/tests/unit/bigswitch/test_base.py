@@ -30,8 +30,8 @@ NOTIFIER = 'neutron.plugins.bigswitch.plugin.AgentNotifierApi'
 CALLBACKS = 'neutron.plugins.bigswitch.plugin.RestProxyCallbacks'
 CERTFETCH = 'neutron.plugins.bigswitch.servermanager.ServerPool._fetch_cert'
 SERVER_MANAGER = 'neutron.plugins.bigswitch.servermanager'
-HTTPCON = 'httplib.HTTPConnection'
-SPAWN = 'eventlet.GreenPool.spawn_n'
+HTTPCON = 'neutron.plugins.bigswitch.servermanager.HTTPConnection'
+SPAWN = 'neutron.plugins.bigswitch.plugin.eventlet.GreenPool.spawn_n'
 CWATCH = SERVER_MANAGER + '.ServerPool._consistency_watchdog'
 
 
@@ -53,8 +53,6 @@ class BigSwitchTestBase(object):
         cfg.CONF.set_override('cache_connections', False, 'RESTPROXY')
 
     def setup_patches(self):
-        self.httpPatch = mock.patch(HTTPCON, create=True,
-                                    new=fake_server.HTTPConnectionMock)
         self.plugin_notifier_p = mock.patch(NOTIFIER)
         self.callbacks_p = mock.patch(CALLBACKS)
         self.spawn_p = mock.patch(SPAWN)
@@ -62,6 +60,10 @@ class BigSwitchTestBase(object):
         self.addCleanup(db.clear_db)
         self.callbacks_p.start()
         self.plugin_notifier_p.start()
-        self.httpPatch.start()
         self.spawn_p.start()
         self.watch_p.start()
+
+    def startHttpPatch(self):
+        self.httpPatch = mock.patch(HTTPCON,
+                                    new=fake_server.HTTPConnectionMock)
+        self.httpPatch.start()
