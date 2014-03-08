@@ -19,24 +19,23 @@ from abc import abstractmethod
 
 from oslo.config import cfg
 
-from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.api.v2 import base
-from neutron import manager
-from neutron import quota
+from neutron.api.v2 import resource_helper
+from neutron.plugins.vmware.common.utils import NetworkTypes
 
-
-RESOURCE_NAME = "network_gateway"
+GATEWAY_RESOURCE_NAME = "network_gateway"
+DEVICE_RESOURCE_NAME = "gateway_device"
 # Use dash for alias and collection name
-EXT_ALIAS = RESOURCE_NAME.replace('_', '-')
-COLLECTION_NAME = "%ss" % EXT_ALIAS
+EXT_ALIAS = GATEWAY_RESOURCE_NAME.replace('_', '-')
+NETWORK_GATEWAYS = "%ss" % EXT_ALIAS
+GATEWAY_DEVICES = "%ss" % DEVICE_RESOURCE_NAME.replace('_', '-')
 DEVICE_ID_ATTR = 'id'
 IFACE_NAME_ATTR = 'interface_name'
 
 # Attribute Map for Network Gateway Resource
 # TODO(salvatore-orlando): add admin state as other neutron resources
 RESOURCE_ATTRIBUTE_MAP = {
-    COLLECTION_NAME: {
+    NETWORK_GATEWAYS: {
         'id': {'allow_post': False, 'allow_put': False,
                'is_visible': True},
         'name': {'allow_post': True, 'allow_put': True,
@@ -54,6 +53,28 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:string': None},
                       'required_by_policy': True,
                       'is_visible': True}
+    },
+    GATEWAY_DEVICES: {
+        'id': {'allow_post': False, 'allow_put': False,
+               'is_visible': True},
+        'name': {'allow_post': True, 'allow_put': True,
+                 'validate': {'type:string': None},
+                 'is_visible': True, 'default': ''},
+        'client_certificate': {'allow_post': True, 'allow_put': True,
+                               'validate': {'type:string': None},
+                               'is_visible': True},
+        'connector_type': {'allow_post': True, 'allow_put': True,
+                           'validate': {'type:connector_type': None},
+                           'is_visible': True},
+        'connector_ip': {'allow_post': True, 'allow_put': True,
+                         'validate': {'type:ip_address': None},
+                         'is_visible': True},
+        'tenant_id': {'allow_post': True, 'allow_put': False,
+                      'validate': {'type:string': None},
+                      'required_by_policy': True,
+                      'is_visible': True},
+        'status': {'allow_post': False, 'allow_put': False,
+                   'is_visible': True},
     }
 }
 
@@ -85,6 +106,23 @@ def _validate_device_list(data, valid_values=None):
         return (_("%s: provided data are not iterable") %
                 _validate_device_list.__name__)
 
+
+def _validate_connector_type(data, valid_values=None):
+    if not data:
+        # A connector type is compulsory
+        msg = _("A connector type is required to create a gateway device")
+        return msg
+    connector_types = (valid_values if valid_values else
+                       [NetworkTypes.GRE,
+                        NetworkTypes.STT,
+                        NetworkTypes.BRIDGE,
+                        'ipsec%s' % NetworkTypes.GRE,
+                        'ipsec%s' % NetworkTypes.STT])
+    if data not in connector_types:
+        msg = _("Unknown connector type: %s") % data
+        return msg
+
+
 nw_gw_quota_opts = [
     cfg.IntOpt('quota_network_gateway',
                default=5,
@@ -95,6 +133,7 @@ nw_gw_quota_opts = [
 cfg.CONF.register_opts(nw_gw_quota_opts, 'QUOTAS')
 
 attributes.validators['type:device_list'] = _validate_device_list
+attributes.validators['type:connector_type'] = _validate_connector_type
 
 
 class Networkgw(object):
@@ -132,22 +171,21 @@ class Networkgw(object):
     @classmethod
     def get_resources(cls):
         """Returns Ext Resources."""
-        plugin = manager.NeutronManager.get_plugin()
-        params = RESOURCE_ATTRIBUTE_MAP.get(COLLECTION_NAME, dict())
 
-        member_actions = {'connect_network': 'PUT',
-                          'disconnect_network': 'PUT'}
+        member_actions = {
+            GATEWAY_RESOURCE_NAME.replace('_', '-'): {
+                'connect_network': 'PUT',
+                'disconnect_network': 'PUT'}}
 
-        # register quotas for network gateways
-        quota.QUOTAS.register_resource_by_name(RESOURCE_NAME)
-        collection_name = COLLECTION_NAME.replace('_', '-')
-        controller = base.create_resource(collection_name,
-                                          RESOURCE_NAME,
-                                          plugin, params,
-                                          member_actions=member_actions)
-        return [extensions.ResourceExtension(COLLECTION_NAME,
-                                             controller,
-                                             member_actions=member_actions)]
+        plural_mappings = resource_helper.build_plural_mappings(
+            {}, RESOURCE_ATTRIBUTE_MAP)
+
+        return resource_helper.build_resource_info(plural_mappings,
+                                                   RESOURCE_ATTRIBUTE_MAP,
+                                                   None,
+                                                   action_map=member_actions,
+                                                   register_quota=True,
+                                                   translate_name=True)
 
     def get_extended_resources(self, version):
         if version == "2.0":
@@ -186,4 +224,24 @@ class NetworkGatewayPluginBase(object):
     @abstractmethod
     def disconnect_network(self, context, network_gateway_id,
                            network_mapping_info):
+        pass
+
+    @abstractmethod
+    def create_gateway_device(self, context, gateway_device):
+        pass
+
+    @abstractmethod
+    def update_gateway_device(self, context, id, gateway_device):
+        pass
+
+    @abstractmethod
+    def delete_gateway_device(self, context, id):
+        pass
+
+    @abstractmethod
+    def get_gateway_device(self, context, id, fields=None):
+        pass
+
+    @abstractmethod
+    def get_gateway_devices(self, context, filters=None, fields=None):
         pass

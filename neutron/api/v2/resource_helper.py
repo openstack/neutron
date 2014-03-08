@@ -46,11 +46,29 @@ def build_resource_info(plural_mappings, resource_map, which_service,
     API resource objects for advanced services extensions. Will optionally
     translate underscores to dashes in resource names, register the resource,
     and accept action information for resources.
+
+    :param plural_mappings: mappings between singular and plural forms
+    :param resource_map: attribute map for the WSGI resources to create
+    :param which_service: The name of the service for which the WSGI resources
+                          are being created. This name will be used to pass
+                          the appropriate plugin to the WSGI resource.
+                          It can be set to None or "CORE"to create WSGI
+                          resources for the the core plugin
+    :param action_map: custom resource actions
+    :param register_quota: it can be set to True to register quotas for the
+                           resource(s) being created
+    :param translate_name: replaces underscores with dashes
+    :param allow_bulk: True if bulk create are allowed
     """
     resources = []
+    if not which_service:
+        which_service = constants.CORE
     if action_map is None:
         action_map = {}
-    plugin = manager.NeutronManager.get_service_plugins()[which_service]
+    if which_service != constants.CORE:
+        plugin = manager.NeutronManager.get_service_plugins()[which_service]
+    else:
+        plugin = manager.NeutronManager.get_plugin()
     for collection_name in resource_map:
         resource_name = plural_mappings[collection_name]
         params = resource_map.get(collection_name, {})
