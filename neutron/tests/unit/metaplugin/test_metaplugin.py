@@ -23,6 +23,8 @@ import testtools
 
 from neutron import context
 from neutron.db import api as db
+from neutron.db import db_base_plugin_v2
+from neutron.db import models_v2
 from neutron.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from neutron.openstack.common import uuidutils
 from neutron.plugins.metaplugin.meta_neutron_plugin import FlavorNotFound
@@ -68,6 +70,13 @@ def setup_metaplugin_conf(has_l3=True):
                           'neutron.openstack.common.rpc.impl_fake')
 
 
+# Hooks registered by metaplugin must not exist for other plugins UT.
+# So hooks must be unregistered (overwrite to None in fact).
+def unregister_meta_hooks():
+    db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+        models_v2.Network, 'metaplugin_net', None, None, None)
+
+
 class MetaNeutronPluginV2Test(base.BaseTestCase):
     """Class conisting of MetaNeutronPluginV2 unit tests."""
 
@@ -82,6 +91,7 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
 
         db.configure_db()
         self.addCleanup(db.clear_db)
+        self.addCleanup(unregister_meta_hooks)
 
         setup_metaplugin_conf(self.has_l3)
 
