@@ -1287,7 +1287,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._delete_port_queue_mapping(context, ret_port['id'])
             self._process_port_queue_mapping(context, ret_port,
                                              port_queue_id)
-            LOG.warn(_("Update port request: %s"), port)
+            LOG.debug(_("Updating port: %s"), port)
             nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, id)
             # Convert Neutron security groups identifiers into NSX security
