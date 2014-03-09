@@ -26,4 +26,4 @@ stevedore>=0.14
 oslo.config>=1.2.0
 oslo.rootwrap
 
-python-novaclient>=2.16.0
+python-novaclient>=2.17.0
