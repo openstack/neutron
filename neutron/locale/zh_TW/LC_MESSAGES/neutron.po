@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-08 06:25+0000\n"
+"POT-Creation-Date: 2014-03-09 06:24+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -6044,7 +6044,7 @@ msgstr ""
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1034
 #: neutron/plugins/hyperv/hyperv_neutron_plugin.py:254
 #: neutron/plugins/ibm/sdnve_neutron_plugin.py:205
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:168
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:195
 #: neutron/plugins/mlnx/mlnx_plugin.py:361
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:511
 #, python-format
@@ -7692,49 +7692,49 @@ msgstr "已呼叫 get_port_from_device()"
 msgid "set_port_status as %s called"
 msgstr "已呼叫 set_port_status 作為 %s"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:41
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:54
 #, python-format
 msgid "Flavor %(flavor)s could not be found"
 msgstr "找不到特性 %(flavor)s"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:45
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:58
 msgid "Failed to add flavor binding"
 msgstr "無法新增特性連結"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:54
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:67
 msgid "Start initializing metaplugin"
 msgstr "開始起始設定 meta 外掛程式"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:95
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:108
 #, python-format
 msgid "default_flavor %s is not plugin list"
 msgstr "default_flavor %s 不是外掛程式清單"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:101
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:114
 #, python-format
 msgid "default_l3_flavor %s is not plugin list"
 msgstr "default_l3_flavor %s 不是外掛程式清單"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:115
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:142
 #, python-format
 msgid "Plugin location: %s"
 msgstr "外掛程式位置：%s"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:158
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:185
 #, python-format
 msgid "Created network: %(net_id)s with flavor %(flavor)s"
 msgstr "已建立特性為 %(flavor)s 的網路：%(net_id)s"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:164
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:191
 msgid "Failed to add flavor bindings"
 msgstr "無法新增特性連結"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:278
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:301
 #, python-format
 msgid "Created router: %(router_id)s with flavor %(flavor)s"
 msgstr "已建立特性為 %(flavor)s 的路由器：%(router_id)s"
 
-#: neutron/plugins/metaplugin/meta_neutron_plugin.py:284
+#: neutron/plugins/metaplugin/meta_neutron_plugin.py:307
 #, python-format
 msgid "Created router: %s"
 msgstr "已建立路由器：%s"
