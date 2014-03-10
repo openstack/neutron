@@ -30,9 +30,18 @@ GET_ALL_SUBNETS = "/pluginhandler/ocplugin/tenant/getallsubnets"
 PORTS_URI = NETWORK_URI + "/lport/"
 PORT_URI = PORTS_URI + "%s"
 
+EXT_URI = "/pluginhandler/ocplugin/ext/tenant/%s"
+FLOATING_IPS_URI = EXT_URI + "/floatingip/"
+FLOATING_IP_URI = FLOATING_IPS_URI + "%s"
+
+ROUTERS_URI = EXT_URI + "/lrouter/"
+ROUTER_URI = ROUTERS_URI + "%s"
+
 TEST_NET = 'test-network'
 TEST_SUBNET = 'test-subnet'
 TEST_PORT = 'test-port'
+TEST_FIP = 'test-floatingip'
+TEST_ROUTER = 'test-router'
 TEST_TENANT = 'test-tenant'
 
 
@@ -184,3 +193,69 @@ class TestNVSDApi(base.BaseTestCase):
                                                  resource='subnet',
                                                  tenant_id=TEST_TENANT,
                                                  resource_id=TEST_SUBNET)
+
+    def test_create_floatingip(self):
+        floatingip = {'id': TEST_FIP,
+                      'tenant_id': TEST_TENANT}
+        uri = FLOATING_IPS_URI % TEST_TENANT
+
+        with mock.patch.object(self.nvsdlib, 'send_request') as send_request:
+            self.nvsdlib.create_floatingip(floatingip)
+            send_request.assert_called_once_with("POST", uri,
+                                                 body=json.dumps(floatingip),
+                                                 resource='floating_ip',
+                                                 tenant_id=TEST_TENANT)
+
+    def test_update_floatingip(self):
+        floatingip = {'id': TEST_FIP,
+                      'tenant_id': TEST_TENANT}
+        uri = FLOATING_IP_URI % (TEST_TENANT, TEST_FIP)
+
+        floatingip_update = {'floatingip': {'router_id': TEST_ROUTER}}
+        with mock.patch.object(self.nvsdlib, 'send_request') as send_request:
+            self.nvsdlib.update_floatingip(floatingip, floatingip_update)
+            send_request.assert_called_once_with(
+                "PUT", uri, body=json.dumps(floatingip_update['floatingip']),
+                resource='floating_ip', tenant_id=TEST_TENANT,
+                resource_id=TEST_FIP)
+
+    def test_delete_floatingip(self):
+        floatingip = {'id': TEST_FIP,
+                      'tenant_id': TEST_TENANT}
+        uri = FLOATING_IP_URI % (TEST_TENANT, TEST_FIP)
+
+        with mock.patch.object(self.nvsdlib, 'send_request') as send_request:
+            self.nvsdlib.delete_floatingip(floatingip)
+            send_request.assert_called_once_with(
+                "DELETE", uri, resource='floating_ip', tenant_id=TEST_TENANT,
+                resource_id=TEST_FIP)
+
+    def test_create_router(self):
+        router = {'id': TEST_ROUTER, 'tenant_id': TEST_TENANT}
+        uri = ROUTERS_URI % TEST_TENANT
+
+        with mock.patch.object(self.nvsdlib, 'send_request') as send_request:
+            self.nvsdlib.create_router(router)
+            send_request.assert_called_once_with(
+                "POST", uri, body=json.dumps(router), resource='router',
+                tenant_id=TEST_TENANT)
+
+    def test_update_router(self):
+        router = {'id': TEST_ROUTER, 'tenant_id': TEST_TENANT}
+        uri = ROUTER_URI % (TEST_TENANT, TEST_ROUTER)
+
+        with mock.patch.object(self.nvsdlib, 'send_request') as send_request:
+            self.nvsdlib.update_router(router)
+            send_request.assert_called_once_with(
+                "PUT", uri, body=json.dumps(router),
+                resource='router', tenant_id=TEST_TENANT,
+                resource_id=TEST_ROUTER)
+
+    def test_delete_router(self):
+        uri = ROUTER_URI % (TEST_TENANT, TEST_ROUTER)
+
+        with mock.patch.object(self.nvsdlib, 'send_request') as send_request:
+            self.nvsdlib.delete_router(TEST_TENANT, TEST_ROUTER)
+            send_request.assert_called_once_with(
+                "DELETE", uri, resource='router',
+                tenant_id=TEST_TENANT, resource_id=TEST_ROUTER)

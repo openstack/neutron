@@ -16,7 +16,7 @@ parameters, use the following lines in localrc:
 Q_PLUGIN=oneconvergence
 
 disable_service n-net
-disable_service q-agt
+enable_service q-agt
 enable_service q-dhcp
 enable_service q-svc
 enable_service q-l3

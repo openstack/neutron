@@ -27,6 +27,7 @@ from neutron.manager import NeutronManager
 from neutron.plugins.oneconvergence import plugin as nvsd_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import test_l3_plugin
 
 PLUGIN_NAME = 'neutron.plugins.oneconvergence.plugin.OneConvergencePluginV2'
 
@@ -107,3 +108,27 @@ class TestOneConvergenceBasicGet(test_plugin.TestBasicGet,
 class TestOneConvergenceV2HTTPResponse(test_plugin.TestV2HTTPResponse,
                                        OneConvergencePluginV2TestCase):
     pass
+
+
+class TestOneConvergenceL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase):
+    _plugin_name = PLUGIN_NAME
+
+    def setUp(self):
+        def mocked_oneconvergence_init(self):
+            def side_effect(*args, **kwargs):
+                return {'id': str(uuid.uuid4())}
+
+            self.nvsdlib = mock.Mock()
+            self.nvsdlib.create_network.side_effect = side_effect
+
+        self.addCleanup(mock.patch.stopall)
+        ext_mgr = test_l3_plugin.L3TestExtensionManager()
+
+        with mock.patch.object(nvsd_plugin.OneConvergencePluginV2,
+                               'oneconvergence_init',
+                               new=mocked_oneconvergence_init):
+            super(TestOneConvergenceL3NatTestCase,
+                  self).setUp(plugin=self._plugin_name, ext_mgr=ext_mgr)
+
+    def test_floatingip_with_invalid_create_port(self):
+        self._test_floatingip_with_invalid_create_port(self._plugin_name)
