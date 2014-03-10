@@ -14,12 +14,15 @@
 #
 # @author: Kevin Benton, kevin.benton@bigswitch.com
 #
+from contextlib import nested
 import mock
 from oslo.config import cfg
 
 from neutron.manager import NeutronManager
 from neutron.plugins.bigswitch import servermanager
 from neutron.tests.unit.bigswitch import test_restproxy_plugin as test_rp
+
+SERVERMANAGER = 'neutron.plugins.bigswitch.servermanager'
 
 
 class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
@@ -45,3 +48,23 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
                 *('example.org', 443)
             )
             sslgetmock.assert_has_calls([mock.call(('example.org', 443))])
+
+    def test_consistency_watchdog(self):
+        pl = NeutronManager.get_plugin()
+        pl.servers.capabilities = []
+        self.watch_p.stop()
+        with nested(
+            mock.patch('time.sleep'),
+            mock.patch(
+                SERVERMANAGER + '.ServerPool.rest_call',
+                side_effect=servermanager.RemoteRestError(
+                    reason='Failure to break loop'
+                )
+            )
+        ) as (smock, rmock):
+            # should return immediately without consistency capability
+            pl.servers._consistency_watchdog()
+            self.assertFalse(smock.called)
+            pl.servers.capabilities = ['consistency']
+            self.assertRaises(servermanager.RemoteRestError,
+                              pl.servers._consistency_watchdog)
