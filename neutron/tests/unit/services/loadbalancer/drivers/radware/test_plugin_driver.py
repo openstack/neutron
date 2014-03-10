@@ -232,6 +232,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                               None, None)
                 ]
                 self.rest_call_mock.assert_has_calls(calls, any_order=True)
+                # need to switch greenthreads in order to let driver delete vip
+                eventlet.greenthread.sleep(0)
 
     def test_update_vip(self):
         self.rest_call_mock.reset_mock()
