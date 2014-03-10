@@ -16,6 +16,7 @@
 #
 # @author: Juergen Brendel, Cisco Systems Inc.
 # @author: Abhishek Raut, Cisco Systems Inc.
+# @author: Sourabh Patwardhan, Cisco Systems Inc.
 
 from mock import patch
 from oslo.config import cfg
@@ -33,6 +34,7 @@ from neutron.plugins.cisco.extensions import network_profile
 from neutron.plugins.cisco.n1kv import n1kv_client
 from neutron.plugins.cisco.n1kv import n1kv_neutron_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
+from neutron.tests.unit.cisco.n1kv import fake_client
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin as test_plugin
 
@@ -343,6 +345,36 @@ class TestN1kvPorts(test_plugin.TestPortsV2,
             res = port_req.get_response(self.api)
             # Port update should fail to update policy profile id.
             self.assertEqual(res.status_int, 400)
+
+    def test_create_first_port_invalid_parameters_fail(self):
+        """Test parameters for first port create sent to the VSM."""
+        profile_obj = self._make_test_policy_profile(name='test_profile')
+        with self.network() as network:
+            client_patch = patch(n1kv_client.__name__ + ".Client",
+                                 new=fake_client.TestClientInvalidRequest)
+            client_patch.start()
+            data = {'port': {n1kv.PROFILE_ID: profile_obj.id,
+                             'tenant_id': self.tenant_id,
+                             'network_id': network['network']['id'],
+                             }}
+            port_req = self.new_create_request('ports', data)
+            res = port_req.get_response(self.api)
+            self.assertEqual(res.status_int, 500)
+            client_patch.stop()
+
+    def test_create_next_port_invalid_parameters_fail(self):
+        """Test parameters for subsequent port create sent to the VSM."""
+        with self.port() as port:
+            client_patch = patch(n1kv_client.__name__ + ".Client",
+                                 new=fake_client.TestClientInvalidRequest)
+            client_patch.start()
+            data = {'port': {n1kv.PROFILE_ID: port['port']['n1kv:profile_id'],
+                             'tenant_id': port['port']['tenant_id'],
+                             'network_id': port['port']['network_id']}}
+            port_req = self.new_create_request('ports', data)
+            res = port_req.get_response(self.api)
+            self.assertEqual(res.status_int, 500)
+            client_patch.stop()
 
 
 class TestN1kvNetworks(test_plugin.TestNetworksV2,

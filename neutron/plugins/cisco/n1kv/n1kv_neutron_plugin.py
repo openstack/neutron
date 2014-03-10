@@ -885,7 +885,6 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             n1kvclient.create_vm_network(port,
                                          vm_network_name,
                                          policy_profile)
-            n1kvclient.create_n1kv_port(port, vm_network_name)
         else:
             vm_network_name = vm_network['name']
             n1kvclient = n1kv_client.Client()
