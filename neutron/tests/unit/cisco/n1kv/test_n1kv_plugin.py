@@ -172,7 +172,6 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Using __name__ to avoid having to enter the full module path.
         http_patcher = patch(n1kv_client.httplib2.__name__ + ".Http")
         FakeHttpConnection = http_patcher.start()
-        self.addCleanup(http_patcher.stop)
         # Now define the return values for a few functions that may be called
         # on any instance of the fake HTTP connection class.
         instance = FakeHttpConnection.return_value
@@ -191,13 +190,11 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         get_vsm_hosts_patcher = patch(n1kv_client.__name__ +
                                       ".Client._get_vsm_hosts")
         fake_get_vsm_hosts = get_vsm_hosts_patcher.start()
-        self.addCleanup(get_vsm_hosts_patcher.stop)
         fake_get_vsm_hosts.return_value = ["127.0.0.1"]
 
         # Return dummy user profiles
         get_cred_name_patcher = patch(cdb.__name__ + ".get_credential_name")
         fake_get_cred_name = get_cred_name_patcher.start()
-        self.addCleanup(get_cred_name_patcher.stop)
         fake_get_cred_name.return_value = {"user_name": "admin",
                                            "password": "admin_password"}
 

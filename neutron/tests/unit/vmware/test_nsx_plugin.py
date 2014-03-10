@@ -358,8 +358,6 @@ class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
         patch_sync.start()
 
         instance.return_value.request.side_effect = self.fc.fake_request
-        self.addCleanup(self.mock_nsx.stop)
-        self.addCleanup(patch_sync.stop)
         super(SecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
 
 
