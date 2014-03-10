@@ -360,3 +360,33 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
     def test_get_router_info_list_tenant_without_namespace_router_with(self):
         self._get_router_info_list_without_namespace_helper(
             router_use_namespaces=True)
+
+    def _get_router_info_list_router_without_router_info_helper(self,
+                                                                rtr_with_ri):
+        self.conf.set_override('use_namespaces', True)
+        # ri.router with associated router_info (ri)
+        # rtr2 has no router_info
+        ri = self._prepare_router_data(use_namespaces=True)
+        rtr2 = {'id': str(uuid.uuid4()), 'tenant_id': ri.router['tenant_id']}
+        routers = [rtr2]
+        self.api.router_info = {}
+        ri_expected = []
+        if rtr_with_ri:
+            self.api.router_info[ri.router_id] = ri
+            routers.append(ri.router)
+            ri_expected.append(ri)
+        with mock.patch.object(ip_lib.IPWrapper,
+                               'get_namespaces') as mock_get_namespaces:
+            mock_get_namespaces.return_value = ri.ns_name()
+            router_info_list = self.api._get_router_info_list_for_tenant(
+                routers,
+                ri.router['tenant_id'])
+            self.assertEqual(ri_expected, router_info_list)
+
+    def test_get_router_info_list_router_without_router_info(self):
+        self._get_router_info_list_router_without_router_info_helper(
+            rtr_with_ri=False)
+
+    def test_get_router_info_list_two_routers_one_without_router_info(self):
+        self._get_router_info_list_router_without_router_info_helper(
+            rtr_with_ri=True)
