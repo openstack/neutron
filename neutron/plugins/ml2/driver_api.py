@@ -594,26 +594,3 @@ class MechanismDriver(object):
         details.
         """
         pass
-
-    def validate_port_binding(self, context):
-        """Check whether existing port binding is still valid.
-
-        :param context: PortContext instance describing the port
-        :returns: True if binding is valid, otherwise False
-
-        Called inside transaction context on session to validate that
-        the MechanismDriver's existing binding for the port is still
-        valid.
-        """
-        return False
-
-    def unbind_port(self, context):
-        """Undo existing port binding.
-
-        :param context: PortContext instance describing the port
-
-        Called inside transaction context on session to notify the
-        MechanismDriver that its existing binding for the port is no
-        longer valid.
-        """
-        pass

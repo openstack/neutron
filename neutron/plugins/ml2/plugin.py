@@ -226,11 +226,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if binding.vif_type != portbindings.VIF_TYPE_UNBOUND:
             if (not host_set and not vnic_type_set and not profile_set and
-                binding.segment and
-                self.mechanism_manager.validate_port_binding(mech_context)):
+                binding.segment):
                 return False
-            self.mechanism_manager.unbind_port(mech_context)
-            self._update_port_dict_binding(port, binding)
+            self._delete_port_binding(mech_context)
 
         # Return True only if an agent notification is needed.
         # This will happen if a new host, vnic_type, or profile was specified
@@ -294,9 +292,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _delete_port_binding(self, mech_context):
         binding = mech_context._binding
+        binding.vif_type = portbindings.VIF_TYPE_UNBOUND
+        binding.vif_details = ''
+        binding.driver = None
+        binding.segment = None
         port = mech_context.current
-        self._update_port_dict_binding(port, binding)
-        self.mechanism_manager.unbind_port(mech_context)
         self._update_port_dict_binding(port, binding)
 
     def _ml2_extend_port_dict_binding(self, port_res, port_db):
@@ -720,7 +720,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.PortContext(self, context, port,
                                                       network)
             self.mechanism_manager.delete_port_precommit(mech_context)
-            self._delete_port_binding(mech_context)
             self._delete_port_security_group_bindings(context, id)
             LOG.debug(_("Calling base delete_port"))
             if l3plugin:
