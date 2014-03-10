@@ -44,6 +44,7 @@ migration_for_plugins = [
     'neutron.plugins.embrane.plugins.embrane_ovs_plugin.EmbraneOvsPlugin',
     'neutron.plugins.ibm.sdnve_neutron_plugin.SdnvePluginV2',
     'neutron.plugins.oneconvergence.plugin.OneConvergencePluginV2',
+    'neutron.plugins.cisco.network_plugin.PluginV2',
 ]
 
 from alembic import op
