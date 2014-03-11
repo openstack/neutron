@@ -1265,7 +1265,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         :returns: port dictionary
         """
         LOG.debug(_("Get port: %s"), id)
-        port = super(N1kvNeutronPluginV2, self).get_port(context, id, fields)
+        port = super(N1kvNeutronPluginV2, self).get_port(context, id, None)
         self._extend_port_dict_profile(context, port)
         return self._fields(port, fields)
 
@@ -1286,7 +1286,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         LOG.debug(_("Get ports"))
         ports = super(N1kvNeutronPluginV2, self).get_ports(context, filters,
-                                                           fields)
+                                                           None)
         for port in ports:
             self._extend_port_dict_profile(context, port)
 
@@ -1351,7 +1351,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         LOG.debug(_("Get subnet: %s"), id)
         subnet = super(N1kvNeutronPluginV2, self).get_subnet(context, id,
-                                                             fields)
+                                                             None)
         return self._fields(subnet, fields)
 
     def get_subnets(self, context, filters=None, fields=None):
@@ -1372,7 +1372,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_("Get subnets"))
         subnets = super(N1kvNeutronPluginV2, self).get_subnets(context,
                                                                filters,
-                                                               fields)
+                                                               None)
         return [self._fields(subnet, fields) for subnet in subnets]
 
     def create_network_profile(self, context, network_profile):
