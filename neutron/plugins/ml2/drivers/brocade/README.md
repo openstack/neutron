@@ -57,4 +57,4 @@ Additionally the brocade mechanism driver needs to be enabled from the ml2 confi
 
 Required L2 Agent
 
-This mechanism driver works in conjuction with an L2 Agent. The agent should be loaded as well in order for it to configure the virtual network int the host machine. Please see the configuration above. Atleast one of linuxbridge or openvswitch must be specified.
+This mechanism driver works in conjunction with an L2 Agent. The agent should be loaded as well in order for it to configure the virtual network int the host machine. Please see the configuration above. Atleast one of linuxbridge or openvswitch must be specified.
