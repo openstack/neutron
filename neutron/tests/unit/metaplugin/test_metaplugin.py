@@ -75,6 +75,8 @@ def setup_metaplugin_conf(has_l3=True):
 def unregister_meta_hooks():
     db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
         models_v2.Network, 'metaplugin_net', None, None, None)
+    db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+        models_v2.Port, 'metaplugin_port', None, None, None)
 
 
 class MetaNeutronPluginV2Test(base.BaseTestCase):
@@ -208,10 +210,20 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
         port1_ret = self.plugin.create_port(self.context, port1)
         port2_ret = self.plugin.create_port(self.context, port2)
         port3_ret = self.plugin.create_port(self.context, port3)
+        ports_all = self.plugin.get_ports(self.context)
 
         self.assertEqual(network_ret1['id'], port1_ret['network_id'])
         self.assertEqual(network_ret2['id'], port2_ret['network_id'])
         self.assertEqual(network_ret3['id'], port3_ret['network_id'])
+        self.assertEqual(3, len(ports_all))
+
+        port1_dict = self.plugin._make_port_dict(port1_ret)
+        port2_dict = self.plugin._make_port_dict(port2_ret)
+        port3_dict = self.plugin._make_port_dict(port3_ret)
+
+        self.assertEqual(port1_dict, port1_ret)
+        self.assertEqual(port2_dict, port2_ret)
+        self.assertEqual(port3_dict, port3_ret)
 
         port1['port']['admin_state_up'] = False
         port2['port']['admin_state_up'] = False
