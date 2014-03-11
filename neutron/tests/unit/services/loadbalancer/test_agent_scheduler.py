@@ -209,6 +209,3 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
 
 class LBaaSAgentSchedulerTestCaseXML(LBaaSAgentSchedulerTestCase):
     fmt = 'xml'
-
-    def test_schedule_pool_with_down_agent(self):
-        self.skipTest("Skipping test until LB #1311232 is fixed.")

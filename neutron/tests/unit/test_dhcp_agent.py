@@ -132,6 +132,9 @@ class TestDhcpAgent(base.BaseTestCase):
         dhcp_agent.register_options()
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
+        # disable setting up periodic state reporting
+        cfg.CONF.set_override('report_interval', 0, 'AGENT')
+
         self.driver_cls_p = mock.patch(
             'neutron.agent.dhcp_agent.importutils.import_class')
         self.driver = mock.Mock(name='driver')
@@ -149,6 +152,8 @@ class TestDhcpAgent(base.BaseTestCase):
 
     def test_dhcp_agent_manager(self):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
+        # sync_state is needed for this test
+        cfg.CONF.set_override('report_interval', 1, 'AGENT')
         with mock.patch.object(DhcpAgentWithStateReport,
                                'sync_state',
                                autospec=True) as mock_sync_state:

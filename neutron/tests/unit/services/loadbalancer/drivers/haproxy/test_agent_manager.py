@@ -151,6 +151,9 @@ class TestManager(base.BaseTestCase):
             '.haproxy.agent_api.LbaasAgentApi'
         ).start()
 
+        # disable setting up periodic state reporting
+        mock_conf.AGENT.report_interval = 0
+
         self.mgr = manager.LbaasAgentManager(mock_conf)
         self.rpc_mock = rpc_mock_cls.return_value
         self.log = mock.patch.object(manager, 'LOG').start()

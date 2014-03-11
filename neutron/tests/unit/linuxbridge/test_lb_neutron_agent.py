@@ -95,6 +95,8 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestLinuxBridgeAgent, self).setUp()
+        # disable setting up periodic state reporting
+        cfg.CONF.set_override('report_interval', 0, 'AGENT')
         cfg.CONF.set_override('rpc_backend',
                               'neutron.openstack.common.rpc.impl_fake')
         self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
