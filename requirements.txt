@@ -11,13 +11,13 @@ eventlet>=0.13.0
 greenlet>=0.3.2
 httplib2>=0.7.5
 requests>=1.1
-iso8601>=0.1.8
+iso8601>=0.1.9
 jsonrpclib
 Jinja2
 kombu>=2.4.8
 netaddr>=0.7.6
 python-neutronclient>=2.3.4,<3
-SQLAlchemy>=0.7.8,<=0.9.99
+SQLAlchemy>=0.7.8,<=0.8.99
 WebOb>=1.2.3
 python-keystoneclient>=0.6.0
 alembic>=0.4.1
