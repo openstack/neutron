@@ -651,8 +651,8 @@ class OperationCompletionHandler(threading.Thread):
 
                 LOG.debug('Operation consumed from the queue: ' +
                           str(oper))
-                 # check the status - if oper is done: update the db ,
-                 # else push the oper again to the queue
+                # check the status - if oper is done: update the db ,
+                # else push the oper again to the queue
                 result = self.rest_client.call('GET',
                                                oper.operation_url,
                                                None,
