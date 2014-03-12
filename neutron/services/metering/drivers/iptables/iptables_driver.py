@@ -154,7 +154,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
             if rule['direction'] == 'egress':
                 dir = '-o ' + ext_dev
 
-            if rule['excluded'] == 'true':
+            if rule['excluded']:
                 ipt_rule = dir + ' -d ' + remote_ip + ' -j RETURN'
                 im.ipv4['filter'].add_rule(rules_chain, ipt_rule, wrap=False,
                                            top=True)
