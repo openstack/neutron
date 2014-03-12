@@ -677,10 +677,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
     def update_floatingip_status(self, context, floatingip_id, status):
         """Update operational status for floating IP in neutron DB."""
-        # TODO(salv-orlando): Optimize avoiding fetch before update
-        with context.session.begin(subtransactions=True):
-            floatingip_db = self._get_floatingip(context, floatingip_id)
-            floatingip_db['status'] = status
+        fip_query = self._model_query(context, FloatingIP).filter(
+            FloatingIP.id == floatingip_id)
+        fip_query.update({'status': status}, synchronize_session=False)
 
     def delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
