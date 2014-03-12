@@ -46,14 +46,12 @@ class TestBigSwitchMechDriverBase(trp.BigSwitchProxyPluginV2TestCase):
         }
         for opt, val in ml2_opts.items():
                 ml2_config.cfg.CONF.set_override(opt, val, 'ml2')
-        self.addCleanup(ml2_config.cfg.CONF.reset)
 
         # Configure the ML2 VLAN parameters
         phys_vrange = ':'.join([PHYS_NET, str(VLAN_START), str(VLAN_END)])
         vlan_config.cfg.CONF.set_override('network_vlan_ranges',
                                           [phys_vrange],
                                           'ml2_type_vlan')
-        self.addCleanup(vlan_config.cfg.CONF.reset)
         super(TestBigSwitchMechDriverBase,
               self).setUp(ML2_PLUGIN)
 

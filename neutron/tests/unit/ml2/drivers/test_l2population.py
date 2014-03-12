@@ -83,7 +83,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                       'l2population'],
                                      'ml2')
         super(TestL2PopulationRpcTestCase, self).setUp(PLUGIN_NAME)
-        self.addCleanup(config.cfg.CONF.reset)
 
         self.adminContext = context.get_admin_context()
 

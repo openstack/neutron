@@ -56,7 +56,6 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.phys_vrange = ':'.join([self.physnet, self.vlan_range])
         config.cfg.CONF.set_override('network_vlan_ranges', [self.phys_vrange],
                                      group='ml2_type_vlan')
-        self.addCleanup(config.cfg.CONF.reset)
         super(Ml2PluginV2TestCase, self).setUp(PLUGIN_NAME,
                                                service_plugins=service_plugins)
         self.port_create_status = 'DOWN'

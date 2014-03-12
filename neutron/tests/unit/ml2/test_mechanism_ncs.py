@@ -29,7 +29,6 @@ class NCSTestCase(test_plugin.NeutronDbPluginV2TestCase):
         config.cfg.CONF.set_override('mechanism_drivers',
                                      ['logger', 'ncs'],
                                      'ml2')
-        self.addCleanup(config.cfg.CONF.reset)
         super(NCSTestCase, self).setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
         mechanism_ncs.NCSMechanismDriver.sendjson = self.check_sendjson

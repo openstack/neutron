@@ -41,7 +41,6 @@ class CreateAgentConfigMap(base.BaseTestCase):
         self.assertTrue(ovs_neutron_agent.create_agent_config_map(cfg.CONF))
 
     def test_create_agent_config_map_fails_for_invalid_tunnel_config(self):
-        self.addCleanup(cfg.CONF.reset)
         # An ip address is required for tunneling but there is no default,
         # verify this for both gre and vxlan tunnels.
         cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE],
@@ -54,7 +53,6 @@ class CreateAgentConfigMap(base.BaseTestCase):
             ovs_neutron_agent.create_agent_config_map(cfg.CONF)
 
     def test_create_agent_config_map_enable_tunneling(self):
-        self.addCleanup(cfg.CONF.reset)
         # Verify setting only enable_tunneling will default tunnel_type to GRE
         cfg.CONF.set_override('tunnel_types', None, group='AGENT')
         cfg.CONF.set_override('enable_tunneling', True, group='OVS')
@@ -63,20 +61,17 @@ class CreateAgentConfigMap(base.BaseTestCase):
         self.assertEqual(cfgmap['tunnel_types'], [p_const.TYPE_GRE])
 
     def test_create_agent_config_map_fails_no_local_ip(self):
-        self.addCleanup(cfg.CONF.reset)
         # An ip address is required for tunneling but there is no default
         cfg.CONF.set_override('enable_tunneling', True, group='OVS')
         with testtools.ExpectedException(ValueError):
             ovs_neutron_agent.create_agent_config_map(cfg.CONF)
 
     def test_create_agent_config_map_fails_for_invalid_tunnel_type(self):
-        self.addCleanup(cfg.CONF.reset)
         cfg.CONF.set_override('tunnel_types', ['foobar'], group='AGENT')
         with testtools.ExpectedException(ValueError):
             ovs_neutron_agent.create_agent_config_map(cfg.CONF)
 
     def test_create_agent_config_map_multiple_tunnel_types(self):
-        self.addCleanup(cfg.CONF.reset)
         cfg.CONF.set_override('local_ip', '10.10.10.10', group='OVS')
         cfg.CONF.set_override('tunnel_types', [p_const.TYPE_GRE,
                               p_const.TYPE_VXLAN], group='AGENT')
@@ -89,7 +84,6 @@ class TestOvsNeutronAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestOvsNeutronAgent, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
@@ -763,7 +757,6 @@ class AncillaryBridgesTest(base.BaseTestCase):
 
     def setUp(self):
         super(AncillaryBridgesTest, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()

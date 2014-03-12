@@ -18,7 +18,6 @@
 
 
 import mock
-from oslo.config import cfg
 
 from neutron.openstack.common import uuidutils
 from neutron.plugins.ibm.common import constants
@@ -37,7 +36,6 @@ class TestSdnveApi(base.BaseTestCase):
 
     def setUp(self):
         super(TestSdnveApi, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
 
         class MockKeystoneClient(object):
             def __init__(self, **kwargs):

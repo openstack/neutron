@@ -81,7 +81,6 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
 
         # Update the plugin and extensions path
         self.setup_coreplugin(plugin)
-        self.addCleanup(cfg.CONF.reset)
 
         _plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = _plugin_patcher.start()

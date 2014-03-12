@@ -36,8 +36,6 @@ class TestCiscoPluginModel(base.BaseTestCase):
 
         super(TestCiscoPluginModel, self).setUp()
 
-        self.addCleanup(cisco_config.CONF.reset)
-
     def test_non_nexus_device_driver(self):
         """Tests handling of an non-Nexus device driver being configured."""
         with mock.patch.dict(sys.modules, {'mock_driver': mock.Mock()}):

@@ -45,8 +45,6 @@ class TestBrocadeMechDriverV2(test_db_plugin.NeutronDbPluginV2TestCase):
         for opt, val in ml2_opts.items():
             ml2_config.cfg.CONF.set_override(opt, val, 'ml2')
 
-        self.addCleanup(ml2_config.cfg.CONF.reset)
-
         def mocked_brocade_init(self):
             self._driver = mock.MagicMock()
 

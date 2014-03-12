@@ -33,7 +33,6 @@ class TestOneConvergenceAgentBase(base.BaseTestCase):
 
     def setUp(self):
         super(TestOneConvergenceAgentBase, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         cfg.CONF.set_override('rpc_backend',
                               'neutron.openstack.common.rpc.impl_fake')
         with contextlib.nested(

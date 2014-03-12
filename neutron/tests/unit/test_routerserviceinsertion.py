@@ -170,7 +170,6 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
         self.setup_coreplugin(plugin)
         cfg.CONF.set_override('service_plugins', [])
         cfg.CONF.set_override('quota_router', -1, group='QUOTAS')
-        self.addCleanup(cfg.CONF.reset)
 
         # Ensure existing ExtensionManager is not used
 
@@ -197,7 +196,6 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
     def tearDown(self):
         self.api = None
         db.clear_db()
-        cfg.CONF.reset()
         super(RouterServiceInsertionTestCase, self).tearDown()
 
     def _setup_core_resources(self):

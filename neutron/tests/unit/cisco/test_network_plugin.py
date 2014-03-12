@@ -101,7 +101,6 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             for group in config[module]:
                 for opt, val in config[module][group].items():
                     module.cfg.CONF.set_override(opt, val, group)
-            self.addCleanup(module.cfg.CONF.reset)
 
         # Configure the Nexus switch dictionary
         # TODO(Henry): add tests for other devices
@@ -1012,7 +1011,6 @@ class TestCiscoRouterInterfacesV2(CiscoNetworkPluginV2TestCase):
         super(TestCiscoRouterInterfacesV2, self).setUp()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
-        self.addCleanup(cisco_config.CONF.reset)
 
     @contextlib.contextmanager
     def _network_subnet_router(self):

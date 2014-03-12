@@ -490,7 +490,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.plugin_p.stop()
         self.mock_makedirs_p.stop()
         self.mock_init_p.stop()
-        cfg.CONF.reset()
         super(TestDhcpAgentEventHandler, self).tearDown()
 
     def _enable_dhcp_helper(self, isolated_metadata=False):
@@ -1118,7 +1117,6 @@ class TestDeviceManager(base.BaseTestCase):
         self.dvr_cls_p.stop()
         self.device_exists_p.stop()
         self.iproute_cls_p.stop()
-        cfg.CONF.reset()
         super(TestDeviceManager, self).tearDown()
 
     def _test_setup_helper(self, device_exists, reuse_existing=False,

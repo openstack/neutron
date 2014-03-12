@@ -37,7 +37,6 @@ class TestNecAgentBase(base.BaseTestCase):
 
     def setUp(self):
         super(TestNecAgentBase, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         cfg.CONF.set_override('rpc_backend',
                               'neutron.openstack.common.rpc.impl_fake')
         cfg.CONF.set_override('host', 'dummy-host')

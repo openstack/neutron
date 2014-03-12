@@ -16,16 +16,12 @@
 #    under the License.
 
 import mock
-from oslo.config import cfg
 
 from neutron.agent import netns_cleanup_util as util
 from neutron.tests import base
 
 
 class TestNetnsCleanup(base.BaseTestCase):
-    def setUp(self):
-        super(TestNetnsCleanup, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
 
     def test_kill_dhcp(self, dhcp_active=True):
         conf = mock.Mock()

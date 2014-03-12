@@ -104,7 +104,6 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             extattr.EXTENDED_ATTRIBUTES_2_0)
         self.agentscheduler_dbMinxin = manager.NeutronManager.get_plugin()
-        self.addCleanup(cfg.CONF.reset)
         self.addCleanup(self.restore_attribute_map)
 
         quota.QUOTAS._driver = None

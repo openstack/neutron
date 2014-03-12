@@ -47,7 +47,6 @@ class TestLinuxBridge(base.BaseTestCase):
 
     def setUp(self):
         super(TestLinuxBridge, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         interface_mappings = {'physnet1': 'eth1'}
         root_helper = cfg.CONF.AGENT.root_helper
 
@@ -704,7 +703,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
     def setUp(self):
         cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
-        self.addCleanup(cfg.CONF.reset)
         super(TestLinuxBridgeRpcCallbacks, self).setUp()
 
         self.u_execute_p = mock.patch('neutron.agent.linux.utils.execute')
