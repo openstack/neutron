@@ -192,17 +192,16 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if str(flavor) not in self.plugins:
             flavor = self.default_flavor
         plugin = self._get_plugin(flavor)
-        with context.session.begin(subtransactions=True):
-            net = plugin.create_network(context, network)
-            LOG.debug(_("Created network: %(net_id)s with flavor "
-                        "%(flavor)s"), {'net_id': net['id'], 'flavor': flavor})
-            try:
-                meta_db_v2.add_network_flavor_binding(context.session,
-                                                      flavor, str(net['id']))
-            except Exception:
-                LOG.exception(_('Failed to add flavor bindings'))
-                plugin.delete_network(context, net['id'])
-                raise FaildToAddFlavorBinding()
+        net = plugin.create_network(context, network)
+        LOG.debug(_("Created network: %(net_id)s with flavor "
+                    "%(flavor)s"), {'net_id': net['id'], 'flavor': flavor})
+        try:
+            meta_db_v2.add_network_flavor_binding(context.session,
+                                                  flavor, str(net['id']))
+        except Exception:
+            LOG.exception(_('Failed to add flavor bindings'))
+            plugin.delete_network(context, net['id'])
+            raise FaildToAddFlavorBinding()
 
         LOG.debug(_("Created network: %s"), net['id'])
         self._extend_network_dict(context, net)
@@ -336,13 +335,17 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         if str(flavor) not in self.l3_plugins:
             flavor = self.default_l3_flavor
         plugin = self._get_l3_plugin(flavor)
-        with context.session.begin(subtransactions=True):
-            r_in_db = plugin.create_router(context, router)
-            LOG.debug(_("Created router: %(router_id)s with flavor "
-                        "%(flavor)s"),
-                      {'router_id': r_in_db['id'], 'flavor': flavor})
+        r_in_db = plugin.create_router(context, router)
+        LOG.debug(_("Created router: %(router_id)s with flavor "
+                    "%(flavor)s"),
+                  {'router_id': r_in_db['id'], 'flavor': flavor})
+        try:
             meta_db_v2.add_router_flavor_binding(context.session,
                                                  flavor, str(r_in_db['id']))
+        except Exception:
+            LOG.exception(_('Failed to add flavor bindings'))
+            plugin.delete_router(context, r_in_db['id'])
+            raise FaildToAddFlavorBinding()
 
         LOG.debug(_("Created router: %s"), r_in_db['id'])
         self._extend_router_dict(context, r_in_db)

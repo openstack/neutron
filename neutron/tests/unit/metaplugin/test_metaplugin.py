@@ -27,6 +27,8 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
 from neutron.openstack.common import uuidutils
+from neutron.plugins.metaplugin.meta_neutron_plugin import (
+    FaildToAddFlavorBinding)
 from neutron.plugins.metaplugin.meta_neutron_plugin import FlavorNotFound
 from neutron.plugins.metaplugin.meta_neutron_plugin import MetaPluginV2
 from neutron.tests import base
@@ -331,6 +333,30 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
 
         self.fail("No Error is not raised")
 
+    def test_create_network_flavor_fail(self):
+        with mock.patch('neutron.plugins.metaplugin.meta_db_v2.'
+                        'add_network_flavor_binding',
+                        side_effect=Exception):
+            network = self._fake_network('fake1')
+            self.assertRaises(FaildToAddFlavorBinding,
+                              self.plugin.create_network,
+                              self.context,
+                              network)
+            count = self.plugin.get_networks_count(self.context)
+            self.assertEqual(count, 0)
+
+    def test_create_router_flavor_fail(self):
+        with mock.patch('neutron.plugins.metaplugin.meta_db_v2.'
+                        'add_router_flavor_binding',
+                        side_effect=Exception):
+            router = self._fake_router('fake1')
+            self.assertRaises(FaildToAddFlavorBinding,
+                              self.plugin.create_router,
+                              self.context,
+                              router)
+            count = self.plugin.get_routers_count(self.context)
+            self.assertEqual(count, 0)
+
 
 class MetaNeutronPluginV2TestWithoutL3(MetaNeutronPluginV2Test):
     """Tests without l3_plugin_list configration."""
@@ -342,4 +368,7 @@ class MetaNeutronPluginV2TestWithoutL3(MetaNeutronPluginV2Test):
                          ['flavor', 'external-net'])
 
     def test_create_delete_router(self):
+        self.skipTest("Test case without router")
+
+    def test_create_router_flavor_fail(self):
         self.skipTest("Test case without router")
