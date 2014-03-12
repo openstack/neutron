@@ -23,6 +23,7 @@ import os
 
 import eventlet.timeout
 import fixtures
+import mock
 from oslo.config import cfg
 import testtools
 
@@ -82,6 +83,7 @@ class BaseTestCase(testtools.TestCase):
         self.useFixture(fixtures.NestedTempfile())
         self.useFixture(fixtures.TempHomeDir())
 
+        self.addCleanup(mock.patch.stopall)
         self.addCleanup(CONF.reset)
 
         if os.environ.get('OS_STDOUT_CAPTURE') in TRUE_STRING:

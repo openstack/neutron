@@ -195,7 +195,6 @@ class ServiceTypeExtensionTestCase(ServiceTypeExtensionTestCaseBase):
         self._patcher = mock.patch(
             "neutron.db.servicetype_db.ServiceTypeManager",
             autospec=True)
-        self.addCleanup(self._patcher.stop)
         self.mock_mgr = self._patcher.start()
         self.mock_mgr.get_instance.return_value = self.mock_mgr.return_value
         super(ServiceTypeExtensionTestCase, self).setUp()

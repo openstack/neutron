@@ -85,7 +85,8 @@ class NecPluginV2TestCaseBase(object):
             self.addCleanup(mock.patch.stopall)
         self._set_nec_ini()
         self.addCleanup(self._clean_nec_ini)
-        self.patch_remote_calls(use_stop_each)
+        # kevinbenton: stopping patches is now handled in base test class
+        self.patch_remote_calls(use_stop=False)
 
 
 class NecPluginV2TestCase(NecPluginV2TestCaseBase,

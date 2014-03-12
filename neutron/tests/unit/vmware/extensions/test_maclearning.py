@@ -76,8 +76,6 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         instance.return_value.request.side_effect = self.fc.fake_request
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
-        self.addCleanup(self.mock_nsx.stop)
-        self.addCleanup(patch_sync.stop)
         self.addCleanup(self.restore_resource_attribute_map)
         self.addCleanup(cfg.CONF.reset)
         super(MacLearningDBTestCase, self).setUp(plugin=PLUGIN_NAME,
