@@ -553,16 +553,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return port
 
     def _network_admin_state(self, network):
-        try:
-            if network["network"].get("admin_state_up"):
-                network_name = network["network"]["name"]
-                if network["network"]["admin_state_up"] is False:
-                    LOG.warning(_("Network with admin_state_up=False are not "
-                                  "supported yet by this plugin. Ignoring "
-                                  "setting for network %s"), network_name)
-        except Exception:
-            err_message = _("Network Admin State Validation Failed: ")
-            raise plum_excep.PLUMgridException(err_msg=err_message)
+        if network["network"].get("admin_state_up") is False:
+            LOG.warning("Networks with admin_state_up=False are not "
+                        "supported by PLUMgrid plugin yet.")
         return network
 
     def _allocate_pools_for_subnet(self, context, subnet):
