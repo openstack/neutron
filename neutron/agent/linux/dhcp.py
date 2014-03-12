@@ -403,6 +403,9 @@ class Dnsmasq(DhcpLocalProcess):
         """Writes a dnsmasq compatible hosts file."""
         r = re.compile('[:.]')
         buf = six.StringIO()
+        filename = self.get_conf_file_name('host')
+
+        LOG.debug(_('Building host file: %s'), filename)
 
         for port in self.network.ports:
             for alloc in port.fixed_ips:
@@ -415,6 +418,11 @@ class Dnsmasq(DhcpLocalProcess):
                 ip_address = alloc.ip_address
                 if netaddr.valid_ipv6(ip_address):
                     ip_address = '[%s]' % ip_address
+
+                LOG.debug(_('Adding %(mac)s : %(name)s : %(ip)s'),
+                          {"mac": port.mac_address, "name": name,
+                           "ip": ip_address})
+
                 if getattr(port, 'extra_dhcp_opts', False):
                     if self.version >= self.MINIMUM_VERSION:
                         set_tag = 'set:'
@@ -426,9 +434,9 @@ class Dnsmasq(DhcpLocalProcess):
                     buf.write('%s,%s,%s\n' %
                               (port.mac_address, name, ip_address))
 
-        name = self.get_conf_file_name('host')
-        utils.replace_file(name, buf.getvalue())
-        return name
+        utils.replace_file(filename, buf.getvalue())
+        LOG.debug(_('Done building host file %s'), filename)
+        return filename
 
     def _read_hosts_file_leases(self, filename):
         leases = set()
