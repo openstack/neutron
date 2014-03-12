@@ -112,7 +112,7 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
 
     def test_udpate404_triggers_background_sync(self):
         with contextlib.nested(
-            mock.patch(SERVER_POOL + '.rest_update_port',
+            mock.patch(DRIVER + '.async_port_create',
                        side_effect=servermanager.RemoteRestError(
                            reason=servermanager.NXNETWORK, status=404)),
             mock.patch(DRIVER + '._send_all_data'),

@@ -56,18 +56,36 @@ def get_network_segments(session, network_id):
                 for record in records]
 
 
-def ensure_port_binding(session, port_id):
+def add_port_binding(session, port_id):
     with session.begin(subtransactions=True):
-        try:
-            record = (session.query(models.PortBinding).
-                      filter_by(port_id=port_id).
-                      one())
-        except exc.NoResultFound:
-            record = models.PortBinding(
-                port_id=port_id,
-                vif_type=portbindings.VIF_TYPE_UNBOUND)
-            session.add(record)
+        record = models.PortBinding(
+            port_id=port_id,
+            vif_type=portbindings.VIF_TYPE_UNBOUND)
+        session.add(record)
         return record
+
+
+def get_locked_port_and_binding(session, port_id):
+    """Get port and port binding records for update within transaction."""
+
+    try:
+        # REVISIT(rkukura): We need the Port and PortBinding records
+        # to both be added to the session and locked for update. A
+        # single joined query should work, but the combination of left
+        # outer joins and postgresql doesn't seem to work.
+        port = (session.query(models_v2.Port).
+                enable_eagerloads(False).
+                filter_by(id=port_id).
+                with_lockmode('update').
+                one())
+        binding = (session.query(models.PortBinding).
+                   enable_eagerloads(False).
+                   filter_by(port_id=port_id).
+                   with_lockmode('update').
+                   one())
+        return port, binding
+    except exc.NoResultFound:
+        return None, None
 
 
 def get_port(session, port_id):
@@ -132,5 +150,9 @@ def get_port_binding_host(port_id):
         except exc.NoResultFound:
             LOG.debug(_("No binding found for port %(port_id)s"),
                       {'port_id': port_id})
+            return
+        except exc.MultipleResultsFound:
+            LOG.error(_("Multiple ports have port_id starting with %s"),
+                      port_id)
             return
     return query.host

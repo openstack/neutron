@@ -69,15 +69,14 @@ class SubnetContext(MechanismDriverContext, api.SubnetContext):
 
 class PortContext(MechanismDriverContext, api.PortContext):
 
-    def __init__(self, plugin, plugin_context, port, network,
+    def __init__(self, plugin, plugin_context, port, network, binding,
                  original_port=None):
         super(PortContext, self).__init__(plugin, plugin_context)
         self._port = port
         self._original_port = original_port
         self._network_context = NetworkContext(plugin, plugin_context,
                                                network)
-        self._binding = db.ensure_port_binding(plugin_context.session,
-                                               port['id'])
+        self._binding = binding
         if original_port:
             self._original_bound_segment_id = self._binding.segment
             self._original_bound_driver = self._binding.driver
