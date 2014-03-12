@@ -121,8 +121,9 @@ class NetworkGatewayDeviceReference(model_base.BASEV2):
     id = sa.Column(sa.String(36), primary_key=True)
     network_gateway_id = sa.Column(sa.String(36),
                                    sa.ForeignKey('networkgateways.id',
-                                                 ondelete='CASCADE'))
-    interface_name = sa.Column(sa.String(64))
+                                                 ondelete='CASCADE'),
+                                   primary_key=True)
+    interface_name = sa.Column(sa.String(64), primary_key=True)
 
 
 class NetworkGatewayDevice(model_base.BASEV2, models_v2.HasId,

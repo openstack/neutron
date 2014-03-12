@@ -51,7 +51,7 @@ def upgrade(active_plugins=None, options=None):
         sa.Column('interface_name', sa.String(length=64), nullable=True),
         sa.ForeignKeyConstraint(['network_gateway_id'], ['networkgateways.id'],
                                 ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('id'),
+        sa.PrimaryKeyConstraint('id', 'network_gateway_id', 'interface_name'),
         mysql_engine='InnoDB')
     # Copy data from networkgatewaydevices into networkgatewaydevicereference
     op.execute("INSERT INTO networkgatewaydevicereferences SELECT "
