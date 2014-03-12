@@ -271,7 +271,12 @@ class Controller(object):
 
     def _send_dhcp_notification(self, context, data, methodname):
         if cfg.CONF.dhcp_agent_notification:
-            self._dhcp_agent_notifier.notify(context, data, methodname)
+            if self._collection in data:
+                for body in data[self._collection]:
+                    item = {self._resource: body}
+                    self._dhcp_agent_notifier.notify(context, item, methodname)
+            else:
+                self._dhcp_agent_notifier.notify(context, data, methodname)
 
     def index(self, request, **kwargs):
         """Returns a list of the requested entity."""

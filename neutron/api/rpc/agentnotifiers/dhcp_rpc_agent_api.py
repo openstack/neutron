@@ -128,9 +128,9 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
                                 {'admin_state_up': admin_state_up},
                                 host)
 
-    def notify(self, context, data, methodname):
+    def notify(self, context, data, method_name):
         # data is {'key' : 'value'} with only one key
-        if methodname not in self.VALID_METHOD_NAMES:
+        if method_name not in self.VALID_METHOD_NAMES:
             return
         obj_type = data.keys()[0]
         if obj_type not in self.VALID_RESOURCES:
@@ -143,11 +143,11 @@ class DhcpAgentNotifyAPI(proxy.RpcProxy):
             network_id = obj_value['network_id']
         if not network_id:
             return
-        methodname = methodname.replace(".", "_")
-        if methodname.endswith("_delete_end"):
+        method_name = method_name.replace(".", "_")
+        if method_name.endswith("_delete_end"):
             if 'id' in obj_value:
-                self._notification(context, methodname,
+                self._notification(context, method_name,
                                    {obj_type + '_id': obj_value['id']},
                                    network_id)
         else:
-            self._notification(context, methodname, data, network_id)
+            self._notification(context, method_name, data, network_id)
