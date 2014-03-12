@@ -65,28 +65,16 @@ class NecPluginV2TestCaseBase(object):
         os.remove(self.nec_ini_file)
         self.nec_ini_file = None
 
-    def patch_remote_calls(self, use_stop=False):
+    def patch_remote_calls(self):
         self.plugin_notifier_p = mock.patch(NOTIFIER)
         self.ofc_manager_p = mock.patch(OFC_MANAGER)
         self.plugin_notifier_p.start()
         self.ofc_manager_p.start()
-        # When using mock.patch.stopall, we need to ensure
-        # stop is not used anywhere in a single test.
-        # In Neutron several tests use stop for each patched object,
-        # so we need to take care of both cases.
-        if use_stop:
-            self.addCleanup(self.plugin_notifier_p.stop)
-            self.addCleanup(self.ofc_manager_p.stop)
 
-    def setup_nec_plugin_base(self, use_stop_all=True,
-                              use_stop_each=False):
-        # If use_stop_each is set, use_stop_all cannot be set.
-        if use_stop_all and not use_stop_each:
-            self.addCleanup(mock.patch.stopall)
+    def setup_nec_plugin_base(self):
         self._set_nec_ini()
         self.addCleanup(self._clean_nec_ini)
-        # kevinbenton: stopping patches is now handled in base test class
-        self.patch_remote_calls(use_stop=False)
+        self.patch_remote_calls()
 
 
 class NecPluginV2TestCase(NecPluginV2TestCaseBase,
@@ -103,7 +91,6 @@ class NecPluginV2TestCase(NecPluginV2TestCaseBase,
         self.callback_nec.update_ports(self.context, **kwargs)
 
     def setUp(self, plugin=None, ext_mgr=None):
-        self.addCleanup(mock.patch.stopall)
 
         self._set_nec_ini()
         self.addCleanup(self._clean_nec_ini)

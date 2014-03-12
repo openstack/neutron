@@ -26,7 +26,6 @@ class NecRouterL3AgentTestCase(test_ext_route.ExtraRouteDBIntTestCase):
     _plugin_name = test_nec_plugin.PLUGIN_NAME
 
     def setUp(self):
-        self.addCleanup(mock.patch.stopall)
         mock.patch(test_nec_plugin.OFC_MANAGER).start()
         super(NecRouterL3AgentTestCase, self).setUp(self._plugin_name)
 

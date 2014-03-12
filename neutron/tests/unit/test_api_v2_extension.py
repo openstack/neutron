@@ -46,7 +46,6 @@ class ExtensionTestCase(testlib_api.WebTestCase):
                         supported_extension_aliases=None,
                         use_quota=False,
                         ):
-        self.addCleanup(mock.patch.stopall)
 
         self._resource_prefix = resource_prefix
         self._plural_mappings = plural_mappings or {}

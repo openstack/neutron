@@ -41,7 +41,6 @@ class TremaDriverTestBase(base.BaseTestCase):
         self.driver = drivers.get_driver(self.driver_name)(TestConfig)
         self.do_request = mock.patch.object(ofc_client.OFCClient,
                                             'do_request').start()
-        self.addCleanup(mock.patch.stopall)
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test."""

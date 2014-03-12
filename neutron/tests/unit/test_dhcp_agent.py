@@ -140,7 +140,6 @@ class TestDhcpAgent(base.BaseTestCase):
         self.driver_cls.return_value = self.driver
         self.mock_makedirs_p = mock.patch("os.makedirs")
         self.mock_makedirs = self.mock_makedirs_p.start()
-        self.addCleanup(mock.patch.stopall)
 
     def test_dhcp_agent_manager(self):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'

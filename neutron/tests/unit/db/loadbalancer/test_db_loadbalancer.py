@@ -352,7 +352,6 @@ class LoadBalancerPluginDbTestCase(LoadBalancerTestMixin,
         mock_lbaas_agent = mock.MagicMock()
         get_lbaas_agent_patcher.start().return_value = mock_lbaas_agent
         mock_lbaas_agent.__getitem__.return_value = {'host': 'host'}
-        self.addCleanup(mock.patch.stopall)
         self.addCleanup(cfg.CONF.reset)
 
         self._subnet_id = _subnet_id

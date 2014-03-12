@@ -132,7 +132,6 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         # Used for SVI placement when round-robin placement is disabled.
         mock.patch.object(cisco_config, 'first_device_ip',
                           new=NEXUS_IP_ADDR).start()
-        self.addCleanup(mock.patch.stopall)
 
     def _get_plugin_ref(self):
         return getattr(NeutronManager.get_plugin(),

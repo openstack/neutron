@@ -37,7 +37,6 @@ class RyuSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
 
     def setUp(self, plugin=None):
         test_sg_rpc.set_firewall_driver(test_sg_rpc.FIREWALL_HYBRID_DRIVER)
-        self.addCleanup(mock.patch.stopall)
         self.fake_ryu = fake_ryu.patch_fake_ryu_client().start()
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()

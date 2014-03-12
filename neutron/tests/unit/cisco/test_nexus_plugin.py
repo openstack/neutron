@@ -161,7 +161,6 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         # according to the preceding switch config.
         mock.patch.object(cisco_config, 'first_device_ip',
                           new=NEXUS_IP_ADDRESS).start()
-        self.addCleanup(mock.patch.stopall)
 
     def test_create_delete_networks(self):
         """Tests creation of two new Virtual Networks."""

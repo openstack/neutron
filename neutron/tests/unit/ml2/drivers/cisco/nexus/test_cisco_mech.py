@@ -64,7 +64,6 @@ class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
           driver
 
         """
-        self.addCleanup(mock.patch.stopall)
 
         # Configure the ML2 mechanism drivers and network types
         ml2_opts = {

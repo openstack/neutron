@@ -28,7 +28,6 @@ from neutron.tests import base
 class TestManager(base.BaseTestCase):
     def setUp(self):
         super(TestManager, self).setUp()
-        self.addCleanup(mock.patch.stopall)
 
         mock_conf = mock.Mock()
         mock_conf.device_driver = ['devdriver']

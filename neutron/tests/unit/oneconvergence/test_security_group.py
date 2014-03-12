@@ -43,9 +43,7 @@ class OneConvergenceSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
             self.nvsdlib = mock.Mock()
             self.nvsdlib.create_network.side_effect = side_effect
 
-        self.addCleanup(mock.patch.stopall)
         test_sg_rpc.set_firewall_driver(test_sg_rpc.FIREWALL_HYBRID_DRIVER)
-        self.addCleanup(mock.patch.stopall)
         notifier_cls = mock.patch(AGENTNOTIFIER).start()
         self.notifier = mock.Mock()
         notifier_cls.return_value = self.notifier

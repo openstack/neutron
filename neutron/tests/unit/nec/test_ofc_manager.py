@@ -55,7 +55,6 @@ class OFCManagerTestBase(base.BaseTestCase):
         # NOTE: enable_autocheck() is a feature of StubOFCDriver
         self.ofc.driver.enable_autocheck()
         self.ctx = context.get_admin_context()
-        self.addCleanup(mock.patch.stopall)
 
     def get_random_params(self):
         """create random parameters for portinfo test."""

@@ -46,7 +46,6 @@ class TestNSClient(testlib_api.WebTestCase):
         self.request_method_mock = mock.Mock()
         requests.request = self.request_method_mock
         self.testclient = self._get_nsclient()
-        self.addCleanup(mock.patch.stopall)
 
     def test_instantiate_nsclient_with_empty_uri(self):
         """Asserts that a call with empty URI will raise an exception."""

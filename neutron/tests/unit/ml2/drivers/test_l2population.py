@@ -120,7 +120,6 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         uptime_patch = mock.patch(uptime, return_value=190)
         uptime_patch.start()
 
-        self.addCleanup(mock.patch.stopall)
         self.addCleanup(db_api.clear_db)
 
     def tearDown(self):

@@ -506,7 +506,6 @@ class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
         super(SecurityGroupAgentRpcTestCase, self).setUp()
         self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
         self.agent.context = None
-        self.addCleanup(mock.patch.stopall)
         mock.patch('neutron.agent.linux.iptables_manager').start()
         self.agent.root_helper = 'sudo'
         self.agent.init_firewall(defer_refresh_firewall=defer_refresh_firewall)
@@ -1437,7 +1436,6 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             'firewall_driver',
             self.FIREWALL_DRIVER,
             group='SECURITYGROUP')
-        self.addCleanup(mock.patch.stopall)
 
         self.agent = sg_rpc.SecurityGroupAgentRpcMixin()
         self.agent.context = None

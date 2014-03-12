@@ -111,7 +111,6 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br = ovs_lib.OVSBridge(self.BR_NAME, self.root_helper)
         self.execute = mock.patch.object(
             utils, "execute", spec=utils.execute).start()
-        self.addCleanup(mock.patch.stopall)
 
     def test_vifport(self):
         """Create and stringify vif port, confirm no exceptions."""

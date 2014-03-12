@@ -47,7 +47,6 @@ class NoopDeviceDriver(device_drivers.DeviceDriver):
 class TestVPNAgent(base.BaseTestCase):
     def setUp(self):
         super(TestVPNAgent, self).setUp()
-        self.addCleanup(mock.patch.stopall)
         self.conf = cfg.CONF
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)

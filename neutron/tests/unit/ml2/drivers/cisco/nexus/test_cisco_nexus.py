@@ -167,7 +167,6 @@ class TestCiscoNexusDevice(base.BaseTestCase):
         self._cisco_mech_driver = (mech_cisco_nexus.
                                    CiscoNexusMechanismDriver())
 
-        self.addCleanup(mock.patch.stopall)
         self.addCleanup(db.clear_db)
 
     def _create_delete_port(self, port_config):

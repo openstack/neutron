@@ -41,7 +41,6 @@ class OFAAgentTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(OFAAgentTestCase, self).setUp()
-        self.addCleanup(mock.patch.stopall)
         self.fake_oflib_of = fake_oflib.patch_fake_oflib_of().start()
         self.mod_agent = importutils.import_module(self._AGENT_NAME)
         self.ryuapp = mock.Mock()

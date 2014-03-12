@@ -72,7 +72,6 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables = (iptables_manager.
                          IptablesManager(root_helper=self.root_helper))
         self.execute = mock.patch.object(self.iptables, "execute").start()
-        self.addCleanup(mock.patch.stopall)
 
     def test_binary_name(self):
         self.assertEqual(iptables_manager.binary_name,

@@ -30,7 +30,6 @@ from neutron.tests import base
 class TestHaproxyNSDriver(base.BaseTestCase):
     def setUp(self):
         super(TestHaproxyNSDriver, self).setUp()
-        self.addCleanup(mock.patch.stopall)
 
         conf = mock.Mock()
         conf.haproxy.loadbalancer_state_path = '/the/path'

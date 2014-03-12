@@ -70,8 +70,6 @@ class TestMeteringOperations(base.BaseTestCase):
         self.agent = metering_agent.MeteringAgent('my agent', cfg.CONF)
         self.driver = self.agent.metering_driver
 
-        self.addCleanup(mock.patch.stopall)
-
     def tearDown(self):
         test_notifier.NOTIFICATIONS = []
         super(TestMeteringOperations, self).tearDown()
@@ -147,8 +145,6 @@ class TestMeteringDriver(base.BaseTestCase):
         self.agent = metering_agent.MeteringAgent('my agent', cfg.CONF)
         self.driver = mock.Mock()
         self.agent.metering_driver = self.driver
-
-        self.addCleanup(mock.patch.stopall)
 
     def test_add_metering_label_with_bad_driver_impl(self):
         del self.driver.add_metering_label

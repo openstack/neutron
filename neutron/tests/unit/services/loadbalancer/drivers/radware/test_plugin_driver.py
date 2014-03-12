@@ -116,7 +116,6 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
         radware_driver.rest_client.call = self.rest_call_mock
 
         self.addCleanup(radware_driver.completion_handler.join)
-        self.addCleanup(mock.patch.stopall)
 
     def test_verify_workflow_templates(self):
         """Test the rest call failure handling by Exception raising."""

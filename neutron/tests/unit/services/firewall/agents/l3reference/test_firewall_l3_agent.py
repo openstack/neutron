@@ -48,7 +48,6 @@ class FWaasAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, FWaasHelper):
 class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
     def setUp(self):
         super(TestFwaasL3AgentRpcCallback, self).setUp()
-        self.addCleanup(mock.patch.stopall)
 
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(base_config.core_opts)

@@ -36,7 +36,6 @@ class NecSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
 
     def setUp(self, plugin=None):
         test_sg_rpc.set_firewall_driver(test_sg_rpc.FIREWALL_HYBRID_DRIVER)
-        self.addCleanup(mock.patch.stopall)
         mock.patch(NOTIFIER).start()
         mock.patch(OFC_MANAGER).start()
         self._attribute_map_bk_ = {}

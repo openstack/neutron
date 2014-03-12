@@ -154,7 +154,6 @@ class TestFirewallCallbacks(test_db_firewall.FirewallPluginDbTestCase):
 class TestFirewallAgentApi(base.BaseTestCase):
     def setUp(self):
         super(TestFirewallAgentApi, self).setUp()
-        self.addCleanup(mock.patch.stopall)
 
         self.api = fwaas_plugin.FirewallAgentApi('topic', 'host')
         self.mock_fanoutcast = mock.patch.object(self.api,

@@ -521,7 +521,6 @@ class TestMidonetInterfaceDriver(TestBase):
         config.register_root_helper(self.conf)
         self.device_exists_p = mock.patch.object(ip_lib, 'device_exists')
         self.device_exists = self.device_exists_p.start()
-        self.addCleanup(mock.patch.stopall)
         self.driver = interface.MidonetInterfaceDriver(self.conf)
         self.network_id = uuidutils.generate_uuid()
         self.port_id = uuidutils.generate_uuid()
