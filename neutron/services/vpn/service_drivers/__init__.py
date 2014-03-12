@@ -76,7 +76,7 @@ class BaseIPsecVpnAgentApi(proxy.RpcProxy):
             active=True)
         for l3_agent in l3_agents:
             LOG.debug(_('Notify agent at %(topic)s.%(host)s the message '
-                        '%(method)s'),
+                        '%(method)s %(args)s'),
                       {'topic': self.to_agent_topic,
                        'host': l3_agent.host,
                        'method': method,
@@ -86,6 +86,7 @@ class BaseIPsecVpnAgentApi(proxy.RpcProxy):
                 version=version,
                 topic='%s.%s' % (self.to_agent_topic, l3_agent.host))
 
-    def vpnservice_updated(self, context, router_id):
+    def vpnservice_updated(self, context, router_id, **kwargs):
         """Send update event of vpnservices."""
-        self._agent_notification(context, 'vpnservice_updated', router_id)
+        self._agent_notification(context, 'vpnservice_updated', router_id,
+                                 **kwargs)

@@ -426,7 +426,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         self.assertFalse(connection.is_dirty)
         self.assertEqual(u'Tunnel0', connection.tunnel)
         self.assertEqual(constants.ACTIVE, connection.last_status)
-        self.assertEqual(0, self.conn_create.call_count)
+        self.assertFalse(self.conn_create.called)
         # TODO(pcm) FUTURE - handling for update (delete/create?)
 
     def test_update_of_unknown_ipsec_connection(self):
@@ -468,7 +468,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         self.assertFalse(connection.is_dirty)
         self.assertEqual(u'Tunnel0', connection.tunnel)
         self.assertEqual(constants.ACTIVE, connection.last_status)
-        self.assertEqual(0, self.conn_create.call_count)
+        self.assertFalse(self.conn_create.called)
 
     def test_update_connection_admin_down(self):
         """Connection updated to admin down state - dirty."""
@@ -488,7 +488,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         self.assertTrue(connection.is_dirty)
         self.assertEqual(u'Tunnel0', connection.tunnel)
         self.assertEqual(constants.DOWN, connection.last_status)
-        self.assertEqual(0, self.conn_create.call_count)
+        self.assertFalse(self.conn_create.called)
 
     def test_update_missing_connection_admin_down(self):
         """Connection not present is in admin down state - nop.
@@ -506,7 +506,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         connection = self.driver.update_connection(self.context,
                                                    u'123', conn_data)
         self.assertIsNone(connection)
-        self.assertEqual(0, self.conn_create.call_count)
+        self.assertFalse(self.conn_create.called)
 
     def test_update_for_vpn_service_create(self):
         """Creation of new IPSec connection on new VPN service - create.
@@ -586,7 +586,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         self.assertFalse(connection.is_dirty)
         self.assertEqual(u'Tunnel0', connection.tunnel)
         self.assertEqual(constants.ACTIVE, connection.last_status)
-        self.assertEqual(0, self.conn_create.call_count)
+        self.assertFalse(self.conn_create.called)
 
     def test_update_service_admin_down(self):
         """VPN service updated to admin down state - dirty.

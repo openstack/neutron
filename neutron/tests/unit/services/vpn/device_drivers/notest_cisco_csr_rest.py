@@ -919,17 +919,13 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                           location)
             # Check the hard-coded items that get set as well...
             content = self.csr.get_request(location, full_url=True)
-            if csr_request.FIXED_CSCum50512:
-                self.assertEqual(requests.codes.OK, self.csr.status)
-                expected_connection = {u'kind': u'object#vpn-site-to-site',
-                                       u'ip-version': u'ipv4'}
-                expected_connection.update(connection_info)
-                expected_connection[u'local-device'][u'ip-address'] = (
-                    u'unnumbered GigabitEthernet3')
-                self.assertEqual(expected_connection, content)
-            else:
-                self.assertEqual(requests.codes.INTERNAL_SERVER_ERROR,
-                                 self.csr.status)
+            self.assertEqual(requests.codes.OK, self.csr.status)
+            expected_connection = {u'kind': u'object#vpn-site-to-site',
+                                   u'ike-profile-id': None,
+                                   u'mtu': 1500,
+                                   u'ip-version': u'ipv4'}
+            expected_connection.update(connection_info)
+            self.assertEqual(expected_connection, content)
 
     def test_create_ipsec_connection_no_pre_shared_key(self):
         """Test of connection create without associated pre-shared key.
@@ -1036,6 +1032,9 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             self.csr.create_ipsec_connection(connection_info)
+            self.addCleanup(self._remove_resource_for_test,
+                            self.csr.delete_ipsec_connection,
+                            'Tunnel%d' % tunnel_id)
             self.assertEqual(requests.codes.BAD_REQUEST, self.csr.status)
 
     def test_create_ipsec_connection_with_max_mtu(self):
@@ -1080,6 +1079,9 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             self.csr.create_ipsec_connection(connection_info)
+            self.addCleanup(self._remove_resource_for_test,
+                            self.csr.delete_ipsec_connection,
+                            'Tunnel%d' % tunnel_id)
             self.assertEqual(requests.codes.BAD_REQUEST, self.csr.status)
 
     def test_status_when_no_tunnels_exist(self):

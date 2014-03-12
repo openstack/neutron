@@ -179,7 +179,8 @@ class CiscoCsrIPsecVPNDriver(service_drivers.VpnDriver):
                 self.service_plugin.update_ipsec_site_conn_status(
                     context, ipsec_site_connection['id'], constants.ERROR)
         csr_id_map.create_tunnel_mapping(context, ipsec_site_connection)
-        self.agent_rpc.vpnservice_updated(context, vpnservice['router_id'])
+        self.agent_rpc.vpnservice_updated(context, vpnservice['router_id'],
+                                          reason='ipsec-conn-create')
 
     def update_ipsec_site_connection(
         self, context, old_ipsec_site_connection, ipsec_site_connection):
@@ -190,7 +191,8 @@ class CiscoCsrIPsecVPNDriver(service_drivers.VpnDriver):
     def delete_ipsec_site_connection(self, context, ipsec_site_connection):
         vpnservice = self.service_plugin._get_vpnservice(
             context, ipsec_site_connection['vpnservice_id'])
-        self.agent_rpc.vpnservice_updated(context, vpnservice['router_id'])
+        self.agent_rpc.vpnservice_updated(context, vpnservice['router_id'],
+                                          reason='ipsec-conn-delete')
 
     def create_ikepolicy(self, context, ikepolicy):
         pass
@@ -214,10 +216,12 @@ class CiscoCsrIPsecVPNDriver(service_drivers.VpnDriver):
         pass
 
     def update_vpnservice(self, context, old_vpnservice, vpnservice):
-        self.agent_rpc.vpnservice_updated(context, vpnservice['router_id'])
+        self.agent_rpc.vpnservice_updated(context, vpnservice['router_id'],
+                                          reason='vpn-service-update')
 
     def delete_vpnservice(self, context, vpnservice):
-        self.agent_rpc.vpnservice_updated(context, vpnservice['router_id'])
+        self.agent_rpc.vpnservice_updated(context, vpnservice['router_id'],
+                                          reason='vpn-service-delete')
 
     def get_cisco_connection_mappings(self, conn_id, context):
         """Obtain persisted mappings for IDs related to connection."""
