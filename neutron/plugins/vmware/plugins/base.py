@@ -433,9 +433,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # However, in order to not break unit tests, we need to still create
         # the DB object and return success
         if self._network_is_external(context, port_data['network_id']):
-            LOG.error(_("NSX plugin does not support regular VIF ports on "
-                        "external networks. Port %s will be down."),
-                      port_data['network_id'])
+            LOG.info(_("NSX plugin does not support regular VIF ports on "
+                       "external networks. Port %s will be down."),
+                     port_data['network_id'])
             # No need to actually update the DB state - the default is down
             return port_data
         lport = None
@@ -485,9 +485,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # does not make sense. However we cannot raise as this would break
         # unit tests.
         if self._network_is_external(context, port_data['network_id']):
-            LOG.error(_("NSX plugin does not support regular VIF ports on "
-                        "external networks. Port %s will be down."),
-                      port_data['network_id'])
+            LOG.info(_("NSX plugin does not support regular VIF ports on "
+                       "external networks. Port %s will be down."),
+                     port_data['network_id'])
             return
         nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
             context.session, self.cluster, port_data['id'])
@@ -683,9 +683,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # However, in order to not break unit tests, we need to still create
         # the DB object and return success
         if self._network_is_external(context, port_data['network_id']):
-            LOG.error(_("NSX plugin does not support regular VIF ports on "
-                        "external networks. Port %s will be down."),
-                      port_data['network_id'])
+            LOG.info(_("NSX plugin does not support regular VIF ports on "
+                       "external networks. Port %s will be down."),
+                     port_data['network_id'])
             # No need to actually update the DB state - the default is down
             return port_data
         lport = None
