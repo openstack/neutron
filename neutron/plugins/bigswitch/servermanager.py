@@ -37,7 +37,6 @@ import json
 import os
 import socket
 import ssl
-import time
 
 import eventlet
 from oslo.config import cfg
@@ -551,7 +550,7 @@ class ServerPool(object):
             # rest call and the consistency header will be added. If it
             # doesn't match, the backend will return a synchronization error
             # that will be handled by the rest_call.
-            time.sleep(polling_interval)
+            eventlet.sleep(polling_interval)
             self.rest_call('GET', HEALTH_PATH)
 
 
