@@ -17,6 +17,8 @@
 
 # @author Mark McClain (DreamHost)
 
+from oslo.config import cfg
+
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -45,11 +47,19 @@ def override_config(config, config_keys=None):
         group = None
         if not isinstance(key, basestring):
             try:
-                group, key = key
+                group, key, module_str = key
                 old_value = getattr(getattr(config, group), key, None)
             except AttributeError:
-                LOG.error(_('Skipping unknown group key: %s'), key)
-                continue
+                try:
+                    config.import_opt(key, module_str, group)
+                    old_value = getattr(getattr(config, group), key, None)
+                except (cfg.NoSuchOptError,
+                        cfg.NoSuchGroupError,
+                        AttributeError):
+                    LOG.warn(_('Key %(key)s in group %(group)s is unknown. '
+                               'It may not be defined or needed by this '
+                               'service.') % {'key': key, 'group': group})
+                    continue
         else:
             old_value = getattr(config, key, None)
         if not old_value:
@@ -77,7 +87,9 @@ def modernize_quantum_config(config):
         'router_scheduler_driver',
         'rpc_backend',
         'service_plugins',
-        ('SECURITYGROUP', 'firewall_driver'),
+        ('SECURITYGROUP',
+         'firewall_driver',
+         'neutron.agent.securitygroups_rpc'),
     ]
 
     override_config(config, config_keys)

@@ -58,7 +58,7 @@ quota_opts = [
 ]
 # Register the configuration options
 cfg.CONF.register_opts(quota_opts, 'QUOTAS')
-legacy.override_config(cfg.CONF, [('QUOTAS', 'quota_driver')])
+legacy.override_config(cfg.CONF, [('QUOTAS', 'quota_driver', 'neutron.quota')])
 
 
 class ConfDriver(object):
