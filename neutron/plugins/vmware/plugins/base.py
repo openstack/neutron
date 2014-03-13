@@ -422,7 +422,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             nsx_db.delete_neutron_nsx_port_mapping(context.session,
                                                    port_id)
             msg = (_("An exception occurred while creating the "
-                     "quantum port %s on the NSX plaform") % port_id)
+                     "neutron port %s on the NSX plaform") % port_id)
             LOG.exception(msg)
 
     def _nsx_create_port(self, context, port_data):
@@ -1176,14 +1176,14 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         except n_exc.NotFound:
             LOG.warning(_("Logical switch for network %s was not "
                           "found in NSX."), port_data['network_id'])
-            # Put port in error on quantum DB
+            # Put port in error on neutron DB
             with context.session.begin(subtransactions=True):
                 port = self._get_port(context, neutron_port_id)
                 port_data['status'] = constants.PORT_STATUS_ERROR
                 port['status'] = port_data['status']
                 context.session.add(port)
         except Exception:
-            # Port must be removed from Quantum DB
+            # Port must be removed from neutron DB
             with excutils.save_and_reraise_exception():
                 LOG.error(_("Unable to create port or set port "
                             "attachment in NSX."))
