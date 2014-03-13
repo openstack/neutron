@@ -114,7 +114,6 @@ class NsxPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.port_create_status = constants.PORT_STATUS_DOWN
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
-        self.addCleanup(mock.patch.stopall)
 
 
 class TestBasicGet(test_plugin.TestBasicGet, NsxPluginV2TestCase):

@@ -868,7 +868,6 @@ class TestNetworkGateway(NsxPluginV2TestCase,
         delete_gw_dev_patcher.start()
         self.mock_get_gw_dev_status = get_gw_dev_status_patcher.start()
 
-        self.addCleanup(mock.patch.stopall)
         super(TestNetworkGateway,
               self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 

@@ -56,7 +56,6 @@ class PFCDriverTestBase(base.BaseTestCase):
         self.driver = drivers.get_driver(self.driver)(TestConfig)
         self.do_request = mock.patch.object(ofc.OFCClient,
                                             'do_request').start()
-        self.addCleanup(mock.patch.stopall)
 
     def get_ofc_item_random_params(self):
         """create random parameters for ofc_item test."""

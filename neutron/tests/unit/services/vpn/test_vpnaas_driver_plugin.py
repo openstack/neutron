@@ -35,7 +35,6 @@ class TestVPNDriverPlugin(test_db_vpnaas.TestVpnaas,
                           test_agent_scheduler.AgentSchedulerTestMixIn,
                           test_agent_ext_plugin.AgentDBTestMixIn):
     def setUp(self):
-        self.addCleanup(mock.patch.stopall)
         self.adminContext = context.get_admin_context()
         driver_cls_p = mock.patch(
             'neutron.services.vpn.'

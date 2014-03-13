@@ -91,7 +91,6 @@ class TestNetScalerPluginDriver(TestLoadBalancerPluginBase):
             netscaler_driver.NetScalerPluginDriver(self.plugin_instance))
         self.driver = self.plugin_instance.drivers[LBAAS_PROVIDER_NAME]
         self.context = context.get_admin_context()
-        self.addCleanup(mock.patch.stopall)
 
     def test_create_vip(self):
         with contextlib.nested(

@@ -43,8 +43,6 @@ class OneConvergencePluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.nvsdlib = mock.Mock()
             self.nvsdlib.create_network.side_effect = side_effect
 
-        self.addCleanup(mock.patch.stopall)
-
         with mock.patch.object(nvsd_plugin.OneConvergencePluginV2,
                                'oneconvergence_init',
                                new=mocked_oneconvergence_init):
@@ -121,7 +119,6 @@ class TestOneConvergenceL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase):
             self.nvsdlib = mock.Mock()
             self.nvsdlib.create_network.side_effect = side_effect
 
-        self.addCleanup(mock.patch.stopall)
         ext_mgr = test_l3_plugin.L3TestExtensionManager()
 
         with mock.patch.object(nvsd_plugin.OneConvergencePluginV2,

@@ -45,8 +45,7 @@ class NecDhcpAgentNotifierTestCase(
     plugin_str = test_nec_plugin.PLUGIN_NAME
 
     def setUp(self):
-        # OvsDhcpAgentNotifierTestCase uses stop() for each mock.
-        self.setup_nec_plugin_base(use_stop_each=True)
+        self.setup_nec_plugin_base()
         super(NecDhcpAgentNotifierTestCase, self).setUp()
 
 
@@ -58,8 +57,7 @@ class NecL3AgentNotifierTestCase(
     l3_plugin = None
 
     def setUp(self):
-        # OvsDhcpAgentNotifierTestCase uses stop() for each mock.
-        self.setup_nec_plugin_base(use_stop_each=True)
+        self.setup_nec_plugin_base()
         super(NecL3AgentNotifierTestCase, self).setUp()
 
 

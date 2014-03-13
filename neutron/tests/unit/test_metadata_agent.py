@@ -337,7 +337,6 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         looping_call_p = mock.patch(
             'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
         self.looping_mock = looping_call_p.start()
-        self.addCleanup(mock.patch.stopall)
         self.cfg.CONF.metadata_proxy_socket = '/the/path'
         self.cfg.CONF.metadata_workers = 0
         self.cfg.CONF.metadata_backlog = 128

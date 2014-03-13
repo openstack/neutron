@@ -50,7 +50,6 @@ FIND_CFG_FOR_CSRS = ('neutron.services.vpn.device_drivers.cisco_ipsec.'
 class TestCiscoCsrIPSecConnection(base.BaseTestCase):
     def setUp(self):
         super(TestCiscoCsrIPSecConnection, self).setUp()
-        self.addCleanup(mock.patch.stopall)
         self.conn_info = {
             u'id': '123',
             u'status': constants.PENDING_CREATE,
@@ -194,7 +193,6 @@ class TestCiscoCsrIPsecConnectionCreateTransforms(base.BaseTestCase):
 
     def setUp(self):
         super(TestCiscoCsrIPsecConnectionCreateTransforms, self).setUp()
-        self.addCleanup(mock.patch.stopall)
         self.conn_info = {
             u'id': '123',
             u'status': constants.PENDING_CREATE,
@@ -360,7 +358,6 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
     def setUp(self):
         super(TestCiscoCsrIPsecDeviceDriverSyncStatuses, self).setUp()
-        self.addCleanup(mock.patch.stopall)
         for klass in ['neutron.openstack.common.rpc.create_connection',
                       'neutron.context.get_admin_context_without_session',
                       'neutron.openstack.common.'
@@ -1210,10 +1207,6 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
 
 class TestCiscoCsrIPsecDeviceDriverConfigLoading(base.BaseTestCase):
-
-    def setUp(self):
-        super(TestCiscoCsrIPsecDeviceDriverConfigLoading, self).setUp()
-        self.addCleanup(mock.patch.stopall)
 
     def create_tempfile(self, contents):
         (fd, path) = tempfile.mkstemp(prefix='test', suffix='.conf')

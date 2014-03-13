@@ -48,7 +48,6 @@ class TestHyperVSecurityGroupsDriver(base.BaseTestCase):
         self._mock_windows_version = mock.patch.object(utilsfactory,
                                                        'get_hypervutils')
         self._mock_windows_version.start()
-        self.addCleanup(mock.patch.stopall)
         self._driver = sg_driver.HyperVSecurityGroupsDriver()
         self._driver._utils = mock.MagicMock()
 

@@ -71,8 +71,6 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
         super(TestMeteringPlugin, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                               service_plugins=service_plugins)
 
-        self.addCleanup(mock.patch.stopall)
-
         self.uuid = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'
 
         uuid = 'neutron.openstack.common.uuidutils.generate_uuid'
@@ -278,8 +276,6 @@ class TestMeteringPluginL3AgentScheduler(
                           service_plugins=service_plugins)
 
         self.uuid = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'
-
-        self.addCleanup(mock.patch.stopall)
 
         uuid = 'neutron.openstack.common.uuidutils.generate_uuid'
         self.uuid_patch = mock.patch(uuid, return_value=self.uuid)

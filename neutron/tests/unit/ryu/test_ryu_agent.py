@@ -29,7 +29,6 @@ class RyuAgentTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(RyuAgentTestCase, self).setUp()
-        self.addCleanup(mock.patch.stopall)
         self.fake_ryu = fake_ryu.patch_fake_ryu_client().start()
         self.mod_agent = importutils.import_module(self._AGENT_NAME)
 

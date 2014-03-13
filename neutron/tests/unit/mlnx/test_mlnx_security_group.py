@@ -44,7 +44,6 @@ class MlnxSecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
                                              RESOURCE_ATTRIBUTE_MAP[item].
                                              copy())
         super(MlnxSecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
-        self.addCleanup(mock.patch.stopall)
 
     def tearDown(self):
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk_

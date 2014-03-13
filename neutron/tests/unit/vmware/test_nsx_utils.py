@@ -29,10 +29,6 @@ from neutron.tests.unit.vmware.nsxlib import base as nsx_base
 
 class NsxUtilsTestCase(base.BaseTestCase):
 
-    def setUp(self):
-        self.addCleanup(mock.patch.stopall)
-        super(NsxUtilsTestCase, self).setUp()
-
     def _mock_port_mapping_db_calls(self, ret_value):
         # Mock relevant db calls
         # This will allow for avoiding setting up the plugin
@@ -276,7 +272,6 @@ class NsxUtilsTestCase(base.BaseTestCase):
                    return_value=ret_value).start()
         mock.patch(nsx_method('add_neutron_nsx_security_group_mapping',
                               module_name='dbexts.db')).start()
-        self.addCleanup(mock.patch.stopall)
 
     def _verify_get_nsx_sec_profile_id(self, exp_sec_prof_uuid):
         # The nsxlib and db calls are  mocked, therefore the cluster

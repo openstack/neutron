@@ -408,7 +408,6 @@ class TestBase(base.BaseTestCase):
         self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
         self.safe = self.replace_p.start()
         self.execute = self.execute_p.start()
-        self.addCleanup(mock.patch.stopall)
 
 
 class TestDhcpBase(TestBase):

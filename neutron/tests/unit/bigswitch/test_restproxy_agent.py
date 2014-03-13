@@ -37,7 +37,6 @@ class BaseAgentTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(BaseAgentTestCase, self).setUp()
-        self.addCleanup(mock.patch.stopall)
         self.mod_agent = importutils.import_module(AGENTMOD)
 
 

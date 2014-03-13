@@ -25,7 +25,6 @@ from neutron.tests import base
 class TestApiCache(base.BaseTestCase):
     def setUp(self):
         super(TestApiCache, self).setUp()
-        self.addCleanup(mock.patch.stopall)
 
         self.api = api.LbaasAgentApi('topic', mock.sentinel.context, 'host')
         self.make_msg = mock.patch.object(self.api, 'make_msg').start()

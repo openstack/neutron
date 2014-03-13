@@ -90,7 +90,6 @@ class TestOvsNeutronAgent(base.BaseTestCase):
     def setUp(self):
         super(TestOvsNeutronAgent, self).setUp()
         self.addCleanup(cfg.CONF.reset)
-        self.addCleanup(mock.patch.stopall)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
@@ -765,7 +764,6 @@ class AncillaryBridgesTest(base.BaseTestCase):
     def setUp(self):
         super(AncillaryBridgesTest, self).setUp()
         self.addCleanup(cfg.CONF.reset)
-        self.addCleanup(mock.patch.stopall)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()

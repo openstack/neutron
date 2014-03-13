@@ -115,7 +115,6 @@ class ServiceRouterTest(test_nsx_plugin.L3NatTest,
 
         self.fc2.set_fake_nsx_api(self.fc)
         self.addCleanup(self.fc2.reset_all)
-        self.addCleanup(mock.patch.stopall)
 
     def tearDown(self):
         plugin = NeutronManager.get_plugin()

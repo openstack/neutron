@@ -69,7 +69,6 @@ class TunnelTest(base.BaseTestCase):
         cfg.CONF.set_override('rpc_backend',
                               'neutron.openstack.common.rpc.impl_fake')
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
-        self.addCleanup(mock.patch.stopall)
 
         self.INT_BRIDGE = 'integration_bridge'
         self.TUN_BRIDGE = 'tunnel_bridge'

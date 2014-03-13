@@ -59,7 +59,6 @@ class BigSwitchTestBase(object):
         self.callbacks_p = mock.patch(CALLBACKS)
         self.spawn_p = mock.patch(SPAWN)
         self.watch_p = mock.patch(CWATCH)
-        self.addCleanup(mock.patch.stopall)
         self.addCleanup(db.clear_db)
         self.callbacks_p.start()
         self.plugin_notifier_p.start()

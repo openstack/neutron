@@ -80,8 +80,6 @@ class TestVarmourRouter(base.BaseTestCase):
             'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
         self.looping_call_p.start()
 
-        self.addCleanup(mock.patch.stopall)
-
     def _create_router(self):
         router = varmour_router.vArmourL3NATAgent(HOSTNAME, self.conf)
         router.rest.server = FAKE_DIRECTOR

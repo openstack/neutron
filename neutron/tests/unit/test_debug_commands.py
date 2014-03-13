@@ -45,7 +45,6 @@ class TestDebugCommands(base.BaseTestCase):
         config.register_root_helper(cfg.CONF)
         cfg.CONF.set_override('use_namespaces', True)
 
-        self.addCleanup(mock.patch.stopall)
         device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists', return_value=False)
         device_exists_p.start()

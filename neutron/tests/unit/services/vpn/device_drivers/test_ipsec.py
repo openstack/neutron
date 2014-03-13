@@ -42,7 +42,6 @@ FAKE_VPN_SERVICE = {
 class TestIPsecDeviceDriver(base.BaseTestCase):
     def setUp(self, driver=ipsec_driver.OpenSwanDriver):
         super(TestIPsecDeviceDriver, self).setUp()
-        self.addCleanup(mock.patch.stopall)
 
         for klass in [
             'os.makedirs',
