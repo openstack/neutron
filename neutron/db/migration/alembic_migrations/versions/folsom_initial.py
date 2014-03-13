@@ -459,7 +459,7 @@ def upgrade_cisco():
         'nexusport_bindings',
         sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column('port_id', sa.String(255)),
-        sa.Column('vlan_id', sa.Integer(255)),
+        sa.Column('vlan_id', sa.Integer()),
         sa.PrimaryKeyConstraint('id')
     )
 
