@@ -96,7 +96,7 @@ class ServiceRouterTest(test_nsx_plugin.L3NatTest,
 
     def setUp(self, ext_mgr=None, service_plugins=None):
         cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
-        cfg.CONF.set_override('task_status_check_interval', 100, group="vcns")
+        cfg.CONF.set_override('task_status_check_interval', 200, group="vcns")
 
         # vcns does not support duplicated router name, ignore router name
         # validation for unit-test cases
