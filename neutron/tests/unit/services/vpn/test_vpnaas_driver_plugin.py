@@ -58,6 +58,11 @@ class TestVPNDriverPlugin(test_db_vpnaas.TestVpnaas,
         self.driver.delete_vpnservice.assert_called_once_with(
             mock.ANY, mock.ANY)
 
+    def test_update_vpnservice(self, **extras):
+        super(TestVPNDriverPlugin, self).test_update_vpnservice()
+        self.driver.update_vpnservice.assert_called_once_with(
+            mock.ANY, mock.ANY, mock.ANY)
+
     @contextlib.contextmanager
     def vpnservice_set(self):
         """Test case to create a ipsec_site_connection."""

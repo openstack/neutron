@@ -77,6 +77,8 @@ STATUS_MAP = {
     'unrouted': constants.DOWN
 }
 
+IPSEC_CONNS = 'ipsec_site_connections'
+
 
 def _get_template(template_file):
     global JINJA_ENV
@@ -622,14 +624,32 @@ class IPsecDriver(device_drivers.DeviceDriver):
             'ipsec_site_connections': copy.deepcopy(process.connection_status)
         }
 
+    def update_downed_connections(self, process_id, new_status):
+        """Update info to be reported, if connections just went down.
+
+        If there is no longer any information for a connection (because it
+        has been removed (e.g. due to an admin down of VPN service or IPSec
+        connection), but there was previous status information for the
+        connection, mark the connection as down for reporting purposes.
+        """
+        if process_id in self.process_status_cache:
+            for conn in self.process_status_cache[process_id][IPSEC_CONNS]:
+                if conn not in new_status[IPSEC_CONNS]:
+                    new_status[IPSEC_CONNS][conn] = {
+                        'status': constants.DOWN,
+                        'updated_pending_status': True
+                    }
+
     def report_status(self, context):
         status_changed_vpn_services = []
         for process in self.processes.values():
             previous_status = self.get_process_status_cache(process)
             if self.is_status_updated(process, previous_status):
                 new_status = self.copy_process_status(process)
-                self.process_status_cache[process.id] = new_status
+                self.update_downed_connections(process.id, new_status)
                 status_changed_vpn_services.append(new_status)
+                self.process_status_cache[process.id] = (
+                    self.copy_process_status(process))
                 # We need unset updated_pending status after it
                 # is reported to the server side
                 self.unset_updated_pending_status(process)
