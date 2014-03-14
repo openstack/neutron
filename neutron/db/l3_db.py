@@ -237,7 +237,10 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if vpnservice:
                 vpnservice.check_router_in_use(context, id)
 
-            # delete any gw port
+            context.session.delete(router)
+
+            # Delete the gw port after the router has been removed to
+            # avoid a constraint violation.
             device_filter = {'device_id': [id],
                              'device_owner': [DEVICE_OWNER_ROUTER_GW]}
             ports = self._core_plugin.get_ports(context.elevated(),
@@ -246,7 +249,6 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 self._core_plugin._delete_port(context.elevated(),
                                                ports[0]['id'])
 
-            context.session.delete(router)
         self.l3_rpc_notifier.router_deleted(context, id)
 
     def get_router(self, context, id, fields=None):
