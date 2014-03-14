@@ -371,6 +371,32 @@ class TestIpWrapper(base.BaseTestCase):
                 self.assertNotIn(mock.call().delete('ns'),
                                  ip_ns_cmd_cls.mock_calls)
 
+    def test_add_vxlan_valid_port_length(self):
+        retval = ip_lib.IPWrapper('sudo').add_vxlan('vxlan0', 'vni0',
+                                                    group='group0',
+                                                    dev='dev0', ttl='ttl0',
+                                                    tos='tos0',
+                                                    local='local0', proxy=True,
+                                                    port=('1', '2'))
+        self.assertIsInstance(retval, ip_lib.IPDevice)
+        self.assertEqual(retval.name, 'vxlan0')
+        self.execute.assert_called_once_with('', 'link',
+                                             ['add', 'vxlan0', 'type',
+                                              'vxlan', 'id', 'vni0', 'group',
+                                              'group0', 'dev', 'dev0',
+                                              'ttl', 'ttl0', 'tos', 'tos0',
+                                              'local', 'local0', 'proxy',
+                                              'port', '1', '2'],
+                                             'sudo', None)
+
+    def test_add_vxlan_invalid_port_length(self):
+        wrapper = ip_lib.IPWrapper('sudo')
+        self.assertRaises(exceptions.NetworkVxlanPortRangeError,
+                          wrapper.add_vxlan, 'vxlan0', 'vni0', group='group0',
+                          dev='dev0', ttl='ttl0', tos='tos0',
+                          local='local0', proxy=True,
+                          port=('1', '2', '3'))
+
     def test_add_device_to_namespace(self):
         dev = mock.Mock()
         ip_lib.IPWrapper('sudo', 'ns').add_device_to_namespace(dev)
