@@ -155,6 +155,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                                       {'vip': vip_data})
 
     def test_create_vip(self):
+        self.skipTest("Skipping test till bug 1288312 is fixed")
+
         self.rest_call_mock.reset_mock()
         with self.subnet() as subnet:
             with self.pool(provider='radware') as pool:
