@@ -19,7 +19,7 @@ from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String
 from sqlalchemy import orm
 
 from neutron.db import l3_db
-from neutron.db.models_v2 import model_base
+from neutron.db import model_base
 
 
 class TzNetworkBinding(model_base.BASEV2):
