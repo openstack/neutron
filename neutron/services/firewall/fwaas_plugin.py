@@ -225,7 +225,8 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
         LOG.debug(_("create_firewall() called"))
         tenant_id = self._get_tenant_id_for_create(context,
                                                    firewall['firewall'])
-        fw_count = self.get_firewalls_count(context)
+        fw_count = self.get_firewalls_count(context,
+                                            filters={'tenant_id': [tenant_id]})
         if fw_count:
             raise FirewallCountExceeded(tenant_id=tenant_id)
         firewall['firewall']['status'] = const.PENDING_CREATE

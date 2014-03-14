@@ -153,9 +153,10 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def _create_firewall_policy(self, fmt, name, description, shared,
                                 firewall_rules, audited,
                                 expected_res_status=None, **kwargs):
+        tenant_id = kwargs.get('tenant_id', self._tenant_id)
         data = {'firewall_policy': {'name': name,
                                     'description': description,
-                                    'tenant_id': self._tenant_id,
+                                    'tenant_id': tenant_id,
                                     'shared': shared,
                                     'firewall_rules': firewall_rules,
                                     'audited': audited}}
@@ -199,8 +200,9 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                               destination_ip_address, source_port,
                               destination_port, action, enabled,
                               expected_res_status=None, **kwargs):
+        tenant_id = kwargs.get('tenant_id', self._tenant_id)
         data = {'firewall_rule': {'name': name,
-                                  'tenant_id': self._tenant_id,
+                                  'tenant_id': tenant_id,
                                   'shared': shared,
                                   'protocol': protocol,
                                   'ip_version': ip_version,
@@ -248,11 +250,12 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def _create_firewall(self, fmt, name, description, firewall_policy_id,
                          admin_state_up=True, expected_res_status=None,
                          **kwargs):
+        tenant_id = kwargs.get('tenant_id', self._tenant_id)
         data = {'firewall': {'name': name,
                              'description': description,
                              'firewall_policy_id': firewall_policy_id,
                              'admin_state_up': admin_state_up,
-                             'tenant_id': self._tenant_id}}
+                             'tenant_id': tenant_id}}
 
         firewall_req = self.new_create_request('firewalls', data, fmt)
         firewall_res = firewall_req.get_response(self.ext_api)

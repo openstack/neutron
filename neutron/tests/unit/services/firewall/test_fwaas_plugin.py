@@ -200,6 +200,13 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
                 firewall_policy_id=None, admin_state_up=True)
             self.assertEqual(res.status_int, 500)
 
+    def test_create_firewall_admin_not_affected_by_other_tenant(self):
+        # Create fw with admin after creating fw with other tenant
+        with self.firewall(tenant_id='other-tenant') as fw1:
+            with self.firewall() as fw2:
+                self.assertEqual('other-tenant', fw1['firewall']['tenant_id'])
+                self.assertEqual(self._tenant_id, fw2['firewall']['tenant_id'])
+
     def test_update_firewall(self):
         ctx = context.get_admin_context()
         name = "new_firewall1"
