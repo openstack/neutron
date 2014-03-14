@@ -139,6 +139,10 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
             new_status = (q_const.PORT_STATUS_BUILD if port.admin_state_up
                           else q_const.PORT_STATUS_DOWN)
             if port.status != new_status:
+                plugin = manager.NeutronManager.get_plugin()
+                plugin.update_port_status(rpc_context,
+                                          port_id,
+                                          new_status)
                 port.status = new_status
             entry = {'device': device,
                      'network_id': port.network_id,
