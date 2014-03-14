@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-13 06:28+0000\n"
+"POT-Creation-Date: 2014-03-14 06:25+0000\n"
 "PO-Revision-Date: 2013-05-22 03:25+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) "
@@ -370,8 +370,8 @@ msgstr "無法將主體解除序列化為提供的內容類型"
 msgid "You must implement __call__"
 msgstr "必須實作 __call__"
 
-#: neutron/wsgi.py:1025 neutron/api/v2/base.py:179 neutron/api/v2/base.py:306
-#: neutron/api/v2/base.py:439 neutron/api/v2/base.py:490
+#: neutron/wsgi.py:1025 neutron/api/v2/base.py:182 neutron/api/v2/base.py:309
+#: neutron/api/v2/base.py:445 neutron/api/v2/base.py:498
 #: neutron/extensions/l3agentscheduler.py:51
 #: neutron/extensions/l3agentscheduler.py:89
 msgid "The resource could not be found."
@@ -1457,7 +1457,7 @@ msgid ""
 " and '%(desc)s'"
 msgstr "對於 sort_dir 來說，%(invalid_dirs)s 是無效值，有效值為 '%(asc)s' 及 '%(desc)s'"
 
-#: neutron/api/api_common.py:317 neutron/api/v2/base.py:562
+#: neutron/api/api_common.py:317 neutron/api/v2/base.py:572
 #, python-format
 msgid "Unable to find '%s' in request body"
 msgstr "在要求內文中找不到 '%s'"
@@ -1809,88 +1809,88 @@ msgstr "'%s' 不是整數"
 msgid "'%s' is not of the form <key>=[value]"
 msgstr "'%s' 的格式不是 <key>=[value]"
 
-#: neutron/api/v2/base.py:84
+#: neutron/api/v2/base.py:87
 msgid "Native pagination depend on native sorting"
 msgstr "原生分頁相依於原生排序"
 
-#: neutron/api/v2/base.py:87
+#: neutron/api/v2/base.py:90
 msgid "Allow sorting is enabled because native pagination requires native sorting"
 msgstr "已啟用容許排序，因為原生分頁需要原生排序"
 
-#: neutron/api/v2/base.py:140
+#: neutron/api/v2/base.py:143
 #, python-format
 msgid ""
 "The resource %(resource)s was not found in the RESOURCE_ATTRIBUTE_MAP; "
 "unable to perform authZ check for attribute %(attr)s"
 msgstr ""
 
-#: neutron/api/v2/base.py:146
+#: neutron/api/v2/base.py:149
 #, python-format
 msgid ""
 "Policy rule:%(action)s not found. Assuming no authZ check is defined for "
 "%(attr)s"
 msgstr ""
 
-#: neutron/api/v2/base.py:332
+#: neutron/api/v2/base.py:335
 #, python-format
 msgid "Unable to undo add for %(resource)s %(id)s"
 msgstr "無法復原新增 %(resource)s %(id)s"
 
-#: neutron/api/v2/base.py:461
+#: neutron/api/v2/base.py:468
 #, python-format
 msgid "Invalid format: %s"
 msgstr "無效的格式：%s"
 
-#: neutron/api/v2/base.py:516
+#: neutron/api/v2/base.py:526
 msgid ""
 "Specifying 'tenant_id' other than authenticated tenant in request "
 "requires admin privileges"
 msgstr "在要求中指定已鑑別 Tenant 之外的 'tenant_id' 時需要管理者專用權"
 
-#: neutron/api/v2/base.py:524
+#: neutron/api/v2/base.py:534
 #, fuzzy
 msgid "Running without keystone AuthN requires  that tenant_id is specified"
 msgstr "在沒有金鑰儲存庫 AuthN 的情況下執行需要指定 tenant_id"
 
-#: neutron/api/v2/base.py:542
+#: neutron/api/v2/base.py:552
 msgid "Resource body required"
 msgstr "需要資源主體"
 
-#: neutron/api/v2/base.py:553
+#: neutron/api/v2/base.py:563
 msgid "Bulk operation not supported"
 msgstr "不支援主體作業"
 
-#: neutron/api/v2/base.py:557
+#: neutron/api/v2/base.py:567
 msgid "Resources required"
 msgstr "需要資源"
 
-#: neutron/api/v2/base.py:573
+#: neutron/api/v2/base.py:583
 #, python-format
 msgid "Failed to parse request. Required attribute '%s' not specified"
 msgstr "無法剖析要求。未指定必要屬性 '%s'"
 
-#: neutron/api/v2/base.py:580
+#: neutron/api/v2/base.py:590
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr "POST 中不接受屬性 '%s'"
 
-#: neutron/api/v2/base.py:585
+#: neutron/api/v2/base.py:595
 #, python-format
 msgid "Cannot update read-only attribute %s"
 msgstr "無法更新唯讀屬性 %s"
 
-#: neutron/api/v2/base.py:603
+#: neutron/api/v2/base.py:613
 #, python-format
 msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr "%(attr)s 的輸入無效。原因：%(reason)s。"
 
-#: neutron/api/v2/base.py:612 neutron/extensions/allowedaddresspairs.py:61
+#: neutron/api/v2/base.py:622 neutron/extensions/allowedaddresspairs.py:61
 #: neutron/extensions/multiprovidernet.py:53
 #, python-format
 msgid "Unrecognized attribute(s) '%s'"
 msgstr "無法辨識屬性 '%s'"
 
-#: neutron/api/v2/base.py:631
+#: neutron/api/v2/base.py:641
 #, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr "Tenant %(tenant_id)s 不可在此網路上建立 %(resource)s"
@@ -1998,27 +1998,69 @@ msgstr ""
 msgid "Ensure that configured gateway is on subnet"
 msgstr "請確保所配置的閘道位於子網路上"
 
-#: neutron/common/config.py:89
+#: neutron/common/config.py:85
+msgid "Send notification to nova when port status changes"
+msgstr ""
+
+#: neutron/common/config.py:87
+msgid ""
+"Send notification to nova when port data (fixed_ips/floatingip) changes "
+"so nova can update its cache."
+msgstr ""
+
+#: neutron/common/config.py:91
+msgid "URL for connection to nova"
+msgstr ""
+
+#: neutron/common/config.py:93
+msgid "Username for connecting to nova in admin context"
+msgstr ""
+
+#: neutron/common/config.py:95
+msgid "Password for connection to nova in admin context"
+msgstr ""
+
+#: neutron/common/config.py:98
+msgid "The uuid of the admin nova tenant"
+msgstr ""
+
+#: neutron/common/config.py:101
+msgid "Authorization URL for connecting to nova in admin context"
+msgstr ""
+
+#: neutron/common/config.py:104
+msgid ""
+"Name of nova region to use. Useful if keystone manages more than one "
+"region."
+msgstr ""
+
+#: neutron/common/config.py:107
+msgid ""
+"Number of seconds between sending events to nova if there are any events "
+"to send."
+msgstr ""
+
+#: neutron/common/config.py:114
 msgid ""
 "Where to store Neutron state files. This directory must be writable by "
 "the agent."
 msgstr ""
 
-#: neutron/common/config.py:115
+#: neutron/common/config.py:140
 #, python-format
 msgid "Base MAC: %s"
 msgstr "基本 MAC：%s"
 
-#: neutron/common/config.py:126
+#: neutron/common/config.py:151
 msgid "Logging enabled!"
 msgstr "已啟用記載！"
 
-#: neutron/common/config.py:142
+#: neutron/common/config.py:167
 #, python-format
 msgid "Config paste file: %s"
 msgstr "配置貼上檔案：%s"
 
-#: neutron/common/config.py:147
+#: neutron/common/config.py:172
 #, python-format
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr "無法從配置檔 %(config_path)s 載入 %(app_name)s。"
@@ -2402,164 +2444,164 @@ msgstr "資料庫登錄異常狀況：%s"
 msgid "Database exception"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:132
+#: neutron/db/db_base_plugin_v2.py:134
 msgid "Cannot create resource for another tenant"
 msgstr "無法給另一個 Tenant 建立資源"
 
-#: neutron/db/db_base_plugin_v2.py:290
+#: neutron/db/db_base_plugin_v2.py:302
 #, python-format
 msgid "Generated mac for network %(network_id)s is %(mac_address)s"
 msgstr "給網路 %(network_id)s 產生的 MAC 位址是 %(mac_address)s"
 
-#: neutron/db/db_base_plugin_v2.py:296
+#: neutron/db/db_base_plugin_v2.py:308
 #, python-format
 msgid "Generated mac %(mac_address)s exists. Remaining attempts %(max_retries)s."
 msgstr "產生的 MAC 位址 %(mac_address)s 已存在。還可以嘗試 %(max_retries)s 次。"
 
-#: neutron/db/db_base_plugin_v2.py:300
+#: neutron/db/db_base_plugin_v2.py:312
 #, python-format
 msgid "Unable to generate mac address after %s attempts"
 msgstr "嘗試 %s 次之後仍無法產生 MAC 位址"
 
-#: neutron/db/db_base_plugin_v2.py:318
+#: neutron/db/db_base_plugin_v2.py:330
 #, python-format
 msgid "Delete allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 msgstr "刪除所配置的 IP %(ip_address)s (%(network_id)s/%(subnet_id)s)"
 
-#: neutron/db/db_base_plugin_v2.py:350
+#: neutron/db/db_base_plugin_v2.py:362
 #, python-format
 msgid "All IPs from subnet %(subnet_id)s (%(cidr)s) allocated"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:355
+#: neutron/db/db_base_plugin_v2.py:367
 #, python-format
 msgid "Allocated IP - %(ip_address)s from %(first_ip)s to %(last_ip)s"
 msgstr "已配置 IP - %(ip_address)s（從 %(first_ip)s 到 %(last_ip)s）"
 
-#: neutron/db/db_base_plugin_v2.py:362
+#: neutron/db/db_base_plugin_v2.py:374
 msgid "No more free IP's in slice. Deleting allocation pool."
 msgstr "截塊中沒有更多的可用 IP。正在刪除配置儲存區。"
 
-#: neutron/db/db_base_plugin_v2.py:381
+#: neutron/db/db_base_plugin_v2.py:393
 #, python-format
 msgid "Rebuilding availability ranges for subnet %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:513
+#: neutron/db/db_base_plugin_v2.py:525
 msgid "IP allocation requires subnet_id or ip_address"
 msgstr "IP 配置需要 subnet_id 或 ip_address"
 
-#: neutron/db/db_base_plugin_v2.py:525
+#: neutron/db/db_base_plugin_v2.py:537
 #, python-format
 msgid "IP address %s is not a valid IP for the defined networks subnets"
 msgstr "IP 位址 %s 不是所定義網路子網路的有效 IP"
 
-#: neutron/db/db_base_plugin_v2.py:531
+#: neutron/db/db_base_plugin_v2.py:543
 #, python-format
 msgid ""
 "Failed to create port on network %(network_id)s, because fixed_ips "
 "included invalid subnet %(subnet_id)s"
 msgstr "無法在網路 %(network_id)s 上建立埠，因為 fixed_ips 包含無效的子網路 %(subnet_id)s"
 
-#: neutron/db/db_base_plugin_v2.py:551
+#: neutron/db/db_base_plugin_v2.py:563
 #, python-format
 msgid "IP address %s is not a valid IP for the defined subnet"
 msgstr "IP 位址 %s 不是所定義子網路的有效 IP"
 
-#: neutron/db/db_base_plugin_v2.py:560 neutron/db/db_base_plugin_v2.py:593
+#: neutron/db/db_base_plugin_v2.py:572 neutron/db/db_base_plugin_v2.py:605
 msgid "Exceeded maximim amount of fixed ips per port"
 msgstr "已超出每個埠的固定 IP 數目上限"
 
-#: neutron/db/db_base_plugin_v2.py:608
+#: neutron/db/db_base_plugin_v2.py:620
 #, python-format
 msgid "Port update. Hold %s"
 msgstr "埠更新。保留 %s"
 
-#: neutron/db/db_base_plugin_v2.py:615
+#: neutron/db/db_base_plugin_v2.py:627
 #, python-format
 msgid "Port update. Adding %s"
 msgstr "埠更新。正在新增 %s"
 
-#: neutron/db/db_base_plugin_v2.py:670
+#: neutron/db/db_base_plugin_v2.py:682
 #, python-format
 msgid ""
 "Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps"
 " with another subnet"
 msgstr "所要求的網路 %(network_id)s 子網路 (CIDR %(cidr)s) 與另一個子網路重疊"
 
-#: neutron/db/db_base_plugin_v2.py:675
+#: neutron/db/db_base_plugin_v2.py:687
 #, python-format
 msgid ""
 "Validation for CIDR: %(new_cidr)s failed - overlaps with subnet "
 "%(subnet_id)s (CIDR: %(cidr)s)"
 msgstr "驗證 CIDR %(new_cidr)s 失敗 - 與子網路 %(subnet_id)s (CIDR %(cidr)s) 重疊"
 
-#: neutron/db/db_base_plugin_v2.py:695
+#: neutron/db/db_base_plugin_v2.py:707
 msgid "Performing IP validity checks on allocation pools"
 msgstr "正在對配置儲存區執行 IP 驗證檢查"
 
-#: neutron/db/db_base_plugin_v2.py:702
+#: neutron/db/db_base_plugin_v2.py:714
 #, python-format
 msgid "Found invalid IP address in pool: %(start)s - %(end)s:"
 msgstr "在儲存區中發現無效的 IP 位址：%(start)s - %(end)s："
 
-#: neutron/db/db_base_plugin_v2.py:709
+#: neutron/db/db_base_plugin_v2.py:721
 msgid "Specified IP addresses do not match the subnet IP version"
 msgstr "指定的 IP 位址與子網路 IP 版本不符"
 
-#: neutron/db/db_base_plugin_v2.py:713
+#: neutron/db/db_base_plugin_v2.py:725
 #, python-format
 msgid "Start IP (%(start)s) is greater than end IP (%(end)s)"
 msgstr "起始 IP (%(start)s) 大於結尾 IP (%(end)s)"
 
-#: neutron/db/db_base_plugin_v2.py:718
+#: neutron/db/db_base_plugin_v2.py:730
 #, python-format
 msgid "Found pool larger than subnet CIDR:%(start)s - %(end)s"
 msgstr "找到的儲存區大於子網路 CIDR：%(start)s - %(end)s"
 
-#: neutron/db/db_base_plugin_v2.py:731
+#: neutron/db/db_base_plugin_v2.py:743
 msgid "Checking for overlaps among allocation pools and gateway ip"
 msgstr "正在檢查配置儲存區及閘道 IP 之間是否有重疊"
 
-#: neutron/db/db_base_plugin_v2.py:742
+#: neutron/db/db_base_plugin_v2.py:754
 #, python-format
 msgid "Found overlapping ranges: %(l_range)s and %(r_range)s"
 msgstr "發現重疊的範圍：%(l_range)s 及 %(r_range)s"
 
-#: neutron/db/db_base_plugin_v2.py:755 neutron/db/db_base_plugin_v2.py:759
+#: neutron/db/db_base_plugin_v2.py:767 neutron/db/db_base_plugin_v2.py:771
 #, python-format
 msgid "Invalid route: %s"
 msgstr "無效的路徑：%s"
 
-#: neutron/db/db_base_plugin_v2.py:880
+#: neutron/db/db_base_plugin_v2.py:892
 #, python-format
 msgid "An exception occurred while creating the %(resource)s:%(item)s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:977
+#: neutron/db/db_base_plugin_v2.py:989
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s '%(addr)s' 與 ip_version '%(ip_version)s' 不符"
 
-#: neutron/db/db_base_plugin_v2.py:1001
+#: neutron/db/db_base_plugin_v2.py:1013
 msgid "Gateway is not valid on subnet"
 msgstr "閘道在子網路上無效"
 
-#: neutron/db/db_base_plugin_v2.py:1021 neutron/db/db_base_plugin_v2.py:1035
+#: neutron/db/db_base_plugin_v2.py:1033 neutron/db/db_base_plugin_v2.py:1047
 msgid "new subnet"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1028
+#: neutron/db/db_base_plugin_v2.py:1040
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr "剖析 DNS 位址 %s 時發生錯誤"
 
-#: neutron/db/db_base_plugin_v2.py:1290
+#: neutron/db/db_base_plugin_v2.py:1302
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr "已配置 IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 
-#: neutron/db/db_base_plugin_v2.py:1382
+#: neutron/db/db_base_plugin_v2.py:1394
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr "%(address)s (%(subnet_id)s) 未回收"
@@ -3268,11 +3310,11 @@ msgid ""
 "external network %(net_id)s is required by one or more floating IPs."
 msgstr "無法更新路由器 %(router_id)s 的閘道，因為一個以上的浮動 IP 需要外部網路 %(net_id)s 的閘道。"
 
-#: neutron/extensions/l3.py:137
+#: neutron/extensions/l3.py:138
 msgid "Number of routers allowed per tenant. A negative value means unlimited."
 msgstr ""
 
-#: neutron/extensions/l3.py:141
+#: neutron/extensions/l3.py:142
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means "
 "unlimited."
@@ -3633,6 +3675,46 @@ msgstr ""
 #: neutron/extensions/vpnaas.py:89
 #, python-format
 msgid "Router %(router_id)s has no external network gateway set"
+msgstr ""
+
+#: neutron/notifiers/nova.py:126
+msgid "device_id is not set on port yet."
+msgstr ""
+
+#: neutron/notifiers/nova.py:130
+msgid "Port ID not set! Nova will not be notified of port status change."
+msgstr ""
+
+#: neutron/notifiers/nova.py:155
+#, python-format
+msgid ""
+"Ignoring state change previous_port_status: %(pre_status)s "
+"current_port_status: %(cur_status)s port_id %(id)s"
+msgstr ""
+
+#: neutron/notifiers/nova.py:183
+#, python-format
+msgid "Sending events: %s"
+msgstr ""
+
+#: neutron/notifiers/nova.py:188
+#, python-format
+msgid "Failed to notify nova on events: %s"
+msgstr ""
+
+#: neutron/notifiers/nova.py:192 neutron/notifiers/nova.py:208
+#, python-format
+msgid "Error response returned from nova: %s"
+msgstr ""
+
+#: neutron/notifiers/nova.py:203
+#, python-format
+msgid "Nova event: %s returned with failed status"
+msgstr ""
+
+#: neutron/notifiers/nova.py:206
+#, python-format
+msgid "Nova event response: %s"
 msgstr ""
 
 #: neutron/openstack/common/eventlet_backdoor.py:140
@@ -6255,6 +6337,8 @@ msgstr ""
 
 #: neutron/plugins/embrane/base_plugin.py:109
 #: neutron/plugins/embrane/agent/dispatcher.py:134
+#: neutron/services/loadbalancer/drivers/embrane/poller.py:56
+#: neutron/services/loadbalancer/drivers/embrane/agent/dispatcher.py:108
 msgid "Unhandled exception occurred"
 msgstr ""
 
@@ -6285,14 +6369,17 @@ msgid "Interface %s not found in the heleos back-end,likely already deleted"
 msgstr ""
 
 #: neutron/plugins/embrane/common/config.py:26
+#: neutron/services/loadbalancer/drivers/embrane/config.py:25
 msgid "ESM management root address"
 msgstr ""
 
 #: neutron/plugins/embrane/common/config.py:28
+#: neutron/services/loadbalancer/drivers/embrane/config.py:27
 msgid "ESM admin username."
 msgstr ""
 
 #: neutron/plugins/embrane/common/config.py:31
+#: neutron/services/loadbalancer/drivers/embrane/config.py:30
 msgid "ESM admin password."
 msgstr ""
 
@@ -6317,14 +6404,17 @@ msgid "Dummy user traffic Security Zone id"
 msgstr ""
 
 #: neutron/plugins/embrane/common/config.py:43
+#: neutron/services/loadbalancer/drivers/embrane/config.py:42
 msgid "Shared resource pool id"
 msgstr ""
 
 #: neutron/plugins/embrane/common/config.py:45
+#: neutron/services/loadbalancer/drivers/embrane/config.py:49
 msgid "Define if the requests have run asynchronously or not"
 msgstr ""
 
 #: neutron/plugins/embrane/common/constants.py:51
+#: neutron/services/loadbalancer/drivers/embrane/constants.py:50
 #, python-format
 msgid "Dva is pending for the following reason: %s"
 msgstr ""
@@ -6336,6 +6426,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/embrane/common/constants.py:54
+#: neutron/services/loadbalancer/drivers/embrane/constants.py:53
 #, python-format
 msgid "Dva seems to be broken for reason %s"
 msgstr ""
@@ -6346,16 +6437,19 @@ msgid "Dva interface seems to be broken for reason %s"
 msgstr ""
 
 #: neutron/plugins/embrane/common/constants.py:57
+#: neutron/services/loadbalancer/drivers/embrane/constants.py:54
 #, python-format
 msgid "Dva creation failed reason %s"
 msgstr ""
 
 #: neutron/plugins/embrane/common/constants.py:58
+#: neutron/services/loadbalancer/drivers/embrane/constants.py:55
 #, python-format
 msgid "Dva creation is in pending state for reason %s"
 msgstr ""
 
 #: neutron/plugins/embrane/common/constants.py:60
+#: neutron/services/loadbalancer/drivers/embrane/constants.py:57
 #, python-format
 msgid "Dva configuration failed for reason %s"
 msgstr ""
@@ -6370,6 +6464,11 @@ msgstr ""
 #: neutron/plugins/embrane/common/exceptions.py:24
 #, python-format
 msgid "An unexpected error occurred:%(err_msg)s"
+msgstr ""
+
+#: neutron/plugins/embrane/common/exceptions.py:28
+#, python-format
+msgid "%(err_msg)s"
 msgstr ""
 
 #: neutron/plugins/embrane/common/utils.py:47
@@ -14693,6 +14792,74 @@ msgid ""
 "Unable to find port %s to unplug.  This can occur when the Vip has been "
 "deleted first."
 msgstr "找不到要拔除的埠 %s。如果先刪除 VIP，則可能會發生此情況。"
+
+#: neutron/services/loadbalancer/drivers/embrane/config.py:32
+msgid "Load Balancer image id (Embrane LB)"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/config.py:34
+msgid "In band Security Zone id for LBs"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/config.py:36
+msgid "Out of band Security Zone id for LBs"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/config.py:38
+msgid "Management Security Zone id for LBs"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/config.py:40
+msgid "Dummy user traffic Security Zone id for LBs"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/config.py:44
+msgid "choose LB image flavor to use, accepted values: small, medium"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/config.py:47
+msgid "resource synchronization interval in seconds"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/constants.py:51
+#, python-format
+msgid "%s, probably was cancelled through the heleos UI"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/constants.py:58
+#, python-format
+msgid ""
+"Failed to delete the backend load balancer for reason %s. Please remove "
+"it manually through the heleos UI"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/constants.py:61
+#, python-format
+msgid ""
+"No subnet is associated to member %s (required to identify the proper "
+"load balancer port)"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/driver.py:88
+msgid "Connection limit is not supported by Embrane LB"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/driver.py:94
+#, python-format
+msgid "Session persistence %s not supported by Embrane LBaaS"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/driver.py:132
+#, python-format
+msgid "Subnet assigned to pool %s doesn't exist, backend port can't be created"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/embrane/agent/lb_operations.py:111
+#, python-format
+msgid ""
+"The load balancer %s had no physical representation, likely already "
+"deleted"
+msgstr ""
 
 #: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:48
 msgid "Location to store config and state files"
