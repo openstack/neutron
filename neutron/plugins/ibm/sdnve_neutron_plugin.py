@@ -107,6 +107,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     external_net_db.External_net_db_mixin,
                     portbindings_db.PortBindingMixin,
                     l3_gwmode_db.L3_NAT_db_mixin,
+                    agents_db.AgentDbMixin,
                     ):
 
     '''
@@ -117,7 +118,8 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     __native_pagination_support = False
     __native_sorting_support = False
 
-    supported_extension_aliases = ["binding", "router", "external-net"]
+    supported_extension_aliases = ["binding", "router", "external-net",
+                                   "agent"]
 
     def __init__(self, configfile=None):
         self.base_binding_dict = {

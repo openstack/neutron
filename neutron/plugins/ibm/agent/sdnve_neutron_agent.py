@@ -27,11 +27,13 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as logging_config
+from neutron.common import constants as n_const
 from neutron.common import legacy
 from neutron.common import topics
-from neutron.common import utils as q_utils
+from neutron.common import utils as n_utils
 from neutron import context
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.ibm.common import config  # noqa
 from neutron.plugins.ibm.common import constants
@@ -76,6 +78,17 @@ class SdnveNeutronAgent():
         self.reset_br = reset_br
         self.out_of_band = out_of_band
 
+        self.agent_state = {
+            'binary': 'neutron-sdnve-agent',
+            'host': cfg.CONF.host,
+            'topic': n_const.L2_AGENT_TOPIC,
+            'configurations': {'interface_mappings': interface_mappings,
+                               'reset_br': self.reset_br,
+                               'out_of_band': self.out_of_band,
+                               'controller_ip': self.controller_ip},
+            'agent_type': n_const.AGENT_TYPE_SDNVE,
+            'start_flag': True}
+
         if self.int_bridge_name:
             self.int_br = self.setup_integration_br(integ_br, reset_br,
                                                     out_of_band,
@@ -85,6 +98,14 @@ class SdnveNeutronAgent():
             self.int_br = None
 
         self.setup_rpc()
+
+    def _report_state(self):
+        try:
+            self.state_rpc.report_state(self.context,
+                                        self.agent_state)
+            self.agent_state.pop('start_flag', None)
+        except Exception:
+            LOG.exception(_("Failed reporting state!"))
 
     def setup_rpc(self):
         if self.int_br:
@@ -105,6 +126,10 @@ class SdnveNeutronAgent():
         self.connection = agent_rpc.create_consumers(self.dispatcher,
                                                      self.topic,
                                                      consumers)
+        if self.polling_interval:
+            heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
+            heartbeat.start(interval=self.polling_interval)
 
     # Plugin calls the agents through the following
     def info_update(self, context, **kwargs):
@@ -209,7 +234,7 @@ class SdnveNeutronAgent():
 
 def create_agent_config_map(config):
 
-    interface_mappings = q_utils.parse_mappings(
+    interface_mappings = n_utils.parse_mappings(
         config.SDNVE.interface_mappings)
 
     controller_ips = config.SDNVE.controller_ips
