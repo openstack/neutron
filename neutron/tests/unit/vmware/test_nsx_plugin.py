@@ -383,6 +383,13 @@ class TestSecurityGroup(ext_sg.TestSecurityGroups, SecurityGroupsTestCase):
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
 
+    def test_update_security_group_deal_with_exc(self):
+        name = 'foo security group'
+        with mock.patch.object(nsxlib.switch, 'do_request',
+                               side_effect=api_exc.NsxApiException):
+            with self.security_group(name=name) as sg:
+                self.assertEqual(sg['security_group']['name'], name)
+
 
 class TestL3ExtensionManager(object):
 

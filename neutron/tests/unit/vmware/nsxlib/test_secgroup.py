@@ -51,6 +51,22 @@ class SecurityProfileTestCase(base.NsxlibTestCase):
         self.assertEqual(len(sec_prof_res['logical_port_egress_rules']), 3)
         self.assertEqual(len(sec_prof_res['logical_port_ingress_rules']), 2)
 
+    def test_update_security_profile_raise_not_found(self):
+        self.assertRaises(exceptions.NotFound,
+                          secgrouplib.update_security_profile,
+                          self.fake_cluster,
+                          _uuid(), 'tatore_magno(the great)')
+
+    def test_update_security_profile(self):
+        tenant_id = 'foo_tenant_uuid'
+        secgroup_id = 'foo_secgroup_uuid'
+        old_sec_prof = secgrouplib.create_security_profile(
+            self.fake_cluster, tenant_id, secgroup_id,
+            {'name': 'tatore_magno'})
+        new_sec_prof = secgrouplib.update_security_profile(
+            self.fake_cluster, old_sec_prof['uuid'], 'aaron_magno')
+        self.assertEqual('aaron_magno', new_sec_prof['display_name'])
+
     def test_update_security_profile_rules(self):
         sec_prof = secgrouplib.create_security_profile(
             self.fake_cluster, _uuid(), 'pippo', {'name': 'test'})
