@@ -388,6 +388,25 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
             self.ofc.delete_ofc_packet_filter.assert_called_once_with(
                 ctx, pf_id)
 
+    def test_delete_pf_with_error_status(self):
+        self.ofc.set_raise_exc('create_ofc_packet_filter',
+                               nexc.OFCException(reason='fake'))
+        with self.packet_filter_on_network() as pf:
+            pf_id = pf['packet_filter']['id']
+            pf_ref = self._show('packet_filters', pf_id)
+            self.assertEqual(pf_ref['packet_filter']['status'], 'ERROR')
+
+        ctx = mock.ANY
+        pf_dict = mock.ANY
+        expected = [
+            mock.call.exists_ofc_packet_filter(ctx, pf_id),
+            mock.call.create_ofc_packet_filter(ctx, pf_id, pf_dict),
+            mock.call.exists_ofc_packet_filter(ctx, pf_id),
+        ]
+        self.ofc.assert_has_calls(expected)
+        self.assertEqual(1, self.ofc.create_ofc_packet_filter.call_count)
+        self.assertEqual(0, self.ofc.delete_ofc_packet_filter.call_count)
+
     def test_activate_pf_on_port_triggered_by_update_port(self):
         ctx = mock.ANY
         pf_dict = mock.ANY
@@ -437,7 +456,8 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
 
             # This update request will make plugin reactivate pf.
             data = {'packet_filter': {'priority': 1000}}
-            self._update('packet_filters', pf_id, data)
+            self._update('packet_filters', pf_id, data,
+                         expected_code=webob.exc.HTTPInternalServerError.code)
 
             self.ofc.set_raise_exc('delete_ofc_packet_filter', None)
 
@@ -451,8 +471,7 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
             mock.call.delete_ofc_packet_filter(ctx, pf_id),
 
             mock.call.exists_ofc_packet_filter(ctx, pf_id),
-
-            mock.call.exists_ofc_packet_filter(ctx, pf_id),
+            mock.call.delete_ofc_packet_filter(ctx, pf_id),
         ]
         self.ofc.assert_has_calls(expected)
         self.assertEqual(self.ofc.delete_ofc_packet_filter.call_count, 2)
@@ -466,7 +485,8 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
                                    nexc.OFCException(reason='hoge'))
 
             data = {'packet_filter': {'admin_state_up': False}}
-            self._update('packet_filters', pf_id, data)
+            self._update('packet_filters', pf_id, data,
+                         expected_code=webob.exc.HTTPInternalServerError.code)
 
             pf_ref = self._show('packet_filters', pf_id)
             self.assertEqual(pf_ref['packet_filter']['status'], 'ERROR')

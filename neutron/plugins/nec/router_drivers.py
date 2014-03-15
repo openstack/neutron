@@ -162,6 +162,8 @@ class RouterOpenFlowDriver(RouterDriverBase):
 
     @call_log.log
     def delete_router(self, context, router_id, router):
+        if not self.ofc.exists_ofc_router(context, router_id):
+            return
         try:
             self.ofc.delete_ofc_router(context, router_id, router)
         except (nexc.OFCException, nexc.OFCMappingNotFound) as exc:
