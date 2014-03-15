@@ -597,12 +597,11 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             new_port = super(NECPluginV2, self).update_port(context, id, port)
             portinfo_changed = self._process_portbindings_update(
                 context, port['port'], new_port)
-            if self.is_address_pairs_attribute_updated(old_port, port):
-                self._delete_allowed_address_pairs(context, id)
-                self._process_create_allowed_address_pairs(
-                    context, new_port,
-                    port['port'][addr_pair.ADDRESS_PAIRS])
-                need_port_update_notify = True
+            if addr_pair.ADDRESS_PAIRS in port['port']:
+                need_port_update_notify |= (
+                    self.update_address_pairs_on_port(context, id, port,
+                                                      old_port,
+                                                      new_port))
             elif changed_fixed_ips:
                 self._check_fixed_ips_and_address_pairs_no_overlap(
                     context, new_port)

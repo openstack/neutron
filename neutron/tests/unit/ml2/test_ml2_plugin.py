@@ -28,6 +28,7 @@ from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import test_extension_allowedaddresspairs as test_pair
 from neutron.tests.unit import test_extension_extradhcpopts as test_dhcpopts
 from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
@@ -313,6 +314,13 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertIsNone(network[pnet.NETWORK_TYPE])
         self.assertIsNone(network[pnet.PHYSICAL_NETWORK])
         self.assertIsNone(network[pnet.SEGMENTATION_ID])
+
+
+class TestMl2AllowedAddressPairs(Ml2PluginV2TestCase,
+                                 test_pair.TestAllowedAddressPairs):
+    def setUp(self, plugin=None):
+        super(test_pair.TestAllowedAddressPairs, self).setUp(
+            plugin=PLUGIN_NAME)
 
 
 class DHCPOptsTestCase(test_dhcpopts.TestExtraDhcpOpt):

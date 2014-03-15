@@ -31,6 +31,7 @@ from neutron.plugins.nec.db import api as ndb
 from neutron.plugins.nec import nec_plugin
 from neutron.tests.unit.nec import fake_ofc_manager
 from neutron.tests.unit import test_db_plugin as test_plugin
+from neutron.tests.unit import test_extension_allowedaddresspairs as test_pair
 
 
 PLUGIN_NAME = 'neutron.plugins.nec.nec_plugin.NECPluginV2'
@@ -890,3 +891,8 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
     def test_delete_port_for_noofcmap_ofc_port(self):
         self._test_delete_port_for_disappeared_ofc_port(
             nexc.OFCMappingNotFound(resource='port', neutron_id='port1'))
+
+
+class TestNecAllowedAddressPairs(NecPluginV2TestCase,
+                                 test_pair.TestAllowedAddressPairs):
+    pass
