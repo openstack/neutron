@@ -738,7 +738,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                nsx_exc.NoMorePortsException:
                                webob.exc.HTTPBadRequest,
                                nsx_exc.MaintenanceInProgress:
-                               webob.exc.HTTPServiceUnavailable})
+                               webob.exc.HTTPServiceUnavailable,
+                               nsx_exc.InvalidSecurityCertificate:
+                               webob.exc.HTTPBadRequest})
 
     def _validate_provider_create(self, context, network):
         if not attr.is_attr_set(network.get(mpnet.SEGMENTS)):
@@ -2098,6 +2100,26 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def _get_nsx_device_id(self, context, device_id):
         return self._get_gateway_device(context, device_id)['nsx_id']
 
+    def _rollback_gw_device(self, context, device_id,
+                            gw_data=None, new_status=None,
+                            is_create=False, log_level=logging.ERROR):
+        LOG.log(log_level,
+                _("Rolling back database changes for gateway device %s "
+                  "because of an error in the NSX backend"), device_id)
+        with context.session.begin(subtransactions=True):
+            query = self._model_query(
+                context, networkgw_db.NetworkGatewayDevice).filter(
+                    networkgw_db.NetworkGatewayDevice.id == device_id)
+            if is_create:
+                query.delete(synchronize_session=False)
+            else:
+                super(NsxPluginV2, self).update_gateway_device(
+                    context, device_id,
+                    {networkgw.DEVICE_RESOURCE_NAME: gw_data})
+                if new_status:
+                    query.update({'status': new_status},
+                                 synchronize_session=False)
+
     # TODO(salv-orlando): Handlers for Gateway device operations should be
     # moved into the appropriate nsx_handlers package once the code for the
     # blueprint nsx-async-backend-communication merges
@@ -2134,16 +2156,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                        'nsx_id': nsx_res['uuid'],
                        'status': device_status})
             return device_status
-        except api_exc.NsxApiException:
-            # Remove gateway device from neutron database
+        except (nsx_exc.InvalidSecurityCertificate, api_exc.NsxApiException):
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Unable to create gateway device: %s on NSX "
-                                "backend."), neutron_id)
-                with context.session.begin(subtransactions=True):
-                    query = self._model_query(
-                        context, networkgw_db.NetworkGatewayDevice).filter(
-                            networkgw_db.NetworkGatewayDevice.id == neutron_id)
-                    query.delete(synchronize_session=False)
+                self._rollback_gw_device(context, neutron_id, is_create=True)
 
     def update_gateway_device_handler(self, context, gateway_device,
                                       old_gateway_device_data,
@@ -2165,7 +2180,6 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Fetch status (it needs another NSX API call)
             device_status = nsx_utils.get_nsx_device_status(self.cluster,
                                                             nsx_id)
-
             # update status
             with context.session.begin(subtransactions=True):
                 query = self._model_query(
@@ -2180,31 +2194,18 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                        'nsx_id': nsx_id,
                        'status': device_status})
             return device_status
-        except api_exc.NsxApiException:
-            # Rollback gateway device on neutron database
-            # As the NSX failure could be transient, we don't put the
-            # gateway device in error status here.
+        except (nsx_exc.InvalidSecurityCertificate, api_exc.NsxApiException):
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Unable to update gateway device: %s on NSX "
-                                "backend."), neutron_id)
-                super(NsxPluginV2, self).update_gateway_device(
-                    context, neutron_id, old_gateway_device_data)
+                self._rollback_gw_device(context, neutron_id,
+                                         gw_data=old_gateway_device_data)
         except n_exc.NotFound:
             # The gateway device was probably deleted in the backend.
             # The DB change should be rolled back and the status must
             # be put in error
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Unable to update gateway device: %s on NSX "
-                                "backend, as the gateway was not found on "
-                                "the NSX backend."), neutron_id)
-            with context.session.begin(subtransactions=True):
-                super(NsxPluginV2, self).update_gateway_device(
-                    context, neutron_id, old_gateway_device_data)
-                query = self._model_query(
-                    context, networkgw_db.NetworkGatewayDevice).filter(
-                        networkgw_db.NetworkGatewayDevice.id == neutron_id)
-                query.update({'status': networkgw_db.ERROR},
-                             synchronize_session=False)
+                self._rollback_gw_device(context, neutron_id,
+                                         gw_data=old_gateway_device_data,
+                                         new_status=networkgw_db.ERROR)
 
     def get_gateway_device(self, context, device_id, fields=None):
         # Get device from database

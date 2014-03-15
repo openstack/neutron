@@ -28,6 +28,7 @@ from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron import manager
 from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.dbexts import networkgw_db
 from neutron.plugins.vmware.extensions import networkgw
 from neutron.plugins.vmware import nsxlib
@@ -861,9 +862,9 @@ class TestNetworkGateway(NsxPluginV2TestCase,
             l2gwlib, 'delete_gateway_device')
         get_gw_dev_status_patcher = mock.patch.object(
             l2gwlib, 'get_gateway_device_status')
-        mock_create_gw_dev = create_gw_dev_patcher.start()
-        mock_create_gw_dev.return_value = {'uuid': 'callejon'}
-        update_gw_dev_patcher.start()
+        self.mock_create_gw_dev = create_gw_dev_patcher.start()
+        self.mock_create_gw_dev.return_value = {'uuid': 'callejon'}
+        self.mock_update_gw_dev = update_gw_dev_patcher.start()
         delete_gw_dev_patcher.start()
         self.mock_get_gw_dev_status = get_gw_dev_status_patcher.start()
 
@@ -969,6 +970,18 @@ class TestNetworkGateway(NsxPluginV2TestCase,
         super(TestNetworkGateway, self).test_create_gateway_device(
             expected_status=networkgw_db.STATUS_DOWN)
 
+    def test_create_gateway_device_invalid_cert_returns_400(self):
+        self.mock_create_gw_dev.side_effect = (
+            nsx_exc.InvalidSecurityCertificate)
+        res = self._create_gateway_device(
+            'json',
+            _uuid(),
+            connector_type='stt',
+            connector_ip='1.1.1.1',
+            client_certificate='invalid_certificate',
+            name='whatever')
+        self.assertEqual(res.status_int, 400)
+
     def test_get_gateway_device(self):
         self.mock_get_gw_dev_status.return_value = True
         super(TestNetworkGateway, self).test_get_gateway_device(
@@ -988,6 +1001,20 @@ class TestNetworkGateway(NsxPluginV2TestCase,
         self.mock_get_gw_dev_status.return_value = False
         super(TestNetworkGateway, self).test_update_gateway_device(
             expected_status=networkgw_db.STATUS_DOWN)
+
+    def test_update_gateway_device_invalid_cert_returns_400(self):
+        with self._gateway_device(
+            name='whaterver',
+            connector_type='stt',
+            connector_ip='1.1.1.1',
+            client_certificate='iminvalidbutiitdoesnotmatter') as dev:
+            self.mock_update_gw_dev.side_effect = (
+                nsx_exc.InvalidSecurityCertificate)
+            res = self._update_gateway_device(
+                'json',
+                dev[self.dev_resource]['id'],
+                client_certificate='invalid_certificate')
+            self.assertEqual(res.status_int, 400)
 
 
 class TestNetworkGatewayPlugin(db_base_plugin_v2.NeutronDbPluginV2,
