@@ -86,10 +86,6 @@ def find_config_file(options, config_file):
                         '/usr/etc/neutron',
                         '/usr/local/etc/neutron',
                         '/etc/neutron/',
-                        # TODO(markmcclain) remove in Icehouse
-                        '/usr/etc/quantum',
-                        '/usr/local/etc/quantum',
-                        '/etc/quantum/',
                         '/etc']
 
     if 'plugin' in options:
