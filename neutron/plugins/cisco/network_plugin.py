@@ -67,7 +67,8 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
 
     def __init__(self):
         """Load the model class."""
-        self._model = importutils.import_object(config.CISCO.model_class)
+        self._model_name = config.CISCO.model_class
+        self._model = importutils.import_object(self._model_name)
         native_bulk_attr_name = ("_%s__native_bulk_support"
                                  % self._model.__class__.__name__)
         self.__native_bulk_support = getattr(self._model,
@@ -108,10 +109,10 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
             return getattr(self._model, name)
         else:
             # Must make sure we re-raise the error that led us here, since
-            # otherwise getattr() and even hasattr() doesn't work corretly.
+            # otherwise getattr() and even hasattr() doesn't work correctly.
             raise AttributeError(
                 _("'%(model)s' object has no attribute '%(name)s'") %
-                {'model': self._model, 'name': name})
+                {'model': self._model_name, 'name': name})
 
     def _extend_fault_map(self):
         """Extend the Neutron Fault Map for Cisco exceptions.
