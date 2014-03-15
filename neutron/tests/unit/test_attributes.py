@@ -176,14 +176,19 @@ class TestAttributes(base.BaseTestCase):
 
         mac_addr = "ffa:16:3e:4f:00:00"
         msg = validator(mac_addr)
-        self.assertEqual(msg, "'%s' is not a valid MAC address" % mac_addr)
+        err_msg = "'%s' is not a valid MAC address"
+        self.assertEqual(msg, err_msg % mac_addr)
+
+        mac_addr = "123"
+        msg = validator(mac_addr)
+        self.assertEqual(msg, err_msg % mac_addr)
 
         mac_addr = None
         msg = validator(mac_addr)
         if allow_none:
             self.assertIsNone(msg)
         else:
-            self.assertEqual(msg, "'None' is not a valid MAC address")
+            self.assertEqual(msg, err_msg % mac_addr)
 
     def test_validate_mac_address(self):
         self._test_validate_mac_address(attributes._validate_mac_address)
