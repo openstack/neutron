@@ -44,6 +44,7 @@ Neutron Internals
    rpc_api
    layer3
    l2_agents
+   advanced_services
 
 
 Module Reference
