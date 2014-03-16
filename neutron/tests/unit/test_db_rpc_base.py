@@ -34,11 +34,6 @@ class TestDhcpRpcCallbackMixin(base.BaseTestCase):
         self.log_p = mock.patch('neutron.db.dhcp_rpc_base.LOG')
         self.log = self.log_p.start()
 
-    def tearDown(self):
-        self.log_p.stop()
-        self.plugin_p.stop()
-        super(TestDhcpRpcCallbackMixin, self).tearDown()
-
     def test_get_active_networks(self):
         plugin_retval = [dict(id='a'), dict(id='b')]
         self.plugin.get_networks.return_value = plugin_retval
@@ -221,9 +216,7 @@ class TestDhcpRpcCallbackMixin(base.BaseTestCase):
                                          device_id='devid')
 
         self.plugin.assert_has_calls([
-            mock.call.delete_ports(mock.ANY,
-                                   filters=dict(network_id=['netid'],
-                                                device_id=['devid']))])
+            mock.call.delete_ports_by_device_id(mock.ANY, 'devid', 'netid')])
 
     def test_release_port_fixed_ip(self):
         port_retval = dict(id='port_id', fixed_ips=[dict(subnet_id='a')])

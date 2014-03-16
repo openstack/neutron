@@ -859,6 +859,10 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                                     data['device_id'],
                                     NEXUS_PORT_2)
 
+    def test_delete_ports_by_device_id_second_call_failure(self):
+        plugin_ref = self._get_plugin_ref()
+        self._test_delete_ports_by_device_id_second_call_failure(plugin_ref)
+
 
 class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                           test_db_plugin.TestNetworksV2):

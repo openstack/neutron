@@ -1349,18 +1349,15 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         with context.session.begin(subtransactions=True):
             self._delete_port(context, id)
 
-    def delete_ports(self, context, filters):
-        with context.session.begin(subtransactions=True):
-            # Disable eagerloads to avoid postgresql issues with outer joins
-            # and SELECT FOR UPDATE. This means that only filters for columns
-            # on the Port model will be effective, which is fine in nearly all
-            # the cases where filters are used
-            query = context.session.query(
-                models_v2.Port).enable_eagerloads(False)
-            ports = self._apply_filters_to_query(
-                query, models_v2.Port, filters).with_lockmode('update').all()
-            for port in ports:
-                self.delete_port(context, port['id'])
+    def delete_ports_by_device_id(self, context, device_id, network_id=None):
+        query = (context.session.query(models_v2.Port.id)
+                 .enable_eagerloads(False)
+                 .filter(models_v2.Port.device_id == device_id))
+        if network_id:
+            query = query.filter(models_v2.Port.network_id == network_id)
+        port_ids = [p[0] for p in query]
+        for port_id in port_ids:
+            self.delete_port(context, port_id)
 
     def _delete_port(self, context, id):
         query = (context.session.query(models_v2.Port).
