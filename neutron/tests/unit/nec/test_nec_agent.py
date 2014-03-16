@@ -197,7 +197,7 @@ class TestNecAgent(TestNecAgentBase):
     def test_report_state_installed(self):
         self.loopingcall.assert_called_once_with(self.agent._report_state)
         instance = self.loopingcall.return_value
-        instance.start.assert_called_once_with(interval=4)
+        self.assertTrue(instance.start.called)
 
     def _check_report_state(self, cur_ports, num_ports, fail_mode,
                             first=False):
