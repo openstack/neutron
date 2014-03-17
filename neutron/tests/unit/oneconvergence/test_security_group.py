@@ -87,6 +87,12 @@ class TestOneConvergenceSGServerRpcCallBack(
     def test_security_group_rule_for_device_ipv6_multi_router_interfaces(self):
         self.skipTest("NVSD Plugin does not support IPV6.")
 
+    def test_notify_security_group_ipv6_gateway_port_added(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_notify_security_group_ipv6_normal_port_added(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
 
 class TestOneConvergenceSGServerRpcCallBackXML(
     OneConvergenceSecurityGroupsTestCase,
@@ -110,6 +116,12 @@ class TestOneConvergenceSGServerRpcCallBackXML(
         self.skipTest("NVSD Plugin does not support IPV6.")
 
     def test_security_group_rule_for_device_ipv6_multi_router_interfaces(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_notify_security_group_ipv6_gateway_port_added(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_notify_security_group_ipv6_normal_port_added(self):
         self.skipTest("NVSD Plugin does not support IPV6.")
 
 

@@ -118,6 +118,12 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         """
         if port['device_owner'] == q_const.DEVICE_OWNER_DHCP:
             self.notifier.security_groups_provider_updated(context)
+        # For IPv6, provider rule need to be updated in case router
+        # interface is created or updated after VM port is created.
+        elif port['device_owner'] == q_const.DEVICE_OWNER_ROUTER_INTF:
+            if any(netaddr.IPAddress(fixed_ip['ip_address']).version == 6
+                   for fixed_ip in port['fixed_ips']):
+                self.notifier.security_groups_provider_updated(context)
         else:
             self.notifier.security_groups_member_updated(
                 context, port.get(ext_sg.SECURITYGROUPS))
@@ -246,8 +252,6 @@ class SecurityGroupServerRpcCallbackMixin(object):
             gateway_ip = subnet['gateway_ip']
             if subnet['ip_version'] != 6 or not gateway_ip:
                 continue
-            # TODO(xuhanp): Figure out how to call the following code
-            # each time router is created or updated.
             if not netaddr.IPAddress(gateway_ip).is_link_local():
                 if subnet['ipv6_ra_mode']:
                     gateway_ip = self._get_lla_gateway_ip_for_subnet(context,
