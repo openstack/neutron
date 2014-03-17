@@ -713,17 +713,17 @@ class TestIpNetnsCommand(TestIPCmdBase):
 
     def test_namespace_exists(self):
         retval = '\n'.join(NETNS_SAMPLE)
-        self.parent._as_root.return_value = retval
+        self.parent._run.return_value = retval
         self.assertTrue(
             self.netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
-        self._assert_sudo('o', ('list',), force_root_namespace=True)
+        self._assert_call('o', ('list',))
 
     def test_namespace_doest_not_exist(self):
         retval = '\n'.join(NETNS_SAMPLE)
-        self.parent._as_root.return_value = retval
+        self.parent._run.return_value = retval
         self.assertFalse(
             self.netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
-        self._assert_sudo('o', ('list',), force_root_namespace=True)
+        self._assert_call('o', ('list',))
 
     def test_execute(self):
         self.parent.namespace = 'ns'
