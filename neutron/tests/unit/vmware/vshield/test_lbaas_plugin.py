@@ -19,7 +19,6 @@ from webob import exc as web_exc
 
 from neutron.api.v2 import attributes
 from neutron import context
-from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.extensions import loadbalancer as lb
 from neutron import manager
 from neutron.openstack.common import uuidutils
@@ -125,9 +124,9 @@ class TestLoadbalancerPlugin(
 
         with contextlib.nested(
             self.subnet(),
-            self.pool(),
-            self.health_monitor()
-        ) as (subnet, pool, health_mon):
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, health_mon, pool):
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             with self.vip(
@@ -150,31 +149,6 @@ class TestLoadbalancerPlugin(
                     for k, v in keys:
                         self.assertEqual(res['health_monitor'][k], v)
 
-    def test_delete_healthmonitor(self):
-        ctx = context.get_admin_context()
-        with contextlib.nested(
-            self.subnet(),
-            self.pool(),
-            self.health_monitor(no_delete=True)
-        ) as (subnet, pool, health_mon):
-            net_id = subnet['subnet']['network_id']
-            self._set_net_external(net_id)
-            with self.vip(
-                router_id=self._create_and_get_router(),
-                pool=pool, subnet=subnet):
-                    self.plugin.create_pool_health_monitor(
-                        context.get_admin_context(),
-                        health_mon, pool['pool']['id']
-                    )
-
-            req = self.new_delete_request('health_monitors',
-                                          health_mon['health_monitor']['id'])
-            res = req.get_response(self.ext_api)
-            self.assertEqual(res.status_int, 204)
-            qry = ctx.session.query(ldb.HealthMonitor)
-            qry = qry.filter_by(id=health_mon['health_monitor']['id'])
-            self.assertIsNone(qry.first())
-
     def test_create_vip(self, **extras):
         expected = {
             'name': 'vip1',
@@ -194,9 +168,9 @@ class TestLoadbalancerPlugin(
 
         with contextlib.nested(
             self.subnet(),
-            self.pool(),
-            self.health_monitor()
-        ) as (subnet, pool, monitor):
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, monitor, pool):
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             expected['pool_id'] = pool['pool']['id']
@@ -228,9 +202,9 @@ class TestLoadbalancerPlugin(
 
         with contextlib.nested(
             self.subnet(),
-            self.pool(),
-            self.health_monitor()
-        ) as (subnet, pool, monitor):
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, monitor, pool):
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             self.plugin.create_pool_health_monitor(
@@ -257,9 +231,9 @@ class TestLoadbalancerPlugin(
     def test_delete_vip(self):
         with contextlib.nested(
             self.subnet(),
-            self.pool(),
-            self.health_monitor()
-        ) as (subnet, pool, monitor):
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, monitor, pool):
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             self.plugin.create_pool_health_monitor(
@@ -287,9 +261,9 @@ class TestLoadbalancerPlugin(
 
         with contextlib.nested(
             self.subnet(),
-            self.pool(),
-            self.health_monitor()
-        ) as (subnet, pool, monitor):
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, monitor, pool):
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             self.plugin.create_pool_health_monitor(
@@ -348,9 +322,9 @@ class TestLoadbalancerPlugin(
                          'admin_state_up': False}}
         with contextlib.nested(
             self.subnet(),
-            self.pool(),
-            self.health_monitor()
-        ) as (subnet, pool, monitor):
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, monitor, pool):
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             self.plugin.create_pool_health_monitor(
@@ -371,9 +345,9 @@ class TestLoadbalancerPlugin(
         router_id = self._create_and_get_router()
         with contextlib.nested(
             self.subnet(),
-            self.pool(),
-            self.health_monitor()
-        ) as (subnet, pool, monitor):
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, monitor, pool):
             pool_id = pool['pool']['id']
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
@@ -413,10 +387,10 @@ class TestLoadbalancerPlugin(
     def test_update_member(self):
         with contextlib.nested(
             self.subnet(),
+            self.health_monitor(),
             self.pool(name="pool1"),
-            self.pool(name="pool2"),
-            self.health_monitor()
-        ) as (subnet, pool1, pool2, monitor):
+            self.pool(name="pool2")
+        ) as (subnet, monitor, pool1, pool2):
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
             self.plugin.create_pool_health_monitor(
@@ -465,9 +439,9 @@ class TestLoadbalancerPlugin(
     def test_delete_member(self):
         with contextlib.nested(
             self.subnet(),
-            self.pool(),
-            self.health_monitor()
-        ) as (subnet, pool, monitor):
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, monitor, pool):
             pool_id = pool['pool']['id']
             net_id = subnet['subnet']['network_id']
             self._set_net_external(net_id)
