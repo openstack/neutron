@@ -366,11 +366,12 @@ class HyperVUtilsV2R2(HyperVUtilsV2):
         return [v for v in acls
                 if v.Action == action and
                 v.Direction == direction and
-                v.LocalPort in [str(local_port), self._ACL_DEFAULT] and
-                v.Protocol in [protocol] and
+                v.LocalPort == str(local_port) and
+                v.Protocol == protocol and
                 v.RemoteIPAddress == remote_addr]
 
     def _get_new_weight(self, acls):
+        acls = [a for a in acls if a.Action is not self._ACL_ACTION_DENY]
         if not acls:
             return self._MAX_WEIGHT - 1
 

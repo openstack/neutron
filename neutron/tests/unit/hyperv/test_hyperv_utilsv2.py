@@ -352,14 +352,19 @@ class TestHyperVUtilsV2R2(base.BaseTestCase):
             default, default, self._FAKE_REMOTE_ADDR)
 
     def _test_filter_security_acls(self, local_port, protocol, remote_addr):
-        mock_acl = mock.MagicMock()
-        mock_acl.Action = self._utils._ACL_ACTION_ALLOW
-        mock_acl.Direction = self._FAKE_ACL_DIR
-        mock_acl.LocalPort = local_port
-        mock_acl.Protocol = protocol
-        mock_acl.RemoteIPAddress = remote_addr
+        acls = []
+        default = self._utils._ACL_DEFAULT
+        for port, proto in [(default, default), (local_port, protocol)]:
+            mock_acl = mock.MagicMock()
+            mock_acl.Action = self._utils._ACL_ACTION_ALLOW
+            mock_acl.Direction = self._FAKE_ACL_DIR
+            mock_acl.LocalPort = port
+            mock_acl.Protocol = proto
+            mock_acl.RemoteIPAddress = remote_addr
+            acls.append(mock_acl)
 
-        acls = [mock_acl, mock_acl]
+        right_acls = [a for a in acls if a.LocalPort == local_port]
+
         good_acls = self._utils._filter_security_acls(
             acls, mock_acl.Action, self._FAKE_ACL_DIR, self._FAKE_ACL_TYPE,
             local_port, protocol, remote_addr)
@@ -367,7 +372,7 @@ class TestHyperVUtilsV2R2(base.BaseTestCase):
             acls, self._FAKE_ACL_ACT, self._FAKE_ACL_DIR, self._FAKE_ACL_TYPE,
             local_port, protocol, remote_addr)
 
-        self.assertEqual(acls, good_acls)
+        self.assertEqual(right_acls, good_acls)
         self.assertEqual([], bad_acls)
 
     def test_get_new_weight(self):
@@ -381,3 +386,13 @@ class TestHyperVUtilsV2R2(base.BaseTestCase):
     def test_get_new_weight_no_acls(self):
         self.assertEqual(self._utils._MAX_WEIGHT - 1,
                          self._utils._get_new_weight([]))
+
+    def test_get_new_weight_default_acls(self):
+        mockacl1 = mock.MagicMock()
+        mockacl1.Weight = self._utils._MAX_WEIGHT - 1
+        mockacl2 = mock.MagicMock()
+        mockacl2.Weight = self._utils._MAX_WEIGHT - 2
+        mockacl2.Action = self._utils._ACL_ACTION_DENY
+
+        self.assertEqual(self._utils._MAX_WEIGHT - 2,
+                         self._utils._get_new_weight([mockacl1, mockacl2]))
