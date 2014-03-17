@@ -73,8 +73,11 @@ def upgrade(active_plugins=None, options=None):
     # Create a networkgatewaydevice for each existing reference.
     # For existing references nsx_id == neutron_id
     # Do not fill conenctor info as they would be unknown
-    op.execute("INSERT INTO networkgatewaydevices (id, nsx_id) SELECT "
-               "id, id as nsx_id FROM networkgatewaydevicereferences")
+    op.execute("INSERT INTO networkgatewaydevices (id, nsx_id, tenant_id) "
+               "SELECT gw_dev_ref.id, gw_dev_ref.id as nsx_id, tenant_id "
+               "FROM networkgatewaydevicereferences AS gw_dev_ref "
+               "INNER JOIN networkgateways AS net_gw ON "
+               "gw_dev_ref.network_gateway_id=net_gw.id")
 
 
 def downgrade(active_plugins=None, options=None):

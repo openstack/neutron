@@ -120,15 +120,18 @@ def _build_gateway_device_body(tenant_id, display_name, neutron_id,
         utils.NetworkTypes.BRIDGE: "BridgeConnector",
         'ipsec%s' % utils.NetworkTypes.STT: "IPsecSTT",
         'ipsec%s' % utils.NetworkTypes.GRE: "IPsecGRE"}
-    nsx_connector_type = connector_type_mappings[connector_type]
+    nsx_connector_type = connector_type_mappings.get(connector_type)
     body = {"display_name": utils.check_and_truncate(display_name),
             "tags": utils.get_tags(os_tid=tenant_id,
                                    q_gw_dev_id=neutron_id),
-            "transport_connectors": [
-                {"transport_zone_uuid": tz_uuid,
-                 "ip_address": connector_ip,
-                 "type": nsx_connector_type}],
             "admin_status_enabled": True}
+
+    if connector_ip and nsx_connector_type:
+        body["transport_connectors"] = [
+            {"transport_zone_uuid": tz_uuid,
+             "ip_address": connector_ip,
+             "type": nsx_connector_type}]
+
     if client_certificate:
         body["credential"] = {"client_certificate":
                               {"pem_encoded": client_certificate},
