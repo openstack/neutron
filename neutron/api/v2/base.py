@@ -551,6 +551,7 @@ class Controller(object):
         if not body:
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
+        LOG.debug(_("Request body: %(body)s"), {'body': body})
         prep_req_body = lambda x: Controller.prepare_request_body(
             context,
             x if resource in x else {resource: x},
