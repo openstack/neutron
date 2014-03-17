@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-16 06:12+0000\n"
+"POT-Creation-Date: 2014-03-17 06:18+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech "
@@ -2595,7 +2595,7 @@ msgstr ""
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1394
+#: neutron/db/db_base_plugin_v2.py:1391
 #, python-format
 msgid "%(address)s (%(subnet_id)s) is not recycled"
 msgstr ""
@@ -2646,22 +2646,22 @@ msgstr ""
 msgid "DHCP port deletion for %(network_id)s request from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:229
+#: neutron/db/dhcp_rpc_base.py:228
 #, python-format
 msgid "DHCP port remove fixed_ip for %(subnet_id)s request from %(host)s"
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:253
+#: neutron/db/dhcp_rpc_base.py:252
 #, python-format
 msgid "Updating lease expiration is now deprecated. Issued  from host %s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:264
+#: neutron/db/dhcp_rpc_base.py:263
 #, python-format
 msgid "Create dhcp port %(port)s from %(host)s."
 msgstr ""
 
-#: neutron/db/dhcp_rpc_base.py:281
+#: neutron/db/dhcp_rpc_base.py:280
 #, python-format
 msgid "Update dhcp port %(port)s from %(host)s."
 msgstr ""
@@ -9838,128 +9838,128 @@ msgstr ""
 msgid "Set_port_status as %s called"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:188
+#: neutron/plugins/nec/nec_plugin.py:187
 #, python-format
 msgid "_cleanup_ofc_tenant: No OFC tenant for %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:191
+#: neutron/plugins/nec/nec_plugin.py:190
 #, python-format
 msgid "delete_ofc_tenant() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:207
+#: neutron/plugins/nec/nec_plugin.py:206
 msgid "activate_port_if_ready(): skip, port.admin_state_up is False."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:211
+#: neutron/plugins/nec/nec_plugin.py:210
 msgid "activate_port_if_ready(): skip, network.admin_state_up is False."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:215
+#: neutron/plugins/nec/nec_plugin.py:214
 msgid "activate_port_if_ready(): skip, no portinfo for this port."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:219
+#: neutron/plugins/nec/nec_plugin.py:218
 msgid "activate_port_if_ready(): skip, ofc_port already exists."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:227
+#: neutron/plugins/nec/nec_plugin.py:226
 #, python-format
 msgid "create_ofc_port() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:240
+#: neutron/plugins/nec/nec_plugin.py:239
 msgid "deactivate_port(): skip, ofc_port does not exist."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:257
+#: neutron/plugins/nec/nec_plugin.py:256
 #, python-format
 msgid "deactivate_port(): OFC port for port=%s is already removed."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:264
+#: neutron/plugins/nec/nec_plugin.py:263
 #, python-format
 msgid "delete_ofc_port() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:285
+#: neutron/plugins/nec/nec_plugin.py:284
 #, python-format
 msgid "NECPluginV2.create_network() called, network=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:302
+#: neutron/plugins/nec/nec_plugin.py:301
 #, python-format
 msgid "Failed to create network id=%(id)s on OFC: %(exc)s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:318
+#: neutron/plugins/nec/nec_plugin.py:317
 #, python-format
 msgid "NECPluginV2.update_network() called, id=%(id)s network=%(network)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:358
+#: neutron/plugins/nec/nec_plugin.py:357
 #, python-format
 msgid "NECPluginV2.delete_network() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:377
+#: neutron/plugins/nec/nec_plugin.py:376
 #, python-format
 msgid "Failed to delete port(s)=%s from OFC."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:388
+#: neutron/plugins/nec/nec_plugin.py:387
 #, python-format
 msgid "delete_network() failed due to %s"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:526
+#: neutron/plugins/nec/nec_plugin.py:525
 #, python-format
 msgid "NECPluginV2.create_port() called, port=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:590
+#: neutron/plugins/nec/nec_plugin.py:589
 #, python-format
 msgid "NECPluginV2.update_port() called, id=%(id)s port=%(port)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:622
+#: neutron/plugins/nec/nec_plugin.py:621
 #, python-format
 msgid "NECPluginV2.delete_port() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:632
+#: neutron/plugins/nec/nec_plugin.py:631
 #, python-format
 msgid "Failed to delete port=%s from OFC."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:701
+#: neutron/plugins/nec/nec_plugin.py:688
 #, python-format
 msgid ""
 "NECPluginV2RPCCallbacks.get_port_from_device() called, device=%(device)s "
 "=> %(ret)s."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:732
+#: neutron/plugins/nec/nec_plugin.py:719
 #, python-format
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:742
+#: neutron/plugins/nec/nec_plugin.py:729
 #, python-format
 msgid ""
 "update_ports(): ignore unchanged portinfo in port_added message "
 "(port_id=%s)."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:761
+#: neutron/plugins/nec/nec_plugin.py:748
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message due to portinfo for "
 "port_id=%s was not registered"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:766
+#: neutron/plugins/nec/nec_plugin.py:753
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message received from different host "
@@ -17194,18 +17194,6 @@ msgstr ""
 #~ msgid "Update port request: %s"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Network with admin_state_up=False are not "
-#~ "supported yet by this plugin. Ignoring"
-#~ " setting for network %s"
-#~ msgstr ""
-
 #~ msgid "Network Admin State Validation Failed: "
-#~ msgstr ""
-
-#~ msgid ""
-#~ "An exception occurred while creating the"
-#~ " quantum port %s on the NSX "
-#~ "plaform"
 #~ msgstr ""
 
