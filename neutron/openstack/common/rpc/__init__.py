@@ -23,13 +23,9 @@ For some wrappers that add message versioning to rpc, see:
     rpc.proxy
 """
 
-import inspect
-
 from oslo.config import cfg
 
-from neutron.openstack.common.gettextutils import _
 from neutron.openstack.common import importutils
-from neutron.openstack.common import local
 from neutron.openstack.common import log as logging
 
 
@@ -93,24 +89,7 @@ def create_connection(new=True):
     return _get_impl().create_connection(CONF, new=new)
 
 
-def _check_for_lock():
-    if not CONF.debug:
-        return None
-
-    if ((hasattr(local.strong_store, 'locks_held')
-         and local.strong_store.locks_held)):
-        stack = ' :: '.join([frame[3] for frame in inspect.stack()])
-        LOG.warn(_('A RPC is being made while holding a lock. The locks '
-                   'currently held are %(locks)s. This is probably a bug. '
-                   'Please report it. Include the following: [%(stack)s].'),
-                 {'locks': local.strong_store.locks_held,
-                  'stack': stack})
-        return True
-
-    return False
-
-
-def call(context, topic, msg, timeout=None, check_for_lock=False):
+def call(context, topic, msg, timeout=None):
     """Invoke a remote method that returns something.
 
     :param context: Information that identifies the user that has made this
@@ -124,16 +103,12 @@ def call(context, topic, msg, timeout=None, check_for_lock=False):
                                              "args" : dict_of_kwargs }
     :param timeout: int, number of seconds to use for a response timeout.
                     If set, this overrides the rpc_response_timeout option.
-    :param check_for_lock: if True, a warning is emitted if a RPC call is made
-                    with a lock held.
 
     :returns: A dict from the remote method.
 
     :raises: openstack.common.rpc.common.Timeout if a complete response
              is not received before the timeout is reached.
     """
-    if check_for_lock:
-        _check_for_lock()
     return _get_impl().call(CONF, context, topic, msg, timeout)
 
 
@@ -176,7 +151,7 @@ def fanout_cast(context, topic, msg):
     return _get_impl().fanout_cast(CONF, context, topic, msg)
 
 
-def multicall(context, topic, msg, timeout=None, check_for_lock=False):
+def multicall(context, topic, msg, timeout=None):
     """Invoke a remote method and get back an iterator.
 
     In this case, the remote method will be returning multiple values in
@@ -194,8 +169,6 @@ def multicall(context, topic, msg, timeout=None, check_for_lock=False):
                                              "args" : dict_of_kwargs }
     :param timeout: int, number of seconds to use for a response timeout.
                     If set, this overrides the rpc_response_timeout option.
-    :param check_for_lock: if True, a warning is emitted if a RPC call is made
-                    with a lock held.
 
     :returns: An iterator.  The iterator will yield a tuple (N, X) where N is
               an index that starts at 0 and increases by one for each value
@@ -205,8 +178,6 @@ def multicall(context, topic, msg, timeout=None, check_for_lock=False):
     :raises: openstack.common.rpc.common.Timeout if a complete response
              is not received before the timeout is reached.
     """
-    if check_for_lock:
-        _check_for_lock()
     return _get_impl().multicall(CONF, context, topic, msg, timeout)
 
 

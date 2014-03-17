@@ -11,6 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+
 """Fake RPC implementation which calls proxy methods directly with no
 queues.  Casts will block, but this is very useful for tests.
 """
@@ -139,8 +140,8 @@ def multicall(conf, context, topic, msg, timeout=None):
     if not method:
         return
     args = msg.get('args', {})
-    version = msg.get('version', None)
-    namespace = msg.get('namespace', None)
+    version = msg.get('version')
+    namespace = msg.get('namespace')
 
     try:
         consumer = CONSUMERS[topic][0]
@@ -184,8 +185,8 @@ def fanout_cast(conf, context, topic, msg):
     if not method:
         return
     args = msg.get('args', {})
-    version = msg.get('version', None)
-    namespace = msg.get('namespace', None)
+    version = msg.get('version')
+    namespace = msg.get('namespace')
 
     for consumer in CONSUMERS.get(topic, []):
         try:
