@@ -1012,7 +1012,16 @@ class TestCiscoSubnetsV2(CiscoNetworkPluginV2TestCase,
 class TestCiscoRouterInterfacesV2(CiscoNetworkPluginV2TestCase):
 
     def setUp(self):
-        """Configure an API extension manager."""
+        """Configure a log exception counter and an API extension manager."""
+        self.log_exc_count = 0
+
+        def _count_exception_logs(*args, **kwargs):
+            self.log_exc_count += 1
+
+        mock.patch.object(logging.LoggerAdapter, 'exception',
+                          autospec=True,
+                          side_effect=_count_exception_logs,
+                          wraps=logging.LoggerAdapter.exception).start()
         super(TestCiscoRouterInterfacesV2, self).setUp()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
@@ -1060,6 +1069,18 @@ class TestCiscoRouterInterfacesV2(CiscoNetworkPluginV2TestCase):
             with self._router_interface(router, subnet,
                                         **kwargs) as response:
                 yield response
+
+    def test_port_list_filtered_by_router_id(self):
+        """Test port list command filtered by router ID."""
+        with self._network_subnet_router() as (network, subnet, router):
+            with self._router_interface(router, subnet):
+                query_params = "device_id=%s" % router['router']['id']
+                req = self.new_list_request('ports', self.fmt, query_params)
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                self.assertEqual(len(res['ports']), 1)
+                self.assertEqual(res['ports'][0]['device_id'],
+                                 router['router']['id'])
+                self.assertFalse(self.log_exc_count)
 
     def test_add_remove_router_intf_with_nexus_l3_enabled(self):
         """Verifies proper add/remove intf operation with Nexus L3 enabled.
