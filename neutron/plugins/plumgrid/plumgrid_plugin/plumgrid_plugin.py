@@ -133,6 +133,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             net_db = super(
                 NeutronPluginPLUMgridV2, self).update_network(context,
                                                               net_id, network)
+            self._process_l3_update(context, net_db, network['network'])
 
             try:
                 LOG.debug(_("PLUMgrid Library: update_network() called"))
