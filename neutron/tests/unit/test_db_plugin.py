@@ -312,7 +312,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         for arg in ('ip_version', 'tenant_id',
                     'enable_dhcp', 'allocation_pools',
                     'dns_nameservers', 'host_routes',
-                    'shared'):
+                    'shared', 'ipv6_ra_mode', 'ipv6_address_mode'):
             # Arg must be present and not null (but can be false)
             if arg in kwargs and kwargs[arg] is not None:
                 data['subnet'][arg] = kwargs[arg]
@@ -405,7 +405,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _make_subnet(self, fmt, network, gateway, cidr,
                      allocation_pools=None, ip_version=4, enable_dhcp=True,
-                     dns_nameservers=None, host_routes=None, shared=None):
+                     dns_nameservers=None, host_routes=None, shared=None,
+                     ipv6_ra_mode=None, ipv6_address_mode=None):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
@@ -416,7 +417,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                   enable_dhcp=enable_dhcp,
                                   dns_nameservers=dns_nameservers,
                                   host_routes=host_routes,
-                                  shared=shared)
+                                  shared=shared,
+                                  ipv6_ra_mode=ipv6_ra_mode,
+                                  ipv6_address_mode=ipv6_address_mode)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= webob.exc.HTTPClientError.code:
@@ -542,7 +545,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                dns_nameservers=None,
                host_routes=None,
                shared=None,
-               do_delete=True):
+               do_delete=True,
+               ipv6_ra_mode=None,
+               ipv6_address_mode=None):
         with optional_ctx(network, self.network) as network_to_use:
             subnet = self._make_subnet(fmt or self.fmt,
                                        network_to_use,
@@ -553,7 +558,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                        enable_dhcp,
                                        dns_nameservers,
                                        host_routes,
-                                       shared=shared)
+                                       shared=shared,
+                                       ipv6_ra_mode=ipv6_ra_mode,
+                                       ipv6_address_mode=ipv6_address_mode)
             try:
                 yield subnet
             finally:
@@ -2947,6 +2954,79 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
+    def test_create_subnet_ipv6_attributes(self):
+        gateway_ip = 'fe80::1'
+        cidr = 'fe80::/80'
+
+        for mode in constants.IPV6_MODES:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr, ip_version=6,
+                                     ipv6_ra_mode=mode,
+                                     ipv6_address_mode=mode)
+
+    def test_create_subnet_ipv6_attributes_no_dhcp_enabled(self):
+        gateway_ip = 'fe80::1'
+        cidr = 'fe80::/80'
+        with testlib_api.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
+            for mode in constants.IPV6_MODES:
+                self._test_create_subnet(gateway_ip=gateway_ip,
+                                         cidr=cidr, ip_version=6,
+                                         enable_dhcp=False,
+                                         ipv6_ra_mode=mode,
+                                         ipv6_address_mode=mode)
+                self.assertEqual(ctx_manager.exception.code,
+                                 webob.exc.HTTPClientError.code)
+
+    def test_create_subnet_invalid_ipv6_ra_mode(self):
+        gateway_ip = 'fe80::1'
+        cidr = 'fe80::/80'
+        with testlib_api.ExpectedException(
+            webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr, ip_version=6,
+                                     ipv6_ra_mode='foo',
+                                     ipv6_address_mode='slaac')
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
+
+    def test_create_subnet_invalid_ipv6_address_mode(self):
+        gateway_ip = 'fe80::1'
+        cidr = 'fe80::/80'
+        with testlib_api.ExpectedException(
+            webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr, ip_version=6,
+                                     ipv6_ra_mode='slaac',
+                                     ipv6_address_mode='baz')
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
+
+    def test_create_subnet_invalid_ipv6_combination(self):
+        gateway_ip = 'fe80::1'
+        cidr = 'fe80::/80'
+        with testlib_api.ExpectedException(
+            webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr, ip_version=6,
+                                     ipv6_ra_mode='stateful',
+                                     ipv6_address_mode='stateless')
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
+
+    def test_create_subnet_ipv6_single_attribute_set(self):
+        gateway_ip = 'fe80::1'
+        cidr = 'fe80::/80'
+        for mode in constants.IPV6_MODES:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr, ip_version=6,
+                                     ipv6_ra_mode=None,
+                                     ipv6_address_mode=mode)
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr, ip_version=6,
+                                     ipv6_ra_mode=mode,
+                                     ipv6_address_mode=None)
+
     def test_update_subnet_no_gateway(self):
         with self.subnet() as subnet:
             data = {'subnet': {'gateway_ip': '11.0.0.1'}}
@@ -3107,6 +3187,53 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 res = req.get_response(self.api)
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPConflict.code)
+
+    def test_update_subnet_ipv6_attributes(self):
+        with self.subnet(ip_version=6, cidr='fe80::/80',
+                         ipv6_ra_mode=constants.IPV6_SLAAC,
+                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
+            data = {'subnet': {'ipv6_ra_mode': constants.DHCPV6_STATEFUL,
+                               'ipv6_address_mode': constants.DHCPV6_STATEFUL}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(res['subnet']['ipv6_ra_mode'],
+                             data['subnet']['ipv6_ra_mode'])
+            self.assertEqual(res['subnet']['ipv6_address_mode'],
+                             data['subnet']['ipv6_address_mode'])
+
+    def test_update_subnet_ipv6_inconsistent_ra_attribute(self):
+        with self.subnet(ip_version=6, cidr='fe80::/80',
+                         ipv6_ra_mode=constants.IPV6_SLAAC,
+                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
+            data = {'subnet': {'ipv6_ra_mode': constants.DHCPV6_STATEFUL}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int,
+                             webob.exc.HTTPClientError.code)
+
+    def test_update_subnet_ipv6_inconsistent_address_attribute(self):
+        with self.subnet(ip_version=6, cidr='fe80::/80',
+                         ipv6_ra_mode=constants.IPV6_SLAAC,
+                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
+            data = {'subnet': {'ipv6_address_mode': constants.DHCPV6_STATEFUL}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int,
+                             webob.exc.HTTPClientError.code)
+
+    def test_update_subnet_ipv6_inconsistent_enable_dhcp(self):
+        with self.subnet(ip_version=6, cidr='fe80::/80',
+                         ipv6_ra_mode=constants.IPV6_SLAAC,
+                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
+            data = {'subnet': {'enable_dhcp': False}}
+            req = self.new_update_request('subnets', data,
+                                          subnet['subnet']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(res.status_int,
+                             webob.exc.HTTPClientError.code)
 
     def test_show_subnet(self):
         with self.network() as network:

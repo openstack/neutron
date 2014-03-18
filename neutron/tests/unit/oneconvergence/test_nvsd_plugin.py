@@ -69,6 +69,24 @@ class TestOneConvergencePluginSubnetsV2(test_plugin.TestSubnetsV2,
     def test_update_subnet_inconsistent_ipv6_hostroute_np_v4(self):
         self.skipTest("NVSD Plugin does not support IPV6.")
 
+    def test_create_subnet_ipv6_attributes(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_create_subnet_ipv6_single_attribute_set(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_update_subnet_ipv6_attributes(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_update_subnet_ipv6_inconsistent_enable_dhcp(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_update_subnet_ipv6_inconsistent_ra_attribute(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
+    def test_update_subnet_ipv6_inconsistent_address_attribute(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
 
 class TestOneConvergencePluginPortsV2(test_plugin.TestPortsV2,
                                       test_bindings.PortBindingsTestCase,

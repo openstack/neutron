@@ -819,6 +819,60 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             tenant_ids.pop() != original.tenant_id):
             raise n_exc.InvalidSharedSetting(network=original.name)
 
+    def _validate_ipv6_attributes(self, subnet, cur_subnet):
+        ra_mode_set = attributes.is_attr_set(subnet.get('ipv6_ra_mode'))
+        address_mode_set = attributes.is_attr_set(
+            subnet.get('ipv6_address_mode'))
+        if cur_subnet:
+            ra_mode = (subnet['ipv6_ra_mode'] if ra_mode_set
+                       else cur_subnet['ipv6_ra_mode'])
+            addr_mode = (subnet['ipv6_address_mode'] if address_mode_set
+                         else cur_subnet['ipv6_address_mode'])
+            if ra_mode_set or address_mode_set:
+                # Check that updated subnet ipv6 attributes do not conflict
+                self._validate_ipv6_combination(ra_mode, addr_mode)
+            self._validate_ipv6_update_dhcp(subnet, cur_subnet)
+        else:
+            self._validate_ipv6_dhcp(ra_mode_set, address_mode_set,
+                                     subnet['enable_dhcp'])
+            if ra_mode_set and address_mode_set:
+                self._validate_ipv6_combination(subnet['ipv6_ra_mode'],
+                                                subnet['ipv6_address_mode'])
+
+    def _validate_ipv6_combination(self, ra_mode, address_mode):
+        if ra_mode != address_mode:
+            msg = _("ipv6_ra_mode set to '%(ra_mode)s' with ipv6_address_mode "
+                    "set to '%(addr_mode)s' is not valid. "
+                    "If both attributes are set, they must be the same value"
+                    ) % {'ra_mode': ra_mode, 'addr_mode': address_mode}
+            raise n_exc.InvalidInput(error_message=msg)
+
+    def _validate_ipv6_dhcp(self, ra_mode_set, address_mode_set, enable_dhcp):
+        if (ra_mode_set or address_mode_set) and not enable_dhcp:
+            msg = _("ipv6_ra_mode or ipv6_address_mode cannot be set when "
+                    "enable_dhcp is set to False.")
+            raise n_exc.InvalidInput(error_message=msg)
+
+    def _validate_ipv6_update_dhcp(self, subnet, cur_subnet):
+        if ('enable_dhcp' in subnet and not subnet['enable_dhcp']):
+            msg = _("Cannot disable enable_dhcp with "
+                    "ipv6 attributes set")
+
+            ra_mode_set = attributes.is_attr_set(subnet.get('ipv6_ra_mode'))
+            address_mode_set = attributes.is_attr_set(
+                subnet.get('ipv6_address_mode'))
+
+            if ra_mode_set or address_mode_set:
+                raise n_exc.InvalidInput(error_message=msg)
+
+            old_ra_mode_set = attributes.is_attr_set(
+                cur_subnet.get('ipv6_ra_mode'))
+            old_address_mode_set = attributes.is_attr_set(
+                cur_subnet.get('ipv6_address_mode'))
+
+            if old_ra_mode_set or old_address_mode_set:
+                raise n_exc.InvalidInput(error_message=msg)
+
     def _make_network_dict(self, network, fields=None,
                            process_extensions=True):
         res = {'id': network['id'],
@@ -847,6 +901,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                     for pool in subnet['allocation_pools']],
                'gateway_ip': subnet['gateway_ip'],
                'enable_dhcp': subnet['enable_dhcp'],
+               'ipv6_ra_mode': subnet['ipv6_ra_mode'],
+               'ipv6_address_mode': subnet['ipv6_address_mode'],
                'dns_nameservers': [dns['address']
                                    for dns in subnet['dns_nameservers']],
                'host_routes': [{'destination': route['destination'],
@@ -1050,6 +1106,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             for rt in s['host_routes']:
                 self._validate_host_route(rt, ip_ver)
 
+        if ip_ver == 6:
+            self._validate_ipv6_attributes(s, cur_subnet)
+
     def _validate_gw_out_of_pools(self, gateway_ip, pools):
         for allocation_pool in pools:
             pool_range = netaddr.IPRange(
@@ -1093,6 +1152,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     'enable_dhcp': s['enable_dhcp'],
                     'gateway_ip': s['gateway_ip'],
                     'shared': network.shared}
+            if s['ip_version'] == 6 and s['enable_dhcp']:
+                if attributes.is_attr_set(s['ipv6_ra_mode']):
+                    args['ipv6_ra_mode'] = s['ipv6_ra_mode']
+                if attributes.is_attr_set(s['ipv6_address_mode']):
+                    args['ipv6_address_mode'] = s['ipv6_address_mode']
             subnet = models_v2.Subnet(**args)
 
             context.session.add(subnet)
