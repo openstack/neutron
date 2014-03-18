@@ -291,7 +291,7 @@ def _validate_subnet(data, valid_values=None):
     msg = None
     try:
         net = netaddr.IPNetwork(_validate_no_whitespace(data))
-        if ('/' not in data or net.network != net.ip):
+        if '/' not in data:
             msg = _("'%(data)s' isn't a recognized IP subnet cidr,"
                     " '%(cidr)s' is recommended") % {"data": data,
                                                      "cidr": net.cidr}

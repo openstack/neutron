@@ -2503,16 +2503,26 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 device_owner='fake_owner',
                                 set_context=False)
 
-    def test_create_subnet_bad_cidr(self):
-        with self.network() as network:
-            data = {'subnet': {'network_id': network['network']['id'],
-                               'cidr': '10.0.2.5/24',
-                               'ip_version': 4,
-                               'tenant_id': network['network']['tenant_id']}}
-
-            subnet_req = self.new_create_request('subnets', data)
-            res = subnet_req.get_response(self.api)
-            self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+    def test_create_subnet_nonzero_cidr(self):
+        with contextlib.nested(
+            self.subnet(cidr='10.129.122.5/8'),
+            self.subnet(cidr='11.129.122.5/15'),
+            self.subnet(cidr='12.129.122.5/16'),
+            self.subnet(cidr='13.129.122.5/18'),
+            self.subnet(cidr='14.129.122.5/22'),
+            self.subnet(cidr='15.129.122.5/24'),
+            self.subnet(cidr='16.129.122.5/28'),
+            self.subnet(cidr='17.129.122.5/32')
+        ) as subs:
+            # the API should accept and correct these for users
+            self.assertEqual(subs[0]['subnet']['cidr'], '10.0.0.0/8')
+            self.assertEqual(subs[1]['subnet']['cidr'], '11.128.0.0/15')
+            self.assertEqual(subs[2]['subnet']['cidr'], '12.129.0.0/16')
+            self.assertEqual(subs[3]['subnet']['cidr'], '13.129.64.0/18')
+            self.assertEqual(subs[4]['subnet']['cidr'], '14.129.120.0/22')
+            self.assertEqual(subs[5]['subnet']['cidr'], '15.129.122.0/24')
+            self.assertEqual(subs[6]['subnet']['cidr'], '16.129.122.0/28')
+            self.assertEqual(subs[7]['subnet']['cidr'], '17.129.122.5/32')
 
     def test_create_subnet_bad_ip_version(self):
         with self.network() as network:
