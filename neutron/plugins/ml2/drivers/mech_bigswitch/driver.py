@@ -17,6 +17,7 @@
 #
 # @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
 # @author: Kevin Benton, Big Switch Networks, Inc.
+import copy
 
 import eventlet
 from oslo.config import cfg
@@ -94,7 +95,8 @@ class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
         self.servers.rest_delete_port(net["tenant_id"], net["id"], port['id'])
 
     def _prepare_port_for_controller(self, context):
-        port = context.current
+        # make a copy so the context isn't changed for other drivers
+        port = copy.deepcopy(context.current)
         net = context.network.current
         port['network'] = net
         port['binding_host'] = context._binding.host
