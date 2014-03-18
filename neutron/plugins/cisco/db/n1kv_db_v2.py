@@ -24,6 +24,7 @@ import re
 from sqlalchemy.orm import exc
 from sqlalchemy.sql import and_
 
+from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 import neutron.db.api as db
 from neutron.db import models_v2
@@ -1226,6 +1227,37 @@ class NetworkProfile_db_mixin(object):
             msg = _("Invalid segment range. example range: 500-550")
             raise n_exc.InvalidInput(error_message=msg)
 
+    def _validate_multicast_ip_range(self, network_profile):
+        """
+        Validate multicast ip range values.
+
+        :param network_profile: network profile object
+        """
+        try:
+            min_ip, max_ip = (network_profile
+                              ['multicast_ip_range'].split('-', 1))
+        except ValueError:
+            msg = _("Invalid multicast ip address range. "
+                    "example range: 224.1.1.1-224.1.1.10")
+            LOG.error(msg)
+            raise n_exc.InvalidInput(error_message=msg)
+        for ip in [min_ip, max_ip]:
+            try:
+                if not netaddr.IPAddress(ip).is_multicast():
+                    msg = _("%s is not a valid multicast ip address") % ip
+                    LOG.error(msg)
+                    raise n_exc.InvalidInput(error_message=msg)
+            except netaddr.AddrFormatError:
+                msg = _("%s is not a valid ip address") % ip
+                LOG.error(msg)
+                raise n_exc.InvalidInput(error_message=msg)
+        if netaddr.IPAddress(min_ip) > netaddr.IPAddress(max_ip):
+            msg = (_("Invalid multicast IP range '%(min_ip)s-%(max_ip)s':"
+                     " Range should be from low address to high address") %
+                   {'min_ip': min_ip, 'max_ip': max_ip})
+            LOG.error(msg)
+            raise n_exc.InvalidInput(error_message=msg)
+
     def _validate_network_profile(self, net_p):
         """
         Validate completeness of a network profile arguments.
@@ -1270,6 +1302,14 @@ class NetworkProfile_db_mixin(object):
         if segment_type == c_const.NETWORK_TYPE_OVERLAY:
             if net_p['sub_type'] != c_const.NETWORK_SUBTYPE_NATIVE_VXLAN:
                 net_p['multicast_ip_range'] = '0.0.0.0'
+            else:
+                multicast_ip_range = net_p.get("multicast_ip_range")
+                if not attributes.is_attr_set(multicast_ip_range):
+                    msg = _("Argument multicast_ip_range missing"
+                            " for VXLAN multicast network profile")
+                    LOG.error(msg)
+                    raise n_exc.InvalidInput(error_message=msg)
+                self._validate_multicast_ip_range(net_p)
         else:
             net_p['multicast_ip_range'] = '0.0.0.0'
 
