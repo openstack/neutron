@@ -113,7 +113,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         self.pool_to_port_id[pool_id] = logical_config['vip']['port']['id']
 
     @n_utils.synchronized('haproxy-driver')
-    def undeploy_instance(self, pool_id):
+    def undeploy_instance(self, pool_id, cleanup_namespace=False):
         namespace = get_ns_name(pool_id)
         ns = ip_lib.IPWrapper(self.root_helper, namespace)
         pid_path = self._get_state_file_path(pool_id, 'pid')
@@ -124,6 +124,12 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         # unplug the ports
         if pool_id in self.pool_to_port_id:
             self._unplug(namespace, self.pool_to_port_id[pool_id])
+
+        # delete all devices from namespace;
+        # used when deleting orphans and port_id is not known for pool_id
+        if cleanup_namespace:
+            for device in ns.get_devices(exclude_loopback=True):
+                self.vif_driver.unplug(device.name, namespace=namespace)
 
         # remove the configuration directory
         conf_dir = os.path.dirname(self._get_state_file_path(pool_id, ''))
@@ -325,6 +331,16 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
 
     def delete_pool_health_monitor(self, health_monitor, pool_id):
         self._refresh_device(pool_id)
+
+    def remove_orphans(self, known_pool_ids):
+        if not os.path.exists(self.state_path):
+            return
+
+        orphans = (pool_id for pool_id in os.listdir(self.state_path)
+                   if pool_id not in known_pool_ids)
+        for pool_id in orphans:
+            if self.exists(pool_id):
+                self.undeploy_instance(pool_id, cleanup_namespace=True)
 
 
 # NOTE (markmcclain) For compliance with interface.py which expects objects
