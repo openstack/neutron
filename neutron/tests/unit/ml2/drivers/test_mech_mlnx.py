@@ -13,8 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
+import mock
+from oslo.config import cfg
+
 from neutron.common import constants
 from neutron.extensions import portbindings
+from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.mlnx import mech_mlnx
 from neutron.tests.unit.ml2 import _test_mech_agent as base
 
@@ -87,3 +92,27 @@ class MlnxMechanismVnicTypeTestCase(MlnxMechanismBaseTestCase,
     def test_vnic_type_normal(self):
         self._check_vif_type_for_vnic_type(portbindings.VNIC_NORMAL,
                                            self.VIF_TYPE)
+
+
+class MlnxMechanismProfileTestCase(MlnxMechanismBaseTestCase):
+    def setUp(self):
+        cfg.CONF.set_override('apply_profile_patch', True, 'ESWITCH')
+        super(MlnxMechanismProfileTestCase, self).setUp()
+
+    def test_profile_contains_physical_net(self):
+        VLAN_SEGMENTS = [{api.ID: 'vlan_segment_id',
+                          api.NETWORK_TYPE: 'vlan',
+                          api.PHYSICAL_NETWORK: 'fake_physical_network',
+                          api.SEGMENTATION_ID: 1234}]
+
+        context = base.FakePortContext(self.AGENT_TYPE,
+                                       self.AGENTS,
+                                       VLAN_SEGMENTS,
+                                       portbindings.VNIC_DIRECT)
+        context._binding = mock.Mock()
+        context._binding.profile = {}
+        segment = VLAN_SEGMENTS[0]
+        agent = self.AGENTS[0]
+        self.driver.try_to_bind_segment_for_agent(context, segment, agent)
+        self.assertEqual('{"physical_network": "fake_physical_network"}',
+                         context._binding.profile)
