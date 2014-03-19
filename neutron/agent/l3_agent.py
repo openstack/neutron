@@ -473,7 +473,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             # TODO(salv-orlando): Less broad catching
             # All floating IPs must be put in error state
             for fip in ri.router.get(l3_constants.FLOATINGIP_KEY, []):
-                fip_statuses[fip] = l3_constants.FLOATINGIP_STATUS_ERROR
+                fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ERROR
 
         if ex_gw_port:
             # Identify floating IPs which were disabled
