@@ -70,6 +70,7 @@ class OFCClient(object):
                 {'status': status, 'msg': detail})
 
     def do_single_request(self, method, action, body=None):
+        action = config.OFC.path_prefix + action
         LOG.debug(_("Client request: %(host)s:%(port)s "
                     "%(method)s %(action)s [%(body)s]"),
                   {'host': self.host, 'port': self.port,

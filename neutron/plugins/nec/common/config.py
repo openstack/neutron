@@ -36,6 +36,9 @@ agent_opts = [
 ofc_opts = [
     cfg.StrOpt('host', default='127.0.0.1',
                help=_("Host to connect to")),
+    cfg.StrOpt('path_prefix', default='',
+               help=_("Base URL of OFC REST API. "
+                      "It is prepended to each API request.")),
     cfg.StrOpt('port', default='8888',
                help=_("Port to connect to")),
     cfg.StrOpt('driver', default='trema',
