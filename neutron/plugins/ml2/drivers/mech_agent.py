@@ -168,3 +168,6 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
             context.set_binding(segment[api.ID],
                                 self.vif_type,
                                 self.vif_details)
+            return True
+        else:
+            return False
