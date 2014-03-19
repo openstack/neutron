@@ -466,7 +466,7 @@ class IpNetnsCommand(IpCommandBase):
             check_exit_code=check_exit_code)
 
     def exists(self, name):
-        output = self._run('list', options='o')
+        output = self._parent._execute('o', 'netns', ['list'])
 
         for line in output.split('\n'):
             if name == line.strip():
