@@ -2170,14 +2170,14 @@ class DBInterface(object):
             # different subnets.
             new_ipnet = netaddr.IPNetwork(subnet_cidr)
             for p in rports:
-                for ip in p['fixed_ips']:
+                for ip in p['q_api_data']['fixed_ips']:
                     if ip['subnet_id'] == subnet_id:
                         msg = (_("Router already has a port on subnet %s")
                                % subnet_id)
-                        raise exc.BadRequest(resource='router', msg=msg)
+                        raise exceptions.BadRequest(resource='router', msg=msg)
                     sub_id = ip['subnet_id']
-                    cidr = self._core_plugin._get_subnet(context.elevated(),
-                                                         sub_id)['cidr']
+                    subnet = self.subnet_read(sub_id)['q_api_data']
+                    cidr = subnet['cidr']
                     ipnet = netaddr.IPNetwork(cidr)
                     match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
                     match2 = netaddr.all_matching_cidrs(ipnet, [subnet_cidr])
@@ -2190,7 +2190,7 @@ class DBInterface(object):
                                  "%(subnet_id)s overlaps with cidr %(cidr)s "
                                  "of subnet %(sub_id)s") % data)
                         raise exceptions.BadRequest(resource='router', msg=msg)
-        except exc.NoResultFound:
+        except NoIdError:
             pass
 
 
@@ -2586,7 +2586,7 @@ class DBInterface(object):
             except NoIdError:
                 try:
                     router_obj = self._logical_router_read(rtr_id=dev_id)
-                    infs = router_obj.virtual_machine_interface_refs()
+                    intfs = router_obj.get_virtual_machine_interface_refs() or []
                 except NoIdError:
                     continue
             
