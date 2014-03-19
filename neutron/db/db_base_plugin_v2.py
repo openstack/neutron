@@ -1428,35 +1428,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                  enable_eagerloads(False).filter_by(id=id))
         if not context.is_admin:
             query = query.filter_by(tenant_id=context.tenant_id)
-        port = query.with_lockmode('update').one()
-
-        allocated_qry = context.session.query(
-            models_v2.IPAllocation).with_lockmode('update')
-        # recycle all of the IP's
-        allocated = allocated_qry.filter_by(port_id=id)
-        for a in allocated:
-            subnet = self._get_subnet(context, a['subnet_id'])
-            # Check if IP was allocated from allocation pool
-            if NeutronDbPluginV2._check_ip_in_allocation_pool(
-                context, a['subnet_id'], subnet['gateway_ip'],
-                a['ip_address']):
-                NeutronDbPluginV2._delete_ip_allocation(context,
-                                                        a['network_id'],
-                                                        a['subnet_id'],
-                                                        a['ip_address'])
-            else:
-                # IPs out of allocation pool will not be recycled, but
-                # we do need to delete the allocation from the DB
-                NeutronDbPluginV2._delete_ip_allocation(
-                    context, a['network_id'],
-                    a['subnet_id'], a['ip_address'])
-                msg_dict = {'address': a['ip_address'],
-                            'subnet_id': a['subnet_id']}
-                msg = _("%(address)s (%(subnet_id)s) is not "
-                        "recycled") % msg_dict
-                LOG.debug(msg)
-
-        context.session.delete(port)
+        query.delete()
 
     def get_port(self, context, id, fields=None):
         port = self._get_port(context, id)
