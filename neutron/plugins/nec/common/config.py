@@ -48,6 +48,11 @@ ofc_opts = [
                help=_("Key file")),
     cfg.StrOpt('cert_file', default=None,
                help=_("Certificate file")),
+    cfg.IntOpt('api_max_attempts', default=3,
+               help=_("Maximum attempts per OFC API request."
+                      "NEC plugin retries API request to OFC "
+                      "when OFC returns ServiceUnavailable (503)."
+                      "The value must be greater than 0.")),
 ]
 
 provider_opts = [
