@@ -18,7 +18,6 @@
 import contextlib
 import itertools
 import mock
-from oslo.config import cfg
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
@@ -28,9 +27,6 @@ from neutron.tests import base
 
 
 class TestOVSCleanup(base.BaseTestCase):
-    def setUp(self):
-        super(TestOVSCleanup, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
 
     def test_setup_conf(self):
         conf = util.setup_conf()

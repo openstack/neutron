@@ -36,7 +36,6 @@ class EmbranePluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         cfg.CONF.set_override('admin_password', "admin123", 'heleos')
-        self.addCleanup(cfg.CONF.reset)
         self.addCleanup(db.clear_db)
         super(EmbranePluginV2TestCase, self).setUp(self._plugin_name)
 

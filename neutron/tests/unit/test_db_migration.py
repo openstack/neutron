@@ -41,7 +41,6 @@ class TestCli(base.BaseTestCase):
         self.do_alembic_cmd_p = mock.patch.object(cli, 'do_alembic_command')
         self.do_alembic_cmd = self.do_alembic_cmd_p.start()
         self.addCleanup(self.do_alembic_cmd_p.stop)
-        self.addCleanup(cli.CONF.reset)
 
     def _main_test_helper(self, argv, func_name, exp_args=(), exp_kwargs={}):
         with mock.patch.object(sys, 'argv', argv):

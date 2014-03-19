@@ -82,7 +82,6 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         ext_mgr = ProviderExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.addCleanup(self._plugin_patcher.stop)
-        self.addCleanup(cfg.CONF.reset)
         self.addCleanup(self._restore_attribute_map)
         self.api = webtest.TestApp(router.APIRouter())
 

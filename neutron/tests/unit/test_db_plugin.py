@@ -161,7 +161,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         # NOTE(jkoelker) for a 'pluggable' framework, Neutron sure
         #                doesn't like when the plugin changes ;)
         db.clear_db()
-        cfg.CONF.reset()
         # Restore the original attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP = self._attribute_map_bk
         super(NeutronDbPluginV2TestCase, self).tearDown()

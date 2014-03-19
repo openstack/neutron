@@ -177,7 +177,6 @@ class AgentDBTestCase(AgentDBTestMixIn,
             self.saved_attr_map[resource] = attrs.copy()
         ext_mgr = AgentTestExtensionManager()
         self.addCleanup(self.restore_resource_attribute_map)
-        self.addCleanup(cfg.CONF.reset)
         super(AgentDBTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def restore_resource_attribute_map(self):

@@ -77,7 +77,6 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.restore_resource_attribute_map)
-        self.addCleanup(cfg.CONF.reset)
         super(MacLearningDBTestCase, self).setUp(plugin=PLUGIN_NAME,
                                                  ext_mgr=ext_mgr)
 

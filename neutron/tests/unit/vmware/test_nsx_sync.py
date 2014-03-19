@@ -302,10 +302,6 @@ class SyncTestCase(base.BaseTestCase):
         self.addCleanup(mock_nm_get_plugin.stop)
         self.addCleanup(mock_nm_get_service_plugins.stop)
 
-    def tearDown(self):
-        cfg.CONF.reset()
-        super(SyncTestCase, self).tearDown()
-
     @contextlib.contextmanager
     def _populate_data(self, ctx, net_size=2, port_size=2, router_size=2):
 

@@ -189,7 +189,6 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
             'provider_vlan_auto_create', auto_create, 'CISCO')
         cfg.CONF.set_override(
             'provider_vlan_auto_trunk', auto_trunk, 'CISCO')
-        self.addCleanup(cfg.CONF.reset)
         with mock.patch.object(cdb, 'is_provider_vlan',
                                return_value=True) as mock_db:
             # Create a provider network

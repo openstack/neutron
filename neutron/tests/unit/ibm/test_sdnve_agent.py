@@ -37,14 +37,12 @@ class CreateAgentConfigMap(base.BaseTestCase):
         self.assertTrue(sdnve_neutron_agent.create_agent_config_map(cfg.CONF))
 
     def test_create_agent_config_using_controller_ips(self):
-        self.addCleanup(cfg.CONF.reset)
         cfg.CONF.set_override('controller_ips',
                               ['10.10.10.1', '10.10.10.2'], group='SDNVE')
         cfgmap = sdnve_neutron_agent.create_agent_config_map(cfg.CONF)
         self.assertEqual(cfgmap['controller_ip'], '10.10.10.1')
 
     def test_create_agent_config_using_interface_mappings(self):
-        self.addCleanup(cfg.CONF.reset)
         cfg.CONF.set_override('interface_mappings',
                               ['interface1 : eth1', 'interface2 : eth2'],
                               group='SDNVE')
@@ -57,7 +55,6 @@ class TestSdnveNeutronAgent(base.BaseTestCase):
 
     def setUp(self):
         super(TestSdnveNeutronAgent, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()

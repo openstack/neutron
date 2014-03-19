@@ -25,10 +25,6 @@ from neutron.tests import base
 
 
 class TestLbaasService(base.BaseTestCase):
-    def setUp(self):
-        super(TestLbaasService, self).setUp()
-        self.addCleanup(cfg.CONF.reset)
-
     def test_start(self):
         with mock.patch.object(
             agent.rpc_service.Service, 'start'

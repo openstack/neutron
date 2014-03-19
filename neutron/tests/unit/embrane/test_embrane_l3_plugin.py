@@ -37,7 +37,6 @@ class TestEmbraneL3NatDBTestCase(router_test.L3NatDBIntTestCase):
 
     def setUp(self):
         cfg.CONF.set_override('admin_password', "admin123", 'heleos')
-        self.addCleanup(cfg.CONF.reset)
         self.addCleanup(db.clear_db)
         super(TestEmbraneL3NatDBTestCase, self).setUp()
 

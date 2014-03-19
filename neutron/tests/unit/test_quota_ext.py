@@ -82,7 +82,6 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         self.api = None
         self.plugin = None
         db.clear_db()
-        cfg.CONF.reset()
 
         # Restore the global RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map

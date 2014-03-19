@@ -179,7 +179,6 @@ class ServiceTypeExtensionTestCaseBase(testlib_api.WebTestCase):
         cfg.CONF.set_override('service_plugins',
                               ["%s.%s" % (dp.__name__,
                                           dp.DummyServicePlugin.__name__)])
-        self.addCleanup(cfg.CONF.reset)
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
         ext_mgr = TestServiceTypeExtensionManager()

@@ -49,7 +49,6 @@ class DhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(patch_sync.stop)
         self.addCleanup(self.mock_nsx_api.stop)
-        self.addCleanup(cfg.CONF.reset)
 
     def _test_gateway_subnet_notification(self, gateway='10.0.0.1'):
         cfg.CONF.set_override('metadata_mode', 'dhcp_host_route', 'NSX')

@@ -18,7 +18,6 @@
 # @author: Abhishek Raut, Cisco Systems Inc.
 
 from mock import patch
-from oslo.config import cfg
 
 from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes
@@ -201,7 +200,6 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         n1kv_neutron_plugin.N1kvNeutronPluginV2._setup_vsm = _fake_setup_vsm
 
         neutron_extensions.append_api_extensions_path(extensions.__path__)
-        self.addCleanup(cfg.CONF.reset)
         ext_mgr = NetworkProfileTestExtensionManager()
 
         # Save the original RESOURCE_ATTRIBUTE_MAP

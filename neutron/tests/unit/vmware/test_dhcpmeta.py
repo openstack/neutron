@@ -268,7 +268,6 @@ class LsnManagerTestCase(base.BaseTestCase):
         self.mock_lsn_api = self.mock_lsn_api_p.start()
         nsx.register_dhcp_opts(cfg)
         nsx.register_metadata_opts(cfg)
-        self.addCleanup(cfg.CONF.reset)
         self.addCleanup(self.mock_lsn_api_p.stop)
 
     def test_lsn_get(self):
@@ -703,7 +702,6 @@ class PersistentLsnManagerTestCase(base.BaseTestCase):
         self.context = context.get_admin_context()
         self.mock_lsn_api_p = mock.patch.object(lsn_man, 'lsn_api')
         self.mock_lsn_api = self.mock_lsn_api_p.start()
-        self.addCleanup(cfg.CONF.reset)
         self.addCleanup(self.mock_lsn_api_p.stop)
         self.addCleanup(db.clear_db)
 
