@@ -245,8 +245,6 @@ class ServerPool(object):
         # Hash to send to backend with request as expected previous
         # state to verify consistency.
         self.consistency_hash = cdb.get_consistency_hash()
-        eventlet.spawn(self._consistency_watchdog,
-                       cfg.CONF.RESTPROXY.consistency_interval)
 
         if not servers:
             raise cfg.Error(_('Servers not defined. Aborting server manager.'))
@@ -262,6 +260,8 @@ class ServerPool(object):
             self.server_proxy_for(server, int(port))
             for server, port in (s.rsplit(':', 1) for s in servers)
         ]
+        eventlet.spawn(self._consistency_watchdog,
+                       cfg.CONF.RESTPROXY.consistency_interval)
         LOG.debug(_("ServerPool: initialization done"))
 
     def get_capabilities(self):
