@@ -37,6 +37,13 @@ PROTOCOL_MAP = {
     lb_constants.PROTOCOL_HTTP: 'http',
     lb_constants.PROTOCOL_HTTPS: 'tcp'
 }
+SESSION_PERSISTENCE_METHOD_MAP = {
+    lb_constants.SESSION_PERSISTENCE_SOURCE_IP: 'sourceip',
+    lb_constants.SESSION_PERSISTENCE_APP_COOKIE: 'cookie',
+    lb_constants.SESSION_PERSISTENCE_HTTP_COOKIE: 'cookie'}
+SESSION_PERSISTENCE_COOKIE_MAP = {
+    lb_constants.SESSION_PERSISTENCE_APP_COOKIE: 'app',
+    lb_constants.SESSION_PERSISTENCE_HTTP_COOKIE: 'insert'}
 
 
 class EdgeLbDriver():
@@ -51,9 +58,11 @@ class EdgeLbDriver():
         pool_vseid = poolid_map['pool_vseid']
         return {
             'name': vip.get('name'),
+            'description': vip.get('description'),
             'ipAddress': vip.get('address'),
             'protocol': vip.get('protocol'),
             'port': vip.get('protocol_port'),
+            'connectionLimit': max(0, vip.get('connection_limit')),
             'defaultPoolId': pool_vseid,
             'applicationProfileId': app_profileid
         }
@@ -75,15 +84,18 @@ class EdgeLbDriver():
     def _convert_lb_pool(self, context, edge_id, pool, members):
         vsepool = {
             'name': pool.get('name'),
+            'description': pool.get('description'),
             'algorithm': BALANCE_MAP.get(
                 pool.get('lb_method'),
                 'round-robin'),
+            'transparent': True,
             'member': [],
             'monitorId': []
         }
         for member in members:
             vsepool['member'].append({
                 'ipAddress': member['address'],
+                'weight': member['weight'],
                 'port': member['protocol_port']
             })
         ##TODO(linb) right now, vse only accept at most one monitor per pool
@@ -121,23 +133,45 @@ class EdgeLbDriver():
             'id': monitor_vse['name']
         }
 
-    def _convert_app_profile(self, name, app_profile):
-        #TODO(linb): convert the session_persistence to
-        #corresponding app_profile
-        return {
-            "insertXForwardedFor": False,
-            "name": name,
-            "persistence": {
-                "method": "sourceip"
-            },
-            "serverSslEnabled": False,
-            "sslPassthrough": False,
-            "template": "HTTP"
+    def _convert_app_profile(self, name, sess_persist, protocol):
+        vcns_app_profile = {
+            'insertXForwardedFor': False,
+            'name': name,
+            'serverSslEnabled': False,
+            'sslPassthrough': False,
+            'template': protocol,
         }
+        # Since SSL Termination is not supported right now, so just use
+        # sslPassthrough mehtod if the protocol is HTTPS.
+        if protocol == lb_constants.PROTOCOL_HTTPS:
+            vcns_app_profile['sslPassthrough'] = True
+
+        if sess_persist.get('type'):
+            # If protocol is not HTTP, only sourceip is supported
+            if (protocol != lb_constants.PROTOCOL_HTTP and
+                sess_persist['type'] != (
+                    lb_constants.SESSION_PERSISTENCE_SOURCE_IP)):
+                msg = (_("Invalid %(protocol)s persistence method: %(type)s") %
+                       {'protocol': protocol,
+                        'type': sess_persist['type']})
+                raise vcns_exc.VcnsBadRequest(resource='sess_persist', msg=msg)
+            persistence = {
+                'method': SESSION_PERSISTENCE_METHOD_MAP.get(
+                    sess_persist['type'])}
+            if sess_persist['type'] in SESSION_PERSISTENCE_COOKIE_MAP:
+                if sess_persist.get('cookie_name'):
+                    persistence['cookieName'] = sess_persist['cookie_name']
+                else:
+                    persistence['cookieName'] = 'default_cookie_name'
+                persistence['cookieMode'] = SESSION_PERSISTENCE_COOKIE_MAP.get(
+                    sess_persist['type'])
+            vcns_app_profile['persistence'] = persistence
+        return vcns_app_profile
 
     def create_vip(self, context, edge_id, vip):
         app_profile = self._convert_app_profile(
-            vip['name'], vip.get('session_persistence'))
+            vip['name'], (vip.get('session_persistence') or {}),
+            vip.get('protocol'))
         try:
             header, response = self.vcns.create_app_profile(
                 edge_id, app_profile)
@@ -156,6 +190,7 @@ class EdgeLbDriver():
             with excutils.save_and_reraise_exception():
                 LOG.exception(_("Failed to create vip on vshield edge: %s"),
                               edge_id)
+                self.vcns.delete_app_profile(edge_id, app_profileid)
         objuri = header['location']
         vip_vseid = objuri[objuri.rfind("/") + 1:]
 
@@ -168,6 +203,18 @@ class EdgeLbDriver():
         }
         vcns_db.add_vcns_edge_vip_binding(context.session, map_info)
 
+    def _get_vip_binding(self, session, id):
+        vip_binding = vcns_db.get_vcns_edge_vip_binding(session, id)
+        if not vip_binding:
+            msg = (_("vip_binding not found with id: %(id)s "
+                     "edge_id: %(edge_id)s") % {
+                   'id': id,
+                   'edge_id': vip_binding[vcns_const.EDGE_ID]})
+            LOG.error(msg)
+            raise vcns_exc.VcnsNotFound(
+                resource='router_service_binding', msg=msg)
+        return vip_binding
+
     def get_vip(self, context, id):
         vip_binding = vcns_db.get_vcns_edge_vip_binding(context.session, id)
         edge_id = vip_binding[vcns_const.EDGE_ID]
@@ -179,33 +226,53 @@ class EdgeLbDriver():
                 LOG.exception(_("Failed to get vip on edge"))
         return self._restore_lb_vip(context, edge_id, response)
 
-    def update_vip(self, context, vip):
-        vip_binding = vcns_db.get_vcns_edge_vip_binding(
-            context.session, vip['id'])
+    def update_vip(self, context, vip, session_persistence_update=True):
+        vip_binding = self._get_vip_binding(context.session, vip['id'])
         edge_id = vip_binding[vcns_const.EDGE_ID]
         vip_vseid = vip_binding.get('vip_vseid')
-        app_profileid = vip_binding.get('app_profileid')
+        if session_persistence_update:
+            app_profileid = vip_binding.get('app_profileid')
+            app_profile = self._convert_app_profile(
+                vip['name'], vip.get('session_persistence', {}),
+                vip.get('protocol'))
+            try:
+                self.vcns.update_app_profile(
+                    edge_id, app_profileid, app_profile)
+            except vcns_exc.VcnsApiException:
+                with excutils.save_and_reraise_exception():
+                    LOG.exception(_("Failed to update app profile on "
+                                    "edge: %s") % edge_id)
 
         vip_new = self._convert_lb_vip(context, edge_id, vip, app_profileid)
         try:
             self.vcns.update_vip(edge_id, vip_vseid, vip_new)
         except vcns_exc.VcnsApiException:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to update vip on edge: %s"), edge_id)
+                LOG.exception(_("Failed to update vip on edge: %s") % edge_id)
 
     def delete_vip(self, context, id):
-        vip_binding = vcns_db.get_vcns_edge_vip_binding(
-            context.session, id)
+        vip_binding = self._get_vip_binding(context.session, id)
         edge_id = vip_binding[vcns_const.EDGE_ID]
         vip_vseid = vip_binding['vip_vseid']
         app_profileid = vip_binding['app_profileid']
 
         try:
             self.vcns.delete_vip(edge_id, vip_vseid)
-            self.vcns.delete_app_profile(edge_id, app_profileid)
+        except vcns_exc.ResourceNotFound:
+            LOG.exception(_("vip not found on edge: %s") % edge_id)
         except vcns_exc.VcnsApiException:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_("Failed to delete vip on edge: %s"), edge_id)
+                LOG.exception(_("Failed to delete vip on edge: %s") % edge_id)
+
+        try:
+            self.vcns.delete_app_profile(edge_id, app_profileid)
+        except vcns_exc.ResourceNotFound:
+            LOG.exception(_("app profile not found on edge: %s") % edge_id)
+        except vcns_exc.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to delete app profile on edge: %s") %
+                              edge_id)
+
         vcns_db.delete_vcns_edge_vip_binding(context.session, id)
 
     def create_pool(self, context, edge_id, pool, members):

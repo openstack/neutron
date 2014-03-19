@@ -260,6 +260,12 @@ class Vcns(object):
             APP_PROFILE_RESOURCE)
         return self.do_request(HTTP_POST, uri, app_profile)
 
+    def update_app_profile(self, edge_id, app_profileid, app_profile):
+        uri = self._build_uri_path(
+            edge_id, LOADBALANCER_SERVICE,
+            APP_PROFILE_RESOURCE, app_profileid)
+        return self.do_request(HTTP_PUT, uri, app_profile)
+
     def delete_app_profile(self, edge_id, app_profileid):
         uri = self._build_uri_path(
             edge_id, LOADBALANCER_SERVICE,
