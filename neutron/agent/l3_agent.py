@@ -331,8 +331,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 self.context)
             return self.target_ex_net_id
         except rpc_common.RemoteError as e:
-            with excutils.save_and_reraise_exception():
+            with excutils.save_and_reraise_exception() as ctx:
                 if e.exc_type == 'TooManyExternalNetworks':
+                    ctx.reraise = False
                     msg = _(
                         "The 'gateway_external_network_id' option must be "
                         "configured for this agent as Neutron has more than "

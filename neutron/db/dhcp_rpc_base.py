@@ -59,8 +59,7 @@ class DhcpRpcCallbackMixin(object):
                 raise n_exc.Invalid(message=msg)
         except (db_exc.DBError, n_exc.NetworkNotFound,
                 n_exc.SubnetNotFound, n_exc.IpAddressGenerationFailure) as e:
-            with excutils.save_and_reraise_exception() as ctxt:
-                ctxt.reraise = False
+            with excutils.save_and_reraise_exception(reraise=False) as ctxt:
                 if isinstance(e, n_exc.IpAddressGenerationFailure):
                     # Check if the subnet still exists and if it does not,
                     # this is the reason why the ip address generation failed.
