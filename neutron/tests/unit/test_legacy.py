@@ -71,7 +71,7 @@ class TestLegacyConfigOverride(base.BaseTestCase):
 
     def test_override_config_group_key(self):
         self.cfg(args=['--bar-baz=quantum'])
-        legacy.override_config(self.cfg, [('bar', 'baz')])
+        legacy.override_config(self.cfg, [('bar', 'baz', 'mod')])
         self.assertEqual(self.cfg.bar.baz, 'neutron')
 
     def test_override_config_list_value(self):
