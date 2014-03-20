@@ -138,7 +138,8 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
                 if stats:
                     self.plugin_rpc.update_pool_stats(pool_id, stats)
             except Exception:
-                LOG.exception(_('Error upating stats'))
+                LOG.exception(_('Error updating statistics on pool %s'),
+                              pool_id)
                 self.needs_resync = True
 
     def sync_state(self):
