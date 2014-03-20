@@ -143,7 +143,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                       'args': args})
         else:
             func = getattr(self._plugins[plugin_key], function_name)
-            return [func(*args, **kwargs)]
+            return func(*args, **kwargs)
 
     def _get_segmentation_id(self, network_id):
         binding_seg_id = odb.get_network_binding(None, network_id)
@@ -175,14 +175,14 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         # The vswitch plugin did all the verification. If it's a provider
         # vlan network, save it for the nexus plugin to use later.
         if provider_vlan_id:
-            network_id = ovs_output[0][const.NET_ID]
+            network_id = ovs_output[const.NET_ID]
             cdb.add_provider_network(network_id,
                                      const.NETWORK_TYPE_VLAN,
                                      provider_vlan_id)
             LOG.debug(_("Provider network added to DB: %(network_id)s, "
                         "%(vlan_id)s"),
                       {'network_id': network_id, 'vlan_id': provider_vlan_id})
-        return ovs_output[0]
+        return ovs_output
 
     def update_network(self, context, id, network):
         """Update network.
@@ -207,10 +207,9 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
         provider._raise_if_updates_provider_attributes(network['network'])
 
         args = [context, id, network]
-        ovs_output = self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
-                                                    self._func_name(),
-                                                    args)
-        return ovs_output[0]
+        return self._invoke_plugin_per_device(const.VSWITCH_PLUGIN,
+                                              self._func_name(),
+                                              args)
 
     def delete_network(self, context, id):
         """Delete network.
@@ -224,7 +223,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                                                     args)
         if cdb.remove_provider_network(id):
             LOG.debug(_("Provider network removed from DB: %s"), id)
-        return ovs_output[0]
+        return ovs_output
 
     def get_network(self, context, id, fields=None):
         """Get network. This method is delegated to the vswitch plugin.
@@ -307,7 +306,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             # to rollback the port creation on the VSwitch plugin.
             exc_info = sys.exc_info()
             try:
-                id = ovs_output[0]['id']
+                id = ovs_output['id']
                 args = [context, id]
                 ovs_output = self._invoke_plugin_per_device(
                     const.VSWITCH_PLUGIN,
@@ -316,7 +315,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             finally:
                 # Re-raise the original exception
                 raise exc_info[0], exc_info[1], exc_info[2]
-        return ovs_output[0]
+        return ovs_output
 
     def get_port(self, context, id, fields=None):
         """Get port. This method is delegated to the vswitch plugin.
@@ -403,7 +402,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             if create_args:
                 self._invoke_nexus_for_net_create(context, *create_args)
 
-            return ovs_output[0]
+            return ovs_output
         except Exception:
             exc_info = sys.exc_info()
             LOG.error(_("Unable to update port '%s' on Nexus switch"),
@@ -411,7 +410,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
             try:
                 # Roll back vSwitch plugin to original port attributes.
                 args = [context, id, {'port': old_port}]
-                ovs_output = self._invoke_plugin_per_device(
+                self._invoke_plugin_per_device(
                     const.VSWITCH_PLUGIN,
                     self._func_name(),
                     args)
@@ -456,7 +455,7 @@ class VirtualPhysicalSwitchModelV2(neutron_plugin_base_v2.NeutronPluginBaseV2):
                 # Raise the original exception.
                 raise exc_info[0], exc_info[1], exc_info[2]
 
-        return ovs_output[0]
+        return ovs_output
 
     def add_router_interface(self, context, router_id, interface_info):
         """Add a router interface on a subnet.
