@@ -58,7 +58,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
         pl.servers.capabilities = []
         self.watch_p.stop()
         with nested(
-            mock.patch('time.sleep'),
+            mock.patch('eventlet.sleep'),
             mock.patch(
                 SERVERMANAGER + '.ServerPool.rest_call',
                 side_effect=servermanager.RemoteRestError(
