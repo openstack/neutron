@@ -59,6 +59,7 @@ from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as q_rpc
 from neutron.common import topics
+from neutron.common import utils
 from neutron import context as qcontext
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -589,6 +590,8 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             self._send_update_network(new_net, context)
         return new_net
 
+    # NOTE(kevinbenton): workaround for eventlet/mysql deadlock
+    @utils.synchronized('bsn-port-barrier')
     def delete_network(self, context, net_id):
         """Delete a network.
         :param context: neutron api request context
@@ -777,6 +780,8 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         # return new_port
         return new_port
 
+    # NOTE(kevinbenton): workaround for eventlet/mysql deadlock
+    @utils.synchronized('bsn-port-barrier')
     def delete_port(self, context, port_id, l3_port_check=True):
         """Delete a port.
         :param context: neutron api request context
@@ -842,6 +847,8 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             self._send_update_network(orig_net, context)
             return new_subnet
 
+    # NOTE(kevinbenton): workaround for eventlet/mysql deadlock
+    @utils.synchronized('bsn-port-barrier')
     def delete_subnet(self, context, id):
         LOG.debug(_("NeutronRestProxyV2: delete_subnet() called"))
         orig_subnet = super(NeutronRestProxyV2, self).get_subnet(context, id)
@@ -921,6 +928,9 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             # return updated router
             return new_router
 
+    # NOTE(kevinbenton): workaround for eventlet/mysql deadlock.
+    # delete_router ends up calling _delete_port instead of delete_port.
+    @utils.synchronized('bsn-port-barrier')
     def delete_router(self, context, router_id):
         LOG.debug(_("NeutronRestProxyV2: delete_router() called"))
 
