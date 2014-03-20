@@ -1746,12 +1746,12 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         info = super(NsxPluginV2, self).remove_router_interface(
             context, router_id, interface_info)
 
-        # Ensure the connection to the 'metadata access network'
-        # is removed  (with the network) if this the last subnet
-        # on the router
-        self.handle_router_metadata_access(
-            context, router_id, interface=info)
         try:
+            # Ensure the connection to the 'metadata access network'
+            # is removed  (with the network) if this the last subnet
+            # on the router
+            self.handle_router_metadata_access(
+                context, router_id, interface=info)
             if not subnet:
                 subnet = self._get_subnet(context, subnet_id)
             router = self._get_router(context, router_id)
@@ -1767,10 +1767,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 self.cluster, nsx_router_id, "NoSourceNatRule",
                 max_num_expected=1, min_num_expected=0,
                 destination_ip_addresses=subnet['cidr'])
-        except api_exc.ResourceNotFound:
-            raise nsx_exc.NsxPluginException(
-                err_msg=(_("Logical router resource %s not found "
-                           "on NSX platform") % router_id))
+        except n_exc.NotFound:
+            LOG.error(_("Logical router resource %s not found "
+                        "on NSX platform") % router_id)
         except api_exc.NsxApiException:
             raise nsx_exc.NsxPluginException(
                 err_msg=(_("Unable to update logical router"

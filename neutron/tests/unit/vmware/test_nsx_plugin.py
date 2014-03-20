@@ -1111,6 +1111,28 @@ class NeutronNsxOutOfSync(NsxPluginV2TestCase,
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 200)
 
+    def test_remove_router_interface_not_in_nsx(self):
+        # Create internal network and subnet
+        int_sub_id = self._create_network_and_subnet('10.0.0.0/24')[1]
+        res = self._create_router('json', 'tenant')
+        router = self.deserialize('json', res)
+        # Add interface to router (needed to generate NAT rule)
+        req = self.new_action_request(
+            'routers',
+            {'subnet_id': int_sub_id},
+            router['router']['id'],
+            "add_router_interface")
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 200)
+        self.fc._fake_lrouter_dict.clear()
+        req = self.new_action_request(
+            'routers',
+            {'subnet_id': int_sub_id},
+            router['router']['id'],
+            "remove_router_interface")
+        res = req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 200)
+
     def test_update_router_not_in_nsx(self):
         res = self._create_router('json', 'tenant')
         router = self.deserialize('json', res)
