@@ -42,6 +42,15 @@ class OFCMappingNotFound(qexc.NotFound):
                 "It may be deleted during processing.")
 
 
+class OFCServiceUnavailable(OFCException):
+    message = _("OFC returns Server Unavailable (503) "
+                "(Retry-After=%(retry_after)s)")
+
+    def __init__(self, **kwargs):
+        super(OFCServiceUnavailable, self).__init__(**kwargs)
+        self.retry_after = kwargs.get('retry_after')
+
+
 class PortInfoNotFound(qexc.NotFound):
     message = _("PortInfo %(id)s could not be found")
 
