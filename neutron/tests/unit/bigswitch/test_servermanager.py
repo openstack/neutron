@@ -14,6 +14,9 @@
 #
 # @author: Kevin Benton, kevin.benton@bigswitch.com
 #
+import httplib
+import socket
+
 from contextlib import nested
 import mock
 from oslo.config import cfg
@@ -22,6 +25,7 @@ from neutron.manager import NeutronManager
 from neutron.plugins.bigswitch import servermanager
 from neutron.tests.unit.bigswitch import test_restproxy_plugin as test_rp
 
+HTTPCON = 'httplib.HTTPConnection'
 SERVERMANAGER = 'neutron.plugins.bigswitch.servermanager'
 
 
@@ -97,3 +101,49 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
                 mock.call.read(),
                 mock.call.write('certdata')
             ])
+
+    def test_reconnect_cached_connection(self):
+        sp = servermanager.ServerPool()
+        with mock.patch(HTTPCON) as conmock:
+            rv = conmock.return_value
+            rv.getresponse.return_value.getheader.return_value = 'HASH'
+            sp.servers[0].capabilities = ['keep-alive']
+            sp.servers[0].rest_call('GET', '/first')
+            # raise an error on re-use to verify reconnect
+            # return okay the second time so the reconnect works
+            rv.request.side_effect = [httplib.ImproperConnectionState(),
+                                      mock.MagicMock()]
+            sp.servers[0].rest_call('GET', '/second')
+        uris = [c[1][1] for c in rv.request.mock_calls]
+        expected = [
+            sp.base_uri + '/first',
+            sp.base_uri + '/second',
+            sp.base_uri + '/second',
+        ]
+        self.assertEqual(uris, expected)
+
+    def test_no_reconnect_recurse_to_infinity(self):
+        # retry uses recursion when a reconnect is necessary
+        # this test makes sure it stops after 1 recursive call
+        sp = servermanager.ServerPool()
+        with mock.patch(HTTPCON) as conmock:
+            rv = conmock.return_value
+            # hash header must be string instead of mock object
+            rv.getresponse.return_value.getheader.return_value = 'HASH'
+            sp.servers[0].capabilities = ['keep-alive']
+            sp.servers[0].rest_call('GET', '/first')
+            # after retrying once, the rest call should raise the
+            # exception up
+            rv.request.side_effect = httplib.ImproperConnectionState()
+            self.assertRaises(httplib.ImproperConnectionState,
+                              sp.servers[0].rest_call,
+                              *('GET', '/second'))
+            # 1 for the first call, 2 for the second with retry
+            self.assertEqual(rv.request.call_count, 3)
+
+    def test_socket_error(self):
+        sp = servermanager.ServerPool()
+        with mock.patch(HTTPCON) as conmock:
+            conmock.return_value.request.side_effect = socket.timeout()
+            resp = sp.servers[0].rest_call('GET', '/')
+            self.assertEqual(resp, (0, None, None, None))
