@@ -12,6 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import contextlib
 
 from oslo.config import cfg
 from sqlalchemy import exc as sql_exc
@@ -41,6 +42,7 @@ from neutron.openstack.common import db as os_db
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import jsonutils
+from neutron.openstack.common import lockutils
 from neutron.openstack.common import log
 from neutron.openstack.common import rpc as c_rpc
 from neutron.plugins.common import constants as service_constants
@@ -699,7 +701,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             l3plugin.prevent_l3_port_deletion(context, id)
 
         session = context.session
-        with session.begin(subtransactions=True):
+        # REVISIT: Serialize this operation with a semaphore to prevent
+        # undesired eventlet yields leading to 'lock wait timeout' errors
+        with contextlib.nested(lockutils.lock('db-access'),
+                               session.begin(subtransactions=True)):
             try:
                 port_db = (session.query(models_v2.Port).
                            enable_eagerloads(False).
@@ -735,7 +740,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def update_port_status(self, context, port_id, status):
         updated = False
         session = context.session
-        with session.begin(subtransactions=True):
+        # REVISIT: Serialize this operation with a semaphore to prevent
+        # undesired eventlet yields leading to 'lock wait timeout' errors
+        with contextlib.nested(lockutils.lock('db-access'),
+                               session.begin(subtransactions=True)):
             port = db.get_port(session, port_id)
             if not port:
                 LOG.warning(_("Port %(port)s updated up by agent not found"),
