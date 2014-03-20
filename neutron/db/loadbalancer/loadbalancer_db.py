@@ -192,7 +192,16 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
     def update_status(self, context, model, id, status,
                       status_description=None):
         with context.session.begin(subtransactions=True):
-            v_db = self._get_resource(context, model, id)
+            if issubclass(model, Vip):
+                try:
+                    v_db = (self._model_query(context, model).
+                            filter(model.id == id).
+                            options(orm.noload('port')).
+                            one())
+                except exc.NoResultFound:
+                    raise loadbalancer.VipNotFound(vip_id=id)
+            else:
+                v_db = self._get_resource(context, model, id)
             if v_db.status != status:
                 v_db.status = status
             # update status_description in two cases:
