@@ -75,18 +75,6 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
             self.assertEqual(port['port']['status'], 'DOWN')
             self.assertEqual(self.port_create_status, 'DOWN')
 
-    # exercise the host_id tracking code
-    def test_port_vif_details(self):
-        kwargs = {'name': 'name', 'binding:host_id': 'ivshost',
-                  'device_id': 'override_dev'}
-        with self.port(**kwargs) as port:
-            self.assertEqual(port['port']['binding:vif_type'],
-                             portbindings.VIF_TYPE_IVS)
-        kwargs = {'name': 'name2', 'binding:host_id': 'someotherhost',
-                  'device_id': 'other_dev'}
-        with self.port(**kwargs) as port:
-            self.assertEqual(port['port']['binding:vif_type'], self.VIF_TYPE)
-
     def _make_port(self, fmt, net_id, expected_res_status=None, arg_list=None,
                    **kwargs):
         arg_list = arg_list or ()
