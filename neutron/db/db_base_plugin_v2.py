@@ -1121,8 +1121,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
     def create_subnet(self, context, subnet):
 
+        net = netaddr.IPNetwork(subnet['subnet']['cidr'])
+        # turn the CIDR into a proper subnet
+        subnet['subnet']['cidr'] = '%s/%s' % (net.network, net.prefixlen)
+
         s = subnet['subnet']
-        net = netaddr.IPNetwork(s['cidr'])
 
         if s['gateway_ip'] is attributes.ATTR_NOT_SPECIFIED:
             s['gateway_ip'] = str(netaddr.IPAddress(net.first + 1))

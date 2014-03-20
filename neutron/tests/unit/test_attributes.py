@@ -459,13 +459,11 @@ class TestAttributes(base.BaseTestCase):
                                                    "cidr": "10.0.2.0/32"}
         self.assertEqual(msg, error)
 
-        # Invalid - IPv4 with final octets
-        cidr = "192.168.1.1/24"
-        msg = validator(cidr, None)
-        error = _("'%(data)s' isn't a recognized IP subnet cidr,"
-                  " '%(cidr)s' is recommended") % {"data": cidr,
-                                                   "cidr": "192.168.1.0/24"}
-        self.assertEqual(msg, error)
+        # Valid - IPv4 with non-zero masked bits is ok
+        for i in range(1, 255):
+            cidr = "192.168.1.%s/24" % i
+            msg = validator(cidr, None)
+            self.assertIsNone(msg)
 
         # Invalid - IPv6 without final octets, missing mask
         cidr = "fe80::"
