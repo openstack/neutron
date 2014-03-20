@@ -21,6 +21,7 @@ from neutron import context
 from neutron.db import api as qdbapi
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as st_db
+from neutron.extensions import loadbalancer
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -154,7 +155,15 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
         #because provider was not known to db plugin at pool creation
         p['provider'] = provider_name
         driver = self.drivers[provider_name]
-        driver.create_pool(context, p)
+        try:
+            driver.create_pool(context, p)
+        except loadbalancer.NoEligibleBackend:
+            # that should catch cases when backend of any kind
+            # is not available (agent, appliance, etc)
+            self.update_status(context, ldb.Pool,
+                               p['id'], constants.ERROR,
+                               "No eligible backend")
+            raise loadbalancer.NoEligibleBackend(pool_id=p['id'])
         return p
 
     def update_pool(self, context, id, pool):

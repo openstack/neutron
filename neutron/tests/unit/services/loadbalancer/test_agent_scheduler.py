@@ -24,6 +24,7 @@ from neutron import context
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import agent
 from neutron.extensions import lbaas_agentscheduler
+from neutron.extensions import loadbalancer
 from neutron import manager
 from neutron.plugins.common import constants as plugin_const
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
@@ -117,7 +118,7 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
             self.assertEqual(1, len(pools['pools']))
             self.assertEqual(pool['pool'], pools['pools'][0])
 
-    def test_schedule_poll_with_disabled_agent(self):
+    def test_schedule_pool_with_disabled_agent(self):
         lbaas_hosta = {
             'binary': 'neutron-loadbalancer-agent',
             'host': LBAAS_HOSTA,
@@ -141,8 +142,12 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
                          'description': 'test'}}
         lbaas_plugin = manager.NeutronManager.get_service_plugins()[
             plugin_const.LOADBALANCER]
-        self.assertRaises(lbaas_agentscheduler.NoEligibleLbaasAgent,
+        self.assertRaises(loadbalancer.NoEligibleBackend,
                           lbaas_plugin.create_pool, self.adminContext, pool)
+        pools = lbaas_plugin.get_pools(self.adminContext)
+        self.assertEqual('ERROR', pools[0]['status'])
+        self.assertEqual('No eligible backend',
+                         pools[0]['status_description'])
 
     def test_schedule_pool_with_down_agent(self):
         lbaas_hosta = {
@@ -171,9 +176,13 @@ class LBaaSAgentSchedulerTestCase(test_agent_ext_plugin.AgentDBTestMixIn,
                              'description': 'test'}}
             lbaas_plugin = manager.NeutronManager.get_service_plugins()[
                 plugin_const.LOADBALANCER]
-            self.assertRaises(lbaas_agentscheduler.NoEligibleLbaasAgent,
+            self.assertRaises(loadbalancer.NoEligibleBackend,
                               lbaas_plugin.create_pool,
                               self.adminContext, pool)
+            pools = lbaas_plugin.get_pools(self.adminContext)
+            self.assertEqual('ERROR', pools[0]['status'])
+            self.assertEqual('No eligible backend',
+                             pools[0]['status_description'])
 
     def test_pool_unscheduling_on_pool_deletion(self):
         self._register_agent_states(lbaas_agents=True)

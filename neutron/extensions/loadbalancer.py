@@ -31,6 +31,10 @@ from neutron.services.service_base import ServicePluginBase
 
 
 # Loadbalancer Exceptions
+class NoEligibleBackend(qexception.NotFound):
+    message = _("No eligible backend for pool %(pool_id)s")
+
+
 class VipNotFound(qexception.NotFound):
     message = _("Vip %(vip_id)s could not be found")
 
