@@ -181,48 +181,14 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
         mock_send_all.assert_has_calls([call])
         self.spawn_p.start()
 
-
-class TestBigSwitchProxyPortsV2IVS(test_plugin.TestPortsV2,
-                                   BigSwitchProxyPluginV2TestCase,
-                                   test_bindings.PortBindingsTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_IVS
-    HAS_PORT_FILTER = False
-
-    def setUp(self):
-        super(TestBigSwitchProxyPortsV2IVS,
-              self).setUp()
-        cfg.CONF.set_override('vif_type', 'ivs', 'NOVA')
-
-
-class TestNoHostIDVIFOverride(test_plugin.TestPortsV2,
-                              BigSwitchProxyPluginV2TestCase,
-                              test_bindings.PortBindingsTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_OVS
-    HAS_PORT_FILTER = False
-
-    def setUp(self):
-        super(TestNoHostIDVIFOverride, self).setUp()
-        cfg.CONF.set_override('vif_type', 'ovs', 'NOVA')
-
-    def test_port_vif_details(self):
+    def test_port_vif_details_default(self):
         kwargs = {'name': 'name', 'device_id': 'override_dev'}
         with self.port(**kwargs) as port:
             self.assertEqual(port['port']['binding:vif_type'],
                              portbindings.VIF_TYPE_OVS)
 
-
-class TestBigSwitchVIFOverride(test_plugin.TestPortsV2,
-                               BigSwitchProxyPluginV2TestCase,
-                               test_bindings.PortBindingsTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_OVS
-    HAS_PORT_FILTER = False
-
-    def setUp(self):
-        super(TestBigSwitchVIFOverride,
-              self).setUp()
-        cfg.CONF.set_override('vif_type', 'ovs', 'NOVA')
-
-    def test_port_vif_details(self):
+    def test_port_vif_details_override(self):
+        # ivshost is in the test config to override to IVS
         kwargs = {'name': 'name', 'binding:host_id': 'ivshost',
                   'device_id': 'override_dev'}
         with self.port(**kwargs) as port:
@@ -234,6 +200,7 @@ class TestBigSwitchVIFOverride(test_plugin.TestPortsV2,
             self.assertEqual(port['port']['binding:vif_type'], self.VIF_TYPE)
 
     def test_port_move(self):
+        # ivshost is in the test config to override to IVS
         kwargs = {'name': 'name', 'binding:host_id': 'ivshost',
                   'device_id': 'override_dev'}
         with self.port(**kwargs) as port:
@@ -254,6 +221,17 @@ class TestBigSwitchVIFOverride(test_plugin.TestPortsV2,
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
+
+
+class TestVifDifferentDefault(BigSwitchProxyPluginV2TestCase):
+
+    def setup_config_files(self):
+        super(TestVifDifferentDefault, self).setup_config_files()
+        cfg.CONF.set_override('vif_type', 'ivs', 'NOVA')
+
+    def test_default_viftype(self):
+        with self.port() as port:
+            self.assertEqual(port['port']['binding:vif_type'], 'ivs')
 
 
 class TestBigSwitchProxyNetworksV2(test_plugin.TestNetworksV2,
