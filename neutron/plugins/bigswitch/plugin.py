@@ -801,19 +801,11 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         with context.session.begin(subtransactions=True):
             self.disassociate_floatingips(context, port_id)
             self._delete_port_security_group_bindings(context, port_id)
-            super(NeutronRestProxyV2, self).delete_port(context, port_id)
-
-    def _delete_port(self, context, port_id):
-        port = super(NeutronRestProxyV2, self).get_port(context, port_id)
-
-        # Tenant ID must come from network in case the network is shared
-        tenant_id = self._get_port_net_tenantid(context, port)
-
-        # Delete from DB
-        ret_val = super(NeutronRestProxyV2,
-                        self)._delete_port(context, port_id)
-        self.servers.rest_delete_port(tenant_id, port['network_id'], port_id)
-        return ret_val
+            port = super(NeutronRestProxyV2, self).get_port(context, port_id)
+            # Tenant ID must come from network in case the network is shared
+            tenid = self._get_port_net_tenantid(context, port)
+            self._delete_port(context, port_id)
+            self.servers.rest_delete_port(tenid, port['network_id'], port_id)
 
     def create_subnet(self, context, subnet):
         LOG.debug(_("NeutronRestProxyV2: create_subnet() called"))
