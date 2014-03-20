@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-18 06:34+0000\n"
+"POT-Creation-Date: 2014-03-20 06:25+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Russian (Russia) "
@@ -629,7 +629,7 @@ msgstr ""
 msgid "Router port %s has no IP address"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:411 neutron/db/l3_db.py:843
+#: neutron/agent/l3_agent.py:411 neutron/db/l3_db.py:845
 #: neutron/services/firewall/agents/varmour/varmour_router.py:103
 #, python-format
 msgid "Ignoring multiple IPs on router port %s"
@@ -1453,7 +1453,7 @@ msgid ""
 " and '%(desc)s'"
 msgstr ""
 
-#: neutron/api/api_common.py:317 neutron/api/v2/base.py:572
+#: neutron/api/api_common.py:317 neutron/api/v2/base.py:573
 #, python-format
 msgid "Unable to find '%s' in request body"
 msgstr ""
@@ -1851,41 +1851,46 @@ msgstr ""
 msgid "Resource body required"
 msgstr ""
 
-#: neutron/api/v2/base.py:563
+#: neutron/api/v2/base.py:554
+#, python-format
+msgid "Request body: %(body)s"
+msgstr ""
+
+#: neutron/api/v2/base.py:564
 msgid "Bulk operation not supported"
 msgstr ""
 
-#: neutron/api/v2/base.py:567
+#: neutron/api/v2/base.py:568
 msgid "Resources required"
 msgstr ""
 
-#: neutron/api/v2/base.py:583
+#: neutron/api/v2/base.py:584
 #, python-format
 msgid "Failed to parse request. Required attribute '%s' not specified"
 msgstr ""
 
-#: neutron/api/v2/base.py:590
+#: neutron/api/v2/base.py:591
 #, python-format
 msgid "Attribute '%s' not allowed in POST"
 msgstr ""
 
-#: neutron/api/v2/base.py:595
+#: neutron/api/v2/base.py:596
 #, python-format
 msgid "Cannot update read-only attribute %s"
 msgstr ""
 
-#: neutron/api/v2/base.py:613
+#: neutron/api/v2/base.py:614
 #, python-format
 msgid "Invalid input for %(attr)s. Reason: %(reason)s."
 msgstr ""
 
-#: neutron/api/v2/base.py:622 neutron/extensions/allowedaddresspairs.py:61
+#: neutron/api/v2/base.py:623 neutron/extensions/allowedaddresspairs.py:61
 #: neutron/extensions/multiprovidernet.py:53
 #, python-format
 msgid "Unrecognized attribute(s) '%s'"
 msgstr ""
 
-#: neutron/api/v2/base.py:641
+#: neutron/api/v2/base.py:642
 #, python-format
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
@@ -2376,14 +2381,16 @@ msgstr ""
 msgid "Bad prefix type for generate IPv6 address by EUI-64: %s"
 msgstr ""
 
-#: neutron/common/legacy.py:33
+#: neutron/common/legacy.py:35
 #, python-format
 msgid "Old class module path in use.  Please change '%(old)s' to '%(new)s'."
 msgstr ""
 
-#: neutron/common/legacy.py:51
+#: neutron/common/legacy.py:59
 #, python-format
-msgid "Skipping unknown group key: %s"
+msgid ""
+"Key %(key)s in group %(group)s is unknown. It may not be defined or "
+"needed by this service."
 msgstr ""
 
 #: neutron/common/log.py:32
@@ -2634,11 +2641,6 @@ msgstr ""
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1455
-#, python-format
-msgid "%(address)s (%(subnet_id)s) is not recycled"
-msgstr ""
-
 #: neutron/db/dhcp_rpc_base.py:58
 msgid "Unrecognized action"
 msgstr ""
@@ -2740,94 +2742,94 @@ msgstr ""
 msgid "No IPs available for external network %s"
 msgstr ""
 
-#: neutron/db/l3_db.py:188 neutron/db/l3_db.py:612
+#: neutron/db/l3_db.py:188 neutron/db/l3_db.py:614
 #, python-format
 msgid "Network %s is not a valid external network"
 msgstr ""
 
-#: neutron/db/l3_db.py:282
+#: neutron/db/l3_db.py:284
 #, python-format
 msgid "Router already has a port on subnet %s"
 msgstr ""
 
-#: neutron/db/l3_db.py:296
+#: neutron/db/l3_db.py:298
 #, python-format
 msgid ""
 "Cidr %(subnet_cidr)s of subnet %(subnet_id)s overlaps with cidr %(cidr)s "
 "of subnet %(sub_id)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:305 neutron/db/l3_db.py:382
+#: neutron/db/l3_db.py:307 neutron/db/l3_db.py:384
 #: neutron/plugins/bigswitch/plugin.py:990
 #: neutron/plugins/bigswitch/plugin.py:999
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
-#: neutron/db/l3_db.py:312
+#: neutron/db/l3_db.py:314
 msgid "Cannot specify both subnet-id and port-id"
 msgstr ""
 
-#: neutron/db/l3_db.py:323
+#: neutron/db/l3_db.py:325
 msgid "Router port must have exactly one fixed IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:338
+#: neutron/db/l3_db.py:340
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:468 neutron/plugins/nec/nec_router.py:197
+#: neutron/db/l3_db.py:470 neutron/plugins/nec/nec_router.py:197
 #, python-format
 msgid "Cannot add floating IP to port on subnet %s which has no gateway_ip"
 msgstr ""
 
-#: neutron/db/l3_db.py:507
+#: neutron/db/l3_db.py:509
 #, python-format
 msgid ""
 "Port %(port_id)s is associated with a different tenant than Floating IP "
 "%(floatingip_id)s and therefore cannot be bound."
 msgstr ""
 
-#: neutron/db/l3_db.py:511
+#: neutron/db/l3_db.py:513
 #, python-format
 msgid ""
 "Cannot create floating IP and bind it to Port %s, since that port is "
 "owned by a different tenant."
 msgstr ""
 
-#: neutron/db/l3_db.py:523
+#: neutron/db/l3_db.py:525
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr ""
 
-#: neutron/db/l3_db.py:530
+#: neutron/db/l3_db.py:532
 #, python-format
 msgid "Cannot add floating IP to port %s that hasno fixed IP addresses"
 msgstr ""
 
-#: neutron/db/l3_db.py:534
+#: neutron/db/l3_db.py:536
 #, python-format
 msgid ""
 "Port %s has multiple fixed IPs.  Must provide a specific IP when "
 "assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:577 neutron/plugins/vmware/plugins/base.py:1837
+#: neutron/db/l3_db.py:579 neutron/plugins/vmware/plugins/base.py:1837
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
-#: neutron/db/l3_db.py:743
+#: neutron/db/l3_db.py:745
 #, python-format
 msgid ""
 "Port %(port_id)s has owner %(port_owner)s, but no IP address, so it can "
 "be deleted"
 msgstr ""
 
-#: neutron/db/l3_db.py:761
+#: neutron/db/l3_db.py:763
 #, python-format
 msgid "Multiple floating IPs found for port %s"
 msgstr ""
 
-#: neutron/db/l3_db.py:849
+#: neutron/db/l3_db.py:851
 #, python-format
 msgid "Skipping port %s as no IP is configure on it"
 msgstr ""
@@ -2890,13 +2892,13 @@ msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:250
 #: neutron/plugins/vmware/plugins/service.py:907
-#: neutron/services/firewall/fwaas_plugin.py:239
+#: neutron/services/firewall/fwaas_plugin.py:240
 msgid "update_firewall() called"
 msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:260
 #: neutron/plugins/vmware/plugins/service.py:933
-#: neutron/services/firewall/fwaas_plugin.py:254
+#: neutron/services/firewall/fwaas_plugin.py:255
 msgid "delete_firewall() called"
 msgstr ""
 
@@ -2918,7 +2920,7 @@ msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:302
 #: neutron/plugins/vmware/plugins/service.py:995
-#: neutron/services/firewall/fwaas_plugin.py:263
+#: neutron/services/firewall/fwaas_plugin.py:264
 msgid "update_firewall_policy() called"
 msgstr ""
 
@@ -2944,12 +2946,12 @@ msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:370
 #: neutron/plugins/vmware/plugins/service.py:969
-#: neutron/services/firewall/fwaas_plugin.py:271
+#: neutron/services/firewall/fwaas_plugin.py:272
 msgid "update_firewall_rule() called"
 msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:394
-#: neutron/services/firewall/fwaas_plugin.py:281
+#: neutron/services/firewall/fwaas_plugin.py:282
 msgid "delete_firewall_rule() called"
 msgstr ""
 
@@ -2967,13 +2969,13 @@ msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:422
 #: neutron/plugins/vmware/plugins/service.py:1022
-#: neutron/services/firewall/fwaas_plugin.py:300
+#: neutron/services/firewall/fwaas_plugin.py:301
 msgid "insert_rule() called"
 msgstr ""
 
 #: neutron/db/firewall/firewall_db.py:462
 #: neutron/plugins/vmware/plugins/service.py:1051
-#: neutron/services/firewall/fwaas_plugin.py:308
+#: neutron/services/firewall/fwaas_plugin.py:309
 msgid "remove_rule() called"
 msgstr ""
 
@@ -4891,11 +4893,11 @@ msgstr ""
 msgid "ServerPool: initializing"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:252
+#: neutron/plugins/bigswitch/servermanager.py:250
 msgid "Servers not defined. Aborting server manager."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:259
+#: neutron/plugins/bigswitch/servermanager.py:257
 #, python-format
 msgid "Servers must be defined as <ip>:<port>. Configuration was %s"
 msgstr ""
@@ -5584,167 +5586,192 @@ msgstr ""
 msgid "Some config files were not parsed properly"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:329
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:330
 #, python-format
 msgid "seg_min %(seg_min)s, seg_max %(seg_max)s"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:454
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:455
 #, python-format
 msgid "Removing vlan %(vlan)s on physical network %(network)s from pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:576
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:577
 #, python-format
 msgid "Reserving specific vlan %(vlan)s on physical network %(network)s from pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:580
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:581
 #, python-format
 msgid ""
 "Reserving specific vlan %(vlan)s on physical network %(network)s outside "
 "pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:608
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:609
 #, python-format
 msgid "Releasing vlan %(vlan)s on physical network %(network)s to pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:613
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:614
 #, python-format
 msgid "Releasing vlan %(vlan)s on physical network %(network)s outside pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:617
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:618
 #, python-format
 msgid "vlan_id %(vlan)s on physical network %(network)s not found"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:627
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:628
 #, python-format
 msgid "Skipping unreasonable vxlan ID range %(vxlan_min)s - %(vxlan_max)s"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:665
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:666
 #, python-format
 msgid "Removing vxlan %s from pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:696
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:697
 #, python-format
 msgid "Reserving specific vxlan %s from pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:698
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:699
 #, python-format
 msgid "Reserving specific vxlan %s outside pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:720
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:721
 #, python-format
 msgid "Releasing vxlan %s to pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:724
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:725
 #, python-format
 msgid "Releasing vxlan %s outside pool"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:727
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:728
 #, python-format
 msgid "vxlan_id %s not found"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:835
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:836
 msgid "create_network_profile()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:857
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:858
 msgid "delete_network_profile()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:871
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:872
 msgid "update_network_profile()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:880
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:881
 msgid "get_network_profile()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:905
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:906
 msgid "create_policy_profile()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:916
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:917
 msgid "delete_policy_profile()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:925
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:926
 msgid "update_policy_profile()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:934
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:935
 msgid "get_policy_profile()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:946
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:947
 msgid "Invalid profile type"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:963
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:964
 msgid "_profile_binding_exists()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:971
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:972
 msgid "get_profile_binding()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:981
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:982
 msgid "delete_profile_binding()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:988
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:989
 #, python-format
 msgid ""
 "Profile-Tenant binding missing for profile ID %(profile_id)s and tenant "
 "ID %(tenant_id)s"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1002
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1003
 msgid "_get_profile_bindings()"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1226
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1227
 msgid "Invalid segment range. example range: 500-550"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1236
-msgid "Arguments segment_type missing for network profile"
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1240
+msgid "Invalid multicast ip address range. example range: 224.1.1.1-224.1.1.10"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1245
-msgid "segment_type should either be vlan, overlay, multi-segment or trunk"
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1247
+#, python-format
+msgid "%s is not a valid multicast ip address"
 msgstr ""
 
 #: neutron/plugins/cisco/db/n1kv_db_v2.py:1251
+#, python-format
+msgid "%s is not a valid ip address"
+msgstr ""
+
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1255
+#, python-format
+msgid ""
+"Invalid multicast IP range '%(min_ip)s-%(max_ip)s': Range should be from "
+"low address to high address"
+msgstr ""
+
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1268
+msgid "Arguments segment_type missing for network profile"
+msgstr ""
+
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1277
+msgid "segment_type should either be vlan, overlay, multi-segment or trunk"
+msgstr ""
+
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1283
 msgid "Argument physical_network missing for network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1258
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1290
 msgid "Argument sub_type missing for network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1265
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1297
 msgid "Argument segment_range missing for network profile"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1296
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1308
+msgid "Argument multicast_ip_range missing for VXLAN multicast network profile"
+msgstr ""
+
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1336
 #, python-format
 msgid "NetworkProfile name %s already exists"
 msgstr ""
 
-#: neutron/plugins/cisco/db/n1kv_db_v2.py:1313
+#: neutron/plugins/cisco/db/n1kv_db_v2.py:1353
 msgid "Segment range overlaps with another profile"
 msgstr ""
 
@@ -8695,13 +8722,13 @@ msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
 #: neutron/plugins/ml2/plugin.py:695
-#: neutron/tests/unit/ml2/test_ml2_plugin.py:118
+#: neutron/tests/unit/ml2/test_ml2_plugin.py:117
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
 #: neutron/plugins/ml2/plugin.py:710
-#: neutron/tests/unit/ml2/test_ml2_plugin.py:119
+#: neutron/tests/unit/ml2/test_ml2_plugin.py:118
 #, python-format
 msgid "The port '%s' was deleted"
 msgstr ""
@@ -10696,7 +10723,7 @@ msgstr ""
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1005
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:909
 #: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:598
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:728
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:722
 msgid "ofport should have a value that can be interpreted as an integer"
 msgstr ""
 
@@ -10704,8 +10731,8 @@ msgstr ""
 #: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:912
 #: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:581
 #: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:601
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:711
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:731
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:705
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:725
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""
@@ -13478,7 +13505,7 @@ msgid "router_id is not provided!"
 msgstr ""
 
 #: neutron/plugins/vmware/plugins/service.py:880
-#: neutron/plugins/vmware/plugins/service.py:1578
+#: neutron/plugins/vmware/plugins/service.py:1580
 #, python-format
 msgid "router_id:%s is not an advanced router!"
 msgstr ""
@@ -13526,127 +13553,127 @@ msgstr ""
 msgid "Failed to create vip!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1268
+#: neutron/plugins/vmware/plugins/service.py:1270
 #, python-format
 msgid "Failed to update vip with id: %s!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1285
+#: neutron/plugins/vmware/plugins/service.py:1287
 #, python-format
 msgid "Failed to delete vip with id: %s!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1341
+#: neutron/plugins/vmware/plugins/service.py:1343
 #, python-format
 msgid "Failed to update pool with id: %s!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1363
-#: neutron/plugins/vmware/plugins/service.py:1410
-#: neutron/plugins/vmware/plugins/service.py:1433
+#: neutron/plugins/vmware/plugins/service.py:1365
+#: neutron/plugins/vmware/plugins/service.py:1412
+#: neutron/plugins/vmware/plugins/service.py:1435
 msgid "Failed to update pool with the member"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1389
+#: neutron/plugins/vmware/plugins/service.py:1391
 msgid "Failed to update old pool with the member"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1453
+#: neutron/plugins/vmware/plugins/service.py:1455
 #, python-format
 msgid "Failed to update monitor with id: %s!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1463
+#: neutron/plugins/vmware/plugins/service.py:1465
 msgid "Vcns right now can only support one monitor per pool"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1492
+#: neutron/plugins/vmware/plugins/service.py:1494
 msgid "Failed to associate monitor with pool!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1523
+#: neutron/plugins/vmware/plugins/service.py:1525
 msgid "Failed to update pool with pool_monitor!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1540
+#: neutron/plugins/vmware/plugins/service.py:1542
 #, python-format
 msgid ""
 "Failed to update ipsec vpn configuration on edge, since the router: %s "
 "does not have a gateway yet!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1564
+#: neutron/plugins/vmware/plugins/service.py:1566
 msgid "Bad or unsupported Input request!"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1567
+#: neutron/plugins/vmware/plugins/service.py:1569
 #, python-format
 msgid ""
 "Failed to update ipsec VPN configuration with vpnservice: "
 "%(vpnservice_id)s on vShield Edge: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1575
+#: neutron/plugins/vmware/plugins/service.py:1577
 msgid "create_vpnservice() called"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1583
+#: neutron/plugins/vmware/plugins/service.py:1585
 #, python-format
 msgid "a vpnservice is already associated with the router: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1696
+#: neutron/plugins/vmware/plugins/service.py:1698
 #, python-format
 msgid "Start deploying %(edge_id)s for router %(name)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1702
-#: neutron/plugins/vmware/plugins/service.py:1739
+#: neutron/plugins/vmware/plugins/service.py:1704
+#: neutron/plugins/vmware/plugins/service.py:1741
 #, python-format
 msgid "Failed to deploy Edge for router %s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1720
+#: neutron/plugins/vmware/plugins/service.py:1722
 #, python-format
 msgid "Router %s not found"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1723
+#: neutron/plugins/vmware/plugins/service.py:1725
 #, python-format
 msgid "Successfully deployed %(edge_id)s for router %(name)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1755
+#: neutron/plugins/vmware/plugins/service.py:1757
 #, python-format
 msgid "interface_update_result %d"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1758
+#: neutron/plugins/vmware/plugins/service.py:1760
 #, python-format
 msgid "snat_create_result %d"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1761
+#: neutron/plugins/vmware/plugins/service.py:1763
 #, python-format
 msgid "snat_delete_result %d"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1764
+#: neutron/plugins/vmware/plugins/service.py:1766
 #, python-format
 msgid "dnat_create_result %d"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1767
+#: neutron/plugins/vmware/plugins/service.py:1769
 #, python-format
 msgid "dnat_delete_result %d"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1770
+#: neutron/plugins/vmware/plugins/service.py:1772
 #, python-format
 msgid "routes_update_result %d"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1773
+#: neutron/plugins/vmware/plugins/service.py:1775
 #, python-format
 msgid "nat_update_result %d"
 msgstr ""
@@ -13988,72 +14015,102 @@ msgstr ""
 msgid "Failed to delete ipsec vpn configuration with edge_id: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:146
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:154
+#, python-format
+msgid "Invalid %(protocol)s persistence method: %(type)s"
+msgstr ""
+
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:180
 #, python-format
 msgid "Failed to create app profile on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:157
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:191
 #, python-format
 msgid "Failed to create vip on vshield edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:179
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:209
+#, python-format
+msgid "vip_binding not found with id: %(id)s edge_id: %(edge_id)s"
+msgstr ""
+
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:226
 msgid "Failed to get vip on edge"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:194
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:243
+#, python-format
+msgid "Failed to update app profile on edge: %s"
+msgstr ""
+
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:251
 #, python-format
 msgid "Failed to update vip on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:208
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:262
+#, python-format
+msgid "vip not found on edge: %s"
+msgstr ""
+
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:265
 #, python-format
 msgid "Failed to delete vip on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:217
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:270
+#, python-format
+msgid "app profile not found on edge: %s"
+msgstr ""
+
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:273
+#, python-format
+msgid "Failed to delete app profile on edge: %s"
+msgstr ""
+
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:284
 msgid "Failed to create pool"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:234
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:301
 #, python-format
 msgid "pool_binding not found with id: %(id)s edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:244
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:311
 msgid "Failed to get pool on edge"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:256
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:323
 msgid "Failed to update pool"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:266
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:333
 msgid "Failed to delete pool"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:276
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:343
 #, python-format
 msgid "Failed to create monitor on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:294
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:361
 #, python-format
 msgid "monitor_binding not found with id: %(id)s edge_id: %(edge_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:304
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:371
 #, python-format
 msgid "Failed to get monitor on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:321
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:388
 #, python-format
 msgid "Failed to update monitor on edge: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:332
+#: neutron/plugins/vmware/vshield/edge_loadbalancer_driver.py:399
 msgid "Failed to delete monitor"
 msgstr ""
 
@@ -17239,21 +17296,15 @@ msgstr ""
 #~ msgid "Network Admin State Validation Failed: "
 #~ msgstr ""
 
-#~ msgid ""
-#~ "VXLAN muticast group must be provided"
-#~ " in vxlan_group option to enable "
-#~ "VXLAN"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Unable to use VXLAN, it requires "
-#~ "at least 3.8 linux kernel and "
-#~ "iproute2 3.8"
-#~ msgstr ""
-
 #~ msgid "Failed to update pool with monitor!"
 #~ msgstr ""
 
 #~ msgid "Failed to delete monitor with id: %s!"
+#~ msgstr ""
+
+#~ msgid "Skipping unknown group key: %s"
+#~ msgstr ""
+
+#~ msgid "%(address)s (%(subnet_id)s) is not recycled"
 #~ msgstr ""
 
