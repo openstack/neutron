@@ -371,7 +371,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             lvm.tun_ofports.add(ofport)
             ofports = ','.join(lvm.tun_ofports)
             self.tun_br.mod_flow(table=constants.FLOOD_TO_TUN,
-                                 priority=1,
                                  dl_vlan=lvm.vlan,
                                  actions="strip_vlan,set_tunnel:%s,"
                                  "output:%s" % (lvm.segmentation_id, ofports))
@@ -390,7 +389,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             if len(lvm.tun_ofports) > 0:
                 ofports = ','.join(lvm.tun_ofports)
                 self.tun_br.mod_flow(table=constants.FLOOD_TO_TUN,
-                                     priority=1,
                                      dl_vlan=lvm.vlan,
                                      actions="strip_vlan,"
                                      "set_tunnel:%s,output:%s" %
@@ -452,7 +450,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 ofports = ','.join(self.tun_br_ofports[network_type].values())
                 if ofports:
                     self.tun_br.mod_flow(table=constants.FLOOD_TO_TUN,
-                                         priority=1,
                                          dl_vlan=lvid,
                                          actions="strip_vlan,"
                                          "set_tunnel:%s,output:%s" %
@@ -927,7 +924,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             for network_id, vlan_mapping in self.local_vlan_map.iteritems():
                 if vlan_mapping.network_type == tunnel_type:
                     self.tun_br.mod_flow(table=constants.FLOOD_TO_TUN,
-                                         priority=1,
                                          dl_vlan=vlan_mapping.vlan,
                                          actions="strip_vlan,"
                                          "set_tunnel:%s,output:%s" %

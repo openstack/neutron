@@ -602,7 +602,6 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                            actions='strip_vlan,'
                                            'set_tunnel:seg1,output:2')
             mod_flow_fn.assert_called_with(table=constants.FLOOD_TO_TUN,
-                                           priority=1,
                                            dl_vlan='vlan1',
                                            actions='strip_vlan,'
                                            'set_tunnel:seg1,output:1,2')
@@ -625,7 +624,6 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                            dl_vlan='vlan2',
                                            dl_dst='mac')
             mod_flow_fn.assert_called_with(table=constants.FLOOD_TO_TUN,
-                                           priority=1,
                                            dl_vlan='vlan2',
                                            actions='strip_vlan,'
                                            'set_tunnel:seg2,output:1')
