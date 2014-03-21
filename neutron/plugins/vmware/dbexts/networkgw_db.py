@@ -294,10 +294,17 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             context.session.delete(gw_db)
         LOG.debug(_("Network gateway '%s' was destroyed."), id)
 
-    def get_network_gateways(self, context, filters=None, fields=None):
+    def get_network_gateways(self, context, filters=None, fields=None,
+                             sorts=None, limit=None, marker=None,
+                             page_reverse=False):
+        marker_obj = self._get_marker_obj(
+            context, 'network_gateway', limit, marker)
         return self._get_collection(context, NetworkGateway,
                                     self._make_network_gateway_dict,
-                                    filters=filters, fields=fields)
+                                    filters=filters, fields=fields,
+                                    sorts=sorts, limit=limit,
+                                    marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
 
     def connect_network(self, context, network_gateway_id,
                         network_mapping_info):
@@ -437,10 +444,18 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             fields, include_nsx_id)
 
     def get_gateway_devices(self, context, filters=None, fields=None,
-                            include_nsx_id=False):
+                            sorts=None, limit=None, marker=None,
+                            page_reverse=False, include_nsx_id=False):
+        marker_obj = self._get_marker_obj(
+            context, 'gateway_device', limit, marker)
         query = self._get_collection_query(context,
                                            NetworkGatewayDevice,
-                                           filters=filters)
+                                           filters=filters,
+                                           fields=fields,
+                                           sorts=sorts,
+                                           limit=limit,
+                                           marker_obj=marker_obj,
+                                           page_reverse=page_reverse)
         return [self._make_gateway_device_dict(row, fields, include_nsx_id)
                 for row in query]
 
