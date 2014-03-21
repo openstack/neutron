@@ -262,7 +262,6 @@ class TunnelTest(base.BaseTestCase):
         ofports = ','.join(TUN_OFPORTS[p_const.TYPE_GRE].values())
         self.mock_tun_bridge_expected += [
             mock.call.mod_flow(table=constants.FLOOD_TO_TUN,
-                               priority=1,
                                dl_vlan=LV_ID,
                                actions="strip_vlan,"
                                "set_tunnel:%s,output:%s" %

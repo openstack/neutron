@@ -359,6 +359,14 @@ class OVS_Lib_Test(base.BaseTestCase):
                           self.br.delete_flows,
                           **params)
 
+    def test_mod_flow_with_priority_set(self):
+        params = {'in_port': '1',
+                  'priority': '1'}
+
+        self.assertRaises(exceptions.InvalidInput,
+                          self.br.mod_flow,
+                          **params)
+
     def test_mod_flow_no_actions_set(self):
         params = {'in_port': '1'}
 
