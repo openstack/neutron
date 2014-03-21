@@ -1711,6 +1711,31 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         plugin = NeutronManager.get_plugin()
         self._test_delete_ports_by_device_id_second_call_failure(plugin)
 
+    def _test_delete_ports_ignores_port_not_found(self, plugin):
+        ctx = context.get_admin_context()
+        with self.subnet() as subnet:
+            with contextlib.nested(
+                self.port(subnet=subnet, device_id='owner1'),
+                mock.patch.object(plugin, 'delete_port')
+            ) as (p, del_port):
+                del_port.side_effect = n_exc.PortNotFound(
+                    port_id=p['port']['id']
+                )
+                network_id = subnet['subnet']['network_id']
+                try:
+                    plugin.delete_ports_by_device_id(ctx, 'owner1',
+                                                     network_id)
+                except n_exc.PortNotFound:
+                    self.fail("delete_ports_by_device_id unexpectedly raised "
+                              "a PortNotFound exception. It should ignore "
+                              "this exception because it is often called at "
+                              "the same time other concurrent operations are "
+                              "deleting some of the same ports.")
+
+    def test_delete_ports_ignores_port_not_found(self):
+        plugin = NeutronManager.get_plugin()
+        self._test_delete_ports_ignores_port_not_found(plugin)
+
 
 class TestNetworksV2(NeutronDbPluginV2TestCase):
     # NOTE(cerberus): successful network update and delete are

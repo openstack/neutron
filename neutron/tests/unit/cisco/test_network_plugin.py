@@ -862,6 +862,10 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
         plugin_ref = self._get_plugin_ref()
         self._test_delete_ports_by_device_id_second_call_failure(plugin_ref)
 
+    def test_delete_ports_ignores_port_not_found(self):
+        plugin_ref = self._get_plugin_ref()
+        self._test_delete_ports_ignores_port_not_found(plugin_ref)
+
 
 class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
                           test_db_plugin.TestNetworksV2):

@@ -1424,7 +1424,13 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             query = query.filter(models_v2.Port.network_id == network_id)
         port_ids = [p[0] for p in query]
         for port_id in port_ids:
-            self.delete_port(context, port_id)
+            try:
+                self.delete_port(context, port_id)
+            except n_exc.PortNotFound:
+                # Don't raise if something else concurrently deleted the port
+                LOG.debug(_("Ignoring PortNotFound when deleting port '%s'. "
+                            "The port has already been deleted."),
+                          port_id)
 
     def _delete_port(self, context, id):
         query = (context.session.query(models_v2.Port).
