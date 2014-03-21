@@ -16,6 +16,8 @@
 
 import mock
 
+from oslo.config import cfg
+
 from neutron.common import exceptions
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.api_client import exception as api_exc
@@ -115,7 +117,8 @@ class TestExplicitLRouters(base.NsxlibTestCase):
                         'type': 'SingleDefaultRouteImplicitRoutingConfig'},
                     'tags': utils.get_tags(os_tid='fake_tenant_id',
                                            q_router_id='pipita_higuain'),
-                    'type': 'LogicalRouterConfig'}
+                    'type': 'LogicalRouterConfig',
+                    'replication_mode': cfg.CONF.NSX.replication_mode}
         self.assertEqual(expected, body)
 
     def test_prepare_body_without_routing_config(self):
@@ -129,7 +132,8 @@ class TestExplicitLRouters(base.NsxlibTestCase):
                     'routing_config': {'type': 'RoutingTableRoutingConfig'},
                     'tags': utils.get_tags(os_tid='fake_tenant_id',
                                            q_router_id='marekiaro_hamsik'),
-                    'type': 'LogicalRouterConfig'}
+                    'type': 'LogicalRouterConfig',
+                    'replication_mode': cfg.CONF.NSX.replication_mode}
         self.assertEqual(expected, body)
 
     def test_get_lrouter(self):

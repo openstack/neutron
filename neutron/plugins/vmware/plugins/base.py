@@ -123,6 +123,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def __init__(self):
         super(NsxPluginV2, self).__init__()
+        config.validate_config_options()
         # TODO(salv-orlando): Replace These dicts with
         # collections.defaultdict for better handling of default values
         # Routines for managing logical ports in NSX
