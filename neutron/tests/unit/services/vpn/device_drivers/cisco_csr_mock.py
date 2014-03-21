@@ -29,7 +29,6 @@ from neutron.openstack.common import log as logging
 from neutron.tests.unit.services.vpn.device_drivers import httmock
 
 # TODO(pcm) Remove, once verified these have been fixed
-FIXED_CSCum50512 = False
 FIXED_CSCum35484 = False
 FIXED_CSCul82396 = False
 FIXED_CSCum10324 = False
@@ -236,7 +235,7 @@ def normal_get(url, request):
                    u'outgoing-interface': u'GigabitEthernet1',
                    u'admin-distance': 1}
         return httmock.response(requests.codes.OK, content=content)
-    if 'vpn-svc/site-to-site/active/sessions':
+    if 'vpn-svc/site-to-site/active/sessions' in url.path:
         # Only including needed fields for mock
         content = {u'kind': u'collection#vpn-active-sessions',
                    u'items': [{u'status': u'DOWN-NEGOTIATING',
@@ -318,26 +317,23 @@ def get_defaults(url, request):
 def get_unnumbered(url, request):
     if not request.headers.get('X-auth-token', None):
         return {'status_code': requests.codes.UNAUTHORIZED}
-    if FIXED_CSCum50512:
-        tunnel = url.path.split('/')[-1]
-        ipsec_policy_id = tunnel[6:]
-        content = {u'kind': u'object#vpn-site-to-site',
-                   u'vpn-interface-name': u'%s' % tunnel,
-                   u'ip-version': u'ipv4',
-                   u'vpn-type': u'site-to-site',
-                   u'ipsec-policy-id': u'%s' % ipsec_policy_id,
-                   u'ike-profile-id': None,
-                   u'mtu': 1500,
-                   u'local-device': {
-                       u'ip-address': u'unnumbered GigabitEthernet3',
-                       u'tunnel-ip-address': u'10.10.10.10'
-                   },
-                   u'remote-device': {
-                       u'tunnel-ip-address': u'10.10.10.20'
-                   }}
-        return httmock.response(requests.codes.OK, content=content)
-    else:
-        return httmock.response(requests.codes.INTERNAL_SERVER_ERROR)
+    tunnel = url.path.split('/')[-1]
+    ipsec_policy_id = tunnel[6:]
+    content = {u'kind': u'object#vpn-site-to-site',
+               u'vpn-interface-name': u'%s' % tunnel,
+               u'ip-version': u'ipv4',
+               u'vpn-type': u'site-to-site',
+               u'ipsec-policy-id': u'%s' % ipsec_policy_id,
+               u'ike-profile-id': None,
+               u'mtu': 1500,
+               u'local-device': {
+                   u'ip-address': u'GigabitEthernet3',
+                   u'tunnel-ip-address': u'10.10.10.10'
+               },
+               u'remote-device': {
+                   u'tunnel-ip-address': u'10.10.10.20'
+               }}
+    return httmock.response(requests.codes.OK, content=content)
 
 
 @filter_request(['get'], 'vpn-svc/site-to-site')

@@ -16,7 +16,7 @@
 
 import abc
 from collections import namedtuple
-import httplib
+import requests
 
 import netaddr
 from oslo.config import cfg
@@ -221,7 +221,8 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
 
     def vpnservice_updated(self, context, **kwargs):
         """Handle VPNaaS service driver change notifications."""
-        LOG.debug(_("Handling VPN service update notification"))
+        LOG.debug(_("Handling VPN service update notification '%s'"),
+                  kwargs.get('reason', ''))
         self.sync(context, [])
 
     def create_vpn_service(self, service_data):
@@ -675,7 +676,7 @@ class CiscoCsrIPSecConnection(object):
 
     def _check_create(self, resource, which):
         """Determine if REST create request was successful."""
-        if self.csr.status == httplib.CREATED:
+        if self.csr.status == requests.codes.CREATED:
             LOG.debug("%(resource)s %(which)s is configured",
                       {'resource': resource, 'which': which})
             return
@@ -701,7 +702,7 @@ class CiscoCsrIPSecConnection(object):
 
     def _verify_deleted(self, status, resource, which):
         """Determine if REST delete request was successful."""
-        if status in (httplib.NO_CONTENT, httplib.NOT_FOUND):
+        if status in (requests.codes.NO_CONTENT, requests.codes.NOT_FOUND):
             LOG.debug("%(resource)s configuration %(which)s was removed",
                       {'resource': resource, 'which': which})
         else:

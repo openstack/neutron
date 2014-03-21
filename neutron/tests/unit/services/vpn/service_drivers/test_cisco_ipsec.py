@@ -309,12 +309,12 @@ class TestCiscoIPsecDriver(base.BaseTestCase):
         mock.patch.object(csr_db, 'create_tunnel_mapping').start()
         self.context = n_ctx.Context('some_user', 'some_tenant')
 
-    def _test_update(self, func, args):
+    def _test_update(self, func, args, reason=None):
         with mock.patch.object(self.driver.agent_rpc, 'cast') as cast:
             func(self.context, *args)
             cast.assert_called_once_with(
                 self.context,
-                {'args': {},
+                {'args': reason,
                  'namespace': None,
                  'method': 'vpnservice_updated'},
                 version='1.0',
@@ -322,7 +322,8 @@ class TestCiscoIPsecDriver(base.BaseTestCase):
 
     def test_create_ipsec_site_connection(self):
         self._test_update(self.driver.create_ipsec_site_connection,
-                          [FAKE_VPN_CONNECTION])
+                          [FAKE_VPN_CONNECTION],
+                          {'reason': 'ipsec-conn-create'})
 
     def test_failure_validation_ipsec_connection(self):
         """Failure test of validation during IPSec site connection create.
@@ -352,12 +353,15 @@ class TestCiscoIPsecDriver(base.BaseTestCase):
 
     def test_delete_ipsec_site_connection(self):
         self._test_update(self.driver.delete_ipsec_site_connection,
-                          [FAKE_VPN_CONNECTION])
+                          [FAKE_VPN_CONNECTION],
+                          {'reason': 'ipsec-conn-delete'})
 
     def test_update_vpnservice(self):
         self._test_update(self.driver.update_vpnservice,
-                          [FAKE_VPN_SERVICE, FAKE_VPN_SERVICE])
+                          [FAKE_VPN_SERVICE, FAKE_VPN_SERVICE],
+                          {'reason': 'vpn-service-update'})
 
     def test_delete_vpnservice(self):
         self._test_update(self.driver.delete_vpnservice,
-                          [FAKE_VPN_SERVICE])
+                          [FAKE_VPN_SERVICE],
+                          {'reason': 'vpn-service-delete'})

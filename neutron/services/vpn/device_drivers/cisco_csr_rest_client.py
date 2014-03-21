@@ -102,10 +102,9 @@ class CsrRestClient(object):
                          if isinstance(te, r_exc.SSLError) else '',
                          'host': self.host})
             self.status = requests.codes.REQUEST_TIMEOUT
-        except r_exc.ConnectionError as ce:
-            LOG.error(_("%(method)s: Unable to connect to CSR(%(host)s): "
-                        "%(error)s"),
-                      {'method': method, 'host': self.host, 'error': ce})
+        except r_exc.ConnectionError:
+            LOG.exception(_("%(method)s: Unable to connect to CSR(%(host)s)"),
+                          {'method': method, 'host': self.host})
             self.status = requests.codes.NOT_FOUND
         except Exception as e:
             LOG.error(_("%(method)s: Unexpected error for CSR (%(host)s): "
