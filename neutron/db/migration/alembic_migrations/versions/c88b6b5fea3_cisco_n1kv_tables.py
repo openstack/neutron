@@ -96,7 +96,7 @@ def upgrade(active_plugins=None, options=None):
         'cisco_n1kv_port_bindings',
         sa.Column('port_id', sa.String(length=36), nullable=False),
         sa.Column('profile_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['port_id'], ['ports.id']),
+        sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['profile_id'], ['cisco_policy_profiles.id']),
         sa.PrimaryKeyConstraint('port_id')
     )
@@ -122,7 +122,8 @@ def upgrade(active_plugins=None, options=None):
                   nullable=True),
         sa.Column('multicast_ip', sa.String(length=32), nullable=True),
         sa.Column('profile_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['network_id'], ['networks.id']),
+        sa.ForeignKeyConstraint(['network_id'], ['networks.id'],
+                                ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['profile_id'], ['cisco_network_profiles.id']),
         sa.PrimaryKeyConstraint('network_id')
     )
