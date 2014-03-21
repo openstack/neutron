@@ -92,6 +92,9 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             "lbaas",
             "vpnaas"
         ])
+    # The service plugin cannot currently support pagination
+    __native_pagination_support = False
+    __native_sorting_support = False
 
     def __init__(self):
         super(NsxAdvancedPlugin, self).__init__()

@@ -98,10 +98,15 @@ class QoSDbMixin(qos.QueuePluginBase):
         except exc.NoResultFound:
             raise qos.QueueNotFound(id=queue_id)
 
-    def get_qos_queues(self, context, filters=None, fields=None):
+    def get_qos_queues(self, context, filters=None, fields=None, sorts=None,
+                       limit=None, marker=None, page_reverse=False):
+        marker_obj = self._get_marker_obj(context, 'qos_queue', limit, marker)
         return self._get_collection(context, QoSQueue,
                                     self._make_qos_queue_dict,
-                                    filters=filters, fields=fields)
+                                    filters=filters, fields=fields,
+                                    sorts=sorts, limit=limit,
+                                    marker_obj=marker_obj,
+                                    page_reverse=page_reverse)
 
     def delete_qos_queue(self, context, queue_id):
         qos_queue = self._get_qos_queue(context, queue_id)
