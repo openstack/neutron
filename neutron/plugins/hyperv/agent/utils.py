@@ -247,3 +247,10 @@ class HyperVUtils(object):
     def enable_port_metrics_collection(self, switch_port_name):
         raise NotImplementedError(_("Metrics collection is not supported on "
                                     "this version of Hyper-V"))
+
+    def enable_control_metrics(self, switch_port_name):
+        raise NotImplementedError(_("Metrics collection is not supported on "
+                                    "this version of Hyper-V"))
+
+    def can_enable_control_metrics(self, switch_port_name):
+        return False
