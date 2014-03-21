@@ -471,8 +471,8 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         self.assertFalse(self.conn_create.called)
 
     def test_update_connection_admin_down(self):
-        """Connection updated to admin down state - dirty."""
-        # Make existing service, and conenction that was active
+        """Connection updated to admin down state - force down."""
+        # Make existing service, and connection that was active
         vpn_service = self.driver.create_vpn_service(self.service123_data)
         conn_data = {u'id': '1', u'status': constants.ACTIVE,
                      u'admin_state_up': True,
@@ -485,7 +485,8 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         connection = self.driver.update_connection(self.context,
                                                    u'123', conn_data)
-        self.assertTrue(connection.is_dirty)
+        self.assertFalse(connection.is_dirty)
+        self.assertTrue(connection.forced_down)
         self.assertEqual(u'Tunnel0', connection.tunnel)
         self.assertEqual(constants.DOWN, connection.last_status)
         self.assertFalse(self.conn_create.called)
@@ -494,8 +495,8 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         """Connection not present is in admin down state - nop.
 
         If the agent has restarted, and a sync notification occurs with
-        a connection that is in admin down state, ignore the connection
-        versus creating and marking dirty and then deleting.
+        a connection that is in admin down state, create the structures,
+        but indicate that the connection is down.
         """
         # Make existing service, but no connection
         self.driver.create_vpn_service(self.service123_data)
@@ -505,8 +506,36 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         connection = self.driver.update_connection(self.context,
                                                    u'123', conn_data)
-        self.assertIsNone(connection)
+        self.assertIsNotNone(connection)
+        self.assertFalse(connection.is_dirty)
+        self.assertFalse(connection.is_admin_up)
+        self.assertTrue(connection.forced_down)
         self.assertFalse(self.conn_create.called)
+
+    def test_update_connection_admin_up(self):
+        """Connection updated to admin up state - record."""
+        # Make existing service, and connection that was admin down
+        conn_data = {u'id': '1', u'status': constants.DOWN,
+                     u'admin_state_up': False,
+                     u'cisco': {u'site_conn_id': u'Tunnel0'}}
+        service_data = {u'id': u'123',
+                        u'status': constants.DOWN,
+                        u'external_ip': u'1.1.1.1',
+                        u'admin_state_up': True,
+                        u'ipsec_conns': [conn_data]}
+        self.driver.update_service(self.context, service_data)
+        self.driver.mark_existing_connections_as_dirty()
+        # Now simulate that the notification shows the connection admin up
+        conn_data[u'admin_state_up'] = True
+        conn_data[u'status'] = constants.DOWN
+
+        connection = self.driver.update_connection(self.context,
+                                                   u'123', conn_data)
+        self.assertFalse(connection.is_dirty)
+        self.assertFalse(connection.forced_down)
+        self.assertEqual(u'Tunnel0', connection.tunnel)
+        self.assertEqual(constants.DOWN, connection.last_status)
+        self.assertEqual(1, self.conn_create.call_count)
 
     def test_update_for_vpn_service_create(self):
         """Creation of new IPSec connection on new VPN service - create.
@@ -589,10 +618,9 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         self.assertFalse(self.conn_create.called)
 
     def test_update_service_admin_down(self):
-        """VPN service updated to admin down state - dirty.
+        """VPN service updated to admin down state - force all down.
 
-        Mark service dirty and do not process any notfications for
-        connections using the service.
+        If service is down, then all connections are forced down.
         """
         # Create an "existing" service, prior to notification
         prev_vpn_service = self.driver.create_vpn_service(self.service123_data)
@@ -607,24 +635,76 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
                         u'ipsec_conns': [conn_data]}
         vpn_service = self.driver.update_service(self.context, service_data)
         self.assertEqual(prev_vpn_service, vpn_service)
-        self.assertTrue(vpn_service.is_dirty)
+        self.assertFalse(vpn_service.is_dirty)
+        self.assertFalse(vpn_service.is_admin_up)
         self.assertEqual(constants.DOWN, vpn_service.last_status)
-        self.assertIsNone(vpn_service.get_connection(u'1'))
+        conn = vpn_service.get_connection(u'1')
+        self.assertIsNotNone(conn)
+        self.assertFalse(conn.is_dirty)
+        self.assertTrue(conn.forced_down)
+        self.assertTrue(conn.is_admin_up)
 
-    def test_update_unknown_service_admin_down(self):
-        """Unknown VPN service uodated to admin down state - nop.
+    def test_update_new_service_admin_down(self):
+        """Unknown VPN service updated to admin down state - nop.
 
         Can happen if agent restarts and then gets its first notificaiton
-        of a service that is in the admin down state. Will not do anything,
-        versus creating, marking dirty, and then deleting the VPN service.
+        of a service that is in the admin down state. Structures will be
+        created, but forced down.
         """
+        conn_data = {u'id': u'1', u'status': constants.ACTIVE,
+                     u'admin_state_up': True,
+                     u'cisco': {u'site_conn_id': u'Tunnel0'}}
         service_data = {u'id': u'123',
                         u'status': constants.DOWN,
                         u'external_ip': u'1.1.1.1',
                         u'admin_state_up': False,
-                        u'ipsec_conns': []}
+                        u'ipsec_conns': [conn_data]}
         vpn_service = self.driver.update_service(self.context, service_data)
-        self.assertIsNone(vpn_service)
+        self.assertIsNotNone(vpn_service)
+        self.assertFalse(vpn_service.is_dirty)
+        self.assertFalse(vpn_service.is_admin_up)
+        self.assertEqual(constants.DOWN, vpn_service.last_status)
+        conn = vpn_service.get_connection(u'1')
+        self.assertIsNotNone(conn)
+        self.assertFalse(conn.is_dirty)
+        self.assertTrue(conn.forced_down)
+        self.assertTrue(conn.is_admin_up)
+
+    def test_update_service_admin_up(self):
+        """VPN service updated to admin up state - restore.
+
+        If service is up now, then connections that are admin up will come
+        up and connections that are admin down, will remain down.
+        """
+        # Create an "existing" service, prior to notification
+        prev_vpn_service = self.driver.create_vpn_service(self.service123_data)
+        self.driver.mark_existing_connections_as_dirty()
+        conn_data1 = {u'id': u'1', u'status': constants.DOWN,
+                      u'admin_state_up': False,
+                      u'cisco': {u'site_conn_id': u'Tunnel0'}}
+        conn_data2 = {u'id': u'2', u'status': constants.ACTIVE,
+                      u'admin_state_up': True,
+                      u'cisco': {u'site_conn_id': u'Tunnel1'}}
+        service_data = {u'id': u'123',
+                        u'status': constants.DOWN,
+                        u'external_ip': u'1.1.1.1',
+                        u'admin_state_up': True,
+                        u'ipsec_conns': [conn_data1, conn_data2]}
+        vpn_service = self.driver.update_service(self.context, service_data)
+        self.assertEqual(prev_vpn_service, vpn_service)
+        self.assertFalse(vpn_service.is_dirty)
+        self.assertTrue(vpn_service.is_admin_up)
+        self.assertEqual(constants.DOWN, vpn_service.last_status)
+        conn1 = vpn_service.get_connection(u'1')
+        self.assertIsNotNone(conn1)
+        self.assertFalse(conn1.is_dirty)
+        self.assertTrue(conn1.forced_down)
+        self.assertFalse(conn1.is_admin_up)
+        conn2 = vpn_service.get_connection(u'2')
+        self.assertIsNotNone(conn2)
+        self.assertFalse(conn2.is_dirty)
+        self.assertFalse(conn2.forced_down)
+        self.assertTrue(conn2.is_admin_up)
 
     def test_update_of_unknown_service_create(self):
         """Create of VPN service that is currently unknown - record.
@@ -800,7 +880,12 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
     def simulate_mark_update_sweep_for_service_with_conn(self, service_state,
                                                          connection_state):
-        """Create internal structures for single service with connection."""
+        """Create internal structures for single service with connection.
+
+        The service and connection will be marked as clean, and since
+        none are being deleted, the service's connections_removed
+        attribute will remain false.
+        """
         # Simulate that we have done mark, update, and sweep.
         conn_data = {u'id': u'1', u'status': connection_state,
                      u'admin_state_up': True,
@@ -833,7 +918,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         # Create report fragment due to change
         self.assertNotEqual(connection.last_status, current_status)
-        report_frag = connection.build_report_based_on_status(current_status)
+        report_frag = connection.update_status_and_build_report(current_status)
         self.assertEqual(current_status, connection.last_status)
         expected = {'1': {'status': constants.ACTIVE,
                     'updated_pending_status': True}}
@@ -860,7 +945,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         # Should be no report, as no change
         self.assertEqual(connection.last_status, current_status)
-        report_frag = connection.build_report_based_on_status(current_status)
+        report_frag = connection.update_status_and_build_report(current_status)
         self.assertEqual(current_status, connection.last_status)
         self.assertEqual({}, report_frag)
 
@@ -885,7 +970,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         # Create report fragment due to change
         self.assertNotEqual(connection.last_status, current_status)
-        report_frag = connection.build_report_based_on_status(current_status)
+        report_frag = connection.update_status_and_build_report(current_status)
         self.assertEqual(current_status, connection.last_status)
         expected = {'1': {'status': constants.ACTIVE,
                     'updated_pending_status': False}}
@@ -915,10 +1000,38 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         # Create report fragment due to change
         self.assertNotEqual(connection.last_status, current_status)
-        report_frag = connection.build_report_based_on_status(current_status)
+        report_frag = connection.update_status_and_build_report(current_status)
         self.assertEqual(current_status, connection.last_status)
         expected = {'1': {'status': constants.ERROR,
                     'updated_pending_status': True}}
+        self.assertEqual(expected, report_frag)
+
+    def test_report_fragment_connection_admin_down(self):
+        """Report for a connection that is in admin down state."""
+        # Prepare service and connection with previous status ACTIVE, but
+        # with connection admin down
+        conn_data = {u'id': u'1', u'status': constants.ACTIVE,
+                     u'admin_state_up': False,
+                     u'cisco': {u'site_conn_id': u'Tunnel0'}}
+        service_data = {u'id': u'123',
+                        u'status': constants.ACTIVE,
+                        u'external_ip': u'1.1.1.1',
+                        u'admin_state_up': True,
+                        u'ipsec_conns': [conn_data]}
+        vpn_service = self.driver.update_service(self.context, service_data)
+        # Tunnel would have been deleted, so simulate no status
+        self.csr.read_tunnel_statuses.return_value = []
+
+        connection = vpn_service.get_connection(u'1')
+        self.assertIsNotNone(connection)
+        self.assertTrue(connection.forced_down)
+        self.assertEqual(constants.ACTIVE, connection.last_status)
+
+        # Create report fragment due to change
+        report_frag = self.driver.build_report_for_connections_on(vpn_service)
+        self.assertEqual(constants.DOWN, connection.last_status)
+        expected = {'1': {'status': constants.DOWN,
+                    'updated_pending_status': False}}
         self.assertEqual(expected, report_frag)
 
     def test_report_fragment_two_connections(self):
@@ -1032,7 +1145,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         Note: No report will be generated if the last connection on the
         service is deleted. The service (and connection) objects will
-        have been reoved by the sweep operation and thus not reported.
+        have been removed by the sweep operation and thus not reported.
         On the plugin, the service should be changed to DOWN. Likewise,
         if the service goes to admin down state.
         """
@@ -1055,7 +1168,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         In addition to reporting the status change and recording the new
         state for the IPSec connection, the VPN service status will be
-        ACTIVE.
+        DOWN.
         """
         # Simulate an existing service and connection that are ACTIVE
         vpn_service = self.simulate_mark_update_sweep_for_service_with_conn(
@@ -1085,7 +1198,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
         In addition to reporting the status change and recording the new
         state for the IPSec connection, the VPN service status will be
-        DOWN.
+        ACTIVE.
         """
         # Simulate an existing service and connection that are DOWN
         vpn_service = self.simulate_mark_update_sweep_for_service_with_conn(
@@ -1113,9 +1226,8 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
     def test_report_service_with_two_connections_gone_down(self):
         """One service with two connections that went down - report.
 
-        If there is more than one IPSec connection on a VPN service, the
-        service will always report as being ACTIVE (whereas, if there is
-        only one connection, the service will reflect the connection status.
+        Shows the case where all the connections are down, so that the
+        service should report as DOWN, as well.
         """
         # Simulated one service with two ACTIVE connections
         conn1_data = {u'id': u'1', u'status': constants.ACTIVE,
@@ -1138,7 +1250,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         expected_report = {
             u'id': u'123',
             u'updated_pending_status': False,
-            u'status': constants.ACTIVE,
+            u'status': constants.DOWN,
             u'ipsec_site_connections': {
                 u'1': {u'status': constants.DOWN,
                        u'updated_pending_status': False},
@@ -1147,7 +1259,108 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
         }
         self.assertEqual(expected_report, report)
         # Check that service and connection statuses are updated
+        self.assertEqual(constants.DOWN, vpn_service.last_status)
+        self.assertEqual(constants.DOWN,
+                         vpn_service.get_connection(u'1').last_status)
+        self.assertEqual(constants.DOWN,
+                         vpn_service.get_connection(u'2').last_status)
+
+    def test_report_service_with_connection_removed(self):
+        """One service with two connections where one is removed - report.
+
+        With a connection removed and the other connection unchanged,
+        normally there would be nothing to report for the connections, but
+        we need to report any possible change to the service state. In this
+        case, the service was ACTIVE, but since the only ACTIVE connection
+        is deleted and the remaining connection is DOWN, the service will
+        indicate as DOWN.
+        """
+        # Simulated one service with one connection up, one down
+        conn1_data = {u'id': u'1', u'status': constants.ACTIVE,
+                      u'admin_state_up': True,
+                      u'cisco': {u'site_conn_id': u'Tunnel1'}}
+        conn2_data = {u'id': u'2', u'status': constants.DOWN,
+                      u'admin_state_up': True,
+                      u'cisco': {u'site_conn_id': u'Tunnel2'}}
+        service_data = {u'id': u'123',
+                        u'status': constants.ACTIVE,
+                        u'external_ip': u'1.1.1.1',
+                        u'admin_state_up': True,
+                        u'ipsec_conns': [conn1_data, conn2_data]}
+        vpn_service = self.driver.update_service(self.context, service_data)
         self.assertEqual(constants.ACTIVE, vpn_service.last_status)
+        self.assertEqual(constants.ACTIVE,
+                         vpn_service.get_connection(u'1').last_status)
+        self.assertEqual(constants.DOWN,
+                         vpn_service.get_connection(u'2').last_status)
+
+        # Simulate that one is deleted
+        self.driver.mark_existing_connections_as_dirty()
+        service_data = {u'id': u'123',
+                        u'status': constants.ACTIVE,
+                        u'external_ip': u'1.1.1.1',
+                        u'admin_state_up': True,
+                        u'ipsec_conns': [conn2_data]}
+        vpn_service = self.driver.update_service(self.context, service_data)
+        self.driver.remove_unknown_connections(self.context)
+        self.assertTrue(vpn_service.connections_removed)
+        self.assertEqual(constants.ACTIVE, vpn_service.last_status)
+        self.assertIsNone(vpn_service.get_connection(u'1'))
+        self.assertEqual(constants.DOWN,
+                         vpn_service.get_connection(u'2').last_status)
+
+        # Simulate that only one connection reports and status is unchanged,
+        # so there will be NO connection info to report.
+        self.csr.read_tunnel_statuses.return_value = [(u'Tunnel2', u'DOWN')]
+        report = self.driver.build_report_for_service(vpn_service)
+        expected_report = {
+            u'id': u'123',
+            u'updated_pending_status': False,
+            u'status': constants.DOWN,
+            u'ipsec_site_connections': {}
+        }
+        self.assertEqual(expected_report, report)
+        # Check that service and connection statuses are updated
+        self.assertEqual(constants.DOWN, vpn_service.last_status)
+        self.assertEqual(constants.DOWN,
+                         vpn_service.get_connection(u'2').last_status)
+
+    def test_report_service_admin_down_with_two_connections(self):
+        """One service admin down, with two connections - report.
+
+        When the service is admin down, all the connections will report
+        as DOWN.
+        """
+        # Simulated one service (admin down) with two ACTIVE connections
+        conn1_data = {u'id': u'1', u'status': constants.ACTIVE,
+                      u'admin_state_up': True,
+                      u'cisco': {u'site_conn_id': u'Tunnel1'}}
+        conn2_data = {u'id': u'2', u'status': constants.ACTIVE,
+                      u'admin_state_up': True,
+                      u'cisco': {u'site_conn_id': u'Tunnel2'}}
+        service_data = {u'id': u'123',
+                        u'status': constants.ACTIVE,
+                        u'external_ip': u'1.1.1.1',
+                        u'admin_state_up': False,
+                        u'ipsec_conns': [conn1_data, conn2_data]}
+        vpn_service = self.driver.update_service(self.context, service_data)
+        # Since service admin down, connections will have been deleted
+        self.csr.read_tunnel_statuses.return_value = []
+
+        report = self.driver.build_report_for_service(vpn_service)
+        expected_report = {
+            u'id': u'123',
+            u'updated_pending_status': False,
+            u'status': constants.DOWN,
+            u'ipsec_site_connections': {
+                u'1': {u'status': constants.DOWN,
+                       u'updated_pending_status': False},
+                u'2': {u'status': constants.DOWN,
+                       u'updated_pending_status': False}}
+        }
+        self.assertEqual(expected_report, report)
+        # Check that service and connection statuses are updated
+        self.assertEqual(constants.DOWN, vpn_service.last_status)
         self.assertEqual(constants.DOWN,
                          vpn_service.get_connection(u'1').last_status)
         self.assertEqual(constants.DOWN,
