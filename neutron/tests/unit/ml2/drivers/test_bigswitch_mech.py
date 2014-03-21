@@ -109,3 +109,14 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
                 )
             ])
         self.spawn_p.start()
+
+    def test_backend_request_contents(self):
+        with nested(
+            mock.patch(SERVER_POOL + '.rest_create_port'),
+            self.port(**{'device_id': 'devid', 'binding:host_id': 'host'})
+        ) as (mock_rest, p):
+            # make sure basic expected keys are present in the port body
+            pb = mock_rest.mock_calls[0][1][2]
+            self.assertEqual('host', pb['binding_host'])
+            self.assertIn('bound_segment', pb)
+            self.assertIn('network', pb)

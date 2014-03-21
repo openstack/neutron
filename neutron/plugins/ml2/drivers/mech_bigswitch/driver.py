@@ -100,6 +100,7 @@ class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
         net = context.network.current
         port['network'] = net
         port['binding_host'] = context._binding.host
+        port['bound_segment'] = context.bound_segment
         actx = ctx.get_admin_context()
         if (portbindings.HOST_ID in port and 'id' in port):
             host_id = port[portbindings.HOST_ID]
