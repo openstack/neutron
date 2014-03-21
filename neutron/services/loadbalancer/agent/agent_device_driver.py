@@ -79,7 +79,7 @@ class AgentDeviceDriver(object):
         pass
 
     @abc.abstractmethod
-    def delete_member(self, context, member):
+    def delete_member(self, member):
         pass
 
     @abc.abstractmethod
@@ -94,5 +94,5 @@ class AgentDeviceDriver(object):
         pass
 
     @abc.abstractmethod
-    def delete_pool_health_monitor(self, context, health_monitor, pool_id):
+    def delete_pool_health_monitor(self, health_monitor, pool_id):
         pass
