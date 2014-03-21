@@ -18,6 +18,7 @@
 from oslo.config import cfg
 
 from neutron.common import exceptions as exc
+from neutron.common import topics
 from neutron import context as neutron_context
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
@@ -93,8 +94,19 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         plugin_list = [plugin_set.split(':')
                        for plugin_set
                        in cfg.CONF.META.plugin_list.split(',')]
+        rpc_flavor = cfg.CONF.META.rpc_flavor
+        topic_save = topics.PLUGIN
+        topic_fake = topic_save + '-metaplugin'
         for flavor, plugin_provider in plugin_list:
+            # Rename topic used by a plugin other than rpc_flavor during
+            # loading the plugin instance if rpc_flavor is specified.
+            # This enforces the plugin specified by rpc_flavor is only
+            # consumer of 'q-plugin'. It is a bit tricky but there is no
+            # bad effect.
+            if rpc_flavor and rpc_flavor != flavor:
+                topics.PLUGIN = topic_fake
             self.plugins[flavor] = self._load_plugin(plugin_provider)
+            topics.PLUGIN = topic_save
 
         self.l3_plugins = {}
         if cfg.CONF.META.l3_plugin_list:
@@ -121,6 +133,10 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                   % self.default_l3_flavor)
             self.supported_extension_aliases += ['router', 'ext-gw-mode',
                                                  'extraroute']
+
+        if rpc_flavor and rpc_flavor not in self.plugins:
+            raise exc.Invalid(_('rpc_flavor %s is not plugin list') %
+                              rpc_flavor)
 
         self.extension_map = {}
         if not cfg.CONF.META.extension_map == '':

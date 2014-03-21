@@ -21,6 +21,8 @@ import mock
 from oslo.config import cfg
 import testtools
 
+from neutron.common import exceptions as exc
+from neutron.common import topics
 from neutron import context
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
@@ -372,3 +374,28 @@ class MetaNeutronPluginV2TestWithoutL3(MetaNeutronPluginV2Test):
 
     def test_create_router_flavor_fail(self):
         self.skipTest("Test case without router")
+
+
+class MetaNeutronPluginV2TestRpcFlavor(base.BaseTestCase):
+    """Tests for rpc_flavor."""
+
+    def setUp(self):
+        super(MetaNeutronPluginV2TestRpcFlavor, self).setUp()
+        db._ENGINE = None
+        db._MAKER = None
+        db.configure_db()
+        self.addCleanup(db.clear_db)
+        self.addCleanup(unregister_meta_hooks)
+
+    def test_rpc_flavor(self):
+        setup_metaplugin_conf()
+        cfg.CONF.set_override('rpc_flavor', 'fake1', 'META')
+        self.plugin = MetaPluginV2()
+        self.assertEqual(topics.PLUGIN, 'q-plugin')
+
+    def test_invalid_rpc_flavor(self):
+        setup_metaplugin_conf()
+        cfg.CONF.set_override('rpc_flavor', 'fake-fake', 'META')
+        self.assertRaises(exc.Invalid,
+                          MetaPluginV2)
+        self.assertEqual(topics.PLUGIN, 'q-plugin')
