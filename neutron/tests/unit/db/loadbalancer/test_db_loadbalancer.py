@@ -227,12 +227,10 @@ class LoadBalancerTestMixin(object):
                         explanation=_("Unexpected error code: %s") %
                         res.status_int
                     )
-                try:
-                    vip = self.deserialize(fmt or self.fmt, res)
-                    yield vip
-                finally:
-                    if not no_delete:
-                        self._delete('vips', vip['vip']['id'])
+                vip = self.deserialize(fmt or self.fmt, res)
+                yield vip
+                if not no_delete:
+                    self._delete('vips', vip['vip']['id'])
 
     @contextlib.contextmanager
     def pool(self, fmt=None, name='pool1', lb_method='ROUND_ROBIN',
@@ -250,12 +248,10 @@ class LoadBalancerTestMixin(object):
             raise webob.exc.HTTPClientError(
                 explanation=_("Unexpected error code: %s") % res.status_int
             )
-        try:
-            pool = self.deserialize(fmt or self.fmt, res)
-            yield pool
-        finally:
-            if not no_delete:
-                self._delete('pools', pool['pool']['id'])
+        pool = self.deserialize(fmt or self.fmt, res)
+        yield pool
+        if not no_delete:
+            self._delete('pools', pool['pool']['id'])
 
     @contextlib.contextmanager
     def member(self, fmt=None, address='192.168.1.100', protocol_port=80,
@@ -271,12 +267,10 @@ class LoadBalancerTestMixin(object):
             raise webob.exc.HTTPClientError(
                 explanation=_("Unexpected error code: %s") % res.status_int
             )
-        try:
-            member = self.deserialize(fmt or self.fmt, res)
-            yield member
-        finally:
-            if not no_delete:
-                self._delete('members', member['member']['id'])
+        member = self.deserialize(fmt or self.fmt, res)
+        yield member
+        if not no_delete:
+            self._delete('members', member['member']['id'])
 
     @contextlib.contextmanager
     def health_monitor(self, fmt=None, type='TCP',
@@ -310,11 +304,9 @@ class LoadBalancerTestMixin(object):
         else:
             for arg in http_related_attributes:
                 self.assertIsNone(the_health_monitor.get(arg))
-        try:
-            yield health_monitor
-        finally:
-            if not no_delete:
-                self._delete('health_monitors', the_health_monitor['id'])
+        yield health_monitor
+        if not no_delete:
+            self._delete('health_monitors', the_health_monitor['id'])
 
 
 class LoadBalancerPluginDbTestCase(LoadBalancerTestMixin,

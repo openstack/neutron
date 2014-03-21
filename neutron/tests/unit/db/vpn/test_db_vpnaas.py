@@ -125,12 +125,10 @@ class VPNTestMixin(object):
                                      **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
-        try:
-            ikepolicy = self.deserialize(fmt or self.fmt, res)
-            yield ikepolicy
-        finally:
-            if not no_delete:
-                self._delete('ikepolicies', ikepolicy['ikepolicy']['id'])
+        ikepolicy = self.deserialize(fmt or self.fmt, res)
+        yield ikepolicy
+        if not no_delete:
+            self._delete('ikepolicies', ikepolicy['ikepolicy']['id'])
 
     def _create_ipsecpolicy(self, fmt,
                             name='ipsecpolicy1',
@@ -188,12 +186,10 @@ class VPNTestMixin(object):
                                        **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
-        try:
-            ipsecpolicy = self.deserialize(fmt or self.fmt, res)
-            yield ipsecpolicy
-        finally:
-            if not no_delete:
-                self._delete('ipsecpolicies', ipsecpolicy['ipsecpolicy']['id'])
+        ipsecpolicy = self.deserialize(fmt or self.fmt, res)
+        yield ipsecpolicy
+        if not no_delete:
+            self._delete('ipsecpolicies', ipsecpolicy['ipsecpolicy']['id'])
 
     def _create_vpnservice(self, fmt, name,
                            admin_state_up,
@@ -250,36 +246,37 @@ class VPNTestMixin(object):
                     'add',
                     tmp_router['router']['id'],
                     tmp_subnet['subnet']['id'], None)
-            try:
-                res = self._create_vpnservice(fmt,
-                                              name,
-                                              admin_state_up,
-                                              router_id=(tmp_router['router']
-                                                         ['id']),
-                                              subnet_id=(tmp_subnet['subnet']
-                                                         ['id']),
-                                              **kwargs)
-                vpnservice = self.deserialize(fmt or self.fmt, res)
-                if res.status_int >= 400:
-                    raise webob.exc.HTTPClientError(
-                        code=res.status_int, detail=vpnservice)
+
+            res = self._create_vpnservice(fmt,
+                                          name,
+                                          admin_state_up,
+                                          router_id=(tmp_router['router']
+                                                     ['id']),
+                                          subnet_id=(tmp_subnet['subnet']
+                                                     ['id']),
+                                          **kwargs)
+            vpnservice = self.deserialize(fmt or self.fmt, res)
+            if res.status_int < 400:
                 yield vpnservice
-            finally:
-                if not no_delete and vpnservice.get('vpnservice'):
-                    self._delete('vpnservices',
-                                 vpnservice['vpnservice']['id'])
-                if plug_subnet:
-                    self._router_interface_action(
-                        'remove',
-                        tmp_router['router']['id'],
-                        tmp_subnet['subnet']['id'], None)
-                if external_router:
-                    external_gateway = tmp_router['router'].get(
-                        'external_gateway_info')
-                    if external_gateway:
-                        network_id = external_gateway['network_id']
-                        self._remove_external_gateway_from_router(
-                            tmp_router['router']['id'], network_id)
+
+            if not no_delete and vpnservice.get('vpnservice'):
+                self._delete('vpnservices',
+                             vpnservice['vpnservice']['id'])
+            if plug_subnet:
+                self._router_interface_action(
+                    'remove',
+                    tmp_router['router']['id'],
+                    tmp_subnet['subnet']['id'], None)
+            if external_router:
+                external_gateway = tmp_router['router'].get(
+                    'external_gateway_info')
+                if external_gateway:
+                    network_id = external_gateway['network_id']
+                    self._remove_external_gateway_from_router(
+                        tmp_router['router']['id'], network_id)
+            if res.status_int >= 400:
+                raise webob.exc.HTTPClientError(
+                    code=res.status_int, detail=vpnservice)
 
     def _create_ipsec_site_connection(self, fmt, name='test',
                                       peer_address='192.168.1.10',
@@ -379,18 +376,18 @@ class VPNTestMixin(object):
                                                      **kwargs)
             if res.status_int >= 400:
                 raise webob.exc.HTTPClientError(code=res.status_int)
-            try:
-                ipsec_site_connection = self.deserialize(
-                    fmt or self.fmt, res
+
+            ipsec_site_connection = self.deserialize(
+                fmt or self.fmt, res
+            )
+            yield ipsec_site_connection
+
+            if not no_delete:
+                self._delete(
+                    'ipsec-site-connections',
+                    ipsec_site_connection[
+                        'ipsec_site_connection']['id']
                 )
-                yield ipsec_site_connection
-            finally:
-                if not no_delete:
-                    self._delete(
-                        'ipsec-site-connections',
-                        ipsec_site_connection[
-                            'ipsec_site_connection']['id']
-                    )
 
     def _check_ipsec_site_connection(self, ipsec_site_connection, keys, dpd):
         self.assertEqual(

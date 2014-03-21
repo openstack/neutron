@@ -523,15 +523,13 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 **kwargs):
         network = self._make_network(fmt or self.fmt, name,
                                      admin_state_up, **kwargs)
-        try:
-            yield network
-        finally:
-            if do_delete:
-                # The do_delete parameter allows you to control whether the
-                # created network is immediately deleted again. Therefore, this
-                # function is also usable in tests, which require the creation
-                # of many networks.
-                self._delete('networks', network['network']['id'])
+        yield network
+        if do_delete:
+            # The do_delete parameter allows you to control whether the
+            # created network is immediately deleted again. Therefore, this
+            # function is also usable in tests, which require the creation
+            # of many networks.
+            self._delete('networks', network['network']['id'])
 
     @contextlib.contextmanager
     def subnet(self, network=None,
@@ -560,11 +558,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                        shared=shared,
                                        ipv6_ra_mode=ipv6_ra_mode,
                                        ipv6_address_mode=ipv6_address_mode)
-            try:
-                yield subnet
-            finally:
-                if do_delete:
-                    self._delete('subnets', subnet['subnet']['id'])
+            yield subnet
+            if do_delete:
+                self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
     def port(self, subnet=None, fmt=None, no_delete=False,
@@ -572,11 +568,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         with optional_ctx(subnet, self.subnet) as subnet_to_use:
             net_id = subnet_to_use['subnet']['network_id']
             port = self._make_port(fmt or self.fmt, net_id, **kwargs)
-            try:
-                yield port
-            finally:
-                if not no_delete:
-                    self._delete('ports', port['port']['id'])
+            yield port
+            if not no_delete:
+                self._delete('ports', port['port']['id'])
 
     def _test_list_with_sort(self, resource,
                              items, sorts, resources=None, query_params=''):

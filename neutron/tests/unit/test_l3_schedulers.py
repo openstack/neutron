@@ -117,12 +117,12 @@ class L3SchedulerTestCase(l3_agentschedulers_db.L3AgentSchedulerDbMixin,
         self._add_external_gateway_to_router(
             router['router']['id'],
             subnet['subnet']['network_id'])
-        try:
-            yield router
-        finally:
-            self._remove_external_gateway_from_router(
-                router['router']['id'], subnet['subnet']['network_id'])
-            self._delete('routers', router['router']['id'])
+
+        yield router
+
+        self._remove_external_gateway_from_router(
+            router['router']['id'], subnet['subnet']['network_id'])
+        self._delete('routers', router['router']['id'])
 
 
 class L3AgentChanceSchedulerTestCase(L3SchedulerTestCase):

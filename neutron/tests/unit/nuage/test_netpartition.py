@@ -63,11 +63,9 @@ class NetPartitionTestCase(test_nuage_plugin.NuagePluginV2TestCase):
                      **kwargs):
         netpart = self._make_netpartition(fmt or self.fmt, name)
 
-        try:
-            yield netpart
-        finally:
-            if do_delete:
-                self._del_netpartition(netpart['net_partition']['id'])
+        yield netpart
+        if do_delete:
+            self._del_netpartition(netpart['net_partition']['id'])
 
     def test_create_netpartition(self):
         name = 'netpart1'
