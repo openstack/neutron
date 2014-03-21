@@ -27,6 +27,7 @@ import mock
 from oslo.config import cfg
 import testtools
 
+from neutron.common import constants as const
 from neutron import manager
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common.notifier import test_notifier
@@ -45,6 +46,12 @@ def fake_use_fatal_exceptions(*args):
 class BaseTestCase(testtools.TestCase):
 
     def _cleanup_coreplugin(self):
+        if manager.NeutronManager._instance:
+            agent_notifiers = getattr(manager.NeutronManager._instance.plugin,
+                                      'agent_notifiers', {})
+            dhcp_agent_notifier = agent_notifiers.get(const.AGENT_TYPE_DHCP)
+            if dhcp_agent_notifier:
+                dhcp_agent_notifier._plugin = None
         manager.NeutronManager._instance = self._saved_instance
 
     def setup_coreplugin(self, core_plugin=None):
