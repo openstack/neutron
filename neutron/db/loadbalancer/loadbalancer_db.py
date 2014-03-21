@@ -205,7 +205,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
         try:
             r = self._get_by_id(context, model, id)
         except exc.NoResultFound:
-            with excutils.save_and_reraise_exception():
+            with excutils.save_and_reraise_exception(reraise=False) as ctx:
                 if issubclass(model, Vip):
                     raise loadbalancer.VipNotFound(vip_id=id)
                 elif issubclass(model, Pool):
@@ -214,6 +214,7 @@ class LoadBalancerPluginDb(LoadBalancerPluginBase,
                     raise loadbalancer.MemberNotFound(member_id=id)
                 elif issubclass(model, HealthMonitor):
                     raise loadbalancer.HealthMonitorNotFound(monitor_id=id)
+                ctx.reraise = True
         return r
 
     def assert_modification_allowed(self, obj):

@@ -179,7 +179,7 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
         try:
             r = self._get_by_id(context, model, v_id)
         except exc.NoResultFound:
-            with excutils.save_and_reraise_exception():
+            with excutils.save_and_reraise_exception(reraise=False) as ctx:
                 if issubclass(model, IPsecSiteConnection):
                     raise vpnaas.IPsecSiteConnectionNotFound(
                         ipsec_site_conn_id=v_id
@@ -190,6 +190,7 @@ class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
                     raise vpnaas.IPsecPolicyNotFound(ipsecpolicy_id=v_id)
                 elif issubclass(model, VPNService):
                     raise vpnaas.VPNServiceNotFound(vpnservice_id=v_id)
+                ctx.reraise = True
         return r
 
     def assert_update_allowed(self, obj):
