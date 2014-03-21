@@ -34,7 +34,7 @@ LOG = logging.getLogger(__name__)
 
 class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
     """Meta-Plugin with v2 API support for multiple sub-plugins."""
-    supported_extension_aliases = ["credential", "Cisco qos"]
+    _supported_extension_aliases = ["credential", "Cisco qos"]
     _methods_to_delegate = ['create_network',
                             'delete_network', 'update_network', 'get_network',
                             'get_networks',
@@ -65,6 +65,15 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
         cexc.VlanIDNotFound: wexc.HTTPNotFound,
     }
 
+    @property
+    def supported_extension_aliases(self):
+        if not hasattr(self, '_aliases'):
+            aliases = self._supported_extension_aliases[:]
+            if hasattr(self._model, "supported_extension_aliases"):
+                aliases.extend(self._model.supported_extension_aliases)
+            self._aliases = aliases
+        return self._aliases
+
     def __init__(self):
         """Load the model class."""
         self._model = importutils.import_object(config.CISCO.model_class)
@@ -72,10 +81,6 @@ class PluginV2(db_base_plugin_v2.NeutronDbPluginV2):
                                  % self._model.__class__.__name__)
         self.__native_bulk_support = getattr(self._model,
                                              native_bulk_attr_name, False)
-
-        if hasattr(self._model, "supported_extension_aliases"):
-            self.supported_extension_aliases.extend(
-                self._model.supported_extension_aliases)
 
         neutron_extensions.append_api_extensions_path(extensions.__path__)
 
