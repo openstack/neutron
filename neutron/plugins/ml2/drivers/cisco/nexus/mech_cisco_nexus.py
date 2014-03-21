@@ -153,7 +153,7 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         host_id = context.current.get(portbindings.HOST_ID)
 
         # Workaround until vlan can be retrieved during delete_port_postcommit
-        # (or prehaps unbind_port) event.
+        # event.
         if func == self._delete_switch_entry:
             vlan_id = self._delete_port_postcommit_vlan
         else:
@@ -168,7 +168,7 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
             raise excep.NexusMissingRequiredFields(fields=fields)
 
         # Workaround until vlan can be retrieved during delete_port_postcommit
-        # (or prehaps unbind_port) event.
+        # event.
         if func == self._delete_nxos_db:
             self._delete_port_postcommit_vlan = vlan_id
         else:

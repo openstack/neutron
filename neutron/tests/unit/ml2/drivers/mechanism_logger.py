@@ -118,9 +118,3 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     def bind_port(self, context):
         self._log_port_call("bind_port", context)
-
-    def validate_port_binding(self, context):
-        self._log_port_call("validate_port_binding", context)
-
-    def unbind_port(self, context):
-        self._log_port_call("unbind_port", context)

@@ -344,18 +344,6 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                            'physnet': segment[api.PHYSICAL_NETWORK],
                            'nettype': segment[api.NETWORK_TYPE]})
 
-    def validate_port_binding(self, context):
-        if self.check_segment(context.bound_segment):
-            LOG.debug(_('Binding valid.'))
-            return True
-        LOG.warning(_("Binding invalid for port: %s"), context.current)
-
-    def unbind_port(self, context):
-        LOG.debug(_("Unbinding port %(port)s on "
-                    "network %(network)s"),
-                  {'port': context.current['id'],
-                   'network': context.network.current['id']})
-
     def check_segment(self, segment):
         """Verify a segment is valid for the OpenDaylight MechanismDriver.
 

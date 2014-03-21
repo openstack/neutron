@@ -35,8 +35,7 @@ class AgentMechanismDriverBase(api.MechanismDriver):
     at least one segment of the port's network.
 
     MechanismDrivers using this base class must pass the agent type to
-    __init__(), and must implement try_to_bind_segment_for_agent() and
-    check_segment_for_agent().
+    __init__(), and must implement try_to_bind_segment_for_agent().
     """
 
     def __init__(self, agent_type,
@@ -75,26 +74,6 @@ class AgentMechanismDriverBase(api.MechanismDriver):
                 LOG.warning(_("Attempting to bind with dead agent: %s"),
                             agent)
 
-    def validate_port_binding(self, context):
-        LOG.debug(_("Validating binding for port %(port)s on "
-                    "network %(network)s"),
-                  {'port': context.current['id'],
-                   'network': context.network.current['id']})
-        for agent in context.host_agents(self.agent_type):
-            LOG.debug(_("Checking agent: %s"), agent)
-            if agent['alive'] and self.check_segment_for_agent(
-                context.bound_segment, agent):
-                LOG.debug(_("Binding valid"))
-                return True
-        LOG.warning(_("Binding invalid for port: %s"), context.current)
-        return False
-
-    def unbind_port(self, context):
-        LOG.debug(_("Unbinding port %(port)s on "
-                    "network %(network)s"),
-                  {'port': context.current['id'],
-                   'network': context.network.current['id']})
-
     @abstractmethod
     def try_to_bind_segment_for_agent(self, context, segment, agent):
         """Try to bind with segment for agent.
@@ -114,21 +93,6 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         return True. Otherwise, it must return False.
         """
 
-    @abstractmethod
-    def check_segment_for_agent(self, segment, agent):
-        """Check if segment can be bound for agent.
-
-        :param segment: segment dictionary describing segment to bind
-        :param agent: agents_db entry describing agent to bind
-        :returns: True iff segment can be bound for agent
-
-        Called inside transaction during validate_port_binding() so
-        that derived MechanismDrivers can use agent_db data along with
-        built-in knowledge of the corresponding agent's capabilities
-        to determine whether or not the specified network segment can
-        be bound for the agent.
-        """
-
 
 @six.add_metaclass(ABCMeta)
 class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
@@ -144,9 +108,7 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
 
     MechanismDrivers using this base class must pass the agent type
     and the values for binding:vif_type and binding:vif_details to
-    __init__(). They must implement check_segment_for_agent() as
-    defined in AgentMechanismDriverBase, which will be called during
-    both binding establishment and validation.
+    __init__(), and must implement check_segment_for_agent().
     """
 
     def __init__(self, agent_type, vif_type, vif_details,
@@ -171,3 +133,18 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
             return True
         else:
             return False
+
+    @abstractmethod
+    def check_segment_for_agent(self, segment, agent):
+        """Check if segment can be bound for agent.
+
+        :param segment: segment dictionary describing segment to bind
+        :param agent: agents_db entry describing agent to bind
+        :returns: True iff segment can be bound for agent
+
+        Called inside transaction during bind_port so that derived
+        MechanismDrivers can use agent_db data along with built-in
+        knowledge of the corresponding agent's capabilities to
+        determine whether or not the specified network segment can be
+        bound for the agent.
+        """
