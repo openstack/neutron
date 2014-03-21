@@ -35,7 +35,6 @@ from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.manager import NeutronManager
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common.notifier import test_notifier
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
@@ -1723,13 +1722,7 @@ class L3BaseForIntTests(test_db_plugin.NeutronDbPluginV2TestCase):
         super(L3BaseForIntTests, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                              service_plugins=service_plugins)
 
-        # Set to None to reload the drivers
-        notifier_api._drivers = None
-        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
-
-    def tearDown(self):
-        test_notifier.NOTIFICATIONS = []
-        super(L3BaseForIntTests, self).tearDown()
+        self.setup_notification_driver()
 
 
 class L3BaseForSepTests(test_db_plugin.NeutronDbPluginV2TestCase):
@@ -1750,13 +1743,7 @@ class L3BaseForSepTests(test_db_plugin.NeutronDbPluginV2TestCase):
         super(L3BaseForSepTests, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                              service_plugins=service_plugins)
 
-        # Set to None to reload the drivers
-        notifier_api._drivers = None
-        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
-
-    def tearDown(self):
-        test_notifier.NOTIFICATIONS = []
-        super(L3BaseForSepTests, self).tearDown()
+        self.setup_notification_driver()
 
 
 class L3AgentDbIntTestCase(L3BaseForIntTests, L3AgentDbTestCaseBase):

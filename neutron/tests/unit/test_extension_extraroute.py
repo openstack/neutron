@@ -24,8 +24,6 @@ from neutron.db import extraroute_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.notifier import api as notifier_api
-from neutron.openstack.common.notifier import test_notifier
 from neutron.openstack.common import uuidutils
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_l3_plugin as test_l3
@@ -470,9 +468,7 @@ class ExtraRouteDBIntTestCase(test_l3.L3NatDBIntTestCase,
         ext_mgr = ExtraRouteTestExtensionManager()
         super(test_l3.L3BaseForIntTests, self).setUp(plugin=plugin,
                                                      ext_mgr=ext_mgr)
-        # Set to None to reload the drivers
-        notifier_api._drivers = None
-        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
+        self.setup_notification_driver()
 
 
 class ExtraRouteDBIntTestCaseXML(ExtraRouteDBIntTestCase):
@@ -497,9 +493,7 @@ class ExtraRouteDBSepTestCase(test_l3.L3NatDBSepTestCase,
             plugin=plugin, ext_mgr=ext_mgr,
             service_plugins=service_plugins)
 
-        # Set to None to reload the drivers
-        notifier_api._drivers = None
-        cfg.CONF.set_override("notification_driver", [test_notifier.__name__])
+        self.setup_notification_driver()
 
 
 class ExtraRouteDBSepTestCaseXML(ExtraRouteDBSepTestCase):
