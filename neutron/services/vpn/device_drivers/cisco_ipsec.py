@@ -237,29 +237,42 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         """Handle notification for a single IPSec connection."""
         vpn_service = self.service_state[vpn_service_id]
         conn_id = conn_data['id']
-        is_admin_up = conn_data[u'admin_state_up']
+        conn_is_admin_up = conn_data[u'admin_state_up']
+
         if conn_id in vpn_service.conn_state:
             ipsec_conn = vpn_service.conn_state[conn_id]
-            ipsec_conn.last_status = conn_data['status']
-            if is_admin_up:
-                ipsec_conn.is_dirty = False
-                LOG.debug(_("Update: IPSec connection %s unchanged - "
-                            "marking clean"), conn_id)
-                # TODO(pcm) FUTURE - Handle update requests (delete/create?)
-                # will need to detect what has changed. For now assume no
-                # change (it is blocked in service driver).
+            if ipsec_conn.forced_down:
+                if vpn_service.is_admin_up and conn_is_admin_up:
+                    LOG.debug(_("Update: Connection %s no longer admin down"),
+                              conn_id)
+                    # TODO(pcm) Do no shut on tunnel, once CSR supports
+                    ipsec_conn.forced_down = False
+                    ipsec_conn.create_ipsec_site_connection(context, conn_data)
             else:
-                LOG.debug(_("Update: IPSec connection %s is admin down - "
-                            "will be removed in sweep phase"), conn_id)
-        else:
-            if not is_admin_up:
-                LOG.debug(_("Update: Unknown IPSec connection %s is admin "
-                            "down - ignoring"), conn_id)
-                return
-            LOG.debug(_("Update: New IPSec connection %s - marking clean"),
-                      conn_id)
+                if not vpn_service.is_admin_up or not conn_is_admin_up:
+                    LOG.debug(_("Update: Connection %s forced to admin down"),
+                              conn_id)
+                    # TODO(pcm) Do shut on tunnel, once CSR supports
+                    ipsec_conn.forced_down = True
+                    ipsec_conn.delete_ipsec_site_connection(context, conn_id)
+                else:
+                    # TODO(pcm) FUTURE handle connection update
+                    LOG.debug(_("Update: Ignoring existing connection %s"),
+                              conn_id)
+        else:  # New connection...
             ipsec_conn = vpn_service.create_connection(conn_data)
-            ipsec_conn.create_ipsec_site_connection(context, conn_data)
+            if not vpn_service.is_admin_up or not conn_is_admin_up:
+                # TODO(pcm) Create, but set tunnel down, once CSR supports
+                LOG.debug(_("Update: Created new connection %s in admin down "
+                            "state"), conn_id)
+                ipsec_conn.forced_down = True
+            else:
+                LOG.debug(_("Update: Created new connection %s"), conn_id)
+                ipsec_conn.create_ipsec_site_connection(context, conn_data)
+
+        ipsec_conn.is_dirty = False
+        ipsec_conn.last_status = conn_data['status']
+        ipsec_conn.is_admin_up = conn_is_admin_up
         return ipsec_conn
 
     def update_service(self, context, service_data):
@@ -271,27 +284,21 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
                         "router (%(csr_id)s is not associated with a Cisco "
                         "CSR"), {'service': vpn_service_id, 'csr_id': csr_id})
             return
-        is_admin_up = service_data[u'admin_state_up']
+
         if vpn_service_id in self.service_state:
+            LOG.debug(_("Update: Existing VPN service %s detected"),
+                      vpn_service_id)
             vpn_service = self.service_state[vpn_service_id]
-            vpn_service.last_status = service_data['status']
-            if is_admin_up:
-                vpn_service.is_dirty = False
-            else:
-                LOG.debug(_("Update: VPN service %s is admin down - will "
-                            "be removed in sweep phase"), vpn_service_id)
-                return vpn_service
         else:
-            if not is_admin_up:
-                LOG.debug(_("Update: Unknown VPN service %s is admin down - "
-                            "ignoring"), vpn_service_id)
-                return
+            LOG.debug(_("Update: New VPN service %s detected"), vpn_service_id)
             vpn_service = self.create_vpn_service(service_data)
-        # Handle all the IPSec connection notifications in the data
-        LOG.debug(_("Update: Processing IPSec connections for VPN service %s"),
-                  vpn_service_id)
+
+        vpn_service.is_dirty = False
+        vpn_service.connections_removed = False
+        vpn_service.last_status = service_data['status']
+        vpn_service.is_admin_up = service_data[u'admin_state_up']
         for conn_data in service_data['ipsec_conns']:
-            self.update_connection(context, service_data['id'], conn_data)
+            self.update_connection(context, vpn_service_id, conn_data)
         LOG.debug(_("Update: Completed update processing"))
         return vpn_service
 
@@ -333,6 +340,7 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         for vpn_service_id, vpn_service in self.service_state.items():
             dirty = [c_id for c_id, c in vpn_service.conn_state.items()
                      if c.is_dirty]
+            vpn_service.connections_removed = len(dirty) > 0
             for conn_id in dirty:
                 conn_state = vpn_service.conn_state[conn_id]
                 conn_state.delete_ipsec_site_connection(context, conn_id)
@@ -341,6 +349,8 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
             if vpn_service.is_dirty:
                 service_count += 1
                 del self.service_state[vpn_service_id]
+            elif dirty:
+                self.connections_removed = True
         LOG.debug(_("Sweep: Removed %(service)d dirty VPN service%(splural)s "
                     "and %(conn)d dirty IPSec connection%(cplural)s"),
                   {'service': service_count, 'conn': connection_count,
@@ -361,8 +371,15 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         tunnels = vpn_service.get_ipsec_connections_status()
         report = {}
         for connection in vpn_service.conn_state.values():
-            current_status = connection.find_current_status_in(tunnels)
-            frag = connection.build_report_based_on_status(current_status)
+            if connection.forced_down:
+                LOG.debug(_("Connection %s forced down"), connection.conn_id)
+                current_status = constants.DOWN
+            else:
+                current_status = connection.find_current_status_in(tunnels)
+                LOG.debug(_("Connection %(conn)s reported %(status)s"),
+                          {'conn': connection.conn_id,
+                           'status': current_status})
+            frag = connection.update_status_and_build_report(current_status)
             if frag:
                 LOG.debug(_("Report: Adding info for IPSec connection %s"),
                           connection.conn_id)
@@ -380,14 +397,10 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         as DOWN).
         """
         conn_report = self.build_report_for_connections_on(vpn_service)
-        if conn_report:
+        if conn_report or vpn_service.connections_removed:
             pending_handled = plugin_utils.in_pending_status(
                 vpn_service.last_status)
-            if (len(conn_report) == 1 and
-                conn_report.values()[0]['status'] != constants.ACTIVE):
-                vpn_service.last_status = constants.DOWN
-            else:
-                vpn_service.last_status = constants.ACTIVE
+            vpn_service.update_last_status()
             LOG.debug(_("Report: Adding info for VPN service %s"),
                       vpn_service.service_id)
             return {u'id': vpn_service.service_id,
@@ -397,15 +410,20 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         else:
             return {}
 
+    @lockutils.synchronized('vpn-agent', 'neutron-')
     def report_status(self, context):
         """Report status of all VPN services and IPSec connections to plugin.
 
-        This is called periodically by the agent, to push up status changes,
-        and at the end of any sync operation to reflect the changes due to a
-        sync or change notification.
+        This is called periodically by the agent, to push up changes in
+        status. Use a lock to serialize access to (and changing of)
+        running state.
         """
+        return self.report_status_internal(context)
+
+    def report_status_internal(self, context):
+        """Generate report and send to plugin, if anything changed."""
         service_report = []
-        LOG.debug(_("Report: Starting status report"))
+        LOG.debug(_("Report: Starting status report processing"))
         for vpn_service_id, vpn_service in self.service_state.items():
             LOG.debug(_("Report: Collecting status for VPN service %s"),
                       vpn_service_id)
@@ -428,11 +446,14 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         Called when update/delete a service or create/update/delete a
         connection (vpnservice_updated message), or router change
         (_process_routers).
+
+        Use lock to serialize access (and changes) to running state for VPN
+        service and IPsec connections.
         """
         self.mark_existing_connections_as_dirty()
         self.update_all_services_and_connections(context)
         self.remove_unknown_connections(context)
-        self.report_status(context)
+        self.report_status_internal(context)
 
     def create_router(self, process_id):
         """Actions taken when router created."""
@@ -451,10 +472,9 @@ class CiscoCsrVpnService(object):
 
     def __init__(self, service_data, csr):
         self.service_id = service_data['id']
-        self.last_status = service_data['status']
         self.conn_state = {}
-        self.is_dirty = False
         self.csr = csr
+        self.is_admin_up = True
         # TODO(pcm) FUTURE - handle sharing of policies
 
     def create_connection(self, conn_data):
@@ -502,6 +522,16 @@ class CiscoCsrVpnService(object):
             if connection.tunnel == tunnel_id:
                 return connection.conn_id
 
+    def no_connections_up(self):
+        return not any(c.last_status == 'ACTIVE'
+                       for c in self.conn_state.values())
+
+    def update_last_status(self):
+        if not self.is_admin_up or self.no_connections_up():
+            self.last_status = constants.DOWN
+        else:
+            self.last_status = constants.ACTIVE
+
 
 class CiscoCsrIPSecConnection(object):
 
@@ -511,8 +541,8 @@ class CiscoCsrIPSecConnection(object):
         self.conn_id = conn_info['id']
         self.csr = csr
         self.steps = []
-        self.is_dirty = False
-        self.last_status = conn_info['status']
+        self.forced_down = False
+        self.is_admin_up = conn_info[u'admin_state_up']
         self.tunnel = conn_info['cisco']['site_conn_id']
 
     def find_current_status_in(self, statuses):
@@ -521,7 +551,7 @@ class CiscoCsrIPSecConnection(object):
         else:
             return constants.ERROR
 
-    def build_report_based_on_status(self, current_status):
+    def update_status_and_build_report(self, current_status):
         if current_status != self.last_status:
             pending_handled = plugin_utils.in_pending_status(self.last_status)
             self.last_status = current_status
