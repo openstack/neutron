@@ -76,6 +76,16 @@ class ServiceOverQuota(n_exc.Conflict):
     message = _("Quota exceeded for Vcns resource: %(overs)s: %(err_msg)s")
 
 
+class RouterInUseByLBService(n_exc.InUse):
+    message = _("Router %(router_id)s is in use by Loadbalancer Service "
+                "%(vip_id)s")
+
+
+class RouterInUseByFWService(n_exc.InUse):
+    message = _("Router %(router_id)s is in use by firewall Service "
+                "%(firewall_id)s")
+
+
 class VcnsDriverException(NsxPluginException):
     message = _("Error happened in NSX VCNS Driver: %(err_msg)s")
 
