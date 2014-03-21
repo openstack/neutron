@@ -18,10 +18,13 @@ import os
 
 from alembic import command as alembic_command
 from alembic import config as alembic_config
+from alembic import script as alembic_script
 from alembic import util as alembic_util
 from oslo.config import cfg
 
 from neutron.common import legacy
+
+HEAD_FILENAME = 'HEAD'
 
 
 _core_opts = [
@@ -61,6 +64,7 @@ def do_alembic_command(config, cmd, *args, **kwargs):
 
 def do_check_migration(config, cmd):
     do_alembic_command(config, 'branches')
+    validate_head_file(config)
 
 
 def do_upgrade_downgrade(config, cmd):
@@ -89,6 +93,30 @@ def do_revision(config, cmd):
                        message=CONF.command.message,
                        autogenerate=CONF.command.autogenerate,
                        sql=CONF.command.sql)
+    update_head_file(config)
+
+
+def validate_head_file(config):
+    script = alembic_script.ScriptDirectory.from_config(config)
+    if len(script.get_heads()) > 1:
+        alembic_util.err(_('Timeline branches unable to generate timeline'))
+
+    head_path = os.path.join(script.versions, HEAD_FILENAME)
+    if (os.path.isfile(head_path) and
+        open(head_path).read().strip() == script.get_current_head()):
+        return
+    else:
+        alembic_util.err(_('HEAD file does not match migration timeline head'))
+
+
+def update_head_file(config):
+    script = alembic_script.ScriptDirectory.from_config(config)
+    if len(script.get_heads()) > 1:
+        alembic_util.err(_('Timeline branches unable to generate timeline'))
+
+    head_path = os.path.join(script.versions, HEAD_FILENAME)
+    with open(head_path, 'w+') as f:
+        f.write(script.get_current_head())
 
 
 def add_command_parsers(subparsers):
