@@ -414,6 +414,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
         port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
 
+    def _get_existing_internal_devices(self, ri):
+        ip_wrapper = ip_lib.IPWrapper(root_helper=self.root_helper,
+                                      namespace=ri.ns_name())
+        ip_devs = ip_wrapper.get_devices(exclude_loopback=True)
+        return [ip_dev.name for ip_dev in ip_devs if
+                ip_dev.name.startswith(INTERNAL_DEV_PREFIX)]
+
     def process_router(self, ri):
         ri.iptables_manager.defer_apply_on()
         ex_gw_port = self._get_ex_gw_port(ri)
@@ -435,6 +442,17 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         for p in old_ports:
             self.internal_network_removed(ri, p['id'], p['ip_cidr'])
             ri.internal_ports.remove(p)
+
+        current_internal_devs = set(self._get_existing_internal_devices(ri))
+        current_port_devs = set([self.get_internal_device_name(id) for
+                                 id in current_port_ids])
+        stale_devs = current_internal_devs - current_port_devs
+        for stale_dev in stale_devs:
+            LOG.debug(_('Deleting stale internal router device: %s'),
+                      stale_dev)
+            self.driver.unplug(stale_dev,
+                               namespace=ri.ns_name(),
+                               prefix=INTERNAL_DEV_PREFIX)
 
         internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports]
         # TODO(salv-orlando): RouterInfo would be a better place for
