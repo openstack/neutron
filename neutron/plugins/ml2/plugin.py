@@ -485,28 +485,28 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         LOG.debug(_("Committing transaction"))
                         break
             except os_db.exception.DBError as e:
-                if isinstance(e.inner_exception, sql_exc.IntegrityError):
-                    msg = _("A concurrent port creation has occurred")
-                    LOG.warning(msg)
-                    continue
-                else:
-                    raise
+                with excutils.save_and_reraise_exception() as ctxt:
+                    if isinstance(e.inner_exception, sql_exc.IntegrityError):
+                        ctxt.reraise = False
+                        msg = _("A concurrent port creation has occurred")
+                        LOG.warning(msg)
+                        continue
 
             for port in ports:
                 try:
                     self.delete_port(context, port.id)
                 except Exception:
-                    LOG.exception(_("Exception auto-deleting port %s"),
-                                  port.id)
-                    raise
+                    with excutils.save_and_reraise_exception():
+                        LOG.exception(_("Exception auto-deleting port %s"),
+                                      port.id)
 
             for subnet in subnets:
                 try:
                     self.delete_subnet(context, subnet.id)
                 except Exception:
-                    LOG.exception(_("Exception auto-deleting subnet %s"),
-                                  subnet.id)
-                    raise
+                    with excutils.save_and_reraise_exception():
+                        LOG.exception(_("Exception auto-deleting subnet %s"),
+                                      subnet.id)
 
         try:
             self.mechanism_manager.delete_network_postcommit(mech_context)
@@ -595,9 +595,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 try:
                     self.delete_port(context, a.port_id)
                 except Exception:
-                    LOG.exception(_("Exception auto-deleting port %s"),
-                                  a.port_id)
-                    raise
+                    with excutils.save_and_reraise_exception():
+                        LOG.exception(_("Exception auto-deleting port %s"),
+                                      a.port_id)
 
         try:
             self.mechanism_manager.delete_subnet_postcommit(mech_context)

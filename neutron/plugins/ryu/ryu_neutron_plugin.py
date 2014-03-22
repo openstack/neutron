@@ -36,6 +36,7 @@ from neutron.db import models_v2
 from neutron.db import portbindings_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import portbindings
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.openstack.common.rpc import proxy
@@ -180,8 +181,8 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             try:
                 self._client_create_network(net['id'], tunnel_key)
             except Exception:
-                self._client_delete_network(net['id'])
-                raise
+                with excutils.save_and_reraise_exception():
+                    self._client_delete_network(net['id'])
 
         return net
 

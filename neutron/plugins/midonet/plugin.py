@@ -518,9 +518,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             super(MidonetPluginV2, self).delete_network(context, id)
         except Exception:
-            LOG.error(_('Failed to delete neutron db, while Midonet bridge=%r'
-                      'had been deleted'), id)
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.error(_('Failed to delete neutron db, while Midonet '
+                            'bridge=%r had been deleted'), id)
 
     def create_port(self, context, port):
         """Create a L2 port in Neutron/MidoNet."""

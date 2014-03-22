@@ -20,6 +20,7 @@ import json
 import socket
 import time
 
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
@@ -129,16 +130,17 @@ class OFCClient(object):
             try:
                 return self.do_single_request(method, action, body)
             except nexc.OFCServiceUnavailable as e:
-                try:
-                    wait_time = int(e.retry_after)
-                except (ValueError, TypeError):
-                    wait_time = None
-                if i > 1 and wait_time:
-                    LOG.info(_("Waiting for %s seconds due to "
-                               "OFC Service_Unavailable."), wait_time)
-                    time.sleep(wait_time)
-                    continue
-                raise
+                with excutils.save_and_reraise_exception() as ctxt:
+                    try:
+                        wait_time = int(e.retry_after)
+                    except (ValueError, TypeError):
+                        wait_time = None
+                    if i > 1 and wait_time:
+                        LOG.info(_("Waiting for %s seconds due to "
+                                   "OFC Service_Unavailable."), wait_time)
+                        time.sleep(wait_time)
+                        ctxt.reraise = False
+                        continue
 
     def get(self, action):
         return self.do_request("GET", action)

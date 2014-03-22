@@ -205,9 +205,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             # Ensure this method is executed only once
             self._is_default_net_gw_in_sync = True
         except Exception:
-            LOG.exception(_("Unable to process default l2 gw service:%s"),
-                          def_l2_gw_uuid)
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Unable to process default l2 gw service:%s"),
+                              def_l2_gw_uuid)
 
     def _build_ip_address_list(self, context, fixed_ips, subnet_ids=None):
         """Build ip_addresses data structure for logical router port.
@@ -1804,10 +1804,10 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 destination_ip_addresses=internal_ip)
 
         except api_exc.NsxApiException:
-            LOG.exception(_("An error occurred while removing NAT rules "
-                            "on the NSX platform for floating ip:%s"),
-                          floating_ip_address)
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("An error occurred while removing NAT rules "
+                                "on the NSX platform for floating ip:%s"),
+                              floating_ip_address)
         except nsx_exc.NatRuleMismatch:
             # Do not surface to the user
             LOG.warning(_("An incorrect number of matching NAT rules "
@@ -2286,13 +2286,13 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                        "resource was not found"),
                      {'neutron_id': device_id, 'nsx_id': nsx_device_id})
         except api_exc.NsxApiException:
-            LOG.exception(_("Removal of gateway device: %(neutron_id)s "
-                            "failed on NSX backend (NSX id:%(nsx_id)s). "
-                            "Neutron and NSX states have diverged."),
-                          {'neutron_id': device_id,
-                           'nsx_id': nsx_device_id})
-            # In this case a 500 should be returned
-            raise
+            with excutils.save_and_reraise_exception():
+                # In this case a 500 should be returned
+                LOG.exception(_("Removal of gateway device: %(neutron_id)s "
+                                "failed on NSX backend (NSX id:%(nsx_id)s). "
+                                "Neutron and NSX states have diverged."),
+                              {'neutron_id': device_id,
+                               'nsx_id': nsx_device_id})
 
     def create_security_group(self, context, security_group, default_sg=False):
         """Create security group.

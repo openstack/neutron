@@ -26,6 +26,7 @@ from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
 from neutron.extensions import l3
+from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
@@ -77,8 +78,9 @@ class RouterMixin(extraroute_db.ExtraRoute_db_mixin,
         try:
             return driver.create_router(context, tenant_id, new_router)
         except nexc.RouterOverLimit:
-            super(RouterMixin, self).delete_router(context, new_router['id'])
-            raise
+            with excutils.save_and_reraise_exception():
+                super(RouterMixin, self).delete_router(context,
+                                                       new_router['id'])
 
     def update_router(self, context, router_id, router):
         LOG.debug(_("RouterMixin.update_router() called, "

@@ -19,6 +19,7 @@ from oslo.config import cfg
 
 from neutron.common import exceptions as n_exc
 from neutron.openstack.common.db import exception as db_exc
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as p_exc
@@ -354,13 +355,15 @@ class PersistentLsnManager(LsnManager):
                 context, network_id, raise_on_err=raise_on_err)
             return obj.lsn_id if obj else None
         except p_exc.LsnNotFound:
-            if self.sync_on_missing:
-                lsn_id = super(PersistentLsnManager, self).lsn_get(
-                    context, network_id, raise_on_err=raise_on_err)
-                self.lsn_save(context, network_id, lsn_id)
-                return lsn_id
-            if raise_on_err:
-                raise
+            with excutils.save_and_reraise_exception() as ctxt:
+                ctxt.reraise = False
+                if self.sync_on_missing:
+                    lsn_id = super(PersistentLsnManager, self).lsn_get(
+                        context, network_id, raise_on_err=raise_on_err)
+                    self.lsn_save(context, network_id, lsn_id)
+                    return lsn_id
+                if raise_on_err:
+                    ctxt.reraise = True
 
     def lsn_save(self, context, network_id, lsn_id):
         """Save LSN-Network mapping to the DB."""
@@ -377,8 +380,8 @@ class PersistentLsnManager(LsnManager):
         try:
             self.lsn_save(context, network_id, lsn_id)
         except p_exc.NsxPluginException:
-            super(PersistentLsnManager, self).lsn_delete(context, lsn_id)
-            raise
+            with excutils.save_and_reraise_exception():
+                super(PersistentLsnManager, self).lsn_delete(context, lsn_id)
         return lsn_id
 
     def lsn_delete(self, context, lsn_id):
@@ -391,18 +394,20 @@ class PersistentLsnManager(LsnManager):
                 context, subnet_id, raise_on_err=raise_on_err)
             return (obj.lsn_id, obj.lsn_port_id) if obj else (None, None)
         except p_exc.LsnPortNotFound:
-            if self.sync_on_missing:
-                lsn_id, lsn_port_id = (
-                    super(PersistentLsnManager, self).lsn_port_get(
-                        context, network_id, subnet_id,
-                        raise_on_err=raise_on_err))
-                mac_addr = lsn_api.lsn_port_info_get(
-                    self.cluster, lsn_id, lsn_port_id)['mac_address']
-                self.lsn_port_save(
-                    context, lsn_port_id, subnet_id, mac_addr, lsn_id)
-                return (lsn_id, lsn_port_id)
-            if raise_on_err:
-                raise
+            with excutils.save_and_reraise_exception() as ctxt:
+                ctxt.reraise = False
+                if self.sync_on_missing:
+                    lsn_id, lsn_port_id = (
+                        super(PersistentLsnManager, self).lsn_port_get(
+                            context, network_id, subnet_id,
+                            raise_on_err=raise_on_err))
+                    mac_addr = lsn_api.lsn_port_info_get(
+                        self.cluster, lsn_id, lsn_port_id)['mac_address']
+                    self.lsn_port_save(
+                        context, lsn_port_id, subnet_id, mac_addr, lsn_id)
+                    return (lsn_id, lsn_port_id)
+                if raise_on_err:
+                    ctxt.reraise = True
 
     def lsn_port_get_by_mac(self, context, network_id, mac, raise_on_err=True):
         try:
@@ -410,18 +415,20 @@ class PersistentLsnManager(LsnManager):
                 context, mac, raise_on_err=raise_on_err)
             return (obj.lsn_id, obj.lsn_port_id) if obj else (None, None)
         except p_exc.LsnPortNotFound:
-            if self.sync_on_missing:
-                lsn_id, lsn_port_id = (
-                    super(PersistentLsnManager, self).lsn_port_get_by_mac(
-                        context, network_id, mac,
-                        raise_on_err=raise_on_err))
-                subnet_id = lsn_api.lsn_port_info_get(
-                    self.cluster, lsn_id, lsn_port_id).get('subnet_id')
-                self.lsn_port_save(
-                    context, lsn_port_id, subnet_id, mac, lsn_id)
-                return (lsn_id, lsn_port_id)
-            if raise_on_err:
-                raise
+            with excutils.save_and_reraise_exception() as ctxt:
+                ctxt.reraise = False
+                if self.sync_on_missing:
+                    lsn_id, lsn_port_id = (
+                        super(PersistentLsnManager, self).lsn_port_get_by_mac(
+                            context, network_id, mac,
+                            raise_on_err=raise_on_err))
+                    subnet_id = lsn_api.lsn_port_info_get(
+                        self.cluster, lsn_id, lsn_port_id).get('subnet_id')
+                    self.lsn_port_save(
+                        context, lsn_port_id, subnet_id, mac, lsn_id)
+                    return (lsn_id, lsn_port_id)
+                if raise_on_err:
+                    ctxt.reraise = True
 
     def lsn_port_save(self, context, lsn_port_id, subnet_id, mac_addr, lsn_id):
         """Save LSN Port information to the DB."""
@@ -440,9 +447,9 @@ class PersistentLsnManager(LsnManager):
             self.lsn_port_save(context, lsn_port_id, subnet_info['subnet_id'],
                                subnet_info['mac_address'], lsn_id)
         except p_exc.NsxPluginException:
-            super(PersistentLsnManager, self).lsn_port_delete(
-                context, lsn_id, lsn_port_id)
-            raise
+            with excutils.save_and_reraise_exception():
+                super(PersistentLsnManager, self).lsn_port_delete(
+                    context, lsn_id, lsn_port_id)
         return lsn_port_id
 
     def lsn_port_delete(self, context, lsn_id, lsn_port_id):

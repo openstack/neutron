@@ -1563,15 +1563,15 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self.vcns_driver.update_ipsec_config(
                 edge_id, sites, enabled=vpn_service.admin_state_up)
         except exceptions.VcnsBadRequest:
-            LOG.exception(_("Bad or unsupported Input request!"))
-            raise
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Bad or unsupported Input request!"))
         except exceptions.VcnsApiException:
-            msg = (_("Failed to update ipsec VPN configuration "
-                     "with vpnservice: %(vpnservice_id)s on vShield Edge: "
-                     "%(edge_id)s") % {'vpnservice_id': vpnservice_id,
-                                       'edge_id': edge_id})
-            LOG.exception(msg)
-            raise
+            with excutils.save_and_reraise_exception():
+                msg = (_("Failed to update ipsec VPN configuration "
+                         "with vpnservice: %(vpnservice_id)s on vShield Edge: "
+                         "%(edge_id)s") % {'vpnservice_id': vpnservice_id,
+                                           'edge_id': edge_id})
+                LOG.exception(msg)
 
     def create_vpnservice(self, context, vpnservice):
         LOG.debug(_("create_vpnservice() called"))
