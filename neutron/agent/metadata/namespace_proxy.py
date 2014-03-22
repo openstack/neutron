@@ -146,10 +146,17 @@ class ProxyDaemon(daemon.Daemon):
 def main():
     eventlet.monkey_patch()
     opts = [
-        cfg.StrOpt('network_id'),
-        cfg.StrOpt('router_id'),
-        cfg.StrOpt('pid_file'),
-        cfg.BoolOpt('daemonize', default=True),
+        cfg.StrOpt('network_id',
+                   help=_('Network that will have instance metadata '
+                          'proxied.')),
+        cfg.StrOpt('router_id',
+                   help=_('Router that will have connected instances\' '
+                          'metadata proxied.')),
+        cfg.StrOpt('pid_file',
+                   help=_('Location of pid file of this process.')),
+        cfg.BoolOpt('daemonize',
+                    default=True,
+                    help=_('Run as daemon.')),
         cfg.IntOpt('metadata_port',
                    default=9697,
                    help=_("TCP Port to listen for metadata server "
