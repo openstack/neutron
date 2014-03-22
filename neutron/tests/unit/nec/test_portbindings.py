@@ -51,24 +51,22 @@ class TestNecPortBindingHost(
 
 
 class TestNecPortBindingPortInfo(test_nec_plugin.NecPluginV2TestCase):
-    def _get_portinfo(self, datapath_id=None, port_no=None, prefix=None):
+    def _get_portinfo(self, datapath_id=None, port_no=None):
         if datapath_id is None:
             datapath_id = '0xabc'
         if port_no is None:
             port_no = 1
-        if prefix is None:
-            prefix = 'portinfo:'
-        return {prefix + 'datapath_id': datapath_id,
-                prefix + 'port_no': port_no}
+        return {'datapath_id': datapath_id,
+                'port_no': port_no}
 
     def _check_response_portbinding_profile(self, port, datapath_id=None,
                                             port_no=None):
-        expected = self._get_portinfo(datapath_id, port_no, prefix='')
+        expected = self._get_portinfo(datapath_id, port_no)
         profile = port[portbindings.PROFILE]
         self.assertEqual(len(profile), 2)
-        self.assertEqual(profile['portinfo:datapath_id'],
+        self.assertEqual(profile['datapath_id'],
                          expected['datapath_id'])
-        self.assertEqual(profile['portinfo:port_no'],
+        self.assertEqual(profile['port_no'],
                          expected['port_no'])
 
     def _check_response_portbinding_no_profile(self, port):
@@ -267,8 +265,8 @@ class TestNecPortBindingPortInfo(test_nec_plugin.NecPluginV2TestCase):
     def test_port_create_portinfo_validation_called(self):
         # Check validate_portinfo is called.
         profile_arg = {portbindings.PROFILE:
-                       {'portinfo:datapath_id': '0xabc',
-                        'portinfo:port_no': 0xffff + 1}}
+                       {'datapath_id': '0xabc',
+                        'port_no': 0xffff + 1}}
         try:
             with self.port(arg_list=(portbindings.PROFILE,),
                            expected_res_status=400,
@@ -281,8 +279,8 @@ class TestNecPortBindingPortInfo(test_nec_plugin.NecPluginV2TestCase):
 class TestNecPortBindingValidatePortInfo(test_nec_plugin.NecPluginV2TestCase):
 
     def test_validate_portinfo_ok(self):
-        profile = {'portinfo:datapath_id': '0x1234567890abcdef',
-                   'portinfo:port_no': 123}
+        profile = {'datapath_id': '0x1234567890abcdef',
+                   'port_no': 123}
         portinfo = self.plugin._validate_portinfo(profile)
         # NOTE(mriedem): Handle long integer conversion universally.
         self.assertEqual(
@@ -292,8 +290,8 @@ class TestNecPortBindingValidatePortInfo(test_nec_plugin.NecPluginV2TestCase):
         self.assertEqual(portinfo['port_no'], 123)
 
     def test_validate_portinfo_ok_without_0x(self):
-        profile = {'portinfo:datapath_id': '1234567890abcdef',
-                   'portinfo:port_no': 123}
+        profile = {'datapath_id': '1234567890abcdef',
+                   'port_no': 123}
         portinfo = self.plugin._validate_portinfo(profile)
         # NOTE(mriedem): Handle long integer conversion universally.
         self.assertEqual(
@@ -311,36 +309,36 @@ class TestNecPortBindingValidatePortInfo(test_nec_plugin.NecPluginV2TestCase):
         expected_msg = ("Invalid input for operation: "
                         "Validation of dictionary's keys failed.")
 
-        profile = {'portinfo:port_no': 123}
+        profile = {'port_no': 123}
         self._test_validate_exception(profile, expected_msg)
 
-        profile = {'portinfo:datapath_id': '0xabcdef'}
+        profile = {'datapath_id': '0xabcdef'}
         self._test_validate_exception(profile, expected_msg)
 
     def test_validate_portinfo_negative_port_number(self):
-        profile = {'portinfo:datapath_id': '0x1234567890abcdef',
-                   'portinfo:port_no': -1}
+        profile = {'datapath_id': '0x1234567890abcdef',
+                   'port_no': -1}
         expected_msg = ("Invalid input for operation: "
                         "'-1' should be non-negative.")
         self._test_validate_exception(profile, expected_msg)
 
     def test_validate_portinfo_invalid_datapath_id(self):
         expected_msg = ("Invalid input for operation: "
-                        "portinfo:datapath_id should be a hex string")
+                        "datapath_id should be a hex string")
 
         # non hexidecimal datapath_id
-        profile = {'portinfo:datapath_id': 'INVALID',
-                   'portinfo:port_no': 123}
+        profile = {'datapath_id': 'INVALID',
+                   'port_no': 123}
         self._test_validate_exception(profile, expected_msg)
 
         # Too big datapath_id
-        profile = {'portinfo:datapath_id': '0x10000000000000000',
-                   'portinfo:port_no': 123}
+        profile = {'datapath_id': '0x10000000000000000',
+                   'port_no': 123}
         self._test_validate_exception(profile, expected_msg)
 
     def test_validate_portinfo_too_big_port_number(self):
-        profile = {'portinfo:datapath_id': '0x1234567890abcdef',
-                   'portinfo:port_no': 65536}
+        profile = {'datapath_id': '0x1234567890abcdef',
+                   'port_no': 65536}
         expected_msg = ("Invalid input for operation: "
-                        "portinfo:port_no should be [0:65535]")
+                        "port_no should be [0:65535]")
         self._test_validate_exception(profile, expected_msg)

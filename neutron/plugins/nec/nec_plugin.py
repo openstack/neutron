@@ -407,24 +407,24 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def _extend_port_dict_binding_portinfo(self, port_res, portinfo):
         if portinfo:
             port_res[portbindings.PROFILE] = {
-                'portinfo:datapath_id': portinfo['datapath_id'],
-                'portinfo:port_no': portinfo['port_no'],
+                'datapath_id': portinfo['datapath_id'],
+                'port_no': portinfo['port_no'],
             }
         elif portbindings.PROFILE in port_res:
             del port_res[portbindings.PROFILE]
 
     def _validate_portinfo(self, profile):
         key_specs = {
-            'portinfo:datapath_id': {'type:string': None, 'required': True},
-            'portinfo:port_no': {'type:non_negative': None, 'required': True,
-                                 'convert_to': attrs.convert_to_int}
+            'datapath_id': {'type:string': None, 'required': True},
+            'port_no': {'type:non_negative': None, 'required': True,
+                        'convert_to': attrs.convert_to_int}
         }
         msg = attrs._validate_dict_or_empty(profile, key_specs=key_specs)
         if msg:
             raise n_exc.InvalidInput(error_message=msg)
 
-        datapath_id = profile.get('portinfo:datapath_id')
-        port_no = profile.get('portinfo:port_no')
+        datapath_id = profile.get('datapath_id')
+        port_no = profile.get('port_no')
         try:
             dpid = int(datapath_id, 16)
         except ValueError:
