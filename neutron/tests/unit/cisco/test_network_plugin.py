@@ -14,10 +14,12 @@
 # limitations under the License.
 
 import contextlib
+import copy
 import inspect
 import logging
 import mock
 
+import six
 import webob.exc as wexc
 
 from neutron.api import extensions
@@ -30,6 +32,7 @@ from neutron.db import l3_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.manager import NeutronManager
+from neutron.openstack.common import gettextutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.common import config as cisco_config
@@ -226,6 +229,38 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         else:
             expected_http = wexc.HTTPInternalServerError.code
         self.assertEqual(status, expected_http)
+
+
+class TestCiscoGetAttribute(CiscoNetworkPluginV2TestCase):
+
+    def test_get_unsupported_attr_in_lazy_gettext_mode(self):
+        """Test get of unsupported attribute in lazy gettext mode.
+
+        This test also checks that this operation does not cause
+        excessive nesting of calls to deepcopy.
+        """
+        plugin = NeutronManager.get_plugin()
+
+        def _lazy_gettext(msg):
+            return gettextutils.Message(msg, domain='neutron')
+
+        with mock.patch.dict(six.moves.builtins.__dict__,
+                             {'_': _lazy_gettext}):
+            self.nesting_count = 0
+
+            def _count_nesting(*args, **kwargs):
+                self.nesting_count += 1
+
+            with mock.patch.object(copy, 'deepcopy',
+                                   side_effect=_count_nesting,
+                                   wraps=copy.deepcopy):
+                self.assertRaises(AttributeError, getattr, plugin,
+                                  'an_unsupported_attribute')
+                # If there were no nested calls to deepcopy, then the total
+                # number of calls to deepcopy should be 2 (1 call for
+                # each mod'd field in the AttributeError message raised
+                # by the plugin).
+                self.assertEqual(self.nesting_count, 2)
 
 
 class TestCiscoBasicGet(CiscoNetworkPluginV2TestCase,
