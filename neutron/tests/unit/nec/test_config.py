@@ -28,6 +28,8 @@ class ConfigurationTest(base.BaseTestCase):
 
         self.assertEqual('127.0.0.1', config.CONF.OFC.host)
         self.assertEqual('8888', config.CONF.OFC.port)
+        # Check path_prefix is an empty string explicitly.
+        self.assertEqual('', config.CONF.OFC.path_prefix)
         self.assertEqual('trema', config.CONF.OFC.driver)
         self.assertTrue(config.CONF.OFC.enable_packet_filter)
         self.assertFalse(config.CONF.OFC.use_ssl)
