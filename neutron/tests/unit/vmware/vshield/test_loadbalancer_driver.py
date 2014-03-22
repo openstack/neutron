@@ -109,6 +109,19 @@ class TestEdgeLbDriver(VcnsDriverTestCase):
                 for k, v in vip_get.iteritems():
                     self.assertEqual(vip_create[k], v)
 
+    def test_create_two_vips_with_same_name(self):
+        ctx = context.get_admin_context()
+        with self.pool(no_delete=True) as pool:
+            self.pool_id = pool['pool']['id']
+            POOL_MAP_INFO['pool_id'] = pool['pool']['id']
+            vcns_db.add_vcns_edge_pool_binding(ctx.session, POOL_MAP_INFO)
+            with self.vip(pool=pool) as res:
+                vip_create = res['vip']
+                self.driver.create_vip(ctx, VSE_ID, vip_create)
+                self.assertRaises(vcns_exc.Forbidden,
+                                  self.driver.create_vip,
+                                  ctx, VSE_ID, vip_create)
+
     def test_convert_app_profile(self):
         app_profile_name = 'app_profile_name'
         sess_persist1 = {'type': "SOURCE_IP"}
@@ -245,6 +258,16 @@ class TestEdgeLbDriver(VcnsDriverTestCase):
             pool_get = self.driver.get_pool(ctx, pool_create['id'], VSE_ID)
             for k, v in pool_get.iteritems():
                 self.assertEqual(pool_create[k], v)
+
+    def test_create_two_pools_with_same_name(self):
+        ctx = context.get_admin_context()
+        with self.pool(no_delete=True) as p:
+            self.pool_id = p['pool']['id']
+            pool_create = p['pool']
+            self.driver.create_pool(ctx, VSE_ID, pool_create, [])
+            self.assertRaises(vcns_exc.Forbidden,
+                              self.driver.create_pool,
+                              ctx, VSE_ID, pool_create, [])
 
     def test_update_pool(self):
         ctx = context.get_admin_context()

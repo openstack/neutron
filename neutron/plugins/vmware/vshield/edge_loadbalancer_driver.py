@@ -57,7 +57,8 @@ class EdgeLbDriver():
             context.session, pool_id, edge_id)
         pool_vseid = poolid_map['pool_vseid']
         return {
-            'name': vip.get('name'),
+            'name': vip.get(
+                'name', '') + vip['id'][-vcns_const.SUFFIX_LENGTH:],
             'description': vip.get('description'),
             'ipAddress': vip.get('address'),
             'protocol': vip.get('protocol'),
@@ -74,7 +75,7 @@ class EdgeLbDriver():
             vip_vse['defaultPoolId'])
 
         return {
-            'name': vip_vse['name'],
+            'name': vip_vse['name'][:-vcns_const.SUFFIX_LENGTH],
             'address': vip_vse['ipAddress'],
             'protocol': vip_vse['protocol'],
             'protocol_port': vip_vse['port'],
@@ -83,7 +84,8 @@ class EdgeLbDriver():
 
     def _convert_lb_pool(self, context, edge_id, pool, members):
         vsepool = {
-            'name': pool.get('name'),
+            'name': pool.get(
+                'name', '') + pool['id'][-vcns_const.SUFFIX_LENGTH:],
             'description': pool.get('description'),
             'algorithm': BALANCE_MAP.get(
                 pool.get('lb_method'),
@@ -112,7 +114,7 @@ class EdgeLbDriver():
     def _restore_lb_pool(self, context, edge_id, pool_vse):
         #TODO(linb): Get more usefule info
         return {
-            'name': pool_vse['name'],
+            'name': pool_vse['name'][:-vcns_const.SUFFIX_LENGTH],
         }
 
     def _convert_lb_monitor(self, context, monitor):
