@@ -16,6 +16,7 @@
 import sys
 
 from oslo.config import cfg
+from six.moves import xrange
 import sqlalchemy as sa
 
 from neutron.common import constants as q_const

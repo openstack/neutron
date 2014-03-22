@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from six.moves import xrange
 from testtools import matchers
 
 from neutron.common import exceptions as n_exc

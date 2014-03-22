@@ -18,6 +18,7 @@
 # @author: Abhishek Raut, Cisco Systems Inc.
 # @author: Rudrajit Tapadar, Cisco Systems Inc.
 
+from six.moves import xrange
 from sqlalchemy.orm import exc as s_exc
 from testtools import matchers
 

@@ -16,6 +16,7 @@
 #    under the License.
 # @author: Alessandro Pilotti, Cloudbase Solutions Srl
 
+from six.moves import xrange
 from sqlalchemy.orm import exc
 
 from neutron.common import exceptions as n_exc

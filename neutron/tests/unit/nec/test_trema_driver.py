@@ -18,6 +18,7 @@
 import random
 
 import mock
+from six.moves import xrange
 
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import ofc_client

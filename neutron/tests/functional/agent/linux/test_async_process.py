@@ -17,6 +17,8 @@
 import eventlet
 import fixtures
 
+from six.moves import xrange
+
 from neutron.agent.linux import async_process
 from neutron.tests import base
 

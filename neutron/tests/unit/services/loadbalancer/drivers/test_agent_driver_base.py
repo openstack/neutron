@@ -19,6 +19,7 @@
 import contextlib
 
 import mock
+from six.moves import xrange
 from webob import exc
 
 from neutron.common import exceptions
