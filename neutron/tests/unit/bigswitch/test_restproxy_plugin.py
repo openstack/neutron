@@ -37,6 +37,9 @@ class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,
                                      test_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self, plugin_name=None):
+        if hasattr(self, 'HAS_PORT_FILTER'):
+            cfg.CONF.set_override(
+                'enable_security_group', self.HAS_PORT_FILTER, 'SECURITYGROUP')
         self.setup_config_files()
         self.setup_patches()
         if plugin_name:
@@ -71,6 +74,10 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
 
     VIF_TYPE = portbindings.VIF_TYPE_OVS
     HAS_PORT_FILTER = False
+
+    def setUp(self, plugin_name=None):
+        super(TestBigSwitchProxyPortsV2,
+              self).setUp(self._plugin_name)
 
     def test_update_port_status_build(self):
         with self.port() as port:

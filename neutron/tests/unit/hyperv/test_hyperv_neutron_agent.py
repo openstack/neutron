@@ -55,7 +55,9 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
         mock.patch('neutron.openstack.common.loopingcall.'
                    'FixedIntervalLoopingCall',
                    new=MockFixedIntervalLoopingCall)
-
+        cfg.CONF.set_default('firewall_driver',
+                             'neutron.agent.firewall.NoopFirewallDriver',
+                             group='SECURITYGROUP')
         self.agent = hyperv_neutron_agent.HyperVNeutronAgent()
         self.agent.plugin_rpc = mock.Mock()
         self.agent.sec_groups_agent = mock.MagicMock()

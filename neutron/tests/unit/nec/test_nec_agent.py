@@ -37,6 +37,9 @@ class TestNecAgentBase(base.BaseTestCase):
 
     def setUp(self):
         super(TestNecAgentBase, self).setUp()
+        cfg.CONF.set_default('firewall_driver',
+                             'neutron.agent.firewall.NoopFirewallDriver',
+                             group='SECURITYGROUP')
         cfg.CONF.set_override('rpc_backend',
                               'neutron.openstack.common.rpc.impl_fake')
         cfg.CONF.set_override('host', 'dummy-host')
