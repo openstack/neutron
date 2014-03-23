@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-22 06:27+0000\n"
+"POT-Creation-Date: 2014-03-23 06:27+0000\n"
 "PO-Revision-Date: 2013-11-15 02:27+0000\n"
 "Last-Translator: daisy.ycguo <daisy.ycguo@gmail.com>\n"
 "Language-Team: Basque (Spain) "
@@ -1043,22 +1043,22 @@ msgstr ""
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:683
+#: neutron/agent/linux/dhcp.py:678
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:693
+#: neutron/agent/linux/dhcp.py:688
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:736
+#: neutron/agent/linux/dhcp.py:731
 #, python-format
 msgid "DHCP port %(device_id)s on network %(network_id)s does not yet exist."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:775 neutron/debug/debug_agent.py:69
+#: neutron/agent/linux/dhcp.py:770 neutron/debug/debug_agent.py:69
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
@@ -14899,30 +14899,30 @@ msgstr ""
 msgid "Multiple lbaas agents found on host %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:98
+#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:99
 #, python-format
 msgid "Pool_id %(pool_id)s status ACTIVE is expected but status is %(status)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:163
+#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:165
 #, python-format
 msgid "Unknown object type: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:174
+#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:176
 #, python-format
 msgid ""
 "Cannot update status: %(obj_type)s %(obj_id)s not found in the DB, it was"
 " probably deleted concurrently"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:197
+#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:199
 #, python-format
 msgid "Unable to find port %s to plug."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:221
-#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:238
+#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:223
+#: neutron/services/loadbalancer/drivers/common/agent_driver_base.py:240
 #, python-format
 msgid ""
 "Unable to find port %s to unplug.  This can occur when the Vip has been "
@@ -15020,7 +15020,7 @@ msgstr ""
 msgid "Error while connecting to stats socket: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:348
+#: neutron/services/loadbalancer/drivers/haproxy/namespace_driver.py:349
 #, python-format
 msgid "Unable to kill haproxy process: %s"
 msgstr ""
@@ -16679,12 +16679,6 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Failed to delete neutron db, while Midonet bridge=%rhad been deleted"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Invalid input for operation: "
-#~ "portinfo:datapath_id should be a hex "
-#~ "string with at most 8 bytes"
 #~ msgstr ""
 
 #~ msgid "Invalid input for operation: portinfo:port_no should be [0:65535]"
