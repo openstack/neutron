@@ -267,7 +267,8 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
     def deploy_instance(self, logical_config):
         # do actual deploy only if vip is configured and active
         if ('vip' not in logical_config or
-            logical_config['vip']['status'] not in constants.ACTIVE_PENDING or
+            (logical_config['vip']['status'] not in
+             constants.ACTIVE_PENDING_STATUSES) or
             not logical_config['vip']['admin_state_up']):
             return
 

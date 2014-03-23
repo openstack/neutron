@@ -48,7 +48,7 @@ STATS_MAP = {
     constants.STATS_RESPONSE_ERRORS: 'eresp'
 }
 
-ACTIVE_PENDING = qconstants.ACTIVE_PENDING
+ACTIVE_PENDING_STATUSES = qconstants.ACTIVE_PENDING_STATUSES
 INACTIVE = qconstants.INACTIVE
 
 
@@ -139,7 +139,7 @@ def _build_backend(config):
 
     # add the members
     for member in config['members']:
-        if ((member['status'] in ACTIVE_PENDING or
+        if ((member['status'] in ACTIVE_PENDING_STATUSES or
              member['status'] == INACTIVE)
             and member['admin_state_up']):
             server = (('server %(id)s %(address)s:%(protocol_port)s '

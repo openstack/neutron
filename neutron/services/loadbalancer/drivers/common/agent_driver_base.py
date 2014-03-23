@@ -84,7 +84,8 @@ class LoadBalancerCallbacks(object):
             qry = context.session.query(loadbalancer_db.Pool.id)
             qry = qry.filter(loadbalancer_db.Pool.id.in_(pool_ids))
             qry = qry.filter(
-                loadbalancer_db.Pool.status.in_(constants.ACTIVE_PENDING))
+                loadbalancer_db.Pool.status.in_(
+                    constants.ACTIVE_PENDING_STATUSES))
             up = True  # makes pep8 and sqlalchemy happy
             qry = qry.filter(loadbalancer_db.Pool.admin_state_up == up)
             return [id for id, in qry]
@@ -118,13 +119,13 @@ class LoadBalancerCallbacks(object):
             retval['members'] = [
                 self.plugin._make_member_dict(m)
                 for m in pool.members if (
-                    m.status in constants.ACTIVE_PENDING or
+                    m.status in constants.ACTIVE_PENDING_STATUSES or
                     m.status == constants.INACTIVE)
             ]
             retval['healthmonitors'] = [
                 self.plugin._make_health_monitor_dict(hm.healthmonitor)
                 for hm in pool.monitors
-                if hm.status in constants.ACTIVE_PENDING
+                if hm.status in constants.ACTIVE_PENDING_STATUSES
             ]
             retval['driver'] = (
                 self.plugin.drivers[pool.provider.provider_name].device_driver)
@@ -138,18 +139,19 @@ class LoadBalancerCallbacks(object):
             pool = qry.one()
 
             # set all resources to active
-            if pool.status in constants.ACTIVE_PENDING:
+            if pool.status in constants.ACTIVE_PENDING_STATUSES:
                 pool.status = constants.ACTIVE
 
-            if pool.vip and pool.vip.status in constants.ACTIVE_PENDING:
+            if (pool.vip and pool.vip.status in
+                    constants.ACTIVE_PENDING_STATUSES):
                 pool.vip.status = constants.ACTIVE
 
             for m in pool.members:
-                if m.status in constants.ACTIVE_PENDING:
+                if m.status in constants.ACTIVE_PENDING_STATUSES:
                     m.status = constants.ACTIVE
 
             for hm in pool.monitors:
-                if hm.status in constants.ACTIVE_PENDING:
+                if hm.status in constants.ACTIVE_PENDING_STATUSES:
                     hm.status = constants.ACTIVE
 
     def update_status(self, context, obj_type, obj_id, status):
@@ -368,7 +370,7 @@ class AgentDriverBase(abstract_driver.LoadBalancerAbstractDriver):
 
     def update_vip(self, context, old_vip, vip):
         agent = self.get_pool_agent(context, vip['pool_id'])
-        if vip['status'] in constants.ACTIVE_PENDING:
+        if vip['status'] in constants.ACTIVE_PENDING_STATUSES:
             self.agent_rpc.update_vip(context, old_vip, vip, agent['host'])
         else:
             self.agent_rpc.delete_vip(context, vip, agent['host'])
@@ -388,7 +390,7 @@ class AgentDriverBase(abstract_driver.LoadBalancerAbstractDriver):
 
     def update_pool(self, context, old_pool, pool):
         agent = self.get_pool_agent(context, pool['id'])
-        if pool['status'] in constants.ACTIVE_PENDING:
+        if pool['status'] in constants.ACTIVE_PENDING_STATUSES:
             self.agent_rpc.update_pool(context, old_pool, pool,
                                        agent['host'])
         else:
