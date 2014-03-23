@@ -646,26 +646,21 @@ class DeviceManager(object):
         host_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname())
         return 'dhcp%s-%s' % (host_uuid, network.id)
 
-    def _get_device(self, network):
+    def _get_device(self, network, port):
         """Return DHCP ip_lib device for this host on the network."""
-        device_id = self.get_device_id(network)
-        port = self.plugin.get_dhcp_port(network.id, device_id)
-        if port:
-            interface_name = self.get_interface_name(network, port)
-            return ip_lib.IPDevice(interface_name,
-                                   self.root_helper,
-                                   network.namespace)
-        else:
-            raise exceptions.NetworkNotFound(net_id=network.id)
+        interface_name = self.get_interface_name(network, port)
+        return ip_lib.IPDevice(interface_name,
+                               self.root_helper,
+                               network.namespace)
 
-    def _set_default_route(self, network):
+    def _set_default_route(self, network, port):
         """Sets the default gateway for this dhcp namespace.
 
         This method is idempotent and will only adjust the route if adjusting
         it would change it from what it already is.  This makes it safe to call
         and avoids unnecessary perturbation of the system.
         """
-        device = self._get_device(network)
+        device = self._get_device(network, port)
         gateway = device.route.get_gateway()
         if gateway:
             gateway = gateway['gateway']
@@ -800,14 +795,18 @@ class DeviceManager(object):
             device.route.pullup_route(interface_name)
 
         if self.conf.use_namespaces:
-            self._set_default_route(network)
+            self._set_default_route(network, port)
 
         return interface_name
 
     def update(self, network):
         """Update device settings for the network's DHCP on this host."""
         if self.conf.use_namespaces:
-            self._set_default_route(network)
+            device_id = self.get_device_id(network)
+            port = self.plugin.get_dhcp_port(network.id, device_id)
+            if not port:
+                raise exceptions.NetworkNotFound(net_id=network.id)
+            self._set_default_route(network, port)
 
     def destroy(self, network, device_name):
         """Destroy the device used for the network's DHCP on this host."""
