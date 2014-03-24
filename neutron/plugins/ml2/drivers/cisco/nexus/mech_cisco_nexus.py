@@ -56,11 +56,10 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
                 cfg.CONF.ml2_cisco.managed_physical_network ==
                 segment[api.PHYSICAL_NETWORK])
 
-    def _get_vlanid(self, context):
-        segment = context.bound_segment
+    def _get_vlanid(self, segment):
         if (segment and segment[api.NETWORK_TYPE] == p_const.TYPE_VLAN and
             self._valid_network_segment(segment)):
-            return context.bound_segment.get(api.SEGMENTATION_ID)
+            return segment.get(api.SEGMENTATION_ID)
 
     def _is_deviceowner_compute(self, port):
         return port['device_owner'].startswith('compute')
@@ -76,24 +75,22 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         else:
             raise excep.NexusComputeHostNotConfigured(host=host_id)
 
-    def _configure_nxos_db(self, context, vlan_id, device_id, host_id):
+    def _configure_nxos_db(self, vlan_id, device_id, host_id):
         """Create the nexus database entry.
 
         Called during update precommit port event.
-
         """
         port_id, switch_ip = self._get_switch_info(host_id)
         nxos_db.add_nexusport_binding(port_id, str(vlan_id), switch_ip,
                                       device_id)
 
-    def _configure_switch_entry(self, context, vlan_id, device_id, host_id):
+    def _configure_switch_entry(self, vlan_id, device_id, host_id):
         """Create a nexus switch entry.
 
         if needed, create a VLAN in the appropriate switch/port and
         configure the appropriate interfaces for this VLAN.
 
         Called during update postcommit port event.
-
         """
         port_id, switch_ip = self._get_switch_info(host_id)
         vlan_name = cfg.CONF.ml2_cisco.vlan_name_prefix + str(vlan_id)
@@ -109,11 +106,10 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
             LOG.debug(_("Nexus: trunk vlan %s"), vlan_name)
             self.driver.enable_vlan_on_trunk_int(switch_ip, vlan_id, port_id)
 
-    def _delete_nxos_db(self, context, vlan_id, device_id, host_id):
+    def _delete_nxos_db(self, vlan_id, device_id, host_id):
         """Delete the nexus database entry.
 
         Called during delete precommit port event.
-
         """
         try:
             row = nxos_db.get_nexusvm_binding(vlan_id, device_id)
@@ -122,14 +118,13 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         except excep.NexusPortBindingNotFound:
             return
 
-    def _delete_switch_entry(self, context, vlan_id, device_id, host_id):
+    def _delete_switch_entry(self, vlan_id, device_id, host_id):
         """Delete the nexus switch entry.
 
         By accessing the current db entries determine if switch
         configuration can be removed.
 
         Called during update postcommit port event.
-
         """
         port_id, switch_ip = self._get_switch_info(host_id)
 
@@ -147,20 +142,25 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
             except excep.NexusPortBindingNotFound:
                 self.driver.delete_vlan(switch_ip, vlan_id)
 
-    def _port_action(self, context, func):
+    def _is_vm_migration(self, context):
+        if not context.bound_segment and context.original_bound_segment:
+            return (context.current.get(portbindings.HOST_ID) !=
+                    context.original.get(portbindings.HOST_ID))
+
+    def _port_action(self, port, segment, func):
         """Verify configuration and then process event."""
-        device_id = context.current.get('device_id')
-        host_id = context.current.get(portbindings.HOST_ID)
+        device_id = port.get('device_id')
+        host_id = port.get(portbindings.HOST_ID)
 
         # Workaround until vlan can be retrieved during delete_port_postcommit
         # event.
         if func == self._delete_switch_entry:
             vlan_id = self._delete_port_postcommit_vlan
         else:
-            vlan_id = self._get_vlanid(context)
+            vlan_id = self._get_vlanid(segment)
 
         if vlan_id and device_id and host_id:
-            func(context, vlan_id, device_id, host_id)
+            func(vlan_id, device_id, host_id)
         else:
             fields = "vlan_id " if not vlan_id else ""
             fields += "device_id " if not device_id else ""
@@ -176,22 +176,46 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
 
     def update_port_precommit(self, context):
         """Update port pre-database transaction commit event."""
-        port = context.current
-        if self._is_deviceowner_compute(port) and self._is_status_active(port):
-            self._port_action(context, self._configure_nxos_db)
+
+        # if VM migration is occurring then remove previous database entry
+        # else process update event.
+        if self._is_vm_migration(context):
+            self._port_action(context.original,
+                              context.original_bound_segment,
+                              self._delete_nxos_db)
+        else:
+            if (self._is_deviceowner_compute(context.current) and
+                self._is_status_active(context.current)):
+                self._port_action(context.current,
+                                  context.bound_segment,
+                                  self._configure_nxos_db)
 
     def update_port_postcommit(self, context):
         """Update port non-database commit event."""
-        port = context.current
-        if self._is_deviceowner_compute(port) and self._is_status_active(port):
-            self._port_action(context, self._configure_switch_entry)
+
+        # if VM migration is occurring then remove previous nexus switch entry
+        # else process update event.
+        if self._is_vm_migration(context):
+            self._port_action(context.original,
+                              context.original_bound_segment,
+                              self._delete_switch_entry)
+        else:
+            if (self._is_deviceowner_compute(context.current) and
+                self._is_status_active(context.current)):
+                self._port_action(context.current,
+                                  context.bound_segment,
+                                  self._configure_switch_entry)
 
     def delete_port_precommit(self, context):
         """Delete port pre-database commit event."""
         if self._is_deviceowner_compute(context.current):
-            self._port_action(context, self._delete_nxos_db)
+            self._port_action(context.current,
+                              context.bound_segment,
+                              self._delete_nxos_db)
 
     def delete_port_postcommit(self, context):
         """Delete port non-database commit event."""
         if self._is_deviceowner_compute(context.current):
-            self._port_action(context, self._delete_switch_entry)
+            self._port_action(context.current,
+                              context.bound_segment,
+                              self._delete_switch_entry)
