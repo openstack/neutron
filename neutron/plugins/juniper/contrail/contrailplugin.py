@@ -70,9 +70,10 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     .. attention::  TODO remove db. ref and replace ctdb. with db.
     """
 
+    # agent extension is added to avoid return 404 for get_agents
     supported_extension_aliases = ["ipam", "policy", "security-group",
                                    "router", "route-table", "port-security",
-                                   "binding",]
+                                   "binding", "agent"]
     _cfgdb = None
     _args = None
     _tenant_id_dict = {}
@@ -216,6 +217,11 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         else:
             return name
     #end tenant_name_to_id
+
+    # Return empty list of agents.
+    def get_agents(self, context, filters=None, fields=None):
+        agents = []
+        return agents;
 
     # Network API handlers
     def create_network(self, context, network):
