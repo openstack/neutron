@@ -861,7 +861,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def _update_routing_table(self, ri, operation, route):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
                'via', route['nexthop']]
-        ip_wrapper = ip_lib.IPWrapper(self.conf.root_helper,
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
                                       namespace=ri.ns_name())
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
