@@ -202,20 +202,18 @@ class PacketFilterDbMixin(object):
 
         It returns a list of tuple (neutron filter_id, OFC id).
         """
-        # TODO(amotoki): bug 1287432
-        # Rename quantum_id column in ID mapping tables.
         query = (context.session.query(nmodels.OFCFilterMapping)
                  .join(PacketFilter,
-                       nmodels.OFCFilterMapping.quantum_id == PacketFilter.id)
+                       nmodels.OFCFilterMapping.neutron_id == PacketFilter.id)
                  .filter(PacketFilter.admin_state_up == True))
 
         network_id = port['network_id']
         net_pf_query = (query.filter(PacketFilter.network_id == network_id)
                         .filter(PacketFilter.in_port == None))
-        net_filters = [(pf['quantum_id'], pf['ofc_id']) for pf in net_pf_query]
+        net_filters = [(pf['neutron_id'], pf['ofc_id']) for pf in net_pf_query]
 
         port_pf_query = query.filter(PacketFilter.in_port == port['id'])
-        port_filters = [(pf['quantum_id'], pf['ofc_id'])
+        port_filters = [(pf['neutron_id'], pf['ofc_id'])
                         for pf in port_pf_query]
 
         return net_filters + port_filters

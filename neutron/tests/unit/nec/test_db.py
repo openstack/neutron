@@ -62,7 +62,7 @@ class NECPluginV2DBOfcMappingTest(NECPluginV2DBTestBase):
         o, q, n = self.get_ofc_item_random_params()
         tenant = ndb.add_ofc_item(self.session, 'ofc_tenant', q, o)
         self.assertEqual(tenant.ofc_id, o)
-        self.assertEqual(tenant.quantum_id, q)
+        self.assertEqual(tenant.neutron_id, q)
 
     def test_add_ofc_item_duplicate_entry(self):
         o, q, n = self.get_ofc_item_random_params()
@@ -76,7 +76,7 @@ class NECPluginV2DBOfcMappingTest(NECPluginV2DBTestBase):
         ndb.add_ofc_item(self.session, 'ofc_tenant', q, o)
         tenant = ndb.get_ofc_item(self.session, 'ofc_tenant', q)
         self.assertEqual(tenant.ofc_id, o)
-        self.assertEqual(tenant.quantum_id, q)
+        self.assertEqual(tenant.neutron_id, q)
 
     def test_get_ofc_item_for_nonexisting_entry(self):
         self.assertIsNone(
@@ -108,7 +108,7 @@ class NECPluginV2DBOfcMappingTest(NECPluginV2DBTestBase):
         ndb.add_ofc_item(self.session, 'ofc_tenant', q, o)
         tenant = ndb.find_ofc_item(self.session, 'ofc_tenant', o)
         self.assertEqual(tenant.ofc_id, o)
-        self.assertEqual(tenant.quantum_id, q)
+        self.assertEqual(tenant.neutron_id, q)
 
     def test_find_ofc_item_for_nonexisting_entry(self):
         self.assertIsNone(

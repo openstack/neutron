@@ -31,8 +31,8 @@ class OFCId(object):
 
 
 class NeutronId(object):
-    """Logical ID on Quantum."""
-    quantum_id = sa.Column(sa.String(36), primary_key=True)
+    """Logical ID on Neutron."""
+    neutron_id = sa.Column(sa.String(36), primary_key=True)
 
 
 class OFCTenantMapping(model_base.BASEV2, NeutronId, OFCId):
