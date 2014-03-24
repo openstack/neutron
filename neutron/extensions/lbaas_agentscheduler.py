@@ -22,6 +22,7 @@ from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import constants
 from neutron.extensions import agent
+from neutron.extensions import loadbalancer
 from neutron import manager
 from neutron.plugins.common import constants as plugin_const
 from neutron import policy
@@ -113,7 +114,7 @@ class Lbaas_agentscheduler(extensions.ExtensionDescriptor):
         return {}
 
 
-class NoEligibleLbaasAgent(agent.AgentNotFound):
+class NoEligibleLbaasAgent(loadbalancer.NoEligibleBackend):
     message = _("No eligible loadbalancer agent found "
                 "for pool %(pool_id)s.")
 
