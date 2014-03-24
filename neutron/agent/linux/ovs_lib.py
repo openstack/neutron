@@ -479,6 +479,16 @@ def get_installed_ovs_klm_version():
         LOG.exception(_("Unable to retrieve OVS kernel module version."))
 
 
+def get_installed_kernel_version():
+    args = ["uname", "-r"]
+    try:
+        cmd = utils.execute(args)
+        for line in cmd.split('\n'):
+            return str(re.findall("\d+\.\d+\.\d+", line))
+    except Exception:
+        LOG.exception(_("Unable to retrieve installed Linux kernel version."))
+
+
 def get_bridge_external_bridge_id(root_helper, bridge):
     args = ["ovs-vsctl", "--timeout=2", "br-get-external-id",
             bridge, "bridge-id"]
@@ -490,7 +500,13 @@ def get_bridge_external_bridge_id(root_helper, bridge):
 
 
 def _compare_installed_and_required_version(
-        installed_version, required_version, check_type, version_type):
+        installed_kernel_version, installed_version, required_version,
+        check_type, version_type):
+    if installed_kernel_version:
+        if dist_version.StrictVersion(
+                installed_kernel_version) >= dist_version.StrictVersion(
+                constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN):
+            return
     if installed_version:
         if dist_version.StrictVersion(
                 installed_version) < dist_version.StrictVersion(
@@ -515,17 +531,21 @@ def _compare_installed_and_required_version(
 def check_ovs_vxlan_version(root_helper):
     min_required_version = constants.MINIMUM_OVS_VXLAN_VERSION
     installed_klm_version = get_installed_ovs_klm_version()
+    installed_kernel_version = get_installed_kernel_version()
     installed_usr_version = get_installed_ovs_usr_version(root_helper)
     LOG.debug(_("Checking OVS version for VXLAN support "
-                "installed klm version is %s "), installed_klm_version)
-    LOG.debug(_("Checking OVS version for VXLAN support "
-                "installed usr version is %s"), installed_usr_version)
+                "installed klm version is %(klm)s, installed Linux version is "
+                "%(kernel)s, installed user version is %(usr)s ") %
+              {'klm': installed_klm_version,
+               'kernel': installed_kernel_version,
+               'usr': installed_usr_version})
     # First check the userspace version
-    _compare_installed_and_required_version(installed_usr_version,
+    _compare_installed_and_required_version(None, installed_usr_version,
                                             min_required_version,
                                             'userspace', 'VXLAN')
     # Now check the kernel version
-    _compare_installed_and_required_version(installed_klm_version,
+    _compare_installed_and_required_version(installed_kernel_version,
+                                            installed_klm_version,
                                             min_required_version,
                                             'kernel', 'VXLAN')
 
