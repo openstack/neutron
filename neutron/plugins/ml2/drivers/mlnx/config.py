@@ -25,7 +25,7 @@ eswitch_opts = [
                       "hostdev")),
     cfg.BoolOpt('apply_profile_patch',
                 default=False,
-                help=_("Enable server compatibility with old nova ")),
+                help=_("Enable server compatibility with old nova")),
 ]
 
 
