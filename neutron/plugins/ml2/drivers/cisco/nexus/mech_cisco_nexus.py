@@ -151,13 +151,7 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         """Verify configuration and then process event."""
         device_id = port.get('device_id')
         host_id = port.get(portbindings.HOST_ID)
-
-        # Workaround until vlan can be retrieved during delete_port_postcommit
-        # event.
-        if func == self._delete_switch_entry:
-            vlan_id = self._delete_port_postcommit_vlan
-        else:
-            vlan_id = self._get_vlanid(segment)
+        vlan_id = self._get_vlanid(segment)
 
         if vlan_id and device_id and host_id:
             func(vlan_id, device_id, host_id)
@@ -166,13 +160,6 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
             fields += "device_id " if not device_id else ""
             fields += "host_id" if not host_id else ""
             raise excep.NexusMissingRequiredFields(fields=fields)
-
-        # Workaround until vlan can be retrieved during delete_port_postcommit
-        # event.
-        if func == self._delete_nxos_db:
-            self._delete_port_postcommit_vlan = vlan_id
-        else:
-            self._delete_port_postcommit_vlan = 0
 
     def update_port_precommit(self, context):
         """Update port pre-database transaction commit event."""
