@@ -2237,9 +2237,6 @@ class DBInterface(object):
 
             port_id = port['q_api_data']['id']
             
-        network_obj = self._virtual_network_read(subnet['network_id'])
-        network_obj.add_logical_router(router_obj)
-        self._virtual_network_update(network_obj)
         vmi_obj = self._vnc_lib.virtual_machine_interface_read(id=port_id)
         router_obj.add_virtual_machine_interface(vmi_obj)
         self._logical_router_update(router_obj)
@@ -2284,18 +2281,6 @@ class DBInterface(object):
         router_obj.del_virtual_machine_interface(port_obj)
         self._vnc_lib.logical_router_update(router_obj)
         self.port_delete(port_id)
-        for intf in router_obj.get_virtual_machine_interface_refs() or []:
-            other_port_db=self.port_read(intf['uuid'])['q_api_data']
-            other_subnet_id = other_port_db['fixed_ips'][0]['subnet_id']
-            if subnet_id == other_subnet_id:
-                break
-            other_subnet = self.subnet_read(other_subnet_id)['q_api_data']
-            if network_id == other_subnet['network_id']:
-                break
-        else:
-            network_obj = self._virtual_network_read(network_id)
-            network_obj.del_logical_router(router_obj)
-            self._virtual_network_update(network_obj)
         info = {'id': router_id,
             'tenant_id': subnet['tenant_id'],
             'port_id': port_id,
