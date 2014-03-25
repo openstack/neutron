@@ -14,6 +14,7 @@
 #    under the License.
 
 import contextlib
+import functools
 import mock
 import testtools
 import uuid
@@ -58,16 +59,41 @@ config.cfg.CONF.import_opt('network_vlan_ranges',
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 
+class Ml2PluginConf(object):
+    """Plugin configuration shared across the unit and functional tests.
+
+    TODO(marun) Evolve a configuration interface usable across all plugins.
+    """
+
+    plugin_name = PLUGIN_NAME
+
+    @staticmethod
+    def setUp(test_case, parent_setup=None):
+        """Perform additional configuration around the parent's setUp."""
+        if parent_setup:
+            parent_setup()
+        test_case.port_create_status = 'DOWN'
+
+
 class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
-    _plugin_name = PLUGIN_NAME
     _mechanism_drivers = ['logger', 'test']
 
-    def setUp(self):
-        # We need a L3 service plugin
+    def setup_parent(self):
+        """Perform parent setup with the common plugin configuration class."""
         l3_plugin = ('neutron.tests.unit.test_l3_plugin.'
                      'TestL3NatServicePlugin')
         service_plugins = {'l3_plugin_name': l3_plugin}
+        # Ensure that the parent setup can be called without arguments
+        # by the common configuration setUp.
+        parent_setup = functools.partial(
+            super(Ml2PluginV2TestCase, self).setUp,
+            plugin=Ml2PluginConf.plugin_name,
+            service_plugins=service_plugins,
+        )
+        Ml2PluginConf.setUp(self, parent_setup)
+
+    def setUp(self):
         # Enable the test mechanism driver to ensure that
         # we can successfully call through to all mechanism
         # driver apis.
@@ -83,9 +109,7 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         config.cfg.CONF.set_override('network_vlan_ranges',
                                      [self.phys_vrange, self.phys2_vrange],
                                      group='ml2_type_vlan')
-        super(Ml2PluginV2TestCase, self).setUp(PLUGIN_NAME,
-                                               service_plugins=service_plugins)
-        self.port_create_status = 'DOWN'
+        self.setup_parent()
         self.driver = ml2_plugin.Ml2Plugin()
         self.context = context.get_admin_context()
 

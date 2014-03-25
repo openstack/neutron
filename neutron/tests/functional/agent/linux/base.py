@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import random
-
 import netaddr
 from oslo.config import cfg
 
@@ -25,6 +23,7 @@ from neutron.common import constants as n_const
 from neutron.openstack.common import uuidutils
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base as functional_base
+from neutron.tests import sub_base
 
 
 BR_PREFIX = 'test-br'
@@ -34,9 +33,7 @@ VETH_PREFIX = 'tst-vth'
 
 
 #TODO(jschwarz): Move these two functions to neutron/tests/common/
-def get_rand_name(max_length=None, prefix='test'):
-    name = prefix + str(random.randint(1, 0x7fffffff))
-    return name[:max_length] if max_length is not None else name
+get_rand_name = sub_base.get_rand_name
 
 
 def get_rand_veth_name():
