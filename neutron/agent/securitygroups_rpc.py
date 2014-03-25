@@ -44,12 +44,13 @@ cfg.CONF.register_opts(security_group_opts, 'SECURITYGROUP')
 #This is backward compatibility check for Havana
 def _is_valid_driver_combination():
     return ((cfg.CONF.SECURITYGROUP.enable_security_group and
-             cfg.CONF.SECURITYGROUP.firewall_driver !=
-             'neutron.agent.firewall.NoopFirewallDriver') or
+             (cfg.CONF.SECURITYGROUP.firewall_driver and
+              cfg.CONF.SECURITYGROUP.firewall_driver !=
+             'neutron.agent.firewall.NoopFirewallDriver')) or
             (not cfg.CONF.SECURITYGROUP.enable_security_group and
              (cfg.CONF.SECURITYGROUP.firewall_driver ==
              'neutron.agent.firewall.NoopFirewallDriver' or
-              cfg.CONF.SECURITYGROUP.firewall_driver == None)
+              cfg.CONF.SECURITYGROUP.firewall_driver is None)
              ))
 
 
@@ -137,6 +138,11 @@ class SecurityGroupAgentRpcMixin(object):
     def init_firewall(self, defer_refresh_firewall=False):
         firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver
         LOG.debug(_("Init firewall settings (driver=%s)"), firewall_driver)
+        if not _is_valid_driver_combination():
+            LOG.warn("Driver configuration doesn't match "
+                     "with enable_security_group")
+        if not firewall_driver:
+            firewall_driver = 'neutron.agent.firewall.NoopFirewallDriver'
         self.firewall = importutils.import_object(firewall_driver)
         # The following flag will be set to true if port filter must not be
         # applied as soon as a rule or membership notification is received
