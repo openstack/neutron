@@ -19,10 +19,32 @@ import contextlib
 
 import mock
 from oslo.config import cfg
+import testtools
 
 from neutron.plugins.mlnx.agent import eswitch_neutron_agent
 from neutron.plugins.mlnx.agent import utils
+from neutron.plugins.mlnx.common import exceptions
 from neutron.tests import base
+
+
+class TestEswichManager(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestEswichManager, self).setUp()
+
+        class MockEswitchUtils(object):
+            def __init__(self, endpoint, timeout):
+                pass
+
+        mock.patch('neutron.plugins.mlnx.agent.utils.EswitchManager',
+                   new=MockEswitchUtils)
+
+        with mock.patch.object(utils, 'zmq'):
+            self.manager = eswitch_neutron_agent.EswitchManager({}, None, None)
+
+    def test_get_not_exist_port_id(self):
+        with testtools.ExpectedException(exceptions.MlnxException):
+            self.manager.get_port_id_by_mac('no-such-mac')
 
 
 class TestEswitchAgent(base.BaseTestCase):
