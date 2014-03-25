@@ -48,7 +48,7 @@ from neutron.tests.unit import test_agent_ext_plugin
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_api_v2_extension
 from neutron.tests.unit import test_db_plugin
-
+from neutron.tests.unit import testlib_plugin
 
 LOG = logging.getLogger(__name__)
 
@@ -1920,7 +1920,8 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
         self._test_notify_op_agent(self._test_floatingips_op_agent)
 
 
-class L3BaseForIntTests(test_db_plugin.NeutronDbPluginV2TestCase):
+class L3BaseForIntTests(test_db_plugin.NeutronDbPluginV2TestCase,
+                        testlib_plugin.NotificationSetupHelper):
 
     mock_rescheduling = True
 
@@ -1941,7 +1942,8 @@ class L3BaseForIntTests(test_db_plugin.NeutronDbPluginV2TestCase):
         self.setup_notification_driver()
 
 
-class L3BaseForSepTests(test_db_plugin.NeutronDbPluginV2TestCase):
+class L3BaseForSepTests(test_db_plugin.NeutronDbPluginV2TestCase,
+                        testlib_plugin.NotificationSetupHelper):
 
     def setUp(self, plugin=None, ext_mgr=None):
         # the plugin without L3 support

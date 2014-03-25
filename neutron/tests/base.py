@@ -16,12 +16,10 @@
 """Base Test Case for all Unit Tests"""
 
 import contextlib
-import gc
 import logging as std_logging
 import os
 import os.path
 import sys
-import weakref
 
 import eventlet.timeout
 import fixtures
@@ -32,8 +30,6 @@ import testtools
 
 from neutron.common import config
 from neutron.common import rpc as n_rpc
-from neutron.db import agentschedulers_db
-from neutron import manager
 from neutron.tests import fake_notifier
 from neutron.tests import post_mortem_debug
 
@@ -61,42 +57,6 @@ def fake_consume_in_threads(self):
 
 class BaseTestCase(testtools.TestCase):
 
-    def cleanup_core_plugin(self):
-        """Ensure that the core plugin is deallocated."""
-        nm = manager.NeutronManager
-        if not nm.has_instance():
-            return
-
-        #TODO(marun) Fix plugins that do not properly initialize notifiers
-        agentschedulers_db.AgentSchedulerDbMixin.agent_notifiers = {}
-
-        # Perform a check for deallocation only if explicitly
-        # configured to do so since calling gc.collect() after every
-        # test increases test suite execution time by ~50%.
-        check_plugin_deallocation = (
-            os.environ.get('OS_CHECK_PLUGIN_DEALLOCATION') in TRUE_STRING)
-        if check_plugin_deallocation:
-            plugin = weakref.ref(nm._instance.plugin)
-
-        nm.clear_instance()
-
-        if check_plugin_deallocation:
-            gc.collect()
-
-            #TODO(marun) Ensure that mocks are deallocated?
-            if plugin() and not isinstance(plugin(), mock.Base):
-                self.fail('The plugin for this test was not deallocated.')
-
-    def setup_coreplugin(self, core_plugin=None):
-        if core_plugin is not None:
-            cfg.CONF.set_override('core_plugin', core_plugin)
-
-    def setup_notification_driver(self, notification_driver=None):
-        self.addCleanup(fake_notifier.reset)
-        if notification_driver is None:
-            notification_driver = [fake_notifier.__name__]
-        cfg.CONF.set_override("notification_driver", notification_driver)
-
     @staticmethod
     def config_parse(conf=None, args=None):
         """Create the default configurations."""
@@ -110,9 +70,6 @@ class BaseTestCase(testtools.TestCase):
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
-        # Ensure plugin cleanup is triggered last so that
-        # test-specific cleanup has a chance to release references.
-        self.addCleanup(self.cleanup_core_plugin)
 
         # Configure this first to ensure pm debugging support for setUp()
         if os.environ.get('OS_POST_MORTEM_DEBUG') in TRUE_STRING:

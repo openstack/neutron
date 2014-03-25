@@ -32,6 +32,7 @@ from neutron import quota
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit import testlib_plugin
 
 
 class ProviderExtensionManager(object):
@@ -49,7 +50,8 @@ class ProviderExtensionManager(object):
         return pnet.get_extended_resources(version)
 
 
-class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
+class ProvidernetExtensionTestCase(testlib_api.WebTestCase,
+                                   testlib_plugin.PluginSetupHelper):
     fmt = 'json'
 
     def setUp(self):

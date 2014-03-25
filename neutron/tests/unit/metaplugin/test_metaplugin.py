@@ -26,6 +26,7 @@ from neutron.extensions import flavor as ext_flavor
 from neutron.openstack.common import uuidutils
 from neutron.plugins.metaplugin import meta_neutron_plugin
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit import testlib_plugin
 
 CONF_FILE = ""
 META_PATH = "neutron.plugins.metaplugin"
@@ -67,7 +68,8 @@ def unregister_meta_hooks():
         models_v2.Port, 'metaplugin_port', None, None, None)
 
 
-class MetaNeutronPluginV2Test(testlib_api.SqlTestCase):
+class MetaNeutronPluginV2Test(testlib_api.SqlTestCase,
+                              testlib_plugin.PluginSetupHelper):
     """Class conisting of MetaNeutronPluginV2 unit tests."""
 
     has_l3 = True

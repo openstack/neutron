@@ -39,6 +39,7 @@ from neutron.openstack.common import importutils
 from neutron.tests import base
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit import testlib_plugin
 
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
@@ -61,7 +62,8 @@ def _fake_get_sorting_helper(self, request):
     return api_common.SortingEmulatedHelper(request, self._attr_info)
 
 
-class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
+class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
+                                testlib_plugin.PluginSetupHelper):
     fmt = 'json'
     resource_prefix_map = {}
 
