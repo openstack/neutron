@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Quantum\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-23 06:27+0000\n"
+"POT-Creation-Date: 2014-03-26 06:26+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Czech "
@@ -588,7 +588,7 @@ msgstr ""
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:240 neutron/agent/linux/dhcp.py:624
+#: neutron/agent/l3_agent.py:240 neutron/agent/linux/dhcp.py:632
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:92
 msgid "An interface driver must be specified"
 msgstr ""
@@ -1038,27 +1038,42 @@ msgstr ""
 msgid "Reloading allocations for network: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:631
+#: neutron/agent/linux/dhcp.py:408
+#, python-format
+msgid "Building host file: %s"
+msgstr ""
+
+#: neutron/agent/linux/dhcp.py:422
+#, python-format
+msgid "Adding %(mac)s : %(name)s : %(ip)s"
+msgstr ""
+
+#: neutron/agent/linux/dhcp.py:438
+#, python-format
+msgid "Done building host file %s"
+msgstr ""
+
+#: neutron/agent/linux/dhcp.py:639
 #, python-format
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:678
+#: neutron/agent/linux/dhcp.py:686
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:688
+#: neutron/agent/linux/dhcp.py:696
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:731
+#: neutron/agent/linux/dhcp.py:739
 #, python-format
 msgid "DHCP port %(device_id)s on network %(network_id)s does not yet exist."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:770 neutron/debug/debug_agent.py:69
+#: neutron/agent/linux/dhcp.py:778 neutron/debug/debug_agent.py:69
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
@@ -3063,6 +3078,47 @@ msgstr ""
 msgid "Available commands"
 msgstr ""
 
+#: neutron/db/migration/migrate_to_ml2.py:391
+#, python-format
+msgid "Unknown tunnel type: %s"
+msgstr ""
+
+#: neutron/db/migration/migrate_to_ml2.py:405
+msgid "The plugin type whose database will be migrated"
+msgstr ""
+
+#: neutron/db/migration/migrate_to_ml2.py:408
+msgid "The connection url for the target db"
+msgstr ""
+
+#: neutron/db/migration/migrate_to_ml2.py:411
+#, python-format
+msgid "The %s tunnel type to migrate from"
+msgstr ""
+
+#: neutron/db/migration/migrate_to_ml2.py:414
+#: neutron/plugins/openvswitch/common/config.py:77
+msgid "The UDP port to use for VXLAN tunnels."
+msgstr ""
+
+#: neutron/db/migration/migrate_to_ml2.py:417
+msgid "Retain the old plugin's tables"
+msgstr ""
+
+#: neutron/db/migration/migrate_to_ml2.py:423
+#, python-format
+msgid ""
+"Tunnel args (tunnel-type and vxlan-udp-port) are not valid for the %s "
+"plugin"
+msgstr ""
+
+#: neutron/db/migration/migrate_to_ml2.py:430
+#, python-format
+msgid ""
+"Support for migrating %(plugin)s for release %(release)s is not yet "
+"implemented"
+msgstr ""
+
 #: neutron/db/vpn/vpn_db.py:681
 #, python-format
 msgid "vpnservice %s in db is already deleted"
@@ -3425,98 +3481,103 @@ msgstr ""
 msgid "The router %(router_id)s is not hosted by L3 agent %(agent_id)s."
 msgstr ""
 
-#: neutron/extensions/lbaas_agentscheduler.py:117
+#: neutron/extensions/lbaas_agentscheduler.py:118
 #, python-format
 msgid "No eligible loadbalancer agent found for pool %(pool_id)s."
 msgstr ""
 
-#: neutron/extensions/lbaas_agentscheduler.py:122
+#: neutron/extensions/lbaas_agentscheduler.py:123
 #, python-format
 msgid "No active loadbalancer agent found for pool %(pool_id)s."
 msgstr ""
 
 #: neutron/extensions/loadbalancer.py:35
 #, python-format
-msgid "Vip %(vip_id)s could not be found"
+msgid "No eligible backend for pool %(pool_id)s"
 msgstr ""
 
 #: neutron/extensions/loadbalancer.py:39
 #, python-format
-msgid "Another Vip already exists for pool %(pool_id)s"
+msgid "Vip %(vip_id)s could not be found"
 msgstr ""
 
 #: neutron/extensions/loadbalancer.py:43
 #, python-format
-msgid "Pool %(pool_id)s could not be found"
+msgid "Another Vip already exists for pool %(pool_id)s"
 msgstr ""
 
 #: neutron/extensions/loadbalancer.py:47
 #, python-format
-msgid "Member %(member_id)s could not be found"
+msgid "Pool %(pool_id)s could not be found"
 msgstr ""
 
 #: neutron/extensions/loadbalancer.py:51
 #, python-format
-msgid "Health_monitor %(monitor_id)s could not be found"
+msgid "Member %(member_id)s could not be found"
 msgstr ""
 
 #: neutron/extensions/loadbalancer.py:55
 #, python-format
+msgid "Health_monitor %(monitor_id)s could not be found"
+msgstr ""
+
+#: neutron/extensions/loadbalancer.py:59
+#, python-format
 msgid "Monitor %(monitor_id)s is not associated with Pool %(pool_id)s"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:60
+#: neutron/extensions/loadbalancer.py:64
 #, python-format
 msgid "health_monitor %(monitor_id)s is already associated with pool %(pool_id)s"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:65
+#: neutron/extensions/loadbalancer.py:69
 #, python-format
 msgid "Invalid state %(state)s of Loadbalancer resource %(id)s"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:69
+#: neutron/extensions/loadbalancer.py:73
 #, python-format
 msgid "Pool %(pool_id)s is still in use"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:73
+#: neutron/extensions/loadbalancer.py:77
 #, python-format
 msgid "Health monitor %(monitor_id)s still has associations with pools"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:78
+#: neutron/extensions/loadbalancer.py:82
 #, python-format
 msgid "Statistics of Pool %(pool_id)s could not be found"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:82
+#: neutron/extensions/loadbalancer.py:86
 #, python-format
 msgid "Protocol %(vip_proto)s does not match pool protocol %(pool_proto)s"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:87
+#: neutron/extensions/loadbalancer.py:91
 #, python-format
 msgid ""
 "Member with address %(address)s and port %(port)s already present in pool"
 " %(pool)s"
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:302
+#: neutron/extensions/loadbalancer.py:306
 msgid "Number of vips allowed per tenant. A negative value means unlimited."
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:306
+#: neutron/extensions/loadbalancer.py:310
 msgid "Number of pools allowed per tenant. A negative value means unlimited."
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:310
+#: neutron/extensions/loadbalancer.py:314
 msgid ""
 "Number of pool members allowed per tenant. A negative value means "
 "unlimited."
 msgstr ""
 
-#: neutron/extensions/loadbalancer.py:314
+#: neutron/extensions/loadbalancer.py:318
 msgid ""
 "Number of health monitors allowed per tenant. A negative value means "
 "unlimited."
@@ -6337,7 +6398,7 @@ msgid "NexusPlugin:create_network() called"
 msgstr ""
 
 #: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:113
-#: neutron/plugins/ml2/drivers/cisco/nexus/mech_cisco_nexus.py:105
+#: neutron/plugins/ml2/drivers/cisco/nexus/mech_cisco_nexus.py:102
 #, python-format
 msgid "Nexus: create & trunk vlan %s"
 msgstr ""
@@ -6348,7 +6409,7 @@ msgid "Nexus: create vlan %s"
 msgstr ""
 
 #: neutron/plugins/cisco/nexus/cisco_nexus_plugin_v2.py:125
-#: neutron/plugins/ml2/drivers/cisco/nexus/mech_cisco_nexus.py:109
+#: neutron/plugins/ml2/drivers/cisco/nexus/mech_cisco_nexus.py:106
 #, python-format
 msgid "Nexus: trunk vlan %s"
 msgstr ""
@@ -9616,7 +9677,7 @@ msgid "Type of VM network interface: mlnx_direct or hostdev"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mlnx/config.py:28
-msgid "Enable server compatibility with old nova "
+msgid "Enable server compatibility with old nova"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/mlnx/mech_mlnx.py:56
@@ -10426,17 +10487,17 @@ msgstr ""
 msgid "Waiting for %s seconds due to OFC Service_Unavailable."
 msgstr ""
 
-#: neutron/plugins/nec/db/api.py:112
+#: neutron/plugins/nec/db/api.py:110
 #, python-format
 msgid "del_ofc_item(): NotFound item (resource=%(resource)s, id=%(id)s) "
 msgstr ""
 
-#: neutron/plugins/nec/db/api.py:146
+#: neutron/plugins/nec/db/api.py:144
 #, python-format
 msgid "del_portinfo(): NotFound portinfo for port_id: %s"
 msgstr ""
 
-#: neutron/plugins/nec/db/api.py:167
+#: neutron/plugins/nec/db/api.py:165
 #: neutron/plugins/openvswitch/ovs_db_v2.py:317
 #, python-format
 msgid "get_port_with_securitygroups() called:port_id=%s"
@@ -11437,10 +11498,6 @@ msgstr ""
 
 #: neutron/plugins/openvswitch/common/config.py:74
 msgid "Network types supported by the agent (gre and/or vxlan)"
-msgstr ""
-
-#: neutron/plugins/openvswitch/common/config.py:77
-msgid "The UDP port to use for VXLAN tunnels."
 msgstr ""
 
 #: neutron/plugins/openvswitch/common/config.py:79
@@ -14803,22 +14860,22 @@ msgstr ""
 msgid "Pool %(pool_id)s is scheduled to lbaas agent %(agent_id)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/plugin.py:81
+#: neutron/services/loadbalancer/plugin.py:82
 #, python-format
 msgid "Delete associated loadbalancer pools before removing providers %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/plugin.py:90
+#: neutron/services/loadbalancer/plugin.py:91
 #, python-format
 msgid "Error retrieving driver for provider %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/plugin.py:98
+#: neutron/services/loadbalancer/plugin.py:99
 #, python-format
 msgid "Error retrieving provider for pool %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/plugin.py:181
+#: neutron/services/loadbalancer/plugin.py:190
 #, python-format
 msgid "Failed to delete pool %s, putting it in ERROR state"
 msgstr ""
@@ -17450,5 +17507,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Handling VPN service update notification"
+#~ msgstr ""
+
+#~ msgid "Enable server compatibility with old nova "
 #~ msgstr ""
 
