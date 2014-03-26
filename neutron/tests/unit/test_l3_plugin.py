@@ -379,7 +379,8 @@ class L3NatTestCaseMixin(object):
 
     def _router_interface_action(self, action, router_id, subnet_id, port_id,
                                  expected_code=exc.HTTPOk.code,
-                                 expected_body=None):
+                                 expected_body=None,
+                                 tenant_id=None):
         interface_data = {}
         if subnet_id:
             interface_data.update({'subnet_id': subnet_id})
@@ -388,6 +389,10 @@ class L3NatTestCaseMixin(object):
 
         req = self.new_action_request('routers', interface_data, router_id,
                                       "%s_router_interface" % action)
+        # if tenant_id was specified, create a tenant context for this request
+        if tenant_id:
+            req.environ['neutron.context'] = context.Context(
+                '', tenant_id)
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, expected_code)
         response = self.deserialize(self.fmt, res)
@@ -967,6 +972,62 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 body = self._show('routers', r['router']['id'])
                 gw_info = body['router']['external_gateway_info']
                 self.assertEqual(gw_info, None)
+
+    def test_create_router_port_with_device_id_of_other_teants_router(self):
+        with self.router() as admin_router:
+            with self.network(tenant_id='tenant_a',
+                              set_context=True) as n:
+                with self.subnet(network=n):
+                    self._create_port(
+                        self.fmt, n['network']['id'],
+                        tenant_id='tenant_a',
+                        device_id=admin_router['router']['id'],
+                        device_owner='network:router_interface',
+                        set_context=True,
+                        expected_res_status=exc.HTTPConflict.code)
+
+    def test_create_non_router_port_device_id_of_other_teants_router_update(
+        self):
+        # This tests that HTTPConflict is raised if we create a non-router
+        # port that matches the device_id of another tenants router and then
+        # we change the device_owner to be network:router_interface.
+        with self.router() as admin_router:
+            with self.network(tenant_id='tenant_a',
+                              set_context=True) as n:
+                with self.subnet(network=n):
+                    port_res = self._create_port(
+                        self.fmt, n['network']['id'],
+                        tenant_id='tenant_a',
+                        device_id=admin_router['router']['id'],
+                        set_context=True)
+                    port = self.deserialize(self.fmt, port_res)
+                    neutron_context = context.Context('', 'tenant_a')
+                    data = {'port': {'device_owner':
+                                     'network:router_interface'}}
+                    self._update('ports', port['port']['id'], data,
+                                 neutron_context=neutron_context,
+                                 expected_code=exc.HTTPConflict.code)
+                    self._delete('ports', port['port']['id'])
+
+    def test_update_port_device_id_to_different_tenants_router(self):
+        with self.router() as admin_router:
+            with self.router(tenant_id='tenant_a',
+                             set_context=True) as tenant_router:
+                with self.network(tenant_id='tenant_a',
+                                  set_context=True) as n:
+                    with self.subnet(network=n) as s:
+                        port = self._router_interface_action(
+                            'add', tenant_router['router']['id'],
+                            s['subnet']['id'], None, tenant_id='tenant_a')
+                        neutron_context = context.Context('', 'tenant_a')
+                        data = {'port':
+                                {'device_id': admin_router['router']['id']}}
+                        self._update('ports', port['port_id'], data,
+                                     neutron_context=neutron_context,
+                                     expected_code=exc.HTTPConflict.code)
+                        self._router_interface_action(
+                            'remove', tenant_router['router']['id'],
+                            s['subnet']['id'], None, tenant_id='tenant_a')
 
     def test_router_add_gateway_invalid_network_returns_404(self):
         with self.router() as r:

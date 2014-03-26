@@ -301,3 +301,8 @@ class NetworkVlanRangeError(NeutronException):
 
 class NetworkVxlanPortRangeError(object):
     message = _("Invalid network VXLAN port range: '%(vxlan_range)s'")
+
+
+class DeviceIDNotOwnedByTenant(Conflict):
+    message = _("The following device_id %(device_id)s is not owned by your "
+                "tenant or matches another tenants router.")

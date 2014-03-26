@@ -27,14 +27,18 @@ from sqlalchemy.orm import exc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as q_exc
+from neutron import context as ctx
 from neutron.db import api as db
 from neutron.db import models_v2
 from neutron.db import sqlalchemyutils
+from neutron.extensions import l3
+from neutron import manager
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants as service_constants
 
 
 LOG = logging.getLogger(__name__)
@@ -1311,6 +1315,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, p)
+        if p.get('device_owner') == constants.DEVICE_OWNER_ROUTER_INTF:
+            self._enforce_device_owner_not_router_intf_or_device_id(context, p,
+                                                                    tenant_id)
 
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, network_id)
@@ -1374,6 +1381,23 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         changed_ips = False
         with context.session.begin(subtransactions=True):
             port = self._get_port(context, id)
+            if 'device_owner' in p:
+                current_device_owner = p['device_owner']
+                changed_device_owner = True
+            else:
+                current_device_owner = port['device_owner']
+                changed_device_owner = False
+            if p.get('device_id') != port['device_id']:
+                changed_device_id = True
+
+            # if the current device_owner is ROUTER_INF and the device_id or
+            # device_owner changed check device_id is not another tenants
+            # router
+            if ((current_device_owner == constants.DEVICE_OWNER_ROUTER_INTF)
+                    and (changed_device_id or changed_device_owner)):
+                self._enforce_device_owner_not_router_intf_or_device_id(
+                    context, p, port['tenant_id'], port)
+
             # Check if the IPs need to be updated
             if 'fixed_ips' in p:
                 changed_ips = True
@@ -1483,3 +1507,41 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
     def get_ports_count(self, context, filters=None):
         return self._get_ports_query(context, filters).count()
+
+    def _enforce_device_owner_not_router_intf_or_device_id(self, context,
+                                                           port_request,
+                                                           tenant_id,
+                                                           db_port=None):
+        if not context.is_admin:
+            # find the device_id. If the call was update_port and the
+            # device_id was not passed in we use the device_id from the
+            # db.
+            device_id = port_request.get('device_id')
+            if not device_id and db_port:
+                device_id = db_port.get('device_id')
+            # check to make sure device_id does not match another tenants
+            # router.
+            if device_id:
+                if hasattr(self, 'get_router'):
+                    try:
+                        ctx_admin = ctx.get_admin_context()
+                        router = self.get_router(ctx_admin, device_id)
+                    except l3.RouterNotFound:
+                        return
+                else:
+                    l3plugin = (
+                        manager.NeutronManager.get_service_plugins().get(
+                            service_constants.L3_ROUTER_NAT))
+                    if l3plugin:
+                        try:
+                            ctx_admin = ctx.get_admin_context()
+                            router = l3plugin.get_router(ctx_admin,
+                                                         device_id)
+                        except l3.RouterNotFound:
+                            return
+                    else:
+                        # raise as extension doesn't support L3 anyways.
+                        raise q_exc.DeviceIDNotOwnedByTenant(
+                            device_id=device_id)
+                if tenant_id != router['tenant_id']:
+                    raise q_exc.DeviceIDNotOwnedByTenant(device_id=device_id)
