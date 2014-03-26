@@ -171,7 +171,8 @@ class Network(model_base.BASEV2, HasId, HasTenant):
 
     name = sa.Column(sa.String(255))
     ports = orm.relationship(Port, backref='networks')
-    subnets = orm.relationship(Subnet, backref='networks')
+    subnets = orm.relationship(Subnet, backref='networks',
+                               lazy="joined")
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
     shared = sa.Column(sa.Boolean)
