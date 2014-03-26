@@ -27,6 +27,8 @@ from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
+from neutron.tests.unit.ml2.drivers import mechanism_logger as mech_logger
+from neutron.tests.unit.ml2.drivers import mechanism_test as mech_test
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_extension_allowedaddresspairs as test_pair
 from neutron.tests.unit import test_extension_extradhcpopts as test_dhcpopts
@@ -332,3 +334,121 @@ class DHCPOptsTestCase(test_dhcpopts.TestExtraDhcpOpt):
     def setUp(self, plugin=None):
         super(test_dhcpopts.ExtraDhcpOptDBTestCase, self).setUp(
             plugin=PLUGIN_NAME)
+
+
+class Ml2PluginV2FaultyDriverTestCase(test_plugin.NeutronDbPluginV2TestCase):
+
+    def setUp(self):
+        # Enable the test mechanism driver to ensure that
+        # we can successfully call through to all mechanism
+        # driver apis.
+        config.cfg.CONF.set_override('mechanism_drivers',
+                                     ['test', 'logger'],
+                                     group='ml2')
+        super(Ml2PluginV2FaultyDriverTestCase, self).setUp(PLUGIN_NAME)
+        self.port_create_status = 'DOWN'
+
+
+class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
+
+    def test_update_network_faulty(self):
+
+        def mock_update_network_postcommit(self, context):
+            raise ml2_exc.MechanismDriverError(
+                method='update_network_postcommit')
+
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'update_network_postcommit',
+                               new=mock_update_network_postcommit):
+            with mock.patch.object(mech_logger.LoggerMechanismDriver,
+                                   'update_network_postcommit') as unp:
+
+                data = {'network': {'name': 'net1',
+                                    'tenant_id': 'tenant_one'}}
+                network_req = self.new_create_request('networks', data)
+                network = self.deserialize(
+                    self.fmt,
+                    network_req.get_response(self.api))
+
+                data = {'network': {'name': 'a_brand_new_name'}}
+                req = self.new_update_request('networks',
+                                              data,
+                                              network['network']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int, 500)
+                # Test if other mechanism driver was called
+                self.assertTrue(unp.called)
+
+                self._delete('networks', network['network']['id'])
+
+    def test_update_subnet_faulty(self):
+
+        def mock_update_subnet_postcommit(self, context):
+            raise ml2_exc.MechanismDriverError(
+                method='update_subnet_postcommit')
+
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'update_subnet_postcommit',
+                               new=mock_update_subnet_postcommit):
+            with mock.patch.object(mech_logger.LoggerMechanismDriver,
+                                   'update_subnet_postcommit') as usp:
+
+                with self.network() as network:
+                    data = {'subnet': {'network_id':
+                                       network['network']['id'],
+                                       'cidr': '10.0.20.0/24',
+                                       'ip_version': '4',
+                                       'name': 'subnet1',
+                                       'tenant_id':
+                                       network['network']['tenant_id'],
+                                       'gateway_ip': '10.0.2.1'}}
+                    subnet_req = self.new_create_request('subnets', data)
+                    subnet = self.deserialize(
+                        self.fmt,
+                        subnet_req.get_response(self.api))
+
+                    data = {'subnet': {'name': 'a_brand_new_name'}}
+                    req = self.new_update_request('subnets',
+                                                  data,
+                                                  subnet['subnet']['id'])
+                    res = req.get_response(self.api)
+                    self.assertEqual(res.status_int, 500)
+                    # Test if other mechanism driver was called
+                    self.assertTrue(usp.called)
+
+                    self._delete('subnets', subnet['subnet']['id'])
+
+    def test_update_port_faulty(self):
+
+        def mock_update_port_postcommit(self, context):
+            raise ml2_exc.MechanismDriverError(
+                method='update_port_postcommit')
+
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'update_port_postcommit',
+                               new=mock_update_port_postcommit):
+            with mock.patch.object(mech_logger.LoggerMechanismDriver,
+                                   'update_port_postcommit') as upp:
+
+                with self.network() as network:
+                    data = {'port': {'network_id': network['network']['id'],
+                                     'tenant_id':
+                                     network['network']['tenant_id'],
+                                     'name': 'port1',
+                                     'admin_state_up': 1,
+                                     'fixed_ips': []}}
+                    port_req = self.new_create_request('ports', data)
+                    port = self.deserialize(
+                        self.fmt,
+                        port_req.get_response(self.api))
+
+                    data = {'port': {'name': 'a_brand_new_name'}}
+                    req = self.new_update_request('ports',
+                                                  data,
+                                                  port['port']['id'])
+                    res = req.get_response(self.api)
+                    self.assertEqual(res.status_int, 500)
+                    # Test if other mechanism driver was called
+                    self.assertTrue(upp.called)
+
+                    self._delete('ports', port['port']['id'])
