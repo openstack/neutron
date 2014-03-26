@@ -314,3 +314,8 @@ class VxlanNetworkUnsupported(NeutronException):
 
 class DuplicatedExtension(NeutronException):
     message = _("Found duplicate extension: %(alias)s")
+
+
+class DeviceIDNotOwnedByTenant(Conflict):
+    message = _("The following device_id %(device_id)s is not owned by your "
+                "tenant or matches another tenants router.")
