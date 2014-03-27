@@ -796,8 +796,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                          FakeDev('qr-b2c3d4e5-f6')]
         stale_devnames = [dev.name for dev in stale_devlist]
 
-        get_devices_return = [FakeDev('qg-a1b2c3d4-e5'),
-                              FakeDev('qg-b2c3d4e5-f6')]
+        get_devices_return = []
         get_devices_return.extend(stale_devlist)
         self.mock_ip.get_devices.return_value = get_devices_return
 
@@ -843,6 +842,33 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                prefix=l3_agent.INTERNAL_DEV_PREFIX)
                      for stale_devname in stale_devnames]
             self.mock_driver.unplug.assert_has_calls(calls, any_order=True)
+
+    def test_process_router_delete_stale_external_devices(self):
+        class FakeDev(object):
+            def __init__(self, name):
+                self.name = name
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        stale_devlist = [FakeDev('qg-a1b2c3d4-e5')]
+        stale_devnames = [dev.name for dev in stale_devlist]
+
+        router = self._prepare_router_data(enable_snat=True,
+                                           num_internal_ports=1)
+        del router['gw_port']
+        ri = l3_agent.RouterInfo(router['id'],
+                                 self.conf.root_helper,
+                                 self.conf.use_namespaces,
+                                 router=router)
+
+        self.mock_ip.get_devices.return_value = stale_devlist
+
+        agent.process_router(ri)
+
+        self.mock_driver.unplug.assert_called_with(
+            stale_devnames[0],
+            bridge="br-ex",
+            namespace=ri.ns_name(),
+            prefix=l3_agent.EXTERNAL_DEV_PREFIX)
 
     def test_routers_with_admin_state_down(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
