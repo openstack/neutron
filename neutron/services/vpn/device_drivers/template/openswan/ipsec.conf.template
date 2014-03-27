@@ -6,7 +6,7 @@ conn %default
     ikelifetime=480m
     keylife=60m
     keyingtries=%forever
-{% for ipsec_site_connection in vpnservice.ipsec_site_connections
+{% for ipsec_site_connection in vpnservice.ipsec_site_connections if ipsec_site_connection.admin_state_up
 %}conn {{ipsec_site_connection.id}}
     # NOTE: a default route is required for %defaultroute to work...
     left={{vpnservice.external_ip}}

@@ -91,6 +91,15 @@ class VPNDriverPlugin(VPNPlugin, vpn_db.VPNPluginRpcDbMixin):
             context, old_ipsec_site_connection, ipsec_site_connection)
         return ipsec_site_connection
 
+    def update_vpnservice(self, context, vpnservice_id, vpnservice):
+        old_vpn_service = self.get_vpnservice(context, vpnservice_id)
+        new_vpn_service = super(
+            VPNDriverPlugin, self).update_vpnservice(context, vpnservice_id,
+                                                     vpnservice)
+        driver = self._get_driver_for_vpnservice(old_vpn_service)
+        driver.update_vpnservice(context, old_vpn_service, new_vpn_service)
+        return new_vpn_service
+
     def delete_vpnservice(self, context, vpnservice_id):
         vpnservice = self._get_vpnservice(context, vpnservice_id)
         super(VPNDriverPlugin, self).delete_vpnservice(context, vpnservice_id)

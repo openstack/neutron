@@ -190,3 +190,69 @@ class TestIPsecDeviceDriver(base.BaseTestCase):
         process_id = _uuid()
         self.driver.sync(context, [{'id': process_id}])
         self.assertNotIn(process_id, self.driver.processes)
+
+    def test_status_updated_on_connection_admin_down(self):
+        self.driver.process_status_cache = {
+            '1': {
+                'status': constants.ACTIVE,
+                'id': 123,
+                'updated_pending_status': False,
+                'ipsec_site_connections': {
+                    '10': {
+                        'status': constants.ACTIVE,
+                        'updated_pending_status': False,
+                    },
+                    '20': {
+                        'status': constants.ACTIVE,
+                        'updated_pending_status': False,
+                    }
+                }
+            }
+        }
+        # Simulate that there is no longer status for connection '20'
+        # e.g. connection admin down
+        new_status = {
+            'ipsec_site_connections': {
+                '10': {
+                    'status': constants.ACTIVE,
+                    'updated_pending_status': False
+                }
+            }
+        }
+        self.driver.update_downed_connections('1', new_status)
+        existing_conn = new_status['ipsec_site_connections'].get('10')
+        self.assertIsNotNone(existing_conn)
+        self.assertEqual(constants.ACTIVE, existing_conn['status'])
+        missing_conn = new_status['ipsec_site_connections'].get('20')
+        self.assertIsNotNone(missing_conn)
+        self.assertEqual(constants.DOWN, missing_conn['status'])
+
+    def test_status_updated_on_service_admin_down(self):
+        self.driver.process_status_cache = {
+            '1': {
+                'status': constants.ACTIVE,
+                'id': 123,
+                'updated_pending_status': False,
+                'ipsec_site_connections': {
+                    '10': {
+                        'status': constants.ACTIVE,
+                        'updated_pending_status': False,
+                    },
+                    '20': {
+                        'status': constants.ACTIVE,
+                        'updated_pending_status': False,
+                    }
+                }
+            }
+        }
+        # Simulate that there are no connections now
+        new_status = {
+            'ipsec_site_connections': {}
+        }
+        self.driver.update_downed_connections('1', new_status)
+        missing_conn = new_status['ipsec_site_connections'].get('10')
+        self.assertIsNotNone(missing_conn)
+        self.assertEqual(constants.DOWN, missing_conn['status'])
+        missing_conn = new_status['ipsec_site_connections'].get('20')
+        self.assertIsNotNone(missing_conn)
+        self.assertEqual(constants.DOWN, missing_conn['status'])
