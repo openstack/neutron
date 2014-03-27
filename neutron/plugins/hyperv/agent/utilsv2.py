@@ -62,6 +62,9 @@ class HyperVUtilsV2(utils.HyperVUtils):
     _ICMP_PROTOCOL = '1'
     _MAX_WEIGHT = 65500
 
+    # 2 directions x 2 address types = 4 ACLs
+    _REJECT_ACLS_COUNT = 4
+
     _wmi_namespace = '//./root/virtualization/v2'
 
     def __init__(self):
@@ -105,9 +108,12 @@ class HyperVUtilsV2(utils.HyperVUtils):
         self._check_job_status(ret_val, job_path)
 
     def _remove_virt_feature(self, feature_resource):
+        self._remove_multiple_virt_features([feature_resource])
+
+    def _remove_multiple_virt_features(self, feature_resources):
         vs_man_svc = self._conn.Msvm_VirtualSystemManagementService()[0]
         (job_path, ret_val) = vs_man_svc.RemoveFeatureSettings(
-            FeatureSettings=[feature_resource.path_()])
+            FeatureSettings=[f.path_() for f in feature_resources])
         self._check_job_status(ret_val, job_path)
 
     def disconnect_switch_port(
@@ -294,6 +300,19 @@ class HyperVUtilsV2(utils.HyperVUtils):
         for acl in filtered_acls:
             self._remove_virt_feature(acl)
 
+    def remove_all_security_rules(self, switch_port_name):
+        port, found = self._get_switch_port_allocation(switch_port_name, False)
+        if not found:
+            # Port not found. It happens when the VM was already deleted.
+            return
+
+        acls = port.associators(wmi_result_class=self._PORT_EXT_ACL_SET_DATA)
+        filtered_acls = [a for a in acls if
+                         a.Action is not self._ACL_ACTION_METER]
+
+        if filtered_acls:
+            self._remove_multiple_virt_features(filtered_acls)
+
     def create_default_reject_all_rules(self, switch_port_name):
         port, found = self._get_switch_port_allocation(switch_port_name, False)
         if not found:
@@ -303,8 +322,7 @@ class HyperVUtilsV2(utils.HyperVUtils):
         acls = port.associators(wmi_result_class=self._PORT_EXT_ACL_SET_DATA)
         filtered_acls = [v for v in acls if v.Action == self._ACL_ACTION_DENY]
 
-        # 2 directions x 2 address types x 2 protocols = 8 ACLs
-        if len(filtered_acls) >= 8:
+        if len(filtered_acls) >= self._REJECT_ACLS_COUNT:
             return
 
         for acl in filtered_acls:
@@ -382,6 +400,9 @@ class HyperVUtilsV2(utils.HyperVUtils):
 class HyperVUtilsV2R2(HyperVUtilsV2):
     _PORT_EXT_ACL_SET_DATA = 'Msvm_EthernetSwitchPortExtendedAclSettingData'
     _MAX_WEIGHT = 65500
+
+    # 2 directions x 2 address types x 3 protocols = 12 ACLs
+    _REJECT_ACLS_COUNT = 12
 
     def _create_security_acl(self, direction, acl_type, action, local_port,
                              protocol, remote_addr, weight):
