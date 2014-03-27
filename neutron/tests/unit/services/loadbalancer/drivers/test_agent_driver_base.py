@@ -22,7 +22,6 @@ import mock
 from six.moves import xrange
 from webob import exc
 
-from neutron.common import exceptions
 from neutron import context
 from neutron.db.loadbalancer import loadbalancer_db as ldb
 from neutron.db import servicetype_db as st_db
@@ -180,15 +179,25 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
                 )
                 self.assertFalse(ready)
 
-    def test_get_logical_device_inactive(self):
+    def test_get_logical_device_non_active(self):
         with self.pool() as pool:
-            with self.vip(pool=pool) as vip:
-                with self.member(pool_id=vip['vip']['pool_id']):
-                    self.assertRaises(
-                        exceptions.Invalid,
-                        self.callbacks.get_logical_device,
-                        context.get_admin_context(),
-                        pool['pool']['id'])
+            ctx = context.get_admin_context()
+            for status in ('INACTIVE', 'PENDING_CREATE', 'PENDING_UPDATE'):
+                self.plugin_instance.update_status(
+                    ctx, ldb.Pool, pool['pool']['id'], status)
+                pool['pool']['status'] = status
+                expected = {
+                    'pool': pool['pool'],
+                    'members': [],
+                    'healthmonitors': [],
+                    'driver': 'dummy'
+                }
+
+                logical_config = self.callbacks.get_logical_device(
+                    ctx, pool['pool']['id']
+                )
+
+                self.assertEqual(expected, logical_config)
 
     def test_get_logical_device_active(self):
         with self.pool() as pool:

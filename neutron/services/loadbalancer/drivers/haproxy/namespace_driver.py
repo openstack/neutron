@@ -265,11 +265,15 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
 
     @n_utils.synchronized('haproxy-driver')
     def deploy_instance(self, logical_config):
-        # do actual deploy only if vip is configured and active
-        if ('vip' not in logical_config or
-            (logical_config['vip']['status'] not in
-             constants.ACTIVE_PENDING_STATUSES) or
-            not logical_config['vip']['admin_state_up']):
+        # do actual deploy only if vip and pool are configured and active
+        if (not logical_config or
+                'vip' not in logical_config or
+                (logical_config['vip']['status'] not in
+                 constants.ACTIVE_PENDING_STATUSES) or
+                not logical_config['vip']['admin_state_up'] or
+                (logical_config['pool']['status'] not in
+                 constants.ACTIVE_PENDING_STATUSES) or
+                not logical_config['pool']['admin_state_up']):
             return
 
         if self.exists(logical_config['pool']['id']):

@@ -95,12 +95,6 @@ class LoadBalancerCallbacks(object):
             qry = context.session.query(loadbalancer_db.Pool)
             qry = qry.filter_by(id=pool_id)
             pool = qry.one()
-            if pool.status != constants.ACTIVE:
-                raise n_exc.Invalid(_('Pool_id %(pool_id)s status ACTIVE '
-                                      'is expected but status is %(status)s') %
-                                    {'pool_id': pool_id,
-                                     'status': pool.status})
-
             retval = {}
             retval['pool'] = self.plugin._make_pool_dict(pool)
 
