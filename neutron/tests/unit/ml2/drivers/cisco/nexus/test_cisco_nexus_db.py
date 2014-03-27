@@ -76,8 +76,8 @@ class CiscoNexusDbTest(base.BaseTestCase):
         return nexus_db_v2.get_nexusvlan_binding(npb.vlan, npb.switch)
 
     def _get_nexusvm_binding(self, npb):
-        """Gets port bindings based on vlan and instance."""
-        return nexus_db_v2.get_nexusvm_binding(npb.vlan, npb.instance)
+        """Gets port binding based on vlan and instance."""
+        return nexus_db_v2.get_nexusvm_bindings(npb.vlan, npb.instance)[0]
 
     def _get_port_vlan_switch_binding(self, npb):
         """Gets port bindings based on port, vlan, and switch."""
@@ -149,7 +149,7 @@ class CiscoNexusDbTest(base.BaseTestCase):
         self._assert_bindings_match(npb, npb22)
 
         with testtools.ExpectedException(exceptions.NexusPortBindingNotFound):
-            nexus_db_v2.get_nexusvm_binding(npb21.vlan, "dummyInstance")
+            nexus_db_v2.get_nexusvm_bindings(npb21.vlan, "dummyInstance")[0]
 
     def test_nexusportvlanswitchbinding_get(self):
         """Tests get of port bindings based on port, vlan, and switch."""

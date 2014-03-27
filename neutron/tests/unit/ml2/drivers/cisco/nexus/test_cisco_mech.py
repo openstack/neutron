@@ -418,8 +418,10 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         with self._create_resources() as result:
             # Verify initial database entry.
             # Use port_id to verify that 1st host name was used.
-            binding = nexus_db_v2.get_nexusvm_binding(VLAN_START, DEVICE_ID_1)
-            self.assertEqual(binding.port_id, NEXUS_INTERFACE)
+            binding = nexus_db_v2.get_nexusvm_bindings(VLAN_START,
+                                                       DEVICE_ID_1)[0]
+            intf_type, nexus_port = binding.port_id.split(':')
+            self.assertEqual(nexus_port, NEXUS_INTERFACE)
 
             port = self.deserialize(self.fmt, result)
             port_id = port['port']['id']
@@ -434,7 +436,7 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
 
             # Verify that port entry has been deleted.
             self.assertRaises(c_exc.NexusPortBindingNotFound,
-                              nexus_db_v2.get_nexusvm_binding,
+                              nexus_db_v2.get_nexusvm_bindings,
                               VLAN_START, DEVICE_ID_1)
 
             # Trigger update event to bind segment with new host.
@@ -445,8 +447,10 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
 
             # Verify that port entry has been added using new host name.
             # Use port_id to verify that 2nd host name was used.
-            binding = nexus_db_v2.get_nexusvm_binding(VLAN_START, DEVICE_ID_1)
-            self.assertEqual(binding.port_id, NEXUS_INTERFACE_2)
+            binding = nexus_db_v2.get_nexusvm_bindings(VLAN_START,
+                                                       DEVICE_ID_1)[0]
+            intf_type, nexus_port = binding.port_id.split(':')
+            self.assertEqual(nexus_port, NEXUS_INTERFACE_2)
 
     def test_nexus_config_fail(self):
         """Test a Nexus switch configuration failure.
