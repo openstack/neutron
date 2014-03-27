@@ -85,9 +85,9 @@ class HyperVSecurityAgent(sg_rpc.SecurityGroupAgentRpcMixin):
     def __init__(self, context, plugin_rpc):
         self.context = context
         self.plugin_rpc = plugin_rpc
-        self.init_firewall()
 
         if sg_rpc.is_firewall_enabled():
+            self.init_firewall()
             self._setup_rpc()
 
     def _setup_rpc(self):
@@ -216,8 +216,9 @@ class HyperVNeutronAgent(object):
     def port_update(self, context, port=None, network_type=None,
                     segmentation_id=None, physical_network=None):
         LOG.debug(_("port_update received"))
-        if 'security_groups' in port:
-            self.sec_groups_agent.refresh_firewall()
+        if CONF.SECURITYGROUP.enable_security_group:
+            if 'security_groups' in port:
+                self.sec_groups_agent.refresh_firewall()
 
         self._treat_vif_port(
             port['id'], port['network_id'],
@@ -383,7 +384,13 @@ class HyperVNeutronAgent(object):
                     device_details['segmentation_id'],
                     device_details['admin_state_up'])
 
-                self.sec_groups_agent.prepare_devices_filter(devices)
+                # check if security groups is enabled.
+                # if not, teardown the security group rules
+                if CONF.SECURITYGROUP.enable_security_group:
+                    self.sec_groups_agent.prepare_devices_filter([device])
+                else:
+                    self._utils.remove_all_security_rules(
+                        device_details['port_id'])
                 self.plugin_rpc.update_device_up(self.context,
                                                  device,
                                                  self.agent_id,
