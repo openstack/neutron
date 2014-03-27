@@ -74,6 +74,12 @@ class HyperVUtilsV2(utils.HyperVUtils):
             ResourceSettings=[res_setting_data.path_()])
         self._check_job_status(ret_val, job)
 
+    def _add_virt_feature(self, element, res_setting_data):
+        vs_man_svc = self._conn.Msvm_VirtualSystemManagementService()[0]
+        (job_path, out_set_data, ret_val) = vs_man_svc.AddFeatureSettings(
+            element.path_(), [res_setting_data.GetText_(1)])
+        self._check_job_status(ret_val, job_path)
+
     def disconnect_switch_port(
             self, vswitch_name, switch_port_name, delete_port):
         """Disconnects the switch port."""
@@ -190,3 +196,18 @@ class HyperVUtilsV2(utils.HyperVUtils):
                     acl.Action = self._ACL_ACTION_METER
                     acl.Applicability = self._ACL_APPLICABILITY_LOCAL
                     self._add_virt_feature(port, acl)
+
+    def _create_acl(self, direction, acl_type, action):
+        acl = self._get_default_setting_data(self._PORT_ALLOC_ACL_SET_DATA)
+        acl.set(Direction=direction,
+                AclType=acl_type,
+                Action=action,
+                Applicability=self._ACL_APPLICABILITY_LOCAL)
+        return acl
+
+    def _filter_acls(self, acls, action, direction, acl_type, remote_addr=""):
+        return [v for v in acls
+                if v.Action == action and
+                v.Direction == direction and
+                v.AclType == acl_type and
+                v.RemoteAddress == remote_addr]

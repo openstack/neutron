@@ -41,6 +41,11 @@ class TestHyperVUtilsV2(base.BaseTestCase):
     _FAKE_CLASS_NAME = "fake_class_name"
     _FAKE_ELEMENT_NAME = "fake_element_name"
 
+    _FAKE_ACL_ACT = 'fake_acl_action'
+    _FAKE_ACL_DIR = 'fake_acl_dir'
+    _FAKE_ACL_TYPE = 'fake_acl_type'
+    _FAKE_REMOTE_ADDR = '0.0.0.0/0'
+
     def setUp(self):
         super(TestHyperVUtilsV2, self).setUp()
         self._utils = utilsv2.HyperVUtilsV2()
@@ -228,3 +233,21 @@ class TestHyperVUtilsV2(base.BaseTestCase):
 
         self.assertEqual(4, len(self._utils._add_virt_feature.mock_calls))
         self._utils._add_virt_feature.assert_called_with(mock_port, mock_acl)
+
+    def test_filter_acls(self):
+        mock_acl = mock.MagicMock()
+        mock_acl.Action = self._FAKE_ACL_ACT
+        mock_acl.Applicability = self._utils._ACL_APPLICABILITY_LOCAL
+        mock_acl.Direction = self._FAKE_ACL_DIR
+        mock_acl.AclType = self._FAKE_ACL_TYPE
+        mock_acl.RemoteAddress = self._FAKE_REMOTE_ADDR
+
+        acls = [mock_acl, mock_acl]
+        good_acls = self._utils._filter_acls(
+            acls, self._FAKE_ACL_ACT, self._FAKE_ACL_DIR,
+            self._FAKE_ACL_TYPE, self._FAKE_REMOTE_ADDR)
+        bad_acls = self._utils._filter_acls(
+            acls, self._FAKE_ACL_ACT, self._FAKE_ACL_DIR, self._FAKE_ACL_TYPE)
+
+        self.assertEqual(acls, good_acls)
+        self.assertEqual([], bad_acls)
