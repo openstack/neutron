@@ -43,7 +43,10 @@ PROFILE = 'binding:profile'
 #
 #  - port_filter : Boolean value indicating Neutron provides port filtering
 #                  features such as security group and anti MAC/IP spoofing
+#  - ovs_hybrid_plug: Boolean used to inform Nova that the hybrid plugging
+#                     strategy for OVS should be used
 CAP_PORT_FILTER = 'port_filter'
+OVS_HYBRID_PLUG = 'ovs_hybrid_plug'
 
 VIF_TYPE_UNBOUND = 'unbound'
 VIF_TYPE_BINDING_FAILED = 'binding_failed'

@@ -36,7 +36,8 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         super(OpenvswitchMechanismDriver, self).__init__(
             constants.AGENT_TYPE_OVS,
             portbindings.VIF_TYPE_OVS,
-            {portbindings.CAP_PORT_FILTER: True})
+            {portbindings.CAP_PORT_FILTER: True,
+             portbindings.OVS_HYBRID_PLUG: True})
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('bridge_mappings', {})

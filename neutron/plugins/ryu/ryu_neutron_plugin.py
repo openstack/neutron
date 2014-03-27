@@ -116,7 +116,10 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             portbindings.VIF_DETAILS: {
                 # TODO(rkukura): Replace with new VIF security details
                 portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases}}
+                'security-group' in self.supported_extension_aliases,
+                portbindings.OVS_HYBRID_PLUG: True
+            }
+        }
         portbindings_base.register_port_dict_function()
         self.tunnel_key = db_api_v2.TunnelKey(
             cfg.CONF.OVS.tunnel_key_min, cfg.CONF.OVS.tunnel_key_max)

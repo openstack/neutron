@@ -41,7 +41,8 @@ class OfagentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         super(OfagentMechanismDriver, self).__init__(
             constants.AGENT_TYPE_OFA,
             portbindings.VIF_TYPE_OVS,
-            {portbindings.CAP_PORT_FILTER: True})
+            {portbindings.CAP_PORT_FILTER: True,
+             portbindings.OVS_HYBRID_PLUG: True})
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('bridge_mappings', {})

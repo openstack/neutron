@@ -401,7 +401,10 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             portbindings.VIF_DETAILS: {
                 # TODO(rkukura): Replace with new VIF security details
                 portbindings.CAP_PORT_FILTER:
-                'security-group' in self.supported_extension_aliases}}
+                'security-group' in self.supported_extension_aliases,
+                portbindings.OVS_HYBRID_PLUG: True
+            }
+        }
         return binding
 
     def _extend_port_dict_binding_portinfo(self, port_res, portinfo):

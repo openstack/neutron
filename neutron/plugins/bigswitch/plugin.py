@@ -374,7 +374,9 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
         port[portbindings.VIF_DETAILS] = {
             # TODO(rkukura): Replace with new VIF security details
             portbindings.CAP_PORT_FILTER:
-            'security-group' in self.supported_extension_aliases}
+            'security-group' in self.supported_extension_aliases,
+            portbindings.OVS_HYBRID_PLUG: True
+        }
         return port
 
     def _check_hostvif_override(self, hostid):
