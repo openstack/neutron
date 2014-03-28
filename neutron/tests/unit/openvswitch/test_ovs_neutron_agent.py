@@ -605,10 +605,10 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'add_flow'),
             mock.patch.object(self.agent.tun_br, 'mod_flow'),
-            mock.patch.object(self.agent.tun_br, 'setup_tunnel_port'),
+            mock.patch.object(self.agent, 'setup_tunnel_port'),
         ) as (add_flow_fn, mod_flow_fn, add_tun_fn):
-            add_tun_fn.return_value = '2'
             self.agent.fdb_add(None, fdb_entry)
+            self.assertFalse(add_tun_fn.called)
             add_flow_fn.assert_called_with(table=constants.UCAST_TO_TUN,
                                            priority=2,
                                            dl_vlan='vlan1',
