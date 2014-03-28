@@ -33,6 +33,7 @@ migration_for_plugins = [
     'neutron.plugins.ml2.plugin.Ml2Plugin'
 ]
 
+from alembic import context
 from alembic import op
 import sqlalchemy as sa
 
@@ -46,6 +47,13 @@ def upgrade(active_plugins=None, options=None):
     op.add_column('ml2_port_bindings',
                   sa.Column('vif_details', sa.String(length=4095),
                             nullable=False, server_default=''))
+    migr_context = context.get_context()
+    with context.begin_transaction():
+        for value in ('true', 'false'):
+            migr_context.execute(
+                "UPDATE ml2_port_bindings SET"
+                " vif_details = '{\"port_filter\": %(value)s}'"
+                " WHERE cap_port_filter = %(value)s" % {'value': value})
     op.drop_column('ml2_port_bindings', 'cap_port_filter')
 
 
@@ -55,5 +63,11 @@ def downgrade(active_plugins=None, options=None):
 
     op.add_column('ml2_port_bindings',
                   sa.Column('cap_port_filter', sa.Boolean(),
-                            nullable=False, server_default=False))
+                            nullable=False, default=False))
+    migr_context = context.get_context()
+    with context.begin_transaction():
+        migr_context.execute(
+            "UPDATE ml2_port_bindings SET"
+            " cap_port_filter = true"
+            " WHERE vif_details LIKE '%\"port_filter\": true%'")
     op.drop_column('ml2_port_bindings', 'vif_details')
