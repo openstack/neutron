@@ -14,9 +14,16 @@
 #
 # @author: Mark McClain, DreamHost
 
+OVS_PLUGIN = ('neutron.plugins.openvswitch.ovs_neutron_plugin'
+              '.OVSNeutronPluginV2')
+CISCO_PLUGIN = 'neutron.plugins.cisco.network_plugin.PluginV2'
+
 
 def should_run(active_plugins, migrate_plugins):
     if '*' in migrate_plugins:
         return True
     else:
+        if (CISCO_PLUGIN not in migrate_plugins and
+                OVS_PLUGIN in migrate_plugins):
+            migrate_plugins.append(CISCO_PLUGIN)
         return set(active_plugins) & set(migrate_plugins)
