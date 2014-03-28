@@ -162,11 +162,11 @@ class ServerProxy(object):
             if self.ssl:
                 self.currentconn = HTTPSConnectionWithValidation(
                     self.server, self.port, timeout=timeout)
-                self.currentconn.combined_cert = self.combined_cert
                 if self.currentconn is None:
                     LOG.error(_('ServerProxy: Could not establish HTTPS '
                                 'connection'))
                     return 0, None, None, None
+                self.currentconn.combined_cert = self.combined_cert
             else:
                 self.currentconn = httplib.HTTPConnection(
                     self.server, self.port, timeout=timeout)
