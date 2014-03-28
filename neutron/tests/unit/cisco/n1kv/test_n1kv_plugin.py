@@ -24,6 +24,7 @@ from neutron.api.v2 import attributes
 from neutron import context
 import neutron.db.api as db
 from neutron.extensions import portbindings
+from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import n1kv_db_v2
 from neutron.plugins.cisco.db import network_db_v2 as cdb
 from neutron.plugins.cisco import extensions
@@ -34,6 +35,11 @@ from neutron.plugins.cisco.n1kv import n1kv_neutron_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin as test_plugin
+
+
+PHYS_NET = 'some-phys-net'
+VLAN_MIN = 100
+VLAN_MAX = 110
 
 
 class FakeResponse(object):
@@ -105,23 +111,27 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
                    'name': name}
         return n1kv_db_v2.create_policy_profile(profile)
 
-    def _make_test_profile(self, name='default_network_profile'):
+    def _make_test_profile(self,
+                           name='default_network_profile',
+                           segment_range='386-400'):
         """
         Create a profile record for testing purposes.
 
         :param name: string representing the name of the network profile to
                      create. Default argument value chosen to correspond to the
                      default name specified in config.py file.
+        :param segment_range: string representing the segment range for network
+                              profile.
         """
         db_session = db.get_session()
         profile = {'name': name,
                    'segment_type': 'vlan',
-                   'physical_network': 'phsy1',
-                   'segment_range': '3968-4047'}
-        self.network_vlan_ranges = {profile[
-            'physical_network']: [(3968, 4047)]}
-        n1kv_db_v2.sync_vlan_allocations(db_session, self.network_vlan_ranges)
-        return n1kv_db_v2.create_network_profile(db_session, profile)
+                   'physical_network': PHYS_NET,
+                   'tenant_id': self.tenant_id,
+                   'segment_range': segment_range}
+        net_p = n1kv_db_v2.create_network_profile(db_session, profile)
+        n1kv_db_v2.sync_vlan_allocations(db_session, net_p)
+        return net_p
 
     def setUp(self):
         """
@@ -244,8 +254,8 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
                                     'segment_type': segment_type,
                                     'tenant_id': self.tenant_id}}
         if segment_type == 'vlan':
-            netp['network_profile']['segment_range'] = '100-180'
-            netp['network_profile']['physical_network'] = 'phys1'
+            netp['network_profile']['segment_range'] = '100-110'
+            netp['network_profile']['physical_network'] = PHYS_NET
         elif segment_type == 'overlay':
             netp['network_profile']['segment_range'] = '10000-10010'
             netp['network_profile']['sub_type'] = 'enhanced' or 'native_vxlan'
@@ -253,15 +263,40 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
                                                              "224.1.1.10")
         return netp
 
-    def test_create_network_profile_plugin(self):
+    def test_create_network_profile_vlan(self):
         data = self._prepare_net_profile_data('vlan')
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
 
+    def test_create_network_profile_overlay(self):
+        data = self._prepare_net_profile_data('overlay')
+        net_p_req = self.new_create_request('network_profiles', data)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 201)
+
+    def test_create_network_profile_overlay_unreasonable_seg_range(self):
+        data = self._prepare_net_profile_data('overlay')
+        data['network_profile']['segment_range'] = '10000-100000000001'
+        net_p_req = self.new_create_request('network_profiles', data)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
+
+    def test_update_network_profile_plugin(self):
+        net_p_dict = self._prepare_net_profile_data('overlay')
+        net_p_req = self.new_create_request('network_profiles', net_p_dict)
+        net_p = self.deserialize(self.fmt,
+                                 net_p_req.get_response(self.ext_api))
+        data = {'network_profile': {'name': 'netp2'}}
+        update_req = self.new_update_request('network_profiles',
+                                             data,
+                                             net_p['network_profile']['id'])
+        update_res = update_req.get_response(self.ext_api)
+        self.assertEqual(update_res.status_int, 200)
+
     def test_update_network_profile_physical_network_fail(self):
         net_p = self._make_test_profile(name='netp1')
-        data = {'network_profile': {'physical_network': 'some-phys-net'}}
+        data = {'network_profile': {'physical_network': PHYS_NET}}
         net_p_req = self.new_update_request('network_profiles',
                                             data,
                                             net_p['id'])
@@ -342,6 +377,47 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
+
+    def test_create_network_profile_populate_vlan_segment_pool(self):
+        db_session = db.get_session()
+        net_p_dict = self._prepare_net_profile_data('vlan')
+        net_p_req = self.new_create_request('network_profiles', net_p_dict)
+        self.deserialize(self.fmt,
+                         net_p_req.get_response(self.ext_api))
+        for vlan in range(VLAN_MIN, VLAN_MAX + 1):
+            self.assertIsNotNone(n1kv_db_v2.get_vlan_allocation(db_session,
+                                                                PHYS_NET,
+                                                                vlan))
+            self.assertFalse(n1kv_db_v2.get_vlan_allocation(db_session,
+                                                            PHYS_NET,
+                                                            vlan).allocated)
+        self.assertRaises(c_exc.VlanIDNotFound,
+                          n1kv_db_v2.get_vlan_allocation,
+                          db_session,
+                          PHYS_NET,
+                          VLAN_MIN - 1)
+        self.assertRaises(c_exc.VlanIDNotFound,
+                          n1kv_db_v2.get_vlan_allocation,
+                          db_session,
+                          PHYS_NET,
+                          VLAN_MAX + 1)
+
+    def test_delete_network_profile_deallocate_vlan_segment_pool(self):
+        db_session = db.get_session()
+        net_p_dict = self._prepare_net_profile_data('vlan')
+        net_p_req = self.new_create_request('network_profiles', net_p_dict)
+        net_p = self.deserialize(self.fmt,
+                                 net_p_req.get_response(self.ext_api))
+        self.assertIsNotNone(n1kv_db_v2.get_vlan_allocation(db_session,
+                                                            PHYS_NET,
+                                                            VLAN_MIN))
+        self._delete('network_profiles', net_p['network_profile']['id'])
+        for vlan in range(VLAN_MIN, VLAN_MAX + 1):
+            self.assertRaises(c_exc.VlanIDNotFound,
+                              n1kv_db_v2.get_vlan_allocation,
+                              db_session,
+                              PHYS_NET,
+                              vlan)
 
 
 class TestN1kvBasicGet(test_plugin.TestBasicGet,

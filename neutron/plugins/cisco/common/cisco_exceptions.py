@@ -180,10 +180,21 @@ class VMNetworkNotFound(exceptions.NotFound):
     message = _("VM Network %(name)s could not be found.")
 
 
-class VxlanIdInUse(exceptions.InUse):
+class VxlanIDInUse(exceptions.InUse):
     """VXLAN ID is in use."""
     message = _("Unable to create the network. "
                 "The VXLAN ID %(vxlan_id)s is in use.")
+
+
+class VxlanIDNotFound(exceptions.NotFound):
+    """VXLAN ID cannot be found."""
+    message = _("Vxlan ID %(vxlan_id)s not found.")
+
+
+class VxlanIDOutsidePool(exceptions.NeutronException):
+    """VXLAN ID cannot be allocated, as it is outside the configured pool."""
+    message = _("Unable to complete operation. VXLAN ID exists outside of the "
+                "configured network segment range.")
 
 
 class VSMConnectionFailed(exceptions.ServiceUnavailable):
