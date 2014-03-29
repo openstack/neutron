@@ -327,7 +327,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
             nets_count = cfgdb.network_count(filters)
-            LOG.debug("get_networks_count(): " + str(nets_count))
+            LOG.debug("get_networks_count(): filters: " + pformat(filters) + " data: " + str(nets_count))
             return nets_count
         except Exception as e:
             cgitb.Hook(format="text").handle(sys.exc_info())
@@ -404,7 +404,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         """
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
-            subnets_info = cfgdb.subnets_list(filters)
+            subnets_info = cfgdb.subnets_list(context, filters)
 
             subnets_dicts = []
             for sn_info in subnets_info:
@@ -426,8 +426,8 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def get_subnets_count(self, context, filters=None):
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
-            subnets_count = cfgdb.subnets_count(filters)
-            LOG.debug("get_subnets_count(): " + str(subnets_count))
+            subnets_count = cfgdb.subnets_count(context, filters)
+            LOG.debug("get_subnets_count(): filters: " + pformat(filters) + " data: " + str(subnets_count))
             return subnets_count
         except Exception as e:
             cgitb.Hook(format="text").handle(sys.exc_info())
@@ -773,12 +773,12 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
             rtrs_count = cfgdb.router_count(filters)
-            LOG.debug("get_routers_count(): " + str(rtrs_count))
+            LOG.debug("get_routers_count(): filters: " + pformat(filters) + " data: " + str(rtrs_count))
             return rtrs_count
         except Exception as e:
             cgitb.Hook(format="text").handle(sys.exc_info())
             raise e
-    #end get_networks_count
+    #end get_routers_count
 
     def add_router_interface(self, context, router_id, interface_info):
         if not interface_info:
@@ -828,7 +828,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                'floating_ip_address': floatingip['floating_ip_address'],
                'floating_network_id': floatingip['floating_network_id'],
                'router_id': floatingip['router_id'],
-               'port_id': floatingip['fixed_port_id'],
+               'port_id': floatingip['port_id'],
                'fixed_ip_address': floatingip['fixed_ip_address']}
         return self._fields(res, fields)
 
@@ -897,7 +897,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def get_floatingips(self, context, filters=None, fields=None):
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
-            fips_info = cfgdb.floatingip_list(filters)
+            fips_info = cfgdb.floatingip_list(context, filters)
 
             fips_dicts = []
             for fip_info in fips_info:
@@ -907,7 +907,8 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 fip_dict.update(fip_info['q_extra_data'])
                 fips_dicts.append(fip_dict)
 
-            LOG.debug("get_floatingips(): " + pformat(fips_dicts))
+            LOG.debug("get_floatingips(): filters: " + pformat(filters) +
+                      "data: " +pformat(fips_dicts))
             return fips_dicts
         except Exception as e:
             cgitb.Hook(format="text").handle(sys.exc_info())
@@ -917,8 +918,9 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def get_floatingips_count(self, context, filters=None):
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
-            floatingips_count = cfgdb.floatingip_count(filters)
-            LOG.debug("get_floatingips_count(): " + str(floatingips_count))
+            floatingips_count = cfgdb.floatingip_count(context, filters)
+            LOG.debug("get_floatingips_count(): filters: " + 
+                      pformat(filters) + " data: " + str(floatingips_count))
             return floatingips_count
         except Exception as e:
             cgitb.Hook(format="text").handle(sys.exc_info())
@@ -1041,7 +1043,8 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
             ports_count = cfgdb.port_count(filters)
-            LOG.debug("get_ports_count(): " + str(ports_count))
+            LOG.debug("get_ports_count(): filter: " + pformat(filters) +
+                      " data: " + str(ports_count))
             return ports_count
         except Exception as e:
             cgitb.Hook(format="text").handle(sys.exc_info())

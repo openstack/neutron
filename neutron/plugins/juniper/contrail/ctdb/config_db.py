@@ -14,6 +14,7 @@ import time
 import socket
 import netaddr
 from netaddr import IPNetwork, IPSet, IPAddress
+import eventlet
 
 from neutron.common import constants
 from neutron.common import exceptions
@@ -431,20 +432,31 @@ class DBInterface(object):
             pass
     #end _virtual_network_delete
 
+    def _virtual_network_list(self, parent_id=None, obj_uuids=None, fields=None,
+                              detail=False, count=False):
+        return self._vnc_lib.virtual_networks_list(
+                                              parent_id=parent_id,
+                                              obj_uuids=obj_uuids,
+                                              fields=fields,
+                                              detail=detail,
+                                              count=count)
+    #end _virtual_network_list
+
     def _virtual_machine_interface_create(self, port_obj):
         port_uuid = self._vnc_lib.virtual_machine_interface_create(port_obj)
 
         return port_uuid
     #end _virtual_machine_interface_create
 
-    def _virtual_machine_interface_read(self, port_id=None, fq_name=None):
+    def _virtual_machine_interface_read(self, port_id=None, fq_name=None,
+                                        fields=None):
         if port_id:
             try:
                 # return self._db_cache['vnc_ports'][port_id]
                 raise KeyError
             except KeyError:
                 port_obj = self._vnc_lib.virtual_machine_interface_read(
-                    id=port_id)
+                    id=port_id, fields=fields)
                 fq_name_str = json.dumps(port_obj.get_fq_name())
                 self._db_cache['vnc_ports'][port_id] = port_obj
                 self._db_cache['vnc_ports'][fq_name_str] = port_obj
@@ -457,7 +469,7 @@ class DBInterface(object):
                 raise KeyError
             except KeyError:
                 port_obj = self._vnc_lib.virtual_machine_interface_read(
-                    fq_name=fq_name)
+                    fq_name=fq_name, fields=fields)
                 self._db_cache['vnc_ports'][fq_name_str] = port_obj
                 self._db_cache['vnc_ports'][port_obj.uuid] = port_obj
                 return port_obj
@@ -489,6 +501,17 @@ class DBInterface(object):
         except KeyError:
             pass
     #end _virtual_machine_interface_delete
+
+    def _virtual_machine_interface_list(self, parent_id=None, back_ref_id=None,
+                                        obj_uuids=None, fields=None):
+        vmi_objs = self._vnc_lib.virtual_machine_interfaces_list(
+                                                     parent_id=parent_id,
+                                                     back_ref_id=back_ref_id,
+                                                     obj_uuids=obj_uuids,
+                                                     detail=True,
+                                                     fields=fields)
+        return vmi_objs
+    #end _virtual_machine_interface_list
 
     def _instance_ip_create(self, iip_obj):
         iip_uuid = self._vnc_lib.instance_ip_create(iip_obj)
@@ -547,6 +570,14 @@ class DBInterface(object):
             pass
     #end _instance_ip_delete
 
+    def _instance_ip_list(self, back_ref_id=None, obj_uuids=None, fields=None):
+        iip_objs = self._vnc_lib.instance_ips_list(detail=True,
+                                                   back_ref_id=back_ref_id,
+                                                   obj_uuids=obj_uuids,
+                                                   fields=fields)
+        return iip_objs
+    #end _instance_ip_list
+
     def _floating_ip_pool_create(self, fip_pool_obj):
         fip_pool_uuid = self._vnc_lib.floating_ip_pool_create(fip_pool_obj)
 
@@ -567,7 +598,7 @@ class DBInterface(object):
     #end _project_list_domain
 
     # find network ids on a given project
-    def _network_list_project(self, project_id):
+    def _network_list_project(self, project_id, count=False):
         if project_id:
             try:
                 project_uuid = str(uuid.UUID(project_id))
@@ -576,9 +607,14 @@ class DBInterface(object):
         else:
             project_uuid = None
 
-        resp_dict = self._vnc_lib.virtual_networks_list(parent_id=project_uuid)
+        if count:
+            ret_val = self._virtual_network_list(parent_id=project_uuid,
+                                                 count=True)
+        else:
+            ret_val = self._virtual_network_list(parent_id=project_uuid,
+                                                 detail=True)
 
-        return resp_dict['virtual-networks']
+        return ret_val
     #end _network_list_project
 
     # find router ids on a given project
@@ -605,14 +641,17 @@ class DBInterface(object):
     #end _ipam_list_project
 
     def _security_group_list_project(self, project_id):
-        try:
-            project_uuid = str(uuid.UUID(project_id))
-        except Exception:
-            print "Error in converting uuid %s" % (project_id)
+        if project_id:
+            try:
+                project_uuid = str(uuid.UUID(project_id))
+            except Exception:
+                print "Error in converting uuid %s" % (project_id)
+        else:
+            project_uuid = None
 
-        resp_dict = self._vnc_lib.security_groups_list(parent_id=project_uuid)
-
-        return resp_dict['security-groups']
+        sg_objs = self._vnc_lib.security_groups_list(parent_id=project_uuid,
+                                                     detail=True)
+        return sg_objs
     #end _security_group_list_project
 
     def _security_group_entries_list_sg(self, sg_id):
@@ -716,31 +755,34 @@ class DBInterface(object):
             pass
     #end _logical_router_delete
 
+    def _floatingip_list(self, back_ref_id=None):
+        return self._vnc_lib.floating_ips_list(back_ref_id=back_ref_id,
+                                               detail=True)
+    #end _floatingip_list
+
     # find floating ip pools a project has access to
     def _fip_pool_refs_project(self, project_id):
-        project_uuid = str(uuid.UUID(project_id))
-        project_obj = self._project_read(proj_id=project_uuid)
+        project_obj = self._project_read(proj_id=project_id)
 
         return project_obj.get_floating_ip_pool_refs()
     #end _fip_pool_refs_project
 
     # find networks of floating ip pools project has access to
     def _fip_pool_ref_networks(self, project_id):
-        ret_nets = []
+        ret_net_objs = []
 
         proj_fip_pool_refs = self._fip_pool_refs_project(project_id)
         if not proj_fip_pool_refs:
-            return ret_nets
+            return ret_net_objs
 
         for fip_pool_ref in proj_fip_pool_refs:
             fip_uuid = fip_pool_ref['uuid']
             fip_pool_obj = self._vnc_lib.floating_ip_pool_read(id=fip_uuid)
             net_uuid = fip_pool_obj.parent_uuid
             net_obj = self._virtual_network_read(net_id=net_uuid)
-            ret_nets.append({'uuid': net_obj.uuid,
-                            'fq_name': net_obj.get_fq_name()})
+            ret_net_objs.append(net_obj)
 
-        return ret_nets
+        return ret_net_objs
     #end _fip_pool_ref_networks
 
     # find floating ip pools defined by network
@@ -750,32 +792,74 @@ class DBInterface(object):
         return resp_dict['floating-ip-pools']
     #end _fip_pool_list_network
 
-    # find port ids on a given network
-    def _port_list_network(self, network_id):
-        ret_list = []
+    def _port_list(self, net_objs, port_objs, iip_objs):
+        ret_q_ports = []
 
-        try:
-            net_obj = self._virtual_network_read(net_id=network_id)
-        except NoIdError:
+        memo_req = {'networks': {},
+                    'subnets': {},
+                    'instance-ips': {}}
+
+        for net_obj in net_objs:
+            # dictionary of iip_uuid to iip_obj
+            memo_req['networks'][net_obj.uuid] = net_obj
+            subnets_info = self._virtual_network_to_subnets(net_obj)
+            memo_req['subnets'][net_obj.uuid] = subnets_info
+
+        for iip_obj in iip_objs:
+            # dictionary of iip_uuid to iip_obj
+            memo_req['instance-ips'][iip_obj.uuid] = iip_obj
+
+        for port_obj in port_objs:
+            port_info = self._port_vnc_to_neutron(port_obj, memo_req)
+            ret_q_ports.append(port_info)
+
+        return ret_q_ports
+    #end _port_list
+
+    def _port_list_network(self, network_ids, count=False):
+        ret_list = []
+        net_objs = self._virtual_network_list(obj_uuids=network_ids,
+                         fields=['virtual_machine_interface_back_refs'],
+                         detail=True)
+        if not net_objs:
             return ret_list
 
-        port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
-        if port_back_refs:
-            for port_back_ref in port_back_refs:
-                ret_list.append({'id': port_back_ref['uuid']})
+        net_ids = [net_obj.uuid for net_obj in net_objs]
+        port_objs = self._virtual_machine_interface_list(back_ref_id=net_ids,
+                                          fields=['instance_ip_back_refs'])
+        iip_objs = self._instance_ip_list(back_ref_id=net_ids)
 
-        return ret_list
+        return self._port_list(net_objs, port_objs, iip_objs)
     #end _port_list_network
 
     # find port ids on a given project
-    def _port_list_project(self, project_id):
-        ret_list = []
-        project_nets = self._network_list_project(project_id)
-        for net in project_nets:
-            net_ports = self._port_list_network(net['uuid'])
-            ret_list.extend(net_ports)
+    def _port_list_project(self, project_id, count=False):
+        if count:
+            ret_val = 0
+        else:
+            ret_val = []
+        
+        net_objs = self._virtual_network_list(project_id,
+                         fields=['virtual_machine_interface_back_refs'],
+                         detail=True)
+        if not net_objs:
+            return ret_val
 
-        return ret_list
+        if count:
+            for net_obj in net_objs:
+                port_back_refs = getattr(net_obj,
+                                     'virtual_machine_interface_back_refs', [])
+                ret_val = ret_val + len(port_back_refs)
+            return ret_val
+
+        net_ids = [net_obj.uuid for net_obj in net_objs]
+        port_objs = self._virtual_machine_interface_list(back_ref_id=net_ids,
+                                          fields=['instance_ip_back_refs'])
+        iip_objs = self._instance_ip_list(back_ref_id=net_ids)
+
+        ret_val = self._port_list(net_objs, port_objs, iip_objs)
+
+        return ret_val
     #end _port_list_project
 
     # Returns True if
@@ -790,7 +874,12 @@ class DBInterface(object):
         if filters:
             if key_name in filters:
                 try:
-                    idx = filters[key_name].index(match_value)
+                    if key_name == 'tenant_id':
+                        filter_value = [str(uuid.UUID(t_id)) \
+                                        for t_id in filters[key_name]]
+                    else:
+                        filter_value = filters[key_name]
+                    idx = filter_value.index(match_value)
                     if ('shared' in filters and
                         filters['shared'][0] == True):
                         # yuck, q-api has shared as list always of 1 elem
@@ -908,6 +997,25 @@ class DBInterface(object):
 
         return None
     #end _ip_address_to_subnet_id
+
+    # Returns a list of dicts of subnet-id:cidr for a VN
+    def _virtual_network_to_subnets(self, net_obj):
+        ret_subnets = []
+
+        ipam_refs = net_obj.get_network_ipam_refs()
+        if ipam_refs:
+            for ipam_ref in ipam_refs:
+                subnet_vncs = ipam_ref['attr'].get_ipam_subnets()
+                for subnet_vnc in subnet_vncs:
+                    subnet_key = self._subnet_vnc_get_key(subnet_vnc,
+                                                          net_obj.uuid)
+                    subnet_id = self._subnet_vnc_read_mapping(key=subnet_key)
+                    cidr = '%s/%s' % (subnet_vnc.subnet.get_ip_prefix(),
+                                      subnet_vnc.subnet.get_ip_prefix_len())
+                    ret_subnets.append({'id': subnet_id, 'cidr': cidr})
+
+        return ret_subnets
+    # end _virtual_network_to_subnets
 
     # Conversion routines between VNC and Quantum objects
     def _svc_instance_neutron_to_vnc(self, si_q, oper):
@@ -1207,32 +1315,7 @@ class DBInterface(object):
         extra_dict['router:external'] = net_obj in self._fip_pool_ref_networks(net_obj.parent_uuid)
 
         if net_repr == 'SHOW':
-
-            # This code path is invoked on every port_create.
-            # Getting the backrefs can be an expensive operation.
-            # For now, just return instance_count of 0
-            #port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
-            port_back_refs = None
-
-            #if port_back_refs:
-            #    net_q_dict['ports'] = []
-            #    for port_back_ref in port_back_refs:
-            #        fq_name = port_back_ref['to']
-            #        try:
-            #            port_obj = self._virtual_machine_interface_read(
-            #                           port_id = fq_name[-1])
-            #        except NoIdError:
-            #            continue
-            #
-            #        port_info = self._port_vnc_to_neutron(port_obj, net_obj)
-            #        port_dict = port_info['q_api_data']
-            #        port_dict.update(port_info['q_extra_data'])
-            #
-            #        net_q_dict['ports'].append(port_dict)
-
             extra_dict['contrail:instance_count'] = 0
-            if port_back_refs:
-                extra_dict['contrail:instance_count'] = len(port_back_refs)
 
             net_policy_refs = net_obj.get_network_policy_refs()
             if net_policy_refs:
@@ -1241,10 +1324,6 @@ class DBInterface(object):
 
         elif net_repr == 'LIST':
             extra_dict['contrail:instance_count'] = 0
-            #port_back_refs = net_obj.get_virtual_machine_interface_back_refs()
-            port_back_refs = None
-            if port_back_refs:
-                extra_dict['contrail:instance_count'] = len(port_back_refs)
 
         rt_refs = net_obj.get_route_table_refs()
         if rt_refs:
@@ -1483,24 +1562,30 @@ class DBInterface(object):
         fip_q_dict = {}
         extra_dict = {}
 
-        fip_pool_obj = self._vnc_lib.floating_ip_pool_read(
-            id=fip_obj.parent_uuid)
-        net_obj = self._virtual_network_read(net_id=fip_pool_obj.parent_uuid)
-
+        net_id = self._vnc_lib.fq_name_to_id('virtual-network',
+                                             fip_obj.get_fq_name()[:-2])
         tenant_id = fip_obj.get_project_refs()[0]['uuid'].replace('-', '')
 
         port_id = None
+        fixed_ip = None
         port_refs = fip_obj.get_virtual_machine_interface_refs()
         if port_refs:
-            port_id = fip_obj.get_virtual_machine_interface_refs()[0]['uuid']
+            port_id = port_refs[0]['uuid']
+            port_obj = self._virtual_machine_interface_read(port_id=port_id,
+                                             fields=['instance_ip_back_refs'])
+            iip_refs = getattr(port_obj, 'instance_ip_back_refs', None)
+            if iip_refs:
+                iip_id = iip_refs[0]['uuid']
+                iip_obj = self._instance_ip_read(instance_ip_id=iip_id)
+                fixed_ip = iip_obj.get_instance_ip_address()
 
         fip_q_dict['id'] = fip_obj.uuid
         fip_q_dict['tenant_id'] = tenant_id
         fip_q_dict['floating_ip_address'] = fip_obj.get_floating_ip_address()
-        fip_q_dict['floating_network_id'] = net_obj.uuid
+        fip_q_dict['floating_network_id'] = net_id
         fip_q_dict['router_id'] = None
-        fip_q_dict['fixed_port_id'] = port_id
-        fip_q_dict['fixed_ip_address'] = None
+        fip_q_dict['port_id'] = port_id
+        fip_q_dict['fixed_ip_address'] = fixed_ip
 
         return {'q_api_data': fip_q_dict,
                 'q_extra_data': extra_dict}
@@ -1524,11 +1609,13 @@ class DBInterface(object):
 
         else:  # READ/UPDATE/DELETE
             port_obj = self._virtual_machine_interface_read(
-                port_id=port_q['id'])
+                port_id=port_q['id'], fields=['instance_ip_back_refs',
+                                              'floating_ip_back_refs'])
 
         port_obj.set_security_group_list([])
         if 'security_groups' in port_q and port_q['security_groups'].__class__ is not object:
             for sg_id in port_q['security_groups']:
+                # TODO optimize to not read sg (only uuid/fqn needed)
                 sg_obj = self._vnc_lib.security_group_read(id=sg_id)
                 port_obj.add_security_group(sg_obj)
 
@@ -1540,31 +1627,39 @@ class DBInterface(object):
         return port_obj
     #end _port_neutron_to_vnc
 
-    def _port_vnc_to_neutron(self, port_obj, net_obj=None):
+    def _port_vnc_to_neutron(self, port_obj, port_req_memo=None):
         port_q_dict = {}
         port_q_dict['name'] = port_obj.uuid
         port_q_dict['id'] = port_obj.uuid
         port_q_dict[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_VROUTER
 
-        if not net_obj:
-            net_refs = port_obj.get_virtual_network_refs()
-            if net_refs:
-                net_id = net_refs[0]['uuid']
-            else:
-                # TODO hack to force network_id on default port
-                # as neutron needs it
-                net_id = self._vnc_lib.obj_to_id(VirtualNetwork())
-
-            #proj_id = self._get_obj_tenant_id('port', port_obj.uuid)
-            proj_id = None
-            if not proj_id:
-                # not in cache, get by reading VN obj, and populate cache
-                net_obj = self._virtual_network_read(net_id=net_id)
-                proj_id = net_obj.parent_uuid.replace('-', '')
-                self._set_obj_tenant_id(port_obj.uuid, proj_id)
+        net_refs = port_obj.get_virtual_network_refs()
+        if net_refs:
+            net_id = net_refs[0]['uuid']
         else:
-            net_id = net_obj.uuid
-            proj_id = net_obj.parent_uuid.replace('-', '')
+            # TODO hack to force network_id on default port
+            # as neutron needs it
+            net_id = self._vnc_lib.obj_to_id(VirtualNetwork())
+
+        if port_req_memo is None:
+            # create a memo only for this port's conversion in this method
+            port_req_memo = {}
+
+        if 'networks' not in port_req_memo:
+            port_req_memo['networks'] = {}
+        if 'subnets' not in port_req_memo:
+            port_req_memo['subnets'] = {}
+
+        try:
+            net_obj = port_req_memo['networks'][net_id]
+        except KeyError:
+            net_obj = self._virtual_network_read(net_id=net_id)
+            port_req_memo['networks'][net_id] = net_obj
+            subnets_info = self._virtual_network_to_subnets(net_obj)
+            port_req_memo['subnets'][net_id] = subnets_info
+
+        proj_id = net_obj.parent_uuid.replace('-', '')
+        self._set_obj_tenant_id(port_obj.uuid, proj_id)
 
         port_q_dict['tenant_id'] = proj_id
         port_q_dict['network_id'] = net_id
@@ -1576,14 +1671,19 @@ class DBInterface(object):
             port_q_dict['mac_address'] = mac_refs.mac_address[0]
 
         port_q_dict['fixed_ips'] = []
-        ip_back_refs = port_obj.get_instance_ip_back_refs()
+        ip_back_refs = getattr(port_obj, 'instance_ip_back_refs', None)
         if ip_back_refs:
             for ip_back_ref in ip_back_refs:
+                iip_uuid = ip_back_ref['uuid']
+                # fetch it from request context cache/memo if there
                 try:
-                    ip_obj = self._instance_ip_read(
-                        instance_ip_id=ip_back_ref['uuid'])
-                except NoIdError:
-                    continue
+                    ip_obj = port_req_memo['instance-ips'][iip_uuid]
+                except KeyError:
+                    try:
+                        ip_obj = self._instance_ip_read(
+                            instance_ip_id=ip_back_ref['uuid'])
+                    except NoIdError:
+                        continue
 
                 ip_addr = ip_obj.get_instance_ip_address()
 
@@ -1606,13 +1706,17 @@ class DBInterface(object):
         port_q_dict['status'] = constants.PORT_STATUS_ACTIVE
         
         # port can be router interface or vm interface
-        router_refs = port_obj.get_logical_router_back_refs() 
-        if router_refs is not None:
-            port_q_dict['device_owner'] = constants.DEVICE_OWNER_ROUTER_INTF
-            port_q_dict['device_id'] = router_refs[0]['uuid']
+        # for perf read logical_router_back_ref only when we have to
+        port_parent_name = port_obj.parent_name
+        if port_parent_name == 'default-virtual-machine':
+            router_refs = port_obj.get_logical_router_back_refs() 
+            if router_refs is not None:
+                port_q_dict['device_owner'] = constants.DEVICE_OWNER_ROUTER_INTF
+                port_q_dict['device_id'] = router_refs[0]['uuid']
         else:
             port_q_dict['device_id'] = port_obj.parent_name
             port_q_dict['device_owner'] = 'TODO-device-owner'
+
         return {'q_api_data': port_q_dict,
                 'q_extra_data': sg_dict}
     #end _port_vnc_to_neutron
@@ -1691,89 +1795,80 @@ class DBInterface(object):
     def network_list(self, context=None, filters=None):
         ret_list = []
 
+        if filters and 'shared' in filters:
+            if filters['shared'][0] == True:
+                # no support for shared networks
+                return ret_list
+
+        def _collect_without_prune(net_ids):
+            for net_id in net_ids:
+                try:
+                    net_obj = self._network_read(net_id)
+                    net_info = self._network_vnc_to_neutron(net_obj,
+                                                        net_repr='LIST')
+                    ret_list.append(net_info)
+                except NoIdError:
+                    pass
+        #end _collect_without_prune
+        
         # collect phase
-        all_nets = []  # all n/ws in all projects
-        if filters and 'tenant_id' in filters:
+        all_net_objs = []  # all n/ws in all projects
+        if not context.is_admin:
+            if filters and 'id' in filters:
+                _collect_without_prune(filters['id'])
+            else:
+                project_uuid = str(uuid.UUID(context.tenant))
+                if filters and 'router:external' in filters:
+                    net_objs = self._fip_pool_ref_networks(project_uuid)
+                else:
+                    net_objs = self._network_list_project(project_uuid)
+                all_net_objs.extend(net_objs)
+        elif filters and 'tenant_id' in filters:
             # project-id is present
             if 'id' in filters:
                 # required networks are also specified,
                 # just read and populate ret_list
-                # prune is skipped because all_nets is empty
-                for net_id in filters['id']:
-                    net_obj = self._network_read(net_id)
-                    net_info = self._network_vnc_to_neutron(net_obj,
-                                                            net_repr='LIST')
-                    ret_list.append(net_info)
+                # prune is skipped because all_net_objs is empty
+                _collect_without_prune(filters['id'])
             else:
                 # read all networks in project, and prune below
-                project_ids = filters['tenant_id']
-                for p_id in project_ids:
+                proj_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
+                for p_id in proj_ids:
                     if 'router:external' in filters:
-                        all_nets.append(self._fip_pool_ref_networks(p_id))
+                        net_objs = self._fip_pool_ref_networks(p_id)
                     else:
-                        project_nets = self._network_list_project(p_id)
-                        all_nets.append(project_nets)
+                        net_objs = self._network_list_project(p_id)
+                    all_net_objs.extend(net_objs)
         elif filters and 'id' in filters:
             # required networks are specified, just read and populate ret_list
-            # prune is skipped because all_nets is empty
-            for net_id in filters['id']:
-                net_obj = self._network_read(net_id)
-                net_info = self._network_vnc_to_neutron(net_obj,
-                                                        net_repr='LIST')
-                ret_list.append(net_info)
-        elif filters and 'name' in filters and not context.is_admin:
-            project_nets = self._network_list_project(context.tenant)
-            all_nets.append(project_nets)
-        elif filters and 'shared' in filters:
-            if filters['shared'][0] == True:
-                nets = self._network_list_project(project_id=None)
-                for net in nets:
-                    try:
-                        net_obj = self._virtual_network_read(net_id=net['uuid'])
-                        if not net_obj.is_shared:
-                            continue
-                        net_info = self._network_vnc_to_neutron(net_obj,
-                                                                net_repr='LIST')
-                    except NoIdError:
-                        continue
-                    ret_list.append(net_info)
+            # prune is skipped because all_net_objs is empty
+            _collect_without_prune(filters['id'])
+        elif filters and 'name' in filters:
+            if not context.is_admin:
+                net_objs = self._network_list_project(context.tenant)
+            else:
+                net_objs = self._network_list_project(None)
+            all_net_objs.extend(net_objs)
         else:
             # read all networks in all projects
-            if context and not context.is_admin:
-                project_uuids = [str(uuid.UUID(context.tenant))]
-            else:
-                dom_projects = self._project_list_domain(None)
-                project_uuids = [proj['uuid'] for proj in dom_projects]
-
-            for proj_id in project_uuids:
-                if filters and 'router:external' in filters:
-                    all_nets.append(self._fip_pool_ref_networks(proj_id))
-                else:
-                    project_nets = self._network_list_project(proj_id)
-                    all_nets.append(project_nets)
+            net_objs = self._network_list_project(None)
+            all_net_objs.extend(net_objs)
 
         # prune phase
-        for project_nets in all_nets:
-            for proj_net in project_nets:
-                proj_net_id = proj_net['uuid']
-                if not self._filters_is_present(filters, 'id', proj_net_id):
-                    continue
-
-                proj_net_fq_name = unicode(proj_net['fq_name'])
-                if not self._filters_is_present(filters, 'contrail:fq_name',
-                                                proj_net_fq_name):
-                    continue
-                if not self._filters_is_present(filters, 'name',
-                                                proj_net['fq_name'][-1]):
-                    continue
-
-                try:
-                    net_obj = self._network_read(proj_net['uuid'])
-                    net_info = self._network_vnc_to_neutron(net_obj,
-                                                            net_repr='LIST')
-                except NoIdError:
-                    continue
-                ret_list.append(net_info)
+        for net_obj in all_net_objs:
+            net_fq_name = unicode(net_obj.get_fq_name())
+            if not self._filters_is_present(filters, 'contrail:fq_name',
+                                            net_fq_name):
+                continue
+            if not self._filters_is_present(filters, 'name',
+                                            net_obj.get_fq_name()[-1]):
+                continue
+            try:
+                net_info = self._network_vnc_to_neutron(net_obj,
+                                                        net_repr='LIST')
+            except NoIdError:
+                continue
+            ret_list.append(net_info)
 
         return ret_list
     #end network_list
@@ -1788,7 +1883,7 @@ class DBInterface(object):
         net_id = subnet_q['network_id']
         net_obj = self._virtual_network_read(net_id=net_id)
 
-        ipam_fq_name = subnet_q['contrail:ipam_fq_name']
+        ipam_fq_name = subnet_q.get('contrail:ipam_fq_name', '')
         if ipam_fq_name != '':
             domain_name, project_name, ipam_name = ipam_fq_name
 
@@ -1900,23 +1995,30 @@ class DBInterface(object):
                     return
     #end subnet_delete
 
-    def subnets_list(self, filters=None):
+    def subnets_list(self, context, filters=None):
         ret_subnets = []
 
+        all_net_objs = []
         if filters and 'id' in filters:
             # required subnets are specified,
             # just read in corresponding net_ids
-            net_ids = set([])
+            net_ids = []
             for subnet_id in filters['id']:
                 subnet_key = self._subnet_vnc_read_mapping(id=subnet_id)
                 net_id = subnet_key.split()[0]
-                net_ids.add(net_id)
-        else:
-            nets_info = self.network_list()
-            net_ids = [n_info['q_api_data']['id'] for n_info in nets_info]
+                net_ids.append(net_id)
 
-        for net_id in net_ids:
-            net_obj = self._network_read(net_id)
+            all_net_objs.extend(self._virtual_network_list(obj_uuids=net_ids,
+                                                           detail=True))
+        else:
+            if not context.is_admin:
+                proj_id = context.tenant
+            else:
+                proj_id = None
+            net_objs = self._network_list_project(proj_id)
+            all_net_objs.extend(net_objs)
+
+        for net_obj in all_net_objs:
             ipam_refs = net_obj.get_network_ipam_refs()
             if ipam_refs:
                 for ipam_ref in ipam_refs:
@@ -1951,8 +2053,8 @@ class DBInterface(object):
         return ret_subnets
     #end subnets_list
 
-    def subnets_count(self, filters=None):
-        subnets_info = self.subnets_list(filters)
+    def subnets_count(self, context, filters=None):
+        subnets_info = self.subnets_list(context, filters)
         return len(subnets_info)
     #end subnets_count
 
@@ -1998,7 +2100,7 @@ class DBInterface(object):
         # collect phase
         all_ipams = []  # all ipams in all projects
         if filters and 'tenant_id' in filters:
-            project_ids = filters['tenant_id']
+            project_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
             for p_id in project_ids:
                 project_ipams = self._ipam_list_project(p_id)
                 all_ipams.append(project_ipams)
@@ -2065,7 +2167,7 @@ class DBInterface(object):
         # collect phase
         all_policys = []  # all policys in all projects
         if filters and 'tenant_id' in filters:
-            project_ids = filters['tenant_id']
+            project_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
             for p_id in project_ids:
                 project_policys = self._policy_list_project(p_id)
                 all_policys.append(project_policys)
@@ -2176,7 +2278,8 @@ class DBInterface(object):
                     ret_list.append(rtr_info)
             else:
                 # read all routers in project, and prune below
-                project_ids = filters['tenant_id']
+                project_ids = [str(uuid.UUID(id)) \
+                               for id in filters['tenant_id']]
                 for p_id in project_ids:
                     if 'router:external' in filters:
                         all_rtrs.append(self._fip_pool_ref_routers(p_id))
@@ -2356,7 +2459,6 @@ class DBInterface(object):
         return info
     # end remove_router_interface
 
-        
     # floatingip api handlers
     def floatingip_create(self, fip_q):
         fip_obj = self._floatingip_neutron_to_vnc(fip_q, CREATE)
@@ -2384,56 +2486,49 @@ class DBInterface(object):
         self._vnc_lib.floating_ip_delete(id=fip_id)
     #end floatingip_delete
 
-    def floatingip_list(self, filters=None):
-        # Find networks, get floatingip backrefs and return
+    def floatingip_list(self, context, filters=None):
+        # Read in floating ips with either
+        # - port(s) as anchor
+        # - project(s) as anchor 
+        # - none as anchor (floating-ip collection)
         ret_list = []
 
+        proj_ids = None
+        port_ids = None
         if filters:
             if 'tenant_id' in filters:
                 proj_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
             elif 'port_id' in filters:
-                # required ports are specified, just read and populate ret_list
-                # prune is skipped because proj_objs is empty
-                proj_ids = []
-                for port_id in filters['port_id']:
-                    port_obj = self._virtual_machine_interface_read(
-                        port_id=port_id)
-                    fip_back_refs = port_obj.get_floating_ip_back_refs()
-                    if not fip_back_refs:
-                        continue
-                    for fip_back_ref in fip_back_refs:
-                        fip_obj = self._vnc_lib.floating_ip_read(
-                            id=fip_back_ref['uuid'])
-                        ret_list.append(self._floatingip_vnc_to_neutron(
-                            fip_obj))
+                port_ids = filters['port_id']
         else:  # no filters
-            dom_projects = self._project_list_domain(None)
-            proj_ids = [proj['uuid'] for proj in dom_projects]
+            if not context.is_admin:
+                proj_ids = [str(uuid.UUID(context.is_admin))]
 
-        # TODO optimize to read only fip back refs
-        proj_objs = [self._project_read(proj_id=id) for id in proj_ids]
-
-        for proj_obj in proj_objs:
-            fip_back_refs = proj_obj.get_floating_ip_back_refs()
-            if not fip_back_refs:
-                continue
-            for fip_back_ref in fip_back_refs:
-                fip_obj = self._vnc_lib.floating_ip_read(
-                    id=fip_back_ref['uuid'])
+        if port_ids:
+            fip_objs = self._floatingip_list(back_ref_id=port_ids)
+            for fip_obj in fip_objs:
+                ret_list.append(self._floatingip_vnc_to_neutron(fip_obj))
+        elif proj_ids:
+            fip_objs = self._floatingip_list(back_ref_id=proj_ids)
+            for fip_obj in fip_objs:
+                ret_list.append(self._floatingip_vnc_to_neutron(fip_obj))
+        else:
+            fip_objs = self._floatingip_list()
+            for fip_obj in fip_objs:
                 ret_list.append(self._floatingip_vnc_to_neutron(fip_obj))
 
         return ret_list
     #end floatingip_list
 
-    def floatingip_count(self, filters=None):
-        floatingip_info = self.floatingip_list(filters)
+    def floatingip_count(self, context, filters=None):
+        floatingip_info = self.floatingip_list(context, filters)
         return len(floatingip_info)
     #end floatingip_count
 
     # port api handlers
     def port_create(self, port_q):
-        # TODO check for duplicate add and return
         net_id = port_q['network_id']
+        # TODO optimize to not read net (only uuid/fqn needed)
         net_obj = self._network_read(net_id)
         proj_id = net_obj.parent_uuid
 
@@ -2476,16 +2571,11 @@ class DBInterface(object):
                 ip_obj.add_virtual_machine_interface(port_obj)
                 self._instance_ip_update(ip_obj)
 
-        # read back the allocated ip address
-        ip_obj = self._instance_ip_read(instance_ip_id=ip_id)
-        ip_addr = ip_obj.get_instance_ip_address()
-        sn_id = self._ip_address_to_subnet_id(ip_addr, net_obj)
-        fixed_ips = [{'ip_address': '%s' % (ip_addr), 'subnet_id': sn_id}]
-
         # TODO below reads back default parent name, fix it
-        port_obj = self._virtual_machine_interface_read(port_id=port_id)
+        port_obj = self._virtual_machine_interface_read(port_id=port_id,
+                                 fields=['instance_ip_back_refs'])
 
-        ret_port_q = self._port_vnc_to_neutron(port_obj, net_obj)
+        ret_port_q = self._port_vnc_to_neutron(port_obj)
         #self._db_cache['q_ports'][port_id] = ret_port_q
         self._set_obj_tenant_id(port_id, proj_id)
 
@@ -2529,11 +2619,11 @@ class DBInterface(object):
     #end port_update
 
     def port_delete(self, port_id):
-        port_obj = self._port_neutron_to_vnc({'id': port_id}, None, READ)
+        port_obj = self._port_neutron_to_vnc({'id': port_id}, None, DELETE)
         instance_id = port_obj.parent_uuid
 
         # release instance IP address
-        iip_back_refs = port_obj.get_instance_ip_back_refs()
+        iip_back_refs = getattr(port_obj, 'instance_ip_back_refs', None)
         if iip_back_refs:
             for iip_back_ref in iip_back_refs:
                 # if name contains IP address then this is shared ip
@@ -2549,18 +2639,17 @@ class DBInterface(object):
                         instance_ip_id=iip_back_ref['uuid'])
 
         # disassociate any floating IP used by instance
-        fip_back_refs = port_obj.get_floating_ip_back_refs()
+        fip_back_refs = getattr(port_obj, 'floating_ip_back_refs', None)
         if fip_back_refs:
             for fip_back_ref in fip_back_refs:
-                fip_obj = self._vnc_lib.floating_ip_read(
-                    id=fip_back_ref['uuid'])
-                self.floatingip_update(fip_obj.uuid, {'port_id': None})
+                self.floatingip_update(fip_back_ref['uuid'], {'port_id': None})
 
         self._virtual_machine_interface_delete(port_id=port_id)
 
         # delete instance if this was the last port
-        inst_obj = self._vnc_lib.virtual_machine_read(id=instance_id)
-        inst_intfs = inst_obj.get_virtual_machine_interfaces()
+        inst_obj = self._vnc_lib.virtual_machine_read(id=instance_id,
+                                 fields=['virtual_machine_interfaces'])
+        inst_intfs = getattr(inst_obj, 'virtual_machine_interfaces', None)
         if inst_obj.name != 'default-virtual-machine' and not inst_intfs:
             self._vnc_lib.virtual_machine_delete(id=inst_obj.uuid)
 
@@ -2592,14 +2681,31 @@ class DBInterface(object):
         if not 'device_id' in filters:
             # Listing from back references
             if not filters:
-                # no filters => return all ports!
-                all_projects = self._project_list_domain(None)
-                all_project_ids = [project['uuid'] for project in all_projects]
+                # TODO once vmi is linked to project in schema, use project_id
+                # to limit scope of list
+                if not context.is_admin:
+                    project_id = str(uuid.UUID(context.tenant))
+                else:
+                    project_id = None
+
+                # read all VMI and IIP in detail one-shot 
+                all_port_greenlet = eventlet.spawn(self._virtual_machine_interface_list,
+                                                   fields=['instance_ip_back_refs'])
+                port_iip_greenlet = eventlet.spawn(self._instance_ip_list)
+                port_net_greenlet = eventlet.spawn(self._virtual_network_list, detail=True)
+
+                all_port_objs = all_port_greenlet.wait()
+                port_iip_objs = port_iip_greenlet.wait()
+                port_net_objs = port_net_greenlet.wait()              
+
+                ret_q_ports = self._port_list(port_net_objs, all_port_objs, port_iip_objs)
+
             elif 'tenant_id' in filters:
-                all_project_ids = filters.get('tenant_id')
+                all_project_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
             elif 'name' in filters:
-                all_project_ids = [context.tenant]
+                all_project_ids = [str(uuid.UUID(context.tenant))]
             elif 'id' in filters:
+                # TODO optimize
                 for port_id in filters['id']:
                     try:
                         port_info = self.port_read(port_id)
@@ -2608,23 +2714,10 @@ class DBInterface(object):
                     ret_q_ports.append(port_info)
 
             for proj_id in all_project_ids:
-                proj_ports = self._port_list_project(proj_id)
-                for port in proj_ports:
-                    try:
-                        port_info = self.port_read(port['id'])
-                    except NoIdError:
-                        continue
-                    if 'name' in filters:
-                        if port_info['q_api_data']['name'] in filters['name']:
-                            ret_q_ports.append(port_info)
-                    else:
-                        ret_q_ports.append(port_info) 
+                ret_q_ports = self._port_list_project(proj_id)
 
-            for net_id in filters.get('network_id', []):
-                net_ports = self._port_list_network(net_id)
-                for port in net_ports:
-                    port_info = self.port_read(port['id'])
-                    ret_q_ports.append(port_info)
+            if 'network_id' in filters:
+                ret_q_ports = self._port_list_network(filters['network_id'])
 
             return ret_q_ports
 
@@ -2632,24 +2725,26 @@ class DBInterface(object):
         device_ids = filters['device_id']
         for dev_id in device_ids:
             try:
-                vm_obj = self._vnc_lib.virtual_machine_read(id=dev_id)
-                resp_dict = self._vnc_lib.virtual_machine_interfaces_list(
-                    parent_id=dev_id)
-                intfs = resp_dict['virtual-machine-interfaces']
+                # TODO optimize
+                port_objs = self._virtual_machine_interface_list(
+                                              parent_id=dev_id,
+                                              fields=['instance_ip_back_refs'])
+                for port_obj in port_objs:
+                    port_info = self._port_vnc_to_neutron(port_obj)
+                    ret_q_ports.append(port_info)
             except NoIdError:
                 try:
                     router_obj = self._logical_router_read(rtr_id=dev_id)
                     intfs = router_obj.get_virtual_machine_interface_refs() or []
+                    for intf in intfs:
+                        try:
+                            port_info = self._port_read(intf['uuid'], port_req_memo)
+                        except NoIdError:
+                            continue
+                        ret_q_ports.append(port_info)
                 except NoIdError:
                     continue
             
-            for intf in intfs:
-                try:
-                    port_info = self.port_read(intf['uuid'])
-                except NoIdError:
-                    continue
-                ret_q_ports.append(port_info)
-
         return ret_q_ports
     #end port_list
 
@@ -2659,9 +2754,9 @@ class DBInterface(object):
 
         if 'tenant_id' in filters:
             if isinstance(filters['tenant_id'], list):
-                project_id = filters['tenant_id'][0]
+                project_id = str(uuid.UUID(filters['tenant_id'][0]))
             else:
-                project_id = filters['tenant_id']
+                project_id = str(uuid.UUID(filters['tenant_id']))
 
             try:
                 nports = self._db_cache['q_tenant_port_count'][project_id]
@@ -2733,7 +2828,7 @@ class DBInterface(object):
         # collect phase
         all_sgs = []  # all sgs in all projects
         if filters and 'tenant_id' in filters:
-            project_ids = filters['tenant_id']
+            project_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
             for p_id in project_ids:
                 project_sgs = self._security_group_list_project(p_id)
                 all_sgs.append(project_sgs)
@@ -2742,23 +2837,17 @@ class DBInterface(object):
             project_sgs = self._security_group_list_project(p_id)
             all_sgs.append(project_sgs)
         else:  # no filters
-            dom_projects = self._project_list_domain(None)
-            for project in dom_projects:
-                proj_id = project['uuid']
-                project_sgs = self._security_group_list_project(proj_id)
-                all_sgs.append(project_sgs)
+            all_sgs.append(self._security_group_list_project(None))
 
         # prune phase
         for project_sgs in all_sgs:
-            for proj_sg in project_sgs:
-                # TODO implement same for name specified in filter
-                proj_sg_id = proj_sg['uuid']
-                if not self._filters_is_present(filters, 'id', proj_sg_id):
+            for sg_obj in project_sgs:
+                if not self._filters_is_present(filters, 'id', sg_obj.uuid):
                     continue
-                sg_info = self.security_group_read(proj_sg_id)
                 if not self._filters_is_present(filters, 'name',
-                                                sg_info['q_api_data']['name']):
+                                                sg_obj.name):
                     continue
+                sg_info = self._security_group_vnc_to_neutron(sg_obj)
                 ret_list.append(sg_info)
 
         return ret_list
@@ -2816,25 +2905,20 @@ class DBInterface(object):
         # collect phase
         all_sgs = []
         if filters and 'tenant_id' in filters:
-            project_ids = filters['tenant_id']
+            project_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
             for p_id in project_ids:
                 project_sgs = self._security_group_list_project(p_id)
                 all_sgs.append(project_sgs)
         else:  # no filters
-            dom_projects = self._project_list_domain(None)
-            for project in dom_projects:
-                proj_id = project['uuid']
-                project_sgs = self._security_group_list_project(proj_id)
-                all_sgs.append(project_sgs)
+            all_sgs.append(self._security_group_list_project(None))
 
         # prune phase
         for project_sgs in all_sgs:
-            for proj_sg in project_sgs:
+            for sg_obj in project_sgs:
                 # TODO implement same for name specified in filter
-                proj_sg_id = proj_sg['uuid']
-                if not self._filters_is_present(filters, 'id', proj_sg_id):
+                if not self._filters_is_present(filters, 'id', sg_obj.uuid):
                     continue
-                sgr_info = self.security_group_rules_read(proj_sg_id)
+                sgr_info = self.security_group_rules_read(sg_obj.uuid)
                 if sgr_info:
                     ret_list.append(sgr_info)
 
@@ -2876,7 +2960,7 @@ class DBInterface(object):
         # collect phase
         all_rts = []  # all rts in all projects
         if filters and 'tenant_id' in filters:
-            project_ids = filters['tenant_id']
+            project_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
             for p_id in project_ids:
                 project_rts = self._route_table_list_project(p_id)
                 all_rts.append(project_rts)
@@ -2935,7 +3019,7 @@ class DBInterface(object):
         # collect phase
         all_sis = []  # all sis in all projects
         if filters and 'tenant_id' in filters:
-            project_ids = filters['tenant_id']
+            project_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
             for p_id in project_ids:
                 project_sis = self._svc_instance_list_project(p_id)
                 all_sis.append(project_sis)
