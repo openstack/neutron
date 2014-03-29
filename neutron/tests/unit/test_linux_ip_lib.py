@@ -713,17 +713,25 @@ class TestIpNetnsCommand(TestIPCmdBase):
 
     def test_namespace_exists(self):
         retval = '\n'.join(NETNS_SAMPLE)
-        self.parent._run.return_value = retval
-        self.assertTrue(
-            self.netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
-        self._assert_call('o', ('list',))
+        # need another instance to avoid mocking
+        netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
+        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+            execute.return_value = retval
+            self.assertTrue(
+                netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
+            execute.assert_called_once_with(['ip', '-o', 'netns', 'list'],
+                                            root_helper=None)
 
     def test_namespace_doest_not_exist(self):
         retval = '\n'.join(NETNS_SAMPLE)
-        self.parent._run.return_value = retval
-        self.assertFalse(
-            self.netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
-        self._assert_call('o', ('list',))
+        # need another instance to avoid mocking
+        netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
+        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+            execute.return_value = retval
+            self.assertFalse(
+                netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
+            execute.assert_called_once_with(['ip', '-o', 'netns', 'list'],
+                                            root_helper=None)
 
     def test_execute(self):
         self.parent.namespace = 'ns'
