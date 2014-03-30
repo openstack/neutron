@@ -12,8 +12,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: Sumit Naiksatam
 
 import datetime
 import random
@@ -21,22 +19,24 @@ import random
 import netaddr
 from oslo.config import cfg
 import sqlalchemy as sa
+from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
-from neutron.common import constants
-from neutron.common import exceptions as q_exc
+from neutron.common import exceptions as nexc
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import sqlalchemyutils
+from neutron.extensions import group_policy as gpolicy
 from neutron import neutron_plugin_base_v2
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import const
 
 
 LOG = logging.getLogger(__name__)
@@ -65,19 +65,6 @@ class PortEndpoint(Endpoint):
                        nullable=True, unique=True)
 
 
-class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
-    """Represents an Endpoint Group that is a collection of endpoints."""
-    __tablename__ = 'gp_endpointgroups'
-    name = sa.Column(sa.String(255))
-    description = sa.Column(sa.String(1024))
-    port_endpoints = orm.relationship(PortEndpoint,
-                                      backref='gp_endpointgroups')
-    provided_contract_scopes = orm.relationship(ContractScope,
-                                                backref='gp_endpointgroups')
-    consumed_contract_scopes = orm.relationship(ContractScope,
-                                                backref='gp_endpointgroups')
-
-
 class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Models an EndpointGroup's provider/consumer relation to a Contract."""
     __tablename__ = 'gp_contractscopes'
@@ -91,6 +78,19 @@ class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     # TODO (Sumit): Add policy_label for scope
 
 
+class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+    """Represents an Endpoint Group that is a collection of endpoints."""
+    __tablename__ = 'gp_endpointgroups'
+    name = sa.Column(sa.String(255))
+    description = sa.Column(sa.String(1024))
+    port_endpoints = orm.relationship(PortEndpoint,
+                                      backref='gp_endpointgroups')
+    provided_contract_scopes = orm.relationship(ContractScope,
+                                                backref='gp_endpointgroups')
+    consumed_contract_scopes = orm.relationship(ContractScope,
+                                                backref='gp_endpointgroups')
+
+
 class ContractPolicyRuleAssociation(model_base.BASEV2):
     """Models the many to many relation between Contract and Policy rules."""
     __tablename__ = 'gp_contract_policyrule_associations'
@@ -100,6 +100,7 @@ class ContractPolicyRuleAssociation(model_base.BASEV2):
     policyrule_id = sa.Column(sa.String(36),
                               sa.ForeignKey('gp_policyrules.id'),
                               primary_key=True)
+    position = sa.Column(sa.Integer)
 
 
 class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -110,14 +111,16 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     enabled = sa.Column(sa.Boolean)
     contracts = orm.relationship(ContractPolicyRuleAssociation,
                                  backref='gp_policyrules')
-    # Default value would be Null implying both TCP and UDP
+    # Default value would be Null implying all protocols
     # TODO (Sumit): Confirm this
-    protocol = sa.Column(sa.Enum("tcp", "udp", name="protocol_type"),
+    protocol = sa.Column(sa.Enum(const.TCP, const.UDP, const.ICMP,
+                                 name="protocol_type"),
                          nullable=True)
     port_range_min = sa.Column(sa.Integer)
     port_range_max = sa.Column(sa.Integer)
-    action_type = sa.Column(sa.Enum('allow', 'redirect',
-                                    name='gp_action_type'))
+    action_type = sa.Column(sa.Enum(const.GP_ALLOW,
+                                    const.GP_REDIRECT,
+                                    name='action_type'))
     # Default value would be Null when action_type is allow
     # however, value is required if something meaningful needs to be done
     # for redirect
@@ -125,6 +128,10 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     action_value = sa.Column(sa.String(36),
                              sa.ForeignKey('gp_contract_scopes.id'),
                              nullable=True, unique=True)
+    direction = sa.Column(sa.Enum(const.GP_DIRECTION_IN,
+                                  const.GP_DIRECTION_OUT,
+                                  const.GP_DIRECTION_BI,
+                                  name='direction'))
     # TODO (Sumit): Add policy_label
 
 
@@ -135,13 +142,16 @@ class Contract(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     description = sa.Column(sa.String(1024))
     policy_rules = orm.relationship(ContractPolicyRuleAssociation,
                                     backref='gp_contract',
-                                    lazy="joined")
+                                    lazy="joined",
+                                    order_by='Contract.position',
+                                    collection_class=
+                                    ordering_list('position', count_from=1))
     contract_scopes = orm.relationship(ContractScope,
                                        backref='gp_contract')
 
 
-class DbMixin(neutron_plugin_base_v2.NeutronPluginBaseV2,
-              db_base_plugin_v2.CommonDbMixin):
+class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
+                         db_base_plugin_v2.CommonDbMixin):
     """Group Policy plugin interface implementation using SQLAlchemy models.
 
     Whenever a non-read call happens the plugin will call an event handler
@@ -153,7 +163,8 @@ class DbMixin(neutron_plugin_base_v2.NeutronPluginBaseV2,
     # This attribute specifies whether the plugin supports or not
     # bulk/pagination/sorting operations. Name mangling is used in
     # order to ensure it is qualified by class
-    __native_bulk_support = True
+    # TODO (Sumit): native bulk support
+    __native_bulk_support = False
     __native_pagination_support = True
     __native_sorting_support = True
 
@@ -173,3 +184,38 @@ class DbMixin(neutron_plugin_base_v2.NeutronPluginBaseV2,
         columns = [c.name for c in model.__table__.columns]
         return dict((k, v) for (k, v) in
                     data.iteritems() if k in columns)
+
+    def _get_port_endpoint(self, context, id):
+        try:
+            port_endpoint = self._get_by_id(context, PortEndpoint, id)
+        except exc.NoResultFound:
+            raise nexc.PortEndpointNotFound(port_endpoint_id=id)
+        return port_endpoint
+
+    def _get_endpoint_group(self, context, id):
+        try:
+            endpoint_group = self._get_by_id(context, EndpointGroup, id)
+        except exc.NoResultFound:
+            raise nexc.EndpointGroupNotFound(endpoint_group_id=id)
+        return endpoint_group
+
+    def _get_contract(self, context, id):
+        try:
+            contract = self._get_by_id(context, Contract, id)
+        except exc.NoResultFound:
+            raise nexc.ContractNotFound(contract_id=id)
+        return contract
+
+    def _get_contract_scope(self, context, id):
+        try:
+            contract_scope = self._get_by_id(context, ContractScope, id)
+        except exc.NoResultFound:
+            raise nexc.ContractScopeNotFound(contract_scope_id=id)
+        return contract_scope
+
+    def _get_policy_rule(self, context, id):
+        try:
+            policy_rule = self._get_by_id(context, PolicyRule, id)
+        except exc.NoResultFound:
+            raise nexc.PolicyRuleNotFound(policy_rule_id=id)
+        return policy_rule
