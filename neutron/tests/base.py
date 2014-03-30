@@ -20,6 +20,7 @@
 import contextlib
 import logging
 import os
+import sys
 
 import eventlet.timeout
 import fixtures
@@ -116,6 +117,9 @@ class BaseTestCase(testtools.TestCase):
         self.useFixture(fixtures.MonkeyPatch(
             'neutron.common.exceptions.NeutronException.use_fatal_exceptions',
             fake_use_fatal_exceptions))
+
+        if sys.version_info < (2, 7) and getattr(self, 'fmt', '') == 'xml':
+            raise self.skipException('XML Testing Skipped in Py26')
 
     def config(self, **kw):
         """Override some configuration values.
