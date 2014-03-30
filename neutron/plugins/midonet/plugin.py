@@ -538,7 +538,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self._build_dhcp_info(bridge, s)
 
             # For external network, link the bridge to the provider router.
-            if net[ext_net.EXTERNAL]:
+            if net[ext_net.EXTERNAL] and s['gateway_ip']:
                 self._link_to_provider_router(bridge, s['gateway_ip'],
                                               s['cidr'])
 
