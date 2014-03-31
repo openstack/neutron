@@ -27,7 +27,7 @@ from neutron import context
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
-from neutron.extensions.flavor import (FLAVOR_NETWORK, FLAVOR_ROUTER)
+from neutron.extensions import flavor as ext_flavor
 from neutron.openstack.common import uuidutils
 from neutron.plugins.metaplugin.meta_neutron_plugin import (
     FaildToAddFlavorBinding)
@@ -130,7 +130,7 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
                             'shared': False,
                             'router:external': [],
                             'tenant_id': self.fake_tenant_id,
-                            FLAVOR_NETWORK: flavor}}
+                            ext_flavor.FLAVOR_NETWORK: flavor}}
         return data
 
     def _fake_port(self, net_id):
@@ -162,22 +162,22 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
     def _fake_router(self, flavor):
         data = {'router': {'name': flavor, 'admin_state_up': True,
                            'tenant_id': self.fake_tenant_id,
-                           FLAVOR_ROUTER: flavor,
+                           ext_flavor.FLAVOR_ROUTER: flavor,
                            'external_gateway_info': None}}
         return data
 
     def test_create_delete_network(self):
         network1 = self._fake_network('fake1')
         ret1 = self.plugin.create_network(self.context, network1)
-        self.assertEqual('fake1', ret1[FLAVOR_NETWORK])
+        self.assertEqual('fake1', ret1[ext_flavor.FLAVOR_NETWORK])
 
         network2 = self._fake_network('fake2')
         ret2 = self.plugin.create_network(self.context, network2)
-        self.assertEqual('fake2', ret2[FLAVOR_NETWORK])
+        self.assertEqual('fake2', ret2[ext_flavor.FLAVOR_NETWORK])
 
         network3 = self._fake_network('proxy')
         ret3 = self.plugin.create_network(self.context, network3)
-        self.assertEqual('proxy', ret3[FLAVOR_NETWORK])
+        self.assertEqual('proxy', ret3[ext_flavor.FLAVOR_NETWORK])
 
         db_ret1 = self.plugin.get_network(self.context, ret1['id'])
         self.assertEqual('fake1', db_ret1['name'])
@@ -191,8 +191,9 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
         db_ret4 = self.plugin.get_networks(self.context)
         self.assertEqual(3, len(db_ret4))
 
-        db_ret5 = self.plugin.get_networks(self.context,
-                                           {FLAVOR_NETWORK: ['fake1']})
+        db_ret5 = self.plugin.get_networks(
+            self.context,
+            {ext_flavor.FLAVOR_NETWORK: ['fake1']})
         self.assertEqual(1, len(db_ret5))
         self.assertEqual('fake1', db_ret5[0]['name'])
         self.plugin.delete_network(self.context, ret1['id'])
@@ -307,14 +308,14 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
         router2 = self._fake_router('fake2')
         router_ret2 = self.plugin.create_router(self.context, router2)
 
-        self.assertEqual('fake1', router_ret1[FLAVOR_ROUTER])
-        self.assertEqual('fake2', router_ret2[FLAVOR_ROUTER])
+        self.assertEqual('fake1', router_ret1[ext_flavor.FLAVOR_ROUTER])
+        self.assertEqual('fake2', router_ret2[ext_flavor.FLAVOR_ROUTER])
 
         router_in_db1 = self.plugin.get_router(self.context, router_ret1['id'])
         router_in_db2 = self.plugin.get_router(self.context, router_ret2['id'])
 
-        self.assertEqual('fake1', router_in_db1[FLAVOR_ROUTER])
-        self.assertEqual('fake2', router_in_db2[FLAVOR_ROUTER])
+        self.assertEqual('fake1', router_in_db1[ext_flavor.FLAVOR_ROUTER])
+        self.assertEqual('fake2', router_in_db2[ext_flavor.FLAVOR_ROUTER])
 
         self.plugin.delete_router(self.context, router_ret1['id'])
         self.plugin.delete_router(self.context, router_ret2['id'])

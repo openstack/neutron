@@ -12,8 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from abc import ABCMeta, abstractmethod
-
+import abc
 import six
 
 from neutron.common import exceptions as exc
@@ -26,7 +25,7 @@ LOG = log.getLogger(__name__)
 TUNNEL = 'tunnel'
 
 
-@six.add_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class TunnelTypeDriver(api.TypeDriver):
     """Define stable abstract interface for ML2 type drivers.
 
@@ -34,7 +33,7 @@ class TunnelTypeDriver(api.TypeDriver):
     methods to manage these endpoints.
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def add_endpoint(self, ip):
         """Register the endpoint in the type_driver database.
 
@@ -42,7 +41,7 @@ class TunnelTypeDriver(api.TypeDriver):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_endpoints(self):
         """Get every endpoint managed by the type_driver
 

@@ -20,15 +20,14 @@ v2 Neutron Plug-in API specification.
 methods that needs to be implemented by a v2 Neutron Plug-in.
 """
 
-from abc import ABCMeta, abstractmethod
-
+import abc
 import six
 
 
-@six.add_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class NeutronPluginBaseV2(object):
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_subnet(self, context, subnet):
         """Create a subnet.
 
@@ -43,7 +42,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_subnet(self, context, id, subnet):
         """Update values of a subnet.
 
@@ -57,7 +56,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_subnet(self, context, id, fields=None):
         """Retrieve a subnet.
 
@@ -71,7 +70,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_subnets(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
         """Retrieve a list of subnets.
@@ -119,7 +118,7 @@ class NeutronPluginBaseV2(object):
         """
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_subnet(self, context, id):
         """Delete a subnet.
 
@@ -128,7 +127,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_network(self, context, network):
         """Create a network.
 
@@ -144,7 +143,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_network(self, context, id, network):
         """Update values of a network.
 
@@ -158,7 +157,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_network(self, context, id, fields=None):
         """Retrieve a network.
 
@@ -172,7 +171,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
         """Retrieve a list of networks.
@@ -220,7 +219,7 @@ class NeutronPluginBaseV2(object):
         """
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_network(self, context, id):
         """Delete a network.
 
@@ -229,7 +228,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_port(self, context, port):
         """Create a port.
 
@@ -244,7 +243,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_port(self, context, id, port):
         """Update values of a port.
 
@@ -257,7 +256,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_port(self, context, id, fields=None):
         """Retrieve a port.
 
@@ -271,7 +270,7 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_ports(self, context, filters=None, fields=None,
                   sorts=None, limit=None, marker=None, page_reverse=False):
         """Retrieve a list of ports.
@@ -316,7 +315,7 @@ class NeutronPluginBaseV2(object):
         """
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_port(self, context, id):
         """Delete a port.
 

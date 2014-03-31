@@ -16,13 +16,12 @@
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
-from abc import ABCMeta, abstractmethod
+import abc
 import inspect
-
 import six
 
 
-@six.add_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class L2DevicePluginBase(object):
     """Base class for a device-specific plugin.
 
@@ -31,7 +30,7 @@ class L2DevicePluginBase(object):
     the configuration on each device.
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_network(self, tenant_id, net_name, net_id, vlan_name, vlan_id,
                        **kwargs):
         """Create network.
@@ -41,7 +40,7 @@ class L2DevicePluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_network(self, tenant_id, net_id, **kwargs):
         """Delete network.
 
@@ -50,7 +49,7 @@ class L2DevicePluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_network(self, tenant_id, net_id, name, **kwargs):
         """Update network.
 
@@ -59,7 +58,7 @@ class L2DevicePluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_port(self, tenant_id, net_id, port_state, port_id, **kwargs):
         """Create port.
 
@@ -68,7 +67,7 @@ class L2DevicePluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_port(self, tenant_id, net_id, port_id, **kwargs):
         """Delete port.
 
@@ -77,7 +76,7 @@ class L2DevicePluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_port(self, tenant_id, net_id, port_id, **kwargs):
         """Update port.
 
@@ -86,7 +85,7 @@ class L2DevicePluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def plug_interface(self, tenant_id, net_id, port_id, remote_interface_id,
                        **kwargs):
         """Plug interface.
@@ -96,7 +95,7 @@ class L2DevicePluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def unplug_interface(self, tenant_id, net_id, port_id, **kwargs):
         """Unplug interface.
 
