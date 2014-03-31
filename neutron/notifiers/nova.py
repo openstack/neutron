@@ -23,6 +23,7 @@ from neutron import context
 from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
+from neutron.openstack.common import uuidutils
 
 
 LOG = logging.getLogger(__name__)
@@ -56,8 +57,8 @@ class Notifier(object):
 
     def _is_compute_port(self, port):
         try:
-            if (port['device_id'] and
-                    port['device_owner'].startswith('compute:')):
+            if (port['device_id'] and uuidutils.is_uuid_like(port['device_id'])
+                    and port['device_owner'].startswith('compute:')):
                 return True
         except (KeyError, AttributeError):
             pass
