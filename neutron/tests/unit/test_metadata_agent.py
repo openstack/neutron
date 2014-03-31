@@ -319,12 +319,12 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
         with mock.patch.object(agent, 'logging') as logging:
             self.server._run('app', 'sock')
 
-            self.eventlet.wsgi.server.called_once_with(
+            self.eventlet.wsgi.server.assert_called_once_with(
                 'sock',
                 'app',
-                self.server.pool,
-                agent.UnixDomainHttpProtocol,
-                mock.ANY
+                protocol=agent.UnixDomainHttpProtocol,
+                log=mock.ANY,
+                custom_pool=self.server.pool
             )
             self.assertTrue(len(logging.mock_calls))
 

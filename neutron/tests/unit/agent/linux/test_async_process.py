@@ -244,7 +244,7 @@ class TestAsyncProcess(base.BaseTestCase):
         self.proc._kill_event = True
         with mock.patch.object(self.proc, '_kill') as mock_kill:
             self.proc.stop()
-        mock_kill.called_once()
+        mock_kill.assert_called_once_with()
 
     def test_stop_raises_exception_if_already_started(self):
         with testtools.ExpectedException(async_process.AsyncProcessException):

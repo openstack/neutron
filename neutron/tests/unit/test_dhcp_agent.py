@@ -718,7 +718,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.plugin.get_network_info.return_value = network
         with mock.patch.object(self.dhcp, 'disable_dhcp_helper') as disable:
             self.dhcp.refresh_dhcp_helper(network.id)
-            disable.called_once_with_args(network.id)
+            disable.assert_called_once_with(network.id)
             self.assertFalse(self.cache.called)
             self.assertFalse(self.call_driver.called)
             self.cache.assert_has_calls(
@@ -1299,14 +1299,14 @@ class TestDeviceManager(base.BaseTestCase):
         expected = ('dhcp1ae5f96c-c527-5079-82ea-371a01645457-12345678-1234-'
                     '5678-1234567890ab')
 
-        with mock.patch('socket.gethostbyname') as get_host:
+        with mock.patch('socket.gethostname') as get_host:
             with mock.patch('uuid.uuid5') as uuid5:
                 uuid5.return_value = '1ae5f96c-c527-5079-82ea-371a01645457'
                 get_host.return_value = 'localhost'
 
                 dh = dhcp.DeviceManager(cfg.CONF, cfg.CONF.root_helper, None)
-                uuid5.called_once_with(uuid.NAMESPACE_DNS, 'localhost')
                 self.assertEqual(dh.get_device_id(fake_net), expected)
+                uuid5.assert_called_once_with(uuid.NAMESPACE_DNS, 'localhost')
 
     def _get_device_manager_with_mock_device(self, conf, device):
             dh = dhcp.DeviceManager(conf, cfg.CONF.root_helper, None)
