@@ -188,12 +188,10 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         firewall_policy = self.deserialize(fmt or self.fmt, res)
-        try:
-            yield firewall_policy
-        finally:
-            if not no_delete:
-                self._delete('firewall_policies',
-                             firewall_policy['firewall_policy']['id'])
+        yield firewall_policy
+        if not no_delete:
+            self._delete('firewall_policies',
+                         firewall_policy['firewall_policy']['id'])
 
     def _create_firewall_rule(self, fmt, name, shared, protocol,
                               ip_version, source_ip_address,
@@ -240,12 +238,10 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         firewall_rule = self.deserialize(fmt or self.fmt, res)
-        try:
-            yield firewall_rule
-        finally:
-            if not no_delete:
-                self._delete('firewall_rules',
-                             firewall_rule['firewall_rule']['id'])
+        yield firewall_rule
+        if not no_delete:
+            self._delete('firewall_rules',
+                         firewall_rule['firewall_rule']['id'])
 
     def _create_firewall(self, fmt, name, description, firewall_policy_id,
                          admin_state_up=True, expected_res_status=None,
@@ -275,11 +271,9 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         firewall = self.deserialize(fmt or self.fmt, res)
-        try:
-            yield firewall
-        finally:
-            if not no_delete:
-                self._delete('firewalls', firewall['firewall']['id'])
+        yield firewall
+        if not no_delete:
+            self._delete('firewalls', firewall['firewall']['id'])
 
     def _rule_action(self, action, id, firewall_rule_id, insert_before=None,
                      insert_after=None, expected_code=webob.exc.HTTPOk.code,

@@ -97,11 +97,9 @@ class TestNecPluginPacketFilterBase(test_nec_plugin.NecPluginV2TestCase):
         with test_plugin.optional_ctx(network, self.network) as network_to_use:
             net_id = network_to_use['network']['id']
             pf = self._make_packet_filter(fmt or self.fmt, net_id, **kwargs)
-            try:
-                yield pf
-            finally:
-                if do_delete:
-                    self._delete('packet_filters', pf['packet_filter']['id'])
+            yield pf
+            if do_delete:
+                self._delete('packet_filters', pf['packet_filter']['id'])
 
     @contextlib.contextmanager
     def packet_filter_on_port(self, port=None, fmt=None, do_delete=True,
@@ -121,11 +119,9 @@ class TestNecPluginPacketFilterBase(test_nec_plugin.NecPluginV2TestCase):
             kwargs['in_port'] = port_id
             pf = self._make_packet_filter(fmt or self.fmt, net_id, **kwargs)
             self.assertEqual(port_id, pf['packet_filter']['in_port'])
-            try:
-                yield pf
-            finally:
-                if do_delete:
-                    self._delete('packet_filters', pf['packet_filter']['id'])
+            yield pf
+            if do_delete:
+                self._delete('packet_filters', pf['packet_filter']['id'])
 
 
 class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):

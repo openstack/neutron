@@ -76,12 +76,12 @@ class TestQoSQueue(NsxPluginV2TestCase):
         qos_queue = self.deserialize('json', res)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
-        try:
-            yield qos_queue
-        finally:
-            if not no_delete:
-                self._delete('qos-queues',
-                             qos_queue['qos_queue']['id'])
+
+        yield qos_queue
+
+        if not no_delete:
+            self._delete('qos-queues',
+                         qos_queue['qos_queue']['id'])
 
     def test_create_qos_queue(self):
         with self.qos_queue(name='fake_lqueue', min=34, max=44,

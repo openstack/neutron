@@ -96,12 +96,10 @@ class MeteringPluginDbTestCaseMixin(object):
             fmt = self.fmt
         metering_label = self._make_metering_label(fmt, name,
                                                    description, **kwargs)
-        try:
-            yield metering_label
-        finally:
-            if not no_delete:
-                self._delete('metering-labels',
-                             metering_label['metering_label']['id'])
+        yield metering_label
+        if not no_delete:
+            self._delete('metering-labels',
+                         metering_label['metering_label']['id'])
 
     @contextlib.contextmanager
     def metering_label_rule(self, metering_label_id=None, direction='ingress',
@@ -114,12 +112,10 @@ class MeteringPluginDbTestCaseMixin(object):
                                                              direction,
                                                              remote_ip_prefix,
                                                              excluded)
-        try:
-            yield metering_label_rule
-        finally:
-            if not no_delete:
-                self._delete('metering-label-rules',
-                             metering_label_rule['metering_label_rule']['id'])
+        yield metering_label_rule
+        if not no_delete:
+            self._delete('metering-label-rules',
+                         metering_label_rule['metering_label_rule']['id'])
 
 
 class MeteringPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase,

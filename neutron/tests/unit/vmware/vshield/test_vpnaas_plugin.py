@@ -85,16 +85,16 @@ class TestVpnPlugin(test_db_vpnaas.VPNTestMixin,
                 data = {'router': {'tenant_id': self._tenant_id}}
                 data['router']['service_router'] = True
                 router_req = self.new_create_request('routers', data, self.fmt)
-                try:
-                    res = router_req.get_response(self.ext_api)
-                    router = self.deserialize(self.fmt, res)
-                    self._add_external_gateway_to_router(
-                        router['router']['id'],
-                        s['subnet']['network_id'])
-                    router = self._show('routers', router['router']['id'])
-                    yield router
-                finally:
-                    self._delete('routers', router['router']['id'])
+
+                res = router_req.get_response(self.ext_api)
+                router = self.deserialize(self.fmt, res)
+                self._add_external_gateway_to_router(
+                    router['router']['id'],
+                    s['subnet']['network_id'])
+                router = self._show('routers', router['router']['id'])
+                yield router
+
+                self._delete('routers', router['router']['id'])
 
     def test_create_vpnservice(self, **extras):
         """Test case to create a vpnservice."""

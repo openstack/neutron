@@ -303,11 +303,9 @@ class TestCiscoPortsV2(CiscoNetworkPluginV2TestCase,
                 res = self._create_port(self.fmt, net_id, arg_list=args,
                                         context=ctx, **port_dict)
                 port = self.deserialize(self.fmt, res)
-                try:
-                    yield res
-                finally:
-                    if do_delete:
-                        self._delete('ports', port['port']['id'])
+                yield res
+                if do_delete:
+                    self._delete('ports', port['port']['id'])
 
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
@@ -961,11 +959,9 @@ class TestCiscoNetworksV2(CiscoNetworkPluginV2TestCase,
         res = self._create_network(self.fmt, net_name, True,
                                    arg_list=arg_list, **provider_attrs)
         network = self.deserialize(self.fmt, res)['network']
-        try:
-            yield network
-        finally:
-            req = self.new_delete_request('networks', network['id'])
-            req.get_response(self.api)
+        yield network
+        req = self.new_delete_request('networks', network['id'])
+        req.get_response(self.api)
 
     def test_create_provider_vlan_network(self):
         with self._provider_vlan_network(PHYS_NET, '1234',
@@ -1073,10 +1069,8 @@ class TestCiscoRouterInterfacesV2(CiscoNetworkPluginV2TestCase):
                 request = self.new_create_request('routers', data, self.fmt)
                 response = request.get_response(self.ext_api)
                 router = self.deserialize(self.fmt, response)
-                try:
-                    yield network, subnet, router
-                finally:
-                    self._delete('routers', router['router']['id'])
+                yield network, subnet, router
+                self._delete('routers', router['router']['id'])
 
     @contextlib.contextmanager
     def _router_interface(self, router, subnet, **kwargs):
@@ -1089,15 +1083,15 @@ class TestCiscoRouterInterfacesV2(CiscoNetworkPluginV2TestCase):
                                           router['router']['id'],
                                           'add_router_interface')
         response = request.get_response(self.ext_api)
-        try:
-            yield response
-        finally:
-            # If router interface was created successfully, delete it now.
-            if response.status_int == wexc.HTTPOk.code:
-                request = self.new_action_request('routers', interface_data,
-                                                  router['router']['id'],
-                                                  'remove_router_interface')
-                request.get_response(self.ext_api)
+
+        yield response
+
+        # If router interface was created successfully, delete it now.
+        if response.status_int == wexc.HTTPOk.code:
+            request = self.new_action_request('routers', interface_data,
+                                              router['router']['id'],
+                                              'remove_router_interface')
+            request.get_response(self.ext_api)
 
     @contextlib.contextmanager
     def _network_subnet_router_interface(self, **kwargs):

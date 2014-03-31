@@ -358,10 +358,8 @@ class L3NatTestCaseMixin(object):
         router = self._make_router(fmt or self.fmt, tenant_id, name,
                                    admin_state_up, external_gateway_info,
                                    set_context, **kwargs)
-        try:
-            yield router
-        finally:
-            self._delete('routers', router['router']['id'])
+        yield router
+        self._delete('routers', router['router']['id'])
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,
@@ -413,31 +411,31 @@ class L3NatTestCaseMixin(object):
                     sid = private_port['port']['fixed_ips'][0]['subnet_id']
                     private_sub = {'subnet': {'id': sid}}
                     floatingip = None
-                    try:
-                        self._add_external_gateway_to_router(
-                            r['router']['id'],
-                            public_sub['subnet']['network_id'])
-                        self._router_interface_action(
-                            'add', r['router']['id'],
-                            private_sub['subnet']['id'], None)
 
-                        floatingip = self._make_floatingip(
-                            fmt or self.fmt,
-                            public_sub['subnet']['network_id'],
-                            port_id=private_port['port']['id'],
-                            fixed_ip=fixed_ip,
-                            set_context=False)
-                        yield floatingip
-                    finally:
-                        if floatingip:
-                            self._delete('floatingips',
-                                         floatingip['floatingip']['id'])
-                        self._router_interface_action(
-                            'remove', r['router']['id'],
-                            private_sub['subnet']['id'], None)
-                        self._remove_external_gateway_from_router(
-                            r['router']['id'],
-                            public_sub['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        public_sub['subnet']['network_id'])
+                    self._router_interface_action(
+                        'add', r['router']['id'],
+                        private_sub['subnet']['id'], None)
+
+                    floatingip = self._make_floatingip(
+                        fmt or self.fmt,
+                        public_sub['subnet']['network_id'],
+                        port_id=private_port['port']['id'],
+                        fixed_ip=fixed_ip,
+                        set_context=False)
+                    yield floatingip
+
+                    if floatingip:
+                        self._delete('floatingips',
+                                     floatingip['floatingip']['id'])
+                    self._router_interface_action(
+                        'remove', r['router']['id'],
+                        private_sub['subnet']['id'], None)
+                    self._remove_external_gateway_from_router(
+                        r['router']['id'],
+                        public_sub['subnet']['network_id'])
 
     @contextlib.contextmanager
     def floatingip_no_assoc_with_public_sub(
@@ -445,29 +443,29 @@ class L3NatTestCaseMixin(object):
         self._set_net_external(public_sub['subnet']['network_id'])
         with self.router() as r:
             floatingip = None
-            try:
-                self._add_external_gateway_to_router(
-                    r['router']['id'],
-                    public_sub['subnet']['network_id'])
-                self._router_interface_action('add', r['router']['id'],
-                                              private_sub['subnet']['id'],
-                                              None)
 
-                floatingip = self._make_floatingip(
-                    fmt or self.fmt,
-                    public_sub['subnet']['network_id'],
-                    set_context=set_context)
-                yield floatingip, r
-            finally:
-                if floatingip:
-                    self._delete('floatingips',
-                                 floatingip['floatingip']['id'])
-                self._router_interface_action('remove', r['router']['id'],
-                                              private_sub['subnet']['id'],
-                                              None)
-                self._remove_external_gateway_from_router(
-                    r['router']['id'],
-                    public_sub['subnet']['network_id'])
+            self._add_external_gateway_to_router(
+                r['router']['id'],
+                public_sub['subnet']['network_id'])
+            self._router_interface_action('add', r['router']['id'],
+                                          private_sub['subnet']['id'],
+                                          None)
+
+            floatingip = self._make_floatingip(
+                fmt or self.fmt,
+                public_sub['subnet']['network_id'],
+                set_context=set_context)
+            yield floatingip, r
+
+            if floatingip:
+                self._delete('floatingips',
+                             floatingip['floatingip']['id'])
+            self._router_interface_action('remove', r['router']['id'],
+                                          private_sub['subnet']['id'],
+                                          None)
+            self._remove_external_gateway_from_router(
+                r['router']['id'],
+                public_sub['subnet']['network_id'])
 
     @contextlib.contextmanager
     def floatingip_no_assoc(self, private_sub, fmt=None, set_context=False):

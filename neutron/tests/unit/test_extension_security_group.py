@@ -126,12 +126,10 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         if not fmt:
             fmt = self.fmt
         security_group = self._make_security_group(fmt, name, description)
-        try:
-            yield security_group
-        finally:
-            if not no_delete:
-                self._delete('security-groups',
-                             security_group['security_group']['id'])
+        yield security_group
+        if not no_delete:
+            self._delete('security-groups',
+                         security_group['security_group']['id'])
 
     @contextlib.contextmanager
     def security_group_rule(self, security_group_id='4cd70774-cc67-4a87-9b39-7'
@@ -150,12 +148,10 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                                remote_group_id,
                                                ethertype=ethertype)
         security_group_rule = self._make_security_group_rule(self.fmt, rule)
-        try:
-            yield security_group_rule
-        finally:
-            if not no_delete:
-                self._delete('security-group-rules',
-                             security_group_rule['security_group_rule']['id'])
+        yield security_group_rule
+        if not no_delete:
+            self._delete('security-group-rules',
+                         security_group_rule['security_group_rule']['id'])
 
     def _delete_default_security_group_egress_rules(self, security_group_id):
         """Deletes default egress rules given a security group ID."""
