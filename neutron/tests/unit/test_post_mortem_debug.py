@@ -38,8 +38,10 @@ class TestTesttoolsExceptionHandler(base.BaseTestCase):
                                        return_value=mock.Mock()):
                     post_mortem_debug.exception_handler(exc_info)
 
-        mock_print_exception.called_once_with(*exc_info)
-        mock_post_mortem.called_once()
+        # traceback will become post_mortem_debug.FilteredTraceback
+        filtered_exc_info = (exc_info[0], exc_info[1], mock.ANY)
+        mock_print_exception.assert_called_once_with(*filtered_exc_info)
+        mock_post_mortem.assert_called_once_with(mock.ANY)
 
 
 class TestFilteredTraceback(base.BaseTestCase):
