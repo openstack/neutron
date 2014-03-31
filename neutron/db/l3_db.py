@@ -125,8 +125,8 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             self._apply_dict_extend_functions(l3.ROUTERS, res, router)
         return self._fields(res, fields)
 
-    def _create_router_db(self, context, router, tenant_id, gw_info):
-        """Create the DB object and update gw info, if available."""
+    def _create_router_db(self, context, router, tenant_id):
+        """Create the DB object."""
         with context.session.begin(subtransactions=True):
             # pre-generate id so it will be available when
             # configuring external gw port
@@ -143,7 +143,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         gw_info = r.pop(EXTERNAL_GW_INFO, None)
         tenant_id = self._get_tenant_id_for_create(context, r)
         with context.session.begin(subtransactions=True):
-            router_db = self._create_router_db(context, r, tenant_id, gw_info)
+            router_db = self._create_router_db(context, r, tenant_id)
             if gw_info:
                 self._update_router_gw_info(context, router_db['id'],
                                             gw_info, router=router_db)
@@ -465,6 +465,23 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
              'device_owner': owner,
              'name': ''}})
 
+    def notify_router_interface_action(
+            self, context, router_id, tenant_id, port_id, subnet_id, action):
+        l3_method = '%s_router_interface' % action
+        self.l3_rpc_notifier.routers_updated(context, [router_id], l3_method)
+
+        mapping = {'add': 'create', 'remove': 'delete'}
+        info = {
+            'id': router_id,
+            'tenant_id': tenant_id,
+            'port_id': port_id,
+            'subnet_id': subnet_id
+        }
+        notifier = n_rpc.get_notifier('network')
+        router_event = 'router.interface.%s' % mapping[action]
+        notifier.info(context, router_event, {'router_interface': info})
+        return info
+
     def add_router_interface(self, context, router_id, interface_info):
         add_by_port, add_by_sub = self._validate_interface_info(interface_info)
         device_owner = self._get_device_owner(context, router_id)
@@ -476,16 +493,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             port = self._add_interface_by_subnet(
                 context, router_id, interface_info['subnet_id'], device_owner)
 
-        self.l3_rpc_notifier.routers_updated(
-            context, [router_id], 'add_router_interface')
-        info = {'id': router_id,
-                'tenant_id': port['tenant_id'],
-                'port_id': port['id'],
-                'subnet_id': port['fixed_ips'][0]['subnet_id']}
-        notifier = n_rpc.get_notifier('network')
-        notifier.info(
-            context, 'router.interface.create', {'router_interface': info})
-        return info
+        return self.notify_router_interface_action(
+            context, router_id, port['tenant_id'], port['id'],
+            port['fixed_ips'][0]['subnet_id'], 'add')
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
@@ -553,16 +563,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             port, subnet = self._remove_interface_by_subnet(
                 context, router_id, subnet_id, device_owner)
 
-        self.l3_rpc_notifier.routers_updated(
-            context, [router_id], 'remove_router_interface')
-        info = {'id': router_id,
-                'tenant_id': port['tenant_id'],
-                'port_id': port['id'],
-                'subnet_id': subnet['id']}
-        notifier = n_rpc.get_notifier('network')
-        notifier.info(
-            context, 'router.interface.delete', {'router_interface': info})
-        return info
+        return self.notify_router_interface_action(
+            context, router_id, port['tenant_id'], port['id'],
+            subnet['id'], 'remove')
 
     def _get_floatingip(self, context, id):
         try:
@@ -695,8 +698,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
 
         return (fip['port_id'], internal_ip_address, router_id)
 
-    def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
-        previous_router_id = floatingip_db.router_id
+    def _check_and_get_fip_assoc(self, context, fip, floatingip_db):
         port_id = internal_ip_address = router_id = None
         if (('fixed_ip_address' in fip and fip['fixed_ip_address']) and
             not ('port_id' in fip and fip['port_id'])):
@@ -721,6 +723,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                     net_id=floatingip_db['floating_network_id'])
             except exc.NoResultFound:
                 pass
+        return port_id, internal_ip_address, router_id
+
+    def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
+        previous_router_id = floatingip_db.router_id
+        port_id, internal_ip_address, router_id = (
+            self._check_and_get_fip_assoc(context, fip, floatingip_db))
         floatingip_db.update({'fixed_ip_address': internal_ip_address,
                               'fixed_port_id': port_id,
                               'router_id': router_id,
@@ -1017,10 +1025,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 else:
                     port['extra_subnets'].append(subnet_info)
 
-    def _process_sync_data(self, routers, interfaces, floating_ips):
-        routers_dict = {}
-        for router in routers:
-            routers_dict[router['id']] = router
+    def _process_floating_ips(self, context, routers_dict, floating_ips):
         for floating_ip in floating_ips:
             router = routers_dict.get(floating_ip['router_id'])
             if router:
@@ -1028,13 +1033,14 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                                 [])
                 router_floatingips.append(floating_ip)
                 router[l3_constants.FLOATINGIP_KEY] = router_floatingips
+
+    def _process_interfaces(self, routers_dict, interfaces):
         for interface in interfaces:
             router = routers_dict.get(interface['device_id'])
             if router:
                 router_interfaces = router.get(l3_constants.INTERFACE_KEY, [])
                 router_interfaces.append(interface)
                 router[l3_constants.INTERFACE_KEY] = router_interfaces
-        return routers_dict.values()
 
     def _get_router_info_list(self, context, router_ids=None, active=None,
                               device_owners=None):
@@ -1052,4 +1058,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
     def get_sync_data(self, context, router_ids=None, active=None):
         routers, interfaces, floating_ips = self._get_router_info_list(
             context, router_ids=router_ids, active=active)
-        return self._process_sync_data(routers, interfaces, floating_ips)
+        routers_dict = dict((router['id'], router) for router in routers)
+        self._process_floating_ips(context, routers_dict, floating_ips)
+        self._process_interfaces(routers_dict, interfaces)
+        return routers_dict.values()

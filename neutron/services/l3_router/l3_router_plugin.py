@@ -25,6 +25,7 @@ from neutron.db import api as qdbapi
 from neutron.db import common_db_mixin
 from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
+from neutron.db import l3_dvr_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_rpc_base
 from neutron.db import model_base
@@ -35,11 +36,14 @@ from neutron.plugins.common import constants
 class L3RouterPluginRpcCallbacks(n_rpc.RpcCallback,
                                  l3_rpc_base.L3RpcCallbackMixin):
 
-    RPC_API_VERSION = '1.1'
+    RPC_API_VERSION = '1.2'
+    # history
+    #   1.2 Added methods for DVR support
 
 
 class L3RouterPlugin(common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
+                     l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                      l3_gwmode_db.L3_NAT_db_mixin,
                      l3_agentschedulers_db.L3AgentSchedulerDbMixin):
 
@@ -49,9 +53,10 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
     router and floatingip resources and manages associated
     request/response.
     All DB related work is implemented in classes
-    l3_db.L3_NAT_db_mixin and extraroute_db.ExtraRoute_db_mixin.
+    l3_db.L3_NAT_db_mixin, l3_dvr_db.L3_NAT_with_dvr_db_mixin, and
+    extraroute_db.ExtraRoute_db_mixin.
     """
-    supported_extension_aliases = ["router", "ext-gw-mode",
+    supported_extension_aliases = ["dvr", "router", "ext-gw-mode",
                                    "extraroute", "l3_agent_scheduler"]
 
     def __init__(self):

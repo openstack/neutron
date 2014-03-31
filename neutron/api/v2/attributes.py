@@ -479,6 +479,11 @@ def convert_to_boolean(data):
     raise n_exc.InvalidInput(error_message=msg)
 
 
+def convert_to_boolean_if_not_none(data):
+    if data is not None:
+        return convert_to_boolean(data)
+
+
 def convert_to_int(data):
     try:
         return int(data)
