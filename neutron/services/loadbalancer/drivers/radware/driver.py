@@ -177,7 +177,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                                                              plugin)
         self.workflow_templates_exists = False
         self.completion_handler.setDaemon(True)
-        self.completion_handler.start()
+        self.completion_handler_started = False
 
     def create_vip(self, context, vip):
         LOG.debug(_('create_vip. vip: %s'), str(vip))
@@ -340,6 +340,12 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
             context, extended_vip['subnet_id'])
         return subnet['network_id']
 
+    def _start_completion_handling_thread(self):
+        if not self.completion_handler_started:
+            LOG.info(_('Starting operation completion handling thread'))
+            self.completion_handler.start()
+            self.completion_handler_started = True
+
     @call_log.log
     def _update_workflow(self, wf_name, action,
                          wf_params, context,
@@ -371,6 +377,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                                        entity_id,
                                        delete=delete)
             LOG.debug(_('Pushing operation %s to the queue'), oper)
+
+            self._start_completion_handling_thread()
             self.queue.put_nowait(oper)
 
     def _remove_workflow(self, ids, context):
@@ -391,6 +399,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                                        ids['vip'],
                                        delete=True)
             LOG.debug(_('Pushing operation %s to the queue'), oper)
+
+            self._start_completion_handling_thread()
             self.queue.put_nowait(oper)
 
     def _remove_service(self, service_name):
@@ -619,23 +629,51 @@ class OperationCompletionHandler(threading.Thread):
         self.stoprequest = threading.Event()
         self.opers_to_handle_before_rest = 0
 
-    def _get_db_status(self, operation, success, messages=None):
-        """Get the db_status based on the status of the vdirect operation."""
-        if not success:
-            # we have a failure - log it and set the return ERROR as DB state
-            msg = ', '.join(messages) if messages else "unknown"
-            error_params = {"operation": operation, "msg": msg}
-            LOG.error(_('Operation %(operation)s failed. Reason: %(msg)s'),
-                      error_params)
-            return constants.ERROR
-        if operation.delete:
-            return None
-        else:
-            return constants.ACTIVE
-
     def join(self, timeout=None):
         self.stoprequest.set()
         super(OperationCompletionHandler, self).join(timeout)
+
+    def handle_operation_completion(self, oper):
+        result = self.rest_client.call('GET',
+                                       oper.operation_url,
+                                       None,
+                                       None)
+        completed = result[RESP_DATA]['complete']
+        reason = result[RESP_REASON],
+        description = result[RESP_STR]
+        if completed:
+            # operation is done - update the DB with the status
+            # or delete the entire graph from DB
+            success = result[RESP_DATA]['success']
+            sec_to_completion = time.time() - oper.creation_time
+            debug_data = {'oper': oper,
+                          'sec_to_completion': sec_to_completion,
+                          'success': success}
+            LOG.debug(_('Operation %(oper)s is completed after '
+                      '%(sec_to_completion)d sec '
+                      'with success status: %(success)s :'),
+                      debug_data)
+            db_status = None
+            if not success:
+                # failure - log it and set the return ERROR as DB state
+                if reason or description:
+                    msg = 'Reason:%s. Description:%s' % (reason, description)
+                else:
+                    msg = "unknown"
+                error_params = {"operation": oper, "msg": msg}
+                LOG.error(_('Operation %(operation)s failed. Reason: %(msg)s'),
+                          error_params)
+                db_status = constants.ERROR
+            else:
+                if oper.delete:
+                    _remove_object_from_db(self.plugin, oper)
+                else:
+                    db_status = constants.ACTIVE
+
+            if db_status:
+                _update_vip_graph_status(self.plugin, oper, db_status)
+
+        return completed
 
     def run(self):
         oper = None
@@ -653,31 +691,7 @@ class OperationCompletionHandler(threading.Thread):
                           str(oper))
                 # check the status - if oper is done: update the db ,
                 # else push the oper again to the queue
-                result = self.rest_client.call('GET',
-                                               oper.operation_url,
-                                               None,
-                                               None)
-                completed = result[RESP_DATA]['complete']
-                if completed:
-                    # operation is done - update the DB with the status
-                    # or delete the entire graph from DB
-                    success = result[RESP_DATA]['success']
-                    sec_to_completion = time.time() - oper.creation_time
-                    debug_data = {'oper': oper,
-                                  'sec_to_completion': sec_to_completion,
-                                  'success': success}
-                    LOG.debug(_('Operation %(oper)s is completed after '
-                              '%(sec_to_completion)d sec '
-                              'with success status: %(success)s :'),
-                              debug_data)
-                    db_status = self._get_db_status(oper, success)
-                    if db_status:
-                        _update_vip_graph_status(
-                            self.plugin, oper, db_status)
-                    else:
-                        _remove_object_from_db(
-                            self.plugin, oper)
-                else:
+                if not self.handle_operation_completion(oper):
                     LOG.debug(_('Operation %s is not completed yet..') % oper)
                     # Not completed - push to the queue again
                     self.queue.put_nowait(oper)
