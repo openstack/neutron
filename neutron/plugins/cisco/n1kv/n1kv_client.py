@@ -383,7 +383,12 @@ class Client(object):
                 'portProfile': policy_profile['name'],
                 'portProfileId': policy_profile['id'],
                 'tenantId': port['tenant_id'],
+                'portId': port['id'],
+                'macAddress': port['mac_address'],
                 }
+        if port.get('fixed_ips'):
+            body['ipAddress'] = port['fixed_ips'][0]['ip_address']
+            body['subnetId'] = port['fixed_ips'][0]['subnet_id']
         return self._post(self.vm_networks_path,
                           body=body)
 
@@ -406,6 +411,7 @@ class Client(object):
                 'macAddress': port['mac_address']}
         if port.get('fixed_ips'):
             body['ipAddress'] = port['fixed_ips'][0]['ip_address']
+            body['subnetId'] = port['fixed_ips'][0]['subnet_id']
         return self._post(self.ports_path % vm_network_name,
                           body=body)
 
