@@ -90,6 +90,11 @@ class VcnsDriverException(NsxPluginException):
     message = _("Error happened in NSX VCNS Driver: %(err_msg)s")
 
 
+class AdvRouterServiceUnavailable(n_exc.ServiceUnavailable):
+    message = _("Router %(router_id)s is not in 'ACTIVE' "
+                "status, thus unable to provide advanced service")
+
+
 class ServiceClusterUnavailable(NsxPluginException):
     message = _("Service cluster: '%(cluster_id)s' is unavailable. Please, "
                 "check NSX setup and/or configuration")

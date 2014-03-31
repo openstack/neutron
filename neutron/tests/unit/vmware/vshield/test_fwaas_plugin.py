@@ -100,11 +100,6 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
         self.ext_api = None
         self.plugin = None
 
-    def _create_and_get_router(self):
-        req = self._create_router(self.fmt, self._tenant_id)
-        res = self.deserialize(self.fmt, req)
-        return res['router']['id']
-
     def _create_firewall(self, fmt, name, description, firewall_policy_id,
                          admin_state_up=True, expected_res_status=None,
                          **kwargs):
@@ -141,20 +136,45 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
                 for k, v in attrs.iteritems():
                     self.assertEqual(fw['firewall'][k], v)
 
-    def test_create_firewall_without_policy(self):
+    def test_create_firewall_without_policy(self, **kwargs):
         name = "new_fw"
         attrs = self._get_test_firewall_attrs(name)
-        attrs['router_id'] = self._create_and_get_router()
+        if 'router_id' in kwargs:
+            attrs['router_id'] = kwargs.pop('router_id')
+        else:
+            attrs['router_id'] = self._create_and_get_router()
 
         with self.firewall(name=name,
                            router_id=attrs['router_id'],
                            admin_state_up=
                            test_db_firewall.ADMIN_STATE_UP,
-                           expected_res_status=201) as fw:
+                           **kwargs) as fw:
             attrs = self._replace_firewall_status(
                 attrs, const.PENDING_CREATE, const.ACTIVE)
             for k, v in attrs.iteritems():
                 self.assertEqual(fw['firewall'][k], v)
+
+    def test_create_firewall_with_invalid_router(self):
+        name = "new_fw"
+        attrs = self._get_test_firewall_attrs(name)
+        attrs['router_id'] = self._create_and_get_router()
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self.test_create_firewall_without_policy,
+                          router_id=None)
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self.test_create_firewall_without_policy,
+                          router_id='invalid_id')
+
+        router_id = self._create_and_get_router(
+            arg_list=('service_router',), service_router=False)
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self.test_create_firewall_without_policy,
+                          router_id=router_id)
+
+        router_id = self._create_and_get_router(active_set=False)
+        self.assertRaises(webob.exc.HTTPClientError,
+                          self.test_create_firewall_without_policy,
+                          router_id=router_id)
 
     def test_update_firewall(self):
         name = "new_fw"
