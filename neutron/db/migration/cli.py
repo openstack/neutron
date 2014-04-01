@@ -22,7 +22,6 @@ from alembic import script as alembic_script
 from alembic import util as alembic_util
 from oslo.config import cfg
 
-from neutron.common import legacy
 
 HEAD_FILENAME = 'HEAD'
 
@@ -165,5 +164,4 @@ def main():
 
     CONF()
     #TODO(gongysh) enable logging
-    legacy.modernize_quantum_config(CONF)
     CONF.command.func(config, CONF.command.name)

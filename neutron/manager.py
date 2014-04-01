@@ -15,7 +15,6 @@
 
 from oslo.config import cfg
 
-from neutron.common import legacy
 from neutron.common import utils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -110,8 +109,6 @@ class NeutronManager(object):
         LOG.info(_("Loading core plugin: %s"), plugin_provider)
         self.plugin = self._get_plugin_instance('neutron.core_plugins',
                                                 plugin_provider)
-        legacy.modernize_quantum_config(cfg.CONF)
-
         msg = validate_post_plugin_load()
         if msg:
             LOG.critical(msg)

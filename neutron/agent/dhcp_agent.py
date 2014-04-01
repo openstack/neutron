@@ -29,7 +29,6 @@ from neutron.agent.linux import ovs_lib  # noqa
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.common import legacy
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
@@ -600,7 +599,6 @@ def main():
     register_options()
     cfg.CONF(project='neutron')
     config.setup_logging(cfg.CONF)
-    legacy.modernize_quantum_config(cfg.CONF)
     server = neutron_service.Service.create(
         binary='neutron-dhcp-agent',
         topic=topics.DHCP_AGENT,

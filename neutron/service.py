@@ -22,7 +22,6 @@ import random
 from oslo.config import cfg
 
 from neutron.common import config
-from neutron.common import legacy
 from neutron import context
 from neutron import manager
 from neutron import neutron_plugin_base_v2
@@ -91,7 +90,6 @@ class NeutronApiService(WsgiService):
         # Log the options used when starting if we're in debug mode...
 
         config.setup_logging(cfg.CONF)
-        legacy.modernize_quantum_config(cfg.CONF)
         # Dump the initial option values
         cfg.CONF.log_opt_values(LOG, std_logging.DEBUG)
         service = cls(app_name)
@@ -101,13 +99,8 @@ class NeutronApiService(WsgiService):
 def serve_wsgi(cls):
 
     try:
-        try:
-            service = cls.create()
-            service.start()
-        except RuntimeError:
-            LOG.exception(_('Error occurred: trying old api-paste.ini.'))
-            service = cls.create('quantum')
-            service.start()
+        service = cls.create()
+        service.start()
     except Exception:
         with excutils.save_and_reraise_exception():
             LOG.exception(_('Unrecoverable error: please check log '
