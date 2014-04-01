@@ -41,7 +41,8 @@ migration_for_plugins = [
     'neutron.plugins.vmware.plugin.NsxPlugin',
     'neutron.plugins.vmware.plugin.NsxServicePlugin',
     'neutron.plugins.oneconvergence.plugin.OneConvergencePluginV2',
-    'neutron.plugins.cisco.network_plugin.PluginV2'
+    'neutron.plugins.cisco.network_plugin.PluginV2',
+    'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2'
 ]
 
 from alembic import op
