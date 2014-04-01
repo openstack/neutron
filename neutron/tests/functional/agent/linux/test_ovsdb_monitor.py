@@ -32,32 +32,23 @@ still able to execute tests that require the capability.
 
 import eventlet
 
-from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import ovsdb_monitor
 from neutron.tests.functional.agent.linux import base as base_agent
 
 
-class BaseMonitorTest(base_agent.BaseLinuxTestCase):
+class BaseMonitorTest(base_agent.BaseOVSLinuxTestCase):
 
     def setUp(self):
-        super(BaseMonitorTest, self).setUp()
+        # Emulate using a rootwrap script with sudo
+        super(BaseMonitorTest, self).setUp(root_helper='sudo sudo')
 
         self._check_test_requirements()
-
-        # Emulate using a rootwrap script with sudo
-        self.root_helper = 'sudo sudo'
-        self.ovs = ovs_lib.BaseOVS(self.root_helper)
-        self.bridge = self.create_ovs_resource('test-br-', self.ovs.add_bridge)
-
-        def cleanup_bridge():
-            self.bridge.destroy()
-        self.addCleanup(cleanup_bridge)
+        self.bridge = self.create_ovs_bridge()
 
     def _check_test_requirements(self):
         self.check_sudo_enabled()
         self.check_command(['which', 'ovsdb-client'],
-                           'Exit code: 1',
-                           'ovsdb-client is not installed')
+                           'Exit code: 1', 'ovsdb-client is not installed')
         self.check_command(['sudo', '-n', 'ovsdb-client', 'list-dbs'],
                            'Exit code: 1',
                            'password-less sudo not granted for ovsdb-client')
@@ -110,7 +101,7 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
                         'Initial call should always be true')
         self.assertFalse(self.monitor.has_updates,
                          'has_updates without port addition should be False')
-        self.create_ovs_resource('test-port-', self.bridge.add_port)
+        self.create_resource('test-port-', self.bridge.add_port)
         with self.assert_max_execution_time():
             # has_updates after port addition should become True
             while not self.monitor.has_updates:

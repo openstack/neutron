@@ -15,12 +15,20 @@
 import os
 import random
 
+from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.plugins.common import constants as q_const
 from neutron.tests import base
 
 
+BR_PREFIX = 'test-br'
+
+
 class BaseLinuxTestCase(base.BaseTestCase):
+    def setUp(self, root_helper='sudo'):
+        super(BaseLinuxTestCase, self).setUp()
+
+        self.root_helper = root_helper
 
     def check_command(self, cmd, error_text, skip_msg):
         try:
@@ -38,17 +46,29 @@ class BaseLinuxTestCase(base.BaseTestCase):
         name = prefix + str(random.randint(1, 0x7fffffff))
         return name[:max_length]
 
-    def create_ovs_resource(self, name_prefix, creation_func):
-        """Create a new ovs resource that does not already exist.
+    def create_resource(self, name_prefix, creation_func, *args, **kwargs):
+        """Create a new resource that does not already exist.
 
         :param name_prefix: The prefix for a randomly generated name
         :param creation_func: A function taking the name of the resource
-               to be created.  An error is assumed to indicate a name
-               collision.
+               to be created as it's first argument.  An error is assumed
+               to indicate a name collision.
+        :param *args *kwargs: These will be passed to the create function.
         """
         while True:
             name = self.get_rand_name(q_const.MAX_DEV_NAME_LEN, name_prefix)
             try:
-                return creation_func(name)
+                return creation_func(name, *args, **kwargs)
             except RuntimeError:
                 continue
+
+
+class BaseOVSLinuxTestCase(BaseLinuxTestCase):
+    def setUp(self, root_helper='sudo'):
+        super(BaseOVSLinuxTestCase, self).setUp(root_helper)
+        self.ovs = ovs_lib.BaseOVS(self.root_helper)
+
+    def create_ovs_bridge(self, br_prefix=BR_PREFIX):
+        br = self.create_resource(br_prefix, self.ovs.add_bridge)
+        self.addCleanup(br.destroy)
+        return br
