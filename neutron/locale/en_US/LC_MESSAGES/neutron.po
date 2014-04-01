@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-31 06:29+0000\n"
+"POT-Creation-Date: 2014-04-01 06:27+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (United States) "
@@ -520,7 +520,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:568 neutron/agent/l3_agent.py:941
+#: neutron/agent/dhcp_agent.py:568 neutron/agent/l3_agent.py:953
 #: neutron/agent/metadata/agent.py:305
 #: neutron/services/metering/agents/metering_agent.py:272
 msgid ""
@@ -528,7 +528,7 @@ msgid ""
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:574 neutron/agent/l3_agent.py:946
+#: neutron/agent/dhcp_agent.py:574 neutron/agent/l3_agent.py:958
 #: neutron/agent/metadata/agent.py:310
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:108
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:841
@@ -541,7 +541,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:582 neutron/agent/l3_agent.py:951
+#: neutron/agent/dhcp_agent.py:582 neutron/agent/l3_agent.py:963
 #: neutron/services/metering/agents/metering_agent.py:280
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -634,97 +634,102 @@ msgstr ""
 msgid "Ignoring multiple IPs on router port %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:451
+#: neutron/agent/l3_agent.py:452
 #, python-format
 msgid "Deleting stale internal router device: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:581
+#: neutron/agent/l3_agent.py:479
+#, python-format
+msgid "Deleting stale external router device: %s"
+msgstr ""
+
+#: neutron/agent/l3_agent.py:593
 #, python-format
 msgid "Unable to configure IP address for floating IP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:611
+#: neutron/agent/l3_agent.py:623
 #, python-format
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:725
+#: neutron/agent/l3_agent.py:737
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:730
+#: neutron/agent/l3_agent.py:742
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:738
+#: neutron/agent/l3_agent.py:750
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:742
+#: neutron/agent/l3_agent.py:754
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:749
+#: neutron/agent/l3_agent.py:761
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:801
+#: neutron/agent/l3_agent.py:813
 #, python-format
 msgid "Starting RPC loop for %d updated routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:810
+#: neutron/agent/l3_agent.py:822
 msgid "RPC loop successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:812 neutron/agent/l3_agent.py:850
+#: neutron/agent/l3_agent.py:824 neutron/agent/l3_agent.py:862
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:830
+#: neutron/agent/l3_agent.py:842
 #, python-format
 msgid "Starting _sync_routers_task - fullsync:%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:841
+#: neutron/agent/l3_agent.py:853
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:844
+#: neutron/agent/l3_agent.py:856
 msgid "_sync_routers_task successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:846
+#: neutron/agent/l3_agent.py:858
 msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:859
+#: neutron/agent/l3_agent.py:871
 msgid "L3 agent started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:874
+#: neutron/agent/l3_agent.py:886
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:882
+#: neutron/agent/l3_agent.py:894
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:914
+#: neutron/agent/l3_agent.py:926
 msgid "Report state task started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:938
+#: neutron/agent/l3_agent.py:950
 msgid "Report state task successfully completed"
 msgstr ""
 
@@ -2695,12 +2700,12 @@ msgstr ""
 msgid "Error parsing dns address %s"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1376
+#: neutron/db/db_base_plugin_v2.py:1377
 #, python-format
 msgid "Allocated IP %(ip_address)s (%(network_id)s/%(subnet_id)s/%(port_id)s)"
 msgstr ""
 
-#: neutron/db/db_base_plugin_v2.py:1455
+#: neutron/db/db_base_plugin_v2.py:1456
 #, python-format
 msgid ""
 "Ignoring PortNotFound when deleting port '%s'. The port has already been "
@@ -4244,18 +4249,6 @@ msgstr ""
 msgid "Could not send notification to %(topic)s. Payload=%(message)s"
 msgstr ""
 
-#: neutron/openstack/common/rpc/__init__.py:103
-#, python-format
-msgid ""
-"A RPC is being made while holding a lock. The locks currently held are "
-"%(locks)s. This is probably a bug. Please report it. Include the "
-"following: [%(stack)s]."
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:75
-msgid "Pool creating new connection"
-msgstr ""
-
 #: neutron/openstack/common/rpc/amqp.py:202
 #, python-format
 msgid "No calling threads waiting for msg_id : %(msg_id)s, message : %(data)s"
@@ -4273,21 +4266,6 @@ msgid ""
 " be a MulticallProxyWaiter leak."
 msgstr ""
 
-#: neutron/openstack/common/rpc/amqp.py:290
-#, python-format
-msgid "unpacked context: %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:342
-#, python-format
-msgid "UNIQUE_ID is %s."
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:435
-#, python-format
-msgid "received %s"
-msgstr ""
-
 #: neutron/openstack/common/rpc/amqp.py:443
 #, python-format
 msgid "no method for message: %s"
@@ -4298,47 +4276,8 @@ msgstr ""
 msgid "No method for message: %s"
 msgstr ""
 
-#: neutron/openstack/common/rpc/amqp.py:472
-#: neutron/openstack/common/rpc/impl_zmq.py:280
-#, python-format
-msgid "Expected exception during message handling (%s)"
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:480
-#: neutron/openstack/common/rpc/impl_zmq.py:286
-msgid "Exception during message handling"
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:554
-#, python-format
-msgid "Making synchronous call on %s ..."
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:557
-#, python-format
-msgid "MSG_ID is %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:583
-#, python-format
-msgid "Making asynchronous cast on %s..."
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:592
-msgid "Making asynchronous fanout cast..."
-msgstr ""
-
-#: neutron/openstack/common/rpc/amqp.py:620
-#, python-format
-msgid "Sending %(event_type)s on %(topic)s"
-msgstr ""
-
 #: neutron/openstack/common/rpc/common.py:76
 msgid "An unknown RPC related exception occurred."
-msgstr ""
-
-#: neutron/openstack/common/rpc/common.py:88
-msgid "Exception in string format operation"
 msgstr ""
 
 #: neutron/openstack/common/rpc/common.py:106
@@ -4387,65 +4326,11 @@ msgstr ""
 msgid "Specified RPC version cap, %(version_cap)s, is too low"
 msgstr ""
 
-#: neutron/openstack/common/rpc/common.py:288
-#, python-format
-msgid "Returning exception %s to caller"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:156
-msgid "Failed to process message ... skipping it."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:160
-msgid "Failed to process message ... will requeue."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:495
-#, python-format
-msgid "Reconnecting to AMQP server on %(hostname)s:%(port)d"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:517
-#, python-format
-msgid "Connected to AMQP server on %(hostname)s:%(port)d"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:554
+#: neutron/openstack/common/rpc/impl_kombu.py:557
 #, python-format
 msgid ""
 "Unable to connect to AMQP server on %(hostname)s:%(port)d after "
 "%(max_retries)d tries: %(err_str)s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:568
-#, python-format
-msgid ""
-"AMQP server on %(hostname)s:%(port)d is unreachable: %(err_str)s. Trying "
-"again in %(sleep_time)d seconds."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:622
-#: neutron/openstack/common/rpc/impl_qpid.py:573
-#, python-format
-msgid "Failed to declare consumer for topic '%(topic)s': %(err_str)s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:640
-#: neutron/openstack/common/rpc/impl_qpid.py:588
-#, python-format
-msgid "Timed out waiting for RPC response: %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:644
-#: neutron/openstack/common/rpc/impl_qpid.py:592
-#, python-format
-msgid "Failed to consume message from queue: %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:683
-#: neutron/openstack/common/rpc/impl_qpid.py:627
-#, python-format
-msgid "Failed to publish message to topic '%(topic)s': %(err_str)s"
 msgstr ""
 
 #: neutron/openstack/common/rpc/impl_qpid.py:87
@@ -4453,63 +4338,8 @@ msgstr ""
 msgid "Invalid value for qpid_topology_version: %d"
 msgstr ""
 
-#: neutron/openstack/common/rpc/impl_qpid.py:191
-msgid "Failed to process message... skipping it."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_qpid.py:515
-#, python-format
-msgid "Unable to connect to AMQP server: %(e)s. Sleeping %(delay)s seconds"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_qpid.py:521
-#, python-format
-msgid "Connected to AMQP server on %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_qpid.py:534
-msgid "Re-established AMQP queues"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_qpid.py:600
-msgid "Error processing message.  Skipping it."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:96
-msgid "JSON serialization failed."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:101
-#, python-format
-msgid "Deserializing: %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:136
-#, python-format
-msgid "Connecting to %(addr)s with %(type)s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:137
-#, python-format
-msgid "-> Subscribed to %(subscribe)s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:138
-#, python-format
-msgid "-> bind: %(bind)s"
-msgstr ""
-
 #: neutron/openstack/common/rpc/impl_zmq.py:146
 msgid "Could not open socket."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:158
-#, python-format
-msgid "Subscribing to %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:195
-msgid "ZeroMQ socket could not be closed."
 msgstr ""
 
 #: neutron/openstack/common/rpc/impl_zmq.py:200
@@ -4520,104 +4350,8 @@ msgstr ""
 msgid "You cannot send on this socket."
 msgstr ""
 
-#: neutron/openstack/common/rpc/impl_zmq.py:267
-#, python-format
-msgid "Running func with context: %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:305
-msgid "Sending reply"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:339
-msgid "RPC message did not include method."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:371
-msgid "Registering reactor"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:383
-msgid "In reactor registered"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:388
-msgid "Consuming socket"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:438
-#, python-format
-msgid "Creating proxy for topic: %s"
-msgstr ""
-
 #: neutron/openstack/common/rpc/impl_zmq.py:444
 msgid "Topic contained dangerous characters."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:476
-msgid "Topic socket file creation failed."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:482
-#, python-format
-msgid "Local per-topic backlog buffer full for topic %(topic)s. Dropping message."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:498
-#, python-format
-msgid "Required IPC directory does not exist at %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:507
-#, python-format
-msgid "Permission denied to IPC directory at %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:510
-msgid "Could not create ZeroMQ receiver daemon. Socket may already be in use."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:544
-#, python-format
-msgid "CONSUMER RECEIVED DATA: %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:563
-msgid "ZMQ Envelope version unsupported or unknown."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:591
-msgid "Skipping topic registration. Already registered."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:598
-#, python-format
-msgid "Consumer is a zmq.%s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:650
-msgid "Creating payload"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:663
-msgid "Creating queue socket for reply waiter"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:676
-msgid "Sending cast"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:679
-msgid "Cast sent; Waiting reply"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:682
-#, python-format
-msgid "Received message: %s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:683
-msgid "Unpacking response"
 msgstr ""
 
 #: neutron/openstack/common/rpc/impl_zmq.py:692
@@ -4626,19 +4360,6 @@ msgstr ""
 
 #: neutron/openstack/common/rpc/impl_zmq.py:699
 msgid "RPC Message Invalid."
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:722
-#: neutron/plugins/midonet/plugin.py:196
-#: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:23
-#: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:27
-#, python-format
-msgid "%(msg)s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_zmq.py:725
-#, python-format
-msgid "Sending message(s) to: %s"
 msgstr ""
 
 #: neutron/openstack/common/rpc/impl_zmq.py:729
@@ -4654,32 +4375,16 @@ msgstr ""
 msgid "rpc_zmq_matchmaker = %(orig)s is deprecated; use %(new)s instead"
 msgstr ""
 
-#: neutron/openstack/common/rpc/matchmaker.py:45
+#: neutron/openstack/common/rpc/matchmaker.py:46
 msgid "Match not found by MatchMaker."
 msgstr ""
 
-#: neutron/openstack/common/rpc/matchmaker.py:79
+#: neutron/openstack/common/rpc/matchmaker.py:80
 msgid "Matchmaker does not implement registration or heartbeat."
 msgstr ""
 
-#: neutron/openstack/common/rpc/matchmaker.py:215
-#, python-format
-msgid "Matchmaker unregistered: %(key)s, %(host)s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/matchmaker.py:227
+#: neutron/openstack/common/rpc/matchmaker.py:228
 msgid "Register before starting heartbeat."
-msgstr ""
-
-#: neutron/openstack/common/rpc/matchmaker_ring.py:75
-#: neutron/openstack/common/rpc/matchmaker_ring.py:93
-#, python-format
-msgid "No key defining hosts for topic '%s', see ringfile"
-msgstr ""
-
-#: neutron/openstack/common/rpc/service.py:47
-#, python-format
-msgid "Creating Consumer connection for Service %s"
 msgstr ""
 
 #: neutron/plugins/bigswitch/config.py:33
@@ -6003,22 +5708,22 @@ msgstr ""
 msgid "Invalid input for CIDR"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:458
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:464
 #, python-format
 msgid "req: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:467
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:473
 #, python-format
 msgid "status_code %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:472
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:478
 #, python-format
 msgid "VSM: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:487
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:493
 #, python-format
 msgid "Unable to serialize object of type = '%s'"
 msgstr ""
@@ -6221,35 +5926,35 @@ msgstr ""
 msgid "_send_create_port_request: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:887
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:886
 #, python-format
 msgid "_send_update_port_request: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:902
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:901
 #, python-format
 msgid "_send_delete_port_request: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:943
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:942
 #, python-format
 msgid "Create network: profile_id=%s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:951
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:950
 #, python-format
 msgid ""
 "Physical_network %(phy_net)s, seg_type %(net_type)s, seg_id %(seg_id)s, "
 "multicast_ip %(multicast_ip)s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:963
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:973
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:962
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:972
 #, python-format
 msgid "Seg list %s "
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1016
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1015
 #: neutron/plugins/hyperv/hyperv_neutron_plugin.py:254
 #: neutron/plugins/ibm/sdnve_neutron_plugin.py:207
 #: neutron/plugins/metaplugin/meta_neutron_plugin.py:222
@@ -6259,84 +5964,84 @@ msgstr ""
 msgid "Created network: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1074
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1073
 #, python-format
 msgid "Updated network: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1089
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1088
 #, python-format
 msgid "Cannot delete network '%s' that is member of a trunk segment"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1093
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1092
 #, python-format
 msgid "Cannot delete network '%s' that is a member of a multi-segment network"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1105
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1104
 #, python-format
 msgid "Deleted network: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1115
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1114
 #, python-format
 msgid "Get network: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1137
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1136
 msgid "Get networks"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1180
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1179
 #, python-format
 msgid "Create port: profile_id=%s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1196
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1195
 #: neutron/plugins/ibm/sdnve_neutron_plugin.py:310
 #, python-format
 msgid "Created port: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1207
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1206
 #, python-format
 msgid "Update port: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1242
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1241
 #, python-format
 msgid "Get port: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1262
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1261
 msgid "Get ports"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1278
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1277
 msgid "Create subnet"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1286
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1285
 #, python-format
 msgid "Created subnet: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1297
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1296
 msgid "Update subnet"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1312
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1311
 #, python-format
 msgid "Delete subnet: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1327
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1326
 #, python-format
 msgid "Get subnet: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1347
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1346
 msgid "Get subnets"
 msgstr ""
 
@@ -8329,6 +8034,13 @@ msgstr ""
 #: neutron/plugins/midonet/plugin.py:174
 #, python-format
 msgid "There is no %(name)s with ID %(id)s in MidoNet."
+msgstr ""
+
+#: neutron/plugins/midonet/plugin.py:196
+#: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:23
+#: neutron/plugins/ml2/drivers/mech_arista/exceptions.py:27
+#, python-format
+msgid "%(msg)s"
 msgstr ""
 
 #: neutron/plugins/midonet/plugin.py:228
@@ -15328,72 +15040,76 @@ msgid ""
 "%(pool_id)s delete = %(delete)s vip_id = %(vip_id)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:364
+#: neutron/services/loadbalancer/drivers/radware/driver.py:345
+msgid "Starting operation completion handling thread"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:370
 #, python-format
 msgid "_update_workflow response: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:373
-#: neutron/services/loadbalancer/drivers/radware/driver.py:393
+#: neutron/services/loadbalancer/drivers/radware/driver.py:379
+#: neutron/services/loadbalancer/drivers/radware/driver.py:401
 #, python-format
 msgid "Pushing operation %s to the queue"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:379
+#: neutron/services/loadbalancer/drivers/radware/driver.py:387
 #, python-format
 msgid "Remove the workflow %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:484
+#: neutron/services/loadbalancer/drivers/radware/driver.py:494
 #, python-format
 msgid "create_workflow response: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:531
+#: neutron/services/loadbalancer/drivers/radware/driver.py:541
 #, python-format
 msgid "vDirectRESTClient:init server=%(server)s, port=%(port)d, ssl=%(ssl)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:557
+#: neutron/services/loadbalancer/drivers/radware/driver.py:567
 msgid "vdirectRESTClient: Could not establish HTTPS connection"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:564
+#: neutron/services/loadbalancer/drivers/radware/driver.py:574
 msgid "vdirectRESTClient: Could not establish HTTP connection"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:581
+#: neutron/services/loadbalancer/drivers/radware/driver.py:591
 #, python-format
 msgid "vdirectRESTClient: %(action)s failure, %(e)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:628
-#, python-format
-msgid "Operation %(operation)s failed. Reason: %(msg)s"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:669
+#: neutron/services/loadbalancer/drivers/radware/driver.py:652
 #, python-format
 msgid ""
 "Operation %(oper)s is completed after %(sec_to_completion)d sec with "
 "success status: %(success)s :"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:681
+#: neutron/services/loadbalancer/drivers/radware/driver.py:664
+#, python-format
+msgid "Operation %(operation)s failed. Reason: %(msg)s"
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:695
 #, python-format
 msgid "Operation %s is not completed yet.."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:696
+#: neutron/services/loadbalancer/drivers/radware/driver.py:710
 msgid "Exception was thrown inside OperationCompletionHandler"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:723
+#: neutron/services/loadbalancer/drivers/radware/driver.py:737
 #, python-format
 msgid "_update: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:763
+#: neutron/services/loadbalancer/drivers/radware/driver.py:777
 #, python-format
 msgid "_remove_object_from_db %s"
 msgstr ""
@@ -15907,9 +15623,9 @@ msgid "No host cert for %(server)s in cert %(cert)s"
 msgstr ""
 
 #: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:227
-#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:251
-#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:272
-#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:297
+#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:249
+#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:268
+#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:291
 #, python-format
 msgid "Unexpected error code: %s"
 msgstr ""
@@ -17480,11 +17196,6 @@ msgstr ""
 #~ msgid "Removing vlan %(vlan)s on physical network %(network)s from pool"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "Reserving specific vlan %(vlan)s on "
-#~ "physical network %(network)s outside pool"
-#~ msgstr ""
-
 #~ msgid "Releasing vlan %(vlan)s on physical network %(network)s to pool"
 #~ msgstr ""
 
@@ -17525,5 +17236,198 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Pool_id %(pool_id)s status ACTIVE is expected but status is %(status)s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "A RPC is being made while holding"
+#~ " a lock. The locks currently held "
+#~ "are %(locks)s. This is probably a "
+#~ "bug. Please report it. Include the "
+#~ "following: [%(stack)s]."
+#~ msgstr ""
+
+#~ msgid "Pool creating new connection"
+#~ msgstr ""
+
+#~ msgid "unpacked context: %s"
+#~ msgstr ""
+
+#~ msgid "UNIQUE_ID is %s."
+#~ msgstr ""
+
+#~ msgid "received %s"
+#~ msgstr ""
+
+#~ msgid "Expected exception during message handling (%s)"
+#~ msgstr ""
+
+#~ msgid "Exception during message handling"
+#~ msgstr ""
+
+#~ msgid "Making synchronous call on %s ..."
+#~ msgstr ""
+
+#~ msgid "MSG_ID is %s"
+#~ msgstr ""
+
+#~ msgid "Making asynchronous cast on %s..."
+#~ msgstr ""
+
+#~ msgid "Making asynchronous fanout cast..."
+#~ msgstr ""
+
+#~ msgid "Sending %(event_type)s on %(topic)s"
+#~ msgstr ""
+
+#~ msgid "Exception in string format operation"
+#~ msgstr ""
+
+#~ msgid "Returning exception %s to caller"
+#~ msgstr ""
+
+#~ msgid "Failed to process message ... skipping it."
+#~ msgstr ""
+
+#~ msgid "Failed to process message ... will requeue."
+#~ msgstr ""
+
+#~ msgid "Reconnecting to AMQP server on %(hostname)s:%(port)d"
+#~ msgstr ""
+
+#~ msgid "Connected to AMQP server on %(hostname)s:%(port)d"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "AMQP server on %(hostname)s:%(port)d is "
+#~ "unreachable: %(err_str)s. Trying again in "
+#~ "%(sleep_time)d seconds."
+#~ msgstr ""
+
+#~ msgid "Failed to declare consumer for topic '%(topic)s': %(err_str)s"
+#~ msgstr ""
+
+#~ msgid "Timed out waiting for RPC response: %s"
+#~ msgstr ""
+
+#~ msgid "Failed to consume message from queue: %s"
+#~ msgstr ""
+
+#~ msgid "Failed to publish message to topic '%(topic)s': %(err_str)s"
+#~ msgstr ""
+
+#~ msgid "Failed to process message... skipping it."
+#~ msgstr ""
+
+#~ msgid "Unable to connect to AMQP server: %(e)s. Sleeping %(delay)s seconds"
+#~ msgstr ""
+
+#~ msgid "Connected to AMQP server on %s"
+#~ msgstr ""
+
+#~ msgid "Re-established AMQP queues"
+#~ msgstr ""
+
+#~ msgid "Error processing message.  Skipping it."
+#~ msgstr ""
+
+#~ msgid "JSON serialization failed."
+#~ msgstr ""
+
+#~ msgid "Deserializing: %s"
+#~ msgstr ""
+
+#~ msgid "Connecting to %(addr)s with %(type)s"
+#~ msgstr ""
+
+#~ msgid "-> Subscribed to %(subscribe)s"
+#~ msgstr ""
+
+#~ msgid "-> bind: %(bind)s"
+#~ msgstr ""
+
+#~ msgid "Subscribing to %s"
+#~ msgstr ""
+
+#~ msgid "ZeroMQ socket could not be closed."
+#~ msgstr ""
+
+#~ msgid "Running func with context: %s"
+#~ msgstr ""
+
+#~ msgid "Sending reply"
+#~ msgstr ""
+
+#~ msgid "RPC message did not include method."
+#~ msgstr ""
+
+#~ msgid "Registering reactor"
+#~ msgstr ""
+
+#~ msgid "In reactor registered"
+#~ msgstr ""
+
+#~ msgid "Consuming socket"
+#~ msgstr ""
+
+#~ msgid "Creating proxy for topic: %s"
+#~ msgstr ""
+
+#~ msgid "Topic socket file creation failed."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Local per-topic backlog buffer full "
+#~ "for topic %(topic)s. Dropping message."
+#~ msgstr ""
+
+#~ msgid "Required IPC directory does not exist at %s"
+#~ msgstr ""
+
+#~ msgid "Permission denied to IPC directory at %s"
+#~ msgstr ""
+
+#~ msgid "Could not create ZeroMQ receiver daemon. Socket may already be in use."
+#~ msgstr ""
+
+#~ msgid "CONSUMER RECEIVED DATA: %s"
+#~ msgstr ""
+
+#~ msgid "ZMQ Envelope version unsupported or unknown."
+#~ msgstr ""
+
+#~ msgid "Skipping topic registration. Already registered."
+#~ msgstr ""
+
+#~ msgid "Consumer is a zmq.%s"
+#~ msgstr ""
+
+#~ msgid "Creating payload"
+#~ msgstr ""
+
+#~ msgid "Creating queue socket for reply waiter"
+#~ msgstr ""
+
+#~ msgid "Sending cast"
+#~ msgstr ""
+
+#~ msgid "Cast sent; Waiting reply"
+#~ msgstr ""
+
+#~ msgid "Received message: %s"
+#~ msgstr ""
+
+#~ msgid "Unpacking response"
+#~ msgstr ""
+
+#~ msgid "Sending message(s) to: %s"
+#~ msgstr ""
+
+#~ msgid "Matchmaker unregistered: %(key)s, %(host)s"
+#~ msgstr ""
+
+#~ msgid "No key defining hosts for topic '%s', see ringfile"
+#~ msgstr ""
+
+#~ msgid "Creating Consumer connection for Service %s"
 #~ msgstr ""
 
