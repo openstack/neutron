@@ -31,6 +31,7 @@ from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import quota_db  # noqa
+from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
@@ -608,6 +609,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         ent_rtr_mapping = nuagedb.get_ent_rtr_mapping_by_rtrid(session,
                                                                id)
         if ent_rtr_mapping:
+            filters = {
+                'device_id': [id],
+                'device_owner': [os_constants.DEVICE_OWNER_ROUTER_INTF]
+            }
+            ports = self.get_ports(context, filters)
+            if ports:
+                raise l3.RouterInUse(router_id=id)
             nuage_router_id = ent_rtr_mapping['nuage_router_id']
             self.nuageclient.delete_router(nuage_router_id)
         router_zone = nuagedb.get_rtr_zone_mapping(session, id)
