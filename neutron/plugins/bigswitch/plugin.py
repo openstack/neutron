@@ -436,6 +436,8 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
             # would have deleted an non-existent port.
             self.servers.rest_delete_port(tenant_id, net_id, port['id'])
 
+    # NOTE(kevinbenton): workaround for eventlet/mysql deadlock
+    @utils.synchronized('bsn-port-barrier')
     def _set_port_status(self, port_id, status):
         session = db.get_session()
         try:
