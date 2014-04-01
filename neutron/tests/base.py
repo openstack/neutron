@@ -62,6 +62,9 @@ class BaseTestCase(testtools.TestCase):
         self.useFixture(fixtures.NestedTempfile())
         self.useFixture(fixtures.TempHomeDir())
 
+        self.temp_dir = self.useFixture(fixtures.TempDir()).path
+        cfg.CONF.set_override('state_path', self.temp_dir)
+
         self.addCleanup(CONF.reset)
 
         if os.environ.get('OS_STDOUT_CAPTURE') in TRUE_STRING:
