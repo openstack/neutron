@@ -117,6 +117,6 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
         ) as (mock_rest, p):
             # make sure basic expected keys are present in the port body
             pb = mock_rest.mock_calls[0][1][2]
-            self.assertEqual('host', pb['binding_host'])
+            self.assertEqual('host', pb['binding:host_id'])
             self.assertIn('bound_segment', pb)
             self.assertIn('network', pb)
