@@ -936,6 +936,8 @@ class DBInterface(object):
             rt_vnc = RouteTable(name=rt_q['name'],
                                 parent_obj=project_obj)
 
+            if not rt_q['routes']:
+                return rt_vnc
             for route in rt_q['routes']['route']:
                 try:
                     vm_obj = self._vnc_lib.virtual_machine_read(id=route['next_hop'])
