@@ -870,17 +870,6 @@ class TestBasicRouterOperations(base.BaseTestCase):
             namespace=ri.ns_name(),
             prefix=l3_agent.EXTERNAL_DEV_PREFIX)
 
-    def test_routers_with_admin_state_down(self):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.plugin_api.get_external_network_id.return_value = None
-
-        routers = [
-            {'id': _uuid(),
-             'admin_state_up': False,
-             'external_gateway_info': {}}]
-        agent._process_routers(routers)
-        self.assertNotIn(routers[0]['id'], agent.router_info)
-
     def test_router_deleted(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.router_deleted(None, FAKE_ID)
