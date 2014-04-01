@@ -220,8 +220,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         self.removed_routers = set()
         self.sync_progress = False
 
-        self._delete_stale_namespaces = (self.conf.use_namespaces and
-                                         self.conf.router_delete_namespaces)
+        self._clean_stale_namespaces = self.conf.use_namespaces
 
         self.rpc_loop = loopingcall.FixedIntervalLoopingCall(
             self._rpc_loop)
@@ -249,7 +248,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def _cleanup_namespaces(self, routers):
         """Destroy stale router namespaces on host when L3 agent restarts
 
-        This routine is called when self._delete_stale_namespaces is True.
+        This routine is called when self._clean_stale_namespaces is True.
 
         The argument routers is the list of routers that are recorded in
         the database as being hosted on this node.
@@ -285,7 +284,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             except RuntimeError:
                 LOG.exception(_('Failed to destroy stale router namespace '
                                 '%s'), ns)
-        self._delete_stale_namespaces = False
+        self._clean_stale_namespaces = False
 
     def _destroy_router_namespace(self, namespace):
         ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=namespace)
@@ -864,7 +863,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
         # Resync is not necessary for the cleanup of stale
         # namespaces.
-        if self._delete_stale_namespaces:
+        if self._clean_stale_namespaces:
             self._cleanup_namespaces(routers)
 
     def after_start(self):
