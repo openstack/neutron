@@ -363,7 +363,11 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
                           "[%s]. Defaulting to ovs."),
                         cfg_vif_type)
             cfg_vif_type = portbindings.VIF_TYPE_OVS
-        hostid = porttracker_db.get_port_hostid(context, port['id'])
+        # In ML2, the host_id is already populated
+        if portbindings.HOST_ID in port:
+            hostid = port[portbindings.HOST_ID]
+        else:
+            hostid = porttracker_db.get_port_hostid(context, port['id'])
         if hostid:
             port[portbindings.HOST_ID] = hostid
             override = self._check_hostvif_override(hostid)

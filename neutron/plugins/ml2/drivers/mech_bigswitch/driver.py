@@ -26,7 +26,6 @@ from neutron import context as ctx
 from neutron.extensions import portbindings
 from neutron.openstack.common import log
 from neutron.plugins.bigswitch import config as pl_config
-from neutron.plugins.bigswitch.db import porttracker_db
 from neutron.plugins.bigswitch.plugin import NeutronRestProxyV2Base
 from neutron.plugins.bigswitch import servermanager
 from neutron.plugins.ml2 import driver_api as api
@@ -99,14 +98,8 @@ class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
         port = copy.deepcopy(context.current)
         net = context.network.current
         port['network'] = net
-        port['binding_host'] = context._binding.host
         port['bound_segment'] = context.bound_segment
         actx = ctx.get_admin_context()
-        if (portbindings.HOST_ID in port and 'id' in port):
-            host_id = port[portbindings.HOST_ID]
-            porttracker_db.put_port_hostid(actx, port['id'], host_id)
-        else:
-            host_id = ''
         prepped_port = self._extend_port_dict_binding(actx, port)
         prepped_port = self._map_state_and_status(prepped_port)
         if (portbindings.HOST_ID not in prepped_port or
