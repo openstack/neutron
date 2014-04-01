@@ -185,17 +185,19 @@ class OneConvergencePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         network['network']['id'] = net['id']
 
-        try:
-            neutron_net = super(OneConvergencePluginV2,
-                                self).create_network(context, network)
+        with context.session.begin(subtransactions=True):
+            try:
+                neutron_net = super(OneConvergencePluginV2,
+                                    self).create_network(context, network)
 
-            #following call checks whether the network is external or not and
-            #if it is external then adds this network to externalnetworks
-            #table of neutron db
-            self._process_l3_create(context, neutron_net, network['network'])
-        except nvsdexception.NVSDAPIException:
-            with excutils.save_and_reraise_exception():
-                self.nvsdlib.delete_network(net)
+                #following call checks whether the network is external or not
+                #and if it is external then adds this network to
+                #externalnetworks table of neutron db
+                self._process_l3_create(context, neutron_net,
+                                        network['network'])
+            except nvsdexception.NVSDAPIException:
+                with excutils.save_and_reraise_exception():
+                    self.nvsdlib.delete_network(net)
 
         return neutron_net
 
