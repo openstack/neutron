@@ -30,27 +30,28 @@ migration_for_plugins = [
     'neutron.plugins.cisco.network_plugin.PluginV2'
 ]
 
-from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
+
+
+new_type = sa.Enum('vlan', 'overlay', 'trunk', 'multi-segment',
+                   name='vlan_type')
+old_type = sa.Enum('vlan', 'vxlan', 'trunk', 'multi-segment',
+                   name='vlan_type')
 
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.alter_column('cisco_network_profiles', 'segment_type',
-                    existing_type=sa.Enum('vlan', 'overlay', 'trunk',
-                                          'multi-segment'),
-                    existing_nullable=False)
+    migration.alter_enum('cisco_network_profiles', 'segment_type', new_type,
+                         nullable=False)
 
 
 def downgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
-    op.alter_column('cisco_network_profiles', 'segment_type',
-                    existing_type=sa.Enum('vlan', 'vxlan', 'trunk',
-                                          'multi-segment'),
-                    existing_nullable=False)
+    migration.alter_enum('cisco_network_profiles', 'segment_type', old_type,
+                         nullable=False)
