@@ -86,7 +86,7 @@ class NeutronManager(object):
     """Neutron's Manager class.
 
     Neutron's Manager class is responsible for parsing a config file and
-    instantiating the correct plugin that concretely implement
+    instantiating the correct plugin that concretely implements
     neutron_plugin_base class.
     The caller should make sure that NeutronManager is a singleton.
     """
