@@ -217,6 +217,23 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             def start(self, interval=0):
                 self.f()
 
+        def _mk_test_dp(name):
+            ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+            ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+            dp = mock.Mock()
+            dp.ofproto = ofp
+            dp.ofproto_parser = ofpp
+            dp.__repr__ = lambda _self: name
+            return dp
+
+        def _mk_test_br(name):
+            dp = _mk_test_dp(name)
+            br = mock.Mock()
+            br.datapath = dp
+            br.ofproto = dp.ofproto
+            br.ofparser = dp.ofproto_parser
+            return br
+
         with contextlib.nested(
             mock.patch.object(self.mod_agent.OFANeutronAgent,
                               'setup_integration_br',
@@ -233,18 +250,19 @@ class TestOFANeutronAgent(OFAAgentTestCase):
                        'FixedIntervalLoopingCall',
                        new=MockFixedIntervalLoopingCall)):
             self.agent = self.mod_agent.OFANeutronAgent(self.ryuapp, **kwargs)
-            self.agent.tun_br = mock.Mock()
-            self.agent.tun_br.ofparser = importutils.import_module(
-                'ryu.ofproto.ofproto_v1_3_parser')
-            self.agent.tun_br.datapath = 'tun_br'
+            self.agent.tun_br = _mk_test_br('tun_br')
             self.datapath = mock.Mock()
             self.ofparser = mock.Mock()
+            self.agent.phys_brs['phys-net1'] = _mk_test_br('phys_br1')
+            self.agent.phys_ofports['phys-net1'] = 777
+            self.agent.int_ofports['phys-net1'] = 666
             self.datapath.ofparser = self.ofparser
             self.ofparser.OFPMatch = mock.Mock()
             self.ofparser.OFPMatch.return_value = mock.Mock()
             self.ofparser.OFPFlowMod = mock.Mock()
             self.ofparser.OFPFlowMod.return_value = mock.Mock()
             self.agent.int_br.ofparser = self.ofparser
+            self.agent.int_br.datapath = _mk_test_dp('int_br')
 
         self.agent.sg_agent = mock.Mock()
 
@@ -728,7 +746,7 @@ class TestOFANeutronAgent(OFAAgentTestCase):
         ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
         ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
         expected_msg = ofpp.OFPFlowMod(
-            'tun_br',
+            self.agent.tun_br.datapath,
             instructions=[
                 ofpp.OFPInstructionActions(
                     ofp.OFPIT_APPLY_ACTIONS,
@@ -742,6 +760,195 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             match=ofpp.OFPMatch(tunnel_id=3),
             priority=1,
             table_id=2)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
+
+    def test__provision_local_vlan_outbound(self):
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._provision_local_vlan_outbound(888, 999, 'phys-net1')
+
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        expected_msg = ofpp.OFPFlowMod(
+            self.agent.phys_brs['phys-net1'].datapath,
+            instructions=[
+                ofpp.OFPInstructionActions(
+                    ofp.OFPIT_APPLY_ACTIONS,
+                    [
+                        ofpp.OFPActionSetField(vlan_vid=999),
+                        ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
+                    ]
+                )
+            ],
+            match=ofpp.OFPMatch(
+                in_port=777,
+                vlan_vid=888 | ofp.OFPVID_PRESENT
+            ),
+            priority=4)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
+
+    def test__provision_local_vlan_inbound(self):
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._provision_local_vlan_inbound(888, 999, 'phys-net1')
+
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        expected_msg = ofpp.OFPFlowMod(
+            self.agent.int_br.datapath,
+            instructions=[
+                ofpp.OFPInstructionActions(
+                    ofp.OFPIT_APPLY_ACTIONS,
+                    [
+                        ofpp.OFPActionSetField(
+                            vlan_vid=888 | ofp.OFPVID_PRESENT
+                        ),
+                        ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
+                    ]
+                )
+            ],
+            match=ofpp.OFPMatch(in_port=666, vlan_vid=999),
+            priority=3)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
+
+    def test__reclaim_local_vlan_outbound(self):
+        lvm = mock.Mock()
+        lvm.network_type = p_const.TYPE_VLAN
+        lvm.segmentation_id = 555
+        lvm.vlan = 444
+        lvm.physical_network = 'phys-net1'
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._reclaim_local_vlan_outbound(lvm)
+
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        expected_msg = ofpp.OFPFlowMod(
+            self.agent.phys_brs['phys-net1'].datapath,
+            command=ofp.OFPFC_DELETE,
+            match=ofpp.OFPMatch(
+                in_port=777,
+                vlan_vid=444 | ofp.OFPVID_PRESENT
+            ),
+            out_group=ofp.OFPG_ANY,
+            out_port=ofp.OFPP_ANY,
+            table_id=ofp.OFPTT_ALL)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
+
+    def test__reclaim_local_vlan_inbound(self):
+        lvm = mock.Mock()
+        lvm.network_type = p_const.TYPE_VLAN
+        lvm.segmentation_id = 555
+        lvm.vlan = 444
+        lvm.physical_network = 'phys-net1'
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._reclaim_local_vlan_inbound(lvm)
+
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        expected_msg = ofpp.OFPFlowMod(
+            self.agent.int_br.datapath,
+            command=ofp.OFPFC_DELETE,
+            match=ofpp.OFPMatch(
+                in_port=666,
+                vlan_vid=555 | ofp.OFPVID_PRESENT
+            ),
+            out_group=ofp.OFPG_ANY,
+            out_port=ofp.OFPP_ANY,
+            table_id=ofp.OFPTT_ALL)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
+
+    def test__provision_local_vlan_outbound_flat(self):
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._provision_local_vlan_outbound(888, ofp.OFPVID_NONE,
+                                                      'phys-net1')
+
+        expected_msg = ofpp.OFPFlowMod(
+            self.agent.phys_brs['phys-net1'].datapath,
+            instructions=[
+                ofpp.OFPInstructionActions(
+                    ofp.OFPIT_APPLY_ACTIONS,
+                    [
+                        ofpp.OFPActionPopVlan(),
+                        ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
+                    ]
+                )
+            ],
+            match=ofpp.OFPMatch(
+                in_port=777,
+                vlan_vid=888 | ofp.OFPVID_PRESENT
+            ),
+            priority=4)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
+
+    def test__provision_local_vlan_inbound_flat(self):
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._provision_local_vlan_inbound(888, ofp.OFPVID_NONE,
+                                                     'phys-net1')
+
+        expected_msg = ofpp.OFPFlowMod(
+            self.agent.int_br.datapath,
+            instructions=[
+                ofpp.OFPInstructionActions(
+                    ofp.OFPIT_APPLY_ACTIONS,
+                    [
+                        ofpp.OFPActionPushVlan(),
+                        ofpp.OFPActionSetField(
+                            vlan_vid=888 | ofp.OFPVID_PRESENT
+                        ),
+                        ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
+                    ]
+                )
+            ],
+            match=ofpp.OFPMatch(in_port=666, vlan_vid=ofp.OFPVID_NONE),
+            priority=3)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
+
+    def test__reclaim_local_vlan_outbound_flat(self):
+        lvm = mock.Mock()
+        lvm.network_type = p_const.TYPE_FLAT
+        lvm.segmentation_id = 555
+        lvm.vlan = 444
+        lvm.physical_network = 'phys-net1'
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._reclaim_local_vlan_outbound(lvm)
+
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        expected_msg = ofpp.OFPFlowMod(
+            self.agent.phys_brs['phys-net1'].datapath,
+            command=ofp.OFPFC_DELETE,
+            match=ofpp.OFPMatch(
+                in_port=777,
+                vlan_vid=444 | ofp.OFPVID_PRESENT
+            ),
+            out_group=ofp.OFPG_ANY,
+            out_port=ofp.OFPP_ANY,
+            table_id=ofp.OFPTT_ALL)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
+
+    def test__reclaim_local_vlan_inbound_flat(self):
+        lvm = mock.Mock()
+        lvm.network_type = p_const.TYPE_FLAT
+        lvm.segmentation_id = 555
+        lvm.vlan = 444
+        lvm.physical_network = 'phys-net1'
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._reclaim_local_vlan_inbound(lvm)
+
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        expected_msg = ofpp.OFPFlowMod(
+            self.agent.int_br.datapath,
+            command=ofp.OFPFC_DELETE,
+            match=ofpp.OFPMatch(
+                in_port=666,
+                vlan_vid=ofp.OFPVID_NONE
+            ),
+            out_group=ofp.OFPG_ANY,
+            out_port=ofp.OFPP_ANY,
+            table_id=ofp.OFPTT_ALL)
         sendmsg.assert_has_calls([mock.call(expected_msg)])
 
 

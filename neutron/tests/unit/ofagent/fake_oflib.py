@@ -18,7 +18,15 @@
 import mock
 
 
-class _Value(object):
+class _Eq(object):
+    def __eq__(self, other):
+        return repr(self) == repr(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+class _Value(_Eq):
     def __or__(self, b):
         return _Op('|', self, b)
 
@@ -45,7 +53,7 @@ class _Op(_Value):
 
 
 def _mkcls(name):
-    class Cls(object):
+    class Cls(_Eq):
         _name = name
 
         def __init__(self, *args, **kwargs):
@@ -61,12 +69,6 @@ def _mkcls(name):
             kwargs = sorted(['%s=%s' % (x, y) for x, y in
                              self._kwargs.items()])
             return '%s(%s)' % (self._name, ', '.join(args + kwargs))
-
-        def __eq__(self, other):
-            return repr(self) == repr(other)
-
-        def __ne__(self, other):
-            return not self.__eq__(other)
 
     return Cls
 
