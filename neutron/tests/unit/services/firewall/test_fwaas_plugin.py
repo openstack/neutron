@@ -21,6 +21,7 @@
 import contextlib
 
 import mock
+from webob import exc
 
 from neutron import context
 from neutron.extensions import firewall
@@ -198,7 +199,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
             res = self._create_firewall(
                 None, 'firewall2', description='test',
                 firewall_policy_id=None, admin_state_up=True)
-            self.assertEqual(res.status_int, 500)
+            self.assertEqual(res.status_int, exc.HTTPConflict.code)
 
     def test_create_firewall_admin_not_affected_by_other_tenant(self):
         # Create fw with admin after creating fw with other tenant
@@ -245,7 +246,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
                 data = {'firewall': {'name': name}}
                 req = self.new_update_request('firewalls', data, fw_id)
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 409)
+                self.assertEqual(res.status_int, exc.HTTPConflict.code)
 
     def test_update_firewall_policy_fails_when_firewall_pending(self):
         name = "new_firewall1"
@@ -261,7 +262,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
                 req = self.new_update_request('firewall_policies',
                                               data, fwp_id)
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 409)
+                self.assertEqual(res.status_int, exc.HTTPConflict.code)
 
     def test_update_firewall_rule_fails_when_firewall_pending(self):
         with self.firewall_rule(name='fwr1') as fr:
@@ -281,7 +282,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
                     req = self.new_update_request('firewall_rules',
                                                   data, fr_id)
                     res = req.get_response(self.ext_api)
-                    self.assertEqual(res.status_int, 409)
+                    self.assertEqual(res.status_int, exc.HTTPConflict.code)
 
     def test_delete_firewall(self):
         ctx = context.get_admin_context()
@@ -315,7 +316,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
                 fw_id = fw['firewall']['id']
                 req = self.new_delete_request('firewalls', fw_id)
                 res = req.get_response(self.ext_api)
-                self.assertEqual(res.status_int, 204)
+                self.assertEqual(res.status_int, exc.HTTPNoContent.code)
                 self.assertRaises(firewall.FirewallNotFound,
                                   self.plugin.get_firewall,
                                   ctx, fw_id)
