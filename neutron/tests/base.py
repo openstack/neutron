@@ -36,6 +36,7 @@ from neutron.tests import post_mortem_debug
 
 
 CONF = cfg.CONF
+CONF.import_opt('state_path', 'neutron.common.config')
 TRUE_STRING = ['True', '1']
 LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 
