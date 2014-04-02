@@ -42,9 +42,12 @@ class TestBaseOVS(base.BaseTestCase):
 
     def test_add_bridge(self):
         with mock.patch.object(self.ovs, 'run_vsctl') as mock_vsctl:
-            self.ovs.add_bridge(self.br_name)
+            bridge = self.ovs.add_bridge(self.br_name)
+
         mock_vsctl.assert_called_with(["--", "--may-exist",
                                        "add-br", self.br_name])
+        self.assertEqual(bridge.br_name, self.br_name)
+        self.assertEqual(bridge.root_helper, self.ovs.root_helper)
 
     def test_delete_bridge(self):
         with mock.patch.object(self.ovs, 'run_vsctl') as mock_vsctl:
