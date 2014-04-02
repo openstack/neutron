@@ -313,8 +313,7 @@ class DBInterface(object):
             proj_id = project['uuid']
             project_sgs = self._security_group_list_project(proj_id)
 
-            for sg in project_sgs:
-                sg_obj = self._vnc_lib.security_group_read(id=sg['uuid'])
+            for sg_obj in project_sgs:
                 sgr_entries = sg_obj.get_security_group_entries()
                 if sgr_entries == None:
                     continue
@@ -1708,7 +1707,7 @@ class DBInterface(object):
         # port can be router interface or vm interface
         # for perf read logical_router_back_ref only when we have to
         port_parent_name = port_obj.parent_name
-        if port_parent_name == 'default-virtual-machine':
+        if port_parent_name != 'default-virtual-machine':
             router_refs = port_obj.get_logical_router_back_refs() 
             if router_refs is not None:
                 port_q_dict['device_owner'] = constants.DEVICE_OWNER_ROUTER_INTF
