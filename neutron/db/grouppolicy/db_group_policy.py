@@ -44,13 +44,9 @@ LOG = logging.getLogger(__name__)
 
 class Endpoint(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Endpoint consumed by the Group Policy."""
+    __tablename__ = 'gp_endpoints'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-
-
-class PortEndpoint(Endpoint):
-    """Represents a Neutron port endpoint."""
-    __tablename__ = 'gp_portendpoints'
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey('ports.id', ondelete='CASCADE'),
                         nullable=False,
@@ -83,8 +79,11 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     __tablename__ = 'gp_endpointgroups'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-    port_endpoints = orm.relationship(PortEndpoint,
-                                      backref='gp_endpointgroups')
+    parent_id = sa.Column(sa.String(36),
+                          sa.ForeignKey('gp_endpointgroups.id'),
+                          nullable=True)
+    children = orm.relationship('EndpointGroup')
+    endpoints = orm.relationship(Endpoint, backref='gp_endpointgroups')
     provided_contract_scopes = orm.relationship(ContractScope,
                                                 backref='gp_endpointgroups')
     consumed_contract_scopes = orm.relationship(ContractScope,
@@ -185,12 +184,12 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         return dict((k, v) for (k, v) in
                     data.iteritems() if k in columns)
 
-    def _get_port_endpoint(self, context, id):
+    def _get_endpoint(self, context, id):
         try:
-            port_endpoint = self._get_by_id(context, PortEndpoint, id)
+            endpoint = self._get_by_id(context, Endpoint, id)
         except exc.NoResultFound:
-            raise nexc.PortEndpointNotFound(port_endpoint_id=id)
-        return port_endpoint
+            raise nexc.EndpointNotFound(endpoint_id=id)
+        return endpoint
 
     def _get_endpoint_group(self, context, id):
         try:
