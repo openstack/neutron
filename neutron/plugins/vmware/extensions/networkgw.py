@@ -213,7 +213,9 @@ class NetworkGatewayPluginBase(object):
         pass
 
     @abstractmethod
-    def get_network_gateways(self, context, filters=None, fields=None):
+    def get_network_gateways(self, context, filters=None, fields=None,
+                             sorts=None, limit=None, marker=None,
+                             page_reverse=False):
         pass
 
     @abstractmethod
@@ -243,5 +245,7 @@ class NetworkGatewayPluginBase(object):
         pass
 
     @abstractmethod
-    def get_gateway_devices(self, context, filters=None, fields=None):
+    def get_gateway_devices(self, context, filters=None, fields=None,
+                            sorts=None, limit=None, marker=None,
+                            page_reverse=False):
         pass

@@ -218,5 +218,6 @@ class QueuePluginBase(object):
         pass
 
     @abstractmethod
-    def get_qos_queues(self, context, filters=None, fields=None):
+    def get_qos_queues(self, context, filters=None, fields=None, sorts=None,
+                       limit=None, marker=None, page_reverse=False):
         pass
