@@ -509,61 +509,6 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             self.agent.port_unbound("vif3", "netuid12345")
             self.assertEqual(reclvl_fn.call_count, 2)
 
-    def _check_ovs_vxlan_version(self, installed_usr_version,
-                                 installed_klm_version,
-                                 installed_kernel_version,
-                                 expecting_ok):
-        with mock.patch(
-                'neutron.agent.linux.ovs_lib.get_installed_ovs_klm_version'
-        ) as klm_cmd:
-            with mock.patch(
-                'neutron.agent.linux.ovs_lib.get_installed_ovs_usr_version'
-            ) as usr_cmd:
-                with mock.patch(
-                    'neutron.agent.linux.ovs_lib.get_installed_kernel_version'
-                ) as krn_cmd:
-                    try:
-                        klm_cmd.return_value = installed_klm_version
-                        usr_cmd.return_value = installed_usr_version
-                        krn_cmd.return_value = installed_kernel_version
-                        self.agent.tunnel_types = 'vxlan'
-                        self.agent._check_ovs_version()
-                        version_ok = True
-                    except SystemExit as e:
-                        self.assertEqual(e.code, 1)
-                        version_ok = False
-                self.assertEqual(version_ok, expecting_ok)
-
-    def test_check_minimum_version(self):
-        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(min_vxlan_ver, min_vxlan_ver,
-                                      min_kernel_ver, expecting_ok=True)
-
-    def test_check_future_version(self):
-        install_ver = str(float(constants.MINIMUM_OVS_VXLAN_VERSION) + 0.01)
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(install_ver, install_ver,
-                                      min_kernel_ver, expecting_ok=True)
-
-    def test_check_fail_version(self):
-        install_ver = str(float(constants.MINIMUM_OVS_VXLAN_VERSION) - 0.01)
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(install_ver, install_ver,
-                                      min_kernel_ver, expecting_ok=False)
-
-    def test_check_fail_no_version(self):
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(None, None,
-                                      min_kernel_ver, expecting_ok=False)
-
-    def test_check_fail_klm_version(self):
-        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
-        min_kernel_ver = OVS_LINUX_KERN_VERS_WITHOUT_VXLAN
-        install_ver = str(float(min_vxlan_ver) - 0.01)
-        self._check_ovs_vxlan_version(min_vxlan_ver, install_ver,
-                                      min_kernel_ver, expecting_ok=False)
-
     def test_daemon_loop_uses_polling_manager(self):
         with mock.patch(
             'neutron.agent.linux.polling.get_polling_manager'
