@@ -80,3 +80,6 @@ TYPE_LOCAL = 'local'
 TYPE_VXLAN = 'vxlan'
 TYPE_VLAN = 'vlan'
 TYPE_NONE = 'none'
+
+# The maximum length of an interface name (in Linux)
+MAX_DEV_NAME_LEN = 16
