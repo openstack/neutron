@@ -30,8 +30,8 @@ LOG = logging.getLogger(__name__)
 
 
 # Group Policy Exceptions
-class PortEndpointNotFound(nexc.NotFound):
-    message = _("PortEndpoint %(port_endpoint_id)s could not be found")
+class EndpointNotFound(nexc.NotFound):
+    message = _("Endpoint %(endpoint_id)s could not be found")
 
 
 class EndpointGroupNotFound(nexc.NotFound):
@@ -133,8 +133,14 @@ def convert_validate_port_value(port):
         raise GroupPolicyInvalidPortValue(port=port)
 
 
+ENDPOINTS = 'endpoints'
+ENDPOINT_GROUPS = 'endpoint_groups'
+CONTRACTS = 'contracts'
+CONTRACT_SCOPES = 'contract_scopes'
+POLICY_RULES = 'policy_rules'
+
 RESOURCE_ATTRIBUTE_MAP = {
-    'port_endpoints': {
+    ENDPOINTS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None}, 'is_visible': True,
                'primary_key': True},
@@ -147,10 +153,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},
                       'required_by_policy': True, 'is_visible': True},
-        'port_id': {'allow_post': True, 'allow_put': False,
-                    'validate': {'type:uuid': None}, 'is_visible': True},
     },
-    'endpoint_groups': {
+    ENDPOINT_GROUPS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None}, 'is_visible': True,
                'primary_key': True},
@@ -163,10 +167,13 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},
                       'required_by_policy': True, 'is_visible': True},
-        'port_endpoints': {'allow_post': True, 'allow_put': True,
-                           'validate': {'type:uuid_list': None},
-                           'convert_to': attr.convert_none_to_empty_list,
-                           'default': None, 'is_visible': True},
+        'parent_id': {'allow_post': True, 'allow_put': True, 'default': None,
+                      'validate': {'type:uuid_or_none': None},
+                      'is_visible': True},
+        'endpoints': {'allow_post': True, 'allow_put': True,
+                      'validate': {'type:uuid_list': None},
+                      'convert_to': attr.convert_none_to_empty_list,
+                      'default': None, 'is_visible': True},
         'provided_contract_scopes': {'allow_post': True, 'allow_put': True,
                                      'validate': {'type:uuid_list': None},
                                      'convert_to':
@@ -178,7 +185,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                                      attr.convert_none_to_empty_list,
                                      'default': None, 'is_visible': True},
     },
-    'contracts': {
+    CONTRACTS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
@@ -200,7 +207,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                          'convert_to': attr.convert_none_to_empty_list,
                          'required': True, 'is_visible': True},
     },
-    'contract_scopes': {
+    # TODO (Sumit): Add policy_label for scope
+    CONTRACT_SCOPES: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
@@ -223,7 +231,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'validate': {'type:uuid': None},
                         'is_visible': True},
     },
-    'policy_rules': {
+    # TODO (Sumit): Add policy_label for scope
+    POLICY_RULES: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
@@ -322,23 +331,23 @@ class GroupPolicyPluginBase(ServicePluginBase):
         return 'Group Policy plugin'
 
     @abc.abstractmethod
-    def get_port_endpoints(self, context, filters=None, fields=None):
+    def get_endpoints(self, context, filters=None, fields=None):
         pass
 
     @abc.abstractmethod
-    def get_port_endpoint(self, context, id, fields=None):
+    def get_endpoint(self, context, id, fields=None):
         pass
 
     @abc.abstractmethod
-    def create_port_endpoint(self, context, port_endpoint):
+    def create_endpoint(self, context, endpoint):
         pass
 
     @abc.abstractmethod
-    def update_port_endpoint_(self, context, id, port_endpoint):
+    def update_endpoint_(self, context, id, endpoint):
         pass
 
     @abc.abstractmethod
-    def delete_port_endpoint(self, context, id):
+    def delete_endpoint(self, context, id):
         pass
 
     @abc.abstractmethod

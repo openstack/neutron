@@ -43,7 +43,8 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         data = {'endpoint_group': {'name': 'epg1',
                                    'tenant_id': _uuid(),
                                    'description': '',
-                                   'port_endpoints': [],
+                                   'parent_id': None,
+                                   'endpoints': [],
                                    'provided_contract_scopes': [],
                                    'consumed_contract_scopes': []}}
         return_value = copy.copy(data['endpoint_group'])
@@ -118,3 +119,23 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
 
     def test_delete_endpoint_group(self):
         self._test_entity_delete('endpoint_group')
+
+    def test_create_endpoint(self):
+        endpoint_id = _uuid()
+        data = {'endpoint': {'name': 'ep1',
+                             'tenant_id': _uuid(),
+                             'description': ''}}
+        return_value = copy.copy(data['endpoint'])
+        return_value.update({'id': endpoint_id})
+
+        instance = self.plugin.return_value
+        instance.create_endpoint.return_value = return_value
+        res = self.api.post(_get_path('gp/endpoints', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
+        instance.create_endpoint.assert_called_with(mock.ANY,
+                                                    endpoint=data)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        res = self.deserialize(res)
+        self.assertIn('endpoint', res)
+        self.assertEqual(res['endpoint'], return_value)
