@@ -30,17 +30,17 @@ from neutron.extensions import portbindings
 
 restproxy_opts = [
     cfg.ListOpt('servers', default=['localhost:8800'],
-                help=_("A comma separated list of BigSwitch or Floodlight "
+                help=_("A comma separated list of Big Switch or Floodlight "
                        "servers and port numbers. The plugin proxies the "
-                       "requests to the BigSwitch/Floodlight server, "
+                       "requests to the Big Switch/Floodlight server, "
                        "which performs the networking configuration. Only one"
                        "server is needed per deployment, but you may wish to"
                        "deploy multiple servers to support failover.")),
     cfg.StrOpt('server_auth', default=None, secret=True,
                help=_("The username and password for authenticating against "
-                      " the BigSwitch or Floodlight controller.")),
+                      " the Big Switch or Floodlight controller.")),
     cfg.BoolOpt('server_ssl', default=True,
-                help=_("If True, Use SSL when connecting to the BigSwitch or "
+                help=_("If True, Use SSL when connecting to the Big Switch or "
                        "Floodlight controller.")),
     cfg.BoolOpt('ssl_sticky', default=True,
                 help=_("Trust and store the first certificate received for "
@@ -59,8 +59,8 @@ restproxy_opts = [
     cfg.BoolOpt('auto_sync_on_failure', default=True,
                 help=_("If neutron fails to create a resource because "
                        "the backend controller doesn't know of a dependency, "
-                       "automatically trigger a full data synchronization "
-                       "to the controller.")),
+                       "the plugin automatically triggers a full data "
+                       "synchronization to the controller.")),
     cfg.IntOpt('consistency_interval', default=60,
                help=_("Time between verifications that the backend controller "
                       "database is consistent with Neutron")),

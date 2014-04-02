@@ -478,7 +478,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         pl_config.register_config()
         self.evpool = eventlet.GreenPool(cfg.CONF.RESTPROXY.thread_pool_size)
 
-        # Include the BigSwitch Extensions path in the api_extensions
+        # Include the Big Switch Extensions path in the api_extensions
         neutron_extensions.append_api_extensions_path(extensions.__path__)
 
         self.add_meta_server_route = cfg.CONF.RESTPROXY.add_meta_server_route
