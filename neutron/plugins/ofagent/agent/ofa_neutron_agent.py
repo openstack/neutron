@@ -399,54 +399,55 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self._provision_local_vlan_inbound_for_tunnel(lvid, network_type,
                                                       segmentation_id)
 
-    def _provision_local_vlan_outbound(self, br, lvid, actions,
-                                       physical_network):
-        match = br.ofparser.OFPMatch(
-            in_port=int(self.phys_ofports[physical_network]),
-            vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT)
-        instructions = [br.ofparser.OFPInstructionActions(
-            ryu_ofp13.OFPIT_APPLY_ACTIONS, actions)]
-        msg = br.ofparser.OFPFlowMod(br.datapath,
-                                     priority=4,
-                                     match=match,
-                                     instructions=instructions)
+    def _provision_local_vlan_outbound(self, lvid, vlan_vid, physical_network):
+        br = self.phys_brs[physical_network]
+        datapath = br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        match = ofpp.OFPMatch(in_port=int(self.phys_ofports[physical_network]),
+                              vlan_vid=int(lvid) | ofp.OFPVID_PRESENT)
+        if vlan_vid == ofp.OFPVID_NONE:
+            actions = [ofpp.OFPActionPopVlan()]
+        else:
+            actions = [ofpp.OFPActionSetField(vlan_vid=vlan_vid)]
+        actions += [ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0)]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+        ]
+        msg = ofpp.OFPFlowMod(datapath, priority=4, match=match,
+                              instructions=instructions)
         self.ryu_send_msg(msg)
 
     def _provision_local_vlan_inbound(self, lvid, vlan_vid, physical_network):
-        match = self.int_br.ofparser.OFPMatch(
-            in_port=int(self.int_ofports[physical_network]),
-            vlan_vid=vlan_vid)
-        actions = [self.int_br.ofparser.OFPActionSetField(
-            vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT),
-            self.int_br.ofparser.OFPActionOutput(
-                ryu_ofp13.OFPP_NORMAL, 0)]
-        instructions = [self.int_br.ofparser.OFPInstructionActions(
-            ryu_ofp13.OFPIT_APPLY_ACTIONS, actions)]
-        msg = self.int_br.ofparser.OFPFlowMod(
-            self.int_br.datapath,
-            priority=3,
-            match=match,
-            instructions=instructions)
+        datapath = self.int_br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        match = ofpp.OFPMatch(in_port=int(self.int_ofports[physical_network]),
+                              vlan_vid=vlan_vid)
+        if vlan_vid == ofp.OFPVID_NONE:
+            actions = [ofpp.OFPActionPushVlan()]
+        else:
+            actions = []
+        actions += [
+            ofpp.OFPActionSetField(vlan_vid=int(lvid) | ofp.OFPVID_PRESENT),
+            ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0),
+        ]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+        ]
+        msg = ofpp.OFPFlowMod(datapath, priority=3, match=match,
+                              instructions=instructions)
         self.ryu_send_msg(msg)
 
     def _local_vlan_for_flat(self, lvid, physical_network):
-        br = self.phys_brs[physical_network]
-        actions = [br.ofparser.OFPActionPopVlan(),
-                   br.ofparser.OFPActionOutput(ryu_ofp13.OFPP_NORMAL, 0)]
-        self._provision_local_vlan_outbound(
-            br, lvid, actions, physical_network)
-        self._provision_local_vlan_inbound(lvid, 0xffff, physical_network)
+        vlan_vid = ryu_ofp13.OFPVID_NONE
+        self._provision_local_vlan_outbound(lvid, vlan_vid, physical_network)
+        self._provision_local_vlan_inbound(lvid, vlan_vid, physical_network)
 
     def _local_vlan_for_vlan(self, lvid, physical_network, segmentation_id):
-        br = self.phys_brs[physical_network]
-        actions = [br.ofparser.OFPActionSetField(
-            vlan_vid=int(segmentation_id) | ryu_ofp13.OFPVID_PRESENT),
-            br.ofparser.OFPActionOutput(ryu_ofp13.OFPP_NORMAL, 0)]
-        self._provision_local_vlan_outbound(
-            br, lvid, actions, physical_network)
-        self._provision_local_vlan_inbound(
-            lvid, int(segmentation_id) | ryu_ofp13.OFPVID_PRESENT,
-            physical_network)
+        vlan_vid = int(segmentation_id) | ryu_ofp13.OFPVID_PRESENT
+        self._provision_local_vlan_outbound(lvid, vlan_vid, physical_network)
+        self._provision_local_vlan_inbound(lvid, vlan_vid, physical_network)
 
     def provision_local_vlan(self, net_uuid, network_type, physical_network,
                              segmentation_id):
@@ -509,28 +510,31 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     def _reclaim_local_vlan_outbound(self, lvm):
         br = self.phys_brs[lvm.physical_network]
-        match = br.ofparser.OFPMatch(
-            in_port=self.phys_ofports[lvm.physical_network],
-            vlan_vid=int(lvm.vlan) | ryu_ofp13.OFPVID_PRESENT)
-        msg = br.ofparser.OFPFlowMod(br.datapath,
-                                     table_id=ryu_ofp13.OFPTT_ALL,
-                                     command=ryu_ofp13.OFPFC_DELETE,
-                                     out_group=ryu_ofp13.OFPG_ANY,
-                                     out_port=ryu_ofp13.OFPP_ANY,
-                                     match=match)
+        datapath = br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        match = ofpp.OFPMatch(
+            in_port=int(self.phys_ofports[lvm.physical_network]),
+            vlan_vid=int(lvm.vlan) | ofp.OFPVID_PRESENT)
+        msg = ofpp.OFPFlowMod(datapath, table_id=ofp.OFPTT_ALL,
+                              command=ofp.OFPFC_DELETE, out_group=ofp.OFPG_ANY,
+                              out_port=ofp.OFPP_ANY, match=match)
         self.ryu_send_msg(msg)
 
-    def _reclaim_local_vlan_inbound(self, lvm, vlan_vid):
-        br = self.int_br
-        match = br.ofparser.OFPMatch(
-            in_port=self.int_ofports[lvm.physical_network],
-            vlan_vid=vlan_vid)
-        msg = br.ofparser.OFPFlowMod(br.datapath,
-                                     table_id=ryu_ofp13.OFPTT_ALL,
-                                     command=ryu_ofp13.OFPFC_DELETE,
-                                     out_group=ryu_ofp13.OFPG_ANY,
-                                     out_port=ryu_ofp13.OFPP_ANY,
-                                     match=match)
+    def _reclaim_local_vlan_inbound(self, lvm):
+        datapath = self.int_br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        if lvm.network_type == p_const.TYPE_FLAT:
+            vid = ofp.OFPVID_NONE
+        else:  # p_const.TYPE_VLAN
+            vid = lvm.segmentation_id | ofp.OFPVID_PRESENT
+        match = ofpp.OFPMatch(
+            in_port=int(self.int_ofports[lvm.physical_network]),
+            vlan_vid=vid)
+        msg = ofpp.OFPFlowMod(datapath, table_id=ofp.OFPTT_ALL,
+                              command=ofp.OFPFC_DELETE, out_group=ofp.OFPG_ANY,
+                              out_port=ofp.OFPP_ANY, match=match)
         self.ryu_send_msg(msg)
 
     def reclaim_local_vlan(self, net_uuid):
@@ -571,15 +575,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                     out_port=ryu_ofp13.OFPP_ANY,
                     match=match)
                 self.ryu_send_msg(msg)
-        elif lvm.network_type == p_const.TYPE_FLAT:
+        elif lvm.network_type in (p_const.TYPE_FLAT, p_const.TYPE_VLAN):
             if lvm.physical_network in self.phys_brs:
                 self._reclaim_local_vlan_outbound(lvm)
-                self._reclaim_local_vlan_inbound(lvm, 0xffff)
-        elif lvm.network_type == p_const.TYPE_VLAN:
-            if lvm.physical_network in self.phys_brs:
-                self._reclaim_local_vlan_outbound(lvm)
-                self._reclaim_local_vlan_inbound(
-                    lvm, lvm.segmentation_id | ryu_ofp13.OFPVID_PRESENT)
+                self._reclaim_local_vlan_inbound(lvm)
         elif lvm.network_type == p_const.TYPE_LOCAL:
             # no flows needed for local networks
             pass
