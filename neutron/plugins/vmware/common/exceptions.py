@@ -65,6 +65,13 @@ class L2GatewayAlreadyInUse(n_exc.Conflict):
     message = _("Gateway Service %(gateway)s is already in use")
 
 
+class InvalidSecurityCertificate(NsxPluginException):
+    message = _("An invalid security certificate was specified for the "
+                "gateway device. Certificates must be enclosed between "
+                "'-----BEGIN CERTIFICATE-----' and "
+                "'-----END CERTIFICATE-----'")
+
+
 class ServiceOverQuota(n_exc.Conflict):
     message = _("Quota exceeded for Vcns resource: %(overs)s: %(err_msg)s")
 
