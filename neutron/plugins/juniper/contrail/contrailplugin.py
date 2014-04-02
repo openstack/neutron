@@ -73,7 +73,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     # agent extension is added to avoid return 404 for get_agents
     supported_extension_aliases = ["ipam", "policy", "security-group",
                                    "router", "route-table", "port-security",
-                                   "binding", "agent"]
+                                   "binding", "agent", "quotas"]
     _cfgdb = None
     _args = None
     _tenant_id_dict = {}
