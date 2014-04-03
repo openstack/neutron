@@ -28,7 +28,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as l3_constants
-from neutron.common import legacy
 from neutron.common import topics
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import service
@@ -339,7 +338,6 @@ def main():
     conf.register_opts(external_process.OPTS)
     conf(project='neutron')
     config.setup_logging(conf)
-    legacy.modernize_quantum_config(conf)
     server = neutron_service.Service.create(
         binary='neutron-l3-agent',
         topic=topics.L3_AGENT,

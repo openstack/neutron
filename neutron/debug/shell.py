@@ -21,7 +21,6 @@ from oslo.config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
-from neutron.common import legacy
 from neutron.debug.debug_agent import NeutronDebugAgent
 from neutron.openstack.common import importutils
 from neutronclient.common import exceptions as exc
@@ -80,7 +79,6 @@ class NeutronDebugShell(shell.NeutronShell):
         config.register_root_helper(cfg.CONF)
         cfg.CONF(['--config-file', self.options.config_file])
         config.setup_logging(cfg.CONF)
-        legacy.modernize_quantum_config(cfg.CONF)
         driver = importutils.import_object(cfg.CONF.interface_driver, cfg.CONF)
         self.debug_agent = NeutronDebugAgent(cfg.CONF, client, driver)
 

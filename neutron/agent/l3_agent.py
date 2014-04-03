@@ -25,7 +25,6 @@ from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ovs_lib  # noqa
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as l3_constants
-from neutron.common import legacy
 from neutron.common import topics
 from neutron.common import utils as common_utils
 from neutron import context
@@ -975,7 +974,6 @@ def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
     conf.register_opts(external_process.OPTS)
     conf(project='neutron')
     config.setup_logging(conf)
-    legacy.modernize_quantum_config(conf)
     server = neutron_service.Service.create(
         binary='neutron-l3-agent',
         topic=topics.L3_AGENT,

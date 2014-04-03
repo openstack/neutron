@@ -28,7 +28,6 @@ from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as logging_config
 from neutron.common import constants as n_const
-from neutron.common import legacy
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -257,7 +256,6 @@ def main():
     cfg.CONF.register_opts(ip_lib.OPTS)
     cfg.CONF(project='neutron')
     logging_config.setup_logging(cfg.CONF)
-    legacy.modernize_quantum_config(cfg.CONF)
 
     try:
         agent_config = create_agent_config_map(cfg.CONF)

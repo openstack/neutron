@@ -21,7 +21,6 @@ from oslo.config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
-from neutron.common import legacy
 from neutron.common import topics
 from neutron.openstack.common.rpc import service as rpc_service
 from neutron.openstack.common import service
@@ -59,7 +58,6 @@ def main():
 
     cfg.CONF(project='neutron')
     config.setup_logging(cfg.CONF)
-    legacy.modernize_quantum_config(cfg.CONF)
 
     mgr = manager.LbaasAgentManager(cfg.CONF)
     svc = LbaasAgentService(
