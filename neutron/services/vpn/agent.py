@@ -67,7 +67,7 @@ class VPNAgent(l3_agent.L3NATAgentWithStateReport):
         router_info = self.router_info.get(router_id)
         if not router_info:
             return
-        return router_info.ns_name()
+        return router_info.ns_name
 
     def add_nat_rule(self, router_id, chain, rule, top=False):
         """Add nat rule in namespace.

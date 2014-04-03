@@ -308,15 +308,15 @@ class vArmourL3NATAgent(l3_agent.L3NATAgent,
 
         if not ip_lib.device_exists(interface_name,
                                     root_helper=self.root_helper,
-                                    namespace=ri.ns_name()):
+                                    namespace=ri.ns_name):
             self.driver.plug(ex_gw_port['network_id'],
                              ex_gw_port['id'], interface_name,
                              ex_gw_port['mac_address'],
                              bridge=self.conf.external_network_bridge,
-                             namespace=ri.ns_name(),
+                             namespace=ri.ns_name,
                              prefix=l3_agent.EXTERNAL_DEV_PREFIX)
         self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
-                            namespace=ri.ns_name())
+                            namespace=ri.ns_name)
 
     def _update_routing_table(self, ri, operation, route):
         return

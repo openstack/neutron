@@ -96,7 +96,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri = l3_agent.RouterInfo(id, self.conf.root_helper,
                                  self.conf.use_namespaces, None)
 
-        self.assertTrue(ri.ns_name().endswith(id))
+        self.assertTrue(ri.ns_name.endswith(id))
 
     def test_router_info_create_with_router(self):
         id = _uuid()
@@ -113,7 +113,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
             'gw_port': ex_gw_port}
         ri = l3_agent.RouterInfo(id, self.conf.root_helper,
                                  self.conf.use_namespaces, router)
-        self.assertTrue(ri.ns_name().endswith(id))
+        self.assertTrue(ri.ns_name.endswith(id))
         self.assertEqual(ri.router, router)
 
     def test_agent_create(self):
@@ -838,7 +838,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
             self.assertEqual(self.mock_driver.unplug.call_count,
                              len(stale_devnames))
             calls = [mock.call(stale_devname,
-                               namespace=ri.ns_name(),
+                               namespace=ri.ns_name,
                                prefix=l3_agent.INTERNAL_DEV_PREFIX)
                      for stale_devname in stale_devnames]
             self.mock_driver.unplug.assert_has_calls(calls, any_order=True)
@@ -867,7 +867,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.mock_driver.unplug.assert_called_with(
             stale_devnames[0],
             bridge="br-ex",
-            namespace=ri.ns_name(),
+            namespace=ri.ns_name,
             prefix=l3_agent.EXTERNAL_DEV_PREFIX)
 
     def test_routers_with_admin_state_down(self):

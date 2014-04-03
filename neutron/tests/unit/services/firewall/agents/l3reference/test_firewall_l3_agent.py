@@ -321,7 +321,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
         self.api.router_info = {ri.router_id: ri}
         with mock.patch.object(ip_lib.IPWrapper,
                                'get_namespaces') as mock_get_namespaces:
-            mock_get_namespaces.return_value = ri.ns_name()
+            mock_get_namespaces.return_value = ri.ns_name
             router_info_list = self.api._get_router_info_list_for_tenant(
                 routers,
                 ri.router['tenant_id'])
@@ -376,7 +376,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
             ri_expected.append(ri)
         with mock.patch.object(ip_lib.IPWrapper,
                                'get_namespaces') as mock_get_namespaces:
-            mock_get_namespaces.return_value = ri.ns_name()
+            mock_get_namespaces.return_value = ri.ns_name
             router_info_list = self.api._get_router_info_list_for_tenant(
                 routers,
                 ri.router['tenant_id'])
