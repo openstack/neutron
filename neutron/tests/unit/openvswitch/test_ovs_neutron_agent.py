@@ -700,7 +700,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 self.agent.daemon_loop()
         mock_get_pm.assert_called_with(True, 'sudo',
                                        constants.DEFAULT_OVSDBMON_RESPAWN)
-        mock_loop.called_once()
+        mock_loop.assert_called_once_with(polling_manager=mock.ANY)
 
     def test_setup_tunnel_port_error_negative(self):
         with contextlib.nested(
