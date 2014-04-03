@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import constants as const
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import driver_api as api
 
@@ -162,4 +163,9 @@ class TestMechanismDriver(api.MechanismDriver):
         elif host == "host-bridge-filter":
             context.set_binding(segment, portbindings.VIF_TYPE_BRIDGE,
                                 {portbindings.CAP_PORT_FILTER: True})
+            self.bound_ports.add(context.current['id'])
+        elif host == "host-ovs-filter-active":
+            context.set_binding(segment, portbindings.VIF_TYPE_OVS,
+                                {portbindings.CAP_PORT_FILTER: True},
+                                status=const.PORT_STATUS_ACTIVE)
             self.bound_ports.add(context.current['id'])

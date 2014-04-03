@@ -41,20 +41,25 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.plugin = manager.NeutronManager.get_plugin()
         self.plugin.start_rpc_listener()
 
-    def _check_response(self, port, vif_type, has_port_filter, bound):
+    def _check_response(self, port, vif_type, has_port_filter, bound, status):
         self.assertEqual(port[portbindings.VIF_TYPE], vif_type)
         vif_details = port[portbindings.VIF_DETAILS]
+        port_status = port['status']
         if bound:
             # TODO(rkukura): Replace with new VIF security details
             self.assertEqual(vif_details[portbindings.CAP_PORT_FILTER],
                              has_port_filter)
+            self.assertEqual(port_status, status or 'DOWN')
+        else:
+            self.assertEqual(port_status, 'DOWN')
 
-    def _test_port_binding(self, host, vif_type, has_port_filter, bound):
+    def _test_port_binding(self, host, vif_type, has_port_filter, bound,
+                           status=None):
         host_arg = {portbindings.HOST_ID: host}
         with self.port(name='name', arg_list=(portbindings.HOST_ID,),
                        **host_arg) as port:
             self._check_response(port['port'], vif_type, has_port_filter,
-                                 bound)
+                                 bound, status)
             port_id = port['port']['id']
             neutron_context = context.get_admin_context()
             details = self.plugin.callbacks.get_device_details(
@@ -83,6 +88,11 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self._test_port_binding("host-bridge-filter",
                                 portbindings.VIF_TYPE_BRIDGE,
                                 True, True)
+
+    def test_binding_status_active(self):
+        self._test_port_binding("host-ovs-filter-active",
+                                portbindings.VIF_TYPE_OVS,
+                                True, True, 'ACTIVE')
 
     def _test_update_port_binding(self, host, new_host=None):
         with mock.patch.object(self.plugin,
