@@ -125,7 +125,7 @@ class MidoClient:
 
     @handle_api_error
     def create_dhcp(self, bridge, gateway_ip, cidr, host_rts=None,
-                    dns_servers=None):
+                    dns_servers=None, enabled=True):
         """Create a new DHCP entry
 
         :param bridge: bridge object to add dhcp to
@@ -133,16 +133,28 @@ class MidoClient:
         :param cidr: subnet represented as x.x.x.x/y
         :param host_rts: list of routes set in the host
         :param dns_servers: list of dns servers
+        :param enabled: activate DHCP
         :returns: newly created dhcp
         """
         LOG.debug(_("MidoClient.create_dhcp called: bridge=%(bridge)s, "
                     "cidr=%(cidr)s, gateway_ip=%(gateway_ip)s, "
-                    "host_rts=%(host_rts)s, dns_servers=%(dns_servers)s"),
+                    "host_rts=%(host_rts)s, dns_servers=%(dns_servers)s, "
+                    "enabled=%(enabled)s"),
                   {'bridge': bridge, 'cidr': cidr, 'gateway_ip': gateway_ip,
-                   'host_rts': host_rts, 'dns_servers': dns_servers})
+                   'host_rts': host_rts, 'dns_servers': dns_servers,
+                   'enabled': enabled})
         self.mido_api.add_bridge_dhcp(bridge, gateway_ip, cidr,
                                       host_rts=host_rts,
-                                      dns_nservers=dns_servers)
+                                      dns_nservers=dns_servers,
+                                      enabled=enabled)
+
+    @handle_api_error
+    def update_dhcp(self, bridge, cidr, gateway_ip, host_rts=None,
+                    dns_servers=None, enabled=None):
+        self.mido_api.update_bridge_dhcp(bridge, cidr, gateway_ip,
+                                         host_rts=host_rts,
+                                         dns_nservers=dns_servers,
+                                         enabled=enabled)
 
     @handle_api_error
     def add_dhcp_host(self, bridge, cidr, ip, mac):
