@@ -1707,11 +1707,14 @@ class DBInterface(object):
         # port can be router interface or vm interface
         # for perf read logical_router_back_ref only when we have to
         port_parent_name = port_obj.parent_name
-        if port_parent_name != 'default-virtual-machine':
-            router_refs = port_obj.get_logical_router_back_refs() 
+        if port_parent_name == 'default-virtual-machine':
+            router_refs = port_obj.get_logical_router_back_refs()
             if router_refs is not None:
                 port_q_dict['device_owner'] = constants.DEVICE_OWNER_ROUTER_INTF
                 port_q_dict['device_id'] = router_refs[0]['uuid']
+            else:
+                port_q_dict['device_owner'] = None
+                port_q_dict['device_id'] = None
         else:
             port_q_dict['device_id'] = port_obj.parent_name
             port_q_dict['device_owner'] = 'TODO-device-owner'
