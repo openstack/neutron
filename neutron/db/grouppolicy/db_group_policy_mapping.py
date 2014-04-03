@@ -21,8 +21,6 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import group_policy as gpolicy
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import uuidutils
-from neutron.plugins.common import const
 
 
 LOG = logging.getLogger(__name__)
@@ -64,5 +62,15 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyMappingDbMixin):
     def _extend_endpoint_dict_portbinding(self, endpoint_res, endpoint_db):
         endpoint_res['neutron_port_id'] = endpoint_db['port_id']
 
+    def _extend_endpoint_group_dict_networkbinding(self,
+                                                   endpoint_group_res,
+                                                   endpoint_group_db):
+        endpoint_group_res['neutron_network_id'] = endpoint_group_db[
+            'network_id']
+
     gpolicy_db.GroupPolicyMappingDbMixin.register_dict_extend_funcs(
         gpolicy.ENDPOINTS, ['_extend_endpoint_dict_portbinding'])
+
+    gpolicy_db.GroupPolicyMappingDbMixin.register_dict_extend_funcs(
+        gpolicy.ENDPOINT_GROUPS,
+        ['_extend_endpoint_group_dict_networkbinding'])

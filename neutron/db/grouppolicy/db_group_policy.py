@@ -13,28 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
-import random
-
-import netaddr
-from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron.api.v2 import attributes
 from neutron.common import exceptions as nexc
+from neutron.common import log
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
-from neutron.db import sqlalchemyutils
 from neutron.extensions import group_policy as gpolicy
-from neutron import neutron_plugin_base_v2
-from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import const
 
@@ -218,3 +209,113 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         except exc.NoResultFound:
             raise nexc.PolicyRuleNotFound(policy_rule_id=id)
         return policy_rule
+
+    def _make_endpoint_dict(self, ep, fields=None):
+        res = {'id': ep['id'],
+               'tenant_id': ep['tenant_id'],
+               'name': ep['name'],
+               'description': ep['description']}
+        return self._fields(res, fields)
+
+    def _make_endpoint_group_dict(self, epg, fields=None):
+        res = {'id': epg['id'],
+               'tenant_id': epg['tenant_id'],
+               'name': epg['name'],
+               'description': epg['description'],
+               'parent_id': epg['parent_id'],
+               'endpoints': epg['endpoints'],
+               'provided_contract_scopes': epg['provided_contract_scopes'],
+               'consumed_contract_scopes': epg['consumed_contract_scopes']}
+        return self._fields(res, fields)
+
+    @log.log
+    def create_endpoint(self, context, ep):
+        ep = ep['endpoint']
+        tenant_id = self._get_tenant_id_for_create(context, ep)
+        with context.session.begin(subtransactions=True):
+            ep_db = Endpoint(id=uuidutils.generate_uuid(),
+                             tenant_id=tenant_id,
+                             name=ep['name'],
+                             description=ep['description'])
+            context.session.add(ep_db)
+        return self._make_endpoint_dict(ep_db)
+
+    @log.log
+    def update_endpoint(self, context, id, ep):
+        ep = ep['endpoint']
+        with context.session.begin(subtransactions=True):
+            ep_query = context.session.query(
+                Endpoint).with_lockmode('update')
+            ep_db = ep_query.filter_by(id=id).one()
+            ep_db.update(ep)
+        return self._make_endpoint_dict(ep_db)
+
+    @log.log
+    def delete_endpoint(self, context, id):
+        with context.session.begin(subtransactions=True):
+            ep_query = context.session.query(
+                Endpoint).with_lockmode('update')
+            ep_db = ep_query.filter_by(id=id).one()
+            context.session.delete(ep_db)
+
+    @log.log
+    def get_endpoint(self, context, id, fields=None):
+        ep = self._get_endpoint(context, id)
+        return self._make_endpoint_dict(ep, fields)
+
+    @log.log
+    def get_endpoints(self, context, filters=None, fields=None):
+        return self._get_collection(context, Endpoint,
+                                    self._make_endpoint_dict,
+                                    filters=filters, fields=fields)
+
+    @log.log
+    def get_endpoints_count(self, context, filters=None):
+        return self._get_collection_count(context, Endpoint,
+                                          filters=filters)
+
+    @log.log
+    def create_endpoint_group(self, context, epg):
+        epg = epg['endpoint_group']
+        tenant_id = self._get_tenant_id_for_create(context, epg)
+        with context.session.begin(subtransactions=True):
+            epg_db = Endpoint(id=uuidutils.generate_uuid(),
+                              tenant_id=tenant_id,
+                              name=epg['name'],
+                              description=epg['description'])
+            context.session.add(epg_db)
+        return self._make_endpoint_group_dict(epg_db)
+
+    @log.log
+    def update_endpoint_group(self, context, id, epg):
+        epg = epg['endpoint_group']
+        with context.session.begin(subtransactions=True):
+            epg_query = context.session.query(
+                Endpoint).with_lockmode('update')
+            epg_db = epg_query.filter_by(id=id).one()
+            epg_db.update(epg)
+        return self._make_endpoint_group_dict(epg_db)
+
+    @log.log
+    def delete_endpoint_group(self, context, id):
+        with context.session.begin(subtransactions=True):
+            epg_query = context.session.query(
+                Endpoint).with_lockmode('update')
+            epg_db = epg_query.filter_by(id=id).one()
+            context.session.delete(epg_db)
+
+    @log.log
+    def get_endpoint_group(self, context, id, fields=None):
+        epg = self._get_endpoint_group(context, id)
+        return self._make_endpoint_group_dict(epg, fields)
+
+    @log.log
+    def get_endpoint_groups(self, context, filters=None, fields=None):
+        return self._get_collection(context, EndpointGroup,
+                                    self._make_endpoint_group_dict,
+                                    filters=filters, fields=fields)
+
+    @log.log
+    def get_endpoint_groups_count(self, context, filters=None):
+        return self._get_collection_count(context, Endpoint,
+                                          filters=filters)
