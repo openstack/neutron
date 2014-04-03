@@ -29,8 +29,9 @@ LOG = logging.getLogger(__name__)
 # Schema for extended group policy resource attributes map to Neutron contructs
 
 
-class EndpointPortBinding(model_base.BASEV2, gpolicy_db.Endpoint):
+class EndpointPortBinding(gpolicy_db.Endpoint):
     """Neutron port binding to an Endpoint."""
+    __table_args__ = {'extend_existing': True}
     # TODO(Sumit): confirm cascade constraints
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey('ports.id'), nullable=False, unique=True)
@@ -39,8 +40,9 @@ class EndpointPortBinding(model_base.BASEV2, gpolicy_db.Endpoint):
                                                 uselist=False))
 
 
-class EndpointGroupNetworkBinding(model_base.BASEV2, gpolicy_db.EndpointGroup):
+class EndpointGroupNetworkBinding(gpolicy_db.EndpointGroup):
     """Neutron network binding to an EndpointGroup."""
+    __table_args__ = {'extend_existing': True}
     # TODO(Sumit): confirm cascade constraints
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
                            nullable=False, unique=True)
@@ -50,7 +52,7 @@ class EndpointGroupNetworkBinding(model_base.BASEV2, gpolicy_db.EndpointGroup):
                                                    uselist=False))
 
 
-class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyMappingDbMixin):
+class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
     """Group Policy Mapping interface implementation using SQLAlchemy models.
 
     Whenever a non-read call happens the plugin will call an event handler
@@ -68,9 +70,9 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyMappingDbMixin):
         endpoint_group_res['neutron_network_id'] = endpoint_group_db[
             'network_id']
 
-    gpolicy_db.GroupPolicyMappingDbMixin.register_dict_extend_funcs(
+    gpolicy_db.GroupPolicyDbMixin.register_dict_extend_funcs(
         gpolicy.ENDPOINTS, ['_extend_endpoint_dict_portbinding'])
 
-    gpolicy_db.GroupPolicyMappingDbMixin.register_dict_extend_funcs(
+    gpolicy_db.GroupPolicyDbMixin.register_dict_extend_funcs(
         gpolicy.ENDPOINT_GROUPS,
         ['_extend_endpoint_group_dict_networkbinding'])
