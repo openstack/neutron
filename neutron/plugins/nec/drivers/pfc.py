@@ -57,7 +57,8 @@ class PFCDriverBase(ofc_driver_base.OFCDriverBase):
                                            port=conf_ofc.port,
                                            use_ssl=conf_ofc.use_ssl,
                                            key_file=conf_ofc.key_file,
-                                           cert_file=conf_ofc.cert_file)
+                                           cert_file=conf_ofc.cert_file,
+                                           insecure_ssl=conf_ofc.insecure_ssl)
 
     @classmethod
     def filter_supported(cls):

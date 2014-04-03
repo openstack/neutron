@@ -15,10 +15,10 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import httplib
 import json
-import socket
 import time
+
+import requests
 
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
@@ -33,7 +33,7 @@ class OFCClient(object):
     """A HTTP/HTTPS client for OFC Drivers."""
 
     def __init__(self, host="127.0.0.1", port=8888, use_ssl=False,
-                 key_file=None, cert_file=None):
+                 key_file=None, cert_file=None, insecure_ssl=False):
         """Creates a new client to some OFC.
 
         :param host: The host where service resides
@@ -41,34 +41,39 @@ class OFCClient(object):
         :param use_ssl: True to use SSL, False to use HTTP
         :param key_file: The SSL key file to use if use_ssl is true
         :param cert_file: The SSL cert file to use if use_ssl is true
+        :param insecure_ssl: Don't verify SSL certificate
         """
         self.host = host
         self.port = port
         self.use_ssl = use_ssl
         self.key_file = key_file
         self.cert_file = cert_file
+        self.insecure_ssl = insecure_ssl
         self.connection = None
-
-    def get_connection(self):
-        """Returns the proper connection."""
-        if self.use_ssl:
-            connection_type = httplib.HTTPSConnection
-        else:
-            connection_type = httplib.HTTPConnection
-
-        # Open connection and send request, handling SSL certs
-        certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
-        certs = dict((x, certs[x]) for x in certs if certs[x] is not None)
-        if self.use_ssl and len(certs):
-            conn = connection_type(self.host, self.port, **certs)
-        else:
-            conn = connection_type(self.host, self.port)
-        return conn
 
     def _format_error_message(self, status, detail):
         detail = ' ' + detail if detail else ''
         return (_("Operation on OFC failed: %(status)s%(msg)s") %
                 {'status': status, 'msg': detail})
+
+    def _get_response(self, method, action, body=None):
+            headers = {"Content-Type": "application/json"}
+            protocol = "http"
+            certs = {'key_file': self.key_file, 'cert_file': self.cert_file}
+            certs = dict((x, certs[x]) for x in certs if certs[x] is not None)
+            verify = True
+
+            if self.use_ssl:
+                protocol = "https"
+                if self.insecure_ssl:
+                    verify = False
+
+            url = "%s://%s:%d%s" % (protocol, self.host, int(self.port),
+                                    action)
+
+            res = requests.request(method, url, data=body, headers=headers,
+                                   cert=certs, verify=verify)
+            return res
 
     def do_single_request(self, method, action, body=None):
         action = config.OFC.path_prefix + action
@@ -79,13 +84,10 @@ class OFCClient(object):
         if type(body) is dict:
             body = json.dumps(body)
         try:
-            conn = self.get_connection()
-            headers = {"Content-Type": "application/json"}
-            conn.request(method, action, body, headers)
-            res = conn.getresponse()
-            data = res.read()
+            res = self._get_response(method, action, body)
+            data = res.text
             LOG.debug(_("OFC returns [%(status)s:%(data)s]"),
-                      {'status': res.status,
+                      {'status': res.status_code,
                        'data': data})
 
             # Try to decode JSON data if possible.
@@ -94,33 +96,33 @@ class OFCClient(object):
             except (ValueError, TypeError):
                 pass
 
-            if res.status in (httplib.OK,
-                              httplib.CREATED,
-                              httplib.ACCEPTED,
-                              httplib.NO_CONTENT):
+            if res.status_code in (requests.codes.OK,
+                                   requests.codes.CREATED,
+                                   requests.codes.ACCEPTED,
+                                   requests.codes.NO_CONTENT):
                 return data
-            elif res.status == httplib.SERVICE_UNAVAILABLE:
-                retry_after = res.getheader('retry-after')
+            elif res.status_code == requests.codes.SERVICE_UNAVAILABLE:
+                retry_after = res.headers.get('retry-after')
                 LOG.warning(_("OFC returns ServiceUnavailable "
                               "(retry-after=%s)"), retry_after)
                 raise nexc.OFCServiceUnavailable(retry_after=retry_after)
-            elif res.status == httplib.NOT_FOUND:
+            elif res.status_code == requests.codes.NOT_FOUND:
                 LOG.info(_("Specified resource %s does not exist on OFC "),
                          action)
                 raise nexc.OFCResourceNotFound(resource=action)
             else:
                 LOG.warning(_("Operation on OFC failed: "
                               "status=%(status)s, detail=%(detail)s"),
-                            {'status': res.status, 'detail': data})
+                            {'status': res.status_code, 'detail': data})
                 params = {'reason': _("Operation on OFC failed"),
-                          'status': res.status}
+                          'status': res.status_code}
                 if isinstance(data, dict):
                     params['err_code'] = data.get('err_code')
                     params['err_msg'] = data.get('err_msg')
                 else:
                     params['err_msg'] = data
                 raise nexc.OFCException(**params)
-        except (socket.error, IOError) as e:
+        except requests.exceptions.RequestException as e:
             reason = _("Failed to connect OFC : %s") % e
             LOG.error(reason)
             raise nexc.OFCException(reason=reason)

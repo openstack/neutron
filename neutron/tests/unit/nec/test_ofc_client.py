@@ -17,10 +17,10 @@
 # @author: Akihiro Motoki
 
 import json
-import socket
 
 import mock
 from oslo.config import cfg
+import requests
 
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
@@ -28,19 +28,25 @@ from neutron.plugins.nec.common import ofc_client
 from neutron.tests import base
 
 
+class FakeResponse(requests.Response):
+    def __init__(self, status_code=None, text=None, headers=None):
+        self._text = text
+        self.status_code = status_code
+        if headers is not None:
+            self.headers = headers
+
+    @property
+    def text(self):
+        return self._text
+
+
 class OFCClientTest(base.BaseTestCase):
 
     def _test_do_request(self, status, resbody, expected_data, exctype=None,
                          exc_checks=None, path_prefix=None):
-        res = mock.Mock()
-        res.status = status
-        res.read.return_value = resbody
+        req = mock.Mock(return_value=(FakeResponse(status, resbody)))
 
-        conn = mock.Mock()
-        conn.getresponse.return_value = res
-
-        with mock.patch.object(ofc_client.OFCClient, 'get_connection',
-                               return_value=conn):
+        with mock.patch.object(requests, 'request', req):
             client = ofc_client.OFCClient()
             path = '/somewhere'
             realpath = path_prefix + path if path_prefix else path
@@ -56,11 +62,9 @@ class OFCClientTest(base.BaseTestCase):
                 self.assertEqual(response, expected_data)
 
             headers = {"Content-Type": "application/json"}
-            expected = [
-                mock.call.request('GET', realpath, '{}', headers),
-                mock.call.getresponse(),
-            ]
-            conn.assert_has_calls(expected)
+            req.assert_called_with('GET', 'http://127.0.0.1:8888' + realpath,
+                                   verify=True, cert={}, data='{}',
+                                   headers=headers)
 
     def test_do_request_200_json_value(self):
         self._test_do_request(200, json.dumps([1, 2, 3]), [1, 2, 3])
@@ -108,13 +112,12 @@ class OFCClientTest(base.BaseTestCase):
                               exc_checks)
 
     def test_do_request_socket_error(self):
-        conn = mock.Mock()
-        conn.request.side_effect = socket.error
-
         data = _("An OFC exception has occurred: Failed to connect OFC : ")
 
-        with mock.patch.object(ofc_client.OFCClient, 'get_connection',
-                               return_value=conn):
+        req = mock.Mock()
+        req.side_effect = requests.exceptions.RequestException
+
+        with mock.patch.object(requests, 'request', req):
             client = ofc_client.OFCClient()
 
             e = self.assertRaises(nexc.OFCException, client.do_request,
@@ -124,10 +127,9 @@ class OFCClientTest(base.BaseTestCase):
                 self.assertIsNone(getattr(e, k))
 
             headers = {"Content-Type": "application/json"}
-            expected = [
-                mock.call.request('GET', '/somewhere', '{}', headers),
-            ]
-            conn.assert_has_calls(expected)
+            req.assert_called_with('GET', 'http://127.0.0.1:8888/somewhere',
+                                   verify=True, cert={}, data='{}',
+                                   headers=headers)
 
     def test_do_request_retry_fail_after_one_attempts(self):
         self._test_do_request_retry_after(1, api_max_attempts=1)
@@ -148,24 +150,17 @@ class OFCClientTest(base.BaseTestCase):
             cfg.CONF.set_override('api_max_attempts', api_max_attempts,
                                   group='OFC')
 
-        res_unavail = mock.Mock()
-        res_unavail.status = 503
-        res_unavail.read.return_value = None
-        res_unavail.getheader.return_value = '10'
+        res_unavail = FakeResponse(503, headers={'retry-after': '10'})
+        res_ok = FakeResponse(200)
 
-        res_ok = mock.Mock()
-        res_ok.status = 200
-        res_ok.read.return_value = None
-
-        conn = mock.Mock()
+        req = mock.Mock()
         if succeed_final:
-            side_effect = [res_unavail] * (exp_request_count - 1) + [res_ok]
+            req.side_effect = ([res_unavail] * (exp_request_count - 1)
+                               + [res_ok])
         else:
-            side_effect = [res_unavail] * exp_request_count
-        conn.getresponse.side_effect = side_effect
+            req.side_effect = [res_unavail] * exp_request_count
 
-        with mock.patch.object(ofc_client.OFCClient, 'get_connection',
-                               return_value=conn):
+        with mock.patch.object(requests, 'request', req):
             with mock.patch('time.sleep') as sleep:
                 client = ofc_client.OFCClient()
                 if succeed_final:
@@ -176,11 +171,10 @@ class OFCClientTest(base.BaseTestCase):
                                           client.do_request,
                                           'GET', '/somewhere')
                     self.assertEqual('10', e.retry_after)
+
         headers = {"Content-Type": "application/json"}
-        expected = [
-            mock.call.request('GET', '/somewhere', None, headers),
-            mock.call.getresponse(),
-        ] * exp_request_count
-        conn.assert_has_calls(expected)
-        self.assertEqual(exp_request_count, conn.request.call_count)
+        req.assert_called_with('GET', 'http://127.0.0.1:8888/somewhere',
+                               verify=True, cert={}, data=None,
+                               headers=headers)
+        self.assertEqual(exp_request_count, req.call_count)
         self.assertEqual(exp_request_count - 1, sleep.call_count)
