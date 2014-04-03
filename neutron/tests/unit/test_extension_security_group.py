@@ -824,7 +824,6 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     rule = self._build_security_group_rule(
                         sg['security_group']['id'],
                         'ingress', protocol, '50', '22')
-                    self._create_security_group_rule(self.fmt, rule)
                     res = self._create_security_group_rule(self.fmt, rule)
                     self.deserialize(self.fmt, res)
                     self.assertEqual(res.status_int,
@@ -838,7 +837,6 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             with self.security_group_rule(security_group_id):
                 rule = self._build_security_group_rule(
                     sg['security_group']['id'], 'ingress', None, '22', '22')
-                self._create_security_group_rule(self.fmt, rule)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
@@ -852,7 +850,6 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 rule = self._build_security_group_rule(
                     sg['security_group']['id'], 'ingress',
                     const.PROTO_NAME_TCP, '22', None)
-                self._create_security_group_rule(self.fmt, rule)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
@@ -866,7 +863,6 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 rule = self._build_security_group_rule(
                     sg['security_group']['id'], 'ingress',
                     const.PROTO_NAME_TCP, None, '22')
-                self._create_security_group_rule(self.fmt, rule)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
@@ -880,7 +876,6 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 rule = self._build_security_group_rule(
                     sg['security_group']['id'], 'ingress',
                     const.PROTO_NAME_ICMP, '256', None)
-                self._create_security_group_rule(self.fmt, rule)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
@@ -894,7 +889,6 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 rule = self._build_security_group_rule(
                     sg['security_group']['id'], 'ingress',
                     const.PROTO_NAME_ICMP, '8', '256')
-                self._create_security_group_rule(self.fmt, rule)
                 res = self._create_security_group_rule(self.fmt, rule)
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
