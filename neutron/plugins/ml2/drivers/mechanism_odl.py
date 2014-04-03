@@ -20,6 +20,7 @@ import time
 from oslo.config import cfg
 import requests
 
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.extensions import portbindings
@@ -332,7 +333,8 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
             if self.check_segment(segment):
                 context.set_binding(segment[api.ID],
                                     self.vif_type,
-                                    self.vif_details)
+                                    self.vif_details,
+                                    status=n_const.PORT_STATUS_ACTIVE)
                 LOG.debug(_("Bound using segment: %s"), segment)
                 return
             else:
