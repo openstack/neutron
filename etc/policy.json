@@ -136,5 +136,15 @@
 
     "get_service_provider": "rule:regular_user",
     "get_lsn": "rule:admin_only",
-    "create_lsn": "rule:admin_only"
+    "create_lsn": "rule:admin_only",
+
+    "create_endpoint": "rule:admin_or_owner",
+    "get_endpoint": "rule:admin_or_owner",
+    "update_endpoint": "rule:admin_or_owner",
+    "delete_endpoint": "rule:admin_or_owner",
+
+    "create_endpoint_group": "rule:admin_or_owner",
+    "get_endpoint_group": "rule:admin_or_owner",
+    "update_endpoint_group": "rule:admin_or_owner",
+    "delete_endpoint_group": "rule:admin_or_owner"
 }

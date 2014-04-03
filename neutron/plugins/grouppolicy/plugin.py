@@ -34,7 +34,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
     Most DB related works are implemented in class
     db_group_policy_mapping.GroupPolicyMappingDbMixin.
     """
-    supported_extension_aliases = ["group-policy"]
+    supported_extension_aliases = ["group-policy", "group-policy-mapping"]
 
     def __init__(self):
         qdbapi.register_models()

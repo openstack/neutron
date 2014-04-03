@@ -272,7 +272,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 # TODO (sumit): Add quota opts
 
 
-class GroupPolicy(extensions.ExtensionDescriptor):
+class Group_policy(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
@@ -308,7 +308,7 @@ class GroupPolicy(extensions.ExtensionDescriptor):
         return GroupPolicyPluginBase
 
     def update_attributes_map(self, attributes):
-        super(GroupPolicy, self).update_attributes_map(
+        super(Group_policy, self).update_attributes_map(
             attributes, extension_attrs_map=RESOURCE_ATTRIBUTE_MAP)
 
     def get_extended_resources(self, version):
@@ -343,7 +343,7 @@ class GroupPolicyPluginBase(ServicePluginBase):
         pass
 
     @abc.abstractmethod
-    def update_endpoint_(self, context, id, endpoint):
+    def update_endpoint(self, context, id, endpoint):
         pass
 
     @abc.abstractmethod

@@ -90,3 +90,5 @@ GP_REDIRECT = "redirect"
 GP_DIRECTION_IN = 'in'
 GP_DIRECTION_OUT = 'out'
 GP_DIRECTION_BI = 'bi'
+GP_PROVIDES = "provides"
+GP_CONSUMES = "consumes"
