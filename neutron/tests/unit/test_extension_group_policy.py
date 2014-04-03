@@ -36,7 +36,7 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         self._setUpExtension(
             'neutron.extensions.group_policy.GroupPolicyPluginBase',
             constants.GROUP_POLICY, gpolicy.RESOURCE_ATTRIBUTE_MAP,
-            gpolicy.GroupPolicy, 'gp', plural_mappings={})
+            gpolicy.Group_policy, 'gp', plural_mappings={})
 
     def test_create_endpoint_group(self):
         endpoint_group_id = _uuid()

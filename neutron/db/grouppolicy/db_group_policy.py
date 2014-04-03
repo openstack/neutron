@@ -27,7 +27,7 @@ from neutron.db import models_v2
 from neutron.extensions import group_policy as gpolicy
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
-from neutron.plugins.common import const
+from neutron.plugins.common import constants as const
 
 
 LOG = logging.getLogger(__name__)
@@ -38,17 +38,8 @@ class Endpoint(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     __tablename__ = 'gp_endpoints'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-    port_id = sa.Column(sa.String(36),
-                        sa.ForeignKey('ports.id', ondelete='CASCADE'),
-                        nullable=False,
-                        unique=True)
-    port = orm.relationship(models_v2.Port,
-                            backref=orm.backref("gp_portendpoints",
-                                                lazy='joined',
-                                                uselist=False,
-                                                cascade='delete'))
     epg_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('gp_portendpoints.id'),
+                       sa.ForeignKey('gp_endpointgroups.id'),
                        nullable=True, unique=True)
 
 
@@ -57,8 +48,11 @@ class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     __tablename__ = 'gp_contractscopes'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
+    scope_type = sa.Column(sa.Enum(const.GP_PROVIDES,
+                                   const.GP_CONSUMES,
+                                   name='scope_type'))
     epg_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('gp_contractscopes.id'),
+                       sa.ForeignKey('gp_endpointgroups.id'),
                        nullable=True, unique=True)
     contract_id = sa.Column(sa.String(36),
                             sa.ForeignKey('gp_contracts.id'))
@@ -75,10 +69,8 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                           nullable=True)
     children = orm.relationship('EndpointGroup')
     endpoints = orm.relationship(Endpoint, backref='gp_endpointgroups')
-    provided_contract_scopes = orm.relationship(ContractScope,
-                                                backref='gp_endpointgroups')
-    consumed_contract_scopes = orm.relationship(ContractScope,
-                                                backref='gp_endpointgroups')
+    contract_scopes = orm.relationship(ContractScope,
+                                       backref='gp_endpointgroups')
 
 
 class ContractPolicyRuleAssociation(model_base.BASEV2):
@@ -116,7 +108,7 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     # for redirect
     # TODO (Sumit): Revisit when other action_types are defined
     action_value = sa.Column(sa.String(36),
-                             sa.ForeignKey('gp_contract_scopes.id'),
+                             sa.ForeignKey('gp_contractscopes.id'),
                              nullable=True, unique=True)
     direction = sa.Column(sa.Enum(const.GP_DIRECTION_IN,
                                   const.GP_DIRECTION_OUT,
@@ -133,7 +125,8 @@ class Contract(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     policy_rules = orm.relationship(ContractPolicyRuleAssociation,
                                     backref='gp_contract',
                                     lazy="joined",
-                                    order_by='Contract.position',
+                                    order_by=
+                                    'ContractPolicyRuleAssociation.position',
                                     collection_class=
                                     ordering_list('position', count_from=1))
     contract_scopes = orm.relationship(ContractScope,
@@ -229,8 +222,8 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         return self._fields(res, fields)
 
     @log.log
-    def create_endpoint(self, context, ep):
-        ep = ep['endpoint']
+    def create_endpoint(self, context, endpoint):
+        ep = endpoint['endpoint']
         tenant_id = self._get_tenant_id_for_create(context, ep)
         with context.session.begin(subtransactions=True):
             ep_db = Endpoint(id=uuidutils.generate_uuid(),
@@ -241,8 +234,8 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         return self._make_endpoint_dict(ep_db)
 
     @log.log
-    def update_endpoint(self, context, id, ep):
-        ep = ep['endpoint']
+    def update_endpoint(self, context, id, endpoint):
+        ep = endpoint['endpoint']
         with context.session.begin(subtransactions=True):
             ep_query = context.session.query(
                 Endpoint).with_lockmode('update')
@@ -275,23 +268,23 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                                           filters=filters)
 
     @log.log
-    def create_endpoint_group(self, context, epg):
-        epg = epg['endpoint_group']
+    def create_endpoint_group(self, context, endpoint_group):
+        epg = endpoint_group['endpoint_group']
         tenant_id = self._get_tenant_id_for_create(context, epg)
         with context.session.begin(subtransactions=True):
-            epg_db = Endpoint(id=uuidutils.generate_uuid(),
-                              tenant_id=tenant_id,
-                              name=epg['name'],
-                              description=epg['description'])
+            epg_db = EndpointGroup(id=uuidutils.generate_uuid(),
+                                   tenant_id=tenant_id,
+                                   name=epg['name'],
+                                   description=epg['description'])
             context.session.add(epg_db)
         return self._make_endpoint_group_dict(epg_db)
 
     @log.log
-    def update_endpoint_group(self, context, id, epg):
-        epg = epg['endpoint_group']
+    def update_endpoint_group(self, context, id, endpoint_group):
+        epg = endpoint_group['endpoint_group']
         with context.session.begin(subtransactions=True):
             epg_query = context.session.query(
-                Endpoint).with_lockmode('update')
+                EndpointGroup).with_lockmode('update')
             epg_db = epg_query.filter_by(id=id).one()
             epg_db.update(epg)
         return self._make_endpoint_group_dict(epg_db)
@@ -300,7 +293,7 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
     def delete_endpoint_group(self, context, id):
         with context.session.begin(subtransactions=True):
             epg_query = context.session.query(
-                Endpoint).with_lockmode('update')
+                EndpointGroup).with_lockmode('update')
             epg_db = epg_query.filter_by(id=id).one()
             context.session.delete(epg_db)
 
@@ -317,5 +310,65 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
 
     @log.log
     def get_endpoint_groups_count(self, context, filters=None):
-        return self._get_collection_count(context, Endpoint,
+        return self._get_collection_count(context, EndpointGroup,
                                           filters=filters)
+
+    @log.log
+    def create_contract(self, context, contract):
+        pass
+
+    @log.log
+    def update_contract(self, context, id, contract):
+        pass
+
+    @log.log
+    def get_contracts(self, context, filters=None, fields=None):
+        pass
+
+    @log.log
+    def get_contract(self, context, id, fields=None):
+        pass
+
+    @log.log
+    def delete_contract(self, context, id):
+        pass
+
+    @log.log
+    def create_contract_scope(self, context, contract_scope):
+        pass
+
+    @log.log
+    def update_contract_scope(self, context, id, contract_scope):
+        pass
+
+    @log.log
+    def get_contract_scopes(self, context, filters=None, fields=None):
+        pass
+
+    @log.log
+    def get_contract_scope(self, context, id, fields=None):
+        pass
+
+    @log.log
+    def delete_contract_scope(self, context, id):
+        pass
+
+    @log.log
+    def get_policy_rules(self, context, filters=None, fields=None):
+        pass
+
+    @log.log
+    def get_policy_rule(self, context, id, fields=None):
+        pass
+
+    @log.log
+    def create_policy_rule(self, context, policy_rule):
+        pass
+
+    @log.log
+    def update_policy_rule(self, context, id, policy_rule):
+        pass
+
+    @log.log
+    def delete_policy_rule(self, context, id):
+        pass

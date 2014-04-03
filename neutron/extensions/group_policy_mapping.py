@@ -32,7 +32,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class GroupPolicyMapping(object):
+class Group_policy_mapping(object):
 
     @classmethod
     def get_name(cls):

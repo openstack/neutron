@@ -23,10 +23,12 @@ from neutron.db.grouppolicy import db_group_policy as gpdb
 import neutron.extensions
 from neutron.extensions import group_policy as gpolicy
 from neutron.openstack.common import importutils
+from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron.tests.unit import test_db_plugin
 
 
+_uuid = uuidutils.generate_uuid
 DB_CORE_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 DB_GP_PLUGIN_KLASS = (
     "neutron.db.grouppolicy.db_group_policy.GroupPolicyDbMixin"
@@ -61,7 +63,7 @@ class GroupPolicyTestMixin(object):
         return ep_res
 
     @contextlib.contextmanager
-    def endpoint(self, fmt=None, name='ep1', description=None,
+    def endpoint(self, fmt=None, name='ep1', description="",
                  no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
@@ -85,7 +87,7 @@ class GroupPolicyDbTestCase(GroupPolicyTestMixin,
             gp_plugin = DB_GP_PLUGIN_KLASS
         service_plugins = {'gp_plugin_name': gp_plugin}
 
-        gpdb.GroupPolicyDbMixin.supported_extension_aliases = ["group-policy"]
+        gpdb.GroupPolicyDbMixin.supported_extension_aliases = ['group-policy']
         super(GroupPolicyDbTestCase, self).setUp(
             ext_mgr=ext_mgr,
             service_plugins=service_plugins

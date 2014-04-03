@@ -39,7 +39,7 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
         self._setUpExtension(
             'neutron.extensions.group_policy.GroupPolicyPluginBase',
             constants.GROUP_POLICY, attr_map,
-            gpolicy.GroupPolicy, 'gp', plural_mappings={})
+            gpolicy.Group_policy, 'gp', plural_mappings={})
 
     def test_create_endpoint_with_port(self):
         endpoint_id = _uuid()
