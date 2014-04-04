@@ -14,10 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import contextlib
-
 import eventlet
-import eventlet.timeout
 import fixtures
 
 from neutron.agent.linux import async_process
@@ -42,13 +39,6 @@ class TestAsyncProcess(base.BaseTestCase):
             if new_output:
                 output += new_output
             eventlet.sleep(0.01)
-
-    @contextlib.contextmanager
-    def assert_max_execution_time(self, max_execution_time=5):
-        with eventlet.timeout.Timeout(max_execution_time, False):
-            yield
-            return
-        self.fail('Execution of this test timed out')
 
     def test_stopping_async_process_lifecycle(self):
         with self.assert_max_execution_time():
