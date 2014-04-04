@@ -146,10 +146,10 @@ class Controller(object):
                       {'resource': self._collection,
                        'attr': attr_name})
         except exceptions.PolicyRuleNotFound:
-            LOG.debug(_("Policy rule:%(action)s not found. Assuming no "
-                        "authZ check is defined for %(attr)s"),
-                      {'action': action,
-                       'attr': attr_name})
+            # Just ignore the exception. Do not even log it, as this will add
+            # a lot of unnecessary info in the log (and take time as well to
+            # write info to the logger)
+            pass
         attr_val = self._attr_info.get(attr_name)
         return attr_val and attr_val['is_visible'] and authz_check
 
