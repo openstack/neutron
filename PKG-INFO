@@ -1,0 +1,45 @@
+Metadata-Version: 1.1
+Name: neutron
+Version: 2013.2
+Summary: OpenStack Networking
+Home-page: http://www.openstack.org/
+Author: OpenStack
+Author-email: openstack-dev@lists.openstack.org
+License: UNKNOWN
+Description: # -- Welcome!
+        
+          You have come across a cloud computing network fabric controller.  It has
+          identified itself as "Neutron."  It aims to tame your (cloud) networking!
+        
+        # -- External Resources:
+        
+         The homepage for Neutron is: http://launchpad.net/neutron .  Use this
+         site for asking for help, and filing bugs. Code is available on github at
+         <http://github.com/openstack/neutron>.
+        
+         The latest and most in-depth documentation on how to use Neutron is
+         available at: <http://docs.openstack.org>.  This includes:
+        
+         Neutron Administrator Guide
+         http://docs.openstack.org/trunk/openstack-network/admin/content/
+        
+         Neutron API Reference:
+         http://docs.openstack.org/api/openstack-network/2.0/content/
+        
+         The start of some developer documentation is available at:
+         http://wiki.openstack.org/NeutronDevelopment
+        
+         For help using or hacking on Neutron, you can send mail to
+         <mailto:openstack-dev@lists.openstack.org>.
+        
+        
+Platform: UNKNOWN
+Classifier: Environment :: OpenStack
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 2.6
