@@ -132,19 +132,24 @@ class AsyncProcess(object):
         # If root helper was used, two processes will be created:
         #
         #  - a root helper process (e.g. sudo myscript)
+        #  - possibly a rootwrap script (e.g. neutron-rootwrap)
         #  - a child process (e.g. myscript)
         #
         # Killing the root helper process will leave the child process
         # as a zombie, so the only way to ensure that both die is to
         # target the child process directly.
         if self.root_helper:
-            pids = utils.find_child_pids(pid)
-            if pids:
-                # The root helper will only ever launch a single child.
-                pid = pids[0]
-            else:
-                # Process is already dead.
-                pid = None
+            try:
+                pid = utils.find_child_pids(pid)[0]
+            except IndexError:
+                # Process is already dead or pid == None.
+                return None
+            while True:
+                try:
+                    pid = utils.find_child_pids(pid)[0]
+                except IndexError:
+                    # Last process in the tree, return it
+                    break
         return pid
 
     def _kill_process(self, pid):

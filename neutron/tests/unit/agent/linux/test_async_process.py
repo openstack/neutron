@@ -185,12 +185,18 @@ class TestAsyncProcess(base.BaseTestCase):
 
     def _test__get_pid_to_kill(self, expected=_marker,
                                root_helper=None, pids=None):
+        def _find_child_pids(x):
+            if not pids:
+                return []
+            pids.pop()
+            return pids
+
         if root_helper:
             self.proc.root_helper = root_helper
         with mock.patch.object(self.proc, '_process') as mock_process:
             with mock.patch.object(mock_process, 'pid') as mock_pid:
                 with mock.patch.object(utils, 'find_child_pids',
-                                       return_value=pids):
+                                       side_effect=_find_child_pids):
                     actual = self.proc._get_pid_to_kill()
         if expected is _marker:
             expected = mock_pid
@@ -200,7 +206,8 @@ class TestAsyncProcess(base.BaseTestCase):
         self._test__get_pid_to_kill()
 
     def test__get_pid_to_kill_returns_child_pid_with_root_helper(self):
-        self._test__get_pid_to_kill(expected='1', pids=['1'], root_helper='a')
+        self._test__get_pid_to_kill(expected='1', pids=['1', '2'],
+                                    root_helper='a')
 
     def test__get_pid_to_kill_returns_none_with_root_helper(self):
         self._test__get_pid_to_kill(expected=None, root_helper='a')
