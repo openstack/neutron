@@ -1205,6 +1205,7 @@ class DBInterface(object):
         else:
             net_q_dict['shared'] = False
         net_q_dict['status'] = constants.NET_STATUS_ACTIVE
+        extra_dict['router:external'] = net_obj in self._fip_pool_ref_networks(net_obj.parent_uuid)
 
         if net_repr == 'SHOW':
 
