@@ -2003,15 +2003,17 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def disassociate_floatingips(self, context, port_id):
         try:
             fip_qry = context.session.query(l3_db.FloatingIP)
-            fip_db = fip_qry.filter_by(fixed_port_id=port_id).one()
-            nsx_router_id = nsx_utils.get_nsx_router_id(
-                context.session, self.cluster, fip_db.router_id)
-            self._retrieve_and_delete_nat_rules(context,
-                                                fip_db.floating_ip_address,
-                                                fip_db.fixed_ip_address,
-                                                nsx_router_id,
-                                                min_num_rules_expected=1)
-            self._remove_floatingip_address(context, fip_db)
+            fip_dbs = fip_qry.filter_by(fixed_port_id=port_id)
+
+            for fip_db in fip_dbs:
+                nsx_router_id = nsx_utils.get_nsx_router_id(
+                    context.session, self.cluster, fip_db.router_id)
+                self._retrieve_and_delete_nat_rules(context,
+                                                    fip_db.floating_ip_address,
+                                                    fip_db.fixed_ip_address,
+                                                    nsx_router_id,
+                                                    min_num_rules_expected=1)
+                self._remove_floatingip_address(context, fip_db)
         except sa_exc.NoResultFound:
             LOG.debug(_("The port '%s' is not associated with floating IPs"),
                       port_id)
