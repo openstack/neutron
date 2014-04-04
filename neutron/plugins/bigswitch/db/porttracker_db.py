@@ -16,13 +16,15 @@
 #    under the License.
 
 from neutron.api.v2 import attributes
-from neutron.db import portbindings_db
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
 def get_port_hostid(context, port_id):
+    # REVISIT(kevinbenton): this is a workaround to avoid portbindings_db
+    # relational table generation until one of the functions is called.
+    from neutron.db import portbindings_db
     with context.session.begin(subtransactions=True):
         query = context.session.query(portbindings_db.PortBindingPort)
         res = query.filter_by(port_id=port_id).first()
@@ -32,6 +34,9 @@ def get_port_hostid(context, port_id):
 
 
 def put_port_hostid(context, port_id, host):
+    # REVISIT(kevinbenton): this is a workaround to avoid portbindings_db
+    # relational table generation until one of the functions is called.
+    from neutron.db import portbindings_db
     if not attributes.is_attr_set(host):
         LOG.warning(_("No host_id in port request to track port location."))
         return
