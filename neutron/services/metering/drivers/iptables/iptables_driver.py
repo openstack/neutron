@@ -70,15 +70,12 @@ class RouterWithMetering(object):
         self.id = router['id']
         self.router = router
         self.root_helper = config.get_root_helper(self.conf)
+        self.ns_name = NS_PREFIX + self.id if conf.use_namespaces else None
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=self.root_helper,
-            namespace=self.ns_name(),
+            namespace=self.ns_name,
             binary_name=WRAP_NAME)
         self.metering_labels = {}
-
-    def ns_name(self):
-        if self.conf.use_namespaces:
-            return NS_PREFIX + self.router['id']
 
 
 class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
