@@ -21,6 +21,7 @@ from neutron.api.v2 import attributes as attr
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import log as logging
+from neutron.extensions import external_net as ext_net_extn
 
 from cfgm_common import exceptions as vnc_exc
 from vnc_api.vnc_api import *
@@ -413,6 +414,11 @@ class DBInterface(object):
             pass
 
         try:
+            if net_obj and net_obj.get_floating_ip_pools():
+                fip_pools = net_obj.get_floating_ip_pools()
+                for fip_pool in fip_pools:
+                    self._floating_ip_pool_delete(id=fip_pool['uuid'])
+
             self._vnc_lib.virtual_network_delete(id=net_id)
         except RefsExistError:
             raise exceptions.NetworkInUse()
@@ -541,6 +547,16 @@ class DBInterface(object):
             pass
     #end _instance_ip_delete
 
+    def _floating_ip_pool_create(self, fip_pool_obj):
+        fip_pool_uuid = self._vnc_lib.floating_ip_pool_create(fip_pool_obj)
+
+        return fip_pool_uuid
+    # end _floating_ip_pool_create
+
+    def _floating_ip_pool_delete(self, fip_pool_id):
+        fip_pool_uuid = self._vnc_lib.floating_ip_pool_delete(id=fip_pool_id)
+    # end _floating_ip_pool_delete
+
     # find projects on a given domain
     def _project_list_domain(self, domain_id):
         # TODO till domain concept is not present in keystone
@@ -552,10 +568,13 @@ class DBInterface(object):
 
     # find network ids on a given project
     def _network_list_project(self, project_id):
-        try:
-            project_uuid = str(uuid.UUID(project_id))
-        except Exception:
-            print "Error in converting uuid %s" % (project_id)
+        if project_id:
+            try:
+                project_uuid = str(uuid.UUID(project_id))
+            except Exception:
+                print "Error in converting uuid %s" % (project_id)
+        else:
+            project_uuid = None
 
         resp_dict = self._vnc_lib.virtual_networks_list(parent_id=project_uuid)
 
@@ -1126,8 +1145,14 @@ class DBInterface(object):
             project_obj = self._project_read(proj_id=project_id)
             id_perms = IdPermsType(enable=True)
             net_obj = VirtualNetwork(net_name, project_obj, id_perms=id_perms)
+            if 'shared' in network_q:
+                net_obj.is_shared = network_q['shared']
+            else:
+                net_obj.is_shared = False
         else:  # READ/UPDATE/DELETE
             net_obj = self._virtual_network_read(net_id=network_q['id'])
+            if oper == UPDATE and 'shared' in network_q:
+                net_obj.is_shared = network_q['shared']
 
         id_perms = net_obj.get_id_perms()
         if 'admin_state_up' in network_q:
@@ -1168,12 +1193,17 @@ class DBInterface(object):
         net_q_dict = {}
         extra_dict = {}
 
+        id_perms = net_obj.get_id_perms()
+        perms = id_perms.permissions
         net_q_dict['id'] = net_obj.uuid
         net_q_dict['name'] = net_obj.name
         extra_dict['contrail:fq_name'] = net_obj.get_fq_name()
         net_q_dict['tenant_id'] = net_obj.parent_uuid.replace('-', '')
-        net_q_dict['admin_state_up'] = net_obj.get_id_perms().enable
-        net_q_dict['shared'] = False
+        net_q_dict['admin_state_up'] = id_perms.enable
+        if net_obj.is_shared:
+            net_q_dict['shared'] = True
+        else:
+            net_q_dict['shared'] = False
         net_q_dict['status'] = constants.NET_STATUS_ACTIVE
         extra_dict['router:external'] = net_obj in self._fip_pool_ref_networks(net_obj.parent_uuid)
 
@@ -1295,7 +1325,10 @@ class DBInterface(object):
                                'nexthop': 'TODO-nexthop',
                                'subnet_id': sn_id}]
 
-        sn_q_dict['shared'] = False
+        if net_obj.is_shared:
+            sn_q_dict['shared'] = True
+        else:
+            sn_q_dict['shared'] = False
 
         extra_dict = {}
         extra_dict['contrail:instance_count'] = 0
@@ -1588,10 +1621,21 @@ class DBInterface(object):
     # public methods
     # network api handlers
     def network_create(self, network_q):
-        #self._ensure_project_exists(network_q['tenant_id'])
+        try:
+            external_attr = network_q[ext_net_extn.EXTERNAL]
+            if external_attr == attr.ATTR_NOT_SPECIFIED:
+                fip_pool_needed = False
+            else:
+                fip_pool_needed = external_attr
+        except KeyError:
+            fip_pool_needed = False
 
         net_obj = self._network_neutron_to_vnc(network_q, CREATE)
         net_uuid = self._virtual_network_create(net_obj)
+
+        if fip_pool_needed:
+            fip_pool_obj = FloatingIpPool('floating-ip-pool', net_obj)
+            self._floating_ip_pool_create(fip_pool_obj)
 
         ret_network_q = self._network_vnc_to_neutron(net_obj, net_repr='SHOW')
         self._db_cache['q_networks'][net_uuid] = ret_network_q
@@ -1631,6 +1675,12 @@ class DBInterface(object):
     #end network_update
 
     def network_delete(self, net_id):
+        net_obj = self._virtual_network_read(net_id=net_id)
+        fip_pools = net_obj.get_floating_ip_pools()
+        if fip_pools:
+            for fip_pool in fip_pools:
+                self._floating_ip_pool_delete(fip_pool_id=fip_pool['uuid'])
+
         self._virtual_network_delete(net_id=net_id)
         try:
             del self._db_cache['q_networks'][net_id]
@@ -1641,11 +1691,6 @@ class DBInterface(object):
     # TODO request based on filter contents
     def network_list(self, context=None, filters=None):
         ret_list = []
-
-        if filters and 'shared' in filters:
-            if filters['shared'][0] == True:
-                # no support for shared networks
-                return ret_list
 
         # collect phase
         all_nets = []  # all n/ws in all projects
@@ -1680,11 +1725,28 @@ class DBInterface(object):
         elif filters and 'name' in filters and not context.is_admin:
             project_nets = self._network_list_project(context.tenant)
             all_nets.append(project_nets)
+        elif filters and 'shared' in filters:
+            if filters['shared'][0] == True:
+                nets = self._network_list_project(project_id=None)
+                for net in nets:
+                    try:
+                        net_obj = self._virtual_network_read(net_id=net['uuid'])
+                        if not net_obj.is_shared:
+                            continue
+                        net_info = self._network_vnc_to_neutron(net_obj,
+                                                                net_repr='LIST')
+                    except NoIdError:
+                        continue
+                    ret_list.append(net_info)
         else:
             # read all networks in all projects
-            dom_projects = self._project_list_domain(None)
-            for project in dom_projects:
-                proj_id = project['uuid']
+            if context and not context.is_admin:
+                project_uuids = [str(uuid.UUID(context.tenant))]
+            else:
+                dom_projects = self._project_list_domain(None)
+                project_uuids = [proj['uuid'] for proj in dom_projects]
+
+            for proj_id in project_uuids:
                 if filters and 'router:external' in filters:
                     all_nets.append(self._fip_pool_ref_networks(proj_id))
                 else:
@@ -1868,7 +1930,11 @@ class DBInterface(object):
                         sn_proj_id = sn_info['q_api_data']['tenant_id']
                         sn_net_id = sn_info['q_api_data']['network_id']
 
-                        if filters:
+                        if (filters and 'shared' in filters and
+                                        filters['shared'][0] == True):
+                            if not net_obj.is_shared:
+                                continue
+                        elif filters:
                             if not self._filters_is_present(filters, 'id',
                                                             sn_id):
                                 continue
