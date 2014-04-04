@@ -59,7 +59,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
 
     def _fake_port(self):
         return {'device': 'tapfake_dev',
-                'mac_address': 'ff:ff:ff:ff',
+                'mac_address': 'ff:ff:ff:ff:ff:ff',
                 'fixed_ips': [FAKE_IP['IPv4'],
                               FAKE_IP['IPv6']]}
 
@@ -100,7 +100,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                                '-j $ofake_dev'),
                  call.add_chain('sfake_dev'),
                  call.add_rule(
-                     'sfake_dev', '-m mac --mac-source ff:ff:ff:ff '
+                     'sfake_dev', '-m mac --mac-source ff:ff:ff:ff:ff:ff '
                      '-s 10.0.0.1 -j RETURN'),
                  call.add_rule('sfake_dev', '-j DROP'),
                  call.add_rule(
@@ -861,7 +861,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                   call.add_chain('sfake_dev'),
                   call.add_rule(
                       'sfake_dev',
-                      '-m mac --mac-source ff:ff:ff:ff -s %s -j RETURN'
+                      '-m mac --mac-source ff:ff:ff:ff:ff:ff -s %s -j RETURN'
                       % prefix),
                   call.add_rule('sfake_dev', '-j DROP'),
                   dhcp_rule,
@@ -932,7 +932,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                  call.add_chain('sfake_dev'),
                  call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff -s 10.0.0.1 '
+                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -s 10.0.0.1 '
                      '-j RETURN'),
                  call.add_rule('sfake_dev', '-j DROP'),
                  call.add_rule(
@@ -986,7 +986,8 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                  call.add_chain('sfake_dev'),
                  call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff -s 10.0.0.1 -j RETURN'),
+                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -s 10.0.0.1 '
+                     '-j RETURN'),
                  call.add_rule('sfake_dev', '-j DROP'),
                  call.add_rule(
                      'ofake_dev',
@@ -1098,7 +1099,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
 
     def test_ip_spoofing_filter_with_multiple_ips(self):
         port = {'device': 'tapfake_dev',
-                'mac_address': 'ff:ff:ff:ff',
+                'mac_address': 'ff:ff:ff:ff:ff:ff',
                 'fixed_ips': ['10.0.0.1', 'fe80::1', '10.0.0.2']}
         self.firewall.prepare_port_filter(port)
         calls = [call.add_chain('sg-fallback'),
@@ -1136,10 +1137,12 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                  call.add_chain('sfake_dev'),
                  call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff -s 10.0.0.1 -j RETURN'),
+                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -s 10.0.0.1 '
+                     '-j RETURN'),
                  call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff -s 10.0.0.2 -j RETURN'),
+                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -s 10.0.0.2 '
+                     '-j RETURN'),
                  call.add_rule('sfake_dev', '-j DROP'),
                  call.add_rule(
                      'ofake_dev',
@@ -1159,7 +1162,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
 
     def test_ip_spoofing_no_fixed_ips(self):
         port = {'device': 'tapfake_dev',
-                'mac_address': 'ff:ff:ff:ff',
+                'mac_address': 'ff:ff:ff:ff:ff:ff',
                 'fixed_ips': []}
         self.firewall.prepare_port_filter(port)
         calls = [call.add_chain('sg-fallback'),
@@ -1197,7 +1200,7 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                  call.add_chain('sfake_dev'),
                  call.add_rule(
                      'sfake_dev',
-                     '-m mac --mac-source ff:ff:ff:ff -j RETURN'),
+                     '-m mac --mac-source ff:ff:ff:ff:ff:ff -j RETURN'),
                  call.add_rule('sfake_dev', '-j DROP'),
                  call.add_rule(
                      'ofake_dev',
