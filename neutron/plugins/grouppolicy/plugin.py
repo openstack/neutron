@@ -18,6 +18,7 @@ from neutron.db import api as qdbapi
 from neutron.db.grouppolicy import db_group_policy_mapping
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
+from neutron.plugins.grouppolicy import config  # noqa
 from neutron.plugins.grouppolicy import group_policy_context as p_context
 from neutron.plugins.grouppolicy import policy_driver_manager as manager
 from neutron.plugins.grouppolicy.common import exceptions as gp_exc
