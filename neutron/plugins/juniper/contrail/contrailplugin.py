@@ -16,7 +16,7 @@ from neutron.common import exceptions as exc
 from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_base
 from neutron.db import l3_db
-from neutron.extensions import l3, securitygroup, vpcroutetable
+from neutron.extensions import l3, securitygroup, vpcroutetable, external_net
 from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
 
@@ -65,7 +65,8 @@ def _read_cfg_boolean(cfg_parser, section, option, default):
 class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                      securitygroup.SecurityGroupPluginBase,
                      portbindings_base.PortBindingBaseMixin,
-                     l3_db.L3_NAT_db_mixin):
+                     l3_db.L3_NAT_db_mixin,
+                     external_net.External_net):
     """
     .. attention::  TODO remove db. ref and replace ctdb. with db.
     """
@@ -73,7 +74,7 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     # agent extension is added to avoid return 404 for get_agents
     supported_extension_aliases = ["ipam", "policy", "security-group",
                                    "router", "route-table", "port-security",
-                                   "binding", "agent", "quotas"]
+                                   "binding", "agent", "quotas", "external-net"]
     _cfgdb = None
     _args = None
     _tenant_id_dict = {}
