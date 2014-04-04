@@ -143,6 +143,8 @@ class LinuxBridgeManager:
             bridge_interface_path = BRIDGE_INTERFACES_FS.replace(
                 BRIDGE_NAME_PLACEHOLDER, bridge_name)
             return os.listdir(bridge_interface_path)
+        else:
+            return []
 
     def get_tap_devices_count(self, bridge_name):
             bridge_interface_path = BRIDGE_INTERFACES_FS.replace(
