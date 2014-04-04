@@ -26,6 +26,79 @@ from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
 
+class TestBaseOVS(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestBaseOVS, self).setUp()
+        self.root_helper = 'sudo'
+        self.ovs = ovs_lib.BaseOVS(self.root_helper)
+        self.br_name = 'bridge1'
+
+    def test_add_bridge(self):
+        with mock.patch.object(self.ovs, 'run_vsctl') as mock_vsctl:
+            bridge = self.ovs.add_bridge(self.br_name)
+
+        mock_vsctl.assert_called_with(["--", "--may-exist",
+                                       "add-br", self.br_name])
+        self.assertEqual(bridge.br_name, self.br_name)
+        self.assertEqual(bridge.root_helper, self.ovs.root_helper)
+
+    def test_delete_bridge(self):
+        with mock.patch.object(self.ovs, 'run_vsctl') as mock_vsctl:
+            self.ovs.delete_bridge(self.br_name)
+        mock_vsctl.assert_called_with(["--", "--if-exists", "del-br",
+                                       self.br_name])
+
+    def test_bridge_exists_returns_true(self):
+        with mock.patch.object(self.ovs, 'run_vsctl') as mock_vsctl:
+            self.assertTrue(self.ovs.bridge_exists(self.br_name))
+        mock_vsctl.assert_called_with(['br-exists', self.br_name],
+                                      check_error=True)
+
+    def test_bridge_exists_returns_false_for_exit_code_2(self):
+        with mock.patch.object(self.ovs, 'run_vsctl',
+                               side_effect=RuntimeError('Exit code: 2\n')):
+            self.assertFalse(self.ovs.bridge_exists('bridge1'))
+
+    def test_bridge_exists_raises_unknown_exception(self):
+        with mock.patch.object(self.ovs, 'run_vsctl',
+                               side_effect=RuntimeError()):
+            with testtools.ExpectedException(RuntimeError):
+                self.ovs.bridge_exists('bridge1')
+
+    def test_get_bridge_name_for_port_name_returns_bridge_for_valid_port(self):
+        port_name = 'bar'
+        with mock.patch.object(self.ovs, 'run_vsctl',
+                               return_value=self.br_name) as mock_vsctl:
+            bridge = self.ovs.get_bridge_name_for_port_name(port_name)
+        self.assertEqual(bridge, self.br_name)
+        mock_vsctl.assert_called_with(['port-to-br', port_name],
+                                      check_error=True)
+
+    def test_get_bridge_name_for_port_name_returns_none_for_exit_code_1(self):
+        with mock.patch.object(self.ovs, 'run_vsctl',
+                               side_effect=RuntimeError('Exit code: 1\n')):
+            self.assertFalse(self.ovs.get_bridge_name_for_port_name('bridge1'))
+
+    def test_get_bridge_name_for_port_name_raises_unknown_exception(self):
+        with mock.patch.object(self.ovs, 'run_vsctl',
+                               side_effect=RuntimeError()):
+            with testtools.ExpectedException(RuntimeError):
+                self.ovs.get_bridge_name_for_port_name('bridge1')
+
+    def _test_port_exists(self, br_name, result):
+        with mock.patch.object(self.ovs,
+                               'get_bridge_name_for_port_name',
+                               return_value=br_name):
+            self.assertEqual(self.ovs.port_exists('bar'), result)
+
+    def test_port_exists_returns_true_for_bridge_name(self):
+        self._test_port_exists(self.br_name, True)
+
+    def test_port_exists_returns_false_for_none(self):
+        self._test_port_exists(None, False)
+
+
 class OVS_Lib_Test(base.BaseTestCase):
     """A test suite to excercise the OVS libraries shared by Neutron agents.
 
@@ -66,12 +139,23 @@ class OVS_Lib_Test(base.BaseTestCase):
 
         self.mox.VerifyAll()
 
+    def test_create(self):
+        self.br.add_bridge(self.BR_NAME)
+        self.mox.ReplayAll()
+
+        self.br.create()
+        self.mox.VerifyAll()
+
+    def test_destroy(self):
+        self.br.delete_bridge(self.BR_NAME)
+        self.mox.ReplayAll()
+
+        self.br.destroy()
+        self.mox.VerifyAll()
+
     def test_reset_bridge(self):
-        utils.execute(["ovs-vsctl", self.TO, "--",
-                       "--if-exists", "del-br", self.BR_NAME],
-                      root_helper=self.root_helper)
-        utils.execute(["ovs-vsctl", self.TO, "add-br", self.BR_NAME],
-                      root_helper=self.root_helper)
+        self.br.destroy()
+        self.br.create()
         self.mox.ReplayAll()
 
         self.br.reset_bridge()
