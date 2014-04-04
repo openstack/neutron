@@ -106,12 +106,14 @@ PROTO_NUM_UDP = 17
 # Multicast Listener Query (130),
 # Multicast Listener Report (131),
 # Multicast Listener Done (132),
-# Router Advertisement (134),
 # Neighbor Solicitation (135),
 # Neighbor Advertisement (136)
-ICMPV6_ALLOWED_TYPES = [130, 131, 132, 134, 135, 136]
+ICMPV6_ALLOWED_TYPES = [130, 131, 132, 135, 136]
+ICMPV6_TYPE_RA = 134
 
 DHCPV6_STATEFUL = 'dhcpv6-stateful'
 DHCPV6_STATELESS = 'dhcpv6-stateless'
 IPV6_SLAAC = 'slaac'
 IPV6_MODES = [DHCPV6_STATEFUL, DHCPV6_STATELESS, IPV6_SLAAC]
+
+IPV6_LLA_PREFIX = 'fe80::/64'

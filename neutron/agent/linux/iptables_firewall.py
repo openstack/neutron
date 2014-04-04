@@ -241,8 +241,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return ['-p udp -m udp --sport 67 --dport 68 -j DROP']
 
     def _accept_inbound_icmpv6(self):
-        # Allow router advertisements, multicast listener
-        # and neighbor advertisement into the instance
+        # Allow multicast listener, neighbor solicitation and
+        # neighbor advertisement into the instance
         icmpv6_rules = []
         for icmp6_type in constants.ICMPV6_ALLOWED_TYPES:
             icmpv6_rules += ['-p icmpv6 --icmpv6-type %s -j RETURN' %
