@@ -110,8 +110,8 @@ class TestGroupPolicy(GroupPolicyDbTestCase):
         attrs = self._get_test_endpoint_attrs(name)
 
         with self.endpoint(name=name) as ep:
-                for k, v in attrs.iteritems():
-                    self.assertEqual(ep['endpoint'][k], v)
+            for k, v in attrs.iteritems():
+                self.assertEqual(ep['endpoint'][k], v)
 
 
 # TODO(Sumit): XML tests

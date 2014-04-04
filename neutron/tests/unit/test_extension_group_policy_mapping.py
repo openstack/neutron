@@ -41,7 +41,7 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
             constants.GROUP_POLICY, attr_map,
             gpolicy.Group_policy, 'gp', plural_mappings={})
 
-    def test_create_endpoint_with_port(self):
+    def test_create_endpoint(self):
         endpoint_id = _uuid()
         data = {'endpoint': {'name': 'ep1',
                              'tenant_id': _uuid(),
