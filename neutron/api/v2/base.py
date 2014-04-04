@@ -166,6 +166,8 @@ class Controller(object):
         if name in self._member_actions:
             def _handle_action(request, id, **kwargs):
                 arg_list = [request.context, id]
+                # Ensure policy engine is initialized
+                policy.init()
                 # Fetch the resource and verify if the user can access it
                 try:
                     resource = self._item(request, id, True)
@@ -176,9 +178,6 @@ class Controller(object):
                 # Explicit comparison with None to distinguish from {}
                 if body is not None:
                     arg_list.append(body)
-                # TODO(salvatore-orlando): bp/make-authz-ortogonal
-                # The body of the action request should be included
-                # in the info passed to the policy engine
                 # It is ok to raise a 403 because accessibility to the
                 # object was checked earlier in this method
                 policy.enforce(request.context, name, resource)
@@ -244,7 +243,6 @@ class Controller(object):
         pagination_links = pagination_helper.get_links(obj_list)
         if pagination_links:
             collection[self._collection + "_links"] = pagination_links
-
         return collection
 
     def _item(self, request, id, do_authz=False, field_list=None,
@@ -270,6 +268,8 @@ class Controller(object):
     def index(self, request, **kwargs):
         """Returns a list of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
+        # Ensure policy engine is initialized
+        policy.init()
         return self._items(request, True, parent_id)
 
     def show(self, request, id, **kwargs):
@@ -281,6 +281,8 @@ class Controller(object):
             field_list, added_fields = self._do_field_list(
                 api_common.list_args(request, "fields"))
             parent_id = kwargs.get(self._parent_id_name)
+            # Ensure policy engine is initialized
+            policy.init()
             return {self._resource:
                     self._view(request.context,
                                self._item(request,
@@ -349,6 +351,8 @@ class Controller(object):
         else:
             items = [body]
             bulk = False
+        # Ensure policy engine is initialized
+        policy.init()
         for item in items:
             self._validate_network_tenant_ownership(request,
                                                     item[self._resource])
@@ -416,6 +420,7 @@ class Controller(object):
         action = self._plugin_handlers[self.DELETE]
 
         # Check authz
+        policy.init()
         parent_id = kwargs.get(self._parent_id_name)
         obj = self._item(request, id, parent_id=parent_id)
         try:
@@ -466,6 +471,8 @@ class Controller(object):
                       if (value.get('required_by_policy') or
                           value.get('primary_key') or
                           'default' not in value)]
+        # Ensure policy engine is initialized
+        policy.init()
         orig_obj = self._item(request, id, field_list=field_list,
                               parent_id=parent_id)
         orig_obj.update(body[self._resource])
