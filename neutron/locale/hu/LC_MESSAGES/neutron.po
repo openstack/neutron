@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-04-03 06:28+0000\n"
+"POT-Creation-Date: 2014-04-04 06:32+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian "
@@ -1225,93 +1225,93 @@ msgstr ""
 msgid "Attempted to get traffic counters of chain %s which does not exist"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:36
+#: neutron/agent/linux/ovs_lib.py:37
 msgid "Timeout in seconds for ovs-vsctl commands"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:70 neutron/agent/linux/ovs_lib.py:166
-#: neutron/agent/linux/ovs_lib.py:283
+#: neutron/agent/linux/ovs_lib.py:71 neutron/agent/linux/ovs_lib.py:167
+#: neutron/agent/linux/ovs_lib.py:284
 #: neutron/plugins/bigswitch/agent/restproxy_agent.py:53
 #, python-format
 msgid "Unable to execute %(cmd)s. Exception: %(exception)s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:205
+#: neutron/agent/linux/ovs_lib.py:206
 msgid "defer_apply_on"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:209
+#: neutron/agent/linux/ovs_lib.py:210
 msgid "defer_apply_off"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:212
+#: neutron/agent/linux/ovs_lib.py:213
 #, python-format
 msgid "Applying following deferred flows to bridge %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:215
+#: neutron/agent/linux/ovs_lib.py:216
 #, python-format
 msgid "%(action)s: %(flow)s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:331
+#: neutron/agent/linux/ovs_lib.py:332
 #, python-format
 msgid "Found not yet ready openvswitch port: %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:346
+#: neutron/agent/linux/ovs_lib.py:347
 #, python-format
 msgid "Found failed openvswitch port: %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:401
+#: neutron/agent/linux/ovs_lib.py:402
 #, python-format
 msgid "Port: %(port_name)s is on %(switch)s, not on %(br_name)s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:409
+#: neutron/agent/linux/ovs_lib.py:410
 #, python-format
 msgid "ofport: %(ofport)s for VIF: %(vif)s is not a positive integer"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:419
+#: neutron/agent/linux/ovs_lib.py:420
 #, python-format
 msgid "Unable to parse interface details. Exception: %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:437
+#: neutron/agent/linux/ovs_lib.py:438
 #, python-format
 msgid "Unable to determine mac address for %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:447
+#: neutron/agent/linux/ovs_lib.py:448
 #, python-format
 msgid "Interface %s not found."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:458
+#: neutron/agent/linux/ovs_lib.py:459
 #, python-format
 msgid "Unable to retrieve bridges. Exception: %s"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:468
+#: neutron/agent/linux/ovs_lib.py:469
 msgid "Unable to retrieve OVS userspace version."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:480
+#: neutron/agent/linux/ovs_lib.py:481
 msgid "Unable to retrieve OVS kernel module version."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:491
+#: neutron/agent/linux/ovs_lib.py:488
 msgid "Unable to retrieve installed Linux kernel version."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:500
+#: neutron/agent/linux/ovs_lib.py:497
 #, python-format
 msgid "Bridge %s not found."
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:516
+#: neutron/agent/linux/ovs_lib.py:513
 #, python-format
 msgid ""
 "Failed %(ctype)s version check for Open vSwitch with %(vtype)s support. "
@@ -1319,7 +1319,7 @@ msgid ""
 "%(required)s or newer!"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:524
+#: neutron/agent/linux/ovs_lib.py:521
 #, python-format
 msgid ""
 "Unable to determine %(ctype)s version for Open vSwitch with %(vtype)s "
@@ -1327,18 +1327,18 @@ msgid ""
 "version is %(required)s or newer!"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:538
+#: neutron/agent/linux/ovs_lib.py:535
 #, python-format
 msgid ""
 "Checking OVS version for VXLAN support installed klm version is %(klm)s, "
 "installed Linux version is %(kernel)s, installed user version is %(usr)s "
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:567
+#: neutron/agent/linux/ovs_lib.py:564
 msgid "Cannot match priority on flow deletion or modification"
 msgstr ""
 
-#: neutron/agent/linux/ovs_lib.py:572
+#: neutron/agent/linux/ovs_lib.py:569
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr ""
 
@@ -2921,6 +2921,11 @@ msgstr ""
 msgid "Resource type '%(resource_type)s' is longer than %(maxlen)d characters"
 msgstr ""
 
+#: neutron/db/securitygroups_rpc_base.py:277
+#, python-format
+msgid "No valid gateway port on subnet %s is found for IPv6 RA"
+msgstr ""
+
 #: neutron/db/sqlalchemyutils.py:73
 #, python-format
 msgid "%s is invalid attribute for sort_key"
@@ -3380,7 +3385,7 @@ msgstr ""
 
 #: neutron/extensions/l3.py:33
 #, python-format
-msgid "Router %(router_id)s still has active ports"
+msgid "Router %(router_id)s still has ports"
 msgstr ""
 
 #: neutron/extensions/l3.py:37
@@ -10019,17 +10024,21 @@ msgid "Certificate file"
 msgstr ""
 
 #: neutron/plugins/nec/common/config.py:55
+msgid "Disable SSL certificate verification"
+msgstr ""
+
+#: neutron/plugins/nec/common/config.py:57
 msgid ""
 "Maximum attempts per OFC API request.NEC plugin retries API request to "
 "OFC when OFC returns ServiceUnavailable (503).The value must be greater "
 "than 0."
 msgstr ""
 
-#: neutron/plugins/nec/common/config.py:64
+#: neutron/plugins/nec/common/config.py:66
 msgid "Default router provider to use."
 msgstr ""
 
-#: neutron/plugins/nec/common/config.py:67
+#: neutron/plugins/nec/common/config.py:69
 msgid "List of enabled router providers."
 msgstr ""
 
@@ -10097,46 +10106,46 @@ msgid ""
 "supported only for router provider %(expected_provider)s."
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:70
+#: neutron/plugins/nec/common/ofc_client.py:56
 #, python-format
 msgid "Operation on OFC failed: %(status)s%(msg)s"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:75
+#: neutron/plugins/nec/common/ofc_client.py:80
 #, python-format
 msgid "Client request: %(host)s:%(port)s %(method)s %(action)s [%(body)s]"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:87
+#: neutron/plugins/nec/common/ofc_client.py:89
 #, python-format
 msgid "OFC returns [%(status)s:%(data)s]"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:104
+#: neutron/plugins/nec/common/ofc_client.py:106
 #, python-format
 msgid "OFC returns ServiceUnavailable (retry-after=%s)"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:108
+#: neutron/plugins/nec/common/ofc_client.py:110
 #, python-format
 msgid "Specified resource %s does not exist on OFC "
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:112
+#: neutron/plugins/nec/common/ofc_client.py:114
 #, python-format
 msgid "Operation on OFC failed: status=%(status)s, detail=%(detail)s"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:115
+#: neutron/plugins/nec/common/ofc_client.py:117
 msgid "Operation on OFC failed"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:124
+#: neutron/plugins/nec/common/ofc_client.py:126
 #, python-format
 msgid "Failed to connect OFC : %s"
 msgstr ""
 
-#: neutron/plugins/nec/common/ofc_client.py:140
+#: neutron/plugins/nec/common/ofc_client.py:142
 #, python-format
 msgid "Waiting for %s seconds due to OFC Service_Unavailable."
 msgstr ""
@@ -15784,17 +15793,17 @@ msgstr ""
 msgid "list_router_routes: routes=%s"
 msgstr ""
 
-#: neutron/tests/unit/nec/test_ofc_client.py:85
+#: neutron/tests/unit/nec/test_ofc_client.py:89
 msgid "The specified OFC resource (/somewhere) is not found."
 msgstr ""
 
-#: neutron/tests/unit/nec/test_ofc_client.py:89
-#: neutron/tests/unit/nec/test_ofc_client.py:95
-#: neutron/tests/unit/nec/test_ofc_client.py:104
+#: neutron/tests/unit/nec/test_ofc_client.py:93
+#: neutron/tests/unit/nec/test_ofc_client.py:99
+#: neutron/tests/unit/nec/test_ofc_client.py:108
 msgid "An OFC exception has occurred: Operation on OFC failed"
 msgstr ""
 
-#: neutron/tests/unit/nec/test_ofc_client.py:114
+#: neutron/tests/unit/nec/test_ofc_client.py:115
 msgid "An OFC exception has occurred: Failed to connect OFC : "
 msgstr ""
 
@@ -15840,4 +15849,7 @@ msgstr ""
 #: neutron/tests/unit/vmware/vshield/test_edge_router.py:129
 msgid "Tasks not completed"
 msgstr ""
+
+#~ msgid "Router %(router_id)s still has active ports"
+#~ msgstr ""
 
