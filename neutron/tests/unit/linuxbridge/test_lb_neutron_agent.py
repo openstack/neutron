@@ -394,9 +394,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertTrue(addgw_fn.called)
             self.assertTrue(delgw_fn.called)
 
+    def test_bridge_exists_and_ensure_up(self):
+        ip_lib_mock = mock.Mock()
+        with mock.patch.object(ip_lib, 'IPDevice', return_value=ip_lib_mock):
+            # device exists
+            self.assertTrue(self.lbm._bridge_exists_and_ensure_up("br0"))
+            self.assertTrue(ip_lib_mock.link.set_up.called)
+            # device doesn't exists
+            ip_lib_mock.link.set_up.side_effect = RuntimeError
+            self.assertFalse(self.lbm._bridge_exists_and_ensure_up("br0"))
+
     def test_ensure_bridge(self):
         with contextlib.nested(
-            mock.patch.object(ip_lib, 'device_exists'),
+            mock.patch.object(self.lbm, '_bridge_exists_and_ensure_up'),
             mock.patch.object(utils, 'execute'),
             mock.patch.object(self.lbm, 'update_interface_ip_details'),
             mock.patch.object(self.lbm, 'interface_exists_on_bridge'),
