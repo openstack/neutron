@@ -17,11 +17,17 @@
 
 import mock
 
+from neutron.agent.linux import interface
 from neutron.agent import netns_cleanup_util as util
 from neutron.tests import base
 
 
 class TestNetnsCleanup(base.BaseTestCase):
+
+    def test_setup_conf(self):
+        expected_opts = interface.OPTS
+        conf = util.setup_conf()
+        self.assertTrue(all([opt.name in conf for opt in expected_opts]))
 
     def test_kill_dhcp(self, dhcp_active=True):
         conf = mock.Mock()
@@ -37,9 +43,10 @@ class TestNetnsCleanup(base.BaseTestCase):
 
             util.kill_dhcp(conf, 'ns')
 
-            import_object.called_once_with('driver', conf, mock.ANY,
-                                           conf.AGENT.root_helper,
-                                           mock.ANY)
+            expected_params = {'conf': conf, 'network': mock.ANY,
+                               'root_helper': conf.AGENT.root_helper,
+                               'plugin': mock.ANY}
+            import_object.assert_called_once_with('driver', **expected_params)
 
             if dhcp_active:
                 driver.assert_has_calls([mock.call.disable()])
@@ -104,7 +111,8 @@ class TestNetnsCleanup(base.BaseTestCase):
 
                 mock_get_bridge_for_iface.assert_called_once_with(
                     conf.AGENT.root_helper, 'tap1')
-                ovs_br_cls.called_once_with('br-int', conf.AGENT.root_helper)
+                ovs_br_cls.assert_called_once_with('br-int',
+                                                   conf.AGENT.root_helper)
                 ovs_bridge.assert_has_calls(
                     [mock.call.delete_port(device.name)])
 
