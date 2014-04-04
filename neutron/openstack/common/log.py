@@ -126,12 +126,14 @@ log_opts = [
                help='prefix each line of exception output with this format'),
     cfg.ListOpt('default_log_levels',
                 default=[
+                    'amqp=WARN',
                     'amqplib=WARN',
-                    'sqlalchemy=WARN',
                     'boto=WARN',
-                    'suds=INFO',
+                    'eventlet.wsgi.server=WARN',
                     'keystone=INFO',
-                    'eventlet.wsgi.server=WARN'
+                    'qpid=WARN',
+                    'sqlalchemy=WARN',
+                    'suds=INFO',
                 ],
                 help='list of logger=LEVEL pairs'),
     cfg.BoolOpt('publish_errors',
