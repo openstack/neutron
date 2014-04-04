@@ -644,19 +644,21 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                       physical_network, segmentation_id)
         lvm = self.local_vlan_map[net_uuid]
         lvm.vif_ports[port.vif_id] = port
-
-        self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                     str(lvm.vlan))
-        if int(port.ofport) != -1:
-            match = self.int_br.ofparser.OFPMatch(in_port=port.ofport)
-            msg = self.int_br.ofparser.OFPFlowMod(
-                self.int_br.datapath,
-                table_id=ryu_ofp13.OFPTT_ALL,
-                command=ryu_ofp13.OFPFC_DELETE,
-                out_group=ryu_ofp13.OFPG_ANY,
-                out_port=ryu_ofp13.OFPP_ANY,
-                match=match)
-            self.ryu_send_msg(msg)
+        # Do not bind a port if it's already bound
+        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+        if cur_tag != str(lvm.vlan):
+            self.int_br.set_db_attribute("Port", port.port_name, "tag",
+                                         str(lvm.vlan))
+            if int(port.ofport) != -1:
+                match = self.int_br.ofparser.OFPMatch(in_port=port.ofport)
+                msg = self.int_br.ofparser.OFPFlowMod(
+                    self.int_br.datapath,
+                    table_id=ryu_ofp13.OFPTT_ALL,
+                    command=ryu_ofp13.OFPFC_DELETE,
+                    out_group=ryu_ofp13.OFPG_ANY,
+                    out_port=ryu_ofp13.OFPP_ANY,
+                    match=match)
+                self.ryu_send_msg(msg)
 
     def port_unbound(self, vif_id, net_uuid=None):
         """Unbind port.
@@ -685,12 +687,15 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
         :param port: a ovs_lib.VifPort object.
         """
-        self.int_br.set_db_attribute("Port", port.port_name, "tag",
-                                     DEAD_VLAN_TAG)
-        match = self.int_br.ofparser.OFPMatch(in_port=int(port.ofport))
-        msg = self.int_br.ofparser.OFPFlowMod(self.int_br.datapath,
-                                              priority=2, match=match)
-        self.ryu_send_msg(msg)
+        # Don't kill a port if it's already dead
+        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
+        if cur_tag != DEAD_VLAN_TAG:
+            self.int_br.set_db_attribute("Port", port.port_name, "tag",
+                                         DEAD_VLAN_TAG)
+            match = self.int_br.ofparser.OFPMatch(in_port=port.ofport)
+            msg = self.int_br.ofparser.OFPFlowMod(self.int_br.datapath,
+                                                  priority=2, match=match)
+            self.ryu_send_msg(msg)
 
     def setup_integration_br(self):
         """Setup the integration bridge.
