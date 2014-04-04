@@ -86,15 +86,6 @@ class LinuxBridgeManager:
         # Store network mapping to segments
         self.network_map = {}
 
-    def device_exists(self, device):
-        """Check if ethernet device exists."""
-        try:
-            utils.execute(['ip', 'link', 'show', 'dev', device],
-                          root_helper=self.root_helper)
-        except RuntimeError:
-            return False
-        return True
-
     def interface_exists_on_bridge(self, bridge, interface):
         directory = '/sys/class/net/%s/brif' % bridge
         for filename in os.listdir(directory):
@@ -139,7 +130,7 @@ class LinuxBridgeManager:
         return neutron_bridge_list
 
     def get_interfaces_on_bridge(self, bridge_name):
-        if self.device_exists(bridge_name):
+        if ip_lib.device_exists(bridge_name, root_helper=self.root_helper):
             bridge_interface_path = BRIDGE_INTERFACES_FS.replace(
                 BRIDGE_NAME_PLACEHOLDER, bridge_name)
             return os.listdir(bridge_interface_path)
@@ -221,7 +212,7 @@ class LinuxBridgeManager:
     def ensure_vlan(self, physical_interface, vlan_id):
         """Create a vlan unless it already exists."""
         interface = self.get_subinterface_name(physical_interface, vlan_id)
-        if not self.device_exists(interface):
+        if not ip_lib.device_exists(interface, root_helper=self.root_helper):
             LOG.debug(_("Creating subinterface %(interface)s for "
                         "VLAN %(vlan_id)s on interface "
                         "%(physical_interface)s"),
@@ -241,7 +232,7 @@ class LinuxBridgeManager:
     def ensure_vxlan(self, segmentation_id):
         """Create a vxlan unless it already exists."""
         interface = self.get_vxlan_device_name(segmentation_id)
-        if not self.device_exists(interface):
+        if not ip_lib.device_exists(interface, root_helper=self.root_helper):
             LOG.debug(_("Creating vxlan interface %(interface)s for "
                         "VNI %(segmentation_id)s"),
                       {'interface': interface,
@@ -291,7 +282,7 @@ class LinuxBridgeManager:
     def ensure_bridge(self, bridge_name, interface=None, ips=None,
                       gateway=None):
         """Create a bridge unless it already exists."""
-        if not self.device_exists(bridge_name):
+        if not ip_lib.device_exists(bridge_name, root_helper=self.root_helper):
             LOG.debug(_("Starting bridge %(bridge_name)s for subinterface "
                         "%(interface)s"),
                       {'bridge_name': bridge_name, 'interface': interface})
@@ -369,7 +360,8 @@ class LinuxBridgeManager:
         If a VIF has been plugged into a network, this function will
         add the corresponding tap device to the relevant bridge.
         """
-        if not self.device_exists(tap_device_name):
+        if not ip_lib.device_exists(tap_device_name,
+                                    root_helper=self.root_helper):
             LOG.debug(_("Tap device: %s does not exist on "
                         "this host, skipped"), tap_device_name)
             return False
@@ -413,7 +405,7 @@ class LinuxBridgeManager:
                                       tap_device_name)
 
     def delete_vlan_bridge(self, bridge_name):
-        if self.device_exists(bridge_name):
+        if ip_lib.device_exists(bridge_name, root_helper=self.root_helper):
             interfaces_on_bridge = self.get_interfaces_on_bridge(bridge_name)
             for interface in interfaces_on_bridge:
                 self.remove_interface(bridge_name, interface)
@@ -456,7 +448,7 @@ class LinuxBridgeManager:
                 del self.network_map[network_id]
 
     def remove_interface(self, bridge_name, interface_name):
-        if self.device_exists(bridge_name):
+        if ip_lib.device_exists(bridge_name, root_helper=self.root_helper):
             if not self.is_device_on_bridge(interface_name):
                 return True
             LOG.debug(_("Removing device %(interface_name)s from bridge "
@@ -479,7 +471,7 @@ class LinuxBridgeManager:
             return False
 
     def delete_vlan(self, interface):
-        if self.device_exists(interface):
+        if ip_lib.device_exists(interface, root_helper=self.root_helper):
             LOG.debug(_("Deleting subinterface %s for vlan"), interface)
             if utils.execute(['ip', 'link', 'set', interface, 'down'],
                              root_helper=self.root_helper):
@@ -490,7 +482,7 @@ class LinuxBridgeManager:
             LOG.debug(_("Done deleting subinterface %s"), interface)
 
     def delete_vxlan(self, interface):
-        if self.device_exists(interface):
+        if ip_lib.device_exists(interface, root_helper=self.root_helper):
             LOG.debug(_("Deleting vxlan interface %s for vlan"),
                       interface)
             int_vxlan = self.ip.device(interface)
@@ -527,8 +519,9 @@ class LinuxBridgeManager:
                          'mode': 'VXLAN UCAST'})
             return False
         for segmentation_id in range(1, constants.MAX_VXLAN_VNI + 1):
-            if not self.device_exists(
-                    self.get_vxlan_device_name(segmentation_id)):
+            if not ip_lib.device_exists(
+                    self.get_vxlan_device_name(segmentation_id),
+                    root_helper=self.root_helper):
                 break
         else:
             LOG.error(_('No valid Segmentation ID to perform UCAST test.'))
