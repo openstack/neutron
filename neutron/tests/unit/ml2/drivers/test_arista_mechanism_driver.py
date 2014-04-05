@@ -234,11 +234,11 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
 
         self.drv.plug_host_into_network(vm_id, host, port_id,
                                         network_id, tenant_id, port_name)
-        cmds = ['enable', 'configure', 'management openstack',
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne',
                 'tenant ten-1', 'vm id vm-1 hostid host',
                 'port id 123 name "123-port" network-id net-id',
-                'exit', 'exit', 'exit', 'exit']
+                'exit', 'exit', 'exit', 'exit', 'exit']
 
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
@@ -252,11 +252,11 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
 
         self.drv.plug_dhcp_port_into_network(vm_id, host, port_id,
                                              network_id, tenant_id, port_name)
-        cmds = ['enable', 'configure', 'management openstack',
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne',
                 'tenant ten-1', 'network id net-id',
                 'dhcp id vm-1 hostid host port-id 123 name "123-port"',
-                'exit', 'exit', 'exit']
+                'exit', 'exit', 'exit', 'exit']
 
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
@@ -268,11 +268,11 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         host = 'host'
         self.drv.unplug_host_from_network(vm_id, host, port_id,
                                           network_id, tenant_id)
-        cmds = ['enable', 'configure', 'management openstack',
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne',
                 'tenant ten-1', 'vm id vm-1 hostid host',
                 'no port id 123',
-                'exit', 'exit', 'exit', 'exit']
+                'exit', 'exit', 'exit', 'exit', 'exit']
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_unplug_dhcp_port_from_network(self):
@@ -284,11 +284,11 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
 
         self.drv.unplug_dhcp_port_from_network(vm_id, host, port_id,
                                                network_id, tenant_id)
-        cmds = ['enable', 'configure', 'management openstack',
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne',
                 'tenant ten-1', 'network id net-id',
                 'no dhcp id vm-1 port-id 123',
-                'exit', 'exit', 'exit']
+                'exit', 'exit', 'exit', 'exit']
 
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
@@ -299,11 +299,11 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
             'network_name': 'net-name',
             'segmentation_id': 123}
         self.drv.create_network(tenant_id, network)
-        cmds = ['enable', 'configure', 'management openstack',
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne',
                 'tenant ten-1', 'network id net-id name "net-name"',
                 'segment 1 type vlan id 123',
-                'exit', 'exit', 'exit', 'exit', 'exit']
+                'exit', 'exit', 'exit', 'exit', 'exit', 'exit']
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_create_network_bulk(self):
@@ -318,7 +318,8 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         self.drv.create_network_bulk(tenant_id, networks)
         cmds = ['enable',
                 'configure',
-                'management openstack',
+                'cvx',
+                'service openstack',
                 'region RegionOne',
                 'tenant ten-2']
         for net_id in range(1, num_networks):
@@ -327,17 +328,17 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
             cmds.append('segment 1 type vlan id %d' % net_id)
 
         cmds.extend(self._get_exit_mode_cmds(['tenant', 'region', 'openstack',
-                                              'configure', 'enable']))
+                                              'cvx', 'configure', 'enable']))
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_delete_network(self):
         tenant_id = 'ten-1'
         network_id = 'net-id'
         self.drv.delete_network(tenant_id, network_id)
-        cmds = ['enable', 'configure', 'management openstack',
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne',
                 'tenant ten-1', 'no network id net-id',
-                'exit', 'exit', 'exit', 'exit']
+                'exit', 'exit', 'exit', 'exit', 'exit']
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_delete_network_bulk(self):
@@ -353,24 +354,25 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         self.drv.delete_network_bulk(tenant_id, networks)
         cmds = ['enable',
                 'configure',
-                'management openstack',
+                'cvx',
+                'service openstack',
                 'region RegionOne',
                 'tenant ten-2']
         for net_id in range(1, num_networks):
             cmds.append('no network id net-id-%d' % net_id)
 
         cmds.extend(self._get_exit_mode_cmds(['tenant', 'region', 'openstack',
-                                              'configure']))
+                                              'cvx', 'configure']))
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_delete_vm(self):
         tenant_id = 'ten-1'
         vm_id = 'vm-id'
         self.drv.delete_vm(tenant_id, vm_id)
-        cmds = ['enable', 'configure', 'management openstack',
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne',
                 'tenant ten-1', 'no vm id vm-id',
-                'exit', 'exit', 'exit', 'exit']
+                'exit', 'exit', 'exit', 'exit', 'exit']
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_delete_vm_bulk(self):
@@ -381,7 +383,8 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
 
         cmds = ['enable',
                 'configure',
-                'management openstack',
+                'cvx',
+                'service openstack',
                 'region RegionOne',
                 'tenant ten-2']
 
@@ -389,7 +392,7 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
             cmds.append('no vm id vm-id-%d' % vm_id)
 
         cmds.extend(self._get_exit_mode_cmds(['tenant', 'region', 'openstack',
-                                              'configure']))
+                                              'cvx', 'configure']))
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_create_vm_port_bulk(self):
@@ -424,7 +427,8 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         self.drv.create_vm_port_bulk(tenant_id, vm_port_list, vms)
         cmds = ['enable',
                 'configure',
-                'management openstack',
+                'cvx',
+                'service openstack',
                 'region RegionOne',
                 'tenant ten-3']
 
@@ -448,15 +452,15 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
                 net_count += 1
 
         cmds.extend(self._get_exit_mode_cmds(['tenant', 'region',
-                                              'openstack']))
+                                              'openstack', 'cvx']))
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_delete_tenant(self):
         tenant_id = 'ten-1'
         self.drv.delete_tenant(tenant_id)
-        cmds = ['enable', 'configure', 'management openstack',
+        cmds = ['enable', 'configure', 'cvx', 'service openstack',
                 'region RegionOne', 'no tenant ten-1',
-                'exit', 'exit', 'exit']
+                'exit', 'exit', 'exit', 'exit']
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_delete_tenant_bulk(self):
@@ -465,13 +469,14 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
         self.drv.delete_tenant_bulk(tenant_list)
         cmds = ['enable',
                 'configure',
-                'management openstack',
+                'cvx',
+                'service openstack',
                 'region RegionOne']
         for ten_id in range(1, num_tenants):
             cmds.append('no tenant ten-%d' % ten_id)
 
         cmds.extend(self._get_exit_mode_cmds(['region', 'openstack',
-                                              'configure']))
+                                              'cvx', 'configure']))
         self.drv._server.runCmds.assert_called_once_with(version=1, cmds=cmds)
 
     def test_get_network_info_returns_none_when_no_such_net(self):

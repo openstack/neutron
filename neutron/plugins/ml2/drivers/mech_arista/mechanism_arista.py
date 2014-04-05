@@ -361,8 +361,10 @@ class AristaRPCWrapper(object):
         """Deleted the region data from EOS."""
         cmds = ['enable',
                 'configure',
-                'management openstack',
+                'cvx',
+                'service openstack',
                 'no region %s' % self.region,
+                'exit',
                 'exit',
                 'exit']
         self._run_eos_cmds(cmds)
@@ -453,12 +455,14 @@ class AristaRPCWrapper(object):
         full_command = [
             'enable',
             'configure',
-            'management openstack',
+            'cvx',
+            'service openstack',
             'region %s' % self.region,
         ]
         full_command.extend(cmds)
         full_command.extend(self._get_exit_mode_cmds(['region',
-                                                      'openstack']))
+                                                      'openstack',
+                                                      'cvx']))
         full_command.extend(self.cli_commands['timestamp'])
         return full_command
 
@@ -481,7 +485,7 @@ class AristaRPCWrapper(object):
             full_log_command = None
         ret = self._run_eos_cmds(full_command, full_log_command)
         # Remove return values for 'configure terminal',
-        # 'management openstack' and 'exit' commands
+        # 'service openstack' and 'exit' commands
         if self.cli_commands['timestamp']:
             self._region_updated_time = ret[-1]
 
