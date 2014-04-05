@@ -181,5 +181,5 @@ class TestCli(base.BaseTestCase):
                 mock_open.return_value.__exit__ = mock.Mock()
 
                 cli.update_head_file(mock.sentinel.config)
-                mock_open.write.called_once_with('a')
+                mock_open.return_value.write.assert_called_once_with('a')
             fc.assert_called_once_with(mock.sentinel.config)
