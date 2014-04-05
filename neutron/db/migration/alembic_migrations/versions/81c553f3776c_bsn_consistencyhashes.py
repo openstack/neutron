@@ -28,7 +28,8 @@ down_revision = '24c7ea5160d7'
 # Change to ['*'] if this migration applies to all plugins
 
 migration_for_plugins = [
-    'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2'
+    'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2',
+    'neutron.plugins.ml2.plugin.Ml2Plugin'
 ]
 
 from alembic import op
