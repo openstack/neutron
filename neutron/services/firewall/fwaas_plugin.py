@@ -130,7 +130,7 @@ class FirewallAgentApi(proxy.RpcProxy):
         )
 
 
-class FirewallCountExceeded(n_exception.NeutronException):
+class FirewallCountExceeded(n_exception.Conflict):
 
     """Reference implementation specific exception for firewall count.
 
