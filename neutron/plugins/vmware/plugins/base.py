@@ -117,6 +117,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    "security-group"]
 
     __native_bulk_support = True
+    __native_pagination_support = True
+    __native_sorting_support = True
 
     # Map nova zones to cluster for easy retrieval
     novazone_cluster_map = {}
@@ -1084,10 +1086,15 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._extend_network_dict_provider(context, net_result)
         return self._fields(net_result, fields)
 
-    def get_networks(self, context, filters=None, fields=None):
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None,
+                     page_reverse=False):
         filters = filters or {}
         with context.session.begin(subtransactions=True):
-            networks = super(NsxPluginV2, self).get_networks(context, filters)
+            networks = (
+                super(NsxPluginV2, self).get_networks(
+                    context, filters, fields, sorts,
+                    limit, marker, page_reverse))
             for net in networks:
                 self._extend_network_dict_provider(context, net)
         return [self._fields(network, fields) for network in networks]
@@ -2054,15 +2061,14 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         return super(NsxPluginV2, self).get_network_gateway(context,
                                                             id, fields)
 
-    def get_network_gateways(self, context, filters=None, fields=None):
+    def get_network_gateways(self, context, filters=None, fields=None,
+                             sorts=None, limit=None, marker=None,
+                             page_reverse=False):
         # Ensure the default gateway in the config file is in sync with the db
         self._ensure_default_network_gateway()
         # Ensure the tenant_id attribute is populated on returned gateways
-        net_gateways = super(NsxPluginV2,
-                             self).get_network_gateways(context,
-                                                        filters,
-                                                        fields)
-        return net_gateways
+        return super(NsxPluginV2, self).get_network_gateways(
+            context, filters, fields, sorts, limit, marker, page_reverse)
 
     def update_network_gateway(self, context, id, network_gateway):
         # Ensure the default gateway in the config file is in sync with the db

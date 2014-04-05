@@ -940,14 +940,15 @@ class TestNetworkGateway(NsxPluginV2TestCase,
             with self._network_gateway(name='test_gw_2') as gw2:
                 req = self.new_list_request(networkgw.NETWORK_GATEWAYS)
                 res = self.deserialize('json', req.get_response(self.ext_api))
+                # Ensure we always get the list in the same order
+                gateways = sorted(
+                    res[self.gw_resource + 's'], key=lambda k: k['name'])
+                self.assertEqual(len(gateways), 3)
                 # We expect the default gateway too
-                key = self.gw_resource + 's'
-                self.assertEqual(len(res[key]), 3)
-                self.assertEqual(res[key][0]['default'],
-                                 True)
-                self.assertEqual(res[key][1]['name'],
+                self.assertEqual(gateways[0]['default'], True)
+                self.assertEqual(gateways[1]['name'],
                                  gw1[self.gw_resource]['name'])
-                self.assertEqual(res[key][2]['name'],
+                self.assertEqual(gateways[2]['name'],
                                  gw2[self.gw_resource]['name'])
 
     def test_list_network_gateway_with_multiple_connections(self):
