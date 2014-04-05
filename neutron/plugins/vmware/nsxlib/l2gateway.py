@@ -17,6 +17,8 @@
 import json
 
 from neutron.openstack.common import log
+from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware.nsxlib import _build_uri_path
 from neutron.plugins.vmware.nsxlib import do_request
@@ -145,9 +147,12 @@ def create_gateway_device(cluster, tenant_id, display_name, neutron_id,
     body = _build_gateway_device_body(tenant_id, display_name, neutron_id,
                                       connector_type, connector_ip,
                                       client_certificate, tz_uuid)
-    return do_request(
-        HTTP_POST, _build_uri_path(TRANSPORTNODE_RESOURCE),
-        json.dumps(body), cluster=cluster)
+    try:
+        return do_request(
+            HTTP_POST, _build_uri_path(TRANSPORTNODE_RESOURCE),
+            json.dumps(body), cluster=cluster)
+    except api_exc.InvalidSecurityCertificate:
+        raise nsx_exc.InvalidSecurityCertificate()
 
 
 def update_gateway_device(cluster, gateway_id, tenant_id,
@@ -157,10 +162,13 @@ def update_gateway_device(cluster, gateway_id, tenant_id,
     body = _build_gateway_device_body(tenant_id, display_name, neutron_id,
                                       connector_type, connector_ip,
                                       client_certificate, tz_uuid)
-    return do_request(
-        HTTP_PUT,
-        _build_uri_path(TRANSPORTNODE_RESOURCE, resource_id=gateway_id),
-        json.dumps(body), cluster=cluster)
+    try:
+        return do_request(
+            HTTP_PUT,
+            _build_uri_path(TRANSPORTNODE_RESOURCE, resource_id=gateway_id),
+            json.dumps(body), cluster=cluster)
+    except api_exc.InvalidSecurityCertificate:
+        raise nsx_exc.InvalidSecurityCertificate()
 
 
 def delete_gateway_device(cluster, device_uuid):

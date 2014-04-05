@@ -68,6 +68,21 @@ class RequestTimeout(NsxApiException):
     message = _("The request has timed out.")
 
 
+class BadRequest(NsxApiException):
+    message = _("The server is unable to fulfill the request due "
+                "to a bad syntax")
+
+
+class InvalidSecurityCertificate(BadRequest):
+    message = _("The backend received an invalid security certificate.")
+
+
+def fourZeroZero(response=None):
+    if response and "Invalid SecurityCertificate" in response.body:
+        raise InvalidSecurityCertificate()
+    raise BadRequest()
+
+
 def fourZeroFour(response=None):
     raise ResourceNotFound()
 
@@ -92,6 +107,7 @@ def zero(self, response=None):
 
 
 ERROR_MAPPINGS = {
+    400: fourZeroZero,
     404: fourZeroFour,
     405: zero,
     409: fourZeroNine,
@@ -99,7 +115,6 @@ ERROR_MAPPINGS = {
     403: fourZeroThree,
     301: zero,
     307: zero,
-    400: zero,
     500: zero,
     501: zero,
     503: zero
