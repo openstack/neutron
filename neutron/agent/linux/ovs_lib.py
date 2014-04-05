@@ -484,7 +484,8 @@ def get_installed_kernel_version():
     try:
         cmd = utils.execute(args)
         for line in cmd.split('\n'):
-            return str(re.findall("\d+\.\d+\.\d+", line))
+            ver = re.findall("\d+\.\d+\.\d+", line)
+            return ver[0]
     except Exception:
         LOG.exception(_("Unable to retrieve installed Linux kernel version."))
 
