@@ -21,8 +21,10 @@ import eventlet
 from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
+from neutron.agent import dhcp_agent
 from neutron.agent import l3_agent
 from neutron.agent.linux import dhcp
+from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.api.v2 import attributes
@@ -36,9 +38,12 @@ NS_MANGLING_PATTERN = ('(%s|%s)' % (dhcp.NS_PREFIX, l3_agent.NS_PREFIX) +
                        attributes.UUID_PATTERN)
 
 
-class FakeNetwork(object):
-    def __init__(self, id):
-        self.id = id
+class FakeDhcpPlugin(object):
+    """Fake RPC plugin to bypass any RPC calls."""
+    def __getattribute__(self, name):
+        def fake_method(*args):
+            pass
+        return fake_method
 
 
 def setup_conf():
@@ -54,18 +59,14 @@ def setup_conf():
                     help=_('Delete the namespace by removing all devices.')),
     ]
 
-    opts = [
-        cfg.StrOpt('dhcp_driver',
-                   default='neutron.agent.linux.dhcp.Dnsmasq',
-                   help=_("The driver used to manage the DHCP server.")),
-    ]
-
     conf = cfg.CONF
     conf.register_cli_opts(cli_opts)
-    conf.register_opts(opts)
     agent_config.register_interface_driver_opts_helper(conf)
+    agent_config.register_use_namespaces_opts_helper(conf)
     agent_config.register_root_helper(conf)
     conf.register_opts(dhcp.OPTS)
+    conf.register_opts(dhcp_agent.DhcpAgent.OPTS)
+    conf.register_opts(interface.OPTS)
     return conf
 
 
@@ -76,9 +77,10 @@ def kill_dhcp(conf, namespace):
 
     dhcp_driver = importutils.import_object(
         conf.dhcp_driver,
-        conf,
-        FakeNetwork(network_id),
-        root_helper)
+        conf=conf,
+        network=dhcp.NetModel(conf.use_namespaces, {'id': network_id}),
+        root_helper=root_helper,
+        plugin=FakeDhcpPlugin())
 
     if dhcp_driver.active:
         dhcp_driver.disable()
