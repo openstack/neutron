@@ -378,6 +378,17 @@ def get_none(url, request):
     return httmock.response(requests.codes.OK, content=content)
 
 
+@filter_request(['get'], 'interfaces/GigabitEthernet3')
+@httmock.urlmatch(netloc=r'localhost')
+def get_local_ip(url, request):
+    if not request.headers.get('X-auth-token', None):
+        return {'status_code': requests.codes.UNAUTHORIZED}
+    content = {u'kind': u'object#interface',
+               u'subnet-mask': u'255.255.255.0',
+               u'ip-address': u'10.5.0.2'}
+    return httmock.response(requests.codes.OK, content=content)
+
+
 @httmock.urlmatch(netloc=r'localhost')
 def post(url, request):
     if request.method != 'POST':

@@ -874,10 +874,10 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             location = self.csr.create_ipsec_connection(connection_info)
-            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.addCleanup(self._remove_resource_for_test,
                             self.csr.delete_ipsec_connection,
                             'Tunnel%d' % tunnel_id)
+            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.assertIn('vpn-svc/site-to-site/Tunnel%d' % tunnel_id,
                           location)
             # Check the hard-coded items that get set as well...
@@ -911,10 +911,10 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             location = self.csr.create_ipsec_connection(connection_info)
-            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.addCleanup(self._remove_resource_for_test,
                             self.csr.delete_ipsec_connection,
                             'Tunnel%d' % tunnel_id)
+            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.assertIn('vpn-svc/site-to-site/Tunnel%d' % tunnel_id,
                           location)
             # Check the hard-coded items that get set as well...
@@ -947,10 +947,10 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             location = self.csr.create_ipsec_connection(connection_info)
-            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.addCleanup(self._remove_resource_for_test,
                             self.csr.delete_ipsec_connection,
                             'Tunnel%d' % tunnel_id)
+            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.assertIn('vpn-svc/site-to-site/Tunnel%d' % tunnel_id,
                           location)
             # Check the hard-coded items that get set as well...
@@ -983,10 +983,10 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             location = self.csr.create_ipsec_connection(connection_info)
-            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.addCleanup(self._remove_resource_for_test,
                             self.csr.delete_ipsec_connection,
                             'Tunnel%d' % tunnel_id)
+            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.assertIn('vpn-svc/site-to-site/Tunnel%d' % tunnel_id,
                           location)
             # Check the hard-coded items that get set as well...
@@ -1013,21 +1013,35 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             self.csr.create_ipsec_connection(connection_info)
+            self.addCleanup(self._remove_resource_for_test,
+                            self.csr.delete_ipsec_connection,
+                            'Tunnel%d' % tunnel_id)
             self.assertEqual(requests.codes.BAD_REQUEST, self.csr.status)
+
+    def _determine_conflicting_ip(self):
+        with httmock.HTTMock(csr_request.token, csr_request.get_local_ip):
+            details = self.csr.get_request('interfaces/GigabitEthernet3')
+            if self.csr.status != requests.codes.OK:
+                self.fail("Unable to obtain interface GigabitEthernet3's IP")
+            if_ip = details.get('ip-address')
+            if not if_ip:
+                self.fail("No IP address for GigabitEthernet3 interface")
+            return '.'.join(if_ip.split('.')[:3]) + '.10'
 
     def test_create_ipsec_connection_conficting_tunnel_ip(self):
         """Negative test of connection create with conflicting tunnel IP.
 
-        The GigabitEthernet3 interface has an IP of 10.2.0.6. This will
-        try a connection create with an IP that is on the same subnet.
+        Find out the IP of a local interface (GigabitEthernet3) and create an
+        IP that is on the same subnet. Note: this interface needs to be up.
         """
 
+        conflicting_ip = self._determine_conflicting_ip()
         tunnel_id, ipsec_policy_id = self._prepare_for_site_conn_create()
         with httmock.HTTMock(csr_request.token, csr_request.post_bad_ip):
             connection_info = {
                 u'vpn-interface-name': u'Tunnel%d' % tunnel_id,
                 u'ipsec-policy-id': u'%d' % ipsec_policy_id,
-                u'local-device': {u'ip-address': u'10.2.0.10/24',
+                u'local-device': {u'ip-address': u'%s/24' % conflicting_ip,
                                   u'tunnel-ip-address': u'10.10.10.10'},
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
@@ -1051,10 +1065,10 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             location = self.csr.create_ipsec_connection(connection_info)
-            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.addCleanup(self._remove_resource_for_test,
                             self.csr.delete_ipsec_connection,
                             'Tunnel%d' % tunnel_id)
+            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.assertIn('vpn-svc/site-to-site/Tunnel%d' % tunnel_id,
                           location)
             # Check the hard-coded items that get set as well...
@@ -1106,10 +1120,10 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
             }
             location = self.csr.create_ipsec_connection(connection_info)
-            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.addCleanup(self._remove_resource_for_test,
                             self.csr.delete_ipsec_connection,
                             u'Tunnel123')
+            self.assertEqual(requests.codes.CREATED, self.csr.status)
             self.assertIn('vpn-svc/site-to-site/Tunnel%d' % tunnel_id,
                           location)
         with httmock.HTTMock(csr_request.token, csr_request.normal_get):
