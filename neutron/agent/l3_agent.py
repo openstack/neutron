@@ -109,11 +109,11 @@ class RouterInfo(object):
         self.use_namespaces = use_namespaces
         # Invoke the setter for establishing initial SNAT action
         self.router = router
+        self.ns_name = NS_PREFIX + router_id if use_namespaces else None
         self.iptables_manager = iptables_manager.IptablesManager(
             root_helper=root_helper,
             #FIXME(danwent): use_ipv6=True,
-            namespace=self.ns_name())
-
+            namespace=self.ns_name)
         self.routes = []
 
     @property
@@ -134,10 +134,6 @@ class RouterInfo(object):
         elif self.ex_gw_port:
             # Gateway port was removed, remove rules
             self._snat_action = 'remove_rules'
-
-    def ns_name(self):
-        if self.use_namespaces:
-            return NS_PREFIX + self.router_id
 
     def perform_snat_action(self, snat_callback, *args):
         # Process SNAT rules for attached subnets
@@ -309,7 +305,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
     def _create_router_namespace(self, ri):
             ip_wrapper_root = ip_lib.IPWrapper(self.root_helper)
-            ip_wrapper = ip_wrapper_root.ensure_namespace(ri.ns_name())
+            ip_wrapper = ip_wrapper_root.ensure_namespace(ri.ns_name)
             ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
     def _fetch_external_net_id(self, force=False):
@@ -353,7 +349,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         ri.iptables_manager.apply()
         super(L3NATAgent, self).process_router_add(ri)
         if self.conf.enable_metadata_proxy:
-            self._spawn_metadata_proxy(ri.router_id, ri.ns_name())
+            self._spawn_metadata_proxy(ri.router_id, ri.ns_name)
 
     def _router_removed(self, router_id):
         ri = self.router_info.get(router_id)
@@ -371,9 +367,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             ri.iptables_manager.ipv4['nat'].remove_rule(c, r)
         ri.iptables_manager.apply()
         if self.conf.enable_metadata_proxy:
-            self._destroy_metadata_proxy(ri.router_id, ri.ns_name())
+            self._destroy_metadata_proxy(ri.router_id, ri.ns_name)
         del self.router_info[router_id]
-        self._destroy_router_namespace(ri.ns_name())
+        self._destroy_router_namespace(ri.ns_name)
 
     def _spawn_metadata_proxy(self, router_id, ns_name):
         def callback(pid_file):
@@ -416,7 +412,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
     def _get_existing_devices(self, ri):
         ip_wrapper = ip_lib.IPWrapper(root_helper=self.root_helper,
-                                      namespace=ri.ns_name())
+                                      namespace=ri.ns_name)
         ip_devs = ip_wrapper.get_devices(exclude_loopback=True)
         return [ip_dev.name for ip_dev in ip_devs]
 
@@ -452,7 +448,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             LOG.debug(_('Deleting stale internal router device: %s'),
                       stale_dev)
             self.driver.unplug(stale_dev,
-                               namespace=ri.ns_name(),
+                               namespace=ri.ns_name,
                                prefix=INTERNAL_DEV_PREFIX)
 
         internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports]
@@ -480,7 +476,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                       stale_dev)
             self.driver.unplug(stale_dev,
                                bridge=self.conf.external_network_bridge,
-                               namespace=ri.ns_name(),
+                               namespace=ri.ns_name,
                                prefix=EXTERNAL_DEV_PREFIX)
 
         # Process static routes for router
@@ -569,7 +565,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         fip_statuses = {}
         interface_name = self.get_external_device_name(ex_gw_port['id'])
         device = ip_lib.IPDevice(interface_name, self.root_helper,
-                                 namespace=ri.ns_name())
+                                 namespace=ri.ns_name)
         existing_cidrs = set([addr['cidr'] for addr in device.addr.list()])
         new_cidrs = set()
 
@@ -617,7 +613,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                       ip_address]
         try:
             ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          namespace=ri.ns_name())
+                                          namespace=ri.ns_name)
             ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
         except Exception as e:
             LOG.error(_("Failed sending gratuitous ARP: %s"), str(e))
@@ -639,7 +635,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                          ex_gw_port['id'], interface_name,
                          ex_gw_port['mac_address'],
                          bridge=self.conf.external_network_bridge,
-                         namespace=ri.ns_name(),
+                         namespace=ri.ns_name,
                          prefix=EXTERNAL_DEV_PREFIX)
 
         # Compute a list of addresses this router is supposed to have.
@@ -650,7 +646,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                         for ip in floating_ips]
 
         self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
-                            namespace=ri.ns_name(),
+                            namespace=ri.ns_name,
                             preserve_ips=preserve_ips)
         ip_address = ex_gw_port['ip_cidr'].split('/')[0]
         self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
@@ -659,7 +655,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         if ex_gw_port['subnet']['gateway_ip']:
             cmd = ['route', 'add', 'default', 'gw', gw_ip]
             ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          namespace=ri.ns_name())
+                                          namespace=ri.ns_name)
             ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def external_gateway_removed(self, ri, ex_gw_port,
@@ -667,7 +663,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
         self.driver.unplug(interface_name,
                            bridge=self.conf.external_network_bridge,
-                           namespace=ri.ns_name(),
+                           namespace=ri.ns_name,
                            prefix=EXTERNAL_DEV_PREFIX)
 
     def metadata_filter_rules(self):
@@ -701,13 +697,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         interface_name = self.get_internal_device_name(port_id)
         if not ip_lib.device_exists(interface_name,
                                     root_helper=self.root_helper,
-                                    namespace=ri.ns_name()):
+                                    namespace=ri.ns_name):
             self.driver.plug(network_id, port_id, interface_name, mac_address,
-                             namespace=ri.ns_name(),
+                             namespace=ri.ns_name,
                              prefix=INTERNAL_DEV_PREFIX)
 
         self.driver.init_l3(interface_name, [internal_cidr],
-                            namespace=ri.ns_name())
+                            namespace=ri.ns_name)
         ip_address = internal_cidr.split('/')[0]
         self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
 
@@ -715,8 +711,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         interface_name = self.get_internal_device_name(port_id)
         if ip_lib.device_exists(interface_name,
                                 root_helper=self.root_helper,
-                                namespace=ri.ns_name()):
-            self.driver.unplug(interface_name, namespace=ri.ns_name(),
+                                namespace=ri.ns_name):
+            self.driver.unplug(interface_name, namespace=ri.ns_name,
                                prefix=INTERNAL_DEV_PREFIX)
 
     def internal_network_nat_rules(self, ex_gw_ip, internal_cidr):
@@ -874,7 +870,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
                'via', route['nexthop']]
         ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                      namespace=ri.ns_name())
+                                      namespace=ri.ns_name)
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def routes_updated(self, ri):
