@@ -767,6 +767,16 @@ class DBInterface(object):
         return project_obj.get_floating_ip_pool_refs()
     #end _fip_pool_refs_project
 
+    def _network_list_router_external(self, project_id):
+        ret_list = []
+        nets = self._network_list_project(project_id)
+        for net in nets:
+            if not net.get_router_external():
+                continue
+            ret_list.append(net)
+        return ret_list
+    # end _network_list_router_external
+
     def _network_list_shared(self):
         ret_list = []
         nets = self._network_list_project(project_id=None)
@@ -1257,19 +1267,30 @@ class DBInterface(object):
 
     def _network_neutron_to_vnc(self, network_q, oper):
         net_name = network_q.get('name', None)
+        try:
+            external_attr = network_q[ext_net_extn.EXTERNAL]
+        except KeyError:
+            external_attr = attr.ATTR_NOT_SPECIFIED
         if oper == CREATE:
             project_id = str(uuid.UUID(network_q['tenant_id']))
             project_obj = self._project_read(proj_id=project_id)
             id_perms = IdPermsType(enable=True)
             net_obj = VirtualNetwork(net_name, project_obj, id_perms=id_perms)
+            if external_attr == attr.ATTR_NOT_SPECIFIED:
+                net_obj.router_external = False
+            else:
+                net_obj.router_external = external_attr
             if 'shared' in network_q:
                 net_obj.is_shared = network_q['shared']
             else:
                 net_obj.is_shared = False
         else:  # READ/UPDATE/DELETE
             net_obj = self._virtual_network_read(net_id=network_q['id'])
-            if oper == UPDATE and 'shared' in network_q:
-                net_obj.is_shared = network_q['shared']
+            if oper == UPDATE:
+                if 'shared' in network_q:
+                    net_obj.is_shared = network_q['shared']
+                if external_attr is not attr.ATTR_NOT_SPECIFIED:
+                    net_obj.router_external = external_attr
 
         id_perms = net_obj.get_id_perms()
         if 'admin_state_up' in network_q:
@@ -1322,7 +1343,10 @@ class DBInterface(object):
         else:
             net_q_dict['shared'] = False
         net_q_dict['status'] = constants.NET_STATUS_ACTIVE
-        extra_dict['router:external'] = net_obj in self._fip_pool_ref_networks(net_obj.parent_uuid)
+        if net_obj.router_external:
+            extra_dict['router:external'] = True
+        else:
+            extra_dict['router:external'] = False
 
         if net_repr == 'SHOW':
             extra_dict['contrail:instance_count'] = 0
@@ -1737,19 +1761,10 @@ class DBInterface(object):
     # public methods
     # network api handlers
     def network_create(self, network_q):
-        try:
-            external_attr = network_q[ext_net_extn.EXTERNAL]
-            if external_attr == attr.ATTR_NOT_SPECIFIED:
-                fip_pool_needed = False
-            else:
-                fip_pool_needed = external_attr
-        except KeyError:
-            fip_pool_needed = False
-
         net_obj = self._network_neutron_to_vnc(network_q, CREATE)
         net_uuid = self._virtual_network_create(net_obj)
 
-        if fip_pool_needed:
+        if net_obj.router_external:
             fip_pool_obj = FloatingIpPool('floating-ip-pool', net_obj)
             self._floating_ip_pool_create(fip_pool_obj)
 
@@ -1826,13 +1841,13 @@ class DBInterface(object):
         
         # collect phase
         all_net_objs = []  # all n/ws in all projects
-        if not context.is_admin:
+        if context and not context.is_admin:
             if filters and 'id' in filters:
                 _collect_without_prune(filters['id'])
             else:
                 project_uuid = str(uuid.UUID(context.tenant))
                 if filters and 'router:external' in filters:
-                    net_objs = self._fip_pool_ref_networks(project_uuid)
+                    net_objs = self._network_list_router_external(project_uuid)
                 else:
                     net_objs = self._network_list_project(project_uuid)
                 all_net_objs.extend(net_objs)
@@ -1848,7 +1863,7 @@ class DBInterface(object):
                 proj_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
                 for p_id in proj_ids:
                     if 'router:external' in filters:
-                        net_objs = self._fip_pool_ref_networks(p_id)
+                        net_objs = self._network_list_router_external(p_id)
                     else:
                         net_objs = self._network_list_project(p_id)
                     all_net_objs.extend(net_objs)
@@ -1857,7 +1872,7 @@ class DBInterface(object):
             # prune is skipped because all_net_objs is empty
             _collect_without_prune(filters['id'])
         elif filters and 'name' in filters:
-            if not context.is_admin:
+            if context and not context.is_admin:
                 net_objs = self._network_list_project(context.tenant)
             else:
                 net_objs = self._network_list_project(None)
@@ -1873,6 +1888,18 @@ class DBInterface(object):
             # read all networks in all projects
             net_objs = self._network_list_project(None)
             all_net_objs.extend(net_objs)
+            if context and not context.is_admin:
+                project_uuids = [str(uuid.UUID(context.tenant))]
+            else:
+                dom_projects = self._project_list_domain(None)
+                project_uuids = [proj['uuid'] for proj in dom_projects]
+
+            for proj_id in project_uuids:
+                if filters and 'router:external' in filters:
+                    all_net_objs.extend(self._network_list_router_external(proj_id))
+                else:
+                    project_nets = self._network_list_project(proj_id)
+                    all_net_objs.extend(project_nets)
 
         # prune phase
         for net_obj in all_net_objs:
