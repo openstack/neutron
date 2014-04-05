@@ -30,7 +30,7 @@ class RouterNotFound(qexception.NotFound):
 
 
 class RouterInUse(qexception.InUse):
-    message = _("Router %(router_id)s still has active ports")
+    message = _("Router %(router_id)s still has ports")
 
 
 class RouterInterfaceNotFound(qexception.NotFound):
