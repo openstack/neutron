@@ -57,7 +57,7 @@ class EswitchManager(object):
         err_msg = _("Agent cache inconsistency - port id "
                     "is not stored for %s") % port_mac
         LOG.error(err_msg)
-        raise exceptions.MlnxException(err_msg)
+        raise exceptions.MlnxException(err_msg=err_msg)
 
     def get_vnics_mac(self):
         return set(self.utils.get_attached_vnics().keys())
