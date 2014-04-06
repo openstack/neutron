@@ -767,16 +767,25 @@ class DBInterface(object):
         return project_obj.get_floating_ip_pool_refs()
     #end _fip_pool_refs_project
 
-    def _network_list_router_external(self, project_id):
+    def _network_list_shared_and_ext(self):
         ret_list = []
-        nets = self._network_list_project(project_id)
+        nets = self._network_list_project(project_id=None)
+        for net in nets:
+            if net.get_router_external() and net.get_is_shared():
+                ret_list.append(net)
+        return ret_list
+    # end _network_list_router_external
+ 
+    def _network_list_router_external(self):
+        ret_list = []
+        nets = self._network_list_project(project_id=None)
         for net in nets:
             if not net.get_router_external():
                 continue
             ret_list.append(net)
         return ret_list
     # end _network_list_router_external
-
+ 
     def _network_list_shared(self):
         ret_list = []
         nets = self._network_list_project(project_id=None)
@@ -900,17 +909,8 @@ class DBInterface(object):
                     else:
                         filter_value = filters[key_name]
                     idx = filter_value.index(match_value)
-                    if ('shared' in filters and
-                        filters['shared'][0] == True):
-                        # yuck, q-api has shared as list always of 1 elem
-                        return False  # no shared-resource support
                 except ValueError:  # not in requested list
                     return False
-            elif len(filters.keys()) == 1:
-                shared_val = filters.get('shared', None)
-                if shared_val and shared_val[0] == True:
-                    return False
-
         return True
     #end _filters_is_present
 
@@ -1844,13 +1844,18 @@ class DBInterface(object):
         if context and not context.is_admin:
             if filters and 'id' in filters:
                 _collect_without_prune(filters['id'])
+            elif filters and 'shared' in filters and 'router:external' not in filters:
+                all_net_objs.extend(self._network_list_shared())
+            elif filters and 'router:external' in filters and 'shared' not in filters:
+                all_net_objs.extend(self._network_list_router_external())
+            elif filters and 'router:external' in filters and 'shared' in filters:
+                all_net_objs.extend(self._network_list_shared_and_ext())
             else:
                 project_uuid = str(uuid.UUID(context.tenant))
-                if filters and 'router:external' in filters:
-                    net_objs = self._network_list_router_external(project_uuid)
-                else:
-                    net_objs = self._network_list_project(project_uuid)
-                all_net_objs.extend(net_objs)
+                if not filters:
+                    all_net_objs.extend(self._network_list_router_external())
+                    all_net_objs.extend(self._network_list_shared())
+                all_net_objs.extend(self._network_list_project(project_uuid))
         elif filters and 'tenant_id' in filters:
             # project-id is present
             if 'id' in filters:
@@ -1862,11 +1867,9 @@ class DBInterface(object):
                 # read all networks in project, and prune below
                 proj_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
                 for p_id in proj_ids:
-                    if 'router:external' in filters:
-                        net_objs = self._network_list_router_external(p_id)
-                    else:
-                        net_objs = self._network_list_project(p_id)
-                    all_net_objs.extend(net_objs)
+                    all_net_objs.extend(self._network_list_project(p_id))
+                if 'router:external' in filters:
+                    all_net_objs.extend(self._network_list_router_external())
         elif filters and 'id' in filters:
             # required networks are specified, just read and populate ret_dict
             # prune is skipped because all_net_objs is empty
@@ -1895,12 +1898,11 @@ class DBInterface(object):
                 project_uuids = [proj['uuid'] for proj in dom_projects]
 
             for proj_id in project_uuids:
-                if filters and 'router:external' in filters:
-                    all_net_objs.extend(self._network_list_router_external(proj_id))
-                else:
-                    project_nets = self._network_list_project(proj_id)
-                    all_net_objs.extend(project_nets)
+                if not filters and 'router:external' not in filters:
+                    all_net_objs.extend(self._network_list_project(proj_id))
 
+            if not filters or 'router:external' in filters:
+                all_net_objs.extend(self._network_list_router_external())
         # prune phase
         for net_obj in all_net_objs:
             if net_obj.uuid in ret_dict:
@@ -1911,6 +1913,13 @@ class DBInterface(object):
                 continue
             if not self._filters_is_present(filters, 'name',
                                             net_obj.get_fq_name()[-1]):
+                continue
+            if net_obj.is_shared == None:
+                is_shared = False
+            else:
+                is_shared = net_obj.is_shared
+            if not self._filters_is_present(filters, 'shared',
+                                            is_shared):
                 continue
             try:
                 net_info = self._network_vnc_to_neutron(net_obj,
