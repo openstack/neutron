@@ -15,11 +15,14 @@
 
 import sqlalchemy as sa
 from sqlalchemy import orm
+from sqlalchemy.orm import exc
 
+from neutron.common import exceptions as nexc
+from neutron.common import log
 from neutron.db.grouppolicy import db_group_policy as gpolicy_db
 from neutron.db import models_v2
-from neutron.extensions import group_policy as gpolicy
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import uuidutils
 
 
 LOG = logging.getLogger(__name__)
@@ -32,9 +35,8 @@ class EndpointPortBinding(gpolicy_db.Endpoint):
     """Neutron port binding to an Endpoint."""
     __table_args__ = {'extend_existing': True}
     # TODO(Sumit): confirm cascade constraints
-    neutron_port_id = sa.Column(sa.String(36),
-                                sa.ForeignKey('ports.id'), nullable=False,
-                                unique=True)
+    neutron_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'),
+                                nullable=True, unique=True)
     neutron_port = orm.relationship(models_v2.Port,
                                     backref=orm.backref("gp_endpoints",
                                                         lazy='joined',
@@ -46,7 +48,7 @@ class EndpointGroupNetworkBinding(gpolicy_db.EndpointGroup):
     __table_args__ = {'extend_existing': True}
     # TODO(Sumit): confirm cascade constraints
     neutron_network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
-                                   nullable=False, unique=True)
+                                   nullable=True, unique=True)
     neutron_network = orm.relationship(models_v2.Network,
                                        backref=orm.backref(
                                            "gp_endpoint_groups",
@@ -62,6 +64,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
     events.
     """
 
+    """
     def _extend_endpoint_dict_portbinding(self, endpoint_res, endpoint_db):
         endpoint_res['neutron_port_id'] = endpoint_db['neutron_port_id']
 
@@ -78,6 +81,23 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
         gpolicy.ENDPOINT_GROUPS,
         ['_extend_endpoint_group_dict_networkbinding'])
 
+    """
+
+    def _get_endpoint(self, context, id):
+        try:
+            endpoint = self._get_by_id(context, EndpointPortBinding, id)
+        except exc.NoResultFound:
+            raise nexc.EndpointNotFound(endpoint_id=id)
+        return endpoint
+
+    def _get_endpoint_group(self, context, id):
+        try:
+            endpoint_group = self._get_by_id(context,
+                                             EndpointGroupNetworkBinding, id)
+        except exc.NoResultFound:
+            raise nexc.EndpointGroupNotFound(endpoint_group_id=id)
+        return endpoint_group
+
     def _make_endpoint_dict(self, ep, fields=None):
         res = super(GroupPolicyMappingDbMixin,
                     self)._make_endpoint_dict(ep)
@@ -89,3 +109,16 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                     self)._make_endpoint_group_dict(epg)
         res['neutron_network_id'] = epg['neutron_network_id']
         return self._fields(res, fields)
+
+    @log.log
+    def create_endpoint(self, context, endpoint):
+        ep = endpoint['endpoint']
+        tenant_id = self._get_tenant_id_for_create(context, ep)
+        with context.session.begin(subtransactions=True):
+            ep_db = EndpointPortBinding(id=uuidutils.generate_uuid(),
+                                        tenant_id=tenant_id,
+                                        name=ep['name'],
+                                        description=ep['description'],
+                                        neutron_port_id=ep['neutron_port_id'])
+            context.session.add(ep_db)
+        return self._make_endpoint_dict(ep_db)
