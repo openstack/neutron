@@ -14,11 +14,7 @@
 #    under the License.
 
 from neutron.common import log
-from neutron.openstack.common import log
 from neutron.plugins.grouppolicy import group_policy_driver_api as api
-
-
-LOG = log.getLogger(__name__)
 
 
 class NoopDriver(api.PolicyDriver):

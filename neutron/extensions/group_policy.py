@@ -207,7 +207,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                          'convert_to': attr.convert_none_to_empty_list,
                          'required': True, 'is_visible': True},
     },
-    # TODO (Sumit): Add policy_label for scope
+    # TODO(Sumit): Add policy_label for scope
     CONTRACT_SCOPES: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
@@ -269,7 +269,7 @@ RESOURCE_ATTRIBUTE_MAP = {
     }
 }
 
-# TODO (sumit): Add quota opts
+# TODO(sumit): Add quota opts
 
 
 class Group_policy(extensions.ExtensionDescriptor):

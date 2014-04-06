@@ -56,7 +56,7 @@ class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                        nullable=True, unique=True)
     contract_id = sa.Column(sa.String(36),
                             sa.ForeignKey('gp_contracts.id'))
-    # TODO (Sumit): Add policy_label for scope
+    # TODO(Sumit): Add policy_label for scope
 
 
 class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -94,7 +94,7 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     contracts = orm.relationship(ContractPolicyRuleAssociation,
                                  backref='gp_policyrules')
     # Default value would be Null implying all protocols
-    # TODO (Sumit): Confirm this
+    # TODO(Sumit): Confirm this
     protocol = sa.Column(sa.Enum(const.TCP, const.UDP, const.ICMP,
                                  name="protocol_type"),
                          nullable=True)
@@ -106,7 +106,7 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     # Default value would be Null when action_type is allow
     # however, value is required if something meaningful needs to be done
     # for redirect
-    # TODO (Sumit): Revisit when other action_types are defined
+    # TODO(Sumit): Revisit when other action_types are defined
     action_value = sa.Column(sa.String(36),
                              sa.ForeignKey('gp_contractscopes.id'),
                              nullable=True, unique=True)
@@ -114,7 +114,7 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                                   const.GP_DIRECTION_OUT,
                                   const.GP_DIRECTION_BI,
                                   name='direction'))
-    # TODO (Sumit): Add policy_label
+    # TODO(Sumit): Add policy_label
 
 
 class Contract(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -146,7 +146,7 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
     # This attribute specifies whether the plugin supports or not
     # bulk/pagination/sorting operations. Name mangling is used in
     # order to ensure it is qualified by class
-    # TODO (Sumit): native bulk support
+    # TODO(Sumit): native bulk support
     __native_bulk_support = False
     __native_pagination_support = True
     __native_sorting_support = True
