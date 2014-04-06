@@ -32,6 +32,12 @@ class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
         config.cfg.CONF.set_override('mechanism_drivers',
                                      ['logger', 'opendaylight'],
                                      'ml2')
+        # Set URL/user/pass so init doesn't throw a cfg required error.
+        # They are not used in these tests since sendjson is overwritten.
+        config.cfg.CONF.set_override('url', 'http://127.0.0.1:9999', 'ml2_odl')
+        config.cfg.CONF.set_override('username', 'someuser', 'ml2_odl')
+        config.cfg.CONF.set_override('password', 'somepass', 'ml2_odl')
+
         super(OpenDaylightTestCase, self).setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
         self.segment = {'api.NETWORK_TYPE': ""}
@@ -57,6 +63,32 @@ class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Validate a network type not currently supported
         self.segment[api.NETWORK_TYPE] = 'mpls'
         self.assertFalse(self.mech.check_segment(self.segment))
+
+
+class OpenDayLightMechanismConfigTests(test_plugin.NeutronDbPluginV2TestCase):
+
+    def _setUp(self):
+        config.cfg.CONF.set_override('mechanism_drivers',
+                                     ['logger', 'opendaylight'],
+                                     'ml2')
+        config.cfg.CONF.set_override('url', 'http://127.0.0.1:9999', 'ml2_odl')
+        config.cfg.CONF.set_override('username', 'someuser', 'ml2_odl')
+        config.cfg.CONF.set_override('password', 'somepass', 'ml2_odl')
+
+    def test_url_required(self):
+        self._setUp()
+        config.cfg.CONF.set_override('url', None, 'ml2_odl')
+        self.assertRaises(config.cfg.RequiredOptError, self.setUp, PLUGIN_NAME)
+
+    def test_username_required(self):
+        self._setUp()
+        config.cfg.CONF.set_override('username', None, 'ml2_odl')
+        self.assertRaises(config.cfg.RequiredOptError, self.setUp, PLUGIN_NAME)
+
+    def test_password_required(self):
+        self._setUp()
+        config.cfg.CONF.set_override('password', None, 'ml2_odl')
+        self.assertRaises(config.cfg.RequiredOptError, self.setUp, PLUGIN_NAME)
 
 
 class OpenDaylightMechanismTestBasicGet(test_plugin.TestBasicGet,
