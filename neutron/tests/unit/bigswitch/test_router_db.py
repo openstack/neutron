@@ -39,6 +39,7 @@ from neutron.tests.unit import test_extension_extradhcpopts as test_extradhcp
 from neutron.tests.unit import test_l3_plugin
 
 
+HTTPCON = 'neutron.plugins.bigswitch.servermanager.httplib.HTTPConnection'
 _uuid = uuidutils.generate_uuid
 
 
@@ -64,23 +65,30 @@ class DHCPOptsTestCase(test_base.BigSwitchTestBase,
         self.setup_config_files()
         super(test_extradhcp.ExtraDhcpOptDBTestCase,
               self).setUp(plugin=self._plugin_name)
+        self.startHttpPatch()
 
 
-class RouterDBTestCase(test_base.BigSwitchTestBase,
-                       test_l3_plugin.L3NatDBIntTestCase):
+class RouterDBTestBase(test_base.BigSwitchTestBase,
+                       test_l3_plugin.L3BaseForIntTests,
+                       test_l3_plugin.L3NatTestCaseMixin):
 
     def setUp(self):
         self.setup_patches()
         self.setup_config_files()
         ext_mgr = RouterRulesTestExtensionManager()
-        super(RouterDBTestCase, self).setUp(plugin=self._plugin_name,
+        super(RouterDBTestBase, self).setUp(plugin=self._plugin_name,
                                             ext_mgr=ext_mgr)
         cfg.CONF.set_default('allow_overlapping_ips', False)
         self.plugin_obj = NeutronManager.get_plugin()
+        self.startHttpPatch()
 
     def tearDown(self):
-        super(RouterDBTestCase, self).tearDown()
+        super(RouterDBTestBase, self).tearDown()
         del test_config['config_files']
+
+
+class RouterDBTestCase(RouterDBTestBase,
+                       test_l3_plugin.L3NatDBIntTestCase):
 
     def test_router_remove_router_interface_wrong_subnet_returns_400(self):
         with self.router() as r:
@@ -164,8 +172,7 @@ class RouterDBTestCase(test_base.BigSwitchTestBase,
                         port_id=p1['port']['id'],
                         tenant_id=tenant1_id)
                     multiFloatPatch = patch(
-                        'httplib.HTTPConnection',
-                        create=True,
+                        HTTPCON,
                         new=fake_server.VerifyMultiTenantFloatingIP)
                     multiFloatPatch.start()
                     fl2 = self._make_floatingip_for_tenant_port(
@@ -504,34 +511,30 @@ class RouterDBTestCase(test_base.BigSwitchTestBase,
 
     def test_rollback_on_router_create(self):
         tid = test_api_v2._uuid()
-        self.errhttpPatch = patch('httplib.HTTPConnection', create=True,
-                                  new=fake_server.HTTPConnectionMock500)
-        self.errhttpPatch.start()
-        self._create_router('json', tid)
-        self.errhttpPatch.stop()
+        self.httpPatch.stop()
+        with patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
+            self._create_router('json', tid)
         self.assertTrue(len(self._get_routers(tid)) == 0)
 
     def test_rollback_on_router_update(self):
         with self.router() as r:
             data = {'router': {'name': 'aNewName'}}
-            self.errhttpPatch = patch('httplib.HTTPConnection', create=True,
-                                      new=fake_server.HTTPConnectionMock500)
-            self.errhttpPatch.start()
-            self.new_update_request('routers', data,
-                                    r['router']['id']).get_response(self.api)
-            self.errhttpPatch.stop()
+            self.httpPatch.stop()
+            with patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
+                self.new_update_request(
+                    'routers', data, r['router']['id']).get_response(self.api)
+            self.httpPatch.start()
             updatedr = self._get_routers(r['router']['tenant_id'])[0]
             # name should have stayed the same due to failure
             self.assertEqual(r['router']['name'], updatedr['name'])
 
     def test_rollback_on_router_delete(self):
         with self.router() as r:
-            self.errhttpPatch = patch('httplib.HTTPConnection', create=True,
-                                      new=fake_server.HTTPConnectionMock500)
-            self.errhttpPatch.start()
-            self._delete('routers', r['router']['id'],
-                         expected_code=exc.HTTPInternalServerError.code)
-            self.errhttpPatch.stop()
+            self.httpPatch.stop()
+            with patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
+                self._delete('routers', r['router']['id'],
+                             expected_code=exc.HTTPInternalServerError.code)
+            self.httpPatch.start()
             self.assertEqual(r['router']['id'],
                              self._get_routers(r['router']['tenant_id']
                                                )[0]['id'])

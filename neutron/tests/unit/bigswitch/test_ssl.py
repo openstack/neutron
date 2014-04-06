@@ -14,6 +14,7 @@
 #
 # @author: Kevin Benton, kevin.benton@bigswitch.com
 #
+from contextlib import nested
 import os
 
 import mock
@@ -34,8 +35,8 @@ CERTCOMBINER = SERVERMANAGER + '.ServerPool._combine_certs_to_file'
 FILEPUT = SERVERMANAGER + '.ServerPool._file_put_contents'
 GETCACERTS = SERVERMANAGER + '.ServerPool._get_ca_cert_paths'
 GETHOSTCERT = SERVERMANAGER + '.ServerPool._get_host_cert_path'
+SSLGETCERT = SERVERMANAGER + '.ssl.get_server_certificate'
 FAKECERTGET = 'neutron.tests.unit.bigswitch.fake_server.get_cert_contents'
-SSLGETCERT = 'ssl.get_server_certificate'
 
 
 class test_ssl_certificate_base(test_plugin.NeutronDbPluginV2TestCase,
@@ -91,9 +92,6 @@ class TestSslSticky(test_ssl_certificate_base):
         self.setup_config_files()
         cfg.CONF.set_override('server_ssl', True, 'RESTPROXY')
         cfg.CONF.set_override('ssl_sticky', True, 'RESTPROXY')
-        self.httpsPatch = mock.patch(HTTPS, create=True,
-                                     new=fake_server.HTTPSHostValidation)
-        self.httpsPatch.start()
         self._setUp()
         # Set fake HTTPS connection's expectation
         self.fake_certget_m.return_value = self.host_cert_val
@@ -103,7 +101,10 @@ class TestSslSticky(test_ssl_certificate_base):
 
     def test_sticky_cert(self):
         # SSL connection should be successful and cert should be cached
-        with self.network():
+        with nested(
+            mock.patch(HTTPS, new=fake_server.HTTPSHostValidation),
+            self.network()
+        ):
             # CA certs should have been checked for
             self.getcacerts_m.assert_has_calls([mock.call(self.ca_certs_path)])
             # cert should have been fetched via SSL lib
@@ -189,9 +190,6 @@ class TestSslWrongHostCert(test_ssl_certificate_base):
         self.setup_config_files()
         cfg.CONF.set_override('server_ssl', True, 'RESTPROXY')
         cfg.CONF.set_override('ssl_sticky', True, 'RESTPROXY')
-        self.httpsPatch = mock.patch(HTTPS, create=True,
-                                     new=fake_server.HTTPSHostValidation)
-        self.httpsPatch.start()
         self._setUp()
 
         # Set fake HTTPS connection's expectation to something wrong
@@ -214,8 +212,9 @@ class TestSslWrongHostCert(test_ssl_certificate_base):
         data = {}
         data['network'] = {'tenant_id': tid, 'name': 'name',
                            'admin_state_up': True}
-        req = self.new_create_request('networks', data, 'json')
-        res = req.get_response(self.api)
+        with mock.patch(HTTPS, new=fake_server.HTTPSHostValidation):
+            req = self.new_create_request('networks', data, 'json')
+            res = req.get_response(self.api)
         self.assertEqual(res.status_int,
                          webob.exc.HTTPInternalServerError.code)
         self.hcertpath_p.assert_has_calls([
@@ -236,16 +235,16 @@ class TestSslNoValidation(test_ssl_certificate_base):
         cfg.CONF.set_override('server_ssl', True, 'RESTPROXY')
         cfg.CONF.set_override('ssl_sticky', False, 'RESTPROXY')
         cfg.CONF.set_override('no_ssl_validation', True, 'RESTPROXY')
-        self.httpsPatch = mock.patch(HTTPS, create=True,
-                                     new=fake_server.HTTPSNoValidation)
-        self.httpsPatch.start()
         self._setUp()
         super(TestSslNoValidation, self).setUp()
 
     def test_validation_disabled(self):
         # SSL connection should be successful without any certificates
         # If not, attempting to create a network will raise an exception
-        with self.network():
+        with nested(
+            mock.patch(HTTPS, new=fake_server.HTTPSNoValidation),
+            self.network()
+        ):
             # no sticky grabbing and no cert combining with no enforcement
             self.assertFalse(self.sslgetcert_m.call_count)
             self.assertFalse(self.certcomb_m.call_count)

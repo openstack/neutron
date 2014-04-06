@@ -26,9 +26,10 @@ PLUGIN = 'neutron.plugins.bigswitch.plugin'
 SERVERMANAGER = PLUGIN + '.servermanager'
 SERVERPOOL = SERVERMANAGER + '.ServerPool'
 SERVERRESTCALL = SERVERMANAGER + '.ServerProxy.rest_call'
+HTTPCON = SERVERMANAGER + '.HTTPConnection'
 
 
-class CapabilitiesTests(test_router_db.RouterDBTestCase):
+class CapabilitiesTests(test_router_db.RouterDBTestBase):
 
     def test_floating_ip_capability(self):
         with nested(
@@ -63,3 +64,19 @@ class CapabilitiesTests(test_router_db.RouterDBTestCase):
             all_floats = [f['floating_ip_address']
                           for floats in updates for f in floats]
             self.assertIn(fip['floatingip']['floating_ip_address'], all_floats)
+
+    def test_keep_alive_capability(self):
+        with mock.patch(
+            SERVERRESTCALL, return_value=(200, None, None, '["keep-alive"]')
+        ):
+            # perform a task to cause capabilities to be retrieved
+            with self.floatingip_with_assoc():
+                pass
+        # now mock HTTP class instead of REST so we can see headers
+        conmock = mock.patch(HTTPCON).start()
+        instance = conmock.return_value
+        instance.getresponse.return_value.getheader.return_value = 'HASHHEADER'
+        with self.network():
+            callheaders = instance.request.mock_calls[0][1][3]
+            self.assertIn('Connection', callheaders)
+            self.assertEqual(callheaders['Connection'], 'keep-alive')
