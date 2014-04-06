@@ -21,6 +21,7 @@ from neutron.plugins.common import constants
 from neutron.plugins.ml2 import config as config
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mechanism_odl
+from neutron.plugins.ml2 import plugin
 from neutron.tests import base
 from neutron.tests.unit import test_db_plugin as test_plugin
 
@@ -36,6 +37,12 @@ class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
         config.cfg.CONF.set_override('mechanism_drivers',
                                      ['logger', 'opendaylight'],
                                      'ml2')
+        # Set URL/user/pass so init doesn't throw a cfg required error.
+        # They are not used in these tests since sendjson is overwritten.
+        config.cfg.CONF.set_override('url', 'http://127.0.0.1:9999', 'ml2_odl')
+        config.cfg.CONF.set_override('username', 'someuser', 'ml2_odl')
+        config.cfg.CONF.set_override('password', 'somepass', 'ml2_odl')
+
         super(OpenDaylightTestCase, self).setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
         self.segment = {'api.NETWORK_TYPE': ""}
@@ -61,6 +68,36 @@ class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Validate a network type not currently supported
         self.segment[api.NETWORK_TYPE] = 'mpls'
         self.assertFalse(self.mech.check_segment(self.segment))
+
+
+class OpenDayLightMechanismConfigTests(base.BaseTestCase):
+
+    def _set_config(self, url='http://127.0.0.1:9999', username='someuser',
+                    password='somepass'):
+        config.cfg.CONF.set_override('mechanism_drivers',
+                                     ['logger', 'opendaylight'],
+                                     'ml2')
+        config.cfg.CONF.set_override('url', url, 'ml2_odl')
+        config.cfg.CONF.set_override('username', username, 'ml2_odl')
+        config.cfg.CONF.set_override('password', password, 'ml2_odl')
+
+    def _test_missing_config(self, **kwargs):
+        self._set_config(**kwargs)
+        self.assertRaises(config.cfg.RequiredOptError,
+                          plugin.Ml2Plugin)
+
+    def test_valid_config(self):
+        self._set_config()
+        plugin.Ml2Plugin()
+
+    def test_missing_url_raises_exception(self):
+        self._test_missing_config(url=None)
+
+    def test_missing_username_raises_exception(self):
+        self._test_missing_config(username=None)
+
+    def test_missing_password_raises_exception(self):
+        self._test_missing_config(password=None)
 
 
 class OpenDaylightMechanismTestBasicGet(test_plugin.TestBasicGet,

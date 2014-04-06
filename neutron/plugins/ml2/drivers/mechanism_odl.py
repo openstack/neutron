@@ -137,6 +137,10 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         self.timeout = cfg.CONF.ml2_odl.timeout
         self.username = cfg.CONF.ml2_odl.username
         self.password = cfg.CONF.ml2_odl.password
+        required_opts = ('url', 'username', 'password')
+        for opt in required_opts:
+            if not getattr(self, opt):
+                raise cfg.RequiredOptError(opt, 'ml2_odl')
         self.auth = JsessionId(self.url, self.username, self.password)
         self.vif_type = portbindings.VIF_TYPE_OVS
         self.vif_details = {portbindings.CAP_PORT_FILTER: True}
@@ -307,18 +311,17 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
 
         headers = {'Content-Type': 'application/json'}
         data = jsonutils.dumps(obj, indent=2) if obj else None
-        if self.url:
-            url = '/'.join([self.url, urlpath])
-            LOG.debug(_('ODL-----> sending URL (%s) <-----ODL') % url)
-            LOG.debug(_('ODL-----> sending JSON (%s) <-----ODL') % obj)
-            r = requests.request(method, url=url,
-                                 headers=headers, data=data,
-                                 auth=self.auth, timeout=self.timeout)
+        url = '/'.join([self.url, urlpath])
+        LOG.debug(_('ODL-----> sending URL (%s) <-----ODL') % url)
+        LOG.debug(_('ODL-----> sending JSON (%s) <-----ODL') % obj)
+        r = requests.request(method, url=url,
+                             headers=headers, data=data,
+                             auth=self.auth, timeout=self.timeout)
 
-            # ignorecodes contains a list of HTTP error codes to ignore.
-            if r.status_code in ignorecodes:
-                return
-            r.raise_for_status()
+        # ignorecodes contains a list of HTTP error codes to ignore.
+        if r.status_code in ignorecodes:
+            return
+        r.raise_for_status()
 
     def bind_port(self, context):
         LOG.debug(_("Attempting to bind port %(port)s on "
