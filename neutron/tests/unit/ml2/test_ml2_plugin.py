@@ -25,6 +25,7 @@ from neutron.extensions import providernet as pnet
 from neutron import manager
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config
+from neutron.plugins.ml2 import driver_api
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.ml2.drivers import mechanism_logger as mech_logger
@@ -288,6 +289,17 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)
         self.assertEqual(res.status_int, 400)
+
+    def test_release_segment_no_type_driver(self):
+        segment = {driver_api.NETWORK_TYPE: 'faketype',
+                   driver_api.PHYSICAL_NETWORK: 'physnet1',
+                   driver_api.ID: 1}
+        with mock.patch('neutron.plugins.ml2.managers.LOG') as log:
+            self.driver.type_manager.release_segment(session=None,
+                                                     segment=segment)
+        log.error.assert_called_once_with(
+            "Failed to release segment '%s' because "
+            "network type is not supported.", segment)
 
     def test_create_provider_fail(self):
         segment = {pnet.NETWORK_TYPE: None,
