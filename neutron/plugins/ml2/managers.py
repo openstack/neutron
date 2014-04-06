@@ -98,6 +98,16 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def release_segment(self, session, segment):
         network_type = segment.get(api.NETWORK_TYPE)
         driver = self.drivers.get(network_type)
+        # ML2 may have been reconfigured since the segment was created,
+        # so a driver may no longer exist for this network_type.
+        # REVISIT: network_type-specific db entries may become orphaned
+        # if a network is deleted and the driver isn't available to release
+        # the segment. This may be fixed with explicit foreign-key references
+        # or consistency checks on driver initialization.
+        if not driver:
+            LOG.error(_("Failed to release segment '%s' because "
+                        "network type is not supported."), segment)
+            return
         driver.obj.release_segment(session, segment)
 
 
