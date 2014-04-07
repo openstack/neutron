@@ -2571,7 +2571,7 @@ class DBInterface(object):
                 port_ids = filters['port_id']
         else:  # no filters
             if not context.is_admin:
-                proj_ids = [str(uuid.UUID(context.is_admin))]
+                proj_ids = [str(uuid.UUID(context.tenant))]
 
         if port_ids:
             fip_objs = self._floatingip_list(back_ref_id=port_ids)
