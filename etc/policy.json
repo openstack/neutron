@@ -47,7 +47,6 @@
     "create_port:port_security_enabled": "rule:admin_or_network_owner",
     "create_port:binding:host_id": "rule:admin_only",
     "create_port:binding:profile": "rule:admin_only",
-    "create_port:binding:vnic_type": "rule:admin_or_owner",
     "create_port:mac_learning_enabled": "rule:admin_or_network_owner",
     "get_port": "rule:admin_or_owner",
     "get_port:queue_id": "rule:admin_only",
@@ -55,13 +54,11 @@
     "get_port:binding:vif_details": "rule:admin_only",
     "get_port:binding:host_id": "rule:admin_only",
     "get_port:binding:profile": "rule:admin_only",
-    "get_port:binding:vnic_type": "rule:admin_or_owner",
     "update_port": "rule:admin_or_owner",
     "update_port:fixed_ips": "rule:admin_or_network_owner",
     "update_port:port_security_enabled": "rule:admin_or_network_owner",
     "update_port:binding:host_id": "rule:admin_only",
     "update_port:binding:profile": "rule:admin_only",
-    "update_port:binding:vnic_type": "rule:admin_or_owner",
     "update_port:mac_learning_enabled": "rule:admin_or_network_owner",
     "delete_port": "rule:admin_or_owner",
 
@@ -83,8 +80,6 @@
 
     "create_firewall_rule": "",
     "get_firewall_rule": "rule:admin_or_owner or rule:shared_firewalls",
-    "create_firewall_rule:shared": "rule:admin_or_owner",
-    "get_firewall_rule:shared": "rule:admin_or_owner",
     "update_firewall_rule": "rule:admin_or_owner",
     "delete_firewall_rule": "rule:admin_or_owner",
 
