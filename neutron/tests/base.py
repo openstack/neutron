@@ -95,6 +95,15 @@ class BaseTestCase(testtools.TestCase):
                 nuke_handlers=capture_logs,
             ))
 
+        # suppress all but errors here
+        self.useFixture(
+            fixtures.FakeLogger(
+                name='neutron.api.extensions',
+                format=LOG_FORMAT,
+                level=logging.ERROR,
+                nuke_handlers=capture_logs,
+            ))
+
         test_timeout = int(os.environ.get('OS_TEST_TIMEOUT', 0))
         if test_timeout == -1:
             test_timeout = 0
