@@ -22,6 +22,7 @@ import os
 import mock
 from oslo.config import cfg
 from testtools import matchers
+from testtools import testcase
 import webob.exc
 
 import neutron
@@ -2998,6 +2999,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = subnet_req.get_response(self.api)
             self.assertEqual(res.status_int, webob.exc.HTTPClientError.code)
 
+    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_create_subnet_ipv6_attributes(self):
         gateway_ip = 'fe80::1'
         cidr = 'fe80::/80'
@@ -3008,6 +3010,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                      ipv6_ra_mode=mode,
                                      ipv6_address_mode=mode)
 
+    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_create_subnet_ipv6_attributes_no_dhcp_enabled(self):
         gateway_ip = 'fe80::1'
         cidr = 'fe80::/80'
@@ -3058,6 +3061,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         self.assertEqual(ctx_manager.exception.code,
                          webob.exc.HTTPClientError.code)
 
+    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_create_subnet_ipv6_single_attribute_set(self):
         gateway_ip = 'fe80::1'
         cidr = 'fe80::/80'
@@ -3232,6 +3236,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPConflict.code)
 
+    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_update_subnet_ipv6_attributes(self):
         with self.subnet(ip_version=6, cidr='fe80::/80',
                          ipv6_ra_mode=constants.IPV6_SLAAC,
@@ -3246,6 +3251,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(res['subnet']['ipv6_address_mode'],
                              data['subnet']['ipv6_address_mode'])
 
+    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_update_subnet_ipv6_inconsistent_ra_attribute(self):
         with self.subnet(ip_version=6, cidr='fe80::/80',
                          ipv6_ra_mode=constants.IPV6_SLAAC,
@@ -3257,6 +3263,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(res.status_int,
                              webob.exc.HTTPClientError.code)
 
+    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_update_subnet_ipv6_inconsistent_address_attribute(self):
         with self.subnet(ip_version=6, cidr='fe80::/80',
                          ipv6_ra_mode=constants.IPV6_SLAAC,
@@ -3268,6 +3275,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(res.status_int,
                              webob.exc.HTTPClientError.code)
 
+    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_update_subnet_ipv6_inconsistent_enable_dhcp(self):
         with self.subnet(ip_version=6, cidr='fe80::/80',
                          ipv6_ra_mode=constants.IPV6_SLAAC,

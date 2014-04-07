@@ -720,15 +720,17 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'default': True,
                         'convert_to': convert_to_boolean,
                         'is_visible': True},
-        'ipv6_ra_mode': {'allow_post': True, 'allow_put': True,
+        # NOTE: The following two attributes will be made visible once IPv6
+        # will be fully supported
+        'ipv6_ra_mode': {'allow_post': False, 'allow_put': False,
                          'default': ATTR_NOT_SPECIFIED,
                          'validate': {'type:values': constants.IPV6_MODES},
-                         'is_visible': True},
-        'ipv6_address_mode': {'allow_post': True, 'allow_put': True,
+                         'is_visible': False},
+        'ipv6_address_mode': {'allow_post': False, 'allow_put': False,
                               'default': ATTR_NOT_SPECIFIED,
                               'validate': {'type:values':
                                            constants.IPV6_MODES},
-                              'is_visible': True},
+                              'is_visible': False},
         SHARED: {'allow_post': False,
                  'allow_put': False,
                  'default': False,
