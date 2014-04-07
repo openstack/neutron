@@ -1160,9 +1160,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     'gateway_ip': s['gateway_ip'],
                     'shared': network.shared}
             if s['ip_version'] == 6 and s['enable_dhcp']:
-                if attributes.is_attr_set(s['ipv6_ra_mode']):
+                if attributes.is_attr_set(s.get('ipv6_ra_mode')):
                     args['ipv6_ra_mode'] = s['ipv6_ra_mode']
-                if attributes.is_attr_set(s['ipv6_address_mode']):
+                if attributes.is_attr_set(s.get('ipv6_address_mode')):
                     args['ipv6_address_mode'] = s['ipv6_address_mode']
             subnet = models_v2.Subnet(**args)
 
