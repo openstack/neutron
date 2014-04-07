@@ -1849,6 +1849,11 @@ class DBInterface(object):
         if context and not context.is_admin:
             if filters and 'id' in filters:
                 _collect_without_prune(filters['id'])
+            elif filters and 'name' in filters:
+                net_objs = self._network_list_project(context.tenant)
+                all_net_objs.extend(net_objs)
+                all_net_objs.extend(self._network_list_shared())
+                all_net_objs.extend(self._network_list_router_external())
             elif filters and 'shared' in filters and 'router:external' not in filters:
                 all_net_objs.extend(self._network_list_shared())
             elif filters and 'router:external' in filters and 'shared' not in filters:
@@ -1861,6 +1866,7 @@ class DBInterface(object):
                     all_net_objs.extend(self._network_list_router_external())
                     all_net_objs.extend(self._network_list_shared())
                 all_net_objs.extend(self._network_list_project(project_uuid))
+        # admin role from here on
         elif filters and 'tenant_id' in filters:
             # project-id is present
             if 'id' in filters:
@@ -1880,10 +1886,7 @@ class DBInterface(object):
             # prune is skipped because all_net_objs is empty
             _collect_without_prune(filters['id'])
         elif filters and 'name' in filters:
-            if context and not context.is_admin:
-                net_objs = self._network_list_project(context.tenant)
-            else:
-                net_objs = self._network_list_project(None)
+            net_objs = self._network_list_project(None)
             all_net_objs.extend(net_objs)
         elif filters and 'shared' in filters:
             if filters['shared'][0] == True:
@@ -1894,13 +1897,8 @@ class DBInterface(object):
                     ret_dict[net.uuid] = net_info
         else:
             # read all networks in all projects
-            net_objs = self._network_list_project(None)
-            all_net_objs.extend(net_objs)
-            if context and not context.is_admin:
-                project_uuids = [str(uuid.UUID(context.tenant))]
-            else:
-                dom_projects = self._project_list_domain(None)
-                project_uuids = [proj['uuid'] for proj in dom_projects]
+            dom_projects = self._project_list_domain(None)
+            project_uuids = [proj['uuid'] for proj in dom_projects]
 
             for proj_id in project_uuids:
                 if not filters and 'router:external' not in filters:
@@ -1908,6 +1906,7 @@ class DBInterface(object):
 
             if not filters or 'router:external' in filters:
                 all_net_objs.extend(self._network_list_router_external())
+
         # prune phase
         for net_obj in all_net_objs:
             if net_obj.uuid in ret_dict:
