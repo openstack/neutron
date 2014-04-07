@@ -770,9 +770,6 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 [router['id'] for router in routers])
         cur_router_ids = set()
         for r in routers:
-            if not r['admin_state_up']:
-                continue
-
             # If namespaces are disabled, only process the router associated
             # with the configured agent id.
             if (not self.conf.use_namespaces and
@@ -809,9 +806,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                       len(self.updated_routers))
             if self.updated_routers:
                 router_ids = list(self.updated_routers)
-                self.updated_routers.clear()
                 routers = self.plugin_rpc.get_routers(
                     self.context, router_ids)
+
+                fetched = set([r['id'] for r in routers])
+                self.removed_routers.update(self.updated_routers - fetched)
+                self.updated_routers.clear()
+
                 self._process_routers(routers)
             self._process_router_delete()
             LOG.debug(_("RPC loop successfully completed"))
