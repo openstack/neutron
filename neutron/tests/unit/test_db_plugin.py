@@ -30,6 +30,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import router
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
+from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
 from neutron import context
@@ -1396,6 +1397,24 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
                 self._delete('ports', port3['port']['id'])
                 self._delete('ports', port4['port']['id'])
+
+    def test_ip_allocation_for_ipv6_subnet_slaac_adddress_mode(self):
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        v6_subnet = self._make_subnet(self.fmt, network,
+                                      gateway='fe80::1',
+                                      cidr='fe80::/80',
+                                      ip_version=6,
+                                      ipv6_ra_mode=None,
+                                      ipv6_address_mode=constants.IPV6_SLAAC)
+        port = self._make_port(self.fmt, network['network']['id'])
+        self.assertEqual(len(port['port']['fixed_ips']), 1)
+        port_mac = port['port']['mac_address']
+        subnet_cidr = v6_subnet['subnet']['cidr']
+        eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                         port_mac))
+        self.assertEqual(port['port']['fixed_ips'][0]['ip_address'], eui_addr)
 
     def test_range_allocation(self):
         with self.subnet(gateway_ip='10.0.0.3',
