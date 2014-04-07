@@ -1,4 +1,4 @@
-pbr>=0.6,<1.0
+pbr>=0.6,!=0.7,<1.0
 
 Paste
 PasteDeploy>=1.5.0
