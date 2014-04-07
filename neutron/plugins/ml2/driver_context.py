@@ -84,6 +84,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         else:
             self._original_bound_segment_id = None
             self._original_bound_driver = None
+        self._new_port_status = None
 
     @property
     def current(self):
@@ -125,8 +126,10 @@ class PortContext(MechanismDriverContext, api.PortContext):
                                        filters={'agent_type': [agent_type],
                                                 'host': [self._binding.host]})
 
-    def set_binding(self, segment_id, vif_type, vif_details):
+    def set_binding(self, segment_id, vif_type, vif_details,
+                    status=None):
         # TODO(rkukura) Verify binding allowed, segment in network
         self._binding.segment = segment_id
         self._binding.vif_type = vif_type
         self._binding.vif_details = jsonutils.dumps(vif_details)
+        self._new_port_status = status

@@ -259,6 +259,19 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.bind_port(mech_context)
             self._update_port_dict_binding(port, binding)
 
+            # Update the port status if requested by the bound driver.
+            if binding.segment and mech_context._new_port_status:
+                # REVISIT(rkukura): This function is currently called
+                # inside a transaction with the port either newly
+                # created or locked for update. After the fix for bug
+                # 1276391 is merged, this will no longer be true, and
+                # the port status update will need to be handled in
+                # the transaction that commits the new binding.
+                port_db = db.get_port(mech_context._plugin_context.session,
+                                      port['id'])
+                port_db.status = mech_context._new_port_status
+                port['status'] = mech_context._new_port_status
+
         return ret_value
 
     def _update_port_dict_binding(self, port, binding):
