@@ -815,9 +815,9 @@ class DeviceManager(object):
         port = self.setup_dhcp_port(network)
         interface_name = self.get_interface_name(network, port)
 
-        if ip_lib.device_exists(interface_name,
-                                self.root_helper,
-                                network.namespace):
+        if ip_lib.ensure_device_is_ready(interface_name,
+                                         self.root_helper,
+                                         network.namespace):
             LOG.debug(_('Reusing existing device: %s.'), interface_name)
         else:
             self.driver.plug(network.id,

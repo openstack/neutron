@@ -789,3 +789,13 @@ class TestDeviceExists(base.BaseTestCase):
             _execute.return_value = ''
             _execute.side_effect = RuntimeError
             self.assertFalse(ip_lib.device_exists('eth0'))
+
+    def test_ensure_device_is_ready(self):
+        ip_lib_mock = mock.Mock()
+        with mock.patch.object(ip_lib, 'IPDevice', return_value=ip_lib_mock):
+            self.assertTrue(ip_lib.ensure_device_is_ready("eth0"))
+            self.assertTrue(ip_lib_mock.link.set_up.called)
+            ip_lib_mock.reset_mock()
+            # device doesn't exists
+            ip_lib_mock.link.set_up.side_effect = RuntimeError
+            self.assertFalse(ip_lib.ensure_device_is_ready("eth0"))
