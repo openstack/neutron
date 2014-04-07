@@ -1795,9 +1795,14 @@ class DBInterface(object):
     #end network_read
 
     def network_update(self, net_id, network_q):
+        net_obj = self._virtual_network_read(net_id=net_id)
+        router_external = net_obj.get_router_external()
         network_q['id'] = net_id
         net_obj = self._network_neutron_to_vnc(network_q, UPDATE)
         self._virtual_network_update(net_obj)
+        if net_obj.router_external and not router_external:
+            fip_pool_obj = FloatingIpPool('floating-ip-pool', net_obj)
+            self._floating_ip_pool_create(fip_pool_obj)
 
         ret_network_q = self._network_vnc_to_neutron(net_obj, net_repr='SHOW')
         self._db_cache['q_networks'][net_id] = ret_network_q
