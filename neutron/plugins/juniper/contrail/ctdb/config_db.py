@@ -1049,8 +1049,7 @@ class DBInterface(object):
             try:
                 sg_obj = self._vnc_lib.security_group_read(id=sg_id)
             except NoIdError:
-                # TODO add security group specific exception
-                raise exceptions.NetworkNotFound(net_id=sg_id)
+                raise ext_sg.SecurityGroupNotFound(id=sg_id)
 
         remote_cidr = None
         remote_sg_uuid = None
@@ -1063,7 +1062,7 @@ class DBInterface(object):
             direction = 'ingress'
             addr = saddr
         else:
-            raise exceptions.NetworkNotFound(net_id=saddr.get_security_group())
+            raise ext_sg.SecurityGroupRuleNotFound(id=sg_rule.get_rule_uuid())
 
         if addr.get_subnet():
             remote_cidr = '%s/%s' % (addr.get_subnet().get_ip_prefix(),
@@ -2708,8 +2707,7 @@ class DBInterface(object):
         try:
             sg_obj = self._vnc_lib.security_group_read(id=sg_id)
         except NoIdError:
-            # TODO add security group specific exception
-            raise exceptions.NetworkNotFound(net_id=sg_id)
+            raise ext_sg.SecurityGroupNotFound(id=sg_id)
 
         return self._security_group_vnc_to_neutron(sg_obj)
     #end security_group_read
@@ -2807,8 +2805,7 @@ class DBInterface(object):
                                                                    sg_obj)
                 sg_rules.append(sg_info)
         except NoIdError:
-            # TODO add security group specific exception
-            raise exceptions.NetworkNotFound(net_id=sgr_id)
+            raise ext_sg.SecurityGroupNotFound(id=sg_id)
 
         return sg_rules
     #end security_group_rules_read
