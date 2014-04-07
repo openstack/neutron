@@ -43,13 +43,6 @@ class TestOvsdbMonitor(base.BaseTestCase):
         result = self.read_output_queues_and_returns_result('stdout', '')
         self.assertIsNone(result)
 
-    def test__read_stdout_queues_root_wrapper_errors_to_stderr_output(self):
-        result = self.read_output_queues_and_returns_result('stdout',
-                                                            self.root_helper)
-        self.assertIsNone(result)
-        self.assertEqual(self.monitor._stderr_lines.get_nowait(),
-                         self.root_helper)
-
     def test__read_stdout_queues_normal_output_to_stdout_queue(self):
         output = 'foo'
         result = self.read_output_queues_and_returns_result('stdout', output)

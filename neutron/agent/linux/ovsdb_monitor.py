@@ -42,16 +42,9 @@ class OvsdbMonitor(async_process.AsyncProcess):
         data = self._process.stdout.readline()
         if not data:
             return
-        #TODO(marun) The default root helper outputs exit errors to
-        # stdout due to bug #1219530.  This check can be moved to
-        # _read_stderr once the error is correctly output to stderr.
-        if self.root_helper and self.root_helper in data:
-            self._stderr_lines.put(data)
-            LOG.error(_('Error received from ovsdb monitor: %s') % data)
-        else:
-            self._stdout_lines.put(data)
-            LOG.debug(_('Output received from ovsdb monitor: %s') % data)
-            return data
+        self._stdout_lines.put(data)
+        LOG.debug(_('Output received from ovsdb monitor: %s') % data)
+        return data
 
     def _read_stderr(self):
         data = super(OvsdbMonitor, self)._read_stderr()
