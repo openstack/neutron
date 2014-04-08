@@ -1169,10 +1169,6 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 self._create_mac_learning_state(context, port_data)
             elif mac_ext.MAC_LEARNING in port_data:
                 port_data.pop(mac_ext.MAC_LEARNING)
-
-            LOG.debug(_("create_port completed on NSX for tenant "
-                        "%(tenant_id)s: (%(id)s)"), port_data)
-
             self._process_portbindings_create_and_update(context,
                                                          port['port'],
                                                          port_data)
@@ -1183,6 +1179,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 port_data['device_owner'],
                 self._port_drivers['create']['default'])
             port_create_func(context, port_data)
+            LOG.debug(_("port created on NSX backend for tenant "
+                        "%(tenant_id)s: (%(id)s)"), port_data)
         except n_exc.NotFound:
             LOG.warning(_("Logical switch for network %s was not "
                           "found in NSX."), port_data['network_id'])
