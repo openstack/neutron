@@ -20,6 +20,7 @@ from neutron.common import exceptions
 from neutron.api.v2 import attributes as attr
 from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
+from neutron.extensions import l3
 from neutron.openstack.common import log as logging
 from neutron.extensions import external_net as ext_net_extn
 
@@ -2367,7 +2368,10 @@ class DBInterface(object):
     #end floatingip_create
 
     def floatingip_read(self, fip_uuid):
-        fip_obj = self._vnc_lib.floating_ip_read(id=fip_uuid)
+        try:
+            fip_obj = self._vnc_lib.floating_ip_read(id=fip_uuid)
+        except NoIdError:
+            raise l3.FloatingIPNotFound(floatingip_id=fip_uuid)
 
         return self._floatingip_vnc_to_neutron(fip_obj)
     #end floatingip_read
