@@ -71,9 +71,6 @@ ORCHESTRATION_SERVICE_ID = 'Neutron v2.0'
 HASH_MATCH_HEADER = 'X-BSN-BVS-HASH-MATCH'
 # error messages
 NXNETWORK = 'NXVNS'
-# NOTE(kevinbenton): This following is to give mock a target that doesn't
-# affect other users of httplib.HTTPConnection
-HTTPConnection = httplib.HTTPConnection
 
 
 class RemoteRestError(exceptions.NeutronException):
@@ -171,7 +168,7 @@ class ServerProxy(object):
                     return 0, None, None, None
                 self.currentconn.combined_cert = self.combined_cert
             else:
-                self.currentconn = HTTPConnection(
+                self.currentconn = httplib.HTTPConnection(
                     self.server, self.port, timeout=timeout)
                 if self.currentconn is None:
                     LOG.error(_('ServerProxy: Could not establish HTTP '

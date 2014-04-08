@@ -28,7 +28,7 @@ from neutron.plugins.bigswitch import servermanager
 from neutron.tests.unit.bigswitch import test_restproxy_plugin as test_rp
 
 SERVERMANAGER = 'neutron.plugins.bigswitch.servermanager'
-HTTPCON = SERVERMANAGER + '.HTTPConnection'
+HTTPCON = SERVERMANAGER + '.httplib.HTTPConnection'
 HTTPSCON = SERVERMANAGER + '.HTTPSConnectionWithValidation'
 
 
