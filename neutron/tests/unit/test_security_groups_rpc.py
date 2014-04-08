@@ -505,6 +505,17 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
             [call.security_groups_provider_updated()])
 
 
+class SecurityGroupAgentRpcTestCaseForNoneDriver(base.BaseTestCase):
+    def test_init_firewall_with_none_driver(self):
+        cfg.CONF.set_override(
+            'enable_security_group', False,
+            group='SECURITYGROUP')
+        agent = sg_rpc.SecurityGroupAgentRpcMixin()
+        agent.init_firewall()
+        self.assertEqual(agent.firewall.__class__.__name__,
+                         'NoopFirewallDriver')
+
+
 class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
     def setUp(self, defer_refresh_firewall=False):
         super(SecurityGroupAgentRpcTestCase, self).setUp()
@@ -1718,6 +1729,15 @@ class TestSecurityGroupExtensionControl(base.BaseTestCase):
             group='SECURITYGROUP')
         cfg.CONF.set_override(
             'firewall_driver', 'neutron.agent.firewall.NoopFirewallDriver',
+            group='SECURITYGROUP')
+        self.assertFalse(sg_rpc._is_valid_driver_combination())
+
+    def test_is_invalid_drvier_combination_sg_enabled_with_none(self):
+        cfg.CONF.set_override(
+            'enable_security_group', True,
+            group='SECURITYGROUP')
+        cfg.CONF.set_override(
+            'firewall_driver', None,
             group='SECURITYGROUP')
         self.assertFalse(sg_rpc._is_valid_driver_combination())
 
