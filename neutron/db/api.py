@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
 import sqlalchemy as sql
 
 from neutron.db import model_base
@@ -23,6 +24,22 @@ LOG = logging.getLogger(__name__)
 
 BASE = model_base.BASEV2
 
+cfg.CONF.import_opt('connection',
+                    'neutron.openstack.common.db.options',
+                    group='database')
+
+_FACADE = None
+
+
+def _create_facade_lazily():
+    global _FACADE
+
+    if _FACADE is None:
+        _FACADE = session.EngineFacade.from_config(
+            cfg.CONF.database.connection, cfg.CONF, sqlite_fk=True)
+
+    return _FACADE
+
 
 def configure_db():
     """Configure database.
@@ -30,26 +47,31 @@ def configure_db():
     Establish the database, create an engine if needed, and register
     the models.
     """
-    session.get_engine(sqlite_fk=True)
     register_models()
 
 
 def clear_db(base=BASE):
     unregister_models(base)
-    session.cleanup()
+
+
+def get_engine():
+    """Helper method to grab engine."""
+    facade = _create_facade_lazily()
+    return facade.get_engine()
 
 
 def get_session(autocommit=True, expire_on_commit=False):
     """Helper method to grab session."""
-    return session.get_session(autocommit=autocommit,
-                               expire_on_commit=expire_on_commit,
-                               sqlite_fk=True)
+    facade = _create_facade_lazily()
+    return facade.get_session(autocommit=autocommit,
+                              expire_on_commit=expire_on_commit)
 
 
 def register_models(base=BASE):
     """Register Models and create properties."""
     try:
-        engine = session.get_engine(sqlite_fk=True)
+        facade = _create_facade_lazily()
+        engine = facade.get_engine()
         base.metadata.create_all(engine)
     except sql.exc.OperationalError as e:
         LOG.info(_("Database registration exception: %s"), e)
@@ -60,7 +82,8 @@ def register_models(base=BASE):
 def unregister_models(base=BASE):
     """Unregister Models, useful clearing out data before testing."""
     try:
-        engine = session.get_engine(sqlite_fk=True)
+        facade = _create_facade_lazily()
+        engine = facade.get_engine()
         base.metadata.drop_all(engine)
     except Exception:
         LOG.exception(_("Database exception"))

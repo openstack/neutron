@@ -23,8 +23,8 @@ from oslo.config import cfg
 
 from neutron.common import config
 from neutron import context
+from neutron.db import api as session
 from neutron import manager
-from neutron.openstack.common.db.sqlalchemy import session
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
@@ -118,7 +118,7 @@ class RpcWorker(object):
         # We may have just forked from parent process.  A quick disposal of the
         # existing sql connections avoids producing errors later when they are
         # discovered to be broken.
-        session.get_engine(sqlite_fk=True).pool.dispose()
+        session.get_engine().pool.dispose()
         self._server = self._plugin.start_rpc_listener()
 
     def wait(self):

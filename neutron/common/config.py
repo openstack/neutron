@@ -24,7 +24,7 @@ from paste import deploy
 
 from neutron.api.v2 import attributes
 from neutron.common import utils
-from neutron.openstack.common.db.sqlalchemy import session as db_session
+from neutron.openstack.common.db import options as db_options
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.version import version_info as neutron_version
@@ -129,7 +129,7 @@ rpc.set_defaults(control_exchange='neutron')
 _SQL_CONNECTION_DEFAULT = 'sqlite://'
 # Update the default QueuePool parameters. These can be tweaked by the
 # configuration variables - max_pool_size, max_overflow and pool_timeout
-db_session.set_defaults(sql_connection=_SQL_CONNECTION_DEFAULT,
+db_options.set_defaults(sql_connection=_SQL_CONNECTION_DEFAULT,
                         sqlite_db='', max_pool_size=10,
                         max_overflow=20, pool_timeout=10)
 
