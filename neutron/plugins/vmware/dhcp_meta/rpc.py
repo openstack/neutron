@@ -164,6 +164,8 @@ def _create_metadata_access_network(plugin, context, router_id):
     meta_net = plugin.create_network(context,
                                      {'network': net_data})
     greenthread.sleep(0)  # yield
+    plugin.schedule_network(context, meta_net)
+    greenthread.sleep(0)  # yield
     # From this point on there will be resources to garbage-collect
     # in case of failures
     meta_sub = None
@@ -187,15 +189,14 @@ def _create_metadata_access_network(plugin, context, router_id):
         plugin.add_router_interface(context, router_id,
                                     {'subnet_id': meta_sub['id']})
         greenthread.sleep(0)  # yield
+        # Tell to start the metadata agent proxy, only if we had success
+        _notify_rpc_agent(context, {'subnet': meta_sub}, 'subnet.create.end')
     except (ntn_exc.NeutronException,
             nsx_exc.NsxPluginException,
             api_exc.NsxApiException):
         # It is not necessary to explicitly delete the subnet
         # as it will be removed with the network
         plugin.delete_network(context, meta_net['id'])
-
-    # Tell to start the metadata agent proxy
-    _notify_rpc_agent(context, {'network': meta_net}, 'network.create.end')
 
 
 def _destroy_metadata_access_network(plugin, context, router_id, ports):
