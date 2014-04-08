@@ -72,6 +72,8 @@ class CapabilitiesTests(test_router_db.RouterDBTestBase):
             # perform a task to cause capabilities to be retrieved
             with self.floatingip_with_assoc():
                 pass
+        # stop default HTTP patch since we need a magicmock
+        self.httpPatch.stop()
         # now mock HTTP class instead of REST so we can see headers
         conmock = mock.patch(HTTPCON).start()
         instance = conmock.return_value

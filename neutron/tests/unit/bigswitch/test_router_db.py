@@ -39,7 +39,7 @@ from neutron.tests.unit import test_extension_extradhcpopts as test_extradhcp
 from neutron.tests.unit import test_l3_plugin
 
 
-HTTPCON = 'neutron.plugins.bigswitch.servermanager.httplib.HTTPConnection'
+HTTPCON = 'neutron.plugins.bigswitch.servermanager.HTTPConnection'
 _uuid = uuidutils.generate_uuid
 
 
@@ -171,6 +171,7 @@ class RouterDBTestCase(RouterDBTestBase,
                         net_id=psub['subnet']['network_id'],
                         port_id=p1['port']['id'],
                         tenant_id=tenant1_id)
+                    self.httpPatch.stop()
                     multiFloatPatch = patch(
                         HTTPCON,
                         new=fake_server.VerifyMultiTenantFloatingIP)
@@ -180,6 +181,7 @@ class RouterDBTestCase(RouterDBTestBase,
                         port_id=p2['port']['id'],
                         tenant_id=tenant2_id)
                     multiFloatPatch.stop()
+                    self.httpPatch.start()
                     self._delete('floatingips', fl1['floatingip']['id'])
                     self._delete('floatingips', fl2['floatingip']['id'])
                     self._router_interface_action(
