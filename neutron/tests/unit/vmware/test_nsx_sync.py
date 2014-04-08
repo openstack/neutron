@@ -30,6 +30,7 @@ from neutron.plugins.vmware.api_client import client
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.api_client import version
 from neutron.plugins.vmware.common import sync
+from neutron.plugins.vmware.dbexts import db
 from neutron.plugins.vmware import nsx_cluster as cluster
 from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware import plugin
@@ -620,6 +621,34 @@ class SyncTestCase(base.BaseTestCase):
                 else:
                     exp_status = constants.NET_STATUS_ACTIVE
                 self.assertEqual(exp_status, q_rtr['status'])
+
+    def test_synchronize_router_nsx_mapping_not_found(self):
+        ctx = context.get_admin_context()
+        with self._populate_data(ctx):
+            # Put a router down to verify synchronization
+            lr_uuid = self.fc._fake_lrouter_dict.keys()[0]
+            q_rtr_id = self._get_tag_dict(
+                self.fc._fake_lrouter_dict[lr_uuid]['tags'])['q_router_id']
+            self.fc._fake_lrouter_dict[lr_uuid]['status'] = 'false'
+            q_rtr_data = self._plugin._get_router(ctx, q_rtr_id)
+
+            # delete router mapping from db.
+            db.delete_neutron_nsx_router_mapping(ctx.session, q_rtr_id)
+            # pop router from fake nsx client
+            router_data = self.fc._fake_lrouter_dict.pop(lr_uuid)
+
+            self._plugin._synchronizer.synchronize_router(ctx, q_rtr_data)
+            # Reload from db
+            q_routers = self._plugin.get_routers(ctx)
+            for q_rtr in q_routers:
+                if q_rtr['id'] == q_rtr_id:
+                    exp_status = constants.NET_STATUS_ERROR
+                else:
+                    exp_status = constants.NET_STATUS_ACTIVE
+                self.assertEqual(exp_status, q_rtr['status'])
+            # put the router database since we don't handle missing
+            # router data in the fake nsx api_client
+            self.fc._fake_lrouter_dict[lr_uuid] = router_data
 
     def test_synchronize_router_on_get(self):
         cfg.CONF.set_override('always_read_status', True, 'NSX_SYNC')
