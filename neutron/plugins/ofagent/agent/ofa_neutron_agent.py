@@ -19,6 +19,7 @@
 
 import time
 
+import netaddr
 from oslo.config import cfg
 from ryu.app.ofctl import api as ryu_api
 from ryu.base import app_manager
@@ -298,6 +299,14 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         except Exception:
             LOG.exception(_("Failed reporting state!"))
 
+    def _create_tunnel_port_name(self, tunnel_type, ip_address):
+        try:
+            ip_hex = '%08x' % netaddr.IPAddress(ip_address, version=4)
+            return '%s-%s' % (tunnel_type, ip_hex)
+        except Exception:
+            LOG.warn(_("Unable to create tunnel port. Invalid remote IP: %s"),
+                     ip_address)
+
     def ryu_send_msg(self, msg):
         result = ryu_api.send_msg(self.ryuapp, msg)
         LOG.info(_("ryu send_msg() result: %s"), result)
@@ -377,7 +386,6 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         if not self.enable_tunneling:
             return
         tunnel_ip = kwargs.get('tunnel_ip')
-        tunnel_id = kwargs.get('tunnel_id', tunnel_ip)
         tunnel_type = kwargs.get('tunnel_type')
         if not tunnel_type:
             LOG.error(_("No tunnel_type specified, cannot create tunnels"))
@@ -387,7 +395,9 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             return
         if tunnel_ip == self.local_ip:
             return
-        tun_name = '%s-%s' % (tunnel_type, tunnel_id)
+        tun_name = self._create_tunnel_port_name(tunnel_type, tunnel_ip)
+        if not tun_name:
+            return
         self.setup_tunnel_port(tun_name, tunnel_ip, tunnel_type)
 
     def create_rpc_dispatcher(self):
@@ -1051,19 +1061,6 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                     self.ryu_send_msg(msg)
         return ofport
 
-    def cleanup_tunnel_port(self, tun_ofport, tunnel_type):
-        # Check if this tunnel port is still used
-        for lvm in self.local_vlan_map.values():
-            if tun_ofport in lvm.tun_ofports:
-                break
-        # If not, remove it
-        else:
-            for remote_ip, ofport in self.tun_br_ofports[tunnel_type].items():
-                if ofport == tun_ofport:
-                    port_name = '%s-%s' % (tunnel_type, remote_ip)
-                    self.tun_br.delete_port(port_name)
-                    self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
-
     def treat_devices_added(self, devices):
         resync = False
         self.sg_agent.prepare_devices_filter(devices)
@@ -1215,8 +1212,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                 tunnels = details['tunnels']
                 for tunnel in tunnels:
                     if self.local_ip != tunnel['ip_address']:
-                        tunnel_id = tunnel.get('id', tunnel['ip_address'])
-                        tun_name = '%s-%s' % (tunnel_type, tunnel_id)
+                        tun_name = self._create_tunnel_port_name(
+                            tunnel_type, tunnel['ip_address'])
+                        if not tun_name:
+                            continue
                         self.setup_tunnel_port(tun_name,
                                                tunnel['ip_address'],
                                                tunnel_type)
