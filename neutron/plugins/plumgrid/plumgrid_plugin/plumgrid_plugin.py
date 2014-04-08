@@ -23,6 +23,7 @@ to the PLUMgrid Network Management System called Director
 
 import netaddr
 from oslo.config import cfg
+from sqlalchemy.orm import exc as sa_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -335,7 +336,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         LOG.debug(_("update_subnet() called"))
         # Collecting subnet info
-        org_sub_db = self._get_subnet(context, subnet_id)
+        orig_sub_db = self._get_subnet(context, subnet_id)
 
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Update
@@ -346,7 +347,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             try:
                 # PLUMgrid Server does not support updating resources yet
                 LOG.debug(_("PLUMgrid Library: update_network() called"))
-                self._plumlib.update_subnet(org_sub_db, new_sub_db, ipnet)
+                self._plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
@@ -482,14 +483,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             floating_ip = super(NeutronPluginPLUMgridV2,
                                 self).create_floatingip(context, floatingip)
-
-            net_id = floating_ip['floating_network_id']
-            net_db = super(NeutronPluginPLUMgridV2,
-                           self).get_network(context, net_id)
-
             try:
                 LOG.debug(_("PLUMgrid Library: create_floatingip() called"))
-                self._plumlib.create_floatingip(net_db, floating_ip)
+                self._plumlib.create_floatingip(floating_ip)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
@@ -500,18 +496,15 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug(_("Neutron PLUMgrid Director: update_floatingip() called"))
 
         with context.session.begin(subtransactions=True):
-
+            floating_ip_orig = super(NeutronPluginPLUMgridV2,
+                                     self).get_floatingip(context, id)
             floating_ip = super(NeutronPluginPLUMgridV2,
                                 self).update_floatingip(context, id,
                                                         floatingip)
-
-            net_id = floating_ip['floating_network_id']
-            net_db = super(NeutronPluginPLUMgridV2,
-                           self).get_network(context, net_id)
-
             try:
                 LOG.debug(_("PLUMgrid Library: update_floatingip() called"))
-                self._plumlib.update_floatingip(net_db, floating_ip, id)
+                self._plumlib.update_floatingip(floating_ip_orig, floating_ip,
+                                                id)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
@@ -523,20 +516,38 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         with context.session.begin(subtransactions=True):
 
-            floating_ip_org = super(NeutronPluginPLUMgridV2,
-                                    self).get_floatingip(context, id)
+            floating_ip_orig = super(NeutronPluginPLUMgridV2,
+                                     self).get_floatingip(context, id)
 
-            net_id = floating_ip_org['floating_network_id']
-            net_db = super(NeutronPluginPLUMgridV2,
-                           self).get_network(context, net_id)
             super(NeutronPluginPLUMgridV2, self).delete_floatingip(context, id)
 
             try:
                 LOG.debug(_("PLUMgrid Library: delete_floatingip() called"))
-                self._plumlib.delete_floatingip(net_db, floating_ip_org, id)
+                self._plumlib.delete_floatingip(floating_ip_orig, id)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def disassociate_floatingips(self, context, port_id):
+        LOG.debug(_("Neutron PLUMgrid Director: disassociate_floatingips() "
+                    "called"))
+
+        try:
+            fip_qry = context.session.query(l3_db.FloatingIP)
+            floating_ip = fip_qry.filter_by(fixed_port_id=port_id).one()
+
+            LOG.debug(_("PLUMgrid Library: disassociate_floatingips()"
+                        " called"))
+            self._plumlib.disassociate_floatingips(floating_ip, port_id)
+
+        except sa_exc.NoResultFound:
+            pass
+
+        except Exception as err_message:
+            raise plum_excep.PLUMgridException(err_msg=err_message)
+
+        super(NeutronPluginPLUMgridV2,
+              self).disassociate_floatingips(context, port_id)
 
     """
     Internal PLUMgrid Fuctions

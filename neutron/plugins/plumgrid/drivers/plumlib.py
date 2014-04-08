@@ -57,8 +57,8 @@ class Plumlib(object):
     def create_subnet(self, sub_db, net_db, ipnet):
         self.plumlib.create_subnet(sub_db, net_db, ipnet)
 
-    def update_subnet(self, org_sub_db, new_sub_db, ipnet):
-        self.plumlib.update_subnet(org_sub_db, new_sub_db, ipnet)
+    def update_subnet(self, orig_sub_db, new_sub_db, ipnet):
+        self.plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet)
 
     def delete_subnet(self, tenant_id, net_db, net_id):
         self.plumlib.delete_subnet(tenant_id, net_db, net_id)
@@ -87,11 +87,14 @@ class Plumlib(object):
     def remove_router_interface(self, tenant_id, net_id, router_id):
         self.plumlib.remove_router_interface(tenant_id, net_id, router_id)
 
-    def create_floatingip(self, net_db, floating_ip):
-        self.plumlib.create_floatingip(net_db, floating_ip)
+    def create_floatingip(self, floating_ip):
+        self.plumlib.create_floatingip(floating_ip)
 
-    def update_floatingip(self, net_db, floating_ip, id):
-        self.plumlib.update_floatingip(net_db, floating_ip, id)
+    def update_floatingip(self, floating_ip_orig, floating_ip, id):
+        self.plumlib.update_floatingip(floating_ip_orig, floating_ip, id)
 
-    def delete_floatingip(self, net_db, floating_ip_org, id):
-        self.plumlib.delete_floatingip(net_db, floating_ip_org, id)
+    def delete_floatingip(self, floating_ip_orig, id):
+        self.plumlib.delete_floatingip(floating_ip_orig, id)
+
+    def disassociate_floatingips(self, floating_ip, port_id):
+        self.plumlib.disassociate_floatingips(floating_ip, port_id)
