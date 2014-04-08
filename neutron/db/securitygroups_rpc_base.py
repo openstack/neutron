@@ -249,7 +249,7 @@ class SecurityGroupServerRpcCallbackMixin(object):
             # TODO(xuhanp): Figure out how to call the following code
             # each time router is created or updated.
             if not netaddr.IPAddress(gateway_ip).is_link_local():
-                if subnet['ipv6_ra_mode']:
+                if subnet.get('ipv6_ra_mode'):
                     gateway_ip = self._get_lla_gateway_ip_for_subnet(context,
                                                                      subnet)
                 else:
