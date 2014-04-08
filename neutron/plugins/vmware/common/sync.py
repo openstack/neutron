@@ -334,16 +334,16 @@ class NsxSynchronizer():
                 # This query will return the logical router status too
                 nsx_router_id = nsx_utils.get_nsx_router_id(
                     context.session, self._cluster, neutron_router_data['id'])
-                lrouter = routerlib.get_lrouter(
-                    self._cluster, nsx_router_id)
+                if nsx_router_id:
+                    lrouter = routerlib.get_lrouter(
+                        self._cluster, nsx_router_id)
             except exceptions.NotFound:
                 # NOTE(salv-orlando): We should be catching
                 # api_exc.ResourceNotFound here
                 # The logical router was not found
                 LOG.warning(_("Logical router for neutron router %s not "
                               "found on NSX."), neutron_router_data['id'])
-                lrouter = None
-            else:
+            if lrouter:
                 # Update the cache
                 self._nsx_cache.update_lrouter(lrouter)
 
