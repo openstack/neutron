@@ -24,6 +24,7 @@ from neutron.extensions import securitygroup as ext_sg
 from neutron.extensions import l3
 from neutron.openstack.common import log as logging
 from neutron.extensions import external_net as ext_net_extn
+from neutron.extensions import policy
 
 from cfgm_common import exceptions as vnc_exc
 from vnc_api.vnc_api import *
@@ -1136,12 +1137,14 @@ class DBInterface(object):
 
     def _security_group_vnc_to_neutron(self, sg_obj):
         sg_q_dict = self._obj_to_dict(sg_obj)
+        extra_dict = {}
 
         # replace field names
         sg_q_dict['id'] = sg_obj.uuid
         sg_q_dict['tenant_id'] = sg_obj.parent_uuid.replace('-', '')
         sg_q_dict['name'] = sg_obj.name
         sg_q_dict['description'] = sg_obj.get_id_perms().get_description()
+        extra_dict['contrail:fq_name'] = sg_obj.get_fq_name()
 
         # get security group rules
         sg_q_dict['rules'] = []
@@ -1151,7 +1154,7 @@ class DBInterface(object):
                 sg_q_dict['rules'].append(rule['q_api_data'])
 
         return {'q_api_data': sg_q_dict,
-                'q_extra_data': {}}
+                'q_extra_data': extra_dict}
     #end _security_group_vnc_to_neutron
 
     def _security_group_neutron_to_vnc(self, sg_q, oper):
@@ -2213,7 +2216,10 @@ class DBInterface(object):
     #end policy_create
 
     def policy_read(self, policy_id):
-        policy_obj = self._vnc_lib.network_policy_read(id=policy_id)
+        try:
+            policy_obj = self._vnc_lib.network_policy_read(id=policy_id)
+        except NoIdError:
+            raise policy.PolicyNotFound(id=policy_id)
 
         return self._policy_vnc_to_neutron(policy_obj)
     #end policy_read

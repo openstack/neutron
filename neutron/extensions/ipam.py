@@ -50,6 +50,16 @@ EXTENDED_ATTRIBUTES_2_0 = {
                                  'default': '',
                                  'is_visible': True},
     },
+    'routers': {
+        'contrail:fq_name': {'allow_post': False,
+                             'allow_put': False,
+                             'is_visible': True},
+    },
+    'security_groups': {
+        'contrail:fq_name': {'allow_post': False,
+                             'allow_put': False,
+                             'is_visible': True},
+    },
     'subnets': {
         'contrail:instance_count': {'allow_post': False,
                                     'allow_put': False,
