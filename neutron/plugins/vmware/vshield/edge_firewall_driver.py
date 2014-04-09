@@ -187,10 +187,10 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
     def _get_firewall(self, context, edge_id):
         try:
             return self.vcns.get_firewall(edge_id)[1]
-        except vcns_exc.VcnsApiException as e:
-            LOG.exception(_("Failed to get firewall with edge "
-                            "id: %s"), edge_id)
-            raise e
+        except vcns_exc.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to get firewall with edge "
+                                "id: %s"), edge_id)
 
     def _get_firewall_rule_next(self, context, edge_id, rule_vseid):
         # Return the firewall rule below 'rule_vseid'
@@ -215,12 +215,12 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
         try:
             response = self.vcns.get_firewall_rule(
                 edge_id, vcns_rule_id)[1]
-        except vcns_exc.VcnsApiException as e:
-            LOG.exception(_("Failed to get firewall rule: %(rule_id)s "
-                            "with edge_id: %(edge_id)s"), {
-                                'rule_id': id,
-                                'edge_id': edge_id})
-            raise e
+        except vcns_exc.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to get firewall rule: %(rule_id)s "
+                                "with edge_id: %(edge_id)s"), {
+                                    'rule_id': id,
+                                    'edge_id': edge_id})
         return self._restore_firewall_rule(context, edge_id, response)
 
     def get_firewall(self, context, edge_id):
@@ -231,10 +231,10 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
         fw_req = self._convert_firewall(context, firewall)
         try:
             self.vcns.update_firewall(edge_id, fw_req)
-        except vcns_exc.VcnsApiException as e:
-            LOG.exception(_("Failed to update firewall "
-                            "with edge_id: %s"), edge_id)
-            raise e
+        except vcns_exc.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to update firewall "
+                                "with edge_id: %s"), edge_id)
         fw_res = self._get_firewall(context, edge_id)
         vcns_db.cleanup_vcns_edge_firewallrule_binding(
             context.session, edge_id)
@@ -243,10 +243,10 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
     def delete_firewall(self, context, edge_id):
         try:
             self.vcns.delete_firewall(edge_id)
-        except vcns_exc.VcnsApiException as e:
-            LOG.exception(_("Failed to delete firewall "
-                            "with edge_id:%s"), edge_id)
-            raise e
+        except vcns_exc.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("Failed to delete firewall "
+                                "with edge_id:%s"), edge_id)
         vcns_db.cleanup_vcns_edge_firewallrule_binding(
             context.session, edge_id)
 
