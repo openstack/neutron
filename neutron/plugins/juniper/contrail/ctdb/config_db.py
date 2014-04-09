@@ -1143,6 +1143,12 @@ class DBInterface(object):
             sg_vnc = SecurityGroup(name=sg_q['name'],
                                    parent_obj=project_obj,
                                    id_perms=id_perms)
+        else:
+            sg_vnc = self._vnc_lib.security_group_read(id=sg_q['id'])
+            if 'description' in sg_q:
+                sg_vnc.get_id_perms().set_description(sg_q['description'])
+            if 'name' in sg_q:
+                sg_vnc.set_display_name(sg_q['name'])
 
         return sg_vnc
     #end _security_group_neutron_to_vnc
@@ -2803,6 +2809,16 @@ class DBInterface(object):
         ret_sg_q = self._security_group_vnc_to_neutron(sg_obj)
         return ret_sg_q
     #end security_group_create
+
+    def security_group_update(self, sg_id, sg_q):
+        sg_q['id'] = sg_id
+        sg_obj = self._security_group_neutron_to_vnc(sg_q, UPDATE)
+        self._vnc_lib.security_group_update(sg_obj)
+
+        ret_sg_q = self._security_group_vnc_to_neutron(sg_obj)
+
+        return ret_sg_q
+    #end security_group_update
 
     def security_group_read(self, sg_id):
         try:
