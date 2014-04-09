@@ -93,6 +93,7 @@ class TunnelEndpoint(model_base.BASEV2):
     __tablename__ = 'ovs_tunnel_endpoints'
     __table_args__ = (
         UniqueConstraint('id', name='uniq_ovs_tunnel_endpoints0id'),
+        model_base.BASEV2.__table_args__,
     )
 
     ip_address = Column(String(64), primary_key=True)
