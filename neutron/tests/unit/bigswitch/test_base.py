@@ -30,7 +30,7 @@ NOTIFIER = 'neutron.plugins.bigswitch.plugin.AgentNotifierApi'
 CALLBACKS = 'neutron.plugins.bigswitch.plugin.RestProxyCallbacks'
 CERTFETCH = 'neutron.plugins.bigswitch.servermanager.ServerPool._fetch_cert'
 SERVER_MANAGER = 'neutron.plugins.bigswitch.servermanager'
-HTTPCON = 'neutron.plugins.bigswitch.servermanager.HTTPConnection'
+HTTPCON = 'neutron.plugins.bigswitch.servermanager.httplib.HTTPConnection'
 SPAWN = 'neutron.plugins.bigswitch.plugin.eventlet.GreenPool.spawn_n'
 CWATCH = SERVER_MANAGER + '.ServerPool._consistency_watchdog'
 

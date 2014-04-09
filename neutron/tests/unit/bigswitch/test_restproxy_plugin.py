@@ -31,7 +31,7 @@ import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_allowedaddresspairs as test_addr_pair
 
 patch = mock.patch
-HTTPCON = 'neutron.plugins.bigswitch.servermanager.HTTPConnection'
+HTTPCON = 'neutron.plugins.bigswitch.servermanager.httplib.HTTPConnection'
 
 
 class BigSwitchProxyPluginV2TestCase(test_base.BigSwitchTestBase,

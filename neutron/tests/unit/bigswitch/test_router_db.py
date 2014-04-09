@@ -39,7 +39,7 @@ from neutron.tests.unit import test_extension_extradhcpopts as test_extradhcp
 from neutron.tests.unit import test_l3_plugin
 
 
-HTTPCON = 'neutron.plugins.bigswitch.servermanager.HTTPConnection'
+HTTPCON = 'neutron.plugins.bigswitch.servermanager.httplib.HTTPConnection'
 _uuid = uuidutils.generate_uuid
 
 

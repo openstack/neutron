@@ -26,7 +26,7 @@ PLUGIN = 'neutron.plugins.bigswitch.plugin'
 SERVERMANAGER = PLUGIN + '.servermanager'
 SERVERPOOL = SERVERMANAGER + '.ServerPool'
 SERVERRESTCALL = SERVERMANAGER + '.ServerProxy.rest_call'
-HTTPCON = SERVERMANAGER + '.HTTPConnection'
+HTTPCON = SERVERMANAGER + '.httplib.HTTPConnection'
 
 
 class CapabilitiesTests(test_router_db.RouterDBTestBase):
