@@ -1292,6 +1292,26 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             cgitb.Hook(format="text").handle(sys.exc_info())
             raise e
 
+    def update_security_group(self, context, sg_id, security_group):
+        """
+        Updates the attributes of a particular Security Group.
+        """
+        try:
+            cfgdb = ContrailPlugin._get_user_cfgdb(context)
+            sg_info = cfgdb.security_group_update(sg_id, security_group['security_group'])
+
+            # verify transformation is conforming to api
+            sg_dict = self._make_security_group_dict(sg_info['q_api_data'])
+
+            sg_dict.update(sg_info['q_extra_data'])
+
+            LOG.debug("update_security_group(): " + pformat(sg_dict))
+            return sg_dict
+        except Exception as e:
+            cgitb.Hook(format="text").handle(sys.exc_info())
+            raise e
+    #end update_network
+
     def delete_security_group(self, context, id):
         try:
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
