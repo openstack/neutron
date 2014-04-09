@@ -346,7 +346,7 @@ class EdgeApplianceDriver(object):
         self.task_manager.add(task)
 
         if wait_for_exec:
-            # waitl until the deploy task is executed so edge_id is available
+            # wait until the deploy task is executed so edge_id is available
             task.wait(TaskState.EXECUTED)
 
         return task
