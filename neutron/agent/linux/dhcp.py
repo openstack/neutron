@@ -162,8 +162,7 @@ class DhcpLocalProcess(DhcpBase):
 
     def enable(self):
         """Enables DHCP for this network by spawning a local process."""
-        interface_name = self.device_manager.setup(self.network,
-                                                   reuse_existing=True)
+        interface_name = self.device_manager.setup(self.network)
         if self.active:
             self.restart()
         elif self._enable_dhcp():
@@ -811,7 +810,7 @@ class DeviceManager(object):
 
         return dhcp_port
 
-    def setup(self, network, reuse_existing=False):
+    def setup(self, network):
         """Create and initialize a device for network's DHCP on this host."""
         port = self.setup_dhcp_port(network)
         interface_name = self.get_interface_name(network, port)
@@ -819,10 +818,6 @@ class DeviceManager(object):
         if ip_lib.device_exists(interface_name,
                                 self.root_helper,
                                 network.namespace):
-            if not reuse_existing:
-                raise exceptions.PreexistingDeviceFailure(
-                    dev_name=interface_name)
-
             LOG.debug(_('Reusing existing device: %s.'), interface_name)
         else:
             self.driver.plug(network.id,
