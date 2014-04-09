@@ -1810,10 +1810,12 @@ class DBInterface(object):
         router_external = net_obj.get_router_external()
         network_q['id'] = net_id
         net_obj = self._network_neutron_to_vnc(network_q, UPDATE)
-        self._virtual_network_update(net_obj)
         if net_obj.router_external and not router_external:
             fip_pool_obj = FloatingIpPool('floating-ip-pool', net_obj)
             self._floating_ip_pool_create(fip_pool_obj)
+        if router_external and not net_obj.router_external:
+            self._vnc_lib.floating_ip_pool_delete(fq_name=net_obj.fq_name+['floating-ip-pool'])
+        self._virtual_network_update(net_obj)
 
         ret_network_q = self._network_vnc_to_neutron(net_obj, net_repr='SHOW')
         self._db_cache['q_networks'][net_id] = ret_network_q
