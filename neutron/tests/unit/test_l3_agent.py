@@ -998,7 +998,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.conf.set_override('router_id', '1234')
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertEqual(['1234'], agent._router_ids())
-        self.assertFalse(agent._delete_stale_namespaces)
+        self.assertFalse(agent._clean_stale_namespaces)
 
     def test_process_routers_with_no_ext_net_in_conf(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1144,7 +1144,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
-        self.assertTrue(agent._delete_stale_namespaces)
+        self.assertTrue(agent._clean_stale_namespaces)
 
         pm = self.external_process.return_value
         pm.reset_mock()
@@ -1158,7 +1158,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         expected_args = [mock.call(ns) for ns in stale_namespace_list]
         agent._destroy_router_namespace.assert_has_calls(expected_args,
                                                          any_order=True)
-        self.assertFalse(agent._delete_stale_namespaces)
+        self.assertFalse(agent._clean_stale_namespaces)
 
     def test_cleanup_namespace(self):
         self.conf.set_override('router_id', None)
