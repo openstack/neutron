@@ -19,12 +19,18 @@ import contextlib
 import eventlet
 
 from neutron.agent.linux import ovsdb_monitor
+from neutron.plugins.openvswitch.common import constants
 
 
 @contextlib.contextmanager
-def get_polling_manager(minimize_polling=False, root_helper=None):
+def get_polling_manager(minimize_polling=False,
+                        root_helper=None,
+                        ovsdb_monitor_respawn_interval=(
+                            constants.DEFAULT_OVSDBMON_RESPAWN)):
     if minimize_polling:
-        pm = InterfacePollingMinimizer(root_helper=root_helper)
+        pm = InterfacePollingMinimizer(
+            root_helper=root_helper,
+            ovsdb_monitor_respawn_interval=ovsdb_monitor_respawn_interval)
         pm.start()
     else:
         pm = AlwaysPoll()
@@ -86,10 +92,14 @@ class AlwaysPoll(BasePollingManager):
 class InterfacePollingMinimizer(BasePollingManager):
     """Monitors ovsdb to determine when polling is required."""
 
-    def __init__(self, root_helper=None):
+    def __init__(self, root_helper=None,
+                 ovsdb_monitor_respawn_interval=(
+                     constants.DEFAULT_OVSDBMON_RESPAWN)):
+
         super(InterfacePollingMinimizer, self).__init__()
         self._monitor = ovsdb_monitor.SimpleInterfaceMonitor(
-            root_helper=root_helper)
+            root_helper=root_helper,
+            respawn_interval=ovsdb_monitor_respawn_interval)
 
     def start(self):
         self._monitor.start()

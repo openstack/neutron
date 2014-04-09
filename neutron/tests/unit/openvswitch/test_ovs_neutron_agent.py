@@ -588,7 +588,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             'neutron.agent.linux.polling.get_polling_manager') as mock_get_pm:
             with mock.patch.object(self.agent, 'rpc_loop') as mock_loop:
                 self.agent.daemon_loop()
-        mock_get_pm.assert_called_with(False, 'sudo')
+        mock_get_pm.assert_called_with(False, 'sudo',
+                                       constants.DEFAULT_OVSDBMON_RESPAWN)
         mock_loop.called_once()
 
 
