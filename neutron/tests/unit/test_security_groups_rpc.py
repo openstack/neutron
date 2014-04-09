@@ -22,7 +22,6 @@ import mock
 from mock import call
 from oslo.config import cfg
 from testtools import matchers
-from testtools import testcase
 import webob.exc
 
 from neutron.agent.common import config
@@ -366,7 +365,6 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                                  expected)
                 self._delete('ports', port_id1)
 
-    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_security_group_ra_rules_for_devices_ipv6_gateway_global(self):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP['IPv6_GLOBAL']
@@ -437,7 +435,6 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 self.deserialize(self.fmt, req.get_response(self.api))
                 self._delete('ports', gateway_port_id)
 
-    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_security_group_rule_for_device_ipv6_multi_router_interfaces(self):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP['IPv6_GLOBAL']
@@ -515,7 +512,6 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', gateway_port_id)
                 self._delete('ports', interface_port_id)
 
-    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_security_group_ra_rules_for_devices_ipv6_gateway_lla(self):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP['IPv6_LLA']
@@ -568,7 +564,6 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                                  expected)
                 self._delete('ports', port_id1)
 
-    @testcase.skip("Skipped until bug 1304093 is fixed")
     def test_security_group_ra_rules_for_devices_ipv6_no_gateway_port(self):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         with self.network() as n:
