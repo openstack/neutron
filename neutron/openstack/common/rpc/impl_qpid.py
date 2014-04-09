@@ -504,7 +504,7 @@ class Connection(object):
             if self.connection.opened():
                 try:
                     self.connection.close()
-                except qpid_exceptions.ConnectionError:
+                except qpid_exceptions.MessagingError:
                     pass
 
             broker = self.brokers[next(self.next_broker_indices)]
@@ -512,7 +512,7 @@ class Connection(object):
             try:
                 self.connection_create(broker)
                 self.connection.open()
-            except qpid_exceptions.ConnectionError as e:
+            except qpid_exceptions.MessagingError as e:
                 msg_dict = dict(e=e, delay=delay)
                 msg = _LE("Unable to connect to AMQP server: %(e)s. "
                           "Sleeping %(delay)s seconds") % msg_dict
@@ -540,7 +540,7 @@ class Connection(object):
             try:
                 return method(*args, **kwargs)
             except (qpid_exceptions.Empty,
-                    qpid_exceptions.ConnectionError) as e:
+                    qpid_exceptions.MessagingError) as e:
                 if error_callback:
                     error_callback(e)
                 self.reconnect()
