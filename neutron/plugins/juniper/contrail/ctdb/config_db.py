@@ -767,9 +767,38 @@ class DBInterface(object):
         return project_obj.get_floating_ip_pool_refs()
     #end _fip_pool_refs_project
 
+    def _network_list_shared_and_ext(self):
+        ret_list = []
+        nets = self._network_list_project(project_id=None)
+        for net in nets:
+            if net.get_router_external() and net.get_is_shared():
+                ret_list.append(net)
+        return ret_list
+    # end _network_list_router_external
+ 
+    def _network_list_router_external(self):
+        ret_list = []
+        nets = self._network_list_project(project_id=None)
+        for net in nets:
+            if not net.get_router_external():
+                continue
+            ret_list.append(net)
+        return ret_list
+    # end _network_list_router_external
+ 
+    def _network_list_shared(self):
+        ret_list = []
+        nets = self._network_list_project(project_id=None)
+        for net in nets:
+            if not net.get_is_shared():
+                continue
+            ret_list.append(net)
+        return ret_list
+    # end _network_list_shared
+ 
     # find networks of floating ip pools project has access to
     def _fip_pool_ref_networks(self, project_id):
-        ret_net_objs = []
+        ret_net_objs = self._network_list_shared()
 
         proj_fip_pool_refs = self._fip_pool_refs_project(project_id)
         if not proj_fip_pool_refs:
@@ -880,17 +909,8 @@ class DBInterface(object):
                     else:
                         filter_value = filters[key_name]
                     idx = filter_value.index(match_value)
-                    if ('shared' in filters and
-                        filters['shared'][0] == True):
-                        # yuck, q-api has shared as list always of 1 elem
-                        return False  # no shared-resource support
                 except ValueError:  # not in requested list
                     return False
-            elif len(filters.keys()) == 1:
-                shared_val = filters.get('shared', None)
-                if shared_val and shared_val[0] == True:
-                    return False
-
         return True
     #end _filters_is_present
 
@@ -1247,19 +1267,30 @@ class DBInterface(object):
 
     def _network_neutron_to_vnc(self, network_q, oper):
         net_name = network_q.get('name', None)
+        try:
+            external_attr = network_q[ext_net_extn.EXTERNAL]
+        except KeyError:
+            external_attr = attr.ATTR_NOT_SPECIFIED
         if oper == CREATE:
             project_id = str(uuid.UUID(network_q['tenant_id']))
             project_obj = self._project_read(proj_id=project_id)
             id_perms = IdPermsType(enable=True)
             net_obj = VirtualNetwork(net_name, project_obj, id_perms=id_perms)
+            if external_attr == attr.ATTR_NOT_SPECIFIED:
+                net_obj.router_external = False
+            else:
+                net_obj.router_external = external_attr
             if 'shared' in network_q:
                 net_obj.is_shared = network_q['shared']
             else:
                 net_obj.is_shared = False
         else:  # READ/UPDATE/DELETE
             net_obj = self._virtual_network_read(net_id=network_q['id'])
-            if oper == UPDATE and 'shared' in network_q:
-                net_obj.is_shared = network_q['shared']
+            if oper == UPDATE:
+                if 'shared' in network_q:
+                    net_obj.is_shared = network_q['shared']
+                if external_attr is not attr.ATTR_NOT_SPECIFIED:
+                    net_obj.router_external = external_attr
 
         id_perms = net_obj.get_id_perms()
         if 'admin_state_up' in network_q:
@@ -1312,7 +1343,10 @@ class DBInterface(object):
         else:
             net_q_dict['shared'] = False
         net_q_dict['status'] = constants.NET_STATUS_ACTIVE
-        extra_dict['router:external'] = net_obj in self._fip_pool_ref_networks(net_obj.parent_uuid)
+        if net_obj.router_external:
+            extra_dict['router:external'] = True
+        else:
+            extra_dict['router:external'] = False
 
         if net_repr == 'SHOW':
             extra_dict['contrail:instance_count'] = 0
@@ -1727,19 +1761,10 @@ class DBInterface(object):
     # public methods
     # network api handlers
     def network_create(self, network_q):
-        try:
-            external_attr = network_q[ext_net_extn.EXTERNAL]
-            if external_attr == attr.ATTR_NOT_SPECIFIED:
-                fip_pool_needed = False
-            else:
-                fip_pool_needed = external_attr
-        except KeyError:
-            fip_pool_needed = False
-
         net_obj = self._network_neutron_to_vnc(network_q, CREATE)
         net_uuid = self._virtual_network_create(net_obj)
 
-        if fip_pool_needed:
+        if net_obj.router_external:
             fip_pool_obj = FloatingIpPool('floating-ip-pool', net_obj)
             self._floating_ip_pool_create(fip_pool_obj)
 
@@ -1770,9 +1795,14 @@ class DBInterface(object):
     #end network_read
 
     def network_update(self, net_id, network_q):
+        net_obj = self._virtual_network_read(net_id=net_id)
+        router_external = net_obj.get_router_external()
         network_q['id'] = net_id
         net_obj = self._network_neutron_to_vnc(network_q, UPDATE)
         self._virtual_network_update(net_obj)
+        if net_obj.router_external and not router_external:
+            fip_pool_obj = FloatingIpPool('floating-ip-pool', net_obj)
+            self._floating_ip_pool_create(fip_pool_obj)
 
         ret_network_q = self._network_vnc_to_neutron(net_obj, net_repr='SHOW')
         self._db_cache['q_networks'][net_id] = ret_network_q
@@ -1796,7 +1826,7 @@ class DBInterface(object):
 
     # TODO request based on filter contents
     def network_list(self, context=None, filters=None):
-        ret_list = []
+        ret_dict = {}
 
         if filters and 'shared' in filters:
             if filters['shared'][0] == True:
@@ -1809,56 +1839,78 @@ class DBInterface(object):
                     net_obj = self._network_read(net_id)
                     net_info = self._network_vnc_to_neutron(net_obj,
                                                         net_repr='LIST')
-                    ret_list.append(net_info)
+                    ret_dict[net_id] = net_info
                 except NoIdError:
                     pass
         #end _collect_without_prune
         
         # collect phase
         all_net_objs = []  # all n/ws in all projects
-        if not context.is_admin:
+        if context and not context.is_admin:
             if filters and 'id' in filters:
                 _collect_without_prune(filters['id'])
+            elif filters and 'name' in filters:
+                net_objs = self._network_list_project(context.tenant)
+                all_net_objs.extend(net_objs)
+                all_net_objs.extend(self._network_list_shared())
+                all_net_objs.extend(self._network_list_router_external())
+            elif filters and 'shared' in filters and 'router:external' not in filters:
+                all_net_objs.extend(self._network_list_shared())
+            elif filters and 'router:external' in filters and 'shared' not in filters:
+                all_net_objs.extend(self._network_list_router_external())
+            elif filters and 'router:external' in filters and 'shared' in filters:
+                all_net_objs.extend(self._network_list_shared_and_ext())
             else:
                 project_uuid = str(uuid.UUID(context.tenant))
-                if filters and 'router:external' in filters:
-                    net_objs = self._fip_pool_ref_networks(project_uuid)
-                else:
-                    net_objs = self._network_list_project(project_uuid)
-                all_net_objs.extend(net_objs)
+                if not filters:
+                    all_net_objs.extend(self._network_list_router_external())
+                    all_net_objs.extend(self._network_list_shared())
+                all_net_objs.extend(self._network_list_project(project_uuid))
+        # admin role from here on
         elif filters and 'tenant_id' in filters:
             # project-id is present
             if 'id' in filters:
                 # required networks are also specified,
-                # just read and populate ret_list
+                # just read and populate ret_dict
                 # prune is skipped because all_net_objs is empty
                 _collect_without_prune(filters['id'])
             else:
                 # read all networks in project, and prune below
                 proj_ids = [str(uuid.UUID(id)) for id in filters['tenant_id']]
                 for p_id in proj_ids:
-                    if 'router:external' in filters:
-                        net_objs = self._fip_pool_ref_networks(p_id)
-                    else:
-                        net_objs = self._network_list_project(p_id)
-                    all_net_objs.extend(net_objs)
+                    all_net_objs.extend(self._network_list_project(p_id))
+                if 'router:external' in filters:
+                    all_net_objs.extend(self._network_list_router_external())
         elif filters and 'id' in filters:
-            # required networks are specified, just read and populate ret_list
+            # required networks are specified, just read and populate ret_dict
             # prune is skipped because all_net_objs is empty
             _collect_without_prune(filters['id'])
         elif filters and 'name' in filters:
-            if not context.is_admin:
-                net_objs = self._network_list_project(context.tenant)
-            else:
-                net_objs = self._network_list_project(None)
-            all_net_objs.extend(net_objs)
-        else:
-            # read all networks in all projects
             net_objs = self._network_list_project(None)
             all_net_objs.extend(net_objs)
+        elif filters and 'shared' in filters:
+            if filters['shared'][0] == True:
+                nets = self._network_list_shared()
+                for net in nets:
+                    net_info = self._network_vnc_to_neutron(net,
+                                                            net_repr='LIST')
+                    ret_dict[net.uuid] = net_info
+        else:
+            # read all networks in all projects
+            dom_projects = self._project_list_domain(None)
+            project_uuids = [proj['uuid'] for proj in dom_projects]
+
+            for proj_id in project_uuids:
+                if not filters and 'router:external' not in filters:
+                    all_net_objs.extend(self._network_list_project(proj_id))
+
+            if not filters or 'router:external' in filters:
+                all_net_objs.extend(self._network_list_router_external())
 
         # prune phase
         for net_obj in all_net_objs:
+            if net_obj.uuid in ret_dict:
+                continue
             net_fq_name = unicode(net_obj.get_fq_name())
             if not self._filters_is_present(filters, 'contrail:fq_name',
                                             net_fq_name):
@@ -1866,12 +1918,22 @@ class DBInterface(object):
             if not self._filters_is_present(filters, 'name',
                                             net_obj.get_fq_name()[-1]):
                 continue
+            if net_obj.is_shared == None:
+                is_shared = False
+            else:
+                is_shared = net_obj.is_shared
+            if not self._filters_is_present(filters, 'shared',
+                                            is_shared):
+                continue
             try:
                 net_info = self._network_vnc_to_neutron(net_obj,
                                                         net_repr='LIST')
             except NoIdError:
                 continue
-            ret_list.append(net_info)
+            ret_dict[net_obj.uuid] = net_info
+        ret_list = []
+        for net in ret_dict.values():
+            ret_list.append(net)
 
         return ret_list
     #end network_list
@@ -2508,7 +2570,7 @@ class DBInterface(object):
                 port_ids = filters['port_id']
         else:  # no filters
             if not context.is_admin:
-                proj_ids = [str(uuid.UUID(context.is_admin))]
+                proj_ids = [str(uuid.UUID(context.tenant))]
 
         if port_ids:
             fip_objs = self._floatingip_list(back_ref_id=port_ids)
