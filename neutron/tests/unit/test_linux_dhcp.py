@@ -527,7 +527,7 @@ class TestDhcpLocalProcess(TestBase):
 
             self.mock_mgr.assert_has_calls(
                 [mock.call(self.conf, 'sudo', None),
-                 mock.call().setup(mock.ANY, reuse_existing=True)])
+                 mock.call().setup(mock.ANY)])
             self.assertEqual(lp.called, ['spawn'])
             self.assertTrue(mocks['interface_name'].__set__.called)
 

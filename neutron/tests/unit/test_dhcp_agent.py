@@ -1124,8 +1124,7 @@ class TestDeviceManager(base.BaseTestCase):
         self.iproute_cls_p.stop()
         super(TestDeviceManager, self).tearDown()
 
-    def _test_setup_helper(self, device_exists, reuse_existing=False,
-                           net=None, port=None):
+    def _test_setup_helper(self, device_exists, net=None, port=None):
         net = net or fake_network
         port = port or fake_port1
         plugin = mock.Mock()
@@ -1136,7 +1135,7 @@ class TestDeviceManager(base.BaseTestCase):
 
         dh = dhcp.DeviceManager(cfg.CONF, cfg.CONF.root_helper, plugin)
         dh._set_default_route = mock.Mock()
-        interface_name = dh.setup(net, reuse_existing)
+        interface_name = dh.setup(net)
 
         self.assertEqual(interface_name, 'tap12345678-12')
 
@@ -1156,7 +1155,7 @@ class TestDeviceManager(base.BaseTestCase):
                 expected_ips,
                 namespace=net.namespace)]
 
-        if not reuse_existing:
+        if not device_exists:
             expected.insert(1,
                             mock.call.plug(net.id,
                                            port.id,
@@ -1174,11 +1173,7 @@ class TestDeviceManager(base.BaseTestCase):
         self._test_setup_helper(False)
 
     def test_setup_device_exists(self):
-        with testtools.ExpectedException(exceptions.PreexistingDeviceFailure):
-            self._test_setup_helper(True)
-
-    def test_setup_device_exists_reuse(self):
-        self._test_setup_helper(True, True)
+        self._test_setup_helper(True)
 
     def test_create_dhcp_port_raise_conflict(self):
         plugin = mock.Mock()
