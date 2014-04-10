@@ -18,6 +18,7 @@
 import random
 
 from oslo.config import cfg
+from sqlalchemy import sql
 
 from neutron.common import constants
 from neutron.db import agents_db
@@ -103,7 +104,7 @@ class ChanceScheduler(object):
             query = query.filter(agents_db.Agent.agent_type ==
                                  constants.AGENT_TYPE_DHCP,
                                  agents_db.Agent.host == host,
-                                 agents_db.Agent.admin_state_up == True)
+                                 agents_db.Agent.admin_state_up == sql.true())
             dhcp_agents = query.all()
             for dhcp_agent in dhcp_agents:
                 if agents_db.AgentDbMixin.is_agent_down(
