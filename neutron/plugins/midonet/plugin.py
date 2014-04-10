@@ -814,6 +814,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         super(MidonetPluginV2, self).delete_port(context, id)
 
+    @utils.synchronized('port-critical-section', external=True)
     def update_port(self, context, id, port):
         """Handle port update, including security groups and fixed IPs."""
         with context.session.begin(subtransactions=True):
