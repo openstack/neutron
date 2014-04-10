@@ -22,7 +22,6 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.drivers.cisco.nexus import config as conf
 from neutron.plugins.ml2.drivers.cisco.nexus import constants as const
-from neutron.plugins.ml2.drivers.cisco.nexus import credentials_v2 as cred
 from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as cexc
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_snippets as snipp
@@ -35,7 +34,6 @@ class CiscoNexusDriver(object):
     def __init__(self):
         self.ncclient = None
         self.nexus_switches = conf.ML2MechCiscoConfig.nexus_dict
-        self.credentials = {}
         self.connections = {}
 
     def _import_ncclient(self):
@@ -77,20 +75,6 @@ class CiscoNexusDriver(object):
                 # the original ncclient exception.
                 raise cexc.NexusConfigFailed(config=config, exc=e)
 
-    def get_credential(self, nexus_ip):
-        """Return credential information for a given Nexus IP address.
-
-        If credential doesn't exist then also add to local dictionary.
-        """
-        if nexus_ip not in self.credentials:
-            nexus_username = cred.Store.get_username(nexus_ip)
-            nexus_password = cred.Store.get_password(nexus_ip)
-            self.credentials[nexus_ip] = {
-                const.USERNAME: nexus_username,
-                const.PASSWORD: nexus_password
-            }
-        return self.credentials[nexus_ip]
-
     def nxos_connect(self, nexus_host):
         """Make SSH connection to the Nexus Switch."""
         if getattr(self.connections.get(nexus_host), 'connected', None):
@@ -99,9 +83,8 @@ class CiscoNexusDriver(object):
         if not self.ncclient:
             self.ncclient = self._import_ncclient()
         nexus_ssh_port = int(self.nexus_switches[nexus_host, 'ssh_port'])
-        nexus_creds = self.get_credential(nexus_host)
-        nexus_user = nexus_creds[const.USERNAME]
-        nexus_password = nexus_creds[const.PASSWORD]
+        nexus_user = self.nexus_switches[nexus_host, const.USERNAME]
+        nexus_password = self.nexus_switches[nexus_host, const.PASSWORD]
         try:
             man = self.ncclient.connect(host=nexus_host,
                                         port=nexus_ssh_port,

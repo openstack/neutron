@@ -121,17 +121,6 @@ class TestCiscoNexusDevice(base.BaseTestCase):
             VLAN_ID_PC),
     }
 
-    test_credentials = {
-        NEXUS_IP_ADDRESS: {
-            constants.USERNAME: 'admin',
-            constants.PASSWORD: 'pass1234'
-        },
-        NEXUS_IP_ADDRESS_PC: {
-            constants.USERNAME: 'admin',
-            constants.PASSWORD: 'password'
-        },
-    }
-
     def setUp(self):
         """Sets up mock ncclient, and switch and credentials dictionaries."""
         super(TestCiscoNexusDevice, self).setUp()
@@ -154,11 +143,12 @@ class TestCiscoNexusDevice(base.BaseTestCase):
                                                host_name)] = nexus_port
                 mech_instance._nexus_switches[(ip_addr,
                                                'ssh_port')] = NEXUS_SSH_PORT
+                mech_instance._nexus_switches[(ip_addr,
+                                               constants.USERNAME)] = 'admin'
+                mech_instance._nexus_switches[(ip_addr,
+                                              constants.PASSWORD)] = 'password'
             mech_instance.driver.nexus_switches = (
                 mech_instance._nexus_switches)
-
-            mech_instance.driver.credentials = (
-                TestCiscoNexusDevice.test_credentials)
 
             db.configure_db()
 
