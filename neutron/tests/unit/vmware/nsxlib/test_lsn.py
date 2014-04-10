@@ -32,7 +32,6 @@ class LSNTestCase(base.BaseTestCase):
         self.mock_request = self.mock_request_p.start()
         self.cluster = mock.Mock()
         self.cluster.default_service_cluster_uuid = 'foo'
-        self.addCleanup(self.mock_request_p.stop)
 
     def test_service_cluster_None(self):
         self.mock_request.return_value = None

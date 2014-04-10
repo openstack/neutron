@@ -27,7 +27,6 @@ class TestProcessManager(base.BaseTestCase):
         super(TestProcessManager, self).setUp()
         self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
         self.execute = self.execute_p.start()
-        self.addCleanup(self.execute_p.stop)
         self.conf = mock.Mock()
         self.conf.external_pids = '/var/path'
 

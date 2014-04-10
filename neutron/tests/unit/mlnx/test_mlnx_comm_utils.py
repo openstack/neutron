@@ -31,7 +31,6 @@ class TestRetryDecorator(base.BaseTestCase):
         super(TestRetryDecorator, self).setUp()
         self.sleep_fn_p = mock.patch.object(RetryDecorator, 'sleep_fn')
         self.sleep_fn = self.sleep_fn_p.start()
-        self.addCleanup(self.sleep_fn_p.stop)
 
     def test_no_retry_required(self):
         self.counter = 0

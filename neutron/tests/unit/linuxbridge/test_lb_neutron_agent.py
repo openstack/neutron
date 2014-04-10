@@ -105,12 +105,10 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
                              group='SECURITYGROUP')
         self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
         self.execute = self.execute_p.start()
-        self.addCleanup(self.execute_p.stop)
         self.execute.return_value = '\n'.join(self.LINK_SAMPLE)
         self.get_mac_p = mock.patch('neutron.agent.linux.utils.'
                                     'get_interface_mac')
         self.get_mac = self.get_mac_p.start()
-        self.addCleanup(self.get_mac_p.stop)
         self.get_mac.return_value = '00:00:00:00:00:01'
 
     def test_update_devices_failed(self):
@@ -761,7 +759,6 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
 
         self.u_execute_p = mock.patch('neutron.agent.linux.utils.execute')
         self.u_execute = self.u_execute_p.start()
-        self.addCleanup(self.u_execute_p.stop)
 
         class FakeLBAgent(object):
             def __init__(self):

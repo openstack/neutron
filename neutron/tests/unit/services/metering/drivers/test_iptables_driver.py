@@ -33,11 +33,9 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.utils_exec_p = mock.patch(
             'neutron.agent.linux.utils.execute')
         self.utils_exec = self.utils_exec_p.start()
-        self.addCleanup(self.utils_exec_p.stop)
         self.iptables_cls_p = mock.patch(
             'neutron.agent.linux.iptables_manager.IptablesManager')
         self.iptables_cls = self.iptables_cls_p.start()
-        self.addCleanup(self.iptables_cls_p.stop)
         self.iptables_inst = mock.Mock()
         self.v4filter_inst = mock.Mock()
         self.v6filter_inst = mock.Mock()

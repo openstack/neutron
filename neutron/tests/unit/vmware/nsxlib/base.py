@@ -53,7 +53,6 @@ class NsxlibTestCase(base.BaseTestCase):
 
         super(NsxlibTestCase, self).setUp()
         self.addCleanup(self.fc.reset_all)
-        self.addCleanup(self.mock_nsxapi.stop)
 
     def _build_tag_dict(self, tags):
         # This syntax is needed for python 2.6 compatibility
@@ -88,4 +87,3 @@ class NsxlibNegativeBaseTestCase(base.BaseTestCase):
 
         super(NsxlibNegativeBaseTestCase, self).setUp()
         self.addCleanup(self.fc.reset_all)
-        self.addCleanup(self.mock_nsxapi.stop)

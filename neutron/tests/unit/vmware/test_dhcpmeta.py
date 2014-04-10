@@ -116,7 +116,6 @@ class MigrationManagerTestCase(base.BaseTestCase):
         self.subnet_id = 'foo_subnet_id'
         self.mock_builder_p = mock.patch.object(self.manager, 'builder')
         self.mock_builder = self.mock_builder_p.start()
-        self.addCleanup(self.mock_builder_p.stop)
 
     def _test_validate(self, lsn_exists=False, ext_net=False, subnets=None):
         network = {'router:external': ext_net}
@@ -268,7 +267,6 @@ class LsnManagerTestCase(base.BaseTestCase):
         self.mock_lsn_api = self.mock_lsn_api_p.start()
         nsx.register_dhcp_opts(cfg)
         nsx.register_metadata_opts(cfg)
-        self.addCleanup(self.mock_lsn_api_p.stop)
 
     def test_lsn_get(self):
         self.mock_lsn_api.lsn_for_network_get.return_value = self.lsn_id
@@ -702,7 +700,6 @@ class PersistentLsnManagerTestCase(base.BaseTestCase):
         self.context = context.get_admin_context()
         self.mock_lsn_api_p = mock.patch.object(lsn_man, 'lsn_api')
         self.mock_lsn_api = self.mock_lsn_api_p.start()
-        self.addCleanup(self.mock_lsn_api_p.stop)
         self.addCleanup(db.clear_db)
 
     def test_lsn_get(self):

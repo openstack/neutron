@@ -270,7 +270,6 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                                          'init',
                                          new=fakepolicyinit)
         self.patcher.start()
-        self.addCleanup(self.patcher.stop)
         self.addCleanup(remove_fake_resource)
         self.context = context.Context('fake', 'fake', roles=['user'])
         plugin_klass = importutils.import_class(
@@ -279,7 +278,6 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         fake_manager = self.manager_patcher.start()
         fake_manager_instance = fake_manager.return_value
         fake_manager_instance.plugin = plugin_klass()
-        self.addCleanup(self.manager_patcher.stop)
 
     def _test_action_on_attr(self, context, action, attr, value,
                              exception=None):

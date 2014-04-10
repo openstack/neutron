@@ -85,7 +85,6 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
 
         _plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = _plugin_patcher.start()
-        self.addCleanup(_plugin_patcher.stop)
 
         # Instantiate mock plugin and enable extensions
         manager.NeutronManager.get_plugin().supported_extension_aliases = (

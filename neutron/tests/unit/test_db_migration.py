@@ -42,7 +42,6 @@ class TestCli(base.BaseTestCase):
         self.do_alembic_cmd = self.do_alembic_cmd_p.start()
         self.mock_alembic_err = mock.patch('alembic.util.err').start()
         self.mock_alembic_err.side_effect = SystemExit
-        self.addCleanup(self.do_alembic_cmd_p.stop)
 
     def _main_test_helper(self, argv, func_name, exp_args=(), exp_kwargs={}):
         with mock.patch.object(sys, 'argv', argv):

@@ -62,7 +62,6 @@ class TestNetworkMetadataProxyHandler(base.BaseTestCase):
         super(TestNetworkMetadataProxyHandler, self).setUp()
         self.log_p = mock.patch.object(ns_proxy, 'LOG')
         self.log = self.log_p.start()
-        self.addCleanup(self.log_p.stop)
 
         self.handler = ns_proxy.NetworkMetadataProxyHandler('router_id')
 

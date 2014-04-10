@@ -148,7 +148,6 @@ class TestSubProcessBase(base.BaseTestCase):
         super(TestSubProcessBase, self).setUp()
         self.execute_p = mock.patch('neutron.agent.linux.utils.execute')
         self.execute = self.execute_p.start()
-        self.addCleanup(self.execute_p.stop)
 
     def test_execute_wrapper(self):
         ip_lib.SubProcessBase._execute('o', 'link', ('list',), 'sudo')
@@ -200,7 +199,6 @@ class TestIpWrapper(base.BaseTestCase):
         super(TestIpWrapper, self).setUp()
         self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
         self.execute = self.execute_p.start()
-        self.addCleanup(self.execute_p.stop)
 
     def test_get_devices(self):
         self.execute.return_value = '\n'.join(LINK_SAMPLE)
