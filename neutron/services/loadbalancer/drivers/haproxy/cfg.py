@@ -199,7 +199,8 @@ def _get_session_persistence(config):
     if persistence['type'] == constants.SESSION_PERSISTENCE_SOURCE_IP:
         opts.append('stick-table type ip size 10k')
         opts.append('stick on src')
-    elif persistence['type'] == constants.SESSION_PERSISTENCE_HTTP_COOKIE:
+    elif (persistence['type'] == constants.SESSION_PERSISTENCE_HTTP_COOKIE and
+          config.get('members')):
         opts.append('cookie SRV insert indirect nocache')
     elif (persistence['type'] == constants.SESSION_PERSISTENCE_APP_COOKIE and
           persistence.get('cookie_name')):
