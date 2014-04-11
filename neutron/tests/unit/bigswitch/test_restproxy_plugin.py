@@ -20,6 +20,7 @@ import mock
 from oslo.config import cfg
 import webob.exc
 
+from neutron.common import constants
 from neutron import context
 from neutron.extensions import portbindings
 from neutron.manager import NeutronManager
@@ -81,7 +82,21 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
         super(TestBigSwitchProxyPortsV2,
               self).setUp(self._plugin_name)
 
+    def test_router_port_status_active(self):
+        # router ports screw up port auto-deletion so it has to be
+        # disabled for this test
+        with self.network(do_delete=False) as net:
+            with self.subnet(network=net, do_delete=False) as sub:
+                with self.port(
+                    subnet=sub,
+                    no_delete=True,
+                    device_owner=constants.DEVICE_OWNER_ROUTER_INTF
+                ) as port:
+                    # router ports should be immediately active
+                    self.assertEqual(port['port']['status'], 'ACTIVE')
+
     def test_update_port_status_build(self):
+        # normal ports go into the pending build state for async creation
         with self.port() as port:
             self.assertEqual(port['port']['status'], 'BUILD')
             self.assertEqual(self.port_create_status, 'BUILD')

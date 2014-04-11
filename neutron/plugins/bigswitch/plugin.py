@@ -664,8 +664,12 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         with context.session.begin(subtransactions=True):
             self._ensure_default_security_group_on_port(context, port)
             sgids = self._get_security_groups_on_port(context, port)
-            # set port status to pending. updated after rest call completes
-            port['port']['status'] = const.PORT_STATUS_BUILD
+            # non-router port status is set to pending. it is then updated
+            # after the async rest call completes. router ports are synchronous
+            if port['port']['device_owner'] == l3_db.DEVICE_OWNER_ROUTER_INTF:
+                port['port']['status'] = const.PORT_STATUS_ACTIVE
+            else:
+                port['port']['status'] = const.PORT_STATUS_BUILD
             dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
             new_port = super(NeutronRestProxyV2, self).create_port(context,
                                                                    port)
@@ -691,8 +695,15 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
 
         # create on network ctrl
         mapped_port = self._map_state_and_status(new_port)
-        self.evpool.spawn_n(self.async_port_create, net["tenant_id"],
-                            new_port["network_id"], mapped_port)
+        # ports have to be created synchronously when creating a router
+        # port since adding router interfaces is a multi-call process
+        if mapped_port['device_owner'] == l3_db.DEVICE_OWNER_ROUTER_INTF:
+            self.servers.rest_create_port(net["tenant_id"],
+                                          new_port["network_id"],
+                                          mapped_port)
+        else:
+            self.evpool.spawn_n(self.async_port_create, net["tenant_id"],
+                                new_port["network_id"], mapped_port)
         self.notify_security_groups_member_updated(context, new_port)
         return new_port
 
