@@ -2231,7 +2231,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         gw_device['status'] = device_status
         return gw_device
 
-    def get_gateway_devices(self, context, filters=None, fields=None):
+    def get_gateway_devices(self, context, filters=None, fields=None,
+                            sorts=None, limit=None, marker=None,
+                            page_reverse=False):
         # Get devices from database
         devices = super(NsxPluginV2, self).get_gateway_devices(
             context, filters, fields, include_nsx_id=True)

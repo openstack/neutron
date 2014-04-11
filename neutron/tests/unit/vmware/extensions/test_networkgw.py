@@ -799,6 +799,25 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual(dev[self.dev_resource]['connector_ip'], '1.1.1.1')
             self.assertEqual(dev[self.dev_resource]['status'], expected_status)
 
+    def test_list_gateway_devices(self):
+        with contextlib.nested(
+            self._gateway_device(name='test-dev-1',
+                                 connector_type='stt',
+                                 connector_ip='1.1.1.1',
+                                 client_certificate='xyz'),
+            self._gateway_device(name='test-dev-2',
+                                 connector_type='stt',
+                                 connector_ip='2.2.2.2',
+                                 client_certificate='qwe')) as (dev_1, dev_2):
+            req = self.new_list_request(networkgw.GATEWAY_DEVICES)
+            res = self.deserialize('json', req.get_response(self.ext_api))
+        devices = res[networkgw.GATEWAY_DEVICES.replace('-', '_')]
+        self.assertEqual(len(devices), 2)
+        dev_1 = devices[0]
+        dev_2 = devices[1]
+        self.assertEqual(dev_1['name'], 'test-dev-1')
+        self.assertEqual(dev_2['name'], 'test-dev-2')
+
     def test_get_gateway_device(
         self, expected_status=networkgw_db.STATUS_UNKNOWN):
         with self._gateway_device(name='test-dev',
@@ -861,11 +880,15 @@ class TestNetworkGateway(NsxPluginV2TestCase,
             l2gwlib, 'delete_gateway_device')
         get_gw_dev_status_patcher = mock.patch.object(
             l2gwlib, 'get_gateway_device_status')
+        get_gw_dev_statuses_patcher = mock.patch.object(
+            l2gwlib, 'get_gateway_devices_status')
         self.mock_create_gw_dev = create_gw_dev_patcher.start()
         self.mock_create_gw_dev.return_value = {'uuid': 'callejon'}
         self.mock_update_gw_dev = update_gw_dev_patcher.start()
         delete_gw_dev_patcher.start()
         self.mock_get_gw_dev_status = get_gw_dev_status_patcher.start()
+        get_gw_dev_statuses = get_gw_dev_statuses_patcher.start()
+        get_gw_dev_statuses.return_value = {}
 
         super(TestNetworkGateway,
               self).setUp(plugin=plugin, ext_mgr=ext_mgr)
