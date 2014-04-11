@@ -229,6 +229,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertEqual(self.lbm.get_interfaces_on_bridge("br0"),
                              ["qbr1"])
 
+    def test_get_interfaces_on_bridge_not_existing(self):
+        self.lbm.device_exists = mock.Mock(return_value=False)
+        self.assertEqual([], self.lbm.get_interfaces_on_bridge("br0"))
+
     def test_get_tap_devices_count(self):
         with mock.patch.object(os, 'listdir') as listdir_fn:
             listdir_fn.return_value = ['tap2101', 'eth0.100', 'vxlan-1000']
