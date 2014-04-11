@@ -29,7 +29,6 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         open(self.test_file, 'w').close()
         self.mock_popen_p = mock.patch("subprocess.Popen.communicate")
         self.mock_popen = self.mock_popen_p.start()
-        self.addCleanup(self.mock_popen_p.stop)
 
     def test_without_helper(self):
         expected = "%s\n" % self.test_file

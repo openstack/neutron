@@ -85,7 +85,6 @@ class TestL3GwModeMixin(base.BaseTestCase):
         ctx_patcher = mock.patch('neutron.context', autospec=True)
         mock_context = ctx_patcher.start()
         self.addCleanup(db_api.clear_db)
-        self.addCleanup(ctx_patcher.stop)
         self.context = mock_context.get_admin_context()
         # This ensure also calls to elevated work in unit tests
         self.context.elevated.return_value = self.context

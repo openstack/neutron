@@ -28,7 +28,6 @@ class TestNeutronContext(base.BaseTestCase):
         db_api = 'neutron.db.api.get_session'
         self._db_api_session_patcher = mock.patch(db_api)
         self.db_api_session = self._db_api_session_patcher.start()
-        self.addCleanup(self._db_api_session_patcher.stop)
 
     def test_neutron_context_create(self):
         ctx = context.Context('user_id', 'tenant_id')

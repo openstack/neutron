@@ -993,20 +993,17 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             'neutron.api.v2.base.Controller._get_sorting_helper',
             new=_fake_get_sorting_helper)
         helper_patcher.start()
-        try:
-            cfg.CONF.set_default('allow_overlapping_ips', True)
-            with contextlib.nested(self.port(admin_state_up='True',
-                                             mac_address='00:00:00:00:00:01'),
-                                   self.port(admin_state_up='False',
-                                             mac_address='00:00:00:00:00:02'),
-                                   self.port(admin_state_up='False',
-                                             mac_address='00:00:00:00:00:03')
-                                   ) as (port1, port2, port3):
-                self._test_list_with_sort('port', (port3, port2, port1),
-                                          [('admin_state_up', 'asc'),
-                                           ('mac_address', 'desc')])
-        finally:
-            helper_patcher.stop()
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        with contextlib.nested(self.port(admin_state_up='True',
+                                         mac_address='00:00:00:00:00:01'),
+                               self.port(admin_state_up='False',
+                                         mac_address='00:00:00:00:00:02'),
+                               self.port(admin_state_up='False',
+                                         mac_address='00:00:00:00:00:03')
+                               ) as (port1, port2, port3):
+            self._test_list_with_sort('port', (port3, port2, port1),
+                                      [('admin_state_up', 'asc'),
+                                       ('mac_address', 'desc')])
 
     def test_list_ports_with_pagination_native(self):
         if self._skip_native_pagination:
@@ -1025,17 +1022,14 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        try:
-            cfg.CONF.set_default('allow_overlapping_ips', True)
-            with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
-                                   self.port(mac_address='00:00:00:00:00:02'),
-                                   self.port(mac_address='00:00:00:00:00:03')
-                                   ) as (port1, port2, port3):
-                self._test_list_with_pagination('port',
-                                                (port1, port2, port3),
-                                                ('mac_address', 'asc'), 2, 2)
-        finally:
-            helper_patcher.stop()
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
+                               self.port(mac_address='00:00:00:00:00:02'),
+                               self.port(mac_address='00:00:00:00:00:03')
+                               ) as (port1, port2, port3):
+            self._test_list_with_pagination('port',
+                                            (port1, port2, port3),
+                                            ('mac_address', 'asc'), 2, 2)
 
     def test_list_ports_with_pagination_reverse_native(self):
         if self._skip_native_pagination:
@@ -1055,18 +1049,15 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        try:
-            cfg.CONF.set_default('allow_overlapping_ips', True)
-            with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
-                                   self.port(mac_address='00:00:00:00:00:02'),
-                                   self.port(mac_address='00:00:00:00:00:03')
-                                   ) as (port1, port2, port3):
-                self._test_list_with_pagination_reverse('port',
-                                                        (port1, port2, port3),
-                                                        ('mac_address', 'asc'),
-                                                        2, 2)
-        finally:
-            helper_patcher.stop()
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        with contextlib.nested(self.port(mac_address='00:00:00:00:00:01'),
+                               self.port(mac_address='00:00:00:00:00:02'),
+                               self.port(mac_address='00:00:00:00:00:03')
+                               ) as (port1, port2, port3):
+            self._test_list_with_pagination_reverse('port',
+                                                    (port1, port2, port3),
+                                                    ('mac_address', 'asc'),
+                                                    2, 2)
 
     def test_show_port(self):
         with self.port() as port:
@@ -2074,19 +2065,16 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_sorting_helper',
             new=_fake_get_sorting_helper)
         helper_patcher.start()
-        try:
-            with contextlib.nested(self.network(admin_status_up=True,
-                                                name='net1'),
-                                   self.network(admin_status_up=False,
-                                                name='net2'),
-                                   self.network(admin_status_up=False,
-                                                name='net3')
-                                   ) as (net1, net2, net3):
-                self._test_list_with_sort('network', (net3, net2, net1),
-                                          [('admin_state_up', 'asc'),
-                                           ('name', 'desc')])
-        finally:
-            helper_patcher.stop()
+        with contextlib.nested(self.network(admin_status_up=True,
+                                            name='net1'),
+                               self.network(admin_status_up=False,
+                                            name='net2'),
+                               self.network(admin_status_up=False,
+                                            name='net3')
+                               ) as (net1, net2, net3):
+            self._test_list_with_sort('network', (net3, net2, net1),
+                                      [('admin_state_up', 'asc'),
+                                       ('name', 'desc')])
 
     def test_list_networks_with_pagination_native(self):
         if self._skip_native_pagination:
@@ -2104,37 +2092,31 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        try:
-            with contextlib.nested(self.network(name='net1'),
-                                   self.network(name='net2'),
-                                   self.network(name='net3')
-                                   ) as (net1, net2, net3):
-                self._test_list_with_pagination('network',
-                                                (net1, net2, net3),
-                                                ('name', 'asc'), 2, 2)
-        finally:
-            helper_patcher.stop()
+        with contextlib.nested(self.network(name='net1'),
+                               self.network(name='net2'),
+                               self.network(name='net3')
+                               ) as (net1, net2, net3):
+            self._test_list_with_pagination('network',
+                                            (net1, net2, net3),
+                                            ('name', 'asc'), 2, 2)
 
     def test_list_networks_without_pk_in_fields_pagination_emulated(self):
         helper_patcher = mock.patch(
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        try:
-            with contextlib.nested(self.network(name='net1',
-                                                shared=True),
-                                   self.network(name='net2',
-                                                shared=False),
-                                   self.network(name='net3',
-                                                shared=True)
-                                   ) as (net1, net2, net3):
-                self._test_list_with_pagination('network',
-                                                (net1, net2, net3),
-                                                ('name', 'asc'), 2, 2,
-                                                query_params="fields=name",
-                                                verify_key='name')
-        finally:
-            helper_patcher.stop()
+        with contextlib.nested(self.network(name='net1',
+                                            shared=True),
+                               self.network(name='net2',
+                                            shared=False),
+                               self.network(name='net3',
+                                            shared=True)
+                               ) as (net1, net2, net3):
+            self._test_list_with_pagination('network',
+                                            (net1, net2, net3),
+                                            ('name', 'asc'), 2, 2,
+                                            query_params="fields=name",
+                                            verify_key='name')
 
     def test_list_networks_without_pk_in_fields_pagination_native(self):
         if self._skip_native_pagination:
@@ -2165,16 +2147,13 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        try:
-            with contextlib.nested(self.network(name='net1'),
-                                   self.network(name='net2'),
-                                   self.network(name='net3')
-                                   ) as (net1, net2, net3):
-                self._test_list_with_pagination_reverse('network',
-                                                        (net1, net2, net3),
-                                                        ('name', 'asc'), 2, 2)
-        finally:
-            helper_patcher.stop()
+        with contextlib.nested(self.network(name='net1'),
+                               self.network(name='net2'),
+                               self.network(name='net3')
+                               ) as (net1, net2, net3):
+            self._test_list_with_pagination_reverse('network',
+                                                    (net1, net2, net3),
+                                                    ('name', 'asc'), 2, 2)
 
     def test_list_networks_with_parameters(self):
         with contextlib.nested(self.network(name='net1',
@@ -3360,21 +3339,18 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_sorting_helper',
             new=_fake_get_sorting_helper)
         helper_patcher.start()
-        try:
-            with contextlib.nested(self.subnet(enable_dhcp=True,
-                                               cidr='10.0.0.0/24'),
-                                   self.subnet(enable_dhcp=False,
-                                               cidr='11.0.0.0/24'),
-                                   self.subnet(enable_dhcp=False,
-                                               cidr='12.0.0.0/24')
-                                   ) as (subnet1, subnet2, subnet3):
-                self._test_list_with_sort('subnet', (subnet3,
-                                                     subnet2,
-                                                     subnet1),
-                                          [('enable_dhcp', 'asc'),
-                                           ('cidr', 'desc')])
-        finally:
-            helper_patcher.stop()
+        with contextlib.nested(self.subnet(enable_dhcp=True,
+                                           cidr='10.0.0.0/24'),
+                               self.subnet(enable_dhcp=False,
+                                           cidr='11.0.0.0/24'),
+                               self.subnet(enable_dhcp=False,
+                                           cidr='12.0.0.0/24')
+                               ) as (subnet1, subnet2, subnet3):
+            self._test_list_with_sort('subnet', (subnet3,
+                                                 subnet2,
+                                                 subnet1),
+                                      [('enable_dhcp', 'asc'),
+                                       ('cidr', 'desc')])
 
     def test_list_subnets_with_pagination_native(self):
         if self._skip_native_pagination:
@@ -3392,16 +3368,13 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        try:
-            with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
-                                   self.subnet(cidr='11.0.0.0/24'),
-                                   self.subnet(cidr='12.0.0.0/24')
-                                   ) as (subnet1, subnet2, subnet3):
-                self._test_list_with_pagination('subnet',
-                                                (subnet1, subnet2, subnet3),
-                                                ('cidr', 'asc'), 2, 2)
-        finally:
-            helper_patcher.stop()
+        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
+                               self.subnet(cidr='11.0.0.0/24'),
+                               self.subnet(cidr='12.0.0.0/24')
+                               ) as (subnet1, subnet2, subnet3):
+            self._test_list_with_pagination('subnet',
+                                            (subnet1, subnet2, subnet3),
+                                            ('cidr', 'asc'), 2, 2)
 
     def test_list_subnets_with_pagination_reverse_native(self):
         if self._skip_native_sorting:
@@ -3420,17 +3393,14 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        try:
-            with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
-                                   self.subnet(cidr='11.0.0.0/24'),
-                                   self.subnet(cidr='12.0.0.0/24')
-                                   ) as (subnet1, subnet2, subnet3):
-                self._test_list_with_pagination_reverse('subnet',
-                                                        (subnet1, subnet2,
-                                                         subnet3),
-                                                        ('cidr', 'asc'), 2, 2)
-        finally:
-            helper_patcher.stop()
+        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
+                               self.subnet(cidr='11.0.0.0/24'),
+                               self.subnet(cidr='12.0.0.0/24')
+                               ) as (subnet1, subnet2, subnet3):
+            self._test_list_with_pagination_reverse('subnet',
+                                                    (subnet1, subnet2,
+                                                     subnet3),
+                                                    ('cidr', 'asc'), 2, 2)
 
     def test_invalid_ip_version(self):
         with self.network() as network:

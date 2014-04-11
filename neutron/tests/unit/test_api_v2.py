@@ -113,7 +113,6 @@ class APIv2TestBase(base.BaseTestCase):
         instance = self.plugin.return_value
         instance._NeutronPluginBaseV2__native_pagination_support = True
         instance._NeutronPluginBaseV2__native_sorting_support = True
-        self.addCleanup(self._plugin_patcher.stop)
 
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
@@ -1143,7 +1142,6 @@ class SubresourceTest(base.BaseTestCase):
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
-        self.addCleanup(self._plugin_patcher.stop)
 
         router.SUB_RESOURCES['dummy'] = {
             'collection_name': 'dummies',
@@ -1434,7 +1432,6 @@ class ExtensionTestCase(base.BaseTestCase):
 
     def tearDown(self):
         super(ExtensionTestCase, self).tearDown()
-        self._plugin_patcher.stop()
         self.api = None
         self.plugin = None
         # Restore the global RESOURCE_ATTRIBUTE_MAP

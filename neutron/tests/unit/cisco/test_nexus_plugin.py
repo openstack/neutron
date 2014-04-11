@@ -151,7 +151,6 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
         self.patch_obj = mock.patch.dict('sys.modules',
                                          {'ncclient': self.mock_ncclient})
         self.patch_obj.start()
-        self.addCleanup(self.patch_obj.stop)
 
         with mock.patch.object(cisco_nexus_plugin_v2.NexusPlugin,
                                '__init__', new=new_nexus_init):

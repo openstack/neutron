@@ -488,15 +488,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         )
         self.external_process = self.external_process_p.start()
 
-    def tearDown(self):
-        self.external_process_p.stop()
-        self.call_driver_p.stop()
-        self.cache_p.stop()
-        self.plugin_p.stop()
-        self.mock_makedirs_p.stop()
-        self.mock_init_p.stop()
-        super(TestDhcpAgentEventHandler, self).tearDown()
-
     def _enable_dhcp_helper(self, isolated_metadata=False):
         if isolated_metadata:
             cfg.CONF.set_override('enable_isolated_metadata', True)
@@ -849,11 +840,6 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
         self.make_msg_p = mock.patch.object(self.proxy, 'make_msg')
         self.make_msg = self.make_msg_p.start()
 
-    def tearDown(self):
-        self.make_msg_p.stop()
-        self.call_p.stop()
-        super(TestDhcpPluginApiProxy, self).tearDown()
-
     def test_get_network_info(self):
         self.call.return_value = dict(a=1)
         retval = self.proxy.get_network_info('netid')
@@ -1117,12 +1103,6 @@ class TestDeviceManager(base.BaseTestCase):
         self.mock_iproute = mock.MagicMock()
         driver_cls.return_value = self.mock_driver
         iproute_cls.return_value = self.mock_iproute
-
-    def tearDown(self):
-        self.dvr_cls_p.stop()
-        self.device_exists_p.stop()
-        self.iproute_cls_p.stop()
-        super(TestDeviceManager, self).tearDown()
 
     def _test_setup_helper(self, device_exists, net=None, port=None):
         net = net or fake_network

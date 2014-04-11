@@ -45,7 +45,6 @@ class TestDhcpNoOpDriver(base.BaseTestCase):
         self.conf.use_namespaces = True
         instance = mock.patch("neutron.agent.linux.dhcp.DeviceManager")
         self.mock_mgr = instance.start()
-        self.addCleanup(instance.stop)
 
     def test_disable_no_retain_port(self):
         dhcp_driver = driver.DhcpNoOpDriver(self.conf, FakeNetwork())

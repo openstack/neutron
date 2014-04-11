@@ -298,10 +298,6 @@ class SyncTestCase(base.BaseTestCase):
         mock_nm_get_service_plugins.start()
         super(SyncTestCase, self).setUp()
         self.addCleanup(self.fc.reset_all)
-        self.addCleanup(patch_sync.stop)
-        self.addCleanup(mock_api.stop)
-        self.addCleanup(mock_nm_get_plugin.stop)
-        self.addCleanup(mock_nm_get_service_plugins.stop)
 
     @contextlib.contextmanager
     def _populate_data(self, ctx, net_size=2, port_size=2, router_size=2):

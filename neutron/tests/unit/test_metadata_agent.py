@@ -48,11 +48,9 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         super(TestMetadataProxyHandler, self).setUp()
         self.qclient_p = mock.patch('neutronclient.v2_0.client.Client')
         self.qclient = self.qclient_p.start()
-        self.addCleanup(self.qclient_p.stop)
 
         self.log_p = mock.patch.object(agent, 'LOG')
         self.log = self.log_p.start()
-        self.addCleanup(self.log_p.stop)
 
         self.handler = agent.MetadataProxyHandler(FakeConf)
 
@@ -279,7 +277,6 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
         super(TestUnixDomainWSGIServer, self).setUp()
         self.eventlet_p = mock.patch.object(agent, 'eventlet')
         self.eventlet = self.eventlet_p.start()
-        self.addCleanup(self.eventlet_p.stop)
         self.server = agent.UnixDomainWSGIServer('test')
 
     def test_start(self):
