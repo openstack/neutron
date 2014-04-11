@@ -23,9 +23,11 @@
 
 import inspect
 import os
+import re
 
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
+from neutron.openstack.common import excutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 
@@ -46,6 +48,10 @@ binary_name = get_binary_name()
 # <max length of iptables chain name> - (<binary_name> + '-') = 28-(16+1) = 11
 MAX_CHAIN_LEN_WRAP = 11
 MAX_CHAIN_LEN_NOWRAP = 28
+
+# Number of iptables rules to print before and after a rule that causes a
+# a failure during iptables-restore
+IPTABLES_ERROR_LINES_OF_CONTEXT = 5
 
 
 def get_chain_name(chain_name, wrap=True):
@@ -396,8 +402,30 @@ class IptablesManager(object):
             args = ['%s-restore' % (cmd,), '-c']
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
-            self.execute(args, process_input='\n'.join(all_lines),
-                         root_helper=self.root_helper)
+            try:
+                self.execute(args, process_input='\n'.join(all_lines),
+                             root_helper=self.root_helper)
+            except RuntimeError as r_error:
+                with excutils.save_and_reraise_exception():
+                    try:
+                        line_no = int(re.search(
+                            'iptables-restore: line ([0-9]+?) failed',
+                            str(r_error)).group(1))
+                        context = IPTABLES_ERROR_LINES_OF_CONTEXT
+                        log_start = max(0, line_no - context)
+                        log_end = line_no + context
+                    except AttributeError:
+                        # line error wasn't found, print all lines instead
+                        log_start = 0
+                        log_end = len(all_lines)
+                    log_lines = ('%7d. %s' % (idx, l)
+                                 for idx, l in enumerate(
+                                     all_lines[log_start:log_end],
+                                     log_start + 1)
+                                 )
+                    LOG.error(_("IPTablesManager.apply failed to apply the "
+                                "following set of iptables rules:\n%s"),
+                              '\n'.join(log_lines))
         LOG.debug(_("IPTablesManager.apply completed with success"))
 
     def _find_table(self, lines, table_name):
