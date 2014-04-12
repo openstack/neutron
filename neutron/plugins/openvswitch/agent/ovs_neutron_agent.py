@@ -222,7 +222,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                               root_helper)
         # Stores port update notifications for processing in main rpc loop
         self.updated_ports = set()
-        # Initialize iteration counter
+        # Initialize iteration counter to zero
         self.iter_num = 0
 
     def _check_ovs_version(self):
