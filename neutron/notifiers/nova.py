@@ -48,6 +48,7 @@ class Notifier(object):
             project_id=None,
             tenant_id=cfg.CONF.nova_admin_tenant_id,
             auth_url=cfg.CONF.nova_admin_auth_url,
+            insecure=cfg.CONF.nova_api_insecure,
             bypass_url=bypass_url,
             region_name=cfg.CONF.nova_region_name,
             extensions=[server_external_events])
