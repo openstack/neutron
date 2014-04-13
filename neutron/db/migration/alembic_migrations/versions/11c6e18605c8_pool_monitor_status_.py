@@ -45,6 +45,7 @@ def upgrade(active_plugins=None, options=None):
 
     op.add_column('poolmonitorassociations', sa.Column('status',
                                                        sa.String(16),
+                                                       server_default='',
                                                        nullable=False))
     op.add_column('poolmonitorassociations', sa.Column('status_description',
                                                        sa.String(255)))
