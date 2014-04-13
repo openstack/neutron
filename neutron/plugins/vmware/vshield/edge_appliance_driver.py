@@ -165,15 +165,15 @@ class EdgeApplianceDriver(object):
         try:
             self.vcns.update_interface(edge_id, config)
         except exceptions.VcnsApiException as e:
-            LOG.exception(_("VCNS: Failed to update vnic %(config)s:\n"
-                            "%(response)s"), {
-                                'config': config,
-                                'response': e.response})
-            raise e
-        except Exception as e:
-            LOG.exception(_("VCNS: Failed to update vnic %d"),
-                          config['index'])
-            raise e
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("VCNS: Failed to update vnic %(config)s:\n"
+                                "%(response)s"), {
+                                    'config': config,
+                                    'response': e.response})
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("VCNS: Failed to update vnic %d"),
+                              config['index'])
 
         return TaskStatus.COMPLETED
 
@@ -221,10 +221,10 @@ class EdgeApplianceDriver(object):
             LOG.debug(_("VCNS: deploying edge %s"), edge_id)
             userdata['edge_id'] = edge_id
             status = TaskStatus.PENDING
-        except exceptions.VcnsApiException as e:
-            LOG.exception(_("VCNS: deploy edge failed for router %s."),
-                          name)
-            raise e
+        except exceptions.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("VCNS: deploy edge failed for router %s."),
+                              name)
 
         return status
 
@@ -240,10 +240,10 @@ class EdgeApplianceDriver(object):
                 status = TaskStatus.COMPLETED
             else:
                 status = TaskStatus.ERROR
-        except exceptions.VcnsApiException as e:
-            LOG.exception(_("VCNS: Edge %s status query failed."), edge_id)
-            raise e
-        except Exception as e:
+        except exceptions.VcnsApiException:
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("VCNS: Edge %s status query failed."), edge_id)
+        except Exception:
             retries = task.userdata.get('retries', 0) + 1
             if retries < 3:
                 task.userdata['retries'] = retries
@@ -302,8 +302,8 @@ class EdgeApplianceDriver(object):
         try:
             return self.vcns.get_edges()[1]
         except exceptions.VcnsApiException as e:
-            LOG.exception(_("VCNS: Failed to get edges:\n%s"), e.response)
-            raise e
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("VCNS: Failed to get edges:\n%s"), e.response)
 
     def deploy_edge(self, router_id, name, internal_network, jobdata=None,
                     wait_for_exec=False, loadbalancer_enable=True):
@@ -380,9 +380,9 @@ class EdgeApplianceDriver(object):
         try:
             return self.vcns.get_nat_config(edge_id)[1]
         except exceptions.VcnsApiException as e:
-            LOG.exception(_("VCNS: Failed to get nat config:\n%s"),
-                          e.response)
-            raise e
+            with excutils.save_and_reraise_exception():
+                LOG.exception(_("VCNS: Failed to get nat config:\n%s"),
+                              e.response)
 
     def _create_nat_rule(self, task):
         # TODO(fank): use POST for optimization
