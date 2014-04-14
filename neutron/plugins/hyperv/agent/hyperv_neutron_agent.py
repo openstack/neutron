@@ -172,7 +172,8 @@ class HyperVNeutronAgent(object):
             self.context, self.plugin_rpc)
         report_interval = CONF.AGENT.report_interval
         if report_interval:
-            heartbeat = loopingcall.LoopingCall(self._report_state)
+            heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
             heartbeat.start(interval=report_interval)
 
     def _load_physical_network_mappings(self):
