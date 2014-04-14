@@ -26,6 +26,7 @@ from oslo.config import cfg
 import testtools
 
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.openstack.common import importutils
 from neutron.plugins.common import constants as p_const
@@ -296,9 +297,14 @@ class TestOFANeutronAgent(OFAAgentTestCase):
         self.assertTrue(ryu_send_msg_func.called)
 
     def mock_scan_ports(self, vif_port_set=None, registered_ports=None,
-                        updated_ports=None):
-        with mock.patch.object(self.agent.int_br, 'get_vif_port_set',
-                               return_value=vif_port_set):
+                        updated_ports=None, port_tags_dict=None):
+        port_tags_dict = port_tags_dict or {}
+        with contextlib.nested(
+            mock.patch.object(self.agent.int_br, 'get_vif_port_set',
+                              return_value=vif_port_set),
+            mock.patch.object(self.agent.int_br, 'get_port_tag_dict',
+                              return_value=port_tags_dict)
+        ):
             return self.agent.scan_ports(registered_ports, updated_ports)
 
     def test_scan_ports_returns_current_only_for_unchanged_ports(self):
@@ -349,6 +355,25 @@ class TestOFANeutronAgent(OFAAgentTestCase):
         expected = dict(current=vif_port_set, updated=set([2]))
         actual = self.mock_scan_ports(vif_port_set, registered_ports,
                                       updated_ports)
+        self.assertEqual(expected, actual)
+
+    def test_update_ports_returns_lost_vlan_port(self):
+        br = self.mod_agent.OVSBridge('br-int', 'fake_helper', self.ryuapp)
+        mac = "ca:fe:de:ad:be:ef"
+        port = ovs_lib.VifPort(1, 1, 1, mac, br)
+        lvm = self.mod_agent.LocalVLANMapping(
+            1, '1', None, 1, {port.vif_id: port})
+        local_vlan_map = {'1': lvm}
+        vif_port_set = set([1, 3])
+        registered_ports = set([1, 2])
+        port_tags_dict = {1: []}
+        expected = dict(
+            added=set([3]), current=vif_port_set,
+            removed=set([2]), updated=set([1])
+        )
+        with mock.patch.dict(self.agent.local_vlan_map, local_vlan_map):
+            actual = self.mock_scan_ports(
+                vif_port_set, registered_ports, port_tags_dict=port_tags_dict)
         self.assertEqual(expected, actual)
 
     def test_treat_devices_added_returns_true_for_missing_device(self):

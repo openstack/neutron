@@ -952,6 +952,9 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         cur_ports = self.int_br.get_vif_port_set()
         self.int_br_device_count = len(cur_ports)
         port_info = {'current': cur_ports}
+        if updated_ports is None:
+            updated_ports = set()
+        updated_ports.update(self._find_lost_vlan_port(registered_ports))
         if updated_ports:
             # Some updated ports might have been removed in the
             # meanwhile, and therefore should not be processed.
@@ -969,6 +972,30 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         # Remove all the known ports not found on the integration bridge
         port_info['removed'] = registered_ports - cur_ports
         return port_info
+
+    def _find_lost_vlan_port(self, registered_ports):
+        """Return ports which have lost their vlan tag.
+
+        The returned value is a set of port ids of the ports concerned by a
+        vlan tag loss.
+        """
+        port_tags = self.int_br.get_port_tag_dict()
+        changed_ports = set()
+        for lvm in self.local_vlan_map.values():
+            for port in registered_ports:
+                if (
+                    port in lvm.vif_ports
+                    and lvm.vif_ports[port].port_name in port_tags
+                    and port_tags[lvm.vif_ports[port].port_name] != lvm.vlan
+                ):
+                    LOG.info(
+                        _("Port '%(port_name)s' has lost "
+                            "its vlan tag '%(vlan_tag)d'!"),
+                        {'port_name': lvm.vif_ports[port].port_name,
+                         'vlan_tag': lvm.vlan}
+                    )
+                    changed_ports.add(port)
+        return changed_ports
 
     def update_ancillary_ports(self, registered_ports):
         ports = set()
