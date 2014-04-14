@@ -1088,9 +1088,9 @@ class TestDeviceManager(base.BaseTestCase):
         cfg.CONF.set_override('use_namespaces', True)
         cfg.CONF.set_override('enable_isolated_metadata', True)
 
-        self.device_exists_p = mock.patch(
-            'neutron.agent.linux.ip_lib.device_exists')
-        self.device_exists = self.device_exists_p.start()
+        self.ensure_device_is_ready_p = mock.patch(
+            'neutron.agent.linux.ip_lib.ensure_device_is_ready')
+        self.ensure_device_is_ready = (self.ensure_device_is_ready_p.start())
 
         self.dvr_cls_p = mock.patch('neutron.agent.linux.interface.NullDriver')
         self.iproute_cls_p = mock.patch('neutron.agent.linux.'
@@ -1104,13 +1104,13 @@ class TestDeviceManager(base.BaseTestCase):
         driver_cls.return_value = self.mock_driver
         iproute_cls.return_value = self.mock_iproute
 
-    def _test_setup_helper(self, device_exists, net=None, port=None):
+    def _test_setup_helper(self, device_is_ready, net=None, port=None):
         net = net or fake_network
         port = port or fake_port1
         plugin = mock.Mock()
         plugin.create_dhcp_port.return_value = port or fake_port1
         plugin.get_dhcp_port.return_value = port or fake_port1
-        self.device_exists.return_value = device_exists
+        self.ensure_device_is_ready.return_value = device_is_ready
         self.mock_driver.get_device_name.return_value = 'tap12345678-12'
 
         dh = dhcp.DeviceManager(cfg.CONF, cfg.CONF.root_helper, plugin)
@@ -1135,7 +1135,7 @@ class TestDeviceManager(base.BaseTestCase):
                 expected_ips,
                 namespace=net.namespace)]
 
-        if not device_exists:
+        if not device_is_ready:
             expected.insert(1,
                             mock.call.plug(net.id,
                                            port.id,
@@ -1152,7 +1152,7 @@ class TestDeviceManager(base.BaseTestCase):
         cfg.CONF.set_override('enable_metadata_network', True)
         self._test_setup_helper(False)
 
-    def test_setup_device_exists(self):
+    def test_setup_device_is_ready(self):
         self._test_setup_helper(True)
 
     def test_create_dhcp_port_raise_conflict(self):

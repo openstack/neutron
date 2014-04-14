@@ -482,6 +482,17 @@ def device_exists(device_name, root_helper=None, namespace=None):
     return bool(address)
 
 
+def ensure_device_is_ready(device_name, root_helper=None, namespace=None):
+    dev = IPDevice(device_name, root_helper, namespace)
+    try:
+        # Ensure the device is up, even if it is already up. If the device
+        # doesn't exist, a RuntimeError will be raised.
+        dev.link.set_up()
+    except RuntimeError:
+        return False
+    return True
+
+
 def iproute_arg_supported(command, arg, root_helper=None):
     command += ['help']
     stdout, stderr = utils.execute(command, root_helper=root_helper,
