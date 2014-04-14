@@ -44,6 +44,9 @@ LVM_FLAT = ovs_neutron_agent.LocalVLANMapping(
     LV_ID, 'flat', 'net1', LS_ID, VIF_PORTS)
 LVM_VLAN = ovs_neutron_agent.LocalVLANMapping(
     LV_ID, 'vlan', 'net1', LS_ID, VIF_PORTS)
+FIXED_IPS = [{'subnet_id': 'my-subnet-uuid',
+              'ip_address': '1.1.1.1'}]
+VM_DEVICE_OWNER = "compute:None"
 
 TUN_OFPORTS = {p_const.TYPE_GRE: {'ip1': '11', 'ip2': '12'}}
 
@@ -199,9 +202,9 @@ class TunnelTest(base.BaseTestCase):
         self.mock_tun_bridge_expected += [
             mock.call.remove_all_flows(),
             mock.call.add_flow(priority=1,
-                               in_port=self.INT_OFPORT,
                                actions="resubmit(,%s)" %
-                               constants.PATCH_LV_TO_TUN),
+                               constants.PATCH_LV_TO_TUN,
+                               in_port=self.INT_OFPORT),
             mock.call.add_flow(priority=0, actions="drop"),
             mock.call.add_flow(priority=0, table=constants.PATCH_LV_TO_TUN,
                                dl_dst=UCAST_MAC,
@@ -450,7 +453,9 @@ class TunnelTest(base.BaseTestCase):
 
         a = self._build_agent()
         a.local_vlan_map[NET_UUID] = LVM
-        a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID, False)
+        a.local_dvr_map = {}
+        a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID,
+                     FIXED_IPS, VM_DEVICE_OWNER, False)
         self._verify_mock_calls()
 
     def test_port_unbound(self):
@@ -486,7 +491,7 @@ class TunnelTest(base.BaseTestCase):
             mock.call.add_tunnel_port('gre-1', '10.0.10.1', '10.0.0.1',
                                       'gre', 4789, True),
             mock.call.add_flow(priority=1, in_port=tunnel_port,
-                               actions='resubmit(,2)')
+                               actions='resubmit(,3)')
         ]
 
         a = self._build_agent()

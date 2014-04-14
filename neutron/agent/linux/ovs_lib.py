@@ -220,10 +220,22 @@ class OVSBridge(BaseOVS):
         return retval
 
     def defer_apply_on(self):
+        # TODO(vivek): when defer_apply_on is used, DVR
+        # flows are only getting partially configured when
+        # run concurrently with l2-pop ON.
+        # Will need make ovs_lib flow API context sensitive
+        # and then use the same across this file, which will
+        # address the race issue here.
         LOG.debug(_('defer_apply_on'))
         self.defer_apply_flows = True
 
     def defer_apply_off(self):
+        # TODO(vivek): when defer_apply_off is used, DVR
+        # flows are only getting partially configured when
+        # run concurrently with l2-pop ON.
+        # Will need make ovs_lib flow API context sensitive
+        # and then use the same across this file, which will
+        # address the race issue here.
         LOG.debug(_('defer_apply_off'))
         # Note(ethuleau): stash flows and disable deferred mode. Then apply
         # flows from the stashed reference to be sure to not purge flows that

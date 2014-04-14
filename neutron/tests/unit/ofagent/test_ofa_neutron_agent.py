@@ -790,11 +790,12 @@ class TestOFANeutronAgent(OFAAgentTestCase):
                         ofpp.OFPActionSetField(vlan_vid=1 |
                                                ofp.OFPVID_PRESENT),
                     ]),
-                ofpp.OFPInstructionGotoTable(table_id=10),
+                ofpp.OFPInstructionGotoTable(
+                    table_id=constants.LEARN_FROM_TUN),
             ],
             match=ofpp.OFPMatch(tunnel_id=3),
             priority=1,
-            table_id=2)
+            table_id=constants.TUN_TABLE['gre'])
         sendmsg.assert_has_calls([mock.call(expected_msg)])
 
     def test__provision_local_vlan_outbound(self):
