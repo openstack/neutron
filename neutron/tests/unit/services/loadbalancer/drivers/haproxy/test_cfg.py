@@ -178,7 +178,15 @@ class TestHaproxyCfg(base.BaseTestCase):
         self.assertEqual(cfg._get_session_persistence(config),
                          ['stick-table type ip size 10k', 'stick on src'])
 
+        config = {'vip': {'session_persistence': {'type': 'HTTP_COOKIE'}},
+                  'members': []}
+        self.assertEqual([], cfg._get_session_persistence(config))
+
         config = {'vip': {'session_persistence': {'type': 'HTTP_COOKIE'}}}
+        self.assertEqual([], cfg._get_session_persistence(config))
+
+        config = {'vip': {'session_persistence': {'type': 'HTTP_COOKIE'}},
+                  'members': [{'id': 'member1_id'}]}
         self.assertEqual(cfg._get_session_persistence(config),
                          ['cookie SRV insert indirect nocache'])
 
