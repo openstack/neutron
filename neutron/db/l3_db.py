@@ -21,8 +21,10 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
+from neutron.common import utils
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron import manager
 from neutron.openstack.common import log as logging
@@ -135,10 +137,19 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
     def update_router(self, context, id, router):
         r = router['router']
         has_gw_info = False
+        gw_info = None
         if EXTERNAL_GW_INFO in r:
             has_gw_info = True
             gw_info = r[EXTERNAL_GW_INFO]
             del r[EXTERNAL_GW_INFO]
+        # check whether router needs and can be rescheduled to the proper
+        # l3 agent (associated with given external network);
+        # do check before update in DB as an exception will be raised
+        # in case no proper l3 agent found
+        candidates = None
+        if has_gw_info:
+            candidates = self._check_router_needs_rescheduling(
+                context, id, gw_info)
         with context.session.begin(subtransactions=True):
             if has_gw_info:
                 self._update_router_gw_info(context, id, gw_info)
@@ -146,9 +157,78 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             # Ensure we actually have something to update
             if r.keys():
                 router_db.update(r)
+        if candidates:
+            l3_plugin = manager.NeutronManager.get_service_plugins().get(
+                constants.L3_ROUTER_NAT)
+            l3_plugin.reschedule_router(context, id, candidates)
+
         self.l3_rpc_notifier.routers_updated(
             context, [router_db['id']])
         return self._make_router_dict(router_db)
+
+    def _check_router_needs_rescheduling(self, context, router_id, gw_info):
+        """Checks whether router's l3 agent can handle the given network
+
+        When external_network_bridge is set, each L3 agent can be associated
+        with at most one external network. If router's new external gateway
+        is on other network then the router needs to be rescheduled to the
+        proper l3 agent.
+        If external_network_bridge is not set then the agent
+        can support multiple external networks and rescheduling is not needed
+
+        :return: list of candidate agents if rescheduling needed,
+        None otherwise; raises exception if there is no eligible l3 agent
+        associated with target external network
+        """
+        # TODO(obondarev): rethink placement of this func as l3 db manager is
+        # not really a proper place for agent scheduling stuff
+        network_id = gw_info.get('network_id') if gw_info else None
+        if not network_id:
+            return
+
+        nets = self._core_plugin.get_networks(
+            context, {external_net.EXTERNAL: [True]})
+        # nothing to do if there is only one external network
+        if len(nets) <= 1:
+            return
+
+        # first get plugin supporting l3 agent scheduling
+        # (either l3 service plugin or core_plugin)
+        l3_plugin = manager.NeutronManager.get_service_plugins().get(
+            constants.L3_ROUTER_NAT)
+        if (not utils.is_extension_supported(
+                l3_plugin,
+                l3_constants.L3_AGENT_SCHEDULER_EXT_ALIAS) or
+            l3_plugin.router_scheduler is None):
+            # that might mean that we are dealing with non-agent-based
+            # implementation of l3 services
+            return
+
+        cur_agents = l3_plugin.list_l3_agents_hosting_router(
+            context, router_id)['agents']
+        for agent in cur_agents:
+            ext_net_id = agent['configurations'].get(
+                'gateway_external_network_id')
+            ext_bridge = agent['configurations'].get(
+                'external_network_bridge', 'br-ex')
+            if (ext_net_id == network_id or
+                    (not ext_net_id and not ext_bridge)):
+                return
+
+        # otherwise find l3 agent with matching gateway_external_network_id
+        active_agents = l3_plugin.get_l3_agents(context, active=True)
+        router = {
+            'id': router_id,
+            'external_gateway_info': {'network_id': network_id}
+        }
+        candidates = l3_plugin.get_l3_agent_candidates(
+            router, active_agents)
+        if not candidates:
+            msg = (_('No eligible l3 agent associated with external network '
+                     '%s found') % network_id)
+            raise n_exc.BadRequest(resource='router', msg=msg)
+
+        return candidates
 
     def _create_router_gw_port(self, context, router, network_id):
         # Port has no 'tenant-id', as it is hidden from user

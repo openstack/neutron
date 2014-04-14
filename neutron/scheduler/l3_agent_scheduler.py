@@ -36,7 +36,7 @@ LOG = logging.getLogger(__name__)
 class L3Scheduler(object):
 
     @abc.abstractmethod
-    def schedule(self, plugin, context, router_id):
+    def schedule(self, plugin, context, router_id, candidates=None):
         """Schedule the router to an active L3 agent.
 
         Schedule the router only if it is not already scheduled.
@@ -161,10 +161,11 @@ class L3Scheduler(object):
 class ChanceScheduler(L3Scheduler):
     """Randomly allocate an L3 agent for a router."""
 
-    def schedule(self, plugin, context, router_id):
+    def schedule(self, plugin, context, router_id, candidates=None):
         with context.session.begin(subtransactions=True):
             sync_router = plugin.get_router(context, router_id)
-            candidates = self.get_candidates(plugin, context, sync_router)
+            candidates = candidates or self.get_candidates(
+                plugin, context, sync_router)
             if not candidates:
                 return
 
@@ -176,10 +177,11 @@ class ChanceScheduler(L3Scheduler):
 class LeastRoutersScheduler(L3Scheduler):
     """Allocate to an L3 agent with the least number of routers bound."""
 
-    def schedule(self, plugin, context, router_id):
+    def schedule(self, plugin, context, router_id, candidates=None):
         with context.session.begin(subtransactions=True):
             sync_router = plugin.get_router(context, router_id)
-            candidates = self.get_candidates(plugin, context, sync_router)
+            candidates = candidates or self.get_candidates(
+                plugin, context, sync_router)
             if not candidates:
                 return
 
