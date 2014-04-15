@@ -1108,6 +1108,15 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             for rt in s['host_routes']:
                 self._validate_host_route(rt, ip_ver)
 
+        if ip_ver == 4:
+            if attributes.is_attr_set(s.get('ipv6_ra_mode')):
+                raise n_exc.InvalidInput(
+                    error_message=(_("ipv6_ra_mode is not valid when "
+                                     "ip_version is 4")))
+            if attributes.is_attr_set(s.get('ipv6_address_mode')):
+                raise n_exc.InvalidInput(
+                    error_message=(_("ipv6_address_mode is not valid when "
+                                     "ip_version is 4")))
         if ip_ver == 6:
             self._validate_ipv6_attributes(s, cur_subnet)
 

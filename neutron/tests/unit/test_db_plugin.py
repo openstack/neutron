@@ -3050,6 +3050,25 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                      ipv6_ra_mode=mode,
                                      ipv6_address_mode=None)
 
+    def test_create_subnet_ipv6_ra_mode_ip_version_4(self):
+        cidr = '10.0.2.0/24'
+        with testlib_api.ExpectedException(
+            webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(cidr=cidr, ip_version=4,
+                                     ipv6_ra_mode=constants.DHCPV6_STATEFUL)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
+
+    def test_create_subnet_ipv6_address_mode_ip_version_4(self):
+        cidr = '10.0.2.0/24'
+        with testlib_api.ExpectedException(
+            webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(
+                cidr=cidr, ip_version=4,
+                ipv6_address_mode=constants.DHCPV6_STATEFUL)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
+
     def test_update_subnet_no_gateway(self):
         with self.subnet() as subnet:
             data = {'subnet': {'gateway_ip': '11.0.0.1'}}
@@ -3257,6 +3276,28 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             res = req.get_response(self.api)
             self.assertEqual(res.status_int,
                              webob.exc.HTTPClientError.code)
+
+    def test_update_subnet_ipv6_ra_mode_ip_version_4(self):
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                data = {'subnet': {'ipv6_ra_mode':
+                                   constants.DHCPV6_STATEFUL}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
+
+    def test_update_subnet_ipv6_address_mode_ip_version_4(self):
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                data = {'subnet': {'ipv6_address_mode':
+                                   constants.DHCPV6_STATEFUL}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
 
     def test_show_subnet(self):
         with self.network() as network:
