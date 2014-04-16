@@ -65,6 +65,7 @@ down_revision = None
 from alembic import op
 import sqlalchemy as sa
 
+from neutron.db import migration
 from neutron.db.migration.alembic_migrations import common_ext_ops
 # NOTE: This is a special migration that creates a Folsom compatible database.
 
@@ -73,10 +74,10 @@ def upgrade(active_plugins=None, options=None):
     # general model
     upgrade_base()
 
-    if set(active_plugins) & set(L3_CAPABLE):
+    if migration.should_run(active_plugins, L3_CAPABLE):
         common_ext_ops.upgrade_l3()
 
-    if set(active_plugins) & set(FOLSOM_QUOTA):
+    if migration.should_run(active_plugins, FOLSOM_QUOTA):
         common_ext_ops.upgrade_quota(options)
 
     if PLUGINS['lbr'] in active_plugins:
@@ -477,10 +478,10 @@ def downgrade(active_plugins=None, options=None):
         downgrade_brocade()
         downgrade_linuxbridge()
 
-    if set(active_plugins) & set(FOLSOM_QUOTA):
+    if migration.should_run(active_plugins, FOLSOM_QUOTA):
         common_ext_ops.downgrade_quota(options)
 
-    if set(active_plugins) & set(L3_CAPABLE):
+    if migration.should_run(active_plugins, L3_CAPABLE):
         common_ext_ops.downgrade_l3()
 
     downgrade_base()
