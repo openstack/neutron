@@ -935,9 +935,13 @@ class DBInterface(object):
                 return self._db_cache['q_subnet_maps'][id]
                 #raise KeyError
             except KeyError:
+                pass
+            try:
                 subnet_key = self._vnc_lib.kv_retrieve(id)
                 self._db_cache['q_subnet_maps'][id] = subnet_key
                 return subnet_key
+            except NoIdError:
+                raise exceptions.SubnetNotFound(subnet_id=id)
         if key:
             try:
                 return self._db_cache['q_subnet_maps'][key]
