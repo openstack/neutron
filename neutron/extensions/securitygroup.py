@@ -164,7 +164,7 @@ def convert_ip_prefix_to_cidr(ip_prefix):
     try:
         cidr = netaddr.IPNetwork(ip_prefix)
         return str(cidr)
-    except (TypeError, netaddr.AddrFormatError):
+    except (ValueError, TypeError, netaddr.AddrFormatError):
         raise qexception.InvalidCIDR(input=ip_prefix)
 
 
