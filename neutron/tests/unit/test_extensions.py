@@ -15,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+
 import mock
 import routes
 import webob
@@ -55,6 +57,47 @@ class FakePluginWithExtension(db_base_plugin_v2.NeutronDbPluginV2):
 
     def method_to_support_foxnsox_extension(self, context):
         self._log("method_to_support_foxnsox_extension", context)
+
+
+class PluginInterfaceTest(base.BaseTestCase):
+    def test_issubclass_hook(self):
+        class A(object):
+            def f(self):
+                pass
+
+        class B(extensions.PluginInterface):
+            @abc.abstractmethod
+            def f(self):
+                pass
+
+        self.assertTrue(issubclass(A, B))
+
+    def test_issubclass_hook_class_without_abstract_methods(self):
+        class A(object):
+            def f(self):
+                pass
+
+        class B(extensions.PluginInterface):
+            def f(self):
+                pass
+
+        self.assertFalse(issubclass(A, B))
+
+    def test_issubclass_hook_not_all_methods_implemented(self):
+        class A(object):
+            def f(self):
+                pass
+
+        class B(extensions.PluginInterface):
+            @abc.abstractmethod
+            def f(self):
+                pass
+
+            @abc.abstractmethod
+            def g(self):
+                pass
+
+        self.assertFalse(issubclass(A, B))
 
 
 class ResourceExtensionTest(base.BaseTestCase):
