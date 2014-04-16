@@ -122,3 +122,17 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                                         neutron_port_id=ep['neutron_port_id'])
             context.session.add(ep_db)
         return self._make_endpoint_dict(ep_db)
+
+    @log.log
+    def create_endpoint_group(self, context, endpoint_group):
+        epg = endpoint_group['endpoint_group']
+        tenant_id = self._get_tenant_id_for_create(context, epg)
+        with context.session.begin(subtransactions=True):
+            epg_db = EndpointGroupNetworkBinding(
+                id=uuidutils.generate_uuid(),
+                tenant_id=tenant_id,
+                name=epg['name'],
+                description=epg['description'],
+                neutron_network_id=epg['neutron_network_id'])
+            context.session.add(epg_db)
+        return self._make_endpoint_group_dict(epg_db)

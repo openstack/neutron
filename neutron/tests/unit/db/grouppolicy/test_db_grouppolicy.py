@@ -47,6 +47,12 @@ class GroupPolicyTestMixin(object):
 
         return attrs
 
+    def _get_test_endpoint_group_attrs(self, name='epg1'):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id}
+
+        return attrs
+
     def _create_endpoint(self, fmt, name, description,
                          expected_res_status=None, **kwargs):
         data = {'endpoint': {'name': name,
@@ -59,6 +65,19 @@ class GroupPolicyTestMixin(object):
             self.assertEqual(ep_res.status_int, expected_res_status)
 
         return ep_res
+
+    def _create_endpoint_group(self, fmt, name, description,
+                               expected_res_status=None, **kwargs):
+        data = {'endpoint_group': {'name': name,
+                                   'description': description,
+                                   'tenant_id': self._tenant_id}}
+
+        epg_req = self.new_create_request('endpoint_groups', data, fmt)
+        epg_res = epg_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(epg_res.status_int, expected_res_status)
+
+        return epg_res
 
     @contextlib.contextmanager
     def endpoint(self, fmt=None, name='ep1', description="",
@@ -75,6 +94,22 @@ class GroupPolicyTestMixin(object):
         finally:
             if not no_delete:
                 self._delete('endpoints', ep['endpoint']['id'])
+
+    @contextlib.contextmanager
+    def endpoint_group(self, fmt=None, name='ep1', description="",
+                       no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        res = self._create_endpoint_group(fmt, name, description, **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        epg = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield epg
+        finally:
+            if not no_delete:
+                self._delete('endpoint_groups', epg['endpoint_group']['id'])
 
 
 class GroupPolicyDbTestCase(GroupPolicyTestMixin,
@@ -110,6 +145,14 @@ class TestGroupPolicy(GroupPolicyDbTestCase):
         with self.endpoint(name=name) as ep:
             for k, v in attrs.iteritems():
                 self.assertEqual(ep['endpoint'][k], v)
+
+    def test_create_endpoint_group(self, **kwargs):
+        name = "epg1"
+        attrs = self._get_test_endpoint_group_attrs(name)
+
+        with self.endpoint_group(name=name) as epg:
+            for k, v in attrs.iteritems():
+                self.assertEqual(epg['endpoint_group'][k], v)
 
 
 # TODO(Sumit): XML tests
