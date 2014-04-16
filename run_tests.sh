@@ -130,6 +130,12 @@ function run_tests {
   set +e
   testrargs=`echo "$testrargs" | sed -e's/^\s*\(.*\)\s*$/\1/'`
   TESTRTESTS="$TESTRTESTS --testr-args='--subunit $testropts $testrargs'"
+  OS_TEST_PATH=`echo $testrargs|grep -o 'neutron\.tests[^[:space:]:]*\+'|tr . /`
+  if [ -d "$OS_TEST_PATH" ]; then
+      wrapper="OS_TEST_PATH=$OS_TEST_PATH $wrapper"
+  elif [ -d "$(dirname $OS_TEST_PATH)" ]; then
+      wrapper="OS_TEST_PATH=$(dirname $OS_TEST_PATH) $wrapper"
+  fi
   echo "Running \`${wrapper} $TESTRTESTS\`"
   bash -c "${wrapper} $TESTRTESTS | ${wrapper} subunit2pyunit"
   RESULT=$?
