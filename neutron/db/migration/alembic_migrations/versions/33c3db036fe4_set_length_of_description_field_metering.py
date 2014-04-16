@@ -41,6 +41,12 @@ def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
         return
 
+    op.execute("CREATE TABLE IF NOT EXISTS meteringlabels( "
+               "tenant_id VARCHAR(255) NULL, "
+               "id VARCHAR(36) PRIMARY KEY NOT NULL, "
+               "name VARCHAR(255) NULL, "
+               "description VARCHAR(255) NULL)")
+
     op.alter_column('meteringlabels', 'description', type_=sa.String(1024),
                     existing_nullable=True)
 
