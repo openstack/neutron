@@ -19,20 +19,45 @@ from oslo.config import cfg
 
 
 meta_plugin_opts = [
-    cfg.StrOpt('plugin_list', default='',
-               help=_("List of plugins to load")),
-    cfg.StrOpt('l3_plugin_list', default='',
-               help=_("List of L3 plugins to load")),
-    cfg.StrOpt('default_flavor', default='',
-               help=_("Default flavor to use")),
-    cfg.StrOpt('default_l3_flavor', default='',
-               help=_("Default L3 flavor to use")),
-    cfg.StrOpt('supported_extension_aliases', default='',
-               help=_("Supported extension aliases")),
-    cfg.StrOpt('extension_map', default='',
-               help=_("A list of extensions, per plugin, to load.")),
-    cfg.StrOpt('rpc_flavor', default='',
-               help=_("Flavor of which plugin handles RPC")),
+    cfg.StrOpt(
+        'plugin_list',
+        default='',
+        help=_("Comma separated list of flavor:neutron_plugin for "
+               "plugins to load. Extension method is searched in the "
+               "list order and the first one is used.")),
+    cfg.StrOpt(
+        'l3_plugin_list',
+        default='',
+        help=_("Comma separated list of flavor:neutron_plugin for L3 "
+               "service plugins to load. This is intended for specifying "
+               "L2 plugins which support L3 functions. If you use a router "
+               "service plugin, set this blank.")),
+    cfg.StrOpt(
+        'default_flavor',
+        default='',
+        help=_("Default flavor to use, when flavor:network is not "
+               "specified at network creation.")),
+    cfg.StrOpt(
+        'default_l3_flavor',
+        default='',
+        help=_("Default L3 flavor to use, when flavor:router is not "
+               "specified at router creation. Ignored if 'l3_plugin_list' "
+               "is blank.")),
+    cfg.StrOpt(
+        'supported_extension_aliases',
+        default='',
+        help=_("Comma separated list of supported extension aliases.")),
+    cfg.StrOpt(
+        'extension_map',
+        default='',
+        help=_("Comma separated list of method:flavor to select specific "
+               "plugin for a method. This has priority over method search "
+               "order based on 'plugin_list'.")),
+    cfg.StrOpt(
+        'rpc_flavor',
+        default='',
+        help=_("Specifies flavor for plugin to handle 'q-plugin' RPC "
+               "requests.")),
 ]
 
 proxy_plugin_opts = [
