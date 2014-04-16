@@ -374,6 +374,21 @@ class TestHyperVUtilsV2(base.BaseTestCase):
     @mock.patch('neutron.plugins.hyperv.agent.utilsv2.HyperVUtilsV2'
                 '._remove_virt_feature')
     @mock.patch('neutron.plugins.hyperv.agent.utilsv2.HyperVUtilsV2'
+                '._bind_security_rule')
+    def test_create_default_reject_all_rules_already_added(self, mock_bind,
+                                                           mock_remove):
+        (m_port, m_acl) = self._setup_security_rule_test()
+        m_acl.Action = self._utils._ACL_ACTION_DENY
+        m_port.associators.return_value = [
+            m_acl] * self._utils._REJECT_ACLS_COUNT
+        self._utils.create_default_reject_all_rules(self._FAKE_PORT_NAME)
+
+        self.assertFalse(self._utils._remove_virt_feature.called)
+        self.assertFalse(self._utils._bind_security_rule.called)
+
+    @mock.patch('neutron.plugins.hyperv.agent.utilsv2.HyperVUtilsV2'
+                '._remove_virt_feature')
+    @mock.patch('neutron.plugins.hyperv.agent.utilsv2.HyperVUtilsV2'
                 '._add_virt_feature')
     @mock.patch('neutron.plugins.hyperv.agent.utilsv2.HyperVUtilsV2'
                 '._create_security_acl')
@@ -396,6 +411,14 @@ class TestHyperVUtilsV2(base.BaseTestCase):
             self._FAKE_PORT_NAME, self._FAKE_ACL_DIR, self._FAKE_ACL_TYPE,
             self._FAKE_LOCAL_PORT, self._FAKE_PROTOCOL, self._FAKE_REMOTE_ADDR)
         self._utils._remove_virt_feature.assert_called_once_with(mock_acl)
+
+    @mock.patch('neutron.plugins.hyperv.agent.utilsv2.HyperVUtilsV2'
+                '._remove_multiple_virt_features')
+    def test_remove_all_security_rules(self, mock_remove_feature):
+        mock_acl = self._setup_security_rule_test()[1]
+        self._utils.remove_all_security_rules(self._FAKE_PORT_NAME)
+        self._utils._remove_multiple_virt_features.assert_called_once_with(
+            [mock_acl])
 
     def _setup_security_rule_test(self):
         mock_port = mock.MagicMock()
