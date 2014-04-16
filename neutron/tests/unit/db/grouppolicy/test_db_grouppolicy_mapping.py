@@ -40,6 +40,8 @@ class GroupPolicyMappingTestExtensionManager(object):
     def get_resources(self):
         attr_map = gpolicy.RESOURCE_ATTRIBUTE_MAP
         attr_map['endpoints'].update(gpm.EXTENDED_ATTRIBUTES_2_0['endpoints'])
+        attr_map['endpoint_groups'].update(
+            gpm.EXTENDED_ATTRIBUTES_2_0['endpoint_groups'])
         return gpolicy.Group_policy.get_resources()
 
     def get_actions(self):
@@ -62,6 +64,14 @@ class GroupPolicyMappingTestMixin(object):
 
         return attrs
 
+    def _get_test_endpoint_group_attrs(self, name='epg1',
+                                       neutron_network_id=None):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id,
+                 'neutron_network_id': neutron_network_id}
+
+        return attrs
+
     def _create_endpoint(self, fmt, name, description, neutron_port_id,
                          expected_res_status=None, **kwargs):
         data = {'endpoint': {'name': name,
@@ -75,6 +85,21 @@ class GroupPolicyMappingTestMixin(object):
             self.assertEqual(ep_res.status_int, expected_res_status)
 
         return ep_res
+
+    def _create_endpoint_group(self, fmt, name, description,
+                               neutron_network_id, expected_res_status=None,
+                               **kwargs):
+        data = {'endpoint_group': {'name': name,
+                                   'description': description,
+                                   'tenant_id': self._tenant_id,
+                                   'neutron_network_id': neutron_network_id}}
+
+        epg_req = self.new_create_request('endpoint_groups', data, fmt)
+        epg_res = epg_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(epg_res.status_int, expected_res_status)
+
+        return epg_res
 
     @contextlib.contextmanager
     def endpoint(self, fmt=None, name='ep1', description="",
@@ -92,6 +117,24 @@ class GroupPolicyMappingTestMixin(object):
         finally:
             if not no_delete:
                 self._delete('endpoints', ep['endpoint']['id'])
+
+    @contextlib.contextmanager
+    def endpoint_group(self, fmt=None, name='epg1', description="",
+                       neutron_network_id=None, no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        res = self._create_endpoint_group(fmt, name, description,
+                                          neutron_network_id,
+                                          **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        epg = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield epg
+        finally:
+            if not no_delete:
+                self._delete('endpoint_groups', epg['endpoint_group']['id'])
 
 
 class GroupPolicyMappingDbTestCase(GroupPolicyMappingTestMixin,
@@ -123,6 +166,15 @@ class TestGroupPolicy(GroupPolicyMappingDbTestCase):
         with self.endpoint(name=name) as ep:
             for k, v in attrs.iteritems():
                 self.assertEqual(ep['endpoint'][k], v)
+
+    def test_create_endpoint_group(self, **kwargs):
+        name = "epg1"
+        neutron_network_id = None
+        attrs = self._get_test_endpoint_group_attrs(name, neutron_network_id)
+
+        with self.endpoint_group(name=name) as epg:
+            for k, v in attrs.iteritems():
+                self.assertEqual(epg['endpoint_group'][k], v)
 
 
 # TODO(Sumit): XML tests

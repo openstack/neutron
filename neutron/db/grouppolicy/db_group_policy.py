@@ -216,9 +216,12 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                'name': epg['name'],
                'description': epg['description'],
                'parent_id': epg['parent_id'],
-               'endpoints': epg['endpoints'],
-               'provided_contract_scopes': epg['provided_contract_scopes'],
-               'consumed_contract_scopes': epg['consumed_contract_scopes']}
+               'endpoints': epg['endpoints']}
+               # REVISIT(rkukura): Need to extract these from
+               # epg['contract_scopes'].
+               #
+               # 'provided_contract_scopes': epg['provided_contract_scopes'],
+               # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
         return self._fields(res, fields)
 
     @log.log
