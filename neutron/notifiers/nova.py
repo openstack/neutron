@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from novaclient import exceptions as nova_exceptions
 import novaclient.v1_1.client as nclient
 from novaclient.v1_1.contrib import server_external_events
 from oslo.config import cfg
@@ -186,6 +187,9 @@ class Notifier(object):
         try:
             response = self.nclient.server_external_events.create(
                 batched_events)
+        except nova_exceptions.NotFound:
+            LOG.warning(_("Nova returned NotFound for event: %s"),
+                        batched_events)
         except Exception:
             LOG.exception(_("Failed to notify nova on events: %s"),
                           batched_events)
