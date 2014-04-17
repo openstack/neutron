@@ -15,6 +15,7 @@
 
 
 import mock
+from novaclient import exceptions as nova_exceptions
 from sqlalchemy.orm import attributes as sql_attr
 
 from oslo.config import cfg
@@ -217,6 +218,13 @@ class TestNovaNotify(base.BaseTestCase):
             self.nova_notifier.nclient.server_external_events,
                 'create') as nclient_create:
             nclient_create.return_value = 'i am a string!'
+            self.nova_notifier.send_events()
+
+    def test_nova_send_event_rasies_404(self):
+        with mock.patch.object(
+            self.nova_notifier.nclient.server_external_events,
+                'create') as nclient_create:
+            nclient_create.side_effect = nova_exceptions.NotFound
             self.nova_notifier.send_events()
 
     def test_nova_send_events_raises(self):
