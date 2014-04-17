@@ -425,7 +425,7 @@ class DBInterface(object):
 
             self._vnc_lib.virtual_network_delete(id=net_id)
         except RefsExistError:
-            raise exceptions.NetworkInUse()
+            raise exceptions.NetworkInUse(net_id=net_id)
 
         try:
             del self._db_cache['vnc_networks'][net_id]
