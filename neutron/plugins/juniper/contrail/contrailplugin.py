@@ -310,8 +310,8 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             for n_info in nets_info:
                 # verify transformation is conforming to api
                 n_dict = self._make_network_dict(n_info['q_api_data'], fields)
-
-                n_dict.update(n_info['q_extra_data'])
+                if not fields:
+                    n_dict.update(n_info['q_extra_data'])
                 nets_dicts.append(n_dict)
 
             LOG.debug(
@@ -357,11 +357,13 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             cfgdb = ContrailPlugin._get_user_cfgdb(context)
             subnet_info = cfgdb.subnet_read(subnet_id)
 
-            # verify transformation is conforming to api
-            subnet_dict = self._make_subnet_dict(subnet_info['q_api_data'],
-                                                 fields)
-
-            subnet_dict.update(subnet_info['q_extra_data'])
+            if not fields:
+                # should return all fields
+                subnet_dict = self._make_subnet_dict(subnet_info['q_api_data'], 
+                                                     fields)
+                subnet_dict.update(subnet_info['q_extra_data'])
+            else:
+                subnet_dict = subnet_info['q_api_data']
 
             LOG.debug("get_subnet(): " + pformat(subnet_dict))
             return self._fields(subnet_dict, fields)
@@ -410,8 +412,8 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             for sn_info in subnets_info:
                 # verify transformation is conforming to api
                 sn_dict = self._make_subnet_dict(sn_info['q_api_data'], fields)
-
-                sn_dict.update(sn_info['q_extra_data'])
+                if not fields:
+                    sn_dict.update(sn_info['q_extra_data'])
                 subnets_dicts.append(sn_dict)
 
             LOG.debug(
@@ -1027,7 +1029,8 @@ class ContrailPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                          p_info,
                                                          p_dict)
 
-                p_dict.update(p_info['q_extra_data'])
+                if not fields:
+                    p_dict.update(p_info['q_extra_data'])
                 ports_dicts.append(p_dict)
 
             LOG.debug(
