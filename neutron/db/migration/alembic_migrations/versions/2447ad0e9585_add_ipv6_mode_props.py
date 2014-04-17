@@ -47,14 +47,16 @@ def upgrade(active_plugins=None, options=None):
     # https://bitbucket.org/zzzeek/alembic/issue/89
     context = op.get_context()
     if context.bind.dialect.name == 'postgresql':
-        op.execute("CREATE TYPE ipv6_modes AS ENUM ('%s', '%s', '%s')"
+        op.execute("CREATE TYPE ipv6_ra_modes AS ENUM ('%s', '%s', '%s')"
+                   % ('slaac', 'dhcpv6-stateful', 'dhcpv6-stateless'))
+        op.execute("CREATE TYPE ipv6_address_modes AS ENUM ('%s', '%s', '%s')"
                    % ('slaac', 'dhcpv6-stateful', 'dhcpv6-stateless'))
     op.add_column('subnets',
                   sa.Column('ipv6_ra_mode',
                             sa.Enum('slaac',
                                     'dhcpv6-stateful',
                                     'dhcpv6-stateless',
-                                    name='ipv6_modes'),
+                                    name='ipv6_ra_modes'),
                             nullable=True)
                   )
     op.add_column('subnets',
@@ -62,7 +64,7 @@ def upgrade(active_plugins=None, options=None):
                             sa.Enum('slaac',
                                     'dhcpv6-stateful',
                                     'dhcpv6-stateless',
-                                    name='ipv6_modes'),
+                                    name='ipv6_address_modes'),
                             nullable=True)
                   )
 
@@ -75,4 +77,5 @@ def downgrade(active_plugins=None, options=None):
     op.drop_column('subnets', 'ipv6_address_mode')
     context = op.get_context()
     if context.bind.dialect.name == 'postgresql':
-        op.execute('DROP TYPE ipv6_modes')
+        op.execute('DROP TYPE ipv6_ra_modes')
+        op.execute('DROP TYPE ipv6_address_modes')
