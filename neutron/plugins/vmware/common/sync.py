@@ -15,14 +15,13 @@
 
 import random
 
-from sqlalchemy.orm import exc
-
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron import context
 from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import models_v2
+from neutron.extensions import l3
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.openstack.common import loopingcall
@@ -285,7 +284,7 @@ class NsxSynchronizer():
             try:
                 network = self._plugin._get_network(context,
                                                     neutron_network_data['id'])
-            except exc.NoResultFound:
+            except exceptions.NetworkNotFound:
                 pass
             else:
                 network.status = status
@@ -367,7 +366,7 @@ class NsxSynchronizer():
             try:
                 router = self._plugin._get_router(context,
                                                   neutron_router_data['id'])
-            except exc.NoResultFound:
+            except l3.RouterNotFound:
                 pass
             else:
                 router.status = status
@@ -462,7 +461,7 @@ class NsxSynchronizer():
             try:
                 port = self._plugin._get_port(context,
                                               neutron_port_data['id'])
-            except exc.NoResultFound:
+            except exceptions.PortNotFound:
                 pass
             else:
                 port.status = status
