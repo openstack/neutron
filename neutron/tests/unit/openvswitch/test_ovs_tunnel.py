@@ -291,24 +291,12 @@ class TunnelTest(base.BaseTestCase):
         self._verify_mock_calls()
 
     def test_construct_vxlan(self):
-        with mock.patch.object(ovs_lib, 'get_installed_ovs_klm_version',
-                               return_value="1.10") as klm_ver:
-            with mock.patch.object(ovs_lib, 'get_installed_ovs_usr_version',
-                                   return_value="1.10") as usr_ver:
-                with mock.patch.object(ovs_lib, 'get_installed_kernel_version',
-                                       return_value=(
-                                           constants.
-                                           MINIMUM_LINUX_KERNEL_OVS_VXLAN
-                                       )) as kernel_ver:
-                    ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
-                                                      self.TUN_BRIDGE,
-                                                      '10.0.0.1',
-                                                      self.NET_MAPPING,
-                                                      'sudo', 2, ['vxlan'],
-                                                      self.VETH_MTU)
-        klm_ver.assert_called_once_with()
-        kernel_ver.assert_called_once_with()
-        usr_ver.assert_called_once_with('sudo')
+        ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
+                                          self.TUN_BRIDGE,
+                                          '10.0.0.1',
+                                          self.NET_MAPPING,
+                                          'sudo', 2, ['vxlan'],
+                                          self.VETH_MTU)
         self._verify_mock_calls()
 
     def test_provision_local_vlan(self):

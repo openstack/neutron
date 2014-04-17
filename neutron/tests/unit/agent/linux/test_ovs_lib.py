@@ -22,7 +22,7 @@ from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import uuidutils
-from neutron.plugins.openvswitch.common import constants
+from neutron.plugins.openvswitch.common import constants as const
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -317,6 +317,15 @@ class OVS_Lib_Test(base.BaseTestCase):
         ofport = "6"
         self.execute.return_value = ofport
         self.assertEqual(self.br.get_port_ofport(pname), ofport)
+        self.execute.assert_called_once_with(
+            ["ovs-vsctl", self.TO, "get", "Interface", pname, "ofport"],
+            root_helper=self.root_helper)
+
+    def test_get_port_ofport_non_int(self):
+        pname = "tap99"
+        ofport = "[]"
+        self.execute.return_value = ofport
+        self.assertEqual(self.br.get_port_ofport(pname), const.INVALID_OFPORT)
         self.execute.assert_called_once_with(
             ["ovs-vsctl", self.TO, "get", "Interface", pname, "ofport"],
             root_helper=self.root_helper)
@@ -853,68 +862,6 @@ class OVS_Lib_Test(base.BaseTestCase):
         data = [[["map", external_ids], "tap99", 1]]
         self.assertIsNone(self._test_get_vif_port_by_id('tap99id', data,
                                                         "br-ext"))
-
-    def _check_ovs_vxlan_version(self, installed_usr_version,
-                                 installed_klm_version,
-                                 installed_kernel_version,
-                                 expecting_ok):
-        with mock.patch(
-                'neutron.agent.linux.ovs_lib.get_installed_ovs_klm_version'
-        ) as klm_cmd:
-            with mock.patch(
-                'neutron.agent.linux.ovs_lib.get_installed_ovs_usr_version'
-            ) as usr_cmd:
-                with mock.patch(
-                    'neutron.agent.linux.ovs_lib.get_installed_kernel_version'
-                ) as kernel_cmd:
-                    try:
-                        klm_cmd.return_value = installed_klm_version
-                        usr_cmd.return_value = installed_usr_version
-                        kernel_cmd.return_value = installed_kernel_version
-                        ovs_lib.check_ovs_vxlan_version(root_helper='sudo')
-                        version_ok = True
-                    except SystemError:
-                        version_ok = False
-                self.assertEqual(version_ok, expecting_ok)
-
-    def test_check_minimum_version(self):
-        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(min_vxlan_ver, min_vxlan_ver,
-                                      min_kernel_ver, expecting_ok=True)
-
-    def test_check_future_version(self):
-        install_ver = str(float(constants.MINIMUM_OVS_VXLAN_VERSION) + 0.01)
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(install_ver, install_ver,
-                                      min_kernel_ver, expecting_ok=True)
-
-    def test_check_fail_version(self):
-        install_ver = str(float(constants.MINIMUM_OVS_VXLAN_VERSION) - 0.01)
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(install_ver, install_ver,
-                                      min_kernel_ver, expecting_ok=False)
-
-    def test_check_fail_no_version(self):
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(None, None,
-                                      min_kernel_ver,
-                                      expecting_ok=False)
-
-    def test_check_fail_klm_version(self):
-        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
-        min_kernel_ver = OVS_LINUX_KERN_VERS_WITHOUT_VXLAN
-        install_ver = str(float(min_vxlan_ver) - 0.01)
-        self._check_ovs_vxlan_version(min_vxlan_ver,
-                                      install_ver,
-                                      min_kernel_ver,
-                                      expecting_ok=False)
-
-    def test_check_pass_kernel_version(self):
-        min_vxlan_ver = constants.MINIMUM_OVS_VXLAN_VERSION
-        min_kernel_ver = constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN
-        self._check_ovs_vxlan_version(min_vxlan_ver, min_vxlan_ver,
-                                      min_kernel_ver, expecting_ok=True)
 
     def test_ofctl_arg_supported(self):
         with mock.patch('neutron.common.utils.get_random_string') as utils:
