@@ -41,6 +41,8 @@ ofc_opts = [
                help=_("Driver to use.")),
     cfg.BoolOpt('enable_packet_filter', default=True,
                 help=_("Enable packet filter.")),
+    cfg.BoolOpt('support_packet_filter_on_ofc_router', default=True,
+                help=_("Support packet filter on OFC router interface.")),
     cfg.BoolOpt('use_ssl', default=False,
                 help=_("Use SSL to connect.")),
     cfg.StrOpt('key_file',

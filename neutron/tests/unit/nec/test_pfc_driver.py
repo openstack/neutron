@@ -18,6 +18,7 @@ import uuid
 
 import mock
 import netaddr
+from oslo.config import cfg
 
 from neutron.common import constants
 from neutron.openstack.common import uuidutils
@@ -369,24 +370,24 @@ class PFCFilterDriverTestMixin:
         t, n, p = self.get_ofc_item_random_params()
 
         filter_id = uuidutils.generate_uuid()
-        f = {'priority': 123, 'action': "ACCEPT"}
+        f = {'priority': 123, 'action': "ACCEPT",
+             'network_id': n}
         if filter_dict:
             f.update(filter_dict)
 
-        net_path = "/networks/%s" % n
         body = {'action': 'pass', 'priority': 123}
         if filter_post:
             body.update(filter_post)
 
         self.do_request.return_value = {'id': filter_id}
-        if apply_ports is not None:
-            ret = self.driver.create_filter(net_path, f, p,
-                                            apply_ports=apply_ports)
-        else:
-            ret = self.driver.create_filter(net_path, f, p)
+        with mock.patch('neutron.plugins.nec.db.api.get_active_ports_on_ofc',
+                        return_value=apply_ports) as active_ports:
+            ret = self.driver.create_filter(mock.sentinel.ctx, f)
         self.do_request.assert_called_once_with("POST", "/filters",
                                                 body=body)
         self.assertEqual(ret, '/filters/%s' % filter_id)
+        active_ports.assert_called_once_with(mock.sentinel.ctx, n,
+                                             filter_dict.get('in_port'))
 
     def test_create_filter_accept(self):
         self._test_create_filter(filter_dict={'action': 'ACCEPT'})
@@ -472,6 +473,29 @@ class PFCFilterDriverTestMixin:
         filter_post = {'apply_ports': [
             {'tenant': 'tenant-1', 'network': 'network-1', 'port': 'port-1'},
             {'tenant': 'tenant-2', 'network': 'network-2', 'port': 'port-2'}
+        ]}
+        self._test_create_filter(filter_dict={}, apply_ports=apply_ports,
+                                 filter_post=filter_post)
+
+    def test_create_filter_apply_ports_with_router_interface(self):
+        apply_ports = [
+            ('p1', '/tenants/tenant-1/networks/network-1/ports/port-1'),
+            ('p2', '/tenants/tenant-2/routers/router-3/interfaces/if-4')]
+        filter_post = {'apply_ports': [
+            {'tenant': 'tenant-1', 'network': 'network-1', 'port': 'port-1'},
+            {'tenant': 'tenant-2', 'router': 'router-3', 'interface': 'if-4'}
+        ]}
+        self._test_create_filter(filter_dict={}, apply_ports=apply_ports,
+                                 filter_post=filter_post)
+
+    def test_create_filter_apply_ports_no_router_interface_support(self):
+        cfg.CONF.set_override('support_packet_filter_on_ofc_router',
+                              False, 'OFC')
+        apply_ports = [
+            ('p1', '/tenants/tenant-1/networks/network-1/ports/port-1'),
+            ('p2', '/tenants/tenant-2/routers/router-3/interfaces/if-4')]
+        filter_post = {'apply_ports': [
+            {'tenant': 'tenant-1', 'network': 'network-1', 'port': 'port-1'},
         ]}
         self._test_create_filter(filter_dict={}, apply_ports=apply_ports,
                                  filter_post=filter_post)

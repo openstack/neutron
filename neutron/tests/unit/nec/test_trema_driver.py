@@ -18,6 +18,7 @@ import mock
 from six import moves
 
 from neutron.openstack.common import uuidutils
+from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.common import ofc_client
 from neutron.plugins.nec.db import models as nmodels
 from neutron.plugins.nec import drivers
@@ -246,7 +247,14 @@ class TremaFilterDriverTest(TremaDriverTestBase):
         if non_ofp_wildcards:
             body['wildcards'] = set(non_ofp_wildcards)
 
-        ret = self.driver.create_filter(net_path, f, p, f['id'])
+        ctx = mock.Mock()
+        ctx.session = mock.sentinel.session
+        with mock.patch('neutron.plugins.nec.db.api.get_portinfo',
+                        return_value=p) as get_portinfo:
+            with mock.patch('neutron.plugins.nec.db.api.get_ofc_id',
+                            return_value=net_path) as get_ofc_id:
+                ret = self.driver.create_filter(ctx, f, f['id'])
+
         # The content of 'body' is checked below.
         self.do_request.assert_called_once_with("POST", "/filters",
                                                 body=mock.ANY)
@@ -263,6 +271,10 @@ class TremaFilterDriverTest(TremaDriverTestBase):
             actual_body['wildcards'] = set(actual_body['wildcards'].split(','))
         self.assertEqual(body, actual_body)
 
+        get_ofc_id.assert_called_once_with(mock.sentinel.session,
+                                           'ofc_network', n)
+        get_portinfo.assert_called_once_with(mock.sentinel.session, p.id)
+
     def test_create_filter_accept(self):
         self._test_create_filter(filter_dict={'action': 'ACCEPT'})
 
@@ -278,7 +290,8 @@ class TremaFilterDriverTest(TremaDriverTestBase):
                                  filter_post={'action': 'DENY'})
 
     def test_create_filter_no_port(self):
-        self._test_create_filter(no_portinfo=True)
+        self.assertRaises(nexc.PortInfoNotFound,
+                          self._test_create_filter, no_portinfo=True)
 
     def test_create_filter_src_mac_wildcard(self):
         self._test_create_filter(filter_dict={'src_mac': ''},
