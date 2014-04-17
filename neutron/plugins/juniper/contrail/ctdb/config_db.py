@@ -2058,7 +2058,10 @@ class DBInterface(object):
                 if len(orig_subnets) != len(new_subnets):
                     # matched subnet to be deleted
                     ipam_ref['attr'].set_ipam_subnets(new_subnets)
-                    self._virtual_network_update(net_obj)
+                    try:
+                        self._virtual_network_update(net_obj)
+                    except RefsExistError:
+                        raise exceptions.SubnetInUse(subnet_id=subnet_id)
                     self._subnet_vnc_delete_mapping(subnet_id, subnet_key)
                     try:
                         del self._db_cache['q_subnets'][subnet_id]
