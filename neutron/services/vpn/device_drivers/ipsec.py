@@ -627,7 +627,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
     def update_downed_connections(self, process_id, new_status):
         """Update info to be reported, if connections just went down.
 
-        If there is no longer any information for a connection (because it
+        If there is no longer any information for a connection, because it
         has been removed (e.g. due to an admin down of VPN service or IPSec
         connection), but there was previous status information for the
         connection, mark the connection as down for reporting purposes.

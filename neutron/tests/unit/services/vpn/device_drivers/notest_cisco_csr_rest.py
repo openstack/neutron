@@ -19,7 +19,8 @@
 
 import random
 
-import httmock
+# TODO(pcm) Uncomment when httmock is added to test requirements.
+# import httmock
 import requests
 
 from neutron.openstack.common import log as logging
@@ -28,9 +29,9 @@ from neutron.services.vpn.device_drivers import (
 from neutron.tests import base
 from neutron.tests.unit.services.vpn.device_drivers import (
     cisco_csr_mock as csr_request)
-# TODO(pcm) Remove once httmock is available. In the meantime, use temp
-# copy of hhtmock source to run UT
-# from neutron.tests.unit.services.vpn.device_drivers import httmock
+# TODO(pcm) Remove once httmock is available. In the meantime, use
+# temporary local copy of httmock source to run UT
+from neutron.tests.unit.services.vpn.device_drivers import httmock
 
 
 LOG = logging.getLogger(__name__)
@@ -39,10 +40,7 @@ if True:
     logging.CONF.set_override('debug', True)
     logging.setup('neutron')
 
-if csr_request.FIXED_CSCum35484:
-    dummy_uuid = '1eb4ee6b-0870-45a0-b554-7b69096'
-else:
-    dummy_uuid = '1eb4ee6b-0870-45a0-b554-7b'
+dummy_policy_id = 'dummy-ipsec-policy-id-name'
 
 
 # Note: Helper functions to test reuse of IDs.
@@ -62,10 +60,10 @@ class TestCsrLoginRestApi(base.BaseTestCase):
 
     """Test logging into CSR to obtain token-id."""
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrLoginRestApi, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def test_get_token(self):
         """Obtain the token and its expiration time."""
@@ -102,10 +100,10 @@ class TestCsrGetRestApi(base.BaseTestCase):
 
     """Test CSR GET REST API."""
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrGetRestApi, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def test_valid_rest_gets(self):
         """Simple GET requests.
@@ -129,10 +127,10 @@ class TestCsrPostRestApi(base.BaseTestCase):
 
     """Test CSR POST REST API."""
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrPostRestApi, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def test_post_requests(self):
         """Simple POST requests (repeatable).
@@ -275,11 +273,11 @@ class TestCsrPutRestApi(base.BaseTestCase):
             if self.csr.status != requests.codes.NO_CONTENT:
                 self.fail("Unable to restore I/F Ge1 description after test")
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         """Prepare for PUT API tests."""
         super(TestCsrPutRestApi, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
         self._save_resources()
         self.addCleanup(self._restore_resources, 'stack', 'cisco')
 
@@ -357,10 +355,10 @@ class TestCsrDeleteRestApi(base.BaseTestCase):
 
     """Test CSR DELETE REST API."""
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrDeleteRestApi, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def _make_dummy_user(self):
         """Create a user that will be later deleted."""
@@ -409,10 +407,10 @@ class TestCsrRestApiFailures(base.BaseTestCase):
     the result, without any error handling.
     """
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=0.1):
         super(TestCsrRestApiFailures, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco', timeout=0.1)
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def test_request_for_non_existent_resource(self):
         """Negative test of non-existent resource on REST request."""
@@ -455,10 +453,10 @@ class TestCsrRestIkePolicyCreate(base.BaseTestCase):
 
     """Test IKE policy create REST requests."""
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestIkePolicyCreate, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def test_create_delete_ike_policy(self):
         """Create and then delete IKE policy."""
@@ -466,7 +464,7 @@ class TestCsrRestIkePolicyCreate(base.BaseTestCase):
                              csr_request.normal_get):
             policy_id = '2'
             policy_info = {u'priority-id': u'%s' % policy_id,
-                           u'encryption': u'aes',
+                           u'encryption': u'aes256',
                            u'hash': u'sha',
                            u'dhGroup': 5,
                            u'lifetime': 3600}
@@ -538,10 +536,10 @@ class TestCsrRestIPSecPolicyCreate(base.BaseTestCase):
 
     """Test IPSec policy create REST requests."""
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestIPSecPolicyCreate, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def test_create_delete_ipsec_policy(self):
         """Create and then delete IPSec policy."""
@@ -551,13 +549,13 @@ class TestCsrRestIPSecPolicyCreate(base.BaseTestCase):
             policy_info = {
                 u'policy-id': u'%s' % policy_id,
                 u'protection-suite': {
-                    u'esp-encryption': u'esp-aes',
+                    u'esp-encryption': u'esp-256-aes',
                     u'esp-authentication': u'esp-sha-hmac',
                     u'ah': u'ah-sha-hmac',
                 },
                 u'lifetime-sec': 120,
                 u'pfs': u'group5',
-                u'anti-replay-window-size': u'128'
+                u'anti-replay-window-size': u'disable'
             }
             location = self.csr.create_ipsec_policy(policy_info)
             self.assertEqual(requests.codes.CREATED, self.csr.status)
@@ -570,6 +568,8 @@ class TestCsrRestIPSecPolicyCreate(base.BaseTestCase):
                                u'lifetime-kb': 4608000,
                                u'idle-time': None}
             expected_policy.update(policy_info)
+            # CSR will respond with capitalized value
+            expected_policy[u'anti-replay-window-size'] = u'Disable'
             self.assertEqual(expected_policy, content)
         # Now delete and verify the IPSec policy is gone
         with httmock.HTTMock(csr_request.token, csr_request.delete,
@@ -609,19 +609,19 @@ class TestCsrRestIPSecPolicyCreate(base.BaseTestCase):
         with httmock.HTTMock(csr_request.token, csr_request.post,
                              csr_request.normal_get):
             policy_info = {
-                u'policy-id': u'%s' % dummy_uuid,
+                u'policy-id': u'%s' % dummy_policy_id,
                 u'protection-suite': {
-                    u'esp-encryption': u'esp-aes',
+                    u'esp-encryption': u'esp-256-aes',
                     u'esp-authentication': u'esp-sha-hmac',
                     u'ah': u'ah-sha-hmac',
                 },
                 u'lifetime-sec': 120,
                 u'pfs': u'group5',
-                u'anti-replay-window-size': u'128'
+                u'anti-replay-window-size': u'disable'
             }
             location = self.csr.create_ipsec_policy(policy_info)
             self.assertEqual(requests.codes.CREATED, self.csr.status)
-            self.assertIn('vpn-svc/ipsec/policies/%s' % dummy_uuid,
+            self.assertIn('vpn-svc/ipsec/policies/%s' % dummy_policy_id,
                           location)
             # Check the hard-coded items that get set as well...
             content = self.csr.get_request(location, full_url=True)
@@ -631,6 +631,8 @@ class TestCsrRestIPSecPolicyCreate(base.BaseTestCase):
                                u'lifetime-kb': 4608000,
                                u'idle-time': None}
             expected_policy.update(policy_info)
+            # CSR will respond with capitalized value
+            expected_policy[u'anti-replay-window-size'] = u'Disable'
             self.assertEqual(expected_policy, content)
 
     def test_create_ipsec_policy_without_ah(self):
@@ -680,15 +682,26 @@ class TestCsrRestIPSecPolicyCreate(base.BaseTestCase):
             self.csr.create_ipsec_policy(policy_info)
             self.assertEqual(requests.codes.BAD_REQUEST, self.csr.status)
 
+    def test_create_ipsec_policy_with_invalid_name(self):
+        """Failure test of creating IPSec policy with name too long."""
+        with httmock.HTTMock(csr_request.token, csr_request.post_bad_name,
+                             csr_request.get_defaults):
+            policy_id = 'policy-name-is-too-long-32-chars'
+            policy_info = {
+                u'policy-id': u'%s' % policy_id,
+            }
+            self.csr.create_ipsec_policy(policy_info)
+            self.assertEqual(requests.codes.BAD_REQUEST, self.csr.status)
+
 
 class TestCsrRestPreSharedKeyCreate(base.BaseTestCase):
 
     """Test Pre-shared key (PSK) create REST requests."""
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestPreSharedKeyCreate, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def test_create_delete_pre_shared_key(self):
         """Create and then delete a keyring entry for pre-shared key."""
@@ -777,10 +790,10 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
     with a real CSR (as we can't mock out these pre-conditions.
     """
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestIPSecConnectionCreate, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def _make_psk_for_test(self):
         psk_id = generate_pre_shared_key_id()
@@ -831,7 +844,7 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
                 },
                 u'lifetime-sec': 120,
                 u'pfs': u'group5',
-                u'anti-replay-window-size': u'64'
+                u'anti-replay-window-size': u'disable'
             }
             self.csr.create_ipsec_policy(policy_info)
             if self.csr.status != requests.codes.CREATED:
@@ -1136,16 +1149,35 @@ class TestCsrRestIkeKeepaliveCreate(base.BaseTestCase):
 
     """Test IKE keepalive REST requests.
 
-    This is a global configuration that will apply to all VPN tunnels and
-    is used to specify Dead Peer Detection information. Currently, the API
-    supports DELETE API, but a bug has been created to remove the API and
-    add an indicator of when the capability is disabled.
+    Note: On the Cisco CSR, the IKE keepalive for v1 is a global configuration
+    that applies to all VPN tunnels to specify Dead Peer Detection information.
+    As a result, this REST API is not used in the OpenStack device driver, and
+    the keepalive will default to zero (disabled).
     """
 
-    def setUp(self):
+    def _save_dpd_info(self):
+        with httmock.HTTMock(csr_request.token, csr_request.normal_get):
+            details = self.csr.get_request('vpn-svc/ike/keepalive')
+            if self.csr.status == requests.codes.OK:
+                self.dpd = details
+                self.addCleanup(self._restore_dpd_info)
+            elif self.csr.status != requests.codes.NOT_FOUND:
+                self.fail("Unable to save original DPD info")
+
+    def _restore_dpd_info(self):
+        with httmock.HTTMock(csr_request.token, csr_request.put):
+            payload = {'interval': self.dpd['interval'],
+                       'retry': self.dpd['retry']}
+            self.csr.put_request('vpn-svc/ike/keepalive', payload=payload)
+            if self.csr.status != requests.codes.NO_CONTENT:
+                self.fail("Unable to restore DPD info after test")
+
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestIkeKeepaliveCreate, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
+        self._save_dpd_info()
+        self.csr.token = None
 
     def test_configure_ike_keepalive(self):
         """Set IKE keep-alive (aka Dead Peer Detection) for the CSR."""
@@ -1164,18 +1196,9 @@ class TestCsrRestIkeKeepaliveCreate(base.BaseTestCase):
         """Disable IKE keep-alive (aka Dead Peer Detection) for the CSR."""
         with httmock.HTTMock(csr_request.token, csr_request.delete,
                              csr_request.put, csr_request.get_not_configured):
-            if csr_request.FIXED_CSCum10324:
-                # TODO(pcm) Is this how to disable?
-                keepalive_info = {'interval': 0, 'retry': 4}
-                self.csr.configure_ike_keepalive(keepalive_info)
-                self.assertEqual(requests.codes.NO_CONTENT, self.csr.status)
-            else:
-                self.csr.delete_request('vnc-svc/ike/keepalive')
-                self.assertIn(self.csr.status,
-                              (requests.codes.NO_CONTENT,
-                               requests.codes.NOT_FOUND))
-                self.csr.get_request('vpn-svc/ike/keepalive')
-                self.assertEqual(requests.codes.NOT_FOUND, self.csr.status)
+            keepalive_info = {'interval': 0, 'retry': 4}
+            self.csr.configure_ike_keepalive(keepalive_info)
+            self.assertEqual(requests.codes.NO_CONTENT, self.csr.status)
 
 
 class TestCsrRestStaticRoute(base.BaseTestCase):
@@ -1186,10 +1209,10 @@ class TestCsrRestStaticRoute(base.BaseTestCase):
     a route for each of the peer CIDRs specified for the VPN connection.
     """
 
-    def setUp(self):
+    def setUp(self, host='localhost', tunnel_ip='10.10.10.10', timeout=None):
         super(TestCsrRestStaticRoute, self).setUp()
-        self.csr = csr_client.CsrRestClient('localhost', '10.10.10.10',
-                                            'stack', 'cisco')
+        self.csr = csr_client.CsrRestClient(host, tunnel_ip, 'stack', 'cisco',
+                                            timeout)
 
     def test_create_delete_static_route(self):
         """Create and then delete a static route for the tunnel."""
