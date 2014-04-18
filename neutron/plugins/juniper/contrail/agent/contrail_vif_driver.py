@@ -56,7 +56,7 @@ class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
         return True
 
     def _instance_locate(self, instance_name):
-        """ locates the instance. Create the instance if not present"""
+        """ locates the instance."""
         fq_name = instance_name.split(':')
         try:
             vm_instance = self._client.virtual_machine_read(fq_name=fq_name)
@@ -83,9 +83,8 @@ class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
             LOG.debug(_("Invalid net_id : %s"), net_id)
             return
 
-        # get the instance name the port is attached to
-        instance_name = port_obj.parent_name
-        instance_obj = self._instance_locate(instance_name)
+        # get the instance object the port is attached to
+        instance_obj = self._instance_locate(port_obj.parent_name)
 
         if instance_obj is None:
             return
@@ -109,7 +108,7 @@ class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
              bridge=None, namespace=None, prefix=None):
         if not ip_lib.device_exists(device_name, self.root_helper, namespace):
             ip = ip_lib.IPWrapper(self.root_helper)
-            tap_name = device_name.replace(prefix or 'tap', 'tap')
+            tap_name = device_name.replace(prefix or 'veth', 'veth')
 
             # Create ns_dev in a namespace if one is configured.
             root_dev, ns_dev = ip.add_veth(tap_name,
@@ -132,7 +131,7 @@ class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
             LOG.warn(_("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
-        tap_name = device_name.replace(prefix or 'tap', 'tap')
+        tap_name = device_name.replace(prefix or 'veth', 'veth')
         if tap_name in self._port_dict:
             self._delete_port(self._port_dict[tap_name].port_id)
             del self._port_dict[tap_name]
