@@ -19,11 +19,11 @@ from oslo.config import cfg
 import webob
 
 from neutron.api import extensions
-from neutron.api.v2.attributes import convert_to_int
+from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import exceptions as n_exc
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import importutils
 from neutron import quota
 from neutron import wsgi
@@ -51,12 +51,12 @@ class QuotaSetsController(wsgi.Controller):
     def _update_attributes(self):
         for quota_resource in QUOTAS.resources.iterkeys():
             attr_dict = EXTENDED_ATTRIBUTES_2_0[RESOURCE_COLLECTION]
-            attr_dict[quota_resource] = {'allow_post': False,
-                                         'allow_put': True,
-                                         'convert_to': convert_to_int,
-                                         'validate': {'type:range':
-                                                      [-1, sys.maxsize]},
-                                         'is_visible': True}
+            attr_dict[quota_resource] = {
+                'allow_post': False,
+                'allow_put': True,
+                'convert_to': attributes.convert_to_int,
+                'validate': {'type:range': [-1, sys.maxsize]},
+                'is_visible': True}
         self._update_extended_attributes = False
 
     def _get_quotas(self, request, tenant_id):
@@ -138,7 +138,7 @@ class Quotasv2(extensions.ExtensionDescriptor):
     def get_resources(cls):
         """Returns Ext Resources."""
         controller = resource.Resource(
-            QuotaSetsController(NeutronManager.get_plugin()),
+            QuotaSetsController(manager.NeutronManager.get_plugin()),
             faults=base.FAULT_MAP)
         return [extensions.ResourceExtension(
             Quotasv2.get_alias(),

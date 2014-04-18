@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import abstractmethod
+import abc
 
 from oslo.config import cfg
 
@@ -196,52 +196,52 @@ class L3(extensions.ExtensionDescriptor):
 
 class RouterPluginBase(object):
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_router(self, context, router):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_router(self, context, id, router):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_router(self, context, id, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_router(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_routers(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def add_router_interface(self, context, router_id, interface_info):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def remove_router_interface(self, context, router_id, interface_info):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_floatingip(self, context, floatingip):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_floatingip(self, context, id, floatingip):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_floatingip(self, context, id, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_floatingip(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_floatingips(self, context, filters=None, fields=None,
                         sorts=None, limit=None, marker=None,
                         page_reverse=False):

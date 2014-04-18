@@ -26,7 +26,7 @@ from neutron.api.v2 import resource_helper
 from neutron.common import exceptions as qexception
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
-from neutron.services.service_base import ServicePluginBase
+from neutron.services import service_base
 
 
 LOG = logging.getLogger(__name__)
@@ -346,7 +346,7 @@ class Firewall(extensions.ExtensionDescriptor):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class FirewallPluginBase(ServicePluginBase):
+class FirewallPluginBase(service_base.ServicePluginBase):
 
     def get_plugin_name(self):
         return constants.FIREWALL
