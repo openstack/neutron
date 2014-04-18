@@ -421,7 +421,7 @@ class DBInterface(object):
             if net_obj and net_obj.get_floating_ip_pools():
                 fip_pools = net_obj.get_floating_ip_pools()
                 for fip_pool in fip_pools:
-                    self._floating_ip_pool_delete(id=fip_pool['uuid'])
+                    self._floating_ip_pool_delete(fip_pool_id=fip_pool['uuid'])
 
             self._vnc_lib.virtual_network_delete(id=net_id)
         except RefsExistError:
@@ -1814,7 +1814,10 @@ class DBInterface(object):
             fip_pool_obj = FloatingIpPool('floating-ip-pool', net_obj)
             self._floating_ip_pool_create(fip_pool_obj)
         if router_external and not net_obj.router_external:
-            self._vnc_lib.floating_ip_pool_delete(fq_name=net_obj.fq_name+['floating-ip-pool'])
+            fip_pools = net_obj.get_floating_ip_pools()
+            if fip_pools:
+                for fip_pool in fip_pools:
+                    self._floating_ip_pool_delete(fip_pool_id=fip_pool['uuid'])
         self._virtual_network_update(net_obj)
 
         ret_network_q = self._network_vnc_to_neutron(net_obj, net_repr='SHOW')
