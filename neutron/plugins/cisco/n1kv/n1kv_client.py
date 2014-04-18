@@ -309,7 +309,7 @@ class Client(object):
                 ip = netaddr.IPNetwork(subnet['cidr'])
                 netmask = str(ip.netmask)
                 network_address = str(ip.network)
-            except netaddr.AddrFormatError:
+            except (ValueError, netaddr.AddrFormatError):
                 msg = _("Invalid input for CIDR")
                 raise n_exc.InvalidInput(error_message=msg)
         else:

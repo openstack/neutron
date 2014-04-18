@@ -30,7 +30,7 @@ def get_ipv6_addr_by_EUI64(prefix, mac):
         eui64 = int(netaddr.EUI(mac).eui64())
         prefix = netaddr.IPNetwork(prefix)
         return netaddr.IPAddress(prefix.first + eui64 ^ (1 << 57))
-    except netaddr.AddrFormatError:
+    except (ValueError, netaddr.AddrFormatError):
         raise TypeError(_('Bad prefix or mac format for generating IPv6 '
                           'address by EUI-64: %(prefix)s, %(mac)s:')
                         % {'prefix': prefix, 'mac': mac})
