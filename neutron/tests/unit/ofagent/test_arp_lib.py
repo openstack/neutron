@@ -19,6 +19,7 @@ import contextlib
 import mock
 
 from neutron.openstack.common import importutils
+import neutron.plugins.ofagent.agent.metadata as meta
 from neutron.tests.unit.ofagent import ofa_test_base
 
 
@@ -38,7 +39,7 @@ class OFAAgentTestCase(ofa_test_base.OFAAgentTestBase):
         self.packet_mod = mock.Mock()
         self.proto_ethernet_mod = mock.Mock()
         self.proto_vlan_mod = mock.Mock()
-        self.proto_vlan_mod.vid = self.nets[0].net
+        self.proto_vlan_mod.vid = 999
         self.proto_arp_mod = mock.Mock()
         self.fake_get_protocol = mock.Mock(return_value=self.proto_vlan_mod)
         self.packet_mod.get_protocol = self.fake_get_protocol
@@ -67,7 +68,8 @@ class OFAAgentTestCase(ofa_test_base.OFAAgentTestBase):
         self.msg_data = 'test_message_data'
         self.msg.data = self.msg_data
         self.ev.msg = self.msg
-        self.msg.match = {'in_port': self.inport}
+        self.msg.match = {'in_port': self.inport,
+                          'metadata': meta.LOCAL | self.nets[0].net}
 
 
 class TestArpLib(OFAAgentTestCase):
@@ -81,6 +83,8 @@ class TestArpLib(OFAAgentTestCase):
         self._fake_get_protocol_ethernet = True
         self._fake_get_protocol_vlan = True
         self._fake_get_protocol_arp = True
+        self.br = mock.Mock(datapath=self.datapath)
+        self.arplib.set_bridge(self.br)
 
     def test__send_unknown_packet_no_buffer(self):
         in_port = 3
@@ -233,14 +237,14 @@ class TestArpLib(OFAAgentTestCase):
             else:
                 return
 
-    def test_packet_in_handler(self):
+    def _test_packet_in_handler(self):
         self.arplib._arp_tbl = {
             self.nets[0].net: {self.nets[0].ip: self.nets[0].mac}}
         with contextlib.nested(
             mock.patch.object(self.arplib, '_respond_arp',
                               return_value=True),
-            mock.patch.object(self.arplib,
-                              '_add_flow_to_avoid_unknown_packet'),
+            mock.patch.object(self.br,
+                              'arp_passthrough'),
             mock.patch.object(self.arplib,
                               '_send_unknown_packet'),
         ) as (res_arp_fn, add_flow_fn, send_unknown_pk_fn):
@@ -250,16 +254,17 @@ class TestArpLib(OFAAgentTestCase):
         res_arp_fn.assert_called_once_with(
             self.datapath, self.inport,
             self.arplib._arp_tbl[self.nets[0].net],
-            self.proto_ethernet_mod, self.proto_vlan_mod, self.proto_arp_mod)
+            self.proto_ethernet_mod,
+            self.proto_vlan_mod if self._fake_get_protocol_vlan else None,
+            self.proto_arp_mod)
 
-    def _test_packet_in_handler(self):
+    def _test_packet_in_handler_drop(self):
         self.arplib._arp_tbl = {
             self.nets[0].net: {self.nets[0].ip: self.nets[0].mac}}
         with contextlib.nested(
             mock.patch.object(self.arplib, '_respond_arp',
                               return_value=True),
-            mock.patch.object(self.arplib,
-                              '_add_flow_to_avoid_unknown_packet'),
+            mock.patch.object(self.br, 'arp_passthrough'),
             mock.patch.object(self.arplib,
                               '_send_unknown_packet'),
         ) as (res_arp_fn, add_flow_fn, send_unknown_pk_fn):
@@ -268,9 +273,12 @@ class TestArpLib(OFAAgentTestCase):
         self.assertFalse(send_unknown_pk_fn.call_count)
         self.assertFalse(res_arp_fn.call_count)
 
+    def test_packet_in_handler(self):
+        self._test_packet_in_handler()
+
     def test_packet_in_handler_non_ethernet(self):
         self._fake_get_protocol_ethernet = False
-        self._test_packet_in_handler()
+        self._test_packet_in_handler_drop()
 
     def test_packet_in_handler_non_vlan(self):
         self._fake_get_protocol_vlan = False
@@ -278,7 +286,7 @@ class TestArpLib(OFAAgentTestCase):
 
     def test_packet_in_handler_non_arp(self):
         self._fake_get_protocol_arp = False
-        self._test_packet_in_handler()
+        self._test_packet_in_handler_drop()
 
     def test_packet_in_handler_unknown_network(self):
         self.arplib._arp_tbl = {
@@ -286,20 +294,14 @@ class TestArpLib(OFAAgentTestCase):
         with contextlib.nested(
             mock.patch.object(self.arplib, '_respond_arp',
                               return_value=False),
-            mock.patch.object(self.arplib,
-                              '_add_flow_to_avoid_unknown_packet'),
+            mock.patch.object(self.br, 'arp_passthrough'),
             mock.patch.object(self.arplib,
                               '_send_unknown_packet'),
         ) as (res_arp_fn, add_flow_fn, send_unknown_pk_fn):
             self.arplib.packet_in_handler(self.ev)
         add_flow_fn.assert_called_once_with(
-            self.datapath,
-            self.datapath.ofproto_parser.OFPMatch(
-                eth_type=self.ethernet.ETH_TYPE_ARP,
-                vlan_vid=self.proto_vlan_mod.vid |
-                self.datapath.ofproto.OFPVID_PRESENT,
-                arp_op=self.arp.ARP_REQUEST,
-                arp_tpa=self.proto_arp_mod.dst_ip))
+            network=self.nets[0].net,
+            tpa=self.proto_arp_mod.dst_ip)
         send_unknown_pk_fn.assert_called_once_with(
             self.ev.msg, self.msg.match['in_port'],
             self.datapath.ofproto.OFPP_TABLE)

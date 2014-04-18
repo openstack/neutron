@@ -117,8 +117,10 @@ def patch_fake_oflib_of():
     ryu_packet_mod.ethernet = ethernet
     ryu_packet_mod.vlan = vlan
     ryu_ofproto_mod = ryu_mod.ofproto
+    ether = _Mod('ryu.ofproto.ether')
     ofp = _Mod('ryu.ofproto.ofproto_v1_3')
     ofpp = _Mod('ryu.ofproto.ofproto_v1_3_parser')
+    ryu_ofproto_mod.ether = ether
     ryu_ofproto_mod.ofproto_v1_3 = ofp
     ryu_ofproto_mod.ofproto_v1_3_parser = ofpp
     ryu_app_mod = ryu_mod.app
@@ -139,6 +141,7 @@ def patch_fake_oflib_of():
                'ryu.lib.packet.ethernet': ethernet,
                'ryu.lib.packet.vlan': vlan,
                'ryu.ofproto': ryu_ofproto_mod,
+               'ryu.ofproto.ether': ether,
                'ryu.ofproto.ofproto_v1_3': ofp,
                'ryu.ofproto.ofproto_v1_3_parser': ofpp,
                'ryu.app': ryu_app_mod,

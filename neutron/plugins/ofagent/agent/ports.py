@@ -1,4 +1,5 @@
 # Copyright (C) 2014 VA Linux Systems Japan K.K.
+# Copyright (C) 2014 YAMAMOTO Takashi <yamamoto at valinux co jp>
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -12,8 +13,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
-# @author: YAMAMOTO Takashi, VA Linux Systems Japan K.K.
 
 
 class OFPort(object):
@@ -77,6 +76,10 @@ def _normalize_port_name(name):
 
 
 class Port(OFPort):
+    def __init__(self, *args, **kwargs):
+        super(Port, self).__init__(*args, **kwargs)
+        self.vif_mac = None
+
     def is_neutron_port(self):
         """Return True if the port looks like a neutron port."""
         return _is_neutron_port(self.port_name)
