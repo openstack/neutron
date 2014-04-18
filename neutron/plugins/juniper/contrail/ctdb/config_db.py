@@ -425,7 +425,7 @@ class DBInterface(object):
 
             self._vnc_lib.virtual_network_delete(id=net_id)
         except RefsExistError:
-            raise exceptions.NetworkInUse()
+            raise exceptions.NetworkInUse(net_id=net_id)
 
         try:
             del self._db_cache['vnc_networks'][net_id]
@@ -1811,13 +1811,18 @@ class DBInterface(object):
         network_q['id'] = net_id
         net_obj = self._network_neutron_to_vnc(network_q, UPDATE)
         if net_obj.router_external and not router_external:
+            fip_pools = net_obj.get_floating_ip_pools()
             fip_pool_obj = FloatingIpPool('floating-ip-pool', net_obj)
             self._floating_ip_pool_create(fip_pool_obj)
         if router_external and not net_obj.router_external:
             fip_pools = net_obj.get_floating_ip_pools()
             if fip_pools:
                 for fip_pool in fip_pools:
-                    self._floating_ip_pool_delete(fip_pool_id=fip_pool['uuid'])
+                    try:
+                        pool_id = fip_pool['uuid']
+                        self._floating_ip_pool_delete(fip_pool_id=pool_id)
+                    except RefsExistError:
+                        raise exceptions.NetworkInUse(net_id=net_id)
         self._virtual_network_update(net_obj)
 
         ret_network_q = self._network_vnc_to_neutron(net_obj, net_repr='SHOW')
@@ -1831,7 +1836,11 @@ class DBInterface(object):
         fip_pools = net_obj.get_floating_ip_pools()
         if fip_pools:
             for fip_pool in fip_pools:
-                self._floating_ip_pool_delete(fip_pool_id=fip_pool['uuid'])
+                try:
+                    pool_id = fip_pool['uuid']
+                    self._floating_ip_pool_delete(fip_pool_id=pool_id)
+                except RefsExistError:
+                    raise exceptions.NetworkInUse(net_id=net_id)
 
         self._virtual_network_delete(net_id=net_id)
         try:
