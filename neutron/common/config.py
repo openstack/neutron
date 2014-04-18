@@ -27,7 +27,7 @@ from neutron.common import utils
 from neutron.openstack.common.db import options as db_options
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
-from neutron.version import version_info as neutron_version
+from neutron import version
 
 
 LOG = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ db_options.set_defaults(sql_connection=_SQL_CONNECTION_DEFAULT,
 
 def parse(args):
     cfg.CONF(args=args, project='neutron',
-             version='%%prog %s' % neutron_version.release_string())
+             version='%%prog %s' % version.version_info.release_string())
 
     # Validate that the base_mac is of the correct format
     msg = attributes._validate_regex(cfg.CONF.base_mac,

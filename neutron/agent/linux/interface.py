@@ -26,7 +26,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
-from neutron.extensions.flavor import (FLAVOR_NETWORK)
+from neutron.extensions import flavor
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 
@@ -397,19 +397,19 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
             region_name=self.conf.auth_region
         )
         self.flavor_driver_map = {}
-        for flavor, driver_name in [
+        for net_flavor, driver_name in [
                 driver_set.split(':')
                 for driver_set in
                 self.conf.meta_flavor_driver_mappings.split(',')]:
-            self.flavor_driver_map[flavor] = self._load_driver(driver_name)
+            self.flavor_driver_map[net_flavor] = self._load_driver(driver_name)
 
     def _get_flavor_by_network_id(self, network_id):
         network = self.neutron.show_network(network_id)
-        return network['network'][FLAVOR_NETWORK]
+        return network['network'][flavor.FLAVOR_NETWORK]
 
     def _get_driver_by_network_id(self, network_id):
-        flavor = self._get_flavor_by_network_id(network_id)
-        return self.flavor_driver_map[flavor]
+        net_flavor = self._get_flavor_by_network_id(network_id)
+        return self.flavor_driver_map[net_flavor]
 
     def _set_device_plugin_tag(self, network_id, device_name, namespace=None):
         plugin_tag = self._get_flavor_by_network_id(network_id)

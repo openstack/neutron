@@ -19,7 +19,7 @@
 
 import copy
 
-from datetime import datetime
+import datetime
 
 from neutron.db import api as db_api
 from neutron.openstack.common import context as common_context
@@ -62,7 +62,7 @@ class ContextBase(common_context.RequestContext):
 
         self.read_deleted = read_deleted
         if not timestamp:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.datetime.utcnow()
         self.timestamp = timestamp
         self._session = None
         self.roles = roles or []
