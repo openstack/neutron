@@ -25,7 +25,6 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.cisco.nexus import config as conf
-from neutron.plugins.ml2.drivers.cisco.nexus import credentials_v2 as cred
 from neutron.plugins.ml2.drivers.cisco.nexus import exceptions as excep
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_db_v2 as nxos_db
 from neutron.plugins.ml2.drivers.cisco.nexus import nexus_network_driver
@@ -45,11 +44,7 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
         self._nexus_switches = conf.ML2MechCiscoConfig.nexus_dict
         LOG.debug(_("nexus_switches found = %s"), self._nexus_switches)
 
-        self.credentials = {}
         self.driver = nexus_network_driver.CiscoNexusDriver()
-
-        # Initialize credential store after database initialization.
-        cred.Store.initialize()
 
     def _valid_network_segment(self, segment):
         return (cfg.CONF.ml2_cisco.managed_physical_network is None or
