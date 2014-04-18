@@ -17,7 +17,7 @@
 
 import mock
 from oslo.config import cfg
-from six.moves import xrange
+from six import moves
 import testtools
 from testtools import matchers
 
@@ -126,7 +126,7 @@ class VlanAllocationsTest(base.BaseTestCase):
 
     def test_vlan_pool(self):
         vlan_ids = set()
-        for x in xrange(VLAN_MIN, VLAN_MAX + 1):
+        for x in moves.xrange(VLAN_MIN, VLAN_MAX + 1):
             physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
             self.assertEqual(physical_network, PHYS_NET)
             self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
@@ -178,7 +178,7 @@ class VlanAllocationsTest(base.BaseTestCase):
 
     def test_sync_with_allocated_false(self):
         vlan_ids = set()
-        for x in xrange(VLAN_MIN, VLAN_MAX + 1):
+        for x in moves.xrange(VLAN_MIN, VLAN_MAX + 1):
             physical_network, vlan_id = ovs_db_v2.reserve_vlan(self.session)
             self.assertEqual(physical_network, PHYS_NET)
             self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
@@ -223,7 +223,7 @@ class TunnelAllocationsTest(base.BaseTestCase):
 
     def test_tunnel_pool(self):
         tunnel_ids = set()
-        for x in xrange(TUN_MIN, TUN_MAX + 1):
+        for x in moves.xrange(TUN_MIN, TUN_MAX + 1):
             tunnel_id = ovs_db_v2.reserve_tunnel(self.session)
             self.assertThat(tunnel_id, matchers.GreaterThan(TUN_MIN - 1))
             self.assertThat(tunnel_id, matchers.LessThan(TUN_MAX + 1))

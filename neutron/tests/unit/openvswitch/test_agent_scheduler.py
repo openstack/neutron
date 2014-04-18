@@ -39,8 +39,8 @@ from neutron.tests.unit import test_agent_ext_plugin
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_extensions
 from neutron.tests.unit import test_l3_plugin
-from neutron.tests.unit.testlib_api import create_request
-from neutron.wsgi import Serializer
+from neutron.tests.unit import testlib_api
+from neutron import wsgi
 
 L3_HOSTA = 'hosta'
 DHCP_HOSTA = 'hosta'
@@ -63,12 +63,12 @@ class AgentSchedulerTestMixIn(object):
         content_type = 'application/%s' % self.fmt
         body = None
         if data is not None:  # empty dict is valid
-            body = Serializer().serialize(data, content_type)
+            body = wsgi.Serializer().serialize(data, content_type)
         if admin_context:
-            return create_request(
+            return testlib_api.create_request(
                 path, body, content_type, method, query_string=query_string)
         else:
-            return create_request(
+            return testlib_api.create_request(
                 path, body, content_type, method, query_string=query_string,
                 context=context.Context('', 'tenant_id'))
 

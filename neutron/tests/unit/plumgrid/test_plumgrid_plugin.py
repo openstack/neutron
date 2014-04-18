@@ -23,7 +23,7 @@ import mock
 
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.plugins.plumgrid.plumgrid_plugin import plumgrid_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
@@ -111,7 +111,7 @@ class TestPlumgridNetworkAdminState(PLUMgridPluginV2TestCase):
         network = {'network': {'name': name,
                                'admin_state_up': admin_status_up,
                                'tenant_id': tenant_id}}
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         self.assertEqual(plugin._network_admin_state(network), network)
 
 
@@ -125,7 +125,7 @@ class TestPlumgridAllocationPool(PLUMgridPluginV2TestCase):
         allocation_pool = [{"start": '10.0.0.2',
                             "end": '10.0.0.253'}]
         context = None
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         pool = plugin._allocate_pools_for_subnet(context, subnet)
         self.assertEqual(allocation_pool, pool)
 

@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from six.moves import xrange
+from six import moves
 import testtools
 from testtools import matchers
 
@@ -138,7 +138,7 @@ class GreTypeTest(base.BaseTestCase):
 
     def test_allocate_tenant_segment(self):
         tunnel_ids = set()
-        for x in xrange(TUN_MIN, TUN_MAX + 1):
+        for x in moves.xrange(TUN_MIN, TUN_MAX + 1):
             segment = self.driver.allocate_tenant_segment(self.session)
             self.assertThat(segment[api.SEGMENTATION_ID],
                             matchers.GreaterThan(TUN_MIN - 1))

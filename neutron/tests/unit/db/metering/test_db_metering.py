@@ -19,8 +19,7 @@ import logging
 
 import webob.exc
 
-from neutron.api.extensions import ExtensionMiddleware
-from neutron.api.extensions import PluginAwareExtensionManager
+from neutron.api import extensions
 from neutron.common import config
 from neutron import context
 import neutron.extensions
@@ -136,12 +135,12 @@ class MeteringPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
         )
 
         self.plugin = metering_plugin.MeteringPlugin()
-        ext_mgr = PluginAwareExtensionManager(
+        ext_mgr = extensions.PluginAwareExtensionManager(
             extensions_path,
             {constants.METERING: self.plugin}
         )
         app = config.load_paste_app('extensions_test_app')
-        self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
+        self.ext_api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
     def test_create_metering_label(self):
         name = 'my label'

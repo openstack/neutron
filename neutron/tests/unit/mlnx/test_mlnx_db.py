@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from six.moves import xrange
+from six import moves
 from testtools import matchers
 
 from neutron.common import exceptions as n_exc
@@ -107,7 +107,7 @@ class SegmentationIdAllocationTest(base.BaseTestCase):
 
     def test_segmentationId_pool(self):
         vlan_ids = set()
-        for x in xrange(VLAN_MIN, VLAN_MAX + 1):
+        for x in moves.xrange(VLAN_MIN, VLAN_MAX + 1):
             physical_network, vlan_id = mlnx_db.reserve_network(self.session)
             self.assertEqual(physical_network, PHYS_NET)
             self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))

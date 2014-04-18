@@ -20,7 +20,6 @@ from webob import exc
 import webtest
 
 from neutron.api import extensions
-from neutron.api.extensions import PluginAwareExtensionManager
 from neutron.api.v2 import attributes
 from neutron import context
 from neutron.db import api as db_api
@@ -37,9 +36,8 @@ from neutron.tests import base
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_db_plugin
 from neutron.tests.unit import test_extensions
-from neutron.tests.unit.vmware import NSXEXT_PATH
-from neutron.tests.unit.vmware import PLUGIN_NAME
-from neutron.tests.unit.vmware.test_nsx_plugin import NsxPluginV2TestCase
+from neutron.tests.unit import vmware
+from neutron.tests.unit.vmware import test_nsx_plugin
 
 _uuid = test_api_v2._uuid
 _get_path = test_api_v2._get_path
@@ -88,7 +86,7 @@ class NetworkGatewayExtensionTestCase(base.BaseTestCase):
         manager.NeutronManager.get_plugin().supported_extension_aliases = (
             [networkgw.EXT_ALIAS])
         ext_mgr = TestExtensionManager()
-        PluginAwareExtensionManager._instance = ext_mgr
+        extensions.PluginAwareExtensionManager._instance = ext_mgr
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
 
@@ -863,11 +861,11 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         self.assertIsNone(dev_query.first())
 
 
-class TestNetworkGateway(NsxPluginV2TestCase,
+class TestNetworkGateway(test_nsx_plugin.NsxPluginV2TestCase,
                          NetworkGatewayDbTestCase):
 
-    def setUp(self, plugin=PLUGIN_NAME, ext_mgr=None):
-        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
+    def setUp(self, plugin=vmware.PLUGIN_NAME, ext_mgr=None):
+        cfg.CONF.set_override('api_extensions_path', vmware.NSXEXT_PATH)
         # Mock l2gwlib calls for gateway devices since this resource is not
         # mocked through the fake NVP API client
         create_gw_dev_patcher = mock.patch.object(
@@ -1046,7 +1044,7 @@ class TestNetworkGatewayPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def __init__(self, **args):
         super(TestNetworkGatewayPlugin, self).__init__(**args)
-        extensions.append_api_extensions_path([NSXEXT_PATH])
+        extensions.append_api_extensions_path([vmware.NSXEXT_PATH])
 
     def delete_port(self, context, id, nw_gw_port_check=True):
         if nw_gw_port_check:

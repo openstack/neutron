@@ -22,7 +22,7 @@ from oslo.config import cfg
 
 from neutron import context
 from neutron.extensions import portbindings
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.tests.unit import test_db_plugin as test_plugin
 
 
@@ -54,7 +54,7 @@ class TestHyperVVirtualSwitchPortsV2(
 
     def test_ports_vif_details(self):
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
             ctx = context.get_admin_context()
             ports = plugin.get_ports(ctx)

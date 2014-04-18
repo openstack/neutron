@@ -12,10 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
+import collections
 import mock
 from oslo.config import cfg
 import testtools
@@ -28,6 +25,12 @@ from neutron.openstack.common import uuidutils
 from neutron.plugins.openvswitch.common import constants
 from neutron.tests import base
 from neutron.tests import tools
+
+try:
+    OrderedDict = collections.OrderedDict
+except AttributeError:
+    import ordereddict
+    OrderedDict = ordereddict.OrderedDict
 
 OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
 

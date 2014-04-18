@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from oslo.config import cfg
-from six.moves import xrange
+from six import moves
 import testtools
 from testtools import matchers
 
@@ -108,7 +108,7 @@ class NetworkStatesTest(base.BaseTestCase):
 
     def test_network_pool(self):
         vlan_ids = set()
-        for x in xrange(VLAN_MIN, VLAN_MAX + 1):
+        for x in moves.xrange(VLAN_MIN, VLAN_MAX + 1):
             physical_network, vlan_id = lb_db.reserve_network(self.session)
             self.assertEqual(physical_network, PHYS_NET)
             self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))

@@ -15,7 +15,7 @@
 #
 # @author: Kevin Benton, Big Switch Networks
 
-from contextlib import nested
+import contextlib
 
 import mock
 
@@ -164,7 +164,7 @@ class TestRestProxyAgent(BaseAgentTestCase):
                      'CONF.RESTPROXYAGENT.polling_interval': 5,
                      'CONF.RESTPROXYAGENT.virtual_switch_type': 'ovs',
                      'CONF.AGENT.root_helper': 'helper'}
-        with nested(
+        with contextlib.nested(
             mock.patch(AGENTMOD + '.cfg', **cfg_attrs),
             mock.patch(NEUTRONCFG),
             mock.patch(PLCONFIG),

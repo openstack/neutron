@@ -15,17 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from contextlib import nested
+import contextlib
 import mock
 import webob.exc
 
 from neutron.extensions import portbindings
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.plugins.bigswitch import servermanager
 from neutron.plugins.ml2 import config as ml2_config
 from neutron.plugins.ml2.drivers import type_vlan as vlan_config
 import neutron.tests.unit.bigswitch.test_restproxy_plugin as trp
-from neutron.tests.unit.ml2.test_ml2_plugin import PLUGIN_NAME as ML2_PLUGIN
+from neutron.tests.unit.ml2 import test_ml2_plugin
 from neutron.tests.unit import test_db_plugin
 
 PHYS_NET = 'physnet1'
@@ -53,7 +53,7 @@ class TestBigSwitchMechDriverBase(trp.BigSwitchProxyPluginV2TestCase):
                                           [phys_vrange],
                                           'ml2_type_vlan')
         super(TestBigSwitchMechDriverBase,
-              self).setUp(ML2_PLUGIN)
+              self).setUp(test_ml2_plugin.PLUGIN_NAME)
 
 
 class TestBigSwitchMechDriverNetworksV2(test_db_plugin.TestNetworksV2,
@@ -90,7 +90,7 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
     def test_create404_triggers_background_sync(self):
         # allow the async background thread to run for this test
         self.spawn_p.stop()
-        with nested(
+        with contextlib.nested(
             mock.patch(SERVER_POOL + '.rest_create_port',
                        side_effect=servermanager.RemoteRestError(
                            reason=servermanager.NXNETWORK, status=404)),
@@ -98,7 +98,7 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
             self.port(**{'device_id': 'devid', 'binding:host_id': 'host'})
         ) as (mock_http, mock_send_all, p):
             # wait for thread to finish
-            mm = NeutronManager.get_plugin().mechanism_manager
+            mm = manager.NeutronManager.get_plugin().mechanism_manager
             bigdriver = mm.mech_drivers['bigswitch'].obj
             bigdriver.evpool.waitall()
             mock_send_all.assert_has_calls([
@@ -111,7 +111,7 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
         self.spawn_p.start()
 
     def test_backend_request_contents(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(SERVER_POOL + '.rest_create_port'),
             self.port(**{'device_id': 'devid', 'binding:host_id': 'host'})
         ) as (mock_rest, p):

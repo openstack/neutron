@@ -25,7 +25,7 @@ from webob import exc
 from neutron import context
 from neutron.db import models_v2
 from neutron.extensions import external_net as external_net
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 from neutron.tests.unit import test_api_v2
@@ -105,20 +105,20 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                     query_params='router:external=False')
 
     def test_get_network_succeeds_without_filter(self):
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         ctx = context.Context(None, None, is_admin=True)
         result = plugin.get_networks(ctx, filters=None)
         self.assertEqual(result, [])
 
     def test_network_filter_hook_admin_context(self):
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         ctx = context.Context(None, None, is_admin=True)
         model = models_v2.Network
         conditions = plugin._network_filter_hook(ctx, model, [])
         self.assertEqual(conditions, [])
 
     def test_network_filter_hook_nonadmin_context(self):
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         ctx = context.Context('edinson', 'cavani')
         model = models_v2.Network
         txt = "externalnetworks.network_id IS NOT NULL"
@@ -160,7 +160,7 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                              True)
 
     def test_delete_network_check_disassociated_floatingips(self):
-        with mock.patch.object(NeutronManager,
+        with mock.patch.object(manager.NeutronManager,
                                'get_service_plugins') as srv_plugins:
             l3_mock = mock.Mock()
             srv_plugins.return_value = {'L3_ROUTER_NAT': l3_mock}

@@ -26,7 +26,6 @@ import testtools
 
 from neutron.agent.common import config
 from neutron.agent import dhcp_agent
-from neutron.agent.dhcp_agent import DhcpAgentWithStateReport
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.common import constants as const
@@ -141,10 +140,10 @@ class TestDhcpAgent(base.BaseTestCase):
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
         # sync_state is needed for this test
         cfg.CONF.set_override('report_interval', 1, 'AGENT')
-        with mock.patch.object(DhcpAgentWithStateReport,
+        with mock.patch.object(dhcp_agent.DhcpAgentWithStateReport,
                                'sync_state',
                                autospec=True) as mock_sync_state:
-            with mock.patch.object(DhcpAgentWithStateReport,
+            with mock.patch.object(dhcp_agent.DhcpAgentWithStateReport,
                                    'periodic_resync',
                                    autospec=True) as mock_periodic_resync:
                 with mock.patch(state_rpc_str) as state_rpc:
@@ -159,7 +158,8 @@ class TestDhcpAgent(base.BaseTestCase):
                         cfg.CONF.register_opts(dhcp.OPTS)
                         cfg.CONF.register_opts(interface.OPTS)
                         cfg.CONF(project='neutron')
-                        agent_mgr = DhcpAgentWithStateReport('testhost')
+                        agent_mgr = dhcp_agent.DhcpAgentWithStateReport(
+                            'testhost')
                         eventlet.greenthread.sleep(1)
                         agent_mgr.after_start()
                         mock_sync_state.assert_called_once_with(agent_mgr)

@@ -19,18 +19,14 @@ import mock
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
-from neutron.common.test_lib import test_config
+from neutron.common import test_lib
 from neutron import context
 from neutron.extensions import agent
-from neutron.plugins.vmware.api_client.version import Version
+from neutron.plugins.vmware.api_client import version
 from neutron.plugins.vmware.common import sync
 from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit import vmware
 from neutron.tests.unit.vmware.apiclient import fake
-from neutron.tests.unit.vmware import get_fake_conf
-from neutron.tests.unit.vmware import NSXAPI_NAME
-from neutron.tests.unit.vmware import NSXEXT_PATH
-from neutron.tests.unit.vmware import PLUGIN_NAME
-from neutron.tests.unit.vmware import STUBS_PATH
 
 
 class MacLearningExtensionManager(object):
@@ -56,28 +52,29 @@ class MacLearningDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         self.adminContext = context.get_admin_context()
-        test_config['config_files'] = [get_fake_conf('nsx.ini.full.test')]
-        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
+        test_lib.test_config['config_files'] = [
+            vmware.get_fake_conf('nsx.ini.full.test')]
+        cfg.CONF.set_override('api_extensions_path', vmware.NSXEXT_PATH)
         # Save the original RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
             self.saved_attr_map[resource] = attrs.copy()
         ext_mgr = MacLearningExtensionManager()
         # mock api client
-        self.fc = fake.FakeClient(STUBS_PATH)
-        self.mock_nsx = mock.patch(NSXAPI_NAME, autospec=True)
+        self.fc = fake.FakeClient(vmware.STUBS_PATH)
+        self.mock_nsx = mock.patch(vmware.NSXAPI_NAME, autospec=True)
         instance = self.mock_nsx.start()
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
         patch_sync.start()
 
         # Emulate tests against NSX 2.x
-        instance.return_value.get_version.return_value = Version("3.0")
+        instance.return_value.get_version.return_value = version.Version("3.0")
         instance.return_value.request.side_effect = self.fc.fake_request
         cfg.CONF.set_override('metadata_mode', None, 'NSX')
         self.addCleanup(self.fc.reset_all)
         self.addCleanup(self.restore_resource_attribute_map)
-        super(MacLearningDBTestCase, self).setUp(plugin=PLUGIN_NAME,
+        super(MacLearningDBTestCase, self).setUp(plugin=vmware.PLUGIN_NAME,
                                                  ext_mgr=ext_mgr)
 
     def restore_resource_attribute_map(self):

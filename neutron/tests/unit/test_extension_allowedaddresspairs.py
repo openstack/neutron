@@ -20,7 +20,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import portsecurity as psec
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.tests.unit import test_db_plugin
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.test_extension_allowedaddresspairs.'
@@ -32,7 +32,7 @@ class AllowedAddressPairTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
         super(AllowedAddressPairTestCase, self).setUp(plugin)
 
         # Check if a plugin supports security groups
-        plugin_obj = NeutronManager.get_plugin()
+        plugin_obj = manager.NeutronManager.get_plugin()
         self._skip_port_security = ('port-security' not in
                                     plugin_obj.supported_extension_aliases)
 
@@ -266,7 +266,7 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
                 update_port = {'port': {psec.PORTSECURITY: False}}
                 # If plugin implements security groups we also need to remove
                 # the security group on port.
-                plugin_obj = NeutronManager.get_plugin()
+                plugin_obj = manager.NeutronManager.get_plugin()
                 if 'security-groups' in plugin_obj.supported_extension_aliases:
                     update_port['port']['security_groups'] = []
                 req = self.new_update_request('ports', update_port,

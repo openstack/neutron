@@ -17,11 +17,11 @@ from oslo.config import cfg
 
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import providernet as pnet
-from neutron.tests.unit.vmware import NSXEXT_PATH
-from neutron.tests.unit.vmware.test_nsx_plugin import NsxPluginV2TestCase
+from neutron.tests.unit import vmware
+from neutron.tests.unit.vmware import test_nsx_plugin
 
 
-class TestProvidernet(NsxPluginV2TestCase):
+class TestProvidernet(test_nsx_plugin.NsxPluginV2TestCase):
 
     def test_create_provider_network_default_physical_net(self):
         data = {'network': {'name': 'net1',
@@ -48,10 +48,10 @@ class TestProvidernet(NsxPluginV2TestCase):
         self.assertEqual(net['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
 
 
-class TestMultiProviderNetworks(NsxPluginV2TestCase):
+class TestMultiProviderNetworks(test_nsx_plugin.NsxPluginV2TestCase):
 
     def setUp(self, plugin=None):
-        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', vmware.NSXEXT_PATH)
         super(TestMultiProviderNetworks, self).setUp()
 
     def test_create_network_provider(self):

@@ -18,7 +18,6 @@
 # @author: Rajesh Mohan, Rajesh_Mohan3@Dell.com, DELL Inc.
 
 import mock
-from mock import call
 from oslo.config import cfg
 
 from neutron.agent.common import config as a_cfg
@@ -125,29 +124,29 @@ class IptablesFwaasTestCase(base.BaseTestCase):
         ipt_mgr_echain = '%s-%s' % (bname, egress_chain[:11])
         for router_info_inst in apply_list:
             v4filter_inst = router_info_inst.iptables_manager.ipv4['filter']
-            calls = [call.ensure_remove_chain('iv4fake-fw-uuid'),
-                     call.ensure_remove_chain('ov4fake-fw-uuid'),
-                     call.ensure_remove_chain('fwaas-default-policy'),
-                     call.add_chain('fwaas-default-policy'),
-                     call.add_rule('fwaas-default-policy', '-j DROP'),
-                     call.add_chain(ingress_chain),
-                     call.add_rule(ingress_chain, invalid_rule),
-                     call.add_rule(ingress_chain, est_rule),
-                     call.add_chain(egress_chain),
-                     call.add_rule(egress_chain, invalid_rule),
-                     call.add_rule(egress_chain, est_rule),
-                     call.add_rule(ingress_chain, rule1),
-                     call.add_rule(egress_chain, rule1),
-                     call.add_rule(ingress_chain, rule2),
-                     call.add_rule(egress_chain, rule2),
-                     call.add_rule('FORWARD',
-                                   '-o qr-+ -j %s' % ipt_mgr_ichain),
-                     call.add_rule('FORWARD',
-                                   '-i qr-+ -j %s' % ipt_mgr_echain),
-                     call.add_rule('FORWARD',
-                                   '-o qr-+ -j %s-fwaas-defau' % bname),
-                     call.add_rule('FORWARD',
-                                   '-i qr-+ -j %s-fwaas-defau' % bname)]
+            calls = [mock.call.ensure_remove_chain('iv4fake-fw-uuid'),
+                     mock.call.ensure_remove_chain('ov4fake-fw-uuid'),
+                     mock.call.ensure_remove_chain('fwaas-default-policy'),
+                     mock.call.add_chain('fwaas-default-policy'),
+                     mock.call.add_rule('fwaas-default-policy', '-j DROP'),
+                     mock.call.add_chain(ingress_chain),
+                     mock.call.add_rule(ingress_chain, invalid_rule),
+                     mock.call.add_rule(ingress_chain, est_rule),
+                     mock.call.add_chain(egress_chain),
+                     mock.call.add_rule(egress_chain, invalid_rule),
+                     mock.call.add_rule(egress_chain, est_rule),
+                     mock.call.add_rule(ingress_chain, rule1),
+                     mock.call.add_rule(egress_chain, rule1),
+                     mock.call.add_rule(ingress_chain, rule2),
+                     mock.call.add_rule(egress_chain, rule2),
+                     mock.call.add_rule('FORWARD',
+                                        '-o qr-+ -j %s' % ipt_mgr_ichain),
+                     mock.call.add_rule('FORWARD',
+                                        '-i qr-+ -j %s' % ipt_mgr_echain),
+                     mock.call.add_rule('FORWARD',
+                                        '-o qr-+ -j %s-fwaas-defau' % bname),
+                     mock.call.add_rule('FORWARD',
+                                        '-i qr-+ -j %s-fwaas-defau' % bname)]
             v4filter_inst.assert_has_calls(calls)
 
     def test_create_firewall_no_rules(self):
@@ -161,21 +160,23 @@ class IptablesFwaasTestCase(base.BaseTestCase):
         for ip_version in (4, 6):
             ingress_chain = ('iv%s%s' % (ip_version, firewall['id']))
             egress_chain = ('ov%s%s' % (ip_version, firewall['id']))
-            calls = [call.ensure_remove_chain('iv%sfake-fw-uuid' % ip_version),
-                     call.ensure_remove_chain('ov%sfake-fw-uuid' % ip_version),
-                     call.ensure_remove_chain('fwaas-default-policy'),
-                     call.add_chain('fwaas-default-policy'),
-                     call.add_rule('fwaas-default-policy', '-j DROP'),
-                     call.add_chain(ingress_chain),
-                     call.add_rule(ingress_chain, invalid_rule),
-                     call.add_rule(ingress_chain, est_rule),
-                     call.add_chain(egress_chain),
-                     call.add_rule(egress_chain, invalid_rule),
-                     call.add_rule(egress_chain, est_rule),
-                     call.add_rule('FORWARD',
-                                   '-o qr-+ -j %s-fwaas-defau' % bname),
-                     call.add_rule('FORWARD',
-                                   '-i qr-+ -j %s-fwaas-defau' % bname)]
+            calls = [mock.call.ensure_remove_chain(
+                     'iv%sfake-fw-uuid' % ip_version),
+                     mock.call.ensure_remove_chain(
+                         'ov%sfake-fw-uuid' % ip_version),
+                     mock.call.ensure_remove_chain('fwaas-default-policy'),
+                     mock.call.add_chain('fwaas-default-policy'),
+                     mock.call.add_rule('fwaas-default-policy', '-j DROP'),
+                     mock.call.add_chain(ingress_chain),
+                     mock.call.add_rule(ingress_chain, invalid_rule),
+                     mock.call.add_rule(ingress_chain, est_rule),
+                     mock.call.add_chain(egress_chain),
+                     mock.call.add_rule(egress_chain, invalid_rule),
+                     mock.call.add_rule(egress_chain, est_rule),
+                     mock.call.add_rule('FORWARD',
+                                        '-o qr-+ -j %s-fwaas-defau' % bname),
+                     mock.call.add_rule('FORWARD',
+                                        '-i qr-+ -j %s-fwaas-defau' % bname)]
             if ip_version == 4:
                 v4filter_inst = apply_list[0].iptables_manager.ipv4['filter']
                 v4filter_inst.assert_has_calls(calls)
@@ -199,9 +200,9 @@ class IptablesFwaasTestCase(base.BaseTestCase):
         self.firewall.delete_firewall(apply_list, firewall)
         ingress_chain = 'iv4%s' % firewall['id']
         egress_chain = 'ov4%s' % firewall['id']
-        calls = [call.ensure_remove_chain(ingress_chain),
-                 call.ensure_remove_chain(egress_chain),
-                 call.ensure_remove_chain('fwaas-default-policy')]
+        calls = [mock.call.ensure_remove_chain(ingress_chain),
+                 mock.call.ensure_remove_chain(egress_chain),
+                 mock.call.ensure_remove_chain('fwaas-default-policy')]
         apply_list[0].iptables_manager.ipv4['filter'].assert_has_calls(calls)
 
     def test_create_firewall_with_admin_down(self):
@@ -209,9 +210,9 @@ class IptablesFwaasTestCase(base.BaseTestCase):
         rule_list = self._fake_rules_v4(FAKE_FW_ID, apply_list)
         firewall = self._fake_firewall_with_admin_down(rule_list)
         self.firewall.create_firewall(apply_list, firewall)
-        calls = [call.ensure_remove_chain('iv4fake-fw-uuid'),
-                 call.ensure_remove_chain('ov4fake-fw-uuid'),
-                 call.ensure_remove_chain('fwaas-default-policy'),
-                 call.add_chain('fwaas-default-policy'),
-                 call.add_rule('fwaas-default-policy', '-j DROP')]
+        calls = [mock.call.ensure_remove_chain('iv4fake-fw-uuid'),
+                 mock.call.ensure_remove_chain('ov4fake-fw-uuid'),
+                 mock.call.ensure_remove_chain('fwaas-default-policy'),
+                 mock.call.add_chain('fwaas-default-policy'),
+                 mock.call.add_rule('fwaas-default-policy', '-j DROP')]
         apply_list[0].iptables_manager.ipv4['filter'].assert_has_calls(calls)

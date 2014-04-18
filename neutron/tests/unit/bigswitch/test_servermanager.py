@@ -14,7 +14,7 @@
 #
 # @author: Kevin Benton, kevin.benton@bigswitch.com
 #
-from contextlib import nested
+import contextlib
 import httplib
 import socket
 import ssl
@@ -22,7 +22,7 @@ import ssl
 import mock
 from oslo.config import cfg
 
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.plugins.bigswitch import servermanager
 from neutron.tests.unit.bigswitch import test_restproxy_plugin as test_rp
@@ -61,7 +61,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
                          '[ABCD:EF01:2345:6789:ABCD:EF01:2345:6789]')
 
     def test_sticky_cert_fetch_fail(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         pl.servers.ssl = True
         with mock.patch(
             'ssl.get_server_certificate',
@@ -75,10 +75,10 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             sslgetmock.assert_has_calls([mock.call(('example.org', 443))])
 
     def test_consistency_watchdog(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         pl.servers.capabilities = []
         self.watch_p.stop()
-        with nested(
+        with contextlib.nested(
             mock.patch('eventlet.sleep'),
             mock.patch(
                 SERVERMANAGER + '.ServerPool.rest_call',
@@ -119,7 +119,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
                                  'HASH2')
 
     def test_file_put_contents(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         with mock.patch(SERVERMANAGER + '.open', create=True) as omock:
             pl.servers._file_put_contents('somepath', 'contents')
             omock.assert_has_calls([mock.call('somepath', 'w')])
@@ -128,7 +128,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             ])
 
     def test_combine_certs_to_file(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         with mock.patch(SERVERMANAGER + '.open', create=True) as omock:
             omock.return_value.__enter__().read.return_value = 'certdata'
             pl.servers._combine_certs_to_file(['cert1.pem', 'cert2.pem'],
@@ -248,7 +248,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             self.assertEqual(resp, (0, None, None, None))
 
     def test_cert_get_fail(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         pl.servers.ssl = True
         with mock.patch('os.path.exists', return_value=False):
             self.assertRaises(cfg.Error,
@@ -256,11 +256,11 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
                               *('example.org', 443))
 
     def test_cert_make_dirs(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         pl.servers.ssl = True
         cfg.CONF.set_override('ssl_sticky', False, 'RESTPROXY')
         # pretend base dir exists, 3 children don't, and host cert does
-        with nested(
+        with contextlib.nested(
             mock.patch('os.path.exists', side_effect=[True, False, False,
                                                       False, True]),
             mock.patch('os.makedirs'),
@@ -279,7 +279,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             self.assertEqual(makemock.call_count, 3)
 
     def test_no_cert_error(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         pl.servers.ssl = True
         cfg.CONF.set_override('ssl_sticky', False, 'RESTPROXY')
         # pretend base dir exists and 3 children do, but host cert doesn't
@@ -296,18 +296,18 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             self.assertEqual(exmock.call_count, 5)
 
     def test_action_success(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         self.assertTrue(pl.servers.action_success((200,)))
 
     def test_server_failure(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         self.assertTrue(pl.servers.server_failure((404,)))
         # server failure has an ignore codes option
         self.assertFalse(pl.servers.server_failure((404,),
                                                    ignore_codes=[404]))
 
     def test_conflict_triggers_sync(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         with mock.patch(
             SERVERMANAGER + '.ServerProxy.rest_call',
             return_value=(httplib.CONFLICT, 0, 0, 0)
@@ -322,7 +322,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             ])
 
     def test_conflict_sync_raises_error_without_topology(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         pl.servers.get_topo_function = None
         with mock.patch(
             SERVERMANAGER + '.ServerProxy.rest_call',
@@ -337,7 +337,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             )
 
     def test_floating_calls(self):
-        pl = NeutronManager.get_plugin()
+        pl = manager.NeutronManager.get_plugin()
         with mock.patch(SERVERMANAGER + '.ServerPool.rest_action') as ramock:
             pl.servers.rest_create_floatingip('tenant', {'id': 'somefloat'})
             pl.servers.rest_update_floatingip('tenant', {'name': 'myfl'}, 'id')

@@ -23,9 +23,7 @@ from oslo.config import cfg
 from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.debug import commands
-from neutron.debug.debug_agent import DEVICE_OWNER_COMPUTE_PROBE
-from neutron.debug.debug_agent import DEVICE_OWNER_NETWORK_PROBE
-from neutron.debug.debug_agent import NeutronDebugAgent
+from neutron.debug import debug_agent
 from neutron.tests import base
 
 
@@ -38,7 +36,7 @@ class TestDebugCommands(base.BaseTestCase):
     def setUp(self):
         super(TestDebugCommands, self).setUp()
         cfg.CONF.register_opts(interface.OPTS)
-        cfg.CONF.register_opts(NeutronDebugAgent.OPTS)
+        cfg.CONF.register_opts(debug_agent.NeutronDebugAgent.OPTS)
         cfg.CONF(args=[], project='neutron')
         config.register_interface_driver_opts_helper(cfg.CONF)
         config.register_use_namespaces_opts_helper(cfg.CONF)
@@ -102,14 +100,14 @@ class TestDebugCommands(base.BaseTestCase):
         self.client = client_inst
         mock_std = mock.Mock()
         self.app = MyApp(mock_std)
-        self.app.debug_agent = NeutronDebugAgent(cfg.CONF,
-                                                 client_inst,
-                                                 mock_driver)
+        self.app.debug_agent = debug_agent.NeutronDebugAgent(cfg.CONF,
+                                                             client_inst,
+                                                             mock_driver)
 
     def _test_create_probe(self, device_owner):
         cmd = commands.CreateProbe(self.app, None)
         cmd_parser = cmd.get_parser('create_probe')
-        if device_owner == DEVICE_OWNER_COMPUTE_PROBE:
+        if device_owner == debug_agent.DEVICE_OWNER_COMPUTE_PROBE:
             args = ['fake_net', '--device-owner', 'compute']
         else:
             args = ['fake_net']
@@ -141,10 +139,10 @@ class TestDebugCommands(base.BaseTestCase):
                                                         )])
 
     def test_create_network_probe(self):
-        self._test_create_probe(DEVICE_OWNER_NETWORK_PROBE)
+        self._test_create_probe(debug_agent.DEVICE_OWNER_NETWORK_PROBE)
 
     def test_create_nova_probe(self):
-        self._test_create_probe(DEVICE_OWNER_COMPUTE_PROBE)
+        self._test_create_probe(debug_agent.DEVICE_OWNER_COMPUTE_PROBE)
 
     def _test_create_probe_external(self, device_owner):
         fake_network = {'network': {'id': 'fake_net',
@@ -154,7 +152,7 @@ class TestDebugCommands(base.BaseTestCase):
         self.client.show_network.return_value = fake_network
         cmd = commands.CreateProbe(self.app, None)
         cmd_parser = cmd.get_parser('create_probe')
-        if device_owner == DEVICE_OWNER_COMPUTE_PROBE:
+        if device_owner == debug_agent.DEVICE_OWNER_COMPUTE_PROBE:
             args = ['fake_net', '--device-owner', 'compute']
         else:
             args = ['fake_net']
@@ -186,10 +184,12 @@ class TestDebugCommands(base.BaseTestCase):
                                                         )])
 
     def test_create_network_probe_external(self):
-        self._test_create_probe_external(DEVICE_OWNER_NETWORK_PROBE)
+        self._test_create_probe_external(
+            debug_agent.DEVICE_OWNER_NETWORK_PROBE)
 
     def test_create_nova_probe_external(self):
-        self._test_create_probe_external(DEVICE_OWNER_COMPUTE_PROBE)
+        self._test_create_probe_external(
+            debug_agent.DEVICE_OWNER_COMPUTE_PROBE)
 
     def test_delete_probe(self):
         cmd = commands.DeleteProbe(self.app, None)
@@ -250,8 +250,9 @@ class TestDebugCommands(base.BaseTestCase):
         parsed_args = cmd_parser.parse_args(args)
         cmd.run(parsed_args)
         self.client.assert_has_calls(
-            [mock.call.list_ports(device_owner=[DEVICE_OWNER_NETWORK_PROBE,
-                                                DEVICE_OWNER_COMPUTE_PROBE])])
+            [mock.call.list_ports(
+                device_owner=[debug_agent.DEVICE_OWNER_NETWORK_PROBE,
+                              debug_agent.DEVICE_OWNER_COMPUTE_PROBE])])
 
     def test_exec_command(self):
         cmd = commands.ExecProbe(self.app, None)
@@ -282,9 +283,10 @@ class TestDebugCommands(base.BaseTestCase):
         cmd.run(parsed_args)
         namespace = 'qprobe-fake_port'
         self.client.assert_has_calls(
-            [mock.call.list_ports(device_id=socket.gethostname(),
-                                  device_owner=[DEVICE_OWNER_NETWORK_PROBE,
-                                                DEVICE_OWNER_COMPUTE_PROBE]),
+            [mock.call.list_ports(
+                device_id=socket.gethostname(),
+                device_owner=[debug_agent.DEVICE_OWNER_NETWORK_PROBE,
+                              debug_agent.DEVICE_OWNER_COMPUTE_PROBE]),
              mock.call.show_port('fake_port'),
              mock.call.show_network('fake_net'),
              mock.call.show_subnet('fake_subnet'),
@@ -312,7 +314,7 @@ class TestDebugCommands(base.BaseTestCase):
             cmd.run(parsed_args)
             ns.assert_has_calls([mock.call.execute(mock.ANY)])
         fake_port = {'port':
-                    {'device_owner': DEVICE_OWNER_NETWORK_PROBE,
+                    {'device_owner': debug_agent.DEVICE_OWNER_NETWORK_PROBE,
                      'admin_state_up': True,
                      'network_id': 'fake_net',
                      'tenant_id': 'fake_tenant',
@@ -340,7 +342,7 @@ class TestDebugCommands(base.BaseTestCase):
         expected = [mock.call.list_ports(),
                     mock.call.list_ports(
                         network_id='fake_net',
-                        device_owner=DEVICE_OWNER_NETWORK_PROBE,
+                        device_owner=debug_agent.DEVICE_OWNER_NETWORK_PROBE,
                         device_id=socket.gethostname()),
                     mock.call.show_subnet('fake_subnet'),
                     mock.call.show_port('fake_port')]

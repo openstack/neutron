@@ -31,7 +31,7 @@ from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import l3_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import gettextutils
 from neutron.plugins.cisco.common import cisco_constants as const
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
@@ -136,7 +136,7 @@ class CiscoNetworkPluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                           new=NEXUS_IP_ADDR).start()
 
     def _get_plugin_ref(self):
-        return getattr(NeutronManager.get_plugin(),
+        return getattr(manager.NeutronManager.get_plugin(),
                        "_model")._plugins[const.VSWITCH_PLUGIN]
 
     @contextlib.contextmanager
@@ -239,7 +239,7 @@ class TestCiscoGetAttribute(CiscoNetworkPluginV2TestCase):
         This test also checks that this operation does not cause
         excessive nesting of calls to deepcopy.
         """
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
 
         def _lazy_gettext(msg):
             return gettextutils.Message(msg, domain='neutron')

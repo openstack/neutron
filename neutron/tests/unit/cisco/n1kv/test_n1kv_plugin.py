@@ -18,7 +18,7 @@
 # @author: Abhishek Raut, Cisco Systems Inc.
 # @author: Sourabh Patwardhan, Cisco Systems Inc.
 
-from mock import patch
+import mock
 
 from neutron.api import extensions as neutron_extensions
 from neutron.api.v2 import attributes
@@ -184,7 +184,7 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # in the unit tests, we need to 'fake' it by patching the HTTP library
         # itself. We install a patch for a fake HTTP connection class.
         # Using __name__ to avoid having to enter the full module path.
-        http_patcher = patch(n1kv_client.httplib2.__name__ + ".Http")
+        http_patcher = mock.patch(n1kv_client.httplib2.__name__ + ".Http")
         FakeHttpConnection = http_patcher.start()
         # Now define the return values for a few functions that may be called
         # on any instance of the fake HTTP connection class.
@@ -201,13 +201,14 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # in the background.
 
         # Return a dummy VSM IP address
-        get_vsm_hosts_patcher = patch(n1kv_client.__name__ +
-                                      ".Client._get_vsm_hosts")
+        get_vsm_hosts_patcher = mock.patch(n1kv_client.__name__ +
+                                           ".Client._get_vsm_hosts")
         fake_get_vsm_hosts = get_vsm_hosts_patcher.start()
         fake_get_vsm_hosts.return_value = ["127.0.0.1"]
 
         # Return dummy user profiles
-        get_cred_name_patcher = patch(cdb.__name__ + ".get_credential_name")
+        get_cred_name_patcher = mock.patch(cdb.__name__ +
+                                           ".get_credential_name")
         fake_get_cred_name = get_cred_name_patcher.start()
         fake_get_cred_name.return_value = {"user_name": "admin",
                                            "password": "admin_password"}
@@ -495,8 +496,8 @@ class TestN1kvPorts(test_plugin.TestPortsV2,
         """Test parameters for first port create sent to the VSM."""
         profile_obj = self._make_test_policy_profile(name='test_profile')
         with self.network() as network:
-            client_patch = patch(n1kv_client.__name__ + ".Client",
-                                 new=fake_client.TestClientInvalidRequest)
+            client_patch = mock.patch(n1kv_client.__name__ + ".Client",
+                                      new=fake_client.TestClientInvalidRequest)
             client_patch.start()
             data = {'port': {n1kv.PROFILE_ID: profile_obj.id,
                              'tenant_id': self.tenant_id,
@@ -510,8 +511,8 @@ class TestN1kvPorts(test_plugin.TestPortsV2,
     def test_create_next_port_invalid_parameters_fail(self):
         """Test parameters for subsequent port create sent to the VSM."""
         with self.port() as port:
-            client_patch = patch(n1kv_client.__name__ + ".Client",
-                                 new=fake_client.TestClientInvalidRequest)
+            client_patch = mock.patch(n1kv_client.__name__ + ".Client",
+                                      new=fake_client.TestClientInvalidRequest)
             client_patch.start()
             data = {'port': {n1kv.PROFILE_ID: port['port']['n1kv:profile_id'],
                              'tenant_id': port['port']['tenant_id'],
@@ -524,8 +525,8 @@ class TestN1kvPorts(test_plugin.TestPortsV2,
 
 class TestN1kvPolicyProfiles(N1kvPluginTestCase):
     def test_populate_policy_profile(self):
-        client_patch = patch(n1kv_client.__name__ + ".Client",
-                             new=fake_client.TestClient)
+        client_patch = mock.patch(n1kv_client.__name__ + ".Client",
+                                  new=fake_client.TestClient)
         client_patch.start()
         instance = n1kv_neutron_plugin.N1kvNeutronPluginV2()
         instance._populate_policy_profiles()
@@ -537,11 +538,11 @@ class TestN1kvPolicyProfiles(N1kvPluginTestCase):
 
     def test_populate_policy_profile_delete(self):
         # Patch the Client class with the TestClient class
-        with patch(n1kv_client.__name__ + ".Client",
-                   new=fake_client.TestClient):
+        with mock.patch(n1kv_client.__name__ + ".Client",
+                        new=fake_client.TestClient):
             # Patch the _get_total_profiles() method to return a custom value
-            with patch(fake_client.__name__ +
-                       '.TestClient._get_total_profiles') as obj_inst:
+            with mock.patch(fake_client.__name__ +
+                            '.TestClient._get_total_profiles') as obj_inst:
                 # Return 3 policy profiles
                 obj_inst.return_value = 3
                 plugin = manager.NeutronManager.get_plugin()

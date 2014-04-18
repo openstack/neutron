@@ -16,7 +16,7 @@
 
 import httplib
 
-from neutron.plugins.vmware.api_client import ctrl_conn_to_str
+from neutron.plugins.vmware import api_client
 from neutron.tests import base
 
 
@@ -25,11 +25,11 @@ class ApiCommonTest(base.BaseTestCase):
     def test_ctrl_conn_to_str(self):
         conn = httplib.HTTPSConnection('localhost', 4242, timeout=0)
         self.assertTrue(
-            ctrl_conn_to_str(conn) == 'https://localhost:4242')
+            api_client.ctrl_conn_to_str(conn) == 'https://localhost:4242')
 
         conn = httplib.HTTPConnection('localhost', 4242, timeout=0)
         self.assertTrue(
-            ctrl_conn_to_str(conn) == 'http://localhost:4242')
+            api_client.ctrl_conn_to_str(conn) == 'http://localhost:4242')
 
-        self.assertRaises(TypeError, ctrl_conn_to_str,
+        self.assertRaises(TypeError, api_client.ctrl_conn_to_str,
                           ('not an httplib.HTTPSConnection'))

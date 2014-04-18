@@ -16,7 +16,7 @@
 import mock
 from oslo.config import cfg
 
-from neutron.plugins.mlnx.common.comm_utils import RetryDecorator
+from neutron.plugins.mlnx.common import comm_utils
 from neutron.plugins.mlnx.common import config  # noqa
 from neutron.plugins.mlnx.common import exceptions
 from neutron.tests import base
@@ -29,14 +29,15 @@ class WrongException(Exception):
 class TestRetryDecorator(base.BaseTestCase):
     def setUp(self):
         super(TestRetryDecorator, self).setUp()
-        self.sleep_fn_p = mock.patch.object(RetryDecorator, 'sleep_fn')
+        self.sleep_fn_p = mock.patch.object(comm_utils.RetryDecorator,
+                                            'sleep_fn')
         self.sleep_fn = self.sleep_fn_p.start()
 
     def test_no_retry_required(self):
         self.counter = 0
 
-        @RetryDecorator(exceptions.RequestTimeout, interval=2,
-                        retries=3, backoff_rate=2)
+        @comm_utils.RetryDecorator(exceptions.RequestTimeout, interval=2,
+                                   retries=3, backoff_rate=2)
         def succeeds():
             self.counter += 1
             return 'success'
@@ -52,8 +53,8 @@ class TestRetryDecorator(base.BaseTestCase):
         backoff_rate = 2
         retries = 0
 
-        @RetryDecorator(exceptions.RequestTimeout, interval,
-                        retries, backoff_rate)
+        @comm_utils.RetryDecorator(exceptions.RequestTimeout, interval,
+                                   retries, backoff_rate)
         def always_fails():
             self.counter += 1
             raise exceptions.RequestTimeout()
@@ -68,8 +69,8 @@ class TestRetryDecorator(base.BaseTestCase):
         backoff_rate = 2
         retries = 3
 
-        @RetryDecorator(exceptions.RequestTimeout, interval,
-                        retries, backoff_rate)
+        @comm_utils.RetryDecorator(exceptions.RequestTimeout, interval,
+                                   retries, backoff_rate)
         def fails_once():
             self.counter += 1
             if self.counter < 2:
@@ -89,8 +90,8 @@ class TestRetryDecorator(base.BaseTestCase):
         interval = 2
         backoff_rate = 4
 
-        @RetryDecorator(exceptions.RequestTimeout, interval,
-                        retries, backoff_rate)
+        @comm_utils.RetryDecorator(exceptions.RequestTimeout, interval,
+                                   retries, backoff_rate)
         def always_fails():
             self.counter += 1
             raise exceptions.RequestTimeout()
@@ -109,7 +110,7 @@ class TestRetryDecorator(base.BaseTestCase):
     def test_limit_is_reached_with_conf(self):
         self.counter = 0
 
-        @RetryDecorator(exceptions.RequestTimeout)
+        @comm_utils.RetryDecorator(exceptions.RequestTimeout)
         def always_fails():
             self.counter += 1
             raise exceptions.RequestTimeout()
@@ -130,7 +131,7 @@ class TestRetryDecorator(base.BaseTestCase):
 
     def test_wrong_exception_no_retry(self):
 
-        @RetryDecorator(exceptions.RequestTimeout)
+        @comm_utils.RetryDecorator(exceptions.RequestTimeout)
         def raise_unexpected_error():
             raise WrongException("wrong exception")
 

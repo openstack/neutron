@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import abstractmethod
+import abc
 
 from neutron.api import extensions
 from neutron import wsgi
@@ -60,7 +60,7 @@ class ExtensionExpectingPluginInterface(StubExtension):
 
 class StubPluginInterface(extensions.PluginInterface):
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_foo(self, bar=None):
         pass
 

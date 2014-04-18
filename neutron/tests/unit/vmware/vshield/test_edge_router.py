@@ -22,16 +22,14 @@ from oslo.config import cfg
 from neutron.api.v2 import attributes
 from neutron import context
 from neutron.extensions import l3
-from neutron.manager import NeutronManager
+from neutron import manager as n_manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware.plugins import service as nsp
 from neutron.tests import base
 from neutron.tests.unit import test_l3_plugin
-from neutron.tests.unit.vmware import NSXEXT_PATH
-from neutron.tests.unit.vmware import SERVICE_PLUGIN_NAME
+from neutron.tests.unit import vmware
 from neutron.tests.unit.vmware import test_nsx_plugin
-from neutron.tests.unit.vmware import VCNS_NAME
 from neutron.tests.unit.vmware.vshield import fake_vcns
 
 _uuid = uuidutils.generate_uuid
@@ -95,21 +93,22 @@ class ServiceRouterTest(test_nsx_plugin.L3NatTest,
             self.fc2.enable_service_loadbalancer)
 
     def setUp(self, ext_mgr=None, service_plugins=None):
-        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', vmware.NSXEXT_PATH)
         cfg.CONF.set_override('task_status_check_interval', 200, group="vcns")
 
         # vcns does not support duplicated router name, ignore router name
         # validation for unit-test cases
         self.fc2 = fake_vcns.FakeVcns(unique_router_name=False)
-        self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)
+        self.mock_vcns = mock.patch(vmware.VCNS_NAME, autospec=True)
         self.vcns_patch()
         mock_proxy = mock.patch(
-            "%s.%s" % (SERVICE_PLUGIN_NAME, '_set_create_lswitch_proxy'))
+            "%s.%s" % (vmware.SERVICE_PLUGIN_NAME,
+                       '_set_create_lswitch_proxy'))
         mock_proxy.start()
 
         ext_mgr = ext_mgr or ServiceRouterTestExtensionManager()
         super(ServiceRouterTest, self).setUp(
-            plugin=SERVICE_PLUGIN_NAME,
+            plugin=vmware.SERVICE_PLUGIN_NAME,
             service_plugins=service_plugins,
             ext_mgr=ext_mgr)
 
@@ -117,7 +116,7 @@ class ServiceRouterTest(test_nsx_plugin.L3NatTest,
         self.addCleanup(self.fc2.reset_all)
 
     def tearDown(self):
-        plugin = NeutronManager.get_plugin()
+        plugin = n_manager.NeutronManager.get_plugin()
         manager = plugin.vcns_driver.task_manager
         # wait max ~10 seconds for all tasks to be finished
         for i in range(100):
@@ -200,7 +199,7 @@ class ServiceRouterTestCase(ServiceRouterTest,
         with self.router(name=name, admin_state_up=True,
                          tenant_id=tenant_id):
             # clear router type cache to mimic plugin restart
-            plugin = NeutronManager.get_plugin()
+            plugin = n_manager.NeutronManager.get_plugin()
             plugin._router_type = {}
 
         # check an integration lswitch is deleted

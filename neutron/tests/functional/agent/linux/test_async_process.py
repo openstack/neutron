@@ -17,7 +17,7 @@
 import eventlet
 import fixtures
 
-from six.moves import xrange
+from six import moves
 
 from neutron.agent.linux import async_process
 from neutron.tests import base
@@ -29,7 +29,7 @@ class TestAsyncProcess(base.BaseTestCase):
         super(TestAsyncProcess, self).setUp()
         self.test_file_path = self.useFixture(
             fixtures.TempDir()).join("test_async_process.tmp")
-        self.data = [str(x) for x in xrange(4)]
+        self.data = [str(x) for x in moves.xrange(4)]
         with file(self.test_file_path, 'w') as f:
             f.writelines('%s\n' % item for item in self.data)
 

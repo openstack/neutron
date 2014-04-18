@@ -17,7 +17,7 @@
 #
 # @author Kevin Benton
 
-from contextlib import nested
+import contextlib
 import mock
 
 from neutron.tests.unit.bigswitch import test_router_db
@@ -32,7 +32,7 @@ HTTPCON = SERVERMANAGER + '.httplib.HTTPConnection'
 class CapabilitiesTests(test_router_db.RouterDBTestBase):
 
     def test_floating_ip_capability(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(SERVERRESTCALL,
                        return_value=(200, None, None, '["floatingip"]')),
             mock.patch(SERVERPOOL + '.rest_create_floatingip',
@@ -51,7 +51,7 @@ class CapabilitiesTests(test_router_db.RouterDBTestBase):
             )
 
     def test_floating_ip_capability_neg(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(SERVERRESTCALL,
                        return_value=(200, None, None, '[""]')),
             mock.patch(SERVERPOOL + '.rest_update_network',

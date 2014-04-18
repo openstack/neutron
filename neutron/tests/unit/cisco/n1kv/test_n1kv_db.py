@@ -18,7 +18,7 @@
 # @author: Abhishek Raut, Cisco Systems Inc.
 # @author: Rudrajit Tapadar, Cisco Systems Inc.
 
-from six.moves import xrange
+from six import moves
 from sqlalchemy.orm import exc as s_exc
 from testtools import matchers
 
@@ -147,7 +147,7 @@ class VlanAllocationsTest(base.BaseTestCase):
 
     def test_vlan_pool(self):
         vlan_ids = set()
-        for x in xrange(VLAN_MIN, VLAN_MAX + 1):
+        for x in moves.xrange(VLAN_MIN, VLAN_MAX + 1):
             (physical_network, seg_type,
              vlan_id, m_ip) = n1kv_db_v2.reserve_vlan(self.session, self.net_p)
             self.assertEqual(physical_network, PHYS_NET)
@@ -242,7 +242,7 @@ class VxlanAllocationsTest(base.BaseTestCase,
 
     def test_vxlan_pool(self):
         vxlan_ids = set()
-        for x in xrange(VXLAN_MIN, VXLAN_MAX + 1):
+        for x in moves.xrange(VXLAN_MIN, VXLAN_MAX + 1):
             vxlan = n1kv_db_v2.reserve_vxlan(self.session, self.net_p)
             vxlan_id = vxlan[2]
             self.assertThat(vxlan_id, matchers.GreaterThan(VXLAN_MIN - 1))

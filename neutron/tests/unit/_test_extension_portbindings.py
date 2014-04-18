@@ -26,7 +26,7 @@ from webob import exc
 
 from neutron import context
 from neutron.extensions import portbindings
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.tests.unit import test_db_plugin
 
 
@@ -75,7 +75,7 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             self._check_response_no_portbindings(non_admin_port)
 
     def test_ports_vif_details(self):
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         cfg.CONF.set_default('allow_overlapping_ips', True)
         with contextlib.nested(self.port(), self.port()):
             ctx = context.get_admin_context()

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from contextlib import nested
+import contextlib
 import httplib
 
 import mock
@@ -226,7 +226,7 @@ class TestOVSNeutronOFPRyuAgent(RyuAgentTestCase):
 
 class TestRyuPluginApi(RyuAgentTestCase):
     def test_get_ofp_rest_api_addr(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.RyuPluginApi.make_msg',
                        return_value='msg'),
             mock.patch(self._AGENT_NAME + '.RyuPluginApi.call',
@@ -313,7 +313,7 @@ class TestOVSBridge(RyuAgentTestCase):
         self.assertEqual(ofport, 1)
 
     def test_get_ports(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_port_name_list',
                        return_value=['p1', 'p2']),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
@@ -338,7 +338,7 @@ class TestOVSBridge(RyuAgentTestCase):
         self.assertEqual(ports, ['port1', 'port2'])
 
     def test_get_ports_empty(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_port_name_list',
                        return_value=[]),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
@@ -356,7 +356,7 @@ class TestOVSBridge(RyuAgentTestCase):
         self.assertEqual(len(ports), 0)
 
     def test_get_ports_invalid_ofport(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_port_name_list',
                        return_value=['p1', 'p2']),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
@@ -380,7 +380,7 @@ class TestOVSBridge(RyuAgentTestCase):
         self.assertEqual(ports, ['port1'])
 
     def test_get_ports_invalid_port(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_port_name_list',
                        return_value=['p1', 'p2']),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
@@ -405,7 +405,7 @@ class TestOVSBridge(RyuAgentTestCase):
         self.assertEqual(ports, ['port2'])
 
     def test_get_external_port(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSBridge.db_get_map',
                        side_effect=[None, {'opts': 'opts_val'}]),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
@@ -428,7 +428,7 @@ class TestOVSBridge(RyuAgentTestCase):
         self.assertEqual(vifport, mock_vif.return_value)
 
     def test_get_external_port_vmport(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSBridge.db_get_map',
                        side_effect=[{'extids': 'extid_val'},
                                     {'opts': 'opts_val'}]),
@@ -447,7 +447,7 @@ class TestOVSBridge(RyuAgentTestCase):
         self.assertIsNone(vifport)
 
     def test_get_external_port_tunnel(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSBridge.db_get_map',
                        side_effect=[None, {'remote_ip': '0.0.0.0'}]),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
@@ -466,7 +466,7 @@ class TestOVSBridge(RyuAgentTestCase):
         self.assertIsNone(vifport)
 
     def test_get_external_ports(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSBridge._get_external_port'),
             mock.patch(self._AGENT_NAME + '.OVSBridge._get_ports')
         ) as (mock_extport, mock_port):
@@ -514,7 +514,7 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
     def test_get_ip_ip(self):
         cfg_attrs = {'CONF.OVS.cfg_ip': '1.2.3.4',
                      'CONF.OVS.cfg_iface': 'eth0'}
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '._get_ip_from_nic',
                        return_value='10.0.0.1'),
@@ -530,7 +530,7 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
     def test_get_ip_nic(self):
         cfg_attrs = {'CONF.OVS.cfg_ip': None,
                      'CONF.OVS.cfg_iface': 'eth0'}
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '._get_ip_from_nic',
                        return_value='10.0.0.1'),
@@ -548,7 +548,7 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
     def test_get_ip_myip(self):
         cfg_attrs = {'CONF.OVS.cfg_ip': None,
                      'CONF.OVS.cfg_iface': None}
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '._get_ip_from_nic',
                        return_value='10.0.0.1'),
@@ -566,7 +566,7 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
     def test_get_ip_nic_myip(self):
         cfg_attrs = {'CONF.OVS.cfg_ip': None,
                      'CONF.OVS.cfg_iface': 'eth0'}
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '._get_ip_from_nic',
                        return_value=None),
@@ -608,7 +608,7 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
                      'CONF.OVS.ovsdb_port': 16634,
                      'CONF.AGENT.polling_interval': 2,
                      'CONF.AGENT.root_helper': 'helper'}
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
             mock.patch(self._AGENT_NAME + '.logging_config'),
             mock.patch(self._AGENT_NAME + '._get_tunnel_ip',
@@ -635,7 +635,7 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
         ])
 
     def test_main_raise(self):
-        with nested(
+        with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.OVSNeutronOFPRyuAgent',
                        side_effect=httplib.HTTPException('boom')),
             mock.patch('sys.exit', side_effect=SystemExit(0))

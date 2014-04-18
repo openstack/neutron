@@ -23,7 +23,7 @@ from neutron import manager
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers.netscaler import ncc_client
 from neutron.services.loadbalancer.drivers.netscaler import netscaler_driver
-from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
+from neutron.tests.unit.db import loadbalancer
 
 
 LBAAS_DRIVER_CLASS = ('neutron.services.loadbalancer.drivers'
@@ -55,7 +55,7 @@ TESTVIP_IP = '10.0.1.100'
 TESTMEMBER_IP = '10.0.0.5'
 
 
-class TestLoadBalancerPluginBase(test_db_loadbalancer
+class TestLoadBalancerPluginBase(loadbalancer.test_db_loadbalancer
                                  .LoadBalancerPluginDbTestCase):
 
     def setUp(self):

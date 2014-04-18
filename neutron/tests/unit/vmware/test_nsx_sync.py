@@ -37,10 +37,8 @@ from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware import plugin
 from neutron.tests import base
 from neutron.tests.unit import test_api_v2
+from neutron.tests.unit import vmware
 from neutron.tests.unit.vmware.apiclient import fake
-from neutron.tests.unit.vmware import get_fake_conf
-from neutron.tests.unit.vmware import NSXAPI_NAME
-from neutron.tests.unit.vmware import STUBS_PATH
 
 LOG = log.getLogger(__name__)
 
@@ -259,8 +257,8 @@ class SyncTestCase(base.BaseTestCase):
 
     def setUp(self):
         # mock api client
-        self.fc = fake.FakeClient(STUBS_PATH)
-        mock_api = mock.patch(NSXAPI_NAME, autospec=True)
+        self.fc = fake.FakeClient(vmware.STUBS_PATH)
+        mock_api = mock.patch(vmware.NSXAPI_NAME, autospec=True)
         # Avoid runs of the synchronizer looping call
         # These unit tests will excplicitly invoke synchronization
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
@@ -284,8 +282,8 @@ class SyncTestCase(base.BaseTestCase):
             redirects=self.fake_cluster.redirects)
         # Instantiate Neutron plugin
         # and setup needed config variables
-        args = ['--config-file', get_fake_conf('neutron.conf.test'),
-                '--config-file', get_fake_conf('nsx.ini.test')]
+        args = ['--config-file', vmware.get_fake_conf('neutron.conf.test'),
+                '--config-file', vmware.get_fake_conf('nsx.ini.test')]
         self.config_parse(args=args)
         cfg.CONF.set_override('allow_overlapping_ips', True)
         self._plugin = plugin.NsxPlugin()

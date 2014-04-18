@@ -18,7 +18,7 @@
 # @author: Kaiwei Fan, VMware, Inc
 #
 
-from abc import abstractmethod
+import abc
 
 from neutron.api import extensions
 from neutron.api.v2 import base
@@ -101,10 +101,10 @@ class Extensionattribute(extensions.ExtensionDescriptor):
 
 class ExtensionObjectTestPluginBase(object):
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_ext_test_resource(self, context, router):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_ext_test_resource(self, context, id, fields=None):
         pass

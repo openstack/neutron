@@ -22,7 +22,7 @@ from neutron.api.v2 import base
 from neutron.common import constants as n_const
 from neutron import context
 from neutron.extensions import portbindings
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config as ml2_config
@@ -274,7 +274,7 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
 
         with mock.patch('__builtin__.hasattr',
                         new=fakehasattr):
-            plugin_obj = NeutronManager.get_plugin()
+            plugin_obj = manager.NeutronManager.get_plugin()
             orig = plugin_obj.create_port
             with mock.patch.object(plugin_obj,
                                    'create_port') as patched_plugin:
@@ -308,7 +308,7 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
             self.skipTest("Plugin does not support native bulk port create")
         ctx = context.get_admin_context()
         with self.network() as net:
-            plugin_obj = NeutronManager.get_plugin()
+            plugin_obj = manager.NeutronManager.get_plugin()
             orig = plugin_obj.create_port
             with mock.patch.object(plugin_obj,
                                    'create_port') as patched_plugin:
@@ -605,7 +605,7 @@ class TestCiscoNetworksV2(CiscoML2MechanismTestCase,
                 return False
             return real_has_attr(item, attr)
 
-        plugin_obj = NeutronManager.get_plugin()
+        plugin_obj = manager.NeutronManager.get_plugin()
         orig = plugin_obj.create_network
         #ensures the API choose the emulation code path
         with mock.patch('__builtin__.hasattr',
@@ -627,7 +627,7 @@ class TestCiscoNetworksV2(CiscoML2MechanismTestCase,
     def test_create_networks_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
-        plugin_obj = NeutronManager.get_plugin()
+        plugin_obj = manager.NeutronManager.get_plugin()
         orig = plugin_obj.create_network
         with mock.patch.object(plugin_obj,
                                'create_network') as patched_plugin:
@@ -659,7 +659,7 @@ class TestCiscoSubnetsV2(CiscoML2MechanismTestCase,
 
         with mock.patch('__builtin__.hasattr',
                         new=fakehasattr):
-            plugin_obj = NeutronManager.get_plugin()
+            plugin_obj = manager.NeutronManager.get_plugin()
             orig = plugin_obj.create_subnet
             with mock.patch.object(plugin_obj,
                                    'create_subnet') as patched_plugin:
@@ -682,7 +682,7 @@ class TestCiscoSubnetsV2(CiscoML2MechanismTestCase,
     def test_create_subnets_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk subnet create")
-        plugin_obj = NeutronManager.get_plugin()
+        plugin_obj = manager.NeutronManager.get_plugin()
         orig = plugin_obj.create_subnet
         with mock.patch.object(plugin_obj,
                                'create_subnet') as patched_plugin:

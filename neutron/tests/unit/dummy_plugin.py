@@ -23,7 +23,7 @@ from neutron.extensions import servicetype
 from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
-from neutron.services.service_base import ServicePluginBase
+from neutron.services import service_base
 
 
 DUMMY_PLUGIN_NAME = "dummy_plugin"
@@ -85,7 +85,7 @@ class Dummy(object):
                                              controller)]
 
 
-class DummyServicePlugin(ServicePluginBase):
+class DummyServicePlugin(service_base.ServicePluginBase):
     """This is a simple plugin for managing instantes of a fictional 'dummy'
         service. This plugin is provided as a proof-of-concept of how
         advanced service might leverage the service type extension.
