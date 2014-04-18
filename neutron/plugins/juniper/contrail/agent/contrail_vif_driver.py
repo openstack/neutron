@@ -23,6 +23,7 @@ from vnc_api.vnc_api import *
 LOG = logging.getLogger(__name__)
 
 
+class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
     """ Opencontrail VIF driver for neutron."""
     def __init__(self, conf):
         super(ContrailInterfaceDriver, self).__init__(conf)
