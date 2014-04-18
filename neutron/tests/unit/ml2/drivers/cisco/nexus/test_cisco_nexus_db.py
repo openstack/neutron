@@ -181,21 +181,6 @@ class CiscoNexusDbTest(base.BaseTestCase):
         npb = nexus_db_v2.get_port_switch_bindings(npb21.port, "dummySwitch")
         self.assertIsNone(npb)
 
-    def test_nexussvibinding_get(self):
-        """Tests get of switch virtual interface port bindings."""
-        npbr1 = self._npb_test_obj('router', 100)
-        npb21 = self._npb_test_obj(20, 100)
-        self._add_bindings_to_db([npbr1, npb21])
-
-        npb_svi = nexus_db_v2.get_nexussvi_bindings()
-        self.assertEqual(len(npb_svi), 1)
-        self._assert_bindings_match(npb_svi[0], npbr1)
-
-        npbr2 = self._npb_test_obj('router', 200)
-        self._add_binding_to_db(npbr2)
-        npb_svi = nexus_db_v2.get_nexussvi_bindings()
-        self.assertEqual(len(npb_svi), 2)
-
     def test_nexusbinding_update(self):
         """Tests update of vlan IDs for port bindings."""
         npb11 = self._npb_test_obj(10, 100, switch='1.1.1.1', instance='test')

@@ -109,12 +109,6 @@ def get_port_switch_bindings(port_id, switch_ip):
         pass
 
 
-def get_nexussvi_bindings():
-    """Lists nexus svi bindings."""
-    LOG.debug(_("get_nexussvi_bindings() called"))
-    return _lookup_all_nexus_bindings(port_id='router')
-
-
 def _lookup_nexus_bindings(query_type, session=None, **bfilter):
     """Look up 'query_type' Nexus bindings matching the filter.
 

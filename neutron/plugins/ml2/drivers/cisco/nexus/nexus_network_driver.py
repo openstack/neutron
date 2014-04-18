@@ -169,23 +169,3 @@ class CiscoNexusDriver(object):
         if nexus_port:
             self.enable_vlan_on_trunk_int(nexus_host, vlan_id, intf_type,
                                           nexus_port)
-
-    def delete_and_untrunk_vlan(self, nexus_host, vlan_id, intf_type,
-                                nexus_port):
-        """Delete VLAN and untrunk it from the specified ports."""
-        self.delete_vlan(nexus_host, vlan_id)
-        if nexus_port:
-            self.disable_vlan_on_trunk_int(nexus_host, vlan_id, intf_type,
-                                           nexus_port)
-
-    def create_vlan_svi(self, nexus_host, vlan_id, gateway_ip):
-        confstr = snipp.CMD_VLAN_SVI_SNIPPET % (vlan_id, gateway_ip)
-        confstr = self.create_xml_snippet(confstr)
-        LOG.debug(_("NexusDriver: %s"), confstr)
-        self._edit_config(nexus_host, target='running', config=confstr)
-
-    def delete_vlan_svi(self, nexus_host, vlan_id):
-        confstr = snipp.CMD_NO_VLAN_SVI_SNIPPET % vlan_id
-        confstr = self.create_xml_snippet(confstr)
-        LOG.debug(_("NexusDriver: %s"), confstr)
-        self._edit_config(nexus_host, target='running', config=confstr)
