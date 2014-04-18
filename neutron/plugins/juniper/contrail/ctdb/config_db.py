@@ -1720,7 +1720,7 @@ class DBInterface(object):
             port_q_dict['mac_address'] = mac_refs.mac_address[0]
 
         port_q_dict['fixed_ips'] = []
-        ip_back_refs = getattr(port_obj, 'instance_ip_back_refs', None)
+        ip_back_refs = port_obj.get_instance_ip_back_refs()
         if ip_back_refs:
             for ip_back_ref in ip_back_refs:
                 iip_uuid = ip_back_ref['uuid']
