@@ -14,7 +14,7 @@
 #
 # @author: Mark McClain, DreamHost
 
-from logging.config import fileConfig
+from logging import config as logging_config
 
 from alembic import context
 from sqlalchemy import create_engine, pool
@@ -32,7 +32,7 @@ neutron_config = config.neutron_config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+logging_config.fileConfig(config.config_file_name)
 
 plugin_class_path = neutron_config.core_plugin
 active_plugins = [plugin_class_path]

@@ -22,7 +22,7 @@ from sqlalchemy.orm import joinedload
 
 from neutron.common import constants
 from neutron.db import agents_db
-from neutron.db.agentschedulers_db import AgentSchedulerDbMixin
+from neutron.db import agentschedulers_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3agentscheduler
@@ -52,7 +52,7 @@ class RouterL3AgentBinding(model_base.BASEV2, models_v2.HasId):
 
 
 class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
-                              AgentSchedulerDbMixin):
+                              agentschedulers_db.AgentSchedulerDbMixin):
     """Mixin class to add l3 agent scheduler extension to plugins
     using the l3 agent for routing.
     """
@@ -237,7 +237,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
         return [l3_agent
                 for l3_agent in query
-                if AgentSchedulerDbMixin.is_eligible_agent(active, l3_agent)]
+                if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
+                    active, l3_agent)]
 
     def get_l3_agent_candidates(self, sync_router, l3_agents):
         """Get the valid l3 agents for the router from a list of l3_agents."""

@@ -30,7 +30,7 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import service
-from neutron.openstack.common.service import ProcessLauncher
+from neutron.openstack.common import service as common_service
 from neutron import wsgi
 
 
@@ -153,7 +153,7 @@ def serve_rpc():
             rpc.start()
             return rpc
         else:
-            launcher = ProcessLauncher(wait_interval=1.0)
+            launcher = common_service.ProcessLauncher(wait_interval=1.0)
             launcher.launch_service(rpc, workers=cfg.CONF.rpc_workers)
             return launcher
     except Exception:

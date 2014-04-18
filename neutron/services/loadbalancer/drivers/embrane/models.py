@@ -17,7 +17,7 @@
 
 import sqlalchemy as sql
 
-from neutron.db.models_v2 import model_base
+from neutron.db import model_base
 
 
 class PoolPort(model_base.BASEV2):

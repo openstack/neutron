@@ -27,7 +27,6 @@ from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import loadbalancer
-from neutron.extensions.loadbalancer import LoadBalancerPluginBase
 from neutron import manager
 from neutron.openstack.common.db import exception
 from neutron.openstack.common import excutils
@@ -177,7 +176,7 @@ class PoolMonitorAssociation(model_base.BASEV2,
                            primary_key=True)
 
 
-class LoadBalancerPluginDb(LoadBalancerPluginBase,
+class LoadBalancerPluginDb(loadbalancer.LoadBalancerPluginBase,
                            base_db.CommonDbMixin):
     """Wraps loadbalancer with SQLAlchemy models.
 
