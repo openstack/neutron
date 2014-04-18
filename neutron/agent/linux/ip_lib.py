@@ -192,6 +192,7 @@ class IPDevice(SubProcessBase):
         self.link = IpLinkCommand(self)
         self.addr = IpAddrCommand(self)
         self.route = IpRouteCommand(self)
+        self.neigh = IpNeighCommand(self)
 
     def __eq__(self, other):
         return (other is not None and self.name == other.name
@@ -437,6 +438,30 @@ class IpRouteCommand(IpDeviceCommandBase):
                 else:
                     self._as_root('append', subnet, 'proto', 'kernel',
                                   'dev', device)
+
+
+class IpNeighCommand(IpDeviceCommandBase):
+    COMMAND = 'neigh'
+
+    def add(self, ip_version, ip_address, mac_address):
+        self._as_root('add',
+                      ip_address,
+                      'lladdr',
+                      mac_address,
+                      'nud',
+                      'permanent',
+                      'dev',
+                      self.name,
+                      options=[ip_version])
+
+    def delete(self, ip_version, ip_address, mac_address):
+        self._as_root('del',
+                      ip_address,
+                      'lladdr',
+                      mac_address,
+                      'dev',
+                      self.name,
+                      options=[ip_version])
 
 
 class IpNetnsCommand(IpCommandBase):

@@ -799,3 +799,22 @@ class TestDeviceExists(base.BaseTestCase):
             # device doesn't exists
             ip_lib_mock.link.set_up.side_effect = RuntimeError
             self.assertFalse(ip_lib.ensure_device_is_ready("eth0"))
+
+
+class TestIpNeighCommand(TestIPCmdBase):
+    def setUp(self):
+        super(TestIpNeighCommand, self).setUp()
+        self.parent.name = 'tap0'
+        self.command = 'neigh'
+        self.neigh_cmd = ip_lib.IpNeighCommand(self.parent)
+
+    def test_add_entry(self):
+        self.neigh_cmd.add(4, '192.168.45.100', 'cc:dd:ee:ff:ab:cd')
+        self._assert_sudo([4], ('add', '192.168.45.100', 'lladdr',
+                                'cc:dd:ee:ff:ab:cd', 'nud', 'permanent',
+                                'dev', 'tap0'))
+
+    def test_delete_entry(self):
+        self.neigh_cmd.delete(4, '192.168.45.100', 'cc:dd:ee:ff:ab:cd')
+        self._assert_sudo([4], ('del', '192.168.45.100', 'lladdr',
+                                'cc:dd:ee:ff:ab:cd', 'dev', 'tap0'))
