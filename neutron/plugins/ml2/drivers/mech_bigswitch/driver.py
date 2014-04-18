@@ -26,7 +26,7 @@ from neutron import context as ctx
 from neutron.extensions import portbindings
 from neutron.openstack.common import log
 from neutron.plugins.bigswitch import config as pl_config
-from neutron.plugins.bigswitch.plugin import NeutronRestProxyV2Base
+from neutron.plugins.bigswitch import plugin
 from neutron.plugins.bigswitch import servermanager
 from neutron.plugins.ml2 import driver_api as api
 
@@ -34,7 +34,7 @@ from neutron.plugins.ml2 import driver_api as api
 LOG = log.getLogger(__name__)
 
 
-class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
+class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
                                api.MechanismDriver):
 
     """Mechanism Driver for Big Switch Networks Controller.

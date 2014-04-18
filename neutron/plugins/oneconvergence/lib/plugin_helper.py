@@ -18,10 +18,10 @@
 
 import httplib
 import time
-from urlparse import urljoin
 
 from oslo.config import cfg
 import requests
+from six.moves.urllib import parse
 
 from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log as logging
@@ -65,8 +65,8 @@ class NVSDController(object):
 
         headers = {"Content-Type": "application/json"}
 
-        login_url = urljoin(self.api_url,
-                            "/pluginhandler/ocplugin/authmgmt/login")
+        login_url = parse.urljoin(self.api_url,
+                                  "/pluginhandler/ocplugin/authmgmt/login")
 
         data = json.dumps({"user_name": self._user, "passwd": self._password})
 
@@ -114,9 +114,9 @@ class NVSDController(object):
 
         headers = {"Content-Type": content_type}
 
-        uri = urljoin(url, "?authToken=%s" % self.auth_token)
+        uri = parse.urljoin(url, "?authToken=%s" % self.auth_token)
 
-        url = urljoin(self.api_url, uri)
+        url = parse.urljoin(self.api_url, uri)
 
         request_ok = False
         response = None

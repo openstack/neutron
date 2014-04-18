@@ -14,7 +14,7 @@
 #
 # @author: Ronak Shah, Nuage Networks, Alcatel-Lucent USA Inc.
 
-from abc import abstractmethod
+import abc
 
 from neutron.api import extensions
 from neutron.api.v2 import base
@@ -86,22 +86,22 @@ class Netpartition(object):
 
 class NetPartitionPluginBase(object):
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_net_partition(self, context, router):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_net_partition(self, context, id, router):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_net_partition(self, context, id, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_net_partition(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_net_partitions(self, context, filters=None, fields=None):
         pass

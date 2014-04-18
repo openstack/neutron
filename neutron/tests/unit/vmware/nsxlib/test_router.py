@@ -150,7 +150,7 @@ class TestExplicitLRouters(base.NsxlibTestCase):
              'type': 'LogicalRouterStatus',
              'lport_link_up_count': 0, }, }
 
-        with mock.patch.object(routerlib, 'do_request',
+        with mock.patch.object(nsxlib, 'do_request',
                                return_value=self._get_lrouter(tenant_id,
                                                               router_name,
                                                               router_id,
@@ -165,7 +165,7 @@ class TestExplicitLRouters(base.NsxlibTestCase):
         router_id = 'fake_router_id'
         nexthop_ip = '10.0.0.1'
         with mock.patch.object(
-            routerlib, 'do_request',
+            nsxlib, 'do_request',
             return_value=self._get_lrouter(tenant_id,
                                            router_name,
                                            router_id)):
@@ -599,7 +599,7 @@ class TestLogicalRouters(base.NsxlibTestCase):
             return {'_relations': {'LogicalPortAttachment':
                                    {'peer_port_uuid': lrouter_port['uuid']}}}
         # mock get_port
-        with mock.patch.object(routerlib, 'get_port', new=fakegetport):
+        with mock.patch.object(switchlib, 'get_port', new=fakegetport):
             routerlib.delete_peer_router_lport(self.fake_cluster,
                                                lrouter_port['uuid'],
                                                'whatwever', 'whatever')
@@ -678,7 +678,7 @@ class TestLogicalRouters(base.NsxlibTestCase):
         def raise_nsx_exc(*args, **kwargs):
             raise api_exc.NsxApiException()
 
-        with mock.patch.object(routerlib, 'do_request', new=raise_nsx_exc):
+        with mock.patch.object(nsxlib, 'do_request', new=raise_nsx_exc):
             self.assertRaises(
                 nsx_exc.NsxPluginException, routerlib.update_lrouter_port_ips,
                 self.fake_cluster, lrouter['uuid'],

@@ -21,7 +21,7 @@ import time
 import eventlet
 import netaddr
 from oslo.config import cfg
-from six.moves import xrange
+from six import moves
 
 from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
@@ -173,8 +173,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         '''
         self.veth_mtu = veth_mtu
         self.root_helper = root_helper
-        self.available_local_vlans = set(xrange(q_const.MIN_VLAN_TAG,
-                                                q_const.MAX_VLAN_TAG))
+        self.available_local_vlans = set(moves.xrange(q_const.MIN_VLAN_TAG,
+                                                      q_const.MAX_VLAN_TAG))
         self.tunnel_types = tunnel_types or []
         self.l2_pop = l2_population
         self.agent_state = {

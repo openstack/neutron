@@ -20,9 +20,7 @@ from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import utils
-from neutron.plugins.vmware.nsxlib import _build_uri_path
-from neutron.plugins.vmware.nsxlib import do_request
-from neutron.plugins.vmware.nsxlib import get_all_query_pages
+from neutron.plugins.vmware import nsxlib
 from neutron.plugins.vmware.nsxlib import switch
 
 HTTP_GET = "GET"
@@ -60,8 +58,8 @@ def create_l2_gw_service(cluster, tenant_id, display_name, devices):
         "gateways": gateways,
         "type": "L2GatewayServiceConfig"
     }
-    return do_request(
-        HTTP_POST, _build_uri_path(GWSERVICE_RESOURCE),
+    return nsxlib.do_request(
+        HTTP_POST, nsxlib._build_uri_path(GWSERVICE_RESOURCE),
         json.dumps(gwservice_obj), cluster=cluster)
 
 
@@ -76,9 +74,9 @@ def plug_l2_gw_service(cluster, lswitch_id, lport_id,
 
 
 def get_l2_gw_service(cluster, gateway_id):
-    return do_request(
-        HTTP_GET, _build_uri_path(GWSERVICE_RESOURCE,
-                                  resource_id=gateway_id),
+    return nsxlib.do_request(
+        HTTP_GET, nsxlib._build_uri_path(GWSERVICE_RESOURCE,
+                                         resource_id=gateway_id),
         cluster=cluster)
 
 
@@ -88,9 +86,9 @@ def get_l2_gw_services(cluster, tenant_id=None,
     if tenant_id:
         actual_filters['tag'] = tenant_id
         actual_filters['tag_scope'] = 'os_tid'
-    return get_all_query_pages(
-        _build_uri_path(GWSERVICE_RESOURCE,
-                        filters=actual_filters),
+    return nsxlib.get_all_query_pages(
+        nsxlib._build_uri_path(GWSERVICE_RESOURCE,
+                               filters=actual_filters),
         cluster)
 
 
@@ -101,15 +99,17 @@ def update_l2_gw_service(cluster, gateway_id, display_name):
         # Nothing to update
         return gwservice_obj
     gwservice_obj["display_name"] = utils.check_and_truncate(display_name)
-    return do_request(HTTP_PUT, _build_uri_path(GWSERVICE_RESOURCE,
-                                                resource_id=gateway_id),
-                      json.dumps(gwservice_obj), cluster=cluster)
+    return nsxlib.do_request(HTTP_PUT,
+                             nsxlib._build_uri_path(GWSERVICE_RESOURCE,
+                                                    resource_id=gateway_id),
+                             json.dumps(gwservice_obj), cluster=cluster)
 
 
 def delete_l2_gw_service(cluster, gateway_id):
-    do_request(HTTP_DELETE, _build_uri_path(GWSERVICE_RESOURCE,
-                                            resource_id=gateway_id),
-               cluster=cluster)
+    nsxlib.do_request(HTTP_DELETE,
+                      nsxlib._build_uri_path(GWSERVICE_RESOURCE,
+                                             resource_id=gateway_id),
+                      cluster=cluster)
 
 
 def _build_gateway_device_body(tenant_id, display_name, neutron_id,
@@ -148,8 +148,8 @@ def create_gateway_device(cluster, tenant_id, display_name, neutron_id,
                                       connector_type, connector_ip,
                                       client_certificate, tz_uuid)
     try:
-        return do_request(
-            HTTP_POST, _build_uri_path(TRANSPORTNODE_RESOURCE),
+        return nsxlib.do_request(
+            HTTP_POST, nsxlib._build_uri_path(TRANSPORTNODE_RESOURCE),
             json.dumps(body), cluster=cluster)
     except api_exc.InvalidSecurityCertificate:
         raise nsx_exc.InvalidSecurityCertificate()
@@ -163,46 +163,48 @@ def update_gateway_device(cluster, gateway_id, tenant_id,
                                       connector_type, connector_ip,
                                       client_certificate, tz_uuid)
     try:
-        return do_request(
+        return nsxlib.do_request(
             HTTP_PUT,
-            _build_uri_path(TRANSPORTNODE_RESOURCE, resource_id=gateway_id),
+            nsxlib._build_uri_path(TRANSPORTNODE_RESOURCE,
+                                   resource_id=gateway_id),
             json.dumps(body), cluster=cluster)
     except api_exc.InvalidSecurityCertificate:
         raise nsx_exc.InvalidSecurityCertificate()
 
 
 def delete_gateway_device(cluster, device_uuid):
-    return do_request(HTTP_DELETE,
-                      _build_uri_path(TRANSPORTNODE_RESOURCE,
-                                      device_uuid),
-                      cluster=cluster)
+    return nsxlib.do_request(HTTP_DELETE,
+                             nsxlib._build_uri_path(TRANSPORTNODE_RESOURCE,
+                                                    device_uuid),
+                             cluster=cluster)
 
 
 def get_gateway_device_status(cluster, device_uuid):
-    status_res = do_request(HTTP_GET,
-                            _build_uri_path(TRANSPORTNODE_RESOURCE,
-                                            device_uuid,
-                                            extra_action='status'),
-                            cluster=cluster)
+    status_res = nsxlib.do_request(HTTP_GET,
+                                   nsxlib._build_uri_path(
+                                       TRANSPORTNODE_RESOURCE,
+                                       device_uuid,
+                                       extra_action='status'),
+                                   cluster=cluster)
     # Returns the connection status
     return status_res['connection']['connected']
 
 
 def get_gateway_devices_status(cluster, tenant_id=None):
     if tenant_id:
-        gw_device_query_path = _build_uri_path(
+        gw_device_query_path = nsxlib._build_uri_path(
             TRANSPORTNODE_RESOURCE,
             fields="uuid,tags",
             relations="TransportNodeStatus",
             filters={'tag': tenant_id,
                      'tag_scope': 'os_tid'})
     else:
-        gw_device_query_path = _build_uri_path(
+        gw_device_query_path = nsxlib._build_uri_path(
             TRANSPORTNODE_RESOURCE,
             fields="uuid,tags",
             relations="TransportNodeStatus")
 
-    response = get_all_query_pages(gw_device_query_path, cluster)
+    response = nsxlib.get_all_query_pages(gw_device_query_path, cluster)
     results = {}
     for item in response:
         results[item['uuid']] = (item['_relations']['TransportNodeStatus']

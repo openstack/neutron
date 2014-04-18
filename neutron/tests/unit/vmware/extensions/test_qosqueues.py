@@ -94,7 +94,7 @@ class TestQoSQueue(test_nsx_plugin.NsxPluginV2TestCase):
 
     def test_create_trusted_qos_queue(self):
         with mock.patch.object(qos_db.LOG, 'info') as log:
-            with mock.patch.object(nsxlib.queue, 'do_request',
+            with mock.patch.object(nsxlib, 'do_request',
                                    return_value={"uuid": "fake_queue"}):
                 with self.qos_queue(name='fake_lqueue', min=34, max=44,
                                     qos_marking='trusted', default=False) as q:

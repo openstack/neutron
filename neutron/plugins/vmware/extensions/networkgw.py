@@ -15,13 +15,13 @@
 #    under the License.
 #
 
-from abc import abstractmethod
+import abc
 
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
 from neutron.api.v2 import resource_helper
-from neutron.plugins.vmware.common.utils import NetworkTypes
+from neutron.plugins.vmware.common import utils
 
 GATEWAY_RESOURCE_NAME = "network_gateway"
 DEVICE_RESOURCE_NAME = "gateway_device"
@@ -113,11 +113,11 @@ def _validate_connector_type(data, valid_values=None):
         msg = _("A connector type is required to create a gateway device")
         return msg
     connector_types = (valid_values if valid_values else
-                       [NetworkTypes.GRE,
-                        NetworkTypes.STT,
-                        NetworkTypes.BRIDGE,
-                        'ipsec%s' % NetworkTypes.GRE,
-                        'ipsec%s' % NetworkTypes.STT])
+                       [utils.NetworkTypes.GRE,
+                        utils.NetworkTypes.STT,
+                        utils.NetworkTypes.BRIDGE,
+                        'ipsec%s' % utils.NetworkTypes.GRE,
+                        'ipsec%s' % utils.NetworkTypes.STT])
     if data not in connector_types:
         msg = _("Unknown connector type: %s") % data
         return msg
@@ -196,55 +196,55 @@ class Networkgw(object):
 
 class NetworkGatewayPluginBase(object):
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_network_gateway(self, context, network_gateway):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_network_gateway(self, context, id, network_gateway):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_network_gateway(self, context, id, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_network_gateway(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_network_gateways(self, context, filters=None, fields=None,
                              sorts=None, limit=None, marker=None,
                              page_reverse=False):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def connect_network(self, context, network_gateway_id,
                         network_mapping_info):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def disconnect_network(self, context, network_gateway_id,
                            network_mapping_info):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_gateway_device(self, context, gateway_device):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_gateway_device(self, context, id, gateway_device):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_gateway_device(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_gateway_device(self, context, id, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_gateway_devices(self, context, filters=None, fields=None,
                             sorts=None, limit=None, marker=None,
                             page_reverse=False):

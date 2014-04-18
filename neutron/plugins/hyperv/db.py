@@ -16,7 +16,7 @@
 #    under the License.
 # @author: Alessandro Pilotti, Cloudbase Solutions Srl
 
-from six.moves import xrange
+from six import moves
 from sqlalchemy.orm import exc
 
 from neutron.common import exceptions as n_exc
@@ -201,7 +201,8 @@ class HyperVPluginDB(object):
                 # physical network
                 vlan_ids = set()
                 for vlan_range in vlan_ranges:
-                    vlan_ids |= set(xrange(vlan_range[0], vlan_range[1] + 1))
+                    vlan_ids |= set(moves.xrange(vlan_range[0],
+                                                 vlan_range[1] + 1))
 
                 # remove from table unallocated vlans not currently allocatable
                 self._remove_non_allocatable_vlans(session,

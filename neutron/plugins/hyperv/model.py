@@ -18,7 +18,7 @@
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 
-from neutron.db.models_v2 import model_base
+from neutron.db import model_base
 
 
 class VlanAllocation(model_base.BASEV2):

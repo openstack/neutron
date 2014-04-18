@@ -24,9 +24,7 @@ from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import utils
-from neutron.plugins.vmware.nsxlib import _build_uri_path
-from neutron.plugins.vmware.nsxlib import do_request
-from neutron.plugins.vmware.nsxlib import get_all_query_pages
+from neutron.plugins.vmware import nsxlib
 
 HTTP_GET = "GET"
 HTTP_POST = "POST"
@@ -68,10 +66,10 @@ def _configure_extensions(lport_obj, mac_address, fixed_ips,
 
 def get_lswitch_by_id(cluster, lswitch_id):
     try:
-        lswitch_uri_path = _build_uri_path(
+        lswitch_uri_path = nsxlib._build_uri_path(
             LSWITCH_RESOURCE, lswitch_id,
             relations="LogicalSwitchStatus")
-        return do_request(HTTP_GET, lswitch_uri_path, cluster=cluster)
+        return nsxlib.do_request(HTTP_GET, lswitch_uri_path, cluster=cluster)
     except exception.NotFound:
         # FIXME(salv-orlando): this should not raise a neutron exception
         raise exception.NetworkNotFound(net_id=lswitch_id)
@@ -81,19 +79,19 @@ def get_lswitches(cluster, neutron_net_id):
 
     def lookup_switches_by_tag():
         # Fetch extra logical switches
-        lswitch_query_path = _build_uri_path(
+        lswitch_query_path = nsxlib._build_uri_path(
             LSWITCH_RESOURCE,
             fields="uuid,display_name,tags,lport_count",
             relations="LogicalSwitchStatus",
             filters={'tag': neutron_net_id,
                      'tag_scope': 'quantum_net_id'})
-        return get_all_query_pages(lswitch_query_path, cluster)
+        return nsxlib.get_all_query_pages(lswitch_query_path, cluster)
 
-    lswitch_uri_path = _build_uri_path(LSWITCH_RESOURCE, neutron_net_id,
-                                       relations="LogicalSwitchStatus")
+    lswitch_uri_path = nsxlib._build_uri_path(LSWITCH_RESOURCE, neutron_net_id,
+                                              relations="LogicalSwitchStatus")
     results = []
     try:
-        ls = do_request(HTTP_GET, lswitch_uri_path, cluster=cluster)
+        ls = nsxlib.do_request(HTTP_GET, lswitch_uri_path, cluster=cluster)
         results.append(ls)
         for tag in ls['tags']:
             if (tag['scope'] == "multi_lswitch" and
@@ -127,23 +125,23 @@ def create_lswitch(cluster, neutron_net_id, tenant_id, display_name,
                                     "scope": "shared"})
     if "tags" in kwargs:
         lswitch_obj["tags"].extend(kwargs["tags"])
-    uri = _build_uri_path(LSWITCH_RESOURCE)
-    lswitch = do_request(HTTP_POST, uri, json.dumps(lswitch_obj),
-                         cluster=cluster)
+    uri = nsxlib._build_uri_path(LSWITCH_RESOURCE)
+    lswitch = nsxlib.do_request(HTTP_POST, uri, json.dumps(lswitch_obj),
+                                cluster=cluster)
     LOG.debug(_("Created logical switch: %s"), lswitch['uuid'])
     return lswitch
 
 
 def update_lswitch(cluster, lswitch_id, display_name,
                    tenant_id=None, **kwargs):
-    uri = _build_uri_path(LSWITCH_RESOURCE, resource_id=lswitch_id)
+    uri = nsxlib._build_uri_path(LSWITCH_RESOURCE, resource_id=lswitch_id)
     lswitch_obj = {"display_name": utils.check_and_truncate(display_name),
                    "tags": utils.get_tags(os_tid=tenant_id)}
     if "tags" in kwargs:
         lswitch_obj["tags"].extend(kwargs["tags"])
     try:
-        return do_request(HTTP_PUT, uri, json.dumps(lswitch_obj),
-                          cluster=cluster)
+        return nsxlib.do_request(HTTP_PUT, uri, json.dumps(lswitch_obj),
+                                 cluster=cluster)
     except exception.NotFound as e:
         LOG.error(_("Network not found, Error: %s"), str(e))
         raise exception.NetworkNotFound(net_id=lswitch_id)
@@ -158,7 +156,7 @@ def delete_networks(cluster, net_id, lswitch_ids):
     for ls_id in lswitch_ids:
         path = "/ws.v1/lswitch/%s" % ls_id
         try:
-            do_request(HTTP_DELETE, path, cluster=cluster)
+            nsxlib.do_request(HTTP_DELETE, path, cluster=cluster)
         except exception.NotFound as e:
             LOG.error(_("Network not found, Error: %s"), str(e))
             raise exception.NetworkNotFound(net_id=ls_id)
@@ -170,15 +168,18 @@ def query_lswitch_lports(cluster, ls_uuid, fields="*",
     if filters and "attachment" in filters:
         filters['attachment_vif_uuid'] = filters["attachment"]
         del filters['attachment']
-    uri = _build_uri_path(LSWITCHPORT_RESOURCE, parent_resource_id=ls_uuid,
-                          fields=fields, filters=filters, relations=relations)
-    return do_request(HTTP_GET, uri, cluster=cluster)['results']
+    uri = nsxlib._build_uri_path(LSWITCHPORT_RESOURCE,
+                                 parent_resource_id=ls_uuid,
+                                 fields=fields,
+                                 filters=filters,
+                                 relations=relations)
+    return nsxlib.do_request(HTTP_GET, uri, cluster=cluster)['results']
 
 
 def delete_port(cluster, switch, port):
     uri = "/ws.v1/lswitch/" + switch + "/lport/" + port
     try:
-        do_request(HTTP_DELETE, uri, cluster=cluster)
+        nsxlib.do_request(HTTP_DELETE, uri, cluster=cluster)
     except exception.NotFound:
         LOG.exception(_("Port or Network not found"))
         raise exception.PortNotFoundOnNetwork(
@@ -234,9 +235,10 @@ def get_ports(cluster, networks=None, devices=None, tenants=None):
             # call. In release L-** or M-**, we might want to swap the calls
             # as it's likely that ports with the new tag would outnumber the
             # ones with the old tag
-            ports = get_all_query_pages(lport_query_path_obsolete, cluster)
+            ports = nsxlib.get_all_query_pages(lport_query_path_obsolete,
+                                               cluster)
             if not ports:
-                ports = get_all_query_pages(lport_query_path, cluster)
+                ports = nsxlib.get_all_query_pages(lport_query_path, cluster)
         except exception.NotFound:
             LOG.warn(_("Lswitch %s not found in NSX"), lswitch)
             ports = None
@@ -259,16 +261,16 @@ def get_port_by_neutron_tag(cluster, lswitch_uuid, neutron_port_id):
     Returns the NSX UUID of the logical port with tag q_port_id equal to
     neutron_port_id or None if the port is not Found.
     """
-    uri = _build_uri_path(LSWITCHPORT_RESOURCE,
-                          parent_resource_id=lswitch_uuid,
-                          fields='uuid',
-                          filters={'tag': neutron_port_id,
-                                   'tag_scope': 'q_port_id'})
+    uri = nsxlib._build_uri_path(LSWITCHPORT_RESOURCE,
+                                 parent_resource_id=lswitch_uuid,
+                                 fields='uuid',
+                                 filters={'tag': neutron_port_id,
+                                          'tag_scope': 'q_port_id'})
     LOG.debug(_("Looking for port with q_port_id tag '%(neutron_port_id)s' "
                 "on: '%(lswitch_uuid)s'"),
               {'neutron_port_id': neutron_port_id,
                'lswitch_uuid': lswitch_uuid})
-    res = do_request(HTTP_GET, uri, cluster=cluster)
+    res = nsxlib.do_request(HTTP_GET, uri, cluster=cluster)
     num_results = len(res["results"])
     if num_results >= 1:
         if num_results > 1:
@@ -287,7 +289,7 @@ def get_port(cluster, network, port, relations=None):
     if relations:
         uri += "relations=%s" % relations
     try:
-        return do_request(HTTP_GET, uri, cluster=cluster)
+        return nsxlib.do_request(HTTP_GET, uri, cluster=cluster)
     except exception.NotFound as e:
         LOG.error(_("Port or Network not found, Error: %s"), str(e))
         raise exception.PortNotFoundOnNetwork(
@@ -313,8 +315,8 @@ def update_port(cluster, lswitch_uuid, lport_uuid, neutron_port_id, tenant_id,
 
     path = "/ws.v1/lswitch/" + lswitch_uuid + "/lport/" + lport_uuid
     try:
-        result = do_request(HTTP_PUT, path, json.dumps(lport_obj),
-                            cluster=cluster)
+        result = nsxlib.do_request(HTTP_PUT, path, json.dumps(lport_obj),
+                                   cluster=cluster)
         LOG.debug(_("Updated logical port %(result)s "
                     "on logical switch %(uuid)s"),
                   {'result': result['uuid'], 'uuid': lswitch_uuid})
@@ -345,10 +347,10 @@ def create_lport(cluster, lswitch_uuid, tenant_id, neutron_port_id,
                           queue_id, mac_learning_enabled,
                           allowed_address_pairs)
 
-    path = _build_uri_path(LSWITCHPORT_RESOURCE,
-                           parent_resource_id=lswitch_uuid)
-    result = do_request(HTTP_POST, path, json.dumps(lport_obj),
-                        cluster=cluster)
+    path = nsxlib._build_uri_path(LSWITCHPORT_RESOURCE,
+                                  parent_resource_id=lswitch_uuid)
+    result = nsxlib.do_request(HTTP_POST, path, json.dumps(lport_obj),
+                               cluster=cluster)
 
     LOG.debug(_("Created logical port %(result)s on logical switch %(uuid)s"),
               {'result': result['uuid'], 'uuid': lswitch_uuid})
@@ -358,9 +360,9 @@ def create_lport(cluster, lswitch_uuid, tenant_id, neutron_port_id,
 def get_port_status(cluster, lswitch_id, port_id):
     """Retrieve the operational status of the port."""
     try:
-        r = do_request(HTTP_GET,
-                       "/ws.v1/lswitch/%s/lport/%s/status" %
-                       (lswitch_id, port_id), cluster=cluster)
+        r = nsxlib.do_request(HTTP_GET,
+                              "/ws.v1/lswitch/%s/lport/%s/status" %
+                              (lswitch_id, port_id), cluster=cluster)
     except exception.NotFound as e:
         LOG.error(_("Port not found, Error: %s"), str(e))
         raise exception.PortNotFoundOnNetwork(
@@ -372,12 +374,12 @@ def get_port_status(cluster, lswitch_id, port_id):
 
 
 def plug_interface(cluster, lswitch_id, lport_id, att_obj):
-    return do_request(HTTP_PUT,
-                      _build_uri_path(LSWITCHPORT_RESOURCE,
-                                      lport_id, lswitch_id,
-                                      is_attachment=True),
-                      json.dumps(att_obj),
-                      cluster=cluster)
+    return nsxlib.do_request(HTTP_PUT,
+                             nsxlib._build_uri_path(LSWITCHPORT_RESOURCE,
+                                                    lport_id, lswitch_id,
+                                                    is_attachment=True),
+                             json.dumps(att_obj),
+                             cluster=cluster)
 
 
 def plug_vif_interface(

@@ -22,8 +22,7 @@ from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import utils
-from neutron.plugins.vmware.nsxlib import _build_uri_path
-from neutron.plugins.vmware.nsxlib import do_request
+from neutron.plugins.vmware import nsxlib
 
 HTTP_GET = "GET"
 HTTP_POST = "POST"
@@ -43,10 +42,11 @@ def service_cluster_exists(cluster, svc_cluster_id):
     try:
         exists = (
             svc_cluster_id and
-            do_request(HTTP_GET,
-                       _build_uri_path(SERVICECLUSTER_RESOURCE,
-                                       resource_id=svc_cluster_id),
-                       cluster=cluster) is not None)
+            nsxlib.do_request(HTTP_GET,
+                              nsxlib._build_uri_path(
+                                  SERVICECLUSTER_RESOURCE,
+                                  resource_id=svc_cluster_id),
+                              cluster=cluster) is not None)
     except exception.NotFound:
         pass
     return exists
@@ -57,19 +57,19 @@ def lsn_for_network_create(cluster, network_id):
         "edge_cluster_uuid": cluster.default_service_cluster_uuid,
         "tags": utils.get_tags(n_network_id=network_id)
     }
-    return do_request(HTTP_POST,
-                      _build_uri_path(LSERVICESNODE_RESOURCE),
-                      json.dumps(lsn_obj),
-                      cluster=cluster)["uuid"]
+    return nsxlib.do_request(HTTP_POST,
+                             nsxlib._build_uri_path(LSERVICESNODE_RESOURCE),
+                             json.dumps(lsn_obj),
+                             cluster=cluster)["uuid"]
 
 
 def lsn_for_network_get(cluster, network_id):
     filters = {"tag": network_id, "tag_scope": "n_network_id"}
-    results = do_request(HTTP_GET,
-                         _build_uri_path(LSERVICESNODE_RESOURCE,
-                                         fields="uuid",
-                                         filters=filters),
-                         cluster=cluster)['results']
+    results = nsxlib.do_request(HTTP_GET,
+                                nsxlib._build_uri_path(LSERVICESNODE_RESOURCE,
+                                                       fields="uuid",
+                                                       filters=filters),
+                                cluster=cluster)['results']
     if not results:
         raise exception.NotFound()
     elif len(results) == 1:
@@ -77,22 +77,22 @@ def lsn_for_network_get(cluster, network_id):
 
 
 def lsn_delete(cluster, lsn_id):
-    do_request(HTTP_DELETE,
-               _build_uri_path(LSERVICESNODE_RESOURCE,
-                               resource_id=lsn_id),
-               cluster=cluster)
+    nsxlib.do_request(HTTP_DELETE,
+                      nsxlib._build_uri_path(LSERVICESNODE_RESOURCE,
+                                             resource_id=lsn_id),
+                      cluster=cluster)
 
 
 def lsn_port_host_entries_update(
     cluster, lsn_id, lsn_port_id, conf, hosts_data):
     hosts_obj = {'hosts': hosts_data}
-    do_request(HTTP_PUT,
-               _build_uri_path(LSERVICESNODEPORT_RESOURCE,
-                               parent_resource_id=lsn_id,
-                               resource_id=lsn_port_id,
-                               extra_action=conf),
-               json.dumps(hosts_obj),
-               cluster=cluster)
+    nsxlib.do_request(HTTP_PUT,
+                      nsxlib._build_uri_path(LSERVICESNODEPORT_RESOURCE,
+                                             parent_resource_id=lsn_id,
+                                             resource_id=lsn_port_id,
+                                             extra_action=conf),
+                      json.dumps(hosts_obj),
+                      cluster=cluster)
 
 
 def lsn_port_create(cluster, lsn_id, port_data):
@@ -103,28 +103,29 @@ def lsn_port_create(cluster, lsn_id, port_data):
                                n_subnet_id=port_data["subnet_id"]),
         "type": "LogicalServicesNodePortConfig",
     }
-    return do_request(HTTP_POST,
-                      _build_uri_path(LSERVICESNODEPORT_RESOURCE,
-                                      parent_resource_id=lsn_id),
-                      json.dumps(port_obj),
-                      cluster=cluster)["uuid"]
+    return nsxlib.do_request(HTTP_POST,
+                             nsxlib._build_uri_path(LSERVICESNODEPORT_RESOURCE,
+                                                    parent_resource_id=lsn_id),
+                             json.dumps(port_obj),
+                             cluster=cluster)["uuid"]
 
 
 def lsn_port_delete(cluster, lsn_id, lsn_port_id):
-    return do_request(HTTP_DELETE,
-                      _build_uri_path(LSERVICESNODEPORT_RESOURCE,
-                                      parent_resource_id=lsn_id,
-                                      resource_id=lsn_port_id),
-                      cluster=cluster)
+    return nsxlib.do_request(HTTP_DELETE,
+                             nsxlib._build_uri_path(LSERVICESNODEPORT_RESOURCE,
+                                                    parent_resource_id=lsn_id,
+                                                    resource_id=lsn_port_id),
+                             cluster=cluster)
 
 
 def _lsn_port_get(cluster, lsn_id, filters):
-    results = do_request(HTTP_GET,
-                         _build_uri_path(LSERVICESNODEPORT_RESOURCE,
-                                         parent_resource_id=lsn_id,
-                                         fields="uuid",
-                                         filters=filters),
-                         cluster=cluster)['results']
+    results = nsxlib.do_request(HTTP_GET,
+                                nsxlib._build_uri_path(
+                                    LSERVICESNODEPORT_RESOURCE,
+                                    parent_resource_id=lsn_id,
+                                    fields="uuid",
+                                    filters=filters),
+                                cluster=cluster)['results']
     if not results:
         raise exception.NotFound()
     elif len(results) == 1:
@@ -142,11 +143,12 @@ def lsn_port_by_subnet_get(cluster, lsn_id, subnet_id):
 
 
 def lsn_port_info_get(cluster, lsn_id, lsn_port_id):
-    result = do_request(HTTP_GET,
-                        _build_uri_path(LSERVICESNODEPORT_RESOURCE,
-                                        parent_resource_id=lsn_id,
-                                        resource_id=lsn_port_id),
-                        cluster=cluster)
+    result = nsxlib.do_request(HTTP_GET,
+                               nsxlib._build_uri_path(
+                                   LSERVICESNODEPORT_RESOURCE,
+                                   parent_resource_id=lsn_id,
+                                   resource_id=lsn_port_id),
+                               cluster=cluster)
     for tag in result['tags']:
         if tag['scope'] == 'n_subnet_id':
             result['subnet_id'] = tag['tag']
@@ -160,13 +162,13 @@ def lsn_port_plug_network(cluster, lsn_id, lsn_port_id, lswitch_port_id):
         "peer_port_uuid": lswitch_port_id
     }
     try:
-        do_request(HTTP_PUT,
-                   _build_uri_path(LSERVICESNODEPORT_RESOURCE,
-                                   parent_resource_id=lsn_id,
-                                   resource_id=lsn_port_id,
-                                   is_attachment=True),
-                   json.dumps(patch_obj),
-                   cluster=cluster)
+        nsxlib.do_request(HTTP_PUT,
+                          nsxlib._build_uri_path(LSERVICESNODEPORT_RESOURCE,
+                                                 parent_resource_id=lsn_id,
+                                                 resource_id=lsn_port_id,
+                                                 is_attachment=True),
+                          json.dumps(patch_obj),
+                          cluster=cluster)
     except api_exc.Conflict:
         # This restriction might be lifted at some point
         msg = (_("Attempt to plug Logical Services Node %(lsn)s into "
@@ -181,29 +183,29 @@ def _lsn_configure_action(
     cluster, lsn_id, action, is_enabled, obj):
     lsn_obj = {"enabled": is_enabled}
     lsn_obj.update(obj)
-    do_request(HTTP_PUT,
-               _build_uri_path(LSERVICESNODE_RESOURCE,
-                               resource_id=lsn_id,
-                               extra_action=action),
-               json.dumps(lsn_obj),
-               cluster=cluster)
+    nsxlib.do_request(HTTP_PUT,
+                      nsxlib._build_uri_path(LSERVICESNODE_RESOURCE,
+                                             resource_id=lsn_id,
+                                             extra_action=action),
+                      json.dumps(lsn_obj),
+                      cluster=cluster)
 
 
 def _lsn_port_configure_action(
     cluster, lsn_id, lsn_port_id, action, is_enabled, obj):
-    do_request(HTTP_PUT,
-               _build_uri_path(LSERVICESNODE_RESOURCE,
-                               resource_id=lsn_id,
-                               extra_action=action),
-               json.dumps({"enabled": is_enabled}),
-               cluster=cluster)
-    do_request(HTTP_PUT,
-               _build_uri_path(LSERVICESNODEPORT_RESOURCE,
-                               parent_resource_id=lsn_id,
-                               resource_id=lsn_port_id,
-                               extra_action=action),
-               json.dumps(obj),
-               cluster=cluster)
+    nsxlib.do_request(HTTP_PUT,
+                      nsxlib._build_uri_path(LSERVICESNODE_RESOURCE,
+                                             resource_id=lsn_id,
+                                             extra_action=action),
+                      json.dumps({"enabled": is_enabled}),
+                      cluster=cluster)
+    nsxlib.do_request(HTTP_PUT,
+                      nsxlib._build_uri_path(LSERVICESNODEPORT_RESOURCE,
+                                             parent_resource_id=lsn_id,
+                                             resource_id=lsn_port_id,
+                                             extra_action=action),
+                      json.dumps(obj),
+                      cluster=cluster)
 
 
 def _get_opts(name, value):
@@ -239,14 +241,14 @@ def lsn_metadata_configure(
 
 def _lsn_port_host_action(
     cluster, lsn_id, lsn_port_id, host_obj, extra_action, action):
-    do_request(HTTP_POST,
-               _build_uri_path(LSERVICESNODEPORT_RESOURCE,
-                               parent_resource_id=lsn_id,
-                               resource_id=lsn_port_id,
-                               extra_action=extra_action,
-                               filters={"action": action}),
-               json.dumps(host_obj),
-               cluster=cluster)
+    nsxlib.do_request(HTTP_POST,
+                      nsxlib._build_uri_path(LSERVICESNODEPORT_RESOURCE,
+                                             parent_resource_id=lsn_id,
+                                             resource_id=lsn_port_id,
+                                             extra_action=extra_action,
+                                             filters={"action": action}),
+                      json.dumps(host_obj),
+                      cluster=cluster)
 
 
 def lsn_port_dhcp_host_add(cluster, lsn_id, lsn_port_id, host_data):

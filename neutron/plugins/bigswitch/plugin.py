@@ -88,7 +88,7 @@ from neutron.plugins.bigswitch.db import porttracker_db
 from neutron.plugins.bigswitch import extensions
 from neutron.plugins.bigswitch import routerrule_db
 from neutron.plugins.bigswitch import servermanager
-from neutron.plugins.bigswitch.version import version_string_with_vcs
+from neutron.plugins.bigswitch import version
 
 LOG = logging.getLogger(__name__)
 
@@ -474,7 +474,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
     def __init__(self, server_timeout=None):
         super(NeutronRestProxyV2, self).__init__()
         LOG.info(_('NeutronRestProxy: Starting plugin. Version=%s'),
-                 version_string_with_vcs())
+                 version.version_string_with_vcs())
         pl_config.register_config()
         self.evpool = eventlet.GreenPool(cfg.CONF.RESTPROXY.thread_pool_size)
 

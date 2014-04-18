@@ -180,7 +180,7 @@ class L2GatewayTestCase(base.NsxlibTestCase):
         connector_type = 'stt'
         connector_ip = '1.1.1.1'
         client_certificate = 'this_should_be_a_certificate'
-        with mock.patch.object(l2gwlib, 'do_request') as request_mock:
+        with mock.patch.object(nsxlib, 'do_request') as request_mock:
             expected_req_body = self._create_expected_req_body(
                 display_name, neutron_id, connector_type.upper(),
                 connector_ip, client_certificate)
@@ -202,7 +202,7 @@ class L2GatewayTestCase(base.NsxlibTestCase):
         connector_type = 'stt'
         connector_ip = '1.1.1.1'
         client_certificate = 'this_should_be_a_certificate'
-        with mock.patch.object(l2gwlib, 'do_request') as request_mock:
+        with mock.patch.object(nsxlib, 'do_request') as request_mock:
             expected_req_body = self._create_expected_req_body(
                 display_name, neutron_id, connector_type.upper(),
                 connector_ip, client_certificate)
@@ -225,7 +225,7 @@ class L2GatewayTestCase(base.NsxlibTestCase):
         neutron_id = 'whatever'
         connector_type = 'stt'
         connector_ip = '1.1.1.1'
-        with mock.patch.object(l2gwlib, 'do_request') as request_mock:
+        with mock.patch.object(nsxlib, 'do_request') as request_mock:
             expected_req_body = self._create_expected_req_body(
                 display_name, neutron_id, connector_type.upper(),
                 connector_ip, None)
@@ -244,7 +244,7 @@ class L2GatewayTestCase(base.NsxlibTestCase):
     def test_get_gw_device_status(self):
         # NOTE(salv-orlando): This unit test mocks backend calls rather than
         # leveraging the fake NVP API client
-        with mock.patch.object(l2gwlib, 'do_request') as request_mock:
+        with mock.patch.object(nsxlib, 'do_request') as request_mock:
             l2gwlib.get_gateway_device_status(self.fake_cluster, 'whatever')
             request_mock.assert_called_once_with(
                 "GET",
@@ -288,7 +288,7 @@ class L2GatewayTestCase(base.NsxlibTestCase):
     def test_delete_gw_device(self):
         # NOTE(salv-orlando): This unit test mocks backend calls rather than
         # leveraging the fake NVP API client
-        with mock.patch.object(l2gwlib, 'do_request') as request_mock:
+        with mock.patch.object(nsxlib, 'do_request') as request_mock:
             l2gwlib.delete_gateway_device(self.fake_cluster, 'whatever')
             request_mock.assert_called_once_with(
                 "DELETE",

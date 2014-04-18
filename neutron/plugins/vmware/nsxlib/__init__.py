@@ -19,7 +19,7 @@ from neutron.common import exceptions as exception
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
-from neutron.version import version_info
+from neutron import version
 
 HTTP_GET = "GET"
 HTTP_POST = "POST"
@@ -27,7 +27,7 @@ HTTP_DELETE = "DELETE"
 HTTP_PUT = "PUT"
 # Prefix to be used for all NSX API calls
 URI_PREFIX = "/ws.v1"
-NEUTRON_VERSION = version_info.release_string()
+NEUTRON_VERSION = version.version_info.release_string()
 
 LOG = log.getLogger(__name__)
 

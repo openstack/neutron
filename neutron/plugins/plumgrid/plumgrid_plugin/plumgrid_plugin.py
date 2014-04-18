@@ -36,7 +36,7 @@ from neutron.extensions import portbindings
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.plumgrid.common import exceptions as plum_excep
-from neutron.plugins.plumgrid.plumgrid_plugin.plugin_ver import VERSION
+from neutron.plugins.plumgrid.plumgrid_plugin import plugin_ver
 
 LOG = logging.getLogger(__name__)
 PLUM_DRIVER = 'neutron.plugins.plumgrid.drivers.plumlib.Plumlib'
@@ -555,7 +555,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
     """
 
     def _get_plugin_version(self):
-        return VERSION
+        return plugin_ver.VERSION
 
     def _port_viftype_binding(self, context, port):
         port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_IOVISOR

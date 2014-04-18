@@ -15,8 +15,7 @@
 # under the License.
 #
 
-from abc import ABCMeta
-from abc import abstractmethod
+import abc
 import copy
 import eventlet
 import httplib
@@ -27,7 +26,7 @@ import six.moves.urllib.parse as urlparse
 
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
-from neutron.plugins.vmware.api_client import ctrl_conn_to_str
+from neutron.plugins.vmware import api_client
 
 LOG = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ DEFAULT_MAXIMUM_REQUEST_ID = 4294967295
 DOWNLOAD_TIMEOUT = 180
 
 
-@six.add_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class ApiRequest(object):
     '''An abstract baseclass for all ApiRequest implementations.
 
@@ -64,15 +63,15 @@ class ApiRequest(object):
         httplib.SERVICE_UNAVAILABLE
     ]
 
-    @abstractmethod
+    @abc.abstractmethod
     def start(self):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def join(self):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def copy(self):
         pass
 
@@ -284,4 +283,5 @@ class ApiRequest(object):
 
     def _request_str(self, conn, url):
         '''Return string representation of connection.'''
-        return "%s %s/%s" % (self._method, ctrl_conn_to_str(conn), url)
+        return "%s %s/%s" % (self._method, api_client.ctrl_conn_to_str(conn),
+                             url)
