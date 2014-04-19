@@ -679,6 +679,6 @@ def get_extensions_path():
 
 
 def append_api_extensions_path(paths):
-    paths = [cfg.CONF.api_extensions_path] + paths
+    paths = list(set([cfg.CONF.api_extensions_path] + paths))
     cfg.CONF.set_override('api_extensions_path',
                           ':'.join([p for p in paths if p]))

@@ -35,6 +35,7 @@ from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db import dvr_mac_db
 from neutron.db import external_net_db
@@ -110,6 +111,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def supported_extension_aliases(self):
         if not hasattr(self, '_aliases'):
             aliases = self._supported_extension_aliases[:]
+            aliases += self.extension_manager.extension_aliases()
             sg_rpc.disable_security_group_extension_by_config(aliases)
             self._aliases = aliases
         return self._aliases
@@ -117,9 +119,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def __init__(self):
         # First load drivers, then initialize DB, then initialize drivers
         self.type_manager = managers.TypeManager()
+        self.extension_manager = managers.ExtensionManager()
         self.mechanism_manager = managers.MechanismManager()
         super(Ml2Plugin, self).__init__()
         self.type_manager.initialize()
+        self.extension_manager.initialize()
         self.mechanism_manager.initialize()
         # bulk support depends on the underlying drivers
         self.__native_bulk_support = self.mechanism_manager.native_bulk_support
@@ -411,6 +415,31 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
         attributes.PORTS, ['_ml2_extend_port_dict_binding'])
 
+    # Register extend dict methods for network and port resources.
+    # Each mechanism driver that supports extend attribute for the resources
+    # can add those attribute to the result.
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+               attributes.NETWORKS, ['_ml2_md_extend_network_dict'])
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+               attributes.PORTS, ['_ml2_md_extend_port_dict'])
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+               attributes.SUBNETS, ['_ml2_md_extend_subnet_dict'])
+
+    def _ml2_md_extend_network_dict(self, result, netdb):
+        session = db_api.get_session()
+        with session.begin(subtransactions=True):
+            self.extension_manager.extend_network_dict(session, result)
+
+    def _ml2_md_extend_port_dict(self, result, portdb):
+        session = db_api.get_session()
+        with session.begin(subtransactions=True):
+            self.extension_manager.extend_port_dict(session, result)
+
+    def _ml2_md_extend_subnet_dict(self, result, subnetdb):
+        session = db_api.get_session()
+        with session.begin(subtransactions=True):
+            self.extension_manager.extend_subnet_dict(session, result)
+
     # Note - The following hook methods have "ml2" in their names so
     # that they are not called twice during unit tests due to global
     # registration of hooks in portbindings_db.py used by other
@@ -460,6 +489,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             self._ensure_default_security_group(context, tenant_id)
             result = super(Ml2Plugin, self).create_network(context, network)
+            self.extension_manager.process_create_network(session, net_data,
+                                                          result)
             self._process_l3_create(context, result, net_data)
             net_data['id'] = result['id']
             self.type_manager.create_network_segments(context, net_data,
@@ -487,6 +518,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             updated_network = super(Ml2Plugin, self).update_network(context,
                                                                     id,
                                                                     network)
+            self.extension_manager.process_update_network(session, network,
+                                                          original_network)
             self._process_l3_update(context, updated_network,
                                     network['network'])
             self.type_manager._extend_network_dict_provider(context,
@@ -627,6 +660,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             result = super(Ml2Plugin, self).create_subnet(context, subnet)
+            self.extension_manager.process_create_subnet(session, subnet,
+                                                         result)
             mech_context = driver_context.SubnetContext(self, context, result)
             self.mechanism_manager.create_subnet_precommit(mech_context)
 
@@ -645,6 +680,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             original_subnet = super(Ml2Plugin, self).get_subnet(context, id)
             updated_subnet = super(Ml2Plugin, self).update_subnet(
                 context, id, subnet)
+            self.extension_manager.process_update_subnet(session, subnet,
+                                                         original_subnet)
             mech_context = driver_context.SubnetContext(
                 self, context, updated_subnet, original_subnet=original_subnet)
             self.mechanism_manager.update_subnet_precommit(mech_context)
@@ -737,6 +774,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             sgids = self._get_security_groups_on_port(context, port)
             dhcp_opts = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
             result = super(Ml2Plugin, self).create_port(context, port)
+            self.extension_manager.process_create_port(session, attrs, result)
             self._process_port_create_security_group(context, result, sgids)
             network = self.get_network(context, result['network_id'])
             binding = db.add_port_binding(session, result['id'])
@@ -791,6 +829,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             original_port = self._make_port_dict(port_db)
             updated_port = super(Ml2Plugin, self).update_port(context, id,
                                                               port)
+            self.extension_manager.process_update_port(session, attrs,
+                                                       original_port)
             if addr_pair.ADDRESS_PAIRS in port['port']:
                 need_port_update_notify |= (
                     self.update_address_pairs_on_port(context, id, port,
