@@ -2010,7 +2010,8 @@ class DBInterface(object):
                     return subnet_info
             vnsn_data = net_ipam_ref['attr']
             vnsn_data.ipam_subnets.append(subnet_vnc)
-
+            # TODO: Add 'ref_update' API that will set this field
+            net_obj._pending_field_updates.add('network_ipam_refs')
         self._virtual_network_update(net_obj)
 
         # allocate an id to the subnet and store mapping with
