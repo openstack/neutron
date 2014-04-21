@@ -81,26 +81,19 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
         query_subnets = context.session.query(models_v2.Subnet)
         return query_subnets.filter_by(cidr=cidr).all()
 
-    def _validate_routes_nexthop(self, context, ports, routes, nexthop):
+    def _validate_routes_nexthop(self, cidrs, ips, routes, nexthop):
         #Note(nati): Nexthop should be connected,
         # so we need to check
         # nexthop belongs to one of cidrs of the router ports
-        cidrs = []
-        for port in ports:
-            cidrs += [self._core_plugin._get_subnet(context,
-                                                    ip['subnet_id'])['cidr']
-                      for ip in port['fixed_ips']]
         if not netaddr.all_matching_cidrs(nexthop, cidrs):
             raise extraroute.InvalidRoutes(
                 routes=routes,
                 reason=_('the nexthop is not connected with router'))
         #Note(nati) nexthop should not be same as fixed_ips
-        for port in ports:
-            for ip in port['fixed_ips']:
-                if nexthop == ip['ip_address']:
-                    raise extraroute.InvalidRoutes(
-                        routes=routes,
-                        reason=_('the nexthop is used by router'))
+        if nexthop in ips:
+            raise extraroute.InvalidRoutes(
+                routes=routes,
+                reason=_('the nexthop is used by router'))
 
     def _validate_routes(self, context,
                          router_id, routes):
@@ -111,14 +104,21 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
 
         filters = {'device_id': [router_id]}
         ports = self._core_plugin.get_ports(context, filters)
+        cidrs = []
+        ips = []
+        for port in ports:
+            for ip in port['fixed_ips']:
+                cidrs.append(self._core_plugin._get_subnet(
+                    context, ip['subnet_id'])['cidr'])
+                ips.append(ip['ip_address'])
         for route in routes:
             self._validate_routes_nexthop(
-                context, ports, routes, route['nexthop'])
+                cidrs, ips, routes, route['nexthop'])
 
     def _update_extra_routes(self, context, router, routes):
         self._validate_routes(context, router['id'],
                               routes)
-        old_routes = self._get_extra_routes_by_router_id(
+        old_routes, routes_dict = self._get_extra_routes_dict_by_router_id(
             context, router['id'])
         added, removed = utils.diff_list_of_dict(old_routes,
                                                  routes)
@@ -132,10 +132,8 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
 
         LOG.debug(_('Removed routes are %s'), removed)
         for route in removed:
-            del_context = context.session.query(RouterRoute)
-            del_context.filter_by(router_id=router['id'],
-                                  destination=route['destination'],
-                                  nexthop=route['nexthop']).delete()
+            context.session.delete(
+                routes_dict[(route['destination'], route['nexthop'])])
 
     @staticmethod
     def _make_extra_route_list(extra_routes):
@@ -147,6 +145,17 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
         query = context.session.query(RouterRoute)
         query = query.filter_by(router_id=id)
         return self._make_extra_route_list(query)
+
+    def _get_extra_routes_dict_by_router_id(self, context, id):
+        query = context.session.query(RouterRoute)
+        query = query.filter_by(router_id=id)
+        routes = []
+        routes_dict = {}
+        for route in query:
+            routes.append({'destination': route['destination'],
+                           'nexthop': route['nexthop']})
+            routes_dict[(route['destination'], route['nexthop'])] = route
+        return routes, routes_dict
 
     def get_router(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
