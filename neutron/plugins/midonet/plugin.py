@@ -1110,8 +1110,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """Disassociate floating IPs (if any) from this port."""
         try:
             fip_qry = context.session.query(l3_db.FloatingIP)
-            fip_db = fip_qry.filter_by(fixed_port_id=port_id).one()
-            self._remove_nat_rules(context, fip_db)
+            fip_dbs = fip_qry.filter_by(fixed_port_id=port_id)
+            for fip_db in fip_dbs:
+                self._remove_nat_rules(context, fip_db)
         except sa_exc.NoResultFound:
             pass
 

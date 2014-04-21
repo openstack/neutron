@@ -753,20 +753,25 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             self._update_nat_rules(context, router)
 
     def disassociate_floatingips(self, context, port_id):
+        routers = set()
+
         try:
             fip_qry = context.session.query(l3_db.FloatingIP)
-            fip_db = fip_qry.filter_by(fixed_port_id=port_id).one()
-            router_id = fip_db.router_id
+            fip_dbs = fip_qry.filter_by(fixed_port_id=port_id)
+            for fip_db in fip_dbs:
+                routers.add(fip_db.router_id)
         except sa_exc.NoResultFound:
-            router_id = None
+            pass
         super(NsxAdvancedPlugin, self).disassociate_floatingips(context,
                                                                 port_id)
-        if router_id and self._is_advanced_service_router(context, router_id):
-            router = self._get_router(context, router_id)
-            # TODO(fank): do rollback on error, or have a dedicated thread
-            # do sync work (rollback, re-configure, or make router down)
-            self._update_interface(context, router)
-            self._update_nat_rules(context, router)
+
+        for router_id in routers:
+            if self._is_advanced_service_router(context, router_id):
+                router = self._get_router(context, router_id)
+                # TODO(fank): do rollback on error, or have a dedicated thread
+                # do sync work (rollback, re-configure, or make router down)
+                self._update_interface(context, router)
+                self._update_nat_rules(context, router)
 
     #
     # FWaaS plugin implementation

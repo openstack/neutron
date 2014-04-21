@@ -828,23 +828,21 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                            'port_owner': port_db['device_owner']})
 
     def disassociate_floatingips(self, context, port_id):
+        router_ids = set()
+
         with context.session.begin(subtransactions=True):
-            try:
-                fip_qry = context.session.query(FloatingIP)
-                floating_ip = fip_qry.filter_by(fixed_port_id=port_id).one()
-                router_id = floating_ip['router_id']
+            fip_qry = context.session.query(FloatingIP)
+            floating_ips = fip_qry.filter_by(fixed_port_id=port_id)
+            for floating_ip in floating_ips:
+                router_ids.add(floating_ip['router_id'])
                 floating_ip.update({'fixed_port_id': None,
                                     'fixed_ip_address': None,
                                     'router_id': None})
-            except exc.NoResultFound:
-                return
-            except exc.MultipleResultsFound:
-                # should never happen
-                raise Exception(_('Multiple floating IPs found for port %s')
-                                % port_id)
-        if router_id:
+
+        if router_ids:
             self.l3_rpc_notifier.routers_updated(
-                context, [router_id])
+                context, list(router_ids),
+                'disassociate_floatingips')
 
     def _build_routers_list(self, routers, gw_ports):
         gw_port_id_gw_port_dict = dict((gw_port['id'], gw_port)
