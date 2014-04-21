@@ -1878,7 +1878,8 @@ class DBInterface(object):
                 all_net_objs.extend(net_objs)
                 all_net_objs.extend(self._network_list_shared())
                 all_net_objs.extend(self._network_list_router_external())
-            elif filters and 'shared' in filters and 'router:external' not in filters:
+            elif (filters and 'shared' in filters and filters['shared'][0] and
+                  'router:external' not in filters):
                 all_net_objs.extend(self._network_list_shared())
             elif filters and 'router:external' in filters and 'shared' not in filters:
                 all_net_objs.extend(self._network_list_router_external())
