@@ -226,6 +226,7 @@ class Client(RequestHandler):
             body = dict(
                 (k.replace(':', '_'), v) for k, v in body.items()
                 if attributes.is_attr_set(v))
+        return body
 
     def sdnve_list(self, resource, **params):
         '''Fetches a list of resources.'''
@@ -255,7 +256,7 @@ class Client(RequestHandler):
             LOG.info(_("Bad resource for forming a create request"))
             return 0, ''
 
-        self.process_request(body)
+        body = self.process_request(body)
         status, data = self.post(res, body=body)
         return (status, data)
 
@@ -267,7 +268,7 @@ class Client(RequestHandler):
             LOG.info(_("Bad resource for forming a update request"))
             return 0, ''
 
-        self.process_request(body)
+        body = self.process_request(body)
         return self.put(res + specific, body=body)
 
     def sdnve_delete(self, resource, specific):

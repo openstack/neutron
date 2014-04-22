@@ -21,15 +21,16 @@ import functools
 
 from oslo.config import cfg
 
-from neutron.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc as q_rpc
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_gwmode_db
 from neutron.db import portbindings_db
+from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
@@ -54,7 +55,7 @@ class SdnveRpcCallbacks():
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return q_rpc.PluginRpcDispatcher([self,
+        return n_rpc.PluginRpcDispatcher([self,
                                           agents_db.AgentExtRpcCallback()])
 
     def sdnve_info(self, rpc_context, **kwargs):
@@ -119,7 +120,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     __native_sorting_support = False
 
     supported_extension_aliases = ["binding", "router", "external-net",
-                                   "agent"]
+                                   "agent", "quotas"]
 
     def __init__(self, configfile=None):
         self.base_binding_dict = {
@@ -266,7 +267,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
 
         # Set port status as 'ACTIVE' to avoid needing the agent
-        port['port']['status'] = q_const.PORT_STATUS_ACTIVE
+        port['port']['status'] = n_const.PORT_STATUS_ACTIVE
         port_data = port['port']
 
         with session.begin(subtransactions=True):
@@ -480,6 +481,11 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 context, id, router)
 
         if processed_request['router']:
+            egw = processed_request['router'].get('external_gateway_info')
+            # Check for existing empty set (different from None) in request
+            if egw == {}:
+                processed_request['router'][
+                    'external_gateway_info'] = {'network_id': 'null'}
             (res, data) = self.sdnve_client.sdnve_update(
                 'router', id, processed_request['router'])
             if res not in constants.HTTP_ACCEPTABLE:
@@ -555,11 +561,11 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                   {'router_id': router_id, 'interface_info': interface_info})
 
         subnet_id = interface_info.get('subnet_id')
+        port_id = interface_info.get('port_id')
         if not subnet_id:
-            portid = interface_info.get('port_id')
-            if not portid:
+            if not port_id:
                 raise sdnve_exc.BadInputException(msg=_('No port ID'))
-            myport = super(SdnvePluginV2, self).get_port(context, portid)
+            myport = super(SdnvePluginV2, self).get_port(context, port_id)
             LOG.debug(_("SdnvePluginV2.remove_router_interface port: %s"),
                       myport)
             myfixed_ips = myport.get('fixed_ips')
@@ -571,6 +577,21 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug(
                     _("SdnvePluginV2.remove_router_interface subnet_id: %s"),
                     subnet_id)
+        else:
+            if not port_id:
+                # The backend requires port id info in the request
+                subnet = super(SdnvePluginV2, self).get_subnet(context,
+                                                               subnet_id)
+                df = {'device_id': [router_id],
+                      'device_owner': [n_const.DEVICE_OWNER_ROUTER_INTF],
+                      'network_id': [subnet['network_id']]}
+                ports = self.get_ports(context, filters=df)
+                if ports:
+                    pid = ports[0]['id']
+                    interface_info['port_id'] = pid
+                    msg = ("SdnvePluginV2.remove_router_interface "
+                           "subnet_id: %(sid)s  port_id: %(pid)s")
+                    LOG.debug(msg, {'sid': subnet_id, 'pid': pid})
 
         (res, data) = self.sdnve_client.sdnve_update(
             'router', router_id + '/remove_router_interface', interface_info)
