@@ -35,7 +35,8 @@ class LsnPort(models_v2.model_base.BASEV2):
 
     lsn_port_id = Column(String(36), primary_key=True)
 
-    lsn_id = Column(String(36), ForeignKey('lsn.lsn_id', ondelete="CASCADE"))
+    lsn_id = Column(String(36), ForeignKey('lsn.lsn_id', ondelete="CASCADE"),
+                    nullable=False)
     sub_id = Column(String(36), nullable=False, unique=True)
     mac_addr = Column(String(32), nullable=False, unique=True)
 
