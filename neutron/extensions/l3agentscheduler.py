@@ -177,6 +177,11 @@ class RouterNotHostedByL3Agent(exceptions.Conflict):
                 " by L3 agent %(agent_id)s.")
 
 
+class RouterL3AgentMismatch(exceptions.Conflict):
+    message = _("Cannot host %(router_type)s router %(router_id)s "
+                "on %(agent_mode)s L3 agent %(agent_id)s.")
+
+
 class L3AgentSchedulerPluginBase(object):
     """REST API to operate the l3 agent scheduler.
 

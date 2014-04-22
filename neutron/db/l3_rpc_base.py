@@ -69,9 +69,19 @@ class L3RpcCallbackMixin(object):
         for router in routers:
             LOG.debug(_("Checking router: %(id)s for host: %(host)s"),
                       {'id': router['id'], 'host': host})
-            self._ensure_host_set_on_port(context, plugin, host,
-                                          router.get('gw_port'),
-                                          router['id'])
+            if router.get('gw_port') and router.get('distributed'):
+                self._ensure_host_set_on_port(context, plugin,
+                                              router.get('gw_port_host'),
+                                              router.get('gw_port'),
+                                              router['id'])
+                for p in router.get(constants.SNAT_ROUTER_INTF_KEY, []):
+                    self._ensure_host_set_on_port(context, plugin,
+                                                  router.get('gw_port_host'),
+                                                  p, router['id'])
+            else:
+                self._ensure_host_set_on_port(context, plugin, host,
+                                              router.get('gw_port'),
+                                              router['id'])
             for interface in router.get(constants.INTERFACE_KEY, []):
                 self._ensure_host_set_on_port(context, plugin, host,
                                               interface, router['id'])

@@ -25,7 +25,7 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import model_base
 from neutron.extensions import l3agentscheduler
-
+from neutron import manager
 
 L3_AGENTS_SCHEDULER_OPTS = [
     cfg.StrOpt('router_scheduler_driver',
@@ -62,21 +62,40 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
     def add_router_to_l3_agent(self, context, agent_id, router_id):
         """Add a l3 agent to host a router."""
         router = self.get_router(context, router_id)
+        distributed = router.get('distributed')
         with context.session.begin(subtransactions=True):
             agent_db = self._get_agent(context, agent_id)
+            agent_conf = self.get_configuration_dict(agent_db)
+            agent_mode = agent_conf.get('agent_mode', 'legacy')
+            if (not distributed and agent_mode == 'dvr' or
+                distributed and agent_mode == 'legacy'):
+                router_type = ('distributed' if distributed else 'centralized')
+                raise l3agentscheduler.RouterL3AgentMismatch(
+                    router_type=router_type, router_id=router_id,
+                    agent_mode=agent_mode, agent_id=agent_id)
             if (agent_db['agent_type'] != constants.AGENT_TYPE_L3 or
                 not agent_db['admin_state_up'] or
-                not self.get_l3_agent_candidates(router, [agent_db])):
+                not self.get_l3_agent_candidates(context,
+                                                 router,
+                                                 [agent_db])):
                 raise l3agentscheduler.InvalidL3Agent(id=agent_id)
             query = context.session.query(RouterL3AgentBinding)
-            try:
-                binding = query.filter_by(router_id=router_id).one()
+            if distributed:
+                binding = query.filter_by(router_id=router_id,
+                                          l3_agent_id=agent_id).first()
+                if binding:
+                    raise l3agentscheduler.RouterHostedByL3Agent(
+                        router_id=router_id,
+                        agent_id=binding.l3_agent_id)
+            else:
+                try:
+                    binding = query.filter_by(router_id=router_id).one()
 
-                raise l3agentscheduler.RouterHostedByL3Agent(
-                    router_id=router_id,
-                    agent_id=binding.l3_agent_id)
-            except exc.NoResultFound:
-                pass
+                    raise l3agentscheduler.RouterHostedByL3Agent(
+                        router_id=router_id,
+                        agent_id=binding.l3_agent_id)
+                except exc.NoResultFound:
+                    pass
 
             result = self.auto_schedule_routers(context,
                                                 agent_db.host,
@@ -238,7 +257,57 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
                     active, l3_agent)]
 
-    def get_l3_agent_candidates(self, sync_router, l3_agents):
+    def check_vmexists_on_l3agent(self, context, l3_agent, router_id,
+                                  subnet_id):
+        if not subnet_id:
+            return True
+
+        core_plugin = manager.NeutronManager.get_plugin()
+        filter = {'fixed_ips': {'subnet_id': [subnet_id]}}
+        ports = core_plugin.get_ports(context, filters=filter)
+        for port in ports:
+            if ("compute:" in port['device_owner'] and
+                l3_agent['host'] == port['binding:host_id']):
+                    return True
+
+        return False
+
+    def get_snat_candidates(self, sync_router, l3_agents):
+        """Get the valid snat enabled l3 agents for the distributed router."""
+        candidates = []
+        is_router_distributed = sync_router.get('distributed', False)
+        if not is_router_distributed:
+            return candidates
+        for l3_agent in l3_agents:
+            if not l3_agent.admin_state_up:
+                continue
+
+            agent_conf = self.get_configuration_dict(l3_agent)
+            agent_mode = agent_conf.get('agent_mode', 'legacy')
+            if agent_mode != 'dvr_snat':
+                continue
+
+            router_id = agent_conf.get('router_id', None)
+            use_namespaces = agent_conf.get('use_namespaces', True)
+            if not use_namespaces and router_id != sync_router['id']:
+                continue
+
+            handle_internal_only_routers = agent_conf.get(
+                'handle_internal_only_routers', True)
+            gateway_external_network_id = agent_conf.get(
+                'gateway_external_network_id', None)
+            ex_net_id = (sync_router['external_gateway_info'] or {}).get(
+                'network_id')
+            if ((not ex_net_id and not handle_internal_only_routers) or
+                (ex_net_id and gateway_external_network_id and
+                 ex_net_id != gateway_external_network_id)):
+                continue
+
+            candidates.append(l3_agent)
+        return candidates
+
+    def get_l3_agent_candidates(self, context, sync_router, l3_agents,
+                                subnet_id=None):
         """Get the valid l3 agents for the router from a list of l3_agents."""
         candidates = []
         for l3_agent in l3_agents:
@@ -251,6 +320,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 'handle_internal_only_routers', True)
             gateway_external_network_id = agent_conf.get(
                 'gateway_external_network_id', None)
+            agent_mode = agent_conf.get('agent_mode', 'legacy')
             if not use_namespaces and router_id != sync_router['id']:
                 continue
             ex_net_id = (sync_router['external_gateway_info'] or {}).get(
@@ -259,7 +329,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 (ex_net_id and gateway_external_network_id and
                  ex_net_id != gateway_external_network_id)):
                 continue
-            candidates.append(l3_agent)
+            is_router_distributed = sync_router.get('distributed', False)
+            if not is_router_distributed and agent_mode == 'legacy':
+                candidates.append(l3_agent)
+            elif (agent_mode.startswith('dvr') and
+                self.check_vmexists_on_l3agent(
+                    context, l3_agent, sync_router['id'], subnet_id)):
+                candidates.append(l3_agent)
         return candidates
 
     def auto_schedule_routers(self, context, host, router_ids):
@@ -267,15 +343,15 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             return self.router_scheduler.auto_schedule_routers(
                 self, context, host, router_ids)
 
-    def schedule_router(self, context, router, candidates=None):
+    def schedule_router(self, context, router, candidates=None, hints=None):
         if self.router_scheduler:
             return self.router_scheduler.schedule(
-                self, context, router, candidates)
+                self, context, router, candidates=candidates, hints=hints)
 
-    def schedule_routers(self, context, routers):
+    def schedule_routers(self, context, routers, hints=None):
         """Schedule the routers to l3 agents."""
         for router in routers:
-            self.schedule_router(context, router)
+            self.schedule_router(context, router, candidates=None, hints=hints)
 
     def get_l3_agent_with_min_routers(self, context, agent_ids):
         """Return l3 agent with the least number of routers."""
