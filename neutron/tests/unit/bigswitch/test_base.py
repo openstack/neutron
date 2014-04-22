@@ -28,6 +28,7 @@ from neutron.tests.unit.bigswitch import fake_server
 RESTPROXY_PKG_PATH = 'neutron.plugins.bigswitch.plugin'
 NOTIFIER = 'neutron.plugins.bigswitch.plugin.AgentNotifierApi'
 CALLBACKS = 'neutron.plugins.bigswitch.plugin.RestProxyCallbacks'
+DISPATCHER = CALLBACKS + '.create_rpc_dispatcher'
 CERTFETCH = 'neutron.plugins.bigswitch.servermanager.ServerPool._fetch_cert'
 SERVER_MANAGER = 'neutron.plugins.bigswitch.servermanager'
 HTTPCON = 'neutron.plugins.bigswitch.servermanager.httplib.HTTPConnection'
@@ -54,9 +55,13 @@ class BigSwitchTestBase(object):
 
     def setup_patches(self):
         self.plugin_notifier_p = mock.patch(NOTIFIER)
-        self.callbacks_p = mock.patch(CALLBACKS)
-        self.spawn_p = mock.patch(SPAWN)
-        self.watch_p = mock.patch(CWATCH)
+        # prevent rpc callback dispatcher from being created
+        self.callbacks_p = mock.patch(DISPATCHER,
+                                      new=lambda *args, **kwargs: None)
+        # prevent any greenthreads from spawning
+        self.spawn_p = mock.patch(SPAWN, new=lambda *args, **kwargs: None)
+        # prevent the consistency watchdog from starting
+        self.watch_p = mock.patch(CWATCH, new=lambda *args, **kwargs: None)
         self.addCleanup(db.clear_db)
         self.callbacks_p.start()
         self.plugin_notifier_p.start()
