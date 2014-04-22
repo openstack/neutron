@@ -22,14 +22,28 @@ from vnc_api.vnc_api import *
 
 LOG = logging.getLogger(__name__)
 
+vnc_opts = [
+    cfg.StrOpt('api_server_ip', default='127.0.0.1'),
+    cfg.StrOpt('api_server_port', default='8082'),
+]
+
 
 class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
     """ Opencontrail VIF driver for neutron."""
     def __init__(self, conf):
         super(ContrailInterfaceDriver, self).__init__(conf)
         self._port_dict = {}
-        self._client = VncApi(api_server_host='127.0.0.1',
-                              api_server_port=8082)
+        self._client = self._connect_to_api_server()
+
+    def _connect_to_api_server(self):
+        cfg.CONF.register_opts(vnc_opts, 'APISERVER')
+        sip = cfg.CONF.APISERVER.api_server_ip
+        sport = cfg.CONF.APISERVER.api_server_port
+        try:
+            client = VncApi(api_server_host=sip, api_server_port=sport)
+            return client
+        except:
+            pass
 
     def _add_port(self, data):
         rpc = rpc_client_instance()
@@ -55,8 +69,8 @@ class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
 
         return True
 
-    def _instance_locate(self, instance_name):
-        """ locates the instance."""
+    def _instance_lookup(self, instance_name):
+        """ lookup the instance."""
         fq_name = instance_name.split(':')
         try:
             vm_instance = self._client.virtual_machine_read(fq_name=fq_name)
@@ -84,7 +98,7 @@ class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
             return
 
         # get the instance object the port is attached to
-        instance_obj = self._instance_locate(port_obj.parent_name)
+        instance_obj = self._instance_lookup(port_obj.parent_name)
 
         if instance_obj is None:
             return
