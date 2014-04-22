@@ -41,6 +41,10 @@ class FakeConf(object):
     nova_metadata_ip = '9.9.9.9'
     nova_metadata_port = 8775
     metadata_proxy_shared_secret = 'secret'
+    nova_metadata_protocol = 'http'
+    nova_metadata_insecure = True
+    nova_client_cert = 'nova_cert'
+    nova_client_priv_key = 'nova_priv_key'
 
 
 class TestMetadataProxyHandler(base.BaseTestCase):
@@ -209,7 +213,15 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
                 retval = self.handler._proxy_request('the_id', 'tenant_id',
                                                      req)
+                mock_http.assert_called_once_with(
+                    ca_certs=None, disable_ssl_certificate_validation=True)
                 mock_http.assert_has_calls([
+                    mock.call().add_certificate(
+                        FakeConf.nova_client_priv_key,
+                        FakeConf.nova_client_cert,
+                        "%s:%s" % (FakeConf.nova_metadata_ip,
+                                   FakeConf.nova_metadata_port)
+                    ),
                     mock.call().request(
                         'http://9.9.9.9:8775/the_path',
                         method=method,

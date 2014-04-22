@@ -79,7 +79,20 @@ class MetadataProxyHandler(object):
         cfg.StrOpt('metadata_proxy_shared_secret',
                    default='',
                    help=_('Shared secret to sign instance-id request'),
-                   secret=True)
+                   secret=True),
+        cfg.StrOpt('nova_metadata_protocol',
+                   default='http',
+                   choices=['http', 'https'],
+                   help=_("Protocol to access nova metadata, http or https")),
+        cfg.BoolOpt('nova_metadata_insecure', default=False,
+                    help=_("Allow to perform insecure SSL (https) requests to "
+                           "nova metadata")),
+        cfg.StrOpt('nova_client_cert',
+                   default='',
+                   help=_("Client certificate for nova metadata api server.")),
+        cfg.StrOpt('nova_client_priv_key',
+                   default='',
+                   help=_("Private key of client certificate."))
     ]
 
     def __init__(self, conf):
@@ -152,15 +165,22 @@ class MetadataProxyHandler(object):
             'X-Instance-ID-Signature': self._sign_instance_id(instance_id)
         }
 
+        nova_ip_port = '%s:%s' % (self.conf.nova_metadata_ip,
+                                  self.conf.nova_metadata_port)
         url = urlparse.urlunsplit((
-            'http',
-            '%s:%s' % (self.conf.nova_metadata_ip,
-                       self.conf.nova_metadata_port),
+            self.conf.nova_metadata_protocol,
+            nova_ip_port,
             req.path_info,
             req.query_string,
             ''))
 
-        h = httplib2.Http()
+        h = httplib2.Http(ca_certs=self.conf.auth_ca_cert,
+                          disable_ssl_certificate_validation=
+                          self.conf.nova_metadata_insecure)
+        if self.conf.nova_client_cert and self.conf.nova_client_priv_key:
+            h.add_certificate(self.conf.nova_client_priv_key,
+                              self.conf.nova_client_cert,
+                              nova_ip_port)
         resp, content = h.request(url, method=req.method, headers=headers,
                                   body=req.body)
 
