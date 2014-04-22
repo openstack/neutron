@@ -1363,16 +1363,13 @@ class DBInterface(object):
         else:
             extra_dict['router:external'] = False
 
-        if net_repr == 'SHOW':
+        if net_repr == 'SHOW' or net_repr == 'LIST':
             extra_dict['contrail:instance_count'] = 0
 
             net_policy_refs = net_obj.get_network_policy_refs()
             if net_policy_refs:
                 extra_dict['contrail:policys'] = \
                     [np_ref['to'] for np_ref in net_policy_refs]
-
-        elif net_repr == 'LIST':
-            extra_dict['contrail:instance_count'] = 0
 
         rt_refs = net_obj.get_route_table_refs()
         if rt_refs:
