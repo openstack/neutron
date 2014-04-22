@@ -11,6 +11,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import ConfigParser
+
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.openstack.common import log as logging
@@ -22,25 +24,42 @@ from vnc_api.vnc_api import *
 
 LOG = logging.getLogger(__name__)
 
-vnc_opts = [
-    cfg.StrOpt('api_server_ip', default='127.0.0.1'),
-    cfg.StrOpt('api_server_port', default='8082'),
-]
+CONTRAIL_CFG_FILE = '/etc/neutron/plugins/juniper/contrail/ContrailPlugin.ini'
+
+
+def _read_cfg(cfg_parser, section, option, default):
+    try:
+        val = cfg_parser.get(section, option)
+    except (AttributeError,
+            ConfigParser.NoOptionError,
+            ConfigParser.NoSectionError):
+        val = default
+
+    return val
 
 
 class ContrailInterfaceDriver(interface.LinuxInterfaceDriver):
     """ Opencontrail VIF driver for neutron."""
+
+    @classmethod
+    def _parse_class_args(cls, cfg_parser):
+        cfg_parser.read(CONTRAIL_CFG_FILE)
+        cls._api_server_ip = _read_cfg(cfg_parser, 'APISERVER',
+                                       'api_server_ip', '127.0.0.1')
+        cls._api_server_port = _read_cfg(cfg_parser, 'APISERVER',
+                                         'api_server_port', '8082')
+
     def __init__(self, conf):
         super(ContrailInterfaceDriver, self).__init__(conf)
         self._port_dict = {}
         self._client = self._connect_to_api_server()
 
     def _connect_to_api_server(self):
-        cfg.CONF.register_opts(vnc_opts, 'APISERVER')
-        sip = cfg.CONF.APISERVER.api_server_ip
-        sport = cfg.CONF.APISERVER.api_server_port
+        cfg_parser = ConfigParser.ConfigParser()
+        ContrailInterfaceDriver._parse_class_args(cfg_parser)
         try:
-            client = VncApi(api_server_host=sip, api_server_port=sport)
+            client = VncApi(api_server_host=self._api_server_ip,
+                            api_server_port=self._api_server_port)
             return client
         except:
             pass
