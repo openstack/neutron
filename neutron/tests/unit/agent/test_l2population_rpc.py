@@ -188,3 +188,46 @@ class TestL2populationRpcCallBackTunnelMixin(
         self.assertRaises(NotImplementedError,
                           self.fakeagent.fdb_update,
                           'context', self.upd_fdb_entry1)
+
+    def test__fdb_chg_ip(self):
+        m_setup_entry_for_arp_reply = mock.Mock()
+        self.fakeagent.setup_entry_for_arp_reply = m_setup_entry_for_arp_reply
+        self.fakeagent.fdb_chg_ip_tun('context', self.upd_fdb_entry1_val,
+                                      self.local_ip, self.local_vlan_map1)
+        expected = [
+            mock.call('remove', self.lvm1.vlan, self.lvms[0].mac,
+                      self.lvms[0].ip),
+            mock.call('add', self.lvm1.vlan, self.lvms[1].mac,
+                      self.lvms[1].ip),
+            mock.call('remove', self.lvm1.vlan, self.lvms[0].mac,
+                      self.lvms[0].ip),
+            mock.call('add', self.lvm1.vlan, self.lvms[1].mac,
+                      self.lvms[1].ip),
+            mock.call('remove', self.lvm2.vlan, self.lvms[0].mac,
+                      self.lvms[0].ip),
+            mock.call('add', self.lvm2.vlan, self.lvms[2].mac,
+                      self.lvms[2].ip),
+        ]
+        m_setup_entry_for_arp_reply.assert_has_calls(expected, any_order=True)
+
+    def test__fdb_chg_ip_no_lvm(self):
+        m_setup_entry_for_arp_reply = mock.Mock()
+        self.fakeagent.setup_entry_for_arp_reply = m_setup_entry_for_arp_reply
+        self.fakeagent.fdb_chg_ip_tun(
+            'context', self.upd_fdb_entry1, self.local_ip, {})
+        self.assertFalse(m_setup_entry_for_arp_reply.call_count)
+
+    def test__fdb_chg_ip_ip_is_local_ip(self):
+        upd_fdb_entry_val = {
+            self.lvms[0].net: {
+                self.local_ip: {
+                    'before': [[self.lvms[0].mac, self.lvms[0].ip]],
+                    'after': [[self.lvms[1].mac, self.lvms[1].ip]],
+                },
+            },
+        }
+        m_setup_entry_for_arp_reply = mock.Mock()
+        self.fakeagent.setup_entry_for_arp_reply = m_setup_entry_for_arp_reply
+        self.fakeagent.fdb_chg_ip_tun('context', upd_fdb_entry_val,
+                                      self.local_ip, self.local_vlan_map1)
+        self.assertFalse(m_setup_entry_for_arp_reply.call_count)

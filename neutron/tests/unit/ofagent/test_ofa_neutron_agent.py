@@ -32,12 +32,10 @@ from neutron.common import constants as n_const
 from neutron.openstack.common import importutils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.common import constants
-from neutron.tests import base
-from neutron.tests.unit.ofagent import fake_oflib
+from neutron.tests.unit.ofagent import ofa_test_base
 
 
 NOTIFIER = ('neutron.plugins.ml2.rpc.AgentNotifierApi')
-OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
 
 
 def _mock_port(is_neutron=True, normalized_name=None):
@@ -48,30 +46,7 @@ def _mock_port(is_neutron=True, normalized_name=None):
     return p
 
 
-class OFAAgentTestCase(base.BaseTestCase):
-
-    _AGENT_NAME = 'neutron.plugins.ofagent.agent.ofa_neutron_agent'
-
-    def setUp(self):
-        super(OFAAgentTestCase, self).setUp()
-        self.fake_oflib_of = fake_oflib.patch_fake_oflib_of().start()
-        self.mod_agent = importutils.import_module(self._AGENT_NAME)
-        self.ryuapp = mock.Mock()
-
-    def setup_config(self):
-        cfg.CONF.set_default('firewall_driver',
-                             'neutron.agent.firewall.NoopFirewallDriver',
-                             group='SECURITYGROUP')
-        cfg.CONF.register_cli_opts([
-            cfg.StrOpt('ofp-listen-host', default='',
-                       help='openflow listen host'),
-            cfg.IntOpt('ofp-tcp-listen-port', default=6633,
-                       help='openflow tcp listen port')
-        ])
-        cfg.CONF.set_override('root_helper', 'fake_helper', group='AGENT')
-
-
-class CreateAgentConfigMap(OFAAgentTestCase):
+class CreateAgentConfigMap(ofa_test_base.OFAAgentTestBase):
 
     def test_create_agent_config_map_succeeds(self):
         self.assertTrue(self.mod_agent.create_agent_config_map(cfg.CONF))
@@ -116,7 +91,7 @@ class CreateAgentConfigMap(OFAAgentTestCase):
                          [p_const.TYPE_GRE, p_const.TYPE_VXLAN])
 
 
-class TestOFANeutronAgentOVSBridge(OFAAgentTestCase):
+class TestOFANeutronAgentOVSBridge(ofa_test_base.OFAAgentTestBase):
 
     def setUp(self):
         super(TestOFANeutronAgentOVSBridge, self).setUp()
@@ -209,7 +184,7 @@ class TestOFANeutronAgentOVSBridge(OFAAgentTestCase):
                 self.ovs.setup_ofp()
 
 
-class TestOFANeutronAgent(OFAAgentTestCase):
+class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
 
     def setUp(self):
         super(TestOFANeutronAgent, self).setUp()
@@ -229,23 +204,6 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             def start(self, interval=0):
                 self.f()
 
-        def _mk_test_dp(name):
-            ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
-            ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
-            dp = mock.Mock()
-            dp.ofproto = ofp
-            dp.ofproto_parser = ofpp
-            dp.__repr__ = lambda _self: name
-            return dp
-
-        def _mk_test_br(name):
-            dp = _mk_test_dp(name)
-            br = mock.Mock()
-            br.datapath = dp
-            br.ofproto = dp.ofproto
-            br.ofparser = dp.ofproto_parser
-            return br
-
         with contextlib.nested(
             mock.patch.object(self.mod_agent.OFANeutronAgent,
                               'setup_integration_br',
@@ -264,14 +222,14 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             self.agent = self.mod_agent.OFANeutronAgent(self.ryuapp, **kwargs)
 
         self.agent.sg_agent = mock.Mock()
-        self.int_dp = _mk_test_dp('int_br')
+        self.int_dp = self._mk_test_dp('int_br')
         self.agent.int_br.ofparser = self.int_dp.ofproto_parser
         self.agent.int_br.datapath = self.int_dp
-        self.agent.tun_br = _mk_test_br('tun_br')
-        self.agent.phys_brs['phys-net1'] = _mk_test_br('phys_br1')
+        self.agent.tun_br = self._mk_test_br('tun_br')
+        self.agent.phys_brs['phys-net1'] = self._mk_test_br('phys_br1')
         self.agent.phys_ofports['phys-net1'] = 777
         self.agent.int_ofports['phys-net1'] = 666
-        self.datapath = _mk_test_dp('phys_br')
+        self.datapath = self._mk_test_dp('phys_br')
 
     def _create_tunnel_port_name(self, tunnel_ip, tunnel_type):
         tunnel_ip_hex = '%08x' % netaddr.IPAddress(tunnel_ip, version=4)
@@ -796,6 +754,44 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             self.agent.fdb_remove(None, fdb_entry)
             del_port_fn.assert_called_once_with(self.tun_name2)
 
+    def test_add_arp_table_entry(self):
+        self._prepare_l2_pop_ofports()
+        fdb_entry = {self.lvms[0].net:
+                     {'network_type': self.tunnel_type,
+                      'segment_id': 'tun1',
+                      'ports': {self.lvms[0].ip: [['mac1', 'ip1']],
+                                self.lvms[1].ip: [['mac2', 'ip2']]}}}
+        with mock.patch.multiple(self.agent,
+                                 ryu_send_msg=mock.DEFAULT,
+                                 setup_tunnel_port=mock.DEFAULT):
+            self.agent.fdb_add(None, fdb_entry)
+            calls = [
+                mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
+                          'ip1', 'mac1'),
+                mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
+                          'ip2', 'mac2')
+            ]
+            self.ryuapp.add_arp_table_entry.assert_has_calls(calls)
+
+    def test_del_arp_table_entry(self):
+        self._prepare_l2_pop_ofports()
+        fdb_entry = {self.lvms[0].net:
+                     {'network_type': self.tunnel_type,
+                      'segment_id': 'tun1',
+                      'ports': {self.lvms[0].ip: [['mac1', 'ip1']],
+                                self.lvms[1].ip: [['mac2', 'ip2']]}}}
+        with mock.patch.multiple(self.agent,
+                                 ryu_send_msg=mock.DEFAULT,
+                                 setup_tunnel_port=mock.DEFAULT):
+            self.agent.fdb_remove(None, fdb_entry)
+            calls = [
+                mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
+                          'ip1'),
+                mock.call(self.agent.local_vlan_map[self.lvms[0].net].vlan,
+                          'ip2')
+            ]
+            self.ryuapp.del_arp_table_entry.assert_has_calls(calls)
+
     def test_recl_lv_port_to_preserve(self):
         self._prepare_l2_pop_ofports()
         self.agent.enable_tunneling = True
@@ -1119,8 +1115,23 @@ class TestOFANeutronAgent(OFAAgentTestCase):
         _get_ports.assert_called_once_with('hoge')
         self.assertEqual(set(names), result)
 
+    def test_setup_tunnel_br(self):
+        with contextlib.nested(
+            mock.patch.object(self.agent.int_br,
+                              'add_patch_port', return_value='1'),
+            mock.patch.object(self.agent.tun_br,
+                              'add_patch_port', return_value='2'),
+            mock.patch.object(self.mod_agent, 'OVSBridge',
+                              return_value=self.agent.tun_br),
+            mock.patch.object(self.agent,
+                              '_tun_br_output_arp_packet_to_controller')
+        ) as (int_add_patch_port, tun_add_patch_port,
+              ovs_br_class, tun_output_ctrl):
+            self.agent.setup_tunnel_br(cfg.CONF.OVS.tunnel_bridge)
+            tun_output_ctrl.assert_called_once_with(self.agent.tun_br)
 
-class AncillaryBridgesTest(OFAAgentTestCase):
+
+class AncillaryBridgesTest(ofa_test_base.OFAAgentTestBase):
 
     def setUp(self):
         super(AncillaryBridgesTest, self).setUp()

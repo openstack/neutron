@@ -369,8 +369,8 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                                  actions="strip_vlan,set_tunnel:%s,"
                                  "output:%s" % (lvm.segmentation_id, ofports))
         else:
-            self._set_arp_responder('add', lvm.vlan, port_info[0],
-                                    port_info[1])
+            self.setup_entry_for_arp_reply('add', lvm.vlan, port_info[0],
+                                           port_info[1])
             if not self.dvr_agent.is_dvr_router_interface(port_info[1]):
                 self.tun_br.add_flow(table=constants.UCAST_TO_TUN,
                                      priority=2,
@@ -395,83 +395,43 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 self.tun_br.delete_flows(table=constants.FLOOD_TO_TUN,
                                          dl_vlan=lvm.vlan)
         else:
-            self._set_arp_responder('remove', lvm.vlan, port_info[0],
-                                    port_info[1])
+            self.setup_entry_for_arp_reply('remove', lvm.vlan, port_info[0],
+                                           port_info[1])
             self.tun_br.delete_flows(table=constants.UCAST_TO_TUN,
                                      dl_vlan=lvm.vlan,
                                      dl_dst=port_info[0])
 
     def _fdb_chg_ip(self, context, fdb_entries):
-        '''fdb update when an IP of a port is updated.
+        LOG.debug("update chg_ip received")
+        self.fdb_chg_ip_tun(
+            context, fdb_entries, self.local_ip, self.local_vlan_map)
 
-        The ML2 l2-pop mechanism driver send an fdb update rpc message when an
-        IP of a port is updated.
-
-        :param context: RPC context.
-        :param fdb_entries: fdb dicts that contain all mac/IP informations per
-                            agent and network.
-                               {'net1':
-                                {'agent_ip':
-                                 {'before': [[mac, ip]],
-                                  'after': [[mac, ip]]
-                                 }
-                                }
-                                'net2':
-                                ...
-                               }
-        '''
-        LOG.debug(_("update chg_ip received"))
-
-        # TODO(ethuleau): Use OVS defer apply flows for all rules will be an
-        # interesting improvement here. But actually, OVS lib defer apply flows
-        # methods doesn't ensure the add flows will be applied before delete.
-        for network_id, agent_ports in fdb_entries.items():
-            lvm = self.local_vlan_map.get(network_id)
-            if not lvm:
-                continue
-
-            for agent_ip, state in agent_ports.items():
-                if agent_ip == self.local_ip:
-                    continue
-
-                after = state.get('after')
-                for mac, ip in after:
-                    self._set_arp_responder('add', lvm.vlan, mac, ip)
-
-                before = state.get('before')
-                for mac, ip in before:
-                    self._set_arp_responder('remove', lvm.vlan, mac, ip)
-
-    def _set_arp_responder(self, action, lvid, mac_str, ip_str):
+    def setup_entry_for_arp_reply(self, action, local_vid, mac_address,
+                                  ip_address):
         '''Set the ARP respond entry.
 
         When the l2 population mechanism driver and OVS supports to edit ARP
         fields, a table (ARP_RESPONDER) to resolve ARP locally is added to the
         tunnel bridge.
-
-        :param action: add or remove ARP entry.
-        :param lvid: local VLAN map of network's ARP entry.
-        :param mac_str: MAC string value.
-        :param ip_str: IP string value.
         '''
         if not self.arp_responder_enabled:
             return
 
-        mac = netaddr.EUI(mac_str, dialect=netaddr.mac_unix)
-        ip = netaddr.IPAddress(ip_str)
+        mac = netaddr.EUI(mac_address, dialect=netaddr.mac_unix)
+        ip = netaddr.IPAddress(ip_address)
 
         if action == 'add':
             actions = constants.ARP_RESPONDER_ACTIONS % {'mac': mac, 'ip': ip}
             self.tun_br.add_flow(table=constants.ARP_RESPONDER,
                                  priority=1,
                                  proto='arp',
-                                 dl_vlan=lvid,
+                                 dl_vlan=local_vid,
                                  nw_dst='%s' % ip,
                                  actions=actions)
         elif action == 'remove':
             self.tun_br.delete_flows(table=constants.ARP_RESPONDER,
                                      proto='arp',
-                                     dl_vlan=lvid,
+                                     dl_vlan=local_vid,
                                      nw_dst='%s' % ip)
         else:
             LOG.warning(_('Action %s not supported'), action)

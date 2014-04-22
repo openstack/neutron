@@ -136,6 +136,22 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
         '''
         pass
 
+    @abc.abstractmethod
+    def setup_entry_for_arp_reply(self, action, local_vid, mac_address,
+                                  ip_address):
+        '''Operate the ARP respond information.
+
+        Do operation of arp respond information for an action
+        In ovs do adding or removing flow entry to edit an arp reply.
+
+        :param action: an action to operate for arp respond infomation.
+            "add" or "remove"
+        :param local_vid: id in local VLAN map of network's ARP entry.
+        :param mac_address: MAC string value.
+        :param ip_address: IP string value.
+        '''
+        pass
+
     def get_agent_ports(self, fdb_entries, local_vlan_map):
         for network_id, values in fdb_entries.items():
             lvm = local_vlan_map.get(network_id)
@@ -180,3 +196,43 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
                 raise NotImplementedError()
 
             getattr(self, method)(context, values)
+
+    @log.log
+    def fdb_chg_ip_tun(self, context, fdb_entries, local_ip, local_vlan_map):
+        '''fdb update when an IP of a port is updated.
+
+        The ML2 l2-pop mechanism driver sends an fdb update rpc message when an
+        IP of a port is updated.
+
+        :param context: RPC context.
+        :param fdb_entries: fdb dicts that contain all mac/IP informations per
+                            agent and network.
+                               {'net1':
+                                {'agent_ip':
+                                 {'before': [[mac, ip]],
+                                  'after': [[mac, ip]]
+                                 }
+                                }
+                                'net2':
+                                ...
+                               }
+        :param local_ip: local IP address of this agent.
+        :local_vlan_map: local VLAN map of network.
+        '''
+
+        for network_id, agent_ports in fdb_entries.items():
+            lvm = local_vlan_map.get(network_id)
+            if not lvm:
+                continue
+
+            for agent_ip, state in agent_ports.items():
+                if agent_ip == local_ip:
+                    continue
+
+                after = state.get('after')
+                for mac, ip in after:
+                    self.setup_entry_for_arp_reply('add', lvm.vlan, mac, ip)
+
+                before = state.get('before')
+                for mac, ip in before:
+                    self.setup_entry_for_arp_reply('remove', lvm.vlan, mac, ip)

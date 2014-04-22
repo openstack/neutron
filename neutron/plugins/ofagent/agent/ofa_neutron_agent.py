@@ -23,7 +23,11 @@ import netaddr
 from oslo.config import cfg
 from ryu.app.ofctl import api as ryu_api
 from ryu.base import app_manager
+from ryu.controller import handler
+from ryu.controller import ofp_event
 from ryu.lib import hub
+from ryu.lib.packet import arp
+from ryu.ofproto import ether
 from ryu.ofproto import ofproto_v1_3 as ryu_ofp13
 
 from neutron.agent import l2population_rpc
@@ -41,6 +45,7 @@ from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ofagent.agent import arp_lib
 from neutron.plugins.ofagent.agent import ports
 from neutron.plugins.ofagent.common import config  # noqa
 from neutron.plugins.openvswitch.common import constants
@@ -132,8 +137,11 @@ class OFASecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
 class OFANeutronAgentRyuApp(app_manager.RyuApp):
     OFP_VERSIONS = [ryu_ofp13.OFP_VERSION]
 
-    def start(self):
+    def __init__(self, *args, **kwargs):
+        super(OFANeutronAgentRyuApp, self).__init__(*args, **kwargs)
+        self.arplib = arp_lib.ArpLib(self)
 
+    def start(self):
         super(OFANeutronAgentRyuApp, self).start()
         return hub.spawn(self._agent_main, self)
 
@@ -159,6 +167,16 @@ class OFANeutronAgentRyuApp(app_manager.RyuApp):
         # Start everything.
         LOG.info(_("Agent initialized successfully, now running... "))
         agent.daemon_loop()
+
+    @handler.set_ev_cls(ofp_event.EventOFPPacketIn, handler.MAIN_DISPATCHER)
+    def _packet_in_handler(self, ev):
+        self.arplib.packet_in_handler(ev)
+
+    def add_arp_table_entry(self, network, ip, mac):
+        self.arplib.add_arp_table_entry(network, ip, mac)
+
+    def del_arp_table_entry(self, network, ip):
+        self.arplib.del_arp_table_entry(network, ip)
 
 
 class OFANeutronAgent(n_rpc.RpcCallback,
@@ -391,6 +409,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             lvm.tun_ofports.add(ofport)
             self._add_fdb_flooding_flow(lvm)
         else:
+            self.ryuapp.add_arp_table_entry(
+                lvm.vlan, port_info[1], port_info[0])
             match = ofpp.OFPMatch(
                 vlan_vid=int(lvm.vlan) | ofp.OFPVID_PRESENT,
                 eth_dst=port_info[0])
@@ -427,6 +447,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
                                       match=match)
                 self.ryu_send_msg(msg)
         else:
+            self.ryuapp.del_arp_table_entry(lvm.vlan, port_info[1])
             match = ofpp.OFPMatch(
                 vlan_vid=int(lvm.vlan) | ofp.OFPVID_PRESENT,
                 eth_dst=port_info[0])
@@ -437,6 +458,18 @@ class OFANeutronAgent(n_rpc.RpcCallback,
                                   out_port=ofp.OFPP_ANY,
                                   match=match)
             self.ryu_send_msg(msg)
+
+    def setup_entry_for_arp_reply(self, action, local_vid, mac_address,
+                                  ip_address):
+        if action == 'add':
+            self.ryuapp.add_arp_table_entry(local_vid, ip_address, mac_address)
+        elif action == 'remove':
+            self.ryuapp.del_arp_table_entry(local_vid, ip_address)
+
+    def _fdb_chg_ip(self, context, fdb_entries):
+        LOG.debug("update chg_ip received")
+        self.fdb_chg_ip_tun(
+            context, fdb_entries, self.local_ip, self.local_vlan_map)
 
     def _provision_local_vlan_inbound_for_tunnel(self, lvid, network_type,
                                                  segmentation_id):
@@ -792,6 +825,22 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         msg = br.ofparser.OFPFlowMod(br.datapath, priority=0)
         self.ryu_send_msg(msg)
 
+    def _tun_br_output_arp_packet_to_controller(self, br):
+        datapath = br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        match = ofpp.OFPMatch(eth_type=ether.ETH_TYPE_ARP,
+                              arp_op=arp.ARP_REQUEST)
+        actions = [ofpp.OFPActionOutput(ofp.OFPP_CONTROLLER)]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions)]
+        msg = ofpp.OFPFlowMod(datapath,
+                              table_id=constants.PATCH_LV_TO_TUN,
+                              priority=10,
+                              match=match,
+                              instructions=instructions)
+        self.ryu_send_msg(msg)
+
     def _tun_br_goto_table_ucast_unicast(self, br):
         match = br.ofparser.OFPMatch(eth_dst=('00:00:00:00:00:00',
                                               '01:00:00:00:00:00'))
@@ -799,6 +848,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             table_id=constants.UCAST_TO_TUN)]
         msg = br.ofparser.OFPFlowMod(br.datapath,
                                      table_id=constants.PATCH_LV_TO_TUN,
+                                     priority=0,
                                      match=match,
                                      instructions=instructions)
         self.ryu_send_msg(msg)
@@ -810,6 +860,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             table_id=constants.FLOOD_TO_TUN)]
         msg = br.ofparser.OFPFlowMod(br.datapath,
                                      table_id=constants.PATCH_LV_TO_TUN,
+                                     priority=0,
                                      match=match,
                                      instructions=instructions)
         self.ryu_send_msg(msg)
@@ -879,6 +930,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         self.ryu_send_msg(msg)
 
         self._tun_br_sort_incoming_traffic_depend_in_port(self.tun_br)
+        self._tun_br_output_arp_packet_to_controller(self.tun_br)
         self._tun_br_goto_table_ucast_unicast(self.tun_br)
         self._tun_br_goto_table_flood_broad_multi_cast(self.tun_br)
         self._tun_br_set_table_tun_by_tunnel_type(self.tun_br)
