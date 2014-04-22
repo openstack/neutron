@@ -28,8 +28,8 @@ class NexusPortBinding(model_base.BASEV2):
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
     port_id = sa.Column(sa.String(255))
     vlan_id = sa.Column(sa.Integer, nullable=False)
-    switch_ip = sa.Column(sa.String(255))
-    instance_id = sa.Column(sa.String(255))
+    switch_ip = sa.Column(sa.String(255), nullable=False)
+    instance_id = sa.Column(sa.String(255), nullable=False)
 
     def __repr__(self):
         """Just the binding, without the id key."""
