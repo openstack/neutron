@@ -810,7 +810,7 @@ class TestIpNeighCommand(TestIPCmdBase):
 
     def test_add_entry(self):
         self.neigh_cmd.add(4, '192.168.45.100', 'cc:dd:ee:ff:ab:cd')
-        self._assert_sudo([4], ('add', '192.168.45.100', 'lladdr',
+        self._assert_sudo([4], ('replace', '192.168.45.100', 'lladdr',
                                 'cc:dd:ee:ff:ab:cd', 'nud', 'permanent',
                                 'dev', 'tap0'))
 

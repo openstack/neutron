@@ -444,7 +444,7 @@ class IpNeighCommand(IpDeviceCommandBase):
     COMMAND = 'neigh'
 
     def add(self, ip_version, ip_address, mac_address):
-        self._as_root('add',
+        self._as_root('replace',
                       ip_address,
                       'lladdr',
                       mac_address,
