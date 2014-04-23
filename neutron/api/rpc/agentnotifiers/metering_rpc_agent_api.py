@@ -20,6 +20,7 @@ from neutron.common import utils
 from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.rpc import proxy
+from neutron.plugins.common import constants as service_constants
 
 LOG = logging.getLogger(__name__)
 
@@ -35,7 +36,8 @@ class MeteringAgentNotifyAPI(proxy.RpcProxy):
     def _agent_notification(self, context, method, routers):
         """Notify l3 metering agents hosted by l3 agent hosts."""
         adminContext = context.is_admin and context or context.elevated()
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
 
         l3_routers = {}
         for router in routers:
@@ -71,7 +73,8 @@ class MeteringAgentNotifyAPI(proxy.RpcProxy):
 
     def _notification(self, context, method, routers):
         """Notify all the agents that are hosting the routers."""
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
         if utils.is_extension_supported(
             plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             self._agent_notification(context, method, routers)

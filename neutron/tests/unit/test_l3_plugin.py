@@ -298,6 +298,15 @@ class TestL3NatServicePlugin(db_base_plugin_v2.CommonDbMixin,
         return "L3 Routing Service Plugin for testing"
 
 
+# A L3 routing with L3 agent scheduling service plugin class for tests with
+# plugins that delegate away L3 routing functionality
+class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
+                                            l3_agentschedulers_db.
+                                            L3AgentSchedulerDbMixin):
+
+    supported_extension_aliases = ["router", "l3_agent_scheduler"]
+
+
 class L3NatTestCaseMixin(object):
 
     def _create_router(self, fmt, tenant_id, name=None,
