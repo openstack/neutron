@@ -474,6 +474,8 @@ class IptablesManager(object):
                 # grab the last entry, if there is one
                 dup = dup_filter[-1]
                 chain_str = str(dup).strip()
+                # backup one index so we write the array correctly
+                rules_index -= 1
             else:
                 # add-on the [packet:bytes]
                 chain_str += ' - [0:0]'
