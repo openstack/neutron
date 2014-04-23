@@ -444,6 +444,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         with session.begin(subtransactions=True):
             binding = db.get_network_binding(session, id)
+            self._process_l3_delete(context, id)
             super(LinuxBridgePluginV2, self).delete_network(context, id)
             if binding.vlan_id != constants.LOCAL_VLAN_ID:
                 db.release_network(session, binding.physical_network,

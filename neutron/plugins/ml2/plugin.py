@@ -457,6 +457,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         while True:
             try:
                 with session.begin(subtransactions=True):
+                    self._process_l3_delete(context, id)
+
                     # Get ports to auto-delete.
                     ports = (session.query(models_v2.Port).
                              enable_eagerloads(False).

@@ -276,6 +276,7 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
         session = context.session
         with session.begin(subtransactions=True):
             binding = self._db.get_network_binding(session, id)
+            self._process_l3_delete(context, id)
             super(HyperVNeutronPlugin, self).delete_network(context, id)
             p = self._network_providers_map[binding.network_type]
             p.delete_network(session, binding)

@@ -236,7 +236,11 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     @_ha
     def delete_network(self, context, id):
         LOG.debug(_("Delete network in progress: %s"), id)
-        super(SdnvePluginV2, self).delete_network(context, id)
+        session = context.session
+
+        with session.begin(subtransactions=True):
+            self._process_l3_delete(context, id)
+            super(SdnvePluginV2, self).delete_network(context, id)
 
         (res, data) = self.sdnve_client.sdnve_delete('network', id)
         if res not in constants.HTTP_ACCEPTABLE:
