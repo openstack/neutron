@@ -279,10 +279,28 @@ class LinuxBridgeManager:
                 src_device.addr.delete(ip_version=ip['ip_version'],
                                        cidr=ip['cidr'])
 
+    def _bridge_exists_and_ensure_up(self, bridge_name):
+        """Check if the bridge exists and make sure it is up."""
+        br = ip_lib.IPDevice(bridge_name, self.root_helper)
+        try:
+            # If the device doesn't exist this will throw a RuntimeError
+            br.link.set_up()
+        except RuntimeError:
+            return False
+        return True
+
     def ensure_bridge(self, bridge_name, interface=None, ips=None,
                       gateway=None):
         """Create a bridge unless it already exists."""
-        if not ip_lib.device_exists(bridge_name, root_helper=self.root_helper):
+        # _bridge_exists_and_ensure_up instead of device_exists is used here
+        # because there are cases where the bridge exists but it's not UP,
+        # for example:
+        # 1) A greenthread was executing this function and had not yet executed
+        # "ip link set bridge_name up" before eventlet switched to this
+        # thread running the same function
+        # 2) The Nova VIF driver was running concurrently and had just created
+        #    the bridge, but had not yet put it UP
+        if not self._bridge_exists_and_ensure_up(bridge_name):
             LOG.debug(_("Starting bridge %(bridge_name)s for subinterface "
                         "%(interface)s"),
                       {'bridge_name': bridge_name, 'interface': interface})
