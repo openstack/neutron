@@ -68,6 +68,10 @@ def try_del(d, keys):
             pass
 
 
+class OpendaylightAuthError(n_exc.NeutronException):
+    message = '%(msg)s'
+
+
 class JsessionId(requests.auth.AuthBase):
 
     """Attaches the JSESSIONID and JSESSIONIDSSO cookies to an HTTP Request.
@@ -95,8 +99,16 @@ class JsessionId(requests.auth.AuthBase):
     def obtain_auth_cookies(self):
         """Make a REST call to obtain cookies for ODL authenticiation."""
 
-        r = requests.get(self.url, auth=(self.username, self.password))
-        r.raise_for_status()
+        try:
+            r = requests.get(self.url, auth=(self.username, self.password))
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise OpendaylightAuthError(msg=_("Failed to authenticate with "
+                                              "OpenDaylight: %s") % e)
+        except requests.exceptions.Timeout as e:
+            raise OpendaylightAuthError(msg=_("Authentication Timed"
+                                              " Out: %s") % e)
+
         jsessionid = r.cookies.get('JSESSIONID')
         jsessionidsso = r.cookies.get('JSESSIONIDSSO')
         if jsessionid and jsessionidsso:
@@ -199,9 +211,11 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
                 urlpath = collection_name + '/' + resource['id']
                 self.sendjson('get', urlpath, None)
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 404:
-                    attr_filter(resource, context, dbcontext)
-                    to_be_synced.append(resource)
+                with excutils.save_and_reraise_exception() as ctx:
+                    if e.response.status_code == 404:
+                        attr_filter(resource, context, dbcontext)
+                        to_be_synced.append(resource)
+                        ctx.reraise = False
 
         key = resource_name if len(to_be_synced) == 1 else collection_name
 
