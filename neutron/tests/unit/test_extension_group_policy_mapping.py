@@ -31,6 +31,11 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
     fmt = 'json'
 
     def setUp(self):
+        self._saved_gp_attr_map = {}
+        for k, v in gpolicy.RESOURCE_ATTRIBUTE_MAP.iteritems():
+            self._saved_gp_attr_map[k] = v.copy()
+        self.addCleanup(self._restore_gp_attr_map)
+
         super(GroupPolicyMappingExtTestCase, self).setUp()
         attr_map = gpolicy.RESOURCE_ATTRIBUTE_MAP
         attr_map['endpoints'].update(gpm.EXTENDED_ATTRIBUTES_2_0['endpoints'])
@@ -38,6 +43,9 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
             'neutron.extensions.group_policy.GroupPolicyPluginBase',
             constants.GROUP_POLICY, attr_map,
             gpolicy.Group_policy, 'gp', plural_mappings={})
+
+    def _restore_gp_attr_map(self):
+        gpolicy.RESOURCE_ATTRIBUTE_MAP = self._saved_gp_attr_map
 
     def test_create_endpoint(self):
         endpoint_id = _uuid()
