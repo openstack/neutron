@@ -20,7 +20,7 @@ import random
 
 import six
 from sqlalchemy.orm import exc
-from sqlalchemy.sql import exists
+from sqlalchemy import sql
 
 from neutron.common import constants
 from neutron.db import agents_db
@@ -58,7 +58,7 @@ class L3Scheduler(object):
             query = query.filter(agents_db.Agent.agent_type ==
                                  constants.AGENT_TYPE_L3,
                                  agents_db.Agent.host == host,
-                                 agents_db.Agent.admin_state_up == True)
+                                 agents_db.Agent.admin_state_up == sql.true())
             try:
                 l3_agent = query.one()
             except (exc.MultipleResultsFound, exc.NoResultFound):
@@ -87,7 +87,7 @@ class L3Scheduler(object):
             else:
                 # get all routers that are not hosted
                 #TODO(gongysh) consider the disabled agent's router
-                stmt = ~exists().where(
+                stmt = ~sql.exists().where(
                     l3_db.Router.id ==
                     l3_agentschedulers_db.RouterL3AgentBinding.router_id)
                 unscheduled_router_ids = [router_id_[0] for router_id_ in

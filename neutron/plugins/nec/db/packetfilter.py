@@ -18,6 +18,7 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc as sa_exc
+from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
 from neutron.db import model_base
@@ -205,11 +206,11 @@ class PacketFilterDbMixin(object):
         query = (context.session.query(nmodels.OFCFilterMapping)
                  .join(PacketFilter,
                        nmodels.OFCFilterMapping.neutron_id == PacketFilter.id)
-                 .filter(PacketFilter.admin_state_up == True))
+                 .filter(PacketFilter.admin_state_up == sql.true()))
 
         network_id = port['network_id']
         net_pf_query = (query.filter(PacketFilter.network_id == network_id)
-                        .filter(PacketFilter.in_port == None))
+                        .filter(PacketFilter.in_port == sql.null()))
         net_filters = [(pf['neutron_id'], pf['ofc_id']) for pf in net_pf_query]
 
         port_pf_query = query.filter(PacketFilter.in_port == port['id'])

@@ -20,6 +20,7 @@ from oslo.config import cfg
 from sqlalchemy import event
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
+from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -98,7 +99,7 @@ class CommonDbMixin(object):
         if not context.is_admin and hasattr(model, 'tenant_id'):
             if hasattr(model, 'shared'):
                 query_filter = ((model.tenant_id == context.tenant_id) |
-                                (model.shared == True))
+                                (model.shared == sql.true()))
             else:
                 query_filter = (model.tenant_id == context.tenant_id)
         # Execute query hooks registered from mixins and plugins

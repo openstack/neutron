@@ -17,6 +17,8 @@
 # @author: Francois Eleouet, Orange
 # @author: Mathieu Rohon, Orange
 
+from sqlalchemy import sql
+
 from neutron.common import constants as const
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as base_db
@@ -63,7 +65,7 @@ class L2populationDbMixin(base_db.CommonDbMixin):
                                ml2_models.PortBinding.host)
             query = query.join(models_v2.Port)
             query = query.filter(models_v2.Port.network_id == network_id,
-                                 models_v2.Port.admin_state_up == True,
+                                 models_v2.Port.admin_state_up == sql.true(),
                                  agents_db.Agent.agent_type.in_(
                                      l2_const.SUPPORTED_AGENT_TYPES))
             return query

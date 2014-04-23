@@ -22,7 +22,7 @@
 import netaddr
 import re
 from sqlalchemy.orm import exc
-from sqlalchemy.sql import and_
+from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
@@ -447,12 +447,13 @@ def reserve_vlan(db_session, network_profile):
 
     with db_session.begin(subtransactions=True):
         alloc = (db_session.query(n1kv_models_v2.N1kvVlanAllocation).
-                 filter(and_(
+                 filter(sql.and_(
                         n1kv_models_v2.N1kvVlanAllocation.vlan_id >= seg_min,
                         n1kv_models_v2.N1kvVlanAllocation.vlan_id <= seg_max,
                         n1kv_models_v2.N1kvVlanAllocation.physical_network ==
                         network_profile['physical_network'],
-                        n1kv_models_v2.N1kvVlanAllocation.allocated == False)
+                        n1kv_models_v2.N1kvVlanAllocation.allocated ==
+                        sql.false())
                         )).first()
         if alloc:
             segment_id = alloc.vlan_id
@@ -476,12 +477,13 @@ def reserve_vxlan(db_session, network_profile):
 
     with db_session.begin(subtransactions=True):
         alloc = (db_session.query(n1kv_models_v2.N1kvVxlanAllocation).
-                 filter(and_(
+                 filter(sql.and_(
                         n1kv_models_v2.N1kvVxlanAllocation.vxlan_id >=
                         seg_min,
                         n1kv_models_v2.N1kvVxlanAllocation.vxlan_id <=
                         seg_max,
-                        n1kv_models_v2.N1kvVxlanAllocation.allocated == False)
+                        n1kv_models_v2.N1kvVxlanAllocation.allocated ==
+                        sql.false())
                         ).first())
         if alloc:
             segment_id = alloc.vxlan_id
@@ -1459,15 +1461,16 @@ class PolicyProfile_db_mixin(object):
                                  profile_type=c_const.POLICY))
             a_set = set(i.profile_id for i in a_set_q)
             b_set_q = (db_session.query(n1kv_models_v2.ProfileBinding).
-                       filter(and_(n1kv_models_v2.ProfileBinding.
-                                   tenant_id != c_const.TENANT_ID_NOT_SET,
-                                   n1kv_models_v2.ProfileBinding.
-                                   profile_type == c_const.POLICY)))
+                       filter(sql.and_(n1kv_models_v2.ProfileBinding.
+                                       tenant_id != c_const.TENANT_ID_NOT_SET,
+                                       n1kv_models_v2.ProfileBinding.
+                                       profile_type == c_const.POLICY)))
             b_set = set(i.profile_id for i in b_set_q)
             (db_session.query(n1kv_models_v2.ProfileBinding).
-             filter(and_(n1kv_models_v2.ProfileBinding.profile_id.
-                         in_(a_set & b_set), n1kv_models_v2.ProfileBinding.
-                         tenant_id == c_const.TENANT_ID_NOT_SET)).
+             filter(sql.and_(n1kv_models_v2.ProfileBinding.profile_id.
+                             in_(a_set & b_set),
+                             n1kv_models_v2.ProfileBinding.tenant_id ==
+                             c_const.TENANT_ID_NOT_SET)).
              delete(synchronize_session="fetch"))
 
     def _add_policy_profile(self,
