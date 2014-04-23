@@ -30,7 +30,6 @@ from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import vpnaas
-from neutron.extensions.vpnaas import VPNPluginBase
 from neutron import manager
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
@@ -163,7 +162,7 @@ class VPNService(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
         cascade="all, delete-orphan")
 
 
-class VPNPluginDb(VPNPluginBase, base_db.CommonDbMixin):
+class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
     """VPN plugin database class using SQLAlchemy models."""
 
     def __init__(self):

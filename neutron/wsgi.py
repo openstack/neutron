@@ -44,7 +44,7 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import gettextutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.service import ProcessLauncher
+from neutron.openstack.common import service as common_service
 
 socket_opts = [
     cfg.IntOpt('backlog',
@@ -216,7 +216,7 @@ class Server(object):
         else:
             # Minimize the cost of checking for child exit by extending the
             # wait interval past the default of 0.01s.
-            self._launcher = ProcessLauncher(wait_interval=1.0)
+            self._launcher = common_service.ProcessLauncher(wait_interval=1.0)
             self._server = WorkerService(self, application)
             self._launcher.launch_service(self._server, workers=workers)
 

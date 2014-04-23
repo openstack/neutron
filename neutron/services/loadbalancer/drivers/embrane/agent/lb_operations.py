@@ -15,7 +15,7 @@
 #
 # @author:  Ivar Lazzaro, Embrane, Inc. ivar@embrane.com
 
-from functools import wraps
+import functools
 
 from heleosapi import exceptions as h_exc
 
@@ -34,7 +34,7 @@ def handler(event, handler):
         else:
             handler[event].append(f)
 
-        @wraps(f)
+        @functools.wraps(f)
         def wrapped_f(*args, **kwargs):
             return f(*args, **kwargs)
 

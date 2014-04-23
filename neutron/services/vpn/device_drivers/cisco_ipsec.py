@@ -15,7 +15,7 @@
 # @author: Paul Michali, Cisco Systems, Inc.
 
 import abc
-from collections import namedtuple
+import collections
 import requests
 
 import netaddr
@@ -46,7 +46,8 @@ cfg.CONF.register_opts(ipsec_opts, 'cisco_csr_ipsec')
 
 LOG = logging.getLogger(__name__)
 
-RollbackStep = namedtuple('RollbackStep', ['action', 'resource_id', 'title'])
+RollbackStep = collections.namedtuple('RollbackStep',
+                                      ['action', 'resource_id', 'title'])
 
 
 class CsrResourceCreateFailure(exceptions.NeutronException):

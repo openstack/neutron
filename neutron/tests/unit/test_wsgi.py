@@ -47,7 +47,7 @@ class TestWSGIServer(base.BaseTestCase):
         server.stop()
         server.wait()
 
-    @mock.patch('neutron.wsgi.ProcessLauncher')
+    @mock.patch('neutron.openstack.common.service.ProcessLauncher')
     def test_start_multiple_workers(self, ProcessLauncher):
         launcher = ProcessLauncher.return_value
 
