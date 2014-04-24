@@ -381,6 +381,9 @@ class FakeClient:
             res_dict = getattr(self, '_fake_%s_dict' % resource_type)
             if parent_uuid == '*':
                 parent_uuid = None
+            # NSX raises ResourceNotFound if lswitch doesn't exist and is not *
+            elif not res_dict and resource_type == self.LSWITCH_LPORT_RESOURCE:
+                raise api_exc.ResourceNotFound()
 
             def _attr_match(res_uuid):
                 if not attr_filter:
