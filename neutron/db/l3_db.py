@@ -51,7 +51,7 @@ class Router(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
     gw_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
-    gw_port = orm.relationship(models_v2.Port)
+    gw_port = orm.relationship(models_v2.Port, lazy='joined')
 
 
 class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
