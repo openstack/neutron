@@ -25,7 +25,7 @@ from neutron.api.v2 import resource_helper
 from neutron.common import exceptions as qexception
 from neutron import manager
 from neutron.plugins.common import constants
-from neutron.services.service_base import ServicePluginBase
+from neutron.services import service_base
 
 
 # Loadbalancer Exceptions
@@ -393,7 +393,7 @@ class Loadbalancer(extensions.ExtensionDescriptor):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class LoadBalancerPluginBase(ServicePluginBase):
+class LoadBalancerPluginBase(service_base.ServicePluginBase):
 
     def get_plugin_name(self):
         return constants.LOADBALANCER

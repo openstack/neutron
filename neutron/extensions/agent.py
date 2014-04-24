@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
+import abc
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
@@ -132,7 +132,7 @@ class AgentPluginBase(object):
         """
         raise exceptions.BadRequest
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_agent(self, context, id):
         """Delete agent.
 
@@ -144,7 +144,7 @@ class AgentPluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def update_agent(self, context, agent):
         """Disable or Enable the agent.
 
@@ -154,10 +154,10 @@ class AgentPluginBase(object):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_agents(self, context, filters=None, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_agent(self, context, id, fields=None):
         pass

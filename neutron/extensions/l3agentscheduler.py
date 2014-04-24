@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import abstractmethod
+import abc
 
 import webob.exc
 
@@ -177,18 +177,18 @@ class L3AgentSchedulerPluginBase(object):
     All of method must be in an admin context.
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def add_router_to_l3_agent(self, context, id, router_id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def remove_router_from_l3_agent(self, context, id, router_id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def list_routers_on_l3_agent(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def list_l3_agents_hosting_router(self, context, router_id):
         pass
