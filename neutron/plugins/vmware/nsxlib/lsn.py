@@ -30,7 +30,7 @@ HTTP_POST = "POST"
 HTTP_DELETE = "DELETE"
 HTTP_PUT = "PUT"
 
-SERVICECLUSTER_RESOURCE = "service-cluster"
+SERVICECLUSTER_RESOURCE = "edge-cluster"
 LSERVICESNODE_RESOURCE = "lservices-node"
 LSERVICESNODEPORT_RESOURCE = "lport/%s" % LSERVICESNODE_RESOURCE
 SUPPORTED_METADATA_OPTIONS = ['metadata_proxy_shared_secret']
@@ -54,7 +54,7 @@ def service_cluster_exists(cluster, svc_cluster_id):
 
 def lsn_for_network_create(cluster, network_id):
     lsn_obj = {
-        "service_cluster_uuid": cluster.default_service_cluster_uuid,
+        "edge_cluster_uuid": cluster.default_service_cluster_uuid,
         "tags": utils.get_tags(n_network_id=network_id)
     }
     return do_request(HTTP_POST,
