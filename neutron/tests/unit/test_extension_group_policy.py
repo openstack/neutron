@@ -121,6 +121,7 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
     def test_create_endpoint(self):
         endpoint_id = _uuid()
         data = {'endpoint': {'name': 'ep1',
+                             'endpointgroup_id': _uuid(),
                              'tenant_id': _uuid(),
                              'description': ''}}
         return_value = copy.copy(data['endpoint'])
