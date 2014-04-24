@@ -18,6 +18,7 @@
 import copy
 
 import mock
+import netaddr
 from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
@@ -303,24 +304,37 @@ class TestBasicRouterOperations(base.BaseTestCase):
             '! -i %s ! -o %s -m conntrack ! --ctstate DNAT -j ACCEPT' %
             (interface_name, interface_name)]
         for source_cidr in source_cidrs:
-            value_dict = {'source_cidr': source_cidr,
-                          'source_nat_ip': source_nat_ip}
-            expected_rules.append('-s %(source_cidr)s -j SNAT --to-source '
-                                  '%(source_nat_ip)s' % value_dict)
+            # Create SNAT rules for IPv4 only
+            if (netaddr.IPNetwork(source_cidr).version == 4 and
+                netaddr.IPNetwork(source_nat_ip).version == 4):
+                value_dict = {'source_cidr': source_cidr,
+                              'source_nat_ip': source_nat_ip}
+                expected_rules.append('-s %(source_cidr)s -j SNAT --to-source '
+                                      '%(source_nat_ip)s' % value_dict)
         for r in rules:
             if negate:
                 self.assertNotIn(r.rule, expected_rules)
             else:
                 self.assertIn(r.rule, expected_rules)
 
-    def _prepare_router_data(self, enable_snat=None, num_internal_ports=1):
+    def _prepare_router_data(self, ip_version=4,
+                             enable_snat=None, num_internal_ports=1):
+        if ip_version == 4:
+            ip_addr = '19.4.4.4'
+            cidr = '19.4.4.0/24'
+            gateway_ip = '19.4.4.1'
+        elif ip_version == 6:
+            ip_addr = 'fd00::4'
+            cidr = 'fd00::/64'
+            gateway_ip = 'fd00::1'
+
         router_id = _uuid()
         ex_gw_port = {'id': _uuid(),
                       'network_id': _uuid(),
-                      'fixed_ips': [{'ip_address': '19.4.4.4',
+                      'fixed_ips': [{'ip_address': ip_addr,
                                      'subnet_id': _uuid()}],
-                      'subnet': {'cidr': '19.4.4.0/24',
-                                 'gateway_ip': '19.4.4.1'}}
+                      'subnet': {'cidr': cidr,
+                                 'gateway_ip': gateway_ip}}
         int_ports = []
         for i in range(0, num_internal_ports):
             int_ports.append({'id': _uuid(),
@@ -523,6 +537,99 @@ class TestBasicRouterOperations(base.BaseTestCase):
         nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
                            if r not in orig_nat_rules]
         self.assertEqual(len(nat_rules_delta), 1)
+        self._verify_snat_rules(nat_rules_delta, router)
+
+    def test_process_ipv6_only_gw(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data(ip_version=6)
+        # Get NAT rules without the gw_port
+        gw_port = router['gw_port']
+        router['gw_port'] = None
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        agent.external_gateway_added = mock.Mock()
+        agent.process_router(ri)
+        orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+
+        # Get NAT rules with the gw_port
+        router['gw_port'] = gw_port
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        with mock.patch.object(
+                agent,
+                'external_gateway_nat_rules') as external_gateway_nat_rules:
+            agent.process_router(ri)
+            new_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+
+            # There should be no change with the NAT rules
+            self.assertFalse(external_gateway_nat_rules.called)
+            self.assertEqual(orig_nat_rules, new_nat_rules)
+
+    def test_process_router_ipv6_interface_added(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data()
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        agent.external_gateway_added = mock.Mock()
+        # Process with NAT
+        agent.process_router(ri)
+        orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+        # Add an IPv6 interface and reprocess
+        router[l3_constants.INTERFACE_KEY].append(
+            {'id': _uuid(),
+             'network_id': _uuid(),
+             'admin_state_up': True,
+             'fixed_ips': [{'ip_address': 'fd00::2',
+                            'subnet_id': _uuid()}],
+             'mac_address': 'ca:fe:de:ad:be:ef',
+             'subnet': {'cidr': 'fd00::/64',
+                        'gateway_ip': 'fd00::1'}})
+        # Reassign the router object to RouterInfo
+        ri.router = router
+        agent.process_router(ri)
+        # For some reason set logic does not work well with
+        # IpTablesRule instances
+        nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
+                           if r not in orig_nat_rules]
+        self.assertFalse(nat_rules_delta)
+
+    def test_process_router_ipv6v4_interface_added(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data()
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        agent.external_gateway_added = mock.Mock()
+        # Process with NAT
+        agent.process_router(ri)
+        orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
+        # Add an IPv4 and IPv6 interface and reprocess
+        router[l3_constants.INTERFACE_KEY].append(
+            {'id': _uuid(),
+             'network_id': _uuid(),
+             'admin_state_up': True,
+             'fixed_ips': [{'ip_address': '35.4.1.4',
+                            'subnet_id': _uuid()}],
+             'mac_address': 'ca:fe:de:ad:be:ef',
+             'subnet': {'cidr': '35.4.1.0/24',
+                        'gateway_ip': '35.4.1.1'}})
+
+        router[l3_constants.INTERFACE_KEY].append(
+            {'id': _uuid(),
+             'network_id': _uuid(),
+             'admin_state_up': True,
+             'fixed_ips': [{'ip_address': 'fd00::2',
+                            'subnet_id': _uuid()}],
+             'mac_address': 'ca:fe:de:ad:be:ef',
+             'subnet': {'cidr': 'fd00::/64',
+                        'gateway_ip': 'fd00::1'}})
+        # Reassign the router object to RouterInfo
+        ri.router = router
+        agent.process_router(ri)
+        # For some reason set logic does not work well with
+        # IpTablesRule instances
+        nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
+                           if r not in orig_nat_rules]
+        self.assertEqual(1, len(nat_rules_delta))
         self._verify_snat_rules(nat_rules_delta, router)
 
     def test_process_router_interface_removed(self):

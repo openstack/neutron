@@ -399,7 +399,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             ri.internal_ports.remove(p)
             self.internal_network_removed(ri, p['id'], p['ip_cidr'])
 
-        internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports]
+        # Get IPv4 only internal CIDRs
+        internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports
+                          if netaddr.IPNetwork(p['ip_cidr']).version == 4]
         # TODO(salv-orlando): RouterInfo would be a better place for
         # this logic too
         ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
@@ -444,11 +446,16 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # And add them back if the action if add_rules
         if action == 'add_rules' and ex_gw_port:
             # ex_gw_port should not be None in this case
-            ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
-            for rule in self.external_gateway_nat_rules(ex_gw_ip,
-                                                        internal_cidrs,
-                                                        interface_name):
-                ri.iptables_manager.ipv4['nat'].add_rule(*rule)
+            # NAT rules are added only if ex_gw_port has an IPv4 address
+            for ip_addr in ex_gw_port['fixed_ips']:
+                ex_gw_ip = ip_addr['ip_address']
+                if netaddr.IPAddress(ex_gw_ip).version == 4:
+                    rules = self.external_gateway_nat_rules(ex_gw_ip,
+                                                            internal_cidrs,
+                                                            interface_name)
+                    for rule in rules:
+                        ri.iptables_manager.ipv4['nat'].add_rule(*rule)
+                    break
         ri.iptables_manager.apply()
 
     def process_router_floating_ips(self, ri, ex_gw_port):
