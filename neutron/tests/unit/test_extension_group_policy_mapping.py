@@ -39,6 +39,8 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
         super(GroupPolicyMappingExtTestCase, self).setUp()
         attr_map = gpolicy.RESOURCE_ATTRIBUTE_MAP
         attr_map['endpoints'].update(gpm.EXTENDED_ATTRIBUTES_2_0['endpoints'])
+        attr_map['endpoint_groups'].update(
+            gpm.EXTENDED_ATTRIBUTES_2_0['endpoint_groups'])
         self._setUpExtension(
             'neutron.extensions.group_policy.GroupPolicyPluginBase',
             constants.GROUP_POLICY, attr_map,
@@ -68,3 +70,26 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
         res = self.deserialize(res)
         self.assertIn('endpoint', res)
         self.assertEqual(res['endpoint'], return_value)
+
+    def test_create_endpoint_group(self):
+        endpoint_group_id = _uuid()
+        data = {'endpoint_group': {'name': 'epg1',
+                                   'tenant_id': _uuid(),
+                                   'description': '',
+                                   'neutron_subnets': [],
+                                   'provided_contract_scopes': [],
+                                   'consumed_contract_scopes': []}}
+        return_value = copy.copy(data['endpoint_group'])
+        return_value.update({'id': endpoint_group_id})
+
+        instance = self.plugin.return_value
+        instance.create_endpoint_group.return_value = return_value
+        res = self.api.post(_get_path('gp/endpoint_groups', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
+        instance.create_endpoint_group.assert_called_with(mock.ANY,
+                                                          endpoint_group=data)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        res = self.deserialize(res)
+        self.assertIn('endpoint_group', res)
+        self.assertEqual(res['endpoint_group'], return_value)

@@ -14,6 +14,7 @@
 #    under the License.
 
 
+from neutron.api.v2 import attributes as attr
 from neutron.extensions import group_policy as gpolicy
 
 
@@ -25,10 +26,22 @@ EXTENDED_ATTRIBUTES_2_0 = {
                             'is_visible': True, 'default': None},
     },
     gpolicy.ENDPOINT_GROUPS: {
+        'neutron_subnets': {'allow_post': True, 'allow_put': True,
+                            'validate': {'type:uuid_list': None},
+                            'convert_to': attr.convert_none_to_empty_list,
+                            'default': None, 'is_visible': True},
+    },
+    gpolicy.BRIDGE_DOMAINS: {
         'neutron_network_id': {'allow_post': True, 'allow_put': False,
                                'validate': {'type:uuid_or_none': None},
                                'is_visible': True, 'default': None},
-    }
+    },
+    gpolicy.ROUTING_DOMAINS: {
+        'neutron_routers': {'allow_post': True, 'allow_put': True,
+                            'validate': {'type:uuid_list': None},
+                            'convert_to': attr.convert_none_to_empty_list,
+                            'default': None, 'is_visible': True},
+    },
 }
 
 
