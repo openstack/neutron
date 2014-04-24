@@ -749,7 +749,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 cluster,
                 neutron_port['network_id'],
                 neutron_port['id'])
-        except NvpApiClient.NvpApiException:
+        except (NvpApiClient.NvpApiException, q_exc.NotFound):
+            nvp_port = None
             LOG.exception(_("Unable to find NVP uuid for Neutron port %s"),
                           neutron_port['id'])
 

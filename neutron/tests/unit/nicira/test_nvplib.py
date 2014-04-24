@@ -1339,16 +1339,27 @@ class TestNvplibLogicalPorts(NvplibTestCase):
         self.assertIsNotNone(lport2)
         self.assertEqual(lport['uuid'], lport2['uuid'])
 
-    def test_get_port_by_tag_not_found_returns_None(self):
+    def test_get_port_by_tag_not_found_with_switch_id_raises_not_found(self):
         tenant_id = 'pippo'
         neutron_port_id = 'whatever'
         transport_zones_config = [{'zone_uuid': _uuid(),
                                    'transport_type': 'stt'}]
         lswitch = nvplib.create_lswitch(self.fake_cluster, tenant_id,
                                         'fake-switch', transport_zones_config)
+        self.assertRaises(exceptions.NotFound,
+                          nvplib.get_port_by_neutron_tag,
+                          self.fake_cluster, lswitch['uuid'],
+                          neutron_port_id)
+
+    def test_get_port_by_tag_not_find_wildcard_lswitch_returns_none(self):
+        tenant_id = 'pippo'
+        neutron_port_id = 'whatever'
+        transport_zones_config = [{'zone_uuid': _uuid(),
+                                   'transport_type': 'stt'}]
+        nvplib.create_lswitch(self.fake_cluster, tenant_id,
+                              'fake-switch', transport_zones_config)
         lport = nvplib.get_port_by_neutron_tag(self.fake_cluster,
-                                               lswitch['uuid'],
-                                               neutron_port_id)
+                                               '*', neutron_port_id)
         self.assertIsNone(lport)
 
     def test_get_port_status(self):
