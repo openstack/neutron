@@ -19,8 +19,8 @@ from sqlalchemy.orm import exc
 
 from neutron.common import exceptions as nexc
 from neutron.common import log
-from neutron.db import model_base
 from neutron.db.grouppolicy import db_group_policy as gpolicy_db
+from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
