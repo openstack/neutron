@@ -24,7 +24,6 @@ from neutron.services.firewall.drivers import fwaas_base
 
 LOG = logging.getLogger(__name__)
 FWAAS_DRIVER_NAME = 'Fwaas iptables driver'
-FWAAS_CHAIN = 'fwaas'
 FWAAS_DEFAULT_CHAIN = 'fwaas-default-policy'
 INGRESS_DIRECTION = 'ingress'
 EGRESS_DIRECTION = 'egress'
