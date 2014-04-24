@@ -106,6 +106,46 @@ class TestABCDriver(TestBase):
              mock.call().addr.add(4, '192.168.1.2/24', '192.168.1.255')])
         self.assertFalse(self.ip_dev().addr.delete.called)
 
+    def test_l3_init_with_ipv6(self):
+        addresses = [dict(ip_version=6,
+                          scope='global',
+                          dynamic=False,
+                          cidr='2001:db8:a::123/64')]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        bc = BaseChild(self.conf)
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc.init_l3('tap0', ['2001:db8:a::124/64'], namespace=ns)
+        self.ip_dev.assert_has_calls(
+            [mock.call('tap0', 'sudo', namespace=ns),
+             mock.call().addr.list(scope='global', filters=['permanent']),
+             mock.call().addr.add(6, '2001:db8:a::124/64',
+                                  '2001:db8:a:0:ffff:ffff:ffff:ffff'),
+             mock.call().addr.delete(6, '2001:db8:a::123/64')])
+
+    def test_l3_init_with_duplicated_ipv6(self):
+        addresses = [dict(ip_version=6,
+                          scope='global',
+                          dynamic=False,
+                          cidr='2001:db8:a::123/64')]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        bc = BaseChild(self.conf)
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc.init_l3('tap0', ['2001:db8:a::123/64'], namespace=ns)
+        self.assertFalse(self.ip_dev().addr.add.called)
+
+    def test_l3_init_with_duplicated_ipv6_uncompact(self):
+        addresses = [dict(ip_version=6,
+                          scope='global',
+                          dynamic=False,
+                          cidr='2001:db8:a::123/64')]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        bc = BaseChild(self.conf)
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc.init_l3('tap0',
+                   ['2001:db8:a:0000:0000:0000:0000:0123/64'],
+                   namespace=ns)
+        self.assertFalse(self.ip_dev().addr.add.called)
+
 
 class TestOVSInterfaceDriver(TestBase):
 
