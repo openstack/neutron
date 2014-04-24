@@ -178,7 +178,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
             self.send_arp.assert_called_once_with(ri, interface_name,
                                                   '20.0.0.30')
             kwargs = {'preserve_ips': ['192.168.1.34/32'],
-                      'namespace': 'qrouter-' + router_id}
+                      'namespace': 'qrouter-' + router_id,
+                      'gateway': '20.0.0.1'}
             self.mock_driver.init_l3.assert_called_with(interface_name,
                                                         ['20.0.0.30/24'],
                                                         **kwargs)

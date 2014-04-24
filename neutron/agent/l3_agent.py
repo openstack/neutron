@@ -645,16 +645,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
         self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
                             namespace=ri.ns_name,
+                            gateway=ex_gw_port['subnet'].get('gateway_ip'),
                             preserve_ips=preserve_ips)
         ip_address = ex_gw_port['ip_cidr'].split('/')[0]
         self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
-
-        gw_ip = ex_gw_port['subnet']['gateway_ip']
-        if ex_gw_port['subnet']['gateway_ip']:
-            cmd = ['route', 'add', 'default', 'gw', gw_ip]
-            ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          namespace=ri.ns_name)
-            ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def external_gateway_removed(self, ri, ex_gw_port,
                                  interface_name, internal_cidrs):
