@@ -61,7 +61,15 @@ DHCP_RESPONSE_PORT = 68
 
 MIN_VLAN_TAG = 1
 MAX_VLAN_TAG = 4094
-MAX_VXLAN_VNI = 16777215
+
+# For GRE Tunnel
+MIN_GRE_ID = 1
+MAX_GRE_ID = 2 ** 32 - 1
+
+# For VXLAN Tunnel
+MIN_VXLAN_VNI = 1
+MAX_VXLAN_VNI = 2 ** 24 - 1
+
 FLOODING_ENTRY = ['00:00:00:00:00:00', '0.0.0.0']
 
 EXT_NS_COMP = '_backward_comp_e_ns'

@@ -18,7 +18,25 @@ Common utilities and helper functions for Openstack Networking Plugins.
 
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
-from neutron.plugins.common import constants
+from neutron.plugins.common import constants as p_const
+
+
+def verify_tunnel_range(tunnel_range, tunnel_type):
+    """Raise an exception for invalid tunnel range or malformed range."""
+    mappings = {p_const.TYPE_GRE: utils.is_valid_gre_id,
+                p_const.TYPE_VXLAN: utils.is_valid_vxlan_vni}
+    if tunnel_type in mappings:
+        for ident in tunnel_range:
+            if not mappings[tunnel_type](ident):
+                raise n_exc.NetworkTunnelRangeError(
+                    tunnel_range=tunnel_range,
+                    error=_("%(id)s is not a valid %(type)s identifier") %
+                    {'id': ident, 'type': tunnel_type})
+    if tunnel_range[1] < tunnel_range[0]:
+        raise n_exc.NetworkTunnelRangeError(
+            tunnel_range=tunnel_range,
+            error=_("End of tunnel range is less "
+                    "than start of tunnel range"))
 
 
 def verify_vlan_range(vlan_range):
@@ -62,6 +80,6 @@ def parse_network_vlan_ranges(network_vlan_ranges_cfg_entries):
 
 
 def in_pending_status(status):
-    return status in (constants.PENDING_CREATE,
-                      constants.PENDING_UPDATE,
-                      constants.PENDING_DELETE)
+    return status in (p_const.PENDING_CREATE,
+                      p_const.PENDING_UPDATE,
+                      p_const.PENDING_DELETE)

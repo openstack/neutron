@@ -16,8 +16,10 @@ import abc
 
 from neutron.common import exceptions as exc
 from neutron.common import topics
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log
+from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import helpers
 
@@ -59,25 +61,23 @@ class TunnelTypeDriver(helpers.TypeDriverHelper):
 
     def _initialize(self, raw_tunnel_ranges):
         self.tunnel_ranges = []
-        self._parse_tunnel_ranges(raw_tunnel_ranges,
-                                  self.tunnel_ranges,
-                                  self.get_type())
+        self._parse_tunnel_ranges(raw_tunnel_ranges, self.tunnel_ranges)
         self.sync_allocations()
 
-    def _parse_tunnel_ranges(self, tunnel_ranges, current_range, tunnel_type):
+    def _parse_tunnel_ranges(self, tunnel_ranges, current_range):
         for entry in tunnel_ranges:
             entry = entry.strip()
             try:
                 tun_min, tun_max = entry.split(':')
                 tun_min = tun_min.strip()
                 tun_max = tun_max.strip()
-                current_range.append((int(tun_min), int(tun_max)))
+                tunnel_range = int(tun_min), int(tun_max)
             except ValueError as ex:
-                LOG.error(_("Invalid tunnel ID range: '%(range)s' - %(e)s. "
-                            "Agent terminated!"),
-                          {'range': tunnel_ranges, 'e': ex})
-        LOG.info(_("%(type)s ID ranges: %(range)s"),
-                 {'type': tunnel_type, 'range': current_range})
+                raise exc.NetworkTunnelRangeError(tunnel_range=entry, error=ex)
+            plugin_utils.verify_tunnel_range(tunnel_range, self.get_type())
+            current_range.append(tunnel_range)
+        LOG.info(_LI("%(type)s ID ranges: %(range)s"),
+                 {'type': self.get_type(), 'range': current_range})
 
     def is_partial_segment(self, segment):
         return segment.get(api.SEGMENTATION_ID) is None

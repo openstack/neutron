@@ -20,6 +20,7 @@ from six import moves
 import sqlalchemy as sa
 from sqlalchemy import sql
 
+from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.openstack.common.gettextutils import _LE
@@ -76,7 +77,12 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
         return p_const.TYPE_VXLAN
 
     def initialize(self):
-        self._initialize(cfg.CONF.ml2_type_vxlan.vni_ranges)
+        try:
+            self._initialize(cfg.CONF.ml2_type_vxlan.vni_ranges)
+        except exc.NetworkTunnelRangeError:
+            LOG.exception(_("Failed to parse vni_ranges. "
+                            "Service terminated!"))
+            raise SystemExit()
 
     def sync_allocations(self):
 
