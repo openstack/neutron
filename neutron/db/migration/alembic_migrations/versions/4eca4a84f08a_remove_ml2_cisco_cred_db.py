@@ -50,10 +50,10 @@ def downgrade(active_plugins=None, options=None):
 
     op.create_table(
         'cisco_ml2_credentials',
-        sa.Column('credential_id', sa.string(length=255), nullable=True),
-        sa.Column('tenant_id', sa.string(length=255), nullable=False),
-        sa.Column('credential_name', sa.string(length=255), nullable=False),
-        sa.Column('user_name', sa.string(length=255), nullable=True),
-        sa.Column('password', sa.string(length=255), nullable=True),
+        sa.Column('credential_id', sa.String(length=255), nullable=True),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
+        sa.Column('credential_name', sa.String(length=255), nullable=False),
+        sa.Column('user_name', sa.String(length=255), nullable=True),
+        sa.Column('password', sa.String(length=255), nullable=True),
         sa.PrimaryKeyConstraint('tenant_id', 'credential_name')
     )
