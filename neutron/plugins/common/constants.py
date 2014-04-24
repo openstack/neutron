@@ -92,3 +92,6 @@ GP_DIRECTION_OUT = 'out'
 GP_DIRECTION_BI = 'bi'
 GP_PROVIDES = "provides"
 GP_CONSUMES = "consumes"
+GP_GLOBAL = "global"
+GP_TENANT = "tenant"
+GP_EPG = "epg"

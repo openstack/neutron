@@ -65,10 +65,10 @@ class GroupPolicyMappingTestMixin(object):
         return attrs
 
     def _get_test_endpoint_group_attrs(self, name='epg1',
-                                       neutron_network_id=None):
+                                       neutron_subnets=None):
         attrs = {'name': name,
                  'tenant_id': self._tenant_id,
-                 'neutron_network_id': neutron_network_id}
+                 'neutron_subnets': neutron_subnets or []}
 
         return attrs
 
@@ -88,12 +88,12 @@ class GroupPolicyMappingTestMixin(object):
         return ep_res
 
     def _create_endpoint_group(self, fmt, name, description,
-                               neutron_network_id, expected_res_status=None,
+                               neutron_subnets, expected_res_status=None,
                                **kwargs):
         data = {'endpoint_group': {'name': name,
                                    'description': description,
                                    'tenant_id': self._tenant_id,
-                                   'neutron_network_id': neutron_network_id}}
+                                   'neutron_subnets': neutron_subnets}}
 
         epg_req = self.new_create_request('endpoint_groups', data, fmt)
         epg_res = epg_req.get_response(self.ext_api)
@@ -123,13 +123,12 @@ class GroupPolicyMappingTestMixin(object):
 
     @contextlib.contextmanager
     def endpoint_group(self, fmt=None, name='epg1', description="",
-                       neutron_network_id=None, no_delete=False, **kwargs):
+                       neutron_subnets=None, no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
         res = self._create_endpoint_group(fmt, name, description,
-                                          neutron_network_id,
-                                          **kwargs)
+                                          neutron_subnets, **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         epg = self.deserialize(fmt or self.fmt, res)
@@ -180,8 +179,8 @@ class TestGroupPolicy(GroupPolicyMappingDbTestCase):
 
     def test_create_endpoint_group(self, **kwargs):
         name = "epg1"
-        neutron_network_id = None
-        attrs = self._get_test_endpoint_group_attrs(name, neutron_network_id)
+        neutron_subnets = None
+        attrs = self._get_test_endpoint_group_attrs(name, neutron_subnets)
 
         with self.endpoint_group(name=name) as epg:
             for k, v in attrs.iteritems():

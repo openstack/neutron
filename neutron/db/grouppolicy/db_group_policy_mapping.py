@@ -19,6 +19,7 @@ from sqlalchemy.orm import exc
 
 from neutron.common import exceptions as nexc
 from neutron.common import log
+from neutron.db import model_base
 from neutron.db.grouppolicy import db_group_policy as gpolicy_db
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
@@ -43,16 +44,24 @@ class EndpointPortBinding(gpolicy_db.Endpoint):
                                                         uselist=False))
 
 
-class EndpointGroupNetworkBinding(gpolicy_db.EndpointGroup):
-    """Neutron network binding to an EndpointGroup."""
+class EndpointGroupSubnetAssociation(model_base.BASEV2):
+    """Models the many to many relation between EndpointGroup and Subnets."""
+    __tablename__ = 'gp_endpoint_group_subnet_associations'
+    endpoint_group_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('gp_endpoint_groups.id'),
+                                  primary_key=True)
+    neutron_subnet_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('subnets.id'),
+                                  primary_key=True)
+
+
+class EndpointGroupSubnetBinding(gpolicy_db.EndpointGroup):
+    """Neutron subnet binding to an EndpointGroup."""
     __table_args__ = {'extend_existing': True}
     # TODO(Sumit): confirm cascade constraints
-    neutron_network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
-                                   nullable=True, unique=True)
-    neutron_network = orm.relationship(models_v2.Network,
-                                       backref=orm.backref(
-                                           "gp_endpoint_groups",
-                                           lazy='joined', uselist=False))
+    neutron_subnets = orm.relationship(EndpointGroupSubnetAssociation,
+                                       backref='gp_endpoint_groups',
+                                       lazy="joined")
 
 
 class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
@@ -62,25 +71,6 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
     class method (e.g., endpoint_created()).  The result is that this class
     can be sub-classed by other classes that add custom behaviors on certain
     events.
-    """
-
-    """
-    def _extend_endpoint_dict_portbinding(self, endpoint_res, endpoint_db):
-        endpoint_res['neutron_port_id'] = endpoint_db['neutron_port_id']
-
-    def _extend_endpoint_group_dict_networkbinding(self,
-                                                   endpoint_group_res,
-                                                   endpoint_group_db):
-        endpoint_group_res['neutron_network_id'] = endpoint_group_db[
-            'neutron_network_id']
-
-    gpolicy_db.GroupPolicyDbMixin.register_dict_extend_funcs(
-        gpolicy.ENDPOINTS, ['_extend_endpoint_dict_portbinding'])
-
-    gpolicy_db.GroupPolicyDbMixin.register_dict_extend_funcs(
-        gpolicy.ENDPOINT_GROUPS,
-        ['_extend_endpoint_group_dict_networkbinding'])
-
     """
 
     def _get_endpoint(self, context, id):
@@ -93,7 +83,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
     def _get_endpoint_group(self, context, id):
         try:
             endpoint_group = self._get_by_id(context,
-                                             EndpointGroupNetworkBinding, id)
+                                             EndpointGroupSubnetBinding, id)
         except exc.NoResultFound:
             raise nexc.EndpointGroupNotFound(endpoint_group_id=id)
         return endpoint_group
@@ -107,7 +97,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
     def _make_endpoint_group_dict(self, epg, fields=None):
         res = super(GroupPolicyMappingDbMixin,
                     self)._make_endpoint_group_dict(epg)
-        res['neutron_network_id'] = epg['neutron_network_id']
+        res['neutron_subnets'] = epg['neutron_subnets']
         return self._fields(res, fields)
 
     @log.log
@@ -128,11 +118,11 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
         epg = endpoint_group['endpoint_group']
         tenant_id = self._get_tenant_id_for_create(context, epg)
         with context.session.begin(subtransactions=True):
-            epg_db = EndpointGroupNetworkBinding(
+            epg_db = EndpointGroupSubnetBinding(
                 id=uuidutils.generate_uuid(),
                 tenant_id=tenant_id,
                 name=epg['name'],
-                description=epg['description'],
-                neutron_network_id=epg['neutron_network_id'])
+                description=epg['description'])
+            # TODO(Sumit): Subnet processing
             context.session.add(epg_db)
         return self._make_endpoint_group_dict(epg_db)

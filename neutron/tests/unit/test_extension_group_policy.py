@@ -41,8 +41,6 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         data = {'endpoint_group': {'name': 'epg1',
                                    'tenant_id': _uuid(),
                                    'description': '',
-                                   'parent_id': None,
-                                   'endpoints': [],
                                    'provided_contract_scopes': [],
                                    'consumed_contract_scopes': []}}
         return_value = copy.copy(data['endpoint_group'])
@@ -138,3 +136,61 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         res = self.deserialize(res)
         self.assertIn('endpoint', res)
         self.assertEqual(res['endpoint'], return_value)
+
+    def test_list_endpoints(self):
+        endpoint_id = _uuid()
+        return_value = [{'tenant_id': _uuid(),
+                         'id': endpoint_id}]
+
+        instance = self.plugin.return_value
+        instance.get_endpoints.return_value = return_value
+
+        res = self.api.get(_get_path('gp/endpoints', fmt=self.fmt))
+
+        instance.get_endpoints.assert_called_with(mock.ANY,
+                                                  fields=mock.ANY,
+                                                  filters=mock.ANY)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+
+    def test_get_endpoint(self):
+        endpoint_id = _uuid()
+        return_value = {'tenant_id': _uuid(),
+                        'id': endpoint_id}
+
+        instance = self.plugin.return_value
+        instance.get_endpoint.return_value = return_value
+
+        res = self.api.get(_get_path('gp/endpoints',
+                                     id=endpoint_id, fmt=self.fmt))
+
+        instance.get_endpoint.assert_called_with(mock.ANY,
+                                                 endpoint_id,
+                                                 fields=mock.ANY)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+        res = self.deserialize(res)
+        self.assertIn('endpoint', res)
+        self.assertEqual(res['endpoint'], return_value)
+
+    def test_update_endpoint(self):
+        endpoint_id = _uuid()
+        update_data = {'endpoint': {'name': 'new_name'}}
+        return_value = {'tenant_id': _uuid(),
+                        'id': endpoint_id}
+
+        instance = self.plugin.return_value
+        instance.update_endpoint.return_value = return_value
+
+        res = self.api.put(_get_path('gp/endpoints',
+                                     id=endpoint_id,
+                                     fmt=self.fmt),
+                           self.serialize(update_data))
+
+        instance.update_endpoint.assert_called_with(
+            mock.ANY, endpoint_id, endpoint=update_data)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+        res = self.deserialize(res)
+        self.assertIn('endpoint', res)
+        self.assertEqual(res['endpoint'], return_value)
+
+    def test_delete_endpoint(self):
+        self._test_entity_delete('endpoint')

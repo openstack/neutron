@@ -39,20 +39,20 @@ class Endpoint(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     epg_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('gp_endpointgroups.id'),
+                       sa.ForeignKey('gp_endpoint_groups.id'),
                        nullable=True, unique=True)
 
 
 class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Models an EndpointGroup's provider/consumer relation to a Contract."""
-    __tablename__ = 'gp_contractscopes'
+    __tablename__ = 'gp_contract_scopes'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     scope_type = sa.Column(sa.Enum(const.GP_PROVIDES,
                                    const.GP_CONSUMES,
                                    name='scope_type'))
     epg_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('gp_endpointgroups.id'),
+                       sa.ForeignKey('gp_endpoint_groups.id'),
                        nullable=True, unique=True)
     contract_id = sa.Column(sa.String(36),
                             sa.ForeignKey('gp_contracts.id'))
@@ -61,16 +61,12 @@ class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
 class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Endpoint Group that is a collection of endpoints."""
-    __tablename__ = 'gp_endpointgroups'
+    __tablename__ = 'gp_endpoint_groups'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-    parent_id = sa.Column(sa.String(36),
-                          sa.ForeignKey('gp_endpointgroups.id'),
-                          nullable=True)
-    children = orm.relationship('EndpointGroup')
-    endpoints = orm.relationship(Endpoint, backref='gp_endpointgroups')
+    endpoints = orm.relationship(Endpoint, backref='gp_endpoint_groups')
     contract_scopes = orm.relationship(ContractScope,
-                                       backref='gp_endpointgroups')
+                                       backref='gp_endpoint_groups')
 
 
 class ContractPolicyRuleAssociation(model_base.BASEV2):
@@ -108,7 +104,7 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     # for redirect
     # TODO(Sumit): Revisit when other action_types are defined
     action_value = sa.Column(sa.String(36),
-                             sa.ForeignKey('gp_contractscopes.id'),
+                             sa.ForeignKey('gp_contract_scopes.id'),
                              nullable=True, unique=True)
     direction = sa.Column(sa.Enum(const.GP_DIRECTION_IN,
                                   const.GP_DIRECTION_OUT,
@@ -215,13 +211,12 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                'tenant_id': epg['tenant_id'],
                'name': epg['name'],
                'description': epg['description'],
-               'parent_id': epg['parent_id'],
                'endpoints': epg['endpoints']}
-               # REVISIT(rkukura): Need to extract these from
-               # epg['contract_scopes'].
-               #
-               # 'provided_contract_scopes': epg['provided_contract_scopes'],
-               # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
+        # REVISIT(rkukura): Need to extract these from
+        # epg['contract_scopes'].
+        #
+        # 'provided_contract_scopes': epg['provided_contract_scopes'],
+        # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
         return self._fields(res, fields)
 
     @log.log
