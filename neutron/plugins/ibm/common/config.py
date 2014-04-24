@@ -38,7 +38,7 @@ sdnve_opts = [
                help=_("SDN-VE request/response format")),
     cfg.StrOpt('userid', default='admin',
                help=_("SDN-VE administrator user id")),
-    cfg.StrOpt('password', default='admin',
+    cfg.StrOpt('password', default='admin', secret=True,
                help=_("SDN-VE administrator password")),
     cfg.StrOpt('integration_bridge', default=None,
                help=_("Integration bridge to use")),
