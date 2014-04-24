@@ -153,6 +153,10 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},
                       'required_by_policy': True, 'is_visible': True},
+        'endpointgroup_id': {'allow_post': True, 'allow_put': True,
+                             'validate': {'type:uuid_or_none': None},
+                             'required': True,
+                             'is_visible': True},
     },
     ENDPOINT_GROUPS: {
         'id': {'allow_post': False, 'allow_put': False,

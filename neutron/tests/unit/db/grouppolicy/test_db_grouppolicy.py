@@ -53,10 +53,11 @@ class GroupPolicyTestMixin(object):
 
         return attrs
 
-    def _create_endpoint(self, fmt, name, description,
+    def _create_endpoint(self, fmt, name, description, endpointgroup_id,
                          expected_res_status=None, **kwargs):
         data = {'endpoint': {'name': name,
                              'description': description,
+                             'endpointgroup_id': endpointgroup_id,
                              'tenant_id': self._tenant_id}}
 
         ep_req = self.new_create_request('endpoints', data, fmt)
@@ -81,11 +82,13 @@ class GroupPolicyTestMixin(object):
 
     @contextlib.contextmanager
     def endpoint(self, fmt=None, name='ep1', description="",
+                 endpointgroup_id='00000000-ffff-ffff-ffff-000000000000',
                  no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
-        res = self._create_endpoint(fmt, name, description, **kwargs)
+        res = self._create_endpoint(fmt, name, description, endpointgroup_id,
+                                    **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         ep = self.deserialize(fmt or self.fmt, res)

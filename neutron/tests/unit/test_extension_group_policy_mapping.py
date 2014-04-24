@@ -52,6 +52,7 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
         data = {'endpoint': {'name': 'ep1',
                              'tenant_id': _uuid(),
                              'description': '',
+                             'endpointgroup_id': _uuid(),
                              'neutron_port_id': _uuid()}}
         return_value = copy.copy(data['endpoint'])
         return_value.update({'id': endpoint_id})
