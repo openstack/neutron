@@ -924,36 +924,41 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         """
         if not ports:
             return
-        subnet_id_ports_dict = {}
-        for port in ports:
-            fixed_ips = port.get('fixed_ips', [])
-            if len(fixed_ips) > 1:
-                LOG.info(_("Ignoring multiple IPs on router port %s"),
-                         port['id'])
-                continue
-            elif not fixed_ips:
-                # Skip ports without IPs, which can occur if a subnet
-                # attached to a router is deleted
-                LOG.info(_("Skipping port %s as no IP is configure on it"),
-                         port['id'])
-                continue
-            fixed_ip = fixed_ips[0]
-            my_ports = subnet_id_ports_dict.get(fixed_ip['subnet_id'], [])
-            my_ports.append(port)
-            subnet_id_ports_dict[fixed_ip['subnet_id']] = my_ports
-        if not subnet_id_ports_dict:
-            return
-        filters = {'id': subnet_id_ports_dict.keys()}
-        fields = ['id', 'cidr', 'gateway_ip']
-        subnet_dicts = self._core_plugin.get_subnets(context, filters, fields)
-        for subnet_dict in subnet_dicts:
-            ports = subnet_id_ports_dict.get(subnet_dict['id'], [])
+
+        def each_port_with_ip():
             for port in ports:
-                # TODO(gongysh) stash the subnet into fixed_ips
-                # to make the payload smaller.
-                port['subnet'] = {'id': subnet_dict['id'],
-                                  'cidr': subnet_dict['cidr'],
-                                  'gateway_ip': subnet_dict['gateway_ip']}
+                fixed_ips = port.get('fixed_ips', [])
+                if len(fixed_ips) > 1:
+                    LOG.info(_("Ignoring multiple IPs on router port %s"),
+                             port['id'])
+                    continue
+                elif not fixed_ips:
+                    # Skip ports without IPs, which can occur if a subnet
+                    # attached to a router is deleted
+                    LOG.info(_("Skipping port %s as no IP is configure on it"),
+                             port['id'])
+                    continue
+                yield (port, fixed_ips[0])
+
+        network_ids = set(p['network_id'] for p, _ in each_port_with_ip())
+        filters = {'network_id': [id for id in network_ids]}
+        fields = ['id', 'cidr', 'gateway_ip', 'network_id']
+
+        subnets_by_network = dict((id, []) for id in network_ids)
+        for subnet in self._core_plugin.get_subnets(context, filters, fields):
+            subnets_by_network[subnet['network_id']].append(subnet)
+
+        for port, fixed_ip in each_port_with_ip():
+            port['extra_subnets'] = []
+            for subnet in subnets_by_network[port['network_id']]:
+                subnet_info = {'id': subnet['id'],
+                               'cidr': subnet['cidr'],
+                               'gateway_ip': subnet['gateway_ip']}
+
+                if subnet['id'] == fixed_ip['subnet_id']:
+                    port['subnet'] = subnet_info
+                else:
+                    port['extra_subnets'].append(subnet_info)
 
     def _process_sync_data(self, routers, interfaces, floating_ips):
         routers_dict = {}

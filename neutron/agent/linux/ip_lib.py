@@ -376,6 +376,22 @@ class IpRouteCommand(IpDeviceCommandBase):
                       'dev',
                       self.name)
 
+    def list_onlink_routes(self):
+        def iterate_routes():
+            output = self._run('list', 'dev', self.name, 'scope', 'link')
+            for line in output.split('\n'):
+                line = line.strip()
+                if line and not line.count('src'):
+                    yield line
+
+        return [x for x in iterate_routes()]
+
+    def add_onlink_route(self, cidr):
+        self._as_root('replace', cidr, 'dev', self.name, 'scope', 'link')
+
+    def delete_onlink_route(self, cidr):
+        self._as_root('del', cidr, 'dev', self.name, 'scope', 'link')
+
     def get_gateway(self, scope=None, filters=None):
         if filters is None:
             filters = []

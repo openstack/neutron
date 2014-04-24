@@ -458,7 +458,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         interface_name = None
         if ex_gw_port_id:
             interface_name = self.get_external_device_name(ex_gw_port_id)
-        if ex_gw_port and not ri.ex_gw_port:
+        if ex_gw_port and ex_gw_port != ri.ex_gw_port:
             self._set_subnet_info(ex_gw_port)
             self.external_gateway_added(ri, ex_gw_port,
                                         interface_name, internal_cidrs)
@@ -646,6 +646,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
                             namespace=ri.ns_name,
                             gateway=ex_gw_port['subnet'].get('gateway_ip'),
+                            extra_subnets=ex_gw_port.get('extra_subnets', []),
                             preserve_ips=preserve_ips)
         ip_address = ex_gw_port['ip_cidr'].split('/')[0]
         self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
