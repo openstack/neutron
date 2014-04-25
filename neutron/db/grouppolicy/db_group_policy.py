@@ -443,7 +443,7 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                                  name=bd['name'],
                                  description=bd['description'],
                                  routing_domain_id=bd['routing_domain_id'])
-            # TODO (Sumit): Process EPGs
+            # TODO(Sumit): Process EPGs
             context.session.add(bd_db)
         return self._make_bridge_domain_dict(bd_db)
 
