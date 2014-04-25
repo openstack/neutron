@@ -38,9 +38,9 @@ class Endpoint(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     __tablename__ = 'gp_endpoints'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-    epg_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('gp_endpoint_groups.id'),
-                       nullable=True, unique=True)
+    endpoint_group_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('gp_endpoint_groups.id'),
+                                  nullable=True, unique=True)
 
 
 class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -51,9 +51,9 @@ class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     scope_type = sa.Column(sa.Enum(const.GP_PROVIDES,
                                    const.GP_CONSUMES,
                                    name='scope_type'))
-    epg_id = sa.Column(sa.String(36),
-                       sa.ForeignKey('gp_endpoint_groups.id'),
-                       nullable=True, unique=True)
+    endpoint_group_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('gp_endpoint_groups.id'),
+                                  nullable=True, unique=True)
     contract_id = sa.Column(sa.String(36),
                             sa.ForeignKey('gp_contracts.id'))
     # TODO(Sumit): Add policy_label for scope
@@ -67,6 +67,9 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     endpoints = orm.relationship(Endpoint, backref='gp_endpoint_groups')
     contract_scopes = orm.relationship(ContractScope,
                                        backref='gp_endpoint_groups')
+    bridge_domain_id = sa.Column(sa.String(36),
+                                 sa.ForeignKey('gp_bridge_domains.id'),
+                                 nullable=True, unique=True)
 
 
 class ContractPolicyRuleAssociation(model_base.BASEV2):
@@ -127,6 +130,29 @@ class Contract(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                                     ordering_list('position', count_from=1))
     contract_scopes = orm.relationship(ContractScope,
                                        backref='gp_contract')
+
+
+class BridgeDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+    """Represents an Bridge Domain that is a collection of endpoint_groups."""
+    __tablename__ = 'gp_bridge_domains'
+    name = sa.Column(sa.String(255))
+    description = sa.Column(sa.String(1024))
+    endpoint_groups = orm.relationship(EndpointGroup,
+                                       backref='gp_bridge_domains')
+    routing_domain_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('gp_routing_domains.id'),
+                                  nullable=True, unique=True)
+
+
+class RoutingDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+    """Represents an Routing Domain with a non-overlapping IP address space."""
+    __tablename__ = 'gp_routing_domains'
+    name = sa.Column(sa.String(255))
+    description = sa.Column(sa.String(1024))
+    ip_version = sa.Column(sa.Integer, nullable=False)
+    ip_supernet = sa.Column(sa.String(64), nullable=False)
+    bridge_domains = orm.relationship(BridgeDomain,
+                                      backref='gp_routing_domains')
 
 
 class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
@@ -199,11 +225,26 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             raise nexc.PolicyRuleNotFound(policy_rule_id=id)
         return policy_rule
 
+    def _get_bridge_domain(self, context, id):
+        try:
+            bridge_domain = self._get_by_id(context, BridgeDomain, id)
+        except exc.NoResultFound:
+            raise nexc.BridgeDomainNotFound(bridge_domain_id=id)
+        return bridge_domain
+
+    def _get_routing_domain(self, context, id):
+        try:
+            routing_domain = self._get_by_id(context, RoutingDomain, id)
+        except exc.NoResultFound:
+            raise nexc.RoutingDomainNotFound(routing_domain_id=id)
+        return routing_domain
+
     def _make_endpoint_dict(self, ep, fields=None):
         res = {'id': ep['id'],
                'tenant_id': ep['tenant_id'],
                'name': ep['name'],
-               'description': ep['description']}
+               'description': ep['description'],
+               'endpoint_group_id': ep['endpoint_group_id']}
         return self._fields(res, fields)
 
     def _make_endpoint_group_dict(self, epg, fields=None):
@@ -211,12 +252,32 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                'tenant_id': epg['tenant_id'],
                'name': epg['name'],
                'description': epg['description'],
+               'bridge_domain_id': epg['bridge_domain_id'],
                'endpoints': epg['endpoints']}
         # REVISIT(rkukura): Need to extract these from
         # epg['contract_scopes'].
         #
         # 'provided_contract_scopes': epg['provided_contract_scopes'],
         # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
+        return self._fields(res, fields)
+
+    def _make_bridge_domain_dict(self, bd, fields=None):
+        res = {'id': bd['id'],
+               'tenant_id': bd['tenant_id'],
+               'name': bd['name'],
+               'description': bd['description'],
+               'routing_domain_id': bd['routing_domain_id'],
+               'endpoint_groups': bd['endpoint_groups']}
+        return self._fields(res, fields)
+
+    def _make_routing_domain_dict(self, rd, fields=None):
+        res = {'id': rd['id'],
+               'tenant_id': rd['tenant_id'],
+               'name': rd['name'],
+               'description': rd['description'],
+               'ip_version': rd['ip_version'],
+               'ip_supernet': rd['ip_supernet'],
+               'bridge_domains': rd['bridge_domains']}
         return self._fields(res, fields)
 
     @log.log
@@ -227,7 +288,8 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             ep_db = Endpoint(id=uuidutils.generate_uuid(),
                              tenant_id=tenant_id,
                              name=ep['name'],
-                             description=ep['description'])
+                             description=ep['description'],
+                             endpoint_group_id=ep['endpoint_group_id'])
             context.session.add(ep_db)
         return self._make_endpoint_dict(ep_db)
 
@@ -370,3 +432,94 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
     @log.log
     def delete_policy_rule(self, context, id):
         pass
+
+    @log.log
+    def create_bridge_domain(self, context, bridge_domain):
+        bd = bridge_domain['bridge_domain']
+        tenant_id = self._get_tenant_id_for_create(context, bd)
+        with context.session.begin(subtransactions=True):
+            bd_db = BridgeDomain(id=uuidutils.generate_uuid(),
+                                 tenant_id=tenant_id,
+                                 name=bd['name'],
+                                 description=bd['description'],
+                                 routing_domain_id=bd['routing_domain_id'])
+            # TODO (Sumit): Process EPGs
+            context.session.add(bd_db)
+        return self._make_bridge_domain_dict(bd_db)
+
+    @log.log
+    def update_bridge_domain(self, context, id, bridge_domain):
+        bd = bridge_domain['bridge_domain']
+        with context.session.begin(subtransactions=True):
+            bd_query = context.session.query(
+                BridgeDomain).with_lockmode('update')
+            bd_db = bd_query.filter_by(id=id).one()
+            bd_db.update(bd)
+        return self._make_bridge_domain_dict(bd_db)
+
+    @log.log
+    def delete_bridge_domain(self, context, id):
+        with context.session.begin(subtransactions=True):
+            bd_query = context.session.query(
+                BridgeDomain).with_lockmode('update')
+            bd_db = bd_query.filter_by(id=id).one()
+            context.session.delete(bd_db)
+
+    @log.log
+    def get_bridge_domain(self, context, id, fields=None):
+        bd = self._get_bridge_domain(context, id)
+        return self._make_bridge_domain_dict(bd, fields)
+
+    @log.log
+    def get_bridge_domains(self, context, filters=None, fields=None):
+        return self._get_collection(context, BridgeDomain,
+                                    self._make_bridge_domain_dict,
+                                    filters=filters, fields=fields)
+
+    @log.log
+    def get_bridge_domains_count(self, context, filters=None):
+        return self._get_collection_count(context, BridgeDomain,
+                                          filters=filters)
+
+    @log.log
+    def create_routing_domain(self, context, routing_domain):
+        rd = routing_domain['routing_domain']
+        tenant_id = self._get_tenant_id_for_create(context, rd)
+        with context.session.begin(subtransactions=True):
+            rd_db = RoutingDomain(id=uuidutils.generate_uuid(),
+                                  tenant_id=tenant_id,
+                                  name=rd['name'],
+                                  description=rd['description'],
+                                  ip_version=rd['ip_version'],
+                                  ip_supernet=rd['ip_supernet'])
+            context.session.add(rd_db)
+        return self._make_routing_domain_dict(rd_db)
+
+    @log.log
+    def update_routing_domain(self, context, id, routing_domain):
+        rd = routing_domain['routing_domain']
+        with context.session.begin(subtransactions=True):
+            rd_query = context.session.query(
+                RoutingDomain).with_lockmode('update')
+            rd_db = rd_query.filter_by(id=id).one()
+            rd_db.update(rd)
+        return self._make_routing_domain_dict(rd_db)
+
+    @log.log
+    def delete_routing_domain(self, context, id):
+        with context.session.begin(subtransactions=True):
+            rd_query = context.session.query(
+                RoutingDomain).with_lockmode('update')
+            rd_db = rd_query.filter_by(id=id).one()
+            context.session.delete(rd_db)
+
+    @log.log
+    def get_routing_domain(self, context, id, fields=None):
+        rd = self._get_routing_domain(context, id)
+        return self._make_routing_domain_dict(rd, fields)
+
+    @log.log
+    def get_routing_domains(self, context, filters=None, fields=None):
+        return self._get_collection(context, RoutingDomain,
+                                    self._make_routing_domain_dict,
+                                    filters=filters, fields=fields)

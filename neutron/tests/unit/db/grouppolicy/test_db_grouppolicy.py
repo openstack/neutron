@@ -53,11 +53,23 @@ class GroupPolicyTestMixin(object):
 
         return attrs
 
-    def _create_endpoint(self, fmt, name, description, endpointgroup_id,
+    def _get_test_bridge_domain_attrs(self, name='bd1'):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id}
+
+        return attrs
+
+    def _get_test_routing_domain_attrs(self, name='rd1'):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id}
+
+        return attrs
+
+    def _create_endpoint(self, fmt, name, description, endpoint_group_id,
                          expected_res_status=None, **kwargs):
         data = {'endpoint': {'name': name,
                              'description': description,
-                             'endpointgroup_id': endpointgroup_id,
+                             'endpoint_group_id': endpoint_group_id,
                              'tenant_id': self._tenant_id}}
 
         ep_req = self.new_create_request('endpoints', data, fmt)
@@ -80,14 +92,46 @@ class GroupPolicyTestMixin(object):
 
         return epg_res
 
+    def _create_bridge_domain(self, fmt, name, description, routing_domain_id,
+                              endpoint_groups, expected_res_status=None,
+                              **kwargs):
+        data = {'bridge_domain': {'name': name,
+                                  'description': description,
+                                  'routing_domain_id': routing_domain_id,
+                                  'endpoint_groups': endpoint_groups,
+                                  'tenant_id': self._tenant_id}}
+
+        bd_req = self.new_create_request('bridge_domains', data, fmt)
+        bd_res = bd_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(bd_res.status_int, expected_res_status)
+
+        return bd_res
+
+    def _create_routing_domain(self, fmt, name, description, ip_version,
+                               ip_supernet, expected_res_status=None,
+                               **kwargs):
+        data = {'routing_domain': {'name': name,
+                                   'description': description,
+                                   'ip_version': ip_version,
+                                   'ip_supernet': ip_supernet,
+                                   'tenant_id': self._tenant_id}}
+
+        rd_req = self.new_create_request('routing_domains', data, fmt)
+        rd_res = rd_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(rd_res.status_int, expected_res_status)
+
+        return rd_res
+
     @contextlib.contextmanager
     def endpoint(self, fmt=None, name='ep1', description="",
-                 endpointgroup_id='00000000-ffff-ffff-ffff-000000000000',
+                 endpoint_group_id='00000000-ffff-ffff-ffff-000000000000',
                  no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
-        res = self._create_endpoint(fmt, name, description, endpointgroup_id,
+        res = self._create_endpoint(fmt, name, description, endpoint_group_id,
                                     **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -113,6 +157,47 @@ class GroupPolicyTestMixin(object):
         finally:
             if not no_delete:
                 self._delete('endpoint_groups', epg['endpoint_group']['id'])
+
+    @contextlib.contextmanager
+    def bridge_domain(self, fmt=None, name='bd1', description="",
+                      routing_domain_id=
+                      '00000000-ffff-ffff-ffff-000000000000',
+                      endpoint_groups=
+                      ['00000000-ffff-ffff-ffff-000000000001'],
+                      no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        res = self._create_bridge_domain(fmt, name, description,
+                                         routing_domain_id, endpoint_groups,
+                                         **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        bd = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield bd
+        finally:
+            if not no_delete:
+                self._delete('bridge_domains', bd['bridge_domain']['id'])
+
+    @contextlib.contextmanager
+    def routing_domain(self, fmt=None, name='rd1', description="",
+                       ip_version=4, ip_supernet='10.0.0.0/8',
+                       no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        res = self._create_routing_domain(fmt, name, description,
+                                          ip_version, ip_supernet,
+                                          **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        rd = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield rd
+        finally:
+            if not no_delete:
+                self._delete('routing_domains', rd['routing_domain']['id'])
 
 
 class GroupPolicyDbTestCase(GroupPolicyTestMixin,
@@ -145,9 +230,11 @@ class TestGroupPolicy(GroupPolicyDbTestCase):
         name = "ep1"
         attrs = self._get_test_endpoint_attrs(name)
 
-        with self.endpoint(name=name) as ep:
-            for k, v in attrs.iteritems():
-                self.assertEqual(ep['endpoint'][k], v)
+        with self.endpoint_group() as epg:
+            epg_id = epg['endpoint_group']['id']
+            with self.endpoint(name=name, endpoint_group_id=epg_id) as ep:
+                for k, v in attrs.iteritems():
+                    self.assertEqual(ep['endpoint'][k], v)
 
     def test_create_endpoint_group(self, **kwargs):
         name = "epg1"
@@ -156,6 +243,26 @@ class TestGroupPolicy(GroupPolicyDbTestCase):
         with self.endpoint_group(name=name) as epg:
             for k, v in attrs.iteritems():
                 self.assertEqual(epg['endpoint_group'][k], v)
+            # TODO(Sumit): Test for readonly attrs
+
+    def test_create_bridge_domain(self, **kwargs):
+        name = "bd1"
+        attrs = self._get_test_bridge_domain_attrs(name)
+
+        with self.routing_domain() as rd:
+            rd_id = rd['routing_domain']['id']
+            with self.bridge_domain(name=name, routing_domain_id=rd_id) as bd:
+                for k, v in attrs.iteritems():
+                    self.assertEqual(bd['bridge_domain'][k], v)
+
+    def test_create_routing_domain(self, **kwargs):
+        name = "rd1"
+        attrs = self._get_test_routing_domain_attrs(name)
+
+        with self.routing_domain(name=name) as rd:
+            for k, v in attrs.iteritems():
+                self.assertEqual(rd['routing_domain'][k], v)
+            # TODO(Sumit): Test for readonly attrs
 
 
 # TODO(Sumit): XML tests

@@ -67,3 +67,51 @@ class NoopDriver(api.PolicyDriver):
     @log.log
     def delete_endpoint_group_postcommit(self, context):
         pass
+
+    @log.log
+    def create_bridge_domain_precommit(self, context):
+        pass
+
+    @log.log
+    def create_bridge_domain_postcommit(self, context):
+        pass
+
+    @log.log
+    def update_bridge_domain_precommit(self, context):
+        pass
+
+    @log.log
+    def update_bridge_domain_postcommit(self, context):
+        pass
+
+    @log.log
+    def delete_bridge_domain_precommit(self, context):
+        pass
+
+    @log.log
+    def delete_bridge_domain_postcommit(self, context):
+        pass
+
+    @log.log
+    def create_routing_domain_precommit(self, context):
+        pass
+
+    @log.log
+    def create_routing_domain_postcommit(self, context):
+        pass
+
+    @log.log
+    def update_routing_domain_precommit(self, context):
+        pass
+
+    @log.log
+    def update_routing_domain_postcommit(self, context):
+        pass
+
+    @log.log
+    def delete_routing_domain_precommit(self, context):
+        pass
+
+    @log.log
+    def delete_routing_domain_postcommit(self, context):
+        pass

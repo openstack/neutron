@@ -20,6 +20,7 @@ from sqlalchemy.orm import exc
 from neutron.common import exceptions as nexc
 from neutron.common import log
 from neutron.db.grouppolicy import db_group_policy as gpolicy_db
+from neutron.db import l3_db  # noqa
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
@@ -64,6 +65,38 @@ class EndpointGroupSubnetBinding(gpolicy_db.EndpointGroup):
                                        lazy="joined")
 
 
+class BridgeDomainNetworkBinding(gpolicy_db.BridgeDomain):
+    """Neutron network binding to a Bridgedomain."""
+    __table_args__ = {'extend_existing': True}
+    # TODO(Sumit): confirm cascade constraints
+    neutron_network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
+                                   nullable=True, unique=True)
+    neutron_network = orm.relationship(models_v2.Network,
+                                       backref=orm.backref("gp_bridge_domains",
+                                                           lazy='joined',
+                                                           uselist=False))
+
+
+class RoutingDomainRouterAssociation(model_base.BASEV2):
+    """Models the many to many relation between RoutingDomain and Routers."""
+    __tablename__ = 'gp_routing_domain_router_associations'
+    routing_domain_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('gp_routing_domains.id'),
+                                  primary_key=True)
+    neutron_router_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('routers.id'),
+                                  primary_key=True)
+
+
+class RoutingDomainRouterBinding(gpolicy_db.RoutingDomain):
+    """Neutron router binding to an RouteringDomain."""
+    __table_args__ = {'extend_existing': True}
+    # TODO(Sumit): confirm cascade constraints
+    neutron_routers = orm.relationship(RoutingDomainRouterAssociation,
+                                       backref='gp_routing_domains',
+                                       lazy="joined")
+
+
 class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
     """Group Policy Mapping interface implementation using SQLAlchemy models.
 
@@ -88,6 +121,22 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             raise nexc.EndpointGroupNotFound(endpoint_group_id=id)
         return endpoint_group
 
+    def _get_bridge_domain(self, context, id):
+        try:
+            bridge_domain = self._get_by_id(context,
+                                            BridgeDomainNetworkBinding, id)
+        except exc.NoResultFound:
+            raise nexc.BridgeDomainNotFound(bridge_domain_id=id)
+        return bridge_domain
+
+    def _get_routing_domain(self, context, id):
+        try:
+            routing_domain = self._get_by_id(context,
+                                             RoutingDomainRouterBinding, id)
+        except exc.NoResultFound:
+            raise nexc.RoutingDomainNotFound(routing_domain_id=id)
+        return routing_domain
+
     def _make_endpoint_dict(self, ep, fields=None):
         res = super(GroupPolicyMappingDbMixin,
                     self)._make_endpoint_dict(ep)
@@ -98,6 +147,18 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
         res = super(GroupPolicyMappingDbMixin,
                     self)._make_endpoint_group_dict(epg)
         res['neutron_subnets'] = epg['neutron_subnets']
+        return self._fields(res, fields)
+
+    def _make_bridge_domain_dict(self, bd, fields=None):
+        res = super(GroupPolicyMappingDbMixin,
+                    self)._make_bridge_domain_dict(bd)
+        res['neutron_network_id'] = bd['neutron_network_id']
+        return self._fields(res, fields)
+
+    def _make_routing_domain_dict(self, rd, fields=None):
+        res = super(GroupPolicyMappingDbMixin,
+                    self)._make_routing_domain_dict(rd)
+        res['neutron_routers'] = rd['neutron_routers']
         return self._fields(res, fields)
 
     @log.log
@@ -123,6 +184,35 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                 tenant_id=tenant_id,
                 name=epg['name'],
                 description=epg['description'])
-            # TODO(Sumit): Subnet processing
+            # TODO(Sumit): Process subnets
             context.session.add(epg_db)
         return self._make_endpoint_group_dict(epg_db)
+
+    @log.log
+    def create_bridge_domain(self, context, bridge_domain):
+        bd = bridge_domain['bridge_domain']
+        tenant_id = self._get_tenant_id_for_create(context, bd)
+        with context.session.begin(subtransactions=True):
+            bd_db = BridgeDomainNetworkBinding(id=uuidutils.generate_uuid(),
+                                               tenant_id=tenant_id,
+                                               name=bd['name'],
+                                               description=bd['description'],
+                                               neutron_network_id=
+                                               bd['neutron_network_id'])
+            context.session.add(bd_db)
+        return self._make_bridge_domain_dict(bd_db)
+
+    @log.log
+    def create_routing_domain(self, context, routing_domain):
+        rd = routing_domain['routing_domain']
+        tenant_id = self._get_tenant_id_for_create(context, rd)
+        with context.session.begin(subtransactions=True):
+            rd_db = RoutingDomainRouterBinding(id=uuidutils.generate_uuid(),
+                                               tenant_id=tenant_id,
+                                               name=rd['name'],
+                                               ip_version=rd['ip_version'],
+                                               ip_supernet=rd['ip_supernet'],
+                                               description=rd['description'])
+            # TODO(Sumit): Process routers
+            context.session.add(rd_db)
+        return self._make_routing_domain_dict(rd_db)

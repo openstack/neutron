@@ -260,3 +260,175 @@ class PolicyDriverManager(stevedore.named.NamedExtensionManager):
         """
         self._call_on_drivers("delete_endpoint_group_postcommit", context,
                               continue_on_failure=True)
+
+    def create_bridge_domain_precommit(self, context):
+        """Notify all policy drivers during bridge_domain creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_bridge_domain_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("create_bridge_domain_precommit", context)
+
+    def create_bridge_domain_postcommit(self, context):
+        """Notify all policy drivers after bridge_domain creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_bridge_domain_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where the bridge_domain will be deleted, triggering
+        any required cleanup. There is no guarantee that all policy
+        drivers are called in this case.
+        """
+        self._call_on_drivers("create_bridge_domain_postcommit", context)
+
+    def update_bridge_domain_precommit(self, context):
+        """Notify all policy drivers during bridge_domain update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_bridge_domain_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_bridge_domain_precommit", context)
+
+    def update_bridge_domain_postcommit(self, context):
+        """Notify all policy drivers after bridge_domain update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_bridge_domain_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where an error is returned to the user. The
+        user is expected to take the appropriate action, whether by
+        retrying the call or deleting the bridge_domain. There is no
+        guarantee that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_bridge_domain_postcommit", context)
+
+    def delete_bridge_domain_precommit(self, context):
+        """Notify all policy drivers during bridge_domain deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_bridge_domain_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("delete_bridge_domain_precommit", context)
+
+    def delete_bridge_domain_postcommit(self, context):
+        """Notify all policy drivers after bridge_domain deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_bridge_domain_postcommit call fails.
+
+        Called after the database transaction. If any policy driver
+        raises an error, then the error is logged but we continue to
+        call every other policy driver. A GroupPolicyDriverError is
+        then reraised at the end to notify the caller of a failure. In
+        general we expect the caller to ignore the error, as the
+        bridge_domain resource has already been deleted from the database
+        and it doesn't make sense to undo the action by recreating the
+        bridge_domain.
+        """
+        self._call_on_drivers("delete_bridge_domain_postcommit", context,
+                              continue_on_failure=True)
+
+    def create_routing_domain_precommit(self, context):
+        """Notify all policy drivers during routing_domain creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_routing_domain_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("create_routing_domain_precommit", context)
+
+    def create_routing_domain_postcommit(self, context):
+        """Notify all policy drivers after routing_domain creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_routing_domain_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where the routing_domain will be deleted, triggering
+        any required cleanup. There is no guarantee that all policy
+        drivers are called in this case.
+        """
+        self._call_on_drivers("create_routing_domain_postcommit", context)
+
+    def update_routing_domain_precommit(self, context):
+        """Notify all policy drivers during routing_domain update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_routing_domain_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_routing_domain_precommit", context)
+
+    def update_routing_domain_postcommit(self, context):
+        """Notify all policy drivers after routing_domain update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_routing_domain_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where an error is returned to the user. The
+        user is expected to take the appropriate action, whether by
+        retrying the call or deleting the routing_domain. There is no
+        guarantee that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_routing_domain_postcommit", context)
+
+    def delete_routing_domain_precommit(self, context):
+        """Notify all policy drivers during routing_domain deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_routing_domain_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("delete_routing_domain_precommit", context)
+
+    def delete_routing_domain_postcommit(self, context):
+        """Notify all policy drivers after routing_domain deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_routing_domain_postcommit call fails.
+
+        Called after the database transaction. If any policy driver
+        raises an error, then the error is logged but we continue to
+        call every other policy driver. A GroupPolicyDriverError is
+        then reraised at the end to notify the caller of a failure. In
+        general we expect the caller to ignore the error, as the
+        routing_domain resource has already been deleted from the database
+        and it doesn't make sense to undo the action by recreating the
+        routing_domain.
+        """
+        self._call_on_drivers("delete_routing_domain_postcommit", context,
+                              continue_on_failure=True)

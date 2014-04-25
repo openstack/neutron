@@ -58,6 +58,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
                 LOG.error(_("policy_driver_manager.create_endpoint_postcommit "
                             "failed, deleting endpoint '%s'"), result['id'])
                 self.delete_endpoint(context, result['id'])
+
         return result
 
     @log.log
@@ -115,6 +116,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
                     "policy_driver_manager.create_endpoint_group_postcommit "
                     "failed, deleting endpoint_group '%s'"), result['id'])
                 self.delete_endpoint_group(context, result['id'])
+
         return result
 
     @log.log
@@ -135,6 +137,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
 
         self.policy_driver_manager.update_endpoint_group_postcommit(
             policy_context)
+
         return updated_endpoint_group
 
     @log.log
@@ -157,3 +160,128 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
                 LOG.error(_(
                     "policy_driver_manager.delete_endpoint_group_postcommit "
                     "failed, deleting endpoint_group '%s'"), id)
+
+    @log.log
+    def create_bridge_domain(self, context, bridge_domain):
+        session = context.session
+        with session.begin(subtransactions=True):
+            result = super(GroupPolicyPlugin,
+                           self).create_bridge_domain(context, bridge_domain)
+            policy_context = p_context.BridgeDomainContext(self, context,
+                                                           result)
+            self.policy_driver_manager.create_bridge_domain_precommit(
+                policy_context)
+
+        try:
+            self.policy_driver_manager.create_bridge_domain_postcommit(
+                policy_context)
+        except gp_exc.GroupPolicyDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_(
+                    "policy_driver_manager.create_bridge_domain_postcommit "
+                    "failed, deleting bridge_domain '%s'"), result['id'])
+                self.delete_bridge_domain(context, result['id'])
+
+        return result
+
+    @log.log
+    def update_bridge_domain(self, context, id, bridge_domain):
+        session = context.session
+        with session.begin(subtransactions=True):
+            original_bridge_domain = super(GroupPolicyPlugin,
+                                           self).get_bridge_domain(context, id)
+            updated_bridge_domain = super(GroupPolicyPlugin,
+                                          self).update_bridge_domain(
+                                              context, id, bridge_domain)
+            policy_context = p_context.BridgeDomainContext(
+                self, context, updated_bridge_domain,
+                original_bridge_domain=original_bridge_domain)
+            self.policy_driver_manager.update_bridge_domain_precommit(
+                policy_context)
+
+        self.policy_driver_manager.update_bridge_domain_postcommit(
+            policy_context)
+        return updated_bridge_domain
+
+    @log.log
+    def delete_bridge_domain(self, context, id):
+        session = context.session
+        with session.begin(subtransactions=True):
+            bridge_domain = self.get_bridge_domain(context, id)
+            policy_context = p_context.BridgeDomainContext(self, context,
+                                                           bridge_domain)
+            self.policy_driver_manager.create_bridge_domain_precommit(
+                policy_context)
+            super(GroupPolicyPlugin, self).delete_bridge_domain(context, id)
+
+        try:
+            self.policy_driver_manager.delete_bridge_domain_postcommit(
+                policy_context)
+        except gp_exc.GroupPolicyDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_(
+                    "policy_driver_manager.delete_bridge_domain_postcommit "
+                    " failed, deleting bridge_domain '%s'"), id)
+
+    @log.log
+    def create_routing_domain(self, context, routing_domain):
+        session = context.session
+        with session.begin(subtransactions=True):
+            result = super(GroupPolicyPlugin,
+                           self).create_routing_domain(context, routing_domain)
+            policy_context = p_context.RoutingDomainContext(self, context,
+                                                            result)
+            self.policy_driver_manager.create_routing_domain_precommit(
+                policy_context)
+
+        try:
+            self.policy_driver_manager.create_routing_domain_postcommit(
+                policy_context)
+        except gp_exc.GroupPolicyDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_(
+                    "policy_driver_manager.create_routing_domain_postcommit "
+                    "failed, deleting routing_domain '%s'"), result['id'])
+                self.delete_routing_domain(context, result['id'])
+
+        return result
+
+    @log.log
+    def update_routing_domain(self, context, id, routing_domain):
+        session = context.session
+        with session.begin(subtransactions=True):
+            original_routing_domain = super(GroupPolicyPlugin,
+                                            self).get_routing_domain(
+                                                context, id)
+            updated_routing_domain = super(
+                GroupPolicyPlugin, self).update_routing_domain(context, id,
+                                                               routing_domain)
+            policy_context = p_context.RoutingDomainContext(
+                self, context, updated_routing_domain,
+                original_routing_domain=original_routing_domain)
+            self.policy_driver_manager.update_routing_domain_precommit(
+                policy_context)
+
+        self.policy_driver_manager.update_routing_domain_postcommit(
+            policy_context)
+        return updated_routing_domain
+
+    @log.log
+    def delete_routing_domain(self, context, id):
+        session = context.session
+        with session.begin(subtransactions=True):
+            routing_domain = self.get_routing_domain(context, id)
+            policy_context = p_context.RoutingDomainContext(self, context,
+                                                            routing_domain)
+            self.policy_driver_manager.create_routing_domain_precommit(
+                policy_context)
+            super(GroupPolicyPlugin, self).delete_routing_domain(context, id)
+
+        try:
+            self.policy_driver_manager.delete_routing_domain_postcommit(
+                policy_context)
+        except gp_exc.GroupPolicyDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_(
+                    "policy_driver_manager.delete_routing_domain_postcommit "
+                    " failed, deleting routing_domain '%s'"), id)

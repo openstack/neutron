@@ -42,6 +42,10 @@ class GroupPolicyMappingTestExtensionManager(object):
         attr_map['endpoints'].update(gpm.EXTENDED_ATTRIBUTES_2_0['endpoints'])
         attr_map['endpoint_groups'].update(
             gpm.EXTENDED_ATTRIBUTES_2_0['endpoint_groups'])
+        attr_map['bridge_domains'].update(
+            gpm.EXTENDED_ATTRIBUTES_2_0['bridge_domains'])
+        attr_map['routing_domains'].update(
+            gpm.EXTENDED_ATTRIBUTES_2_0['routing_domains'])
         return gpolicy.Group_policy.get_resources()
 
     def get_actions(self):
@@ -72,11 +76,28 @@ class GroupPolicyMappingTestMixin(object):
 
         return attrs
 
-    def _create_endpoint(self, fmt, name, description, endpointgroup_id,
+    def _get_test_bridge_domain_attrs(self, name='bd1',
+                                      neutron_network_id=None):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id,
+                 'neutron_network_id': neutron_network_id}
+
+        return attrs
+
+    def _get_test_routing_domain_attrs(self, name='rd1', ip_version=4,
+                                       ip_supernet='10.0.0.0/8',
+                                       neutron_routers=None):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id,
+                 'neutron_routers': neutron_routers or []}
+
+        return attrs
+
+    def _create_endpoint(self, fmt, name, description, endpoint_group_id,
                          neutron_port_id, expected_res_status=None, **kwargs):
         data = {'endpoint': {'name': name,
                              'description': description,
-                             'endpointgroup_id': endpointgroup_id,
+                             'endpoint_group_id': endpoint_group_id,
                              'tenant_id': self._tenant_id,
                              'neutron_port_id': neutron_port_id}}
 
@@ -102,15 +123,48 @@ class GroupPolicyMappingTestMixin(object):
 
         return epg_res
 
+    def _create_bridge_domain(self, fmt, name, description, routing_domain_id,
+                              endpoint_groups, neutron_network_id,
+                              expected_res_status=None, **kwargs):
+        data = {'bridge_domain': {'name': name,
+                                  'description': description,
+                                  'routing_domain_id': routing_domain_id,
+                                  'endpoint_groups': endpoint_groups,
+                                  'tenant_id': self._tenant_id,
+                                  'neutron_network_id': neutron_network_id}}
+
+        bd_req = self.new_create_request('bridge_domains', data, fmt)
+        bd_res = bd_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(bd_res.status_int, expected_res_status)
+
+        return bd_res
+
+    def _create_routing_domain(self, fmt, name, description, ip_version,
+                               ip_supernet, neutron_routers,
+                               expected_res_status=None, **kwargs):
+        data = {'routing_domain': {'name': name,
+                                   'description': description,
+                                   'ip_version': ip_version,
+                                   'ip_supernet': ip_supernet,
+                                   'tenant_id': self._tenant_id,
+                                   'neutron_routers': neutron_routers}}
+
+        rd_req = self.new_create_request('routing_domains', data, fmt)
+        rd_res = rd_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(rd_res.status_int, expected_res_status)
+
+        return rd_res
+
     @contextlib.contextmanager
     def endpoint(self, fmt=None, name='ep1', description="",
-                 endpointgroup_id='00000000-ffff-ffff-ffff-000000000000',
-                 neutron_port_id=None,
-                 no_delete=False, **kwargs):
+                 endpoint_group_id='00000000-ffff-ffff-ffff-000000000000',
+                 neutron_port_id=None, no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
-        res = self._create_endpoint(fmt, name, description, endpointgroup_id,
+        res = self._create_endpoint(fmt, name, description, endpoint_group_id,
                                     neutron_port_id, **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -137,6 +191,47 @@ class GroupPolicyMappingTestMixin(object):
         finally:
             if not no_delete:
                 self._delete('endpoint_groups', epg['endpoint_group']['id'])
+
+    @contextlib.contextmanager
+    def bridge_domain(self, fmt=None, name='bd1', description="",
+                      routing_domain_id=
+                      '00000000-ffff-ffff-ffff-000000000000',
+                      endpoint_groups=
+                      ['00000000-ffff-ffff-ffff-000000000001'],
+                      neutron_network_id=None, no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        res = self._create_bridge_domain(fmt, name, description,
+                                         routing_domain_id, endpoint_groups,
+                                         neutron_network_id, **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        bd = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield bd
+        finally:
+            if not no_delete:
+                self._delete('bridge_domains', bd['bridge_domain']['id'])
+
+    @contextlib.contextmanager
+    def routing_domain(self, fmt=None, name='rd1', description="",
+                       ip_version=4, ip_supernet='10.0.0.0/8',
+                       neutron_routers=None, no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        res = self._create_routing_domain(fmt, name, description,
+                                          ip_version, ip_supernet,
+                                          neutron_routers, **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        rd = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield rd
+        finally:
+            if not no_delete:
+                self._delete('routing_domains', rd['routing_domain']['id'])
 
 
 class GroupPolicyMappingDbTestCase(GroupPolicyMappingTestMixin,
@@ -185,6 +280,26 @@ class TestGroupPolicy(GroupPolicyMappingDbTestCase):
         with self.endpoint_group(name=name) as epg:
             for k, v in attrs.iteritems():
                 self.assertEqual(epg['endpoint_group'][k], v)
+
+    def test_create_bridge_domain(self, **kwargs):
+        name = "bd1"
+        neutron_network_id = None
+        attrs = self._get_test_bridge_domain_attrs(name,
+                                                   neutron_network_id)
+
+        with self.bridge_domain(name=name) as bd:
+            for k, v in attrs.iteritems():
+                self.assertEqual(bd['bridge_domain'][k], v)
+
+    def test_create_routing_domain(self, **kwargs):
+        name = "rd1"
+        neutron_routers = None
+        attrs = self._get_test_routing_domain_attrs(name,
+                                                    neutron_routers)
+
+        with self.routing_domain(name=name) as rd:
+            for k, v in attrs.iteritems():
+                self.assertEqual(rd['routing_domain'][k], v)
 
 
 # TODO(Sumit): XML tests
