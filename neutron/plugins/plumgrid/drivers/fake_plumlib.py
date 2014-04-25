@@ -55,7 +55,7 @@ class Plumlib():
     def create_subnet(self, sub_db, net_db, ipnet):
         pass
 
-    def update_subnet(self, org_sub_db, new_sub_db, ipnet):
+    def update_subnet(self, orig_sub_db, new_sub_db, ipnet):
         pass
 
     def delete_subnet(self, tenant_id, net_db, net_id):
@@ -85,11 +85,15 @@ class Plumlib():
     def remove_router_interface(self, tenant_id, net_id, router_id):
         pass
 
-    def create_floatingip(self, net_db, floating_ip):
+    def create_floatingip(self, floating_ip):
         pass
 
-    def update_floatingip(self, net_db, floating_ip, id):
+    def update_floatingip(self, floating_ip_orig, floating_ip, id):
         pass
 
-    def delete_floatingip(self, net_db, floating_ip_org, id):
+    def delete_floatingip(self, floating_ip_orig, id):
         pass
+
+    def disassociate_floatingips(self, fip, port_id):
+        return dict((key, fip[key]) for key in ("id", "floating_network_id",
+                                                "floating_ip_address"))

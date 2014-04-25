@@ -148,3 +148,25 @@ class TestPlumgridProvidernet(PLUMgridPluginV2TestCase):
         self.assertEqual(net['network'][provider.NETWORK_TYPE], 'vlan')
         self.assertEqual(net['network'][provider.SEGMENTATION_ID], 3333)
         self.assertEqual(net['network'][provider.PHYSICAL_NETWORK], 'phy3333')
+
+
+class TestDisassociateFloatingIP(PLUMgridPluginV2TestCase):
+
+    def test_disassociate_floating_ip(self):
+        port_id = "abcdefgh"
+        tenant_id = "94eb42de4e331"
+        fip_net_id = "b843d18245678"
+        fip_addr = "10.0.3.44"
+        fip_id = "e623679734051"
+        fip = {"router_id": "94eb42de4e331",
+               "tenant_id": tenant_id,
+               "floating_network_id": fip_net_id,
+               "fixed_ip_address": "192.168.8.2",
+               "floating_ip_address": fip_addr,
+               "port_id": port_id,
+               "id": fip_id}
+        plumlib = importutils.import_object(PLUM_DRIVER)
+        fip_res = plumlib.disassociate_floatingips(fip, port_id)
+        self.assertEqual(fip_res["id"], fip_id)
+        self.assertEqual(fip_res["floating_ip_address"], fip_addr)
+        self.assertEqual(fip_res["floating_network_id"], fip_net_id)
