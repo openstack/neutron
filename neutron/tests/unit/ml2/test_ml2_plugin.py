@@ -36,6 +36,11 @@ from neutron.tests.unit import test_extension_extradhcpopts as test_dhcpopts
 from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 
 
+config.cfg.CONF.import_opt('network_vlan_ranges',
+                           'neutron.plugins.ml2.drivers.type_vlan',
+                           group='ml2_type_vlan')
+
+
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 
