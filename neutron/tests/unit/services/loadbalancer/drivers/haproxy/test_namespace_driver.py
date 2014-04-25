@@ -123,6 +123,41 @@ class TestHaproxyNSDriver(base.BaseTestCase):
                 mock.call().garbage_collect_namespace()
             ])
 
+    def test_undeploy_instance_with_ns_cleanup(self):
+        with contextlib.nested(
+            mock.patch.object(self.driver, '_get_state_file_path'),
+            mock.patch.object(self.driver, 'vif_driver'),
+            mock.patch.object(namespace_driver, 'kill_pids_in_file'),
+            mock.patch('neutron.agent.linux.ip_lib.IPWrapper'),
+            mock.patch('os.path.isdir'),
+            mock.patch('shutil.rmtree')
+        ) as (gsp, vif, kill, ip_wrap, isdir, rmtree):
+            device = mock.Mock()
+            device_name = 'port_device'
+            device.name = device_name
+            ip_wrap.return_value.get_devices.return_value = [device]
+
+            self.driver.undeploy_instance('pool_id', cleanup_namespace=True)
+            vif.unplug.assert_called_once_with(device_name,
+                                               namespace='qlbaas-pool_id')
+
+    def test_remove_orphans(self):
+        with contextlib.nested(
+            mock.patch.object(self.driver, 'exists'),
+            mock.patch.object(self.driver, 'undeploy_instance'),
+            mock.patch('os.listdir'),
+            mock.patch('os.path.exists')
+        ) as (exists, undeploy, listdir, path_exists):
+            known = ['known1', 'known2']
+            unknown = ['unknown1', 'unknown2']
+            listdir.return_value = known + unknown
+            exists.side_effect = lambda x: x == 'unknown2'
+
+            self.driver.remove_orphans(known)
+
+            undeploy.assert_called_once_with('unknown2',
+                                             cleanup_namespace=True)
+
     def test_exists(self):
         with contextlib.nested(
             mock.patch.object(self.driver, '_get_state_file_path'),
