@@ -156,18 +156,6 @@ class Client(object):
         """
         return self._get(self.port_profiles_path)
 
-    def list_events(self, event_type=None, epoch=None):
-        """
-        Fetch all events of event_type from the VSM.
-
-        :param event_type: type of event to be listed.
-        :param epoch: timestamp after which the events occurred to be listed.
-        :returns: XML string
-        """
-        if event_type:
-            self.events_path = self.events_path + '?type=' + event_type
-        return self._get(self.events_path)
-
     def create_bridge_domain(self, network, overlay_subtype):
         """
         Create a bridge domain on VSM.
