@@ -41,6 +41,10 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
         attr_map['endpoints'].update(gpm.EXTENDED_ATTRIBUTES_2_0['endpoints'])
         attr_map['endpoint_groups'].update(
             gpm.EXTENDED_ATTRIBUTES_2_0['endpoint_groups'])
+        attr_map['bridge_domains'].update(
+            gpm.EXTENDED_ATTRIBUTES_2_0['bridge_domains'])
+        attr_map['routing_domains'].update(
+            gpm.EXTENDED_ATTRIBUTES_2_0['routing_domains'])
         self._setUpExtension(
             'neutron.extensions.group_policy.GroupPolicyPluginBase',
             constants.GROUP_POLICY, attr_map,
@@ -54,7 +58,7 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
         data = {'endpoint': {'name': 'ep1',
                              'tenant_id': _uuid(),
                              'description': '',
-                             'endpointgroup_id': _uuid(),
+                             'endpoint_group_id': _uuid(),
                              'neutron_port_id': _uuid()}}
         return_value = copy.copy(data['endpoint'])
         return_value.update({'id': endpoint_id})
@@ -81,6 +85,7 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
                                    'consumed_contract_scopes': []}}
         return_value = copy.copy(data['endpoint_group'])
         return_value.update({'id': endpoint_group_id})
+        return_value.update({'bridge_domain_id': None})
 
         instance = self.plugin.return_value
         instance.create_endpoint_group.return_value = return_value
@@ -93,3 +98,49 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
         res = self.deserialize(res)
         self.assertIn('endpoint_group', res)
         self.assertEqual(res['endpoint_group'], return_value)
+
+    def test_create_bridge_domain(self):
+        bridge_domain_id = _uuid()
+        data = {'bridge_domain': {'name': 'bd',
+                                  'tenant_id': _uuid(),
+                                  'description': '',
+                                  'routing_domain_id': _uuid(),
+                                  'endpoint_groups': [_uuid()],
+                                  'neutron_network_id': _uuid()}}
+        return_value = copy.copy(data['bridge_domain'])
+        return_value.update({'id': bridge_domain_id})
+
+        instance = self.plugin.return_value
+        instance.create_bridge_domain.return_value = return_value
+        res = self.api.post(_get_path('gp/bridge_domains', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
+        instance.create_bridge_domain.assert_called_with(mock.ANY,
+                                                         bridge_domain=data)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        res = self.deserialize(res)
+        self.assertIn('bridge_domain', res)
+        self.assertEqual(res['bridge_domain'], return_value)
+
+    def test_create_routing_domain(self):
+        routing_domain_id = _uuid()
+        data = {'routing_domain': {'name': 'rd',
+                                   'tenant_id': _uuid(),
+                                   'description': '',
+                                   'ip_version': 4,
+                                   'ip_supernet': '10.0.0.0/8',
+                                   'neutron_routers': [_uuid()]}}
+        return_value = copy.copy(data['routing_domain'])
+        return_value.update({'id': routing_domain_id})
+
+        instance = self.plugin.return_value
+        instance.create_routing_domain.return_value = return_value
+        res = self.api.post(_get_path('gp/routing_domains', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
+        instance.create_routing_domain.assert_called_with(mock.ANY,
+                                                          routing_domain=data)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        res = self.deserialize(res)
+        self.assertIn('routing_domain', res)
+        self.assertEqual(res['routing_domain'], return_value)

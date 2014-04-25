@@ -50,6 +50,14 @@ class PolicyRuleNotFound(nexc.NotFound):
     message = _("PolicyRule %(policy_rule_id)s could not be found")
 
 
+class BridgeDomainNotFound(nexc.NotFound):
+    message = _("BridgeDomain %(bridge_domain_id)s could not be found")
+
+
+class RoutingDomainNotFound(nexc.NotFound):
+    message = _("RoutingDomain %(routing_domain_id)s could not be found")
+
+
 class GroupPolicyInvalidPortValue(nexc.InvalidInput):
     message = _("Invalid value for port %(port)s")
 
@@ -170,9 +178,9 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:string': None},
                       'required_by_policy': True, 'is_visible': True},
-        'endpointgroup_id': {'allow_post': True, 'allow_put': True,
-                             'validate': {'type:uuid_or_none': None},
-                             'required': True, 'is_visible': True},
+        'endpoint_group_id': {'allow_post': True, 'allow_put': True,
+                              'validate': {'type:uuid_or_none': None},
+                              'required': True, 'is_visible': True},
     },
     ENDPOINT_GROUPS: {
         'id': {'allow_post': False, 'allow_put': False,
@@ -191,6 +199,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:uuid_list': None},
                       'convert_to': attr.convert_none_to_empty_list,
                       'default': None, 'is_visible': True},
+        'bridge_domain_id': {'allow_post': False, 'allow_put': False,
+                             'validate': {'type:uuid_or_none': None},
+                             'default': None, 'is_visible': True},
         'provided_contract_scopes': {'allow_post': True, 'allow_put': True,
                                      'validate': {'type:uuid_list': None},
                                      'convert_to':
@@ -454,6 +465,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                             'validate': {'type:uuid_list': None},
                             'convert_to': attr.convert_none_to_empty_list,
                             'default': None, 'is_visible': True},
+        'routing_domain_id': {'allow_post': True, 'allow_put': True,
+                              'validate': {'type:uuid_or_none': None},
+                              'default': None, 'is_visible': True,
+                              'required': True},
     },
     ROUTING_DOMAINS: {
         'id': {'allow_post': False, 'allow_put': False,
@@ -475,7 +490,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'ip_supernet': {'allow_post': True, 'allow_put': False,
                         'validate': {'type:subnet': None},
                         'is_visible': True},
-        'bridge_domains': {'allow_post': True, 'allow_put': True,
+        'bridge_domains': {'allow_post': False, 'allow_put': False,
                            'validate': {'type:uuid_list': None},
                            'convert_to': attr.convert_none_to_empty_list,
                            'default': None, 'is_visible': True},
@@ -641,4 +656,44 @@ class GroupPolicyPluginBase(ServicePluginBase):
 
     @abc.abstractmethod
     def delete_policy_rule(self, context, id):
+        pass
+
+    @abc.abstractmethod
+    def get_bridge_domains(self, context, filters=None, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def get_bridge_domain(self, context, id, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def create_bridge_domain(self, context, bridge_domain):
+        pass
+
+    @abc.abstractmethod
+    def update_bridge_domain(self, context, id, bridge_domain):
+        pass
+
+    @abc.abstractmethod
+    def delete_bridge_domain(self, context, id):
+        pass
+
+    @abc.abstractmethod
+    def get_routing_domains(self, context, filters=None, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def get_routing_domain(self, context, id, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def create_routing_domain(self, context, routing_domain):
+        pass
+
+    @abc.abstractmethod
+    def update_routing_domain(self, context, id, routing_domain):
+        pass
+
+    @abc.abstractmethod
+    def delete_routing_domain(self, context, id):
         pass

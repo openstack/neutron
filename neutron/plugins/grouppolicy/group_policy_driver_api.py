@@ -74,6 +74,64 @@ class EndpointGroupContext(object):
 
 
 @six.add_metaclass(ABCMeta)
+class BridgeDomainContext(object):
+    """Context passed to policy engine for changes to bridge_domain resources.
+
+    A BridgeDomainContext instance wraps an bridge_domain resource. It provides
+    helper methods for accessing other relevant information. Results
+    from expensive operations are cached for convenient access.
+    """
+
+    @abstractproperty
+    def current(self):
+        """Return the current state of the bridge_domain.
+
+        Return the current state of the bridge_domain, as defined by
+        GroupPolicyPlugin.create_bridge_domain.
+        """
+        pass
+
+    @abstractproperty
+    def original(self):
+        """Return the original state of the bridge_domain.
+
+        Return the original state of the bridge_domain, prior to a call to
+        update_bridge_domain. Method is only valid within calls to
+        update_bridge_domain_precommit and update_bridge_domain_postcommit.
+        """
+        pass
+
+
+@six.add_metaclass(ABCMeta)
+class RoutingDomainContext(object):
+    """Context passed to policy engine for changes to routing_domain resources.
+
+    A RoutingDomainContext instance wraps an routing_domain resource.xi
+    It provides helper methods for accessing other relevant information.
+    Results from expensive operations are cached for convenient access.
+    """
+
+    @abstractproperty
+    def current(self):
+        """Return the current state of the routing_domain.
+
+        Return the current state of the routing_domain, as defined by
+        GroupPolicyPlugin.create_routing_domain.
+        """
+        pass
+
+    @abstractproperty
+    def original(self):
+        """Return the original state of the routing_domain.
+
+        Return the original state of the routing_domain, prior to a call to
+        update_routing_domain. Method is only valid within calls to
+        update_routing_domain_precommit and update_routing_domain_postcommit.
+        """
+        pass
+
+
+@six.add_metaclass(ABCMeta)
 class PolicyDriver(object):
     """Define stable abstract interface for Group Policy drivers.
 
@@ -276,6 +334,186 @@ class PolicyDriver(object):
 
         :param context: EndpointGroupContext instance describing the current
         state of the endpoint_group, prior to the call to delete it.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Runtime errors are not
+        expected, and will not prevent the resource from being
+        deleted.
+        """
+        pass
+
+    def create_bridge_domain_precommit(self, context):
+        """Allocate resources for a new bridge_domain.
+
+        :param context: BridgeContext instance describing the new
+        bridge_domain.
+
+        Create a new bridge_domain, allocating resources as necessary in the
+        database. Called inside transaction context on session. Call
+        cannot block.  Raising an exception will result in a rollback
+        of the current transaction.
+        """
+        pass
+
+    def create_bridge_domain_postcommit(self, context):
+        """Create a bridge_domain.
+
+        :param context: BridgeContext instance describing the new
+        bridge_domain.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Raising an exception will
+        cause the deletion of the resource.
+        """
+        pass
+
+    def update_bridge_domain_precommit(self, context):
+        """Update resources of a bridge_domain.
+
+        :param context: BridgeContext instance describing the new
+        state of the bridge_domain, as well as the original state prior
+        to the update_bridge_domain call.
+
+        Update values of a bridge_domain, updating the associated resources
+        in the database. Called inside transaction context on session.
+        Raising an exception will result in rollback of the
+        transaction.
+
+        update_bridge_domain_precommit is called for all changes to the
+        bridge_domain state. It is up to the mechanism driver to ignore
+        state or state changes that it does not know or care about.
+        """
+        pass
+
+    def update_bridge_domain_postcommit(self, context):
+        """Update a bridge_domain.
+
+        :param context: BridgeContext instance describing the new
+        state of the bridge_domain, as well as the original state prior
+        to the update_bridge_domain call.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Raising an exception will
+        cause the deletion of the resource.
+
+        update_bridge_domain_postcommit is called for all changes to the
+        bridge_domain state.  It is up to the mechanism driver to ignore
+        state or state changes that it does not know or care about.
+        """
+        pass
+
+    def delete_bridge_domain_precommit(self, context):
+        """Delete resources for a bridge_domain.
+
+        :param context: BridgeContext instance describing the current
+        state of the bridge_domain, prior to the call to delete it.
+
+        Delete bridge_domain resources previously allocated by this
+        mechanism driver for a bridge_domain. Called inside transaction
+        context on session. Runtime errors are not expected, but
+        raising an exception will result in rollback of the
+        transaction.
+        """
+        pass
+
+    def delete_bridge_domain_postcommit(self, context):
+        """Delete a bridge_domain.
+
+        :param context: BridgeContext instance describing the current
+        state of the bridge_domain, prior to the call to delete it.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Runtime errors are not
+        expected, and will not prevent the resource from being
+        deleted.
+        """
+        pass
+
+    def create_routing_domain_precommit(self, context):
+        """Allocate resources for a new routing_domain.
+
+        :param context: RoutingContext instance describing the new
+        routing_domain.
+
+        Create a new routing_domain, allocating resources as necessary in the
+        database. Called inside transaction context on session. Call
+        cannot block.  Raising an exception will result in a rollback
+        of the current transaction.
+        """
+        pass
+
+    def create_routing_domain_postcommit(self, context):
+        """Create a routing_domain.
+
+        :param context: RoutingContext instance describing the new
+        routing_domain.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Raising an exception will
+        cause the deletion of the resource.
+        """
+        pass
+
+    def update_routing_domain_precommit(self, context):
+        """Update resources of a routing_domain.
+
+        :param context: RoutingContext instance describing the new
+        state of the routing_domain, as well as the original state prior
+        to the update_routing_domain call.
+
+        Update values of a routing_domain, updating the associated resources
+        in the database. Called inside transaction context on session.
+        Raising an exception will result in rollback of the
+        transaction.
+
+        update_routing_domain_precommit is called for all changes to the
+        routing_domain state. It is up to the mechanism driver to ignore
+        state or state changes that it does not know or care about.
+        """
+        pass
+
+    def update_routing_domain_postcommit(self, context):
+        """Update a routing_domain.
+
+        :param context: RoutingContext instance describing the new
+        state of the routing_domain, as well as the original state prior
+        to the update_routing_domain call.
+
+        Called after the transaction commits. Call can block, though
+        will block the entire process so care should be taken to not
+        drastically affect performance. Raising an exception will
+        cause the deletion of the resource.
+
+        update_routing_domain_postcommit is called for all changes to the
+        routing_domain state.  It is up to the mechanism driver to ignore
+        state or state changes that it does not know or care about.
+        """
+        pass
+
+    def delete_routing_domain_precommit(self, context):
+        """Delete resources for a routing_domain.
+
+        :param context: RoutingContext instance describing the current
+        state of the routing_domain, prior to the call to delete it.
+
+        Delete routing_domain resources previously allocated by this
+        mechanism driver for a routing_domain. Called inside transaction
+        context on session. Runtime errors are not expected, but
+        raising an exception will result in rollback of the
+        transaction.
+        """
+        pass
+
+    def delete_routing_domain_postcommit(self, context):
+        """Delete a routing_domain.
+
+        :param context: RoutingContext instance describing the current
+        state of the routing_domain, prior to the call to delete it.
 
         Called after the transaction commits. Call can block, though
         will block the entire process so care should be taken to not

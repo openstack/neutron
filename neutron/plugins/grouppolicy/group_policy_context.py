@@ -52,3 +52,37 @@ class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
     @property
     def original(self):
         return self._original_endpoint_group
+
+
+class BridgeDomainContext(GroupPolicyContext, api.BridgeDomainContext):
+
+    def __init__(self, plugin, plugin_context, bridge_domain,
+                 original_bridge_domain=None):
+        super(BridgeDomainContext, self).__init__(plugin, plugin_context)
+        self._bridge_domain = bridge_domain
+        self._original_bridge_domain = original_bridge_domain
+
+    @property
+    def current(self):
+        return self._bridge_domain
+
+    @property
+    def original(self):
+        return self._original_bridge_domain
+
+
+class RoutingDomainContext(GroupPolicyContext, api.RoutingDomainContext):
+
+    def __init__(self, plugin, plugin_context, routing_domain,
+                 original_routing_domain=None):
+        super(RoutingDomainContext, self).__init__(plugin, plugin_context)
+        self._routing_domain = routing_domain
+        self._original_routing_domain = original_routing_domain
+
+    @property
+    def current(self):
+        return self._routing_domain
+
+    @property
+    def original(self):
+        return self._original_routing_domain
