@@ -116,3 +116,24 @@ class MlnxMechanismProfileTestCase(MlnxMechanismBaseTestCase):
         self.driver.try_to_bind_segment_for_agent(context, segment, agent)
         self.assertEqual('{"physical_network": "fake_physical_network"}',
                          context._binding.profile)
+
+
+class MlnxMechanismVifDetailsTestCase(MlnxMechanismBaseTestCase):
+    def setUp(self):
+        super(MlnxMechanismVifDetailsTestCase, self).setUp()
+
+    def test_vif_details_contains_physical_net(self):
+        VLAN_SEGMENTS = [{api.ID: 'vlan_segment_id',
+                          api.NETWORK_TYPE: 'vlan',
+                          api.PHYSICAL_NETWORK: 'fake_physical_network',
+                          api.SEGMENTATION_ID: 1234}]
+
+        context = base.FakePortContext(self.AGENT_TYPE,
+                                       self.AGENTS,
+                                       VLAN_SEGMENTS,
+                                       portbindings.VNIC_DIRECT)
+        segment = VLAN_SEGMENTS[0]
+        agent = self.AGENTS[0]
+        self.driver.try_to_bind_segment_for_agent(context, segment, agent)
+        set({"physical_network": "fake_physical_network"}).issubset(
+            set(context._bound_vif_details.items()))
