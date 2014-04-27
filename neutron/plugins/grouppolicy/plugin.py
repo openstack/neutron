@@ -85,7 +85,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
         with session.begin(subtransactions=True):
             endpoint = self.get_endpoint(context, id)
             policy_context = p_context.EndpointContext(self, context, endpoint)
-            self.policy_driver_manager.create_endpoint_precommit(
+            self.policy_driver_manager.delete_endpoint_precommit(
                 policy_context)
             super(GroupPolicyPlugin, self).delete_endpoint(context, id)
 
@@ -148,7 +148,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
             # TODO(sumit) : Do not delete if EPG has EPs
             policy_context = p_context.EndpointContext(self, context,
                                                        endpoint_group)
-            self.policy_driver_manager.create_endpoint_group_precommit(
+            self.policy_driver_manager.delete_endpoint_group_precommit(
                 policy_context)
             super(GroupPolicyPlugin, self).delete_endpoint_group(context, id)
 
@@ -210,7 +210,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
             bridge_domain = self.get_bridge_domain(context, id)
             policy_context = p_context.BridgeDomainContext(self, context,
                                                            bridge_domain)
-            self.policy_driver_manager.create_bridge_domain_precommit(
+            self.policy_driver_manager.delete_bridge_domain_precommit(
                 policy_context)
             super(GroupPolicyPlugin, self).delete_bridge_domain(context, id)
 
@@ -273,7 +273,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
             routing_domain = self.get_routing_domain(context, id)
             policy_context = p_context.RoutingDomainContext(self, context,
                                                             routing_domain)
-            self.policy_driver_manager.create_routing_domain_precommit(
+            self.policy_driver_manager.delete_routing_domain_precommit(
                 policy_context)
             super(GroupPolicyPlugin, self).delete_routing_domain(context, id)
 
