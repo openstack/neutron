@@ -74,6 +74,8 @@ class TestVarmourRouter(base.BaseTestCase):
         self.mock_ip = mock.MagicMock()
         ip_cls.return_value = self.mock_ip
 
+        mock.patch('neutron.agent.l3_agent.L3PluginApi').start()
+
         self.looping_call_p = mock.patch(
             'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
         self.looping_call_p.start()

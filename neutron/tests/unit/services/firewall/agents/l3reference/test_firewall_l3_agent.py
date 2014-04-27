@@ -39,8 +39,16 @@ class FWaasHelper(object):
 
 
 class FWaasAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, FWaasHelper):
+    neutron_service_plugins = []
+
     def __init__(self, conf=None):
         super(FWaasAgent, self).__init__(conf)
+
+
+class FWaasTestAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, FWaasHelper):
+    def __init__(self, conf=None):
+        self.neutron_service_plugins = [constants.FIREWALL]
+        super(FWaasTestAgent, self).__init__(conf)
 
 
 class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
@@ -55,6 +63,10 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
         self.conf.root_helper = 'sudo'
         self.api = FWaasAgent(self.conf)
         self.api.fwaas_driver = test_firewall_agent_api.NoopFwaasDriver()
+
+    def test_missing_fw_config(self):
+        self.conf.fwaas_enabled = False
+        self.assertRaises(SystemExit, FWaasTestAgent, self.conf)
 
     def test_create_firewall(self):
         fake_firewall = {'id': 0}

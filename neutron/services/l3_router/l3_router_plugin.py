@@ -36,9 +36,10 @@ from neutron.plugins.common import constants
 class L3RouterPluginRpcCallbacks(n_rpc.RpcCallback,
                                  l3_rpc_base.L3RpcCallbackMixin):
 
-    RPC_API_VERSION = '1.2'
+    RPC_API_VERSION = '1.3'
     # history
     #   1.2 Added methods for DVR support
+    #   1.3 Added a method that returns the list of activated services
 
 
 class L3RouterPlugin(common_db_mixin.CommonDbMixin,

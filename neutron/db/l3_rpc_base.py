@@ -124,6 +124,10 @@ class L3RpcCallbackMixin(object):
                   net_id)
         return net_id
 
+    def get_service_plugin_list(self, context, **kwargs):
+        plugins = manager.NeutronManager.get_service_plugins()
+        return plugins.keys()
+
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Update operational status for a floating IP."""
         l3_plugin = manager.NeutronManager.get_service_plugins()[

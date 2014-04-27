@@ -247,7 +247,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.l3pluginApi_cls_p = mock.patch(
             'neutron.agent.l3_agent.L3PluginApi')
         l3pluginApi_cls = self.l3pluginApi_cls_p.start()
-        self.plugin_api = mock.Mock()
+        self.plugin_api = mock.MagicMock()
         l3pluginApi_cls.return_value = self.plugin_api
 
         self.looping_call_p = mock.patch(
@@ -1864,7 +1864,7 @@ class TestL3AgentEventHandler(base.BaseTestCase):
         l3_plugin_p = mock.patch(
             'neutron.agent.l3_agent.L3PluginApi')
         l3_plugin_cls = l3_plugin_p.start()
-        l3_plugin_cls.return_value = mock.Mock()
+        l3_plugin_cls.return_value = mock.MagicMock()
 
         self.external_process_p = mock.patch(
             'neutron.agent.linux.external_process.ProcessManager'

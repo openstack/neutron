@@ -71,7 +71,7 @@ class TestVPNAgent(base.BaseTestCase):
 
         l3pluginApi_cls = mock.patch(
             'neutron.agent.l3_agent.L3PluginApi').start()
-        self.plugin_api = mock.Mock()
+        self.plugin_api = mock.MagicMock()
         l3pluginApi_cls.return_value = self.plugin_api
 
         looping_call_p = mock.patch(
