@@ -71,6 +71,11 @@ class DhcpMetadataBuilderTestCase(base.BaseTestCase):
     def test_router_id_get_none_subnet(self):
         self.assertIsNone(self.builder.router_id_get(mock.ANY, None))
 
+    def test_router_id_get_none_no_router(self):
+        self.builder.plugin.get_ports.return_value = []
+        subnet = {'network_id': self.network_id}
+        self.assertIsNone(self.builder.router_id_get(mock.ANY, subnet))
+
     def test_metadata_deallocate(self):
         self.builder.metadata_deallocate(
             mock.ANY, self.router_id, self.subnet_id)
