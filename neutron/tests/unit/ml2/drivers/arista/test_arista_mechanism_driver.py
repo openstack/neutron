@@ -17,6 +17,7 @@ import mock
 from oslo.config import cfg
 
 from neutron.common import constants as n_const
+from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.arista import db
 from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
@@ -525,13 +526,14 @@ class PositiveRPCWrapperValidConfigTestCase(base.BaseTestCase):
     def test_register_with_eos(self):
         self.drv.register_with_eos()
         auth = fake_keystone_info_class()
-        keystone_url = '%s://%s:%s/v2.0/' % (auth.auth_protocol,
-                                             auth.auth_host,
-                                             auth.auth_port)
-        auth_cmd = 'auth url %s user %s password %s tenant %s' % (keystone_url,
-                    auth.admin_user,
-                    auth.admin_password,
-                    auth.admin_tenant_name)
+        auth_cmd = (
+            'auth url %(auth_url)s user %(user)s '
+            'password %(password)s tenant %(tenant)s' %
+            {'auth_url': utils.get_keystone_url(auth),
+             'user': auth.admin_user,
+             'password': auth.admin_password,
+             'tenant': auth.admin_tenant_name}
+        )
         cmds = ['enable',
                 'configure',
                 'cvx',
@@ -713,9 +715,8 @@ class fake_keystone_info_class(object):
     Arista Driver expects Keystone auth info. This fake information
     is for testing only
     """
-    auth_protocol = 'abc'
-    auth_host = 'host'
-    auth_port = 5000
+    auth_uri = 'abc://host:35357/v2.0/'
+    identity_uri = 'abc://host:5000'
     admin_user = 'neutron'
     admin_password = 'fun'
     admin_tenant_name = 'tenant_name'

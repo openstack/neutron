@@ -20,6 +20,7 @@ import jsonrpclib
 from oslo.config import cfg
 
 from neutron.common import constants as n_const
+from neutron.common import utils
 from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.common import exceptions as ml2_exc
@@ -76,13 +77,6 @@ class AristaRPCWrapper(object):
             self.cli_commands['timestamp'] = []
             LOG.warn(_LW("'timestamp' command '%s' is not available on EOS"),
                      cmd)
-
-    def _keystone_url(self):
-        keystone_auth_url = ('%s://%s:%s/v2.0/' %
-                             (self.keystone_conf.auth_protocol,
-                              self.keystone_conf.auth_host,
-                              self.keystone_conf.auth_port))
-        return keystone_auth_url
 
     def get_tenants(self):
         """Returns dict of all tenants known by EOS.
@@ -389,18 +383,25 @@ class AristaRPCWrapper(object):
         This the initial handshake between Neutron and EOS.
         critical end-point information is registered with EOS.
         """
+        keystone_conf = self.keystone_conf
+        # FIXME(ihrachys): plugins should not construct keystone URL
+        # from configuration file and should instead rely on service
+        # catalog contents
+        auth_uri = utils.get_keystone_url(keystone_conf)
 
-        cmds = ['auth url %s user %s password %s tenant %s' % (
-                self._keystone_url(),
-                self.keystone_conf.admin_user,
-                self.keystone_conf.admin_password,
-                self.keystone_conf.admin_tenant_name)]
+        cmds = ['auth url %(auth_url)s user %(user)s '
+                'password %(password)s tenant %(tenant)s' %
+                {'auth_url': auth_uri,
+                 'user': keystone_conf.admin_user,
+                 'password': keystone_conf.admin_password,
+                 'tenant': keystone_conf.admin_tenant_name}]
 
-        log_cmds = ['auth url %s user %s password %s tenant %s' % (
-                    self._keystone_url(),
-                    self.keystone_conf.admin_user,
-                    '******',
-                    self.keystone_conf.admin_tenant_name)]
+        log_cmds = ['auth url %(auth_url)s user %(user)s '
+                    'password %(password)s tenant %(tenant)s' %
+                    {'auth_url': auth_uri,
+                     'user': keystone_conf.admin_user,
+                     'password': '******',
+                     'tenant': keystone_conf.admin_tenant_name}]
 
         sync_interval_cmd = 'sync interval %d' % self.sync_interval
         cmds.append(sync_interval_cmd)
