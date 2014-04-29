@@ -72,7 +72,7 @@ class LinuxInterfaceDriver(object):
         self.root_helper = config.get_root_helper(conf)
 
     def init_l3(self, device_name, ip_cidrs, namespace=None,
-                preserve_ips=[]):
+                preserve_ips=[], gateway=None):
         """Set the L3 settings for the interface using data from the port.
 
         ip_cidrs: list of 'X.X.X.X/YY' strings
@@ -104,6 +104,9 @@ class LinuxInterfaceDriver(object):
         for ip_cidr, ip_version in previous.items():
             if ip_cidr not in preserve_ips:
                 device.addr.delete(ip_version, ip_cidr)
+
+        if gateway:
+            device.route.add_gateway(gateway)
 
     def check_bridge_exists(self, bridge):
         if not ip_lib.device_exists(bridge):
