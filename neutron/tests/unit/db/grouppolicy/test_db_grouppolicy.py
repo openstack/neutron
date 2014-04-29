@@ -79,10 +79,11 @@ class GroupPolicyTestMixin(object):
 
         return ep_res
 
-    def _create_endpoint_group(self, fmt, name, description,
+    def _create_endpoint_group(self, fmt, name, description, bridge_domain_id,
                                expected_res_status=None, **kwargs):
         data = {'endpoint_group': {'name': name,
                                    'description': description,
+                                   'bridge_domain_id': bridge_domain_id,
                                    'tenant_id': self._tenant_id}}
 
         epg_req = self.new_create_request('endpoint_groups', data, fmt)
@@ -93,12 +94,10 @@ class GroupPolicyTestMixin(object):
         return epg_res
 
     def _create_bridge_domain(self, fmt, name, description, routing_domain_id,
-                              endpoint_groups, expected_res_status=None,
-                              **kwargs):
+                              expected_res_status=None, **kwargs):
         data = {'bridge_domain': {'name': name,
                                   'description': description,
                                   'routing_domain_id': routing_domain_id,
-                                  'endpoint_groups': endpoint_groups,
                                   'tenant_id': self._tenant_id}}
 
         bd_req = self.new_create_request('bridge_domains', data, fmt)
@@ -144,11 +143,13 @@ class GroupPolicyTestMixin(object):
 
     @contextlib.contextmanager
     def endpoint_group(self, fmt=None, name='ep1', description="",
+                       bridge_domain_id='00000000-ffff-ffff-ffff-000000000001',
                        no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
-        res = self._create_endpoint_group(fmt, name, description, **kwargs)
+        res = self._create_endpoint_group(fmt, name, description,
+                                          bridge_domain_id, **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         epg = self.deserialize(fmt or self.fmt, res)
@@ -160,17 +161,13 @@ class GroupPolicyTestMixin(object):
 
     @contextlib.contextmanager
     def bridge_domain(self, fmt=None, name='bd1', description="",
-                      routing_domain_id=
-                      '00000000-ffff-ffff-ffff-000000000000',
-                      endpoint_groups=
-                      ['00000000-ffff-ffff-ffff-000000000001'],
+                      routing_domain_id='00000000-ffff-ffff-ffff-000000000002',
                       no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
         res = self._create_bridge_domain(fmt, name, description,
-                                         routing_domain_id, endpoint_groups,
-                                         **kwargs)
+                                         routing_domain_id, **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         bd = self.deserialize(fmt or self.fmt, res)

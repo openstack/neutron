@@ -108,11 +108,12 @@ class GroupPolicyMappingTestMixin(object):
 
         return ep_res
 
-    def _create_endpoint_group(self, fmt, name, description,
+    def _create_endpoint_group(self, fmt, name, description, bridge_domain_id,
                                neutron_subnets, expected_res_status=None,
                                **kwargs):
         data = {'endpoint_group': {'name': name,
                                    'description': description,
+                                   'bridge_domain_id': bridge_domain_id,
                                    'tenant_id': self._tenant_id,
                                    'neutron_subnets': neutron_subnets}}
 
@@ -124,12 +125,11 @@ class GroupPolicyMappingTestMixin(object):
         return epg_res
 
     def _create_bridge_domain(self, fmt, name, description, routing_domain_id,
-                              endpoint_groups, neutron_network_id,
-                              expected_res_status=None, **kwargs):
+                              neutron_network_id, expected_res_status=None,
+                              **kwargs):
         data = {'bridge_domain': {'name': name,
                                   'description': description,
                                   'routing_domain_id': routing_domain_id,
-                                  'endpoint_groups': endpoint_groups,
                                   'tenant_id': self._tenant_id,
                                   'neutron_network_id': neutron_network_id}}
 
@@ -177,12 +177,14 @@ class GroupPolicyMappingTestMixin(object):
 
     @contextlib.contextmanager
     def endpoint_group(self, fmt=None, name='epg1', description="",
+                       bridge_domain_id='00000000-ffff-ffff-ffff-000000000001',
                        neutron_subnets=None, no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
         res = self._create_endpoint_group(fmt, name, description,
-                                          neutron_subnets, **kwargs)
+                                          bridge_domain_id, neutron_subnets,
+                                          **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         epg = self.deserialize(fmt or self.fmt, res)
@@ -194,17 +196,14 @@ class GroupPolicyMappingTestMixin(object):
 
     @contextlib.contextmanager
     def bridge_domain(self, fmt=None, name='bd1', description="",
-                      routing_domain_id=
-                      '00000000-ffff-ffff-ffff-000000000000',
-                      endpoint_groups=
-                      ['00000000-ffff-ffff-ffff-000000000001'],
+                      routing_domain_id='00000000-ffff-ffff-ffff-000000000002',
                       neutron_network_id=None, no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
         res = self._create_bridge_domain(fmt, name, description,
-                                         routing_domain_id, endpoint_groups,
-                                         neutron_network_id, **kwargs)
+                                         routing_domain_id, neutron_network_id,
+                                         **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
         bd = self.deserialize(fmt or self.fmt, res)

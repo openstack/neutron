@@ -80,6 +80,7 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
         data = {'endpoint_group': {'name': 'epg1',
                                    'tenant_id': _uuid(),
                                    'description': '',
+                                   'bridge_domain_id': _uuid(),
                                    'neutron_subnets': [],
                                    'provided_contract_scopes': [],
                                    'consumed_contract_scopes': []}}
@@ -105,7 +106,6 @@ class GroupPolicyMappingExtTestCase(test_api_v2_extension.ExtensionTestCase):
                                   'tenant_id': _uuid(),
                                   'description': '',
                                   'routing_domain_id': _uuid(),
-                                  'endpoint_groups': [_uuid()],
                                   'neutron_network_id': _uuid()}}
         return_value = copy.copy(data['bridge_domain'])
         return_value.update({'id': bridge_domain_id})
