@@ -159,8 +159,8 @@ class GroupPolicyMappingTestMixin(object):
 
     @contextlib.contextmanager
     def endpoint(self, fmt=None, name='ep1', description="",
-                 endpoint_group_id='00000000-ffff-ffff-ffff-000000000000',
-                 neutron_port_id=None, no_delete=False, **kwargs):
+                 endpoint_group_id=None, neutron_port_id=None, no_delete=False,
+                 **kwargs):
         if not fmt:
             fmt = self.fmt
 
@@ -177,8 +177,8 @@ class GroupPolicyMappingTestMixin(object):
 
     @contextlib.contextmanager
     def endpoint_group(self, fmt=None, name='epg1', description="",
-                       bridge_domain_id='00000000-ffff-ffff-ffff-000000000001',
-                       neutron_subnets=None, no_delete=False, **kwargs):
+                       bridge_domain_id=None, neutron_subnets=None,
+                       no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
@@ -196,8 +196,8 @@ class GroupPolicyMappingTestMixin(object):
 
     @contextlib.contextmanager
     def bridge_domain(self, fmt=None, name='bd1', description="",
-                      routing_domain_id='00000000-ffff-ffff-ffff-000000000002',
-                      neutron_network_id=None, no_delete=False, **kwargs):
+                      routing_domain_id=None, neutron_network_id=None,
+                      no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 

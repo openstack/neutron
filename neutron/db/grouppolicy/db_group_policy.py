@@ -335,7 +335,8 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             epg_db = EndpointGroup(id=uuidutils.generate_uuid(),
                                    tenant_id=tenant_id,
                                    name=epg['name'],
-                                   description=epg['description'])
+                                   description=epg['description'],
+                                   bridge_domain_id=epg['bridge_domain_id'])
             context.session.add(epg_db)
         return self._make_endpoint_group_dict(epg_db)
 
