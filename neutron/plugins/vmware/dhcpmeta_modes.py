@@ -102,10 +102,10 @@ class DhcpMetadataAccess(object):
             cfg.CONF.set_override('network_auto_schedule', False)
             LOG.warn(_('network_auto_schedule has been disabled'))
             notifier = combined.DhcpAgentNotifyAPI(self, lsn_manager)
-        self.supported_extension_aliases.append(lsn.EXT_ALIAS)
-        # Add the capability to migrate dhcp and metadata services over
-        self.migration_manager = (
-            migration.MigrationManager(self, lsn_manager, notifier))
+            self.supported_extension_aliases.append(lsn.EXT_ALIAS)
+            # Add the capability to migrate dhcp and metadata services over
+            self.migration_manager = (
+                migration.MigrationManager(self, lsn_manager, notifier))
         return notifier
 
     def _init_extensions(self):
