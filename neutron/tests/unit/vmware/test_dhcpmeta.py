@@ -219,7 +219,7 @@ class MigrationManagerTestCase(base.BaseTestCase):
                            'services': ['foo_lsn_id'], 'type': 'lsn'})
 
     def _test_report_for_lsn_without_subnet(self, validated_subnet):
-        with mock.patch.object(self.manager, 'validate',
+        with mock.patch.object(self.manager.plugin, 'get_subnets',
                                return_value=validated_subnet):
             self.manager.manager.lsn_port_get.return_value = (
                 ('foo_lsn_id', 'foo_lsn_port_id'))
@@ -231,7 +231,7 @@ class MigrationManagerTestCase(base.BaseTestCase):
             self.assertEqual(expected, report)
 
     def test_report_for_lsn_without_subnet_subnet_found(self):
-        self._test_report_for_lsn_without_subnet({'id': self.subnet_id})
+        self._test_report_for_lsn_without_subnet([{'id': self.subnet_id}])
 
     def test_report_for_lsn_without_subnet_subnet_not_found(self):
         self.manager.manager.lsn_get.return_value = 'foo_lsn_id'
