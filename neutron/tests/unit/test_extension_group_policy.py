@@ -120,6 +120,7 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         data = {'endpoint_group': {'name': 'epg1',
                                    'tenant_id': _uuid(),
                                    'description': '',
+                                   'bridge_domain_id': _uuid(),
                                    'provided_contract_scopes': [],
                                    'consumed_contract_scopes': []}}
         return_value = copy.copy(data['endpoint_group'])
@@ -201,8 +202,7 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         data = {'bridge_domain': {'name': 'bd1',
                                   'tenant_id': _uuid(),
                                   'description': '',
-                                  'routing_domain_id': _uuid(),
-                                  'endpoint_groups': [_uuid()]}}
+                                  'routing_domain_id': _uuid()}}
         return_value = copy.copy(data['bridge_domain'])
         return_value.update({'id': bridge_domain_id})
         return_value.update({'routing_domain_id': None})
