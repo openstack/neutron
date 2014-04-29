@@ -1,0 +1,17 @@
+[DEFAULT]
+default_tz_uuid = fake_tz_uuid
+nova_zone_id = whatever
+nsx_controllers = fake_1, fake_2
+nsx_user = foo
+nsx_password = bar
+default_l3_gw_service_uuid = whatever
+default_l2_gw_service_uuid = whatever
+default_service_cluster_uuid = whatever
+default_interface_name = whatever
+req_timeout = 14
+http_timeout = 13
+redirects = 12
+retries = 11
+
+[NSX]
+agent_mode = combined
