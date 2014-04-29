@@ -84,7 +84,7 @@ def sync_network_states(network_vlan_ranges):
                                 "network %(physical_network)s"
                                 " from pool"),
                               {'vlan_id': state.vlan_id,
-                               'physical_network': physical_network})
+                               'physical_network': state.physical_network})
                     session.delete(state)
 
 
