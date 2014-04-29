@@ -14,6 +14,9 @@
 #
 # @author: Mark McClain, DreamHost
 
+from alembic import op
+import sqlalchemy as sa
+
 OVS_PLUGIN = ('neutron.plugins.openvswitch.ovs_neutron_plugin'
               '.OVSNeutronPluginV2')
 CISCO_PLUGIN = 'neutron.plugins.cisco.network_plugin.PluginV2'
@@ -27,3 +30,24 @@ def should_run(active_plugins, migrate_plugins):
                 OVS_PLUGIN in migrate_plugins):
             migrate_plugins.append(CISCO_PLUGIN)
         return set(active_plugins) & set(migrate_plugins)
+
+
+def alter_enum(table, column, enum_type, nullable):
+    bind = op.get_bind()
+    engine = bind.engine
+    if engine.name == 'postgresql':
+        values = {'table': table,
+                  'column': column,
+                  'name': enum_type.name}
+        op.execute("ALTER TYPE %(name)s RENAME TO old_%(name)s" % values)
+        enum_type.create(bind, checkfirst=False)
+        op.execute("ALTER TABLE %(table)s RENAME COLUMN %(column)s TO "
+                   "old_%(column)s" % values)
+        op.add_column(table, sa.Column(column, enum_type, nullable=nullable))
+        op.execute("UPDATE %(table)s SET %(column)s = "
+                   "old_%(column)s::text::%(name)s" % values)
+        op.execute("ALTER TABLE %(table)s DROP COLUMN old_%(column)s" % values)
+        op.execute("DROP TYPE old_%(name)s" % values)
+    else:
+        op.alter_column(table, column, type_=enum_type,
+                        existing_nullable=nullable)

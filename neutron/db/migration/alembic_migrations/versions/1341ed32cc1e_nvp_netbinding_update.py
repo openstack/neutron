@@ -42,6 +42,11 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+new_type = sa.Enum('flat', 'vlan', 'stt', 'gre', 'l3_ext',
+                   name='nvp_network_bindings_binding_type')
+old_type = sa.Enum('flat', 'vlan', 'stt', 'gre',
+                   name='nvp_network_bindings_binding_type')
+
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
@@ -50,10 +55,8 @@ def upgrade(active_plugins=None, options=None):
                     name='phy_uuid',
                     existing_type=sa.String(36),
                     existing_nullable=True)
-    op.alter_column('nvp_network_bindings', 'binding_type',
-                    type_=sa.Enum('flat', 'vlan', 'stt', 'gre', 'l3_ext',
-                                  name='nvp_network_bindings_binding_type'),
-                    existing_nullable=True)
+    migration.alter_enum('nvp_network_bindings', 'binding_type', new_type,
+                         nullable=False)
 
 
 def downgrade(active_plugins=None, options=None):
@@ -63,7 +66,5 @@ def downgrade(active_plugins=None, options=None):
                     name='tz_uuid',
                     existing_type=sa.String(36),
                     existing_nullable=True)
-    op.alter_column('nvp_network_bindings', 'binding_type',
-                    type_=sa.Enum('flat', 'vlan', 'stt', 'gre',
-                                  name='nvp_network_bindings_binding_type'),
-                    existing_nullable=True)
+    migration.alter_enum('nvp_network_bindings', 'binding_type', old_type,
+                         nullable=False)

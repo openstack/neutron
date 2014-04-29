@@ -35,6 +35,9 @@ import sqlalchemy as sa
 
 from neutron.db import migration
 
+new_type = sa.Enum('vlan', 'vxlan', 'trunk', 'multi-segment', name='vlan_type')
+old_type = sa.Enum('vlan', 'vxlan', name='vlan_type')
+
 
 def upgrade(active_plugins=None, options=None):
     if not migration.should_run(active_plugins, migration_for_plugins):
@@ -60,10 +63,8 @@ def upgrade(active_plugins=None, options=None):
         sa.PrimaryKeyConstraint('multi_segment_id', 'segment1_id',
                                 'segment2_id')
     )
-    op.alter_column('cisco_network_profiles', 'segment_type',
-                    existing_type=sa.Enum('vlan', 'vxlan', 'trunk',
-                                          'multi-segment'),
-                    existing_nullable=False)
+    migration.alter_enum('cisco_network_profiles', 'segment_type', new_type,
+                         nullable=False)
     op.add_column('cisco_network_profiles',
                   sa.Column('sub_type', sa.String(length=255), nullable=True))
 
@@ -74,7 +75,6 @@ def downgrade(active_plugins=None, options=None):
 
     op.drop_table('cisco_n1kv_trunk_segments')
     op.drop_table('cisco_n1kv_multi_segments')
-    op.alter_column('cisco_network_profiles', 'segment_type',
-                    existing_type=sa.Enum('vlan', 'vxlan'),
-                    existing_nullable=False)
+    migration.alter_enum('cisco_network_profiles', 'segment_type', old_type,
+                         nullable=False)
     op.drop_column('cisco_network_profiles', 'sub_type')
