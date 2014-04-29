@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-04-26 06:48+0000\n"
-"PO-Revision-Date: 2014-04-07 06:32+0000\n"
+"POT-Creation-Date: 2014-04-29 06:46+0000\n"
+"PO-Revision-Date: 2014-04-27 22:00+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Spanish (Mexico) "
 "(http://www.transifex.com/projects/p/neutron/language/es_MX/)\n"
@@ -2525,12 +2525,12 @@ msgstr ""
 msgid "Number of DHCP agents scheduled to host a network."
 msgstr ""
 
-#: neutron/db/api.py:55
+#: neutron/db/api.py:77
 #, python-format
 msgid "Database registration exception: %s"
 msgstr ""
 
-#: neutron/db/api.py:66
+#: neutron/db/api.py:89
 msgid "Database exception"
 msgstr ""
 
@@ -3976,7 +3976,7 @@ msgstr ""
 #: neutron/openstack/common/log.py:402
 #, python-format
 msgid "Error loading logging config %(log_config)s: %(err_msg)s"
-msgstr ""
+msgstr "Error al cargar configuración de entrada %(log_config)s: %(err_msg)s"
 
 #: neutron/openstack/common/log.py:453
 #, python-format
@@ -3986,7 +3986,7 @@ msgstr ""
 #: neutron/openstack/common/log.py:623
 #, python-format
 msgid "Fatal call to deprecated config: %(msg)s"
-msgstr ""
+msgstr "Llamado crítico de configuración en desuso ; %(msg)s"
 
 #: neutron/openstack/common/loopingcall.py:82
 #, python-format
@@ -4120,71 +4120,54 @@ msgid ""
 "%(remove_in)s. It will not be superseded."
 msgstr ""
 
-#: neutron/openstack/common/db/api.py:97
-msgid "DB exceeded retry limit."
-msgstr ""
-
-#: neutron/openstack/common/db/api.py:101
-msgid "DB connection error."
-msgstr ""
-
 #: neutron/openstack/common/db/exception.py:44
 msgid "Invalid Parameter: Unicode is not supported by the current database."
-msgstr ""
+msgstr "Parámetro inválido : Unicode no está soportado por la base de datos actual"
 
-#: neutron/openstack/common/db/sqlalchemy/session.py:618
-msgid "DB exception wrapped."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/session.py:687
-#, python-format
-msgid "Database server has gone away: %s"
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/session.py:779
-msgid ""
-"This application has not enabled MySQL traditional mode, which means "
-"silent data corruption may occur. Please encourage the application "
-"developers to enable this mode."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/session.py:804
-#, python-format
-msgid "SQL connection failed. %s attempts left."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:57
+#: neutron/openstack/common/db/sqlalchemy/utils.py:58
 msgid "Sort key supplied was not valid."
 msgstr ""
 
-#: neutron/openstack/common/db/sqlalchemy/utils.py:96
-msgid "Id not in sort_keys; is sort_keys unique?"
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:118
+#: neutron/openstack/common/db/sqlalchemy/utils.py:119
 msgid "Unknown sort direction, must be 'desc' or 'asc'"
 msgstr ""
 
-#: neutron/openstack/common/db/sqlalchemy/utils.py:193
+#: neutron/openstack/common/db/sqlalchemy/utils.py:162
+#, python-format
+msgid ""
+"There is no `deleted` column in `%s` table. Project doesn't use soft-"
+"deleted feature."
+msgstr ""
+
+#: neutron/openstack/common/db/sqlalchemy/utils.py:174
+#, python-format
+msgid "Unrecognized read_deleted value '%s'"
+msgstr ""
+
+#: neutron/openstack/common/db/sqlalchemy/utils.py:181
+#, python-format
+msgid "There is no `project_id` column in `%s` table."
+msgstr ""
+
+#: neutron/openstack/common/db/sqlalchemy/utils.py:243
+msgid "model should be a subclass of ModelBase"
+msgstr ""
+
+#: neutron/openstack/common/db/sqlalchemy/utils.py:286
 #, python-format
 msgid ""
 "Please specify column %s in col_name_col_instance param. It is required "
 "because column has unsupported type by sqlite)."
 msgstr ""
 
-#: neutron/openstack/common/db/sqlalchemy/utils.py:199
+#: neutron/openstack/common/db/sqlalchemy/utils.py:292
 #, python-format
 msgid ""
 "col_name_col_instance param has wrong type of column instance for column "
 "%s It should be instance of sqlalchemy.Column."
 msgstr ""
 
-#: neutron/openstack/common/db/sqlalchemy/utils.py:279
-#, python-format
-msgid "Deleting duplicated row with id: %(id)s from table: %(table)s"
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:300
+#: neutron/openstack/common/db/sqlalchemy/utils.py:400
 msgid "Unsupported id columns type"
 msgstr ""
 
@@ -12215,7 +12198,7 @@ msgid "NSX identifiers for neutron security group %s not yet stored in Neutron D
 msgstr ""
 
 #: neutron/plugins/vmware/dbexts/lsn_db.py:86
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:70
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:71
 #, python-format
 msgid "Unable to find Logical Service Node for network %s"
 msgstr ""
@@ -12403,80 +12386,80 @@ msgstr ""
 msgid "Monitor Resource binding with id:%s not found!"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:39
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:40
 msgid ""
 "Pull LSN information from NSX in case it is missing from the local data "
 "store. This is useful to rebuild the local store in case of server "
 "recovery."
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:81
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:82
 #, python-format
 msgid "Unable to create LSN for network %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:89
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:90
 #, python-format
 msgid "Unable to delete Logical Service Node %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:106
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:107
 #, python-format
 msgid ""
 "Unable to find Logical Service Node Port for LSN %(lsn_id)s and subnet "
 "%(subnet_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:128
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:129
 #, python-format
 msgid ""
 "Unable to find Logical Service Node Port for LSN %(lsn_id)s and mac "
 "address %(mac)s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:148
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:149
 #, python-format
 msgid "Unable to create port for LSN  %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:156
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:157
 #, python-format
 msgid "Unable to delete LSN Port %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:173
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:174
 #, python-format
 msgid "Metadata port not found while attempting to delete it from network %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:176
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:177
 #, python-format
 msgid "Unable to find Logical Services Node Port with MAC %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:257
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:262
 #, python-format
 msgid ""
 "Unable to configure dhcp for Logical Service Node %(lsn_id)s and port "
 "%(lsn_port_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:278
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:283
 #, python-format
 msgid "Unable to configure metadata for subnet %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:301
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:306
 #, python-format
 msgid "Error while configuring LSN port %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:373
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:378
 #, python-format
 msgid "Unable to save LSN for network %s"
 msgstr ""
 
-#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:439
+#: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:444
 #, python-format
 msgid "Unable to save LSN port for subnet %s"
 msgstr ""
