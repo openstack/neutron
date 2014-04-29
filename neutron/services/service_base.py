@@ -72,7 +72,7 @@ def load_drivers(service_type, plugin):
         msg = (_("No providers specified for '%s' service, exiting") %
                service_type)
         LOG.error(msg)
-        raise SystemExit(msg)
+        raise SystemExit(1)
 
     drivers = {}
     for provider in providers:

@@ -82,7 +82,7 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
             msg = _("Delete associated loadbalancer pools before "
                     "removing providers %s") % list(lost_providers)
             LOG.exception(msg)
-            raise SystemExit(msg)
+            raise SystemExit(1)
 
     def _get_driver_for_provider(self, provider):
         if provider in self.drivers:

@@ -206,7 +206,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             msg = _("Error importing interface driver "
                     "'%s'") % self.conf.interface_driver
             LOG.error(msg)
-            raise SystemExit(msg)
+            raise SystemExit(1)
 
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, host)
@@ -233,12 +233,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         if not self.conf.interface_driver:
             msg = _('An interface driver must be specified')
             LOG.error(msg)
-            raise SystemExit(msg)
+            raise SystemExit(1)
 
         if not self.conf.use_namespaces and not self.conf.router_id:
             msg = _('Router id is required if not using namespaces.')
             LOG.error(msg)
-            raise SystemExit(msg)
+            raise SystemExit(1)
 
     def _cleanup_namespaces(self, routers):
         """Destroy stale router namespaces on host when L3 agent restarts

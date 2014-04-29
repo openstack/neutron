@@ -677,7 +677,7 @@ class DeviceManager(object):
         if not conf.interface_driver:
             msg = _('An interface driver must be specified')
             LOG.error(msg)
-            raise SystemExit(msg)
+            raise SystemExit(1)
         try:
             self.driver = importutils.import_object(
                 conf.interface_driver, conf)
@@ -686,7 +686,7 @@ class DeviceManager(object):
                    "%(inner)s") % {'driver': conf.interface_driver,
                                    'inner': e})
             LOG.error(msg)
-            raise SystemExit(msg)
+            raise SystemExit(1)
 
     def get_interface_name(self, network, port):
         """Return interface(device) name for use by the DHCP process."""

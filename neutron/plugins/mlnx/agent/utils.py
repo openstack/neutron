@@ -32,7 +32,7 @@ class EswitchUtils(object):
             msg = _("Failed to import eventlet.green.zmq. "
                     "Won't connect to eSwitchD - exiting...")
             LOG.error(msg)
-            raise SystemExit(msg)
+            raise SystemExit(1)
         self.__conn = None
         self.daemon = daemon_endpoint
         self.timeout = timeout

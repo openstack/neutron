@@ -65,7 +65,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 msg = _("No type driver for tenant network_type: %s. "
                         "Service terminated!") % network_type
                 LOG.error(msg)
-                raise SystemExit(msg)
+                raise SystemExit(1)
         LOG.info(_("Tenant network_types: %s"), self.tenant_network_types)
 
     def initialize(self):
