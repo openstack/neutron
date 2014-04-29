@@ -170,6 +170,8 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                                         tenant_id=tenant_id,
                                         name=ep['name'],
                                         description=ep['description'],
+                                        endpoint_group_id=
+                                        ep['endpoint_group_id'],
                                         neutron_port_id=ep['neutron_port_id'])
             context.session.add(ep_db)
         return self._make_endpoint_dict(ep_db)
@@ -183,7 +185,8 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                 id=uuidutils.generate_uuid(),
                 tenant_id=tenant_id,
                 name=epg['name'],
-                description=epg['description'])
+                description=epg['description'],
+                bridge_domain_id=epg['bridge_domain_id'])
             # TODO(Sumit): Process subnets
             context.session.add(epg_db)
         return self._make_endpoint_group_dict(epg_db)
@@ -197,6 +200,8 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                                                tenant_id=tenant_id,
                                                name=bd['name'],
                                                description=bd['description'],
+                                               routing_domain_id=
+                                               bd['routing_domain_id'],
                                                neutron_network_id=
                                                bd['neutron_network_id'])
             context.session.add(bd_db)

@@ -39,7 +39,8 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
         with self.endpoint_group(name=epg_name) as epg:
             for k, v in epg_attrs.iteritems():
                 self.assertEqual(epg['endpoint_group'][k], v)
-
+            # TODO(rkukura): Verify RD and BD created with router and
+            # network
             epg_id = epg['endpoint_group']['id']
 
             ep_name = "ep1"
@@ -48,6 +49,49 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
                                endpoint_group_id=epg_id) as ep:
                 for k, v in ep_attrs.iteritems():
                     self.assertEqual(ep['endpoint'][k], v)
+                self.assertEqual(ep['endpoint']['endpoint_group_id'], epg_id)
+                # TODO(rkukura): Verify port created
+
+    def test_explicit_workflow(self, **kwargs):
+        rd_name = "rd1"
+        rd_attrs = self._get_test_routing_domain_attrs(rd_name)
+        with self.routing_domain(name=rd_name) as rd:
+            for k, v in rd_attrs.iteritems():
+                self.assertEqual(rd['routing_domain'][k], v)
+            # TODO(rkukura): Verify router created
+            rd_id = rd['routing_domain']['id']
+
+            bd_name = "bd1"
+            bd_attrs = self._get_test_bridge_domain_attrs(bd_name)
+            with self.bridge_domain(name=bd_name,
+                                    routing_domain_id=rd_id) as bd:
+                for k, v in bd_attrs.iteritems():
+                    self.assertEqual(bd['bridge_domain'][k], v)
+                self.assertEqual(bd['bridge_domain']['routing_domain_id'],
+                                 rd_id)
+                # TODO(rkukura): Verify network created
+                bd_id = bd['bridge_domain']['id']
+
+                epg_name = "epg1"
+                epg_attrs = self._get_test_endpoint_group_attrs(epg_name)
+                with self.endpoint_group(name=epg_name,
+                                         bridge_domain_id=bd_id) as epg:
+                    for k, v in epg_attrs.iteritems():
+                        self.assertEqual(epg['endpoint_group'][k], v)
+                    self.assertEqual(epg['endpoint_group']['bridge_domain_id'],
+                                     bd_id)
+                    # TODO(rkukura): Verify subnet created
+                    epg_id = epg['endpoint_group']['id']
+
+                    ep_name = "ep1"
+                    ep_attrs = self._get_test_endpoint_attrs(ep_name)
+                    with self.endpoint(name=ep_name,
+                                       endpoint_group_id=epg_id) as ep:
+                        for k, v in ep_attrs.iteritems():
+                            self.assertEqual(ep['endpoint'][k], v)
+                        self.assertEqual(ep['endpoint']['endpoint_group_id'],
+                                         epg_id)
+                        # TODO(rkukura): Verify port created
 
 
 # TODO(Sumit): XML tests
