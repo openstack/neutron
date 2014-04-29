@@ -35,18 +35,20 @@ import datetime
 import functools
 import inspect
 import itertools
-import json
-try:
-    import xmlrpclib
-except ImportError:
-    # NOTE(jaypipes): xmlrpclib was renamed to xmlrpc.client in Python3
-    #                 however the function and object call signatures
-    #                 remained the same. This whole try/except block should
-    #                 be removed and replaced with a call to six.moves once
-    #                 six 1.4.2 is released. See http://bit.ly/1bqrVzu
-    import xmlrpc.client as xmlrpclib
+import sys
+
+if sys.version_info < (2, 7):
+    # On Python <= 2.6, json module is not C boosted, so try to use
+    # simplejson module if available
+    try:
+        import simplejson as json
+    except ImportError:
+        import json
+else:
+    import json
 
 import six
+import six.moves.xmlrpc_client as xmlrpclib
 
 from neutron.openstack.common import gettextutils
 from neutron.openstack.common import importutils
