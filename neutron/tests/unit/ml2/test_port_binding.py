@@ -55,7 +55,9 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def _test_port_binding(self, host, vif_type, has_port_filter, bound,
                            status=None):
-        host_arg = {portbindings.HOST_ID: host}
+        mac_address = 'aa:aa:aa:aa:aa:aa'
+        host_arg = {portbindings.HOST_ID: host,
+                    'mac_address': mac_address}
         with self.port(name='name', arg_list=(portbindings.HOST_ID,),
                        **host_arg) as port:
             self._check_response(port['port'], vif_type, has_port_filter,
@@ -66,8 +68,10 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                 neutron_context, agent_id="theAgentId", device=port_id)
             if bound:
                 self.assertEqual(details['network_type'], 'local')
+                self.assertEqual(mac_address, details['mac_address'])
             else:
                 self.assertNotIn('network_type', details)
+                self.assertNotIn('mac_address', details)
 
     def test_unbound(self):
         self._test_port_binding("",
