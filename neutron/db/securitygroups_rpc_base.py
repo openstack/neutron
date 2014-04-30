@@ -337,7 +337,7 @@ class SecurityGroupServerRpcCallbackMixin(object):
 
             ra_rule = {'direction': 'ingress',
                        'ethertype': q_const.IPv6,
-                       'protocol': 'icmp',
+                       'protocol': q_const.PROTO_NAME_ICMP_V6,
                        'source_ip_prefix': ra_ip,
                        'source_port_range_min': q_const.ICMPV6_TYPE_RA}
             port['security_group_rules'].append(ra_rule)
