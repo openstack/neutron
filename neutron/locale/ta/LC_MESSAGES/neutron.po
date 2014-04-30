@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-04-29 06:46+0000\n"
+"POT-Creation-Date: 2014-04-30 06:47+0000\n"
 "PO-Revision-Date: 2014-04-07 06:32+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Tamil "
@@ -515,7 +515,7 @@ msgid ""
 "port %(port_id)s, for router %(router_id)s will be considered"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:569 neutron/agent/l3_agent.py:949
+#: neutron/agent/dhcp_agent.py:569 neutron/agent/l3_agent.py:943
 #: neutron/agent/metadata/agent.py:325
 #: neutron/services/metering/agents/metering_agent.py:272
 msgid ""
@@ -523,7 +523,7 @@ msgid ""
 " will be disabled."
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:575 neutron/agent/l3_agent.py:954
+#: neutron/agent/dhcp_agent.py:575 neutron/agent/l3_agent.py:948
 #: neutron/agent/metadata/agent.py:330
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:107
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:854
@@ -536,7 +536,7 @@ msgstr ""
 msgid "Failed reporting state!"
 msgstr ""
 
-#: neutron/agent/dhcp_agent.py:583 neutron/agent/l3_agent.py:959
+#: neutron/agent/dhcp_agent.py:583 neutron/agent/l3_agent.py:953
 #: neutron/services/metering/agents/metering_agent.py:280
 #, python-format
 msgid "agent_updated by server side %s!"
@@ -649,82 +649,82 @@ msgstr ""
 msgid "Failed sending gratuitous ARP: %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:731
+#: neutron/agent/l3_agent.py:725
 #, python-format
 msgid "Got router deleted notification for %s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:736
+#: neutron/agent/l3_agent.py:730
 #, python-format
 msgid "Got routers updated notification :%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:744
+#: neutron/agent/l3_agent.py:738
 #, python-format
 msgid "Got router removed from agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:748
+#: neutron/agent/l3_agent.py:742
 #, python-format
 msgid "Got router added to agent :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:755
+#: neutron/agent/l3_agent.py:749
 #, python-format
 msgid "The external network bridge '%s' does not exist"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:804
+#: neutron/agent/l3_agent.py:798
 #, python-format
 msgid "Starting RPC loop for %d updated routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:817
+#: neutron/agent/l3_agent.py:811
 msgid "RPC loop successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:819 neutron/agent/l3_agent.py:857
+#: neutron/agent/l3_agent.py:813 neutron/agent/l3_agent.py:851
 #: neutron/services/metering/agents/metering_agent.py:58
 msgid "Failed synchronizing routers"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:837
+#: neutron/agent/l3_agent.py:831
 #, python-format
 msgid "Starting _sync_routers_task - fullsync:%s"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:848
+#: neutron/agent/l3_agent.py:842
 #, python-format
 msgid "Processing :%r"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:851
+#: neutron/agent/l3_agent.py:845
 msgid "_sync_routers_task successfully completed"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:853
+#: neutron/agent/l3_agent.py:847
 msgid "Failed synchronizing routers due to RPC error"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:866
+#: neutron/agent/l3_agent.py:860
 msgid "L3 agent started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:881
+#: neutron/agent/l3_agent.py:875
 #, python-format
 msgid "Added route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:889
+#: neutron/agent/l3_agent.py:883
 #, python-format
 msgid "Removed route entry is '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:922
+#: neutron/agent/l3_agent.py:916
 msgid "Report state task started"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:946
+#: neutron/agent/l3_agent.py:940
 msgid "Report state task successfully completed"
 msgstr ""
 
@@ -1137,25 +1137,25 @@ msgstr ""
 msgid "Authentication region"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:206 neutron/agent/linux/interface.py:260
-#: neutron/agent/linux/interface.py:322 neutron/agent/linux/interface.py:371
+#: neutron/agent/linux/interface.py:209 neutron/agent/linux/interface.py:263
+#: neutron/agent/linux/interface.py:325 neutron/agent/linux/interface.py:374
 #, python-format
 msgid "Device %s already exists"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:224 neutron/agent/linux/interface.py:271
-#: neutron/agent/linux/interface.py:334 neutron/agent/linux/interface.py:378
+#: neutron/agent/linux/interface.py:227 neutron/agent/linux/interface.py:274
+#: neutron/agent/linux/interface.py:337 neutron/agent/linux/interface.py:381
 #, python-format
 msgid "Unplugged interface '%s'"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:226 neutron/agent/linux/interface.py:270
-#: neutron/agent/linux/interface.py:336 neutron/agent/linux/interface.py:380
+#: neutron/agent/linux/interface.py:229 neutron/agent/linux/interface.py:273
+#: neutron/agent/linux/interface.py:339 neutron/agent/linux/interface.py:383
 #, python-format
 msgid "Failed unplugging interface '%s'"
 msgstr ""
 
-#: neutron/agent/linux/interface.py:438
+#: neutron/agent/linux/interface.py:441
 #, python-format
 msgid "Driver location: %s"
 msgstr ""
@@ -5372,6 +5372,7 @@ msgid "N1K Policy profile polling duration in seconds"
 msgstr ""
 
 #: neutron/plugins/cisco/common/config.py:135
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:68
 #: neutron/plugins/ml2/drivers/cisco/nexus/config.py:58
 msgid "Some config files were not parsed properly"
 msgstr ""
@@ -9128,6 +9129,105 @@ msgstr ""
 #: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:128
 #: neutron/plugins/ml2/drivers/brocade/nos/nosdriver.py:141
 msgid "NETCONF error"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_client.py:223
+#, python-format
+msgid "data = %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_client.py:226
+#: neutron/services/loadbalancer/drivers/netscaler/ncc_client.py:168
+#, python-format
+msgid "Response: %s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_client.py:290
+#, python-format
+msgid "APIC session will expire in %d seconds"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/apic_client.py:335
+msgid "APIC session timed-out, logging in again."
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:23
+msgid "Host name or IP Address of the APIC controller"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:25
+msgid "Username for the APIC controller"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:27
+msgid "Password for the APIC controller"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:29
+msgid "Communication port for the APIC controller"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:31
+msgid "Name for the VMM domain provider"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:33
+msgid "Name for the VMM domain to be created for Openstack"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:35
+msgid "Name for the vlan namespace to be used for openstack"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:37
+msgid "Range of VLAN's to be used for Openstack"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:39
+msgid "Name of the node profile to be created"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:41
+msgid "Name of the entity profile to be created"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:43
+msgid "Name of the function profile to be created"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/config.py:45
+msgid "Clear the node profiles on the APIC at startup (mainly used for testing)"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/exceptions.py:25
+#, python-format
+msgid "No response from APIC at %(url)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/exceptions.py:30
+#, python-format
+msgid ""
+"APIC responded with HTTP status %(status)s: %(reason)s, Request: "
+"'%(request)s', APIC error code %(err_code)s: %(err_text)s"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/exceptions.py:37
+#, python-format
+msgid "APIC failed to provide cookie for %(request)s request"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/exceptions.py:42
+msgid "Authorized APIC session not established"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/exceptions.py:47
+#, python-format
+msgid "The switch and port for host '%(host)s' are not configured"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/cisco/apic/exceptions.py:52
+#, python-format
+msgid "Managed Object '%(mo_class)s' is not supported"
 msgstr ""
 
 #: neutron/plugins/ml2/drivers/cisco/nexus/config.py:25
@@ -14797,11 +14897,6 @@ msgstr ""
 #: neutron/services/loadbalancer/drivers/netscaler/ncc_client.py:163
 #, python-format
 msgid "A unknown error occurred during request to %s"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/netscaler/ncc_client.py:168
-#, python-format
-msgid "Response: %s"
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/netscaler/ncc_client.py:171
