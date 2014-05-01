@@ -192,6 +192,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.int_br_device_count = 0
 
         self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
+        # Stores port update notifications for processing in main rpc loop
+        self.updated_ports = set()
         self.setup_rpc()
         self.setup_integration_br()
         self.setup_physical_bridges(bridge_mappings)
@@ -220,8 +222,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.sg_agent = OVSSecurityGroupAgent(self.context,
                                               self.plugin_rpc,
                                               root_helper)
-        # Stores port update notifications for processing in main rpc loop
-        self.updated_ports = set()
         # Initialize iteration counter
         self.iter_num = 0
 
