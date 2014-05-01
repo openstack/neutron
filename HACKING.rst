@@ -8,7 +8,7 @@ Neutron Style Commandments
 Neutron Specific Commandments
 --------------------------
 
-None so far
+- [N320] Validate that LOG messages, except debug ones, have translations
 
 Creating Unit Tests
 -------------------

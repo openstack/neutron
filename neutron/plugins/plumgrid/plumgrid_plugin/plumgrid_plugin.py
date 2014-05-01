@@ -570,8 +570,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _network_admin_state(self, network):
         if network["network"].get("admin_state_up") is False:
-            LOG.warning("Networks with admin_state_up=False are not "
-                        "supported by PLUMgrid plugin yet.")
+            LOG.warning(_("Networks with admin_state_up=False are not "
+                          "supported by PLUMgrid plugin yet."))
         return network
 
     def _allocate_pools_for_subnet(self, context, subnet):

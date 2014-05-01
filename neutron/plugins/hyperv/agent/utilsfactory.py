@@ -60,8 +60,8 @@ def get_hypervutils():
     force_v1_flag = CONF.hyperv.force_hyperv_utils_v1
     if _check_min_windows_version(6, 3):
         if force_v1_flag:
-            LOG.warning('V1 virtualization namespace no longer supported on '
-                        'Windows Server / Hyper-V Server 2012 R2 or above.')
+            LOG.warning(_('V1 virtualization namespace no longer supported on '
+                          'Windows Server / Hyper-V Server 2012 R2 or above.'))
         cls = utilsv2.HyperVUtilsV2R2
     elif not force_v1_flag and _check_min_windows_version(6, 2):
         cls = utilsv2.HyperVUtilsV2
