@@ -64,7 +64,7 @@ class LSNTestCase(base.BaseTestCase):
     def test_lsn_for_network_create(self):
         net_id = "foo_network_id"
         tags = utils.get_tags(n_network_id=net_id)
-        obj = {"service_cluster_uuid": "foo", "tags": tags}
+        obj = {"edge_cluster_uuid": "foo", "tags": tags}
         lsnlib.lsn_for_network_create(self.cluster, net_id)
         self.mock_request.assert_called_once_with(
             "POST", "/ws.v1/lservices-node",
