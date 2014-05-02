@@ -44,7 +44,8 @@ class TestPidfile(base.BaseTestCase):
 
         daemon.Pidfile('thefile', 'python')
         self.os.open.assert_called_once_with('thefile', os.O_CREAT | os.O_RDWR)
-        self.fcntl.flock.assert_called_once_with(FAKE_FD, self.fcntl.LOCK_EX)
+        self.fcntl.flock.assert_called_once_with(FAKE_FD, self.fcntl.LOCK_EX |
+                                                 self.fcntl.LOCK_NB)
 
     def test_init_open_fail(self):
         self.os.open.side_effect = IOError
@@ -61,7 +62,7 @@ class TestPidfile(base.BaseTestCase):
         p = daemon.Pidfile('thefile', 'python')
         p.unlock()
         self.fcntl.flock.assert_has_calls([
-            mock.call(FAKE_FD, self.fcntl.LOCK_EX),
+            mock.call(FAKE_FD, self.fcntl.LOCK_EX | self.fcntl.LOCK_NB),
             mock.call(FAKE_FD, self.fcntl.LOCK_UN)]
         )
 
