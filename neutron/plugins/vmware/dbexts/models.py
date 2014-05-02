@@ -91,7 +91,7 @@ class NeutronNsxPortMapping(model_base.BASEV2):
                         ForeignKey('ports.id', ondelete="CASCADE"),
                         primary_key=True)
     nsx_switch_id = Column(String(36))
-    nsx_port_id = Column(String(36))
+    nsx_port_id = Column(String(36), nullable=False)
 
     def __init__(self, neutron_id, nsx_switch_id, nsx_port_id):
         self.neutron_id = neutron_id
