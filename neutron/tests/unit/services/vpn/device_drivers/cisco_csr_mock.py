@@ -331,6 +331,34 @@ def get_unnumbered(url, request):
     return httmock.response(requests.codes.OK, content=content)
 
 
+@filter_request(['get'], 'vpn-svc/site-to-site/Tunnel')
+@httmock.urlmatch(netloc=r'localhost')
+def get_admin_down(url, request):
+    if not request.headers.get('X-auth-token', None):
+        return {'status_code': requests.codes.UNAUTHORIZED}
+    # URI has .../Tunnel#/state, so get number from 2nd to last element
+    tunnel = url.path.split('/')[-2]
+    content = {u'kind': u'object#vpn-site-to-site-state',
+               u'vpn-interface-name': u'%s' % tunnel,
+               u'line-protocol-state': u'down',
+               u'enabled': False}
+    return httmock.response(requests.codes.OK, content=content)
+
+
+@filter_request(['get'], 'vpn-svc/site-to-site/Tunnel')
+@httmock.urlmatch(netloc=r'localhost')
+def get_admin_up(url, request):
+    if not request.headers.get('X-auth-token', None):
+        return {'status_code': requests.codes.UNAUTHORIZED}
+    # URI has .../Tunnel#/state, so get number from 2nd to last element
+    tunnel = url.path.split('/')[-2]
+    content = {u'kind': u'object#vpn-site-to-site-state',
+               u'vpn-interface-name': u'%s' % tunnel,
+               u'line-protocol-state': u'down',
+               u'enabled': True}
+    return httmock.response(requests.codes.OK, content=content)
+
+
 @filter_request(['get'], 'vpn-svc/site-to-site')
 @httmock.urlmatch(netloc=r'localhost')
 def get_mtu(url, request):

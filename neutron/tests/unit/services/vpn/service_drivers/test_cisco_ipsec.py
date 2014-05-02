@@ -309,12 +309,12 @@ class TestCiscoIPsecDriver(base.BaseTestCase):
         mock.patch.object(csr_db, 'create_tunnel_mapping').start()
         self.context = n_ctx.Context('some_user', 'some_tenant')
 
-    def _test_update(self, func, args, reason=None):
+    def _test_update(self, func, args, additional_info=None):
         with mock.patch.object(self.driver.agent_rpc, 'cast') as cast:
             func(self.context, *args)
             cast.assert_called_once_with(
                 self.context,
-                {'args': reason,
+                {'args': additional_info,
                  'namespace': None,
                  'method': 'vpnservice_updated'},
                 version='1.0',
@@ -345,11 +345,9 @@ class TestCiscoIPsecDriver(base.BaseTestCase):
                                                constants.ERROR)
 
     def test_update_ipsec_site_connection(self):
-        # TODO(pcm) FUTURE - Update test, when supported
-        self.assertRaises(ipsec_driver.CsrUnsupportedError,
-                          self._test_update,
-                          self.driver.update_ipsec_site_connection,
-                          [FAKE_VPN_CONNECTION, FAKE_VPN_CONNECTION])
+        self._test_update(self.driver.update_ipsec_site_connection,
+                          [FAKE_VPN_CONNECTION, FAKE_VPN_CONNECTION],
+                          {'reason': 'ipsec-conn-update'})
 
     def test_delete_ipsec_site_connection(self):
         self._test_update(self.driver.delete_ipsec_site_connection,

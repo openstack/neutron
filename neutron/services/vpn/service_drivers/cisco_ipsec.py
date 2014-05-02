@@ -41,10 +41,6 @@ class CsrValidationFailure(exceptions.BadRequest):
                 "with value '%(value)s'")
 
 
-class CsrUnsupportedError(exceptions.NeutronException):
-    message = _("Cisco CSR does not currently support %(capability)s")
-
-
 class CiscoCsrIPsecVpnDriverCallBack(object):
 
     """Handler for agent to plugin RPC messaging."""
@@ -184,9 +180,11 @@ class CiscoCsrIPsecVPNDriver(service_drivers.VpnDriver):
 
     def update_ipsec_site_connection(
         self, context, old_ipsec_site_connection, ipsec_site_connection):
-        capability = _("update of IPSec connections. You can delete and "
-                       "re-add, as a workaround.")
-        raise CsrUnsupportedError(capability=capability)
+        vpnservice = self.service_plugin._get_vpnservice(
+            context, ipsec_site_connection['vpnservice_id'])
+        self.agent_rpc.vpnservice_updated(
+            context, vpnservice['router_id'],
+            reason='ipsec-conn-update')
 
     def delete_ipsec_site_connection(self, context, ipsec_site_connection):
         vpnservice = self.service_plugin._get_vpnservice(

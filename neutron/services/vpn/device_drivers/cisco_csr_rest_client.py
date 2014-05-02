@@ -214,9 +214,6 @@ class CsrRestClient(object):
         base_conn_info = {u'vpn-type': u'site-to-site',
                           u'ip-version': u'ipv4'}
         connection_info.update(base_conn_info)
-        # TODO(pcm) pass in value, when CSR is embedded as Neutron router.
-        # Currently, get this from .INI file.
-        connection_info[u'local-device'][u'tunnel-ip-address'] = self.tunnel_ip
         return self.post_request('vpn-svc/site-to-site',
                                  payload=connection_info)
 
@@ -231,6 +228,14 @@ class CsrRestClient(object):
 
     def delete_static_route(self, route_id):
         return self.delete_request('routing-svc/static-routes/%s' % route_id)
+
+    def set_ipsec_connection_state(self, tunnel, admin_up=True):
+        """Set the IPSec site-to-site connection (tunnel) admin state.
+
+        Note: When a tunnel is created, it will be admin up.
+        """
+        info = {u'vpn-interface-name': tunnel, u'enabled': admin_up}
+        return self.put_request('vpn-svc/site-to-site/%s/state' % tunnel, info)
 
     def delete_ipsec_connection(self, conn_id):
         return self.delete_request('vpn-svc/site-to-site/%s' % conn_id)

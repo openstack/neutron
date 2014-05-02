@@ -1012,6 +1012,47 @@ class TestCsrRestIPSecConnectionCreate(base.BaseTestCase):
             expected_connection.update(connection_info)
             self.assertEqual(expected_connection, content)
 
+    def test_set_ipsec_connection_admin_state_changes(self):
+        """Create IPSec connection in admin down state."""
+        tunnel_id, ipsec_policy_id = self._prepare_for_site_conn_create()
+        tunnel = u'Tunnel%d' % tunnel_id
+        with httmock.HTTMock(csr_request.token, csr_request.post):
+            connection_info = {
+                u'vpn-interface-name': tunnel,
+                u'ipsec-policy-id': u'%d' % ipsec_policy_id,
+                u'mtu': 1500,
+                u'local-device': {u'ip-address': u'10.3.0.1/24',
+                                  u'tunnel-ip-address': u'10.10.10.10'},
+                u'remote-device': {u'tunnel-ip-address': u'10.10.10.20'}
+            }
+            location = self.csr.create_ipsec_connection(connection_info)
+            self.addCleanup(self._remove_resource_for_test,
+                            self.csr.delete_ipsec_connection,
+                            tunnel)
+            self.assertEqual(requests.codes.CREATED, self.csr.status)
+            self.assertIn('vpn-svc/site-to-site/%s' % tunnel, location)
+        state_uri = location + "/state"
+        # Note: When created, the tunnel will be in admin 'up' state
+        # Note: Line protocol state will be down, unless have an active conn.
+        expected_state = {u'kind': u'object#vpn-site-to-site-state',
+                          u'vpn-interface-name': tunnel,
+                          u'line-protocol-state': u'down',
+                          u'enabled': False}
+        with httmock.HTTMock(csr_request.put, csr_request.get_admin_down):
+            self.csr.set_ipsec_connection_state(tunnel, admin_up=False)
+            self.assertEqual(requests.codes.NO_CONTENT, self.csr.status)
+            content = self.csr.get_request(state_uri, full_url=True)
+            self.assertEqual(requests.codes.OK, self.csr.status)
+            self.assertEqual(expected_state, content)
+
+        with httmock.HTTMock(csr_request.put, csr_request.get_admin_up):
+            self.csr.set_ipsec_connection_state(tunnel, admin_up=True)
+            self.assertEqual(requests.codes.NO_CONTENT, self.csr.status)
+            content = self.csr.get_request(state_uri, full_url=True)
+            self.assertEqual(requests.codes.OK, self.csr.status)
+            expected_state[u'enabled'] = True
+            self.assertEqual(expected_state, content)
+
     def test_create_ipsec_connection_missing_ipsec_policy(self):
         """Negative test of connection create without IPSec policy."""
         tunnel_id, ipsec_policy_id = self._prepare_for_site_conn_create(
