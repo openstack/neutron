@@ -371,4 +371,4 @@ class OpenDaylightMechanismDriver(api.MechanismDriver):
         """
         network_type = segment[api.NETWORK_TYPE]
         return network_type in [constants.TYPE_LOCAL, constants.TYPE_GRE,
-                                constants.TYPE_VXLAN]
+                                constants.TYPE_VXLAN, constants.TYPE_VLAN]
