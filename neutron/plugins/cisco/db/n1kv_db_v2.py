@@ -1208,7 +1208,7 @@ class NetworkProfile_db_mixin(object):
                 raise n_exc.InvalidInput(error_message=msg)
         if segment_type in [c_const.NETWORK_TYPE_TRUNK,
                             c_const.NETWORK_TYPE_OVERLAY]:
-            if "sub_type" not in net_p:
+            if not attributes.is_attr_set(net_p.get("sub_type")):
                 msg = _("Argument sub_type missing "
                         "for network profile")
                 LOG.exception(msg)
