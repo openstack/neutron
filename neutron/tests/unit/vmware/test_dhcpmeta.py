@@ -265,6 +265,7 @@ class LsnManagerTestCase(base.BaseTestCase):
         self.lsn_port_id = 'foo_lsn_port_id'
         self.tenant_id = 'foo_tenant_id'
         self.manager = lsn_man.LsnManager(mock.Mock())
+        self.context = context.get_admin_context()
         self.mock_lsn_api_p = mock.patch.object(lsn_man, 'lsn_api')
         self.mock_lsn_api = self.mock_lsn_api_p.start()
         self.mock_nsx_utils_p = mock.patch.object(lsn_man, 'nsx_utils')
@@ -567,14 +568,22 @@ class LsnManagerTestCase(base.BaseTestCase):
             'network_id': self.net_id,
             'tenant_id': self.tenant_id
         }
+        expected_data = {
+            'subnet_id': subnet['id'],
+            'ip_address': subnet['cidr'],
+            'mac_address': constants.METADATA_MAC
+        }
         self.mock_nsx_utils.get_nsx_switch_ids.return_value = [self.switch_id]
         with mock.patch.object(lsn_man.switch_api, 'create_lport') as f:
-            f.return_value = {'uuid': self.port_id}
-            self.manager.lsn_port_metadata_setup(
-                mock.Mock(), self.lsn_id, subnet)
-            self.assertEqual(1, self.mock_lsn_api.lsn_port_create.call_count)
-            self.mock_lsn_api.lsn_port_plug_network.assert_called_once_with(
-                mock.ANY, self.lsn_id, mock.ANY, self.port_id)
+            with mock.patch.object(self.manager, 'lsn_port_create') as g:
+                f.return_value = {'uuid': self.port_id}
+                self.manager.lsn_port_metadata_setup(
+                    self.context, self.lsn_id, subnet)
+                (self.mock_lsn_api.lsn_port_plug_network.
+                 assert_called_once_with(mock.ANY, self.lsn_id,
+                                         mock.ANY, self.port_id))
+                g.assert_called_once_with(
+                    self.context, self.lsn_id, expected_data)
 
     def test_lsn_port_metadata_setup_raise_not_found(self):
         subnet = {

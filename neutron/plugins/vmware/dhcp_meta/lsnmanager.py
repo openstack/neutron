@@ -222,7 +222,7 @@ class LsnManager(object):
                 self.cluster, switch_id, tenant_id,
                 const.METADATA_PORT_ID, const.METADATA_PORT_NAME,
                 const.METADATA_DEVICE_ID, True)['uuid']
-            lsn_port_id = self.lsn_port_create(self.cluster, lsn_id, data)
+            lsn_port_id = self.lsn_port_create(context, lsn_id, data)
         except (n_exc.NotFound, p_exc.NsxPluginException,
                 api_exc.NsxApiException):
             raise p_exc.PortConfigurationError(
