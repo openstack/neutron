@@ -16,18 +16,15 @@
 import mock
 from oslo.config import cfg
 
-from neutron.common import config as neutron_config
 from neutron.plugins.cisco.common import config as cisco_config
 from neutron.tests import base
-from neutron.tests.unit import test_api_v2
 
 
 class TestCiscoNexusPluginConfig(base.BaseTestCase):
 
     def setUp(self):
         # Point neutron config file to: neutron/tests/etc/neutron.conf.test
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
-        neutron_config.parse(args=args)
+        self.config_parse()
 
         super(TestCiscoNexusPluginConfig, self).setUp()
 

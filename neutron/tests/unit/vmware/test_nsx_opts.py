@@ -18,7 +18,6 @@ import fixtures
 import mock
 from oslo.config import cfg
 
-from neutron.common import config as q_config
 from neutron.manager import NeutronManager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.api_client import client
@@ -99,8 +98,8 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual('whatever', cluster.default_interface_name)
 
     def test_load_plugin_with_full_options(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NSX_INI_FULL_PATH])
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NSX_INI_FULL_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         plugin = NeutronManager().get_plugin()
         cluster = plugin.cluster
@@ -108,8 +107,8 @@ class ConfigurationTest(base.BaseTestCase):
         self._assert_extra_options(cluster)
 
     def test_load_plugin_with_required_options_only(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NSX_INI_PATH])
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NSX_INI_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         plugin = NeutronManager().get_plugin()
         self._assert_required_options(plugin.cluster)
@@ -135,16 +134,16 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual('breth0', cfg.CONF.default_interface_name)
 
     def test_load_api_extensions(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NSX_INI_FULL_PATH])
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NSX_INI_FULL_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         # Load the configuration, and initialize the plugin
         NeutronManager().get_plugin()
         self.assertIn('extensions', cfg.CONF.api_extensions_path)
 
     def test_agentless_extensions(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NSX_INI_AGENTLESS_PATH])
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NSX_INI_AGENTLESS_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         self.assertEqual(config.AgentModes.AGENTLESS,
                          cfg.CONF.NSX.agent_mode)
@@ -162,8 +161,8 @@ class ConfigurationTest(base.BaseTestCase):
                                  plugin.supported_extension_aliases)
 
     def test_agentless_extensions_version_fail(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NSX_INI_AGENTLESS_PATH])
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NSX_INI_AGENTLESS_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         self.assertEqual(config.AgentModes.AGENTLESS,
                          cfg.CONF.NSX.agent_mode)
@@ -173,8 +172,8 @@ class ConfigurationTest(base.BaseTestCase):
             self.assertRaises(exceptions.NsxPluginException, NeutronManager)
 
     def test_agentless_extensions_unmet_deps_fail(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NSX_INI_AGENTLESS_PATH])
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NSX_INI_AGENTLESS_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         self.assertEqual(config.AgentModes.AGENTLESS,
                          cfg.CONF.NSX.agent_mode)
@@ -188,8 +187,8 @@ class ConfigurationTest(base.BaseTestCase):
                                   NeutronManager)
 
     def test_agent_extensions(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NSX_INI_FULL_PATH])
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NSX_INI_FULL_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         self.assertEqual(config.AgentModes.AGENT,
                          cfg.CONF.NSX.agent_mode)
@@ -218,8 +217,8 @@ class OldNVPConfigurationTest(base.BaseTestCase):
         self.assertEqual(cluster.default_tz_uuid, 'fake_tz_uuid')
 
     def test_load_plugin_with_deprecated_options(self):
-        q_config.parse(['--config-file', BASE_CONF_PATH,
-                        '--config-file', NVP_INI_DEPR_PATH])
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NVP_INI_DEPR_PATH])
         cfg.CONF.set_override('core_plugin', PLUGIN_NAME)
         plugin = NeutronManager().get_plugin()
         cluster = plugin.cluster

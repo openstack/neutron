@@ -17,7 +17,6 @@
 
 import contextlib
 import copy
-import os
 
 import mock
 from oslo.config import cfg
@@ -30,7 +29,6 @@ from neutron.api.extensions import PluginAwareExtensionManager
 from neutron.api.v2 import attributes
 from neutron.api.v2.attributes import ATTR_NOT_SPECIFIED
 from neutron.api.v2.router import APIRouter
-from neutron.common import config
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common.test_lib import test_config
@@ -45,8 +43,6 @@ from neutron.tests.unit import test_extensions
 from neutron.tests.unit import testlib_api
 
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-ROOTDIR = os.path.dirname(os.path.dirname(__file__))
-ETCDIR = os.path.join(ROOTDIR, 'etc')
 
 
 def optional_ctx(obj, fallback):
@@ -57,10 +53,6 @@ def optional_ctx(obj, fallback):
     def context_wrapper():
         yield obj
     return context_wrapper()
-
-
-def etcdir(*p):
-    return os.path.join(ETCDIR, *p)
 
 
 def _fake_get_pagination_helper(self, request):
@@ -98,11 +90,11 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             plugin = DB_PLUGIN_KLASS
 
         # Create the default configurations
-        args = ['--config-file', etcdir('neutron.conf.test')]
+        args = ['--config-file', base.etcdir('neutron.conf.test')]
         # If test_config specifies some config-file, use it, as well
         for config_file in test_config.get('config_files', []):
             args.extend(['--config-file', config_file])
-        config.parse(args=args)
+        self.config_parse(args=args)
         # Update the plugin
         self.setup_coreplugin(plugin)
         cfg.CONF.set_override(

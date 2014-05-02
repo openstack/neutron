@@ -390,9 +390,6 @@ class LocalChild(dhcp.DhcpLocalProcess):
 class TestBase(base.BaseTestCase):
     def setUp(self):
         super(TestBase, self).setUp()
-        root = os.path.dirname(os.path.dirname(__file__))
-        args = ['--config-file',
-                os.path.join(root, 'etc', 'neutron.conf.test')]
         self.conf = config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(dhcp.OPTS)
@@ -401,7 +398,7 @@ class TestBase(base.BaseTestCase):
         self.mock_mgr = instance.start()
         self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
                                            default=True))
-        self.conf(args=args)
+        self.config_parse(self.conf)
         self.conf.set_override('state_path', '')
         self.conf.use_namespaces = True
 

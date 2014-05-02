@@ -163,8 +163,7 @@ class RouterServiceInsertionTestCase(base.BaseTestCase):
         )
 
         # point config file to: neutron/tests/etc/neutron.conf.test
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
-        config.parse(args=args)
+        self.config_parse()
 
         #just stubbing core plugin with LoadBalancer plugin
         self.setup_coreplugin(plugin)

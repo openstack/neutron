@@ -16,7 +16,6 @@
 from eventlet import greenthread
 import mock
 
-from neutron.common import config as n_config
 from neutron.plugins.vmware.vshield.common import constants as vcns_const
 from neutron.plugins.vmware.vshield.common.constants import RouterStatus
 from neutron.plugins.vmware.vshield.tasks.constants import TaskState
@@ -315,7 +314,7 @@ class VcnsDriverTestCase(base.BaseTestCase):
     def setUp(self):
         super(VcnsDriverTestCase, self).setUp()
 
-        n_config.parse(['--config-file', VCNS_CONFIG_FILE])
+        self.config_parse(args=['--config-file', VCNS_CONFIG_FILE])
 
         self.fc = fake_vcns.FakeVcns()
         self.mock_vcns = mock.patch(VCNS_NAME, autospec=True)

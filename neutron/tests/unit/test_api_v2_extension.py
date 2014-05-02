@@ -27,7 +27,6 @@ import webtest
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron.common import config
 from neutron import quota
 from neutron.tests.unit import test_api_v2
 from neutron.tests.unit import test_extensions
@@ -60,8 +59,7 @@ class ExtensionTestCase(testlib_api.WebTestCase):
         self.addCleanup(self._resotre_attr_map)
 
         # Create the default configurations
-        args = ['--config-file', test_api_v2.etcdir('neutron.conf.test')]
-        config.parse(args)
+        self.config_parse()
 
         #just stubbing core plugin with plugin
         self.setup_coreplugin(plugin)

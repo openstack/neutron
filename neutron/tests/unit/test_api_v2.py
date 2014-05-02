@@ -30,7 +30,6 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
-from neutron.common import config
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.manager import NeutronManager
@@ -44,14 +43,9 @@ from neutron.tests.unit import testlib_api
 
 
 ROOTDIR = os.path.dirname(os.path.dirname(__file__))
-ETCDIR = os.path.join(ROOTDIR, 'etc')
 EXTDIR = os.path.join(ROOTDIR, 'unit/extensions')
 
 _uuid = uuidutils.generate_uuid
-
-
-def etcdir(*p):
-    return os.path.join(ETCDIR, *p)
 
 
 def _get_path(resource, id=None, action=None, fmt=None):
@@ -102,8 +96,7 @@ class APIv2TestBase(base.BaseTestCase):
         # Ensure existing ExtensionManager is not used
         PluginAwareExtensionManager._instance = None
         # Create the default configurations
-        args = ['--config-file', etcdir('neutron.conf.test')]
-        config.parse(args=args)
+        self.config_parse()
         # Update the plugin
         self.setup_coreplugin(plugin)
         cfg.CONF.set_override('allow_pagination', True)
@@ -1136,8 +1129,7 @@ class SubresourceTest(base.BaseTestCase):
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
             self.saved_attr_map[resource] = attrs.copy()
 
-        args = ['--config-file', etcdir('neutron.conf.test')]
-        config.parse(args=args)
+        self.config_parse()
         self.setup_coreplugin(plugin)
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)
@@ -1410,8 +1402,7 @@ class ExtensionTestCase(base.BaseTestCase):
             self.saved_attr_map[resource] = attrs.copy()
 
         # Create the default configurations
-        args = ['--config-file', etcdir('neutron.conf.test')]
-        config.parse(args=args)
+        self.config_parse()
 
         # Update the plugin and extensions path
         self.setup_coreplugin(plugin)
