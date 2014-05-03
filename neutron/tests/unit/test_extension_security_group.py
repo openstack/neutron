@@ -56,7 +56,7 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
         data = {'security_group': {'name': name,
                                    'tenant_id': kwargs.get('tenant_id',
-                                                           'test_tenant'),
+                                                           'test-tenant'),
                                    'description': description}}
         security_group_req = self.new_create_request('security-groups', data,
                                                      fmt)
@@ -69,7 +69,7 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def _build_security_group_rule(self, security_group_id, direction, proto,
                                    port_range_min=None, port_range_max=None,
                                    remote_ip_prefix=None, remote_group_id=None,
-                                   tenant_id='test_tenant',
+                                   tenant_id='test-tenant',
                                    ethertype=const.IPv4):
 
         data = {'security_group_rule': {'security_group_id': security_group_id,
@@ -1243,7 +1243,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rule = {'security_group_id': sg['security_group']['id'],
                     'direction': 'ingress',
                     'ethertype': 'IPv4',
-                    'tenant_id': 'test_tenant'}
+                    'tenant_id': 'test-tenant'}
 
             res = self._create_security_group_rule(
                 self.fmt, {'security_group_rule': rule})
@@ -1258,11 +1258,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rule_v4 = {'security_group_id': sg['security_group']['id'],
                        'direction': 'ingress',
                        'ethertype': 'IPv4',
-                       'tenant_id': 'test_tenant'}
+                       'tenant_id': 'test-tenant'}
             rule_v6 = {'security_group_id': sg['security_group']['id'],
                        'direction': 'ingress',
                        'ethertype': 'IPv6',
-                       'tenant_id': 'test_tenant'}
+                       'tenant_id': 'test-tenant'}
 
             rules = {'security_group_rules': [rule_v4, rule_v6]}
             res = self._create_security_group_rule(self.fmt, rules)

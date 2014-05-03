@@ -43,7 +43,7 @@ class MeteringPluginDbTestCaseMixin(object):
     def _create_metering_label(self, fmt, name, description, **kwargs):
         data = {'metering_label': {'name': name,
                                    'tenant_id': kwargs.get('tenant_id',
-                                                           'test_tenant'),
+                                                           'test-tenant'),
                                    'description': description}}
         req = self.new_create_request('metering-labels', data,
                                       fmt)
@@ -66,7 +66,7 @@ class MeteringPluginDbTestCaseMixin(object):
                                     remote_ip_prefix, excluded, **kwargs):
         data = {'metering_label_rule':
                 {'metering_label_id': metering_label_id,
-                 'tenant_id': kwargs.get('tenant_id', 'test_tenant'),
+                 'tenant_id': kwargs.get('tenant_id', 'test-tenant'),
                  'direction': direction,
                  'excluded': excluded,
                  'remote_ip_prefix': remote_ip_prefix}}
