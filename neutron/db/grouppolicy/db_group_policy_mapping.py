@@ -217,6 +217,8 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                                                name=rd['name'],
                                                ip_version=rd['ip_version'],
                                                ip_supernet=rd['ip_supernet'],
+                                               subnet_prefix_length=
+                                               rd['subnet_prefix_length'],
                                                description=rd['description'])
             # TODO(Sumit): Process routers
             context.session.add(rd_db)

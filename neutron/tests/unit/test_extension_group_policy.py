@@ -283,7 +283,8 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
                                    'tenant_id': _uuid(),
                                    'description': '',
                                    'ip_version': 4,
-                                   'ip_supernet': '10.0.0.0/8'}}
+                                   'ip_supernet': '10.0.0.0/8',
+                                   'subnet_prefix_length': 16}}
         return_value = copy.copy(data['routing_domain'])
         return_value.update({'id': routing_domain_id})
 

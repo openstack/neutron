@@ -151,6 +151,7 @@ class RoutingDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     description = sa.Column(sa.String(1024))
     ip_version = sa.Column(sa.Integer, nullable=False)
     ip_supernet = sa.Column(sa.String(64), nullable=False)
+    subnet_prefix_length = sa.Column(sa.Integer, nullable=False)
     bridge_domains = orm.relationship(BridgeDomain,
                                       backref='gp_routing_domains')
 
@@ -277,6 +278,7 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                'description': rd['description'],
                'ip_version': rd['ip_version'],
                'ip_supernet': rd['ip_supernet'],
+               'subnet_prefix_length': rd['subnet_prefix_length'],
                'bridge_domains': rd['bridge_domains']}
         return self._fields(res, fields)
 
@@ -492,7 +494,9 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                                   name=rd['name'],
                                   description=rd['description'],
                                   ip_version=rd['ip_version'],
-                                  ip_supernet=rd['ip_supernet'])
+                                  ip_supernet=rd['ip_supernet'],
+                                  subnet_prefix_length=
+                                  rd['subnet_prefix_length'])
             context.session.add(rd_db)
         return self._make_routing_domain_dict(rd_db)
 

@@ -86,6 +86,7 @@ class GroupPolicyMappingTestMixin(object):
 
     def _get_test_routing_domain_attrs(self, name='rd1', ip_version=4,
                                        ip_supernet='10.0.0.0/8',
+                                       subnet_prefix_length=24,
                                        neutron_routers=None):
         attrs = {'name': name,
                  'tenant_id': self._tenant_id,
@@ -141,12 +142,15 @@ class GroupPolicyMappingTestMixin(object):
         return bd_res
 
     def _create_routing_domain(self, fmt, name, description, ip_version,
-                               ip_supernet, neutron_routers,
-                               expected_res_status=None, **kwargs):
+                               ip_supernet, subnet_prefix_length,
+                               neutron_routers, expected_res_status=None,
+                               **kwargs):
         data = {'routing_domain': {'name': name,
                                    'description': description,
                                    'ip_version': ip_version,
                                    'ip_supernet': ip_supernet,
+                                   'subnet_prefix_length':
+                                   subnet_prefix_length,
                                    'tenant_id': self._tenant_id,
                                    'neutron_routers': neutron_routers}}
 
@@ -216,12 +220,14 @@ class GroupPolicyMappingTestMixin(object):
     @contextlib.contextmanager
     def routing_domain(self, fmt=None, name='rd1', description="",
                        ip_version=4, ip_supernet='10.0.0.0/8',
-                       neutron_routers=None, no_delete=False, **kwargs):
+                       subnet_prefix_length=24, neutron_routers=None,
+                       no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
         res = self._create_routing_domain(fmt, name, description,
                                           ip_version, ip_supernet,
+                                          subnet_prefix_length,
                                           neutron_routers, **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)

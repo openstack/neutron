@@ -108,12 +108,14 @@ class GroupPolicyTestMixin(object):
         return bd_res
 
     def _create_routing_domain(self, fmt, name, description, ip_version,
-                               ip_supernet, expected_res_status=None,
-                               **kwargs):
+                               ip_supernet, subnet_prefix_length,
+                               expected_res_status=None, **kwargs):
         data = {'routing_domain': {'name': name,
                                    'description': description,
                                    'ip_version': ip_version,
                                    'ip_supernet': ip_supernet,
+                                   'subnet_prefix_length':
+                                   subnet_prefix_length,
                                    'tenant_id': self._tenant_id}}
 
         rd_req = self.new_create_request('routing_domains', data, fmt)
@@ -177,12 +179,14 @@ class GroupPolicyTestMixin(object):
     @contextlib.contextmanager
     def routing_domain(self, fmt=None, name='rd1', description="",
                        ip_version=4, ip_supernet='10.0.0.0/8',
-                       no_delete=False, **kwargs):
+                       subnet_prefix_length=24, no_delete=False,
+                       **kwargs):
         if not fmt:
             fmt = self.fmt
 
         res = self._create_routing_domain(fmt, name, description,
                                           ip_version, ip_supernet,
+                                          subnet_prefix_length,
                                           **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
