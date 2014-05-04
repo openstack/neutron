@@ -138,6 +138,13 @@ class BridgeDomainContext(GroupPolicyContext, api.BridgeDomainContext):
     def original(self):
         return self._original_bridge_domain
 
+    def set_neutron_network_id(self, network_id):
+        with self._plugin_context.session.begin(subtransactions=True):
+            bd = self._plugin._get_bridge_domain(self._plugin_context,
+                                                 self._bridge_domain['id'])
+            bd.neutron_network_id = network_id
+        self._bridge_domain['neutron_network_id'] = network_id
+
 
 class RoutingDomainContext(GroupPolicyContext, api.RoutingDomainContext):
 

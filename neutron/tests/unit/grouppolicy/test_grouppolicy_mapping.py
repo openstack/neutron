@@ -62,14 +62,19 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
             rd_id = rd['routing_domain']['id']
 
             bd_name = "bd1"
+            # REVISIT(rkukura): Do we need to test all attrs here?
             bd_attrs = self._get_test_bridge_domain_attrs(bd_name)
+            del bd_attrs['neutron_network_id']
+            # REVISIT(rkukura): Mock core plugin?
             with self.bridge_domain(name=bd_name,
                                     routing_domain_id=rd_id) as bd:
                 for k, v in bd_attrs.iteritems():
                     self.assertEqual(bd['bridge_domain'][k], v)
                 self.assertEqual(bd['bridge_domain']['routing_domain_id'],
                                  rd_id)
-                # TODO(rkukura): Verify network created
+                net_id = bd['bridge_domain']['neutron_network_id']
+                self.assertIsNotNone(net_id)
+                # TODO(rkukura): Verify network details
                 bd_id = bd['bridge_domain']['id']
 
                 epg_name = "epg1"

@@ -11,6 +11,7 @@
 #    under the License.
 
 from neutron.common import log
+from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.grouppolicy import group_policy_driver_api as api
 
@@ -22,7 +23,6 @@ class MappingDriver(api.PolicyDriver):
 
     @log.log
     def initialize(self):
-        # pass
         LOG.info("initialize")
 
     @log.log
@@ -76,10 +76,14 @@ class MappingDriver(api.PolicyDriver):
     @log.log
     def create_bridge_domain_precommit(self, context):
         LOG.info("create_bridge_domain_precommit: %s", context.current)
+        if context.current['neutron_network_id']:
+            self._validate_bd_network(context)
 
     @log.log
     def create_bridge_domain_postcommit(self, context):
         LOG.info("create_bridge_domain_postcommit: %s", context.current)
+        if not context.current['neutron_network_id']:
+            self._create_bd_network(context)
 
     @log.log
     def update_bridge_domain_precommit(self, context):
@@ -100,10 +104,14 @@ class MappingDriver(api.PolicyDriver):
     @log.log
     def create_routing_domain_precommit(self, context):
         LOG.info("create_routing_domain_precommit: %s", context.current)
+        if context.current['neutron_routers']:
+            self._validate_rd_routers(context)
 
     @log.log
     def create_routing_domain_postcommit(self, context):
         LOG.info("create_routing_domain_postcommit: %s", context.current)
+        if not context.current['neutron_routers']:
+            self._create_rd_routers(context)
 
     @log.log
     def update_routing_domain_precommit(self, context):
@@ -120,3 +128,25 @@ class MappingDriver(api.PolicyDriver):
     @log.log
     def delete_routing_domain_postcommit(self, context):
         LOG.info("delete_routing_domain_postcommit: %s", context.current)
+
+    def _validate_rd_routers(self, context):
+        # TODO(rkukura): Implement
+        pass
+
+    def _create_rd_routers(self, context):
+        # TODO(rkukura): Implement
+        pass
+
+    def _validate_bd_network(self, context):
+        # TODO(rkukura): Implement
+        pass
+
+    def _create_bd_network(self, context):
+        attrs = {'network':
+                 {'tenant_id': context.current['id'],
+                  'name': 'bd_' + context.current['name'],
+                  'admin_state_up': True,
+                  'shared': False}}
+        core_plugin = manager.NeutronManager.get_plugin()
+        network = core_plugin.create_network(context._plugin_context, attrs)
+        context.set_neutron_network_id(network['id'])

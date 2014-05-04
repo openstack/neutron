@@ -219,9 +219,20 @@ class BridgeDomainContext(object):
         """
         pass
 
+    @abstractmethod
+    def set_neutron_network_id(self, network_id):
+        """Set the neutron network for the bridge_domain.
+
+        :param network_id: Network to which bridge_domain is mapped.
+
+        Set the neutron network to which the bridge_domain is mapped.
+        """
+        pass
+
 
 @six.add_metaclass(ABCMeta)
 class RoutingDomainContext(object):
+
     """Context passed to policy engine for changes to routing_domain resources.
 
     A RoutingDomainContext instance wraps an routing_domain resource.xi
