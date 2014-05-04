@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-04-30 06:47+0000\n"
+"POT-Creation-Date: 2014-05-04 06:53+0000\n"
 "PO-Revision-Date: 2014-04-15 02:50+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Portuguese (Brazil) "
@@ -6154,27 +6154,27 @@ msgstr ""
 msgid "_send_delete_subnet_request: %s"
 msgstr "_send_delete_subnet_request: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:839
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:849
 #, python-format
 msgid "_send_create_port_request: %s"
 msgstr "_send_create_port_request: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:877
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:866
 #, python-format
 msgid "_send_update_port_request: %s"
 msgstr "_send_update_port_request: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:892
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:882
 #, python-format
 msgid "_send_delete_port_request: %s"
 msgstr "_send_delete_port_request: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:933
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:913
 #, python-format
 msgid "Create network: profile_id=%s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:941
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:921
 #, python-format
 msgid ""
 "Physical_network %(phy_net)s, seg_type %(net_type)s, seg_id %(seg_id)s, "
@@ -6183,13 +6183,13 @@ msgstr ""
 "Physical_network %(phy_net)s, seg_type %(net_type)s, seg_id %(seg_id)s, "
 "multicast_ip %(multicast_ip)s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:953
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:963
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:933
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:943
 #, python-format
 msgid "Seg list %s "
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1006
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:983
 #: neutron/plugins/hyperv/hyperv_neutron_plugin.py:254
 #: neutron/plugins/ibm/sdnve_neutron_plugin.py:207
 #: neutron/plugins/metaplugin/meta_neutron_plugin.py:232
@@ -6199,88 +6199,88 @@ msgstr ""
 msgid "Created network: %s"
 msgstr "Rede criada: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1064
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1041
 #, python-format
 msgid "Updated network: %s"
 msgstr "Rede atualizada: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1079
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1056
 #, python-format
 msgid "Cannot delete network '%s' that is member of a trunk segment"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1083
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1060
 #, python-format
 msgid "Cannot delete network '%s' that is a member of a multi-segment network"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1097
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1073
 #, python-format
 msgid "Deleted network: %s"
 msgstr "Rede excluída: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1107
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1083
 #, python-format
 msgid "Get network: %s"
 msgstr "Buscar rede: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1129
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1105
 msgid "Get networks"
 msgstr "Buscar redes"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1174
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1155
 #, python-format
 msgid "Create port: profile_id=%s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1190
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1201
 #: neutron/plugins/ibm/sdnve_neutron_plugin.py:314
 #, python-format
 msgid "Created port: %s"
 msgstr "Criada porta: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1201
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1212
 #, python-format
 msgid "Update port: %s"
 msgstr "Atualizada porta: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1236
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1259
 #, python-format
 msgid "Get port: %s"
 msgstr "Buscar porta: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1256
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1279
 msgid "Get ports"
 msgstr "Buscar portas"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1272
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1295
 msgid "Create subnet"
 msgstr "Criar sub-rede"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1280
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1303
 #, python-format
 msgid "Created subnet: %s"
 msgstr "Criada sub-rede: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1291
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1314
 msgid "Update subnet"
 msgstr "Atualizar sub-rede"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1306
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1329
 #, python-format
 msgid "Delete subnet: %s"
 msgstr "Excluir sub-rede: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1321
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1344
 #, python-format
 msgid "Get subnet: %s"
 msgstr "Buscar sub-rede: %s"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1341
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1364
 msgid "Get subnets"
 msgstr "Busca sub-redes"
 
-#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1426
+#: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1449
 #, python-format
 msgid "Scheduling router %s"
 msgstr ""
@@ -8880,13 +8880,13 @@ msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
 #: neutron/plugins/ml2/plugin.py:721
-#: neutron/tests/unit/ml2/test_ml2_plugin.py:125
+#: neutron/tests/unit/ml2/test_ml2_plugin.py:130
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
 #: neutron/plugins/ml2/plugin.py:739
-#: neutron/tests/unit/ml2/test_ml2_plugin.py:126
+#: neutron/tests/unit/ml2/test_ml2_plugin.py:131
 #, python-format
 msgid "The port '%s' was deleted"
 msgstr ""
@@ -12796,7 +12796,7 @@ msgstr ""
 msgid "NSX identifiers for neutron security group %s not yet stored in Neutron DB"
 msgstr ""
 
-#: neutron/plugins/vmware/dbexts/lsn_db.py:86
+#: neutron/plugins/vmware/dbexts/lsn_db.py:87
 #: neutron/plugins/vmware/dhcp_meta/lsnmanager.py:71
 #, python-format
 msgid "Unable to find Logical Service Node for network %s"
@@ -15183,22 +15183,22 @@ msgstr ""
 msgid "Unsupported IP version rule."
 msgstr ""
 
-#: neutron/services/loadbalancer/agent_scheduler.py:102
+#: neutron/services/loadbalancer/agent_scheduler.py:103
 #, python-format
 msgid "Pool %(pool_id)s has already been hosted by lbaas agent %(agent_id)s"
 msgstr "Pool %(pool_id)s já foi hospedado pelo agente LBaaS %(agent_id)s"
 
-#: neutron/services/loadbalancer/agent_scheduler.py:110
+#: neutron/services/loadbalancer/agent_scheduler.py:111
 #, python-format
 msgid "No active lbaas agents for pool %s"
 msgstr "Nenhum agente LBaaS ativo para o pool %s"
 
-#: neutron/services/loadbalancer/agent_scheduler.py:116
+#: neutron/services/loadbalancer/agent_scheduler.py:117
 #, python-format
 msgid "No lbaas agent supporting device driver %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/agent_scheduler.py:125
+#: neutron/services/loadbalancer/agent_scheduler.py:126
 #, python-format
 msgid "Pool %(pool_id)s is scheduled to lbaas agent %(agent_id)s"
 msgstr "Pool %(pool_id)s está agendado para o agente LBaaS %(agent_id)s"
@@ -15601,82 +15601,84 @@ msgid "Removing SNAT port for subnet %s as this is the last pool using it..."
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/radware/driver.py:63
-msgid "vdirect server IP address"
+msgid "IP address of vDirect server."
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/radware/driver.py:66
-msgid "vdirect user name"
+msgid "vDirect user name."
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/radware/driver.py:69
-msgid "vdirect user password"
+msgid "vDirect user password."
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/radware/driver.py:72
-msgid "Service ADC type"
+msgid "Service ADC type. Default: VA."
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/radware/driver.py:75
-msgid "Service ADC version"
+msgid "Service ADC version."
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/radware/driver.py:78
-msgid "service HA pair"
+msgid "Enables or disables the Service HA pair. Default: False."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:81
-msgid "service throughtput"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:82
+msgid "Service throughput. Default: 1000."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:84
-msgid "service ssl throughtput"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:85
+msgid "Service SSL throughput. Default: 100."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:87
-msgid "service compression throughtput"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:88
+msgid "Service compression throughput. Default: 100."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:90
-msgid "service cache"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:91
+msgid "Size of service cache. Default: 20."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:93
-msgid "l2_l3 workflow name"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:94
+msgid "Name of l2_l3 workflow. Default: openstack_l2_l3."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:96
-msgid "l4 workflow name"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:98
+msgid "Name of l4 workflow. Default: openstack_l4."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:104
-msgid "l2_l3 workflow constructor params"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:106
+msgid "Parameter for l2_l3 workflow constructor."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:111
-msgid "l2_l3 workflow setup params"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:113
+msgid "Parameter for l2_l3 workflow setup."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:114
-msgid "List of actions that we dont want to push to the completion queue"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:116
+msgid "List of actions that are not pushed to the completion queue."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:118
-msgid "l4 workflow action name"
-msgstr ""
-
-#: neutron/services/loadbalancer/drivers/radware/driver.py:121
-msgid "Resource pool ids"
+#: neutron/services/loadbalancer/drivers/radware/driver.py:120
+msgid "Name of the l4 workflow action. Default: BaseCreate."
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/radware/driver.py:124
-msgid "A required VLAN for the interswitch link to use"
+msgid "Resource pool IDs."
 msgstr ""
 
 #: neutron/services/loadbalancer/drivers/radware/driver.py:127
-msgid "Support an Alteon interswitch link for stateful session failover"
+msgid "A required VLAN for the interswitch link to use."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:221
+#: neutron/services/loadbalancer/drivers/radware/driver.py:130
+msgid ""
+"Enable or disable Alteon interswitch link for stateful session failover. "
+"Default: False."
+msgstr ""
+
+#: neutron/services/loadbalancer/drivers/radware/driver.py:224
 #, python-format
 msgid ""
 "vip: %(vip)s, extended_vip: %(extended_vip)s, network_id: "
@@ -15684,128 +15686,128 @@ msgid ""
 "%(pip_info)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:256
+#: neutron/services/loadbalancer/drivers/radware/driver.py:259
 #, python-format
 msgid "Retrieved pip nport: %(port)r for vip: %(vip)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:264
+#: neutron/services/loadbalancer/drivers/radware/driver.py:267
 #, python-format
 msgid "Found no pip nports associated with vip: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:273
+#: neutron/services/loadbalancer/drivers/radware/driver.py:276
 #, python-format
 msgid "Failed to remove workflow %s. Going to set vip to ERROR status"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:287
+#: neutron/services/loadbalancer/drivers/radware/driver.py:290
 #, python-format
 msgid "pip nport id: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:291
+#: neutron/services/loadbalancer/drivers/radware/driver.py:294
 #, python-format
 msgid "pip nport delete failed: %r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:379
+#: neutron/services/loadbalancer/drivers/radware/driver.py:382
 #, python-format
 msgid ""
 "_handle_pool_health_monitor. health_monitor = %(hm_id)s pool_id = "
 "%(pool_id)s delete = %(delete)s vip_id = %(vip_id)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:410
+#: neutron/services/loadbalancer/drivers/radware/driver.py:413
 msgid "Starting operation completion handling thread"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:440
+#: neutron/services/loadbalancer/drivers/radware/driver.py:443
 #, python-format
 msgid "_update_workflow response: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:449
-#: neutron/services/loadbalancer/drivers/radware/driver.py:480
+#: neutron/services/loadbalancer/drivers/radware/driver.py:452
+#: neutron/services/loadbalancer/drivers/radware/driver.py:483
 #, python-format
 msgid "Pushing operation %s to the queue"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:457
+#: neutron/services/loadbalancer/drivers/radware/driver.py:460
 #, python-format
 msgid "Remove the workflow %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:465
+#: neutron/services/loadbalancer/drivers/radware/driver.py:468
 #, python-format
 msgid "Post-remove workflow function %r completed"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:469
+#: neutron/services/loadbalancer/drivers/radware/driver.py:472
 #, python-format
 msgid "Post-remove workflow function %r failed"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:584
+#: neutron/services/loadbalancer/drivers/radware/driver.py:587
 #, python-format
 msgid "create_workflow response: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:650
+#: neutron/services/loadbalancer/drivers/radware/driver.py:653
 #, python-format
 msgid "vDirectRESTClient:init server=%(server)s, port=%(port)d, ssl=%(ssl)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:676
+#: neutron/services/loadbalancer/drivers/radware/driver.py:679
 msgid "vdirectRESTClient: Could not establish HTTPS connection"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:683
+#: neutron/services/loadbalancer/drivers/radware/driver.py:686
 msgid "vdirectRESTClient: Could not establish HTTP connection"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:700
+#: neutron/services/loadbalancer/drivers/radware/driver.py:703
 #, python-format
 msgid "vdirectRESTClient: %(action)s failure, %(e)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:768
+#: neutron/services/loadbalancer/drivers/radware/driver.py:771
 #, python-format
 msgid ""
 "Operation %(oper)s is completed after %(sec_to_completion)d sec with "
 "success status: %(success)s :"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:780
+#: neutron/services/loadbalancer/drivers/radware/driver.py:783
 #, python-format
 msgid "Operation %(operation)s failed. Reason: %(msg)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:812
+#: neutron/services/loadbalancer/drivers/radware/driver.py:815
 #, python-format
 msgid "Operation %s is not completed yet.."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:827
+#: neutron/services/loadbalancer/drivers/radware/driver.py:830
 msgid "Exception was thrown inside OperationCompletionHandler"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:836
+#: neutron/services/loadbalancer/drivers/radware/driver.py:839
 #, python-format
 msgid "Post-operation function %(func)r completed after operation %(oper)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:842
+#: neutron/services/loadbalancer/drivers/radware/driver.py:845
 #, python-format
 msgid "Post-operation function %(func)r failed after operation %(oper)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:876
+#: neutron/services/loadbalancer/drivers/radware/driver.py:879
 #, python-format
 msgid "_update: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:916
+#: neutron/services/loadbalancer/drivers/radware/driver.py:919
 #, python-format
 msgid "_remove_object_from_db %s"
 msgstr ""
@@ -15971,227 +15973,237 @@ msgstr ""
 
 #: neutron/services/vpn/device_drivers/cisco_ipsec.py:58
 #, python-format
+msgid "Cisco CSR failed to change %(tunnel)s admin state to %(state)s"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:63
+#, python-format
 msgid ""
 "Required %(resource)s attribute %(attr)s mapping for Cisco CSR is missing"
 " in device driver"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:63
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:68
 #, python-format
 msgid ""
 "Device driver does not have a mapping of '%(value)s for attribute "
 "%(attr)s of %(resource)s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:78
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:83
 #, python-format
 msgid "Scanning config files %s for Cisco CSR configurations"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:83
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:88
 #, python-format
 msgid "Config file parse error: %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:87
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:92
 #, python-format
 msgid "Unable to parse config files %s for Cisco CSR info"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:97
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:102
 #, python-format
 msgid "Ignoring Cisco CSR configuration entry - router IP %s is not valid"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:108
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:113
 #, python-format
 msgid "Ignoring Cisco CSR for router %(router)s - missing %(field)s setting"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:116
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:121
 #, python-format
 msgid "Ignoring Cisco CSR for router %s - timeout is not a floating point number"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:125
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:130
 #, python-format
 msgid "Ignoring Cisco CSR for subnet %s - REST management is not an IP address"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:132
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:137
 #, python-format
 msgid "Ignoring Cisco CSR for router %s - local tunnel is not an IP address"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:142
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:147
 #, python-format
 msgid "Found CSR for router %(router)s: %(info)s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:207
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:212
 #, python-format
 msgid "Loaded %(num)d Cisco CSR configuration%(plural)s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:211
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:216
 #, python-format
 msgid "No Cisco CSR configurations found in: %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:225
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:230
 #, python-format
 msgid "Handling VPN service update notification '%s'"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:247
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:252
+#, python-format
+msgid "Update: Existing connection %s changed"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:259
 #, python-format
 msgid "Update: Connection %s no longer admin down"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:254
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:265
 #, python-format
 msgid "Update: Connection %s forced to admin down"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:261
-#, python-format
-msgid "Update: Ignoring existing connection %s"
-msgstr ""
-
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:267
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:273
 #, python-format
 msgid "Update: Created new connection %s in admin down state"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:271
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:278
 #, python-format
 msgid "Update: Created new connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:284
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:290
 #, python-format
 msgid ""
 "Update: Skipping VPN service %(service)s as it's router (%(csr_id)s is "
 "not associated with a Cisco CSR"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:290
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:296
 #, python-format
 msgid "Update: Existing VPN service %s detected"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:294
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:300
 #, python-format
 msgid "Update: New VPN service %s detected"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:303
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:309
 msgid "Update: Completed update processing"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:333
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:339
 #, python-format
 msgid "Mark: %(service)d VPN services and %(conn)d IPSec connections marked dirty"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:355
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:361
 #, python-format
 msgid ""
 "Sweep: Removed %(service)d dirty VPN service%(splural)s and %(conn)d "
 "dirty IPSec connection%(cplural)s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:370
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:376
 #, python-format
 msgid "Report: Collecting status for IPSec connections on VPN service %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:376
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:382
 #, python-format
 msgid "Connection %s forced down"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:380
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:386
 #, python-format
 msgid "Connection %(conn)s reported %(status)s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:385
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:391
 #, python-format
 msgid "Report: Adding info for IPSec connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:405
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:411
 #, python-format
 msgid "Report: Adding info for VPN service %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:427
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:433
 msgid "Report: Starting status report processing"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:429
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:435
 #, python-format
 msgid "Report: Collecting status for VPN service %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:435
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:441
 msgid "Sending status report update to plugin"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:437
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:443
 msgid "Report: Completed status report processing"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:711
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:738
 #, python-format
 msgid "Unable to create %(resource)s %(which)s: %(status)d"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:724
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:752
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:751
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:779
 #, python-format
 msgid "Internal error - '%s' is not defined"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:737
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:764
 #, python-format
 msgid "Unable to delete %(resource)s %(which)s: %(status)d"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:746
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:773
 #, python-format
 msgid "Performing rollback action %(action)s for resource %(resource)s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:772
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:799
 #, python-format
 msgid "Creating IPSec connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:805
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:832
 #, python-format
 msgid "FAILED: Create of IPSec site-to-site connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:808
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:835
 #, python-format
 msgid "SUCCESS: Created IPSec site-to-site connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:817
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:844
 #, python-format
 msgid "Deleting IPSec connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:819
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:846
 #, python-format
 msgid "Unable to find connection %s"
 msgstr ""
 
-#: neutron/services/vpn/device_drivers/cisco_ipsec.py:823
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:850
 #, python-format
 msgid "SUCCESS: Deleted IPSec site-to-site connection %s"
+msgstr ""
+
+#: neutron/services/vpn/device_drivers/cisco_ipsec.py:858
+#, python-format
+msgid "Unable to change %(tunnel)s admin state to %(state)s"
 msgstr ""
 
 #: neutron/services/vpn/device_drivers/ipsec.py:49
@@ -16287,18 +16299,9 @@ msgid ""
 "'%(value)s'"
 msgstr ""
 
-#: neutron/services/vpn/service_drivers/cisco_ipsec.py:45
-#, python-format
-msgid "Cisco CSR does not currently support %(capability)s"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_ipsec.py:168
+#: neutron/services/vpn/service_drivers/cisco_ipsec.py:164
 #, python-format
 msgid "IPSec connection %s validated for Cisco CSR"
-msgstr ""
-
-#: neutron/services/vpn/service_drivers/cisco_ipsec.py:187
-msgid "update of IPSec connections. You can delete and re-add, as a workaround."
 msgstr ""
 
 #: neutron/tests/unit/test_api_v2_resource.py:176
@@ -16328,10 +16331,10 @@ msgstr ""
 msgid "No host cert for %(server)s in cert %(cert)s"
 msgstr ""
 
-#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:227
-#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:249
-#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:268
-#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:291
+#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:220
+#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:242
+#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:261
+#: neutron/tests/unit/db/loadbalancer/test_db_loadbalancer.py:284
 #, python-format
 msgid "Unexpected error code: %s"
 msgstr "Código de erro inesperado: %s"
