@@ -769,7 +769,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_add_interface_port(self):
         with self.router() as r:
-            with self.port(no_delete=True) as p:
+            with self.port(do_delete=False) as p:
                 body = self._router_interface_action('add',
                                                      r['router']['id'],
                                                      None,
@@ -794,7 +794,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                               'roles': []}
             tdict.return_value = admin_context
             with self.router() as r:
-                with self.port(no_delete=True) as p:
+                with self.port(do_delete=False) as p:
                     tdict.return_value = tenant_context
                     err_code = exc.HTTPNotFound.code
                     self._router_interface_action('add',
@@ -843,7 +843,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_add_interface_dup_subnet2_returns_400(self):
         with self.router() as r:
             with self.subnet() as s:
-                with self.port(subnet=s, no_delete=True) as p1:
+                with self.port(subnet=s, do_delete=False) as p1:
                     with self.port(subnet=s) as p2:
                         self._router_interface_action('add',
                                                       r['router']['id'],
@@ -1067,7 +1067,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_remove_interface_wrong_subnet_returns_400(self):
         with self.router() as r:
             with self.subnet() as s:
-                with self.port(no_delete=True) as p:
+                with self.port(do_delete=False) as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,
@@ -1085,7 +1085,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_remove_interface_returns_200(self):
         with self.router() as r:
-            with self.port(no_delete=True) as p:
+            with self.port(do_delete=False) as p:
                 body = self._router_interface_action('add',
                                                      r['router']['id'],
                                                      None,
@@ -1099,7 +1099,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_remove_interface_wrong_port_returns_404(self):
         with self.router() as r:
             with self.subnet():
-                with self.port(no_delete=True) as p:
+                with self.port(do_delete=False) as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,
@@ -1710,7 +1710,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
     def test_l3_agent_routers_query_interfaces(self):
         with self.router() as r:
-            with self.port(no_delete=True) as p:
+            with self.port(do_delete=False) as p:
                 self._router_interface_action('add',
                                               r['router']['id'],
                                               None,
@@ -1734,7 +1734,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
         with self.router() as r:
             with self.subnet(cidr='9.0.1.0/24') as subnet:
                 with self.port(subnet=subnet,
-                               no_delete=True,
+                               do_delete=False,
                                fixed_ips=[{'ip_address': '9.0.1.3'}]) as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
@@ -1822,7 +1822,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
         self._test_notify_op_agent(self._test_router_gateway_op_agent)
 
     def _test_interfaces_op_agent(self, r, notifyApi):
-        with self.port(no_delete=True) as p:
+        with self.port(do_delete=False) as p:
             self._router_interface_action('add',
                                           r['router']['id'],
                                           None,

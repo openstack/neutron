@@ -175,7 +175,7 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def firewall_policy(self, fmt=None, name='firewall_policy1',
                         description=DESCRIPTION, shared=True,
                         firewall_rules=None, audited=True,
-                        no_delete=False, **kwargs):
+                        do_delete=True, **kwargs):
         if firewall_rules is None:
             firewall_rules = []
         if not fmt:
@@ -187,7 +187,7 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             raise webob.exc.HTTPClientError(code=res.status_int)
         firewall_policy = self.deserialize(fmt or self.fmt, res)
         yield firewall_policy
-        if not no_delete:
+        if do_delete:
             self._delete('firewall_policies',
                          firewall_policy['firewall_policy']['id'])
 
@@ -225,7 +225,7 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                       source_port=SOURCE_PORT,
                       destination_port=DESTINATION_PORT,
                       action=ACTION, enabled=ENABLED,
-                      no_delete=False, **kwargs):
+                      do_delete=True, **kwargs):
         if not fmt:
             fmt = self.fmt
         res = self._create_firewall_rule(fmt, name, shared, protocol,
@@ -237,7 +237,7 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             raise webob.exc.HTTPClientError(code=res.status_int)
         firewall_rule = self.deserialize(fmt or self.fmt, res)
         yield firewall_rule
-        if not no_delete:
+        if do_delete:
             self._delete('firewall_rules',
                          firewall_rule['firewall_rule']['id'])
 
@@ -261,7 +261,7 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     @contextlib.contextmanager
     def firewall(self, fmt=None, name='firewall_1', description=DESCRIPTION,
                  firewall_policy_id=None, admin_state_up=True,
-                 no_delete=False, **kwargs):
+                 do_delete=True, **kwargs):
         if not fmt:
             fmt = self.fmt
         res = self._create_firewall(fmt, name, description, firewall_policy_id,
@@ -270,7 +270,7 @@ class FirewallPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             raise webob.exc.HTTPClientError(code=res.status_int)
         firewall = self.deserialize(fmt or self.fmt, res)
         yield firewall
-        if not no_delete:
+        if do_delete:
             self._delete('firewalls', firewall['firewall']['id'])
 
     def _rule_action(self, action, id, firewall_rule_id, insert_before=None,
@@ -504,7 +504,7 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
 
     def test_delete_firewall_policy(self):
         ctx = context.get_admin_context()
-        with self.firewall_policy(no_delete=True) as fwp:
+        with self.firewall_policy(do_delete=False) as fwp:
             fwp_id = fwp['firewall_policy']['id']
             req = self.new_delete_request('firewall_policies', fwp_id)
             res = req.get_response(self.ext_api)
@@ -516,7 +516,7 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
     def test_delete_firewall_policy_with_rule(self):
         ctx = context.get_admin_context()
         attrs = self._get_test_firewall_policy_attrs()
-        with self.firewall_policy(no_delete=True) as fwp:
+        with self.firewall_policy(do_delete=False) as fwp:
             fwp_id = fwp['firewall_policy']['id']
             with self.firewall_rule(name='fwr1') as fr:
                 fr_id = fr['firewall_rule']['id']
@@ -722,7 +722,7 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
 
     def test_delete_firewall_rule(self):
         ctx = context.get_admin_context()
-        with self.firewall_rule(no_delete=True) as fwr:
+        with self.firewall_rule(do_delete=False) as fwr:
             fwr_id = fwr['firewall_rule']['id']
             req = self.new_delete_request('firewall_rules', fwr_id)
             res = req.get_response(self.ext_api)
@@ -817,7 +817,7 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
         with self.firewall_policy() as fwp:
             fwp_id = fwp['firewall_policy']['id']
             with self.firewall(firewall_policy_id=fwp_id,
-                               no_delete=True) as fw:
+                               do_delete=False) as fw:
                 fw_id = fw['firewall']['id']
                 req = self.new_delete_request('firewalls', fw_id)
                 res = req.get_response(self.ext_api)

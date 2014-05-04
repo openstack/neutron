@@ -890,7 +890,7 @@ class TestNecPluginOfcManager(NecPluginV2TestCase):
     def _test_delete_port_for_disappeared_ofc_port(self, raised_exc):
         self.ofc.set_raise_exc('delete_ofc_port', raised_exc)
 
-        with self.port(no_delete=True) as port:
+        with self.port(do_delete=False) as port:
             port_id = port['port']['id']
 
             portinfo = {'id': port_id, 'port_no': 123}

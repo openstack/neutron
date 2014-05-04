@@ -102,14 +102,14 @@ class TestEdgeFwDriver(VcnsDriverTestCase):
         ctx = context.get_admin_context()
         name = 'firewall'
         with contextlib.nested(self.firewall_rule(name='fwr1',
-                                                  no_delete=True),
+                                                  do_delete=False),
                                self.firewall_rule(name='fwr2',
-                                                  no_delete=True),
+                                                  do_delete=False),
                                self.firewall_rule(name='fwr3',
-                                                  no_delete=True)) as fr:
+                                                  do_delete=False)) as fr:
             fw_rule_ids = [r['firewall_rule']['id'] for r in fr]
             with self.firewall_policy(firewall_rules=fw_rule_ids,
-                                      no_delete=True) as fwp:
+                                      do_delete=False) as fwp:
                 fwp_id = fwp['firewall_policy']['id']
                 with self.firewall(name=name,
                                    firewall_policy_id=fwp_id) as firewall:
@@ -126,14 +126,14 @@ class TestEdgeFwDriver(VcnsDriverTestCase):
         ctx = context.get_admin_context()
         name = 'new_firewall'
         with contextlib.nested(self.firewall_rule(name='fwr1',
-                                                  no_delete=True),
+                                                  do_delete=False),
                                self.firewall_rule(name='fwr2',
-                                                  no_delete=True),
+                                                  do_delete=False),
                                self.firewall_rule(name='fwr3',
-                                                  no_delete=True)) as fr:
+                                                  do_delete=False)) as fr:
             fw_rule_ids = [r['firewall_rule']['id'] for r in fr]
             with self.firewall_policy(firewall_rules=fw_rule_ids,
-                                      no_delete=True) as fwp:
+                                      do_delete=False) as fwp:
                 fwp_id = fwp['firewall_policy']['id']
                 with self.firewall(name=name,
                                    firewall_policy_id=fwp_id) as firewall:
@@ -161,14 +161,14 @@ class TestEdgeFwDriver(VcnsDriverTestCase):
         ctx = context.get_admin_context()
         name = 'firewall'
         with contextlib.nested(self.firewall_rule(name='fwr1',
-                                                  no_delete=True),
+                                                  do_delete=False),
                                self.firewall_rule(name='fwr2',
-                                                  no_delete=True),
+                                                  do_delete=False),
                                self.firewall_rule(name='fwr3',
-                                                  no_delete=True)) as fr:
+                                                  do_delete=False)) as fr:
             fw_rule_ids = [r['firewall_rule']['id'] for r in fr]
             with self.firewall_policy(firewall_rules=fw_rule_ids,
-                                      no_delete=True) as fwp:
+                                      do_delete=False) as fwp:
                 fwp_id = fwp['firewall_policy']['id']
                 with self.firewall(name=name,
                                    firewall_policy_id=fwp_id) as firewall:
@@ -185,10 +185,10 @@ class TestEdgeFwDriver(VcnsDriverTestCase):
         ctx = context.get_admin_context()
         name = 'new_firewall'
         with contextlib.nested(self.firewall_rule(name='fwr1',
-                                                  no_delete=True)) as fr:
+                                                  do_delete=False)) as fr:
             fw_rule_ids = [r['firewall_rule']['id'] for r in fr]
             with self.firewall_policy(firewall_rules=fw_rule_ids,
-                                      no_delete=True) as fwp:
+                                      do_delete=False) as fwp:
                 fwp_id = fwp['firewall_policy']['id']
                 with self.firewall(name=name,
                                    firewall_policy_id=fwp_id) as firewall:
@@ -218,12 +218,12 @@ class TestEdgeFwDriver(VcnsDriverTestCase):
         ctx = context.get_admin_context()
         name = 'new_firewall'
         with contextlib.nested(self.firewall_rule(name='fwr1',
-                                                  no_delete=True),
+                                                  do_delete=False),
                                self.firewall_rule(name='fwr2',
-                                                  no_delete=True)) as fr:
+                                                  do_delete=False)) as fr:
             fw_rule_ids = [r['firewall_rule']['id'] for r in fr]
             with self.firewall_policy(firewall_rules=fw_rule_ids,
-                                      no_delete=True) as fwp:
+                                      do_delete=False) as fwp:
                 fwp_id = fwp['firewall_policy']['id']
                 with self.firewall(name=name,
                                    firewall_policy_id=fwp_id) as firewall:
@@ -251,20 +251,20 @@ class TestEdgeFwDriver(VcnsDriverTestCase):
                     ctx, fw_create['id'])
                 self.driver.update_firewall(ctx, VSE_ID, fw_create)
                 with contextlib.nested(self.firewall_rule(name='fwr0',
-                                                          no_delete=True),
+                                                          do_delete=False),
                                        self.firewall_rule(name='fwr1',
-                                                          no_delete=True),
+                                                          do_delete=False),
                                        self.firewall_rule(name='fwr2',
-                                                          no_delete=True),
+                                                          do_delete=False),
                                        self.firewall_rule(name='fwr3',
-                                                          no_delete=True),
+                                                          do_delete=False),
                                        self.firewall_rule(name='fwr4',
-                                                          no_delete=True),
+                                                          do_delete=False),
                                        self.firewall_rule(name='fwr5',
-                                                          no_delete=True),
+                                                          do_delete=False),
                                        self.firewall_rule(
                                            name='fwr6',
-                                           no_delete=True)) as fwr:
+                                           do_delete=False)) as fwr:
                     # test insert when rule list is empty
                     fwr0_id = fwr[0]['firewall_rule']['id']
                     self._rule_action('insert', fwp_id, fwr0_id,

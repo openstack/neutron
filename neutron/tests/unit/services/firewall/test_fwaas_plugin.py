@@ -85,7 +85,7 @@ class TestFirewallCallbacks(test_db_firewall.FirewallPluginDbTestCase):
             fwp_id = fwp['firewall_policy']['id']
             with self.firewall(firewall_policy_id=fwp_id,
                                admin_state_up=test_db_firewall.ADMIN_STATE_UP,
-                               no_delete=True) as fw:
+                               do_delete=False) as fw:
                 fw_id = fw['firewall']['id']
                 with ctx.session.begin(subtransactions=True):
                     fw_db = self.plugin._get_firewall(ctx, fw_id)
@@ -347,7 +347,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
         with self.firewall_policy() as fwp:
             fwp_id = fwp['firewall_policy']['id']
             with self.firewall(firewall_policy_id=fwp_id,
-                               no_delete=True) as fw:
+                               do_delete=False) as fw:
                 fw_id = fw['firewall']['id']
                 req = self.new_delete_request('firewalls', fw_id)
                 res = req.get_response(self.ext_api)

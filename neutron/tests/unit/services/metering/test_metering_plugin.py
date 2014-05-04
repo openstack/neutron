@@ -246,7 +246,7 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
     def test_delete_metering_label_does_not_clear_router_tenant_id(self):
         tenant_id = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'
         with self.metering_label(tenant_id=tenant_id,
-                                 no_delete=True) as metering_label:
+                                 do_delete=False) as metering_label:
             with self.router(tenant_id=tenant_id, set_context=True) as r:
                 router = self._show('routers', r['router']['id'])
                 self.assertEqual(tenant_id, router['router']['tenant_id'])

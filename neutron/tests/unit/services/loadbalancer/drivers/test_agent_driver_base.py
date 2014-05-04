@@ -563,7 +563,8 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
     def test_delete_vip(self):
         with self.subnet() as subnet:
             with self.pool(subnet=subnet) as pool:
-                with self.vip(pool=pool, subnet=subnet, no_delete=True) as vip:
+                with self.vip(pool=pool, subnet=subnet,
+                              do_delete=False) as vip:
                     ctx = context.get_admin_context()
                     self.plugin_instance.delete_vip(ctx, vip['vip']['id'])
                     vip['vip']['status'] = 'PENDING_DELETE'
@@ -615,7 +616,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
                     mock.ANY, old_pool, updated, 'host')
 
     def test_delete_pool(self):
-        with self.pool(no_delete=True) as pool:
+        with self.pool(do_delete=False) as pool:
             req = self.new_delete_request('pools',
                                           pool['pool']['id'])
             res = req.get_response(self.ext_api)
@@ -662,7 +663,7 @@ class TestLoadBalancerPluginNotificationWrapper(TestLoadBalancerPluginBase):
         with self.pool() as pool:
             pool_id = pool['pool']['id']
             with self.member(pool_id=pool_id,
-                             no_delete=True) as member:
+                             do_delete=False) as member:
                 req = self.new_delete_request('members',
                                               member['member']['id'])
                 res = req.get_response(self.ext_api)
