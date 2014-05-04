@@ -801,18 +801,24 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # _rpc_loop and _sync_routers_task will not be
         # executed in the same time because of lock.
         # so we can clear the value of updated_routers
-        # and removed_routers
+        # and removed_routers, but they can be updated by
+        # updated_routers and removed_routers rpc call
         try:
             LOG.debug(_("Starting RPC loop for %d updated routers"),
                       len(self.updated_routers))
             if self.updated_routers:
-                router_ids = list(self.updated_routers)
+                # We're capturing and clearing the list, and will
+                # process the "captured" updates in this loop,
+                # and any updates that happen due to a context switch
+                # will be picked up on the next pass.
+                updated_routers = set(self.updated_routers)
+                self.updated_routers.clear()
+                router_ids = list(updated_routers)
                 routers = self.plugin_rpc.get_routers(
                     self.context, router_ids)
-
+                # routers with admin_state_up=false will not be in the fetched
                 fetched = set([r['id'] for r in routers])
-                self.removed_routers.update(self.updated_routers - fetched)
-                self.updated_routers.clear()
+                self.removed_routers.update(updated_routers - fetched)
 
                 self._process_routers(routers)
             self._process_router_delete()
