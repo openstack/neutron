@@ -53,6 +53,11 @@ class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
     def original(self):
         return self._original_endpoint_group
 
+    def add_neutron_subnet(self, subnet_id):
+        subnets = self._plugin._add_subnet_to_endpoint_group(
+            self._plugin_context, self._endpoint_group['id'], subnet_id)
+        self._endpoint_group['neutron_subnets'] = subnets
+
 
 class ContractContext(GroupPolicyContext, api.ContractContext):
 
@@ -139,10 +144,9 @@ class BridgeDomainContext(GroupPolicyContext, api.BridgeDomainContext):
         return self._original_bridge_domain
 
     def set_neutron_network_id(self, network_id):
-        with self._plugin_context.session.begin(subtransactions=True):
-            bd = self._plugin._get_bridge_domain(self._plugin_context,
-                                                 self._bridge_domain['id'])
-            bd.neutron_network_id = network_id
+        self._plugin._set_network_for_bridge_domain(self._plugin_context,
+                                                    self._bridge_domain['id'],
+                                                    network_id)
         self._bridge_domain['neutron_network_id'] = network_id
 
 

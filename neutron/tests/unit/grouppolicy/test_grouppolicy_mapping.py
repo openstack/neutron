@@ -79,14 +79,19 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
                 bd_id = bd['bridge_domain']['id']
 
                 epg_name = "epg1"
+                # REVISIT(rkukura): Do we need to test all attrs here?
                 epg_attrs = self._get_test_endpoint_group_attrs(epg_name)
+                del epg_attrs['neutron_subnets']
                 with self.endpoint_group(name=epg_name,
                                          bridge_domain_id=bd_id) as epg:
                     for k, v in epg_attrs.iteritems():
                         self.assertEqual(epg['endpoint_group'][k], v)
                     self.assertEqual(epg['endpoint_group']['bridge_domain_id'],
                                      bd_id)
-                    # TODO(rkukura): Verify subnet created
+                    subnets = epg['endpoint_group']['neutron_subnets']
+                    self.assertIsNotNone(subnets)
+                    # self.assertEqual(len(subnets), 1)
+                    # TODO(rkukura): Verify subnet details
                     epg_id = epg['endpoint_group']['id']
 
                     ep_name = "ep1"

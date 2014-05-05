@@ -12,6 +12,8 @@
 
 import netaddr
 
+from neutron.api.v2 import attributes
+from neutron.common import exceptions as nexc
 from neutron.common import log
 from neutron import manager
 from neutron.openstack.common import log as logging
@@ -123,7 +125,7 @@ class MappingDriver(api.PolicyDriver):
     def create_routing_domain_postcommit(self, context):
         LOG.info("create_routing_domain_postcommit: %s", context.current)
         if not context.current['neutron_routers']:
-            self._create_rd_routers(context)
+            self._add_rd_router(context)
 
     @log.log
     def update_routing_domain_precommit(self, context):
@@ -145,7 +147,7 @@ class MappingDriver(api.PolicyDriver):
         # TODO(rkukura): Implement
         pass
 
-    def _create_rd_routers(self, context):
+    def _add_rd_router(self, context):
         # TODO(rkukura): Implement
         pass
 
@@ -155,7 +157,7 @@ class MappingDriver(api.PolicyDriver):
 
     def _create_bd_network(self, context):
         attrs = {'network':
-                 {'tenant_id': context.current['id'],
+                 {'tenant_id': context.current['tenant_id'],
                   'name': 'bd_' + context.current['name'],
                   'admin_state_up': True,
                   'shared': False}}
@@ -176,6 +178,35 @@ class MappingDriver(api.PolicyDriver):
                                                 rd_id)
         supernet = netaddr.IPNetwork(rd['ip_supernet'])
         LOG.info("allocating subnet from supernet: %s", supernet)
+        attrs = {'subnet':
+                 {'tenant_id': context.current['tenant_id'],
+                  'name': 'epg_' + context.current['name'],
+                  'network_id': bd['neutron_network_id'],
+                  'ip_version': rd['ip_version'],
+                  'enable_dhcp': True,
+                  'gateway_ip': attributes.ATTR_NOT_SPECIFIED,
+                  'allocation_pools': attributes.ATTR_NOT_SPECIFIED,
+                  'dns_nameservers': attributes.ATTR_NOT_SPECIFIED,
+                  'host_routes': attributes.ATTR_NOT_SPECIFIED}}
+        core_plugin = manager.NeutronManager.get_plugin()
+        subnet = None
+        for cidr in supernet.subnet(rd['subnet_prefix_length']):
+            LOG.info("trying: %s", cidr)
+            # TODO(rkukura): Need to ensure subnet not already
+            # allocated within entire RD, not just within BD's
+            # network. We may need some sort of allocation pool for
+            # this, or a set of locked for update queries.
+            try:
+                attrs['subnet']['cidr'] = cidr.__str__()
+                subnet = core_plugin.create_subnet(context._plugin_context,
+                                                   attrs)
+                LOG.info("created subnet: %s", subnet)
+                context.add_neutron_subnet(subnet['id'])
+                return
+            except Exception:
+                LOG.exception("got exception")
+        # TODO(rkukura): Need real exception
+        raise nexc.ResourceExhausted("no more subnets in supernet")
 
     def _validate_ep_port(self, context):
         # TODO(rkukura): Implement

@@ -72,6 +72,17 @@ class EndpointGroupContext(object):
         """
         pass
 
+    @abstractmethod
+    def add_neutron_subnet(self, subnet_id):
+        """Add the neutron subnet to the endpoint_group.
+
+        :param subnet_id: Subnet to which endpoint_group is mapped.
+
+        Add a neutron subnet to the set of subnets to which the
+        endpoint_group is mapped.
+        """
+        pass
+
 
 @six.add_metaclass(ABCMeta)
 class ContractContext(object):

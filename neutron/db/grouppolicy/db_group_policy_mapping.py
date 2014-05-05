@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -62,7 +64,7 @@ class EndpointGroupSubnetBinding(gpolicy_db.EndpointGroup):
     # TODO(Sumit): confirm cascade constraints
     neutron_subnets = orm.relationship(EndpointGroupSubnetAssociation,
                                        backref='gp_endpoint_groups',
-                                       lazy="joined")
+                                       cascade='all', lazy="joined")
 
 
 class BridgeDomainNetworkBinding(gpolicy_db.BridgeDomain):
@@ -146,7 +148,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
     def _make_endpoint_group_dict(self, epg, fields=None):
         res = super(GroupPolicyMappingDbMixin,
                     self)._make_endpoint_group_dict(epg)
-        res['neutron_subnets'] = epg['neutron_subnets']
+        res['neutron_subnets'] = copy.copy(epg['neutron_subnets'])
         return self._fields(res, fields)
 
     def _make_bridge_domain_dict(self, bd, fields=None):
@@ -160,6 +162,19 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                     self)._make_routing_domain_dict(rd)
         res['neutron_routers'] = rd['neutron_routers']
         return self._fields(res, fields)
+
+    def _set_network_for_bridge_domain(self, context, bd_id, network_id):
+        with context.session.begin(subtransactions=True):
+            bd_db = self._get_bridge_domain(context, bd_id)
+            bd_db.neutron_network_id = network_id
+
+    def _add_subnet_to_endpoint_group(self, context, epg_id, subnet_id):
+        with context.session.begin(subtransactions=True):
+            epg_db = self._get_endpoint_group(context, epg_id)
+            assoc = EndpointGroupSubnetAssociation(endpoint_group_id=epg_id,
+                                                   neutron_subnet_id=subnet_id)
+            epg_db.neutron_subnets.append(assoc)
+        return copy.copy(epg_db.neutron_subnets)
 
     @log.log
     def create_endpoint(self, context, endpoint):
@@ -190,6 +205,14 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             # TODO(Sumit): Process subnets
             context.session.add(epg_db)
         return self._make_endpoint_group_dict(epg_db)
+
+    @log.log
+    def delete_endpoint_group(self, context, id):
+        with context.session.begin(subtransactions=True):
+            epg_query = context.session.query(
+                EndpointGroupSubnetBinding).with_lockmode('update')
+            epg_db = epg_query.filter_by(id=id).one()
+            context.session.delete(epg_db)
 
     @log.log
     def create_bridge_domain(self, context, bridge_domain):
