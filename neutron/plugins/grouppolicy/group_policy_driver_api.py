@@ -17,7 +17,7 @@ import six
 
 @six.add_metaclass(ABCMeta)
 class EndpointContext(object):
-    """Context passed to policy engine for changes to endpoint resources.
+    """Context passed to policy engine for endpoint resource changes.
 
     An EndpointContext instance wraps an endpoint resource. It provides
     helper methods for accessing other relevant information. Results
@@ -46,7 +46,7 @@ class EndpointContext(object):
 
 @six.add_metaclass(ABCMeta)
 class EndpointGroupContext(object):
-    """Context passed to policy engine for changes to endpoint_group resources.
+    """Context passed to policy engine for endpoint_group resource changes.
 
     An EndpointContext instance wraps an endpoint_group resource. It provides
     helper methods for accessing other relevant information. Results
@@ -104,7 +104,7 @@ class ContractContext(object):
 
 @six.add_metaclass(ABCMeta)
 class PolicyRuleContext(object):
-    """Context passed to policy engine for changes to policy_rule resources.
+    """Context passed to policy engine for policy_rule resource changes.
 
     An PolicyRuleContext instance wraps an policy_rule resource.
     It provides helper methods for accessing other relevant information.
@@ -134,7 +134,7 @@ class PolicyRuleContext(object):
 
 @six.add_metaclass(ABCMeta)
 class PolicyClassifierContext(object):
-    """Context passed to policy engine for changes to policy_classifier resources.
+    """Context passed to policy engine for policy_classifier resource changes.
 
     An PolicyClassifierContext instance wraps an policy_classifier resource.
     It provides helper methods for accessing other relevant information.
@@ -164,7 +164,7 @@ class PolicyClassifierContext(object):
 
 @six.add_metaclass(ABCMeta)
 class PolicyActionContext(object):
-    """Context passed to policy engine for changes to policy_action resources.
+    """Context passed to policy engine for policy_action resource changes.
 
     An PolicyActionContext instance wraps an policy_action resource.
     It provides helper methods for accessing other relevant information.
@@ -193,7 +193,7 @@ class PolicyActionContext(object):
 
 @six.add_metaclass(ABCMeta)
 class BridgeDomainContext(object):
-    """Context passed to policy engine for changes to bridge_domain resources.
+    """Context passed to policy engine for bridge_domain resource changes.
 
     A BridgeDomainContext instance wraps an bridge_domain resource. It provides
     helper methods for accessing other relevant information. Results
@@ -233,7 +233,7 @@ class BridgeDomainContext(object):
 @six.add_metaclass(ABCMeta)
 class RoutingDomainContext(object):
 
-    """Context passed to policy engine for changes to routing_domain resources.
+    """Context passed to policy engine for routing_domain resource changes.
 
     A RoutingDomainContext instance wraps an routing_domain resource.xi
     It provides helper methods for accessing other relevant information.
