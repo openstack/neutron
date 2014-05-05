@@ -53,6 +53,12 @@ class GroupPolicyTestMixin(object):
 
         return attrs
 
+    def _get_test_policy_rule_attrs(self, name='pr1'):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id}
+
+        return attrs
+
     def _get_test_policy_classifier_attrs(self, name='pc1'):
         attrs = {'name': name,
                  'tenant_id': self._tenant_id}
@@ -104,6 +110,25 @@ class GroupPolicyTestMixin(object):
             self.assertEqual(epg_res.status_int, expected_res_status)
 
         return epg_res
+
+    def _create_policy_rule(self, fmt, name, description, enabled,
+                            contract_filter_id, policy_classifier_id,
+                            policy_actions, expected_res_status=None,
+                            **kwargs):
+        data = {'policy_rule': {'name': name,
+                                'description': description,
+                                'tenant_id': self._tenant_id,
+                                'enabled': enabled,
+                                'contract_filter_id': contract_filter_id,
+                                'policy_classifier_id': policy_classifier_id,
+                                'policy_actions': policy_actions}}
+
+        pr_req = self.new_create_request('policy_rules', data, fmt)
+        pr_res = pr_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(pr_res.status_int, expected_res_status)
+
+        return pr_res
 
     def _create_policy_classifier(self, fmt, name, description, protocol,
                                   port_range, direction,
@@ -203,6 +228,32 @@ class GroupPolicyTestMixin(object):
         finally:
             if not no_delete:
                 self._delete('endpoint_groups', epg['endpoint_group']['id'])
+
+    @contextlib.contextmanager
+    def policy_rule(self, fmt=None, name='pr1', description="",
+                    enabled=True, contract_filter_id=None,
+                    policy_classifier_id=
+                    '00000000-ffff-ffff-ffff-000000000000',
+                    policy_actions=None, no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        if not policy_actions:
+            policy_actions = []
+
+        res = self._create_policy_rule(fmt, name, description, enabled,
+                                       contract_filter_id,
+                                       policy_classifier_id, policy_actions,
+                                       **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        pr = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield pr
+        finally:
+            if not no_delete:
+                self._delete('policy_rules',
+                             pr['policy_rule']['id'])
 
     @contextlib.contextmanager
     def policy_classifier(self, fmt=None, name='pc1', description="",
@@ -346,6 +397,20 @@ class TestGroupPolicyMappedResources(GroupPolicyDbTestCase):
 
 
 class TestGroupPolicyUnMappedResources(GroupPolicyDbTestCase):
+
+    def test_create_policy_rule(self, **kwargs):
+        name = "pr1"
+        attrs = self._get_test_policy_rule_attrs(name)
+
+        with self.policy_classifier() as pc:
+            pc_id = pc['policy_classifier']['id']
+            with self.policy_action() as pa:
+                pa_id = pa['policy_action']['id']
+                with self.policy_rule(
+                    name=name, policy_classifier_id=pc_id,
+                    policy_actions=[pa_id]) as pr:
+                    for k, v in attrs.iteritems():
+                        self.assertEqual(pr['policy_rule'][k], v)
 
     def test_create_policy_classifier(self, **kwargs):
         name = "pc1"

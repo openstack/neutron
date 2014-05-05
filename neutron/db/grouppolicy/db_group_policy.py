@@ -18,7 +18,6 @@ from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron.common import exceptions as nexc
 from neutron.common import log
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
@@ -72,7 +71,8 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                                  nullable=True, unique=True)
 
 
-class ContractPolicyRuleAssociation(model_base.BASEV2):
+class ContractPolicyRuleAssociation(model_base.BASEV2,
+                                    models_v2.HasStatusDescription):
     """Models the many to many relation between Contract and Policy rules."""
     __tablename__ = 'gp_contract_policyrule_associations'
     contract_id = sa.Column(sa.String(36),
@@ -84,6 +84,18 @@ class ContractPolicyRuleAssociation(model_base.BASEV2):
     position = sa.Column(sa.Integer)
 
 
+class PolicyRuleActionAssociation(model_base.BASEV2):
+    """Many to many relation between PolicyRules and PolicyActions."""
+    __tablename__ = 'gp_policy_rule_action_associations'
+    policy_rule_id = sa.Column(sa.String(36),
+                               sa.ForeignKey('gp_policy_rules.id'),
+                               primary_key=True)
+    policy_action_id = sa.Column(sa.String(36),
+                                 sa.ForeignKey(
+                                 'gp_policy_actions.id'),
+                                 primary_key=True)
+
+
 class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a Group Policy Rule."""
     __tablename__ = 'gp_policy_rules'
@@ -92,6 +104,13 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     enabled = sa.Column(sa.Boolean)
     contracts = orm.relationship(ContractPolicyRuleAssociation,
                                  backref='gp_policy_rules')
+    policy_classifier_id = sa.Column(sa.String(36),
+                                     sa.ForeignKey(
+                                     'gp_policy_classifiers.id'),
+                                     nullable=False)
+    policy_actions = orm.relationship(PolicyRuleActionAssociation,
+                                      backref='gp_policy_rules',
+                                      cascade='all', lazy="joined")
 
 
 class PolicyClassifier(model_base.BASEV2, models_v2.HasId,
@@ -111,6 +130,8 @@ class PolicyClassifier(model_base.BASEV2, models_v2.HasId,
                                   const.GP_DIRECTION_OUT,
                                   const.GP_DIRECTION_BI,
                                   name='direction'))
+    policy_rules = orm.relationship(PolicyRule,
+                                    backref='gp_policy_classifiers')
 
 
 class PolicyAction(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -128,6 +149,8 @@ class PolicyAction(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     # TODO(Sumit): Revisit when other action_types are defined
     action_value = sa.Column(sa.String(36),
                              nullable=True, unique=True)
+    policy_rules = orm.relationship(PolicyRuleActionAssociation,
+                                    cascade='all', backref='gp_policy_actions')
 
 
 class Contract(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -209,63 +232,63 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         try:
             endpoint = self._get_by_id(context, Endpoint, id)
         except exc.NoResultFound:
-            raise nexc.EndpointNotFound(endpoint_id=id)
+            raise gpolicy.EndpointNotFound(endpoint_id=id)
         return endpoint
 
     def _get_endpoint_group(self, context, id):
         try:
             endpoint_group = self._get_by_id(context, EndpointGroup, id)
         except exc.NoResultFound:
-            raise nexc.EndpointGroupNotFound(endpoint_group_id=id)
+            raise gpolicy.EndpointGroupNotFound(endpoint_group_id=id)
         return endpoint_group
 
     def _get_contract(self, context, id):
         try:
             contract = self._get_by_id(context, Contract, id)
         except exc.NoResultFound:
-            raise nexc.ContractNotFound(contract_id=id)
+            raise gpolicy.ContractNotFound(contract_id=id)
         return contract
 
     def _get_contract_scope(self, context, id):
         try:
             contract_scope = self._get_by_id(context, ContractScope, id)
         except exc.NoResultFound:
-            raise nexc.ContractScopeNotFound(contract_scope_id=id)
+            raise gpolicy.ContractScopeNotFound(contract_scope_id=id)
         return contract_scope
 
     def _get_policy_rule(self, context, id):
         try:
             policy_rule = self._get_by_id(context, PolicyRule, id)
         except exc.NoResultFound:
-            raise nexc.PolicyRuleNotFound(policy_rule_id=id)
+            raise gpolicy.PolicyRuleNotFound(policy_rule_id=id)
         return policy_rule
 
     def _get_policy_classifier(self, context, id):
         try:
             policy_classifier = self._get_by_id(context, PolicyClassifier, id)
         except exc.NoResultFound:
-            raise nexc.PolicyClassifierNotFound(policy_classifier_id=id)
+            raise gpolicy.PolicyClassifierNotFound(policy_classifier_id=id)
         return policy_classifier
 
     def _get_policy_action(self, context, id):
         try:
             policy_action = self._get_by_id(context, PolicyAction, id)
         except exc.NoResultFound:
-            raise nexc.PolicyActionNotFound(policy_action_id=id)
+            raise gpolicy.PolicyActionNotFound(policy_action_id=id)
         return policy_action
 
     def _get_bridge_domain(self, context, id):
         try:
             bridge_domain = self._get_by_id(context, BridgeDomain, id)
         except exc.NoResultFound:
-            raise nexc.BridgeDomainNotFound(bridge_domain_id=id)
+            raise gpolicy.BridgeDomainNotFound(bridge_domain_id=id)
         return bridge_domain
 
     def _get_routing_domain(self, context, id):
         try:
             routing_domain = self._get_by_id(context, RoutingDomain, id)
         except exc.NoResultFound:
-            raise nexc.RoutingDomainNotFound(routing_domain_id=id)
+            raise gpolicy.RoutingDomainNotFound(routing_domain_id=id)
         return routing_domain
 
     def _get_min_max_ports_from_range(self, port_range):
@@ -283,6 +306,64 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             return str(min_port)
         else:
             return '%d:%d' % (min_port, max_port)
+
+    def _set_rules_for_contract(self, context, contract_db, rule_id_list):
+        ct_db = contract_db
+        with context.session.begin(subtransactions=True):
+            if not rule_id_list:
+                ct_db.policy_rules = []
+                return
+            # We will first check if the new list of rules is valid
+            filters = {'id': [r_id for r_id in rule_id_list]}
+            rules_in_db = self._get_collection_query(context, PolicyRule,
+                                                     filters=filters)
+            rules_dict = dict((r_db['id'], r_db) for r_db in rules_in_db)
+            for rule_id in rule_id_list:
+                if rule_id not in rules_dict:
+                    # If we find an invalid rule in the list we
+                    # do not perform the update since this breaks
+                    # the integrity of this list.
+                    raise gpolicy.PolicyRuleNotFound(policy_rule_id=rule_id)
+            # New list of rules is valid so we will first reset the existing
+            # list and then add each rule in order.
+            # Note that the list could be empty in which case we interpret
+            # it as clearing existing rules.
+            ct_db.policy_rules = []
+            for rule_id in rule_id_list:
+                ct_rule_db = ContractPolicyRuleAssociation(
+                    policy_rule_id=rule_id,
+                    context_id=ct_db.id)
+                ct_db.policy_rules.append(ct_rule_db)
+            ct_db.policy_rules.reorder()
+
+    def _set_actions_for_rule(self, context, policy_rule_db, action_id_list):
+        pr_db = policy_rule_db
+        with context.session.begin(subtransactions=True):
+            if not action_id_list:
+                pr_db.policy_actions = []
+                return
+            # We will first check if the new list of actions is valid
+            filters = {'id': [a_id for a_id in action_id_list]}
+            actions_in_db = self._get_collection_query(context, PolicyAction,
+                                                       filters=filters)
+            actions_dict = dict((a_db['id'], a_db) for a_db in actions_in_db)
+            for action_id in action_id_list:
+                if action_id not in actions_dict:
+                    # If we find an invalid action in the list we
+                    # do not perform the update since this breaks
+                    # the integrity of this list.
+                    raise gpolicy.PolicyActionNotFound(policy_action_id=
+                                                       action_id)
+            # New list of actions is valid so we will first reset the existing
+            # list and then add each action in order.
+            # Note that the list could be empty in which case we interpret
+            # it as clearing existing rules.
+            pr_db.policy_actions = []
+            for action_id in action_id_list:
+                assoc = PolicyRuleActionAssociation(policy_rule_id=pr_db.id,
+                                                    policy_action_id=action_id)
+                pr_db.policy_actions.append(assoc)
+                # TODO(Sumit): Check if this is getting added properly
 
     def _make_endpoint_dict(self, ep, fields=None):
         res = {'id': ep['id'],
@@ -304,6 +385,17 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         #
         # 'provided_contract_scopes': epg['provided_contract_scopes'],
         # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
+        return self._fields(res, fields)
+
+    def _make_policy_rule_dict(self, pr, fields=None):
+        res = {'id': pr['id'],
+               'tenant_id': pr['tenant_id'],
+               'name': pr['name'],
+               'description': pr['description'],
+               'enabled': pr['enabled'],
+               'policy_classifier_id': pr['policy_classifier_id']}
+        res['policy_actions'] = [pa['policy_action_id']
+                                 for pa in pr['policy_actions']]
         return self._fields(res, fields)
 
     def _make_policy_classifier_dict(self, pc, fields=None):
@@ -483,24 +575,58 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         pass
 
     @log.log
-    def get_policy_rules(self, context, filters=None, fields=None):
-        pass
-
-    @log.log
-    def get_policy_rule(self, context, id, fields=None):
-        pass
-
-    @log.log
     def create_policy_rule(self, context, policy_rule):
-        pass
+        pr = policy_rule['policy_rule']
+        tenant_id = self._get_tenant_id_for_create(context, pr)
+        with context.session.begin(subtransactions=True):
+            pr_db = PolicyRule(id=uuidutils.generate_uuid(),
+                               tenant_id=tenant_id,
+                               name=pr['name'],
+                               description=pr['description'],
+                               enabled=pr['enabled'],
+                               policy_classifier_id=pr['policy_classifier_id'])
+            context.session.add(pr_db)
+            self._set_actions_for_rule(context, pr_db,
+                                       pr['policy_actions'])
+        return self._make_policy_rule_dict(pr_db)
 
     @log.log
     def update_policy_rule(self, context, id, policy_rule):
-        pass
+        pr = policy_rule['policy_rule']
+        with context.session.begin(subtransactions=True):
+            pr_query = context.session.query(
+                PolicyRule).with_lockmode('update')
+            pr_db = pr_query.filter_by(id=id).one()
+            if 'policy_actions' in pr:
+                self._set_actions_for_rule(context, pr_db,
+                                           pr['policy_actions'])
+                del pr['policy_actions']
+            pr_db.update(pr)
+        return self._make_policy_rule_dict(pr_db)
 
     @log.log
     def delete_policy_rule(self, context, id):
-        pass
+        with context.session.begin(subtransactions=True):
+            pr_query = context.session.query(
+                PolicyRule).with_lockmode('update')
+            pr_db = pr_query.filter_by(id=id).one()
+            context.session.delete(pr_db)
+
+    @log.log
+    def get_policy_rule(self, context, id, fields=None):
+        pr = self._get_policy_rule(context, id)
+        return self._make_policy_rule_dict(pr, fields)
+
+    @log.log
+    def get_policy_rules(self, context, filters=None, fields=None):
+        return self._get_collection(context, PolicyRule,
+                                    self._make_policy_rule_dict,
+                                    filters=filters, fields=fields)
+
+    @log.log
+    def get_policy_rules_count(self, context, filters=None):
+        return self._get_collection_count(context, PolicyRule,
+                                          filters=filters)
 
     @log.log
     def create_policy_classifier(self, context, policy_classifier):
