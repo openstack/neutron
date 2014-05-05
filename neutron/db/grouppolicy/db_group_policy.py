@@ -99,21 +99,27 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                          nullable=True)
     port_range_min = sa.Column(sa.Integer)
     port_range_max = sa.Column(sa.Integer)
-    action_type = sa.Column(sa.Enum(const.GP_ALLOW,
-                                    const.GP_REDIRECT,
-                                    name='action_type'))
-    # Default value would be Null when action_type is allow
-    # however, value is required if something meaningful needs to be done
-    # for redirect
-    # TODO(Sumit): Revisit when other action_types are defined
-    action_value = sa.Column(sa.String(36),
-                             sa.ForeignKey('gp_contract_scopes.id'),
-                             nullable=True, unique=True)
     direction = sa.Column(sa.Enum(const.GP_DIRECTION_IN,
                                   const.GP_DIRECTION_OUT,
                                   const.GP_DIRECTION_BI,
                                   name='direction'))
-    # TODO(Sumit): Add policy_label
+
+
+class PolicyAction(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+    """Represents a Group Policy Action."""
+    __tablename__ = 'gp_policy_actions'
+    name = sa.Column(sa.String(255))
+    description = sa.Column(sa.String(1024))
+    action_type = sa.Column(sa.Enum(const.GP_ALLOW,
+                                    const.GP_REDIRECT,
+                                    name='action_type'))
+    # Default action_value would be Null when action_type is allow
+    # however, value is required if something meaningful needs to be done
+    # for redirect
+    # TODO(Sumit): Add foreign key constraints
+    # TODO(Sumit): Revisit when other action_types are defined
+    action_value = sa.Column(sa.String(36),
+                             nullable=True, unique=True)
 
 
 class Contract(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -226,6 +232,13 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             raise nexc.PolicyRuleNotFound(policy_rule_id=id)
         return policy_rule
 
+    def _get_policy_action(self, context, id):
+        try:
+            policy_action = self._get_by_id(context, PolicyAction, id)
+        except exc.NoResultFound:
+            raise nexc.PolicyActionNotFound(policy_action_id=id)
+        return policy_action
+
     def _get_bridge_domain(self, context, id):
         try:
             bridge_domain = self._get_by_id(context, BridgeDomain, id)
@@ -260,6 +273,15 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         #
         # 'provided_contract_scopes': epg['provided_contract_scopes'],
         # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
+        return self._fields(res, fields)
+
+    def _make_policy_action_dict(self, pa, fields=None):
+        res = {'id': pa['id'],
+               'tenant_id': pa['tenant_id'],
+               'name': pa['name'],
+               'description': pa['description'],
+               'action_type': pa['action_type'],
+               'action_value': pa['action_value']}
         return self._fields(res, fields)
 
     def _make_bridge_domain_dict(self, bd, fields=None):
@@ -433,6 +455,54 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         pass
 
     @log.log
+    def create_policy_action(self, context, policy_action):
+        pa = policy_action['policy_action']
+        tenant_id = self._get_tenant_id_for_create(context, pa)
+        with context.session.begin(subtransactions=True):
+            pa_db = PolicyAction(id=uuidutils.generate_uuid(),
+                                 tenant_id=tenant_id,
+                                 name=pa['name'],
+                                 description=pa['description'],
+                                 action_type=pa['action_type'],
+                                 action_value=pa['action_value'])
+            context.session.add(pa_db)
+        return self._make_policy_action_dict(pa_db)
+
+    @log.log
+    def update_policy_action(self, context, id, policy_action):
+        pa = policy_action['policy_action']
+        with context.session.begin(subtransactions=True):
+            pa_query = context.session.query(
+                PolicyAction).with_lockmode('update')
+            pa_db = pa_query.filter_by(id=id).one()
+            pa_db.update(pa)
+        return self._make_policy_action_dict(pa_db)
+
+    @log.log
+    def delete_policy_action(self, context, id):
+        with context.session.begin(subtransactions=True):
+            pa_query = context.session.query(
+                PolicyAction).with_lockmode('update')
+            pa_db = pa_query.filter_by(id=id).one()
+            context.session.delete(pa_db)
+
+    @log.log
+    def get_policy_action(self, context, id, fields=None):
+        pa = self._get_policy_action(context, id)
+        return self._make_policy_action_dict(pa, fields)
+
+    @log.log
+    def get_policy_actions(self, context, filters=None, fields=None):
+        return self._get_collection(context, PolicyAction,
+                                    self._make_policy_action_dict,
+                                    filters=filters, fields=fields)
+
+    @log.log
+    def get_policy_actions_count(self, context, filters=None):
+        return self._get_collection_count(context, PolicyAction,
+                                          filters=filters)
+
+    @log.log
     def delete_policy_rule(self, context, id):
         pass
 
@@ -488,6 +558,8 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
     def create_routing_domain(self, context, routing_domain):
         rd = routing_domain['routing_domain']
         tenant_id = self._get_tenant_id_for_create(context, rd)
+        # TODO(Sumit): Check that subnet_prefix_length is smaller
+        # than size of the supernet
         with context.session.begin(subtransactions=True):
             rd_db = RoutingDomain(id=uuidutils.generate_uuid(),
                                   tenant_id=tenant_id,
@@ -503,6 +575,8 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
     @log.log
     def update_routing_domain(self, context, id, routing_domain):
         rd = routing_domain['routing_domain']
+        # TODO(Sumit): Check that subnet_prefix_length is smaller
+        # than size of the supernet if its being updated
         with context.session.begin(subtransactions=True):
             rd_query = context.session.query(
                 RoutingDomain).with_lockmode('update')

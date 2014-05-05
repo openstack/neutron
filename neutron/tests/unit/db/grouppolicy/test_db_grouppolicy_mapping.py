@@ -266,7 +266,7 @@ class GroupPolicyMappingDbTestCase(GroupPolicyMappingTestMixin,
         gpolicy.RESOURCE_ATTRIBUTE_MAP = self._saved_gp_attr_map
 
 
-class TestGroupPolicy(GroupPolicyMappingDbTestCase):
+class TestGroupPolicyMappedResources(GroupPolicyMappingDbTestCase):
 
     def test_create_endpoint(self, **kwargs):
         name = "ep1"

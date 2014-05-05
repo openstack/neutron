@@ -50,6 +50,10 @@ class PolicyRuleNotFound(nexc.NotFound):
     message = _("PolicyRule %(policy_rule_id)s could not be found")
 
 
+class PolicyActionNotFound(nexc.NotFound):
+    message = _("PolicyAction %(policy_action_id)s could not be found")
+
+
 class BridgeDomainNotFound(nexc.NotFound):
     message = _("BridgeDomain %(bridge_domain_id)s could not be found")
 
@@ -156,10 +160,10 @@ CONTRACTS = 'contracts'
 CONTRACT_PROVIDING_SCOPES = 'contract_providing_scopes'
 CONTRACT_CONSUMING_SCOPES = 'contract_consuming_scopes'
 POLICY_RULES = 'policy_rules'
-FILTERS = 'filters'
-CLASSIFIERS = 'classifiers'
-ACTIONS = 'actions'
-SELECTORS = 'selectors'
+CONTRACT_FILTERS = 'contract_filters'
+POLICY_CLASSIFIERS = 'policy_classifiers'
+POLICY_ACTIONS = 'policy_actions'
+ENDPOINT_GROUP_SELECTORS = 'endpoint_group_selectors'
 POLICY_LABELS = 'policy_labels'
 BRIDGE_DOMAINS = 'bridge_domains'
 ROUTING_DOMAINS = 'routing_domains'
@@ -330,7 +334,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                     'convert_to': attr.convert_none_to_empty_list,
                     'required': True, 'is_visible': True},
     },
-    FILTERS: {
+    CONTRACT_FILTERS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True, 'primary_key': True},
@@ -354,7 +358,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'convert_to': attr.convert_none_to_empty_list,
                            'required': True, 'is_visible': True},
     },
-    CLASSIFIERS: {
+    POLICY_CLASSIFIERS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True, 'primary_key': True},
@@ -380,7 +384,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:string': gp_supported_directions},
                       'default': None, 'is_visible': True},
     },
-    ACTIONS: {
+    POLICY_ACTIONS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
@@ -403,7 +407,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                          'validate': {'type:uuid_or_none': None},
                          'is_visible': True},
     },
-    SELECTORS: {
+    ENDPOINT_GROUP_SELECTORS: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
@@ -660,6 +664,26 @@ class GroupPolicyPluginBase(ServicePluginBase):
 
     @abc.abstractmethod
     def delete_policy_rule(self, context, id):
+        pass
+
+    @abc.abstractmethod
+    def get_policy_actions(self, context, filters=None, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def get_policy_action(self, context, id, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def create_policy_action(self, context, policy_action):
+        pass
+
+    @abc.abstractmethod
+    def update_policy_action(self, context, id, policy_action):
+        pass
+
+    @abc.abstractmethod
+    def delete_policy_action(self, context, id):
         pass
 
     @abc.abstractmethod

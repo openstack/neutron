@@ -54,6 +54,23 @@ class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
         return self._original_endpoint_group
 
 
+class PolicyActionContext(GroupPolicyContext, api.PolicyActionContext):
+
+    def __init__(self, plugin, plugin_context, policy_action,
+                 original_policy_action=None):
+        super(PolicyActionContext, self).__init__(plugin, plugin_context)
+        self._policy_action = policy_action
+        self._original_policy_action = original_policy_action
+
+    @property
+    def current(self):
+        return self._policy_action
+
+    @property
+    def original(self):
+        return self._original_policy_action
+
+
 class BridgeDomainContext(GroupPolicyContext, api.BridgeDomainContext):
 
     def __init__(self, plugin, plugin_context, bridge_domain,

@@ -74,6 +74,35 @@ class EndpointGroupContext(object):
 
 
 @six.add_metaclass(ABCMeta)
+class PolicyActionContext(object):
+    """Context passed to policy engine for changes to policy_action resources.
+
+    An PolicyActionContext instance wraps an policy_action resource.
+    It provides helper methods for accessing other relevant information.
+    Results from expensive operations are cached for convenient access.
+    """
+
+    @abstractproperty
+    def current(self):
+        """Return the current state of the policy_action.
+
+        Return the current state of the policy_action, as defined by
+        GroupPolicyPlugin.create_policy_action.
+        """
+        pass
+
+    @abstractproperty
+    def original(self):
+        """Return the original state of the policy_action.
+
+        Return the original state of the policy_action, prior to a call to
+        update_policy_action. Method is only valid within calls to
+        update_policy_action_precommit and update_policy_action_postcommit.
+        """
+        pass
+
+
+@six.add_metaclass(ABCMeta)
 class BridgeDomainContext(object):
     """Context passed to policy engine for changes to bridge_domain resources.
 

@@ -45,6 +45,30 @@ class NoopDriver(api.PolicyDriver):
         pass
 
     @log.log
+    def create_policy_action_precommit(self, context):
+        pass
+
+    @log.log
+    def create_policy_action_postcommit(self, context):
+        pass
+
+    @log.log
+    def update_policy_action_precommit(self, context):
+        pass
+
+    @log.log
+    def update_policy_action_postcommit(self, context):
+        pass
+
+    @log.log
+    def delete_policy_action_precommit(self, context):
+        pass
+
+    @log.log
+    def delete_policy_action_postcommit(self, context):
+        pass
+
+    @log.log
     def create_endpoint_group_precommit(self, context):
         pass
 
