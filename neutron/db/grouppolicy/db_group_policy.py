@@ -79,19 +79,27 @@ class ContractPolicyRuleAssociation(model_base.BASEV2):
                             sa.ForeignKey('gp_contracts.id'),
                             primary_key=True)
     policyrule_id = sa.Column(sa.String(36),
-                              sa.ForeignKey('gp_policyrules.id'),
+                              sa.ForeignKey('gp_policy_rules.id'),
                               primary_key=True)
     position = sa.Column(sa.Integer)
 
 
 class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a Group Policy Rule."""
-    __tablename__ = 'gp_policyrules'
+    __tablename__ = 'gp_policy_rules'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     enabled = sa.Column(sa.Boolean)
     contracts = orm.relationship(ContractPolicyRuleAssociation,
-                                 backref='gp_policyrules')
+                                 backref='gp_policy_rules')
+
+
+class PolicyClassifier(model_base.BASEV2, models_v2.HasId,
+                       models_v2.HasTenant):
+    """Represents a Group Policy Classifier."""
+    __tablename__ = 'gp_policy_classifiers'
+    name = sa.Column(sa.String(255))
+    description = sa.Column(sa.String(1024))
     # Default value would be Null implying all protocols
     # TODO(Sumit): Confirm this
     protocol = sa.Column(sa.Enum(const.TCP, const.UDP, const.ICMP,
@@ -232,6 +240,13 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             raise nexc.PolicyRuleNotFound(policy_rule_id=id)
         return policy_rule
 
+    def _get_policy_classifier(self, context, id):
+        try:
+            policy_classifier = self._get_by_id(context, PolicyClassifier, id)
+        except exc.NoResultFound:
+            raise nexc.PolicyClassifierNotFound(policy_classifier_id=id)
+        return policy_classifier
+
     def _get_policy_action(self, context, id):
         try:
             policy_action = self._get_by_id(context, PolicyAction, id)
@@ -253,6 +268,22 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             raise nexc.RoutingDomainNotFound(routing_domain_id=id)
         return routing_domain
 
+    def _get_min_max_ports_from_range(self, port_range):
+        if not port_range:
+            return [None, None]
+        min_port, sep, max_port = port_range.partition(":")
+        if not max_port:
+            max_port = min_port
+        return [int(min_port), int(max_port)]
+
+    def _get_port_range_from_min_max_ports(self, min_port, max_port):
+        if not min_port:
+            return None
+        if min_port == max_port:
+            return str(min_port)
+        else:
+            return '%d:%d' % (min_port, max_port)
+
     def _make_endpoint_dict(self, ep, fields=None):
         res = {'id': ep['id'],
                'tenant_id': ep['tenant_id'],
@@ -273,6 +304,19 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         #
         # 'provided_contract_scopes': epg['provided_contract_scopes'],
         # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
+        return self._fields(res, fields)
+
+    def _make_policy_classifier_dict(self, pc, fields=None):
+        port_range = self._get_port_range_from_min_max_ports(
+            pc['port_range_min'],
+            pc['port_range_max'])
+        res = {'id': pc['id'],
+               'tenant_id': pc['tenant_id'],
+               'name': pc['name'],
+               'description': pc['description'],
+               'protocol': pc['protocol'],
+               'port_range': port_range,
+               'direction': pc['direction']}
         return self._fields(res, fields)
 
     def _make_policy_action_dict(self, pa, fields=None):
@@ -455,6 +499,62 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         pass
 
     @log.log
+    def delete_policy_rule(self, context, id):
+        pass
+
+    @log.log
+    def create_policy_classifier(self, context, policy_classifier):
+        pc = policy_classifier['policy_classifier']
+        tenant_id = self._get_tenant_id_for_create(context, pc)
+        port_min, port_max = self._get_min_max_ports_from_range(
+            pc['port_range'])
+        with context.session.begin(subtransactions=True):
+            pc_db = PolicyClassifier(id=uuidutils.generate_uuid(),
+                                     tenant_id=tenant_id,
+                                     name=pc['name'],
+                                     description=pc['description'],
+                                     protocol=pc['protocol'],
+                                     port_range_min=port_min,
+                                     port_range_max=port_max,
+                                     direction=pc['direction'])
+            context.session.add(pc_db)
+        return self._make_policy_classifier_dict(pc_db)
+
+    @log.log
+    def update_policy_classifier(self, context, id, policy_classifier):
+        pc = policy_classifier['policy_classifier']
+        with context.session.begin(subtransactions=True):
+            pc_query = context.session.query(
+                PolicyClassifier).with_lockmode('update')
+            pc_db = pc_query.filter_by(id=id).one()
+            pc_db.update(pc)
+        return self._make_policy_classifier_dict(pc_db)
+
+    @log.log
+    def delete_policy_classifier(self, context, id):
+        with context.session.begin(subtransactions=True):
+            pc_query = context.session.query(
+                PolicyClassifier).with_lockmode('update')
+            pc_db = pc_query.filter_by(id=id).one()
+            context.session.delete(pc_db)
+
+    @log.log
+    def get_policy_classifier(self, context, id, fields=None):
+        pc = self._get_policy_classifier(context, id)
+        return self._make_policy_classifier_dict(pc, fields)
+
+    @log.log
+    def get_policy_classifiers(self, context, filters=None, fields=None):
+        return self._get_collection(context, PolicyClassifier,
+                                    self._make_policy_classifier_dict,
+                                    filters=filters, fields=fields)
+
+    @log.log
+    def get_policy_classifiers_count(self, context, filters=None):
+        return self._get_collection_count(context, PolicyClassifier,
+                                          filters=filters)
+
+    @log.log
     def create_policy_action(self, context, policy_action):
         pa = policy_action['policy_action']
         tenant_id = self._get_tenant_id_for_create(context, pa)
@@ -501,10 +601,6 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
     def get_policy_actions_count(self, context, filters=None):
         return self._get_collection_count(context, PolicyAction,
                                           filters=filters)
-
-    @log.log
-    def delete_policy_rule(self, context, id):
-        pass
 
     @log.log
     def create_bridge_domain(self, context, bridge_domain):

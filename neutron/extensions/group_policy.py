@@ -54,6 +54,10 @@ class PolicyActionNotFound(nexc.NotFound):
     message = _("PolicyAction %(policy_action_id)s could not be found")
 
 
+class PolicyClassifierNotFound(nexc.NotFound):
+    message = _("PolicyClassifier %(policy_classifier_id)s could not be found")
+
+
 class BridgeDomainNotFound(nexc.NotFound):
     message = _("BridgeDomain %(bridge_domain_id)s could not be found")
 
@@ -152,6 +156,9 @@ def convert_validate_port_value(port):
         return val
     else:
         raise GroupPolicyInvalidPortValue(port=port)
+
+
+attr.validators['type:port_range'] = _validate_port_range
 
 
 ENDPOINTS = 'endpoints'
@@ -664,6 +671,26 @@ class GroupPolicyPluginBase(ServicePluginBase):
 
     @abc.abstractmethod
     def delete_policy_rule(self, context, id):
+        pass
+
+    @abc.abstractmethod
+    def get_policy_classifiers(self, context, filters=None, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def get_policy_classifier(self, context, id, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def create_policy_classifier(self, context, policy_classifier):
+        pass
+
+    @abc.abstractmethod
+    def update_policy_classifier(self, context, id, policy_classifier):
+        pass
+
+    @abc.abstractmethod
+    def delete_policy_classifier(self, context, id):
         pass
 
     @abc.abstractmethod
