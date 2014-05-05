@@ -195,7 +195,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
             extended_vip = self.plugin.populate_vip_graph(context, vip)
             vip_network_id = self._get_vip_network_id(context, extended_vip)
             pool_network_id = self._get_pool_network_id(context, extended_vip)
-            service_name = self._get_service(vip_network_id, pool_network_id)
+            service_name = self._get_service(vip_network_id, pool_network_id,
+                                             vip['tenant_id'])
             log_info['extended_vip'] = extended_vip
             log_info['vip_network_id'] = vip_network_id
             log_info['service_name'] = service_name
@@ -491,7 +492,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
                       resource, None, None),
                       [202])
 
-    def _get_service(self, vip_network_id, pool_network_id):
+    def _get_service(self, vip_network_id, pool_network_id,
+                     tenant_id):
         """Get a service name.
 
         if you can't find one,
@@ -512,7 +514,8 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
             LOG.debug(
                 'Could not find a service named ' + incoming_service_name)
             service_name = self._create_service(vip_network_id,
-                                                pool_network_id)
+                                                pool_network_id,
+                                                tenant_id)
             self.l2_l3_ctor_params["service"] = incoming_service_name
             wf_name = 'l2_l3_' + networks_name
             self._create_workflow(
@@ -523,7 +526,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
             LOG.debug('A service named ' + service_name + ' was found.')
         return service_name
 
-    def _create_service(self, vip_network_id, pool_network_id):
+    def _create_service(self, vip_network_id, pool_network_id, tenant_id):
         """create the service and provision it (async)."""
         # 1) create the service
         service = copy.deepcopy(self.service)
@@ -534,7 +537,7 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         else:
             service_name = 'srv_' + vip_network_id
             service['primary']['network']['portgroups'] = [vip_network_id]
-        resource = '/api/service?name=%s' % service_name
+        resource = '/api/service?name=%s&tenant=%s' % (service_name, tenant_id)
 
         response = _rest_wrapper(self.rest_client.call('POST', resource,
                                  service,

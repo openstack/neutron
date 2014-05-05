@@ -200,7 +200,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                     mock.call('GET', u'/api/service/srv_' +
                               subnet['subnet']['network_id'], None, None),
                     mock.call('POST', u'/api/service?name=srv_' +
-                              subnet['subnet']['network_id'], mock.ANY,
+                              subnet['subnet']['network_id'] + '&tenant=' +
+                              vip['tenant_id'], mock.ANY,
                               driver.CREATE_SERVICE_HEADER),
                     mock.call('GET', u'/api/workflow/l2_l3_' +
                               subnet['subnet']['network_id'], None, None),
@@ -282,8 +283,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                         mock.call('GET', '/api/service/srv_' + name_suffix,
                                   None, None),
                         mock.call('POST', '/api/service?name=srv_' +
-                                  name_suffix, mock.ANY,
-                                  driver.CREATE_SERVICE_HEADER),
+                                  name_suffix + '&tenant=' + vip['tenant_id'],
+                                  mock.ANY, driver.CREATE_SERVICE_HEADER),
                         mock.call('POST', 'someuri',
                                   None, driver.PROVISION_HEADER),
                         mock.call('GET', '/api/workflow/l2_l3_' + name_suffix,
