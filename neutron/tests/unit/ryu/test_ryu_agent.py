@@ -410,7 +410,7 @@ class TestOVSBridge(RyuAgentTestCase):
                        side_effect=[None, {'opts': 'opts_val'}]),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
                        return_value=1),
-            mock.patch(self._AGENT_NAME + '.VifPort')
+            mock.patch('neutron.agent.linux.ovs_lib.VifPort')
         ) as (mock_db, mock_ofport, mock_vif):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             vifport = br._get_external_port('iface')
@@ -434,7 +434,7 @@ class TestOVSBridge(RyuAgentTestCase):
                                     {'opts': 'opts_val'}]),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
                        return_value=1),
-            mock.patch(self._AGENT_NAME + '.VifPort')
+            mock.patch('neutron.agent.linux.ovs_lib.VifPort')
         ) as (mock_db, mock_ofport, mock_vif):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             vifport = br._get_external_port('iface')
@@ -452,7 +452,7 @@ class TestOVSBridge(RyuAgentTestCase):
                        side_effect=[None, {'remote_ip': '0.0.0.0'}]),
             mock.patch(self._AGENT_NAME + '.OVSBridge.get_ofport',
                        return_value=1),
-            mock.patch(self._AGENT_NAME + '.VifPort')
+            mock.patch('neutron.agent.linux.ovs_lib.VifPort')
         ) as (mock_db, mock_ofport, mock_vif):
             br = self.mod_agent.OVSBridge('br_name', 'helper')
             vifport = br._get_external_port('iface')

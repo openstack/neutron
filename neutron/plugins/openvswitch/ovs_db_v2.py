@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from six.moves import xrange
+from six import moves
 from sqlalchemy import func
 from sqlalchemy.orm import exc
 
@@ -72,7 +72,7 @@ def sync_vlan_allocations(network_vlan_ranges):
             # physical network
             vlan_ids = set()
             for vlan_range in vlan_ranges:
-                vlan_ids |= set(xrange(vlan_range[0], vlan_range[1] + 1))
+                vlan_ids |= set(moves.xrange(vlan_range[0], vlan_range[1] + 1))
 
             # remove from table unallocated vlans not currently allocatable
             if physical_network in allocations:
@@ -211,7 +211,7 @@ def sync_tunnel_allocations(tunnel_id_ranges):
                         "%(tun_min)s:%(tun_max)s"),
                       {'tun_min': tun_min, 'tun_max': tun_max})
         else:
-            tunnel_ids |= set(xrange(tun_min, tun_max + 1))
+            tunnel_ids |= set(moves.xrange(tun_min, tun_max + 1))
 
     session = db.get_session()
     with session.begin():
@@ -371,7 +371,7 @@ def add_tunnel_endpoint(ip, max_retries=10):
     #                   doesn't conflict with any other concurrently executed
     #                   DB transactions in spite of the specified transactions
     #                   isolation level value
-    for i in xrange(max_retries):
+    for i in moves.xrange(max_retries):
         LOG.debug(_('Adding a tunnel endpoint for %s'), ip)
         try:
             session = db.get_session()

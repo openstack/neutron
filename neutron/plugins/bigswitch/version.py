@@ -22,39 +22,27 @@
 """Determine version of NeutronRestProxy plugin"""
 from __future__ import print_function
 
-# if vcsversion exists, use it. Else, use LOCALBRANCH:LOCALREVISION
-try:
-    from neutron.plugins.bigswitch.vcsversion import version_info
-except ImportError:
-    version_info = {'branch_nick': u'LOCALBRANCH',
-                    'revision_id': u'LOCALREVISION',
-                    'revno': 0}
-try:
-    from neutron.plugins.bigswitch.vcsversion import NeutronRestPROXY_VERSION
-except ImportError:
-    NeutronRestPROXY_VERSION = ['2013', '1', None]
-try:
-    from neutron.plugins.bigswitch.vcsversion import FINAL
-except ImportError:
-    FINAL = False   # This becomes true at Release Candidate time
+from neutron.plugins.bigswitch import vcsversion
 
 
-YEAR, COUNT, REVISION = NeutronRestPROXY_VERSION
+YEAR, COUNT, REVISION = vcsversion.NEUTRONRESTPROXY_VERSION
 
 
 def canonical_version_string():
-    return '.'.join(filter(None, NeutronRestPROXY_VERSION))
+    return '.'.join(filter(None,
+                           vcsversion.NEUTRONRESTPROXY_VERSION))
 
 
 def version_string():
-    if FINAL:
+    if vcsversion.FINAL:
         return canonical_version_string()
     else:
         return '%s-dev' % (canonical_version_string(),)
 
 
 def vcs_version_string():
-    return "%s:%s" % (version_info['branch_nick'], version_info['revision_id'])
+    return "%s:%s" % (vcsversion.version_info['branch_nick'],
+                      vcsversion.version_info['revision_id'])
 
 
 def version_string_with_vcs():

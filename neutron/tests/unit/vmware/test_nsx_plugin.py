@@ -40,10 +40,10 @@ from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.api_client import version as version_module
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import sync
+from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware.dbexts import db as nsx_db
 from neutron.plugins.vmware.extensions import distributedrouter as dist_router
 from neutron.plugins.vmware import nsxlib
-from neutron.plugins.vmware.plugins import base
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
@@ -221,7 +221,7 @@ class TestPortsV2(NsxPluginV2TestCase,
 
     def test_create_port_maintenance_returns_503(self):
         with self.network() as net:
-            with mock.patch.object(nsxlib.switch, 'do_request',
+            with mock.patch.object(nsxlib, 'do_request',
                                    side_effect=nsx_exc.MaintenanceInProgress):
                 data = {'port': {'network_id': net['network']['id'],
                                  'admin_state_up': False,
@@ -322,7 +322,7 @@ class TestNetworksV2(test_plugin.TestNetworksV2, NsxPluginV2TestCase):
         data = {'network': {'name': 'foo',
                             'admin_state_up': True,
                             'tenant_id': self._tenant_id}}
-        with mock.patch.object(nsxlib.switch, 'do_request',
+        with mock.patch.object(nsxlib, 'do_request',
                                side_effect=nsx_exc.MaintenanceInProgress):
             net_req = self.new_create_request('networks', data, self.fmt)
             res = net_req.get_response(self.api)
@@ -379,13 +379,6 @@ class TestSecurityGroup(ext_sg.TestSecurityGroups, SecurityGroupsTestCase):
             res = self._create_security_group_rule(self.fmt, rule)
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, 400)
-
-    def test_update_security_group_deal_with_exc(self):
-        name = 'foo security group'
-        with mock.patch.object(nsxlib.switch, 'do_request',
-                               side_effect=api_exc.NsxApiException):
-            with self.security_group(name=name) as sg:
-                self.assertEqual(sg['security_group']['name'], name)
 
 
 class TestL3ExtensionManager(object):
@@ -459,7 +452,7 @@ class L3NatTest(test_l3_plugin.L3BaseForIntTests, NsxPluginV2TestCase):
 
     def _create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
-        net_type = base.NetworkTypes.L3_EXT
+        net_type = utils.NetworkTypes.L3_EXT
         providernet_args = {pnet.NETWORK_TYPE: net_type,
                             pnet.PHYSICAL_NETWORK: 'l3_gw_uuid'}
         if vlan_id:
@@ -478,7 +471,7 @@ class TestL3NatTestCase(L3NatTest,
 
     def _test_create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
-        net_type = base.NetworkTypes.L3_EXT
+        net_type = utils.NetworkTypes.L3_EXT
         expected = [('subnets', []), ('name', name), ('admin_state_up', True),
                     ('status', 'ACTIVE'), ('shared', False),
                     (external_net.EXTERNAL, True),
@@ -957,7 +950,7 @@ class TestL3NatTestCase(L3NatTest,
         with self._create_l3_ext_network() as net:
             with self.subnet(network=net) as s:
                 with mock.patch.object(
-                    nsxlib.router,
+                    nsxlib,
                     'do_request',
                     side_effect=nsx_exc.MaintenanceInProgress):
                     data = {'router': {'tenant_id': 'whatever'}}

@@ -17,14 +17,14 @@
 
 import hashlib
 
-from neutron.api.v2.attributes import is_attr_set
+from neutron.api.v2 import attributes
 from neutron.openstack.common import log
-from neutron.version import version_info
+from neutron import version
 
 
 LOG = log.getLogger(__name__)
 MAX_DISPLAY_NAME_LEN = 40
-NEUTRON_VERSION = version_info.release_string()
+NEUTRON_VERSION = version.version_info.release_string()
 
 
 # Allowed network types for the NSX Plugin
@@ -61,7 +61,8 @@ def device_id_to_vm_id(device_id, obfuscate=False):
 
 
 def check_and_truncate(display_name):
-    if is_attr_set(display_name) and len(display_name) > MAX_DISPLAY_NAME_LEN:
+    if (attributes.is_attr_set(display_name) and
+            len(display_name) > MAX_DISPLAY_NAME_LEN):
         LOG.debug(_("Specified name:'%s' exceeds maximum length. "
                     "It will be truncated on NSX"), display_name)
         return display_name[:MAX_DISPLAY_NAME_LEN]

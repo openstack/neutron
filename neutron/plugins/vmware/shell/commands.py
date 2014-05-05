@@ -15,8 +15,7 @@
 #    under the License.
 #
 
-from neutronclient.neutron.v2_0 import find_resourceid_by_name_or_id
-from neutronclient.neutron.v2_0 import NeutronCommand
+from neutronclient.neutron import v2_0 as client
 
 LSN_PATH = '/lsns'
 
@@ -29,7 +28,7 @@ def print_report(write_func, report):
     write_func(_("Port uuids = %s\n\n") % ports)
 
 
-class NetworkReport(NeutronCommand):
+class NetworkReport(client.NeutronCommand):
     """Retrieve network migration report."""
 
     def get_parser(self, prog_name):
@@ -40,14 +39,15 @@ class NetworkReport(NeutronCommand):
 
     def run(self, parsed_args):
         net = parsed_args.network
-        net_id = find_resourceid_by_name_or_id(self.app.client, 'network', net)
+        net_id = client.find_resourceid_by_name_or_id(self.app.client,
+                                                      'network', net)
         res = self.app.client.get("%s/%s" % (LSN_PATH, net_id))
         if res:
             self.app.stdout.write(_('Migration report is:\n'))
             print_report(self.app.stdout.write, res['lsn'])
 
 
-class NetworkMigrate(NeutronCommand):
+class NetworkMigrate(client.NeutronCommand):
     """Perform network migration."""
 
     def get_parser(self, prog_name):
@@ -58,7 +58,8 @@ class NetworkMigrate(NeutronCommand):
 
     def run(self, parsed_args):
         net = parsed_args.network
-        net_id = find_resourceid_by_name_or_id(self.app.client, 'network', net)
+        net_id = client.find_resourceid_by_name_or_id(self.app.client,
+                                                      'network', net)
         body = {'network': net_id}
         res = self.app.client.post(LSN_PATH, body={'lsn': body})
         if res:

@@ -28,7 +28,7 @@ from neutron.api.v2 import attributes
 from neutron.openstack.common import log as logging
 from neutron.plugins.ibm.common import config  # noqa
 from neutron.plugins.ibm.common import constants
-from neutron.wsgi import Serializer
+from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class RequestHandler(object):
         '''Serializes a dictionary with a single key.'''
 
         if isinstance(data, dict):
-            return Serializer().serialize(data, self.content_type())
+            return wsgi.Serializer().serialize(data, self.content_type())
         elif data:
             raise TypeError(_("unable to serialize object type: '%s'") %
                             type(data))
@@ -106,7 +106,7 @@ class RequestHandler(object):
         if status_code == httplib.NO_CONTENT:
             return data
         try:
-            deserialized_data = Serializer(
+            deserialized_data = wsgi.Serializer(
                 metadata=self._s_meta).deserialize(data, self.content_type())
             deserialized_data = deserialized_data['body']
         except Exception:

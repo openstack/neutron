@@ -21,9 +21,7 @@ import contextlib
 import mock
 
 from neutron.common import exceptions
-from neutron.services.loadbalancer.drivers.haproxy import (
-    namespace_driver
-)
+from neutron.services.loadbalancer.drivers.haproxy import namespace_driver
 from neutron.tests import base
 
 

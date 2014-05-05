@@ -28,7 +28,8 @@ class LSNTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(LSNTestCase, self).setUp()
-        self.mock_request_p = mock.patch.object(lsnlib, 'do_request')
+        self.mock_request_p = mock.patch(
+            'neutron.plugins.vmware.nsxlib.do_request')
         self.mock_request = self.mock_request_p.start()
         self.cluster = mock.Mock()
         self.cluster.default_service_cluster_uuid = 'foo'

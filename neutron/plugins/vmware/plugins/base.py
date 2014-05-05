@@ -60,7 +60,7 @@ from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import nsx_utils
 from neutron.plugins.vmware.common import securitygroups as sg_utils
 from neutron.plugins.vmware.common import sync
-from neutron.plugins.vmware.common.utils import NetworkTypes
+from neutron.plugins.vmware.common import utils as c_utils
 from neutron.plugins.vmware.dbexts import db as nsx_db
 from neutron.plugins.vmware.dbexts import distributedrouter as dist_rtr
 from neutron.plugins.vmware.dbexts import maclearning as mac_db
@@ -374,8 +374,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         max_ports = self.nsx_opts.max_lp_per_overlay_ls
         allow_extra_lswitches = False
         for network_binding in network_bindings:
-            if network_binding.binding_type in (NetworkTypes.FLAT,
-                                                NetworkTypes.VLAN):
+            if network_binding.binding_type in (c_utils.NetworkTypes.FLAT,
+                                                c_utils.NetworkTypes.VLAN):
                 max_ports = self.nsx_opts.max_lp_per_bridged_ls
                 allow_extra_lswitches = True
                 break
@@ -621,7 +621,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                       True,
                                       ip_addresses)
         ext_network = self.get_network(context, port_data['network_id'])
-        if ext_network.get(pnet.NETWORK_TYPE) == NetworkTypes.L3_EXT:
+        if ext_network.get(pnet.NETWORK_TYPE) == c_utils.NetworkTypes.L3_EXT:
             # Update attachment
             physical_network = (ext_network[pnet.PHYSICAL_NETWORK] or
                                 self.cluster.default_l3_gw_service_uuid)
@@ -758,12 +758,13 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             err_msg = None
             if not network_type_set:
                 err_msg = _("%s required") % pnet.NETWORK_TYPE
-            elif network_type in (NetworkTypes.GRE, NetworkTypes.STT,
-                                  NetworkTypes.FLAT):
+            elif network_type in (c_utils.NetworkTypes.GRE,
+                                  c_utils.NetworkTypes.STT,
+                                  c_utils.NetworkTypes.FLAT):
                 if segmentation_id_set:
                     err_msg = _("Segmentation ID cannot be specified with "
                                 "flat network type")
-            elif network_type == NetworkTypes.VLAN:
+            elif network_type == c_utils.NetworkTypes.VLAN:
                 if not segmentation_id_set:
                     err_msg = _("Segmentation ID must be specified with "
                                 "vlan network type")
@@ -782,7 +783,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                         raise n_exc.VlanIdInUse(
                             vlan_id=segmentation_id,
                             physical_network=physical_network)
-            elif network_type == NetworkTypes.L3_EXT:
+            elif network_type == c_utils.NetworkTypes.L3_EXT:
                 if (segmentation_id_set and
                     not utils.is_valid_vlan_tag(segmentation_id)):
                     err_msg = (_("%(segmentation_id)s out of range "
@@ -888,9 +889,10 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         if bindings:
             transport_entry = {}
             for binding in bindings:
-                if binding.binding_type in [NetworkTypes.FLAT,
-                                            NetworkTypes.VLAN]:
-                    transport_entry['transport_type'] = NetworkTypes.BRIDGE
+                if binding.binding_type in [c_utils.NetworkTypes.FLAT,
+                                            c_utils.NetworkTypes.VLAN]:
+                    transport_entry['transport_type'] = (
+                        c_utils.NetworkTypes.BRIDGE)
                     transport_entry['binding_config'] = {}
                     vlan_id = binding.vlan_id
                     if vlan_id:
@@ -910,8 +912,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
             transport_entry = {}
             transport_type = transport_zone.get(pnet.NETWORK_TYPE)
-            if transport_type in [NetworkTypes.FLAT, NetworkTypes.VLAN]:
-                transport_entry['transport_type'] = NetworkTypes.BRIDGE
+            if transport_type in [c_utils.NetworkTypes.FLAT,
+                                  c_utils.NetworkTypes.VLAN]:
+                transport_entry['transport_type'] = c_utils.NetworkTypes.BRIDGE
                 transport_entry['binding_config'] = {}
                 vlan_id = transport_zone.get(pnet.SEGMENTATION_ID)
                 if vlan_id:

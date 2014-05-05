@@ -18,7 +18,7 @@
 from neutron.openstack.common import importutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
-from neutron.plugins.mlnx.common.comm_utils import RetryDecorator
+from neutron.plugins.mlnx.common import comm_utils
 from neutron.plugins.mlnx.common import exceptions
 
 zmq = importutils.try_import('eventlet.green.zmq')
@@ -49,7 +49,7 @@ class EswitchUtils(object):
             self.poller.register(self._conn, zmq.POLLIN)
         return self.__conn
 
-    @RetryDecorator(exceptions.RequestTimeout)
+    @comm_utils.RetryDecorator(exceptions.RequestTimeout)
     def send_msg(self, msg):
         self._conn.send(msg)
 

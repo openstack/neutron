@@ -16,7 +16,7 @@
 #    under the License.
 #
 
-from abc import abstractmethod
+import abc
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
@@ -205,19 +205,19 @@ class Qos(object):
 
 
 class QueuePluginBase(object):
-    @abstractmethod
+    @abc.abstractmethod
     def create_qos_queue(self, context, queue):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_qos_queue(self, context, id):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_qos_queue(self, context, id, fields=None):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_qos_queues(self, context, filters=None, fields=None, sorts=None,
                        limit=None, marker=None, page_reverse=False):
         pass

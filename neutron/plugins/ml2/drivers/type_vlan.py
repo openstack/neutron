@@ -16,7 +16,7 @@
 import sys
 
 from oslo.config import cfg
-from six.moves import xrange
+from six import moves
 import sqlalchemy as sa
 
 from neutron.common import constants as q_const
@@ -112,7 +112,7 @@ class VlanTypeDriver(api.TypeDriver):
                 # this physical network
                 vlan_ids = set()
                 for vlan_min, vlan_max in vlan_ranges:
-                    vlan_ids |= set(xrange(vlan_min, vlan_max + 1))
+                    vlan_ids |= set(moves.xrange(vlan_min, vlan_max + 1))
 
                 # remove from table unallocated vlans not currently
                 # allocatable

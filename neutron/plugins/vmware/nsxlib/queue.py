@@ -20,8 +20,7 @@ from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import utils
-from neutron.plugins.vmware.nsxlib import _build_uri_path
-from neutron.plugins.vmware.nsxlib import do_request
+from neutron.plugins.vmware import nsxlib
 
 HTTP_POST = "POST"
 HTTP_DELETE = "DELETE"
@@ -50,10 +49,10 @@ def create_lqueue(cluster, queue_data):
 
     queue_obj['tags'] = utils.get_tags()
     try:
-        return do_request(HTTP_POST,
-                          _build_uri_path(LQUEUE_RESOURCE),
-                          jsonutils.dumps(queue_obj),
-                          cluster=cluster)['uuid']
+        return nsxlib.do_request(HTTP_POST,
+                                 nsxlib._build_uri_path(LQUEUE_RESOURCE),
+                                 jsonutils.dumps(queue_obj),
+                                 cluster=cluster)['uuid']
     except api_exc.NsxApiException:
         # FIXME(salv-orlando): This should not raise NeutronException
         with excutils.save_and_reraise_exception():
@@ -62,10 +61,10 @@ def create_lqueue(cluster, queue_data):
 
 def delete_lqueue(cluster, queue_id):
     try:
-        do_request(HTTP_DELETE,
-                   _build_uri_path(LQUEUE_RESOURCE,
-                                   resource_id=queue_id),
-                   cluster=cluster)
+        nsxlib.do_request(HTTP_DELETE,
+                          nsxlib._build_uri_path(LQUEUE_RESOURCE,
+                                                 resource_id=queue_id),
+                          cluster=cluster)
     except Exception:
         # FIXME(salv-orlando): This should not raise NeutronException
         with excutils.save_and_reraise_exception():

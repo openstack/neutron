@@ -25,7 +25,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron import quota
 
 
@@ -195,7 +195,7 @@ class Packetfilter(extensions.ExtensionDescriptor):
         quota.QUOTAS.register_resource(qresource)
 
         resource = base.create_resource(COLLECTION, RESOURCE,
-                                        NeutronManager.get_plugin(),
+                                        manager.NeutronManager.get_plugin(),
                                         PACKET_FILTER_ATTR_PARAMS)
         pf_ext = extensions.ResourceExtension(
             COLLECTION, resource, attr_map=PACKET_FILTER_ATTR_PARAMS)

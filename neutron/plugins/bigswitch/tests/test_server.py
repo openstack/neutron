@@ -27,8 +27,8 @@ from __future__ import print_function
 import json
 import re
 
-from six.moves import xrange
-from wsgiref.simple_server import make_server
+from six import moves
+from wsgiref import simple_server
 
 
 class TestNetworkCtrl(object):
@@ -93,7 +93,7 @@ class TestNetworkCtrl(object):
     def request_handler(self, method, uri, body):
         retstatus = self.default_status
         retbody = self.default_response
-        for i in xrange(len(self.matches)):
+        for i in moves.xrange(len(self.matches)):
             (prior, method_regexp, uri_regexp, handler, data, multi) = \
                 self.matches[i]
             if re.match(method_regexp, method) and re.match(uri_regexp, uri):
@@ -156,7 +156,7 @@ class TestNetworkCtrl(object):
                     print('%s: %s' % ('Response',
                           json.dumps(body_data, sort_keys=True, indent=4)))
             return body
-        return make_server(self.host, self.port, app)
+        return simple_server.make_server(self.host, self.port, app)
 
     def run(self):
         print("Serving on port %d ..." % self.port)
