@@ -53,6 +53,12 @@ class GroupPolicyTestMixin(object):
 
         return attrs
 
+    def _get_test_policy_action_attrs(self, name='pa1'):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id}
+
+        return attrs
+
     def _get_test_bridge_domain_attrs(self, name='bd1'):
         attrs = {'name': name,
                  'tenant_id': self._tenant_id}
@@ -92,6 +98,22 @@ class GroupPolicyTestMixin(object):
             self.assertEqual(epg_res.status_int, expected_res_status)
 
         return epg_res
+
+    def _create_policy_action(self, fmt, name, description, action_type,
+                              action_value, expected_res_status=None,
+                              **kwargs):
+        data = {'policy_action': {'name': name,
+                                  'description': description,
+                                  'action_type': action_type,
+                                  'action_value': action_value,
+                                  'tenant_id': self._tenant_id}}
+
+        pa_req = self.new_create_request('policy_actions', data, fmt)
+        pa_res = pa_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(pa_res.status_int, expected_res_status)
+
+        return pa_res
 
     def _create_bridge_domain(self, fmt, name, description, routing_domain_id,
                               expected_res_status=None, **kwargs):
@@ -160,6 +182,24 @@ class GroupPolicyTestMixin(object):
                 self._delete('endpoint_groups', epg['endpoint_group']['id'])
 
     @contextlib.contextmanager
+    def policy_action(self, fmt=None, name='pa1', description="",
+                      action_type='allow', action_value=None,
+                      no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        res = self._create_policy_action(fmt, name, description, action_type,
+                                         action_value, **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        pa = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield pa
+        finally:
+            if not no_delete:
+                self._delete('policy_actions', pa['policy_action']['id'])
+
+    @contextlib.contextmanager
     def bridge_domain(self, fmt=None, name='bd1', description="",
                       routing_domain_id=None, no_delete=False, **kwargs):
         if not fmt:
@@ -222,7 +262,7 @@ class GroupPolicyDbTestCase(GroupPolicyTestMixin,
             self.ext_api = api_ext.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
 
-class TestGroupPolicy(GroupPolicyDbTestCase):
+class TestGroupPolicyMappedResources(GroupPolicyDbTestCase):
 
     def test_create_endpoint(self, **kwargs):
         name = "ep1"
@@ -261,6 +301,17 @@ class TestGroupPolicy(GroupPolicyDbTestCase):
             for k, v in attrs.iteritems():
                 self.assertEqual(rd['routing_domain'][k], v)
             # TODO(Sumit): Test for readonly attrs
+
+
+class TestGroupPolicyUnMappedResources(GroupPolicyDbTestCase):
+
+    def test_create_policy_action(self, **kwargs):
+        name = "pa1"
+        attrs = self._get_test_policy_action_attrs(name)
+
+        with self.policy_action(name=name) as pa:
+            for k, v in attrs.iteritems():
+                self.assertEqual(pa['policy_action'][k], v)
 
 
 # TODO(Sumit): XML tests

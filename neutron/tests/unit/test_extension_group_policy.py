@@ -197,6 +197,86 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
     def test_delete_endpoint_group(self):
         self._test_entity_delete('endpoint_group')
 
+    def test_create_policy_action(self):
+        policy_action_id = _uuid()
+        data = {'policy_action': {'name': 'pa1',
+                                  'tenant_id': _uuid(),
+                                  'action_type': 'allow',
+                                  'action_value': None,
+                                  'description': ''}}
+        return_value = copy.copy(data['policy_action'])
+        return_value.update({'id': policy_action_id})
+
+        instance = self.plugin.return_value
+        instance.create_policy_action.return_value = return_value
+        res = self.api.post(_get_path('gp/policy_actions', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
+        instance.create_policy_action.assert_called_with(mock.ANY,
+                                                         policy_action=data)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        res = self.deserialize(res)
+        self.assertIn('policy_action', res)
+        self.assertEqual(res['policy_action'], return_value)
+
+    def test_list_policy_actions(self):
+        policy_action_id = _uuid()
+        return_value = [{'tenant_id': _uuid(),
+                         'id': policy_action_id}]
+
+        instance = self.plugin.return_value
+        instance.get_policy_actions.return_value = return_value
+
+        res = self.api.get(_get_path('gp/policy_actions', fmt=self.fmt))
+
+        instance.get_policy_actions.assert_called_with(mock.ANY,
+                                                       fields=mock.ANY,
+                                                       filters=mock.ANY)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+
+    def test_get_policy_action(self):
+        policy_action_id = _uuid()
+        return_value = {'tenant_id': _uuid(),
+                        'id': policy_action_id}
+
+        instance = self.plugin.return_value
+        instance.get_policy_action.return_value = return_value
+
+        res = self.api.get(_get_path('gp/policy_actions',
+                                     id=policy_action_id, fmt=self.fmt))
+
+        instance.get_policy_action.assert_called_with(mock.ANY,
+                                                      policy_action_id,
+                                                      fields=mock.ANY)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+        res = self.deserialize(res)
+        self.assertIn('policy_action', res)
+        self.assertEqual(res['policy_action'], return_value)
+
+    def test_update_policy_action(self):
+        policy_action_id = _uuid()
+        update_data = {'policy_action': {'name': 'new_name'}}
+        return_value = {'tenant_id': _uuid(),
+                        'id': policy_action_id}
+
+        instance = self.plugin.return_value
+        instance.update_policy_action.return_value = return_value
+
+        res = self.api.put(_get_path('gp/policy_actions',
+                                     id=policy_action_id,
+                                     fmt=self.fmt),
+                           self.serialize(update_data))
+
+        instance.update_policy_action.assert_called_with(
+            mock.ANY, policy_action_id, policy_action=update_data)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+        res = self.deserialize(res)
+        self.assertIn('policy_action', res)
+        self.assertEqual(res['policy_action'], return_value)
+
+    def test_delete_policy_action(self):
+        self._test_entity_delete('policy_action')
+
     def test_create_bridge_domain(self):
         bridge_domain_id = _uuid()
         data = {'bridge_domain': {'name': 'bd1',

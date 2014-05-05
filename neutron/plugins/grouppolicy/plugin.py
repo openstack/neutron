@@ -98,6 +98,68 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
                             "failed, deleting endpoint '%s'"), id)
 
     @log.log
+    def create_policy_action(self, context, policy_action):
+        session = context.session
+        with session.begin(subtransactions=True):
+            result = super(GroupPolicyPlugin,
+                           self).create_policy_action(context, policy_action)
+            policy_context = p_context.PolicyActionContext(self, context,
+                                                           result)
+            self.policy_driver_manager.create_policy_action_precommit(
+                policy_context)
+
+        try:
+            self.policy_driver_manager.create_policy_action_postcommit(
+                policy_context)
+        except gp_exc.GroupPolicyDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_(
+                    "policy_driver_manager.create_policy_action_postcommit "
+                    "failed, deleting policy_action '%s'"), result['id'])
+                self.delete_policy_action(context, result['id'])
+
+        return result
+
+    @log.log
+    def update_policy_action(self, context, id, policy_action):
+        session = context.session
+        with session.begin(subtransactions=True):
+            original_policy_action = super(
+                GroupPolicyPlugin, self).get_policy_action(context, id)
+            updated_policy_action = super(
+                GroupPolicyPlugin, self).update_policy_action(context, id,
+                                                              policy_action)
+            policy_context = p_context.PolicyActionContext(
+                self, context, updated_policy_action,
+                original_policy_action=original_policy_action)
+            self.policy_driver_manager.update_policy_action_precommit(
+                policy_context)
+
+        self.policy_driver_manager.update_policy_action_postcommit(
+            policy_context)
+        return updated_policy_action
+
+    @log.log
+    def delete_policy_action(self, context, id):
+        session = context.session
+        with session.begin(subtransactions=True):
+            policy_action = self.get_policy_action(context, id)
+            policy_context = p_context.PolicyActionContext(self, context,
+                                                           policy_action)
+            self.policy_driver_manager.delete_policy_action_precommit(
+                policy_context)
+            super(GroupPolicyPlugin, self).delete_policy_action(context, id)
+
+        try:
+            self.policy_driver_manager.delete_policy_action_postcommit(
+                policy_context)
+        except gp_exc.GroupPolicyDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_(
+                    "policy_driver_manager.delete_policy_action_postcommit "
+                    "failed, deleting policy_action '%s'"), id)
+
+    @log.log
     def create_endpoint_group(self, context, endpoint_group):
         session = context.session
         with session.begin(subtransactions=True):

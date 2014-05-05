@@ -11,7 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import neutron.tests.unit.db.grouppolicy.test_db_grouppolicy_mapping as tdb
+import neutron.tests.unit.db.grouppolicy.test_db_grouppolicy as tdb
+import neutron.tests.unit.db.grouppolicy.test_db_grouppolicy_mapping as tdbm
 
 
 GP_PLUGIN_KLASS = (
@@ -19,7 +20,7 @@ GP_PLUGIN_KLASS = (
 )
 
 
-class GroupPolicyPluginTestCase(tdb.GroupPolicyMappingDbTestCase):
+class GroupPolicyPluginTestCase(tdb.GroupPolicyDbTestCase):
 
     def setUp(self, core_plugin=None, gp_plugin=None, ext_mgr=None):
         super(GroupPolicyPluginTestCase, self).setUp(
@@ -27,8 +28,22 @@ class GroupPolicyPluginTestCase(tdb.GroupPolicyMappingDbTestCase):
         )
 
 
-class TestGroupPolicyPlugin(GroupPolicyPluginTestCase,
-                            tdb.TestGroupPolicy):
+class TestGroupPolicyPluginUnMappedResources(
+    GroupPolicyPluginTestCase, tdb.TestGroupPolicyUnMappedResources):
+
+    pass
+
+
+class GroupPolicyPluginMappingTestCase(tdbm.GroupPolicyMappingDbTestCase):
+
+    def setUp(self, core_plugin=None, gp_plugin=None, ext_mgr=None):
+        super(GroupPolicyPluginMappingTestCase, self).setUp(
+            gp_plugin=GP_PLUGIN_KLASS
+        )
+
+
+class TestGroupPolicyPluginMappedResources(
+    GroupPolicyPluginMappingTestCase, tdbm.TestGroupPolicyMappedResources):
 
     pass
 
