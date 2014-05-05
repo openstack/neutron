@@ -54,6 +54,23 @@ class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
         return self._original_endpoint_group
 
 
+class PolicyClassifierContext(GroupPolicyContext, api.PolicyClassifierContext):
+
+    def __init__(self, plugin, plugin_context, policy_classifier,
+                 original_policy_classifier=None):
+        super(PolicyClassifierContext, self).__init__(plugin, plugin_context)
+        self._policy_classifier = policy_classifier
+        self._original_policy_classifier = original_policy_classifier
+
+    @property
+    def current(self):
+        return self._policy_classifier
+
+    @property
+    def original(self):
+        return self._original_policy_classifier
+
+
 class PolicyActionContext(GroupPolicyContext, api.PolicyActionContext):
 
     def __init__(self, plugin, plugin_context, policy_action,

@@ -53,6 +53,12 @@ class GroupPolicyTestMixin(object):
 
         return attrs
 
+    def _get_test_policy_classifier_attrs(self, name='pc1'):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id}
+
+        return attrs
+
     def _get_test_policy_action_attrs(self, name='pa1'):
         attrs = {'name': name,
                  'tenant_id': self._tenant_id}
@@ -98,6 +104,23 @@ class GroupPolicyTestMixin(object):
             self.assertEqual(epg_res.status_int, expected_res_status)
 
         return epg_res
+
+    def _create_policy_classifier(self, fmt, name, description, protocol,
+                                  port_range, direction,
+                                  expected_res_status=None, **kwargs):
+        data = {'policy_classifier': {'name': name,
+                                      'description': description,
+                                      'protocol': protocol,
+                                      'port_range': port_range,
+                                      'direction': direction,
+                                      'tenant_id': self._tenant_id}}
+
+        pc_req = self.new_create_request('policy_classifiers', data, fmt)
+        pc_res = pc_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(pc_res.status_int, expected_res_status)
+
+        return pc_res
 
     def _create_policy_action(self, fmt, name, description, action_type,
                               action_value, expected_res_status=None,
@@ -180,6 +203,25 @@ class GroupPolicyTestMixin(object):
         finally:
             if not no_delete:
                 self._delete('endpoint_groups', epg['endpoint_group']['id'])
+
+    @contextlib.contextmanager
+    def policy_classifier(self, fmt=None, name='pc1', description="",
+                          protocol='tcp', port_range='80', direction='in',
+                          no_delete=False, **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        res = self._create_policy_classifier(fmt, name, description, protocol,
+                                             port_range, direction, **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        pc = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield pc
+        finally:
+            if not no_delete:
+                self._delete('policy_classifiers',
+                             pc['policy_classifier']['id'])
 
     @contextlib.contextmanager
     def policy_action(self, fmt=None, name='pa1', description="",
@@ -304,6 +346,14 @@ class TestGroupPolicyMappedResources(GroupPolicyDbTestCase):
 
 
 class TestGroupPolicyUnMappedResources(GroupPolicyDbTestCase):
+
+    def test_create_policy_classifier(self, **kwargs):
+        name = "pc1"
+        attrs = self._get_test_policy_classifier_attrs(name)
+
+        with self.policy_classifier(name=name) as pc:
+            for k, v in attrs.iteritems():
+                self.assertEqual(pc['policy_classifier'][k], v)
 
     def test_create_policy_action(self, **kwargs):
         name = "pa1"

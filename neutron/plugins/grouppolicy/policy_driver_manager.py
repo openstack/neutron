@@ -175,6 +175,92 @@ class PolicyDriverManager(stevedore.named.NamedExtensionManager):
         self._call_on_drivers("delete_endpoint_postcommit", context,
                               continue_on_failure=True)
 
+    def create_policy_classifier_precommit(self, context):
+        """Notify all policy drivers during policy_classifier creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_policy_classifier_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("create_policy_classifier_precommit", context)
+
+    def create_policy_classifier_postcommit(self, context):
+        """Notify all policy drivers after policy_classifier creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_policy_classifier_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where the policy_classifier will be deleted, triggering
+        any required cleanup. There is no guarantee that all policy
+        drivers are called in this case.
+        """
+        self._call_on_drivers("create_policy_classifier_postcommit", context)
+
+    def update_policy_classifier_precommit(self, context):
+        """Notify all policy drivers during policy_classifier update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_policy_classifier_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_policy_classifier_precommit", context)
+
+    def update_policy_classifier_postcommit(self, context):
+        """Notify all policy drivers after policy_classifier update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_policy_classifier_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where an error is returned to the user. The
+        user is expected to take the appropriate action, whether by
+        retrying the call or deleting the policy_classifier. There is no
+        guarantee that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_policy_classifier_postcommit", context)
+
+    def delete_policy_classifier_precommit(self, context):
+        """Notify all policy drivers during policy_classifier deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_policy_classifier_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("delete_policy_classifier_precommit", context)
+
+    def delete_policy_classifier_postcommit(self, context):
+        """Notify all policy drivers after policy_classifier deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_policy_classifier_postcommit call fails.
+
+        Called after the database transaction. If any policy driver
+        raises an error, then the error is logged but we continue to
+        call every other policy driver. A GroupPolicyDriverError is
+        then reraised at the end to notify the caller of a failure. In
+        general we expect the caller to ignore the error, as the
+        policy_classifier resource has already been deleted from the database
+        and it doesn't make sense to undo the action by recreating the
+        policy_classifier.
+        """
+        self._call_on_drivers("delete_policy_classifier_postcommit", context,
+                              continue_on_failure=True)
+
     def create_policy_action_precommit(self, context):
         """Notify all policy drivers during policy_action creation.
 
