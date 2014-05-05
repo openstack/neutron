@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+
 from neutron.common import log
 from neutron import manager
 from neutron.openstack.common import log as logging
@@ -28,10 +30,14 @@ class MappingDriver(api.PolicyDriver):
     @log.log
     def create_endpoint_precommit(self, context):
         LOG.info("create_endpoint_precommit: %s", context.current)
+        if context.current['neutron_port_id']:
+            self._validate_ep_port(context)
 
     @log.log
     def create_endpoint_postcommit(self, context):
         LOG.info("create_endpoint_postcommit: %s", context.current)
+        if not context.current['neutron_port_id']:
+            self._create_ep_port(context)
 
     @log.log
     def update_endpoint_precommit(self, context):
@@ -52,10 +58,15 @@ class MappingDriver(api.PolicyDriver):
     @log.log
     def create_endpoint_group_precommit(self, context):
         LOG.info("create_endpoint_group_precommit: %s", context.current)
+        if context.current['neutron_subnets']:
+            self._validate_epg_subnets(context)
 
     @log.log
     def create_endpoint_group_postcommit(self, context):
         LOG.info("create_endpoint_group_postcommit: %s", context.current)
+        # TODO(rkukura): Create/find BD if not specified
+        if not context.current['neutron_subnets']:
+            self._add_epg_subnet(context)
 
     @log.log
     def update_endpoint_group_precommit(self, context):
@@ -82,6 +93,7 @@ class MappingDriver(api.PolicyDriver):
     @log.log
     def create_bridge_domain_postcommit(self, context):
         LOG.info("create_bridge_domain_postcommit: %s", context.current)
+        # TODO(rkukura): Create/find RD if not specified
         if not context.current['neutron_network_id']:
             self._create_bd_network(context)
 
@@ -150,3 +162,25 @@ class MappingDriver(api.PolicyDriver):
         core_plugin = manager.NeutronManager.get_plugin()
         network = core_plugin.create_network(context._plugin_context, attrs)
         context.set_neutron_network_id(network['id'])
+
+    def _validate_epg_subnets(self, context):
+        # TODO(rkukura): Implement
+        pass
+
+    def _add_epg_subnet(self, context):
+        bd_id = context.current['bridge_domain_id']
+        bd = context._plugin.get_bridge_domain(context._plugin_context,
+                                               bd_id)
+        rd_id = bd['routing_domain_id']
+        rd = context._plugin.get_routing_domain(context._plugin_context,
+                                                rd_id)
+        supernet = netaddr.IPNetwork(rd['ip_supernet'])
+        LOG.info("allocating subnet from supernet: %s", supernet)
+
+    def _validate_ep_port(self, context):
+        # TODO(rkukura): Implement
+        pass
+
+    def _create_ep_port(self, context):
+        # TODO(rkukura): Implement
+        pass
