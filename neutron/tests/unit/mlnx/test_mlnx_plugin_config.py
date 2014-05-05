@@ -19,7 +19,7 @@ from oslo.config import cfg
 #NOTE this import loads tests required options
 from neutron.plugins.mlnx.common import config  # noqa
 from neutron.plugins.mlnx.common import constants
-from neutron.plugins.mlnx.mlnx_plugin import MellanoxEswitchPlugin
+from neutron.plugins.mlnx import mlnx_plugin
 from neutron.tests import base
 
 
@@ -41,7 +41,7 @@ class TestMlnxPluginConfig(base.BaseTestCase):
 
     def _create_mlnx_plugin(self):
         with mock.patch('neutron.plugins.mlnx.db.mlnx_db_v2'):
-            return MellanoxEswitchPlugin()
+            return mlnx_plugin.MellanoxEswitchPlugin()
 
     def _assert_expected_config(self):
         plugin = self._create_mlnx_plugin()

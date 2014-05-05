@@ -19,7 +19,7 @@
 import contextlib
 
 import mock
-from six.moves import xrange
+from six import moves
 from webob import exc
 
 from neutron import context
@@ -91,7 +91,7 @@ class TestLoadBalancerCallbacks(TestLoadBalancerPluginBase):
         # add 3 pools and 2 vips directly to DB
         # to create 2 "ready" devices and one pool without vip
         pools = []
-        for i in xrange(3):
+        for i in moves.xrange(3):
             pools.append(ldb.Pool(id=uuidutils.generate_uuid(),
                                   subnet_id=self._subnet_id,
                                   protocol="HTTP",

@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neutron.tests.unit.metaplugin.test_metaplugin import setup_metaplugin_conf
-from neutron.tests.unit.metaplugin.test_metaplugin import unregister_meta_hooks
+from neutron.tests.unit.metaplugin import test_metaplugin
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_l3_plugin
 
@@ -30,9 +29,9 @@ class MetaPluginV2DBTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # as this class will always invoke super with self._plugin_name.
         # These keyword parameters ensure setUp methods always have the
         # same signature.
-        setup_metaplugin_conf()
+        test_metaplugin.setup_metaplugin_conf()
         ext_mgr = ext_mgr or test_l3_plugin.L3TestExtensionManager()
-        self.addCleanup(unregister_meta_hooks)
+        self.addCleanup(test_metaplugin.unregister_meta_hooks)
         super(MetaPluginV2DBTestCase, self).setUp(
             plugin=self._plugin_name, ext_mgr=ext_mgr,
             service_plugins=service_plugins)

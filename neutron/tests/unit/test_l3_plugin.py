@@ -35,7 +35,7 @@ from neutron.db import l3_rpc_base
 from neutron.db import model_base
 from neutron.extensions import external_net
 from neutron.extensions import l3
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.notifier import test_notifier
@@ -244,7 +244,7 @@ class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             super(TestL3NatBasePlugin, self).delete_network(context, id)
 
     def delete_port(self, context, id, l3_port_check=True):
-        plugin = NeutronManager.get_service_plugins().get(
+        plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         if plugin:
             if l3_port_check:
@@ -1808,7 +1808,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
     def _test_notify_op_agent(self, target_func, *args):
         l3_rpc_agent_api_str = (
             'neutron.api.rpc.agentnotifiers.l3_rpc_agent_api.L3AgentNotifyAPI')
-        plugin = NeutronManager.get_service_plugins()[
+        plugin = manager.NeutronManager.get_service_plugins()[
             service_constants.L3_ROUTER_NAT]
         oldNotify = plugin.l3_rpc_notifier
         try:
@@ -1927,7 +1927,7 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
         self.adminContext = context.get_admin_context()
 
     def _assert_router_on_agent(self, router_id, agent_host):
-        plugin = NeutronManager.get_service_plugins().get(
+        plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         agents = plugin.list_l3_agents_hosting_router(
             self.adminContext, router_id)['agents']

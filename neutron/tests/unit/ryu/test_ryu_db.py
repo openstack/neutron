@@ -15,7 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from contextlib import nested
+import contextlib
 import operator
 
 from neutron.db import api as db
@@ -34,10 +34,9 @@ class RyuDBTest(test_plugin.NeutronDbPluginV2TestCase):
     def test_key_allocation(self):
         tunnel_key = db_api_v2.TunnelKey()
         session = db.get_session()
-        with nested(self.network('network-0'),
-                    self.network('network-1')
-                    ) as (network_0,
-                          network_1):
+        with contextlib.nested(self.network('network-0'),
+                               self.network('network-1')
+                               ) as (network_0, network_1):
                 network_id0 = network_0['network']['id']
                 key0 = tunnel_key.allocate(session, network_id0)
                 network_id1 = network_1['network']['id']

@@ -17,7 +17,6 @@
 import copy
 
 import mock
-from mock import call
 from oslo.config import cfg
 
 from neutron.services.metering.drivers.iptables import iptables_driver
@@ -80,13 +79,16 @@ class IptablesDriverTestCase(base.BaseTestCase):
             'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
 
         self.metering.add_metering_label(None, routers)
-        calls = [call.add_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-c5df2fe5-c60',
-                               '',
-                               wrap=False)]
+        calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-c5df2fe5-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-c5df2fe5-c60',
+                                    '',
+                                    wrap=False)]
 
         self.v4filter_inst.assert_has_calls(calls)
 
@@ -121,27 +123,34 @@ class IptablesDriverTestCase(base.BaseTestCase):
              'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
 
         self.metering.add_metering_label(None, routers)
-        calls = [call.add_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-c5df2fe5-c60',
-                               '',
-                               wrap=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-6d411f48-ec -d 10.0.0.0/24'
-                               ' -j neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False),
-                 call.add_chain('neutron-meter-l-eeef45da-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-eeef45da-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-eeef45da-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-eeef45da-c60',
-                               '',
-                               wrap=False),
-                 call.add_rule('neutron-meter-r-eeef45da-c60',
-                               '-i qg-7d411f48-ec -d 20.0.0.0/24 -j RETURN',
-                               wrap=False, top=True)]
+        calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-c5df2fe5-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-c5df2fe5-c60',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-6d411f48-ec -d 10.0.0.0/24'
+                                    ' -j neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False),
+                 mock.call.add_chain('neutron-meter-l-eeef45da-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-eeef45da-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-eeef45da-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-eeef45da-c60',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-eeef45da-c60',
+                                    '-i qg-7d411f48-ec -d 20.0.0.0/24'
+                                    ' -j RETURN',
+                                    wrap=False, top=True)]
 
         self.v4filter_inst.assert_has_calls(calls)
 
@@ -178,25 +187,30 @@ class IptablesDriverTestCase(base.BaseTestCase):
 
         self.metering.update_metering_label_rules(None, updates)
 
-        calls = [call.add_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-c5df2fe5-c60',
-                               '',
-                               wrap=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-6d411f48-ec -d 10.0.0.0/24'
-                               ' -j neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False),
-                 call.empty_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-o qg-6d411f48-ec -d 10.0.0.0/24 -j RETURN',
-                               wrap=False, top=True),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-6d411f48-ec -d 20.0.0.0/24 -j '
-                               'neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False)]
+        calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-c5df2fe5-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-c5df2fe5-c60',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-6d411f48-ec -d 10.0.0.0/24'
+                                    ' -j neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False),
+                 mock.call.empty_chain('neutron-meter-r-c5df2fe5-c60',
+                                       wrap=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-o qg-6d411f48-ec -d 10.0.0.0/24'
+                                    ' -j RETURN',
+                                    wrap=False, top=True),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-6d411f48-ec -d 20.0.0.0/24 -j '
+                                    'neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False)]
 
         self.v4filter_inst.assert_has_calls(calls)
 
@@ -241,26 +255,30 @@ class IptablesDriverTestCase(base.BaseTestCase):
             'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
 
         self.metering.update_metering_label_rules(None, routers)
-        calls = [call.add_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-c5df2fe5-c60',
-                               '',
-                               wrap=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-7d411f48-ec -d 10.0.0.0/24'
-                               ' -j neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-7d411f48-ec -d 20.0.0.0/24'
-                               ' -j neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False),
-                 call.empty_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-7d411f48-ec -d 10.0.0.0/24'
-                               ' -j neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False)]
+        calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-c5df2fe5-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-c5df2fe5-c60',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-7d411f48-ec -d 10.0.0.0/24'
+                                    ' -j neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-7d411f48-ec -d 20.0.0.0/24'
+                                    ' -j neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False),
+                 mock.call.empty_chain('neutron-meter-r-c5df2fe5-c60',
+                                       wrap=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-7d411f48-ec -d 10.0.0.0/24'
+                                    ' -j neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False)]
 
         self.v4filter_inst.assert_has_calls(calls)
 
@@ -283,19 +301,24 @@ class IptablesDriverTestCase(base.BaseTestCase):
 
         self.metering.add_metering_label(None, routers)
         self.metering.remove_metering_label(None, routers)
-        calls = [call.add_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-c5df2fe5-c60',
-                               '',
-                               wrap=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-7d411f48-ec -d 10.0.0.0/24'
-                               ' -j neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False),
-                 call.remove_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.remove_chain('neutron-meter-r-c5df2fe5-c60', wrap=False)]
+        calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-c5df2fe5-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-c5df2fe5-c60',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-7d411f48-ec -d 10.0.0.0/24'
+                                    ' -j neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False),
+                 mock.call.remove_chain('neutron-meter-l-c5df2fe5-c60',
+                                        wrap=False),
+                 mock.call.remove_chain('neutron-meter-r-c5df2fe5-c60',
+                                        wrap=False)]
 
         self.v4filter_inst.assert_has_calls(calls)
 
@@ -335,39 +358,51 @@ class IptablesDriverTestCase(base.BaseTestCase):
         updates[0]['gw_port_id'] = '587b63c1-22a3-40b3-9834-486d1fb215a5'
 
         self.metering.update_routers(None, updates)
-        calls = [call.add_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-c5df2fe5-c60',
-                               '',
-                               wrap=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-6d411f48-ec -d 10.0.0.0/24'
-                               ' -j neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False),
-                 call.add_chain('neutron-meter-l-eeef45da-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-eeef45da-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-eeef45da-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-eeef45da-c60',
-                               '',
-                               wrap=False),
-                 call.add_rule('neutron-meter-r-eeef45da-c60',
-                               '-i qg-7d411f48-ec -d 20.0.0.0/24 -j RETURN',
-                               wrap=False, top=True),
-                 call.remove_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.remove_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_chain('neutron-meter-l-c5df2fe5-c60', wrap=False),
-                 call.add_chain('neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-FORWARD', '-j '
-                               'neutron-meter-r-c5df2fe5-c60', wrap=False),
-                 call.add_rule('neutron-meter-l-c5df2fe5-c60',
-                               '',
-                               wrap=False),
-                 call.add_rule('neutron-meter-r-c5df2fe5-c60',
-                               '-i qg-587b63c1-22 -d 10.0.0.0/24'
-                               ' -j neutron-meter-l-c5df2fe5-c60',
-                               wrap=False, top=False)]
+        calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-c5df2fe5-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-c5df2fe5-c60',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-6d411f48-ec -d 10.0.0.0/24'
+                                    ' -j neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False),
+                 mock.call.add_chain('neutron-meter-l-eeef45da-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-eeef45da-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-eeef45da-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-eeef45da-c60',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-eeef45da-c60',
+                                    '-i qg-7d411f48-ec -d 20.0.0.0/24'
+                                    ' -j RETURN',
+                                    wrap=False, top=True),
+                 mock.call.remove_chain('neutron-meter-l-c5df2fe5-c60',
+                                        wrap=False),
+                 mock.call.remove_chain('neutron-meter-r-c5df2fe5-c60',
+                                        wrap=False),
+                 mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-c5df2fe5-c60',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD', '-j '
+                                    'neutron-meter-r-c5df2fe5-c60',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-c5df2fe5-c60',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
+                                    '-i qg-587b63c1-22 -d 10.0.0.0/24'
+                                    ' -j neutron-meter-l-c5df2fe5-c60',
+                                    wrap=False, top=False)]
 
         self.v4filter_inst.assert_has_calls(calls)

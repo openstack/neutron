@@ -23,7 +23,7 @@ from oslo.config import cfg
 
 from neutron import context
 from neutron.extensions import portbindings
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.plugins.oneconvergence import plugin as nvsd_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
@@ -97,7 +97,7 @@ class TestOneConvergencePluginPortsV2(test_plugin.TestPortsV2,
         self.skipTest("NVSD Plugin does not support IPV6.")
 
     def test_port_vif_details(self):
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         with self.port(name='name') as port1:
             ctx = context.get_admin_context()
             port = plugin.get_port(ctx, port1['port']['id'])
@@ -106,7 +106,7 @@ class TestOneConvergencePluginPortsV2(test_plugin.TestPortsV2,
 
     def test_ports_vif_details(self):
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         with contextlib.nested(self.port(), self.port()) as (port1, port2):
             ctx = context.get_admin_context()
             ports = plugin.get_ports(ctx)

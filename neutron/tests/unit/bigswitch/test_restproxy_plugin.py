@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from contextlib import nested
+import contextlib
 import mock
 from oslo.config import cfg
 import webob.exc
@@ -23,7 +23,7 @@ import webob.exc
 from neutron.common import constants
 from neutron import context
 from neutron.extensions import portbindings
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.bigswitch import fake_server
 from neutron.tests.unit.bigswitch import test_base
@@ -106,7 +106,7 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
                                 self._list_ports('json', netid=netid))['ports']
 
     def test_rollback_for_port_create(self):
-        plugin = NeutronManager.get_plugin()
+        plugin = manager.NeutronManager.get_plugin()
         with self.subnet() as s:
             # stop normal patch
             self.httpPatch.stop()
@@ -183,7 +183,7 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
     def test_create404_triggers_sync(self):
         # allow async port thread for this patch
         self.spawn_p.stop()
-        with nested(
+        with contextlib.nested(
             self.subnet(),
             patch(HTTPCON, create=True,
                   new=fake_server.HTTPConnectionMock404),
@@ -192,7 +192,7 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
         ) as (s, mock_http, mock_send_all):
             with self.port(subnet=s, device_id='somedevid') as p:
                 # wait for the async port thread to finish
-                plugin = NeutronManager.get_plugin()
+                plugin = manager.NeutronManager.get_plugin()
                 plugin.evpool.waitall()
         call = mock.call(
             send_routers=True, send_ports=True, send_floating_ips=True,
@@ -259,7 +259,7 @@ class TestBigSwitchProxyNetworksV2(test_plugin.TestNetworksV2,
 
     def _get_networks(self, tenant_id):
         ctx = context.Context('', tenant_id)
-        return NeutronManager.get_plugin().get_networks(ctx)
+        return manager.NeutronManager.get_plugin().get_networks(ctx)
 
     def test_rollback_on_network_create(self):
         tid = test_api_v2._uuid()
@@ -306,7 +306,7 @@ class TestBigSwitchProxySubnetsV2(test_plugin.TestSubnetsV2,
 class TestBigSwitchProxySync(BigSwitchProxyPluginV2TestCase):
 
     def test_send_data(self):
-        plugin_obj = NeutronManager.get_plugin()
+        plugin_obj = manager.NeutronManager.get_plugin()
         result = plugin_obj._send_all_data()
         self.assertEqual(result[0], 200)
 

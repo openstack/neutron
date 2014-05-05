@@ -18,7 +18,7 @@
 import sys
 
 import mock
-from six.moves import xrange
+from six import moves
 
 from neutron.tests import base
 from neutron.tests import post_mortem_debug
@@ -66,7 +66,7 @@ class TestGetIgnoredTraceback(base.BaseTestCase):
 
         tb = root_tb
         tracebacks = [tb]
-        for x in xrange(len(ignored_bit_array) - 1):
+        for x in moves.xrange(len(ignored_bit_array) - 1):
             tb.tb_next = mock.Mock()
             tb = tb.tb_next
             tracebacks.append(tb)

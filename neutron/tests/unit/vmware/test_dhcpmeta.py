@@ -21,7 +21,7 @@ from neutron.common import constants as n_consts
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as db
-from neutron.plugins.vmware.api_client.exception import NsxApiException
+from neutron.plugins.vmware.api_client import exception
 from neutron.plugins.vmware.common import exceptions as p_exc
 from neutron.plugins.vmware.dbexts import lsn_db
 from neutron.plugins.vmware.dhcp_meta import constants
@@ -290,7 +290,7 @@ class LsnManagerTestCase(base.BaseTestCase):
         self._test_lsn_get_raise_not_found_with_exc(n_exc.NotFound)
 
     def test_lsn_get_raise_not_found_with_api_error(self):
-        self._test_lsn_get_raise_not_found_with_exc(NsxApiException)
+        self._test_lsn_get_raise_not_found_with_exc(exception.NsxApiException)
 
     def _test_lsn_get_silent_raise_with_exc(self, exc):
         self.mock_lsn_api.lsn_for_network_get.side_effect = exc
@@ -304,7 +304,7 @@ class LsnManagerTestCase(base.BaseTestCase):
         self._test_lsn_get_silent_raise_with_exc(n_exc.NotFound)
 
     def test_lsn_get_silent_raise_with_api_error(self):
-        self._test_lsn_get_silent_raise_with_exc(NsxApiException)
+        self._test_lsn_get_silent_raise_with_exc(exception.NsxApiException)
 
     def test_lsn_create(self):
         self.mock_lsn_api.lsn_for_network_create.return_value = self.lsn_id
@@ -313,7 +313,8 @@ class LsnManagerTestCase(base.BaseTestCase):
             mock.ANY, self.net_id)
 
     def test_lsn_create_raise_api_error(self):
-        self.mock_lsn_api.lsn_for_network_create.side_effect = NsxApiException
+        self.mock_lsn_api.lsn_for_network_create.side_effect = (
+            exception.NsxApiException)
         self.assertRaises(p_exc.NsxPluginException,
                           self.manager.lsn_create,
                           mock.ANY, self.net_id)
@@ -335,7 +336,7 @@ class LsnManagerTestCase(base.BaseTestCase):
         self._test_lsn_delete_with_exc(n_exc.NotFound)
 
     def test_lsn_delete_api_exception(self):
-        self._test_lsn_delete_with_exc(NsxApiException)
+        self._test_lsn_delete_with_exc(exception.NsxApiException)
 
     def test_lsn_delete_by_network(self):
         self.mock_lsn_api.lsn_for_network_get.return_value = self.lsn_id
@@ -355,7 +356,7 @@ class LsnManagerTestCase(base.BaseTestCase):
         self._test_lsn_delete_by_network_with_exc(n_exc.NotFound)
 
     def test_lsn_delete_by_network_with_not_api_error(self):
-        self._test_lsn_delete_by_network_with_exc(NsxApiException)
+        self._test_lsn_delete_by_network_with_exc(exception.NsxApiException)
 
     def test_lsn_port_get(self):
         self.mock_lsn_api.lsn_port_by_subnet_get.return_value = (
@@ -412,7 +413,7 @@ class LsnManagerTestCase(base.BaseTestCase):
         self._test_lsn_port_create_with_exc(n_exc.NotFound, p_exc.LsnNotFound)
 
     def test_lsn_port_create_api_exception(self):
-        self._test_lsn_port_create_with_exc(NsxApiException,
+        self._test_lsn_port_create_with_exc(exception.NsxApiException,
                                             p_exc.NsxPluginException)
 
     def test_lsn_port_delete(self):
@@ -430,7 +431,7 @@ class LsnManagerTestCase(base.BaseTestCase):
         self._test_lsn_port_delete_with_exc(n_exc.NotFound)
 
     def test_lsn_port_delete_api_exception(self):
-        self._test_lsn_port_delete_with_exc(NsxApiException)
+        self._test_lsn_port_delete_with_exc(exception.NsxApiException)
 
     def _test_lsn_port_dhcp_setup(self, ret_val, sub):
         self.mock_nsx_utils.get_nsx_switch_ids.return_value = [self.switch_id]
@@ -639,7 +640,8 @@ class LsnManagerTestCase(base.BaseTestCase):
         self._test_lsn_port_dispose_with_values(self.lsn_id, None, 0)
 
     def test_lsn_port_dispose_api_error(self):
-        self.mock_lsn_api.lsn_port_delete.side_effect = NsxApiException
+        self.mock_lsn_api.lsn_port_delete.side_effect = (
+            exception.NsxApiException)
         with mock.patch.object(lsn_man.LOG, 'warn') as l:
             self.manager.lsn_port_dispose(mock.ANY, self.net_id, self.mac)
             self.assertEqual(1, l.call_count)
@@ -686,7 +688,7 @@ class LsnManagerTestCase(base.BaseTestCase):
 
     def test_lsn_port_update_raise_error(self):
         self.mock_lsn_api.lsn_port_host_entries_update.side_effect = (
-            NsxApiException)
+            exception.NsxApiException)
         self.assertRaises(p_exc.PortConfigurationError,
                           self.manager.lsn_port_update,
                           mock.ANY, mock.ANY, mock.ANY, mock.ANY)

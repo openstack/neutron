@@ -15,11 +15,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from contextlib import contextmanager
-from contextlib import nested
+import contextlib
 
 import mock
-from mock import call
 from oslo.config import cfg
 from testtools import matchers
 import webob.exc
@@ -35,7 +33,7 @@ from neutron import context
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import securitygroup as ext_sg
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common.rpc import proxy
 from neutron.tests import base
 from neutron.tests.unit import test_extension_security_group as test_sg
@@ -71,9 +69,9 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
     def test_security_group_rules_for_devices_ipv4_ingress(self):
         fake_prefix = FAKE_PREFIX[const.IPv4]
         with self.network() as n:
-            with nested(self.subnet(n),
-                        self.security_group()) as (subnet_v4,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n),
+                                   self.security_group()) as (subnet_v4,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -123,15 +121,15 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
                 self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv4_ingress_addr_pair(self):
-        plugin_obj = NeutronManager.get_plugin()
+        plugin_obj = manager.NeutronManager.get_plugin()
         if ('allowed-address-pairs'
             not in plugin_obj.supported_extension_aliases):
             self.skipTest("Test depeneds on allowed-address-pairs extension")
         fake_prefix = FAKE_PREFIX['IPv4']
         with self.network() as n:
-            with nested(self.subnet(n),
-                        self.security_group()) as (subnet_v4,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n),
+                                   self.security_group()) as (subnet_v4,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -188,9 +186,9 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
     def test_security_group_rules_for_devices_ipv4_egress(self):
         fake_prefix = FAKE_PREFIX[const.IPv4]
         with self.network() as n:
-            with nested(self.subnet(n),
-                        self.security_group()) as (subnet_v4,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n),
+                                   self.security_group()) as (subnet_v4,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -242,11 +240,11 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
     def test_security_group_rules_for_devices_ipv4_source_group(self):
 
         with self.network() as n:
-            with nested(self.subnet(n),
-                        self.security_group(),
-                        self.security_group()) as (subnet_v4,
-                                                   sg1,
-                                                   sg2):
+            with contextlib.nested(self.subnet(n),
+                                   self.security_group(),
+                                   self.security_group()) as (subnet_v4,
+                                                              sg1,
+                                                              sg2):
                 sg1_id = sg1['security_group']['id']
                 sg2_id = sg2['security_group']['id']
                 rule1 = self._build_security_group_rule(
@@ -302,12 +300,12 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP[const.IPv6]
         with self.network() as n:
-            with nested(self.subnet(n,
-                                    gateway_ip=fake_gateway,
-                                    cidr=fake_prefix,
-                                    ip_version=6),
-                        self.security_group()) as (subnet_v6,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n,
+                                               gateway_ip=fake_gateway,
+                                               cidr=fake_prefix,
+                                               ip_version=6),
+                                   self.security_group()) as (subnet_v6,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -369,13 +367,13 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP['IPv6_GLOBAL']
         with self.network() as n:
-            with nested(self.subnet(n,
-                                    gateway_ip=fake_gateway,
-                                    cidr=fake_prefix,
-                                    ip_version=6,
-                                    ipv6_ra_mode=const.IPV6_SLAAC),
-                        self.security_group()) as (subnet_v6,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n,
+                                               gateway_ip=fake_gateway,
+                                               cidr=fake_prefix,
+                                               ip_version=6,
+                                               ipv6_ra_mode=const.IPV6_SLAAC),
+                                   self.security_group()) as (subnet_v6,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -439,13 +437,13 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP['IPv6_GLOBAL']
         with self.network() as n:
-            with nested(self.subnet(n,
-                                    gateway_ip=fake_gateway,
-                                    cidr=fake_prefix,
-                                    ip_version=6,
-                                    ipv6_ra_mode=const.IPV6_SLAAC),
-                        self.security_group()) as (subnet_v6,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n,
+                                               gateway_ip=fake_gateway,
+                                               cidr=fake_prefix,
+                                               ip_version=6,
+                                               ipv6_ra_mode=const.IPV6_SLAAC),
+                                   self.security_group()) as (subnet_v6,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -516,13 +514,13 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP['IPv6_LLA']
         with self.network() as n:
-            with nested(self.subnet(n,
-                                    gateway_ip=fake_gateway,
-                                    cidr=fake_prefix,
-                                    ip_version=6,
-                                    ipv6_ra_mode=const.IPV6_SLAAC),
-                        self.security_group()) as (subnet_v6,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n,
+                                               gateway_ip=fake_gateway,
+                                               cidr=fake_prefix,
+                                               ip_version=6,
+                                               ipv6_ra_mode=const.IPV6_SLAAC),
+                                   self.security_group()) as (subnet_v6,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -567,13 +565,13 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
     def test_security_group_ra_rules_for_devices_ipv6_no_gateway_port(self):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         with self.network() as n:
-            with nested(self.subnet(n,
-                                    gateway_ip=None,
-                                    cidr=fake_prefix,
-                                    ip_version=6,
-                                    ipv6_ra_mode=const.IPV6_SLAAC),
-                        self.security_group()) as (subnet_v6,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n,
+                                               gateway_ip=None,
+                                               cidr=fake_prefix,
+                                               ip_version=6,
+                                               ipv6_ra_mode=const.IPV6_SLAAC),
+                                   self.security_group()) as (subnet_v6,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -614,12 +612,12 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP[const.IPv6]
         with self.network() as n:
-            with nested(self.subnet(n,
-                                    gateway_ip=fake_gateway,
-                                    cidr=fake_prefix,
-                                    ip_version=6),
-                        self.security_group()) as (subnet_v6,
-                                                   sg1):
+            with contextlib.nested(self.subnet(n,
+                                               gateway_ip=fake_gateway,
+                                               cidr=fake_prefix,
+                                               ip_version=6),
+                                   self.security_group()) as (subnet_v6,
+                                                              sg1):
                 sg1_id = sg1['security_group']['id']
                 rule1 = self._build_security_group_rule(
                     sg1_id,
@@ -679,14 +677,14 @@ class SGServerRpcCallBackMixinTestCase(test_sg.SecurityGroupDBTestCase):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         fake_gateway = FAKE_IP[const.IPv6]
         with self.network() as n:
-            with nested(self.subnet(n,
-                                    gateway_ip=fake_gateway,
-                                    cidr=fake_prefix,
-                                    ip_version=6),
-                        self.security_group(),
-                        self.security_group()) as (subnet_v6,
-                                                   sg1,
-                                                   sg2):
+            with contextlib.nested(self.subnet(n,
+                                               gateway_ip=fake_gateway,
+                                               cidr=fake_prefix,
+                                               ip_version=6),
+                                   self.security_group(),
+                                   self.security_group()) as (subnet_v6,
+                                                              sg1,
+                                                              sg2):
                 sg1_id = sg1['security_group']['id']
                 sg2_id = sg2['security_group']['id']
                 rule1 = self._build_security_group_rule(
@@ -759,18 +757,18 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
         self.rpc.security_groups_rule_updated(None,
                                               security_groups=['fake_sgid'])
         self.rpc.sg_agent.assert_has_calls(
-            [call.security_groups_rule_updated(['fake_sgid'])])
+            [mock.call.security_groups_rule_updated(['fake_sgid'])])
 
     def test_security_groups_member_updated(self):
         self.rpc.security_groups_member_updated(None,
                                                 security_groups=['fake_sgid'])
         self.rpc.sg_agent.assert_has_calls(
-            [call.security_groups_member_updated(['fake_sgid'])])
+            [mock.call.security_groups_member_updated(['fake_sgid'])])
 
     def test_security_groups_provider_updated(self):
         self.rpc.security_groups_provider_updated(None)
         self.rpc.sg_agent.assert_has_calls(
-            [call.security_groups_provider_updated()])
+            [mock.call.security_groups_provider_updated()])
 
 
 class SecurityGroupAgentRpcTestCaseForNoneDriver(base.BaseTestCase):
@@ -816,11 +814,11 @@ class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
         self.agent.prepare_devices_filter(['fake_device'])
         self.agent.remove_devices_filter(['fake_device'])
         # ignore device which is not filtered
-        self.firewall.assert_has_calls([call.defer_apply(),
-                                        call.prepare_port_filter(
+        self.firewall.assert_has_calls([mock.call.defer_apply(),
+                                        mock.call.prepare_port_filter(
                                             self.fake_device),
-                                        call.defer_apply(),
-                                        call.remove_port_filter(
+                                        mock.call.defer_apply(),
+                                        mock.call.remove_port_filter(
                                             self.fake_device),
                                         ])
 
@@ -829,7 +827,7 @@ class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.security_groups_rule_updated(['fake_sgid1', 'fake_sgid3'])
         self.agent.refresh_firewall.assert_has_calls(
-            [call.refresh_firewall([self.fake_device['device']])])
+            [mock.call.refresh_firewall([self.fake_device['device']])])
 
     def test_security_groups_rule_not_updated(self):
         self.agent.refresh_firewall = mock.Mock()
@@ -842,7 +840,7 @@ class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.security_groups_member_updated(['fake_sgid2', 'fake_sgid3'])
         self.agent.refresh_firewall.assert_has_calls(
-            [call.refresh_firewall([self.fake_device['device']])])
+            [mock.call.refresh_firewall([self.fake_device['device']])])
 
     def test_security_groups_member_not_updated(self):
         self.agent.refresh_firewall = mock.Mock()
@@ -854,24 +852,24 @@ class SecurityGroupAgentRpcTestCase(base.BaseTestCase):
         self.agent.refresh_firewall = mock.Mock()
         self.agent.security_groups_provider_updated()
         self.agent.refresh_firewall.assert_has_calls(
-            [call.refresh_firewall()])
+            [mock.call.refresh_firewall()])
 
     def test_refresh_firewall(self):
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.refresh_firewall()
-        calls = [call.defer_apply(),
-                 call.prepare_port_filter(self.fake_device),
-                 call.defer_apply(),
-                 call.update_port_filter(self.fake_device)]
+        calls = [mock.call.defer_apply(),
+                 mock.call.prepare_port_filter(self.fake_device),
+                 mock.call.defer_apply(),
+                 mock.call.update_port_filter(self.fake_device)]
         self.firewall.assert_has_calls(calls)
 
     def test_refresh_firewall_devices(self):
         self.agent.prepare_devices_filter(['fake_port_id'])
         self.agent.refresh_firewall([self.fake_device])
-        calls = [call.defer_apply(),
-                 call.prepare_port_filter(self.fake_device),
-                 call.defer_apply(),
-                 call.update_port_filter(self.fake_device)]
+        calls = [mock.call.defer_apply(),
+                 mock.call.prepare_port_filter(self.fake_device),
+                 mock.call.defer_apply(),
+                 mock.call.update_port_filter(self.fake_device)]
         self.firewall.assert_has_calls(calls)
 
     def test_refresh_firewall_none(self):
@@ -886,7 +884,7 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         super(SecurityGroupAgentRpcWithDeferredRefreshTestCase, self).setUp(
             defer_refresh_firewall=True)
 
-    @contextmanager
+    @contextlib.contextmanager
     def add_fake_device(self, device, sec_groups, source_sec_groups=None):
         fake_device = {'device': device,
                        'security_groups': sec_groups,
@@ -1095,7 +1093,7 @@ class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
     def test_security_group_rules_for_devices(self):
         self.rpc.security_group_rules_for_devices(None, ['fake_device'])
         self.rpc.call.assert_has_calls(
-            [call(None,
+            [mock.call(None,
              {'args':
                  {'devices': ['fake_device']},
               'method': 'security_group_rules_for_devices',
@@ -1120,25 +1118,25 @@ class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
         self.notifier.security_groups_rule_updated(
             None, security_groups=['fake_sgid'])
         self.notifier.fanout_cast.assert_has_calls(
-            [call(None,
-                  {'args':
-                      {'security_groups': ['fake_sgid']},
-                      'method': 'security_groups_rule_updated',
-                      'namespace': None},
-                  version=sg_rpc.SG_RPC_VERSION,
-                  topic='fake-security_group-update')])
+            [mock.call(None,
+                       {'args':
+                           {'security_groups': ['fake_sgid']},
+                           'method': 'security_groups_rule_updated',
+                           'namespace': None},
+                       version=sg_rpc.SG_RPC_VERSION,
+                       topic='fake-security_group-update')])
 
     def test_security_groups_member_updated(self):
         self.notifier.security_groups_member_updated(
             None, security_groups=['fake_sgid'])
         self.notifier.fanout_cast.assert_has_calls(
-            [call(None,
-                  {'args':
-                      {'security_groups': ['fake_sgid']},
-                      'method': 'security_groups_member_updated',
-                      'namespace': None},
-                  version=sg_rpc.SG_RPC_VERSION,
-                  topic='fake-security_group-update')])
+            [mock.call(None,
+                       {'args':
+                           {'security_groups': ['fake_sgid']},
+                           'method': 'security_groups_member_updated',
+                           'namespace': None},
+                       version=sg_rpc.SG_RPC_VERSION,
+                       topic='fake-security_group-update')])
 
     def test_security_groups_rule_not_updated(self):
         self.notifier.security_groups_rule_updated(
@@ -1822,7 +1820,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
         if has_process_input:
             kwargs['process_input'] = mock.ANY
-        self.expected_calls.append(call(*args, **kwargs))
+        self.expected_calls.append(mock.call(*args, **kwargs))
         self.expected_call_count += 1
 
     def _verify_mock_calls(self):
@@ -1921,10 +1919,10 @@ class SGNotificationTestMixin():
                                               ):
                     pass
             self.notifier.assert_has_calls(
-                [call.security_groups_rule_updated(mock.ANY,
-                                                   [security_group_id]),
-                 call.security_groups_rule_updated(mock.ANY,
-                                                   [security_group_id])])
+                [mock.call.security_groups_rule_updated(mock.ANY,
+                                                        [security_group_id]),
+                 mock.call.security_groups_rule_updated(mock.ANY,
+                                                        [security_group_id])])
 
     def test_security_group_member_updated(self):
         with self.network() as n:
@@ -1947,7 +1945,7 @@ class SGNotificationTestMixin():
                                      security_group_id)
                     self._delete('ports', port['port']['id'])
                     self.notifier.assert_has_calls(
-                        [call.security_groups_member_updated(
+                        [mock.call.security_groups_member_updated(
                             mock.ANY, [mock.ANY])])
 
 

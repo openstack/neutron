@@ -14,7 +14,7 @@
 #
 # @author: Kevin Benton, kevin.benton@bigswitch.com
 #
-from contextlib import nested
+import contextlib
 import os
 
 import mock
@@ -101,7 +101,7 @@ class TestSslSticky(test_ssl_certificate_base):
 
     def test_sticky_cert(self):
         # SSL connection should be successful and cert should be cached
-        with nested(
+        with contextlib.nested(
             mock.patch(HTTPS, new=fake_server.HTTPSHostValidation),
             self.network()
         ):
@@ -241,7 +241,7 @@ class TestSslNoValidation(test_ssl_certificate_base):
     def test_validation_disabled(self):
         # SSL connection should be successful without any certificates
         # If not, attempting to create a network will raise an exception
-        with nested(
+        with contextlib.nested(
             mock.patch(HTTPS, new=fake_server.HTTPSNoValidation),
             self.network()
         ):

@@ -18,7 +18,7 @@
 
 import re
 
-from functools import wraps
+import functools
 # import httmock
 import requests
 from requests import exceptions as r_exc
@@ -26,9 +26,11 @@ from requests import exceptions as r_exc
 from neutron.openstack.common import log as logging
 # TODO(pcm) Remove once httmock package is added to test-requirements. For
 # now, uncomment and include httmock source to UT
-from neutron.tests.unit.services.vpn.device_drivers import httmock
+from neutron.tests.unit.services.vpn import device_drivers
 
 LOG = logging.getLogger(__name__)
+
+httmock = device_drivers.httmock
 
 
 def repeat(n):
@@ -43,7 +45,7 @@ def repeat(n):
         retries = n
 
     def decorator(func):
-        @wraps(func)
+        @functools.wraps(func)
         def wrapped(*args, **kwargs):
             if static.retries == 0:
                 return None
@@ -66,7 +68,7 @@ def filter_request(methods, resource):
         target_resource = resource
 
     def decorator(func):
-        @wraps(func)
+        @functools.wraps(func)
         def wrapped(*args, **kwargs):
             if (args[1].method in static.target_methods and
                 static.target_resource in args[0].path):

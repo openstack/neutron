@@ -15,7 +15,7 @@
 #
 
 from neutron.plugins.vmware.api_client import exception
-from neutron.plugins.vmware.api_client.version import Version
+from neutron.plugins.vmware.api_client import version as version_module
 from neutron.plugins.vmware.nsxlib import router as routerlib
 from neutron.plugins.vmware.nsxlib import versioning
 from neutron.tests import base
@@ -24,28 +24,28 @@ from neutron.tests import base
 class TestVersioning(base.BaseTestCase):
 
     def test_function_handling_missing_minor(self):
-        version = Version('2.0')
+        version = version_module.Version('2.0')
         function = versioning.get_function_by_version(
             routerlib.ROUTER_FUNC_DICT, 'create_lrouter', version)
         self.assertEqual(routerlib.create_implicit_routing_lrouter,
                          function)
 
     def test_function_handling_with_both_major_and_minor(self):
-        version = Version('3.2')
+        version = version_module.Version('3.2')
         function = versioning.get_function_by_version(
             routerlib.ROUTER_FUNC_DICT, 'create_lrouter', version)
         self.assertEqual(routerlib.create_explicit_routing_lrouter,
                          function)
 
     def test_function_handling_with_newer_major(self):
-        version = Version('5.2')
+        version = version_module.Version('5.2')
         function = versioning.get_function_by_version(
             routerlib.ROUTER_FUNC_DICT, 'create_lrouter', version)
         self.assertEqual(routerlib.create_explicit_routing_lrouter,
                          function)
 
     def test_function_handling_with_obsolete_major(self):
-        version = Version('1.2')
+        version = version_module.Version('1.2')
         self.assertRaises(NotImplementedError,
                           versioning.get_function_by_version,
                           routerlib.ROUTER_FUNC_DICT,

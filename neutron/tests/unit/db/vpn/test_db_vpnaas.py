@@ -23,8 +23,7 @@ import os
 from oslo.config import cfg
 import webob.exc
 
-from neutron.api.extensions import ExtensionMiddleware
-from neutron.api.extensions import PluginAwareExtensionManager
+from neutron.api import extensions as api_extensions
 from neutron.common import config
 from neutron import context
 from neutron.db import agentschedulers_db
@@ -441,13 +440,13 @@ class VPNPluginDbTestCase(VPNTestMixin,
         self._subnet_id = uuidutils.generate_uuid()
         self.core_plugin = TestVpnCorePlugin
         self.plugin = vpn_plugin.VPNPlugin()
-        ext_mgr = PluginAwareExtensionManager(
+        ext_mgr = api_extensions.PluginAwareExtensionManager(
             extensions_path,
             {constants.CORE: self.core_plugin,
              constants.VPN: self.plugin}
         )
         app = config.load_paste_app('extensions_test_app')
-        self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
+        self.ext_api = api_extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
 
 class TestVpnaas(VPNPluginDbTestCase):

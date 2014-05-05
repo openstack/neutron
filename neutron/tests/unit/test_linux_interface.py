@@ -22,7 +22,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.extensions.flavor import (FLAVOR_NETWORK)
+from neutron.extensions import flavor
 from neutron.openstack.common import uuidutils
 from neutron.tests import base
 
@@ -417,7 +417,7 @@ class TestMetaInterfaceDriver(TestBase):
         self.client_inst = mock.Mock()
         client_cls.return_value = self.client_inst
 
-        fake_network = {'network': {FLAVOR_NETWORK: 'fake1'}}
+        fake_network = {'network': {flavor.FLAVOR_NETWORK: 'fake1'}}
         fake_port = {'ports':
                      [{'mac_address':
                       'aa:bb:cc:dd:ee:ffa', 'network_id': 'test'}]}

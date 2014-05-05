@@ -21,15 +21,15 @@
 import contextlib
 import copy
 
-from mock import patch
+import mock
 from oslo.config import cfg
-from six.moves import xrange
+from six import moves
 from webob import exc
 
-from neutron.common.test_lib import test_config
+from neutron.common import test_lib
 from neutron import context
 from neutron.extensions import l3
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.bigswitch.extensions import routerrule
 from neutron.tests.unit.bigswitch import fake_server
@@ -79,12 +79,12 @@ class RouterDBTestBase(test_base.BigSwitchTestBase,
         super(RouterDBTestBase, self).setUp(plugin=self._plugin_name,
                                             ext_mgr=ext_mgr)
         cfg.CONF.set_default('allow_overlapping_ips', False)
-        self.plugin_obj = NeutronManager.get_plugin()
+        self.plugin_obj = manager.NeutronManager.get_plugin()
         self.startHttpPatch()
 
     def tearDown(self):
         super(RouterDBTestBase, self).tearDown()
-        del test_config['config_files']
+        del test_lib.test_config['config_files']
 
 
 class RouterDBTestCase(RouterDBTestBase,
@@ -172,7 +172,7 @@ class RouterDBTestCase(RouterDBTestBase,
                         port_id=p1['port']['id'],
                         tenant_id=tenant1_id)
                     self.httpPatch.stop()
-                    multiFloatPatch = patch(
+                    multiFloatPatch = mock.patch(
                         HTTPCON,
                         new=fake_server.VerifyMultiTenantFloatingIP)
                     multiFloatPatch.start()
@@ -301,7 +301,7 @@ class RouterDBTestCase(RouterDBTestBase,
 
     def test_send_data(self):
         fmt = 'json'
-        plugin_obj = NeutronManager.get_plugin()
+        plugin_obj = manager.NeutronManager.get_plugin()
 
         with self.router() as r:
             r_id = r['router']['id']
@@ -502,7 +502,7 @@ class RouterDBTestCase(RouterDBTestBase,
         cfg.CONF.set_override('max_router_rules', 10, 'ROUTER')
         with self.router() as r:
             rules = []
-            for i in xrange(1, 12):
+            for i in moves.xrange(1, 12):
                 rule = {'source': 'any', 'nexthops': [],
                         'destination': '1.1.1.' + str(i) + '/32',
                         'action': 'permit'}
@@ -514,7 +514,7 @@ class RouterDBTestCase(RouterDBTestBase,
     def test_rollback_on_router_create(self):
         tid = test_api_v2._uuid()
         self.httpPatch.stop()
-        with patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
+        with mock.patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
             self._create_router('json', tid)
         self.assertTrue(len(self._get_routers(tid)) == 0)
 
@@ -522,7 +522,7 @@ class RouterDBTestCase(RouterDBTestBase,
         with self.router() as r:
             data = {'router': {'name': 'aNewName'}}
             self.httpPatch.stop()
-            with patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
+            with mock.patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
                 self.new_update_request(
                     'routers', data, r['router']['id']).get_response(self.api)
             self.httpPatch.start()
@@ -533,7 +533,7 @@ class RouterDBTestCase(RouterDBTestBase,
     def test_rollback_on_router_delete(self):
         with self.router() as r:
             self.httpPatch.stop()
-            with patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
+            with mock.patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
                 self._delete('routers', r['router']['id'],
                              expected_code=exc.HTTPInternalServerError.code)
             self.httpPatch.start()

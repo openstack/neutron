@@ -21,8 +21,7 @@ from oslo.config import cfg
 import testtools
 import webob.exc
 
-from neutron.api.extensions import ExtensionMiddleware
-from neutron.api.extensions import PluginAwareExtensionManager
+from neutron.api import extensions
 from neutron.common import config
 from neutron import context
 import neutron.db.l3_db  # noqa
@@ -34,9 +33,7 @@ from neutron.plugins.common import constants
 from neutron.services.loadbalancer import (
     plugin as loadbalancer_plugin
 )
-from neutron.services.loadbalancer.drivers import (
-    abstract_driver
-)
+from neutron.services.loadbalancer.drivers import abstract_driver
 from neutron.services import provider_configuration as pconf
 from neutron.tests.unit import test_db_plugin
 
@@ -324,12 +321,12 @@ class LoadBalancerPluginDbTestCase(LoadBalancerTestMixin,
 
         if not ext_mgr:
             self.plugin = loadbalancer_plugin.LoadBalancerPlugin()
-            ext_mgr = PluginAwareExtensionManager(
+            ext_mgr = extensions.PluginAwareExtensionManager(
                 extensions_path,
                 {constants.LOADBALANCER: self.plugin}
             )
             app = config.load_paste_app('extensions_test_app')
-            self.ext_api = ExtensionMiddleware(app, ext_mgr=ext_mgr)
+            self.ext_api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
         get_lbaas_agent_patcher = mock.patch(
             'neutron.services.loadbalancer.agent_scheduler'

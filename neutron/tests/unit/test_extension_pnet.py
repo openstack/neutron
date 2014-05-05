@@ -28,7 +28,7 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import router
 from neutron import context
 from neutron.extensions import providernet as pnet
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron import quota
 from neutron.tests.unit import test_api_v2
@@ -77,7 +77,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         instance = self.plugin.return_value
         instance.get_networks_count.return_value = 1
         # Instantiate mock plugin and enable the 'provider' extension
-        NeutronManager.get_plugin().supported_extension_aliases = (
+        manager.NeutronManager.get_plugin().supported_extension_aliases = (
             ["provider"])
         ext_mgr = ProviderExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)

@@ -27,10 +27,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron.extensions import flavor as ext_flavor
 from neutron.openstack.common import uuidutils
-from neutron.plugins.metaplugin.meta_neutron_plugin import (
-    FaildToAddFlavorBinding)
-from neutron.plugins.metaplugin.meta_neutron_plugin import FlavorNotFound
-from neutron.plugins.metaplugin.meta_neutron_plugin import MetaPluginV2
+from neutron.plugins.metaplugin import meta_neutron_plugin
 from neutron.tests import base
 
 CONF_FILE = ""
@@ -112,9 +109,10 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
         self.client_inst.delete_network.return_value = True
         self.client_inst.delete_port.return_value = True
         self.client_inst.delete_subnet.return_value = True
-        plugin = MetaPluginV2.__module__ + '.' + MetaPluginV2.__name__
+        plugin = (meta_neutron_plugin.MetaPluginV2.__module__ + '.'
+                  + meta_neutron_plugin.MetaPluginV2.__name__)
         self.setup_coreplugin(plugin)
-        self.plugin = MetaPluginV2(configfile=None)
+        self.plugin = meta_neutron_plugin.MetaPluginV2(configfile=None)
 
     def _fake_network(self, flavor):
         data = {'network': {'name': flavor,
@@ -311,7 +309,7 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
 
         self.plugin.delete_router(self.context, router_ret1['id'])
         self.plugin.delete_router(self.context, router_ret2['id'])
-        with testtools.ExpectedException(FlavorNotFound):
+        with testtools.ExpectedException(meta_neutron_plugin.FlavorNotFound):
             self.plugin.get_router(self.context, router_ret1['id'])
 
     def test_extension_method(self):
@@ -333,7 +331,7 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
                         'add_network_flavor_binding',
                         side_effect=Exception):
             network = self._fake_network('fake1')
-            self.assertRaises(FaildToAddFlavorBinding,
+            self.assertRaises(meta_neutron_plugin.FaildToAddFlavorBinding,
                               self.plugin.create_network,
                               self.context,
                               network)
@@ -345,7 +343,7 @@ class MetaNeutronPluginV2Test(base.BaseTestCase):
                         'add_router_flavor_binding',
                         side_effect=Exception):
             router = self._fake_router('fake1')
-            self.assertRaises(FaildToAddFlavorBinding,
+            self.assertRaises(meta_neutron_plugin.FaildToAddFlavorBinding,
                               self.plugin.create_router,
                               self.context,
                               router)
@@ -383,7 +381,7 @@ class MetaNeutronPluginV2TestRpcFlavor(base.BaseTestCase):
     def test_rpc_flavor(self):
         setup_metaplugin_conf()
         cfg.CONF.set_override('rpc_flavor', 'fake1', 'META')
-        self.plugin = MetaPluginV2()
+        self.plugin = meta_neutron_plugin.MetaPluginV2()
         self.assertEqual(topics.PLUGIN, 'q-plugin')
         ret = self.plugin.rpc_workers_supported()
         self.assertFalse(ret)
@@ -392,13 +390,13 @@ class MetaNeutronPluginV2TestRpcFlavor(base.BaseTestCase):
         setup_metaplugin_conf()
         cfg.CONF.set_override('rpc_flavor', 'fake-fake', 'META')
         self.assertRaises(exc.Invalid,
-                          MetaPluginV2)
+                          meta_neutron_plugin.MetaPluginV2)
         self.assertEqual(topics.PLUGIN, 'q-plugin')
 
     def test_rpc_flavor_multiple_rpc_workers(self):
         setup_metaplugin_conf()
         cfg.CONF.set_override('rpc_flavor', 'fake2', 'META')
-        self.plugin = MetaPluginV2()
+        self.plugin = meta_neutron_plugin.MetaPluginV2()
         self.assertEqual(topics.PLUGIN, 'q-plugin')
         ret = self.plugin.rpc_workers_supported()
         self.assertTrue(ret)

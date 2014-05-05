@@ -21,7 +21,7 @@ import time
 
 import mock
 from oslo.config import cfg
-from six.moves import xrange
+from six import moves
 import testtools
 
 from neutron.agent.linux import ovs_lib
@@ -154,8 +154,8 @@ class TestNecAgent(TestNecAgentBase):
         # Ensure vif_ports_scenario is longer than DAEMON_LOOP_COUNT
         if len(self.vif_ports_scenario) < DAEMON_LOOP_COUNT:
             self.vif_ports_scenario.extend(
-                [] for _i in xrange(DAEMON_LOOP_COUNT -
-                                    len(self.vif_ports_scenario)))
+                [] for _i in moves.xrange(DAEMON_LOOP_COUNT -
+                                          len(self.vif_ports_scenario)))
 
         with contextlib.nested(
             mock.patch.object(time, 'sleep', side_effect=sleep_mock),

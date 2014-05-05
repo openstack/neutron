@@ -20,7 +20,7 @@ import mock
 import webob.exc
 
 from neutron.common import constants
-from neutron.common.test_lib import test_config
+from neutron.common import test_lib
 from neutron.common import topics
 from neutron import context
 from neutron.db import db_base_plugin_v2
@@ -52,16 +52,16 @@ class NecPluginV2TestCaseBase(object):
         self.nec_ini_file = self.useFixture(fixtures.TempDir()).join("nec.ini")
         with open(self.nec_ini_file, 'w') as f:
             f.write(self._nec_ini)
-        if 'config_files' in test_config.keys():
-            for c in test_config['config_files']:
+        if 'config_files' in test_lib.test_config.keys():
+            for c in test_lib.test_config['config_files']:
                 if c.rfind("/nec.ini") > -1:
-                    test_config['config_files'].remove(c)
-            test_config['config_files'].append(self.nec_ini_file)
+                    test_lib.test_config['config_files'].remove(c)
+            test_lib.test_config['config_files'].append(self.nec_ini_file)
         else:
-            test_config['config_files'] = [self.nec_ini_file]
+            test_lib.test_config['config_files'] = [self.nec_ini_file]
 
     def _clean_nec_ini(self):
-        test_config['config_files'].remove(self.nec_ini_file)
+        test_lib.test_config['config_files'].remove(self.nec_ini_file)
         os.remove(self.nec_ini_file)
         self.nec_ini_file = None
 

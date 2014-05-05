@@ -33,30 +33,25 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as secgrp
 from neutron import manager
-from neutron.manager import NeutronManager
 from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.api_client import exception as api_exc
-from neutron.plugins.vmware.api_client.version import Version
+from neutron.plugins.vmware.api_client import version as version_module
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import sync
 from neutron.plugins.vmware.dbexts import db as nsx_db
 from neutron.plugins.vmware.extensions import distributedrouter as dist_router
 from neutron.plugins.vmware import nsxlib
-from neutron.plugins.vmware.plugins.base import NetworkTypes
+from neutron.plugins.vmware.plugins import base
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 import neutron.tests.unit.test_db_plugin as test_plugin
 import neutron.tests.unit.test_extension_ext_gw_mode as test_ext_gw_mode
 import neutron.tests.unit.test_extension_security_group as ext_sg
 import neutron.tests.unit.test_l3_plugin as test_l3_plugin
 from neutron.tests.unit import testlib_api
+from neutron.tests.unit import vmware
 from neutron.tests.unit.vmware.apiclient import fake
-from neutron.tests.unit.vmware import get_fake_conf
-from neutron.tests.unit.vmware import NSXAPI_NAME
-from neutron.tests.unit.vmware import NSXEXT_PATH
-from neutron.tests.unit.vmware import PLUGIN_NAME
-from neutron.tests.unit.vmware import STUBS_PATH
 
 LOG = log.getLogger(__name__)
 
@@ -91,13 +86,14 @@ class NsxPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         return network_req.get_response(self.api)
 
     def setUp(self,
-              plugin=PLUGIN_NAME,
+              plugin=vmware.PLUGIN_NAME,
               ext_mgr=None,
               service_plugins=None):
-        test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
+        test_lib.test_config['config_files'] = [
+            vmware.get_fake_conf('nsx.ini.test')]
         # mock api client
-        self.fc = fake.FakeClient(STUBS_PATH)
-        self.mock_nsx = mock.patch(NSXAPI_NAME, autospec=True)
+        self.fc = fake.FakeClient(vmware.STUBS_PATH)
+        self.mock_nsx = mock.patch(vmware.NSXAPI_NAME, autospec=True)
         self.mock_instance = self.mock_nsx.start()
         # Avoid runs of the synchronizer looping call
         patch_sync = mock.patch.object(sync, '_start_loopingcall')
@@ -105,7 +101,7 @@ class NsxPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
         # Emulate tests against NSX 2.x
         self.mock_instance.return_value.get_version.return_value = (
-            Version("2.9"))
+            version_module.Version("2.9"))
         self.mock_instance.return_value.request.side_effect = (
             self.fc.fake_request)
         super(NsxPluginV2TestCase, self).setUp(plugin=plugin,
@@ -346,10 +342,11 @@ class TestNetworksV2(test_plugin.TestNetworksV2, NsxPluginV2TestCase):
 class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
 
     def setUp(self):
-        test_lib.test_config['config_files'] = [get_fake_conf('nsx.ini.test')]
+        test_lib.test_config['config_files'] = [
+            vmware.get_fake_conf('nsx.ini.test')]
         # mock nsx api client
-        self.fc = fake.FakeClient(STUBS_PATH)
-        self.mock_nsx = mock.patch(NSXAPI_NAME, autospec=True)
+        self.fc = fake.FakeClient(vmware.STUBS_PATH)
+        self.mock_nsx = mock.patch(vmware.NSXAPI_NAME, autospec=True)
         instance = self.mock_nsx.start()
         instance.return_value.login.return_value = "the_cookie"
         # Avoid runs of the synchronizer looping call
@@ -357,7 +354,7 @@ class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
         patch_sync.start()
 
         instance.return_value.request.side_effect = self.fc.fake_request
-        super(SecurityGroupsTestCase, self).setUp(PLUGIN_NAME)
+        super(SecurityGroupsTestCase, self).setUp(vmware.PLUGIN_NAME)
 
 
 class TestSecurityGroup(ext_sg.TestSecurityGroups, SecurityGroupsTestCase):
@@ -442,18 +439,19 @@ class L3NatTest(test_l3_plugin.L3BaseForIntTests, NsxPluginV2TestCase):
     def _restore_l3_attribute_map(self):
         l3.RESOURCE_ATTRIBUTE_MAP = self._l3_attribute_map_bk
 
-    def setUp(self, plugin=PLUGIN_NAME, ext_mgr=None, service_plugins=None):
+    def setUp(self, plugin=vmware.PLUGIN_NAME, ext_mgr=None,
+              service_plugins=None):
         self._l3_attribute_map_bk = {}
         for item in l3.RESOURCE_ATTRIBUTE_MAP:
             self._l3_attribute_map_bk[item] = (
                 l3.RESOURCE_ATTRIBUTE_MAP[item].copy())
-        cfg.CONF.set_override('api_extensions_path', NSXEXT_PATH)
+        cfg.CONF.set_override('api_extensions_path', vmware.NSXEXT_PATH)
         l3_attribute_map_bk = backup_l3_attribute_map()
         self.addCleanup(restore_l3_attribute_map, l3_attribute_map_bk)
         ext_mgr = ext_mgr or TestL3ExtensionManager()
         super(L3NatTest, self).setUp(
             plugin=plugin, ext_mgr=ext_mgr, service_plugins=service_plugins)
-        plugin_instance = NeutronManager.get_plugin()
+        plugin_instance = manager.NeutronManager.get_plugin()
         self._plugin_name = "%s.%s" % (
             plugin_instance.__module__,
             plugin_instance.__class__.__name__)
@@ -461,7 +459,7 @@ class L3NatTest(test_l3_plugin.L3BaseForIntTests, NsxPluginV2TestCase):
 
     def _create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
-        net_type = NetworkTypes.L3_EXT
+        net_type = base.NetworkTypes.L3_EXT
         providernet_args = {pnet.NETWORK_TYPE: net_type,
                             pnet.PHYSICAL_NETWORK: 'l3_gw_uuid'}
         if vlan_id:
@@ -480,7 +478,7 @@ class TestL3NatTestCase(L3NatTest,
 
     def _test_create_l3_ext_network(self, vlan_id=None):
         name = 'l3_ext_net'
-        net_type = NetworkTypes.L3_EXT
+        net_type = base.NetworkTypes.L3_EXT
         expected = [('subnets', []), ('name', name), ('admin_state_up', True),
                     ('status', 'ACTIVE'), ('shared', False),
                     (external_net.EXTERNAL, True),
@@ -540,7 +538,7 @@ class TestL3NatTestCase(L3NatTest,
     def _test_router_create_with_distributed(self, dist_input, dist_expected,
                                              version='3.1', return_code=201):
         self.mock_instance.return_value.get_version.return_value = (
-            Version(version))
+            version_module.Version(version))
 
         data = {'tenant_id': 'whatever'}
         data['name'] = 'router1'

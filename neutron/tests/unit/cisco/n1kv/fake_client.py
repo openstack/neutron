@@ -19,7 +19,7 @@
 
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
-from neutron.plugins.cisco.n1kv.n1kv_client import Client as n1kv_client
+from neutron.plugins.cisco.n1kv import n1kv_client
 
 LOG = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ _resource_metadata = {'port': ['id', 'macAddress', 'ipAddress', 'subnetId'],
                                     'ipAddress', 'subnetId']}
 
 
-class TestClient(n1kv_client):
+class TestClient(n1kv_client.Client):
 
     def __init__(self, **kwargs):
         self.broken = False

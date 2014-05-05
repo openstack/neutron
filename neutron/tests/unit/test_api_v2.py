@@ -25,14 +25,14 @@ from webob import exc
 import webtest
 
 from neutron.api import api_common
-from neutron.api.extensions import PluginAwareExtensionManager
+from neutron.api import extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
 from neutron.common import exceptions as n_exc
 from neutron import context
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common.notifier import api as notifer_api
 from neutron.openstack.common import policy as common_policy
 from neutron.openstack.common import uuidutils
@@ -94,7 +94,7 @@ class APIv2TestBase(base.BaseTestCase):
 
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
         # Ensure existing ExtensionManager is not used
-        PluginAwareExtensionManager._instance = None
+        extensions.PluginAwareExtensionManager._instance = None
         # Create the default configurations
         self.config_parse()
         # Update the plugin
@@ -1122,7 +1122,7 @@ class SubresourceTest(base.BaseTestCase):
         super(SubresourceTest, self).setUp()
 
         plugin = 'neutron.tests.unit.test_api_v2.TestSubresourcePlugin'
-        PluginAwareExtensionManager._instance = None
+        extensions.PluginAwareExtensionManager._instance = None
 
         # Save the global RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
@@ -1394,7 +1394,7 @@ class ExtensionTestCase(base.BaseTestCase):
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
 
         # Ensure existing ExtensionManager is not used
-        PluginAwareExtensionManager._instance = None
+        extensions.PluginAwareExtensionManager._instance = None
 
         # Save the global RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
@@ -1412,7 +1412,8 @@ class ExtensionTestCase(base.BaseTestCase):
         self.plugin = self._plugin_patcher.start()
 
         # Instantiate mock plugin and enable the V2attributes extension
-        NeutronManager.get_plugin().supported_extension_aliases = ["v2attrs"]
+        manager.NeutronManager.get_plugin().supported_extension_aliases = (
+            ["v2attrs"])
 
         api = router.APIRouter()
         self.api = webtest.TestApp(api)

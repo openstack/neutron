@@ -18,7 +18,7 @@
 import random
 
 import mock
-from six.moves import xrange
+from six import moves
 
 from neutron.openstack.common import uuidutils
 from neutron.plugins.nec.common import ofc_client
@@ -48,7 +48,8 @@ class TremaDriverTestBase(base.BaseTestCase):
         tenant_id = uuidutils.generate_uuid()
         network_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
-        mac = ':'.join(['%x' % random.randint(0, 255) for i in xrange(6)])
+        mac = ':'.join(['%x' % random.randint(0, 255)
+                        for i in moves.xrange(6)])
         portinfo = nmodels.PortInfo(id=port_id, datapath_id="0x123456789",
                                     port_no=1234, vlan_id=321,
                                     mac=mac)
@@ -186,7 +187,8 @@ class TremaFilterDriverTest(TremaDriverTestBase):
     def _test_create_filter(self, filter_dict=None, filter_post=None,
                             filter_wildcards=None, no_portinfo=False):
         t, n, p = self.get_ofc_item_random_params()
-        src_mac = ':'.join(['%x' % random.randint(0, 255) for i in xrange(6)])
+        src_mac = ':'.join(['%x' % random.randint(0, 255)
+                            for i in moves.xrange(6)])
         if filter_wildcards is None:
             filter_wildcards = []
 
@@ -286,7 +288,8 @@ class TremaFilterDriverTest(TremaDriverTestBase):
                                  filter_wildcards=['dl_src'])
 
     def test_create_filter_dst_mac(self):
-        dst_mac = ':'.join(['%x' % random.randint(0, 255) for i in xrange(6)])
+        dst_mac = ':'.join(['%x' % random.randint(0, 255)
+                            for i in moves.xrange(6)])
         self._test_create_filter(filter_dict={'dst_mac': dst_mac},
                                  filter_post={'dl_dst': dst_mac})
 
