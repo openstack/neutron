@@ -74,6 +74,36 @@ class EndpointGroupContext(object):
 
 
 @six.add_metaclass(ABCMeta)
+class PolicyRuleContext(object):
+    """Context passed to policy engine for changes to policy_rule resources.
+
+    An PolicyRuleContext instance wraps an policy_rule resource.
+    It provides helper methods for accessing other relevant information.
+    Results from expensive operations are cached for convenient access.
+    """
+
+    @abstractproperty
+    def current(self):
+        """Return the current state of the policy_rule.
+
+        Return the current state of the policy_rule, as defined by
+        GroupPolicyPlugin.create_policy_rule.
+        """
+        pass
+
+    @abstractproperty
+    def original(self):
+        """Return the original state of the policy_rule.
+
+        Return the original state of the policy_rule, prior to a call to
+        update_policy_rule. Method is only valid within calls to
+        update_policy_rule_precommit and
+        update_policy_rule_postcommit.
+        """
+        pass
+
+
+@six.add_metaclass(ABCMeta)
 class PolicyClassifierContext(object):
     """Context passed to policy engine for changes to policy_classifier resources.
 

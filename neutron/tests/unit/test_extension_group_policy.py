@@ -197,86 +197,87 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
     def test_delete_endpoint_group(self):
         self._test_entity_delete('endpoint_group')
 
-    def test_create_policy_classifier(self):
-        policy_classifier_id = _uuid()
-        data = {'policy_classifier': {'name': 'pc1',
-                                      'tenant_id': _uuid(),
-                                      'protocol': 'tcp',
-                                      'port_range': '80',
-                                      'direction': 'in',
-                                      'description': ''}}
-        return_value = copy.copy(data['policy_classifier'])
-        return_value.update({'id': policy_classifier_id})
+    def test_create_policy_rule(self):
+        policy_rule_id = _uuid()
+        data = {'policy_rule': {'name': 'pr1',
+                                'tenant_id': _uuid(),
+                                'enabled': True,
+                                'contract_filter_id': _uuid(),
+                                'policy_classifier_id': _uuid(),
+                                'policy_actions': [_uuid()],
+                                'description': ''}}
+        return_value = copy.copy(data['policy_rule'])
+        return_value.update({'id': policy_rule_id})
 
         instance = self.plugin.return_value
-        instance.create_policy_classifier.return_value = return_value
-        res = self.api.post(_get_path('gp/policy_classifiers', fmt=self.fmt),
+        instance.create_policy_rule.return_value = return_value
+        res = self.api.post(_get_path('gp/policy_rules', fmt=self.fmt),
                             self.serialize(data),
                             content_type='application/%s' % self.fmt)
-        instance.create_policy_classifier.assert_called_with(
-            mock.ANY, policy_classifier=data)
+        instance.create_policy_rule.assert_called_with(
+            mock.ANY, policy_rule=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
         res = self.deserialize(res)
-        self.assertIn('policy_classifier', res)
-        self.assertEqual(res['policy_classifier'], return_value)
+        self.assertIn('policy_rule', res)
+        self.assertEqual(res['policy_rule'], return_value)
 
-    def test_list_policy_classifiers(self):
-        policy_classifier_id = _uuid()
+    def test_list_policy_rules(self):
+        policy_rule_id = _uuid()
         return_value = [{'tenant_id': _uuid(),
-                         'id': policy_classifier_id}]
+                         'id': policy_rule_id}]
 
         instance = self.plugin.return_value
-        instance.get_policy_classifiers.return_value = return_value
+        instance.get_policy_rules.return_value = return_value
 
-        res = self.api.get(_get_path('gp/policy_classifiers', fmt=self.fmt))
+        res = self.api.get(_get_path('gp/policy_rules', fmt=self.fmt))
 
-        instance.get_policy_classifiers.assert_called_with(mock.ANY,
-                                                           fields=mock.ANY,
-                                                           filters=mock.ANY)
+        instance.get_policy_rules.assert_called_with(mock.ANY,
+                                                     fields=mock.ANY,
+                                                     filters=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
 
-    def test_get_policy_classifier(self):
-        policy_classifier_id = _uuid()
+    def test_get_policy_rule(self):
+        policy_rule_id = _uuid()
         return_value = {'tenant_id': _uuid(),
-                        'id': policy_classifier_id}
+                        'id': policy_rule_id}
 
         instance = self.plugin.return_value
-        instance.get_policy_classifier.return_value = return_value
+        instance.get_policy_rule.return_value = return_value
 
-        res = self.api.get(_get_path('gp/policy_classifiers',
-                                     id=policy_classifier_id, fmt=self.fmt))
+        res = self.api.get(_get_path('gp/policy_rules',
+                                     id=policy_rule_id, fmt=self.fmt))
 
-        instance.get_policy_classifier.assert_called_with(mock.ANY,
-                                                          policy_classifier_id,
-                                                          fields=mock.ANY)
+        instance.get_policy_rule.assert_called_with(mock.ANY,
+                                                    policy_rule_id,
+                                                    fields=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
-        self.assertIn('policy_classifier', res)
-        self.assertEqual(res['policy_classifier'], return_value)
+        self.assertIn('policy_rule', res)
+        self.assertEqual(res['policy_rule'], return_value)
 
-    def test_update_policy_classifier(self):
-        policy_classifier_id = _uuid()
-        update_data = {'policy_classifier': {'name': 'new_name'}}
+    def test_update_policy_rule(self):
+        policy_rule_id = _uuid()
+        update_data = {'policy_rule': {'name': 'new_name'}}
         return_value = {'tenant_id': _uuid(),
-                        'id': policy_classifier_id}
+                        'id': policy_rule_id}
 
         instance = self.plugin.return_value
-        instance.update_policy_classifier.return_value = return_value
+        instance.update_policy_rule.return_value = return_value
 
-        res = self.api.put(_get_path('gp/policy_classifiers',
-                                     id=policy_classifier_id,
+        res = self.api.put(_get_path('gp/policy_rules',
+                                     id=policy_rule_id,
                                      fmt=self.fmt),
                            self.serialize(update_data))
 
-        instance.update_policy_classifier.assert_called_with(
-            mock.ANY, policy_classifier_id, policy_classifier=update_data)
+        instance.update_policy_rule.assert_called_with(
+            mock.ANY, policy_rule_id, policy_rule=update_data)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
-        self.assertIn('policy_classifier', res)
-        self.assertEqual(res['policy_classifier'], return_value)
+        self.assertIn('policy_rule', res)
+        self.assertEqual(res['policy_rule'], return_value)
 
-    def test_delete_policy_classifier(self):
-        self._test_entity_delete('policy_classifier')
+    def test_delete_policy_rule(self):
+        self._test_entity_delete('policy_rule')
 
     def test_create_policy_action(self):
         policy_action_id = _uuid()
