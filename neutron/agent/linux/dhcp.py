@@ -347,11 +347,15 @@ class Dnsmasq(DhcpLocalProcess):
 
             cidr = netaddr.IPNetwork(subnet.cidr)
 
-            cmd.append('--dhcp-range=%s%s,%s,%s,%ss' %
+            if self.conf.dhcp_lease_duration == -1:
+                lease = 'infinite'
+            else:
+                lease = '%ss' % self.conf.dhcp_lease_duration
+
+            cmd.append('--dhcp-range=%s%s,%s,%s,%s' %
                        (set_tag, self._TAG_PREFIX % i,
-                        cidr.network,
-                        mode,
-                        self.conf.dhcp_lease_duration))
+                        cidr.network, mode, lease))
+
             possible_leases += cidr.size
 
         # Cap the limit because creating lots of subnets can inflate

@@ -648,7 +648,7 @@ class TestDhcpLocalProcess(TestBase):
 
 class TestDnsmasq(TestBase):
     def _test_spawn(self, extra_options, network=FakeDualNetwork(),
-                    max_leases=16777216):
+                    max_leases=16777216, lease_duration=86400):
         def mock_get_conf_file_name(kind, ensure_conf_dir=False):
             return '/dhcp/%s/%s' % (network.id, kind)
 
@@ -678,11 +678,15 @@ class TestDnsmasq(TestBase):
             '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
             '--leasefile-ro']
 
-        expected.extend(
-            '--dhcp-range=set:tag%d,%s,static,86400s' %
-            (i, s.cidr.split('/')[0])
-            for i, s in enumerate(network.subnets)
-        )
+        seconds = ''
+        if lease_duration == -1:
+            lease_duration = 'infinite'
+        else:
+            seconds = 's'
+        expected.extend('--dhcp-range=set:tag%d,%s,static,%s%s' %
+                        (i, s.cidr.split('/')[0], lease_duration, seconds)
+                        for i, s in enumerate(network.subnets))
+
         expected.append('--dhcp-lease-max=%d' % max_leases)
         expected.extend(extra_options)
 
@@ -711,6 +715,11 @@ class TestDnsmasq(TestBase):
 
     def test_spawn(self):
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'])
+
+    def test_spawn_infinite_lease_duration(self):
+        self.conf.set_override('dhcp_lease_duration', -1)
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
+                         FakeDualNetwork(), 16777216, -1)
 
     def test_spawn_cfg_config_file(self):
         self.conf.set_override('dnsmasq_config_file', '/foo')
