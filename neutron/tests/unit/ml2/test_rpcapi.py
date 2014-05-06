@@ -38,11 +38,9 @@ class RpcApiTestCase(base.BaseTestCase):
         if rpc_method == 'cast' and method == 'run_instance':
             kwargs['call'] = False
 
-        rpc_method_mock = mock.Mock()
-        rpc_method_mock.return_value = expected_retval
-        setattr(rpc, rpc_method, rpc_method_mock)
-
-        retval = getattr(rpcapi, method)(ctxt, **kwargs)
+        with mock.patch.object(rpc, rpc_method) as rpc_method_mock:
+            rpc_method_mock.return_value = expected_retval
+            retval = getattr(rpcapi, method)(ctxt, **kwargs)
 
         self.assertEqual(retval, expected_retval)
 
