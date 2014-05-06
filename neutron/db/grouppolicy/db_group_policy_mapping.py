@@ -168,6 +168,11 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
         res['neutron_routers'] = rd['neutron_routers']
         return self._fields(res, fields)
 
+    def _set_port_for_endpoint(self, context, ep_id, port_id):
+        with context.session.begin(subtransactions=True):
+            ep_db = self._get_endpoint(context, ep_id)
+            ep_db.neutron_port_id = port_id
+
     def _set_network_for_bridge_domain(self, context, bd_id, network_id):
         with context.session.begin(subtransactions=True):
             bd_db = self._get_bridge_domain(context, bd_id)

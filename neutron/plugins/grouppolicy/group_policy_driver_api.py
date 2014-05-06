@@ -43,6 +43,16 @@ class EndpointContext(object):
         """
         pass
 
+    @abstractmethod
+    def set_neutron_port_id(self, port_id):
+        """Set the neutron port for the endpoint.
+
+        :param port_id: Port to which endpoint is mapped.
+
+        Set the neutron port to which the endpoint is mapped.
+        """
+        pass
+
 
 @six.add_metaclass(ABCMeta)
 class EndpointGroupContext(object):

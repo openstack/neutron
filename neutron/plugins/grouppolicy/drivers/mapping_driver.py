@@ -214,5 +214,21 @@ class MappingDriver(api.PolicyDriver):
         pass
 
     def _create_ep_port(self, context):
-        # TODO(rkukura): Implement
-        pass
+        epg_id = context.current['endpoint_group_id']
+        epg = context._plugin.get_endpoint_group(context._plugin_context,
+                                                 epg_id)
+        bd_id = epg['bridge_domain_id']
+        bd = context._plugin.get_bridge_domain(context._plugin_context,
+                                               bd_id)
+        attrs = {'port':
+                 {'tenant_id': context.current['tenant_id'],
+                  'name': 'ep_' + context.current['name'],
+                  'network_id': bd['neutron_network_id'],
+                  'mac_address': attributes.ATTR_NOT_SPECIFIED,
+                  'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                  'device_id': '',
+                  'device_owner': '',
+                  'admin_state_up': True}}
+        core_plugin = manager.NeutronManager.get_plugin()
+        port = core_plugin.create_port(context._plugin_context, attrs)
+        context.set_neutron_port_id(port['id'])

@@ -83,7 +83,9 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
                                        endpoint_group_id=epg_id) as ep:
                         self.assertEqual(ep['endpoint']['endpoint_group_id'],
                                          epg_id)
-                        # TODO(rkukura): Verify port created
+                        port_id = ep['endpoint']['neutron_port_id']
+                        self.assertIsNotNone(port_id)
+                        # TODO(rkukura): Verify port details
 
 
 # TODO(Sumit): XML tests

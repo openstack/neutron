@@ -36,6 +36,11 @@ class EndpointContext(GroupPolicyContext, api.EndpointContext):
     def original(self):
         return self._original_endpoint
 
+    def set_neutron_port_id(self, port_id):
+        self._plugin._set_port_for_endpoint(self._plugin_context,
+                                            self._endpoint['id'], port_id)
+        self._endpoint['neutron_port_id'] = port_id
+
 
 class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
 
