@@ -666,14 +666,10 @@ class LsnManagerTestCase(base.BaseTestCase):
 
     def test_lsn_port_host_conf_lsn_port_not_found(self):
         with mock.patch.object(
-            self.manager,
-            'lsn_port_get',
-            side_effect=p_exc.LsnPortNotFound(lsn_id=self.lsn_id,
-                                              entity='subnet',
-                                              entity_id=self.sub_id)):
-            self.assertRaises(p_exc.PortConfigurationError,
-                              self.manager._lsn_port_host_conf, mock.ANY,
-                              self.net_id, self.sub_id, mock.ANY, mock.Mock())
+            self.manager, 'lsn_port_get', return_value=(None, None)) as f:
+            self.manager._lsn_port_host_conf(
+                mock.ANY, self.net_id, self.sub_id, mock.ANY, mock.Mock())
+            self.assertEqual(1, f.call_count)
 
     def _test_lsn_port_update(self, dhcp=None, meta=None):
         self.manager.lsn_port_update(
