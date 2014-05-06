@@ -43,7 +43,7 @@ class EndpointPortBinding(gpolicy_db.Endpoint):
     neutron_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'),
                                 nullable=True, unique=True)
     neutron_port = orm.relationship(models_v2.Port,
-                                    backref=orm.backref("gp_endpoints",
+                                    backref=orm.backref("gp_endpoint",
                                                         lazy='joined',
                                                         uselist=False))
 
@@ -77,7 +77,7 @@ class BridgeDomainNetworkBinding(gpolicy_db.BridgeDomain):
     neutron_network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
                                    nullable=True, unique=True)
     neutron_network = orm.relationship(models_v2.Network,
-                                       backref=orm.backref("gp_bridge_domains",
+                                       backref=orm.backref("gp_bridge_domain",
                                                            lazy='joined',
                                                            uselist=False))
 
