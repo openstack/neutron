@@ -121,8 +121,8 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
                                    'tenant_id': _uuid(),
                                    'description': '',
                                    'bridge_domain_id': _uuid(),
-                                   'provided_contract_scopes': [],
-                                   'consumed_contract_scopes': []}}
+                                   'provided_contracts': {},
+                                   'consumed_contracts': {}}}
         return_value = copy.copy(data['endpoint_group'])
         return_value.update({'id': endpoint_group_id})
         return_value.update({'bridge_domain_id': None})
