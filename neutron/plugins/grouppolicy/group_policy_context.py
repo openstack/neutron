@@ -53,6 +53,10 @@ class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
     def original(self):
         return self._original_endpoint_group
 
+    def is_cidr_available(self, cidr):
+        return self._plugin._is_cidr_available_to_endpoint_group(
+            self._plugin_context, self._endpoint_group['id'], cidr)
+
     def add_neutron_subnet(self, subnet_id):
         subnets = self._plugin._add_subnet_to_endpoint_group(
             self._plugin_context, self._endpoint_group['id'], subnet_id)

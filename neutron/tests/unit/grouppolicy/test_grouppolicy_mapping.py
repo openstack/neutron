@@ -54,23 +54,14 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
                 # TODO(rkukura): Verify port created
 
     def test_explicit_workflow(self, **kwargs):
-        rd_name = "rd1"
-        rd_attrs = self._get_test_routing_domain_attrs(rd_name)
-        with self.routing_domain(name=rd_name) as rd:
-            for k, v in rd_attrs.iteritems():
-                self.assertEqual(rd['routing_domain'][k], v)
+        # REVISIT(rkukura): Mock core plugin?
+
+        with self.routing_domain(name="rd1") as rd:
             # TODO(rkukura): Verify router created
             rd_id = rd['routing_domain']['id']
 
-            bd_name = "bd1"
-            # REVISIT(rkukura): Do we need to test all attrs here?
-            bd_attrs = self._get_test_bridge_domain_attrs(bd_name)
-            del bd_attrs['neutron_network_id']
-            # REVISIT(rkukura): Mock core plugin?
-            with self.bridge_domain(name=bd_name,
+            with self.bridge_domain(name="bd1",
                                     routing_domain_id=rd_id) as bd:
-                for k, v in bd_attrs.iteritems():
-                    self.assertEqual(bd['bridge_domain'][k], v)
                 self.assertEqual(bd['bridge_domain']['routing_domain_id'],
                                  rd_id)
                 net_id = bd['bridge_domain']['neutron_network_id']
@@ -78,28 +69,18 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
                 # TODO(rkukura): Verify network details
                 bd_id = bd['bridge_domain']['id']
 
-                epg_name = "epg1"
-                # REVISIT(rkukura): Do we need to test all attrs here?
-                epg_attrs = self._get_test_endpoint_group_attrs(epg_name)
-                del epg_attrs['neutron_subnets']
-                with self.endpoint_group(name=epg_name,
+                with self.endpoint_group(name="epg1",
                                          bridge_domain_id=bd_id) as epg:
-                    for k, v in epg_attrs.iteritems():
-                        self.assertEqual(epg['endpoint_group'][k], v)
                     self.assertEqual(epg['endpoint_group']['bridge_domain_id'],
                                      bd_id)
                     subnets = epg['endpoint_group']['neutron_subnets']
                     self.assertIsNotNone(subnets)
-                    # self.assertEqual(len(subnets), 1)
+                    self.assertEqual(len(subnets), 1)
                     # TODO(rkukura): Verify subnet details
                     epg_id = epg['endpoint_group']['id']
 
-                    ep_name = "ep1"
-                    ep_attrs = self._get_test_endpoint_attrs(ep_name)
-                    with self.endpoint(name=ep_name,
+                    with self.endpoint(name="ep1",
                                        endpoint_group_id=epg_id) as ep:
-                        for k, v in ep_attrs.iteritems():
-                            self.assertEqual(ep['endpoint'][k], v)
                         self.assertEqual(ep['endpoint']['endpoint_group_id'],
                                          epg_id)
                         # TODO(rkukura): Verify port created

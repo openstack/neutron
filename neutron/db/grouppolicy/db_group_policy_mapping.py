@@ -19,12 +19,12 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron.common import exceptions as nexc
 from neutron.common import log
 from neutron.db.grouppolicy import db_group_policy as gpolicy_db
 from neutron.db import l3_db  # noqa
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.extensions import group_policy as gpolicy
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
@@ -112,7 +112,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
         try:
             endpoint = self._get_by_id(context, EndpointPortBinding, id)
         except exc.NoResultFound:
-            raise nexc.EndpointNotFound(endpoint_id=id)
+            raise gpolicy.EndpointNotFound(endpoint_id=id)
         return endpoint
 
     def _get_endpoint_group(self, context, id):
@@ -120,7 +120,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             endpoint_group = self._get_by_id(context,
                                              EndpointGroupSubnetBinding, id)
         except exc.NoResultFound:
-            raise nexc.EndpointGroupNotFound(endpoint_group_id=id)
+            raise gpolicy.EndpointGroupNotFound(endpoint_group_id=id)
         return endpoint_group
 
     def _get_bridge_domain(self, context, id):
@@ -128,7 +128,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             bridge_domain = self._get_by_id(context,
                                             BridgeDomainNetworkBinding, id)
         except exc.NoResultFound:
-            raise nexc.BridgeDomainNotFound(bridge_domain_id=id)
+            raise gpolicy.BridgeDomainNotFound(bridge_domain_id=id)
         return bridge_domain
 
     def _get_routing_domain(self, context, id):
@@ -136,7 +136,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             routing_domain = self._get_by_id(context,
                                              RoutingDomainRouterBinding, id)
         except exc.NoResultFound:
-            raise nexc.RoutingDomainNotFound(routing_domain_id=id)
+            raise gpolicy.RoutingDomainNotFound(routing_domain_id=id)
         return routing_domain
 
     def _make_endpoint_dict(self, ep, fields=None):
@@ -168,12 +168,31 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             bd_db = self._get_bridge_domain(context, bd_id)
             bd_db.neutron_network_id = network_id
 
+    def _is_cidr_available_to_endpoint_group(self, context, epg_id, cidr):
+        with context.session.begin(subtransactions=True):
+            # REVISIT(rkukura): Optimize querying for set of EPGs with
+            # same RD.
+            LOG.info("epg_id: %s" % epg_id)
+            epg_db = self._get_endpoint_group(context, epg_id)
+            LOG.info("epg_db: %s" % epg_db)
+            # bd_db = epg_db.bridge_domain
+            # LOG.info("bd_db: %s" % bd_db)
+            # rd_db = bd_db.routing_domain
+            # LOG.info("rd_db: %s" % rd_db)
+            # LOG.info("rd_db.bridge_domains: %s" % rd_db.bridge_domains)
+        # TODO(rkukura): Implement
+        return True
+
     def _add_subnet_to_endpoint_group(self, context, epg_id, subnet_id):
         with context.session.begin(subtransactions=True):
             epg_db = self._get_endpoint_group(context, epg_id)
             assoc = EndpointGroupSubnetAssociation(endpoint_group_id=epg_id,
                                                    neutron_subnet_id=subnet_id)
             epg_db.neutron_subnets.append(assoc)
+        # TODO(rkukura): Commit transaction (not subtransaction?) and
+        # Raise exception if subnet overlaps any other subnets in
+        # RD. Or come up with better way to atomically allocate
+        # subnets from RD's supernet.
         return copy.copy(epg_db.neutron_subnets)
 
     @log.log

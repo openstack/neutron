@@ -191,20 +191,21 @@ class MappingDriver(api.PolicyDriver):
         core_plugin = manager.NeutronManager.get_plugin()
         subnet = None
         for cidr in supernet.subnet(rd['subnet_prefix_length']):
-            LOG.info("trying: %s", cidr)
-            # TODO(rkukura): Need to ensure subnet not already
-            # allocated within entire RD, not just within BD's
-            # network. We may need some sort of allocation pool for
-            # this, or a set of locked for update queries.
-            try:
-                attrs['subnet']['cidr'] = cidr.__str__()
-                subnet = core_plugin.create_subnet(context._plugin_context,
-                                                   attrs)
-                LOG.info("created subnet: %s", subnet)
-                context.add_neutron_subnet(subnet['id'])
-                return
-            except Exception:
-                LOG.exception("got exception")
+            if context.is_cidr_available(cidr):
+                try:
+                    attrs['subnet']['cidr'] = cidr.__str__()
+                    subnet = core_plugin.create_subnet(context._plugin_context,
+                                                       attrs)
+                    LOG.info("created subnet: %s", subnet)
+                    try:
+                        context.add_neutron_subnet(subnet['id'])
+                        return
+                    except Exception:
+                        LOG.exception("add_neutron_subnet failed")
+                        core_plugin.delete_subnet(context._plugin_context,
+                                                  subnet['id'])
+                except Exception:
+                    LOG.exception("create_subnet failed")
         # TODO(rkukura): Need real exception
         raise nexc.ResourceExhausted("no more subnets in supernet")
 

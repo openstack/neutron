@@ -73,6 +73,19 @@ class EndpointGroupContext(object):
         pass
 
     @abstractmethod
+    def is_cidr_available(self, cidr):
+        """Check if CIDR is available.
+
+        :param cidr: CIDR to check.
+
+        Return True iff the specified CIDR does not overlap with any
+        subnets currently allocated within this endpoint_group's
+        bridge_domain's routing_domain. Note that this does not lock
+        anything, so its only a hint.
+        """
+        pass
+
+    @abstractmethod
     def add_neutron_subnet(self, subnet_id):
         """Add the neutron subnet to the endpoint_group.
 
