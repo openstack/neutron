@@ -35,6 +35,11 @@ LOG = logging.getLogger(__name__)
 class Endpoint(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Endpoint consumed by the Group Policy."""
     __tablename__ = 'gp_endpoints'
+    type = sa.Column(sa.String(15))
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     endpoint_group_id = sa.Column(sa.String(36),
@@ -78,6 +83,11 @@ class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Endpoint Group that is a collection of endpoints."""
     __tablename__ = 'gp_endpoint_groups'
+    type = sa.Column(sa.String(15))
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     endpoints = orm.relationship(Endpoint, backref='endpoint_group')
@@ -210,6 +220,11 @@ class Contract(model_base.BASEV2, models_v2.HasTenant):
 class BridgeDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Bridge Domain that is a collection of endpoint_groups."""
     __tablename__ = 'gp_bridge_domains'
+    type = sa.Column(sa.String(15))
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     endpoint_groups = orm.relationship(EndpointGroup, backref='bridge_domain')
@@ -221,6 +236,11 @@ class BridgeDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 class RoutingDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Routing Domain with a non-overlapping IP address space."""
     __tablename__ = 'gp_routing_domains'
+    type = sa.Column(sa.String(15))
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     ip_version = sa.Column(sa.Integer, nullable=False)

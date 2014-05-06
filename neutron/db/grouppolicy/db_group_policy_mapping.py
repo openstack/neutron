@@ -38,6 +38,7 @@ LOG = logging.getLogger(__name__)
 class EndpointPortBinding(gpolicy_db.Endpoint):
     """Neutron port binding to an Endpoint."""
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': 'mapping'}
     # TODO(Sumit): confirm cascade constraints
     neutron_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'),
                                 nullable=True, unique=True)
@@ -61,6 +62,7 @@ class EndpointGroupSubnetAssociation(model_base.BASEV2):
 class EndpointGroupSubnetBinding(gpolicy_db.EndpointGroup):
     """Neutron subnet binding to an EndpointGroup."""
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': 'mapping'}
     # TODO(Sumit): confirm cascade constraints
     neutron_subnets = orm.relationship(EndpointGroupSubnetAssociation,
                                        backref='gp_endpoint_groups',
@@ -70,6 +72,7 @@ class EndpointGroupSubnetBinding(gpolicy_db.EndpointGroup):
 class BridgeDomainNetworkBinding(gpolicy_db.BridgeDomain):
     """Neutron network binding to a Bridgedomain."""
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': 'mapping'}
     # TODO(Sumit): confirm cascade constraints
     neutron_network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
                                    nullable=True, unique=True)
@@ -93,6 +96,7 @@ class RoutingDomainRouterAssociation(model_base.BASEV2):
 class RoutingDomainRouterBinding(gpolicy_db.RoutingDomain):
     """Neutron router binding to an RouteringDomain."""
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': 'mapping'}
     # TODO(Sumit): confirm cascade constraints
     neutron_routers = orm.relationship(RoutingDomainRouterAssociation,
                                        backref='gp_routing_domains',
@@ -175,11 +179,11 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             LOG.info("epg_id: %s" % epg_id)
             epg_db = self._get_endpoint_group(context, epg_id)
             LOG.info("epg_db: %s" % epg_db)
-            # bd_db = epg_db.bridge_domain
-            # LOG.info("bd_db: %s" % bd_db)
-            # rd_db = bd_db.routing_domain
-            # LOG.info("rd_db: %s" % rd_db)
-            # LOG.info("rd_db.bridge_domains: %s" % rd_db.bridge_domains)
+            bd_db = epg_db.bridge_domain
+            LOG.info("bd_db: %s" % bd_db)
+            rd_db = bd_db.routing_domain
+            LOG.info("rd_db: %s" % rd_db)
+            LOG.info("rd_db.bridge_domains: %s" % rd_db.bridge_domains)
         # TODO(rkukura): Implement
         return True
 
