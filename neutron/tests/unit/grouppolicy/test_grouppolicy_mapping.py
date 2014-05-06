@@ -57,7 +57,7 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
         # REVISIT(rkukura): Mock core plugin?
 
         with self.routing_domain(name="rd1") as rd:
-            # TODO(rkukura): Verify router created
+            # TODO(rkukura): Verify router created (not yet)
             rd_id = rd['routing_domain']['id']
 
             with self.bridge_domain(name="bd1",

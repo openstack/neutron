@@ -14,6 +14,7 @@
 #    under the License.
 
 import copy
+import netaddr
 
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -174,17 +175,18 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
 
     def _is_cidr_available_to_endpoint_group(self, context, epg_id, cidr):
         with context.session.begin(subtransactions=True):
+            ipnet1 = netaddr.IPNetwork(cidr)
             # REVISIT(rkukura): Optimize querying for set of EPGs with
-            # same RD.
-            LOG.info("epg_id: %s" % epg_id)
+            # same RD?
             epg_db = self._get_endpoint_group(context, epg_id)
-            LOG.info("epg_db: %s" % epg_db)
-            bd_db = epg_db.bridge_domain
-            LOG.info("bd_db: %s" % bd_db)
-            rd_db = bd_db.routing_domain
-            LOG.info("rd_db: %s" % rd_db)
-            LOG.info("rd_db.bridge_domains: %s" % rd_db.bridge_domains)
-        # TODO(rkukura): Implement
+            rd_db = epg_db.bridge_domain.routing_domain
+            for bd_db in rd_db.bridge_domains:
+                for epg_db in bd_db.endpoint_groups:
+                    for subnet in epg_db.neutron_subnets:
+                        ipnet2 = netaddr.IPNetwork(subnet.cidr)
+                        if (ipnet1.first <= ipnet2.last and
+                            ipnet2.first <= ipnet1.last):
+                            return False
         return True
 
     def _add_subnet_to_endpoint_group(self, context, epg_id, subnet_id):
