@@ -54,7 +54,8 @@ class IPsecPolicyNotFound(qexception.NotFound):
 
 
 class IKEPolicyInUse(qexception.InUse):
-    message = _("IKEPolicy %(ikepolicy_id)s is still in use")
+    message = _("IKEPolicy %(ikepolicy_id)s is in use by existing "
+                "IPsecSiteConnection and can't be updated or deleted")
 
 
 class VPNServiceInUse(qexception.InUse):
@@ -71,7 +72,8 @@ class VPNStateInvalidToUpdate(qexception.BadRequest):
 
 
 class IPsecPolicyInUse(qexception.InUse):
-    message = _("IPsecPolicy %(ipsecpolicy_id)s is still in use")
+    message = _("IPsecPolicy %(ipsecpolicy_id)s is in use by existing "
+                "IPsecSiteConnection and can't be updated or deleted")
 
 
 class DeviceDriverImportError(qexception.NeutronException):
