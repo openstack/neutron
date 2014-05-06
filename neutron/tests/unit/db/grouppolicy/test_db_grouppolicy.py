@@ -103,10 +103,14 @@ class GroupPolicyTestMixin(object):
 
         return ep_res
 
-    def _create_endpoint_group(self, fmt, name, description, bridge_domain_id,
-                               expected_res_status=None, **kwargs):
+    def _create_endpoint_group(self, fmt, name, description,
+                               provided_contracts, consumed_contracts,
+                               bridge_domain_id, expected_res_status=None,
+                               **kwargs):
         data = {'endpoint_group': {'name': name,
                                    'description': description,
+                                   'provided_contracts': provided_contracts,
+                                   'consumed_contracts': consumed_contracts,
                                    'bridge_domain_id': bridge_domain_id,
                                    'tenant_id': self._tenant_id}}
 
@@ -235,11 +239,20 @@ class GroupPolicyTestMixin(object):
 
     @contextlib.contextmanager
     def endpoint_group(self, fmt=None, name='ep1', description="",
+                       provided_contracts=None, consumed_contracts=None,
                        bridge_domain_id=None, no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
+        if not provided_contracts:
+            provided_contracts = {}
+
+        if not consumed_contracts:
+            consumed_contracts = {}
+
         res = self._create_endpoint_group(fmt, name, description,
+                                          provided_contracts,
+                                          consumed_contracts,
                                           bridge_domain_id, **kwargs)
         if res.status_int >= 400:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -417,9 +430,19 @@ class TestGroupPolicyMappedResources(GroupPolicyDbTestCase):
         name = "epg1"
         attrs = self._get_test_endpoint_group_attrs(name)
 
-        with self.endpoint_group(name=name) as epg:
-            for k, v in attrs.iteritems():
-                self.assertEqual(epg['endpoint_group'][k], v)
+        with self.contract(name=name, child_contracts=[],
+                           policy_rules=[]) as ct1:
+            with self.contract(name=name, child_contracts=[],
+                               policy_rules=[]) as ct2:
+                ct1_id = ct1['contract']['id']
+                ct2_id = ct2['contract']['id']
+                with self.endpoint_group(name=name,
+                                         provided_contracts=
+                                         {ct1_id: None},
+                                         consumed_contracts=
+                                         {ct2_id: None},) as epg:
+                    for k, v in attrs.iteritems():
+                        self.assertEqual(epg['endpoint_group'][k], v)
             # TODO(Sumit): Test for readonly attrs
 
     def test_create_bridge_domain(self, **kwargs):

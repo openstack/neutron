@@ -109,13 +109,16 @@ class GroupPolicyMappingTestMixin(object):
 
         return ep_res
 
-    def _create_endpoint_group(self, fmt, name, description, bridge_domain_id,
-                               neutron_subnets, expected_res_status=None,
-                               **kwargs):
+    def _create_endpoint_group(self, fmt, name, description,
+                               provided_contracts, consumed_contracts,
+                               bridge_domain_id, neutron_subnets,
+                               expected_res_status=None, **kwargs):
         data = {'endpoint_group': {'name': name,
-                                   'description': description,
-                                   'bridge_domain_id': bridge_domain_id,
                                    'tenant_id': self._tenant_id,
+                                   'description': description,
+                                   'provided_contracts': provided_contracts,
+                                   'consumed_contracts': consumed_contracts,
+                                   'bridge_domain_id': bridge_domain_id,
                                    'neutron_subnets': neutron_subnets}}
 
         epg_req = self.new_create_request('endpoint_groups', data, fmt)
@@ -181,12 +184,21 @@ class GroupPolicyMappingTestMixin(object):
 
     @contextlib.contextmanager
     def endpoint_group(self, fmt=None, name='epg1', description="",
+                       provided_contracts=None, consumed_contracts=None,
                        bridge_domain_id=None, neutron_subnets=None,
                        no_delete=False, **kwargs):
         if not fmt:
             fmt = self.fmt
 
+        if not provided_contracts:
+            provided_contracts = {}
+
+        if not consumed_contracts:
+            consumed_contracts = {}
+
         res = self._create_endpoint_group(fmt, name, description,
+                                          provided_contracts,
+                                          consumed_contracts,
                                           bridge_domain_id, neutron_subnets,
                                           **kwargs)
         if res.status_int >= 400:
@@ -285,6 +297,7 @@ class TestGroupPolicyMappedResources(GroupPolicyMappingDbTestCase):
         with self.endpoint_group(name=name) as epg:
             for k, v in attrs.iteritems():
                 self.assertEqual(epg['endpoint_group'][k], v)
+        # TODO(Sumit): Perhaps check wiht Contracts here as well
 
     def test_create_bridge_domain(self, **kwargs):
         name = "bd1"

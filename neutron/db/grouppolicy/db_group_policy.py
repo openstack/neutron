@@ -40,6 +40,29 @@ class Endpoint(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     endpoint_group_id = sa.Column(sa.String(36),
                                   sa.ForeignKey('gp_endpoint_groups.id'),
                                   nullable=True, unique=True)
+    # TODO(Sumit): Add policy_label
+
+
+class EndpointGroupContractProvidingAssociation(model_base.BASEV2):
+    """Models the many to many relation between EPGs and Contracts."""
+    __tablename__ = 'gp_endpoint_group_contract_providing_associations'
+    contract_id = sa.Column(sa.String(36),
+                            sa.ForeignKey('gp_contracts.id'),
+                            primary_key=True)
+    endpoint_group_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('gp_endpoint_groups.id'),
+                                  nullable=True, unique=True)
+
+
+class EndpointGroupContractConsumingAssociation(model_base.BASEV2):
+    """Models the many to many relation between EPGs and Contracts."""
+    __tablename__ = 'gp_endpoint_group_contract_consuming_associations'
+    contract_id = sa.Column(sa.String(36),
+                            sa.ForeignKey('gp_contracts.id'),
+                            primary_key=True)
+    endpoint_group_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey('gp_endpoint_groups.id'),
+                                  nullable=True, unique=True)
 
 
 class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -50,12 +73,6 @@ class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     scope_type = sa.Column(sa.Enum(const.GP_PROVIDES,
                                    const.GP_CONSUMES,
                                    name='scope_type'))
-    endpoint_group_id = sa.Column(sa.String(36),
-                                  sa.ForeignKey('gp_endpoint_groups.id'),
-                                  nullable=True, unique=True)
-    contract_id = sa.Column(sa.String(36),
-                            sa.ForeignKey('gp_contracts.id'))
-    # TODO(Sumit): Add policy_label for scope
 
 
 class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -64,11 +81,16 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     endpoints = orm.relationship(Endpoint, backref='gp_endpoint_groups')
-    contract_scopes = orm.relationship(ContractScope,
-                                       backref='gp_endpoint_groups')
+    provided_contracts = orm.relationship(
+        EndpointGroupContractProvidingAssociation,
+        backref='gp_endpoint_groups', cascade='all')
+    consumed_contracts = orm.relationship(
+        EndpointGroupContractConsumingAssociation,
+        backref='gp_endpoint_groups', cascade='all')
     bridge_domain_id = sa.Column(sa.String(36),
                                  sa.ForeignKey('gp_bridge_domains.id'),
                                  nullable=True, unique=True)
+    # TODO(Sumit): Add policy_label
 
 
 class ContractPolicyRuleAssociation(model_base.BASEV2):
@@ -173,6 +195,12 @@ class Contract(model_base.BASEV2, models_v2.HasTenant):
                                     collection_class=
                                     ordering_list('position', count_from=1),
                                     cascade='all')
+    providing_endpoint_groups = orm.relationship(
+        EndpointGroupContractProvidingAssociation, backref='gp_contracts',
+        lazy="joined", cascade='all')
+    consuming_endpoint_groups = orm.relationship(
+        EndpointGroupContractConsumingAssociation, backref='gp_contracts',
+        lazy="joined", cascade='all')
     """
     contract_scopes = orm.relationship(ContractScope,
                                        backref='gp_contracts')
@@ -317,12 +345,58 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         else:
             return '%d:%d' % (min_port, max_port)
 
+    def _set_providers_or_consumers_for_endpoint_group(self, context, epg_db,
+                                                       contracts_dict,
+                                                       provider=True):
+        # TODO(Sumit): Check that the same contract ID does not belong to
+        # belong provider and consumer dicts
+        if not contracts_dict:
+            if provider:
+                epg_db.provided_contracts = []
+                return
+            else:
+                epg_db.consumed_contracts = []
+                return
+        with context.session.begin(subtransactions=True):
+            contracts_id_list = contracts_dict.keys()
+            # We will first check if the new list of contracts is valid
+            filters = {'id': [c_id for c_id in contracts_id_list]}
+            contracts_in_db = self._get_collection_query(context, Contract,
+                                                         filters=filters)
+            contracts_dict = dict((c_db['id'],
+                                   c_db) for c_db in contracts_in_db)
+            for contract_id in contracts_id_list:
+                if contract_id not in contracts_dict:
+                    # If we find an invalid contract id in the list we
+                    # do not perform the update
+                    raise gpolicy.ContractNotFound(contract_id=contract_id)
+            # New list of contracts is valid so we will first reset the
+            #  existing list and then add each action in order.
+            # Note that the list could be empty in which case we interpret
+            # it as clearing existing rules.
+            if provider:
+                epg_db.provided_contracts = []
+            else:
+                epg_db.consumed_contracts = []
+            for contract_id in contracts_dict:
+                if provider:
+                    assoc = EndpointGroupContractProvidingAssociation(
+                        endpoint_group_id=epg_db.id,
+                        contract_id=contract_id)
+                    epg_db.provided_contracts.append(assoc)
+                else:
+                    assoc = EndpointGroupContractConsumingAssociation(
+                        endpoint_group_id=epg_db.id,
+                        contract_id=contract_id)
+                    epg_db.consumed_contracts.append(assoc)
+                # TODO(Sumit): Check if this is getting added properly
+
     def _set_rules_for_contract(self, context, contract_db, rule_id_list):
         ct_db = contract_db
+        if not rule_id_list:
+            ct_db.policy_rules = []
+            return
         with context.session.begin(subtransactions=True):
-            if not rule_id_list:
-                ct_db.policy_rules = []
-                return
             # We will first check if the new list of rules is valid
             filters = {'id': [r_id for r_id in rule_id_list]}
             rules_in_db = self._get_collection_query(context, PolicyRule,
@@ -348,10 +422,10 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
 
     def _set_actions_for_rule(self, context, policy_rule_db, action_id_list):
         pr_db = policy_rule_db
+        if not action_id_list:
+            pr_db.policy_actions = []
+            return
         with context.session.begin(subtransactions=True):
-            if not action_id_list:
-                pr_db.policy_actions = []
-                return
             # We will first check if the new list of actions is valid
             filters = {'id': [a_id for a_id in action_id_list]}
             actions_in_db = self._get_collection_query(context, PolicyAction,
@@ -390,11 +464,10 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                'description': epg['description'],
                'bridge_domain_id': epg['bridge_domain_id'],
                'endpoints': epg['endpoints']}
-        # REVISIT(rkukura): Need to extract these from
-        # epg['contract_scopes'].
-        #
-        # 'provided_contract_scopes': epg['provided_contract_scopes'],
-        # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
+        res['provided_contracts'] = [ct['contract_id']
+                                     for ct in epg['provided_contracts']]
+        res['consumed_contracts'] = [ct['contract_id']
+                                     for ct in epg['consumed_contracts']]
         return self._fields(res, fields)
 
     def _make_contract_dict(self, ct, fields=None):
@@ -520,6 +593,10 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
                                    description=epg['description'],
                                    bridge_domain_id=epg['bridge_domain_id'])
             context.session.add(epg_db)
+            self._set_providers_or_consumers_for_endpoint_group(
+                context, epg_db, epg['provided_contracts'])
+            self._set_providers_or_consumers_for_endpoint_group(
+                context, epg_db, epg['consumed_contracts'], False)
         return self._make_endpoint_group_dict(epg_db)
 
     @log.log
@@ -529,6 +606,15 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             epg_query = context.session.query(
                 EndpointGroup).with_lockmode('update')
             epg_db = epg_query.filter_by(id=id).one()
+            if 'provided_contracts' in epg:
+                self._set_providers_or_consumers_for_endpoint_group(
+                    context, epg_db, epg['provided_contracts'])
+                del epg['provided_contracts']
+            if 'consumed_contracts' in epg:
+                self._set_providers_or_consumers_for_endpoint_group(
+                    context, epg_db, epg['consumed_contracts'], False)
+                del epg['consumed_contracts']
+
             epg_db.update(epg)
         return self._make_endpoint_group_dict(epg_db)
 
