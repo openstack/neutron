@@ -80,7 +80,7 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     __tablename__ = 'gp_endpoint_groups'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-    endpoints = orm.relationship(Endpoint, backref='gp_endpoint_groups')
+    endpoints = orm.relationship(Endpoint, backref='endpoint_group')
     provided_contracts = orm.relationship(
         EndpointGroupContractProvidingAssociation,
         backref='gp_endpoint_groups', cascade='all')
@@ -212,8 +212,7 @@ class BridgeDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     __tablename__ = 'gp_bridge_domains'
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-    endpoint_groups = orm.relationship(EndpointGroup,
-                                       backref='gp_bridge_domains')
+    endpoint_groups = orm.relationship(EndpointGroup, backref='bridge_domain')
     routing_domain_id = sa.Column(sa.String(36),
                                   sa.ForeignKey('gp_routing_domains.id'),
                                   nullable=True, unique=True)
@@ -227,8 +226,7 @@ class RoutingDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     ip_version = sa.Column(sa.Integer, nullable=False)
     ip_supernet = sa.Column(sa.String(64), nullable=False)
     subnet_prefix_length = sa.Column(sa.Integer, nullable=False)
-    bridge_domains = orm.relationship(BridgeDomain,
-                                      backref='gp_routing_domains')
+    bridge_domains = orm.relationship(BridgeDomain, backref='routing_domain')
 
 
 class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
