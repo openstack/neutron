@@ -74,6 +74,35 @@ class EndpointGroupContext(object):
 
 
 @six.add_metaclass(ABCMeta)
+class ContractContext(object):
+    """Context passed to policy engine for changes to contract resources.
+
+    An ContractContext instance wraps an contract resource. It provides
+    helper methods for accessing other relevant information. Results
+    from expensive operations are cached for convenient access.
+    """
+
+    @abstractproperty
+    def current(self):
+        """Return the current state of the contract.
+
+        Return the current state of the contract, as defined by
+        GroupPolicyPlugin.create_contract.
+        """
+        pass
+
+    @abstractproperty
+    def original(self):
+        """Return the original state of the contract.
+
+        Return the original state of the contract, prior to a call to
+        update_contract. Method is only valid within calls to
+        update_contract_precommit and update_contract_postcommit.
+        """
+        pass
+
+
+@six.add_metaclass(ABCMeta)
 class PolicyRuleContext(object):
     """Context passed to policy engine for changes to policy_rule resources.
 

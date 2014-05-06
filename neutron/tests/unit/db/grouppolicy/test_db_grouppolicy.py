@@ -53,6 +53,12 @@ class GroupPolicyTestMixin(object):
 
         return attrs
 
+    def _get_test_contract_attrs(self, name='ct1'):
+        attrs = {'name': name,
+                 'tenant_id': self._tenant_id}
+
+        return attrs
+
     def _get_test_policy_rule_attrs(self, name='pr1'):
         attrs = {'name': name,
                  'tenant_id': self._tenant_id}
@@ -129,6 +135,21 @@ class GroupPolicyTestMixin(object):
             self.assertEqual(pr_res.status_int, expected_res_status)
 
         return pr_res
+
+    def _create_contract(self, fmt, name, description, child_contracts,
+                         policy_rules, expected_res_status=None, **kwargs):
+        data = {'contract': {'name': name,
+                             'description': description,
+                             'tenant_id': self._tenant_id,
+                             'child_contracts': child_contracts,
+                             'policy_rules': policy_rules}}
+
+        ct_req = self.new_create_request('contracts', data, fmt)
+        ct_res = ct_req.get_response(self.ext_api)
+        if expected_res_status:
+            self.assertEqual(ct_res.status_int, expected_res_status)
+
+        return ct_res
 
     def _create_policy_classifier(self, fmt, name, description, protocol,
                                   port_range, direction,
@@ -228,6 +249,31 @@ class GroupPolicyTestMixin(object):
         finally:
             if not no_delete:
                 self._delete('endpoint_groups', epg['endpoint_group']['id'])
+
+    @contextlib.contextmanager
+    def contract(self, fmt=None, name='ct1', description="",
+                 child_contracts=None, policy_rules=None, no_delete=False,
+                 **kwargs):
+        if not fmt:
+            fmt = self.fmt
+
+        if not child_contracts:
+            child_contracts = []
+
+        if not policy_rules:
+            policy_rules = []
+
+        res = self._create_contract(fmt, name, description, child_contracts,
+                                    policy_rules, **kwargs)
+        if res.status_int >= 400:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        ct = self.deserialize(fmt or self.fmt, res)
+        try:
+            yield ct
+        finally:
+            if not no_delete:
+                self._delete('contracts',
+                             ct['contract']['id'])
 
     @contextlib.contextmanager
     def policy_rule(self, fmt=None, name='pr1', description="",
@@ -397,6 +443,23 @@ class TestGroupPolicyMappedResources(GroupPolicyDbTestCase):
 
 
 class TestGroupPolicyUnMappedResources(GroupPolicyDbTestCase):
+
+    def test_create_contract(self, **kwargs):
+        name = "ct1"
+        attrs = self._get_test_policy_rule_attrs(name)
+
+        with self.policy_classifier() as pc:
+            pc_id = pc['policy_classifier']['id']
+            with self.policy_action() as pa:
+                pa_id = pa['policy_action']['id']
+                with self.policy_rule(
+                    name=name, policy_classifier_id=pc_id,
+                    policy_actions=[pa_id]) as pr:
+                    pr_id = pr['policy_rule']['id']
+                    with self.contract(name=name, child_contracts=[],
+                                       policy_rules=[pr_id]) as ct:
+                        for k, v in attrs.iteritems():
+                            self.assertEqual(ct['contract'][k], v)
 
     def test_create_policy_rule(self, **kwargs):
         name = "pr1"

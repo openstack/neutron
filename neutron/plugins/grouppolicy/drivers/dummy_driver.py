@@ -45,6 +45,54 @@ class NoopDriver(api.PolicyDriver):
         pass
 
     @log.log
+    def create_endpoint_group_precommit(self, context):
+        pass
+
+    @log.log
+    def create_endpoint_group_postcommit(self, context):
+        pass
+
+    @log.log
+    def update_endpoint_group_precommit(self, context):
+        pass
+
+    @log.log
+    def update_endpoint_group_postcommit(self, context):
+        pass
+
+    @log.log
+    def delete_endpoint_group_precommit(self, context):
+        pass
+
+    @log.log
+    def delete_endpoint_group_postcommit(self, context):
+        pass
+
+    @log.log
+    def create_contract_precommit(self, context):
+        pass
+
+    @log.log
+    def create_contract_postcommit(self, context):
+        pass
+
+    @log.log
+    def update_contract_precommit(self, context):
+        pass
+
+    @log.log
+    def update_contract_postcommit(self, context):
+        pass
+
+    @log.log
+    def delete_contract_precommit(self, context):
+        pass
+
+    @log.log
+    def delete_contract_postcommit(self, context):
+        pass
+
+    @log.log
     def create_policy_rule_precommit(self, context):
         pass
 
@@ -114,30 +162,6 @@ class NoopDriver(api.PolicyDriver):
 
     @log.log
     def delete_policy_action_postcommit(self, context):
-        pass
-
-    @log.log
-    def create_endpoint_group_precommit(self, context):
-        pass
-
-    @log.log
-    def create_endpoint_group_postcommit(self, context):
-        pass
-
-    @log.log
-    def update_endpoint_group_precommit(self, context):
-        pass
-
-    @log.log
-    def update_endpoint_group_postcommit(self, context):
-        pass
-
-    @log.log
-    def delete_endpoint_group_precommit(self, context):
-        pass
-
-    @log.log
-    def delete_endpoint_group_postcommit(self, context):
         pass
 
     @log.log

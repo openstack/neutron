@@ -71,16 +71,15 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                                  nullable=True, unique=True)
 
 
-class ContractPolicyRuleAssociation(model_base.BASEV2,
-                                    models_v2.HasStatusDescription):
+class ContractPolicyRuleAssociation(model_base.BASEV2):
     """Models the many to many relation between Contract and Policy rules."""
-    __tablename__ = 'gp_contract_policyrule_associations'
+    __tablename__ = 'gp_contract_policy_rule_associations'
     contract_id = sa.Column(sa.String(36),
                             sa.ForeignKey('gp_contracts.id'),
                             primary_key=True)
-    policyrule_id = sa.Column(sa.String(36),
-                              sa.ForeignKey('gp_policy_rules.id'),
-                              primary_key=True)
+    policy_rule_id = sa.Column(sa.String(36),
+                               sa.ForeignKey('gp_policy_rules.id'),
+                               primary_key=True)
     position = sa.Column(sa.Integer)
 
 
@@ -103,7 +102,7 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     description = sa.Column(sa.String(1024))
     enabled = sa.Column(sa.Boolean)
     contracts = orm.relationship(ContractPolicyRuleAssociation,
-                                 backref='gp_policy_rules')
+                                 backref='gp_policy_rules', cascade='all')
     policy_classifier_id = sa.Column(sa.String(36),
                                      sa.ForeignKey(
                                      'gp_policy_classifiers.id'),
@@ -153,20 +152,31 @@ class PolicyAction(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                                     cascade='all', backref='gp_policy_actions')
 
 
-class Contract(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class Contract(model_base.BASEV2, models_v2.HasTenant):
     """Represents a Contract that is a collection of Policy rules."""
     __tablename__ = 'gp_contracts'
+    id = sa.Column(sa.String(36), primary_key=True,
+                   default=uuidutils.generate_uuid)
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
+    # TODO(Sumit): Revisit parent and child relationships
+    parent_id = sa.Column(sa.String(255), sa.ForeignKey('gp_contracts.id'),
+                          nullable=True, unique=True)
+    child_contracts = orm.relationship("Contract",
+                                       backref=orm.backref('parent',
+                                                           remote_side=[id]))
     policy_rules = orm.relationship(ContractPolicyRuleAssociation,
-                                    backref='gp_contract',
+                                    backref='gp_contracts',
                                     lazy="joined",
                                     order_by=
                                     'ContractPolicyRuleAssociation.position',
                                     collection_class=
-                                    ordering_list('position', count_from=1))
+                                    ordering_list('position', count_from=1),
+                                    cascade='all')
+    """
     contract_scopes = orm.relationship(ContractScope,
-                                       backref='gp_contract')
+                                       backref='gp_contracts')
+    """
 
 
 class BridgeDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -332,7 +342,7 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             for rule_id in rule_id_list:
                 ct_rule_db = ContractPolicyRuleAssociation(
                     policy_rule_id=rule_id,
-                    context_id=ct_db.id)
+                    contract_id=ct_db.id)
                 ct_db.policy_rules.append(ct_rule_db)
             ct_db.policy_rules.reorder()
 
@@ -385,6 +395,18 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         #
         # 'provided_contract_scopes': epg['provided_contract_scopes'],
         # 'consumed_contract_scopes': epg['consumed_contract_scopes']}
+        return self._fields(res, fields)
+
+    def _make_contract_dict(self, ct, fields=None):
+        res = {'id': ct['id'],
+               'tenant_id': ct['tenant_id'],
+               'name': ct['name'],
+               'description': ct['description'],
+               'parent_id': ct['parent_id']}
+        res['child_contracts'] = [ct['id']
+                                  for ch in ct['child_contracts']]
+        res['policy_rules'] = [pr['policy_rule_id']
+                               for pr in ct['policy_rules']]
         return self._fields(res, fields)
 
     def _make_policy_rule_dict(self, pr, fields=None):
@@ -536,23 +558,55 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
 
     @log.log
     def create_contract(self, context, contract):
-        pass
+        ct = contract['contract']
+        tenant_id = self._get_tenant_id_for_create(context, ct)
+        with context.session.begin(subtransactions=True):
+            ct_db = Contract(id=uuidutils.generate_uuid(),
+                             tenant_id=tenant_id,
+                             name=ct['name'],
+                             description=ct['description'])
+            context.session.add(ct_db)
+            self._set_rules_for_contract(context, ct_db,
+                                         ct['policy_rules'])
+        return self._make_contract_dict(ct_db)
 
     @log.log
     def update_contract(self, context, id, contract):
-        pass
-
-    @log.log
-    def get_contracts(self, context, filters=None, fields=None):
-        pass
-
-    @log.log
-    def get_contract(self, context, id, fields=None):
-        pass
+        ct = contract['contract']
+        with context.session.begin(subtransactions=True):
+            ct_query = context.session.query(
+                Contract).with_lockmode('update')
+            ct_db = ct_query.filter_by(id=id).one()
+            if 'policy_rules' in ct:
+                self._set_rules_for_contract(context, ct_db,
+                                             ct['policy_rules'])
+                del ct['policy_rules']
+            ct_db.update(ct)
+        return self._make_contract_dict(ct_db)
 
     @log.log
     def delete_contract(self, context, id):
-        pass
+        with context.session.begin(subtransactions=True):
+            ct_query = context.session.query(
+                Contract).with_lockmode('update')
+            ct_db = ct_query.filter_by(id=id).one()
+            context.session.delete(ct_db)
+
+    @log.log
+    def get_contract(self, context, id, fields=None):
+        ct = self._get_contract(context, id)
+        return self._make_contract_dict(ct, fields)
+
+    @log.log
+    def get_contracts(self, context, filters=None, fields=None):
+        return self._get_collection(context, Contract,
+                                    self._make_contract_dict,
+                                    filters=filters, fields=fields)
+
+    @log.log
+    def get_contracts_count(self, context, filters=None):
+        return self._get_collection_count(context, Contract,
+                                          filters=filters)
 
     @log.log
     def create_contract_scope(self, context, contract_scope):

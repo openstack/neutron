@@ -197,6 +197,86 @@ class GroupPolicyExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
     def test_delete_endpoint_group(self):
         self._test_entity_delete('endpoint_group')
 
+    def test_create_contract(self):
+        contract_id = _uuid()
+        data = {'contract': {'name': 'ct1',
+                             'tenant_id': _uuid(),
+                             'description': '',
+                             'child_contracts': [],
+                             'policy_rules': []}}
+        return_value = copy.copy(data['contract'])
+        return_value.update({'id': contract_id})
+
+        instance = self.plugin.return_value
+        instance.create_contract.return_value = return_value
+        res = self.api.post(_get_path('gp/contracts', fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt)
+        instance.create_contract.assert_called_with(mock.ANY,
+                                                    contract=data)
+        self.assertEqual(res.status_int, exc.HTTPCreated.code)
+        res = self.deserialize(res)
+        self.assertIn('contract', res)
+        self.assertEqual(res['contract'], return_value)
+
+    def test_list_contracts(self):
+        contract_id = _uuid()
+        return_value = [{'tenant_id': _uuid(),
+                         'id': contract_id}]
+
+        instance = self.plugin.return_value
+        instance.get_contracts.return_value = return_value
+
+        res = self.api.get(_get_path('gp/contracts', fmt=self.fmt))
+
+        instance.get_contracts.assert_called_with(mock.ANY,
+                                                  fields=mock.ANY,
+                                                  filters=mock.ANY)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+
+    def test_get_contract(self):
+        contract_id = _uuid()
+        return_value = {'tenant_id': _uuid(),
+                        'id': contract_id}
+
+        instance = self.plugin.return_value
+        instance.get_contract.return_value = return_value
+
+        res = self.api.get(_get_path('gp/contracts',
+                                     id=contract_id, fmt=self.fmt))
+
+        instance.get_contract.assert_called_with(mock.ANY,
+                                                 contract_id,
+                                                 fields=mock.ANY)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+        res = self.deserialize(res)
+        self.assertIn('contract', res)
+        self.assertEqual(res['contract'], return_value)
+
+    def test_update_contract(self):
+        contract_id = _uuid()
+        update_data = {'contract': {'name': 'new_name'}}
+        return_value = {'tenant_id': _uuid(),
+                        'id': contract_id}
+
+        instance = self.plugin.return_value
+        instance.update_contract.return_value = return_value
+
+        res = self.api.put(_get_path('gp/contracts',
+                                     id=contract_id,
+                                     fmt=self.fmt),
+                           self.serialize(update_data))
+
+        instance.update_contract.assert_called_with(
+            mock.ANY, contract_id, contract=update_data)
+        self.assertEqual(res.status_int, exc.HTTPOk.code)
+        res = self.deserialize(res)
+        self.assertIn('contract', res)
+        self.assertEqual(res['contract'], return_value)
+
+    def test_delete_contract(self):
+        self._test_entity_delete('contract')
+
     def test_create_policy_rule(self):
         policy_rule_id = _uuid()
         data = {'policy_rule': {'name': 'pr1',

@@ -54,6 +54,23 @@ class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
         return self._original_endpoint_group
 
 
+class ContractContext(GroupPolicyContext, api.ContractContext):
+
+    def __init__(self, plugin, plugin_context, contract,
+                 original_contract=None):
+        super(ContractContext, self).__init__(plugin, plugin_context)
+        self._contract = contract
+        self._original_contract = original_contract
+
+    @property
+    def current(self):
+        return self._contract
+
+    @property
+    def original(self):
+        return self._original_contract
+
+
 class PolicyRuleContext(GroupPolicyContext, api.PolicyRuleContext):
 
     def __init__(self, plugin, plugin_context, policy_rule,

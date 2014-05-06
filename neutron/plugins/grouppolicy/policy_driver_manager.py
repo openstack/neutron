@@ -175,6 +175,178 @@ class PolicyDriverManager(stevedore.named.NamedExtensionManager):
         self._call_on_drivers("delete_endpoint_postcommit", context,
                               continue_on_failure=True)
 
+    def create_endpoint_group_precommit(self, context):
+        """Notify all policy drivers during endpoint_group creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_endpoint_group_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("create_endpoint_group_precommit", context)
+
+    def create_endpoint_group_postcommit(self, context):
+        """Notify all policy drivers after endpoint_group creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_endpoint_group_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where the endpoint_group will be deleted, triggering
+        any required cleanup. There is no guarantee that all policy
+        drivers are called in this case.
+        """
+        self._call_on_drivers("create_endpoint_group_postcommit", context)
+
+    def update_endpoint_group_precommit(self, context):
+        """Notify all policy drivers during endpoint_group update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_endpoint_group_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_endpoint_group_precommit", context)
+
+    def update_endpoint_group_postcommit(self, context):
+        """Notify all policy drivers after endpoint_group update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_endpoint_group_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where an error is returned to the user. The
+        user is expected to take the appropriate action, whether by
+        retrying the call or deleting the endpoint_group. There is no
+        guarantee that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_endpoint_group_postcommit", context)
+
+    def delete_endpoint_group_precommit(self, context):
+        """Notify all policy drivers during endpoint_group deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_endpoint_group_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("delete_endpoint_group_precommit", context)
+
+    def delete_endpoint_group_postcommit(self, context):
+        """Notify all policy drivers after endpoint_group deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_endpoint_group_postcommit call fails.
+
+        Called after the database transaction. If any policy driver
+        raises an error, then the error is logged but we continue to
+        call every other policy driver. A GroupPolicyDriverError is
+        then reraised at the end to notify the caller of a failure. In
+        general we expect the caller to ignore the error, as the
+        endpoint_group resource has already been deleted from the database
+        and it doesn't make sense to undo the action by recreating the
+        endpoint_group.
+        """
+        self._call_on_drivers("delete_endpoint_group_postcommit", context,
+                              continue_on_failure=True)
+
+    def create_contract_precommit(self, context):
+        """Notify all policy drivers during contract creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_contract_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("create_contract_precommit", context)
+
+    def create_contract_postcommit(self, context):
+        """Notify all policy drivers after contract creation.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver create_contract_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where the contract will be deleted, triggering
+        any required cleanup. There is no guarantee that all policy
+        drivers are called in this case.
+        """
+        self._call_on_drivers("create_contract_postcommit", context)
+
+    def update_contract_precommit(self, context):
+        """Notify all policy drivers during contract update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_contract_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_contract_precommit", context)
+
+    def update_contract_postcommit(self, context):
+        """Notify all policy drivers after contract update.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver update_contract_postcommit call fails.
+
+        Called after the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propagated
+        to the caller, where an error is returned to the user. The
+        user is expected to take the appropriate action, whether by
+        retrying the call or deleting the contract. There is no
+        guarantee that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("update_contract_postcommit", context)
+
+    def delete_contract_precommit(self, context):
+        """Notify all policy drivers during contract deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_contract_precommit call fails.
+
+        Called within the database transaction. If a policy driver
+        raises an exception, then a GroupPolicyDriverError is propogated
+        to the caller, triggering a rollback. There is no guarantee
+        that all policy drivers are called in this case.
+        """
+        self._call_on_drivers("delete_contract_precommit", context)
+
+    def delete_contract_postcommit(self, context):
+        """Notify all policy drivers after contract deletion.
+
+        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
+        if any policy driver delete_contract_postcommit call fails.
+
+        Called after the database transaction. If any policy driver
+        raises an error, then the error is logged but we continue to
+        call every other policy driver. A GroupPolicyDriverError is
+        then reraised at the end to notify the caller of a failure. In
+        general we expect the caller to ignore the error, as the
+        contract resource has already been deleted from the database
+        and it doesn't make sense to undo the action by recreating the
+        contract.
+        """
+        self._call_on_drivers("delete_contract_postcommit", context,
+                              continue_on_failure=True)
+
     def create_policy_rule_precommit(self, context):
         """Notify all policy drivers during policy_rule creation.
 
@@ -431,92 +603,6 @@ class PolicyDriverManager(stevedore.named.NamedExtensionManager):
         policy_action.
         """
         self._call_on_drivers("delete_policy_action_postcommit", context,
-                              continue_on_failure=True)
-
-    def create_endpoint_group_precommit(self, context):
-        """Notify all policy drivers during endpoint_group creation.
-
-        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
-        if any policy driver create_endpoint_group_precommit call fails.
-
-        Called within the database transaction. If a policy driver
-        raises an exception, then a GroupPolicyDriverError is propogated
-        to the caller, triggering a rollback. There is no guarantee
-        that all policy drivers are called in this case.
-        """
-        self._call_on_drivers("create_endpoint_group_precommit", context)
-
-    def create_endpoint_group_postcommit(self, context):
-        """Notify all policy drivers after endpoint_group creation.
-
-        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
-        if any policy driver create_endpoint_group_postcommit call fails.
-
-        Called after the database transaction. If a policy driver
-        raises an exception, then a GroupPolicyDriverError is propagated
-        to the caller, where the endpoint_group will be deleted, triggering
-        any required cleanup. There is no guarantee that all policy
-        drivers are called in this case.
-        """
-        self._call_on_drivers("create_endpoint_group_postcommit", context)
-
-    def update_endpoint_group_precommit(self, context):
-        """Notify all policy drivers during endpoint_group update.
-
-        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
-        if any policy driver update_endpoint_group_precommit call fails.
-
-        Called within the database transaction. If a policy driver
-        raises an exception, then a GroupPolicyDriverError is propogated
-        to the caller, triggering a rollback. There is no guarantee
-        that all policy drivers are called in this case.
-        """
-        self._call_on_drivers("update_endpoint_group_precommit", context)
-
-    def update_endpoint_group_postcommit(self, context):
-        """Notify all policy drivers after endpoint_group update.
-
-        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
-        if any policy driver update_endpoint_group_postcommit call fails.
-
-        Called after the database transaction. If a policy driver
-        raises an exception, then a GroupPolicyDriverError is propagated
-        to the caller, where an error is returned to the user. The
-        user is expected to take the appropriate action, whether by
-        retrying the call or deleting the endpoint_group. There is no
-        guarantee that all policy drivers are called in this case.
-        """
-        self._call_on_drivers("update_endpoint_group_postcommit", context)
-
-    def delete_endpoint_group_precommit(self, context):
-        """Notify all policy drivers during endpoint_group deletion.
-
-        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
-        if any policy driver delete_endpoint_group_precommit call fails.
-
-        Called within the database transaction. If a policy driver
-        raises an exception, then a GroupPolicyDriverError is propogated
-        to the caller, triggering a rollback. There is no guarantee
-        that all policy drivers are called in this case.
-        """
-        self._call_on_drivers("delete_endpoint_group_precommit", context)
-
-    def delete_endpoint_group_postcommit(self, context):
-        """Notify all policy drivers after endpoint_group deletion.
-
-        :raises: neutron.plugins.grouppolicy.common.GroupPolicyDriverError
-        if any policy driver delete_endpoint_group_postcommit call fails.
-
-        Called after the database transaction. If any policy driver
-        raises an error, then the error is logged but we continue to
-        call every other policy driver. A GroupPolicyDriverError is
-        then reraised at the end to notify the caller of a failure. In
-        general we expect the caller to ignore the error, as the
-        endpoint_group resource has already been deleted from the database
-        and it doesn't make sense to undo the action by recreating the
-        endpoint_group.
-        """
-        self._call_on_drivers("delete_endpoint_group_postcommit", context,
                               continue_on_failure=True)
 
     def create_bridge_domain_precommit(self, context):
