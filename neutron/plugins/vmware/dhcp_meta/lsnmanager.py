@@ -296,12 +296,11 @@ class LsnManager(object):
             self.lsn_port_dispose(context, network_id, const.METADATA_MAC)
 
     def _lsn_port_host_conf(self, context, network_id, subnet_id, data, hdlr):
-        lsn_id = None
-        lsn_port_id = None
+        lsn_id, lsn_port_id = self.lsn_port_get(
+            context, network_id, subnet_id, raise_on_err=False)
         try:
-            lsn_id, lsn_port_id = self.lsn_port_get(
-                context, network_id, subnet_id)
-            hdlr(self.cluster, lsn_id, lsn_port_id, data)
+            if lsn_id and lsn_port_id:
+                hdlr(self.cluster, lsn_id, lsn_port_id, data)
         except (n_exc.NotFound, api_exc.NsxApiException):
             LOG.error(_('Error while configuring LSN '
                         'port %s'), lsn_port_id)
