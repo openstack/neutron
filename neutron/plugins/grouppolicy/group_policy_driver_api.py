@@ -83,6 +83,16 @@ class EndpointGroupContext(object):
         pass
 
     @abstractmethod
+    def set_bridge_domain_id(self, bridge_domain_id):
+        """Set the bridge_domain for the endpoint_group.
+
+        :param bridge_domain_id: bridge_domain for the endpoint_group.
+
+        Set the bridge_domain for the endpoint_group.
+        """
+        pass
+
+    @abstractmethod
     def is_cidr_available(self, cidr):
         """Check if CIDR is available.
 
@@ -250,6 +260,16 @@ class BridgeDomainContext(object):
         Return the original state of the bridge_domain, prior to a call to
         update_bridge_domain. Method is only valid within calls to
         update_bridge_domain_precommit and update_bridge_domain_postcommit.
+        """
+        pass
+
+    @abstractmethod
+    def set_routing_domain_id(self, routing_domain_id):
+        """Set the routing_domain for the bridge_domain.
+
+        :param routing_domain_id: routing_domain for the bridge_domain.
+
+        Set the routing_domain for the bridge_domain.
         """
         pass
 

@@ -363,6 +363,16 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
         else:
             return '%d:%d' % (min_port, max_port)
 
+    def _set_routing_domain_for_bridge_domain(self, context, bd_id, rd_id):
+        with context.session.begin(subtransactions=True):
+            bd_db = self._get_bridge_domain(context, bd_id)
+            bd_db.routing_domain_id = rd_id
+
+    def _set_bridge_domain_for_endpoint_group(self, context, epg_id, bd_id):
+        with context.session.begin(subtransactions=True):
+            epg_db = self._get_endpoint_group(context, epg_id)
+            epg_db.bridge_domain_id = bd_id
+
     def _set_providers_or_consumers_for_endpoint_group(self, context, epg_db,
                                                        contracts_dict,
                                                        provider=True):

@@ -58,6 +58,11 @@ class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
     def original(self):
         return self._original_endpoint_group
 
+    def set_bridge_domain_id(self, bridge_domain_id):
+        self._plugin._set_bridge_domain_for_endpoint_group(
+            self._plugin_context, self._endpoint_group['id'], bridge_domain_id)
+        self._endpoint_group['bridge_domain_id'] = bridge_domain_id
+
     def is_cidr_available(self, cidr):
         return self._plugin._is_cidr_available_to_endpoint_group(
             self._plugin_context, self._endpoint_group['id'], cidr)
@@ -151,6 +156,11 @@ class BridgeDomainContext(GroupPolicyContext, api.BridgeDomainContext):
     @property
     def original(self):
         return self._original_bridge_domain
+
+    def set_routing_domain_id(self, routing_domain_id):
+        self._plugin._set_routing_domain_for_bridge_domain(
+            self._plugin_context, self._bridge_domain['id'], routing_domain_id)
+        self._bridge_domain['routing_domain_id'] = routing_domain_id
 
     def set_neutron_network_id(self, network_id):
         self._plugin._set_network_for_bridge_domain(self._plugin_context,

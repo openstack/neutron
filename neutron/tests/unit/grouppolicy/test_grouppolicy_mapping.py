@@ -32,30 +32,24 @@ class GroupPolicyMappingTestCase(tdb.GroupPolicyMappingDbTestCase):
 
 
 class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
+    # REVISIT(rkukura): Mock core plugin?
 
-    # TODO(rkukura): Re-enable
-    def _test_implicit_workflow(self, **kwargs):
-        epg_name = "epg1"
-        epg_attrs = self._get_test_endpoint_group_attrs(epg_name)
-        with self.endpoint_group(name=epg_name) as epg:
-            for k, v in epg_attrs.iteritems():
-                self.assertEqual(epg['endpoint_group'][k], v)
-            # TODO(rkukura): Verify RD and BD created with router and
-            # network
+    def test_implicit_workflow(self, **kwargs):
+        with self.endpoint_group(name="epg1") as epg:
+            self.assertIsNotNone(epg['endpoint_group']['bridge_domain_id'])
+            subnets = epg['endpoint_group']['neutron_subnets']
+            self.assertIsNotNone(subnets)
+            self.assertEqual(len(subnets), 1)
+            # TODO(rkukura): Verify subnet details
             epg_id = epg['endpoint_group']['id']
 
-            ep_name = "ep1"
-            ep_attrs = self._get_test_endpoint_attrs(ep_name)
-            with self.endpoint(name=ep_name,
-                               endpoint_group_id=epg_id) as ep:
-                for k, v in ep_attrs.iteritems():
-                    self.assertEqual(ep['endpoint'][k], v)
+            with self.endpoint(name="ep1", endpoint_group_id=epg_id) as ep:
                 self.assertEqual(ep['endpoint']['endpoint_group_id'], epg_id)
-                # TODO(rkukura): Verify port created
+                port_id = ep['endpoint']['neutron_port_id']
+                self.assertIsNotNone(port_id)
+                # TODO(rkukura): Verify port details
 
     def test_explicit_workflow(self, **kwargs):
-        # REVISIT(rkukura): Mock core plugin?
-
         with self.routing_domain(name="rd1") as rd:
             # TODO(rkukura): Verify router created (not yet)
             rd_id = rd['routing_domain']['id']
