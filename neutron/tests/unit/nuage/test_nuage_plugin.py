@@ -216,6 +216,10 @@ class TestNuageSubnetsV2(NuagePluginV2TestCase,
         self.skipTest("Plugin does not support "
                       "Neutron Subnet no-gateway option")
 
+    def test_create_subnet_nonzero_cidr(self):
+        self.skipTest("Plugin does not support "
+                      "Neutron Subnet no-gateway option")
+
     def test_create_subnet_with_none_gateway_fully_allocated(self):
         self.skipTest("Plugin does not support Neutron "
                       "Subnet no-gateway option")
@@ -235,7 +239,9 @@ class TestNuagePluginPortBinding(NuagePluginV2TestCase,
 
 class TestNuagePortsV2(NuagePluginV2TestCase,
                        test_db_plugin.TestPortsV2):
-    pass
+    def test_no_more_port_exception(self):
+        self.skipTest("Plugin does not support "
+                      "Neutron Subnet no-gateway option")
 
 
 class TestNuageL3NatTestCase(NuagePluginV2TestCase,

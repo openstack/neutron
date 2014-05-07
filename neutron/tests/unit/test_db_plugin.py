@@ -1144,7 +1144,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  data['port']['fixed_ips'])
 
     def test_no_more_port_exception(self):
-        with self.subnet(cidr='10.0.0.0/32') as subnet:
+        with self.subnet(cidr='10.0.0.0/32', gateway_ip=None) as subnet:
             id = subnet['subnet']['network_id']
             res = self._create_port(self.fmt, id)
             data = self.deserialize(self.fmt, res)
@@ -2583,7 +2583,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.subnet(cidr='14.129.122.5/22'),
             self.subnet(cidr='15.129.122.5/24'),
             self.subnet(cidr='16.129.122.5/28'),
-            self.subnet(cidr='17.129.122.5/32')
+            self.subnet(cidr='17.129.122.5/32', gateway_ip=None)
         ) as subs:
             # the API should accept and correct these for users
             self.assertEqual(subs[0]['subnet']['cidr'], '10.0.0.0/8')
@@ -2724,15 +2724,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                          allocation_pools)
 
     def test_create_subnet_gw_values(self):
-        # Gateway not in subnet
-        gateway = '100.0.0.1'
         cidr = '10.0.0.0/24'
-        allocation_pools = [{'start': '10.0.0.1',
-                             'end': '10.0.0.254'}]
-        expected = {'gateway_ip': gateway,
-                    'cidr': cidr,
-                    'allocation_pools': allocation_pools}
-        self._test_create_subnet(expected=expected, gateway_ip=gateway)
         # Gateway is last IP in range
         gateway = '10.0.0.254'
         allocation_pools = [{'start': '10.0.0.1',
@@ -2751,8 +2743,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         self._test_create_subnet(expected=expected,
                                  gateway_ip=gateway)
 
-    def test_create_subnet_gw_outside_cidr_force_on_returns_400(self):
-        cfg.CONF.set_override('force_gateway_on_subnet', True)
+    def test_create_subnet_gw_outside_cidr_returns_400(self):
         with self.network() as network:
             self._create_subnet(self.fmt,
                                 network['network']['id'],
@@ -2760,8 +2751,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 webob.exc.HTTPClientError.code,
                                 gateway_ip='100.0.0.1')
 
-    def test_create_subnet_gw_of_network_force_on_returns_400(self):
-        cfg.CONF.set_override('force_gateway_on_subnet', True)
+    def test_create_subnet_gw_of_network_returns_400(self):
         with self.network() as network:
             self._create_subnet(self.fmt,
                                 network['network']['id'],
@@ -2769,8 +2759,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 webob.exc.HTTPClientError.code,
                                 gateway_ip='10.0.0.0')
 
-    def test_create_subnet_gw_bcast_force_on_returns_400(self):
-        cfg.CONF.set_override('force_gateway_on_subnet', True)
+    def test_create_subnet_gw_bcast_returns_400(self):
         with self.network() as network:
             self._create_subnet(self.fmt,
                                 network['network']['id'],
@@ -3038,6 +3027,28 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                      ipv6_ra_mode=mode,
                                      ipv6_address_mode=mode)
 
+    def test_create_subnet_ipv6_out_of_cidr_global(self):
+        gateway_ip = '2000::1'
+        cidr = '2001::/64'
+
+        with testlib_api.ExpectedException(
+            webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(
+                gateway_ip=gateway_ip, cidr=cidr, ip_version=6,
+                ipv6_ra_mode=constants.DHCPV6_STATEFUL,
+                ipv6_address_mode=constants.DHCPV6_STATEFUL)
+        self.assertEqual(ctx_manager.exception.code,
+                         webob.exc.HTTPClientError.code)
+
+    def test_create_subnet_ipv6_out_of_cidr_lla(self):
+        gateway_ip = 'fe80::1'
+        cidr = '2001::/64'
+
+        self._test_create_subnet(
+            gateway_ip=gateway_ip, cidr=cidr, ip_version=6,
+            ipv6_ra_mode=constants.IPV6_SLAAC,
+            ipv6_address_mode=constants.IPV6_SLAAC)
+
     def test_create_subnet_ipv6_attributes_no_dhcp_enabled(self):
         gateway_ip = 'fe80::1'
         cidr = 'fe80::/80'
@@ -3122,7 +3133,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnet_no_gateway(self):
         with self.subnet() as subnet:
-            data = {'subnet': {'gateway_ip': '11.0.0.1'}}
+            data = {'subnet': {'gateway_ip': '10.0.0.1'}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
@@ -3136,7 +3147,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnet(self):
         with self.subnet() as subnet:
-            data = {'subnet': {'gateway_ip': '11.0.0.1'}}
+            data = {'subnet': {'gateway_ip': '10.0.0.1'}}
             req = self.new_update_request('subnets', data,
                                           subnet['subnet']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
@@ -3182,8 +3193,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(res.status_int,
                                  webob.exc.HTTPClientError.code)
 
-    def test_update_subnet_gw_outside_cidr_force_on_returns_400(self):
-        cfg.CONF.set_override('force_gateway_on_subnet', True)
+    def test_update_subnet_gw_outside_cidr_returns_400(self):
         with self.network() as network:
             with self.subnet(network=network) as subnet:
                 data = {'subnet': {'gateway_ip': '100.0.0.1'}}
