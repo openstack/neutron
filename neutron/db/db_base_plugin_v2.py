@@ -16,6 +16,7 @@
 #    under the License.
 
 import random
+import weakref
 
 import netaddr
 from oslo.config import cfg
@@ -90,6 +91,16 @@ class CommonDbMixin(object):
             cls._model_query_hooks[model] = model_hooks
         model_hooks[name] = {'query': query_hook, 'filter': filter_hook,
                              'result_filters': result_filters}
+
+    @property
+    def safe_reference(self):
+        """Return a weakref to the instance.
+
+        Minimize the potential for the instance persisting
+        unnecessarily in memory by returning a weakref proxy that
+        won't prevent deallocation.
+        """
+        return weakref.proxy(self)
 
     def _model_query(self, context, model):
         query = context.session.query(model)
