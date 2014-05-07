@@ -280,7 +280,8 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             lrouter_port = nvplib.create_router_lport(
                 cluster, router_id, port_data.get('tenant_id', 'fake'),
                 port_data.get('id', 'fake'), port_data.get('name', 'fake'),
-                port_data.get('admin_state_up', True), ip_addresses)
+                port_data.get('admin_state_up', True), ip_addresses,
+                port_data.get('mac_address'))
             LOG.debug(_("Created NVP router port:%s"), lrouter_port['uuid'])
         except NvpApiClient.NvpApiException:
             LOG.exception(_("Unable to create port on NVP logical router %s"),
