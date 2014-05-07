@@ -48,6 +48,10 @@ class L2populationDbMixin(base_db.CommonDbMixin):
         configuration = jsonutils.loads(agent.configurations)
         return configuration.get('tunnel_types')
 
+    def get_agent_l2pop_network_types(self, agent):
+        configuration = jsonutils.loads(agent.configurations)
+        return configuration.get('l2pop_network_types')
+
     def get_agent_by_host(self, session, agent_host):
         with session.begin(subtransactions=True):
             query = session.query(agents_db.Agent)

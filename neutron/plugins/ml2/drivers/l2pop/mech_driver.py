@@ -175,8 +175,10 @@ class L2populationMechanismDriver(api.MechanismDriver,
                         {'port': port['id'], 'agent': agent})
             return
 
-        tunnel_types = self.get_agent_tunnel_types(agent)
-        if segment['network_type'] not in tunnel_types:
+        network_types = self.get_agent_l2pop_network_types(agent)
+        if network_types is None:
+            network_types = self.get_agent_tunnel_types(agent)
+        if segment['network_type'] not in network_types:
             return
 
         fdb_entries = self._get_port_fdb_entries(port)
