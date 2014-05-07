@@ -1200,6 +1200,8 @@ class TestL3AgentEventHandler(base.BaseTestCase):
     def setUp(self):
         super(TestL3AgentEventHandler, self).setUp()
         cfg.CONF.register_opts(l3_agent.L3NATAgent.OPTS)
+        agent_config.register_interface_driver_opts_helper(cfg.CONF)
+        agent_config.register_use_namespaces_opts_helper(cfg.CONF)
         cfg.CONF.set_override(
             'interface_driver', 'neutron.agent.linux.interface.NullDriver'
         )
