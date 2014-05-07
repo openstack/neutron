@@ -27,7 +27,9 @@ class GroupPolicyMappingTestCase(tdb.GroupPolicyMappingDbTestCase):
                                      ['mapping'],
                                      group='group_policy')
         super(GroupPolicyMappingTestCase, self).setUp(
-            gp_plugin=GP_PLUGIN_KLASS
+            gp_plugin=GP_PLUGIN_KLASS,
+            service_plugins={'gp_plugin_name': GP_PLUGIN_KLASS,
+                             'l3_plugin_name': 'router'}
         )
 
 
@@ -51,7 +53,10 @@ class TestGroupPolicyMapping(GroupPolicyMappingTestCase):
 
     def test_explicit_workflow(self, **kwargs):
         with self.routing_domain(name="rd1") as rd:
-            # TODO(rkukura): Verify router created (not yet)
+            routers = rd['routing_domain']['neutron_routers']
+            self.assertIsNotNone(routers)
+            self.assertEqual(len(routers), 1)
+            # TODO(rkukura): Verify subnet details
             rd_id = rd['routing_domain']['id']
 
             with self.bridge_domain(name="bd1",

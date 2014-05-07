@@ -101,7 +101,7 @@ class RoutingDomainRouterBinding(gpolicy_db.RoutingDomain):
     # TODO(Sumit): confirm cascade constraints
     neutron_routers = orm.relationship(RoutingDomainRouterAssociation,
                                        backref='gp_routing_domains',
-                                       lazy="joined")
+                                       cascade='all', lazy="joined")
 
 
 class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
@@ -201,10 +201,18 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                                                    neutron_subnet_id=subnet_id)
             epg_db.neutron_subnets.append(assoc)
         # TODO(rkukura): Commit transaction (not subtransaction?) and
-        # Raise exception if subnet overlaps any other subnets in
+        # raise exception if subnet overlaps any other subnets in
         # RD. Or come up with better way to atomically allocate
         # subnets from RD's supernet.
         return copy.copy(epg_db.neutron_subnets)
+
+    def _add_router_to_routing_domain(self, context, rd_id, router_id):
+        with context.session.begin(subtransactions=True):
+            rd_db = self._get_routing_domain(context, rd_id)
+            assoc = RoutingDomainRouterAssociation(routing_domain_id=rd_id,
+                                                   neutron_router_id=router_id)
+            rd_db.neutron_routers.append(assoc)
+        return copy.copy(rd_db.neutron_routers)
 
     @log.log
     def create_endpoint(self, context, endpoint):
@@ -276,3 +284,11 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             # TODO(Sumit): Process routers
             context.session.add(rd_db)
         return self._make_routing_domain_dict(rd_db)
+
+    @log.log
+    def delete_routing_domain(self, context, id):
+        with context.session.begin(subtransactions=True):
+            rd_query = context.session.query(
+                RoutingDomainRouterBinding).with_lockmode('update')
+            rd_db = rd_query.filter_by(id=id).one()
+            context.session.delete(rd_db)
