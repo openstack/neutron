@@ -18,6 +18,8 @@ from neutron.plugins.common import constants
 from neutron.plugins.ml2 import config as config
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mechanism_odl
+from neutron.plugins.ml2 import plugin
+from neutron.tests import base
 from neutron.tests.unit import test_db_plugin as test_plugin
 
 PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -65,30 +67,34 @@ class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.assertFalse(self.mech.check_segment(self.segment))
 
 
-class OpenDayLightMechanismConfigTests(test_plugin.NeutronDbPluginV2TestCase):
+class OpenDayLightMechanismConfigTests(base.BaseTestCase):
 
-    def _setUp(self):
+    def _set_config(self, url='http://127.0.0.1:9999', username='someuser',
+                    password='somepass'):
         config.cfg.CONF.set_override('mechanism_drivers',
                                      ['logger', 'opendaylight'],
                                      'ml2')
-        config.cfg.CONF.set_override('url', 'http://127.0.0.1:9999', 'ml2_odl')
-        config.cfg.CONF.set_override('username', 'someuser', 'ml2_odl')
-        config.cfg.CONF.set_override('password', 'somepass', 'ml2_odl')
+        config.cfg.CONF.set_override('url', url, 'ml2_odl')
+        config.cfg.CONF.set_override('username', username, 'ml2_odl')
+        config.cfg.CONF.set_override('password', password, 'ml2_odl')
 
-    def test_url_required(self):
-        self._setUp()
-        config.cfg.CONF.set_override('url', None, 'ml2_odl')
-        self.assertRaises(config.cfg.RequiredOptError, self.setUp, PLUGIN_NAME)
+    def _test_missing_config(self, **kwargs):
+        self._set_config(**kwargs)
+        self.assertRaises(config.cfg.RequiredOptError,
+                          plugin.Ml2Plugin)
 
-    def test_username_required(self):
-        self._setUp()
-        config.cfg.CONF.set_override('username', None, 'ml2_odl')
-        self.assertRaises(config.cfg.RequiredOptError, self.setUp, PLUGIN_NAME)
+    def test_valid_config(self):
+        self._set_config()
+        plugin.Ml2Plugin()
 
-    def test_password_required(self):
-        self._setUp()
-        config.cfg.CONF.set_override('password', None, 'ml2_odl')
-        self.assertRaises(config.cfg.RequiredOptError, self.setUp, PLUGIN_NAME)
+    def test_missing_url_raises_exception(self):
+        self._test_missing_config(url=None)
+
+    def test_missing_username_raises_exception(self):
+        self._test_missing_config(username=None)
+
+    def test_missing_password_raises_exception(self):
+        self._test_missing_config(password=None)
 
 
 class OpenDaylightMechanismTestBasicGet(test_plugin.TestBasicGet,
