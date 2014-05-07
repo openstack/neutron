@@ -36,6 +36,11 @@ class EndpointContext(GroupPolicyContext, api.EndpointContext):
     def original(self):
         return self._original_endpoint
 
+    def set_neutron_port_id(self, port_id):
+        self._plugin._set_port_for_endpoint(self._plugin_context,
+                                            self._endpoint['id'], port_id)
+        self._endpoint['neutron_port_id'] = port_id
+
 
 class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
 
@@ -52,6 +57,20 @@ class EndpointGroupContext(GroupPolicyContext, api.EndpointGroupContext):
     @property
     def original(self):
         return self._original_endpoint_group
+
+    def set_bridge_domain_id(self, bridge_domain_id):
+        self._plugin._set_bridge_domain_for_endpoint_group(
+            self._plugin_context, self._endpoint_group['id'], bridge_domain_id)
+        self._endpoint_group['bridge_domain_id'] = bridge_domain_id
+
+    def is_cidr_available(self, cidr):
+        return self._plugin._is_cidr_available_to_endpoint_group(
+            self._plugin_context, self._endpoint_group['id'], cidr)
+
+    def add_neutron_subnet(self, subnet_id):
+        subnets = self._plugin._add_subnet_to_endpoint_group(
+            self._plugin_context, self._endpoint_group['id'], subnet_id)
+        self._endpoint_group['neutron_subnets'] = subnets
 
 
 class ContractContext(GroupPolicyContext, api.ContractContext):
@@ -137,6 +156,17 @@ class BridgeDomainContext(GroupPolicyContext, api.BridgeDomainContext):
     @property
     def original(self):
         return self._original_bridge_domain
+
+    def set_routing_domain_id(self, routing_domain_id):
+        self._plugin._set_routing_domain_for_bridge_domain(
+            self._plugin_context, self._bridge_domain['id'], routing_domain_id)
+        self._bridge_domain['routing_domain_id'] = routing_domain_id
+
+    def set_neutron_network_id(self, network_id):
+        self._plugin._set_network_for_bridge_domain(self._plugin_context,
+                                                    self._bridge_domain['id'],
+                                                    network_id)
+        self._bridge_domain['neutron_network_id'] = network_id
 
 
 class RoutingDomainContext(GroupPolicyContext, api.RoutingDomainContext):

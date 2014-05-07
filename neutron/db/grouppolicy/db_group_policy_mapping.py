@@ -13,16 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+import netaddr
+
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron.common import exceptions as nexc
 from neutron.common import log
 from neutron.db.grouppolicy import db_group_policy as gpolicy_db
 from neutron.db import l3_db  # noqa
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.extensions import group_policy as gpolicy
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import uuidutils
 
@@ -36,11 +39,12 @@ LOG = logging.getLogger(__name__)
 class EndpointPortBinding(gpolicy_db.Endpoint):
     """Neutron port binding to an Endpoint."""
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': 'mapping'}
     # TODO(Sumit): confirm cascade constraints
     neutron_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'),
                                 nullable=True, unique=True)
     neutron_port = orm.relationship(models_v2.Port,
-                                    backref=orm.backref("gp_endpoints",
+                                    backref=orm.backref("gp_endpoint",
                                                         lazy='joined',
                                                         uselist=False))
 
@@ -59,20 +63,22 @@ class EndpointGroupSubnetAssociation(model_base.BASEV2):
 class EndpointGroupSubnetBinding(gpolicy_db.EndpointGroup):
     """Neutron subnet binding to an EndpointGroup."""
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': 'mapping'}
     # TODO(Sumit): confirm cascade constraints
     neutron_subnets = orm.relationship(EndpointGroupSubnetAssociation,
                                        backref='gp_endpoint_groups',
-                                       lazy="joined")
+                                       cascade='all', lazy="joined")
 
 
 class BridgeDomainNetworkBinding(gpolicy_db.BridgeDomain):
     """Neutron network binding to a Bridgedomain."""
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': 'mapping'}
     # TODO(Sumit): confirm cascade constraints
     neutron_network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'),
                                    nullable=True, unique=True)
     neutron_network = orm.relationship(models_v2.Network,
-                                       backref=orm.backref("gp_bridge_domains",
+                                       backref=orm.backref("gp_bridge_domain",
                                                            lazy='joined',
                                                            uselist=False))
 
@@ -91,6 +97,7 @@ class RoutingDomainRouterAssociation(model_base.BASEV2):
 class RoutingDomainRouterBinding(gpolicy_db.RoutingDomain):
     """Neutron router binding to an RouteringDomain."""
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {'polymorphic_identity': 'mapping'}
     # TODO(Sumit): confirm cascade constraints
     neutron_routers = orm.relationship(RoutingDomainRouterAssociation,
                                        backref='gp_routing_domains',
@@ -110,7 +117,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
         try:
             endpoint = self._get_by_id(context, EndpointPortBinding, id)
         except exc.NoResultFound:
-            raise nexc.EndpointNotFound(endpoint_id=id)
+            raise gpolicy.EndpointNotFound(endpoint_id=id)
         return endpoint
 
     def _get_endpoint_group(self, context, id):
@@ -118,7 +125,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             endpoint_group = self._get_by_id(context,
                                              EndpointGroupSubnetBinding, id)
         except exc.NoResultFound:
-            raise nexc.EndpointGroupNotFound(endpoint_group_id=id)
+            raise gpolicy.EndpointGroupNotFound(endpoint_group_id=id)
         return endpoint_group
 
     def _get_bridge_domain(self, context, id):
@@ -126,7 +133,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             bridge_domain = self._get_by_id(context,
                                             BridgeDomainNetworkBinding, id)
         except exc.NoResultFound:
-            raise nexc.BridgeDomainNotFound(bridge_domain_id=id)
+            raise gpolicy.BridgeDomainNotFound(bridge_domain_id=id)
         return bridge_domain
 
     def _get_routing_domain(self, context, id):
@@ -134,7 +141,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             routing_domain = self._get_by_id(context,
                                              RoutingDomainRouterBinding, id)
         except exc.NoResultFound:
-            raise nexc.RoutingDomainNotFound(routing_domain_id=id)
+            raise gpolicy.RoutingDomainNotFound(routing_domain_id=id)
         return routing_domain
 
     def _make_endpoint_dict(self, ep, fields=None):
@@ -146,7 +153,7 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
     def _make_endpoint_group_dict(self, epg, fields=None):
         res = super(GroupPolicyMappingDbMixin,
                     self)._make_endpoint_group_dict(epg)
-        res['neutron_subnets'] = epg['neutron_subnets']
+        res['neutron_subnets'] = copy.copy(epg['neutron_subnets'])
         return self._fields(res, fields)
 
     def _make_bridge_domain_dict(self, bd, fields=None):
@@ -160,6 +167,44 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
                     self)._make_routing_domain_dict(rd)
         res['neutron_routers'] = rd['neutron_routers']
         return self._fields(res, fields)
+
+    def _set_port_for_endpoint(self, context, ep_id, port_id):
+        with context.session.begin(subtransactions=True):
+            ep_db = self._get_endpoint(context, ep_id)
+            ep_db.neutron_port_id = port_id
+
+    def _set_network_for_bridge_domain(self, context, bd_id, network_id):
+        with context.session.begin(subtransactions=True):
+            bd_db = self._get_bridge_domain(context, bd_id)
+            bd_db.neutron_network_id = network_id
+
+    def _is_cidr_available_to_endpoint_group(self, context, epg_id, cidr):
+        with context.session.begin(subtransactions=True):
+            ipnet1 = netaddr.IPNetwork(cidr)
+            # REVISIT(rkukura): Optimize querying for set of EPGs with
+            # same RD?
+            epg_db = self._get_endpoint_group(context, epg_id)
+            rd_db = epg_db.bridge_domain.routing_domain
+            for bd_db in rd_db.bridge_domains:
+                for epg_db in bd_db.endpoint_groups:
+                    for subnet in epg_db.neutron_subnets:
+                        ipnet2 = netaddr.IPNetwork(subnet.cidr)
+                        if (ipnet1.first <= ipnet2.last and
+                            ipnet2.first <= ipnet1.last):
+                            return False
+        return True
+
+    def _add_subnet_to_endpoint_group(self, context, epg_id, subnet_id):
+        with context.session.begin(subtransactions=True):
+            epg_db = self._get_endpoint_group(context, epg_id)
+            assoc = EndpointGroupSubnetAssociation(endpoint_group_id=epg_id,
+                                                   neutron_subnet_id=subnet_id)
+            epg_db.neutron_subnets.append(assoc)
+        # TODO(rkukura): Commit transaction (not subtransaction?) and
+        # Raise exception if subnet overlaps any other subnets in
+        # RD. Or come up with better way to atomically allocate
+        # subnets from RD's supernet.
+        return copy.copy(epg_db.neutron_subnets)
 
     @log.log
     def create_endpoint(self, context, endpoint):
@@ -190,6 +235,14 @@ class GroupPolicyMappingDbMixin(gpolicy_db.GroupPolicyDbMixin):
             # TODO(Sumit): Process subnets
             context.session.add(epg_db)
         return self._make_endpoint_group_dict(epg_db)
+
+    @log.log
+    def delete_endpoint_group(self, context, id):
+        with context.session.begin(subtransactions=True):
+            epg_query = context.session.query(
+                EndpointGroupSubnetBinding).with_lockmode('update')
+            epg_db = epg_query.filter_by(id=id).one()
+            context.session.delete(epg_db)
 
     @log.log
     def create_bridge_domain(self, context, bridge_domain):

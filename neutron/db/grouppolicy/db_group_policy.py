@@ -35,6 +35,11 @@ LOG = logging.getLogger(__name__)
 class Endpoint(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Endpoint consumed by the Group Policy."""
     __tablename__ = 'gp_endpoints'
+    type = sa.Column(sa.String(15))
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     endpoint_group_id = sa.Column(sa.String(36),
@@ -78,9 +83,14 @@ class ContractScope(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 class EndpointGroup(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Endpoint Group that is a collection of endpoints."""
     __tablename__ = 'gp_endpoint_groups'
+    type = sa.Column(sa.String(15))
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-    endpoints = orm.relationship(Endpoint, backref='gp_endpoint_groups')
+    endpoints = orm.relationship(Endpoint, backref='endpoint_group')
     provided_contracts = orm.relationship(
         EndpointGroupContractProvidingAssociation,
         backref='gp_endpoint_groups', cascade='all')
@@ -210,10 +220,14 @@ class Contract(model_base.BASEV2, models_v2.HasTenant):
 class BridgeDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Bridge Domain that is a collection of endpoint_groups."""
     __tablename__ = 'gp_bridge_domains'
+    type = sa.Column(sa.String(15))
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
-    endpoint_groups = orm.relationship(EndpointGroup,
-                                       backref='gp_bridge_domains')
+    endpoint_groups = orm.relationship(EndpointGroup, backref='bridge_domain')
     routing_domain_id = sa.Column(sa.String(36),
                                   sa.ForeignKey('gp_routing_domains.id'),
                                   nullable=True, unique=True)
@@ -222,13 +236,17 @@ class BridgeDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 class RoutingDomain(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents an Routing Domain with a non-overlapping IP address space."""
     __tablename__ = 'gp_routing_domains'
+    type = sa.Column(sa.String(15))
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'base'
+    }
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(1024))
     ip_version = sa.Column(sa.Integer, nullable=False)
     ip_supernet = sa.Column(sa.String(64), nullable=False)
     subnet_prefix_length = sa.Column(sa.Integer, nullable=False)
-    bridge_domains = orm.relationship(BridgeDomain,
-                                      backref='gp_routing_domains')
+    bridge_domains = orm.relationship(BridgeDomain, backref='routing_domain')
 
 
 class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
@@ -344,6 +362,16 @@ class GroupPolicyDbMixin(gpolicy.GroupPolicyPluginBase,
             return str(min_port)
         else:
             return '%d:%d' % (min_port, max_port)
+
+    def _set_routing_domain_for_bridge_domain(self, context, bd_id, rd_id):
+        with context.session.begin(subtransactions=True):
+            bd_db = self._get_bridge_domain(context, bd_id)
+            bd_db.routing_domain_id = rd_id
+
+    def _set_bridge_domain_for_endpoint_group(self, context, epg_id, bd_id):
+        with context.session.begin(subtransactions=True):
+            epg_db = self._get_endpoint_group(context, epg_id)
+            epg_db.bridge_domain_id = bd_id
 
     def _set_providers_or_consumers_for_endpoint_group(self, context, epg_db,
                                                        contracts_dict,

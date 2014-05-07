@@ -17,7 +17,7 @@ import six
 
 @six.add_metaclass(ABCMeta)
 class EndpointContext(object):
-    """Context passed to policy engine for changes to endpoint resources.
+    """Context passed to policy engine for endpoint resource changes.
 
     An EndpointContext instance wraps an endpoint resource. It provides
     helper methods for accessing other relevant information. Results
@@ -43,10 +43,20 @@ class EndpointContext(object):
         """
         pass
 
+    @abstractmethod
+    def set_neutron_port_id(self, port_id):
+        """Set the neutron port for the endpoint.
+
+        :param port_id: Port to which endpoint is mapped.
+
+        Set the neutron port to which the endpoint is mapped.
+        """
+        pass
+
 
 @six.add_metaclass(ABCMeta)
 class EndpointGroupContext(object):
-    """Context passed to policy engine for changes to endpoint_group resources.
+    """Context passed to policy engine for endpoint_group resource changes.
 
     An EndpointContext instance wraps an endpoint_group resource. It provides
     helper methods for accessing other relevant information. Results
@@ -69,6 +79,40 @@ class EndpointGroupContext(object):
         Return the original state of the endpoint_group, prior to a call to
         update_endpoint_group. Method is only valid within calls to
         update_endpoint_group_precommit and update_endpoint_group_postcommit.
+        """
+        pass
+
+    @abstractmethod
+    def set_bridge_domain_id(self, bridge_domain_id):
+        """Set the bridge_domain for the endpoint_group.
+
+        :param bridge_domain_id: bridge_domain for the endpoint_group.
+
+        Set the bridge_domain for the endpoint_group.
+        """
+        pass
+
+    @abstractmethod
+    def is_cidr_available(self, cidr):
+        """Check if CIDR is available.
+
+        :param cidr: CIDR to check.
+
+        Return True iff the specified CIDR does not overlap with any
+        subnets currently allocated within this endpoint_group's
+        bridge_domain's routing_domain. Note that this does not lock
+        anything, so its only a hint.
+        """
+        pass
+
+    @abstractmethod
+    def add_neutron_subnet(self, subnet_id):
+        """Add the neutron subnet to the endpoint_group.
+
+        :param subnet_id: Subnet to which endpoint_group is mapped.
+
+        Add a neutron subnet to the set of subnets to which the
+        endpoint_group is mapped.
         """
         pass
 
@@ -104,7 +148,7 @@ class ContractContext(object):
 
 @six.add_metaclass(ABCMeta)
 class PolicyRuleContext(object):
-    """Context passed to policy engine for changes to policy_rule resources.
+    """Context passed to policy engine for policy_rule resource changes.
 
     An PolicyRuleContext instance wraps an policy_rule resource.
     It provides helper methods for accessing other relevant information.
@@ -134,7 +178,7 @@ class PolicyRuleContext(object):
 
 @six.add_metaclass(ABCMeta)
 class PolicyClassifierContext(object):
-    """Context passed to policy engine for changes to policy_classifier resources.
+    """Context passed to policy engine for policy_classifier resource changes.
 
     An PolicyClassifierContext instance wraps an policy_classifier resource.
     It provides helper methods for accessing other relevant information.
@@ -164,7 +208,7 @@ class PolicyClassifierContext(object):
 
 @six.add_metaclass(ABCMeta)
 class PolicyActionContext(object):
-    """Context passed to policy engine for changes to policy_action resources.
+    """Context passed to policy engine for policy_action resource changes.
 
     An PolicyActionContext instance wraps an policy_action resource.
     It provides helper methods for accessing other relevant information.
@@ -193,7 +237,7 @@ class PolicyActionContext(object):
 
 @six.add_metaclass(ABCMeta)
 class BridgeDomainContext(object):
-    """Context passed to policy engine for changes to bridge_domain resources.
+    """Context passed to policy engine for bridge_domain resource changes.
 
     A BridgeDomainContext instance wraps an bridge_domain resource. It provides
     helper methods for accessing other relevant information. Results
@@ -219,10 +263,31 @@ class BridgeDomainContext(object):
         """
         pass
 
+    @abstractmethod
+    def set_routing_domain_id(self, routing_domain_id):
+        """Set the routing_domain for the bridge_domain.
+
+        :param routing_domain_id: routing_domain for the bridge_domain.
+
+        Set the routing_domain for the bridge_domain.
+        """
+        pass
+
+    @abstractmethod
+    def set_neutron_network_id(self, network_id):
+        """Set the neutron network for the bridge_domain.
+
+        :param network_id: Network to which bridge_domain is mapped.
+
+        Set the neutron network to which the bridge_domain is mapped.
+        """
+        pass
+
 
 @six.add_metaclass(ABCMeta)
 class RoutingDomainContext(object):
-    """Context passed to policy engine for changes to routing_domain resources.
+
+    """Context passed to policy engine for routing_domain resource changes.
 
     A RoutingDomainContext instance wraps an routing_domain resource.xi
     It provides helper methods for accessing other relevant information.

@@ -103,7 +103,8 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
         with session.begin(subtransactions=True):
             result = super(GroupPolicyPlugin,
                            self).create_endpoint_group(context, endpoint_group)
-            policy_context = p_context.EndpointContext(self, context, result)
+            policy_context = p_context.EndpointGroupContext(self, context,
+                                                            result)
             self.policy_driver_manager.create_endpoint_group_precommit(
                 policy_context)
 
@@ -129,7 +130,7 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
             updated_endpoint_group = super(GroupPolicyPlugin,
                                            self).update_endpoint_group(
                                                context, id, endpoint_group)
-            policy_context = p_context.EndpointContext(
+            policy_context = p_context.EndpointGroupContext(
                 self, context, updated_endpoint_group,
                 original_endpoint_group=original_endpoint_group)
             self.policy_driver_manager.update_endpoint_group_precommit(
@@ -146,8 +147,8 @@ class GroupPolicyPlugin(db_group_policy_mapping.GroupPolicyMappingDbMixin):
         with session.begin(subtransactions=True):
             endpoint_group = self.get_endpoint_group(context, id)
             # TODO(sumit) : Do not delete if EPG has EPs
-            policy_context = p_context.EndpointContext(self, context,
-                                                       endpoint_group)
+            policy_context = p_context.EndpointGroupContext(self, context,
+                                                            endpoint_group)
             self.policy_driver_manager.delete_endpoint_group_precommit(
                 policy_context)
             super(GroupPolicyPlugin, self).delete_endpoint_group(context, id)
