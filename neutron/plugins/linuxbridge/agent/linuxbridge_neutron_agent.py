@@ -966,6 +966,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
         self.remove_devices_filter(devices)
         for device in devices:
             LOG.info(_("Attachment %s removed"), device)
+            details = None
             try:
                 details = self.plugin_rpc.update_device_down(self.context,
                                                              device,
@@ -975,7 +976,7 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                 LOG.debug(_("port_removed failed for %(device)s: %(e)s"),
                           {'device': device, 'e': e})
                 resync = True
-            if details['exists']:
+            if details and details['exists']:
                 LOG.info(_("Port %s updated."), device)
             else:
                 LOG.debug(_("Device %s not defined on plugin"), device)
