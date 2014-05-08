@@ -257,6 +257,14 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         self.vif_driver.init_l3(interface_name, cidrs, namespace=namespace)
 
         gw_ip = port['fixed_ips'][0]['subnet'].get('gateway_ip')
+
+        if not gw_ip:
+            host_routes = port['fixed_ips'][0]['subnet'].get('host_routes', [])
+            for host_route in host_routes:
+                if host_route['destination'] == "0.0.0.0/0":
+                    gw_ip = host_route['nexthop']
+                    break
+
         if gw_ip:
             cmd = ['route', 'add', 'default', 'gw', gw_ip]
             ip_wrapper = ip_lib.IPWrapper(self.root_helper,
