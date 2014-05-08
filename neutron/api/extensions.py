@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from abc import ABCMeta
+import abc
 import imp
 import itertools
 import os
@@ -28,7 +28,7 @@ import webob.exc
 from neutron.api.v2 import attributes
 from neutron.common import exceptions
 import neutron.extensions
-from neutron.manager import NeutronManager
+from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron import policy
 from neutron import wsgi
@@ -37,7 +37,7 @@ from neutron import wsgi
 LOG = logging.getLogger(__name__)
 
 
-@six.add_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class PluginInterface(object):
 
     @classmethod
@@ -619,7 +619,7 @@ class PluginAwareExtensionManager(ExtensionManager):
     def get_instance(cls):
         if cls._instance is None:
             cls._instance = cls(get_extensions_path(),
-                                NeutronManager.get_service_plugins())
+                                manager.NeutronManager.get_service_plugins())
         return cls._instance
 
     def check_if_plugin_extensions_loaded(self):

@@ -17,13 +17,13 @@
 
 from cliff import lister
 from neutronclient.common import utils
-from neutronclient.neutron.v2_0 import NeutronCommand
-from neutronclient.neutron.v2_0.port import _format_fixed_ips
+from neutronclient.neutron import v2_0 as client
+from neutronclient.neutron.v2_0 import port
 
 from neutron.openstack.common import log as logging
 
 
-class ProbeCommand(NeutronCommand):
+class ProbeCommand(client.NeutronCommand):
     log = logging.getLogger(__name__ + '.ProbeCommand')
 
     def get_debug_agent(self):
@@ -53,9 +53,9 @@ class CreateProbe(ProbeCommand):
     def run(self, parsed_args):
         self.log.debug('run(%s)' % parsed_args)
         debug_agent = self.get_debug_agent()
-        port = debug_agent.create_probe(parsed_args.id,
-                                        parsed_args.device_owner)
-        self.log.info(_('Probe created : %s '), port.id)
+        probe_port = debug_agent.create_probe(parsed_args.id,
+                                              parsed_args.device_owner)
+        self.log.info(_('Probe created : %s '), probe_port.id)
 
 
 class DeleteProbe(ProbeCommand):
@@ -77,11 +77,11 @@ class DeleteProbe(ProbeCommand):
         self.log.info(_('Probe %s deleted'), parsed_args.id)
 
 
-class ListProbe(NeutronCommand, lister.Lister):
+class ListProbe(client.NeutronCommand, lister.Lister):
     """List probes."""
 
     log = logging.getLogger(__name__ + '.ListProbe')
-    _formatters = {'fixed_ips': _format_fixed_ips, }
+    _formatters = {'fixed_ips': port._format_fixed_ips, }
 
     def get_debug_agent(self):
         return self.app.debug_agent

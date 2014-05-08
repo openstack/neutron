@@ -21,7 +21,7 @@ from oslo.config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
-from neutron.debug.debug_agent import NeutronDebugAgent
+from neutron.debug import debug_agent
 from neutron.openstack.common import importutils
 from neutronclient.common import exceptions as exc
 from neutronclient.common import utils
@@ -73,14 +73,16 @@ class NeutronDebugShell(shell.NeutronShell):
                   " either --config-file or env[NEUTRON_TEST_CONFIG_FILE]"))
         client = self.client_manager.neutron
         cfg.CONF.register_opts(interface.OPTS)
-        cfg.CONF.register_opts(NeutronDebugAgent.OPTS)
+        cfg.CONF.register_opts(debug_agent.NeutronDebugAgent.OPTS)
         config.register_interface_driver_opts_helper(cfg.CONF)
         config.register_use_namespaces_opts_helper(cfg.CONF)
         config.register_root_helper(cfg.CONF)
         cfg.CONF(['--config-file', self.options.config_file])
         config.setup_logging(cfg.CONF)
         driver = importutils.import_object(cfg.CONF.interface_driver, cfg.CONF)
-        self.debug_agent = NeutronDebugAgent(cfg.CONF, client, driver)
+        self.debug_agent = debug_agent.NeutronDebugAgent(cfg.CONF,
+                                                         client,
+                                                         driver)
 
 
 def main(argv=None):
