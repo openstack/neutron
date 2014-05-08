@@ -367,7 +367,7 @@ def _raise_if_duplicate_entry_error(integrity_error, engine_name):
             return [columns]
         return columns[len(uniqbase):].split("0")[1:]
 
-    if engine_name not in ["ibm_db_sa", "mysql", "sqlite", "postgresql"]:
+    if engine_name not in ("ibm_db_sa", "mysql", "sqlite", "postgresql"):
         return
 
     # FIXME(johannes): The usage of the .message attribute has been
@@ -489,7 +489,7 @@ def _thread_yield(dbapi_con, con_record):
 
 
 def _ping_listener(engine, dbapi_conn, connection_rec, connection_proxy):
-    """Ensures that MySQL and DB2 connections are alive.
+    """Ensures that MySQL, PostgreSQL or DB2 connections are alive.
 
     Borrowed from:
     http://groups.google.com/group/sqlalchemy/msg/a4ce563d802c929f
@@ -645,7 +645,7 @@ def create_engine(sql_connection, sqlite_fk=False, mysql_sql_mode=None,
 
     sqlalchemy.event.listen(engine, 'checkin', _thread_yield)
 
-    if engine.name in ['mysql', 'ibm_db_sa']:
+    if engine.name in ('ibm_db_sa', 'mysql', 'postgresql'):
         ping_callback = functools.partial(_ping_listener, engine)
         sqlalchemy.event.listen(engine, 'checkout', ping_callback)
         if engine.name == 'mysql':
