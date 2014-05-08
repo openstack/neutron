@@ -19,6 +19,7 @@ from neutron.common import exceptions as nexc
 from neutron.common import log
 from neutron import manager
 from neutron.openstack.common import log as logging
+from neutron.plugins.common import constants as pconst
 from neutron.plugins.grouppolicy import group_policy_driver_api as api
 
 
@@ -179,8 +180,18 @@ class MappingDriver(api.PolicyDriver):
         pass
 
     def _add_rd_router(self, context):
-        # TODO(rkukura): Implement
-        pass
+        attrs = {'router':
+                 {'tenant_id': context.current['tenant_id'],
+                  'name': 'rd_' + context.current['name'],
+                  'external_gateway_info': None,
+                  'admin_state_up': True}}
+        plugins = manager.NeutronManager.get_service_plugins()
+        l3_plugin = plugins.get(pconst.L3_ROUTER_NAT)
+        if not l3_plugin:
+            raise Exception(_("No L3 router service plugin found."))
+        router = l3_plugin.create_router(context._plugin_context, attrs)
+        LOG.info("created router: %s" % router)
+        context.add_neutron_router(router['id'])
 
     def _default_bd_rd(self, context):
         filter = {'tenant_id': context.current['tenant_id'],

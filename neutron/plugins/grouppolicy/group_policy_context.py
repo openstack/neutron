@@ -184,3 +184,8 @@ class RoutingDomainContext(GroupPolicyContext, api.RoutingDomainContext):
     @property
     def original(self):
         return self._original_routing_domain
+
+    def add_neutron_router(self, router_id):
+        routers = self._plugin._add_router_to_routing_domain(
+            self._plugin_context, self._routing_domain['id'], router_id)
+        self._routing_domain['neutron_routers'] = routers

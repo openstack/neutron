@@ -254,7 +254,8 @@ class GroupPolicyMappingTestMixin(object):
 class GroupPolicyMappingDbTestCase(GroupPolicyMappingTestMixin,
                                    test_db_plugin.NeutronDbPluginV2TestCase):
 
-    def setUp(self, core_plugin=None, gp_plugin=None, ext_mgr=None):
+    def setUp(self, core_plugin=None, gp_plugin=None, service_plugins=None,
+              ext_mgr=None):
         self._saved_gp_attr_map = {}
         for k, v in gpolicy.RESOURCE_ATTRIBUTE_MAP.iteritems():
             self._saved_gp_attr_map[k] = v.copy()
@@ -262,7 +263,8 @@ class GroupPolicyMappingDbTestCase(GroupPolicyMappingTestMixin,
 
         if not gp_plugin:
             gp_plugin = DB_GP_PLUGIN_KLASS
-        service_plugins = {'gp_plugin_name': gp_plugin}
+        if not service_plugins:
+            service_plugins = {'gp_plugin_name': gp_plugin}
 
         gpdb.GroupPolicyMappingDbMixin.supported_extension_aliases = [
             'group-policy', 'group-policy-mapping']

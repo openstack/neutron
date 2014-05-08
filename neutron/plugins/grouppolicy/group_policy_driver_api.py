@@ -313,6 +313,17 @@ class RoutingDomainContext(object):
         """
         pass
 
+    @abstractmethod
+    def add_neutron_router(self, router_id):
+        """Add the neutron router to the routing_domain.
+
+        :param router_id: Router to which routing_domain is mapped.
+
+        Add a neutron router to the set of routers to which the
+        routing_domain is mapped.
+        """
+        pass
+
 
 @six.add_metaclass(ABCMeta)
 class PolicyDriver(object):
