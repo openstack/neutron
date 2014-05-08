@@ -39,7 +39,7 @@ import webob.exc
 from neutron.common import constants
 from neutron.common import exceptions as exception
 from neutron import context
-from neutron.openstack.common.db.sqlalchemy import session
+from neutron.db import api
 from neutron.openstack.common import excutils
 from neutron.openstack.common import gettextutils
 from neutron.openstack.common import jsonutils
@@ -95,7 +95,7 @@ class WorkerService(object):
         # We may have just forked from parent process.  A quick disposal of the
         # existing sql connections avoids producting 500 errors later when they
         # are discovered to be broken.
-        session.get_engine(sqlite_fk=True).pool.dispose()
+        api.get_engine().pool.dispose()
         self._server = self._service.pool.spawn(self._service._run,
                                                 self._application,
                                                 self._service._socket)
