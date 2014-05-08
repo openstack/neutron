@@ -566,8 +566,8 @@ class HTTPSConnectionWithValidation(httplib.HTTPSConnection):
     combined_cert = None
 
     def connect(self):
-        sock = socket.create_connection((self.host, self.port), self.timeout,
-                                        getattr(self, 'source_address', None))
+        sock = socket.create_connection((self.host, self.port),
+                                        self.timeout, self.source_address)
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
