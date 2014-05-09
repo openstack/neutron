@@ -576,6 +576,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(1, num_before_remove)
         self.assertEqual(0, num_after_remove)
 
+    def test_list_active_networks_on_not_registered_yet_dhcp_agent(self):
+        plugin = manager.NeutronManager.get_plugin()
+        nets = plugin.list_active_networks_on_active_dhcp_agent(
+            self.adminContext, host=DHCP_HOSTA)
+        self.assertEqual([], nets)
+
     def test_reserved_port_after_network_remove_from_dhcp_agent(self):
         dhcp_hosta = {
             'binary': 'neutron-dhcp-agent',

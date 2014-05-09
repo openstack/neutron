@@ -23,6 +23,7 @@ from neutron.common import constants
 from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import model_base
+from neutron.extensions import agent as ext_agent
 from neutron.extensions import dhcpagentscheduler
 from neutron.openstack.common import log as logging
 
@@ -184,8 +185,13 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             return {'networks': []}
 
     def list_active_networks_on_active_dhcp_agent(self, context, host):
-        agent = self._get_agent_by_type_and_host(
-            context, constants.AGENT_TYPE_DHCP, host)
+        try:
+            agent = self._get_agent_by_type_and_host(
+                context, constants.AGENT_TYPE_DHCP, host)
+        except ext_agent.AgentNotFoundByTypeHost:
+            LOG.debug("DHCP Agent not found on host %s", host)
+            return []
+
         if not agent.admin_state_up:
             return []
         query = context.session.query(NetworkDhcpAgentBinding.network_id)
