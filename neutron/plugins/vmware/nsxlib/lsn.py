@@ -206,29 +206,33 @@ def _lsn_port_configure_action(
                cluster=cluster)
 
 
+def _get_opts(name, value):
+    return {"name": name, "value": str(value)}
+
+
 def lsn_port_dhcp_configure(
         cluster, lsn_id, lsn_port_id, is_enabled=True, dhcp_options=None):
     dhcp_options = dhcp_options or {}
-    opts = ["%s=%s" % (key, val) for key, val in dhcp_options.iteritems()]
-    dhcp_obj = {
-        'options': {'options': opts}
-    }
+    opts = [_get_opts(key, val) for key, val in dhcp_options.iteritems()]
+    dhcp_obj = {'options': opts}
     _lsn_port_configure_action(
         cluster, lsn_id, lsn_port_id, 'dhcp', is_enabled, dhcp_obj)
 
 
 def lsn_metadata_configure(
         cluster, lsn_id, is_enabled=True, metadata_info=None):
-    opts = [
-        "%s=%s" % (opt, metadata_info[opt])
-        for opt in SUPPORTED_METADATA_OPTIONS
-        if metadata_info.get(opt)
-    ]
     meta_obj = {
         'metadata_server_ip': metadata_info['metadata_server_ip'],
         'metadata_server_port': metadata_info['metadata_server_port'],
-        'misc_options': opts
     }
+    if metadata_info:
+        opts = [
+            _get_opts(opt, metadata_info[opt])
+            for opt in SUPPORTED_METADATA_OPTIONS
+            if metadata_info.get(opt)
+        ]
+        if opts:
+            meta_obj["options"] = opts
     _lsn_configure_action(
         cluster, lsn_id, 'metadata-proxy', is_enabled, meta_obj)
 
