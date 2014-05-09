@@ -163,10 +163,18 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.tun_client.create_tunnel_key(net_id, tunnel_key)
 
     def _client_delete_network(self, net_id):
+        RyuNeutronPluginV2._safe_client_delete_network(self.safe_reference,
+                                                       net_id)
+
+    @staticmethod
+    def _safe_client_delete_network(safe_reference, net_id):
+        # Avoid handing naked plugin references to the client.  When
+        # the client is mocked for testing, such references can
+        # prevent the plugin from being deallocated.
         client.ignore_http_not_found(
-            lambda: self.client.delete_network(net_id))
+            lambda: safe_reference.client.delete_network(net_id))
         client.ignore_http_not_found(
-            lambda: self.tun_client.delete_tunnel_key(net_id))
+            lambda: safe_reference.tun_client.delete_tunnel_key(net_id))
 
     def create_network(self, context, network):
         session = context.session
