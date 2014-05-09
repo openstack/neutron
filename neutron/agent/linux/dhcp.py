@@ -544,6 +544,9 @@ class Dnsmasq(DhcpLocalProcess):
                 )
 
             if host_routes:
+                if gateway:
+                    host_routes.append('0.0.0.0/0,%s' % (gateway))
+
                 options.append(
                     self._format_option(i, 'classless-static-route',
                                         ','.join(host_routes)))
