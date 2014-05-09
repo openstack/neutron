@@ -58,13 +58,22 @@ class BaseTestCase(testtools.TestCase):
         #TODO(marun) Fix plugins that do not properly initialize notifiers
         agentschedulers_db.AgentSchedulerDbMixin.agent_notifiers = {}
 
-        plugin = weakref.ref(nm._instance.plugin)
-        nm.clear_instance()
-        gc.collect()
+        # Perform a check for deallocation only if explicitly
+        # configured to do so since calling gc.collect() after every
+        # test increases test suite execution time by ~50%.
+        check_plugin_deallocation = (
+            os.environ.get('OS_CHECK_PLUGIN_DEALLOCATION') in TRUE_STRING)
+        if check_plugin_deallocation:
+            plugin = weakref.ref(nm._instance.plugin)
 
-        #TODO(marun) Ensure that mocks are deallocated?
-        if plugin() and not isinstance(plugin(), mock.Base):
-            self.fail('The plugin for this test was not deallocated.')
+        nm.clear_instance()
+
+        if check_plugin_deallocation:
+            gc.collect()
+
+            #TODO(marun) Ensure that mocks are deallocated?
+            if plugin() and not isinstance(plugin(), mock.Base):
+                self.fail('The plugin for this test was not deallocated.')
 
     def setup_coreplugin(self, core_plugin=None):
         if core_plugin is not None:
