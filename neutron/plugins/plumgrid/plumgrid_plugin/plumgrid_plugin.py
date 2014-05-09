@@ -39,7 +39,6 @@ from neutron.plugins.plumgrid.common import exceptions as plum_excep
 from neutron.plugins.plumgrid.plumgrid_plugin import plugin_ver
 
 LOG = logging.getLogger(__name__)
-PLUM_DRIVER = 'neutron.plugins.plumgrid.drivers.plumlib.Plumlib'
 
 director_server_opts = [
     cfg.StrOpt('director_server', default='localhost',
@@ -51,7 +50,10 @@ director_server_opts = [
     cfg.StrOpt('password', default='password', secret=True,
                help=_("PLUMgrid Director admin password")),
     cfg.IntOpt('servertimeout', default=5,
-               help=_("PLUMgrid Director server timeout")), ]
+               help=_("PLUMgrid Director server timeout")),
+    cfg.StrOpt('driver',
+               default="neutron.plugins.plumgrid.drivers.plumlib.Plumlib",
+               help=_("PLUMgrid Driver")), ]
 
 cfg.CONF.register_opts(director_server_opts, "plumgriddirector")
 
@@ -83,10 +85,11 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         director_admin = cfg.CONF.plumgriddirector.username
         director_password = cfg.CONF.plumgriddirector.password
         timeout = cfg.CONF.plumgriddirector.servertimeout
+        plum_driver = cfg.CONF.plumgriddirector.driver
 
         # PLUMgrid Director info validation
         LOG.info(_('Neutron PLUMgrid Director: %s'), director_plumgrid)
-        self._plumlib = importutils.import_object(PLUM_DRIVER)
+        self._plumlib = importutils.import_object(plum_driver)
         self._plumlib.director_conn(director_plumgrid, director_port, timeout,
                                     director_admin, director_password)
 
