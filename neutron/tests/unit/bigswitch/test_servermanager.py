@@ -402,3 +402,20 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
         self.assertEqual(con._tunnel_host, 'myproxy.local')
         self.assertEqual(con._tunnel_port, 3128)
         self.assertEqual(con.sock, self.wrap_mock())
+
+
+class TestSockets(test_rp.BigSwitchProxyPluginV2TestCase):
+
+    def setUp(self):
+        super(TestSockets, self).setUp()
+        # http patch must not be running or it will mangle the servermanager
+        # import where the https connection classes are defined
+        self.httpPatch.stop()
+        self.sm = importutils.import_module(SERVERMANAGER)
+
+    def test_socket_create_attempt(self):
+        # exercise the socket creation to make sure it works on both python
+        # versions
+        con = self.sm.HTTPSConnectionWithValidation('127.0.0.1', 0, timeout=1)
+        # if httpcon was created, a connect attempt should raise a socket error
+        self.assertRaises(socket.error, con.connect)
