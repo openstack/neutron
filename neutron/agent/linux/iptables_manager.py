@@ -22,6 +22,10 @@ import inspect
 import os
 import re
 
+from oslo.config import cfg
+
+from neutron.agent.common import config
+from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
 from neutron.openstack.common import excutils
@@ -51,6 +55,12 @@ MAX_CHAIN_LEN_NOWRAP = 28
 IPTABLES_ERROR_LINES_OF_CONTEXT = 5
 
 
+def comment_rule(rule, comment):
+    if not cfg.CONF.AGENT.comment_iptables_rules or not comment:
+        return rule
+    return '%s -m comment --comment "%s"' % (rule, comment)
+
+
 def get_chain_name(chain_name, wrap=True):
     if wrap:
         return chain_name[:MAX_CHAIN_LEN_WRAP]
@@ -67,13 +77,14 @@ class IptablesRule(object):
     """
 
     def __init__(self, chain, rule, wrap=True, top=False,
-                 binary_name=binary_name, tag=None):
+                 binary_name=binary_name, tag=None, comment=None):
         self.chain = get_chain_name(chain, wrap)
         self.rule = rule
         self.wrap = wrap
         self.top = top
         self.wrap_name = binary_name[:16]
         self.tag = tag
+        self.comment = comment
 
     def __eq__(self, other):
         return ((self.chain == other.chain) and
@@ -89,7 +100,7 @@ class IptablesRule(object):
             chain = '%s-%s' % (self.wrap_name, self.chain)
         else:
             chain = self.chain
-        return '-A %s %s' % (chain, self.rule)
+        return comment_rule('-A %s %s' % (chain, self.rule), self.comment)
 
 
 class IptablesTable(object):
@@ -182,7 +193,8 @@ class IptablesTable(object):
         self.rules = [r for r in self.rules
                       if jump_snippet not in r.rule]
 
-    def add_rule(self, chain, rule, wrap=True, top=False, tag=None):
+    def add_rule(self, chain, rule, wrap=True, top=False, tag=None,
+                 comment=None):
         """Add a rule to the table.
 
         This is just like what you'd feed to iptables, just without
@@ -202,7 +214,7 @@ class IptablesTable(object):
                 self._wrap_target_chain(e, wrap) for e in rule.split(' '))
 
         self.rules.append(IptablesRule(chain, rule, wrap, top, self.wrap_name,
-                                       tag))
+                                       tag, comment))
 
     def _wrap_target_chain(self, s, wrap):
         if s.startswith('$'):
@@ -210,7 +222,7 @@ class IptablesTable(object):
 
         return s
 
-    def remove_rule(self, chain, rule, wrap=True, top=False):
+    def remove_rule(self, chain, rule, wrap=True, top=False, comment=None):
         """Remove a rule from a chain.
 
         Note: The rule must be exactly identical to the one that was added.
@@ -225,10 +237,12 @@ class IptablesTable(object):
                     self._wrap_target_chain(e, wrap) for e in rule.split(' '))
 
             self.rules.remove(IptablesRule(chain, rule, wrap, top,
-                                           self.wrap_name))
+                                           self.wrap_name,
+                                           comment=comment))
             if not wrap:
                 self.remove_rules.append(IptablesRule(chain, rule, wrap, top,
-                                                      self.wrap_name))
+                                                      self.wrap_name,
+                                                      comment=comment))
         except ValueError:
             LOG.warn(_('Tried to remove rule that was not there:'
                        ' %(chain)r %(rule)r %(wrap)r %(top)r'),
@@ -288,6 +302,7 @@ class IptablesManager(object):
         else:
             self.execute = linux_utils.execute
 
+        config.register_iptables_opts(cfg.CONF)
         self.use_ipv6 = use_ipv6
         self.root_helper = root_helper
         self.namespace = namespace
@@ -351,7 +366,8 @@ class IptablesManager(object):
             # chain so that it's applied last.
             self.ipv4['nat'].add_chain('snat')
             self.ipv4['nat'].add_rule('neutron-postrouting-bottom',
-                                      '-j $snat', wrap=False)
+                                      '-j $snat', wrap=False,
+                                      comment=ic.SNAT_OUT)
 
             # And then we add a float-snat chain and jump to first thing in
             # the snat chain.

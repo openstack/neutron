@@ -46,6 +46,11 @@ USE_NAMESPACES_OPTS = [
                 help=_("Allow overlapping IP.")),
 ]
 
+IPTABLES_OPTS = [
+    cfg.BoolOpt('comment_iptables_rules', default=True,
+                help=_("Add comments to iptables rules.")),
+]
+
 
 def get_log_args(conf, log_file_name):
     cmd_args = []
@@ -90,6 +95,10 @@ def register_interface_driver_opts_helper(conf):
 
 def register_use_namespaces_opts_helper(conf):
     conf.register_opts(USE_NAMESPACES_OPTS)
+
+
+def register_iptables_opts(conf):
+    conf.register_opts(IPTABLES_OPTS, 'AGENT')
 
 
 def get_root_helper(conf):
