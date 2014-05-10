@@ -74,7 +74,7 @@ class EswitchManager(object):
     def port_down(self, network_id, physical_network, port_mac):
         """Sets port to down.
 
-        Check  internal network map for port data.
+        Check internal network map for port data.
         If port exists set port to Down
         """
         for network_id, data in self.network_map.iteritems():
@@ -89,7 +89,7 @@ class EswitchManager(object):
         """Sets port to up.
 
         Update internal network map with port data.
-        -Check if vnic defined
+        - Check if vnic defined
         - configure eswitch vport
         - set port to Up
         """
