@@ -153,7 +153,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
         session = db_api.get_session()
         with session.begin(subtransactions=True):
             # remove from table unallocated tunnels not currently allocatable
-            allocs = session.query(VxlanAllocation)
+            allocs = session.query(VxlanAllocation).with_lockmode("update")
             for alloc in allocs:
                 try:
                     # see if tunnel is allocatable
