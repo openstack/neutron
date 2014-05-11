@@ -406,6 +406,26 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertEqual(dev.mock_calls, [])
 
 
+class TestIpRule(base.BaseTestCase):
+    def setUp(self):
+        super(TestIpRule, self).setUp()
+        self.execute_p = mock.patch.object(ip_lib.IpRule, '_execute')
+        self.execute = self.execute_p.start()
+
+    def test_add_rule_from(self):
+        ip_lib.IpRule('sudo').add_rule_from('192.168.45.100', 2, 100)
+        self.execute.assert_called_once_with('', 'rule',
+                                             ('add', 'from', '192.168.45.100',
+                                              'lookup', 2, 'priority', 100),
+                                             'sudo', None)
+
+    def test_delete_rule_priority(self):
+        ip_lib.IpRule('sudo').delete_rule_priority(100)
+        self.execute.assert_called_once_with('', 'rule',
+                                             ('del', 'priority', 100),
+                                             'sudo', None)
+
+
 class TestIPDevice(base.BaseTestCase):
     def test_eq_same_name(self):
         dev1 = ip_lib.IPDevice('tap0')
@@ -656,18 +676,20 @@ class TestIpRouteCommand(TestIPCmdBase):
     def test_add_gateway(self):
         gateway = '192.168.45.100'
         metric = 100
-        self.route_cmd.add_gateway(gateway, metric)
+        table = 14
+        self.route_cmd.add_gateway(gateway, metric, table)
         self._assert_sudo([],
                           ('replace', 'default', 'via', gateway,
                            'metric', metric,
-                           'dev', self.parent.name))
+                           'dev', self.parent.name, 'table', table))
 
     def test_del_gateway(self):
         gateway = '192.168.45.100'
-        self.route_cmd.delete_gateway(gateway)
+        table = 14
+        self.route_cmd.delete_gateway(gateway, table)
         self._assert_sudo([],
                           ('del', 'default', 'via', gateway,
-                           'dev', self.parent.name))
+                           'dev', self.parent.name, 'table', table))
 
     def test_get_gateway(self):
         test_cases = [{'sample': GATEWAY_SAMPLE1,
@@ -717,6 +739,24 @@ class TestIpRouteCommand(TestIPCmdBase):
         self.route_cmd.pullup_route('tap1d7888a7-10')
         # Check two calls - device get and subnet get
         self.assertEqual(len(self.parent._run.mock_calls), 2)
+
+    def test_add_route(self):
+        cidr = '192.168.45.100/24'
+        ip = '10.0.0.1'
+        table = 14
+        self.route_cmd.add_route(cidr, ip, table)
+        self._assert_sudo([],
+                          ('replace', cidr, 'via', ip,
+                           'dev', self.parent.name, 'table', table))
+
+    def test_delete_route(self):
+        cidr = '192.168.45.100/24'
+        ip = '10.0.0.1'
+        table = 14
+        self.route_cmd.delete_route(cidr, ip, table)
+        self._assert_sudo([],
+                          ('del', cidr, 'via', ip,
+                           'dev', self.parent.name, 'table', table))
 
 
 class TestIpNetnsCommand(TestIPCmdBase):

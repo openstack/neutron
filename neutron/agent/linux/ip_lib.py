@@ -185,6 +185,18 @@ class IPWrapper(SubProcessBase):
         return [l.strip() for l in output.split('\n')]
 
 
+class IpRule(IPWrapper):
+    def add_rule_from(self, ip, table, rule_pr):
+        args = ['add', 'from', ip, 'lookup', table, 'priority', rule_pr]
+        ip = self._as_root('', 'rule', tuple(args))
+        return ip
+
+    def delete_rule_priority(self, rule_pr):
+        args = ['del', 'priority', rule_pr]
+        ip = self._as_root('', 'rule', tuple(args))
+        return ip
+
+
 class IPDevice(SubProcessBase):
     def __init__(self, name, root_helper=None, namespace=None):
         super(IPDevice, self).__init__(root_helper=root_helper,
@@ -362,20 +374,23 @@ class IpAddrCommand(IpDeviceCommandBase):
 class IpRouteCommand(IpDeviceCommandBase):
     COMMAND = 'route'
 
-    def add_gateway(self, gateway, metric=None):
+    def add_gateway(self, gateway, metric=None, table=None):
         args = ['replace', 'default', 'via', gateway]
         if metric:
             args += ['metric', metric]
         args += ['dev', self.name]
+        if table:
+            args += ['table', table]
         self._as_root(*args)
 
-    def delete_gateway(self, gateway):
-        self._as_root('del',
-                      'default',
-                      'via',
-                      gateway,
-                      'dev',
-                      self.name)
+    def delete_gateway(self, gateway=None, table=None):
+        args = ['del', 'default']
+        if gateway:
+            args += ['via', gateway]
+        args += ['dev', self.name]
+        if table:
+            args += ['table', table]
+        self._as_root(*args)
 
     def list_onlink_routes(self):
         def iterate_routes():
@@ -455,6 +470,18 @@ class IpRouteCommand(IpDeviceCommandBase):
                 else:
                     self._as_root('append', subnet, 'proto', 'kernel',
                                   'dev', device)
+
+    def add_route(self, cidr, ip, table=None):
+        args = ['replace', cidr, 'via', ip, 'dev', self.name]
+        if table:
+            args += ['table', table]
+        self._as_root(*args)
+
+    def delete_route(self, cidr, ip, table=None):
+        args = ['del', cidr, 'via', ip, 'dev', self.name]
+        if table:
+            args += ['table', table]
+        self._as_root(*args)
 
 
 class IpNeighCommand(IpDeviceCommandBase):
