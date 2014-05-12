@@ -95,7 +95,7 @@ def _ha(func):
         When a controller is detected to be not responding, and a
         new controller is chosen to be used in its place, this decorator
         makes sure the existing integration bridges are set to point
-        to the new controleer by calling the set_controller method.
+        to the new controller by calling the set_controller method.
         '''
         ret_func = func(self, *args, **kwargs)
         self.set_controller(args[0])
@@ -444,7 +444,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             router['router']['admin_state_up'] = True
 
         tenant_id = self._get_tenant_id_for_create(context, router['router'])
-        # Create a new Pinnaacles tenant if need be
+        # Create a new SDN-VE tenant if need be
         sdnve_tenant = self.sdnve_client.sdnve_check_and_create_tenant(
             tenant_id)
         if sdnve_tenant is None:
@@ -452,7 +452,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 msg=_('Create router failed: no SDN-VE tenant.'))
 
         new_router = super(SdnvePluginV2, self).create_router(context, router)
-        # Create Sdnve router
+        # Create SDN-VE router
         (res, data) = self.sdnve_client.sdnve_create('router', new_router)
         if res not in constants.HTTP_ACCEPTABLE:
             super(SdnvePluginV2, self).delete_router(context, new_router['id'])

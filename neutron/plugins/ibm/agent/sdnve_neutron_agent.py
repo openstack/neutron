@@ -161,7 +161,7 @@ class SdnveNeutronAgent():
         Otherwise, creates the bridge if not already existing.
         :param bridge_name: the name of the integration bridge.
         :param reset_br: A boolean to rest the bridge if True.
-        :param out_of_band: A boolean inidicating controller is out of band.
+        :param out_of_band: A boolean indicating controller is out of band.
         :param controller_ip: IP address to use as the bridge controller.
         :returns: the integration bridge
         '''

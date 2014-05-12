@@ -46,7 +46,7 @@ class ExternalNetwork(model_base.BASEV2):
 
 
 class External_net_db_mixin(object):
-    """Mixin class to add external network methods to db_plugin_base_v2."""
+    """Mixin class to add external network methods to db_base_plugin_v2."""
 
     def _network_model_hook(self, context, original_model, query):
         query = query.outerjoin(ExternalNetwork,

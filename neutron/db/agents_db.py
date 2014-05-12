@@ -71,7 +71,7 @@ class Agent(model_base.BASEV2, models_v2.HasId):
 
 
 class AgentDbMixin(ext_agent.AgentPluginBase):
-    """Mixin class to add agent extension to db_plugin_base_v2."""
+    """Mixin class to add agent extension to db_base_plugin_v2."""
 
     def _get_agent(self, context, id):
         try:

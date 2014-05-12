@@ -91,7 +91,7 @@ class SecurityGroupRule(model_base.BASEV2, models_v2.HasId,
 
 
 class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
-    """Mixin class to add security group to db_plugin_base_v2."""
+    """Mixin class to add security group to db_base_plugin_v2."""
 
     __native_bulk_support = True
 

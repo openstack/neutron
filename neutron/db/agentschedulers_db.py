@@ -97,7 +97,7 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
 class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                                 .DhcpAgentSchedulerPluginBase,
                                 AgentSchedulerDbMixin):
-    """Mixin class to add DHCP agent scheduler extension to db_plugin_base_v2.
+    """Mixin class to add DHCP agent scheduler extension to db_base_plugin_v2.
     """
 
     network_scheduler = None
