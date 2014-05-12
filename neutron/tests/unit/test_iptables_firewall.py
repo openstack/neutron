@@ -801,14 +801,18 @@ class IptablesFirewallTestCase(base.BaseTestCase):
         ethertype = rule['ethertype']
         prefix = FAKE_IP[ethertype]
         filter_inst = self.v4filter_inst
-        dhcp_rule = mock.call.add_rule(
+        dhcp_rule = [mock.call.add_rule(
             'ofake_dev',
-            '-p udp -m udp --sport 68 --dport 67 -j RETURN')
+            '-p udp -m udp --sport 68 --dport 67 -j RETURN')]
 
         if ethertype == 'IPv6':
             filter_inst = self.v6filter_inst
-            dhcp_rule = mock.call.add_rule('ofake_dev', '-p icmpv6 -j RETURN')
 
+            dhcp_rule = [mock.call.add_rule('ofake_dev',
+                                            '-p icmpv6 -j RETURN'),
+                         mock.call.add_rule('ofake_dev', '-p udp -m udp '
+                                            '--sport 546 --dport 547 '
+                                            '-j RETURN')]
         sg = [rule]
         port['security_group_rules'] = sg
         self.firewall.prepare_port_filter(port)
@@ -860,13 +864,17 @@ class IptablesFirewallTestCase(base.BaseTestCase):
                       'sfake_dev',
                       '-m mac --mac-source ff:ff:ff:ff:ff:ff -s %s -j RETURN'
                       % prefix),
-                  mock.call.add_rule('sfake_dev', '-j DROP'),
-                  dhcp_rule,
-                  mock.call.add_rule('ofake_dev', '-j $sfake_dev')]
+                  mock.call.add_rule('sfake_dev', '-j DROP')]
+        calls += dhcp_rule
+        calls.append(mock.call.add_rule('ofake_dev', '-j $sfake_dev'))
         if ethertype == 'IPv4':
             calls.append(mock.call.add_rule(
                 'ofake_dev',
                 '-p udp -m udp --sport 67 --dport 68 -j DROP'))
+        if ethertype == 'IPv6':
+            calls.append(mock.call.add_rule(
+                'ofake_dev',
+                '-p udp -m udp --sport 547 --dport 546 -j DROP'))
 
         calls += [mock.call.add_rule(
                   'ofake_dev', '-m state --state INVALID -j DROP'),
