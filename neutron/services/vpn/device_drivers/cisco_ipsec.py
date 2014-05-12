@@ -20,6 +20,7 @@ import requests
 
 import netaddr
 from oslo.config import cfg
+import six
 
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
@@ -172,6 +173,7 @@ class CiscoCsrIPsecVpnDriverApi(proxy.RpcProxy):
                          topic=self.topic)
 
 
+@six.add_metaclass(abc.ABCMeta)
 class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
     """Cisco CSR VPN Device Driver for IPSec.
 
@@ -185,7 +187,6 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
     #   1.0 Initial version
 
     RPC_API_VERSION = '1.0'
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, agent, host):
         self.host = host
