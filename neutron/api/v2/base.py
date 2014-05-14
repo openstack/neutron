@@ -126,41 +126,48 @@ class Controller(object):
                                     % self._plugin.__class__.__name__)
         return getattr(self._plugin, native_sorting_attr_name, False)
 
-    def _is_visible(self, context, attr_name, data):
-        action = "%s:%s" % (self._plugin_handlers[self.SHOW], attr_name)
-        # Optimistically init authz_check to True
-        authz_check = True
-        try:
-            attr = (attributes.RESOURCE_ATTRIBUTE_MAP
-                    [self._collection].get(attr_name))
-            if attr and attr.get('enforce_policy'):
-                authz_check = policy.check_if_exists(
-                    context, action, data)
-        except KeyError:
-            # The extension was not configured for adding its resources
-            # to the global resource attribute map. Policy check should
-            # not be performed
-            LOG.debug(_("The resource %(resource)s was not found in the "
-                        "RESOURCE_ATTRIBUTE_MAP; unable to perform authZ "
-                        "check for attribute %(attr)s"),
-                      {'resource': self._collection,
-                       'attr': attr_name})
-        except exceptions.PolicyRuleNotFound:
-            # Just ignore the exception. Do not even log it, as this will add
-            # a lot of unnecessary info in the log (and take time as well to
-            # write info to the logger)
-            pass
-        attr_val = self._attr_info.get(attr_name)
-        return attr_val and attr_val['is_visible'] and authz_check
+    def _exclude_attributes_by_policy(self, context, data):
+        """Identifies attributes to exclude according to authZ policies.
+
+        Return a list of attribute names which should be stripped from the
+        response returned to the user because the user is not authorized
+        to see them.
+        """
+        attributes_to_exclude = []
+        for attr_name in data.keys():
+            attr_data = self._attr_info.get(attr_name)
+            if attr_data and attr_data['is_visible']:
+                if policy.check(
+                    context,
+                    '%s:%s' % (self._plugin_handlers[self.SHOW], attr_name),
+                    None,
+                    might_not_exist=True):
+                    # this attribute is visible, check next one
+                    continue
+            # if the code reaches this point then either the policy check
+            # failed or the attribute was not visible in the first place
+            attributes_to_exclude.append(attr_name)
+        return attributes_to_exclude
 
     def _view(self, context, data, fields_to_strip=None):
-        # make sure fields_to_strip is iterable
-        if not fields_to_strip:
-            fields_to_strip = []
+        """Build a view of an API resource.
 
+        :param context: the neutron context
+        :param data: the object for which a view is being created
+        :param fields_to_strip: attributes to remove from the view
+
+        :returns: a view of the object which includes only attributes
+        visible according to API resource declaration and authZ policies.
+        """
+        fields_to_strip = ((fields_to_strip or []) +
+                           self._exclude_attributes_by_policy(context, data))
+        return self._filter_attributes(context, data, fields_to_strip)
+
+    def _filter_attributes(self, context, data, fields_to_strip=None):
+        if not fields_to_strip:
+            return data
         return dict(item for item in data.iteritems()
-                    if (self._is_visible(context, item[0], data) and
-                        item[0] not in fields_to_strip))
+                    if (item[0] not in fields_to_strip))
 
     def _do_field_list(self, original_fields):
         fields_to_add = None
@@ -245,9 +252,19 @@ class Controller(object):
                                         self._plugin_handlers[self.SHOW],
                                         obj,
                                         plugin=self._plugin)]
+        # Use the first element in the list for discriminating which attributes
+        # should be filtered out because of authZ policies
+        # fields_to_add contains a list of attributes added for request policy
+        # checks but that were not required by the user. They should be
+        # therefore stripped
+        fields_to_strip = fields_to_add or []
+        if obj_list:
+            fields_to_strip += self._exclude_attributes_by_policy(
+                request.context, obj_list[0])
         collection = {self._collection:
-                      [self._view(request.context, obj,
-                                  fields_to_strip=fields_to_add)
+                      [self._filter_attributes(
+                          request.context, obj,
+                          fields_to_strip=fields_to_strip)
                        for obj in obj_list]}
         pagination_links = pagination_helper.get_links(obj_list)
         if pagination_links:
@@ -318,9 +335,12 @@ class Controller(object):
                 kwargs = {self._resource: item}
                 if parent_id:
                     kwargs[self._parent_id_name] = parent_id
-                objs.append(self._view(request.context,
-                                       obj_creator(request.context,
-                                                   **kwargs)))
+                fields_to_strip = self._exclude_attributes_by_policy(
+                    request.context, item)
+                objs.append(self._filter_attributes(
+                    request.context,
+                    obj_creator(request.context, **kwargs),
+                    fields_to_strip=fields_to_strip))
             return objs
         # Note(salvatore-orlando): broad catch as in theory a plugin
         # could raise any kind of exception
@@ -409,8 +429,13 @@ class Controller(object):
             # plugin does atomic bulk create operations
             obj_creator = getattr(self._plugin, "%s_bulk" % action)
             objs = obj_creator(request.context, body, **kwargs)
-            return notify({self._collection: [self._view(request.context, obj)
-                                              for obj in objs]})
+            # Use first element of list to discriminate attributes which
+            # should be removed because of authZ policies
+            fields_to_strip = self._exclude_attributes_by_policy(
+                request.context, objs[0])
+            return notify({self._collection: [self._filter_attributes(
+                request.context, obj, fields_to_strip=fields_to_strip)
+                for obj in objs]})
         else:
             obj_creator = getattr(self._plugin, action)
             if self._collection in body:
@@ -424,8 +449,8 @@ class Controller(object):
 
                 self._nova_notifier.send_network_change(
                     action, {}, {self._resource: obj})
-                return notify({self._resource: self._view(request.context,
-                                                          obj)})
+                return notify({self._resource: self._view(
+                    request.context, obj)})
 
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""
