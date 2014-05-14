@@ -513,37 +513,58 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                   expected_code=exc.HTTPNotFound.code)
 
     def test_create_network_gateway(self):
+        tenant_id = _uuid()
         with contextlib.nested(
-            self._gateway_device(name='dev_1'),
-            self._gateway_device(name='dev_2')) as (dev_1, dev_2):
+            self._gateway_device(name='dev_1',
+                                 tenant_id=tenant_id),
+            self._gateway_device(name='dev_2',
+                                 tenant_id=tenant_id)) as (dev_1, dev_2):
             name = 'test-gw'
             dev_1_id = dev_1[self.dev_resource]['id']
             dev_2_id = dev_2[self.dev_resource]['id']
             devices = [{'id': dev_1_id, 'interface_name': 'xxx'},
                        {'id': dev_2_id, 'interface_name': 'yyy'}]
             keys = [('devices', devices), ('name', name)]
-            with self._network_gateway(name=name, devices=devices) as gw:
+            with self._network_gateway(name=name,
+                                       devices=devices,
+                                       tenant_id=tenant_id) as gw:
                 for k, v in keys:
                     self.assertEqual(gw[self.gw_resource][k], v)
 
     def test_create_network_gateway_no_interface_name(self):
-        with self._gateway_device() as dev:
+        tenant_id = _uuid()
+        with self._gateway_device(tenant_id=tenant_id) as dev:
             name = 'test-gw'
             devices = [{'id': dev[self.dev_resource]['id']}]
             exp_devices = devices
             exp_devices[0]['interface_name'] = 'breth0'
             keys = [('devices', exp_devices), ('name', name)]
-            with self._network_gateway(name=name, devices=devices) as gw:
+            with self._network_gateway(name=name,
+                                       devices=devices,
+                                       tenant_id=tenant_id) as gw:
                 for k, v in keys:
                     self.assertEqual(gw[self.gw_resource][k], v)
 
+    def test_create_network_gateway_not_owned_device_raises_404(self):
+        # Create a device with a different tenant identifier
+        with self._gateway_device(name='dev', tenant_id=_uuid()) as dev:
+            name = 'test-gw'
+            dev_id = dev[self.dev_resource]['id']
+            devices = [{'id': dev_id, 'interface_name': 'xxx'}]
+            res = self._create_network_gateway(
+                'json', _uuid(), name=name, devices=devices)
+            self.assertEqual(404, res.status_int)
+
     def test_delete_network_gateway(self):
-        with self._gateway_device() as dev:
+        tenant_id = _uuid()
+        with self._gateway_device(tenant_id=tenant_id) as dev:
             name = 'test-gw'
             device_id = dev[self.dev_resource]['id']
             devices = [{'id': device_id,
                         'interface_name': 'xxx'}]
-            with self._network_gateway(name=name, devices=devices) as gw:
+            with self._network_gateway(name=name,
+                                       devices=devices,
+                                       tenant_id=tenant_id) as gw:
                 # Nothing to do here - just let the gateway go
                 gw_id = gw[self.gw_resource]['id']
         # Verify nothing left on db

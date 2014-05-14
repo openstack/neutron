@@ -259,9 +259,12 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                 tenant_id=tenant_id,
                 name=gw_data.get('name'))
             # Device list is guaranteed to be a valid list
-            # TODO(salv-orlando): Enforce that gateway device identifiers
-            # in this list are among the tenant's NSX network gateway devices
-            # to avoid risk a tenant 'guessing' other tenant's network devices
+            device_query = self._query_gateway_devices(
+                context, filters={'id': [device['id']
+                                         for device in gw_data['devices']]})
+            for device in device_query:
+                if device['tenant_id'] != tenant_id:
+                    raise GatewayDeviceNotFound(device_id=device['id'])
             gw_db.devices.extend([NetworkGatewayDeviceReference(**device)
                                   for device in gw_data['devices']])
             context.session.add(gw_db)
@@ -443,18 +446,25 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
             self._get_gateway_device(context, device_id),
             fields, include_nsx_id)
 
+    def _query_gateway_devices(self, context,
+                               filters=None, sorts=None,
+                               limit=None, marker=None,
+                               page_reverse=None):
+        marker_obj = self._get_marker_obj(
+            context, 'gateway_device', limit, marker)
+        return self._get_collection_query(context,
+                                          NetworkGatewayDevice,
+                                          filters=filters,
+                                          sorts=sorts,
+                                          limit=limit,
+                                          marker_obj=marker_obj,
+                                          page_reverse=page_reverse)
+
     def get_gateway_devices(self, context, filters=None, fields=None,
                             sorts=None, limit=None, marker=None,
                             page_reverse=False, include_nsx_id=False):
-        marker_obj = self._get_marker_obj(
-            context, 'gateway_device', limit, marker)
-        query = self._get_collection_query(context,
-                                           NetworkGatewayDevice,
-                                           filters=filters,
-                                           sorts=sorts,
-                                           limit=limit,
-                                           marker_obj=marker_obj,
-                                           page_reverse=page_reverse)
+        query = self._query_gateway_devices(context, filters, sorts, limit,
+                                            marker, page_reverse)
         return [self._make_gateway_device_dict(row, fields, include_nsx_id)
                 for row in query]
 
