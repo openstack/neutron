@@ -624,19 +624,19 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(self.agent.tun_br, 'delete_flows'),
         ) as (mod_flow_fn, del_flow_fn):
             self.agent.fdb_remove(None, fdb_entry)
-            del_flow_fn.assert_has_calls([
-                mock.call(table=constants.ARP_RESPONDER,
-                          proto='arp',
-                          dl_vlan='vlan2',
-                          nw_dst=FAKE_IP1),
-                mock.call(table=constants.UCAST_TO_TUN,
-                          dl_vlan='vlan2',
-                          dl_dst=FAKE_MAC)
-            ])
             mod_flow_fn.assert_called_with(table=constants.FLOOD_TO_TUN,
                                            dl_vlan='vlan2',
                                            actions='strip_vlan,'
                                            'set_tunnel:seg2,output:1')
+            expected = [mock.call(table=constants.ARP_RESPONDER,
+                                  proto='arp',
+                                  dl_vlan='vlan2',
+                                  nw_dst=FAKE_IP1),
+                        mock.call(table=constants.UCAST_TO_TUN,
+                                  dl_vlan='vlan2',
+                                  dl_dst=FAKE_MAC),
+                        mock.call(in_port='2')]
+            del_flow_fn.assert_has_calls(expected)
 
     def test_fdb_add_port(self):
         self._prepare_l2_pop_ofports()

@@ -1080,6 +1080,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     port_name = '%s-%s' % (tunnel_type,
                                            self.get_ip_in_hex(remote_ip))
                     self.tun_br.delete_port(port_name)
+                    self.tun_br.delete_flows(in_port=ofport)
                     self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
 
     def treat_devices_added_or_updated(self, devices, ovs_restarted):
