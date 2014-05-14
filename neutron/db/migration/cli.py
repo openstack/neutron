@@ -45,6 +45,7 @@ _db_opts = [
     cfg.StrOpt('connection',
                deprecated_name='sql_connection',
                default='',
+               secret=True,
                help=_('URL to database')),
 ]
 
