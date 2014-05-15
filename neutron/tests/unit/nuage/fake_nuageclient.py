@@ -83,3 +83,9 @@ class FakeNuageClient(object):
 
     def delete_vms(self, params):
         pass
+
+    def create_nuage_staticroute(self, params):
+        return str(uuid.uuid4())
+
+    def delete_nuage_staticroute(self, id):
+        pass
