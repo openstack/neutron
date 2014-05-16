@@ -21,10 +21,12 @@ import mock
 from oslo.config import cfg
 import testtools
 
+from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
+from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.agent import ovs_neutron_agent
 from neutron.plugins.openvswitch.common import constants
@@ -139,7 +141,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        'db_get_val', return_value=str(old_local_vlan)),
             mock.patch.object(self.agent.int_br, 'delete_flows')
         ) as (set_ovs_db_func, get_ovs_db_func, delete_flows_func):
-            self.agent.port_bound(port, net_uuid, 'local', None, None)
+            self.agent.port_bound(port, net_uuid, 'local', None, None, False)
         get_ovs_db_func.assert_called_once_with("Port", mock.ANY, "tag")
         if new_local_vlan != old_local_vlan:
             set_ovs_db_func.assert_called_once_with(
@@ -275,7 +277,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                               side_effect=Exception()),
             mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
                               return_value=mock.Mock())):
-            self.assertTrue(self.agent.treat_devices_added_or_updated([{}]))
+            self.assertTrue(self.agent.treat_devices_added_or_updated([{}],
+                                                                      False))
 
     def _mock_treat_devices_added_updated(self, details, port, func_name):
         """Mock treat devices added or updated.
@@ -294,7 +297,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(self.agent.plugin_rpc, 'update_device_down'),
             mock.patch.object(self.agent, func_name)
         ) as (get_dev_fn, get_vif_func, upd_dev_up, upd_dev_down, func):
-            self.assertFalse(self.agent.treat_devices_added_or_updated([{}]))
+            self.assertFalse(self.agent.treat_devices_added_or_updated([{}],
+                                                                       False))
         return func.called
 
     def test_treat_devices_added_updated_ignores_invalid_ofport(self):
@@ -341,7 +345,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(self.agent, 'treat_vif_port')
         ) as (get_dev_fn, get_vif_func, upd_dev_up,
               upd_dev_down, treat_vif_port):
-            self.assertFalse(self.agent.treat_devices_added_or_updated([{}]))
+            self.assertFalse(self.agent.treat_devices_added_or_updated([{}],
+                                                                       False))
             self.assertTrue(treat_vif_port.called)
             self.assertTrue(upd_dev_down.called)
 
@@ -372,11 +377,12 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(self.agent, "treat_devices_removed",
                               return_value=False)
         ) as (setup_port_filters, device_added_updated, device_removed):
-            self.assertFalse(self.agent.process_network_ports(port_info))
+            self.assertFalse(self.agent.process_network_ports(port_info,
+                                                              False))
             setup_port_filters.assert_called_once_with(
                 port_info['added'], port_info.get('updated', set()))
             device_added_updated.assert_called_once_with(
-                port_info['added'] | port_info.get('updated', set()))
+                port_info['added'] | port_info.get('updated', set()), False)
             device_removed.assert_called_once_with(port_info['removed'])
 
     def test_process_network_ports(self):
@@ -788,6 +794,61 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         self.agent.tunnel_update(context=None, **kwargs)
         expected_calls = [mock.call('gre-0a0a0a0a', '10.10.10.10', 'gre')]
         self.agent.setup_tunnel_port.assert_has_calls(expected_calls)
+
+    def test_ovs_restart(self):
+        reply2 = {'current': set(['tap0']),
+                  'added': set(['tap2']),
+                  'removed': set([])}
+
+        reply3 = {'current': set(['tap2']),
+                  'added': set([]),
+                  'removed': set(['tap0'])}
+
+        with contextlib.nested(
+            mock.patch.object(async_process.AsyncProcess, "_spawn"),
+            mock.patch.object(log.ContextAdapter, 'exception'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'scan_ports'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'process_network_ports'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'check_ovs_restart'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'setup_integration_br'),
+            mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
+                              'setup_physical_bridges')
+        ) as (spawn_fn, log_exception, scan_ports, process_network_ports,
+              check_ovs_restart, setup_int_br, setup_phys_br):
+            log_exception.side_effect = Exception(
+                'Fake exception to get out of the loop')
+            scan_ports.side_effect = [reply2, reply3]
+            process_network_ports.side_effect = [
+                False, Exception('Fake exception to get out of the loop')]
+            check_ovs_restart.side_effect = [False, True]
+
+            # This will exit after the second loop
+            try:
+                self.agent.daemon_loop()
+            except Exception:
+                pass
+
+        scan_ports.assert_has_calls([
+            mock.call(set(), set()),
+            mock.call(set(), set())
+        ])
+        process_network_ports.assert_has_calls([
+            mock.call({'current': set(['tap0']),
+                       'removed': set([]),
+                       'added': set(['tap2'])}, False),
+            mock.call({'current': set(['tap2']),
+                       'removed': set(['tap0']),
+                       'added': set([])}, True)
+        ])
+
+        # Verify the second time through the loop we triggered an
+        # OVS restart and re-setup the bridges
+        setup_int_br.assert_has_calls([mock.call()])
+        setup_phys_br.assert_has_calls([mock.call({})])
 
 
 class AncillaryBridgesTest(base.BaseTestCase):
