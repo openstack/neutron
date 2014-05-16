@@ -965,6 +965,29 @@ class TestLoadBalancer(LoadBalancerPluginDbTestCase):
             for k, v in keys:
                 self.assertEqual(monitor['health_monitor'][k], v)
 
+    def test_create_health_monitor_with_timeout_delay_invalid(self):
+        data = {'health_monitor': {'type': type,
+                                   'delay': 3,
+                                   'timeout': 6,
+                                   'max_retries': 2,
+                                   'admin_state_up': True,
+                                   'tenant_id': self._tenant_id}}
+        req = self.new_create_request('health_monitors', data, self.fmt)
+        res = req.get_response(self.ext_api)
+        self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
+    def test_update_health_monitor_with_timeout_delay_invalid(self):
+        with self.health_monitor() as monitor:
+            data = {'health_monitor': {'delay': 10,
+                                       'timeout': 20,
+                                       'max_retries': 2,
+                                       'admin_state_up': False}}
+            req = self.new_update_request("health_monitors",
+                                          data,
+                                          monitor['health_monitor']['id'])
+            res = req.get_response(self.ext_api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
     def test_update_healthmonitor(self):
         keys = [('type', "TCP"),
                 ('tenant_id', self._tenant_id),
