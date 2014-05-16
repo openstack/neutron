@@ -250,6 +250,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                   'convert_to': attr.convert_to_int,
                   'is_visible': True},
         'timeout': {'allow_post': True, 'allow_put': True,
+                    'validate': {'type:non_negative': None},
                     'convert_to': attr.convert_to_int,
                     'is_visible': True},
         'max_retries': {'allow_post': True, 'allow_put': True,
