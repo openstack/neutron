@@ -931,7 +931,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                               return_value='6'),
             mock.patch.object(self.agent.tun_br, "add_flow")
         ) as (add_tun_port_fn, add_flow_fn):
-            self.agent._setup_tunnel_port('portname', '1.2.3.4', 'vxlan')
+            self.agent._setup_tunnel_port(self.agent.tun_br, 'portname',
+                                          '1.2.3.4', 'vxlan')
             self.assertTrue(add_tun_port_fn.called)
 
     def test_port_unbound(self):
@@ -996,7 +997,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        [[FAKE_MAC, FAKE_IP1],
                         n_const.FLOODING_ENTRY]}}}
         with mock.patch.object(self.agent.tun_br,
-                               "defer_apply_on") as defer_fn:
+                               "deferred") as defer_fn:
             self.agent.fdb_add(None, fdb_entry)
             self.assertFalse(defer_fn.called)
 
@@ -1013,33 +1014,36 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        [[FAKE_MAC, FAKE_IP1],
                         n_const.FLOODING_ENTRY]}}}
         with contextlib.nested(
-            mock.patch.object(self.agent.tun_br, 'add_flow'),
-            mock.patch.object(self.agent.tun_br, 'mod_flow'),
+            mock.patch.object(self.agent.tun_br, 'deferred'),
+            mock.patch.object(self.agent.tun_br, 'do_action_flows'),
             mock.patch.object(self.agent, '_setup_tunnel_port'),
-        ) as (add_flow_fn, mod_flow_fn, add_tun_fn):
+        ) as (deferred_fn, do_action_flows_fn, add_tun_fn):
+            deferred_fn.return_value = ovs_lib.DeferredOVSBridge(
+                self.agent.tun_br)
             self.agent.fdb_add(None, fdb_entry)
             self.assertFalse(add_tun_fn.called)
             actions = (constants.ARP_RESPONDER_ACTIONS %
                        {'mac': netaddr.EUI(FAKE_MAC, dialect=netaddr.mac_unix),
                         'ip': netaddr.IPAddress(FAKE_IP1)})
-            add_flow_fn.assert_has_calls([
-                mock.call(table=constants.ARP_RESPONDER,
-                          priority=1,
-                          proto='arp',
-                          dl_vlan='vlan1',
-                          nw_dst=FAKE_IP1,
-                          actions=actions),
-                mock.call(table=constants.UCAST_TO_TUN,
-                          priority=2,
-                          dl_vlan='vlan1',
-                          dl_dst=FAKE_MAC,
-                          actions='strip_vlan,'
-                          'set_tunnel:seg1,output:2')
-            ])
-            mod_flow_fn.assert_called_with(table=constants.FLOOD_TO_TUN,
-                                           dl_vlan='vlan1',
-                                           actions='strip_vlan,'
-                                           'set_tunnel:seg1,output:1,2')
+            expected_calls = [
+                mock.call('add', [dict(table=constants.ARP_RESPONDER,
+                                       priority=1,
+                                       proto='arp',
+                                       dl_vlan='vlan1',
+                                       nw_dst=FAKE_IP1,
+                                       actions=actions),
+                                  dict(table=constants.UCAST_TO_TUN,
+                                       priority=2,
+                                       dl_vlan='vlan1',
+                                       dl_dst=FAKE_MAC,
+                                       actions='strip_vlan,'
+                                       'set_tunnel:seg1,output:2')]),
+                mock.call('mod', [dict(table=constants.FLOOD_TO_TUN,
+                                       dl_vlan='vlan1',
+                                       actions='strip_vlan,'
+                                       'set_tunnel:seg1,output:1,2')]),
+            ]
+            do_action_flows_fn.assert_has_calls(expected_calls)
 
     def test_fdb_del_flows(self):
         self._prepare_l2_pop_ofports()
@@ -1051,23 +1055,27 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        [[FAKE_MAC, FAKE_IP1],
                         n_const.FLOODING_ENTRY]}}}
         with contextlib.nested(
-            mock.patch.object(self.agent.tun_br, 'mod_flow'),
-            mock.patch.object(self.agent.tun_br, 'delete_flows'),
-        ) as (mod_flow_fn, del_flow_fn):
+            mock.patch.object(self.agent.tun_br, 'deferred'),
+            mock.patch.object(self.agent.tun_br, 'do_action_flows'),
+        ) as (deferred_fn, do_action_flows_fn):
+            deferred_fn.return_value = ovs_lib.DeferredOVSBridge(
+                self.agent.tun_br)
             self.agent.fdb_remove(None, fdb_entry)
-            mod_flow_fn.assert_called_with(table=constants.FLOOD_TO_TUN,
-                                           dl_vlan='vlan2',
-                                           actions='strip_vlan,'
-                                           'set_tunnel:seg2,output:1')
-            expected = [mock.call(table=constants.ARP_RESPONDER,
-                                  proto='arp',
-                                  dl_vlan='vlan2',
-                                  nw_dst=FAKE_IP1),
-                        mock.call(table=constants.UCAST_TO_TUN,
-                                  dl_vlan='vlan2',
-                                  dl_dst=FAKE_MAC),
-                        mock.call(in_port='2')]
-            del_flow_fn.assert_has_calls(expected)
+            expected_calls = [
+                mock.call('mod', [dict(table=constants.FLOOD_TO_TUN,
+                                       dl_vlan='vlan2',
+                                       actions='strip_vlan,'
+                                       'set_tunnel:seg2,output:1')]),
+                mock.call('del', [dict(table=constants.ARP_RESPONDER,
+                                       proto='arp',
+                                       dl_vlan='vlan2',
+                                       nw_dst=FAKE_IP1),
+                                  dict(table=constants.UCAST_TO_TUN,
+                                       dl_vlan='vlan2',
+                                       dl_dst=FAKE_MAC),
+                                  dict(in_port='2')]),
+            ]
+            do_action_flows_fn.assert_has_calls(expected_calls)
 
     def test_fdb_add_port(self):
         self._prepare_l2_pop_ofports()
@@ -1076,15 +1084,18 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       'segment_id': 'tun1',
                       'ports': {'1.1.1.1': [[FAKE_MAC, FAKE_IP1]]}}}
         with contextlib.nested(
-            mock.patch.object(self.agent.tun_br, 'add_flow'),
-            mock.patch.object(self.agent.tun_br, 'mod_flow'),
+            mock.patch.object(self.agent.tun_br, 'deferred'),
+            mock.patch.object(self.agent.tun_br, 'do_action_flows'),
             mock.patch.object(self.agent, '_setup_tunnel_port')
-        ) as (add_flow_fn, mod_flow_fn, add_tun_fn):
+        ) as (deferred_fn, do_action_flows_fn, add_tun_fn):
+            deferred_br = ovs_lib.DeferredOVSBridge(self.agent.tun_br)
+            deferred_fn.return_value = deferred_br
             self.agent.fdb_add(None, fdb_entry)
             self.assertFalse(add_tun_fn.called)
             fdb_entry['net1']['ports']['10.10.10.10'] = [[FAKE_MAC, FAKE_IP1]]
             self.agent.fdb_add(None, fdb_entry)
-            add_tun_fn.assert_called_with('gre-0a0a0a0a', '10.10.10.10', 'gre')
+            add_tun_fn.assert_called_with(
+                deferred_br, 'gre-0a0a0a0a', '10.10.10.10', 'gre')
 
     def test_fdb_del_port(self):
         self._prepare_l2_pop_ofports()
@@ -1093,11 +1104,14 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       'segment_id': 'tun2',
                       'ports': {'2.2.2.2': [n_const.FLOODING_ENTRY]}}}
         with contextlib.nested(
-            mock.patch.object(self.agent.tun_br, 'delete_flows'),
+            mock.patch.object(self.agent.tun_br, 'deferred'),
+            mock.patch.object(self.agent.tun_br, 'do_action_flows'),
             mock.patch.object(self.agent.tun_br, 'delete_port')
-        ) as (del_flow_fn, del_port_fn):
+        ) as (deferred_fn, do_action_flows_fn, delete_port_fn):
+            deferred_br = ovs_lib.DeferredOVSBridge(self.agent.tun_br)
+            deferred_fn.return_value = deferred_br
             self.agent.fdb_remove(None, fdb_entry)
-            del_port_fn.assert_called_once_with('gre-02020202')
+            delete_port_fn.assert_called_once_with('gre-02020202')
 
     def test_fdb_update_chg_ip(self):
         self._prepare_l2_pop_ofports()
@@ -1107,23 +1121,30 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                          {'before': [[FAKE_MAC, FAKE_IP1]],
                           'after': [[FAKE_MAC, FAKE_IP2]]}}}}
         with contextlib.nested(
-            mock.patch.object(self.agent.tun_br, 'add_flow'),
-            mock.patch.object(self.agent.tun_br, 'delete_flows')
-        ) as (add_flow_fn, del_flow_fn):
+            mock.patch.object(self.agent.tun_br, 'deferred'),
+            mock.patch.object(self.agent.tun_br, 'do_action_flows'),
+        ) as (deferred_fn, do_action_flows_fn):
+            deferred_br = ovs_lib.DeferredOVSBridge(self.agent.tun_br)
+            deferred_fn.return_value = deferred_br
             self.agent.fdb_update(None, fdb_entries)
             actions = (constants.ARP_RESPONDER_ACTIONS %
                        {'mac': netaddr.EUI(FAKE_MAC, dialect=netaddr.mac_unix),
                         'ip': netaddr.IPAddress(FAKE_IP2)})
-            add_flow_fn.assert_called_once_with(table=constants.ARP_RESPONDER,
-                                                priority=1,
-                                                proto='arp',
-                                                dl_vlan='vlan1',
-                                                nw_dst=FAKE_IP2,
-                                                actions=actions)
-            del_flow_fn.assert_called_once_with(table=constants.ARP_RESPONDER,
-                                                proto='arp',
-                                                dl_vlan='vlan1',
-                                                nw_dst=FAKE_IP1)
+            expected_calls = [
+                mock.call('add', [dict(table=constants.ARP_RESPONDER,
+                                       priority=1,
+                                       proto='arp',
+                                       dl_vlan='vlan1',
+                                       nw_dst=FAKE_IP2,
+                                       actions=actions)]),
+                mock.call('del', [dict(table=constants.ARP_RESPONDER,
+                                       proto='arp',
+                                       dl_vlan='vlan1',
+                                       nw_dst=FAKE_IP1)])
+            ]
+            do_action_flows_fn.assert_has_calls(expected_calls)
+            self.assertEqual(len(expected_calls),
+                             len(do_action_flows_fn.mock_calls))
 
     def test_recl_lv_port_to_preserve(self):
         self._prepare_l2_pop_ofports()
@@ -1191,7 +1212,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(ovs_neutron_agent.LOG, 'error')
         ) as (add_tunnel_port_fn, log_error_fn):
             ofport = self.agent._setup_tunnel_port(
-                'gre-1', 'remote_ip', p_const.TYPE_GRE)
+                self.agent.tun_br, 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
                 self.agent.vxlan_udp_port, self.agent.dont_fragment)
@@ -1208,7 +1229,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(ovs_neutron_agent.LOG, 'error')
         ) as (add_tunnel_port_fn, log_exc_fn, log_error_fn):
             ofport = self.agent._setup_tunnel_port(
-                'gre-1', 'remote_ip', p_const.TYPE_GRE)
+                self.agent.tun_br, 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
                 self.agent.vxlan_udp_port, self.agent.dont_fragment)
@@ -1228,7 +1249,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         ) as (add_tunnel_port_fn, log_error_fn):
             self.agent.dont_fragment = False
             ofport = self.agent._setup_tunnel_port(
-                'gre-1', 'remote_ip', p_const.TYPE_GRE)
+                self.agent.tun_br, 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
                 self.agent.vxlan_udp_port, self.agent.dont_fragment)
@@ -1247,7 +1268,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         ) as (tunnel_sync_rpc_fn, _setup_tunnel_port_fn):
             self.agent.tunnel_types = ['gre']
             self.agent.tunnel_sync()
-            expected_calls = [mock.call('gre-42', '100.101.102.103', 'gre')]
+            expected_calls = [mock.call(self.agent.tun_br, 'gre-42',
+                                        '100.101.102.103', 'gre')]
             _setup_tunnel_port_fn.assert_has_calls(expected_calls)
 
     def test_tunnel_sync_with_ml2_plugin(self):
@@ -1259,7 +1281,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         ) as (tunnel_sync_rpc_fn, _setup_tunnel_port_fn):
             self.agent.tunnel_types = ['vxlan']
             self.agent.tunnel_sync()
-            expected_calls = [mock.call('vxlan-64651f0f',
+            expected_calls = [mock.call(self.agent.tun_br, 'vxlan-64651f0f',
                                         '100.101.31.15', 'vxlan')]
             _setup_tunnel_port_fn.assert_has_calls(expected_calls)
 
@@ -1273,7 +1295,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         ) as (tunnel_sync_rpc_fn, _setup_tunnel_port_fn):
             self.agent.tunnel_types = ['vxlan']
             self.agent.tunnel_sync()
-            _setup_tunnel_port_fn.assert_called_once_with('vxlan-64646464',
+            _setup_tunnel_port_fn.assert_called_once_with(self.agent.tun_br,
+                                                          'vxlan-64646464',
                                                           '100.100.100.100',
                                                           'vxlan')
 
@@ -1285,7 +1308,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         self.agent.tunnel_types = ['gre']
         self.agent.l2_pop = False
         self.agent.tunnel_update(context=None, **kwargs)
-        expected_calls = [mock.call('gre-0a0a0a0a', '10.10.10.10', 'gre')]
+        expected_calls = [
+            mock.call(self.agent.tun_br, 'gre-0a0a0a0a', '10.10.10.10', 'gre')]
         self.agent._setup_tunnel_port.assert_has_calls(expected_calls)
 
     def test_ovs_restart(self):

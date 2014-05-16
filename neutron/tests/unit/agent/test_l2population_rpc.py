@@ -69,15 +69,15 @@ class TestL2populationRpcCallBackTunnelMixin(
             mock.patch.object(self.fakeagent, 'setup_tunnel_port'),
             mock.patch.object(self.fakeagent, 'add_fdb_flow'),
         ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
-            self.fakeagent.fdb_add_tun('context', self.lvm1,
+            self.fakeagent.fdb_add_tun('context', self.fakebr, self.lvm1,
                                        self.agent_ports, self.ofports)
         expected = [
-            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
-                      self.lvm1, self.ports[0].ofport),
-            mock.call([self.lvms[1].mac, self.lvms[1].ip], self.ports[1].ip,
-                      self.lvm1, self.ports[1].ofport),
-            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
-                      self.lvm1, self.ports[2].ofport),
+            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+                      self.ports[0].ip, self.lvm1, self.ports[0].ofport),
+            mock.call(self.fakebr, [self.lvms[1].mac, self.lvms[1].ip],
+                      self.ports[1].ip, self.lvm1, self.ports[1].ofport),
+            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+                      self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
                          sorted(mock_add_fdb_flow.call_args_list))
@@ -90,17 +90,17 @@ class TestL2populationRpcCallBackTunnelMixin(
                               return_value=ofport),
             mock.patch.object(self.fakeagent, 'add_fdb_flow'),
         ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
-            self.fakeagent.fdb_add_tun('context', self.lvm1,
+            self.fakeagent.fdb_add_tun('context', self.fakebr, self.lvm1,
                                        self.agent_ports, self.ofports)
         mock_setup_tunnel_port.assert_called_once_with(
-            self.ports[1].ip, self.lvm1.network_type)
+            self.fakebr, self.ports[1].ip, self.lvm1.network_type)
         expected = [
-            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
-                      self.lvm1, self.ports[0].ofport),
-            mock.call([self.lvms[1].mac, self.lvms[1].ip], self.ports[1].ip,
-                      self.lvm1, ofport),
-            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
-                      self.lvm1, self.ports[2].ofport),
+            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+                      self.ports[0].ip, self.lvm1, self.ports[0].ofport),
+            mock.call(self.fakebr, [self.lvms[1].mac, self.lvms[1].ip],
+                      self.ports[1].ip, self.lvm1, ofport),
+            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+                      self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
                          sorted(mock_add_fdb_flow.call_args_list))
@@ -112,15 +112,15 @@ class TestL2populationRpcCallBackTunnelMixin(
                               return_value=0),
             mock.patch.object(self.fakeagent, 'add_fdb_flow'),
         ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
-            self.fakeagent.fdb_add_tun('context', self.lvm1,
+            self.fakeagent.fdb_add_tun('context', self.fakebr, self.lvm1,
                                        self.agent_ports, self.ofports)
         mock_setup_tunnel_port.assert_called_once_with(
-            self.ports[1].ip, self.lvm1.network_type)
+            self.fakebr, self.ports[1].ip, self.lvm1.network_type)
         expected = [
-            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
-                      self.lvm1, self.ports[0].ofport),
-            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
-                      self.lvm1, self.ports[2].ofport),
+            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+                      self.ports[0].ip, self.lvm1, self.ports[0].ofport),
+            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+                      self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
                          sorted(mock_add_fdb_flow.call_args_list))
@@ -128,15 +128,15 @@ class TestL2populationRpcCallBackTunnelMixin(
     def test_fdb_remove_tun(self):
         with mock.patch.object(
             self.fakeagent, 'del_fdb_flow') as mock_del_fdb_flow:
-            self.fakeagent.fdb_remove_tun('context', self.lvm1,
+            self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm1,
                                           self.agent_ports, self.ofports)
         expected = [
-            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
-                      self.lvm1, self.ports[0].ofport),
-            mock.call([self.lvms[1].mac, self.lvms[1].ip], self.ports[1].ip,
-                      self.lvm1, self.ports[1].ofport),
-            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
-                      self.lvm1, self.ports[2].ofport),
+            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+                      self.ports[0].ip, self.lvm1, self.ports[0].ofport),
+            mock.call(self.fakebr, [self.lvms[1].mac, self.lvms[1].ip],
+                      self.ports[1].ip, self.lvm1, self.ports[1].ofport),
+            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+                      self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
                          sorted(mock_del_fdb_flow.call_args_list))
@@ -147,32 +147,33 @@ class TestL2populationRpcCallBackTunnelMixin(
             mock.patch.object(self.fakeagent, 'del_fdb_flow'),
             mock.patch.object(self.fakeagent, 'cleanup_tunnel_port'),
         ) as (mock_del_fdb_flow, mock_cleanup_tunnel_port):
-            self.fakeagent.fdb_remove_tun('context', self.lvm1,
+            self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm1,
                                           self.agent_ports, self.ofports)
         expected = [
-            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
-                      self.lvm1, self.ports[0].ofport),
-            mock.call([n_const.FLOODING_ENTRY[0], n_const.FLOODING_ENTRY[1]],
+            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+                      self.ports[0].ip, self.lvm1, self.ports[0].ofport),
+            mock.call(self.fakebr,
+                      [n_const.FLOODING_ENTRY[0], n_const.FLOODING_ENTRY[1]],
                       self.ports[1].ip, self.lvm1, self.ports[1].ofport),
-            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
-                      self.lvm1, self.ports[2].ofport),
+            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+                      self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
                          sorted(mock_del_fdb_flow.call_args_list))
         mock_cleanup_tunnel_port.assert_called_once_with(
-            self.ports[1].ofport, self.lvm1.network_type)
+            self.fakebr, self.ports[1].ofport, self.lvm1.network_type)
 
     def test_fdb_remove_tun_non_existence_key_in_ofports(self):
         del self.ofports[self.type_gre][self.ports[1].ip]
         with mock.patch.object(
             self.fakeagent, 'del_fdb_flow') as mock_del_fdb_flow:
-            self.fakeagent.fdb_remove_tun('context', self.lvm1,
+            self.fakeagent.fdb_remove_tun('context', self.fakebr, self.lvm1,
                                           self.agent_ports, self.ofports)
         expected = [
-            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
-                      self.lvm1, self.ports[0].ofport),
-            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
-                      self.lvm1, self.ports[2].ofport),
+            mock.call(self.fakebr, [self.lvms[0].mac, self.lvms[0].ip],
+                      self.ports[0].ip, self.lvm1, self.ports[0].ofport),
+            mock.call(self.fakebr, [self.lvms[2].mac, self.lvms[2].ip],
+                      self.ports[2].ip, self.lvm1, self.ports[2].ofport),
         ]
         self.assertEqual(sorted(expected),
                          sorted(mock_del_fdb_flow.call_args_list))
@@ -192,20 +193,21 @@ class TestL2populationRpcCallBackTunnelMixin(
     def test__fdb_chg_ip(self):
         m_setup_entry_for_arp_reply = mock.Mock()
         self.fakeagent.setup_entry_for_arp_reply = m_setup_entry_for_arp_reply
-        self.fakeagent.fdb_chg_ip_tun('context', self.upd_fdb_entry1_val,
-                                      self.local_ip, self.local_vlan_map1)
+        self.fakeagent.fdb_chg_ip_tun('context', self.fakebr,
+                                      self.upd_fdb_entry1_val, self.local_ip,
+                                      self.local_vlan_map1)
         expected = [
-            mock.call('remove', self.lvm1.vlan, self.lvms[0].mac,
+            mock.call(self.fakebr, 'remove', self.lvm1.vlan, self.lvms[0].mac,
                       self.lvms[0].ip),
-            mock.call('add', self.lvm1.vlan, self.lvms[1].mac,
+            mock.call(self.fakebr, 'add', self.lvm1.vlan, self.lvms[1].mac,
                       self.lvms[1].ip),
-            mock.call('remove', self.lvm1.vlan, self.lvms[0].mac,
+            mock.call(self.fakebr, 'remove', self.lvm1.vlan, self.lvms[0].mac,
                       self.lvms[0].ip),
-            mock.call('add', self.lvm1.vlan, self.lvms[1].mac,
+            mock.call(self.fakebr, 'add', self.lvm1.vlan, self.lvms[1].mac,
                       self.lvms[1].ip),
-            mock.call('remove', self.lvm2.vlan, self.lvms[0].mac,
+            mock.call(self.fakebr, 'remove', self.lvm2.vlan, self.lvms[0].mac,
                       self.lvms[0].ip),
-            mock.call('add', self.lvm2.vlan, self.lvms[2].mac,
+            mock.call(self.fakebr, 'add', self.lvm2.vlan, self.lvms[2].mac,
                       self.lvms[2].ip),
         ]
         m_setup_entry_for_arp_reply.assert_has_calls(expected, any_order=True)
@@ -214,7 +216,7 @@ class TestL2populationRpcCallBackTunnelMixin(
         m_setup_entry_for_arp_reply = mock.Mock()
         self.fakeagent.setup_entry_for_arp_reply = m_setup_entry_for_arp_reply
         self.fakeagent.fdb_chg_ip_tun(
-            'context', self.upd_fdb_entry1, self.local_ip, {})
+            'context', self.fakebr, self.upd_fdb_entry1, self.local_ip, {})
         self.assertFalse(m_setup_entry_for_arp_reply.call_count)
 
     def test__fdb_chg_ip_ip_is_local_ip(self):
@@ -228,6 +230,7 @@ class TestL2populationRpcCallBackTunnelMixin(
         }
         m_setup_entry_for_arp_reply = mock.Mock()
         self.fakeagent.setup_entry_for_arp_reply = m_setup_entry_for_arp_reply
-        self.fakeagent.fdb_chg_ip_tun('context', upd_fdb_entry_val,
-                                      self.local_ip, self.local_vlan_map1)
+        self.fakeagent.fdb_chg_ip_tun('context', self.fakebr,
+                                      upd_fdb_entry_val, self.local_ip,
+                                      self.local_vlan_map1)
         self.assertFalse(m_setup_entry_for_arp_reply.call_count)

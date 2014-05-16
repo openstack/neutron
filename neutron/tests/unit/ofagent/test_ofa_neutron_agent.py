@@ -736,7 +736,7 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             fdb_entry[self.lvms[0].net]['ports'][tunnel_ip] = [['mac', 'ip']]
             self.agent.fdb_add(None, fdb_entry)
             add_tun_fn.assert_called_with(
-                tun_name, tunnel_ip, self.tunnel_type)
+                self.agent.tun_br, tun_name, tunnel_ip, self.tunnel_type)
 
     def test_fdb_del_port(self):
         self._prepare_l2_pop_ofports()
@@ -831,7 +831,7 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             mock.patch.object(self.mod_agent.LOG, 'error')
         ) as (add_tunnel_port_fn, log_error_fn):
             ofport = self.agent._setup_tunnel_port(
-                'gre-1', 'remote_ip', p_const.TYPE_GRE)
+                self.agent.tun_br, 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
                 self.agent.vxlan_udp_port, self.agent.dont_fragment)
@@ -848,7 +848,7 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
             mock.patch.object(self.mod_agent.LOG, 'error')
         ) as (add_tunnel_port_fn, log_exc_fn, log_error_fn):
             ofport = self.agent._setup_tunnel_port(
-                'gre-1', 'remote_ip', p_const.TYPE_GRE)
+                self.agent.tun_br, 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
                 self.agent.vxlan_udp_port, self.agent.dont_fragment)
