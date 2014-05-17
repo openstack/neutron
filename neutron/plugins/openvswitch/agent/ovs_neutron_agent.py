@@ -343,7 +343,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                         if ofport == 0:
                             continue
                     for port in ports:
-                        self._add_fdb_flow(port, agent_ip, lvm, ofport)
+                        self._add_fdb_flow(port, lvm, ofport)
                 self.tun_br.defer_apply_off()
 
     def fdb_remove(self, context, fdb_entries):
@@ -363,10 +363,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     if not ofport:
                         continue
                     for port in ports:
-                        self._del_fdb_flow(port, agent_ip, lvm, ofport)
+                        self._del_fdb_flow(port, lvm, ofport)
                 self.tun_br.defer_apply_off()
 
-    def _add_fdb_flow(self, port_info, agent_ip, lvm, ofport):
+    def _add_fdb_flow(self, port_info, lvm, ofport):
         if port_info == q_const.FLOODING_ENTRY:
             lvm.tun_ofports.add(ofport)
             ofports = ','.join(lvm.tun_ofports)
@@ -383,7 +383,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                  actions="strip_vlan,set_tunnel:%s,output:%s" %
                                  (lvm.segmentation_id, ofport))
 
-    def _del_fdb_flow(self, port_info, agent_ip, lvm, ofport):
+    def _del_fdb_flow(self, port_info, lvm, ofport):
         if port_info == q_const.FLOODING_ENTRY:
             lvm.tun_ofports.remove(ofport)
             if len(lvm.tun_ofports) > 0:
