@@ -84,9 +84,8 @@ class NVSDPluginV2AgentNotifierApi(rpc.proxy.RpcProxy,
 
     def port_update(self, context, port):
         self.fanout_cast(context,
-                         self.make_msg('port_update',
-                                       port=port,
-                                       topic=self.topic_port_update))
+                         self.make_msg('port_update', port=port),
+                         topic=self.topic_port_update)
 
 
 class OneConvergencePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
