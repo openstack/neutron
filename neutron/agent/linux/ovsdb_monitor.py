@@ -15,6 +15,7 @@
 import eventlet
 
 from neutron.agent.linux import async_process
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 
 
@@ -41,13 +42,13 @@ class OvsdbMonitor(async_process.AsyncProcess):
         if not data:
             return
         self._stdout_lines.put(data)
-        LOG.debug(_('Output received from ovsdb monitor: %s') % data)
+        LOG.debug('Output received from ovsdb monitor: %s', data)
         return data
 
     def _read_stderr(self):
         data = super(OvsdbMonitor, self)._read_stderr()
         if data:
-            LOG.error(_('Error received from ovsdb monitor: %s') % data)
+            LOG.error(_LE('Error received from ovsdb monitor: %s'), data)
             # Do not return value to ensure that stderr output will
             # stop the monitor.
 

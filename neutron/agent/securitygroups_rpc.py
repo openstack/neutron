@@ -64,8 +64,8 @@ def _is_valid_driver_combination():
 
 def is_firewall_enabled():
     if not _is_valid_driver_combination():
-        LOG.warn(_("Driver configuration doesn't match with "
-                   "enable_security_group"))
+        LOG.warn(_LW("Driver configuration doesn't match with "
+                     "enable_security_group"))
 
     return cfg.CONF.SECURITYGROUP.enable_security_group
 
@@ -87,8 +87,8 @@ class SecurityGroupServerRpcApiMixin(object):
     """A mix-in that enable SecurityGroup support in plugin rpc."""
 
     def security_group_rules_for_devices(self, context, devices):
-        LOG.debug(_("Get security group rules "
-                    "for devices via rpc %r"), devices)
+        LOG.debug("Get security group rules "
+                  "for devices via rpc %r", devices)
         return self.call(context,
                          self.make_msg('security_group_rules_for_devices',
                                        devices=devices),
@@ -111,9 +111,9 @@ class SecurityGroupAgentRpcCallbackMixin(object):
     sg_agent = None
 
     def _security_groups_agent_not_set(self):
-        LOG.warning(_("Security group agent binding currently not set. "
-                      "This should be set by the end of the init "
-                      "process."))
+        LOG.warning(_LW("Security group agent binding currently not set. "
+                        "This should be set by the end of the init "
+                        "process."))
 
     def security_groups_rule_updated(self, context, **kwargs):
         """Callback for security group rule update.
@@ -121,8 +121,8 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         :param security_groups: list of updated security_groups
         """
         security_groups = kwargs.get('security_groups', [])
-        LOG.debug(
-            _("Security group rule updated on remote: %s"), security_groups)
+        LOG.debug("Security group rule updated on remote: %s",
+                  security_groups)
         if not self.sg_agent:
             return self._security_groups_agent_not_set()
         self.sg_agent.security_groups_rule_updated(security_groups)
@@ -133,15 +133,15 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         :param security_groups: list of updated security_groups
         """
         security_groups = kwargs.get('security_groups', [])
-        LOG.debug(
-            _("Security group member updated on remote: %s"), security_groups)
+        LOG.debug("Security group member updated on remote: %s",
+                  security_groups)
         if not self.sg_agent:
             return self._security_groups_agent_not_set()
         self.sg_agent.security_groups_member_updated(security_groups)
 
     def security_groups_provider_updated(self, context, **kwargs):
         """Callback for security group provider update."""
-        LOG.debug(_("Provider rule updated"))
+        LOG.debug("Provider rule updated")
         if not self.sg_agent:
             return self._security_groups_agent_not_set()
         self.sg_agent.security_groups_provider_updated()
@@ -154,10 +154,10 @@ class SecurityGroupAgentRpcMixin(object):
 
     def init_firewall(self, defer_refresh_firewall=False):
         firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver
-        LOG.debug(_("Init firewall settings (driver=%s)"), firewall_driver)
+        LOG.debug("Init firewall settings (driver=%s)", firewall_driver)
         if not _is_valid_driver_combination():
-            LOG.warn(_("Driver configuration doesn't match "
-                       "with enable_security_group"))
+            LOG.warn(_LW("Driver configuration doesn't match "
+                         "with enable_security_group"))
         if not firewall_driver:
             firewall_driver = 'neutron.agent.firewall.NoopFirewallDriver'
         self.firewall = importutils.import_object(firewall_driver)
@@ -257,8 +257,8 @@ class SecurityGroupAgentRpcMixin(object):
                 devices.append(device['device'])
         if devices:
             if self.defer_refresh_firewall:
-                LOG.debug(_("Adding %s devices to the list of devices "
-                            "for which firewall needs to be refreshed"),
+                LOG.debug("Adding %s devices to the list of devices "
+                          "for which firewall needs to be refreshed",
                           devices)
                 self.devices_to_refilter |= set(devices)
             else:
@@ -305,7 +305,7 @@ class SecurityGroupAgentRpcMixin(object):
 
         with self.firewall.defer_apply():
             for device in devices.values():
-                LOG.debug(_("Update port filter for %s"), device['device'])
+                LOG.debug("Update port filter for %s", device['device'])
                 self.firewall.update_port_filter(device)
             if self.use_enhanced_rpc:
                 LOG.debug("Update security group information for ports %s",
@@ -328,7 +328,7 @@ class SecurityGroupAgentRpcMixin(object):
         updated devices
         """
         if new_devices:
-            LOG.debug(_("Preparing device filters for %d new devices"),
+            LOG.debug("Preparing device filters for %d new devices",
                       len(new_devices))
             self.prepare_devices_filter(new_devices)
         # These data structures are cleared here in order to avoid
@@ -341,7 +341,7 @@ class SecurityGroupAgentRpcMixin(object):
         # refresh providing a precise list of devices for which firewall
         # should be refreshed
         if global_refresh_firewall:
-            LOG.debug(_("Refreshing firewall for all filtered devices"))
+            LOG.debug("Refreshing firewall for all filtered devices")
             self.refresh_firewall()
         else:
             # If a device is both in new and updated devices
@@ -349,7 +349,7 @@ class SecurityGroupAgentRpcMixin(object):
             updated_devices = ((updated_devices | devices_to_refilter) -
                                new_devices)
             if updated_devices:
-                LOG.debug(_("Refreshing firewall for %d devices"),
+                LOG.debug("Refreshing firewall for %d devices",
                           len(updated_devices))
                 self.refresh_firewall(updated_devices)
 

@@ -26,7 +26,7 @@ from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.extensions import flavor
-from neutron.openstack.common.gettextutils import _LE
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 
@@ -262,7 +262,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             if self.conf.ovs_use_veth:
                 root_dev.link.set_up()
         else:
-            LOG.info(_("Device %s already exists"), device_name)
+            LOG.info(_LI("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
@@ -280,9 +280,9 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                                          self.root_helper,
                                          namespace)
                 device.link.delete()
-                LOG.debug(_("Unplugged interface '%s'"), device_name)
+                LOG.debug("Unplugged interface '%s'", device_name)
         except RuntimeError:
-            LOG.error(_("Failed unplugging interface '%s'"),
+            LOG.error(_LE("Failed unplugging interface '%s'"),
                       device_name)
 
 
@@ -317,7 +317,7 @@ class MidonetInterfaceDriver(LinuxInterfaceDriver):
             utils.execute(cmd, self.root_helper)
 
         else:
-            LOG.info(_("Device %s already exists"), device_name)
+            LOG.info(_LI("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         # the port will be deleted by the dhcp agent that will call the plugin
@@ -327,8 +327,8 @@ class MidonetInterfaceDriver(LinuxInterfaceDriver):
         try:
             device.link.delete()
         except RuntimeError:
-            LOG.error(_("Failed unplugging interface '%s'"), device_name)
-        LOG.debug(_("Unplugged interface '%s'"), device_name)
+            LOG.error(_LE("Failed unplugging interface '%s'"), device_name)
+        LOG.debug("Unplugged interface '%s'", device_name)
 
         ip_lib.IPWrapper(
             self.root_helper, namespace).garbage_collect_namespace()
@@ -380,7 +380,7 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
             ns_dev.link.set_up()
             root_dev.link.set_up()
         else:
-            LOG.info(_("Device %s already exists"), device_name)
+            LOG.info(_LI("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
@@ -392,9 +392,9 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
                                      self.root_helper,
                                      namespace)
             device.link.delete()
-            LOG.debug(_("Unplugged interface '%s'"), device_name)
+            LOG.debug("Unplugged interface '%s'", device_name)
         except RuntimeError:
-            LOG.error(_("Failed unplugging interface '%s'"),
+            LOG.error(_LE("Failed unplugging interface '%s'"),
                       device_name)
 
 
@@ -427,16 +427,16 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
             ns_veth.link.set_up()
 
         else:
-            LOG.info(_("Device %s already exists"), device_name)
+            LOG.info(_LI("Device %s already exists"), device_name)
 
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
         """Unplug the interface."""
         device = ip_lib.IPDevice(device_name, self.root_helper, namespace)
         try:
             device.link.delete()
-            LOG.debug(_("Unplugged interface '%s'"), device_name)
+            LOG.debug("Unplugged interface '%s'", device_name)
         except RuntimeError:
-            LOG.error(_("Failed unplugging interface '%s'"),
+            LOG.error(_LE("Failed unplugging interface '%s'"),
                       device_name)
 
 
@@ -495,6 +495,6 @@ class MetaInterfaceDriver(LinuxInterfaceDriver):
         return driver.unplug(device_name, bridge, namespace, prefix)
 
     def _load_driver(self, driver_provider):
-        LOG.debug(_("Driver location: %s"), driver_provider)
+        LOG.debug("Driver location: %s", driver_provider)
         plugin_klass = importutils.import_class(driver_provider)
         return plugin_klass(self.conf)

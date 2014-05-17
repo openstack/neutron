@@ -43,7 +43,7 @@ def create_process(cmd, root_helper=None, addl_env=None):
         cmd = shlex.split(root_helper) + cmd
     cmd = map(str, cmd)
 
-    LOG.debug(_("Running command: %s"), cmd)
+    LOG.debug("Running command: %s", cmd)
     env = os.environ.copy()
     if addl_env:
         env.update(addl_env)

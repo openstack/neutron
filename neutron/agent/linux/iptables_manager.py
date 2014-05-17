@@ -29,6 +29,7 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
 from neutron.openstack.common import excutils
+from neutron.openstack.common.gettextutils import _LE, _LW
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 
@@ -151,7 +152,7 @@ class IptablesTable(object):
         chain_set = self._select_chain_set(wrap)
 
         if name not in chain_set:
-            LOG.warn(_('Attempted to remove chain %s which does not exist'),
+            LOG.warn(_LW('Attempted to remove chain %s which does not exist'),
                      name)
             return
 
@@ -231,8 +232,8 @@ class IptablesTable(object):
                                                       self.wrap_name,
                                                       comment=comment))
         except ValueError:
-            LOG.warn(_('Tried to remove rule that was not there:'
-                       ' %(chain)r %(rule)r %(wrap)r %(top)r'),
+            LOG.warn(_LW('Tried to remove rule that was not there:'
+                         ' %(chain)r %(rule)r %(wrap)r %(top)r'),
                      {'chain': chain, 'rule': rule,
                       'top': top, 'wrap': wrap})
 
@@ -388,10 +389,10 @@ class IptablesManager(object):
 
         try:
             with lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX, True):
-                LOG.debug(_('Got semaphore / lock "%s"'), lock_name)
+                LOG.debug('Got semaphore / lock "%s"', lock_name)
                 return self._apply_synchronized()
         finally:
-            LOG.debug(_('Semaphore / lock released "%s"'), lock_name)
+            LOG.debug('Semaphore / lock released "%s"', lock_name)
 
     def _apply_synchronized(self):
         """Apply the current in-memory set of iptables rules.
@@ -442,10 +443,10 @@ class IptablesManager(object):
                                      all_lines[log_start:log_end],
                                      log_start + 1)
                                  )
-                    LOG.error(_("IPTablesManager.apply failed to apply the "
-                                "following set of iptables rules:\n%s"),
+                    LOG.error(_LE("IPTablesManager.apply failed to apply the "
+                                  "following set of iptables rules:\n%s"),
                               '\n'.join(log_lines))
-        LOG.debug(_("IPTablesManager.apply completed with success"))
+        LOG.debug("IPTablesManager.apply completed with success")
 
     def _find_table(self, lines, table_name):
         if len(lines) < 3:
@@ -455,7 +456,7 @@ class IptablesManager(object):
             start = lines.index('*%s' % table_name) - 1
         except ValueError:
             # Couldn't find table_name
-            LOG.debug(_('Unable to find table %s'), table_name)
+            LOG.debug('Unable to find table %s', table_name)
             return (0, 0)
         end = lines[start:].index('COMMIT') + start + 2
         return (start, end)
@@ -659,8 +660,8 @@ class IptablesManager(object):
         """Return the sum of the traffic counters of all rules of a chain."""
         cmd_tables = self._get_traffic_counters_cmd_tables(chain, wrap)
         if not cmd_tables:
-            LOG.warn(_('Attempted to get traffic counters of chain %s which '
-                       'does not exist'), chain)
+            LOG.warn(_LW('Attempted to get traffic counters of chain %s which '
+                         'does not exist'), chain)
             return
 
         name = get_chain_name(chain, wrap)

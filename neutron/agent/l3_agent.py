@@ -43,7 +43,7 @@ from neutron.common import utils as common_utils
 from neutron import context as n_context
 from neutron import manager
 from neutron.openstack.common import excutils
-from neutron.openstack.common.gettextutils import _LE, _LW
+from neutron.openstack.common.gettextutils import _LE, _LI, _LW
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
@@ -515,9 +515,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self.conf
             )
         except Exception:
-            msg = _("Error importing interface driver "
-                    "'%s'") % self.conf.interface_driver
-            LOG.error(msg)
+            LOG.error(_LE("Error importing interface driver "
+                          "'%s'"), self.conf.interface_driver)
             raise SystemExit(1)
 
         self.context = n_context.get_admin_context_without_session()
@@ -588,12 +587,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         The actual values are not verified for correctness.
         """
         if not self.conf.interface_driver:
-            msg = _('An interface driver must be specified')
+            msg = _LE('An interface driver must be specified')
             LOG.error(msg)
             raise SystemExit(1)
 
         if not self.conf.use_namespaces and not self.conf.router_id:
-            msg = _('Router id is required if not using namespaces.')
+            msg = _LE('Router id is required if not using namespaces.')
             LOG.error(msg)
             raise SystemExit(1)
 
@@ -611,7 +610,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                        if (ns.startswith(NS_PREFIX)
                            or ns.startswith(SNAT_NS_PREFIX)))
         except RuntimeError:
-            LOG.exception(_('RuntimeError in obtaining router list '
+            LOG.exception(_LE('RuntimeError in obtaining router list '
                             'for namespace cleanup.'))
             return set()
 
@@ -646,8 +645,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             try:
                 self._destroy_namespace(ns)
             except RuntimeError:
-                LOG.exception(_('Failed to destroy stale router namespace '
-                                '%s'), ns)
+                LOG.exception(_LE('Failed to destroy stale router namespace '
+                                  '%s'), ns)
         self._clean_stale_namespaces = False
 
     def _destroy_namespace(self, ns):
@@ -662,8 +661,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         try:
             ns_ip.netns.delete(ns)
         except RuntimeError:
-            msg = _('Failed trying to delete namespace: %s') % ns
-            LOG.exception(msg)
+            LOG.exception(_LE('Failed trying to delete namespace: %s'), ns)
 
     def _destroy_snat_namespace(self, ns):
         ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
@@ -790,8 +788,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _router_removed(self, router_id):
         ri = self.router_info.get(router_id)
         if ri is None:
-            LOG.warn(_("Info for router %s were not found. "
-                       "Skipping router removal"), router_id)
+            LOG.warn(_LW("Info for router %s were not found. "
+                         "Skipping router removal"), router_id)
             return
 
         if ri.is_ha:
@@ -865,7 +863,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if not ips:
             raise Exception(_("Router port %s has no IP address") % port['id'])
         if len(ips) > 1:
-            LOG.error(_("Ignoring multiple IPs on router port %s"),
+            LOG.error(_LE("Ignoring multiple IPs on router port %s"),
                       port['id'])
         prefixlen = netaddr.IPNetwork(port['subnet']['cidr']).prefixlen
         port['ip_cidr'] = "%s/%s" % (ips[0]['ip_address'], prefixlen)
@@ -926,7 +924,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                  id in current_port_ids])
         stale_devs = current_internal_devs - current_port_devs
         for stale_dev in stale_devs:
-            LOG.debug(_('Deleting stale internal router device: %s'),
+            LOG.debug('Deleting stale internal router device: %s',
                       stale_dev)
             self.driver.unplug(stale_dev,
                                namespace=ri.ns_name,
@@ -963,7 +961,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                       if dev.startswith(EXTERNAL_DEV_PREFIX)
                       and dev != interface_name]
         for stale_dev in stale_devs:
-            LOG.debug(_('Deleting stale external router device: %s'),
+            LOG.debug('Deleting stale external router device: %s',
                       stale_dev)
             self.driver.unplug(stale_dev,
                                bridge=self.conf.external_network_bridge,
@@ -1133,8 +1131,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     processutils.ProcessExecutionError):
                 # any exception occurred here should cause the floating IP
                 # to be set in error state
-                LOG.warn(_("Unable to configure IP address for "
-                           "floating IP: %s"), fip['id'])
+                LOG.warn(_LW("Unable to configure IP address for "
+                             "floating IP: %s"), fip['id'])
                 return l3_constants.FLOATINGIP_STATUS_ERROR
             if ri.router['distributed']:
                 # Special Handling for DVR - update FIP namespace
@@ -1216,7 +1214,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                           namespace=ns_name)
             ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
         except Exception as e:
-            LOG.error(_("Failed sending gratuitous ARP: %s"), str(e))
+            LOG.error(_LE("Failed sending gratuitous ARP: %s"), str(e))
         if distributed:
             device.addr.delete(net.version, ip_cidr)
 
@@ -1281,7 +1279,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         if match_port:
             return match_port[0]
         else:
-            LOG.error(_('DVR: no map match_port found!'))
+            LOG.error(_LE('DVR: no map match_port found!'))
 
     def _create_dvr_gateway(self, ri, ex_gw_port, gw_interface_name,
                             snat_ports):
@@ -1485,7 +1483,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             ns_ipr.netns.execute(['sysctl', '-w', 'net.ipv4.conf.%s.'
                                  'send_redirects=0' % sn_int])
         except Exception:
-            LOG.exception(_('DVR: error adding redirection logic'))
+            LOG.exception(_LE('DVR: error adding redirection logic'))
 
     def _snat_redirect_remove(self, ri, sn_port, sn_int):
         """Removes rules and routes for SNAT redirection."""
@@ -1497,7 +1495,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             ns_ipd.route.delete_gateway(table=snat_idx)
             ns_ipr.delete_rule_priority(snat_idx)
         except Exception:
-            LOG.exception(_('DVR: removed snat failed'))
+            LOG.exception(_LE('DVR: removed snat failed'))
 
     def _internal_network_added(self, ns_name, network_id, port_id,
                                 internal_cidr, mac_address,
@@ -1598,7 +1596,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             self.plugin_rpc.get_agent_gateway_port(
                 self.context, network_id))
         if 'subnet' not in self.agent_gateway_port:
-            LOG.error(_('Missing subnet/agent_gateway_port'))
+            LOG.error(_LE('Missing subnet/agent_gateway_port'))
             return
         self._set_subnet_info(self.agent_gateway_port)
 
@@ -1718,7 +1716,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""
-        LOG.debug(_('Got router deleted notification for %s'), router_id)
+        LOG.debug('Got router deleted notification for %s', router_id)
         update = RouterUpdate(router_id, PRIORITY_RPC, action=DELETE_ROUTER)
         self._queue.add(update)
 
@@ -1739,7 +1737,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 elif operation == 'delete':
                     device.neigh.delete(net.version, ip, mac)
             except Exception:
-                LOG.exception(_("DVR: Failed updating arp entry"))
+                LOG.exception(_LE("DVR: Failed updating arp entry"))
                 self.fullsync = True
 
     def add_arp_entry(self, context, payload):
@@ -1766,7 +1764,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def routers_updated(self, context, routers):
         """Deal with routers modification and creation RPC message."""
-        LOG.debug(_('Got routers updated notification :%s'), routers)
+        LOG.debug('Got routers updated notification :%s', routers)
         if routers:
             # This is needed for backward compatibility
             if isinstance(routers[0], dict):
@@ -1776,19 +1774,19 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                 self._queue.add(update)
 
     def router_removed_from_agent(self, context, payload):
-        LOG.debug(_('Got router removed from agent :%r'), payload)
+        LOG.debug('Got router removed from agent :%r', payload)
         router_id = payload['router_id']
         update = RouterUpdate(router_id, PRIORITY_RPC, action=DELETE_ROUTER)
         self._queue.add(update)
 
     def router_added_to_agent(self, context, payload):
-        LOG.debug(_('Got router added to agent :%r'), payload)
+        LOG.debug('Got router added to agent :%r', payload)
         self.routers_updated(context, payload)
 
     def _process_router_if_compatible(self, router):
         if (self.conf.external_network_bridge and
             not ip_lib.device_exists(self.conf.external_network_bridge)):
-            LOG.error(_("The external network bridge '%s' does not exist"),
+            LOG.error(_LE("The external network bridge '%s' does not exist"),
                       self.conf.external_network_bridge)
             return
 
@@ -1828,7 +1826,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                     routers = self.plugin_rpc.get_routers(self.context,
                                                           [update.id])
                 except Exception:
-                    msg = _("Failed to fetch router information for '%s'")
+                    msg = _LE("Failed to fetch router information for '%s'")
                     LOG.exception(msg, update.id)
                     self.fullsync = True
                     continue
@@ -1869,7 +1867,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
     def _sync_routers_task(self, context):
         if self.services_sync:
             super(L3NATAgent, self).process_services_sync(context)
-        LOG.debug(_("Starting _sync_routers_task - fullsync:%s"),
+        LOG.debug("Starting _sync_routers_task - fullsync:%s",
                   self.fullsync)
         if not self.fullsync:
             return
@@ -1887,7 +1885,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             routers = self.plugin_rpc.get_routers(
                 context, router_ids)
 
-            LOG.debug(_('Processing :%r'), routers)
+            LOG.debug('Processing :%r', routers)
             for r in routers:
                 update = RouterUpdate(r['id'],
                                       PRIORITY_SYNC_ROUTERS_TASK,
@@ -1895,12 +1893,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                                       timestamp=timestamp)
                 self._queue.add(update)
             self.fullsync = False
-            LOG.debug(_("_sync_routers_task successfully completed"))
+            LOG.debug("_sync_routers_task successfully completed")
         except messaging.MessagingException:
-            LOG.exception(_("Failed synchronizing routers due to RPC error"))
+            LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
             self.fullsync = True
         except Exception:
-            LOG.exception(_("Failed synchronizing routers"))
+            LOG.exception(_LE("Failed synchronizing routers"))
             self.fullsync = True
         else:
             # Resync is not necessary for the cleanup of stale namespaces
@@ -1923,7 +1921,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
 
     def after_start(self):
         eventlet.spawn_n(self._process_routers_loop)
-        LOG.info(_("L3 agent started"))
+        LOG.info(_LI("L3 agent started"))
 
     def _update_routing_table(self, ri, operation, route):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
@@ -1942,7 +1940,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         adds, removes = common_utils.diff_list_of_dict(old_routes,
                                                        new_routes)
         for route in adds:
-            LOG.debug(_("Added route entry is '%s'"), route)
+            LOG.debug("Added route entry is '%s'", route)
             # remove replaced route from deleted route
             for del_route in removes:
                 if route['destination'] == del_route['destination']:
@@ -1950,7 +1948,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
             #replace success even if there is no existing route
             self._update_routing_table(ri, 'replace', route)
         for route in removes:
-            LOG.debug(_("Removed route entry is '%s'"), route)
+            LOG.debug("Removed route entry is '%s'", route)
             self._update_routing_table(ri, 'delete', route)
         ri.routes = new_routes
 
@@ -1984,7 +1982,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):
-        LOG.debug(_("Report state task started"))
+        LOG.debug("Report state task started")
         num_ex_gw_ports = 0
         num_interfaces = 0
         num_floating_ips = 0
@@ -2008,20 +2006,20 @@ class L3NATAgentWithStateReport(L3NATAgent):
                                         self.use_call)
             self.agent_state.pop('start_flag', None)
             self.use_call = False
-            LOG.debug(_("Report state task successfully completed"))
+            LOG.debug("Report state task successfully completed")
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warn(_("Neutron server does not support state report."
-                       " State report for this agent will be disabled."))
+            LOG.warn(_LW("Neutron server does not support state report."
+                         " State report for this agent will be disabled."))
             self.heartbeat.stop()
             return
         except Exception:
-            LOG.exception(_("Failed reporting state!"))
+            LOG.exception(_LE("Failed reporting state!"))
 
     def agent_updated(self, context, payload):
         """Handle the agent_updated notification event."""
         self.fullsync = True
-        LOG.info(_("agent_updated by server side %s!"), payload)
+        LOG.info(_LI("agent_updated by server side %s!"), payload)
 
 
 def _register_opts(conf):

@@ -18,7 +18,7 @@ from oslo import messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-
+from neutron.openstack.common.gettextutils import _LW
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import timeutils
 
@@ -107,7 +107,7 @@ class PluginApi(n_rpc.RpcProxy):
             # may not work correctly, however it can function in 'degraded'
             # mode, in that DVR routers may not be in the system yet, and
             # it might be not necessary to retrieve info about the host.
-            LOG.warn(_('DVR functionality requires a server upgrade.'))
+            LOG.warn(_LW('DVR functionality requires a server upgrade.'))
             res = [
                 self.call(context,
                           self.make_msg('get_device_details', device=device,

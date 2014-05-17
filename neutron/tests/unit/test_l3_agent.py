@@ -30,6 +30,7 @@ from neutron.agent.linux import interface
 from neutron.common import config as base_config
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import processutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as p_const
@@ -1970,8 +1971,8 @@ vrrp_instance VR_1 {
         with mock.patch.object(l3_agent, 'LOG') as log:
             self.assertRaises(SystemExit, l3_agent.L3NATAgent,
                               HOSTNAME, self.conf)
-            msg = "Error importing interface driver 'wrong_driver'"
-            log.error.assert_called_once_with(msg)
+            msg = _LE("Error importing interface driver '%s'")
+            log.error.assert_called_once_with(msg, 'wrong_driver')
 
     def test_metadata_filter_rules(self):
         self.conf.set_override('enable_metadata_proxy', False)

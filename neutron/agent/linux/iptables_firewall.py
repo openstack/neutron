@@ -22,6 +22,7 @@ from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
 from neutron.common import ipv6_utils
+from neutron.openstack.common.gettextutils import _LI
 from neutron.openstack.common import log as logging
 
 
@@ -84,7 +85,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.sg_members[sg_id] = sg_members
 
     def prepare_port_filter(self, port):
-        LOG.debug(_("Preparing device (%s) filter"), port['device'])
+        LOG.debug("Preparing device (%s) filter", port['device'])
         self._remove_chains()
         self.filtered_ports[port['device']] = port
         # each security group has it own chains
@@ -92,10 +93,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.apply()
 
     def update_port_filter(self, port):
-        LOG.debug(_("Updating device (%s) filter"), port['device'])
+        LOG.debug("Updating device (%s) filter", port['device'])
         if port['device'] not in self.filtered_ports:
-            LOG.info(_('Attempted to update port filter which is not '
-                       'filtered %s'), port['device'])
+            LOG.info(_LI('Attempted to update port filter which is not '
+                         'filtered %s'), port['device'])
             return
         self._remove_chains()
         self.filtered_ports[port['device']] = port
@@ -103,10 +104,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.apply()
 
     def remove_port_filter(self, port):
-        LOG.debug(_("Removing device (%s) filter"), port['device'])
+        LOG.debug("Removing device (%s) filter", port['device'])
         if not self.filtered_ports.get(port['device']):
-            LOG.info(_('Attempted to remove port filter which is not '
-                       'filtered %r'), port)
+            LOG.info(_LI('Attempted to remove port filter which is not '
+                         'filtered %r'), port)
             return
         self._remove_chains()
         self.filtered_ports.pop(port['device'], None)
