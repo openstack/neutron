@@ -163,7 +163,6 @@ def _build_match_rule(action, target):
        action is being executed
        (e.g.: create_router:external_gateway_info:network_id)
     """
-
     match_rule = policy.RuleCheck('rule', action)
     resource, is_write = get_resource_and_action(action)
     # Attribute-based checks shall not be enforced on GETs
@@ -316,7 +315,6 @@ class FieldCheck(policy.Check):
 
 def _prepare_check(context, action, target):
     """Prepare rule, target, and credentials for the policy engine."""
-    init()
     # Compare with None to distinguish case in which target is {}
     if target is None:
         target = {}
@@ -373,7 +371,6 @@ def enforce(context, action, target, plugin=None):
     :raises neutron.exceptions.PolicyNotAllowed: if verification fails.
     """
 
-    init()
     rule, target, credentials = _prepare_check(context, action, target)
     return policy.check(rule, target, credentials,
                         exc=exceptions.PolicyNotAuthorized, action=action)
