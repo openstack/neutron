@@ -73,7 +73,7 @@ class LocalVLANMapping:
 class Port(object):
     """Represents a neutron port.
 
-    Class stores port data in a ORM-free way, so attributres are
+    Class stores port data in a ORM-free way, so attributes are
     still available even if a row has been deleted.
     """
 
@@ -128,14 +128,14 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     to the physical networking details realizing that virtual network.
 
     For virtual networks realized as GRE tunnels, a Logical Switch
-    (LS) identifier and is used to differentiate tenant traffic on
+    (LS) identifier is used to differentiate tenant traffic on
     inter-HV tunnels. A mesh of tunnels is created to other
     Hypervisors in the cloud. These tunnels originate and terminate on
     the tunneling bridge of each hypervisor. Port patching is done to
     connect local VLANs on the integration bridge to inter-hypervisor
     tunnels on the tunnel bridge.
 
-    For each virtual networks realized as a VLANs or flat network, a
+    For each virtual network realized as a VLAN or flat network, a
     veth is used to connect the local VLAN on the integration bridge
     with the physical network bridge, with flow rules adding,
     modifying, or stripping VLAN tags as necessary.
@@ -218,7 +218,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Collect additional bridges to monitor
         self.ancillary_brs = self.setup_ancillary_bridges(integ_br, tun_br)
 
-        # Security group agent supprot
+        # Security group agent support
         self.sg_agent = OVSSecurityGroupAgent(self.context,
                                               self.plugin_rpc,
                                               root_helper)
@@ -394,7 +394,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                      "set_tunnel:%s,output:%s" %
                                      (lvm.segmentation_id, ofports))
             else:
-                # This local vlan doesn't require any more tunelling
+                # This local vlan doesn't require any more tunnelling
                 self.tun_br.delete_flows(table=constants.FLOOD_TO_TUN,
                                          dl_vlan=lvm.vlan)
             # Check if this tunnel port is still used
@@ -702,7 +702,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                              constants.PATCH_LV_TO_TUN)
         self.tun_br.add_flow(priority=0, actions="drop")
         # PATCH_LV_TO_TUN table will handle packets coming from patch_int
-        # unicasts go to table UCAST_TO_TUN where remote adresses are learnt
+        # unicasts go to table UCAST_TO_TUN where remote addresses are learnt
         self.tun_br.add_flow(table=constants.PATCH_LV_TO_TUN,
                              dl_dst="00:00:00:00:00:00/01:00:00:00:00:00",
                              actions="resubmit(,%s)" % constants.UCAST_TO_TUN)
@@ -712,14 +712,14 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                              actions="resubmit(,%s)" % constants.FLOOD_TO_TUN)
         # Tables [tunnel_type]_TUN_TO_LV will set lvid depending on tun_id
         # for each tunnel type, and resubmit to table LEARN_FROM_TUN where
-        # remote mac adresses will be learnt
+        # remote mac addresses will be learnt
         for tunnel_type in constants.TUNNEL_NETWORK_TYPES:
             self.tun_br.add_flow(table=constants.TUN_TABLE[tunnel_type],
                                  priority=0,
                                  actions="drop")
         # LEARN_FROM_TUN table will have a single flow using a learn action to
         # dynamically set-up flows in UCAST_TO_TUN corresponding to remote mac
-        # adresses (assumes that lvid has already been set by a previous flow)
+        # addresses (assumes that lvid has already been set by a previous flow)
         learned_flow = ("table=%s,"
                         "priority=1,"
                         "hard_timeout=300,"
@@ -729,13 +729,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                         "load:NXM_NX_TUN_ID[]->NXM_NX_TUN_ID[],"
                         "output:NXM_OF_IN_PORT[]" %
                         constants.UCAST_TO_TUN)
-        # Once remote mac adresses are learnt, packet is outputed to patch_int
+        # Once remote mac addresses are learnt, output packet to patch_int
         self.tun_br.add_flow(table=constants.LEARN_FROM_TUN,
                              priority=1,
                              actions="learn(%s),output:%s" %
                              (learned_flow, self.patch_int_ofport))
         # Egress unicast will be handled in table UCAST_TO_TUN, where remote
-        # mac adresses will be learned. For now, just add a default flow that
+        # mac addresses will be learned. For now, just add a default flow that
         # will resubmit unknown unicasts to table FLOOD_TO_TUN to treat them
         # as broadcasts/multicasts
         self.tun_br.add_flow(table=constants.UCAST_TO_TUN,
@@ -912,7 +912,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         self.tun_br_ofports[tunnel_type][remote_ip] = ofport
         # Add flow in default table to resubmit to the right
-        # tunelling table (lvid will be set in the latter)
+        # tunnelling table (lvid will be set in the latter)
         self.tun_br.add_flow(priority=1,
                              in_port=ofport,
                              actions="resubmit(,%s)" %
@@ -1090,7 +1090,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                         "treat_devices_removed completed in %(elapsed).3f"),
                       {'iter_num': self.iter_num,
                        'elapsed': time.time() - start})
-        # If one of the above opertaions fails => resync with plugin
+        # If one of the above operations fails => resync with plugin
         return (resync_a | resync_b)
 
     def process_ancillary_network_ports(self, port_info):
@@ -1114,7 +1114,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                       {'iter_num': self.iter_num,
                        'elapsed': time.time() - start})
 
-        # If one of the above opertaions fails => resync with plugin
+        # If one of the above operations fails => resync with plugin
         return (resync_a | resync_b)
 
     def get_ip_in_hex(self, ip_address):
@@ -1327,7 +1327,7 @@ def create_agent_config_map(config):
     # Verify the tunnel_types specified are valid
     for tun in kwargs['tunnel_types']:
         if tun not in constants.TUNNEL_NETWORK_TYPES:
-            msg = _('Invalid tunnel type specificed: %s'), tun
+            msg = _('Invalid tunnel type specified: %s'), tun
             raise ValueError(msg)
         if not kwargs['local_ip']:
             msg = _('Tunneling cannot be enabled without a valid local_ip.')
