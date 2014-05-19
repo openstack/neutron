@@ -51,6 +51,10 @@ class PluginInterface(object):
         marked with the abstractmethod decorator is
         provided by the plugin class.
         """
+
+        if not cls.__abstractmethods__:
+            return NotImplemented
+
         for method in cls.__abstractmethods__:
             if any(method in base.__dict__ for base in klass.__mro__):
                 continue
