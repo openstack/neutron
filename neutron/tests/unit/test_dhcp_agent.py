@@ -366,7 +366,7 @@ class TestDhcpAgent(base.BaseTestCase):
         with mock.patch.object(dhcp, 'LOG') as log:
             self.assertRaises(SystemExit, dhcp.DeviceManager,
                               cfg.CONF, 'sudo', None)
-            log.error.assert_called_once()
+            self.assertEqual(log.error.call_count, 1)
 
 
 class TestLogArgs(base.BaseTestCase):
@@ -1330,7 +1330,7 @@ class TestDeviceManager(base.BaseTestCase):
             network = FakeV4Network()
             dh._set_default_route(network, 'tap-name')
 
-        device.route.get_gateway.assert_called_once()
+        self.assertEqual(device.route.get_gateway.call_count, 1)
         self.assertFalse(device.route.delete_gateway.called)
         device.route.add_gateway.assert_called_once_with('192.168.0.1')
 
@@ -1344,7 +1344,7 @@ class TestDeviceManager(base.BaseTestCase):
             network.namespace = 'qdhcp-1234'
             dh._set_default_route(network, 'tap-name')
 
-        device.route.get_gateway.assert_called_once()
+        self.assertEqual(device.route.get_gateway.call_count, 1)
         self.assertFalse(device.route.delete_gateway.called)
         self.assertFalse(device.route.add_gateway.called)
 
@@ -1358,7 +1358,7 @@ class TestDeviceManager(base.BaseTestCase):
             network.namespace = 'qdhcp-1234'
             dh._set_default_route(network, 'tap-name')
 
-        device.route.get_gateway.assert_called_once()
+        self.assertEqual(device.route.get_gateway.call_count, 1)
         device.route.delete_gateway.assert_called_once_with('192.168.0.1')
         self.assertFalse(device.route.add_gateway.called)
 
@@ -1372,7 +1372,7 @@ class TestDeviceManager(base.BaseTestCase):
             network.namespace = 'qdhcp-1234'
             dh._set_default_route(network, 'tap-name')
 
-        device.route.get_gateway.assert_called_once()
+        self.assertEqual(device.route.get_gateway.call_count, 1)
         device.route.delete_gateway.assert_called_once_with('192.168.0.1')
         self.assertFalse(device.route.add_gateway.called)
 
@@ -1385,7 +1385,7 @@ class TestDeviceManager(base.BaseTestCase):
             network = FakeV4Network()
             dh._set_default_route(network, 'tap-name')
 
-        device.route.get_gateway.assert_called_once()
+        self.assertEqual(device.route.get_gateway.call_count, 1)
         self.assertFalse(device.route.delete_gateway.called)
         self.assertFalse(device.route.add_gateway.called)
 
@@ -1398,7 +1398,7 @@ class TestDeviceManager(base.BaseTestCase):
             network = FakeV4Network()
             dh._set_default_route(network, 'tap-name')
 
-        device.route.get_gateway.assert_called_once()
+        self.assertEqual(device.route.get_gateway.call_count, 1)
         self.assertFalse(device.route.delete_gateway.called)
         device.route.add_gateway.assert_called_once_with('192.168.0.1')
 
@@ -1415,7 +1415,7 @@ class TestDeviceManager(base.BaseTestCase):
             network.subnets = [subnet2, FakeV4Subnet()]
             dh._set_default_route(network, 'tap-name')
 
-        device.route.get_gateway.assert_called_once()
+        self.assertEqual(device.route.get_gateway.call_count, 1)
         self.assertFalse(device.route.delete_gateway.called)
         device.route.add_gateway.assert_called_once_with('192.168.1.1')
 

@@ -73,7 +73,7 @@ class TestAsyncProcess(base.BaseTestCase):
 
         kill.assert_has_calls(mock.call(respawning=True))
         sleep.assert_has_calls(mock.call(self.proc.respawn_interval))
-        spawn.assert_called_once()
+        spawn.assert_called_once_with()
 
     def _test__watch_process(self, callback, kill_event):
         self.proc._kill_event = kill_event
@@ -84,7 +84,7 @@ class TestAsyncProcess(base.BaseTestCase):
                 self.proc._watch_process(callback, kill_event)
 
         if not kill_event.ready():
-            func.assert_called_once()
+            func.assert_called_once_with()
 
     def test__watch_process_exits_on_callback_failure(self):
         self._test__watch_process(lambda: False, eventlet.event.Event())
@@ -128,7 +128,7 @@ class TestAsyncProcess(base.BaseTestCase):
         with mock.patch.object(self.proc, '_spawn') as mock_start:
             self.proc.start()
 
-        mock_start.assert_called_once()
+        mock_start.assert_called_once_with()
 
     def test__iter_queue_returns_empty_list_for_empty_queue(self):
         result = list(self.proc._iter_queue(eventlet.queue.LightQueue()))
@@ -170,9 +170,9 @@ class TestAsyncProcess(base.BaseTestCase):
             else:
                 self.assertIsNone(self.proc._kill_event)
 
-        mock_kill_event.send.assert_called_once()
+        mock_kill_event.send.assert_called_once_with()
         if pid:
-            mock_kill_process.assert_called_once(pid)
+            mock_kill_process.assert_called_once_with(pid)
 
     def test__kill_when_respawning_does_not_clear_kill_event(self):
         self._test__kill(True)

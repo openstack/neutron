@@ -194,7 +194,7 @@ class TestCiscoNexusPlugin(base.BaseTestCase):
             # Create a provider network
             new_net_dict = self._cisco_nexus_plugin.create_network(
                 self.providernet, self.attachment1)
-            mock_db.assert_called_once()
+            self.assertEqual(mock_db.call_count, 1)
             for attr in NET_ATTRS:
                 self.assertEqual(new_net_dict[attr], self.providernet[attr])
             # Delete the provider network
