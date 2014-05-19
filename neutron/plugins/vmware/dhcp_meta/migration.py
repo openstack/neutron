@@ -58,8 +58,6 @@ class DhcpMetadataBuilder(object):
         for port in ports:
             if port['fixed_ips'][0]['subnet_id'] == subnet['id']:
                 return port['device_id']
-        else:
-            raise n_exc.NotFound()
 
     def metadata_deallocate(self, context, router_id, subnet_id):
         """Deallocate metadata services for the subnet."""
