@@ -57,7 +57,7 @@ class OpenDaylightTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.segment[api.NETWORK_TYPE] = constants.TYPE_FLAT
         self.assertFalse(self.mech.check_segment(self.segment))
         self.segment[api.NETWORK_TYPE] = constants.TYPE_VLAN
-        self.assertFalse(self.mech.check_segment(self.segment))
+        self.assertTrue(self.mech.check_segment(self.segment))
         self.segment[api.NETWORK_TYPE] = constants.TYPE_GRE
         self.assertTrue(self.mech.check_segment(self.segment))
         self.segment[api.NETWORK_TYPE] = constants.TYPE_VXLAN
