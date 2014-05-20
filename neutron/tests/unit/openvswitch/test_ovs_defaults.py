@@ -31,3 +31,5 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual(0, len(cfg.CONF.OVS.bridge_mappings))
         self.assertEqual(0, len(cfg.CONF.OVS.network_vlan_ranges))
         self.assertEqual(0, len(cfg.CONF.OVS.tunnel_id_ranges))
+        self.assertFalse(cfg.CONF.AGENT.l2_population)
+        self.assertFalse(cfg.CONF.AGENT.arp_responder)

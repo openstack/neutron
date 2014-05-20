@@ -18,6 +18,7 @@ import contextlib
 import sys
 
 import mock
+import netaddr
 from oslo.config import cfg
 import testtools
 
@@ -34,6 +35,10 @@ from neutron.tests import base
 NOTIFIER = ('neutron.plugins.openvswitch.'
             'ovs_neutron_plugin.AgentNotifierApi')
 OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
+
+FAKE_MAC = '00:11:22:33:44:55'
+FAKE_IP1 = '10.0.0.1'
+FAKE_IP2 = '10.0.0.2'
 
 
 class CreateAgentConfigMap(base.BaseTestCase):
@@ -118,7 +123,10 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        return_value='00:00:00:00:00:01'),
             mock.patch('neutron.openstack.common.loopingcall.'
                        'FixedIntervalLoopingCall',
-                       new=MockFixedIntervalLoopingCall)):
+                       new=MockFixedIntervalLoopingCall),
+            mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
+                       'OVSNeutronAgent._check_arp_responder_support',
+                       return_value=True)):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**kwargs)
             self.agent.tun_br = mock.Mock()
         self.agent.sg_agent = mock.Mock()
@@ -503,6 +511,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         self.agent.local_vlan_map = {'net1': lvm1, 'net2': lvm2}
         self.agent.tun_br_ofports = {'gre':
                                      {'1.1.1.1': '1', '2.2.2.2': '2'}}
+        self.agent.arp_responder_enabled = True
 
     def test_fdb_ignore_network(self):
         self._prepare_l2_pop_ofports()
@@ -528,7 +537,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       'segment_id': 'tun2',
                       'ports':
                       {'agent_ip':
-                       [['mac', 'ip'],
+                       [[FAKE_MAC, FAKE_IP1],
                         n_const.FLOODING_ENTRY]}}}
         with mock.patch.object(self.agent.tun_br,
                                "defer_apply_on") as defer_fn:
@@ -545,7 +554,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       'segment_id': 'tun1',
                       'ports':
                       {'2.2.2.2':
-                       [['mac', 'ip'],
+                       [[FAKE_MAC, FAKE_IP1],
                         n_const.FLOODING_ENTRY]}}}
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'add_flow'),
@@ -554,12 +563,30 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         ) as (add_flow_fn, mod_flow_fn, add_tun_fn):
             self.agent.fdb_add(None, fdb_entry)
             self.assertFalse(add_tun_fn.called)
-            add_flow_fn.assert_called_with(table=constants.UCAST_TO_TUN,
-                                           priority=2,
-                                           dl_vlan='vlan1',
-                                           dl_dst='mac',
-                                           actions='strip_vlan,'
-                                           'set_tunnel:seg1,output:2')
+            actions = ('move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],'
+                       'mod_dl_src:%(mac)s,'
+                       'load:0x2->NXM_OF_ARP_OP[],'
+                       'move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],'
+                       'move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],'
+                       'load:%(mac)#x->NXM_NX_ARP_SHA[],'
+                       'load:%(ip)#x->NXM_OF_ARP_SPA[],'
+                       'in_port' %
+                       {'mac': netaddr.EUI(FAKE_MAC, dialect=netaddr.mac_unix),
+                        'ip': netaddr.IPAddress(FAKE_IP1)})
+            add_flow_fn.assert_has_calls([
+                mock.call(table=constants.ARP_RESPONDER,
+                          priority=1,
+                          proto='arp',
+                          dl_vlan='vlan1',
+                          nw_dst=FAKE_IP1,
+                          actions=actions),
+                mock.call(table=constants.UCAST_TO_TUN,
+                          priority=2,
+                          dl_vlan='vlan1',
+                          dl_dst=FAKE_MAC,
+                          actions='strip_vlan,'
+                          'set_tunnel:seg1,output:2')
+            ])
             mod_flow_fn.assert_called_with(table=constants.FLOOD_TO_TUN,
                                            dl_vlan='vlan1',
                                            actions='strip_vlan,'
@@ -572,16 +599,22 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                       'segment_id': 'tun2',
                       'ports':
                       {'2.2.2.2':
-                       [['mac', 'ip'],
+                       [[FAKE_MAC, FAKE_IP1],
                         n_const.FLOODING_ENTRY]}}}
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'mod_flow'),
             mock.patch.object(self.agent.tun_br, 'delete_flows'),
         ) as (mod_flow_fn, del_flow_fn):
             self.agent.fdb_remove(None, fdb_entry)
-            del_flow_fn.assert_called_with(table=constants.UCAST_TO_TUN,
-                                           dl_vlan='vlan2',
-                                           dl_dst='mac')
+            del_flow_fn.assert_has_calls([
+                mock.call(table=constants.ARP_RESPONDER,
+                          proto='arp',
+                          dl_vlan='vlan2',
+                          nw_dst=FAKE_IP1),
+                mock.call(table=constants.UCAST_TO_TUN,
+                          dl_vlan='vlan2',
+                          dl_dst=FAKE_MAC)
+            ])
             mod_flow_fn.assert_called_with(table=constants.FLOOD_TO_TUN,
                                            dl_vlan='vlan2',
                                            actions='strip_vlan,'
@@ -592,7 +625,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         fdb_entry = {'net1':
                      {'network_type': 'gre',
                       'segment_id': 'tun1',
-                      'ports': {'1.1.1.1': [['mac', 'ip']]}}}
+                      'ports': {'1.1.1.1': [[FAKE_MAC, FAKE_IP1]]}}}
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'add_flow'),
             mock.patch.object(self.agent.tun_br, 'mod_flow'),
@@ -600,7 +633,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         ) as (add_flow_fn, mod_flow_fn, add_tun_fn):
             self.agent.fdb_add(None, fdb_entry)
             self.assertFalse(add_tun_fn.called)
-            fdb_entry['net1']['ports']['10.10.10.10'] = [['mac', 'ip']]
+            fdb_entry['net1']['ports']['10.10.10.10'] = [[FAKE_MAC, FAKE_IP1]]
             self.agent.fdb_add(None, fdb_entry)
             add_tun_fn.assert_called_with('gre-0a0a0a0a', '10.10.10.10', 'gre')
 
@@ -616,6 +649,39 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         ) as (del_flow_fn, del_port_fn):
             self.agent.fdb_remove(None, fdb_entry)
             del_port_fn.assert_called_once_with('gre-02020202')
+
+    def test_fdb_update_chg_ip(self):
+        self._prepare_l2_pop_ofports()
+        fdb_entries = {'chg_ip':
+                       {'net1':
+                        {'agent_ip':
+                         {'before': [[FAKE_MAC, FAKE_IP1]],
+                          'after': [[FAKE_MAC, FAKE_IP2]]}}}}
+        with contextlib.nested(
+            mock.patch.object(self.agent.tun_br, 'add_flow'),
+            mock.patch.object(self.agent.tun_br, 'delete_flows')
+        ) as (add_flow_fn, del_flow_fn):
+            self.agent.fdb_update(None, fdb_entries)
+            actions = ('move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],'
+                       'mod_dl_src:%(mac)s,'
+                       'load:0x2->NXM_OF_ARP_OP[],'
+                       'move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],'
+                       'move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],'
+                       'load:%(mac)#x->NXM_NX_ARP_SHA[],'
+                       'load:%(ip)#x->NXM_OF_ARP_SPA[],'
+                       'in_port' %
+                       {'mac': netaddr.EUI(FAKE_MAC, dialect=netaddr.mac_unix),
+                        'ip': netaddr.IPAddress(FAKE_IP2)})
+            add_flow_fn.assert_called_once_with(table=constants.ARP_RESPONDER,
+                                                priority=1,
+                                                proto='arp',
+                                                dl_vlan='vlan1',
+                                                nw_dst=FAKE_IP2,
+                                                actions=actions)
+            del_flow_fn.assert_called_once_with(table=constants.ARP_RESPONDER,
+                                                proto='arp',
+                                                dl_vlan='vlan1',
+                                                nw_dst=FAKE_IP1)
 
     def test_recl_lv_port_to_preserve(self):
         self._prepare_l2_pop_ofports()
@@ -772,7 +838,10 @@ class AncillaryBridgesTest(base.BaseTestCase):
                        return_value=bridges),
             mock.patch(
                 'neutron.agent.linux.ovs_lib.get_bridge_external_bridge_id',
-                side_effect=pullup_side_effect)):
+                side_effect=pullup_side_effect),
+            mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
+                       'OVSNeutronAgent._check_arp_responder_support',
+                       return_value=True)):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**self.kwargs)
             self.assertEqual(len(ancillary), len(self.agent.ancillary_brs))
             if ancillary:

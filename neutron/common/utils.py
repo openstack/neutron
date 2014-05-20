@@ -18,8 +18,11 @@
 
 """Utilities and helper functions."""
 
+import datetime
+import hashlib
 import logging as std_logging
 import os
+import random
 import signal
 import socket
 
@@ -199,3 +202,17 @@ def log_opt_values(log):
 
 def is_valid_vlan_tag(vlan):
     return q_const.MIN_VLAN_TAG <= vlan <= q_const.MAX_VLAN_TAG
+
+
+def get_random_string(length):
+    """Get a random hex string of the specified length.
+
+    based on Cinder library
+      cinder/transfer/api.py
+    """
+    rndstr = ""
+    random.seed(datetime.datetime.now().microsecond)
+    while len(rndstr) < length:
+        rndstr += hashlib.sha224(str(random.random())).hexdigest()
+
+    return rndstr[0:length]

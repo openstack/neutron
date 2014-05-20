@@ -22,6 +22,7 @@ from oslo.config import cfg
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import exceptions
+from neutron.common import utils as common_utils
 from neutron.openstack.common import excutils
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
@@ -586,3 +587,26 @@ def _build_flow_expr_str(flow_dict, cmd):
         flow_expr_arr.append(actions)
 
     return ','.join(flow_expr_arr)
+
+
+def ofctl_arg_supported(root_helper, cmd, args):
+    '''Verify if ovs-ofctl binary supports command with specific args.
+
+    :param root_helper: utility to use when running shell cmds.
+    :param cmd: ovs-vsctl command to use for test.
+    :param args: arguments to test with command.
+    :returns: a boolean if the args supported.
+    '''
+    supported = True
+    br_name = 'br-test-%s' % common_utils.get_random_string(6)
+    test_br = OVSBridge(br_name, root_helper)
+    test_br.reset_bridge()
+
+    full_args = ["ovs-ofctl", cmd, test_br.br_name] + args
+    try:
+        utils.execute(full_args, root_helper=root_helper)
+    except Exception:
+        supported = False
+
+    test_br.destroy()
+    return supported
