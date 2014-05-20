@@ -61,14 +61,6 @@ class AllowedAddressPairsMixin(object):
 
         return allowed_address_pairs
 
-    def _check_fixed_ips_and_address_pairs_no_overlap(self, context, port):
-        address_pairs = self.get_allowed_address_pairs(context, port['id'])
-        for fixed_ip in port['fixed_ips']:
-            for address_pair in address_pairs:
-                if (fixed_ip['ip_address'] == address_pair['ip_address']
-                    and port['mac_address'] == address_pair['mac_address']):
-                    raise addr_pair.AddressPairMatchesPortFixedIPAndMac()
-
     def get_allowed_address_pairs(self, context, port_id):
         pairs = (context.session.query(AllowedAddressPair).
                  filter_by(port_id=port_id))

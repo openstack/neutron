@@ -754,9 +754,6 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                 ctrl_update_required |= (
                     self.update_address_pairs_on_port(context, port_id, port,
                                                       orig_port, new_port))
-            if 'fixed_ips' in port['port']:
-                self._check_fixed_ips_and_address_pairs_no_overlap(
-                    context, new_port)
             self._update_extra_dhcp_opts_on_port(context, port_id, port,
                                                  new_port)
             old_host_id = porttracker_db.get_port_hostid(context,

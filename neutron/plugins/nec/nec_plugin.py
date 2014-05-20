@@ -611,7 +611,6 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     "id=%(id)s port=%(port)s ."),
                   {'id': id, 'port': port})
         need_port_update_notify = False
-        changed_fixed_ips = 'fixed_ips' in port['port']
         with context.session.begin(subtransactions=True):
             old_port = super(NECPluginV2, self).get_port(context, id)
             new_port = super(NECPluginV2, self).update_port(context, id, port)
@@ -622,9 +621,6 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     self.update_address_pairs_on_port(context, id, port,
                                                       old_port,
                                                       new_port))
-            elif changed_fixed_ips:
-                self._check_fixed_ips_and_address_pairs_no_overlap(
-                    context, new_port)
             need_port_update_notify |= self.update_security_group_on_port(
                 context, id, port, old_port, new_port)
 
