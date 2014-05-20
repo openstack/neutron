@@ -13,5 +13,5 @@ http_timeout = 13
 redirects = 12
 retries = 11
 
-[NVP]
+[NSX]
 agent_mode = agentless

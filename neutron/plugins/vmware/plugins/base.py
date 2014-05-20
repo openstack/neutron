@@ -107,7 +107,6 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    "mac-learning",
                                    "multi-provider",
                                    "network-gateway",
-                                   "nvp-qos",
                                    "port-security",
                                    "provider",
                                    "qos-queue",
@@ -2243,7 +2242,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # Get devices from database
         devices = super(NsxPluginV2, self).get_gateway_devices(
             context, filters, fields, include_nsx_id=True)
-        # Fetch operational status from NVP, filter by tenant tag
+        # Fetch operational status from NSX, filter by tenant tag
         # TODO(salv-orlando): Asynchronous sync for gateway device status
         tenant_id = context.tenant_id if not context.is_admin else None
         nsx_statuses = nsx_utils.get_nsx_device_statuses(self.cluster,
@@ -2503,7 +2502,3 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 return
         queuelib.delete_lqueue(self.cluster, queue_id)
         return super(NsxPluginV2, self).delete_qos_queue(context, queue_id)
-
-
-# for backward compatibility
-NvpPluginV2 = NsxPluginV2

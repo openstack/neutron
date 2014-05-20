@@ -888,7 +888,7 @@ class TestNetworkGateway(test_nsx_plugin.NsxPluginV2TestCase,
     def setUp(self, plugin=vmware.PLUGIN_NAME, ext_mgr=None):
         cfg.CONF.set_override('api_extensions_path', vmware.NSXEXT_PATH)
         # Mock l2gwlib calls for gateway devices since this resource is not
-        # mocked through the fake NVP API client
+        # mocked through the fake NSX API client
         create_gw_dev_patcher = mock.patch.object(
             l2gwlib, 'create_gateway_device')
         update_gw_dev_patcher = mock.patch.object(
