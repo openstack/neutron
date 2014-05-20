@@ -31,6 +31,7 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
+from neutron.openstack.common.gettextutils import _LE, _LI
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
@@ -242,13 +243,24 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
     def add_port_update(self, port):
         self.updated_ports.add(port)
 
-    def scan_ports(self, registered_ports, updated_ports_copy=None):
+    def scan_ports(self, previous, sync):
         cur_ports = self.eswitch.get_vnics_mac()
         port_info = {'current': cur_ports}
-        # Shouldn't process updates for not existing ports
-        port_info['updated'] = updated_ports_copy & cur_ports
-        port_info['added'] = cur_ports - registered_ports
-        port_info['removed'] = registered_ports - cur_ports
+        updated_ports = self.updated_ports
+        self.updated_ports = set()
+        if sync:
+            # Either it's the first iteration or previous iteration had
+            # problems.
+            port_info['added'] = cur_ports
+            port_info['removed'] = ((previous['removed'] | previous['current'])
+                                    - cur_ports)
+            port_info['updated'] = ((previous['updated'] | updated_ports)
+                                    & cur_ports)
+        else:
+            # Shouldn't process updates for not existing ports
+            port_info['added'] = cur_ports - previous['current']
+            port_info['removed'] = previous['current'] - cur_ports
+            port_info['updated'] = updated_ports & cur_ports
         return port_info
 
     def process_network_ports(self, port_info):
@@ -349,39 +361,30 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
                 port_info['updated'])
 
     def daemon_loop(self):
-        sync = True
-        ports = set()
-        updated_ports_copy = set()
-
         LOG.info(_("eSwitch Agent Started!"))
-
+        sync = True
+        port_info = {'current': set(),
+                     'added': set(),
+                     'removed': set(),
+                     'updated': set()}
         while True:
             start = time.time()
-            if sync:
-                LOG.info(_("Agent out of sync with plugin!"))
-                ports.clear()
-                sync = False
-
             try:
-                updated_ports_copy = self.updated_ports
-                self.updated_ports = set()
-                port_info = self.scan_ports(ports, updated_ports_copy)
-                LOG.debug("Agent loop process devices!")
-                # If treat devices fails - must resync with plugin
-                ports = port_info['current']
-                if self._port_info_has_changes(port_info):
-                    LOG.debug("Starting to process devices in:%s", port_info)
-                    # sync with upper/lower layers about port deltas
-                    sync = self.process_network_ports(port_info)
-
+                port_info = self.scan_ports(previous=port_info, sync=sync)
             except exceptions.RequestTimeout:
                 LOG.exception(_("Request timeout in agent event loop "
                                 "eSwitchD is not responding - exiting..."))
                 raise SystemExit(1)
-            except Exception:
-                LOG.exception(_("Error in agent event loop"))
-                sync = True
-                self.updated_ports |= updated_ports_copy
+            if sync:
+                LOG.info(_LI("Agent out of sync with plugin!"))
+                sync = False
+            if self._port_info_has_changes(port_info):
+                LOG.debug("Starting to process devices in:%s", port_info)
+                try:
+                    sync = self.process_network_ports(port_info)
+                except Exception:
+                    LOG.exception(_LE("Error in agent event loop"))
+                    sync = True
             # sleep till end of polling interval
             elapsed = (time.time() - start)
             if (elapsed < self._polling_interval):

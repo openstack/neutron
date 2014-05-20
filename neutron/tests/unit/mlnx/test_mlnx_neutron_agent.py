@@ -187,44 +187,50 @@ class TestEswitchAgent(base.BaseTestCase):
         self.agent.add_port_update(mac_addr)
         self.assertEqual(set([mac_addr]), self.agent.updated_ports)
 
-    def _mock_scan_ports(self, vif_port_set, registered_ports, updated_ports):
+    def _mock_scan_ports(self, vif_port_set, previous,
+                         updated_ports, sync=False):
+        self.agent.updated_ports = updated_ports
         with mock.patch.object(self.agent.eswitch, 'get_vnics_mac',
                                return_value=vif_port_set):
-            return self.agent.scan_ports(registered_ports, updated_ports)
+            return self.agent.scan_ports(previous, sync)
 
     def test_scan_ports_return_current_for_unchanged_ports(self):
         vif_port_set = set([1, 2])
-        registered_ports = set([1, 2])
-        actual = self._mock_scan_ports(vif_port_set,
-                                       registered_ports, set())
+        previous = dict(current=set([1, 2]), added=set(),
+                        removed=set(), updated=set())
         expected = dict(current=vif_port_set, added=set(),
                         removed=set(), updated=set())
+        actual = self._mock_scan_ports(vif_port_set,
+                                       previous, set())
         self.assertEqual(expected, actual)
 
     def test_scan_ports_return_port_changes(self):
         vif_port_set = set([1, 3])
-        registered_ports = set([1, 2])
-        actual = self._mock_scan_ports(vif_port_set,
-                                       registered_ports, set())
+        previous = dict(current=set([1, 2]), added=set(),
+                        removed=set(), updated=set())
         expected = dict(current=vif_port_set, added=set([3]),
                         removed=set([2]), updated=set())
+        actual = self._mock_scan_ports(vif_port_set,
+                                       previous, set())
         self.assertEqual(expected, actual)
 
     def test_scan_ports_with_updated_ports(self):
         vif_port_set = set([1, 3, 4])
-        registered_ports = set([1, 2, 4])
-        actual = self._mock_scan_ports(vif_port_set,
-                                       registered_ports, set([4]))
+        previous = dict(current=set([1, 2, 4]), added=set(),
+                        removed=set(), updated=set())
         expected = dict(current=vif_port_set, added=set([3]),
                         removed=set([2]), updated=set([4]))
+        actual = self._mock_scan_ports(vif_port_set,
+                                       previous, set([4]))
         self.assertEqual(expected, actual)
 
     def test_scan_ports_with_unknown_updated_ports(self):
         vif_port_set = set([1, 3, 4])
-        registered_ports = set([1, 2, 4])
-        actual = self._mock_scan_ports(vif_port_set,
-                                       registered_ports,
-                                       updated_ports=set([4, 5]))
+        previous = dict(current=set([1, 2, 4]), added=set(),
+                        removed=set(), updated=set())
         expected = dict(current=vif_port_set, added=set([3]),
                         removed=set([2]), updated=set([4]))
+        actual = self._mock_scan_ports(vif_port_set,
+                                       previous,
+                                       updated_ports=set([4, 5]))
         self.assertEqual(expected, actual)
