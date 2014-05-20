@@ -27,7 +27,6 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as const
 from neutron.common import exceptions
-from neutron.notifiers import nova
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron import policy
@@ -77,7 +76,9 @@ class Controller(object):
             agent_notifiers.get(const.AGENT_TYPE_DHCP) or
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
-        self._nova_notifier = nova.Notifier()
+        if cfg.CONF.notify_nova_on_port_data_changes:
+            from neutron.notifiers import nova
+            self._nova_notifier = nova.Notifier()
         self._member_actions = member_actions
         self._primary_key = self._get_primary_key()
         if self._allow_pagination and self._native_pagination:
@@ -296,6 +297,10 @@ class Controller(object):
             else:
                 self._dhcp_agent_notifier.notify(context, data, methodname)
 
+    def _send_nova_notification(self, action, orig, returned):
+        if hasattr(self, '_nova_notifier'):
+            self._nova_notifier.send_network_change(action, orig, returned)
+
     def index(self, request, **kwargs):
         """Returns a list of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
@@ -446,11 +451,10 @@ class Controller(object):
             else:
                 kwargs.update({self._resource: body})
                 obj = obj_creator(request.context, **kwargs)
-
-                self._nova_notifier.send_network_change(
-                    action, {}, {self._resource: obj})
-                return notify({self._resource: self._view(
-                    request.context, obj)})
+                self._send_nova_notification(action, {},
+                                             {self._resource: obj})
+                return notify({self._resource: self._view(request.context,
+                                                          obj)})
 
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""
@@ -484,7 +488,7 @@ class Controller(object):
                             notifier_api.CONF.default_notification_level,
                             {self._resource + '_id': id})
         result = {self._resource: self._view(request.context, obj)}
-        self._nova_notifier.send_network_change(action, {}, result)
+        self._send_nova_notification(action, {}, result)
         self._send_dhcp_notification(request.context,
                                      result,
                                      notifier_method)
@@ -545,8 +549,7 @@ class Controller(object):
         self._send_dhcp_notification(request.context,
                                      result,
                                      notifier_method)
-        self._nova_notifier.send_network_change(
-            action, orig_object_copy, result)
+        self._send_nova_notification(action, orig_object_copy, result)
         return result
 
     @staticmethod
