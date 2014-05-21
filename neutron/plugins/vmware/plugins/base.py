@@ -2023,12 +2023,14 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 device['interface_name'] = self.cluster.default_interface_name
         try:
             # Replace Neutron device identifiers with NSX identifiers
-            # TODO(salv-orlando): Make this operation more efficient doing a
-            # single DB query for all devices
-            nsx_devices = [{'id': self._get_nsx_device_id(context,
-                                                          device['id']),
-                            'interface_name': device['interface_name']} for
-                           device in devices]
+            dev_map = dict((dev['id'], dev['interface_name']) for
+                           dev in devices)
+            nsx_devices = []
+            for db_device in self._query_gateway_devices(
+                context, filters={'id': [device['id'] for device in devices]}):
+                nsx_devices.append(
+                    {'id': db_device['nsx_id'],
+                     'interface_name': dev_map[db_device['id']]})
             nsx_res = l2gwlib.create_l2_gw_service(
                 self.cluster, tenant_id, gw_data['name'], nsx_devices)
             nsx_uuid = nsx_res.get('uuid')
