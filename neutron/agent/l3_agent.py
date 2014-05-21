@@ -164,7 +164,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                    help=_("TCP Port used by Neutron metadata namespace "
                           "proxy.")),
         cfg.IntOpt('send_arp_for_ha',
-                   default=0,
+                   default=3,
                    help=_("Send this many gratuitous ARPs for HA setup, if "
                           "less than or equal to 0, the feature is disabled")),
         cfg.StrOpt('router_id', default='',
