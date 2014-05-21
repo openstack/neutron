@@ -16,10 +16,8 @@ import sqlalchemy as sa
 
 from sqlalchemy import orm
 from sqlalchemy.orm import exc as sa_orm_exc
-from webob import exc as web_exc
 
 from neutron.api.v2 import attributes
-from neutron.api.v2 import base
 from neutron.common import exceptions
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -71,7 +69,7 @@ class GatewayConnectionInUse(exceptions.InUse):
                 "network gateway '%(gateway_id)s'.")
 
 
-class MultipleGatewayConnections(exceptions.NeutronException):
+class MultipleGatewayConnections(exceptions.Conflict):
     message = _("Multiple network connections found on '%(gateway_id)s' "
                 "with provided criteria.")
 
@@ -84,13 +82,6 @@ class GatewayConnectionNotFound(exceptions.NotFound):
 class NetworkGatewayUnchangeable(exceptions.InUse):
     message = _("The network gateway %(gateway_id)s "
                 "cannot be updated or deleted")
-
-# Add exceptions to HTTP Faults mappings
-base.FAULT_MAP.update({GatewayInUse: web_exc.HTTPConflict,
-                       NetworkGatewayPortInUse: web_exc.HTTPConflict,
-                       GatewayConnectionInUse: web_exc.HTTPConflict,
-                       GatewayConnectionNotFound: web_exc.HTTPNotFound,
-                       MultipleGatewayConnections: web_exc.HTTPConflict})
 
 
 class NetworkConnection(model_base.BASEV2, models_v2.HasTenant):
