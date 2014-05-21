@@ -14,7 +14,7 @@
 #
 # @author: Ronak Shah, Aniket Dandekar, Nuage Networks, Alcatel-Lucent USA Inc.
 
-import uuid
+from neutron.openstack.common import uuidutils
 
 
 class FakeNuageClient(object):
@@ -30,10 +30,10 @@ class FakeNuageClient(object):
 
     def create_subnet(self, neutron_subnet, params):
         nuage_subnet = {
-            'nuage_l2template_id': str(uuid.uuid4()),
-            'nuage_userid': str(uuid.uuid4()),
-            'nuage_groupid': str(uuid.uuid4()),
-            'nuage_l2domain_id': str(uuid.uuid4())
+            'nuage_l2template_id': uuidutils.generate_uuid(),
+            'nuage_userid': uuidutils.generate_uuid(),
+            'nuage_groupid': uuidutils.generate_uuid(),
+            'nuage_l2domain_id': uuidutils.generate_uuid()
         }
         return nuage_subnet
 
@@ -42,10 +42,10 @@ class FakeNuageClient(object):
 
     def create_router(self, neutron_router, router, params):
         nuage_router = {
-            'nuage_userid': str(uuid.uuid4()),
-            'nuage_groupid': str(uuid.uuid4()),
-            'nuage_domain_id': str(uuid.uuid4()),
-            'nuage_def_zone_id': str(uuid.uuid4()),
+            'nuage_userid': uuidutils.generate_uuid(),
+            'nuage_groupid': uuidutils.generate_uuid(),
+            'nuage_domain_id': uuidutils.generate_uuid(),
+            'nuage_def_zone_id': uuidutils.generate_uuid(),
         }
         return nuage_router
 
@@ -66,9 +66,9 @@ class FakeNuageClient(object):
 
     def create_net_partition(self, params):
         fake_net_partition = {
-            'nuage_entid': str(uuid.uuid4()),
-            'l3dom_id': str(uuid.uuid4()),
-            'l2dom_id': str(uuid.uuid4()),
+            'nuage_entid': uuidutils.generate_uuid(),
+            'l3dom_id': uuidutils.generate_uuid(),
+            'l2dom_id': uuidutils.generate_uuid(),
         }
         return fake_net_partition
 
@@ -85,7 +85,22 @@ class FakeNuageClient(object):
         pass
 
     def create_nuage_staticroute(self, params):
-        return str(uuid.uuid4())
+        return uuidutils.generate_uuid()
 
     def delete_nuage_staticroute(self, id):
+        pass
+
+    def create_nuage_sharedresource(self, params):
+        return uuidutils.generate_uuid()
+
+    def delete_nuage_sharedresource(self, id):
+        pass
+
+    def create_nuage_floatingip(self, params):
+        return uuidutils.generate_uuid()
+
+    def delete_nuage_floatingip(self, id):
+        pass
+
+    def update_nuage_vm_vport(self, params):
         pass

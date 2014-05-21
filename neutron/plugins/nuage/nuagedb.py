@@ -58,6 +58,10 @@ def update_subnetl2dom_mapping(subnet_l2dom,
     subnet_l2dom.update(new_dict)
 
 
+def delete_subnetl2dom_mapping(session, subnet_l2dom):
+    session.delete(subnet_l2dom)
+
+
 def add_port_vport_mapping(session, port_id, nuage_vport_id,
                            nuage_vif_id, static_ip):
     port_mapping = nuage_models.PortVPortMapping(port_id=port_id,
@@ -152,3 +156,47 @@ def add_static_route(session, router_id, nuage_rtr_id,
                                                 nexthop=nexthop)
     session.add(staticrt)
     return staticrt
+
+
+def add_fip_mapping(session, neutron_fip_id, router_id, nuage_fip_id):
+    fip = nuage_models.FloatingIPMapping(fip_id=neutron_fip_id,
+                                         router_id=router_id,
+                                         nuage_fip_id=nuage_fip_id)
+    session.add(fip)
+    return fip
+
+
+def delete_fip_mapping(session, fip_mapping):
+    session.delete(fip_mapping)
+
+
+def add_fip_pool_mapping(session, fip_pool_id, net_id, router_id=None):
+    fip_pool_mapping = nuage_models.FloatingIPPoolMapping(
+        fip_pool_id=fip_pool_id,
+        net_id=net_id,
+        router_id=router_id)
+    session.add(fip_pool_mapping)
+    return fip_pool_mapping
+
+
+def delete_fip_pool_mapping(session, fip_pool_mapping):
+    session.delete(fip_pool_mapping)
+
+
+def get_fip_pool_by_id(session, id):
+    query = session.query(nuage_models.FloatingIPPoolMapping)
+    return query.filter_by(fip_pool_id=id).first()
+
+
+def get_fip_pool_from_netid(session, net_id):
+    query = session.query(nuage_models.FloatingIPPoolMapping)
+    return query.filter_by(net_id=net_id).first()
+
+
+def get_fip_mapping_by_id(session, id):
+    qry = session.query(nuage_models.FloatingIPMapping)
+    return qry.filter_by(fip_id=id).first()
+
+
+def update_fip_pool_mapping(fip_pool_mapping, new_dict):
+    fip_pool_mapping.update(new_dict)
