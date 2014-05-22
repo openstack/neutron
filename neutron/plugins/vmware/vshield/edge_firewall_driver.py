@@ -277,7 +277,7 @@ class EdgeFirewallDriver(db_base_plugin_v2.NeutronDbPluginV2):
                               {'rule_id': id,
                                'edge_id': edge_id})
         vcns_db.delete_vcns_edge_firewallrule_binding(
-            context.session, id)
+            context.session, id, edge_id)
 
     def _add_rule_above(self, context, ref_rule_id, edge_id, firewall_rule):
         rule_map = vcns_db.get_vcns_edge_firewallrule_binding(

@@ -70,10 +70,10 @@ def add_vcns_edge_firewallrule_binding(session, map_info):
         return binding
 
 
-def delete_vcns_edge_firewallrule_binding(session, id):
+def delete_vcns_edge_firewallrule_binding(session, id, edge_id):
     with session.begin(subtransactions=True):
         if not (session.query(vcns_models.VcnsEdgeFirewallRuleBinding).
-                filter_by(rule_id=id).delete()):
+                filter_by(rule_id=id, edge_id=edge_id).delete()):
             msg = _("Rule Resource binding with id:%s not found!") % id
             raise nsx_exc.NsxPluginException(err_msg=msg)
 
