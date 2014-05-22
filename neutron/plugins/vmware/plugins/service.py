@@ -1795,7 +1795,3 @@ def _process_base_create_lswitch_args(*args, **kwargs):
     if kwargs.get("tags"):
         tags.extend(kwargs["tags"])
     return switch_name, tz_config, tags
-
-
-# For backward compatibility
-NvpAdvancedPlugin = NsxAdvancedPlugin
