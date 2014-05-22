@@ -34,6 +34,7 @@ BASE_CONF_PATH = vmware.get_fake_conf('neutron.conf.test')
 NSX_INI_PATH = vmware.get_fake_conf('nsx.ini.basic.test')
 NSX_INI_FULL_PATH = vmware.get_fake_conf('nsx.ini.full.test')
 NSX_INI_AGENTLESS_PATH = vmware.get_fake_conf('nsx.ini.agentless.test')
+NSX_INI_COMBINED_PATH = vmware.get_fake_conf('nsx.ini.combined.test')
 NVP_INI_DEPR_PATH = vmware.get_fake_conf('nvp.ini.full.test')
 
 
@@ -158,6 +159,8 @@ class ConfigurationTest(base.BaseTestCase):
                                  plugin.supported_extension_aliases)
                 self.assertNotIn('dhcp_agent_scheduler',
                                  plugin.supported_extension_aliases)
+                self.assertNotIn('lsn',
+                                 plugin.supported_extension_aliases)
 
     def test_agentless_extensions_version_fail(self):
         self.config_parse(args=['--config-file', BASE_CONF_PATH,
@@ -197,6 +200,26 @@ class ConfigurationTest(base.BaseTestCase):
                       plugin.supported_extension_aliases)
         self.assertIn('dhcp_agent_scheduler',
                       plugin.supported_extension_aliases)
+
+    def test_combined_extensions(self):
+        self.config_parse(args=['--config-file', BASE_CONF_PATH,
+                                '--config-file', NSX_INI_COMBINED_PATH])
+        cfg.CONF.set_override('core_plugin', vmware.PLUGIN_NAME)
+        self.assertEqual(config.AgentModes.COMBINED,
+                         cfg.CONF.NSX.agent_mode)
+        with mock.patch.object(client.NsxApiClient,
+                               'get_version',
+                               return_value=version.Version("4.2")):
+            with mock.patch.object(lsnlib,
+                                   'service_cluster_exists',
+                                   return_value=True):
+                plugin = manager.NeutronManager().get_plugin()
+                self.assertIn('agent',
+                              plugin.supported_extension_aliases)
+                self.assertIn('dhcp_agent_scheduler',
+                              plugin.supported_extension_aliases)
+                self.assertIn('lsn',
+                              plugin.supported_extension_aliases)
 
 
 class OldNVPConfigurationTest(base.BaseTestCase):
