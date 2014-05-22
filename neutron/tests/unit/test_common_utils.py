@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import testtools
 
 from neutron.common import exceptions as n_exc
@@ -314,3 +315,69 @@ class TestDictUtils(base.BaseTestCase):
         added, removed = utils.diff_list_of_dict(old_list, new_list)
         self.assertEqual(added, [dict(key4="value4")])
         self.assertEqual(removed, [dict(key3="value3")])
+
+
+class _CachingDecorator(object):
+    def __init__(self):
+        self.func_retval = 'bar'
+        self._cache = mock.Mock()
+
+    @utils.cache_method_results
+    def func(self, *args, **kwargs):
+        return self.func_retval
+
+
+class TestCachingDecorator(base.BaseTestCase):
+    def setUp(self):
+        super(TestCachingDecorator, self).setUp()
+        self.decor = _CachingDecorator()
+        self.func_name = '%(module)s._CachingDecorator.func' % {
+            'module': self.__module__
+        }
+        self.not_cached = self.decor.func.func.im_self._not_cached
+
+    def test_cache_miss(self):
+        expected_key = (self.func_name, 1, 2, ('foo', 'bar'))
+        args = (1, 2)
+        kwargs = {'foo': 'bar'}
+        self.decor._cache.get.return_value = self.not_cached
+        retval = self.decor.func(*args, **kwargs)
+        self.decor._cache.set.assert_called_once_with(
+            expected_key, self.decor.func_retval, None)
+        self.assertEqual(self.decor.func_retval, retval)
+
+    def test_cache_hit(self):
+        expected_key = (self.func_name, 1, 2, ('foo', 'bar'))
+        args = (1, 2)
+        kwargs = {'foo': 'bar'}
+        retval = self.decor.func(*args, **kwargs)
+        self.assertFalse(self.decor._cache.set.called)
+        self.assertEqual(self.decor._cache.get.return_value, retval)
+        self.decor._cache.get.assert_called_once_with(expected_key,
+                                                      self.not_cached)
+
+    def test_get_unhashable(self):
+        expected_key = (self.func_name, [1], 2)
+        self.decor._cache.get.side_effect = TypeError
+        retval = self.decor.func([1], 2)
+        self.assertFalse(self.decor._cache.set.called)
+        self.assertEqual(self.decor.func_retval, retval)
+        self.decor._cache.get.assert_called_once_with(expected_key,
+                                                      self.not_cached)
+
+    def test_missing_cache(self):
+        delattr(self.decor, '_cache')
+        self.assertRaises(NotImplementedError, self.decor.func, (1, 2))
+
+    def test_no_cache(self):
+        self.decor._cache = False
+        retval = self.decor.func((1, 2))
+        self.assertEqual(self.decor.func_retval, retval)
+
+
+class TestDict2Tuples(base.BaseTestCase):
+    def test_dict(self):
+        input_dict = {'foo': 'bar', 42: 'baz', 'aaa': 'zzz'}
+        expected = ((42, 'baz'), ('aaa', 'zzz'), ('foo', 'bar'))
+        output_tuple = utils.dict2tuple(input_dict)
+        self.assertEqual(expected, output_tuple)
