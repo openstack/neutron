@@ -401,6 +401,50 @@ class OVS_Lib_Test(base.BaseTestCase):
             mock.call('del-flows', ['-'], 'deleted_flow_1\n')
         ])
 
+    def test_defer_apply_flows_concurrently(self):
+        flow_expr = mock.patch.object(ovs_lib, '_build_flow_expr_str').start()
+        flow_expr.side_effect = ['added_flow_1', 'deleted_flow_1',
+                                 'modified_flow_1', 'added_flow_2',
+                                 'deleted_flow_2', 'modified_flow_2']
+
+        run_ofctl = mock.patch.object(self.br, 'run_ofctl').start()
+
+        def run_ofctl_fake(cmd, args, process_input=None):
+            self.br.defer_apply_on()
+            if cmd == 'add-flows':
+                self.br.add_flow(flow='added_flow_2')
+            elif cmd == 'del-flows':
+                self.br.delete_flows(flow='deleted_flow_2')
+            elif cmd == 'mod-flows':
+                self.br.mod_flow(flow='modified_flow_2')
+        run_ofctl.side_effect = run_ofctl_fake
+
+        self.br.defer_apply_on()
+        self.br.add_flow(flow='added_flow_1')
+        self.br.delete_flows(flow='deleted_flow_1')
+        self.br.mod_flow(flow='modified_flow_1')
+        self.br.defer_apply_off()
+
+        run_ofctl.side_effect = None
+        self.br.defer_apply_off()
+
+        flow_expr.assert_has_calls([
+            mock.call({'flow': 'added_flow_1'}, 'add'),
+            mock.call({'flow': 'deleted_flow_1'}, 'del'),
+            mock.call({'flow': 'modified_flow_1'}, 'mod'),
+            mock.call({'flow': 'added_flow_2'}, 'add'),
+            mock.call({'flow': 'deleted_flow_2'}, 'del'),
+            mock.call({'flow': 'modified_flow_2'}, 'mod')
+        ])
+        run_ofctl.assert_has_calls([
+            mock.call('add-flows', ['-'], 'added_flow_1\n'),
+            mock.call('del-flows', ['-'], 'deleted_flow_1\n'),
+            mock.call('mod-flows', ['-'], 'modified_flow_1\n'),
+            mock.call('add-flows', ['-'], 'added_flow_2\n'),
+            mock.call('del-flows', ['-'], 'deleted_flow_2\n'),
+            mock.call('mod-flows', ['-'], 'modified_flow_2\n')
+        ])
+
     def test_add_tunnel_port(self):
         pname = "tap99"
         local_ip = "1.1.1.1"
