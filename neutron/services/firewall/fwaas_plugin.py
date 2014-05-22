@@ -214,8 +214,7 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
             for firewall_id in firewall_policy['firewall_list']:
                 self._ensure_update_firewall(context, firewall_id)
 
-    def _ensure_update_or_delete_firewall_rule(self, context,
-                                               firewall_rule_id):
+    def _ensure_update_firewall_rule(self, context, firewall_rule_id):
         fw_rule = self.get_firewall_rule(context, firewall_rule_id)
         if 'firewall_policy_id' in fw_rule and fw_rule['firewall_policy_id']:
             self._ensure_update_firewall_policy(context,
@@ -270,32 +269,13 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
 
     def update_firewall_rule(self, context, id, firewall_rule):
         LOG.debug(_("update_firewall_rule() called"))
-        self._ensure_update_or_delete_firewall_rule(context, id)
+        self._ensure_update_firewall_rule(context, id)
         fwr = super(FirewallPlugin,
                     self).update_firewall_rule(context, id, firewall_rule)
         firewall_policy_id = fwr['firewall_policy_id']
         if firewall_policy_id:
             self._rpc_update_firewall_policy(context, firewall_policy_id)
         return fwr
-
-    def delete_firewall_rule(self, context, id):
-        LOG.debug(_("delete_firewall_rule() called"))
-        self._ensure_update_or_delete_firewall_rule(context, id)
-        fwr = self.get_firewall_rule(context, id)
-        firewall_policy_id = fwr['firewall_policy_id']
-        super(FirewallPlugin, self).delete_firewall_rule(context, id)
-        # At this point we have already deleted the rule in the DB,
-        # however it's still not deleted on the backend firewall.
-        # Until it gets deleted on the backend we will be setting
-        # the firewall in PENDING_UPDATE state. The backend firewall
-        # implementation is responsible for setting the appropriate
-        # configuration (e.g. do not allow any traffic) until the rule
-        # is deleted. Once the rule is deleted, the backend should put
-        # the firewall back in ACTIVE state. While the firewall is in
-        # PENDING_UPDATE state, the firewall behavior might differ based
-        # on the backend implementation.
-        if firewall_policy_id:
-            self._rpc_update_firewall_policy(context, firewall_policy_id)
 
     def insert_rule(self, context, id, rule_info):
         LOG.debug(_("insert_rule() called"))
