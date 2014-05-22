@@ -68,3 +68,12 @@ INVALID_OFPORT = '-1'
 
 # Represent invalid OF Port
 OFPORT_INVALID = -1
+
+ARP_RESPONDER_ACTIONS = ('move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],'
+                         'mod_dl_src:%(mac)s,'
+                         'load:0x2->NXM_OF_ARP_OP[],'
+                         'move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],'
+                         'move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],'
+                         'load:%(mac)#x->NXM_NX_ARP_SHA[],'
+                         'load:%(ip)#x->NXM_OF_ARP_SPA[],'
+                         'in_port')

@@ -61,6 +61,16 @@ def check_nova_notify():
     return result
 
 
+def check_arp_responder():
+    result = checks.arp_responder_supported(
+        root_helper=cfg.CONF.AGENT.root_helper)
+    if not result:
+        LOG.error(_('Check for Open vSwitch ARP responder support failed. '
+                    'Please ensure that the version of openvswitch '
+                    'being used has ARP flows support.'))
+    return result
+
+
 # Define CLI opts to test specific features, with a calback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -69,6 +79,8 @@ OPTS = [
                     help=_('Check for patch port support')),
     BoolOptCallback('nova_notify', check_nova_notify, default=False,
                     help=_('Check for nova notification support')),
+    BoolOptCallback('arp_responder', check_arp_responder, default=False,
+                    help=_('Check for ARP responder support')),
 ]
 
 
@@ -87,6 +99,8 @@ def enable_tests_from_config():
     if (cfg.CONF.notify_nova_on_port_status_changes or
             cfg.CONF.notify_nova_on_port_data_changes):
         cfg.CONF.set_override('nova_notify', True)
+    if cfg.CONF.AGENT.arp_responder:
+        cfg.CONF.set_override('arp_responder', True)
 
 
 def all_tests_passed():

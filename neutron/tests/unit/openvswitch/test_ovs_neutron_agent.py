@@ -137,10 +137,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        'get_bridges'),
             mock.patch('neutron.openstack.common.loopingcall.'
                        'FixedIntervalLoopingCall',
-                       new=MockFixedIntervalLoopingCall),
-            mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
-                       'OVSNeutronAgent._check_arp_responder_support',
-                       return_value=True)):
+                       new=MockFixedIntervalLoopingCall)):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**kwargs)
             self.agent.tun_br = mock.Mock()
         self.agent.sg_agent = mock.Mock()
@@ -1022,14 +1019,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         ) as (add_flow_fn, mod_flow_fn, add_tun_fn):
             self.agent.fdb_add(None, fdb_entry)
             self.assertFalse(add_tun_fn.called)
-            actions = ('move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],'
-                       'mod_dl_src:%(mac)s,'
-                       'load:0x2->NXM_OF_ARP_OP[],'
-                       'move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],'
-                       'move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],'
-                       'load:%(mac)#x->NXM_NX_ARP_SHA[],'
-                       'load:%(ip)#x->NXM_OF_ARP_SPA[],'
-                       'in_port' %
+            actions = (constants.ARP_RESPONDER_ACTIONS %
                        {'mac': netaddr.EUI(FAKE_MAC, dialect=netaddr.mac_unix),
                         'ip': netaddr.IPAddress(FAKE_IP1)})
             add_flow_fn.assert_has_calls([
@@ -1121,14 +1111,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(self.agent.tun_br, 'delete_flows')
         ) as (add_flow_fn, del_flow_fn):
             self.agent.fdb_update(None, fdb_entries)
-            actions = ('move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],'
-                       'mod_dl_src:%(mac)s,'
-                       'load:0x2->NXM_OF_ARP_OP[],'
-                       'move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],'
-                       'move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],'
-                       'load:%(mac)#x->NXM_NX_ARP_SHA[],'
-                       'load:%(ip)#x->NXM_OF_ARP_SPA[],'
-                       'in_port' %
+            actions = (constants.ARP_RESPONDER_ACTIONS %
                        {'mac': netaddr.EUI(FAKE_MAC, dialect=netaddr.mac_unix),
                         'ip': netaddr.IPAddress(FAKE_IP2)})
             add_flow_fn.assert_called_once_with(table=constants.ARP_RESPONDER,
@@ -1400,10 +1383,7 @@ class AncillaryBridgesTest(base.BaseTestCase):
                        return_value=bridges),
             mock.patch(
                 'neutron.agent.linux.ovs_lib.get_bridge_external_bridge_id',
-                side_effect=pullup_side_effect),
-            mock.patch('neutron.plugins.openvswitch.agent.ovs_neutron_agent.'
-                       'OVSNeutronAgent._check_arp_responder_support',
-                       return_value=True)):
+                side_effect=pullup_side_effect)):
             self.agent = ovs_neutron_agent.OVSNeutronAgent(**self.kwargs)
             self.assertEqual(len(ancillary), len(self.agent.ancillary_brs))
             if ancillary:

@@ -13,10 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+
 from neutron.agent.linux import ovs_lib
+from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils
+from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as const
 from neutron.plugins.openvswitch.common import constants as ovs_const
+
+LOG = logging.getLogger(__name__)
 
 
 def vxlan_supported(root_helper, from_ip='192.0.2.1', to_ip='192.0.2.2'):
@@ -42,3 +48,44 @@ def nova_notify_supported():
         return True
     except ImportError:
         return False
+
+
+def ofctl_arg_supported(root_helper, cmd, **kwargs):
+    """Verify if ovs-ofctl binary supports cmd with **kwargs.
+
+    :param root_helper: utility to use when running shell commands.
+    :param cmd: ovs-ofctl command to use for test.
+    :param **kwargs: arguments to test with the command.
+    :returns: a boolean if the supplied arguments are supported.
+    """
+    br_name = 'br-test-%s' % utils.get_random_string(6)
+    with ovs_lib.OVSBridge(br_name, root_helper) as test_br:
+        full_args = ["ovs-ofctl", cmd, test_br.br_name,
+                     ovs_lib._build_flow_expr_str(kwargs, cmd.split('-')[0])]
+        try:
+            agent_utils.execute(full_args, root_helper=root_helper)
+        except RuntimeError as e:
+            LOG.debug("Exception while checking supported feature via "
+                      "command %s. Exception: %s" % (full_args, e))
+            return False
+        except Exception:
+            LOG.exception(_("Unexpected exception while checking supported"
+                            " feature via command: %s") % full_args)
+            return False
+        else:
+            return True
+
+
+def arp_responder_supported(root_helper):
+    mac = netaddr.EUI('dead:1234:beef', dialect=netaddr.mac_unix)
+    ip = netaddr.IPAddress('240.0.0.1')
+    actions = ovs_const.ARP_RESPONDER_ACTIONS % {'mac': mac, 'ip': ip}
+
+    return ofctl_arg_supported(root_helper,
+                               cmd='add-flow',
+                               table=21,
+                               priority=1,
+                               proto='arp',
+                               dl_vlan=42,
+                               nw_dst='%s' % ip,
+                               actions=actions)
