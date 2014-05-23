@@ -75,7 +75,7 @@ class Notifier(object):
         If a thread is already alive and waiting, this call will simply queue
         the event and return leaving it up to the thread to send it.
 
-        :param event: the event that occured.
+        :param event: the event that occurred.
         """
         if not event:
             return
@@ -120,7 +120,7 @@ class Notifier(object):
                             returned_obj):
         """Called when a network change is made that nova cares about.
 
-        :param action: the event that occured.
+        :param action: the event that occurred.
         :param original_obj: the previous value of resource before action.
         :param returned_obj: the body returned to client as result of action.
         """

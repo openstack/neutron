@@ -139,7 +139,7 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                         pass
                     self.assertEqual(ctx_manager.exception.code, 403)
 
-    def test_create_port_external_network_admin_suceeds(self):
+    def test_create_port_external_network_admin_succeeds(self):
         with self.network(router__external=True) as ext_net:
             with self.subnet(network=ext_net) as ext_subnet:
                 with self.port(subnet=ext_subnet) as port:
@@ -154,7 +154,7 @@ class ExtNetDBTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                 pass
             self.assertEqual(ctx_manager.exception.code, 403)
 
-    def test_create_external_network_admin_suceeds(self):
+    def test_create_external_network_admin_succeeds(self):
         with self.network(router__external=True) as ext_net:
             self.assertEqual(ext_net['network'][external_net.EXTERNAL],
                              True)
