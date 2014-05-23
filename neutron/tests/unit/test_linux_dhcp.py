@@ -495,12 +495,28 @@ class TestDhcpLocalProcess(TestBase):
             mocks['pid'].__get__ = mock.Mock(return_value=5)
             mocks['interface_name'].__get__ = mock.Mock(return_value='tap0')
             lp = LocalChild(self.conf, network)
-            lp.disable()
+            with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip:
+                lp.disable()
 
         self.mock_mgr.assert_has_calls([mock.call(self.conf, 'sudo', None),
                                         mock.call().destroy(network, 'tap0')])
         exp_args = ['kill', '-9', 5]
         self.execute.assert_called_once_with(exp_args, 'sudo')
+
+        self.assertEqual(ip.return_value.netns.delete.call_count, 0)
+
+    def test_disable_delete_ns(self):
+        self.conf.set_override('dhcp_delete_namespaces', True)
+        attrs_to_mock = dict([(a, mock.DEFAULT) for a in ['active', 'pid']])
+
+        with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
+            mocks['active'].__get__ = mock.Mock(return_value=False)
+            mocks['pid'].__get__ = mock.Mock(return_value=False)
+            lp = LocalChild(self.conf, FakeDualNetwork())
+            with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip:
+                lp.disable()
+
+        ip.return_value.netns.delete.assert_called_with('qdhcp-ns')
 
     def test_pid(self):
         with mock.patch('__builtin__.open') as mock_open:
