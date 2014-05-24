@@ -72,3 +72,13 @@ class PortVPortMapping(model_base.BASEV2):
     nuage_vport_id = Column(String(36))
     nuage_vif_id = Column(String(36))
     static_ip = Column(Boolean())
+
+
+class RouterRoutesMapping(model_base.BASEV2, models_v2.Route):
+    __tablename__ = 'routerroutes_mapping'
+    router_id = Column(String(36),
+                       ForeignKey('routers.id',
+                                  ondelete="CASCADE"),
+                       primary_key=True,
+                       nullable=False)
+    nuage_route_id = Column(String(36))

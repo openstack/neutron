@@ -18,6 +18,7 @@ import os
 
 import mock
 from oslo.config import cfg
+from webob import exc
 
 from neutron.extensions import portbindings
 from neutron.plugins.nuage import extensions
@@ -25,6 +26,7 @@ from neutron.plugins.nuage import plugin as nuage_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.nuage import fake_nuageclient
 from neutron.tests.unit import test_db_plugin
+from neutron.tests.unit import test_extension_extraroute as extraroute_test
 from neutron.tests.unit import test_l3_plugin
 
 API_EXT_PATH = os.path.dirname(extensions.__file__)
@@ -160,3 +162,32 @@ class TestNuagePortsV2(NuagePluginV2TestCase,
 class TestNuageL3NatTestCase(NuagePluginV2TestCase,
                              test_l3_plugin.L3NatDBIntTestCase):
     pass
+
+
+class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
+                                  extraroute_test.ExtraRouteDBIntTestCase):
+
+    def test_router_update_with_dup_destination_address(self):
+        with self.router() as r:
+            with self.subnet(cidr='10.0.1.0/24') as s:
+                with self.port(subnet=s, no_delete=True) as p:
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+
+                    routes = [{'destination': '135.207.0.0/16',
+                               'nexthop': '10.0.1.3'},
+                              {'destination': '135.207.0.0/16',
+                               'nexthop': '10.0.1.5'}]
+
+                    self._update('routers', r['router']['id'],
+                                 {'router': {'routes':
+                                             routes}},
+                                 expected_code=exc.HTTPBadRequest.code)
+
+                    # clean-up
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  None,
+                                                  p['port']['id'])

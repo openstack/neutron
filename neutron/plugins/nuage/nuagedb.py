@@ -131,3 +131,24 @@ def get_net_partitions(session, filters=None, fields=None):
                                               nuage_models.NetPartition,
                                               filters)
     return query
+
+
+def delete_static_route(session, static_route):
+    session.delete(static_route)
+
+
+def get_router_route_mapping(session, id, route):
+    qry = session.query(nuage_models.RouterRoutesMapping)
+    return qry.filter_by(router_id=id,
+                         destination=route['destination'],
+                         nexthop=route['nexthop']).one()
+
+
+def add_static_route(session, router_id, nuage_rtr_id,
+                     destination, nexthop):
+    staticrt = nuage_models.RouterRoutesMapping(router_id=router_id,
+                                                nuage_route_id=nuage_rtr_id,
+                                                destination=destination,
+                                                nexthop=nexthop)
+    session.add(staticrt)
+    return staticrt
