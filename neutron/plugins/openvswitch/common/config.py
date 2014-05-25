@@ -75,7 +75,7 @@ agent_opts = [
                        "(gre and/or vxlan)")),
     cfg.IntOpt('vxlan_udp_port', default=constants.VXLAN_UDP_PORT,
                help=_("The UDP port to use for VXLAN tunnels.")),
-    cfg.IntOpt('veth_mtu', default=None,
+    cfg.IntOpt('veth_mtu',
                help=_("MTU size of veth interfaces")),
     cfg.BoolOpt('l2_population', default=False,
                 help=_("Use ml2 l2population mechanism driver to learn "

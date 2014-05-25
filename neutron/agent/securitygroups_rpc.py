@@ -28,7 +28,6 @@ SG_RPC_VERSION = "1.1"
 security_group_opts = [
     cfg.StrOpt(
         'firewall_driver',
-        default=None,
         help=_('Driver for security groups firewall in the L2 agent')),
     cfg.BoolOpt(
         'enable_security_group',

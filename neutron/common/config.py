@@ -101,7 +101,6 @@ core_opts = [
                help=_('Authorization URL for connecting to nova in admin '
                       'context')),
     cfg.StrOpt('nova_ca_certificates_file',
-               default=None,
                help=_('CA file for novaclient to verify server certificates')),
     cfg.BoolOpt('nova_api_insecure', default=False,
                 help=_("If True, ignore any SSL validation issues")),

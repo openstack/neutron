@@ -36,7 +36,7 @@ restproxy_opts = [
                        "which performs the networking configuration. Only one"
                        "server is needed per deployment, but you may wish to"
                        "deploy multiple servers to support failover.")),
-    cfg.StrOpt('server_auth', default=None, secret=True,
+    cfg.StrOpt('server_auth', secret=True,
                help=_("The username and password for authenticating against "
                       " the Big Switch or Floodlight controller.")),
     cfg.BoolOpt('server_ssl', default=True,

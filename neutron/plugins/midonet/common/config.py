@@ -33,7 +33,6 @@ midonet_opts = [
                help=_('ID of the project that MidoNet admin user'
                       'belongs to.')),
     cfg.StrOpt('provider_router_id',
-               default=None,
                help=_('Virtual provider router ID.')),
     cfg.StrOpt('mode',
                default='dev',

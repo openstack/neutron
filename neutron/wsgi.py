@@ -65,15 +65,12 @@ socket_opts = [
                 default=False,
                 help=_('Enable SSL on the API server')),
     cfg.StrOpt('ssl_ca_file',
-               default=None,
                help=_("CA certificate file to use to verify "
                       "connecting clients")),
     cfg.StrOpt('ssl_cert_file',
-               default=None,
                help=_("Certificate file to use when starting "
                       "the server securely")),
     cfg.StrOpt('ssl_key_file',
-               default=None,
                help=_("Private key file to use when starting "
                       "the server securely")),
 ]
