@@ -22,6 +22,7 @@ import datetime
 import functools
 import hashlib
 import logging as std_logging
+import multiprocessing
 import os
 import random
 import signal
@@ -291,3 +292,10 @@ def get_dhcp_agent_device_id(network_id, host):
     local_hostname = host.split('.')[0]
     host_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, str(local_hostname))
     return 'dhcp%s-%s' % (host_uuid, network_id)
+
+
+def cpu_count():
+    try:
+        return multiprocessing.cpu_count()
+    except NotImplementedError:
+        return 1
