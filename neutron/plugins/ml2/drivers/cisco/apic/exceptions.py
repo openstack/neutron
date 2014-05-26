@@ -50,3 +50,10 @@ class ApicHostNotConfigured(exceptions.NotAuthorized):
 class ApicManagedObjectNotSupported(exceptions.NeutronException):
     """Attempted to use an unsupported Managed Object."""
     message = _("Managed Object '%(mo_class)s' is not supported")
+
+
+class ApicMultipleVlanRanges(exceptions.NeutronException):
+    """Multiple VLAN ranges specified."""
+    message = _("Multiple VLAN ranges are not supported in the APIC plugin. "
+                "Please specify a single VLAN range. "
+                "Current config: '%(vlan_ranges)s'")
