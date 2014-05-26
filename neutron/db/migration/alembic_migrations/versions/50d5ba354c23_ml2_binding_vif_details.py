@@ -65,6 +65,8 @@ def upgrade(active_plugins=None, options=None):
             " vif_details = '{\"port_filter\": false}'"
             " WHERE cap_port_filter = false")
     op.drop_column('ml2_port_bindings', 'cap_port_filter')
+    if op.get_bind().engine.name == 'ibm_db_sa':
+        op.execute("CALL SYSPROC.ADMIN_CMD('REORG TABLE ml2_port_bindings')")
 
 
 def downgrade(active_plugins=None, options=None):
@@ -93,3 +95,5 @@ def downgrade(active_plugins=None, options=None):
             " cap_port_filter = true"
             " WHERE vif_details LIKE '%\"port_filter\": true%'")
     op.drop_column('ml2_port_bindings', 'vif_details')
+    if op.get_bind().engine.name == 'ibm_db_sa':
+        op.execute("CALL SYSPROC.ADMIN_CMD('REORG TABLE ml2_port_bindings')")
