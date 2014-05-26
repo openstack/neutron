@@ -24,18 +24,18 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import common_db_mixin
 from neutron.db import extraroute_db
-from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
+from neutron.db import l3_hamode_db
 from neutron.openstack.common import importutils
 from neutron.plugins.common import constants
 
 
 class L3RouterPlugin(common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
-                     l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                      l3_gwmode_db.L3_NAT_db_mixin,
-                     l3_dvrscheduler_db.L3_DVRsch_db_mixin):
+                     l3_dvrscheduler_db.L3_DVRsch_db_mixin,
+                     l3_hamode_db.L3_HA_NAT_db_mixin):
 
     """Implementation of the Neutron L3 Router Service Plugin.
 
@@ -43,17 +43,19 @@ class L3RouterPlugin(common_db_mixin.CommonDbMixin,
     router and floatingip resources and manages associated
     request/response.
     All DB related work is implemented in classes
-    l3_db.L3_NAT_db_mixin, l3_dvr_db.L3_NAT_with_dvr_db_mixin, and
-    extraroute_db.ExtraRoute_db_mixin.
+    l3_db.L3_NAT_db_mixin, l3_hamode_db.L3_HA_NAT_db_mixin,
+    l3_dvr_db.L3_NAT_with_dvr_db_mixin, and extraroute_db.ExtraRoute_db_mixin.
     """
     supported_extension_aliases = ["dvr", "router", "ext-gw-mode",
-                                   "extraroute", "l3_agent_scheduler"]
+                                   "extraroute", "l3_agent_scheduler",
+                                   "l3-ha"]
 
     def __init__(self):
         self.setup_rpc()
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)
         self.start_periodic_agent_status_check()
+        super(L3RouterPlugin, self).__init__()
 
     def setup_rpc(self):
         # RPC support
