@@ -396,10 +396,11 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             with mock.patch.object(utils, 'execute') as exec_fn:
                 exec_fn.return_value = False
                 self.assertEqual(self.lbm.ensure_vlan("eth0", "1"), "eth0.1")
-                exec_fn.assert_called_twice()
+                # FIXME(kevinbenton): validate the params to the exec_fn calls
+                self.assertEqual(exec_fn.call_count, 2)
                 exec_fn.return_value = True
                 self.assertIsNone(self.lbm.ensure_vlan("eth0", "1"))
-                exec_fn.assert_called_once()
+                self.assertEqual(exec_fn.call_count, 3)
 
     def test_ensure_vxlan(self):
         seg_id = "12345678"

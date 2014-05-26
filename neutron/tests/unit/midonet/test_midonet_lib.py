@@ -88,12 +88,11 @@ class MidoClientTestCase(testtools.TestCase):
 
         dhcp_call = mock.call.add_bridge_dhcp(bridge, gateway_ip, cidr,
                                               host_rts=host_rts,
-                                              dns_servers=dns_servers)
+                                              dns_nservers=dns_servers)
 
         self.client.create_dhcp(bridge, gateway_ip, cidr, host_rts=host_rts,
                                 dns_servers=dns_servers)
-
-        bridge.assert_has_call(dhcp_call)
+        self.mock_api.assert_has_calls([dhcp_call])
 
     def test_delete_dhcp(self):
 

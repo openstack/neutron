@@ -401,7 +401,7 @@ class TestBridgeInterfaceDriver(TestBase):
         with mock.patch('neutron.agent.linux.interface.LOG.debug') as log:
             br = interface.BridgeInterfaceDriver(self.conf)
             br.unplug('tap0')
-            log.assert_called_once()
+            self.assertEqual(log.call_count, 1)
 
         self.ip_dev.assert_has_calls([mock.call('tap0', 'sudo', None),
                                       mock.call().link.delete()])

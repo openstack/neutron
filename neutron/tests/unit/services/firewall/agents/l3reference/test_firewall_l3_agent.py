@@ -255,7 +255,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
                 routers,
                 ri.router['tenant_id'])
             mock_get_firewalls_for_tenant.assert_called_once_with(ctx)
-            mock_driver_update_firewall.assert_called_once(
+            mock_driver_update_firewall.assert_called_once_with(
                 routers,
                 fake_firewall_list[0])
 
@@ -299,7 +299,7 @@ class TestFwaasL3AgentRpcCallback(base.BaseTestCase):
                 routers,
                 ri.router['tenant_id'])
             mock_get_firewalls_for_tenant.assert_called_once_with(ctx)
-            mock_driver_delete_firewall.assert_called_once(
+            mock_driver_delete_firewall.assert_called_once_with(
                 routers,
                 fake_firewall_list[0])
 
