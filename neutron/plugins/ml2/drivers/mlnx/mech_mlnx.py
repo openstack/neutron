@@ -69,6 +69,9 @@ class MlnxMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         if self.check_segment_for_agent(segment, agent):
             vif_type = self._get_vif_type(
                 context.current[portbindings.VNIC_TYPE])
+            if segment[api.NETWORK_TYPE] in ['flat', 'vlan']:
+                self.vif_details['physical_network'] = segment[
+                    'physical_network']
             context.set_binding(segment[api.ID],
                                 vif_type,
                                 self.vif_details)
