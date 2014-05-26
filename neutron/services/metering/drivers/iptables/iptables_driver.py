@@ -141,16 +141,17 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         for rule in rules:
             remote_ip = rule['remote_ip_prefix']
 
-            dir = '-i ' + ext_dev
             if rule['direction'] == 'egress':
-                dir = '-o ' + ext_dev
+                dir_opt = '-o %s -s %s' % (ext_dev, remote_ip)
+            else:
+                dir_opt = '-i %s -d %s' % (ext_dev, remote_ip)
 
             if rule['excluded']:
-                ipt_rule = dir + ' -d ' + remote_ip + ' -j RETURN'
-                im.ipv4['filter'].add_rule(rules_chain, ipt_rule, wrap=False,
-                                           top=True)
+                ipt_rule = '%s -j RETURN' % dir_opt
+                im.ipv4['filter'].add_rule(rules_chain, ipt_rule,
+                                           wrap=False, top=True)
             else:
-                ipt_rule = dir + ' -d ' + remote_ip + ' -j ' + label_chain
+                ipt_rule = '%s -j %s' % (dir_opt, label_chain)
                 im.ipv4['filter'].add_rule(rules_chain, ipt_rule,
                                            wrap=False, top=False)
 
