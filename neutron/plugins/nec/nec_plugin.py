@@ -683,8 +683,9 @@ class DhcpRpcCallback(dhcp_rpc_base.DhcpRpcCallbackMixin):
 
 
 class L3RpcCallback(l3_rpc_base.L3RpcCallbackMixin):
-    # L3PluginApi BASE_RPC_API_VERSION
-    RPC_API_VERSION = '1.0'
+    # 1.0  L3PluginApi BASE_RPC_API_VERSION
+    # 1.1  Support update_floatingip_statuses
+    RPC_API_VERSION = '1.1'
 
 
 class SecurityGroupServerRpcCallback(
