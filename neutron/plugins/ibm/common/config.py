@@ -49,8 +49,8 @@ sdnve_opts = [
     cfg.ListOpt('interface_mappings',
                 default=DEFAULT_INTERFACE_MAPPINGS,
                 help=_("List of <physical_network_name>:<interface_name>")),
-    cfg.StrOpt('default_tenant_type', default='OF',
-               help=_("Tenant type: OF (default) and OVERLAY")),
+    cfg.StrOpt('default_tenant_type', default='OVERLAY',
+               help=_("Tenant type: OVERLAY (default) or OF")),
     cfg.StrOpt('overlay_signature', default='SDNVE-OVERLAY',
                help=_("The string in tenant description that indicates "
                       "the tenant is a OVERLAY tenant")),
