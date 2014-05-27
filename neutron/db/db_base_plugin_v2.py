@@ -238,7 +238,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         db.configure_db()
         if cfg.CONF.notify_nova_on_port_status_changes:
             from neutron.notifiers import nova
-            # NOTE(arosen) These event listners are here to hook into when
+            # NOTE(arosen) These event listeners are here to hook into when
             # port status changes and notify nova about their change.
             self.nova_notifier = nova.Notifier()
             event.listen(models_v2.Port, 'after_insert',

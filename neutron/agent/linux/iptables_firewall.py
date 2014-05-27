@@ -333,7 +333,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
         if protocol in ['icmp', 'icmpv6']:
             # Note(xuhanp): port_range_min/port_range_max represent
-            # icmp type/code when protocal is icmp or icmpv6
+            # icmp type/code when protocol is icmp or icmpv6
             # icmp code can be 0 so we cannot use "if port_range_max" here
             if port_range_max is not None:
                 return ['--%s-type' % protocol,
