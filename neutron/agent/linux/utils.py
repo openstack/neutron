@@ -71,9 +71,12 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
         m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdout: %(stdout)r\n"
               "Stderr: %(stderr)r") % {'cmd': cmd, 'code': obj.returncode,
                                        'stdout': _stdout, 'stderr': _stderr}
-        LOG.debug(m)
-        if obj.returncode and check_exit_code:
-            raise RuntimeError(m)
+        if obj.returncode:
+            LOG.error(m)
+            if check_exit_code:
+                raise RuntimeError(m)
+        else:
+            LOG.debug(m)
     finally:
         # NOTE(termie): this appears to be necessary to let the subprocess
         #               call clean something up in between calls, without

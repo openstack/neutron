@@ -20,6 +20,19 @@ from neutron.agent.linux import utils
 from neutron.tests import base
 
 
+class FakeCreateProcess(object):
+    class FakeStdin(object):
+        def close(self):
+            pass
+
+    def __init__(self, returncode):
+        self.returncode = returncode
+        self.stdin = self.FakeStdin()
+
+    def communicate(self, process_input=None):
+        return '', ''
+
+
 class AgentUtilsExecuteTest(base.BaseTestCase):
     def setUp(self):
         super(AgentUtilsExecuteTest, self).setUp()
@@ -74,6 +87,28 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         result = utils.execute(["ls", self.test_file],
                                addl_env={'foo': 'bar'})
         self.assertEqual(result, expected)
+
+    def test_return_code_log_error_raise_runtime(self):
+        with mock.patch.object(utils, 'create_process') as create_process:
+            create_process.return_value = FakeCreateProcess(1), 'ls'
+            with mock.patch.object(utils, 'LOG') as log:
+                self.assertRaises(RuntimeError, utils.execute,
+                                  ['ls'])
+                self.assertTrue(log.error.called)
+
+    def test_return_code_log_error_no_raise_runtime(self):
+        with mock.patch.object(utils, 'create_process') as create_process:
+            create_process.return_value = FakeCreateProcess(1), 'ls'
+            with mock.patch.object(utils, 'LOG') as log:
+                utils.execute(['ls'], check_exit_code=False)
+                self.assertTrue(log.error.called)
+
+    def test_return_code_log_debug(self):
+        with mock.patch.object(utils, 'create_process') as create_process:
+            create_process.return_value = FakeCreateProcess(0), 'ls'
+            with mock.patch.object(utils, 'LOG') as log:
+                utils.execute(['ls'])
+                self.assertTrue(log.debug.called)
 
 
 class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
