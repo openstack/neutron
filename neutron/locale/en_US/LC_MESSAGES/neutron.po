@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-05-26 06:10+0000\n"
+"POT-Creation-Date: 2014-05-27 06:13+0000\n"
 "PO-Revision-Date: 2013-01-28 21:54+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: English (United States) "
@@ -2864,8 +2864,8 @@ msgid ""
 msgstr ""
 
 #: neutron/db/l3_db.py:387 neutron/db/l3_db.py:464
-#: neutron/plugins/bigswitch/plugin.py:1001
-#: neutron/plugins/bigswitch/plugin.py:1010
+#: neutron/plugins/bigswitch/plugin.py:998
+#: neutron/plugins/bigswitch/plugin.py:1007
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
@@ -2917,7 +2917,7 @@ msgid ""
 "assigning a floating IP"
 msgstr ""
 
-#: neutron/db/l3_db.py:659 neutron/plugins/vmware/plugins/base.py:1849
+#: neutron/db/l3_db.py:659 neutron/plugins/vmware/plugins/base.py:1845
 msgid "fixed_ip_address cannot be specified without a port_id"
 msgstr ""
 
@@ -4564,72 +4564,72 @@ msgstr ""
 msgid "NeutronRestProxyV2: update_port() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:804
+#: neutron/plugins/bigswitch/plugin.py:801
 msgid "NeutronRestProxyV2: delete_port() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:820
+#: neutron/plugins/bigswitch/plugin.py:817
 msgid "NeutronRestProxyV2: create_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:836
+#: neutron/plugins/bigswitch/plugin.py:833
 msgid "NeutronRestProxyV2: update_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:854
+#: neutron/plugins/bigswitch/plugin.py:851
 msgid "NeutronRestProxyV2: delete_subnet() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:892
+#: neutron/plugins/bigswitch/plugin.py:889
 msgid "NeutronRestProxyV2: create_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:914
+#: neutron/plugins/bigswitch/plugin.py:911
 msgid "NeutronRestProxyV2.update_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:936
+#: neutron/plugins/bigswitch/plugin.py:933
 msgid "NeutronRestProxyV2: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:965
+#: neutron/plugins/bigswitch/plugin.py:962
 msgid "NeutronRestProxyV2: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:993
+#: neutron/plugins/bigswitch/plugin.py:990
 msgid "NeutronRestProxyV2: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1026
+#: neutron/plugins/bigswitch/plugin.py:1023
 msgid "NeutronRestProxyV2: create_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1043
+#: neutron/plugins/bigswitch/plugin.py:1040
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1049
+#: neutron/plugins/bigswitch/plugin.py:1046
 msgid "NeutronRestProxyV2: update_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1065
+#: neutron/plugins/bigswitch/plugin.py:1062
 msgid "NeutronRestProxyV2: delete_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1080
+#: neutron/plugins/bigswitch/plugin.py:1077
 msgid "NeutronRestProxyV2: diassociate_floatingips() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1110
+#: neutron/plugins/bigswitch/plugin.py:1107
 msgid "NeutronRestProxyV2: too many external networks"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1125
+#: neutron/plugins/bigswitch/plugin.py:1122
 msgid "Adding host route: "
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1126
+#: neutron/plugins/bigswitch/plugin.py:1123
 #, python-format
 msgid "Destination:%(dst)s nexthop:%(next)s"
 msgstr ""
@@ -5926,7 +5926,7 @@ msgstr ""
 
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:983
 #: neutron/plugins/hyperv/hyperv_neutron_plugin.py:254
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:207
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:208
 #: neutron/plugins/metaplugin/meta_neutron_plugin.py:232
 #: neutron/plugins/mlnx/mlnx_plugin.py:361
 #: neutron/plugins/openvswitch/ovs_neutron_plugin.py:512
@@ -5969,7 +5969,7 @@ msgid "Create port: profile_id=%s"
 msgstr ""
 
 #: neutron/plugins/cisco/n1kv/n1kv_neutron_plugin.py:1201
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:314
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:315
 #, python-format
 msgid "Created port: %s"
 msgstr ""
@@ -6732,32 +6732,32 @@ msgstr ""
 msgid "Deserialized body: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_api.py:235
+#: neutron/plugins/ibm/sdnve_api.py:236
 msgid "Bad resource for forming a list request"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_api.py:245
+#: neutron/plugins/ibm/sdnve_api.py:246
 msgid "Bad resource for forming a show request"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_api.py:255
+#: neutron/plugins/ibm/sdnve_api.py:256
 msgid "Bad resource for forming a create request"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_api.py:267
+#: neutron/plugins/ibm/sdnve_api.py:268
 msgid "Bad resource for forming a update request"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_api.py:278
+#: neutron/plugins/ibm/sdnve_api.py:279
 msgid "Bad resource for forming a delete request"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_api.py:306
+#: neutron/plugins/ibm/sdnve_api.py:307
 #, python-format
 msgid "Non matching tenant and network types: %(ttype)s %(ntype)s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_api.py:368
+#: neutron/plugins/ibm/sdnve_api.py:369
 #, python-format
 msgid "Did not find tenant: %r"
 msgstr ""
@@ -6798,285 +6798,285 @@ msgstr ""
 msgid "Fake SDNVE controller: get controller"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:161
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:162
 msgid "Set a new controller if needed."
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:167
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:168
 #, python-format
 msgid "Set the controller to a new controller: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:175
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:176
 #, python-format
 msgid "Original SDN-VE HTTP request: %(orig)s; New request: %(new)s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:185
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:186
 #, python-format
 msgid "Create network in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:194
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:195
 msgid "Create net failed: no SDN-VE tenant."
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:205
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:206
 #, python-format
 msgid "Create net failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:212
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:213
 #, python-format
 msgid "Update network in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:232
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:233
 #, python-format
 msgid "Update net failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:238
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:239
 #, python-format
 msgid "Delete network in progress: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:248
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:249
 #, python-format
 msgid "Delete net failed after deleting the network in DB: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:253
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:254
 #, python-format
 msgid "Get network in progress: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:259
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:260
 msgid "Get networks in progress"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:269
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:270
 #, python-format
 msgid "Create port in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:285
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:286
 msgid "Create port does not have tenant id info"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:291
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:292
 #, python-format
 msgid "Create port does not have tenant id info; obtained is: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:312
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:313
 #, python-format
 msgid "Create port failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:319
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:320
 #, python-format
 msgid "Update port in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:346
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:347
 #, python-format
 msgid "Update port failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:352
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:353
 #, python-format
 msgid "Delete port in progress: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:365
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:366
 #, python-format
 msgid "Delete port operation failed in SDN-VE after deleting the port from DB: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:374
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:375
 #, python-format
 msgid "Create subnet in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:386
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:387
 #, python-format
 msgid "Create subnet failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:388
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:389
 #, python-format
 msgid "Subnet created: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:394
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:395
 #, python-format
 msgid "Update subnet in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:419
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:420
 #, python-format
 msgid "Update subnet failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:425
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:426
 #, python-format
 msgid "Delete subnet in progress: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:430
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:431
 #, python-format
 msgid ""
 "Delete subnet operation failed in SDN-VE after deleting the subnet from "
 "DB: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:439
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:440
 #, python-format
 msgid "Create router in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:442
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:443
 #, python-format
 msgid "Ignoring admin_state_up=False for router=%r.  Overriding with True"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:452
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:453
 msgid "Create router failed: no SDN-VE tenant."
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:460
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:461
 #, python-format
 msgid "Create router failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:462
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:463
 #, python-format
 msgid "Router created: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:467
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:468
 #, python-format
 msgid "Update router in progress: id=%(id)s router=%(router)r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:474
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:475
 msgid "admin_state_up=False routers are not supported."
-msgstr ""
-
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:493
-#, python-format
-msgid "Update router failed in SDN-VE: %s"
 msgstr ""
 
 #: neutron/plugins/ibm/sdnve_neutron_plugin.py:499
 #, python-format
+msgid "Update router failed in SDN-VE: %s"
+msgstr ""
+
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:505
+#, python-format
 msgid "Delete router in progress: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:506
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:512
 #, python-format
 msgid ""
 "Delete router operation failed in SDN-VE after deleting the router in DB:"
 " %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:511
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:517
 #, python-format
 msgid ""
 "Add router interface in progress: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:519
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:525
 #, python-format
 msgid "SdnvePluginV2.add_router_interface called. Port info: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:533
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:539
 #, python-format
 msgid "Update router-add-interface failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:536
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:542
 #, python-format
 msgid "Added router interface: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:540
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:546
 #, python-format
 msgid ""
 "Add router interface only called: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:550
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:556
 msgid ""
 "SdnvePluginV2._add_router_interface_only: failed to add the interface in "
 "the roll back. of a remove_router_interface operation"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:556
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:562
 #, python-format
 msgid ""
 "Remove router interface in progress: router_id=%(router_id)s "
 "interface_info=%(interface_info)r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:565
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:571
 msgid "No port ID"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:567
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:573
 #, python-format
 msgid "SdnvePluginV2.remove_router_interface port: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:571
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:577
 msgid "No fixed IP"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:576
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:582
 #, python-format
 msgid "SdnvePluginV2.remove_router_interface subnet_id: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:584
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:605
 #, python-format
 msgid "Update router-remove-interface failed SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:605
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:626
 #, python-format
 msgid "Create floatingip in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:616
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:637
 #, python-format
 msgid "Creating floating ip operation failed in SDN-VE controller: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:619
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:640
 #, python-format
 msgid "Created floatingip : %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:624
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:645
 #, python-format
 msgid "Update floatingip in progress: %r"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:644
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:665
 #, python-format
 msgid "Update floating ip failed in SDN-VE: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:650
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:671
 #, python-format
 msgid "Delete floatingip in progress: %s"
 msgstr ""
 
-#: neutron/plugins/ibm/sdnve_neutron_plugin.py:655
+#: neutron/plugins/ibm/sdnve_neutron_plugin.py:676
 #, python-format
 msgid "Delete floatingip failed in SDN-VE: %s"
 msgstr ""
@@ -7173,7 +7173,7 @@ msgid "List of <physical_network_name>:<interface_name>"
 msgstr ""
 
 #: neutron/plugins/ibm/common/config.py:53
-msgid "Tenant type: OF (default) and OVERLAY"
+msgid "Tenant type: OVERLAY (default) or OF"
 msgstr ""
 
 #: neutron/plugins/ibm/common/config.py:55
@@ -8550,27 +8550,27 @@ msgstr ""
 msgid "mechanism_manager.create_port_postcommit failed, deleting port '%s'"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:721
+#: neutron/plugins/ml2/plugin.py:717
 #: neutron/tests/unit/ml2/test_ml2_plugin.py:131
 #, python-format
 msgid "Deleting port %s"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:739
+#: neutron/plugins/ml2/plugin.py:735
 #: neutron/tests/unit/ml2/test_ml2_plugin.py:132
 #, python-format
 msgid "The port '%s' was deleted"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:748
+#: neutron/plugins/ml2/plugin.py:744
 msgid "Calling base delete_port"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:760
+#: neutron/plugins/ml2/plugin.py:756
 msgid "mechanism_manager.delete_port_postcommit failed"
 msgstr ""
 
-#: neutron/plugins/ml2/plugin.py:772
+#: neutron/plugins/ml2/plugin.py:768
 #, python-format
 msgid "Port %(port)s updated up by agent not found"
 msgstr ""
@@ -9929,38 +9929,38 @@ msgstr ""
 msgid "NECPluginV2.update_port() called, id=%(id)s port=%(port)s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:642
+#: neutron/plugins/nec/nec_plugin.py:638
 #, python-format
 msgid "NECPluginV2.delete_port() called, id=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:707
+#: neutron/plugins/nec/nec_plugin.py:703
 #, python-format
 msgid ""
 "NECPluginV2RPCCallbacks.get_port_from_device() called, device=%(device)s "
 "=> %(ret)s."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:738
+#: neutron/plugins/nec/nec_plugin.py:734
 #, python-format
 msgid "NECPluginV2RPCCallbacks.update_ports() called, kwargs=%s ."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:748
+#: neutron/plugins/nec/nec_plugin.py:744
 #, python-format
 msgid ""
 "update_ports(): ignore unchanged portinfo in port_added message "
 "(port_id=%s)."
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:768
+#: neutron/plugins/nec/nec_plugin.py:764
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message due to portinfo for "
 "port_id=%s was not registered"
 msgstr ""
 
-#: neutron/plugins/nec/nec_plugin.py:773
+#: neutron/plugins/nec/nec_plugin.py:769
 #, python-format
 msgid ""
 "update_ports(): ignore port_removed message received from different host "
@@ -13170,13 +13170,13 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/vmware/plugins/base.py:669
-#: neutron/plugins/vmware/plugins/base.py:1784
+#: neutron/plugins/vmware/plugins/base.py:1780
 #, python-format
 msgid "Logical router resource %s not found on NSX platform"
 msgstr ""
 
 #: neutron/plugins/vmware/plugins/base.py:673
-#: neutron/plugins/vmware/plugins/base.py:1788
+#: neutron/plugins/vmware/plugins/base.py:1784
 msgid "Unable to update logical routeron NSX Platform"
 msgstr ""
 
@@ -13271,195 +13271,195 @@ msgstr ""
 msgid "Unable to create port or set port attachment in NSX."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1293
+#: neutron/plugins/vmware/plugins/base.py:1289
 #, python-format
 msgid "Updating port: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1328
+#: neutron/plugins/vmware/plugins/base.py:1324
 #, python-format
 msgid "Unable to update port id: %s."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1411
+#: neutron/plugins/vmware/plugins/base.py:1407
 msgid ""
 "Cannot create a distributed router with the NSX platform currently in "
 "execution. Please, try without specifying the 'distributed' attribute."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1417
+#: neutron/plugins/vmware/plugins/base.py:1413
 msgid "Unable to create logical router on NSX Platform"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1428
+#: neutron/plugins/vmware/plugins/base.py:1424
 #, python-format
 msgid ""
 "Unable to create L3GW port on logical router %(router_uuid)s. Verify "
 "Default Layer-3 Gateway service %(def_l3_gw_svc)s id is correct"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1438
+#: neutron/plugins/vmware/plugins/base.py:1434
 #, python-format
 msgid "Unable to create router %s on NSX backend"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1467
-#: neutron/plugins/vmware/plugins/base.py:1552
+#: neutron/plugins/vmware/plugins/base.py:1463
+#: neutron/plugins/vmware/plugins/base.py:1548
 #: neutron/plugins/vmware/plugins/service.py:201
 #: neutron/plugins/vmware/plugins/service.py:1213
 #, python-format
 msgid "Network '%s' is not a valid external network"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1516
+#: neutron/plugins/vmware/plugins/base.py:1512
 #, python-format
 msgid "Failed to set gateway info for router being created:%s - removing router"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1519
+#: neutron/plugins/vmware/plugins/base.py:1515
 #, python-format
 msgid ""
 "Create router failed while setting external gateway. Router:%s has been "
 "removed from DB and backend"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1561
+#: neutron/plugins/vmware/plugins/base.py:1557
 msgid ""
 "'routes' cannot contain route '0.0.0.0/0', this must be updated through "
 "the default gateway attribute"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1577
+#: neutron/plugins/vmware/plugins/base.py:1573
 #, python-format
 msgid "Logical router %s not found on NSX Platform"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1581
+#: neutron/plugins/vmware/plugins/base.py:1577
 msgid "Unable to update logical router on NSX Platform"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1583
+#: neutron/plugins/vmware/plugins/base.py:1579
 msgid ""
 "Request cannot contain 'routes' with the NSX platform currently in "
 "execution. Please, try without specifying the static routes."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1640
+#: neutron/plugins/vmware/plugins/base.py:1636
 #, python-format
 msgid "Logical router '%s' not found on NSX Platform"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1644
+#: neutron/plugins/vmware/plugins/base.py:1640
 #, python-format
 msgid "Unable to delete logical router '%s' on NSX Platform"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1654
+#: neutron/plugins/vmware/plugins/base.py:1650
 #, python-format
 msgid ""
 "Unable to remove NSX mapping for Neutron router %(router_id)s because of "
 "the following exception:%(d_exc)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1722
+#: neutron/plugins/vmware/plugins/base.py:1718
 #, python-format
 msgid ""
 "Add_router_interface completed for subnet:%(subnet_id)s and "
 "router:%(router_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1820
+#: neutron/plugins/vmware/plugins/base.py:1816
 #, python-format
 msgid ""
 "An error occurred while removing NAT rules on the NSX platform for "
 "floating ip:%s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1825
+#: neutron/plugins/vmware/plugins/base.py:1821
 msgid "An incorrect number of matching NAT rules was found on the NSX platform"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1957
+#: neutron/plugins/vmware/plugins/base.py:1953
 #, python-format
 msgid ""
 "An error occurred while creating NAT rules on the NSX platform for "
 "floating ip:%(floating_ip)s mapped to internal ip:%(internal_ip)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:1963
+#: neutron/plugins/vmware/plugins/base.py:1959
 msgid "Failed to update NAT rules for floatingip update"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2000
+#: neutron/plugins/vmware/plugins/base.py:1996
 #, python-format
 msgid "The port '%s' is not associated with floating IPs"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2003
+#: neutron/plugins/vmware/plugins/base.py:1999
 #, python-format
 msgid "Nat rules not found in nsx for port: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2039
+#: neutron/plugins/vmware/plugins/base.py:2035
 #, python-format
 msgid "Unable to create l2_gw_service for: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2062
+#: neutron/plugins/vmware/plugins/base.py:2058
 msgid ""
 "Unable to remove gateway service from NSX plaform - the resource was not "
 "found"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2091
+#: neutron/plugins/vmware/plugins/base.py:2087
 #, python-format
 msgid "Unable to update name on NSX backend for network gateway: %s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2120
+#: neutron/plugins/vmware/plugins/base.py:2116
 #, python-format
 msgid ""
 "Rolling back database changes for gateway device %s because of an error "
 "in the NSX backend"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2165
-#: neutron/plugins/vmware/plugins/base.py:2203
+#: neutron/plugins/vmware/plugins/base.py:2161
+#: neutron/plugins/vmware/plugins/base.py:2199
 #, python-format
 msgid ""
 "Neutron gateway device: %(neutron_id)s; NSX transport node identifier: "
 "%(nsx_id)s; Operational status: %(status)s."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2300
+#: neutron/plugins/vmware/plugins/base.py:2296
 #, python-format
 msgid ""
 "Removal of gateway device: %(neutron_id)s failed on NSX backend (NSX "
 "id:%(nsx_id)s) because the NSX resource was not found"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2307
+#: neutron/plugins/vmware/plugins/base.py:2303
 #, python-format
 msgid ""
 "Removal of gateway device: %(neutron_id)s failed on NSX backend (NSX "
 "id:%(nsx_id)s). Neutron and NSX states have diverged."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2355
+#: neutron/plugins/vmware/plugins/base.py:2351
 #, python-format
 msgid ""
 "Error while updating security profile %(uuid)s with name %(name)s: "
 "%(error)s."
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2387
+#: neutron/plugins/vmware/plugins/base.py:2383
 #, python-format
 msgid ""
 "The NSX security profile %(sec_profile_id)s, associated with the Neutron "
 "security group %(sec_group_id)s was not found on the backend"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2395
+#: neutron/plugins/vmware/plugins/base.py:2391
 #, python-format
 msgid ""
 "An exception occurred while removing the NSX security profile "
@@ -13467,12 +13467,12 @@ msgid ""
 "%(sec_group_id)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2402
+#: neutron/plugins/vmware/plugins/base.py:2398
 #, python-format
 msgid "Unable to remove security group %s from backend"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/base.py:2415
+#: neutron/plugins/vmware/plugins/base.py:2411
 #, python-format
 msgid "Port values not valid for protocol: %s"
 msgstr ""
