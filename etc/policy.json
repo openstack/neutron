@@ -70,6 +70,7 @@
     "create_firewall:shared": "rule:admin_only",
     "get_firewall:shared": "rule:admin_only",
     "update_firewall": "rule:admin_or_owner",
+    "update_firewall:shared": "rule:admin_only",
     "delete_firewall": "rule:admin_or_owner",
 
     "create_firewall_policy": "",

@@ -158,7 +158,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         super(NeutronDbPluginV2TestCase, self).tearDown()
 
     def _req(self, method, resource, data=None, fmt=None, id=None, params=None,
-             action=None, subresource=None, sub_id=None):
+             action=None, subresource=None, sub_id=None, context=None):
         fmt = fmt or self.fmt
 
         path = '/%s.%s' % (
@@ -176,7 +176,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if data is not None:  # empty dict is valid
             body = self.serialize(data)
         return testlib_api.create_request(path, body, content_type, method,
-                                          query_string=params)
+                                          query_string=params, context=context)
 
     def new_create_request(self, resource, data, fmt=None, id=None,
                            subresource=None):
@@ -211,9 +211,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         )
 
     def new_update_request(self, resource, data, id, fmt=None,
-                           subresource=None):
+                           subresource=None, context=None):
         return self._req(
-            'PUT', resource, data, fmt, id=id, subresource=subresource
+            'PUT', resource, data, fmt, id=id, subresource=subresource,
+            context=context
         )
 
     def new_action_request(self, resource, data, id, action, fmt=None,

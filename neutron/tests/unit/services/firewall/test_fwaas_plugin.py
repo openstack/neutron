@@ -248,6 +248,25 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
                 res = req.get_response(self.ext_api)
                 self.assertEqual(res.status_int, exc.HTTPConflict.code)
 
+    def test_update_firewall_shared_fails_for_non_admin(self):
+        ctx = context.get_admin_context()
+        with self.firewall_policy() as fwp:
+            fwp_id = fwp['firewall_policy']['id']
+            with self.firewall(firewall_policy_id=fwp_id,
+                               admin_state_up=
+                               test_db_firewall.ADMIN_STATE_UP,
+                               tenant_id='noadmin') as firewall:
+                fw_id = firewall['firewall']['id']
+                self.callbacks.set_firewall_status(ctx, fw_id,
+                                                   const.ACTIVE)
+                data = {'firewall': {'shared': True}}
+                req = self.new_update_request(
+                    'firewalls', data, fw_id,
+                    context=context.Context('', 'noadmin'))
+                res = req.get_response(self.ext_api)
+                # returns 404 due to security reasons
+                self.assertEqual(res.status_int, exc.HTTPNotFound.code)
+
     def test_update_firewall_policy_fails_when_firewall_pending(self):
         name = "new_firewall1"
         attrs = self._get_test_firewall_attrs(name)
