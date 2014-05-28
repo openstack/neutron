@@ -348,6 +348,23 @@ class LoadBalancerExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         self.assertIn('health_monitor', res)
         self.assertEqual(res['health_monitor'], return_value)
 
+    def test_health_monitor_create_with_timeout_negative(self):
+        data = {'health_monitor': {'type': 'HTTP',
+                                   'delay': 2,
+                                   'timeout': -1,
+                                   'max_retries': 3,
+                                   'http_method': 'GET',
+                                   'url_path': '/path',
+                                   'expected_codes': '200-300',
+                                   'admin_state_up': True,
+                                   'tenant_id': _uuid()}}
+        res = self.api.post(_get_path('lb/health_monitors',
+                                      fmt=self.fmt),
+                            self.serialize(data),
+                            content_type='application/%s' % self.fmt,
+                            expect_errors=True)
+        self.assertEqual(400, res.status_int)
+
     def test_health_monitor_list(self):
         health_monitor_id = _uuid()
         return_value = [{'type': 'HTTP',
