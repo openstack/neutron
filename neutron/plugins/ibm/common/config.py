@@ -40,7 +40,7 @@ sdnve_opts = [
                help=_("SDN-VE administrator user id")),
     cfg.StrOpt('password', default='admin', secret=True,
                help=_("SDN-VE administrator password")),
-    cfg.StrOpt('integration_bridge', default=None,
+    cfg.StrOpt('integration_bridge',
                help=_("Integration bridge to use")),
     cfg.BoolOpt('reset_bridge', default=True,
                 help=_("Reset the integration bridge before use")),

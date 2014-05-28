@@ -65,7 +65,6 @@ class MetadataProxyHandler(object):
                     help=_("Turn off verification of the certificate for"
                            " ssl")),
         cfg.StrOpt('auth_ca_cert',
-                   default=None,
                    help=_("Certificate Authority public key (CA cert) "
                           "file for ssl")),
         cfg.StrOpt('endpoint_type',
