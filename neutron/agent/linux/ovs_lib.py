@@ -476,7 +476,7 @@ def get_installed_ovs_usr_version(root_helper):
 
 
 def get_installed_ovs_klm_version():
-    args = ["modinfo", "-F vermagic", "openvswitch"]
+    args = ["modinfo", "openvswitch"]
     try:
         cmd = utils.execute(args)
         for line in cmd.split('\n'):
