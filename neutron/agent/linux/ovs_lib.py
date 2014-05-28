@@ -239,7 +239,8 @@ class OVSBridge(BaseOVS):
 
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=p_const.TYPE_GRE,
-                        vxlan_udp_port=constants.VXLAN_UDP_PORT):
+                        vxlan_udp_port=constants.VXLAN_UDP_PORT,
+                        dont_fragment=True):
         vsctl_command = ["--", "--may-exist", "add-port", self.br_name,
                          port_name]
         vsctl_command.extend(["--", "set", "Interface", port_name,
@@ -248,6 +249,8 @@ class OVSBridge(BaseOVS):
             # Only set the VXLAN UDP port if it's not the default
             if vxlan_udp_port != constants.VXLAN_UDP_PORT:
                 vsctl_command.append("options:dst_port=%s" % vxlan_udp_port)
+        vsctl_command.append(("options:df_default=%s" %
+                             bool(dont_fragment)).lower())
         vsctl_command.extend(["options:remote_ip=%s" % remote_ip,
                               "options:local_ip=%s" % local_ip,
                               "options:in_key=flow",
