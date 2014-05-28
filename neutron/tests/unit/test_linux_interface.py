@@ -81,15 +81,32 @@ class TestABCDriver(TestBase):
         addresses = [dict(ip_version=4, scope='global',
                           dynamic=False, cidr='172.16.77.240/24')]
         self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        self.ip_dev().route.list_onlink_routes.return_value = []
+
+        bc = BaseChild(self.conf)
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        bc.init_l3('tap0', ['192.168.1.2/24'], namespace=ns,
+                   extra_subnets=[{'cidr': '172.20.0.0/24'}])
+        self.ip_dev.assert_has_calls(
+            [mock.call('tap0', 'sudo', namespace=ns),
+             mock.call().addr.list(scope='global', filters=['permanent']),
+             mock.call().addr.add(4, '192.168.1.2/24', '192.168.1.255'),
+             mock.call().addr.delete(4, '172.16.77.240/24'),
+             mock.call().route.list_onlink_routes(),
+             mock.call().route.add_onlink_route('172.20.0.0/24')])
+
+    def test_l3_init_delete_onlink_routes(self):
+        addresses = [dict(ip_version=4, scope='global',
+                          dynamic=False, cidr='172.16.77.240/24')]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        self.ip_dev().route.list_onlink_routes.return_value = ['172.20.0.0/24']
 
         bc = BaseChild(self.conf)
         ns = '12345678-1234-5678-90ab-ba0987654321'
         bc.init_l3('tap0', ['192.168.1.2/24'], namespace=ns)
         self.ip_dev.assert_has_calls(
-            [mock.call('tap0', 'sudo', namespace=ns),
-             mock.call().addr.list(scope='global', filters=['permanent']),
-             mock.call().addr.add(4, '192.168.1.2/24', '192.168.1.255'),
-             mock.call().addr.delete(4, '172.16.77.240/24')])
+            [mock.call().route.list_onlink_routes(),
+             mock.call().route.delete_onlink_route('172.20.0.0/24')])
 
     def test_l3_init_with_preserve(self):
         addresses = [dict(ip_version=4, scope='global',

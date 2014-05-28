@@ -159,6 +159,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'subnet_id': _uuid()}],
                       'subnet': {'gateway_ip': '20.0.0.1'},
+                      'extra_subnets': [{'cidr': '172.16.0.0/24'}],
                       'id': _uuid(),
                       'network_id': _uuid(),
                       'mac_address': 'ca:fe:de:ad:be:ef',
@@ -178,7 +179,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                                   '20.0.0.30')
             kwargs = {'preserve_ips': ['192.168.1.34/32'],
                       'namespace': 'qrouter-' + router_id,
-                      'gateway': '20.0.0.1'}
+                      'gateway': '20.0.0.1',
+                      'extra_subnets': [{'cidr': '172.16.0.0/24'}]}
             self.mock_driver.init_l3.assert_called_with(interface_name,
                                                         ['20.0.0.30/24'],
                                                         **kwargs)
