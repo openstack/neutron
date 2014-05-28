@@ -68,6 +68,19 @@ class TestMultiProviderNetworks(NsxPluginV2TestCase):
         self.assertEqual(network['network'][pnet.SEGMENTATION_ID], 1)
         self.assertNotIn(mpnet.SEGMENTS, network['network'])
 
+    def test_create_network_provider_flat(self):
+        data = {'network': {'name': 'net1',
+                            pnet.NETWORK_TYPE: 'flat',
+                            pnet.PHYSICAL_NETWORK: 'physnet1',
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        self.assertEqual('flat', network['network'][pnet.NETWORK_TYPE])
+        self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(0, network['network'][pnet.SEGMENTATION_ID])
+        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+
     def test_create_network_single_multiple_provider(self):
         data = {'network': {'name': 'net1',
                             mpnet.SEGMENTS:
