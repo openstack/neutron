@@ -1005,11 +1005,15 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 isinstance(provider_type, bool)):
                 net_bindings = []
                 for tz in net_data[mpnet.SEGMENTS]:
+                    segmentation_id = tz.get(pnet.SEGMENTATION_ID, 0)
+                    segmentation_id_set = attr.is_attr_set(segmentation_id)
+                    if not segmentation_id_set:
+                        segmentation_id = 0
                     net_bindings.append(nsx_db.add_network_binding(
                         context.session, new_net['id'],
                         tz.get(pnet.NETWORK_TYPE),
                         tz.get(pnet.PHYSICAL_NETWORK),
-                        tz.get(pnet.SEGMENTATION_ID, 0)))
+                        segmentation_id))
                 if provider_type:
                     nsx_db.set_multiprovider_network(context.session,
                                                      new_net['id'])
