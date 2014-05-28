@@ -534,6 +534,69 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             {'wrap': True, 'top': False, 'rule': '-j DROP',
              'chain': 'nonexistent'})
 
+    def test_iptables_failure_with_no_failing_line_number(self):
+        with mock.patch.object(iptables_manager, "LOG") as log:
+            # generate Runtime errors on iptables-restore calls
+            def iptables_restore_failer(*args, **kwargs):
+                if 'iptables-restore' in args[0]:
+                    self.input_lines = kwargs['process_input'].split('\n')
+                    # don't provide a specific failure message so all lines
+                    # are logged
+                    raise RuntimeError()
+                return FILTER_DUMP
+            self.execute.side_effect = iptables_restore_failer
+            # _apply_synchronized calls iptables-restore so it should raise
+            # a RuntimeError
+            self.assertRaises(RuntimeError,
+                              self.iptables._apply_synchronized)
+        # The RuntimeError should have triggered a log of the input to the
+        # process that it failed to execute. Verify by comparing the log
+        # call to the 'process_input' arg given to the failed iptables-restore
+        # call.
+        # Failure without a specific line number in the error should cause
+        # all lines to be logged with numbers.
+        logged = ['%7d. %s' % (n, l)
+                  for n, l in enumerate(self.input_lines, 1)]
+        log.error.assert_called_once_with(_(
+            'IPTablesManager.apply failed to apply the '
+            'following set of iptables rules:\n%s'),
+            '\n'.join(logged)
+        )
+
+    def test_iptables_failure_on_specific_line(self):
+        with mock.patch.object(iptables_manager, "LOG") as log:
+            # generate Runtime errors on iptables-restore calls
+            def iptables_restore_failer(*args, **kwargs):
+                if 'iptables-restore' in args[0]:
+                    self.input_lines = kwargs['process_input'].split('\n')
+                    # pretend line 11 failed
+                    msg = ("Exit code: 1\nStdout: ''\n"
+                           "Stderr: 'iptables-restore: line 11 failed\n'")
+                    raise RuntimeError(msg)
+                return FILTER_DUMP
+            self.execute.side_effect = iptables_restore_failer
+            # _apply_synchronized calls iptables-restore so it should raise
+            # a RuntimeError
+            self.assertRaises(RuntimeError,
+                              self.iptables._apply_synchronized)
+        # The RuntimeError should have triggered a log of the input to the
+        # process that it failed to execute. Verify by comparing the log
+        # call to the 'process_input' arg given to the failed iptables-restore
+        # call.
+        # Line 11 of the input was marked as failing so lines (11 - context)
+        # to (11 + context) should be logged
+        ctx = iptables_manager.IPTABLES_ERROR_LINES_OF_CONTEXT
+        log_start = max(0, 11 - ctx)
+        log_end = 11 + ctx
+        logged = ['%7d. %s' % (n, l)
+                  for n, l in enumerate(self.input_lines[log_start:log_end],
+                                        log_start + 1)]
+        log.error.assert_called_once_with(_(
+            'IPTablesManager.apply failed to apply the '
+            'following set of iptables rules:\n%s'),
+            '\n'.join(logged)
+        )
+
     def test_get_traffic_counters_chain_notexists(self):
         with mock.patch.object(iptables_manager, "LOG") as log:
             acc = self.iptables.get_traffic_counters('chain1')
