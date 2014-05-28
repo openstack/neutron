@@ -18,18 +18,18 @@
 # @author: Rudrajit Tapadar, Cisco Systems, Inc.
 
 import base64
-import httplib2
 import netaddr
+import requests
 
 from neutron.common import exceptions as n_exc
 from neutron.extensions import providernet
+from neutron.openstack.common import jsonutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as c_cred
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import network_db_v2
 from neutron.plugins.cisco.extensions import n1kv
-from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
 
@@ -105,25 +105,6 @@ class Client(object):
 
     """
 
-    # Metadata for deserializing xml
-    _serialization_metadata = {
-        "application/xml": {
-            "attributes": {
-                "network": ["id", "name"],
-                "port": ["id", "mac_address"],
-                "subnet": ["id", "prefix"]
-            },
-        },
-        "plurals": {
-            "networks": "network",
-            "ports": "port",
-            "set": "instance",
-            "subnets": "subnet",
-            "mappings": "mapping",
-            "segments": "segment"
-        }
-    }
-
     # Define paths for the URI where the client connects for HTTP requests.
     port_profiles_path = "/virtual-port-profile"
     network_segment_path = "/network-segment/%s"
@@ -152,7 +133,7 @@ class Client(object):
         """
         Fetch all policy profiles from the VSM.
 
-        :returns: XML string
+        :returns: JSON string
         """
         return self._get(self.port_profiles_path)
 
@@ -430,8 +411,8 @@ class Client(object):
         """
         Perform the HTTP request.
 
-        The response is in either XML format or plain text. A GET method will
-        invoke a XML response while a PUT/POST/DELETE returns message from the
+        The response is in either JSON format or plain text. A GET method will
+        invoke a JSON response while a PUT/POST/DELETE returns message from the
         VSM in plain text format.
         Exception is raised when VSM replies with an INTERNAL SERVER ERROR HTTP
         status code (500) i.e. an error has occurred on the VSM or SERVICE
@@ -441,58 +422,35 @@ class Client(object):
         :param action: path to which the client makes request
         :param body: dict for arguments which are sent as part of the request
         :param headers: header for the HTTP request
-        :returns: XML or plain text in HTTP response
+        :returns: JSON or plain text in HTTP response
         """
         action = self.action_prefix + action
         if not headers and self.hosts:
             headers = self._get_auth_header(self.hosts[0])
         headers['Content-Type'] = self._set_content_type('json')
+        headers['Accept'] = self._set_content_type('json')
         if body:
-            body = self._serialize(body)
+            body = jsonutils.dumps(body, indent=2)
             LOG.debug(_("req: %s"), body)
         try:
-            resp, replybody = (httplib2.Http(timeout=self.timeout).
-                               request(action,
-                                       method,
-                                       body=body,
-                                       headers=headers))
+            resp = requests.request(method,
+                                    url=action,
+                                    data=body,
+                                    headers=headers,
+                                    timeout=self.timeout)
         except Exception as e:
             raise c_exc.VSMConnectionFailed(reason=e)
-        LOG.debug(_("status_code %s"), resp.status)
-        if resp.status == 200:
-            if 'application/xml' in resp['content-type']:
-                return self._deserialize(replybody, resp.status)
-            elif 'text/plain' in resp['content-type']:
-                LOG.debug(_("VSM: %s"), replybody)
+        LOG.debug(_("status_code %s"), resp.status_code)
+        if resp.status_code == requests.codes.OK:
+            if 'application/json' in resp.headers['content-type']:
+                try:
+                    return resp.json()
+                except ValueError:
+                    return {}
+            elif 'text/plain' in resp.headers['content-type']:
+                LOG.debug(_("VSM: %s"), resp.text)
         else:
-            raise c_exc.VSMError(reason=replybody)
-
-    def _serialize(self, data):
-        """
-        Serialize a dictionary with a single key into either xml or json.
-
-        :param data: data in the form of dict
-        """
-        if data is None:
-            return None
-        elif type(data) is dict:
-            return wsgi.Serializer().serialize(data, self._set_content_type())
-        else:
-            raise Exception(_("Unable to serialize object of type = '%s'") %
-                            type(data))
-
-    def _deserialize(self, data, status_code):
-        """
-        Deserialize an XML string into a dictionary.
-
-        :param data: XML string from the HTTP response
-        :param status_code: integer status code from the HTTP response
-        :return: data in the form of dict
-        """
-        if status_code == 204:
-            return data
-        return wsgi.Serializer(self._serialization_metadata).deserialize(
-            data, self._set_content_type('xml'))
+            raise c_exc.VSMError(reason=resp.text)
 
     def _set_content_type(self, format=None):
         """
@@ -539,7 +497,7 @@ class Client(object):
         """
         username = c_cred.Store.get_username(host_ip)
         password = c_cred.Store.get_password(host_ip)
-        auth = base64.encodestring("%s:%s" % (username, password))
+        auth = base64.encodestring("%s:%s" % (username, password)).rstrip()
         header = {"Authorization": "Basic %s" % auth}
         return header
 
