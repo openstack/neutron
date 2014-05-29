@@ -1180,6 +1180,7 @@ class TestDeviceManager(base.BaseTestCase):
         plugin.update_dhcp_port.return_value = fake_network.ports[0]
         dh.setup_dhcp_port(fake_network_copy)
         port_body = {'port': {
+                     'network_id': fake_network.id,
                      'fixed_ips': [{'subnet_id': fake_fixed_ip1.subnet_id,
                                     'ip_address': fake_fixed_ip1.ip_address},
                                    {'subnet_id': fake_subnet2.id}]}}

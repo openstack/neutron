@@ -71,9 +71,10 @@ class DhcpRpcCallbackMixin(object):
                         pass
                     else:
                         ctxt.reraise = True
-                network_id = port['port']['network_id']
-                LOG.warn(_("Port for network %(net_id)s could not be created: "
-                           "%(reason)s") % {"net_id": network_id, 'reason': e})
+                net_id = port['port']['network_id']
+                LOG.warn(_("Action %(action)s for network %(net_id)s "
+                           "could not complete successfully: %(reason)s")
+                         % {"action": action, "net_id": net_id, 'reason': e})
 
     def get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active network ids."""

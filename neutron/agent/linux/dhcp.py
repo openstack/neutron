@@ -771,7 +771,8 @@ class DeviceManager(object):
                     port_fixed_ips.extend(
                         [dict(subnet_id=s) for s in dhcp_enabled_subnet_ids])
                     dhcp_port = self.plugin.update_dhcp_port(
-                        port.id, {'port': {'fixed_ips': port_fixed_ips}})
+                        port.id, {'port': {'network_id': network.id,
+                                           'fixed_ips': port_fixed_ips}})
                     if not dhcp_port:
                         raise exceptions.Conflict()
                 else:
@@ -788,7 +789,8 @@ class DeviceManager(object):
                 port_device_id = getattr(port, 'device_id', None)
                 if port_device_id == constants.DEVICE_ID_RESERVED_DHCP_PORT:
                     dhcp_port = self.plugin.update_dhcp_port(
-                        port.id, {'port': {'device_id': device_id}})
+                        port.id, {'port': {'network_id': network.id,
+                                           'device_id': device_id}})
                     if dhcp_port:
                         break
 
