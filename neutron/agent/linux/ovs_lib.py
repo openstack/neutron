@@ -14,6 +14,7 @@
 #    under the License.
 
 import distutils.version as dist_version
+import os
 import re
 
 from oslo.config import cfg
@@ -485,13 +486,9 @@ def get_installed_ovs_klm_version():
 
 
 def get_installed_kernel_version():
-    args = ["uname", "-r"]
     try:
-        cmd = utils.execute(args)
-        for line in cmd.split('\n'):
-            ver = re.findall("\d+\.\d+\.\d+", line)
-            return ver[0]
-    except Exception:
+        return os.uname()[2].split('-', 1)[0]
+    except IndexError:
         LOG.exception(_("Unable to retrieve installed Linux kernel version."))
 
 
