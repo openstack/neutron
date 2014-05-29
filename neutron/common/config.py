@@ -87,7 +87,7 @@ core_opts = [
                 help=_("Send notification to nova when port data (fixed_ips/"
                        "floatingip) changes so nova can update its cache.")),
     cfg.StrOpt('nova_url',
-               default='http://127.0.0.1:8774',
+               default='http://127.0.0.1:8774/v2',
                help=_('URL for connection to nova')),
     cfg.StrOpt('nova_admin_username',
                help=_('Username for connecting to nova in admin context')),
