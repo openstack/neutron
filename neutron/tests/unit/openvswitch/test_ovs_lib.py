@@ -361,6 +361,34 @@ class OVS_Lib_Test(base.BaseTestCase):
                           self.br.delete_flows,
                           **params)
 
+    def test_dump_flows(self):
+        table = 23
+        nxst_flow = "NXST_FLOW reply (xid=0x4):"
+        flows = "\n".join([" cookie=0x0, duration=18042.514s, table=0, "
+                           "n_packets=6, n_bytes=468, "
+                           "priority=2,in_port=1 actions=drop",
+                           " cookie=0x0, duration=18027.562s, table=0, "
+                           "n_packets=0, n_bytes=0, "
+                           "priority=3,in_port=1,dl_vlan=100 "
+                           "actions=mod_vlan_vid:1,NORMAL",
+                           " cookie=0x0, duration=18044.351s, table=0, "
+                           "n_packets=9, n_bytes=594, priority=1 "
+                           "actions=NORMAL", " cookie=0x0, "
+                           "duration=18044.211s, table=23, n_packets=0, "
+                           "n_bytes=0, priority=0 actions=drop"])
+        flow_args = '\n'.join([nxst_flow, flows])
+        run_ofctl = mock.patch.object(self.br, 'run_ofctl').start()
+        run_ofctl.side_effect = [flow_args]
+        retflows = self.br.dump_flows_for_table(table)
+        self.assertEqual(flows, retflows)
+
+    def test_dump_flows_ovs_dead(self):
+        table = 23
+        run_ofctl = mock.patch.object(self.br, 'run_ofctl').start()
+        run_ofctl.side_effect = ['']
+        retflows = self.br.dump_flows_for_table(table)
+        self.assertEqual(None, retflows)
+
     def test_mod_flow_with_priority_set(self):
         params = {'in_port': '1',
                   'priority': '1'}
