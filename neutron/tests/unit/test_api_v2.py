@@ -97,15 +97,13 @@ class APIv2TestBase(base.BaseTestCase):
         super(APIv2TestBase, self).setUp()
 
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
-        # Ensure 'stale' patched copies of the plugin are never returned
-        NeutronManager._instance = None
         # Ensure existing ExtensionManager is not used
         PluginAwareExtensionManager._instance = None
         # Create the default configurations
         args = ['--config-file', etcdir('neutron.conf.test')]
         config.parse(args=args)
         # Update the plugin
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
         cfg.CONF.set_override('allow_pagination', True)
         cfg.CONF.set_override('allow_sorting', True)
         self._plugin_patcher = mock.patch(plugin, autospec=True)
@@ -1130,7 +1128,6 @@ class SubresourceTest(base.BaseTestCase):
         super(SubresourceTest, self).setUp()
 
         plugin = 'neutron.tests.unit.test_api_v2.TestSubresourcePlugin'
-        NeutronManager._instance = None
         PluginAwareExtensionManager._instance = None
 
         # Save the global RESOURCE_ATTRIBUTE_MAP
@@ -1140,7 +1137,7 @@ class SubresourceTest(base.BaseTestCase):
 
         args = ['--config-file', etcdir('neutron.conf.test')]
         config.parse(args=args)
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
@@ -1354,9 +1351,6 @@ class ExtensionTestCase(base.BaseTestCase):
         super(ExtensionTestCase, self).setUp()
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
 
-        # Ensure 'stale' patched copies of the plugin are never returned
-        NeutronManager._instance = None
-
         # Ensure existing ExtensionManager is not used
         PluginAwareExtensionManager._instance = None
 
@@ -1370,7 +1364,7 @@ class ExtensionTestCase(base.BaseTestCase):
         config.parse(args=args)
 
         # Update the plugin and extensions path
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
         cfg.CONF.set_override('api_extensions_path', EXTDIR)
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)

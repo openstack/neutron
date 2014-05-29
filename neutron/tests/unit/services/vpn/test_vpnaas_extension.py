@@ -28,7 +28,6 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import config
 from neutron.extensions import vpnaas
-from neutron import manager
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 from neutron import quota
@@ -65,8 +64,6 @@ class VpnaasExtensionTestCase(testlib_api.WebTestCase):
     def setUp(self):
         super(VpnaasExtensionTestCase, self).setUp()
         plugin = 'neutron.extensions.vpnaas.VPNPluginBase'
-        # Ensure 'stale' patched copies of the plugin are never returned
-        manager.NeutronManager._instance = None
 
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
@@ -76,7 +73,7 @@ class VpnaasExtensionTestCase(testlib_api.WebTestCase):
         config.parse(args)
 
         #just stubbing core plugin with LoadBalancer plugin
-        cfg.CONF.set_override('core_plugin', plugin)
+        self.setup_coreplugin(plugin)
         cfg.CONF.set_override('service_plugins', [plugin])
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)

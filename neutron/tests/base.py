@@ -28,6 +28,7 @@ import stubout
 import testtools
 
 from neutron.common import exceptions
+from neutron import manager
 
 
 CONF = cfg.CONF
@@ -36,6 +37,16 @@ LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 
 
 class BaseTestCase(testtools.TestCase):
+
+    def _cleanup_coreplugin(self):
+        manager.NeutronManager._instance = self._saved_instance
+
+    def setup_coreplugin(self, core_plugin=None):
+        self._saved_instance = manager.NeutronManager._instance
+        self.addCleanup(self._cleanup_coreplugin)
+        manager.NeutronManager._instance = None
+        if core_plugin is not None:
+            cfg.CONF.set_override('core_plugin', core_plugin)
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
