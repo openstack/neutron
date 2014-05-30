@@ -19,6 +19,8 @@
 #
 
 import eventlet
+eventlet.monkey_patch()
+
 import netaddr
 from oslo.config import cfg
 
@@ -327,7 +329,6 @@ class vArmourL3NATAgentWithStateReport(vArmourL3NATAgent,
 
 
 def main():
-    eventlet.monkey_patch()
     conf = cfg.CONF
     conf.register_opts(vArmourL3NATAgent.OPTS)
     config.register_interface_driver_opts_helper(conf)

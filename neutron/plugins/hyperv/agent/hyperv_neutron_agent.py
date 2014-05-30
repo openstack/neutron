@@ -18,10 +18,12 @@
 # @author: Pedro Navarro Perez
 # @author: Alessandro Pilotti, Cloudbase Solutions Srl
 
-import eventlet
 import platform
 import re
 import time
+
+import eventlet
+eventlet.monkey_patch()
 
 from oslo.config import cfg
 
@@ -464,7 +466,6 @@ class HyperVNeutronAgent(object):
 
 
 def main():
-    eventlet.monkey_patch()
     cfg.CONF(project='neutron')
     logging_config.setup_logging(cfg.CONF)
 

@@ -27,6 +27,8 @@ import sys
 import time
 
 import eventlet
+eventlet.monkey_patch()
+
 from oslo.config import cfg
 
 from neutron.agent import l2population_rpc as l2pop_rpc
@@ -1025,7 +1027,6 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
 
 
 def main():
-    eventlet.monkey_patch()
     cfg.CONF(project='neutron')
 
     logging_config.setup_logging(cfg.CONF)

@@ -22,6 +22,8 @@ import os
 import socket
 
 import eventlet
+eventlet.monkey_patch()
+
 import httplib2
 from neutronclient.v2_0 import client
 from oslo.config import cfg
@@ -377,7 +379,6 @@ class UnixDomainMetadataProxy(object):
 
 
 def main():
-    eventlet.monkey_patch()
     cfg.CONF.register_opts(UnixDomainMetadataProxy.OPTS)
     cfg.CONF.register_opts(MetadataProxyHandler.OPTS)
     cache.register_oslo_configs(cfg.CONF)

@@ -17,6 +17,8 @@
 # @author: Mark McClain, DreamHost
 
 import eventlet
+eventlet.monkey_patch()
+
 from oslo.config import cfg
 
 from neutron.agent.common import config
@@ -47,7 +49,6 @@ class LbaasAgentService(rpc_service.Service):
 
 
 def main():
-    eventlet.monkey_patch()
     cfg.CONF.register_opts(OPTS)
     cfg.CONF.register_opts(manager.OPTS)
     # import interface options just in case the driver uses namespaces

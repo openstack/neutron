@@ -15,14 +15,15 @@
 # under the License.
 #
 
-import eventlet
 import time
+
+import eventlet
+eventlet.monkey_patch()
 
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import base
 from neutron.plugins.vmware.api_client import eventlet_request
 
-eventlet.monkey_patch()
 LOG = logging.getLogger(__name__)
 
 

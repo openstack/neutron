@@ -18,6 +18,8 @@
 import os
 
 import eventlet
+eventlet.monkey_patch()
+
 import netaddr
 from oslo.config import cfg
 
@@ -607,7 +609,6 @@ def register_options():
 
 
 def main():
-    eventlet.monkey_patch()
     register_options()
     cfg.CONF(project='neutron')
     config.setup_logging(cfg.CONF)

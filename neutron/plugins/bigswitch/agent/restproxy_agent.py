@@ -17,9 +17,11 @@
 #    under the License.
 # @author: Kevin Benton, kevin.benton@bigswitch.com
 
-import eventlet
 import sys
 import time
+
+import eventlet
+eventlet.monkey_patch()
 
 from oslo.config import cfg
 
@@ -162,7 +164,6 @@ class RestProxyAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
 
 def main():
-    eventlet.monkey_patch()
     cfg.CONF(project='neutron')
     config.setup_logging(cfg.CONF)
     pl_config.register_config()

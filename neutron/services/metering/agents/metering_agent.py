@@ -17,6 +17,8 @@
 import time
 
 import eventlet
+eventlet.monkey_patch()
+
 from oslo.config import cfg
 
 from neutron.agent.common import config
@@ -281,7 +283,6 @@ class MeteringAgentWithStateReport(MeteringAgent):
 
 
 def main():
-    eventlet.monkey_patch()
     conf = cfg.CONF
     conf.register_opts(MeteringAgent.Opts)
     config.register_agent_state_opts_helper(conf)

@@ -18,6 +18,8 @@
 import re
 
 import eventlet
+eventlet.monkey_patch()
+
 from oslo.config import cfg
 
 from neutron.agent.common import config as agent_config
@@ -157,8 +159,6 @@ def main():
     installation as it will blindly purge namespaces and their devices. This
     option also kills any lingering DHCP instances.
     """
-    eventlet.monkey_patch()
-
     conf = setup_conf()
     conf()
     config.setup_logging(conf)
