@@ -29,6 +29,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
 from neutron.db import agents_db
@@ -60,7 +61,8 @@ from neutron.plugins.common import constants as svc_constants
 LOG = logging.getLogger(__name__)
 
 
-class N1kvRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+class N1kvRpcCallbacks(rpc_compat.RpcCallback,
+                       dhcp_rpc_base.DhcpRpcCallbackMixin,
                        l3_rpc_base.L3RpcCallbackMixin):
 
     """Class to handle agent RPC calls."""

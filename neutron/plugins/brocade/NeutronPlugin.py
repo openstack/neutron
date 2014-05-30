@@ -81,7 +81,8 @@ cfg.CONF.register_opts(SWITCH_OPTS, "SWITCH")
 cfg.CONF.register_opts(PHYSICAL_INTERFACE_OPTS, "PHYSICAL_INTERFACE")
 
 
-class BridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+class BridgeRpcCallbacks(rpc_compat.RpcCallback,
+                         dhcp_rpc_base.DhcpRpcCallbackMixin,
                          l3_rpc_base.L3RpcCallbackMixin,
                          sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
     """Agent callback."""

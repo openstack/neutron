@@ -30,6 +30,7 @@ from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
@@ -84,7 +85,8 @@ class SecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         self.init_firewall()
 
 
-class RestProxyAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+class RestProxyAgent(rpc_compat.RpcCallback,
+                     sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
 

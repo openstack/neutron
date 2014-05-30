@@ -489,6 +489,8 @@ class IPsecDriver(device_drivers.DeviceDriver):
     RPC_API_VERSION = '1.0'
 
     def __init__(self, agent, host):
+        # TODO(ihrachys): we can't use RpcCallback here due to
+        # inheritance issues
         self.agent = agent
         self.conf = self.agent.conf
         self.root_helper = self.agent.root_helper

@@ -51,6 +51,8 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         # not having their own __init__ functions. If an __init__() is added
         # to one, this could break. Fix this and add a unit test to cover this
         # test in H3.
+        # FIXME(ihrachys): we can't use rpc_compat.RpcCallback here due
+        # to inheritance problems
         super(RpcCallbacks, self).__init__(notifier, type_manager)
 
     def create_rpc_dispatcher(self):

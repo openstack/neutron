@@ -62,11 +62,12 @@ class NECPluginApi(agent_rpc.PluginApi):
                                 port_removed=port_removed))
 
 
-class NECAgentRpcCallback(object):
+class NECAgentRpcCallback(rpc_compat.RpcCallback):
 
     RPC_API_VERSION = '1.0'
 
     def __init__(self, context, agent, sg_agent):
+        super(NECAgentRpcCallback, self).__init__()
         self.context = context
         self.agent = agent
         self.sg_agent = sg_agent
@@ -92,11 +93,13 @@ class SecurityGroupServerRpcApi(rpc_compat.RpcProxy,
 
 
 class SecurityGroupAgentRpcCallback(
+    rpc_compat.RpcCallback,
     sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     RPC_API_VERSION = sg_rpc.SG_RPC_VERSION
 
     def __init__(self, context, sg_agent):
+        super(SecurityGroupAgentRpcCallback, self).__init__()
         self.context = context
         self.sg_agent = sg_agent
 

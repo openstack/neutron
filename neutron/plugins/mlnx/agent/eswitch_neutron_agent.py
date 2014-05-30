@@ -146,7 +146,8 @@ class EswitchManager(object):
         self.network_map[network_id] = data
 
 
-class MlnxEswitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+class MlnxEswitchRpcCallbacks(rpc_compat.RpcCallback,
+                              sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
     # history
@@ -154,6 +155,7 @@ class MlnxEswitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     RPC_API_VERSION = '1.1'
 
     def __init__(self, context, agent):
+        super(MlnxEswitchRpcCallbacks, self).__init__()
         self.context = context
         self.agent = agent
         self.eswitch = agent.eswitch

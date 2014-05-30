@@ -59,7 +59,8 @@ from neutron.plugins.openvswitch import ovs_db_v2
 LOG = logging.getLogger(__name__)
 
 
-class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+class OVSRpcCallbacks(rpc_compat.RpcCallback,
+                      dhcp_rpc_base.DhcpRpcCallbackMixin,
                       l3_rpc_base.L3RpcCallbackMixin,
                       sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
@@ -70,6 +71,7 @@ class OVSRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
     RPC_API_VERSION = '1.1'
 
     def __init__(self, notifier, tunnel_type):
+        super(OVSRpcCallbacks, self).__init__()
         self.notifier = notifier
         self.tunnel_type = tunnel_type
 

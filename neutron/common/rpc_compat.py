@@ -26,6 +26,15 @@ class RpcProxy(proxy.RpcProxy):
     '''
 
 
+class RpcCallback(object):
+    '''
+    This class is created to facilitate migration from oslo-incubator
+    RPC layer implementation to oslo.messaging and is intended to set
+    callback version using oslo.messaging API once the migration is
+    applied.
+    '''
+
+
 # exceptions
 RPCException = rpc_common.RPCException
 RemoteError = rpc_common.RemoteError

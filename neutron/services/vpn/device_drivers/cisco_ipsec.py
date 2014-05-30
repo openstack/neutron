@@ -189,6 +189,8 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
     RPC_API_VERSION = '1.0'
 
     def __init__(self, agent, host):
+        # TODO(ihrachys): we can't use RpcCallback here due to
+        # inheritance issues
         self.host = host
         self.conn = rpc.create_connection(new=True)
         context = ctx.get_admin_context_without_session()

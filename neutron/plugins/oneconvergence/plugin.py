@@ -53,7 +53,8 @@ LOG = logging.getLogger(__name__)
 IPv6 = 6
 
 
-class NVSDPluginRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+class NVSDPluginRpcCallbacks(rpc_compat.RpcCallback,
+                             dhcp_rpc_base.DhcpRpcCallbackMixin,
                              l3_rpc_base.L3RpcCallbackMixin,
                              sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 

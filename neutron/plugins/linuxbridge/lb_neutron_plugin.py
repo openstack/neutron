@@ -55,7 +55,8 @@ from neutron.plugins.linuxbridge.db import l2network_db_v2 as db
 LOG = logging.getLogger(__name__)
 
 
-class LinuxBridgeRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+class LinuxBridgeRpcCallbacks(rpc_compat.RpcCallback,
+                              dhcp_rpc_base.DhcpRpcCallbackMixin,
                               l3_rpc_base.L3RpcCallbackMixin,
                               sg_db_rpc.SecurityGroupServerRpcCallbackMixin
                               ):

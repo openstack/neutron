@@ -680,18 +680,20 @@ class NECPluginV2AgentNotifierApi(rpc_compat.RpcProxy,
                          topic=self.topic_port_update)
 
 
-class DhcpRpcCallback(dhcp_rpc_base.DhcpRpcCallbackMixin):
+class DhcpRpcCallback(rpc_compat.RpcCallback,
+                      dhcp_rpc_base.DhcpRpcCallbackMixin):
     # DhcpPluginApi BASE_RPC_API_VERSION
     RPC_API_VERSION = '1.1'
 
 
-class L3RpcCallback(l3_rpc_base.L3RpcCallbackMixin):
+class L3RpcCallback(rpc_compat.RpcCallback, l3_rpc_base.L3RpcCallbackMixin):
     # 1.0  L3PluginApi BASE_RPC_API_VERSION
     # 1.1  Support update_floatingip_statuses
     RPC_API_VERSION = '1.1'
 
 
 class SecurityGroupServerRpcCallback(
+    rpc_compat.RpcCallback,
     sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
     RPC_API_VERSION = sg_rpc.SG_RPC_VERSION
@@ -707,11 +709,12 @@ class SecurityGroupServerRpcCallback(
         return port
 
 
-class NECPluginV2RPCCallbacks(object):
+class NECPluginV2RPCCallbacks(rpc_compat.RpcCallback):
 
     RPC_API_VERSION = '1.0'
 
     def __init__(self, plugin):
+        super(NECPluginV2RPCCallbacks, self).__init__()
         self.plugin = plugin
 
     def create_rpc_dispatcher(self):

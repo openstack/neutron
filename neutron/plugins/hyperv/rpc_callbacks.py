@@ -18,6 +18,7 @@
 
 from neutron.common import constants as q_const
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.db import agents_db
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_rpc_base
@@ -29,6 +30,7 @@ LOG = logging.getLogger(__name__)
 
 
 class HyperVRpcCallbacks(
+        rpc_compat.RpcCallback,
         dhcp_rpc_base.DhcpRpcCallbackMixin,
         l3_rpc_base.L3RpcCallbackMixin):
 
@@ -36,6 +38,7 @@ class HyperVRpcCallbacks(
     RPC_API_VERSION = '1.1'
 
     def __init__(self, notifier):
+        super(HyperVRpcCallbacks, self).__init__()
         self.notifier = notifier
         self._db = hyperv_db.HyperVPluginDB()
 
