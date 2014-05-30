@@ -17,16 +17,10 @@
 #
 # @author:  Ivar Lazzaro, Embrane, Inc.
 
-import sys
-
-import mock
 from oslo.config import cfg
 
 from neutron.plugins.embrane.common import config  # noqa
 from neutron.tests import base
-
-# Need to mock heleosapi.
-sys.modules["heleosapi"] = mock.Mock()
 
 
 class ConfigurationTest(base.BaseTestCase):

@@ -16,7 +16,6 @@
 #    under the License.
 #
 # @author:  Ivar Lazzaro, Embrane, Inc.
-
 import sys
 
 import mock
@@ -28,7 +27,6 @@ from neutron.tests.unit import test_db_plugin as test_plugin
 
 PLUGIN_NAME = ('neutron.plugins.embrane.plugins.embrane_fake_plugin.'
                'EmbraneFakePlugin')
-sys.modules["heleosapi"] = mock.Mock()
 
 
 class EmbranePluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
@@ -36,7 +34,11 @@ class EmbranePluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def setUp(self):
         cfg.CONF.set_override('admin_password', "admin123", 'heleos')
+        p = mock.patch.dict(sys.modules, {'heleosapi': mock.Mock()})
+        p.start()
         self.addCleanup(db.clear_db)
+        # dict patches must be explicitly stopped
+        self.addCleanup(p.stop)
         super(EmbranePluginV2TestCase, self).setUp(self._plugin_name)
 
 
