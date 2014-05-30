@@ -25,12 +25,12 @@ from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as logging_config
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron import context as n_context
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.rpc import dispatcher
-from neutron.openstack.common.rpc import proxy
 from neutron.plugins.oneconvergence.lib import config
 
 LOG = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class NVSDAgentRpcCallback(object):
             self.sg_agent.refresh_firewall()
 
 
-class SecurityGroupServerRpcApi(proxy.RpcProxy,
+class SecurityGroupServerRpcApi(rpc_compat.RpcProxy,
                                 sg_rpc.SecurityGroupServerRpcApiMixin):
     def __init__(self, topic):
         super(SecurityGroupServerRpcApi, self).__init__(

@@ -23,6 +23,7 @@ from oslo.config import cfg
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db.loadbalancer import loadbalancer_db
@@ -31,7 +32,6 @@ from neutron.extensions import portbindings
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import proxy
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers import abstract_driver
 
@@ -239,7 +239,7 @@ class LoadBalancerCallbacks(object):
         self.plugin.update_pool_stats(context, pool_id, data=stats)
 
 
-class LoadBalancerAgentApi(proxy.RpcProxy):
+class LoadBalancerAgentApi(rpc_compat.RpcProxy):
     """Plugin side of plugin to agent RPC API."""
 
     BASE_RPC_API_VERSION = '2.0'

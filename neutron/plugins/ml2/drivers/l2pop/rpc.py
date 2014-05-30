@@ -17,15 +17,15 @@
 # @author: Francois Eleouet, Orange
 # @author: Mathieu Rohon, Orange
 
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.rpc import proxy
 
 
 LOG = logging.getLogger(__name__)
 
 
-class L2populationAgentNotifyAPI(proxy.RpcProxy):
+class L2populationAgentNotifyAPI(rpc_compat.RpcProxy):
     BASE_RPC_API_VERSION = '1.0'
 
     def __init__(self, topic=topics.AGENT):

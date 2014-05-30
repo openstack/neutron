@@ -29,6 +29,7 @@ from neutron.agent.linux import ovs_lib  # noqa
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants
 from neutron.common import exceptions
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
@@ -37,7 +38,6 @@ from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import common
-from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import service
 from neutron import service as neutron_service
 
@@ -376,7 +376,7 @@ class DhcpAgent(manager.Manager):
         pm.disable()
 
 
-class DhcpPluginApi(proxy.RpcProxy):
+class DhcpPluginApi(rpc_compat.RpcProxy):
     """Agent side of the dhcp rpc API.
 
     API version history:

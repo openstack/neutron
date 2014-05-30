@@ -21,6 +21,7 @@ from oslo.config import cfg
 
 from neutron.common import exceptions as n_exception
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron import context as neutron_context
 from neutron.db import api as qdbapi
@@ -28,7 +29,6 @@ from neutron.db.firewall import firewall_db
 from neutron.extensions import firewall as fw_ext
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import proxy
 from neutron.plugins.common import constants as const
 
 
@@ -97,7 +97,7 @@ class FirewallCallbacks(object):
         return fw_tenant_list
 
 
-class FirewallAgentApi(proxy.RpcProxy):
+class FirewallAgentApi(rpc_compat.RpcProxy):
     """Plugin side of plugin to agent RPC API."""
 
     API_VERSION = '1.0'

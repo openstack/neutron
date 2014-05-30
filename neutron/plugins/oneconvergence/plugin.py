@@ -24,6 +24,7 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import constants as q_const
 from neutron.common import exceptions as nexception
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -71,7 +72,7 @@ class NVSDPluginRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         return port
 
 
-class NVSDPluginV2AgentNotifierApi(rpc.proxy.RpcProxy,
+class NVSDPluginV2AgentNotifierApi(rpc_compat.RpcProxy,
                                    sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     BASE_RPC_API_VERSION = '1.0'

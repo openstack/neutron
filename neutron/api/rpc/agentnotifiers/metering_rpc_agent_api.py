@@ -15,17 +15,17 @@
 # under the License.
 
 from neutron.common import constants
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
 from neutron import manager
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.rpc import proxy
 from neutron.plugins.common import constants as service_constants
 
 LOG = logging.getLogger(__name__)
 
 
-class MeteringAgentNotifyAPI(proxy.RpcProxy):
+class MeteringAgentNotifyAPI(rpc_compat.RpcProxy):
     """API for plugin to notify L3 metering agent."""
     BASE_RPC_API_VERSION = '1.0'
 

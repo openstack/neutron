@@ -22,6 +22,7 @@ from oslo.config import cfg
 from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as constants
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
@@ -31,7 +32,6 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common import periodic_task
-from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import service
 from neutron import service as neutron_service
 
@@ -39,7 +39,7 @@ from neutron import service as neutron_service
 LOG = logging.getLogger(__name__)
 
 
-class MeteringPluginRpc(proxy.RpcProxy):
+class MeteringPluginRpc(rpc_compat.RpcProxy):
 
     BASE_RPC_API_VERSION = '1.0'
 
