@@ -19,8 +19,6 @@
 # @author: Rossella Sblendido, Midokura Japan KK
 
 import mock
-import sys
-sys.modules["midonetclient"] = mock.Mock()
 
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp

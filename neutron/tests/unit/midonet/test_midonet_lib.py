@@ -18,15 +18,15 @@
 #
 # @author: Ryu Ishimoto, Midokura Japan KK
 # @author: Tomoe Sugihara, Midokura Japan KK
+import sys
 
 import mock
-import sys
-sys.modules["midonetclient"] = mock.Mock()
 import testtools
 import webob.exc as w_exc
 
 from neutron.openstack.common import uuidutils
-from neutron.plugins.midonet import midonet_lib
+with mock.patch.dict(sys.modules, {'midonetclient': mock.Mock()}):
+    from neutron.plugins.midonet import midonet_lib
 import neutron.tests.unit.midonet.mock_lib as mock_lib
 
 
