@@ -193,6 +193,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.int_br_device_count = 0
 
         self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
+        self.int_br.set_secure_mode()
         # Stores port update notifications for processing in main rpc loop
         self.updated_ports = set()
         self.setup_rpc()

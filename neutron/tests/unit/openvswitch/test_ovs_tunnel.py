@@ -101,6 +101,7 @@ class TunnelTest(base.BaseTestCase):
         self.mock_int_bridge = self.ovs_bridges[self.INT_BRIDGE]
         self.mock_int_bridge.get_local_port_mac.return_value = '000000000001'
         self.mock_int_bridge_expected = [
+            mock.call.set_secure_mode(),
             mock.call.get_local_port_mac(),
             mock.call.delete_port('patch-tun'),
             mock.call.remove_all_flows(),
