@@ -238,7 +238,7 @@ class TestPortsV2(NsxPluginV2TestCase,
 
 class TestNetworksV2(test_plugin.TestNetworksV2, NsxPluginV2TestCase):
 
-    def _test_create_bridge_network(self, vlan_id=None):
+    def _test_create_bridge_network(self, vlan_id=0):
         net_type = vlan_id and 'vlan' or 'flat'
         name = 'bridge_net'
         expected = [('subnets', []), ('name', name), ('admin_state_up', True),
@@ -469,7 +469,7 @@ class TestL3NatTestCase(L3NatTest,
                         test_l3_plugin.L3NatDBIntTestCase,
                         NsxPluginV2TestCase):
 
-    def _test_create_l3_ext_network(self, vlan_id=None):
+    def _test_create_l3_ext_network(self, vlan_id=0):
         name = 'l3_ext_net'
         net_type = utils.NetworkTypes.L3_EXT
         expected = [('subnets', []), ('name', name), ('admin_state_up', True),
