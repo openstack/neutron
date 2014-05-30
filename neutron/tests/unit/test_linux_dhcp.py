@@ -18,6 +18,7 @@ import os
 
 import mock
 from oslo.config import cfg
+import testtools
 
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp
@@ -1284,7 +1285,8 @@ tag:tag0,option:router""".lstrip()
                             float(2.48))
 
     def test_check_version_failed_cmd_execution(self):
-        self._check_version('Error while executing command', 0)
+        with testtools.ExpectedException(SystemExit):
+            self._check_version('Error while executing command', 0)
 
     def test_only_populates_dhcp_enabled_subnets(self):
         exp_host_name = '/dhcp/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee/host'

@@ -318,9 +318,10 @@ class Dnsmasq(DhcpLocalProcess):
                               'Please ensure that its version is %s '
                               'or above!'), cls.MINIMUM_VERSION)
         except (OSError, RuntimeError, IndexError, ValueError):
-            LOG.warning(_('Unable to determine dnsmasq version. '
-                          'Please ensure that its version is %s '
-                          'or above!'), cls.MINIMUM_VERSION)
+            LOG.error(_('Unable to determine dnsmasq version. '
+                        'Please ensure that its version is %s '
+                        'or above!'), cls.MINIMUM_VERSION)
+            raise SystemExit(1)
         return float(ver)
 
     @classmethod
