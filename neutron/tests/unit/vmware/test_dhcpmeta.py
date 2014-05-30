@@ -1153,6 +1153,12 @@ class DhcpTestCase(base.BaseTestCase):
         self.plugin.lsn_manager.lsn_create.assert_called_once_with(
             mock.ANY, network['id'])
 
+    def test_handle_create_network_router_external(self):
+        network = {'id': 'foo_network_id', 'router:external': True}
+        nsx.handle_network_dhcp_access(
+            self.plugin, mock.ANY, network, 'create_network')
+        self.assertFalse(self.plugin.lsn_manager.lsn_create.call_count)
+
     def test_handle_delete_network(self):
         network_id = 'foo_network_id'
         self.plugin.lsn_manager.lsn_delete_by_network.return_value = (
