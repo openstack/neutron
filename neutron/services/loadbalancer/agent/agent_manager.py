@@ -58,6 +58,7 @@ class LbaasAgentManager(periodic_task.PeriodicTasks):
     #       object individually;
 
     def __init__(self, conf):
+        super(LbaasAgentManager, self).__init__()
         self.conf = conf
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_api.LbaasAgentApi(
