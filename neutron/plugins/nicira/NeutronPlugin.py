@@ -2046,8 +2046,12 @@ class NvpPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             if super(NvpPluginV2, self)._get_port_security_group_bindings(
                 context, filters):
                 raise ext_sg.SecurityGroupInUse(id=security_group['id'])
-            nvplib.delete_security_profile(self.cluster,
-                                           security_group['id'])
+            try:
+                nvplib.delete_security_profile(
+                    self.cluster, security_group['id'])
+            except q_exc.NotFound:
+                LOG.info(_("Security group: %s was already deleted "
+                           "from backend"), security_group_id)
             return super(NvpPluginV2, self).delete_security_group(
                 context, security_group_id)
 
