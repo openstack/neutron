@@ -201,17 +201,13 @@ class N1kvPluginTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # in the background.
 
         # Return a dummy VSM IP address
-        get_vsm_hosts_patcher = mock.patch(n1kv_client.__name__ +
-                                           ".Client._get_vsm_hosts")
-        fake_get_vsm_hosts = get_vsm_hosts_patcher.start()
-        fake_get_vsm_hosts.return_value = ["127.0.0.1"]
+        mock.patch(n1kv_client.__name__ + ".Client._get_vsm_hosts",
+                   new=lambda self: "127.0.0.1").start()
 
         # Return dummy user profiles
-        get_cred_name_patcher = mock.patch(cdb.__name__ +
-                                           ".get_credential_name")
-        fake_get_cred_name = get_cred_name_patcher.start()
-        fake_get_cred_name.return_value = {"user_name": "admin",
-                                           "password": "admin_password"}
+        mock.patch(cdb.__name__ + ".get_credential_name",
+                   new=lambda self: {"user_name": "admin",
+                                     "password": "admin_password"}).start()
 
         n1kv_neutron_plugin.N1kvNeutronPluginV2._setup_vsm = _fake_setup_vsm
 
