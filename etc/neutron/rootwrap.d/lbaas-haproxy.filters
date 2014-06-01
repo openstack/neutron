@@ -20,3 +20,4 @@ mm-ctl: CommandFilter, mm-ctl, root
 # ip_lib
 ip: IpFilter, ip, root
 ip_exec: IpNetnsExecFilter, ip, root
+route: CommandFilter, route, root
