@@ -173,7 +173,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         self._is_default_net_gw_in_sync = False
         # Create a synchronizer instance for backend sync
         self._synchronizer = sync.NsxSynchronizer(
-            self, self.cluster,
+            self.safe_reference, self.cluster,
             self.nsx_sync_opts.state_sync_interval,
             self.nsx_sync_opts.min_sync_req_delay,
             self.nsx_sync_opts.min_chunk_size,
