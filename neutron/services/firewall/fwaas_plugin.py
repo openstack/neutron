@@ -28,7 +28,6 @@ from neutron.db import api as qdbapi
 from neutron.db.firewall import firewall_db
 from neutron.extensions import firewall as fw_ext
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants as const
 
 
@@ -169,7 +168,7 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
 
         self.callbacks = FirewallCallbacks(self)
 
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.conn.create_consumer(
             topics.FIREWALL_PLUGIN,
             self.callbacks.create_rpc_dispatcher(),

@@ -19,7 +19,6 @@ import netaddr
 from neutron.common import rpc as n_rpc
 from neutron.common import rpc_compat
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.services.vpn.common import topics
 from neutron.services.vpn import service_drivers
 
@@ -76,7 +75,7 @@ class IPsecVPNDriver(service_drivers.VpnDriver):
     def __init__(self, service_plugin):
         super(IPsecVPNDriver, self).__init__(service_plugin)
         self.callbacks = IPsecVpnDriverCallBack(self)
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.conn.create_consumer(
             topics.IPSEC_DRIVER_TOPIC,
             self.callbacks.create_rpc_dispatcher(),

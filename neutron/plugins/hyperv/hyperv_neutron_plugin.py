@@ -20,6 +20,7 @@ from oslo.config import cfg
 
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -30,7 +31,6 @@ from neutron.db import quota_db  # noqa
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.hyperv import agent_notifier_api
@@ -187,7 +187,7 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
         # RPC support
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.notifier = agent_notifier_api.AgentNotifierApi(
             topics.AGENT)
         self.callbacks = rpc_callbacks.HyperVRpcCallbacks(self.notifier)

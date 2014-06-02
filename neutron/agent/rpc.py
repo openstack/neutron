@@ -21,7 +21,6 @@ from neutron.common import rpc_compat
 from neutron.common import topics
 
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.openstack.common import timeutils
 
 
@@ -40,7 +39,7 @@ def create_consumers(dispatcher, prefix, topic_details):
     :returns: A common Connection.
     """
 
-    connection = rpc.create_connection(new=True)
+    connection = rpc_compat.create_connection(new=True)
     for details in topic_details:
         topic, operation, node_name = itertools.islice(
             itertools.chain(details, [None]), 3)

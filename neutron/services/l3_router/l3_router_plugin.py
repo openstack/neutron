@@ -32,7 +32,6 @@ from neutron.db import l3_gwmode_db
 from neutron.db import l3_rpc_base
 from neutron.db import model_base
 from neutron.openstack.common import importutils
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants
 
 
@@ -75,7 +74,7 @@ class L3RouterPlugin(db_base_plugin_v2.CommonDbMixin,
     def setup_rpc(self):
         # RPC support
         self.topic = topics.L3PLUGIN
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.agent_notifiers.update(
             {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotify})
         self.callbacks = L3RouterPluginRpcCallbacks()

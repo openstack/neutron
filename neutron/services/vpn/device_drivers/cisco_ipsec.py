@@ -29,7 +29,6 @@ from neutron import context as ctx
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as plugin_utils
 from neutron.services.vpn.common import topics
@@ -192,7 +191,7 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         # TODO(ihrachys): we can't use RpcCallback here due to
         # inheritance issues
         self.host = host
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         context = ctx.get_admin_context_without_session()
         node_topic = '%s.%s' % (topics.CISCO_IPSEC_AGENT_TOPIC, self.host)
 

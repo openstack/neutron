@@ -33,7 +33,6 @@ from neutron import context
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as plugin_utils
 from neutron.services.vpn.common import topics
@@ -495,7 +494,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
         self.conf = self.agent.conf
         self.root_helper = self.agent.root_helper
         self.host = host
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.context = context.get_admin_context_without_session()
         self.topic = topics.IPSEC_AGENT_TOPIC
         node_topic = '%s.%s' % (self.topic, self.host)
