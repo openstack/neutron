@@ -29,15 +29,14 @@ import eventlet.timeout
 import fixtures
 import mock
 from oslo.config import cfg
+from oslo.messaging import conffixture as messaging_conffixture
 import testtools
 
 from neutron.common import config
+from neutron.common import rpc as n_rpc
 from neutron.db import agentschedulers_db
 from neutron import manager
-from neutron.openstack.common.notifier import api as notifier_api
-from neutron.openstack.common.notifier import test_notifier
-from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import impl_fake
+from neutron.tests import fake_notifier
 from neutron.tests import post_mortem_debug
 
 
@@ -56,6 +55,10 @@ def etcdir(*p):
 
 def fake_use_fatal_exceptions(*args):
     return True
+
+
+def fake_consume_in_threads(self):
+    return []
 
 
 class BaseTestCase(testtools.TestCase):
@@ -90,16 +93,10 @@ class BaseTestCase(testtools.TestCase):
         if core_plugin is not None:
             cfg.CONF.set_override('core_plugin', core_plugin)
 
-    def _cleanup_test_notifier(self):
-        test_notifier.NOTIFICATIONS = []
-
     def setup_notification_driver(self, notification_driver=None):
-        # to reload the drivers
-        self.addCleanup(notifier_api._reset_drivers)
-        self.addCleanup(self._cleanup_test_notifier)
-        notifier_api._reset_drivers()
+        self.addCleanup(fake_notifier.reset)
         if notification_driver is None:
-            notification_driver = [test_notifier.__name__]
+            notification_driver = [fake_notifier.__name__]
         cfg.CONF.set_override("notification_driver", notification_driver)
 
     @staticmethod
@@ -113,18 +110,12 @@ class BaseTestCase(testtools.TestCase):
         else:
             conf(args)
 
-    def _cleanup_rpc_backend(self):
-        rpc._RPCIMPL = None
-        impl_fake.CONSUMERS.clear()
-
     def setUp(self):
         super(BaseTestCase, self).setUp()
 
         # Ensure plugin cleanup is triggered last so that
         # test-specific cleanup has a chance to release references.
         self.addCleanup(self.cleanup_core_plugin)
-
-        self.addCleanup(self._cleanup_rpc_backend)
 
         # Configure this first to ensure pm debugging support for setUp()
         if os.environ.get('OS_POST_MORTEM_DEBUG') in TRUE_STRING:
@@ -178,6 +169,25 @@ class BaseTestCase(testtools.TestCase):
         self.useFixture(fixtures.MonkeyPatch(
             'neutron.common.exceptions.NeutronException.use_fatal_exceptions',
             fake_use_fatal_exceptions))
+
+        # don't actually start RPC listeners when testing
+        self.useFixture(fixtures.MonkeyPatch(
+            'neutron.common.rpc_compat.Connection.consume_in_thread',
+            fake_consume_in_threads))
+
+        self.useFixture(fixtures.MonkeyPatch(
+            'oslo.messaging.Notifier', fake_notifier.FakeNotifier))
+
+        self.messaging_conf = messaging_conffixture.ConfFixture(CONF)
+        self.messaging_conf.transport_driver = 'fake'
+        self.messaging_conf.response_timeout = 15
+        self.useFixture(self.messaging_conf)
+
+        self.addCleanup(n_rpc.clear_extra_exmods)
+        n_rpc.add_extra_exmods('neutron.test')
+
+        self.addCleanup(n_rpc.cleanup)
+        n_rpc.init(CONF)
 
         if sys.version_info < (2, 7) and getattr(self, 'fmt', '') == 'xml':
             raise self.skipException('XML Testing Skipped in Py26')

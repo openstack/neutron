@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo import messaging
+
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
@@ -46,13 +47,15 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
     #   1.0 Initial version (from openvswitch/linuxbridge)
     #   1.1 Support Security Group RPC
 
+    # FIXME(ihrachys): we can't use rpc_compat.RpcCallback here due to
+    # inheritance problems
+    target = messaging.Target(version=RPC_API_VERSION)
+
     def __init__(self, notifier, type_manager):
         # REVISIT(kmestery): This depends on the first three super classes
         # not having their own __init__ functions. If an __init__() is added
         # to one, this could break. Fix this and add a unit test to cover this
         # test in H3.
-        # FIXME(ihrachys): we can't use rpc_compat.RpcCallback here due
-        # to inheritance problems
         super(RpcCallbacks, self).__init__(notifier, type_manager)
 
     def create_rpc_dispatcher(self):
@@ -61,8 +64,7 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return q_rpc.PluginRpcDispatcher([self,
-                                          agents_db.AgentExtRpcCallback()])
+        return [self, agents_db.AgentExtRpcCallback()]
 
     @classmethod
     def _device_to_port_id(cls, device):

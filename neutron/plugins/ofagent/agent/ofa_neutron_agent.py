@@ -39,7 +39,6 @@ from neutron.common import utils as n_utils
 from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ofagent.common import config  # noqa
 from neutron.plugins.openvswitch.common import constants
@@ -351,7 +350,7 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         """
-        return dispatcher.RpcDispatcher([self])
+        return [self]
 
     def _provision_local_vlan_outbound_for_tunnel(self, lvid,
                                                   segmentation_id, ofports):

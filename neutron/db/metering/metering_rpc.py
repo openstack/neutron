@@ -15,7 +15,6 @@
 # under the License.
 
 from neutron.common import constants as consts
-from neutron.common import rpc as p_rpc
 from neutron.common import utils
 from neutron import manager
 from neutron.openstack.common import log as logging
@@ -32,7 +31,7 @@ class MeteringRpcCallbacks(object):
         self.meter_plugin = meter_plugin
 
     def create_rpc_dispatcher(self):
-        return p_rpc.PluginRpcDispatcher([self])
+        return [self]
 
     def get_sync_data_metering(self, context, **kwargs):
         l3_plugin = manager.NeutronManager.get_service_plugins().get(

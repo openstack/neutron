@@ -29,7 +29,6 @@ from sqlalchemy.orm import exc as sa_exc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc as n_rpc
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
@@ -189,8 +188,7 @@ class MidoRpcCallbacks(rpc_compat.RpcCallback,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         """
-        return n_rpc.PluginRpcDispatcher([self,
-                                          agents_db.AgentExtRpcCallback()])
+        return [self, agents_db.AgentExtRpcCallback()]
 
 
 class MidonetPluginException(n_exc.NeutronException):

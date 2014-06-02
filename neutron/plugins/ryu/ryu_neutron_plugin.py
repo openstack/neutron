@@ -23,7 +23,6 @@ from ryu.app import rest_nw_id
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import api as db
@@ -59,7 +58,7 @@ class RyuRpcCallbacks(rpc_compat.RpcCallback,
         self.ofp_rest_api_addr = ofp_rest_api_addr
 
     def create_rpc_dispatcher(self):
-        return q_rpc.PluginRpcDispatcher([self])
+        return [self]
 
     def get_ofp_rest_api(self, context, **kwargs):
         LOG.debug(_("get_ofp_rest_api: %s"), self.ofp_rest_api_addr)

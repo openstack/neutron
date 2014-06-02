@@ -37,7 +37,6 @@ class rpcApiTestCase(base.BaseTestCase):
         expected_retval = 'foo' if method == 'call' else None
         if not expected_msg:
             expected_msg = rpcapi.make_msg(method, **kwargs)
-        expected_msg['version'] = rpcapi.BASE_RPC_API_VERSION
         if rpc_method == 'cast' and method == 'run_instance':
             kwargs['call'] = False
 
@@ -51,15 +50,19 @@ class rpcApiTestCase(base.BaseTestCase):
                 return expected_retval
 
         self.useFixture(fixtures.MonkeyPatch(
-            'neutron.openstack.common.rpc.' + rpc_method, _fake_rpc_method))
+            'neutron.common.rpc_compat.RpcProxy.' + rpc_method,
+            _fake_rpc_method))
 
         retval = getattr(rpcapi, method)(ctxt, **kwargs)
 
         self.assertEqual(expected_retval, retval)
-        expected_args = [ctxt, topic, expected_msg]
+        expected_args = [ctxt, expected_msg]
+        expected_kwargs = {'topic': topic}
 
-        for arg, expected_arg in zip(self.fake_args, expected_args):
+        # skip the first argument which is 'self'
+        for arg, expected_arg in zip(self.fake_args[1:], expected_args):
             self.assertEqual(expected_arg, arg)
+        self.assertEqual(expected_kwargs, self.fake_kwargs)
 
     def test_delete_network(self):
         rpcapi = agent_notify_api.AgentNotifierApi(topics.AGENT)

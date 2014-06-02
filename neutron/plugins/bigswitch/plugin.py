@@ -57,7 +57,6 @@ from neutron.api import extensions as neutron_extensions
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import constants as const
 from neutron.common import exceptions
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
@@ -121,8 +120,7 @@ class RestProxyCallbacks(rpc_compat.RpcCallback,
     RPC_API_VERSION = '1.1'
 
     def create_rpc_dispatcher(self):
-        return q_rpc.PluginRpcDispatcher([self,
-                                          agents_db.AgentExtRpcCallback()])
+        return [self, agents_db.AgentExtRpcCallback()]
 
     def get_port_from_device(self, device):
         port_id = re.sub(r"^tap", "", device)

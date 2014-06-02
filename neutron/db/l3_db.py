@@ -21,6 +21,7 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
+from neutron.common import rpc as n_rpc
 from neutron.common import utils
 from neutron.db import model_base
 from neutron.db import models_v2
@@ -28,7 +29,6 @@ from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron import manager
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.notifier import api as notifier_api
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
 
@@ -481,11 +481,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 'tenant_id': port['tenant_id'],
                 'port_id': port['id'],
                 'subnet_id': port['fixed_ips'][0]['subnet_id']}
-        notifier_api.notify(context,
-                            notifier_api.publisher_id('network'),
-                            'router.interface.create',
-                            notifier_api.CONF.default_notification_level,
-                            {'router_interface': info})
+        notifier = n_rpc.get_notifier('network')
+        notifier.info(
+            context, 'router.interface.create', {'router_interface': info})
         return info
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
@@ -560,11 +558,9 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 'tenant_id': port['tenant_id'],
                 'port_id': port['id'],
                 'subnet_id': subnet['id']}
-        notifier_api.notify(context,
-                            notifier_api.publisher_id('network'),
-                            'router.interface.delete',
-                            notifier_api.CONF.default_notification_level,
-                            {'router_interface': info})
+        notifier = n_rpc.get_notifier('network')
+        notifier.info(
+            context, 'router.interface.delete', {'router_interface': info})
         return info
 
     def _get_floatingip(self, context, id):

@@ -42,7 +42,6 @@ from neutron.common import topics
 from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import log
-from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.ryu.common import config  # noqa
 
 
@@ -209,7 +208,7 @@ class OVSNeutronOFPRyuAgent(rpc_compat.RpcCallback,
                                                      consumers)
 
     def _create_rpc_dispatcher(self):
-        return dispatcher.RpcDispatcher([self])
+        return [self]
 
     def _setup_integration_br(self, root_helper, integ_br,
                               tunnel_ip, ovsdb_port, ovsdb_ip):

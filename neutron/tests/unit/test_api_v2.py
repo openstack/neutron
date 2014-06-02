@@ -33,12 +33,12 @@ from neutron.api.v2 import router
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
-from neutron.openstack.common.notifier import api as notifer_api
 from neutron.openstack.common import policy as common_policy
 from neutron.openstack.common import uuidutils
 from neutron import policy
 from neutron import quota
 from neutron.tests import base
+from neutron.tests import fake_notifier
 from neutron.tests.unit import testlib_api
 
 
@@ -1242,41 +1242,42 @@ class V2Views(base.BaseTestCase):
 
 
 class NotificationTest(APIv2TestBase):
-    def _resource_op_notifier(self, opname, resource, expected_errors=False,
-                              notification_level='INFO'):
+
+    def setUp(self):
+        super(NotificationTest, self).setUp()
+        fake_notifier.reset()
+
+    def _resource_op_notifier(self, opname, resource, expected_errors=False):
         initial_input = {resource: {'name': 'myname'}}
         instance = self.plugin.return_value
         instance.get_networks.return_value = initial_input
         instance.get_networks_count.return_value = 0
         expected_code = exc.HTTPCreated.code
-        with mock.patch.object(notifer_api, 'notify') as mynotifier:
-            if opname == 'create':
-                initial_input[resource]['tenant_id'] = _uuid()
-                res = self.api.post_json(
-                    _get_path('networks'),
-                    initial_input, expect_errors=expected_errors)
-            if opname == 'update':
-                res = self.api.put_json(
-                    _get_path('networks', id=_uuid()),
-                    initial_input, expect_errors=expected_errors)
-                expected_code = exc.HTTPOk.code
-            if opname == 'delete':
-                initial_input[resource]['tenant_id'] = _uuid()
-                res = self.api.delete(
-                    _get_path('networks', id=_uuid()),
-                    expect_errors=expected_errors)
-                expected_code = exc.HTTPNoContent.code
-            expected = [mock.call(mock.ANY,
-                                  'network.' + cfg.CONF.host,
-                                  resource + "." + opname + ".start",
-                                  notification_level,
-                                  mock.ANY),
-                        mock.call(mock.ANY,
-                                  'network.' + cfg.CONF.host,
-                                  resource + "." + opname + ".end",
-                                  notification_level,
-                                  mock.ANY)]
-            self.assertEqual(expected, mynotifier.call_args_list)
+        if opname == 'create':
+            initial_input[resource]['tenant_id'] = _uuid()
+            res = self.api.post_json(
+                _get_path('networks'),
+                initial_input, expect_errors=expected_errors)
+        if opname == 'update':
+            res = self.api.put_json(
+                _get_path('networks', id=_uuid()),
+                initial_input, expect_errors=expected_errors)
+            expected_code = exc.HTTPOk.code
+        if opname == 'delete':
+            initial_input[resource]['tenant_id'] = _uuid()
+            res = self.api.delete(
+                _get_path('networks', id=_uuid()),
+                expect_errors=expected_errors)
+            expected_code = exc.HTTPNoContent.code
+
+        expected_events = ('.'.join([resource, opname, "start"]),
+                           '.'.join([resource, opname, "end"]))
+        self.assertEqual(len(fake_notifier.NOTIFICATIONS),
+                         len(expected_events))
+        for msg, event in zip(fake_notifier.NOTIFICATIONS, expected_events):
+            self.assertEqual('INFO', msg['priority'])
+            self.assertEqual(event, msg['event_type'])
+
         self.assertEqual(res.status_int, expected_code)
 
     def test_network_create_notifer(self):
@@ -1287,11 +1288,6 @@ class NotificationTest(APIv2TestBase):
 
     def test_network_update_notifer(self):
         self._resource_op_notifier('update', 'network')
-
-    def test_network_create_notifer_with_log_level(self):
-        cfg.CONF.set_override('default_notification_level', 'DEBUG')
-        self._resource_op_notifier('create', 'network',
-                                   notification_level='DEBUG')
 
 
 class DHCPNotificationTest(APIv2TestBase):
