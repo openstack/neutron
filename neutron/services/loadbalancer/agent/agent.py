@@ -23,8 +23,8 @@ from oslo.config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
+from neutron.common import rpc_compat
 from neutron.common import topics
-from neutron.openstack.common.rpc import service as rpc_service
 from neutron.openstack.common import service
 from neutron.services.loadbalancer.agent import agent_manager as manager
 
@@ -37,7 +37,7 @@ OPTS = [
 ]
 
 
-class LbaasAgentService(rpc_service.Service):
+class LbaasAgentService(rpc_compat.Service):
     def start(self):
         super(LbaasAgentService, self).start()
         self.tg.add_timer(
