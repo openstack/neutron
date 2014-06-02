@@ -137,7 +137,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             router_db = self._create_router_db(context, r, tenant_id, gw_info)
             if gw_info:
                 self._update_router_gw_info(context, router_db['id'], gw_info)
-        return self._make_router_dict(router_db, process_extensions=False)
+        return self._make_router_dict(router_db)
 
     def _update_router_db(self, context, router_id, data, gw_info):
         """Update the DB object and related gw info, if available."""

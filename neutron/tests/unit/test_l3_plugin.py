@@ -520,6 +520,18 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             for k, v in expected_value:
                 self.assertEqual(router['router'][k], v)
 
+    def test_router_create_call_extensions(self):
+        self.extension_called = False
+
+        def _extend_router_dict_test_attr(*args, **kwargs):
+            self.extension_called = True
+
+        db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+            l3.ROUTERS, [_extend_router_dict_test_attr])
+        self.assertFalse(self.extension_called)
+        with self.router():
+            self.assertTrue(self.extension_called)
+
     def test_router_create_with_gwinfo(self):
         with self.subnet() as s:
             self._set_net_external(s['subnet']['network_id'])
