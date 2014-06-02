@@ -42,14 +42,11 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
         if rpc_method == 'cast' and method == 'run_instance':
             kwargs['call'] = False
 
-        rpc_method_mock = mock.Mock()
-        rpc_method_mock.return_value = expected_retval
-        setattr(rpc, rpc_method, rpc_method_mock)
-
-        retval = getattr(rpcapi, method)(ctxt, **kwargs)
+        with mock.patch.object(rpc, rpc_method) as rpc_method_mock:
+            rpc_method_mock.return_value = expected_retval
+            retval = getattr(rpcapi, method)(ctxt, **kwargs)
 
         self.assertEqual(retval, expected_retval)
-
         expected_args = [ctxt, topic, expected_msg]
         for arg, expected_arg in zip(rpc_method_mock.call_args[0],
                                      expected_args):
