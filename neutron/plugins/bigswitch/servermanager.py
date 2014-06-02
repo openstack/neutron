@@ -131,7 +131,7 @@ class ServerProxy(object):
         headers['NeutronProxy-Agent'] = self.name
         headers['Instance-ID'] = self.neutron_id
         headers['Orchestration-Service-ID'] = ORCHESTRATION_SERVICE_ID
-        headers[HASH_MATCH_HEADER] = self.mypool.consistency_hash
+        headers[HASH_MATCH_HEADER] = self.mypool.consistency_hash or ''
         if 'keep-alive' in self.capabilities:
             headers['Connection'] = 'keep-alive'
         else:
