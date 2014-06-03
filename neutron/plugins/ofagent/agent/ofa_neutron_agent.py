@@ -41,6 +41,7 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.common import constants as p_const
+from neutron.plugins.ofagent.agent import ports
 from neutron.plugins.ofagent.common import config  # noqa
 from neutron.plugins.openvswitch.common import constants
 
@@ -302,6 +303,36 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
                 self._report_state)
             heartbeat.start(interval=report_interval)
 
+    @staticmethod
+    def _get_ofport_name(interface_id):
+        """Convert from neutron device id (uuid) to OpenFlow port name.
+
+        This needs to be synced with ML2 plugin's _device_to_port_id().
+
+        An assumption: The switch uses an OS's interface name as the
+        corresponding OpenFlow port name.
+        NOTE(yamamoto): While it's true for Open vSwitch, it isn't
+        necessarily true everywhere.  For example, LINC uses something
+        like "LogicalSwitch0-Port2".
+        """
+        return "tap" + interface_id[0:11]
+
+    def _get_ports(self, br):
+        """Generate ports.Port instances for the given bridge."""
+        datapath = br.datapath
+        ofpp = datapath.ofproto_parser
+        msg = ofpp.OFPPortDescStatsRequest(datapath=datapath)
+        descs = ryu_api.send_msg(app=self.ryuapp, msg=msg,
+                                 reply_cls=ofpp.OFPPortDescStatsReply,
+                                 reply_multi=True)
+        for d in descs:
+            for p in d.body:
+                yield ports.Port.from_ofp_port(p)
+
+    def _get_ofport_names(self, br):
+        """Return a set of OpenFlow port names for the given bridge."""
+        return set(p.port_name for p in self._get_ports(br))
+
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in self.local_vlan_map.iteritems():
             if vif_id in vlan_mapping.vif_ports:
@@ -323,7 +354,7 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
         # Even if full port details might be provided to this call,
         # they are not used since there is no guarantee the notifications
         # are processed in the same order as the relevant API requests
-        self.updated_ports.add(port['id'])
+        self.updated_ports.add(self._get_ofport_name(port['id']))
         LOG.debug(_("port_update received port %s"), port['id'])
 
     def tunnel_update(self, context, **kwargs):
@@ -609,7 +640,7 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
             self.provision_local_vlan(net_uuid, network_type,
                                       physical_network, segmentation_id)
         lvm = self.local_vlan_map[net_uuid]
-        lvm.vif_ports[port.vif_id] = port
+        lvm.vif_ports[port.port_name] = port
         # Do not bind a port if it's already bound
         cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
         if cur_tag != str(lvm.vlan):
@@ -920,7 +951,7 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
                 br, physical_network, bridge, ip_wrapper)
 
     def scan_ports(self, registered_ports, updated_ports=None):
-        cur_ports = self.int_br.get_vif_port_set()
+        cur_ports = self._get_ofport_names(self.int_br)
         self.int_br_device_count = len(cur_ports)
         port_info = {'current': cur_ports}
         if updated_ports is None:
@@ -950,25 +981,32 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
         The returned value is a set of port ids of the ports concerned by a
         vlan tag loss.
         """
+        # TODO(yamamoto): stop using ovsdb
+        # an idea is to use metadata instead of tagged vlans.
+        # cf. blueprint ofagent-merge-bridges
         port_tags = self.int_br.get_port_tag_dict()
         changed_ports = set()
         for lvm in self.local_vlan_map.values():
             for port in registered_ports:
                 if (
                     port in lvm.vif_ports
-                    and lvm.vif_ports[port].port_name in port_tags
-                    and port_tags[lvm.vif_ports[port].port_name] != lvm.vlan
+                    and port in port_tags
+                    and port_tags[port] != lvm.vlan
                 ):
                     LOG.info(
                         _("Port '%(port_name)s' has lost "
                             "its vlan tag '%(vlan_tag)d'!"),
-                        {'port_name': lvm.vif_ports[port].port_name,
+                        {'port_name': port,
                          'vlan_tag': lvm.vlan}
                     )
                     changed_ports.add(port)
         return changed_ports
 
     def update_ancillary_ports(self, registered_ports):
+        # TODO(yamamoto): stop using ovsdb
+        # - do the same as scan_ports
+        # - or, find a way to update status of ancillary ports differently
+        #   eg. let interface drivers mark ports up
         ports = set()
         for bridge in self.ancillary_brs:
             ports |= bridge.get_vif_port_set()
@@ -990,7 +1028,7 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
             # error condition of which operators should be aware
             if not vif_port.ofport:
                 LOG.warn(_("VIF port: %s has no ofport configured, and might "
-                           "not be able to transmit"), vif_port.vif_id)
+                           "not be able to transmit"), vif_port.port_name)
             if admin_state_up:
                 self.port_bound(vif_port, network_id, network_type,
                                 physical_network, segmentation_id)
@@ -1060,16 +1098,17 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
 
     def treat_devices_added_or_updated(self, devices):
         resync = False
+        all_ports = dict((p.port_name, p) for p in self._get_ports())
         for device in devices:
             LOG.debug(_("Processing port %s"), device)
-            port = self.int_br.get_vif_port_by_id(device)
-            if not port:
+            if device not in all_ports:
                 # The port has disappeared and should not be processed
                 # There is no need to put the port DOWN in the plugin as
                 # it never went up in the first place
                 LOG.info(_("Port %s was not found on the integration bridge "
                            "and will therefore not be processed"), device)
                 continue
+            port = all_ports[device]
             try:
                 details = self.plugin_rpc.get_device_details(self.context,
                                                              device,
@@ -1378,6 +1417,9 @@ class OFANeutronAgent(rpc_compat.RpcCallback,
             self.iter_num = self.iter_num + 1
 
     def daemon_loop(self):
+        # TODO(yamamoto): make polling logic stop using ovsdb monitor
+        # - make it a dumb periodic polling
+        # - or, monitor port status async messages
         with polling.get_polling_manager(
                 self.minimize_polling,
                 self.root_helper,
