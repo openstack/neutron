@@ -119,5 +119,3 @@ class L3AgentNotifyAPI(rpc_compat.RpcProxy):
     def router_added_to_agent(self, context, router_ids, host):
         self._notification_host(context, 'router_added_to_agent',
                                 router_ids, host)
-
-L3AgentNotify = L3AgentNotifyAPI()

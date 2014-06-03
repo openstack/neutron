@@ -76,7 +76,7 @@ class L3RouterPlugin(db_base_plugin_v2.CommonDbMixin,
         self.topic = topics.L3PLUGIN
         self.conn = rpc_compat.create_connection(new=True)
         self.agent_notifiers.update(
-            {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotify})
+            {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
         self.callbacks = L3RouterPluginRpcCallbacks()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
