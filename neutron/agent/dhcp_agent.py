@@ -16,6 +16,7 @@
 #    under the License.
 
 import os
+import sys
 
 import eventlet
 eventlet.monkey_patch()
@@ -29,6 +30,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ovs_lib  # noqa
 from neutron.agent import rpc as agent_rpc
+from neutron.common import config as common_config
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import rpc_compat
@@ -610,7 +612,7 @@ def register_options():
 
 def main():
     register_options()
-    cfg.CONF(project='neutron')
+    common_config.init(sys.argv[1:])
     config.setup_logging(cfg.CONF)
     server = neutron_service.Service.create(
         binary='neutron-dhcp-agent',

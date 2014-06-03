@@ -17,6 +17,7 @@
 """NVSD agent code for security group events."""
 
 import socket
+import sys
 import time
 
 import eventlet
@@ -25,7 +26,7 @@ eventlet.monkey_patch()
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
-from neutron.common import config as logging_config
+from neutron.common import config as common_config
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron import context as n_context
@@ -164,8 +165,8 @@ class NVSDNeutronAgent(rpc_compat.RpcCallback):
 
 
 def main():
-    config.CONF(project='neutron')
-    logging_config.setup_logging(config.CONF)
+    common_config.init(sys.argv[1:])
+    common_config.setup_logging(config.CONF)
 
     integ_br = config.AGENT.integration_bridge
     root_helper = config.AGENT.root_helper

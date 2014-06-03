@@ -212,13 +212,10 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
     def test_main(self):
         with mock.patch.object(hyperv_neutron_agent,
                                'HyperVNeutronAgent') as plugin:
-            with mock.patch.object(hyperv_neutron_agent.cfg, 'CONF') as cfg:
-                with mock.patch.object(
-                    hyperv_neutron_agent,
-                    'logging_config') as logging_config:
+            with mock.patch.object(hyperv_neutron_agent,
+                                   'common_config') as common_config:
+                hyperv_neutron_agent.main()
 
-                    hyperv_neutron_agent.main()
-
-                    self.assertTrue(cfg.called)
-                    self.assertTrue(logging_config.setup_logging.called)
-                    plugin.assert_has_calls([mock.call().daemon_loop()])
+                self.assertTrue(common_config.init.called)
+                self.assertTrue(common_config.setup_logging.called)
+                plugin.assert_has_calls([mock.call().daemon_loop()])

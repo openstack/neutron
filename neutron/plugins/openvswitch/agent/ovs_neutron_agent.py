@@ -33,7 +33,7 @@ from neutron.agent.linux import polling
 from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
-from neutron.common import config as logging_config
+from neutron.common import config as common_config
 from neutron.common import constants as q_const
 from neutron.common import rpc_compat
 from neutron.common import topics
@@ -1502,8 +1502,8 @@ def create_agent_config_map(config):
 
 def main():
     cfg.CONF.register_opts(ip_lib.OPTS)
-    cfg.CONF(project='neutron')
-    logging_config.setup_logging(cfg.CONF)
+    common_config.init(sys.argv[1:])
+    common_config.setup_logging(cfg.CONF)
     q_utils.log_opt_values(LOG)
 
     try:

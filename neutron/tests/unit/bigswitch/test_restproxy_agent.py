@@ -166,9 +166,10 @@ class TestRestProxyAgent(BaseAgentTestCase):
                      'CONF.AGENT.root_helper': 'helper'}
         with contextlib.nested(
             mock.patch(AGENTMOD + '.cfg', **cfg_attrs),
+            mock.patch(AGENTMOD + '.config.init'),
             mock.patch(NEUTRONCFG),
             mock.patch(PLCONFIG),
-        ) as (mock_conf, mock_log_conf, mock_pluginconf):
+        ) as (mock_conf, mock_init, mock_log_conf, mock_pluginconf):
             self.mod_agent.main()
 
         mock_log_conf.assert_has_calls([

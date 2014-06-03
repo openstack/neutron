@@ -161,16 +161,16 @@ class TestOneConvergenceAgentMain(base.BaseTestCase):
     def test_main(self):
         with contextlib.nested(
             mock.patch.object(nvsd_neutron_agent, 'NVSDNeutronAgent'),
-            mock.patch.object(nvsd_neutron_agent, 'logging_config'),
+            mock.patch.object(nvsd_neutron_agent, 'common_config'),
             mock.patch.object(nvsd_neutron_agent, 'config')
-        ) as (agent, logging_config, config):
+        ) as (agent, common_config, config):
             config.AGENT.integration_bridge = 'br-int-dummy'
             config.AGENT.root_helper = 'root-helper'
             config.AGENT.polling_interval = 5
 
             nvsd_neutron_agent.main()
 
-            self.assertTrue(logging_config.setup_logging.called)
+            self.assertTrue(common_config.setup_logging.called)
             agent.assert_has_calls([
                 mock.call('br-int-dummy', 'root-helper', 5),
                 mock.call().daemon_loop()

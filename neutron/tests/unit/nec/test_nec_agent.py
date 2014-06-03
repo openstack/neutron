@@ -350,16 +350,16 @@ class TestNecAgentMain(base.BaseTestCase):
     def test_main(self):
         with contextlib.nested(
             mock.patch.object(nec_neutron_agent, 'NECNeutronAgent'),
-            mock.patch.object(nec_neutron_agent, 'logging_config'),
+            mock.patch.object(nec_neutron_agent, 'common_config'),
             mock.patch.object(nec_neutron_agent, 'config')
-        ) as (agent, logging_config, cfg):
+        ) as (agent, common_config, cfg):
             cfg.OVS.integration_bridge = 'br-int-x'
             cfg.AGENT.root_helper = 'dummy-helper'
             cfg.AGENT.polling_interval = 10
 
             nec_neutron_agent.main()
 
-            self.assertTrue(logging_config.setup_logging.called)
+            self.assertTrue(common_config.setup_logging.called)
             agent.assert_has_calls([
                 mock.call('br-int-x', 'dummy-helper', 10),
                 mock.call().daemon_loop()

@@ -85,7 +85,7 @@ def main():
     cfg.CONF.register_cli_opts(OPTS)
     cfg.CONF.set_override('use_stderr', True)
     config.setup_logging(cfg.CONF)
-    config.parse(sys.argv[1:], default_config_files=[])
+    config.init(sys.argv[1:], default_config_files=[])
 
     if cfg.CONF.config_file:
         enable_tests_from_config()

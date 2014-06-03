@@ -35,7 +35,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
-from neutron.common import config as logging_config
+from neutron.common import config as common_config
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc_compat
 from neutron.common import topics
@@ -286,9 +286,9 @@ class OVSNeutronOFPRyuAgent(rpc_compat.RpcCallback,
 
 
 def main():
-    cfg.CONF(project='neutron')
+    common_config.init(sys.argv[1:])
 
-    logging_config.setup_logging(cfg.CONF)
+    common_config.setup_logging(cfg.CONF)
 
     integ_br = cfg.CONF.OVS.integration_bridge
     polling_interval = cfg.CONF.AGENT.polling_interval

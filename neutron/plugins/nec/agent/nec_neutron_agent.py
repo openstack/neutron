@@ -21,6 +21,7 @@
 # @author: Akihiro MOTOKI
 
 import socket
+import sys
 import time
 
 import eventlet
@@ -29,7 +30,7 @@ eventlet.monkey_patch()
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
-from neutron.common import config as logging_config
+from neutron.common import config as common_config
 from neutron.common import constants as q_const
 from neutron.common import rpc_compat
 from neutron.common import topics
@@ -234,9 +235,9 @@ class NECNeutronAgent(object):
 
 
 def main():
-    config.CONF(project='neutron')
+    common_config.init(sys.argv[1:])
 
-    logging_config.setup_logging(config.CONF)
+    common_config.setup_logging(config.CONF)
 
     # Determine which agent type to use.
     integ_br = config.OVS.integration_bridge
