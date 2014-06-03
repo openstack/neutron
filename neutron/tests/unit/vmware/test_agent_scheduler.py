@@ -52,7 +52,7 @@ class DhcpAgentNotifierTestCase(test_base.OvsDhcpAgentNotifierTestCase):
         cfg.CONF.set_override('metadata_mode', 'dhcp_host_route', 'NSX')
         hosts = ['hosta']
         with mock.patch.object(rpc.LOG, 'info') as mock_log:
-            [mock_dhcp, net, subnet, port] = self._network_port_create(
+            net, subnet, port = self._network_port_create(
                 hosts, gateway=gateway, owner=constants.DEVICE_OWNER_DHCP)
             self.assertEqual(subnet['subnet']['gateway_ip'], gateway)
             called = 1 if gateway is None else 0

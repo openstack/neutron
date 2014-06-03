@@ -200,7 +200,7 @@ class OvsAgentSchedulerTestCaseBase(test_l3_plugin.L3NatTestCaseMixin,
     l3_plugin = None
 
     def setUp(self):
-        # Save the global RESOURCE_ATTRIBUTE_MAP
+        # Save the global RESOURCE_ATTRIBUTE_MAP before loading plugin
         self.saved_attr_map = {}
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
             self.saved_attr_map[resource] = attrs.copy()
@@ -1020,17 +1020,16 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                   'ovs_neutron_plugin.OVSNeutronPluginV2')
 
     def setUp(self):
-        self.dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-        self.dhcp_notifier_cls_p = mock.patch(
-            'neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
-            'DhcpAgentNotifyAPI')
-        self.dhcp_notifier_cls = self.dhcp_notifier_cls_p.start()
-        self.dhcp_notifier_cls.return_value = self.dhcp_notifier
-        # Save the global RESOURCE_ATTRIBUTE_MAP
+        # Save the global RESOURCE_ATTRIBUTE_MAP before loading plugin
         self.saved_attr_map = {}
         for resource, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.iteritems():
             self.saved_attr_map[resource] = attrs.copy()
         super(OvsDhcpAgentNotifierTestCase, self).setUp(self.plugin_str)
+        # the notifier is used to get access to make_msg() method only
+        self.dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        self.dhcp_notifier_cast = mock.patch(
+            'neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
+            'DhcpAgentNotifyAPI.cast').start()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
@@ -1047,20 +1046,19 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_network_add_to_dhcp_agent_notification(self):
-        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
-            with self.network() as net1:
-                network_id = net1['network']['id']
-                self._register_agent_states()
-                hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
-                                              DHCP_HOSTA)
-                self._add_network_to_dhcp_agent(hosta_id,
-                                                network_id)
-            mock_dhcp.assert_called_with(
-                mock.ANY,
-                self.dhcp_notifier.make_msg(
-                    'network_create_end',
-                    payload={'network': {'id': network_id}}),
-                topic='dhcp_agent.' + DHCP_HOSTA)
+        with self.network() as net1:
+            network_id = net1['network']['id']
+            self._register_agent_states()
+            hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                          DHCP_HOSTA)
+            self._add_network_to_dhcp_agent(hosta_id,
+                                            network_id)
+        self.dhcp_notifier_cast.assert_called_with(
+            mock.ANY,
+            self.dhcp_notifier.make_msg(
+                'network_create_end',
+                payload={'network': {'id': network_id}}),
+            topic='dhcp_agent.' + DHCP_HOSTA)
 
     def test_network_remove_from_dhcp_agent_notification(self):
         with self.network(do_delete=False) as net1:
@@ -1070,27 +1068,27 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                                           DHCP_HOSTA)
             self._add_network_to_dhcp_agent(hosta_id,
                                             network_id)
-        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
-            self._remove_network_from_dhcp_agent(hosta_id,
-                                                 network_id)
-            mock_dhcp.assert_called_with(
-                mock.ANY,
-                self.dhcp_notifier.make_msg(
-                    'network_delete_end',
-                    payload={'network_id': network_id}),
-                topic='dhcp_agent.' + DHCP_HOSTA)
+
+        self._remove_network_from_dhcp_agent(hosta_id,
+                                             network_id)
+        self.dhcp_notifier_cast.assert_called_with(
+            mock.ANY,
+            self.dhcp_notifier.make_msg(
+                'network_delete_end',
+                payload={'network_id': network_id}),
+            topic='dhcp_agent.' + DHCP_HOSTA)
 
     def test_agent_updated_dhcp_agent_notification(self):
-        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
-            self._register_agent_states()
-            hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
-                                          DHCP_HOSTA)
-            self._disable_agent(hosta_id, admin_state_up=False)
-            mock_dhcp.assert_called_with(
-                mock.ANY, self.dhcp_notifier.make_msg(
-                    'agent_updated',
-                    payload={'admin_state_up': False}),
-                topic='dhcp_agent.' + DHCP_HOSTA)
+        self._register_agent_states()
+        hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
+                                      DHCP_HOSTA)
+        self._disable_agent(hosta_id, admin_state_up=False)
+
+        self.dhcp_notifier_cast.assert_called_with(
+            mock.ANY, self.dhcp_notifier.make_msg(
+                'agent_updated',
+                payload={'admin_state_up': False}),
+            topic='dhcp_agent.' + DHCP_HOSTA)
 
     def _network_port_create(
         self, hosts, gateway=attributes.ATTR_NOT_SPECIFIED, owner=None):
@@ -1102,22 +1100,21 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                  'configurations': {'dhcp_driver': 'dhcp_driver',
                                     'use_namespaces': True, },
                  'agent_type': constants.AGENT_TYPE_DHCP})
-        with mock.patch.object(self.dhcp_notifier, 'cast') as mock_dhcp:
-            with self.network(do_delete=False) as net1:
-                with self.subnet(network=net1,
-                                 gateway_ip=gateway,
-                                 do_delete=False) as subnet1:
-                    if owner:
-                        with self.port(subnet=subnet1,
-                                       no_delete=True,
-                                       device_owner=owner) as port:
-                            return [mock_dhcp, net1, subnet1, port]
-                    else:
-                        with self.port(subnet=subnet1,
-                                       no_delete=True) as port:
-                            return [mock_dhcp, net1, subnet1, port]
+        with self.network(do_delete=False) as net1:
+            with self.subnet(network=net1,
+                             gateway_ip=gateway,
+                             do_delete=False) as subnet1:
+                if owner:
+                    with self.port(subnet=subnet1,
+                                   no_delete=True,
+                                   device_owner=owner) as port:
+                        return [net1, subnet1, port]
+                else:
+                    with self.port(subnet=subnet1,
+                                   no_delete=True) as port:
+                        return [net1, subnet1, port]
 
-    def _notification_mocks(self, hosts, mock_dhcp, net, subnet, port):
+    def _notification_mocks(self, hosts, net, subnet, port):
         host_calls = {}
         for host in hosts:
             expected_calls = [
@@ -1138,21 +1135,20 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
 
     def test_network_port_create_notification(self):
         hosts = [DHCP_HOSTA]
-        [mock_dhcp, net, subnet, port] = self._network_port_create(hosts)
-        expected_calls = self._notification_mocks(hosts, mock_dhcp,
-                                                  net, subnet, port)
-        self.assertEqual(expected_calls[DHCP_HOSTA], mock_dhcp.call_args_list)
+        net, subnet, port = self._network_port_create(hosts)
+        expected_calls = self._notification_mocks(hosts, net, subnet, port)
+        self.assertEqual(
+            expected_calls[DHCP_HOSTA], self.dhcp_notifier_cast.call_args_list)
 
     def test_network_ha_port_create_notification(self):
         cfg.CONF.set_override('dhcp_agents_per_network', 2)
         hosts = [DHCP_HOSTA, DHCP_HOSTC]
-        [mock_dhcp, net, subnet, port] = self._network_port_create(hosts)
-        expected_calls = self._notification_mocks(hosts, mock_dhcp,
-                                                  net, subnet, port)
+        net, subnet, port = self._network_port_create(hosts)
+        expected_calls = self._notification_mocks(hosts, net, subnet, port)
         for expected in expected_calls[DHCP_HOSTA]:
-            self.assertIn(expected, mock_dhcp.call_args_list)
+            self.assertIn(expected, self.dhcp_notifier_cast.call_args_list)
         for expected in expected_calls[DHCP_HOSTC]:
-            self.assertIn(expected, mock_dhcp.call_args_list)
+            self.assertIn(expected, self.dhcp_notifier_cast.call_args_list)
 
 
 class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
