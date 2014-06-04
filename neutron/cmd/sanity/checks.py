@@ -26,3 +26,13 @@ def vxlan_supported(root_helper, from_ip='192.0.2.1', to_ip='192.0.2.2'):
     with ovs_lib.OVSBridge(name, root_helper) as br:
         port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_VXLAN)
         return port != ovs_const.INVALID_OFPORT
+
+
+def patch_supported(root_helper):
+    seed = utils.get_random_string(6)
+    name = "patchtest-" + seed
+    peer_name = "peertest0-" + seed
+    patch_name = "peertest1-" + seed
+    with ovs_lib.OVSBridge(name, root_helper) as br:
+        port = br.add_patch_port(patch_name, peer_name)
+        return port != ovs_const.INVALID_OFPORT
