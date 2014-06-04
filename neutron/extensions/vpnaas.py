@@ -64,6 +64,10 @@ class RouterInUseByVPNService(qexception.InUse):
     message = _("Router %(router_id)s is used by VPNService %(vpnservice_id)s")
 
 
+class SubnetInUseByVPNService(qexception.InUse):
+    message = _("Subnet %(subnet_id)s is used by VPNService %(vpnservice_id)s")
+
+
 class VPNStateInvalidToUpdate(qexception.BadRequest):
     message = _("Invalid state %(state)s of vpnaas resource %(id)s"
                 " for updating")

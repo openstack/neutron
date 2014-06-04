@@ -867,6 +867,55 @@ class TestVpnaas(VPNPluginDbTestCase):
                                           if k in expected),
                                      expected)
 
+    def test_delete_router_interface_in_use_by_vpnservice(self):
+        """Test delete router interface in use by vpn service."""
+        with self.subnet(cidr='10.2.0.0/24') as subnet:
+            with self.router() as router:
+                with self.vpnservice(subnet=subnet,
+                                     router=router):
+                    self._router_interface_action('remove',
+                                                  router['router']['id'],
+                                                  subnet['subnet']['id'],
+                                                  None,
+                                                  expected_code=webob.exc.
+                                                  HTTPConflict.code)
+
+    def test_delete_external_gateway_interface_in_use_by_vpnservice(self):
+        """Test delete external gateway interface in use by vpn service."""
+        with self.subnet(cidr='10.2.0.0/24') as subnet:
+            with self.router() as router:
+                with self.subnet(cidr='11.0.0.0/24') as public_sub:
+                    self._set_net_external(
+                        public_sub['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        router['router']['id'],
+                        public_sub['subnet']['network_id'])
+                    with self.vpnservice(subnet=subnet,
+                                         router=router):
+                        self._remove_external_gateway_from_router(
+                            router['router']['id'],
+                            public_sub['subnet']['network_id'],
+                            expected_code=webob.exc.HTTPConflict.code)
+
+    def test_router_update_after_ipsec_site_connection(self):
+        """Test case to update router after vpn connection."""
+        rname1 = "router_one"
+        rname2 = "router_two"
+        with self.subnet(cidr='10.2.0.0/24') as subnet:
+            with self.router(name=rname1) as r:
+                with self.vpnservice(subnet=subnet,
+                                     router=r
+                                     ) as vpnservice:
+                    self.ipsec_site_connection(
+                        name='connection1', vpnservice=vpnservice
+                    )
+                    body = self._show('routers', r['router']['id'])
+                    self.assertEqual(body['router']['name'], rname1)
+                    body = self._update('routers', r['router']['id'],
+                                        {'router': {'name': rname2}})
+                    body = self._show('routers', r['router']['id'])
+                    self.assertEqual(body['router']['name'], rname2)
+
     def test_update_vpnservice(self):
         """Test case to update a vpnservice."""
         name = 'new_vpnservice1'
