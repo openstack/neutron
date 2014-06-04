@@ -32,10 +32,6 @@ class DuplicateAddressPairInRequest(nexception.InvalidInput):
                 "mac_address %(mac_address)s ip_address %(ip_address)s.")
 
 
-class AddressPairMatchesPortFixedIPAndMac(nexception.InvalidInput):
-    message = _("Port's Fixed IP and Mac Address match an address pair entry.")
-
-
 def _validate_allowed_address_pairs(address_pairs, valid_values=None):
     unique_check = {}
     for address_pair in address_pairs:

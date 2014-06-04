@@ -159,6 +159,22 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
                           'ip_address': '10.0.0.1'}]
         self._create_port_with_address_pairs(address_pairs, 400)
 
+    def test_create_overlap_with_fixed_ip(self):
+        address_pairs = [{'mac_address': '00:00:00:00:00:01',
+                          'ip_address': '10.0.0.2'}]
+        with self.network() as network:
+            with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
+                fixed_ips = [{'subnet_id': subnet['subnet']['id'],
+                              'ip_address': '10.0.0.2'}]
+                res = self._create_port(self.fmt, network['network']['id'],
+                                        arg_list=(addr_pair.ADDRESS_PAIRS,
+                                        'fixed_ips'),
+                                        allowed_address_pairs=address_pairs,
+                                        fixed_ips=fixed_ips)
+                self.assertEqual(res.status_int, 201)
+                port = self.deserialize(self.fmt, res)
+                self._delete('ports', port['port']['id'])
+
     def test_create_port_extra_args(self):
         address_pairs = [{'mac_address': '00:00:00:00:00:01',
                           'ip_address': '10.0.0.1',
