@@ -411,8 +411,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         br = self.tun_br
         match = br.ofparser.OFPMatch(
             tunnel_id=int(segmentation_id))
-        actions = [br.ofparser.OFPActionSetField(
-            vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT)]
+        actions = [
+            br.ofparser.OFPActionPushVlan(),
+            br.ofparser.OFPActionSetField(
+                vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT)]
         instructions = [
             br.ofparser.OFPInstructionActions(
                 ryu_ofp13.OFPIT_APPLY_ACTIONS, actions),

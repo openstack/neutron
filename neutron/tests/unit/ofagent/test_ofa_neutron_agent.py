@@ -14,7 +14,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
 # @author: Fumihiko Kakuma, VA Linux Systems Japan K.K.
+# @author: YAMAMOTO Takashi, VA Linux Systems Japan K.K.
 
 import contextlib
 
@@ -233,6 +235,9 @@ class TestOFANeutronAgent(OFAAgentTestCase):
                        new=MockFixedIntervalLoopingCall)):
             self.agent = self.mod_agent.OFANeutronAgent(self.ryuapp, **kwargs)
             self.agent.tun_br = mock.Mock()
+            self.agent.tun_br.ofparser = importutils.import_module(
+                'ryu.ofproto.ofproto_v1_3_parser')
+            self.agent.tun_br.datapath = 'tun_br'
             self.datapath = mock.Mock()
             self.ofparser = mock.Mock()
             self.datapath.ofparser = self.ofparser
@@ -730,6 +735,29 @@ class TestOFANeutronAgent(OFAAgentTestCase):
         expected_calls = [mock.call(tun_name, tunnel_ip,
                                     self.agent.tunnel_types[0])]
         self.agent.setup_tunnel_port.assert_has_calls(expected_calls)
+
+    def test__provision_local_vlan_inbound_for_tunnel(self):
+        with mock.patch.object(self.agent, 'ryu_send_msg') as sendmsg:
+            self.agent._provision_local_vlan_inbound_for_tunnel(1, 'gre', 3)
+
+        ofp = importutils.import_module('ryu.ofproto.ofproto_v1_3')
+        ofpp = importutils.import_module('ryu.ofproto.ofproto_v1_3_parser')
+        expected_msg = ofpp.OFPFlowMod(
+            'tun_br',
+            instructions=[
+                ofpp.OFPInstructionActions(
+                    ofp.OFPIT_APPLY_ACTIONS,
+                    [
+                        ofpp.OFPActionPushVlan(),
+                        ofpp.OFPActionSetField(vlan_vid=1 |
+                                               ofp.OFPVID_PRESENT),
+                    ]),
+                ofpp.OFPInstructionGotoTable(table_id=10),
+            ],
+            match=ofpp.OFPMatch(tunnel_id=3),
+            priority=1,
+            table_id=2)
+        sendmsg.assert_has_calls([mock.call(expected_msg)])
 
 
 class AncillaryBridgesTest(OFAAgentTestCase):
