@@ -71,35 +71,6 @@ class LocalVLANMapping:
                  self.segmentation_id))
 
 
-class Port(object):
-    """Represents a neutron port.
-
-    Class stores port data in a ORM-free way, so attributres are
-    still available even if a row has been deleted.
-    """
-
-    def __init__(self, p):
-        self.id = p.id
-        self.network_id = p.network_id
-        self.device_id = p.device_id
-        self.admin_state_up = p.admin_state_up
-        self.status = p.status
-
-    def __eq__(self, other):
-        """Compare only fields that will cause us to re-wire."""
-        try:
-            return (other and self.id == other.id
-                    and self.admin_state_up == other.admin_state_up)
-        except Exception:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash(self.id)
-
-
 class OVSBridge(ovs_lib.OVSBridge):
     def __init__(self, br_name, root_helper, ryuapp):
         super(OVSBridge, self).__init__(br_name, root_helper)
