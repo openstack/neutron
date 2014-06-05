@@ -95,6 +95,9 @@ class DhcpAgentNotifyAPI(n_rpc.RpcProxy):
                              'payload': payload})
         return enabled_agents
 
+    def _is_reserved_dhcp_port(self, port):
+        return port.get('device_id') == constants.DEVICE_ID_RESERVED_DHCP_PORT
+
     def _notify_agents(self, context, method, payload, network_id):
         """Notify all the agents that are hosting the network."""
         # fanout is required as we do not know who is "listening"
@@ -115,7 +118,9 @@ class DhcpAgentNotifyAPI(n_rpc.RpcProxy):
                 context, [network_id])
 
             # schedule the network first, if needed
-            schedule_required = method == 'port_create_end'
+            schedule_required = (
+                method == 'port_create_end' and
+                not self._is_reserved_dhcp_port(payload['port']))
             if schedule_required:
                 agents = self._schedule_network(admin_ctx, network, agents)
 
