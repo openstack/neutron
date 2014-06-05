@@ -2313,7 +2313,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
     def create_security_group(self, context, security_group, default_sg=False):
         """Create security group.
 
-        If default_sg is true that means a we are creating a default security
+        If default_sg is true that means we are creating a default security
         group and we don't need to check if one exists.
         """
         s = security_group.get('security_group')
