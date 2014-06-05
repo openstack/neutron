@@ -786,6 +786,13 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                               None,
                                               p['port']['id'])
 
+    def test_router_add_interface_empty_port_and_subnet_ids(self):
+        with self.router() as r:
+            self._router_interface_action('add', r['router']['id'],
+                                          None, None,
+                                          expected_code=exc.
+                                          HTTPBadRequest.code)
+
     def test_router_add_interface_port_bad_tenant_returns_404(self):
         with mock.patch('neutron.context.Context.to_dict') as tdict:
             admin_context = {'roles': ['admin']}
