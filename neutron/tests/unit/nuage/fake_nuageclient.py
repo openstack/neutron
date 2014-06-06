@@ -72,6 +72,15 @@ class FakeNuageClient(object):
         }
         return fake_net_partition
 
+    def get_def_netpartition_data(self, default_net_part):
+        if default_net_part == 'default_test_np':
+            fake_defnetpart_data = {
+                'np_id': uuidutils.generate_uuid(),
+                'l3dom_tid': uuidutils.generate_uuid(),
+                'l2dom_tid': uuidutils.generate_uuid(),
+            }
+            return fake_defnetpart_data
+
     def delete_net_partition(self, id, l3dom_id=None, l2dom_id=None):
         pass
 
