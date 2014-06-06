@@ -133,9 +133,10 @@ db_options.set_defaults(sql_connection=_SQL_CONNECTION_DEFAULT,
                         max_overflow=20, pool_timeout=10)
 
 
-def parse(args):
+def parse(args, **kwargs):
     cfg.CONF(args=args, project='neutron',
-             version='%%prog %s' % version.version_info.release_string())
+             version='%%prog %s' % version.version_info.release_string(),
+             **kwargs)
 
     # Validate that the base_mac is of the correct format
     msg = attributes._validate_regex(cfg.CONF.base_mac,

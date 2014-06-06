@@ -13,10 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import distutils.version as dist_version
-import os
-import re
-
 from oslo.config import cfg
 
 from neutron.agent.linux import ip_lib
@@ -176,7 +172,14 @@ class OVSBridge(BaseOVS):
         self.run_ofctl("del-flows", [])
 
     def get_port_ofport(self, port_name):
-        return self.db_get_val("Interface", port_name, "ofport")
+        ofport = self.db_get_val("Interface", port_name, "ofport")
+        # This can return a non-integer string, like '[]' so ensure a
+        # common failure case
+        try:
+            int(ofport)
+            return ofport
+        except ValueError:
+            return constants.INVALID_OFPORT
 
     def get_datapath_id(self):
         return self.db_get_val('Bridge',
@@ -250,7 +253,13 @@ class OVSBridge(BaseOVS):
                               "options:in_key=flow",
                               "options:out_key=flow"])
         self.run_vsctl(vsctl_command)
-        return self.get_port_ofport(port_name)
+        ofport = self.get_port_ofport(port_name)
+        if (tunnel_type == p_const.TYPE_VXLAN and
+                ofport == constants.INVALID_OFPORT):
+            LOG.error(_('Unable to create VXLAN tunnel port. Please ensure '
+                        'that an openvswitch version that supports VXLAN is '
+                        'installed.'))
+        return ofport
 
     def add_patch_port(self, local_name, remote_name):
         self.run_vsctl(["add-port", self.br_name, local_name,
@@ -453,6 +462,13 @@ class OVSBridge(BaseOVS):
             msg = _('Unable to determine mac address for %s') % self.br_name
             raise Exception(msg)
 
+    def __enter__(self):
+        self.create()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        self.destroy()
+
 
 def get_bridge_for_iface(root_helper, iface):
     args = ["ovs-vsctl", "--timeout=%d" % cfg.CONF.ovs_vsctl_timeout,
@@ -474,35 +490,6 @@ def get_bridges(root_helper):
             LOG.exception(_("Unable to retrieve bridges. Exception: %s"), e)
 
 
-def get_installed_ovs_usr_version(root_helper):
-    args = ["ovs-vsctl", "--version"]
-    try:
-        cmd = utils.execute(args, root_helper=root_helper)
-        ver = re.findall("\d+\.\d+", cmd)[0]
-        return ver
-    except Exception:
-        LOG.exception(_("Unable to retrieve OVS userspace version."))
-
-
-def get_installed_ovs_klm_version():
-    args = ["modinfo", "openvswitch"]
-    try:
-        cmd = utils.execute(args)
-        for line in cmd.split('\n'):
-            if 'version: ' in line and not 'srcversion' in line:
-                ver = re.findall("\d+\.\d+", line)
-                return ver[0]
-    except Exception:
-        LOG.exception(_("Unable to retrieve OVS kernel module version."))
-
-
-def get_installed_kernel_version():
-    try:
-        return os.uname()[2].split('-', 1)[0]
-    except IndexError:
-        LOG.exception(_("Unable to retrieve installed Linux kernel version."))
-
-
 def get_bridge_external_bridge_id(root_helper, bridge):
     args = ["ovs-vsctl", "--timeout=2", "br-get-external-id",
             bridge, "bridge-id"]
@@ -511,57 +498,6 @@ def get_bridge_external_bridge_id(root_helper, bridge):
     except Exception:
         LOG.exception(_("Bridge %s not found."), bridge)
         return None
-
-
-def _compare_installed_and_required_version(
-        installed_kernel_version, installed_version, required_version,
-        check_type, version_type):
-    if installed_kernel_version:
-        if dist_version.StrictVersion(
-                installed_kernel_version) >= dist_version.StrictVersion(
-                constants.MINIMUM_LINUX_KERNEL_OVS_VXLAN):
-            return
-    if installed_version:
-        if dist_version.StrictVersion(
-                installed_version) < dist_version.StrictVersion(
-                required_version):
-            msg = (_('Failed %(ctype)s version check for Open '
-                     'vSwitch with %(vtype)s support. To use '
-                     '%(vtype)s tunnels with OVS, please ensure '
-                     'the OVS version is %(required)s or newer!') %
-                   {'ctype': check_type, 'vtype': version_type,
-                    'required': required_version})
-            raise SystemError(msg)
-    else:
-        msg = (_('Unable to determine %(ctype)s version for Open '
-                 'vSwitch with %(vtype)s support. To use '
-                 '%(vtype)s tunnels with OVS, please ensure '
-                 'that the version is %(required)s or newer!') %
-               {'ctype': check_type, 'vtype': version_type,
-                'required': required_version})
-        raise SystemError(msg)
-
-
-def check_ovs_vxlan_version(root_helper):
-    min_required_version = constants.MINIMUM_OVS_VXLAN_VERSION
-    installed_klm_version = get_installed_ovs_klm_version()
-    installed_kernel_version = get_installed_kernel_version()
-    installed_usr_version = get_installed_ovs_usr_version(root_helper)
-    LOG.debug(_("Checking OVS version for VXLAN support "
-                "installed klm version is %(klm)s, installed Linux version is "
-                "%(kernel)s, installed user version is %(usr)s ") %
-              {'klm': installed_klm_version,
-               'kernel': installed_kernel_version,
-               'usr': installed_usr_version})
-    # First check the userspace version
-    _compare_installed_and_required_version(None, installed_usr_version,
-                                            min_required_version,
-                                            'userspace', 'VXLAN')
-    # Now check the kernel version
-    _compare_installed_and_required_version(installed_kernel_version,
-                                            installed_klm_version,
-                                            min_required_version,
-                                            'kernel', 'VXLAN')
 
 
 def _build_flow_expr_str(flow_dict, cmd):

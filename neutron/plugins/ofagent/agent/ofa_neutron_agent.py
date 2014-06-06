@@ -267,7 +267,6 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.local_ip = local_ip
         self.tunnel_count = 0
         self.vxlan_udp_port = cfg.CONF.AGENT.vxlan_udp_port
-        self._check_ovs_version()
         if self.enable_tunneling:
             self.setup_tunnel_br(tun_br)
         # Collect additional bridges to monitor
@@ -279,14 +278,6 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                               self.root_helper)
         # Initialize iteration counter
         self.iter_num = 0
-
-    def _check_ovs_version(self):
-        if p_const.TYPE_VXLAN in self.tunnel_types:
-            try:
-                ovs_lib.check_ovs_vxlan_version(self.root_helper)
-            except SystemError:
-                LOG.exception(_("Agent terminated"))
-                raise SystemExit(1)
 
     def _report_state(self):
         # How many devices are likely used by a VM
