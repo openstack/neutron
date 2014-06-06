@@ -23,6 +23,7 @@ from oslo.config import cfg
 
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
+from neutron.plugins.ml2 import driver_api
 from neutron.plugins.ml2.drivers.brocade.db import models as brocade_db
 
 LOG = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ ML2_BROCADE = [cfg.StrOpt('address', default='',
 cfg.CONF.register_opts(ML2_BROCADE, "ml2_brocade")
 
 
-class BrocadeMechanism():
+class BrocadeMechanism(driver_api.MechanismDriver):
     """ML2 Mechanism driver for Brocade VDX switches. This is the upper
     layer driver class that interfaces to lower layer (NETCONF) below.
 
