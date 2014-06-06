@@ -42,10 +42,22 @@ def check_ovs_vxlan():
     return result
 
 
+def check_ovs_patch():
+    result = checks.patch_supported(root_helper=cfg.CONF.AGENT.root_helper)
+    if not result:
+        LOG.error(_('Check for Open vSwitch patch port support failed. '
+                    'Please ensure that the version of openvswitch '
+                    'being used has patch port support or disable features '
+                    'requiring patch ports (gre/vxlan, etc.).'))
+    return result
+
+
 # Define CLI opts to test specific features, with a calback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
                     help=_('Check for vxlan support')),
+    BoolOptCallback('ovs_patch', check_ovs_patch, default=False,
+                    help=_('Check for patch port support')),
 ]
 
 
@@ -57,6 +69,8 @@ def enable_tests_from_config():
 
     if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_override('ovs_vxlan', True)
+    if cfg.CONF.AGENT.tunnel_types:
+        cfg.CONF.set_override('ovs_patch', True)
 
 
 def all_tests_passed():

@@ -37,3 +37,10 @@ class OVSSanityTestCase(base.BaseTestCase):
         """
         self.check_sudo_enabled()
         checks.vxlan_supported(self.root_helper)
+
+    def test_ovs_patch_support_runs(self):
+        """This test just ensures that the test in neutron-sanity-check
+            can run through without error, without mocking anything out
+        """
+        self.check_sudo_enabled()
+        checks.patch_supported(self.root_helper)
