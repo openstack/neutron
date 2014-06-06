@@ -211,14 +211,16 @@ class TestDhcpAgent(base.BaseTestCase):
         self.driver.return_value.foo.side_effect = exc or Exception
         with mock.patch.object(dhcp_agent.LOG, trace_level) as log:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            self.assertIsNone(dhcp.call_driver('foo', network))
-            self.driver.assert_called_once_with(cfg.CONF,
-                                                mock.ANY,
-                                                'sudo',
-                                                mock.ANY,
-                                                mock.ANY)
-            self.assertEqual(log.call_count, 1)
-            self.assertEqual(expected_sync, dhcp.needs_resync)
+            with mock.patch.object(dhcp,
+                                   'schedule_resync') as schedule_resync:
+                self.assertIsNone(dhcp.call_driver('foo', network))
+                self.driver.assert_called_once_with(cfg.CONF,
+                                                    mock.ANY,
+                                                    'sudo',
+                                                    mock.ANY,
+                                                    mock.ANY)
+                self.assertEqual(log.call_count, 1)
+                self.assertEqual(expected_sync, schedule_resync.called)
 
     def test_call_driver_failure(self):
         self._test_call_driver_failure()
@@ -298,10 +300,12 @@ class TestDhcpAgent(base.BaseTestCase):
 
             with mock.patch.object(dhcp_agent.LOG, 'exception') as log:
                 dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-                dhcp.sync_state()
+                with mock.patch.object(dhcp,
+                                       'schedule_resync') as schedule_resync:
+                    dhcp.sync_state()
 
-                self.assertTrue(log.called)
-                self.assertTrue(dhcp.needs_resync)
+                    self.assertTrue(log.called)
+                    self.assertTrue(schedule_resync.called)
 
     def test_periodic_resync(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
@@ -312,14 +316,14 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_periodoc_resync_helper(self):
         with mock.patch.object(dhcp_agent.eventlet, 'sleep') as sleep:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            dhcp.needs_resync = True
+            dhcp.needs_resync_reasons = ['reason1', 'reason2']
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
                 with testtools.ExpectedException(RuntimeError):
                     dhcp._periodic_resync_helper()
                 sync_state.assert_called_once_with()
                 sleep.assert_called_once_with(dhcp.conf.resync_interval)
-                self.assertFalse(dhcp.needs_resync)
+                self.assertEqual(len(dhcp.needs_resync_reasons), 0)
 
     def test_populate_cache_on_start_without_active_networks_support(self):
         # emul dhcp driver that doesn't support retrieving of active networks
@@ -468,14 +472,15 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.mock_init_p = mock.patch('neutron.agent.dhcp_agent.'
                                       'DhcpAgent._populate_networks_cache')
         self.mock_init = self.mock_init_p.start()
-
         with mock.patch.object(dhcp.Dnsmasq,
                                'check_version') as check_v:
             check_v.return_value = dhcp.Dnsmasq.MINIMUM_VERSION
             self.dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         self.call_driver_p = mock.patch.object(self.dhcp, 'call_driver')
-
         self.call_driver = self.call_driver_p.start()
+        self.schedule_resync_p = mock.patch.object(self.dhcp,
+                                                   'schedule_resync')
+        self.schedule_resync = self.schedule_resync_p.start()
         self.external_process_p = mock.patch(
             'neutron.agent.linux.external_process.ProcessManager'
         )
@@ -525,7 +530,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                 [mock.call.get_network_info('fake_id')])
             self.assertFalse(self.call_driver.called)
             self.assertTrue(log.called)
-            self.assertFalse(self.dhcp.needs_resync)
+            self.assertFalse(self.dhcp.schedule_resync.called)
 
     def test_enable_dhcp_helper_exception_during_rpc(self):
         self.plugin.get_network_info.side_effect = Exception
@@ -535,7 +540,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                 [mock.call.get_network_info(fake_network.id)])
             self.assertFalse(self.call_driver.called)
             self.assertTrue(log.called)
-            self.assertTrue(self.dhcp.needs_resync)
+            self.assertTrue(self.schedule_resync.called)
             self.assertFalse(self.cache.called)
             self.assertFalse(self.external_process.called)
 
@@ -723,7 +728,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.cache.assert_has_calls(
                 [mock.call.get_network_by_id('net-id')])
             self.assertTrue(log.called)
-            self.assertTrue(self.dhcp.needs_resync)
+            self.assertTrue(self.dhcp.schedule_resync.called)
 
     def test_subnet_update_end(self):
         payload = dict(subnet=dict(network_id=fake_network.id))
