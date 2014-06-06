@@ -73,6 +73,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             pl.servers.capabilities = ['consistency']
             self.assertRaises(servermanager.RemoteRestError,
                               pl.servers._consistency_watchdog)
+            rmock.assert_called_with('GET', '/health', '', {}, [], False)
 
     def test_file_put_contents(self):
         pl = NeutronManager.get_plugin()
