@@ -93,6 +93,7 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             pl.servers.capabilities = ['consistency']
             self.assertRaises(servermanager.RemoteRestError,
                               pl.servers._consistency_watchdog)
+            rmock.assert_called_with('GET', '/health', '', {}, [], False)
 
     def test_consistency_hash_header(self):
         # mock HTTP class instead of rest_call so we can see headers

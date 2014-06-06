@@ -554,9 +554,9 @@ class ServerPool(object):
             # If consistency is supported, all we have to do is make any
             # rest call and the consistency header will be added. If it
             # doesn't match, the backend will return a synchronization error
-            # that will be handled by the rest_call.
+            # that will be handled by the rest_action.
             eventlet.sleep(polling_interval)
-            self.rest_call('GET', HEALTH_PATH)
+            self.rest_action('GET', HEALTH_PATH)
 
 
 class HTTPSConnectionWithValidation(httplib.HTTPSConnection):
