@@ -352,7 +352,8 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             # making a call should trigger a conflict sync
             pl.servers.rest_call('GET', '/', '', None, [])
             srestmock.assert_has_calls([
-                mock.call('GET', '/', '', None, False, reconnect=True),
+                mock.call('GET', '/', '', None, False, reconnect=True,
+                          hash_handler=mock.ANY),
                 mock.call('PUT', '/topology',
                           {'routers': [], 'networks': []},
                           timeout=None)

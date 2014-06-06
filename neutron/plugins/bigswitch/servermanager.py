@@ -39,6 +39,7 @@ import socket
 import ssl
 
 import eventlet
+import eventlet.corolocal
 from oslo.config import cfg
 
 from neutron.common import exceptions
@@ -121,7 +122,7 @@ class ServerProxy(object):
         return self.capabilities
 
     def rest_call(self, action, resource, data='', headers={}, timeout=False,
-                  reconnect=False):
+                  reconnect=False, hash_handler=None):
         uri = self.base_uri + resource
         body = json.dumps(data)
         if not headers:
@@ -131,7 +132,12 @@ class ServerProxy(object):
         headers['NeutronProxy-Agent'] = self.name
         headers['Instance-ID'] = self.neutron_id
         headers['Orchestration-Service-ID'] = ORCHESTRATION_SERVICE_ID
-        headers[HASH_MATCH_HEADER] = self.mypool.consistency_hash or ''
+        if hash_handler:
+            # this will be excluded on calls that don't need hashes
+            # (e.g. topology sync, capability checks)
+            headers[HASH_MATCH_HEADER] = hash_handler.read_for_update()
+        else:
+            hash_handler = cdb.HashHandler()
         if 'keep-alive' in self.capabilities:
             headers['Connection'] = 'keep-alive'
         else:
@@ -178,9 +184,7 @@ class ServerProxy(object):
         try:
             self.currentconn.request(action, uri, body, headers)
             response = self.currentconn.getresponse()
-            newhash = response.getheader(HASH_MATCH_HEADER)
-            if newhash:
-                self._put_consistency_hash(newhash)
+            hash_handler.put_hash(response.getheader(HASH_MATCH_HEADER))
             respstr = response.read()
             respdata = respstr
             if response.status in self.success_codes:
@@ -216,10 +220,6 @@ class ServerProxy(object):
                                                     'data': ret[3]})
         return ret
 
-    def _put_consistency_hash(self, newhash):
-        self.mypool.consistency_hash = newhash
-        cdb.put_consistency_hash(newhash)
-
 
 class ServerPool(object):
 
@@ -235,6 +235,7 @@ class ServerPool(object):
         self.neutron_id = cfg.CONF.RESTPROXY.neutron_id
         self.base_uri = base_uri
         self.name = name
+        self.contexts = {}
         self.timeout = cfg.CONF.RESTPROXY.server_timeout
         self.always_reconnect = not cfg.CONF.RESTPROXY.cache_connections
         default_port = 8000
@@ -245,10 +246,6 @@ class ServerPool(object):
         # Needs to be set by module that uses the servermanager.
         self.get_topo_function = None
         self.get_topo_function_args = {}
-
-        # Hash to send to backend with request as expected previous
-        # state to verify consistency.
-        self.consistency_hash = cdb.get_consistency_hash()
 
         if not servers:
             raise cfg.Error(_('Servers not defined. Aborting server manager.'))
@@ -267,6 +264,19 @@ class ServerPool(object):
         eventlet.spawn(self._consistency_watchdog,
                        cfg.CONF.RESTPROXY.consistency_interval)
         LOG.debug(_("ServerPool: initialization done"))
+
+    def set_context(self, context):
+        # this context needs to be local to the greenthread
+        # so concurrent requests don't use the wrong context
+        self.contexts[eventlet.corolocal.get_ident()] = context
+
+    def pop_context(self):
+        # Don't store these contexts after use. They should only
+        # last for one request.
+        try:
+            return self.contexts.pop(eventlet.corolocal.get_ident())
+        except KeyError:
+            return None
 
     def get_capabilities(self):
         # lookup on first try
@@ -394,12 +404,14 @@ class ServerPool(object):
     @utils.synchronized('bsn-rest-call')
     def rest_call(self, action, resource, data, headers, ignore_codes,
                   timeout=False):
+        hash_handler = cdb.HashHandler(context=self.pop_context())
         good_first = sorted(self.servers, key=lambda x: x.failed)
         first_response = None
         for active_server in good_first:
             ret = active_server.rest_call(action, resource, data, headers,
                                           timeout,
-                                          reconnect=self.always_reconnect)
+                                          reconnect=self.always_reconnect,
+                                          hash_handler=hash_handler)
             # If inconsistent, do a full synchronization
             if ret[0] == httplib.CONFLICT:
                 if not self.get_topo_function:
