@@ -46,6 +46,8 @@ VXLAN_TUN_TO_LV = 3
 LEARN_FROM_TUN = 10
 UCAST_TO_TUN = 20
 FLOOD_TO_TUN = 21
+CANARY_TABLE = 22
+
 # Map tunnel types to tables number
 TUN_TABLE = {p_const.TYPE_GRE: GRE_TUN_TO_LV,
              p_const.TYPE_VXLAN: VXLAN_TUN_TO_LV}

@@ -105,6 +105,8 @@ class TunnelTest(base.BaseTestCase):
             mock.call.delete_port('patch-tun'),
             mock.call.remove_all_flows(),
             mock.call.add_flow(priority=1, actions='normal'),
+            mock.call.add_flow(priority=0, table=constants.CANARY_TABLE,
+                               actions='drop')
         ]
 
         self.mock_map_tun_bridge = self.ovs_bridges[self.MAP_TUN_BRIDGE]
@@ -435,7 +437,7 @@ class TunnelTest(base.BaseTestCase):
                                               'sudo', 2, ['gre'],
                                               self.VETH_MTU)
         a.local_vlan_map[NET_UUID] = LVM
-        a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID)
+        a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID, False)
         self._verify_mock_calls()
 
     def test_port_unbound(self):
@@ -511,6 +513,11 @@ class TunnelTest(base.BaseTestCase):
                   'added': set([]),
                   'removed': set(['tap0'])}
 
+        self.mock_int_bridge_expected += [
+            mock.call.dump_flows_for_table(constants.CANARY_TABLE),
+            mock.call.dump_flows_for_table(constants.CANARY_TABLE)
+        ]
+
         with contextlib.nested(
             mock.patch.object(log.ContextAdapter, 'exception'),
             mock.patch.object(ovs_neutron_agent.OVSNeutronAgent,
@@ -549,10 +556,10 @@ class TunnelTest(base.BaseTestCase):
         process_network_ports.assert_has_calls([
             mock.call({'current': set(['tap0']),
                        'removed': set([]),
-                       'added': set(['tap2'])}),
+                       'added': set(['tap2'])}, False),
             mock.call({'current': set(['tap2']),
                        'removed': set(['tap0']),
-                       'added': set([])})
+                       'added': set([])}, False)
         ])
         self._verify_mock_calls()
 

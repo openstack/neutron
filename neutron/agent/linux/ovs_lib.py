@@ -201,6 +201,13 @@ class OVSBridge(BaseOVS):
         else:
             self.run_ofctl("del-flows", [flow_expr_str])
 
+    def dump_flows_for_table(self, table):
+        flow_str = "table=%s" % table
+        flows = self.run_ofctl("dump-flows", [flow_str])
+        retval = '\n'.join(item for item in flows.splitlines()
+                           if 'NXST' not in item)
+        return retval
+
     def defer_apply_on(self):
         LOG.debug(_('defer_apply_on'))
         self.defer_apply_flows = True
