@@ -35,9 +35,6 @@ import neutron.tests.unit.test_l3_plugin as test_l3_plugin
 MIDOKURA_PKG_PATH = "neutron.plugins.midonet.plugin"
 MIDONET_PLUGIN_NAME = ('%s.MidonetPluginV2' % MIDOKURA_PKG_PATH)
 
-# Need to mock the midonetclient module since the plugin will try to load it.
-sys.modules["midonetclient"] = mock.Mock()
-
 
 class MidonetPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
 
@@ -51,6 +48,10 @@ class MidonetPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         test_lib.test_config['config_files'] = [os.path.join(
             etc_path, 'midonet.ini.test')]
 
+        p = mock.patch.dict(sys.modules, {'midonetclient': mock.Mock()})
+        p.start()
+        # dict patches must be explicitly stopped
+        self.addCleanup(p.stop)
         self.instance = self.mock_api.start()
         mock_cfg = mock_lib.MidonetLibMockConfig(self.instance.return_value)
         mock_cfg.setup()
@@ -68,8 +69,8 @@ class TestMidonetNetworksV2(test_plugin.TestNetworksV2,
     pass
 
 
-class TestMidonetL3NatTestCase(test_l3_plugin.L3NatDBIntTestCase,
-                               MidonetPluginV2TestCase):
+class TestMidonetL3NatTestCase(MidonetPluginV2TestCase,
+                               test_l3_plugin.L3NatDBIntTestCase):
     def setUp(self,
               plugin=MIDONET_PLUGIN_NAME,
               ext_mgr=None,
@@ -147,6 +148,10 @@ class TestMidonetSecurityGroupsTestCase(sg.SecurityGroupDBTestCase):
         self.instance = self.mock_api.start()
         mock_cfg = mock_lib.MidonetLibMockConfig(self.instance.return_value)
         mock_cfg.setup()
+        p = mock.patch.dict(sys.modules, {'midonetclient': mock.Mock()})
+        p.start()
+        # dict patches must be explicitly stopped
+        self.addCleanup(p.stop)
         super(TestMidonetSecurityGroupsTestCase, self).setUp(self._plugin_name)
 
 
