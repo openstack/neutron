@@ -24,7 +24,7 @@ import six
 import webob.dec
 
 from neutron.openstack.common import context
-from neutron.openstack.common.gettextutils import _
+from neutron.openstack.common.gettextutils import _LE
 from neutron.openstack.common import log as logging
 from neutron.openstack.common.middleware import base
 from neutron.openstack.common.notifier import api
@@ -37,8 +37,8 @@ def log_and_ignore_error(fn):
         try:
             return fn(*args, **kwargs)
         except Exception as e:
-            LOG.exception(_('An exception occurred processing '
-                            'the API call: %s ') % e)
+            LOG.exception(_LE('An exception occurred processing '
+                              'the API call: %s ') % e)
     return wrapped
 
 
@@ -56,7 +56,7 @@ class RequestNotifier(base.Middleware):
         return _factory
 
     def __init__(self, app, **conf):
-        self.service_name = conf.get('service_name', None)
+        self.service_name = conf.get('service_name')
         self.ignore_req_list = [x.upper().strip() for x in
                                 conf.get('ignore_req_list', '').split(',')]
         super(RequestNotifier, self).__init__(app)
@@ -68,7 +68,7 @@ class RequestNotifier(base.Middleware):
 
         """
         return dict((k, v) for k, v in six.iteritems(environ)
-                    if k.isupper())
+                    if k.isupper() and k != 'HTTP_X_AUTH_TOKEN')
 
     @log_and_ignore_error
     def process_request(self, request):
