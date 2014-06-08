@@ -757,8 +757,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                     self._update_router_gw_info(context, router_db['id'],
                                                 gw_info)
 
-            router_data = self._make_router_dict(router_db,
-                                                 process_extensions=False)
+            router_data = self._make_router_dict(router_db)
 
         except Exception:
             # Try removing the midonet router
