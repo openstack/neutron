@@ -163,6 +163,28 @@ class TestVpnPlugin(test_db_vpnaas.VPNTestMixin,
                 for k, v in expected:
                     self.assertEqual(res['vpnservice'][k], v)
 
+    def test_delete_vpnservice(self):
+        """Test case to delete a vpnservice."""
+        with self.subnet(cidr='10.2.0.0/24') as subnet:
+            with self.router() as router:
+                with self.vpnservice(name='vpnservice',
+                                     subnet=subnet,
+                                     router=router,
+                                     no_delete=True) as vpnservice:
+                    req = self.new_delete_request(
+                        'vpnservices', vpnservice['vpnservice']['id'])
+                    res = req.get_response(self.ext_api)
+                    self.assertEqual(res.status_int, 204)
+
+    def test_delete_router_in_use_by_vpnservice(self):
+        """Test delete router in use by vpn service."""
+        with self.subnet(cidr='10.2.0.0/24') as subnet:
+            with self.router() as router:
+                with self.vpnservice(subnet=subnet,
+                                     router=router):
+                    self._delete('routers', router['router']['id'],
+                                 expected_code=webob.exc.HTTPConflict.code)
+
     def _test_create_ipsec_site_connection(self, key_overrides=None,
                                            ike_key_overrides=None,
                                            ipsec_key_overrides=None,

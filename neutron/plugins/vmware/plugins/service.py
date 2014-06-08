@@ -28,6 +28,7 @@ from neutron.db.vpn import vpn_db
 from neutron.extensions import firewall as fw_ext
 from neutron.extensions import l3
 from neutron.extensions import routedserviceinsertion as rsi
+from neutron.extensions import vpnaas as vpn_ext
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants as service_constants
@@ -498,12 +499,35 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
         lrouter['status'] = service_constants.PENDING_CREATE
         return lrouter
 
+    def check_router_in_use(self, context, router_id):
+        router_filter = {'router_id': [router_id]}
+        vpnservices = self.get_vpnservices(
+            context, filters={'router_id': [router_id]})
+        if vpnservices:
+            raise vpn_ext.RouterInUseByVPNService(
+                router_id=router_id,
+                vpnservice_id=vpnservices[0]['id'])
+        vips = self.get_vips(
+            context, filters=router_filter)
+        if vips:
+            raise nsx_exc.RouterInUseByLBService(
+                router_id=router_id,
+                vip_id=vips[0]['id'])
+        firewalls = self.get_firewalls(
+            context, filters=router_filter)
+        if firewalls:
+            raise nsx_exc.RouterInUseByFWService(
+                router_id=router_id,
+                firewall_id=firewalls[0]['id'])
+
     def _delete_lrouter(self, context, router_id, nsx_router_id):
         binding = vcns_db.get_vcns_router_binding(context.session, router_id)
         if not binding:
             super(NsxAdvancedPlugin, self)._delete_lrouter(
                 context, router_id, nsx_router_id)
         else:
+            #Check whether router has an advanced service inserted.
+            self.check_router_in_use(context, router_id)
             vcns_db.update_vcns_router_binding(
                 context.session, router_id,
                 status=service_constants.PENDING_DELETE)

@@ -197,6 +197,19 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
                         firewall.FirewallNotFound,
                         self.plugin.get_firewall, ctx, fw_id)
 
+    def test_delete_router_in_use_by_fwservice(self):
+        router_id = self._create_and_get_router()
+        with self.firewall_policy() as fwp:
+            fwp_id = fwp['firewall_policy']['id']
+            with self.firewall(name='fw',
+                               firewall_policy_id=fwp_id,
+                               router_id=router_id,
+                               admin_state_up=
+                               test_db_firewall.ADMIN_STATE_UP,
+                               expected_res_status=201):
+                self._delete('routers', router_id,
+                             expected_code=webob.exc.HTTPConflict.code)
+
     def test_show_firewall(self):
         name = "firewall1"
         attrs = self._get_test_firewall_attrs(name)

@@ -280,10 +280,28 @@ class TestLoadbalancerPlugin(
             with self.vip(
                 router_id=self._create_and_get_router(),
                 pool=pool, subnet=subnet, no_delete=True) as vip:
-                req = self.new_delete_request('vips',
-                                              vip['vip']['id'])
+                req = self.new_delete_request('vips', vip['vip']['id'])
                 res = req.get_response(self.ext_api)
                 self.assertEqual(res.status_int, 204)
+
+    def test_delete_router_in_use_by_lbservice(self):
+        router_id = self._create_and_get_router()
+        with contextlib.nested(
+            self.subnet(),
+            self.health_monitor(),
+            self.pool()
+        ) as (subnet, monitor, pool):
+            net_id = subnet['subnet']['network_id']
+            self._set_net_external(net_id)
+            self.plugin.create_pool_health_monitor(
+                context.get_admin_context(),
+                monitor, pool['pool']['id']
+            )
+            with self.vip(
+                router_id=router_id,
+                pool=pool, subnet=subnet):
+                self._delete('routers', router_id,
+                             expected_code=web_exc.HTTPConflict.code)
 
     def test_show_vip(self):
         router_id = self._create_and_get_router()
