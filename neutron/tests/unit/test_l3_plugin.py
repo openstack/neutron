@@ -351,10 +351,11 @@ class L3NatTestCaseMixin(object):
                             neutron_context=neutron_context)
 
     def _remove_external_gateway_from_router(self, router_id, network_id,
-                                             expected_code=exc.HTTPOk.code):
+                                             expected_code=exc.HTTPOk.code,
+                                             external_gw_info=None):
         return self._update('routers', router_id,
                             {'router': {'external_gateway_info':
-                                       {}}},
+                                        external_gw_info}},
                             expected_code=expected_code)
 
     def _router_interface_action(self, action, router_id, subnet_id, port_id,
@@ -615,9 +616,13 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     net_id = (body['router']
                               ['external_gateway_info']['network_id'])
                     self.assertEqual(net_id, s2['subnet']['network_id'])
+                    # Validate that we can clear the gateway with
+                    # an empty dict, in any other case, we fall back
+                    # on None as default value
                     self._remove_external_gateway_from_router(
                         r['router']['id'],
-                        s2['subnet']['network_id'])
+                        s2['subnet']['network_id'],
+                        external_gw_info={})
 
     def test_router_update_gateway_with_existed_floatingip(self):
         with self.subnet() as subnet:
