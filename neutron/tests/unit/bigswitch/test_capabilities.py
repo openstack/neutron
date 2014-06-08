@@ -34,7 +34,7 @@ class CapabilitiesTests(test_router_db.RouterDBTestBase):
     def test_floating_ip_capability(self):
         with contextlib.nested(
             mock.patch(SERVERRESTCALL,
-                       return_value=(200, None, None, '["floatingip"]')),
+                       return_value=(200, None, '["floatingip"]', None)),
             mock.patch(SERVERPOOL + '.rest_create_floatingip',
                        return_value=(200, None, None, None)),
             mock.patch(SERVERPOOL + '.rest_delete_floatingip',
@@ -53,7 +53,7 @@ class CapabilitiesTests(test_router_db.RouterDBTestBase):
     def test_floating_ip_capability_neg(self):
         with contextlib.nested(
             mock.patch(SERVERRESTCALL,
-                       return_value=(200, None, None, '[""]')),
+                       return_value=(200, None, '[""]', None)),
             mock.patch(SERVERPOOL + '.rest_update_network',
                        return_value=(200, None, None, None))
         ) as (mock_rest, mock_netupdate):
@@ -67,7 +67,7 @@ class CapabilitiesTests(test_router_db.RouterDBTestBase):
 
     def test_keep_alive_capability(self):
         with mock.patch(
-            SERVERRESTCALL, return_value=(200, None, None, '["keep-alive"]')
+            SERVERRESTCALL, return_value=(200, None, '["keep-alive"]', None)
         ):
             # perform a task to cause capabilities to be retrieved
             with self.floatingip_with_assoc():
