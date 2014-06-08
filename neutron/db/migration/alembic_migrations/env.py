@@ -48,16 +48,19 @@ target_metadata = model_base.BASEV2.metadata
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
+    This configures the context with either a URL
+    or an Engine.
 
     Calls to context.execute() here emit the given string to the
     script output.
 
     """
-    context.configure(url=neutron_config.database.connection)
+    kwargs = dict()
+    if neutron_config.database.connection:
+        kwargs['url'] = neutron_config.database.connection
+    else:
+        kwargs['dialect_name'] = neutron_config.database.engine
+    context.configure(**kwargs)
 
     with context.begin_transaction():
         context.run_migrations(active_plugins=active_plugins,
