@@ -2324,7 +2324,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         # NOTE(salv-orlando): Pre-generating Neutron ID for security group.
         neutron_id = str(uuid.uuid4())
         nsx_secgroup = secgrouplib.create_security_profile(
-            self.cluster, neutron_id, tenant_id, s)
+            self.cluster, tenant_id, neutron_id, s)
         with context.session.begin(subtransactions=True):
             s['id'] = neutron_id
             sec_group = super(NsxPluginV2, self).create_security_group(
