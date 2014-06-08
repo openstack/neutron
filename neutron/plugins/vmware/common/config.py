@@ -116,7 +116,7 @@ connection_opts = [
                default=30,
                help=_('Total time limit for a cluster request')),
     cfg.IntOpt('http_timeout',
-               default=10,
+               default=30,
                help=_('Time before aborting a request')),
     cfg.IntOpt('retries',
                default=2,

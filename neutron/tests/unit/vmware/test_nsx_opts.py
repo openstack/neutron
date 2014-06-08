@@ -125,7 +125,7 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual('admin', cfg.CONF.nsx_user)
         self.assertEqual('admin', cfg.CONF.nsx_password)
         self.assertEqual(30, cfg.CONF.req_timeout)
-        self.assertEqual(10, cfg.CONF.http_timeout)
+        self.assertEqual(30, cfg.CONF.http_timeout)
         self.assertEqual(2, cfg.CONF.retries)
         self.assertEqual(2, cfg.CONF.redirects)
         self.assertIsNone(cfg.CONF.nsx_controllers)
