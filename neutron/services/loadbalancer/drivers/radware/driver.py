@@ -20,9 +20,9 @@ import base64
 import copy
 import httplib
 import Queue
-import socket
 import threading
 import time
+
 
 import eventlet
 from oslo.config import cfg
@@ -61,6 +61,8 @@ CREATE_SERVICE_HEADER = {'Content-Type':
 driver_opts = [
     cfg.StrOpt('vdirect_address',
                help=_('IP address of vDirect server.')),
+    cfg.StrOpt('ha_secondary_address',
+               help=_('IP address of secondary vDirect server.')),
     cfg.StrOpt('vdirect_user',
                default='vDirect',
                help=_('vDirect user name.')),
@@ -173,8 +175,10 @@ class LoadBalancerDriver(abstract_driver.LoadBalancerAbstractDriver):
         self.l2_l3_setup_params = rad.l2_l3_setup_params
         self.l4_action_name = rad.l4_action_name
         self.actions_to_skip = rad.actions_to_skip
-        vdirect_address = cfg.CONF.radware.vdirect_address
+        vdirect_address = rad.vdirect_address
+        sec_server = rad.ha_secondary_address
         self.rest_client = vDirectRESTClient(server=vdirect_address,
+                                             secondary_server=sec_server,
                                              user=rad.vdirect_user,
                                              password=rad.vdirect_password)
         self.queue = Queue.Queue()
@@ -633,6 +637,7 @@ class vDirectRESTClient:
 
     def __init__(self,
                  server='localhost',
+                 secondary_server=None,
                  user=None,
                  password=None,
                  port=2189,
@@ -640,6 +645,7 @@ class vDirectRESTClient:
                  timeout=5000,
                  base_uri=''):
         self.server = server
+        self.secondary_server = secondary_server
         self.port = port
         self.ssl = ssl
         self.base_uri = base_uri
@@ -651,14 +657,48 @@ class vDirectRESTClient:
             raise r_exc.AuthenticationMissing()
 
         debug_params = {'server': self.server,
+                        'sec_server': self.secondary_server,
                         'port': self.port,
                         'ssl': self.ssl}
         LOG.debug(_('vDirectRESTClient:init server=%(server)s, '
-                  'port=%(port)d, '
-                  'ssl=%(ssl)r'), debug_params)
+                    'secondary server=%(sec_server)s, '
+                    'port=%(port)d, '
+                    'ssl=%(ssl)r'), debug_params)
+
+    def _flip_servers(self):
+        LOG.warning(_('Fliping servers. Current is: %(server)s, '
+                      'switching to %(secondary)s'),
+                    {'server': self.server,
+                     'secondary': self.secondary_server})
+        self.server, self.secondary_server = self.secondary_server, self.server
+
+    def _recover(self, action, resource, data, headers, binary=False):
+        if self.server and self.secondary_server:
+            self._flip_servers()
+            resp = self._call(action, resource, data,
+                              headers, binary)
+            return resp
+        else:
+            LOG.exception(_('REST client is not able to recover '
+                            'since only one vDirect server is '
+                            'configured.'))
+            return -1, None, None, None
+
+    def call(self, action, resource, data, headers, binary=False):
+        resp = self._call(action, resource, data, headers, binary)
+        if resp[RESP_STATUS] == -1:
+            LOG.warning(_('vDirect server is not responding (%s).'),
+                        self.server)
+            return self._recover(action, resource, data, headers, binary)
+        elif resp[RESP_STATUS] in (301, 307):
+            LOG.warning(_('vDirect server is not active (%s).'),
+                        self.server)
+            return self._recover(action, resource, data, headers, binary)
+        else:
+            return resp
 
     @call_log.log
-    def call(self, action, resource, data, headers, binary=False):
+    def _call(self, action, resource, data, headers, binary=False):
         if resource.startswith('http'):
             uri = resource
         else:
@@ -701,11 +741,11 @@ class vDirectRESTClient:
                 # response was not JSON, ignore the exception
                 pass
             ret = (response.status, response.reason, respstr, respdata)
-        except (socket.timeout, socket.error) as e:
+        except Exception as e:
             log_dict = {'action': action, 'e': e}
             LOG.error(_('vdirectRESTClient: %(action)s failure, %(e)r'),
                       log_dict)
-            ret = 0, None, None, None
+            ret = -1, None, None, None
         conn.close()
         return ret
 
@@ -853,7 +893,14 @@ class OperationCompletionHandler(threading.Thread):
 
 def _rest_wrapper(response, success_codes=[202]):
     """Wrap a REST call and make sure a valid status is returned."""
-    if response[RESP_STATUS] not in success_codes:
+    if not response:
+        raise r_exc.RESTRequestFailure(
+            status=-1,
+            reason="Unknown",
+            description="Unknown",
+            success_codes=success_codes
+        )
+    elif response[RESP_STATUS] not in success_codes:
         raise r_exc.RESTRequestFailure(
             status=response[RESP_STATUS],
             reason=response[RESP_REASON],

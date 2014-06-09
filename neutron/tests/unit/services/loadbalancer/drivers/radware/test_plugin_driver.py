@@ -32,6 +32,7 @@ from neutron.services.loadbalancer.drivers.radware import exceptions as r_exc
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
 
 GET_200 = ('/api/workflow/', '/api/service/', '/api/workflowTemplate')
+SERVER_DOWN_CODES = (-1, 301, 307)
 
 
 class QueueMock(Queue.Queue):
@@ -43,10 +44,16 @@ class QueueMock(Queue.Queue):
         self.completion_handler(oper)
 
 
+def _recover_function_mock(action, resource, data, headers, binary=False):
+    pass
+
+
 def rest_call_function_mock(action, resource, data, headers, binary=False):
     if rest_call_function_mock.RESPOND_WITH_ERROR:
         return 400, 'error_status', 'error_description', None
-
+    if rest_call_function_mock.RESPOND_WITH_SERVER_DOWN in SERVER_DOWN_CODES:
+        val = rest_call_function_mock.RESPOND_WITH_SERVER_DOWN
+        return val, 'error_status', 'error_description', None
     if action == 'GET':
         return _get_handler(resource)
     elif action == 'DELETE':
@@ -114,6 +121,8 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
             {'RESPOND_WITH_ERROR': False})
         rest_call_function_mock.__dict__.update(
             {'TEMPLATES_MISSING': False})
+        rest_call_function_mock.__dict__.update(
+            {'RESPOND_WITH_SERVER_DOWN': 200})
 
         self.operation_completer_start_mock = mock.Mock(
             return_value=None)
@@ -121,13 +130,22 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
             return_value=None)
         self.driver_rest_call_mock = mock.Mock(
             side_effect=rest_call_function_mock)
+        self.flip_servers_mock = mock.Mock(
+            return_value=None)
+        self.recover_mock = mock.Mock(
+            side_effect=_recover_function_mock)
 
         radware_driver = self.plugin_instance.drivers['radware']
         radware_driver.completion_handler.start = (
             self.operation_completer_start_mock)
         radware_driver.completion_handler.join = (
             self.operation_completer_join_mock)
+        self.orig_call = radware_driver.rest_client.call
+        self.orig__call = radware_driver.rest_client._call
         radware_driver.rest_client.call = self.driver_rest_call_mock
+        radware_driver.rest_client._call = self.driver_rest_call_mock
+        radware_driver.rest_client._flip_servers = self.flip_servers_mock
+        radware_driver.rest_client._recover = self.recover_mock
         radware_driver.completion_handler.rest_client.call = (
             self.driver_rest_call_mock)
 
@@ -135,6 +153,34 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
             radware_driver.completion_handler.handle_operation_completion)
 
         self.addCleanup(radware_driver.completion_handler.join)
+
+    def test_rest_client_recover_was_called(self):
+        """Call the real REST client and verify _recover is called."""
+        radware_driver = self.plugin_instance.drivers['radware']
+        radware_driver.rest_client.call = self.orig_call
+        radware_driver.rest_client._call = self.orig__call
+        self.assertRaises(r_exc.RESTRequestFailure,
+                          radware_driver._verify_workflow_templates)
+        self.recover_mock.assert_called_once()
+
+    def test_rest_client_flip_servers(self):
+        radware_driver = self.plugin_instance.drivers['radware']
+        server = radware_driver.rest_client.server
+        sec_server = radware_driver.rest_client.secondary_server
+        radware_driver.rest_client._flip_servers()
+        self.assertEqual(server,
+                         radware_driver.rest_client.secondary_server)
+        self.assertEqual(sec_server,
+                         radware_driver.rest_client.server)
+
+    def test_verify_workflow_templates_server_down(self):
+        """Test the rest call failure when backend is down."""
+        for value in SERVER_DOWN_CODES:
+            rest_call_function_mock.__dict__.update(
+                {'RESPOND_WITH_SERVER_DOWN': value})
+            self.assertRaises(r_exc.RESTRequestFailure,
+                              self.plugin_instance.drivers['radware'].
+                              _verify_workflow_templates)
 
     def test_verify_workflow_templates(self):
         """Test the rest call failure handling by Exception raising."""
