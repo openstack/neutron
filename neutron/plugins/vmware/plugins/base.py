@@ -298,6 +298,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 routerlib.delete_nat_rules_by_match(
                     self.cluster, nsx_router_id, "SourceNatRule",
                     max_num_expected=1, min_num_expected=0,
+                    raise_on_len_mismatch=False,
                     source_ip_addresses=cidr)
         if add_snat_rules:
             ip_addresses = self._build_ip_address_list(
@@ -1682,6 +1683,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             routerlib.delete_nat_rules_by_match(
                 self.cluster, nsx_router_id, "SourceNatRule",
                 max_num_expected=1, min_num_expected=1,
+                raise_on_len_mismatch=False,
                 source_ip_addresses=subnet['cidr'])
 
     def add_router_interface(self, context, router_id, interface_info):
@@ -1786,6 +1788,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             routerlib.delete_nat_rules_by_match(
                 self.cluster, nsx_router_id, "NoSourceNatRule",
                 max_num_expected=1, min_num_expected=0,
+                raise_on_len_mismatch=False,
                 destination_ip_addresses=subnet['cidr'])
         except n_exc.NotFound:
             LOG.error(_("Logical router resource %s not found "
