@@ -54,7 +54,7 @@ class TestHyperVNeutronAgent(base.BaseTestCase):
 
         mock.patch('neutron.openstack.common.loopingcall.'
                    'FixedIntervalLoopingCall',
-                   new=MockFixedIntervalLoopingCall)
+                   new=MockFixedIntervalLoopingCall).start()
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
