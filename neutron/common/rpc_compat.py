@@ -142,10 +142,10 @@ class Connection(object):
         super(Connection, self).__init__()
         self.servers = []
 
-    def create_consumer(self, topic, proxy, fanout=False):
+    def create_consumer(self, topic, endpoints, fanout=False):
         target = messaging.Target(
             topic=topic, server=cfg.CONF.host, fanout=fanout)
-        server = n_rpc.get_server(target, proxy)
+        server = n_rpc.get_server(target, endpoints)
         self.servers.append(server)
 
     def consume_in_threads(self):
