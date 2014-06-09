@@ -102,8 +102,8 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             with self.network():
                 callheaders = rv.request.mock_calls[0][1][3]
                 self.assertIn('X-BSN-BVS-HASH-MATCH', callheaders)
-                # first call will be False to indicate no previous state hash
-                self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'], False)
+                # first call will be empty to indicate no previous state hash
+                self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'], '')
                 # change the header that will be received on delete call
                 rv.getresponse.return_value.getheader.return_value = 'HASH2'
 
