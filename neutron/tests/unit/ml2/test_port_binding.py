@@ -62,7 +62,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                  bound, status)
             port_id = port['port']['id']
             neutron_context = context.get_admin_context()
-            details = self.plugin.callbacks.get_device_details(
+            details = self.plugin.endpoints[0].get_device_details(
                 neutron_context, agent_id="theAgentId", device=port_id)
             if bound:
                 self.assertEqual(details['network_type'], 'local')

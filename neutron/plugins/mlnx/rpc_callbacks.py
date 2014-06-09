@@ -18,7 +18,6 @@ from oslo.config import cfg
 
 from neutron.common import constants as q_const
 from neutron.common import rpc_compat
-from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_rpc_base
@@ -39,15 +38,6 @@ class MlnxRpcCallbacks(rpc_compat.RpcCallback,
 
     #to be compatible with Linux Bridge Agent on Network Node
     TAP_PREFIX_LEN = 3
-
-    def create_rpc_dispatcher(self):
-        """Get the rpc dispatcher for this manager.
-
-        If a manager would like to set an RPC API version,
-        or support more than one class as the target of RPC messages,
-        override this method.
-        """
-        return [self, agents_db.AgentExtRpcCallback()]
 
     @classmethod
     def get_port_from_device(cls, device):

@@ -123,10 +123,10 @@ class SdnveNeutronAgent(rpc_compat.RpcCallback):
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)
 
         self.context = context.get_admin_context_without_session()
-        self.dispatcher = self.create_rpc_dispatcher()
+        self.endpoints = [self]
         consumers = [[constants.INFO, topics.UPDATE]]
 
-        self.connection = agent_rpc.create_consumers(self.dispatcher,
+        self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers)
         if self.polling_interval:
@@ -153,9 +153,6 @@ class SdnveNeutronAgent(rpc_compat.RpcCallback):
                                              self.int_bridge_name,
                                              "connection-mode",
                                              "out-of-band")
-
-    def create_rpc_dispatcher(self):
-        return [self]
 
     def setup_integration_br(self, bridge_name, reset_br, out_of_band,
                              controller_ip=None):

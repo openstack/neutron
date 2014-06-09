@@ -190,10 +190,10 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
         self.conn = rpc_compat.create_connection(new=True)
         self.notifier = agent_notifier_api.AgentNotifierApi(
             topics.AGENT)
-        self.callbacks = rpc_callbacks.HyperVRpcCallbacks(self.notifier)
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        self.endpoints = [rpc_callbacks.HyperVRpcCallbacks(self.notifier),
+                          agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():
-            self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
+            self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)
         # Consume from all consumers in threads
         self.conn.consume_in_threads()
 

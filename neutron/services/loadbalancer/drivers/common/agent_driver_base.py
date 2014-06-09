@@ -64,9 +64,6 @@ class LoadBalancerCallbacks(rpc_compat.RpcCallback):
         super(LoadBalancerCallbacks, self).__init__()
         self.plugin = plugin
 
-    def create_rpc_dispatcher(self):
-        return [self, agents_db.AgentExtRpcCallback(self.plugin)]
-
     def get_ready_devices(self, context, host=None):
         with context.session.begin(subtransactions=True):
             agents = self.plugin.get_lbaas_agents(context,
@@ -342,11 +339,14 @@ class AgentDriverBase(abstract_driver.LoadBalancerAbstractDriver):
         if hasattr(self.plugin, 'agent_callbacks'):
             return
 
-        self.plugin.agent_callbacks = LoadBalancerCallbacks(self.plugin)
+        self.plugin.agent_endpoints = [
+            LoadBalancerCallbacks(self.plugin),
+            agents_db.AgentExtRpcCallback(self.plugin)
+        ]
         self.plugin.conn = rpc_compat.create_connection(new=True)
         self.plugin.conn.create_consumer(
             topics.LOADBALANCER_PLUGIN,
-            self.plugin.agent_callbacks.create_rpc_dispatcher(),
+            self.plugin.agent_endpoints,
             fanout=False)
         self.plugin.conn.consume_in_threads()
 

@@ -249,7 +249,7 @@ class OVSNeutronAgent(rpc_compat.RpcCallback,
         # RPC network init
         self.context = context.get_admin_context_without_session()
         # Handle updates from service
-        self.dispatcher = self.create_rpc_dispatcher()
+        self.endpoints = [self]
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
@@ -258,7 +258,7 @@ class OVSNeutronAgent(rpc_compat.RpcCallback,
         if self.l2_pop:
             consumers.append([topics.L2POPULATION,
                               topics.UPDATE, cfg.CONF.host])
-        self.connection = agent_rpc.create_consumers(self.dispatcher,
+        self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers)
         report_interval = cfg.CONF.AGENT.report_interval
@@ -492,14 +492,6 @@ class OVSNeutronAgent(rpc_compat.RpcCallback,
                                      nw_dst='%s' % ip)
         else:
             LOG.warning(_('Action %s not supported'), action)
-
-    def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
-
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        '''
-        return [self]
 
     def provision_local_vlan(self, net_uuid, network_type, physical_network,
                              segmentation_id):

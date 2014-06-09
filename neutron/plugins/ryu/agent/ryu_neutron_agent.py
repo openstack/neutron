@@ -200,15 +200,12 @@ class OVSNeutronOFPRyuAgent(rpc_compat.RpcCallback,
         self.topic = topics.AGENT
         self.plugin_rpc = RyuPluginApi(topics.PLUGIN)
         self.context = q_context.get_admin_context_without_session()
-        self.dispatcher = self._create_rpc_dispatcher()
+        self.endpoints = [self]
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.SECURITY_GROUP, topics.UPDATE]]
-        self.connection = agent_rpc.create_consumers(self.dispatcher,
+        self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers)
-
-    def _create_rpc_dispatcher(self):
-        return [self]
 
     def _setup_integration_br(self, root_helper, integ_br,
                               tunnel_ip, ovsdb_port, ovsdb_ip):

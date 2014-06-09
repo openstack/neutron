@@ -18,7 +18,6 @@
 
 from neutron.common import constants as q_const
 from neutron.common import rpc_compat
-from neutron.db import agents_db
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_rpc_base
 from neutron.openstack.common import log as logging
@@ -40,14 +39,6 @@ class HyperVRpcCallbacks(
         super(HyperVRpcCallbacks, self).__init__()
         self.notifier = notifier
         self._db = hyperv_db.HyperVPluginDB()
-
-    def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
-
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        '''
-        return [self, agents_db.AgentExtRpcCallback()]
 
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""
