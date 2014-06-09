@@ -920,3 +920,29 @@ class TestLogicalRouters(base.NsxlibTestCase):
             routerlib.delete_nat_rules_by_match,
             self.fake_cluster, lrouter['uuid'],
             'SomeWeirdType', 1, 1)
+
+    def test_delete_nat_rules_by_match_len_mismatch_does_not_raise(self):
+        lrouter = self._prepare_nat_rules_for_delete_tests()
+        rules = routerlib.query_nat_rules(self.fake_cluster, lrouter['uuid'])
+        self.assertEqual(len(rules), 3)
+        deleted_rules = routerlib.delete_nat_rules_by_match(
+            self.fake_cluster, lrouter['uuid'],
+            'DestinationNatRule',
+            max_num_expected=1, min_num_expected=1,
+            raise_on_len_mismatch=False,
+            destination_ip_addresses='99.99.99.99')
+        self.assertEqual(0, deleted_rules)
+        # add an extra rule to emulate a duplicate one
+        with mock.patch.object(self.fake_cluster.api_client,
+                               'get_version',
+                               new=lambda: version_module.Version('2.0')):
+            routerlib.create_lrouter_snat_rule(
+                self.fake_cluster, lrouter['uuid'],
+                '10.0.0.2', '10.0.0.2', order=220,
+                match_criteria={'source_ip_addresses': '192.168.0.0/24'})
+        deleted_rules_2 = routerlib.delete_nat_rules_by_match(
+            self.fake_cluster, lrouter['uuid'], 'SourceNatRule',
+            min_num_expected=1, max_num_expected=1,
+            raise_on_len_mismatch=False,
+            source_ip_addresses='192.168.0.0/24')
+        self.assertEqual(2, deleted_rules_2)
