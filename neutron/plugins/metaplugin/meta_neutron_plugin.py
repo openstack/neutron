@@ -94,7 +94,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         plugin_list = [plugin_set.split(':')
                        for plugin_set
                        in cfg.CONF.META.plugin_list.split(',')]
-        rpc_flavor = cfg.CONF.META.rpc_flavor
+        self.rpc_flavor = cfg.CONF.META.rpc_flavor
         topic_save = topics.PLUGIN
         topic_fake = topic_save + '-metaplugin'
         for flavor, plugin_provider in plugin_list:
@@ -103,7 +103,7 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             # This enforces the plugin specified by rpc_flavor is only
             # consumer of 'q-plugin'. It is a bit tricky but there is no
             # bad effect.
-            if rpc_flavor and rpc_flavor != flavor:
+            if self.rpc_flavor and self.rpc_flavor != flavor:
                 topics.PLUGIN = topic_fake
             self.plugins[flavor] = self._load_plugin(plugin_provider)
             topics.PLUGIN = topic_save
@@ -134,9 +134,9 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             self.supported_extension_aliases += ['router', 'ext-gw-mode',
                                                  'extraroute']
 
-        if rpc_flavor and rpc_flavor not in self.plugins:
+        if self.rpc_flavor and self.rpc_flavor not in self.plugins:
             raise exc.Invalid(_('rpc_flavor %s is not plugin list') %
-                              rpc_flavor)
+                              self.rpc_flavor)
 
         self.extension_map = {}
         if not cfg.CONF.META.extension_map == '':
@@ -201,6 +201,15 @@ class MetaPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def _extend_network_dict(self, context, network):
         flavor = self._get_flavor_by_network_id(context, network['id'])
         network[FLAVOR_NETWORK] = flavor
+
+    def start_rpc_listener(self):
+        return self.plugins[self.rpc_flavor].start_rpc_listener()
+
+    def rpc_workers_supported(self):
+        #NOTE: If a plugin which supports multiple RPC workers is desired
+        # to handle RPC, rpc_flavor must be specified.
+        return (self.rpc_flavor and
+                self.plugins[self.rpc_flavor].rpc_workers_supported())
 
     def create_network(self, context, network):
         n = network['network']

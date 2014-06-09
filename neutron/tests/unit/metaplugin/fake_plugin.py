@@ -70,3 +70,7 @@ class Fake2(Fake1):
 
     def fake_func2(self):
         return 'fake2'
+
+    def start_rpc_listener(self):
+        # return value is only used to confirm this method was called.
+        return 'OK'

@@ -392,6 +392,8 @@ class MetaNeutronPluginV2TestRpcFlavor(base.BaseTestCase):
         cfg.CONF.set_override('rpc_flavor', 'fake1', 'META')
         self.plugin = MetaPluginV2()
         self.assertEqual(topics.PLUGIN, 'q-plugin')
+        ret = self.plugin.rpc_workers_supported()
+        self.assertFalse(ret)
 
     def test_invalid_rpc_flavor(self):
         setup_metaplugin_conf()
@@ -399,3 +401,13 @@ class MetaNeutronPluginV2TestRpcFlavor(base.BaseTestCase):
         self.assertRaises(exc.Invalid,
                           MetaPluginV2)
         self.assertEqual(topics.PLUGIN, 'q-plugin')
+
+    def test_rpc_flavor_multiple_rpc_workers(self):
+        setup_metaplugin_conf()
+        cfg.CONF.set_override('rpc_flavor', 'fake2', 'META')
+        self.plugin = MetaPluginV2()
+        self.assertEqual(topics.PLUGIN, 'q-plugin')
+        ret = self.plugin.rpc_workers_supported()
+        self.assertTrue(ret)
+        ret = self.plugin.start_rpc_listener()
+        self.assertEqual('OK', ret)

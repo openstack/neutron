@@ -25,7 +25,6 @@ from neutron.common import config
 from neutron.common import legacy
 from neutron import context
 from neutron import manager
-from neutron import neutron_plugin_base_v2
 from neutron.openstack.common.db.sqlalchemy import session
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
@@ -144,10 +143,9 @@ def serve_rpc():
 
     # If 0 < rpc_workers then start_rpc_listener would be called in a
     # subprocess and we cannot simply catch the NotImplementedError.  It is
-    # simpler to check this up front by testing whether the plugin overrides
-    # start_rpc_listener.
-    base = neutron_plugin_base_v2.NeutronPluginBaseV2
-    if plugin.__class__.start_rpc_listener == base.start_rpc_listener:
+    # simpler to check this up front by testing whether the plugin supports
+    # multiple RPC workers.
+    if not plugin.rpc_workers_supported():
         LOG.debug(_("Active plugin doesn't implement start_rpc_listener"))
         if 0 < cfg.CONF.rpc_workers:
             msg = _("'rpc_workers = %d' ignored because start_rpc_listener "
