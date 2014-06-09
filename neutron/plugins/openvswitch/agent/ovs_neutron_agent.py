@@ -194,11 +194,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.int_br_device_count = 0
 
         self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
+        self.setup_integration_br()
         self.int_br.set_secure_mode()
         # Stores port update notifications for processing in main rpc loop
         self.updated_ports = set()
         self.setup_rpc()
-        self.setup_integration_br()
         self.bridge_mappings = bridge_mappings
         self.setup_physical_bridges(self.bridge_mappings)
         self.local_vlan_map = {}
@@ -658,6 +658,12 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         :param bridge_name: the name of the integration bridge.
         :returns: the integration bridge
         '''
+        # Ensure the integration bridge is created.
+        # ovs_lib.OVSBridge.create() will run
+        #   ovs-vsctl -- --may-exist add-br BRIDGE_NAME
+        # which does nothing if bridge already exists.
+        self.int_br.create()
+
         self.int_br.delete_port(cfg.CONF.OVS.int_peer_patch_port)
         self.int_br.remove_all_flows()
         # switch all traffic using L2 learning
