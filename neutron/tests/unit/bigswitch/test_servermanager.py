@@ -83,17 +83,22 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             mock.patch(
                 SERVERMANAGER + '.ServerPool.rest_call',
                 side_effect=servermanager.RemoteRestError(
-                    reason='Failure to break loop'
+                    reason='Failure to trigger except clause.'
                 )
+            ),
+            mock.patch(
+                SERVERMANAGER + '.LOG.exception',
+                side_effect=KeyError('Failure to break loop')
             )
-        ) as (smock, rmock):
+        ) as (smock, rmock, lmock):
             # should return immediately without consistency capability
             pl.servers._consistency_watchdog()
             self.assertFalse(smock.called)
             pl.servers.capabilities = ['consistency']
-            self.assertRaises(servermanager.RemoteRestError,
+            self.assertRaises(KeyError,
                               pl.servers._consistency_watchdog)
             rmock.assert_called_with('GET', '/health', '', {}, [], False)
+            self.assertEqual(1, len(lmock.mock_calls))
 
     def test_consistency_hash_header(self):
         # mock HTTP class instead of rest_call so we can see headers

@@ -556,7 +556,11 @@ class ServerPool(object):
             # doesn't match, the backend will return a synchronization error
             # that will be handled by the rest_action.
             eventlet.sleep(polling_interval)
-            self.rest_action('GET', HEALTH_PATH)
+            try:
+                self.rest_action('GET', HEALTH_PATH)
+            except Exception:
+                LOG.exception(_("Encountered an error checking controller "
+                                "health."))
 
 
 class HTTPSConnectionWithValidation(httplib.HTTPSConnection):
