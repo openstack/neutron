@@ -1,0 +1,102 @@
+=====================================================
+Freescale SDN Mechanism Driver for Neutron ML2 plugin
+=====================================================
+
+Introduction
+============
+
+Freescale SDN (FSL-SDN) Mechanism Driver is an add-on support for ML2 plugin
+for Neutron.
+
+It supports the Cloud Resource Discovery (CRD) service by updating
+Network, Subnet and Port Create/Update/Delete data into the CRD database.
+
+CRD service manages network nodes, virtual network appliances and openflow
+controller based network applications.
+
+Basic work flow
+---------------
+
+::
+
+ +---------------------------------+
+ |                                 |
+ |       Neutron Server            |
+ |      (with ML2 plugin)          |
+ |                                 |
+ | +-------------------------------+
+ | |        Freescale SDN          |
+ | |       Mechanism Driver        |
+ +-+--------+----------------------+
+            |
+            |  ReST API
+            |
+ +----------+-------------+
+ |      CRD server        |
+ +------------------------+
+
+
+
+How does Freescale SDN Mechanism Driver work?
+===========================================
+
+- Freescale Mechanism driver handles the following postcommit operations.
+   - Network create/update/delete
+   - Subnet  create/update/delete
+   - Port    create/delete
+
+Sequence diagram : create_network
+---------------------------------
+
+::
+
+ create_network
+ {
+   neutron    ->  ML2_plugin
+   ML2_plugin ->  FSL-SDN-MD
+   FSL-SDN-MD ->  crd_service
+   FSL-SDN-MD <-- crd_service
+   ML2_plugin <-- FSL-SDN-MD
+   neutron    <-- ML2_plugin
+ }
+
+- Supported network types by FSL OF Controller include vlan and vxlan.
+
+- Freescale SDN mechanism driver handles VM port binding within in the
+  mechanism driver (like ODL MD).
+
+- 'bind_port' function verifies the supported network types (vlan,vxlan)
+  and calls context.set_binding with binding details.
+
+- Flow management in OVS is handled by Freescale Openflow Controller.
+
+
+How to use Freescale SDN Mechanism Driver?
+==========================================
+
+Configuring ML2 Plugin
+----------------------
+
+In [ml2] section of /etc/neutron/plugins/ml2/ml2_conf.ini,
+modify 'mechanism_drivers' attributes as:
+
+::
+
+ mechanism_drivers = fslsdn
+
+Configuring FSLSDN Mechanism Driver
+-----------------------------------
+
+Update /etc/neutron/plugins/ml2/ml2_conf_fslsdn.ini, as below.
+
+::
+
+ [ml2_fslsdn]
+ crd_auth_strategy = keystone
+ crd_url = http://127.0.0.1:9797
+ crd_auth_url = http://127.0.0.1:5000/v2.0/
+ crd_tenant_name = service
+ crd_password = <-service-password->
+ crd_user_name = <-service-username->
+
+CRD service must be running in the controller.
