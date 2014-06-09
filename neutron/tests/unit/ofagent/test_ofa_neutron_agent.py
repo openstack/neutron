@@ -643,7 +643,7 @@ class TestOFANeutronAgent(OFAAgentTestCase):
                 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
-                self.agent.vxlan_udp_port)
+                self.agent.vxlan_udp_port, self.agent.dont_fragment)
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
@@ -660,7 +660,7 @@ class TestOFANeutronAgent(OFAAgentTestCase):
                 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
-                self.agent.vxlan_udp_port)
+                self.agent.vxlan_udp_port, self.agent.dont_fragment)
             log_exc_fn.assert_called_once_with(
                 _("ofport should have a value that can be "
                   "interpreted as an integer"))

@@ -508,7 +508,7 @@ class TunnelTest(base.BaseTestCase):
         self.mock_tun_bridge.add_tunnel_port.return_value = tunnel_port
         self.mock_tun_bridge_expected += [
             mock.call.add_tunnel_port('gre-1', '10.0.10.1', '10.0.0.1',
-                                      'gre', 4789),
+                                      'gre', 4789, True),
             mock.call.add_flow(priority=1, in_port=tunnel_port,
                                actions='resubmit(,2)')
         ]

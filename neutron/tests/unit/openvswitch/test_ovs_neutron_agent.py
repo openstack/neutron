@@ -729,7 +729,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
-                self.agent.vxlan_udp_port)
+                self.agent.vxlan_udp_port, self.agent.dont_fragment)
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
@@ -746,10 +746,27 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 'gre-1', 'remote_ip', p_const.TYPE_GRE)
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
-                self.agent.vxlan_udp_port)
+                self.agent.vxlan_udp_port, self.agent.dont_fragment)
             log_exc_fn.assert_called_once_with(
                 _("ofport should have a value that can be "
                   "interpreted as an integer"))
+            log_error_fn.assert_called_once_with(
+                _("Failed to set-up %(type)s tunnel port to %(ip)s"),
+                {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
+            self.assertEqual(ofport, 0)
+
+    def test_setup_tunnel_port_error_negative_df_disabled(self):
+        with contextlib.nested(
+            mock.patch.object(self.agent.tun_br, 'add_tunnel_port',
+                              return_value='-1'),
+            mock.patch.object(ovs_neutron_agent.LOG, 'error')
+        ) as (add_tunnel_port_fn, log_error_fn):
+            self.agent.dont_fragment = False
+            ofport = self.agent.setup_tunnel_port(
+                'gre-1', 'remote_ip', p_const.TYPE_GRE)
+            add_tunnel_port_fn.assert_called_once_with(
+                'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
+                self.agent.vxlan_udp_port, self.agent.dont_fragment)
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})

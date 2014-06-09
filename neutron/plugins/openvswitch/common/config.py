@@ -82,6 +82,9 @@ agent_opts = [
                        "remote mac and IPs and improve tunnel scalability")),
     cfg.BoolOpt('arp_responder', default=False,
                 help=_("Enable local ARP responder if it is supported")),
+    cfg.BoolOpt('dont_fragment', default=True,
+                help=_("Set or un-set the don't fragment (DF) bit on "
+                       "outgoing IP packet carrying GRE/VXLAN tunnel")),
 ]
 
 

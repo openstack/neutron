@@ -22,6 +22,7 @@ from neutron.agent.linux import utils
 from neutron.common import exceptions
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants as p_const
 from neutron.plugins.openvswitch.common import constants as const
 from neutron.tests import base
 from neutron.tests import tools
@@ -496,7 +497,8 @@ class OVS_Lib_Test(base.BaseTestCase):
         command = ["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
                    self.BR_NAME, pname]
         command.extend(["--", "set", "Interface", pname])
-        command.extend(["type=gre", "options:remote_ip=" + remote_ip,
+        command.extend(["type=gre", "options:df_default=true",
+                        "options:remote_ip=" + remote_ip,
                         "options:local_ip=" + local_ip,
                         "options:in_key=flow",
                         "options:out_key=flow"])
@@ -512,6 +514,41 @@ class OVS_Lib_Test(base.BaseTestCase):
 
         self.assertEqual(
             self.br.add_tunnel_port(pname, remote_ip, local_ip),
+            ofport)
+
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
+
+    def test_add_vxlan_fragmented_tunnel_port(self):
+        pname = "tap99"
+        local_ip = "1.1.1.1"
+        remote_ip = "9.9.9.9"
+        ofport = "6"
+        vxlan_udp_port = "9999"
+        dont_fragment = False
+        command = ["ovs-vsctl", self.TO, '--', "--may-exist", "add-port",
+                   self.BR_NAME, pname]
+        command.extend(["--", "set", "Interface", pname])
+        command.extend(["type=" + p_const.TYPE_VXLAN,
+                        "options:dst_port=" + vxlan_udp_port,
+                        "options:df_default=false",
+                        "options:remote_ip=" + remote_ip,
+                        "options:local_ip=" + local_ip,
+                        "options:in_key=flow",
+                        "options:out_key=flow"])
+        # Each element is a tuple of (expected mock call, return_value)
+        expected_calls_and_values = [
+            (mock.call(command, root_helper=self.root_helper), None),
+            (mock.call(["ovs-vsctl", self.TO, "get",
+                        "Interface", pname, "ofport"],
+                       root_helper=self.root_helper),
+             ofport),
+        ]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+
+        self.assertEqual(
+            self.br.add_tunnel_port(pname, remote_ip, local_ip,
+                                    p_const.TYPE_VXLAN, vxlan_udp_port,
+                                    dont_fragment),
             ofport)
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)

@@ -238,6 +238,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         self.local_ip = local_ip
         self.tunnel_count = 0
         self.vxlan_udp_port = cfg.CONF.AGENT.vxlan_udp_port
+        self.dont_fragment = cfg.CONF.AGENT.dont_fragment
         if self.enable_tunneling:
             self.setup_tunnel_br(tun_br)
         # Collect additional bridges to monitor
@@ -1001,7 +1002,8 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                                              remote_ip,
                                              self.local_ip,
                                              tunnel_type,
-                                             self.vxlan_udp_port)
+                                             self.vxlan_udp_port,
+                                             self.dont_fragment)
         ofport_int = -1
         try:
             ofport_int = int(ofport)
