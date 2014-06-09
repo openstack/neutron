@@ -21,7 +21,7 @@ Unit Tests for hyperv neutron rpc
 import mock
 
 from neutron.agent import rpc as agent_rpc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.openstack.common import context
 from neutron.plugins.hyperv import agent_notifier_api as ana
@@ -39,7 +39,7 @@ class rpcHyperVApiTestCase(base.BaseTestCase):
         if rpc_method == 'cast' and method == 'run_instance':
             kwargs['call'] = False
 
-        proxy = rpc_compat.RpcProxy
+        proxy = n_rpc.RpcProxy
         with mock.patch.object(proxy, rpc_method) as rpc_method_mock:
             rpc_method_mock.return_value = expected_retval
             retval = getattr(rpcapi, method)(ctxt, **kwargs)

@@ -27,7 +27,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as constants
 from neutron.common import rpc as n_rpc
-from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context
@@ -43,7 +42,7 @@ from neutron import service as neutron_service
 LOG = logging.getLogger(__name__)
 
 
-class MeteringPluginRpc(rpc_compat.RpcProxy):
+class MeteringPluginRpc(n_rpc.RpcProxy):
 
     BASE_RPC_API_VERSION = '1.0'
 

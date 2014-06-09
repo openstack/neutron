@@ -27,7 +27,7 @@ from sqlalchemy.orm import exc as sa_exc
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -174,7 +174,7 @@ def _check_resource_exists(func, id, name, raise_exc=False):
             raise MidonetPluginException(msg=exc)
 
 
-class MidoRpcCallbacks(rpc_compat.RpcCallback,
+class MidoRpcCallbacks(n_rpc.RpcCallback,
                        dhcp_rpc_base.DhcpRpcCallbackMixin):
     RPC_API_VERSION = '1.1'
 
@@ -369,7 +369,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def setup_rpc(self):
         # RPC support
         self.topic = topics.PLUGIN
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.endpoints = [MidoRpcCallbacks(),
                           agents_db.AgentExtRpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,

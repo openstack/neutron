@@ -19,7 +19,7 @@ from oslo.config import cfg
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import constants as q_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import api as qdbapi
 from neutron.db import db_base_plugin_v2
@@ -32,7 +32,7 @@ from neutron.openstack.common import importutils
 from neutron.plugins.common import constants
 
 
-class L3RouterPluginRpcCallbacks(rpc_compat.RpcCallback,
+class L3RouterPluginRpcCallbacks(n_rpc.RpcCallback,
                                  l3_rpc_base.L3RpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
@@ -63,7 +63,7 @@ class L3RouterPlugin(db_base_plugin_v2.CommonDbMixin,
     def setup_rpc(self):
         # RPC support
         self.topic = topics.L3PLUGIN
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.agent_notifiers.update(
             {q_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
         self.endpoints = [L3RouterPluginRpcCallbacks()]

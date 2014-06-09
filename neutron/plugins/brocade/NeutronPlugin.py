@@ -29,7 +29,7 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import constants as q_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron.db import agents_db
@@ -77,7 +77,7 @@ cfg.CONF.register_opts(SWITCH_OPTS, "SWITCH")
 cfg.CONF.register_opts(PHYSICAL_INTERFACE_OPTS, "PHYSICAL_INTERFACE")
 
 
-class BridgeRpcCallbacks(rpc_compat.RpcCallback,
+class BridgeRpcCallbacks(n_rpc.RpcCallback,
                          dhcp_rpc_base.DhcpRpcCallbackMixin,
                          l3_rpc_base.L3RpcCallbackMixin,
                          sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
@@ -154,7 +154,7 @@ class BridgeRpcCallbacks(rpc_compat.RpcCallback,
         return entry
 
 
-class AgentNotifierApi(rpc_compat.RpcProxy,
+class AgentNotifierApi(n_rpc.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin):
     """Agent side of the linux bridge rpc API.
 
@@ -251,7 +251,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.rpc_context = context.RequestContext('neutron', 'neutron',
                                                   is_admin=False)
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.endpoints = [BridgeRpcCallbacks(),
                           agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():

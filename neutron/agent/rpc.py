@@ -15,7 +15,7 @@
 
 import itertools
 
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 
 from neutron.openstack.common import log as logging
@@ -37,7 +37,7 @@ def create_consumers(endpoints, prefix, topic_details):
     :returns: A common Connection.
     """
 
-    connection = rpc_compat.create_connection(new=True)
+    connection = n_rpc.create_connection(new=True)
     for details in topic_details:
         topic, operation, node_name = itertools.islice(
             itertools.chain(details, [None]), 3)
@@ -53,7 +53,7 @@ def create_consumers(endpoints, prefix, topic_details):
     return connection
 
 
-class PluginReportStateAPI(rpc_compat.RpcProxy):
+class PluginReportStateAPI(n_rpc.RpcProxy):
     BASE_RPC_API_VERSION = '1.0'
 
     def __init__(self, topic):
@@ -71,7 +71,7 @@ class PluginReportStateAPI(rpc_compat.RpcProxy):
             return self.cast(context, msg, topic=self.topic)
 
 
-class PluginApi(rpc_compat.RpcProxy):
+class PluginApi(n_rpc.RpcProxy):
     '''Agent side of the rpc API.
 
     API version history:

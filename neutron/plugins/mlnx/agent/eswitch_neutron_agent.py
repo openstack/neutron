@@ -27,7 +27,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as q_constants
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
@@ -143,7 +143,7 @@ class EswitchManager(object):
         self.network_map[network_id] = data
 
 
-class MlnxEswitchRpcCallbacks(rpc_compat.RpcCallback,
+class MlnxEswitchRpcCallbacks(n_rpc.RpcCallback,
                               sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     # Set RPC API version to 1.0 by default.
@@ -203,7 +203,7 @@ class MlnxEswitchRpcCallbacks(rpc_compat.RpcCallback,
                         port['mac_address'],
                         self.agent.agent_id,
                         cfg.CONF.host)
-            except rpc_compat.MessagingTimeout:
+            except n_rpc.MessagingTimeout:
                 LOG.error(_("RPC timeout while updating port %s"), port['id'])
         else:
             LOG.debug(_("No port %s defined on agent."), port['id'])

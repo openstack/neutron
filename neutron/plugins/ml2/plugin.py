@@ -23,7 +23,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as exc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -130,7 +130,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.endpoints = [rpc.RpcCallbacks(self.notifier, self.type_manager),
                           agents_db.AgentExtRpcCallback()]
         self.topic = topics.PLUGIN
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         return self.conn.consume_in_threads()

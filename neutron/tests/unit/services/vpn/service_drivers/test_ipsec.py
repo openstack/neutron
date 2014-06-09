@@ -35,7 +35,7 @@ FAKE_HOST = 'fake_host'
 class TestIPsecDriver(base.BaseTestCase):
     def setUp(self):
         super(TestIPsecDriver, self).setUp()
-        mock.patch('neutron.common.rpc_compat.create_connection').start()
+        mock.patch('neutron.common.rpc.create_connection').start()
 
         l3_agent = mock.Mock()
         l3_agent.host = FAKE_HOST

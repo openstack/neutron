@@ -31,7 +31,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context
 from neutron.openstack.common import log as logging
@@ -79,7 +79,7 @@ CONF.register_opts(agent_opts, "AGENT")
 config.register_agent_state_opts_helper(cfg.CONF)
 
 
-class HyperVSecurityAgent(rpc_compat.RpcCallback,
+class HyperVSecurityAgent(n_rpc.RpcCallback,
                           sg_rpc.SecurityGroupAgentRpcMixin):
     # Set RPC API version to 1.1 by default.
     RPC_API_VERSION = '1.1'
@@ -103,7 +103,7 @@ class HyperVSecurityAgent(rpc_compat.RpcCallback,
                                                      consumers)
 
 
-class HyperVSecurityCallbackMixin(rpc_compat.RpcCallback,
+class HyperVSecurityCallbackMixin(n_rpc.RpcCallback,
                                   sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     # Set RPC API version to 1.1 by default.
     RPC_API_VERSION = '1.1'
@@ -118,7 +118,7 @@ class HyperVPluginApi(agent_rpc.PluginApi,
     pass
 
 
-class HyperVNeutronAgent(rpc_compat.RpcCallback):
+class HyperVNeutronAgent(n_rpc.RpcCallback):
     # Set RPC API version to 1.0 by default.
     RPC_API_VERSION = '1.0'
 

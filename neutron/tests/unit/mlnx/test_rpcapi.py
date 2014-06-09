@@ -48,7 +48,7 @@ class rpcApiTestCase(base.BaseTestCase):
                 return expected_retval
 
         self.useFixture(fixtures.MonkeyPatch(
-            'neutron.common.rpc_compat.RpcProxy.' + rpc_method,
+            'neutron.common.rpc.RpcProxy.' + rpc_method,
             _fake_rpc_method))
 
         retval = getattr(rpcapi, method)(ctxt, **kwargs)

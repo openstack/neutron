@@ -26,7 +26,7 @@ import six
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron import context
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
@@ -441,7 +441,7 @@ class OpenSwanProcess(BaseSwanProcess):
         self.connection_status = {}
 
 
-class IPsecVpnDriverApi(rpc_compat.RpcProxy):
+class IPsecVpnDriverApi(n_rpc.RpcProxy):
     """IPSecVpnDriver RPC api."""
     IPSEC_PLUGIN_VERSION = '1.0'
 
@@ -494,7 +494,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
         self.conf = self.agent.conf
         self.root_helper = self.agent.root_helper
         self.host = host
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.context = context.get_admin_context_without_session()
         self.topic = topics.IPSEC_AGENT_TOPIC
         node_topic = '%s.%s' % (self.topic, self.host)

@@ -20,7 +20,7 @@ Unit Tests for ml2 rpc
 import mock
 
 from neutron.agent import rpc as agent_rpc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.openstack.common import context
 from neutron.plugins.ml2.drivers import type_tunnel
@@ -37,7 +37,7 @@ class RpcApiTestCase(base.BaseTestCase):
         if rpc_method == 'cast' and method == 'run_instance':
             kwargs['call'] = False
 
-        rpc = rpc_compat.RpcProxy
+        rpc = n_rpc.RpcProxy
         with mock.patch.object(rpc, rpc_method) as rpc_method_mock:
             rpc_method_mock.return_value = expected_retval
             retval = getattr(rpcapi, method)(ctxt, **kwargs)

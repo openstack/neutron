@@ -14,7 +14,7 @@
 #    under the License.
 import netaddr
 
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log as logging
 from neutron.services.vpn.common import topics
 from neutron.services.vpn import service_drivers
@@ -26,7 +26,7 @@ IPSEC = 'ipsec'
 BASE_IPSEC_VERSION = '1.0'
 
 
-class IPsecVpnDriverCallBack(rpc_compat.RpcCallback):
+class IPsecVpnDriverCallBack(n_rpc.RpcCallback):
     """Callback for IPSecVpnDriver rpc."""
 
     # history
@@ -53,7 +53,7 @@ class IPsecVpnDriverCallBack(rpc_compat.RpcCallback):
 
 
 class IPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
-                       rpc_compat.RpcCallback):
+                       n_rpc.RpcCallback):
     """Agent RPC API for IPsecVPNAgent."""
 
     RPC_API_VERSION = BASE_IPSEC_VERSION
@@ -69,7 +69,7 @@ class IPsecVPNDriver(service_drivers.VpnDriver):
     def __init__(self, service_plugin):
         super(IPsecVPNDriver, self).__init__(service_plugin)
         self.endpoints = [IPsecVpnDriverCallBack(self)]
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.conn.create_consumer(
             topics.IPSEC_DRIVER_TOPIC, self.endpoints, fanout=False)
         self.conn.consume_in_threads()

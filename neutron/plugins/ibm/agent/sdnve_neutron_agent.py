@@ -31,7 +31,7 @@ from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -52,7 +52,7 @@ class SdnvePluginApi(agent_rpc.PluginApi):
                          topic=self.topic)
 
 
-class SdnveNeutronAgent(rpc_compat.RpcCallback):
+class SdnveNeutronAgent(n_rpc.RpcCallback):
 
     RPC_API_VERSION = '1.1'
 

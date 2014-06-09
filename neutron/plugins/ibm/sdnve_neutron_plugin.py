@@ -23,7 +23,7 @@ from oslo.config import cfg
 
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -56,7 +56,7 @@ class SdnveRpcCallbacks():
         return info
 
 
-class AgentNotifierApi(rpc_compat.RpcProxy):
+class AgentNotifierApi(n_rpc.RpcProxy):
     '''Agent side of the SDN-VE rpc API.'''
 
     BASE_RPC_API_VERSION = '1.0'
@@ -131,7 +131,7 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def setup_rpc(self):
         # RPC support
         self.topic = topics.PLUGIN
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
         self.endpoints = [SdnveRpcCallbacks(self.notifier),
                           agents_db.AgentExtRpcCallback()]

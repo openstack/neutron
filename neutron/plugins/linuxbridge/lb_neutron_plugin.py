@@ -23,7 +23,7 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron.db import agents_db
@@ -53,7 +53,7 @@ from neutron.plugins.linuxbridge.db import l2network_db_v2 as db
 LOG = logging.getLogger(__name__)
 
 
-class LinuxBridgeRpcCallbacks(rpc_compat.RpcCallback,
+class LinuxBridgeRpcCallbacks(n_rpc.RpcCallback,
                               dhcp_rpc_base.DhcpRpcCallbackMixin,
                               l3_rpc_base.L3RpcCallbackMixin,
                               sg_db_rpc.SecurityGroupServerRpcCallbackMixin
@@ -152,7 +152,7 @@ class LinuxBridgeRpcCallbacks(rpc_compat.RpcCallback,
             LOG.debug(_("%s can not be found in database"), device)
 
 
-class AgentNotifierApi(rpc_compat.RpcProxy,
+class AgentNotifierApi(n_rpc.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin):
     '''Agent side of the linux bridge rpc API.
 
@@ -272,7 +272,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # RPC support
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.endpoints = [LinuxBridgeRpcCallbacks(),
                           agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():

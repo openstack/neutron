@@ -22,7 +22,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as ntn_exc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_db
@@ -40,7 +40,7 @@ METADATA_GATEWAY_IP = '169.254.169.253'
 METADATA_DHCP_ROUTE = '169.254.169.254/32'
 
 
-class NSXRpcCallbacks(rpc_compat.RpcCallback,
+class NSXRpcCallbacks(n_rpc.RpcCallback,
                       dhcp_rpc_base.DhcpRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'

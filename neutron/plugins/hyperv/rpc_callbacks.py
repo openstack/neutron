@@ -15,7 +15,7 @@
 # @author: Alessandro Pilotti, Cloudbase Solutions Srl
 
 from neutron.common import constants as q_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_rpc_base
 from neutron.openstack.common import log as logging
@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 
 class HyperVRpcCallbacks(
-        rpc_compat.RpcCallback,
+        n_rpc.RpcCallback,
         dhcp_rpc_base.DhcpRpcCallbackMixin,
         l3_rpc_base.L3RpcCallbackMixin):
 

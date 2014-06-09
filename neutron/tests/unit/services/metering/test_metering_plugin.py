@@ -83,7 +83,7 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
         self.uuid_patch = mock.patch(uuid, return_value=self.uuid)
         self.mock_uuid = self.uuid_patch.start()
 
-        fanout = ('neutron.common.rpc_compat.RpcProxy.fanout_cast')
+        fanout = ('neutron.common.rpc.RpcProxy.fanout_cast')
         self.fanout_patch = mock.patch(fanout)
         self.mock_fanout = self.fanout_patch.start()
 
@@ -290,7 +290,7 @@ class TestMeteringPluginL3AgentScheduler(
         self.uuid_patch = mock.patch(uuid, return_value=self.uuid)
         self.mock_uuid = self.uuid_patch.start()
 
-        cast = 'neutron.common.rpc_compat.RpcProxy.cast'
+        cast = 'neutron.common.rpc.RpcProxy.cast'
         self.cast_patch = mock.patch(cast)
         self.mock_cast = self.cast_patch.start()
 

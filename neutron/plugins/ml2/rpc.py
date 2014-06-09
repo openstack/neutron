@@ -17,7 +17,7 @@ from oslo import messaging
 
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
@@ -46,7 +46,7 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
     #   1.0 Initial version (from openvswitch/linuxbridge)
     #   1.1 Support Security Group RPC
 
-    # FIXME(ihrachys): we can't use rpc_compat.RpcCallback here due to
+    # FIXME(ihrachys): we can't use n_rpc.RpcCallback here due to
     # inheritance problems
     target = messaging.Target(version=RPC_API_VERSION)
 
@@ -198,7 +198,7 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                                   q_const.PORT_STATUS_ACTIVE)
 
 
-class AgentNotifierApi(rpc_compat.RpcProxy,
+class AgentNotifierApi(n_rpc.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin,
                        type_tunnel.TunnelAgentRpcApiMixin):
     """Agent side of the openvswitch rpc API.

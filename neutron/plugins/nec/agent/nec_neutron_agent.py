@@ -32,7 +32,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as q_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
@@ -62,7 +62,7 @@ class NECPluginApi(agent_rpc.PluginApi):
                                 port_removed=port_removed))
 
 
-class NECAgentRpcCallback(rpc_compat.RpcCallback):
+class NECAgentRpcCallback(n_rpc.RpcCallback):
 
     RPC_API_VERSION = '1.0'
 
@@ -84,7 +84,7 @@ class NECAgentRpcCallback(rpc_compat.RpcCallback):
             self.sg_agent.refresh_firewall()
 
 
-class SecurityGroupServerRpcApi(rpc_compat.RpcProxy,
+class SecurityGroupServerRpcApi(n_rpc.RpcProxy,
                                 sg_rpc.SecurityGroupServerRpcApiMixin):
 
     def __init__(self, topic):
@@ -93,7 +93,7 @@ class SecurityGroupServerRpcApi(rpc_compat.RpcProxy,
 
 
 class SecurityGroupAgentRpcCallback(
-    rpc_compat.RpcCallback,
+    n_rpc.RpcCallback,
     sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
     RPC_API_VERSION = sg_rpc.SG_RPC_VERSION

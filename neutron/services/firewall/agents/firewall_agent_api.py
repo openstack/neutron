@@ -19,7 +19,7 @@
 
 from oslo.config import cfg
 
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ FWaaSOpts = [
 cfg.CONF.register_opts(FWaaSOpts, 'fwaas')
 
 
-class FWaaSPluginApiMixin(rpc_compat.RpcProxy):
+class FWaaSPluginApiMixin(n_rpc.RpcProxy):
     """Agent side of the FWaaS agent to FWaaS Plugin RPC API."""
 
     RPC_API_VERSION = '1.0'
