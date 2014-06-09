@@ -509,8 +509,8 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
-        # Consume from all consumers in a thread
-        self.conn.consume_in_thread()
+        # Consume from all consumers in threads
+        self.conn.consume_in_threads()
 
     def create_network(self, context, network):
         """Create a network.

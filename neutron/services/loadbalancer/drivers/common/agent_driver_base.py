@@ -348,7 +348,7 @@ class AgentDriverBase(abstract_driver.LoadBalancerAbstractDriver):
             topics.LOADBALANCER_PLUGIN,
             self.plugin.agent_callbacks.create_rpc_dispatcher(),
             fanout=False)
-        self.plugin.conn.consume_in_thread()
+        self.plugin.conn.consume_in_threads()
 
     def get_pool_agent(self, context, pool_id):
         agent = self.plugin.get_lbaas_agent_hosting_pool(context, pool_id)

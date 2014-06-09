@@ -508,7 +508,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
             node_topic,
             self.create_rpc_dispatcher(),
             fanout=False)
-        self.conn.consume_in_thread()
+        self.conn.consume_in_threads()
         self.agent_rpc = IPsecVpnDriverApi(topics.IPSEC_DRIVER_TOPIC, '1.0')
         self.process_status_cache_check = loopingcall.FixedIntervalLoopingCall(
             self.report_status, self.context)

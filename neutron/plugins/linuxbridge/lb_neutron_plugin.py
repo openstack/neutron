@@ -285,8 +285,8 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
-        # Consume from all consumers in a thread
-        self.conn.consume_in_thread()
+        # Consume from all consumers in threads
+        self.conn.consume_in_threads()
         self.notifier = AgentNotifierApi(topics.AGENT)
         self.agent_notifiers[q_const.AGENT_TYPE_DHCP] = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()

@@ -51,7 +51,7 @@ def create_consumers(dispatcher, prefix, topic_details):
             connection.create_consumer(node_topic_name,
                                        dispatcher,
                                        fanout=False)
-    connection.consume_in_thread()
+    connection.consume_in_threads()
     return connection
 
 

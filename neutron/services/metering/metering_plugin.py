@@ -35,7 +35,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
             topics.METERING_PLUGIN,
             self.callbacks.create_rpc_dispatcher(),
             fanout=False)
-        self.conn.consume_in_thread()
+        self.conn.consume_in_threads()
 
         self.meter_rpc = metering_rpc_agent_api.MeteringAgentNotifyAPI()
 

@@ -74,7 +74,7 @@ class DhcpMetadataAccess(object):
         self.conn.create_consumer(self.topic, self.dispatcher, fanout=False)
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             notifier or dhcp_rpc_agent_api.DhcpAgentNotifyAPI())
-        self.conn.consume_in_thread()
+        self.conn.consume_in_threads()
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver
         )

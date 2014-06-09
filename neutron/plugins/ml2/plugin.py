@@ -132,7 +132,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
-        return self.conn.consume_in_thread()
+        return self.conn.consume_in_threads()
 
     def _process_provider_segment(self, segment):
         network_type = self._get_attribute(segment, provider.NETWORK_TYPE)

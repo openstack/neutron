@@ -345,8 +345,8 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
-        # Consume from all consumers in a thread
-        self.conn.consume_in_thread()
+        # Consume from all consumers in threads
+        self.conn.consume_in_threads()
 
     def _parse_network_vlan_ranges(self):
         try:
