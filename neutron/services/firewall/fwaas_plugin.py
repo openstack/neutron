@@ -67,9 +67,10 @@ class FirewallCallbacks(object):
                 self.plugin.delete_db_firewall_object(context, firewall_id)
                 return True
             else:
+                LOG.warn(_('Firewall %(fw)s unexpectedly deleted by agent, '
+                           'status was %(status)s'),
+                         {'fw': firewall_id, 'status': fw_db.status})
                 fw_db.status = const.ERROR
-                LOG.warn(_('Firewall %s unexpectedly deleted by agent.'),
-                         firewall_id)
                 return False
 
     def get_firewalls_for_tenant(self, context, **kwargs):
