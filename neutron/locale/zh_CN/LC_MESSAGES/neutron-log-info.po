@@ -1,0 +1,124 @@
+# Translations template for neutron.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+msgid ""
+msgstr ""
+"Project-Id-Version: Neutron\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2014-06-09 06:08+0000\n"
+"PO-Revision-Date: 2014-05-29 07:49+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
+"language/zh_CN/)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: neutron/openstack/common/periodic_task.py:125
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr ""
+
+#: neutron/openstack/common/periodic_task.py:130
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr ""
+
+#: neutron/openstack/common/service.py:176
+#: neutron/openstack/common/service.py:270
+#, python-format
+msgid "Caught %s, exiting"
+msgstr "捕获到 %s，正在退出"
+
+#: neutron/openstack/common/service.py:239
+msgid "Parent process has died unexpectedly, exiting"
+msgstr "父进程已意外终止，正在退出"
+
+#: neutron/openstack/common/service.py:309
+msgid "Forking too fast, sleeping"
+msgstr "派生速度太快，正在休眠"
+
+#: neutron/openstack/common/service.py:328
+#, python-format
+msgid "Started child %d"
+msgstr "已启动子代 %d"
+
+#: neutron/openstack/common/service.py:338
+#, python-format
+msgid "Starting %d workers"
+msgstr "正在启动 %d 工作程序"
+
+#: neutron/openstack/common/service.py:355
+#, python-format
+msgid "Child %(pid)d killed by signal %(sig)d"
+msgstr "信号 %(sig)d 已终止子代 %(pid)d"
+
+#: neutron/openstack/common/service.py:359
+#, python-format
+msgid "Child %(pid)s exited with status %(code)d"
+msgstr "子代 %(pid)s 已退出，状态为 %(code)d"
+
+#: neutron/openstack/common/service.py:394
+#, python-format
+msgid "Caught %s, stopping children"
+msgstr "捕获到 %s，正在停止子代"
+
+#: neutron/openstack/common/service.py:403
+msgid "Wait called after thread killed.  Cleaning up."
+msgstr ""
+
+#: neutron/openstack/common/service.py:414
+#, python-format
+msgid "Waiting on %d children to exit"
+msgstr "正在等待 %d 个子代退出"
+
+#: neutron/openstack/common/db/sqlalchemy/utils.py:379
+#, python-format
+msgid "Deleting duplicated row with id: %(id)s from table: %(table)s"
+msgstr "正在从表 %(table)s 中删除具有id %(id)s 的重复行"
+
+#: neutron/openstack/common/rpc/impl_kombu.py:498
+#, python-format
+msgid "Reconnecting to AMQP server on %(hostname)s:%(port)d"
+msgstr "正在重新连接至 %(hostname)s:%(port)d 上的 AMQP 服务器"
+
+#: neutron/openstack/common/rpc/impl_kombu.py:520
+#, python-format
+msgid "Connected to AMQP server on %(hostname)s:%(port)d"
+msgstr "已连接至 %(hostname)s:%(port)d 上的 AMQP 服务器"
+
+#: neutron/openstack/common/rpc/impl_qpid.py:523
+#, python-format
+msgid "Connected to AMQP server on %s"
+msgstr "已连接至 %s 上的 AMQP 服务器"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:371
+msgid "Registering reactor"
+msgstr "正在注册反应器"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:383
+msgid "In reactor registered"
+msgstr "已注册内部反应器"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:388
+msgid "Consuming socket"
+msgstr "正在使用套接字"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:438
+#, python-format
+msgid "Creating proxy for topic: %s"
+msgstr "正在为主题创建代理：%s"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:591
+msgid "Skipping topic registration. Already registered."
+msgstr "正在跳过主题注册。已注册。"
+
+#: neutron/openstack/common/rpc/matchmaker.py:216
+#, python-format
+msgid "Matchmaker unregistered: %(key)s, %(host)s"
+msgstr "Matchmaker已注销: %(key)s, %(host)s"

@@ -1,0 +1,124 @@
+# Translations template for neutron.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+msgid ""
+msgstr ""
+"Project-Id-Version: Neutron\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2014-06-09 06:08+0000\n"
+"PO-Revision-Date: 2014-05-29 07:49+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/"
+"neutron/language/pt_BR/)\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: neutron/openstack/common/periodic_task.py:125
+#, python-format
+msgid "Skipping periodic task %(task)s because its interval is negative"
+msgstr ""
+
+#: neutron/openstack/common/periodic_task.py:130
+#, python-format
+msgid "Skipping periodic task %(task)s because it is disabled"
+msgstr ""
+
+#: neutron/openstack/common/service.py:176
+#: neutron/openstack/common/service.py:270
+#, python-format
+msgid "Caught %s, exiting"
+msgstr "%s capturadas, saindo"
+
+#: neutron/openstack/common/service.py:239
+msgid "Parent process has died unexpectedly, exiting"
+msgstr "Processo pai saiu inesperadamente, saindo"
+
+#: neutron/openstack/common/service.py:309
+msgid "Forking too fast, sleeping"
+msgstr "Bifurcação muito rápida, suspendendo"
+
+#: neutron/openstack/common/service.py:328
+#, python-format
+msgid "Started child %d"
+msgstr "Filho %d iniciado"
+
+#: neutron/openstack/common/service.py:338
+#, python-format
+msgid "Starting %d workers"
+msgstr "Iniciando %d trabalhadores"
+
+#: neutron/openstack/common/service.py:355
+#, python-format
+msgid "Child %(pid)d killed by signal %(sig)d"
+msgstr "%(pid)d filho eliminado pelo sinal %(sig)d"
+
+#: neutron/openstack/common/service.py:359
+#, python-format
+msgid "Child %(pid)s exited with status %(code)d"
+msgstr "Filho %(pid)s encerrando com status %(code)d"
+
+#: neutron/openstack/common/service.py:394
+#, python-format
+msgid "Caught %s, stopping children"
+msgstr "%s capturado, parando filhos"
+
+#: neutron/openstack/common/service.py:403
+msgid "Wait called after thread killed.  Cleaning up."
+msgstr ""
+
+#: neutron/openstack/common/service.py:414
+#, python-format
+msgid "Waiting on %d children to exit"
+msgstr "Aguardando em %d filhos para sair"
+
+#: neutron/openstack/common/db/sqlalchemy/utils.py:379
+#, python-format
+msgid "Deleting duplicated row with id: %(id)s from table: %(table)s"
+msgstr "Excluindo linha duplicada com ID: %(id)s da tabela: %(table)s"
+
+#: neutron/openstack/common/rpc/impl_kombu.py:498
+#, python-format
+msgid "Reconnecting to AMQP server on %(hostname)s:%(port)d"
+msgstr "Reconectando ao servidor AMQP em %(hostname)s:%(port)d"
+
+#: neutron/openstack/common/rpc/impl_kombu.py:520
+#, python-format
+msgid "Connected to AMQP server on %(hostname)s:%(port)d"
+msgstr "Conectado ao servidor AMQP em %(hostname)s:%(port)d"
+
+#: neutron/openstack/common/rpc/impl_qpid.py:523
+#, python-format
+msgid "Connected to AMQP server on %s"
+msgstr "Conectado ao servidor AMQP em %s"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:371
+msgid "Registering reactor"
+msgstr "Registrando reator"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:383
+msgid "In reactor registered"
+msgstr "No reator registrado"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:388
+msgid "Consuming socket"
+msgstr "Consumindo soquete"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:438
+#, python-format
+msgid "Creating proxy for topic: %s"
+msgstr "Criando proxy para o tópico: %s"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:591
+msgid "Skipping topic registration. Already registered."
+msgstr "Ignorando registro de tópico. Já registrado."
+
+#: neutron/openstack/common/rpc/matchmaker.py:216
+#, python-format
+msgid "Matchmaker unregistered: %(key)s, %(host)s"
+msgstr "Matchmaker não registrado: %(key)s, %(host)s"
