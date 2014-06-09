@@ -39,7 +39,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         super(PortBindingTestCase, self).setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
         self.plugin = manager.NeutronManager.get_plugin()
-        self.plugin.start_rpc_listener()
+        self.plugin.start_rpc_listeners()
 
     def _check_response(self, port, vif_type, has_port_filter, bound, status):
         self.assertEqual(port[portbindings.VIF_TYPE], vif_type)

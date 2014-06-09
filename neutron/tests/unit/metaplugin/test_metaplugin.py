@@ -400,5 +400,5 @@ class MetaNeutronPluginV2TestRpcFlavor(base.BaseTestCase):
         self.assertEqual(topics.PLUGIN, 'q-plugin')
         ret = self.plugin.rpc_workers_supported()
         self.assertTrue(ret)
-        ret = self.plugin.start_rpc_listener()
+        ret = self.plugin.start_rpc_listeners()
         self.assertEqual('OK', ret)

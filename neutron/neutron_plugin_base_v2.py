@@ -324,10 +324,10 @@ class NeutronPluginBaseV2(object):
         """
         pass
 
-    def start_rpc_listener(self):
-        """Start the rpc listener.
+    def start_rpc_listeners(self):
+        """Start the RPC listeners.
 
-        Most plugins start an RPC listener implicitly on initialization.  In
+        Most plugins start RPC listeners implicitly on initialization.  In
         order to support multiple process RPC, the plugin needs to expose
         control over when this is started.
 
@@ -340,13 +340,13 @@ class NeutronPluginBaseV2(object):
         """Return whether the plugin supports multiple RPC workers.
 
         A plugin that supports multiple RPC workers should override the
-        start_rpc_listener method to ensure that this method returns True and
-        that start_rpc_listener is called at the appropriate time.
+        start_rpc_listeners method to ensure that this method returns True and
+        that start_rpc_listeners is called at the appropriate time.
         Alternately, a plugin can override this method to customize detection
         of support for multiple rpc workers
 
         .. note:: this method is optional, as it was not part of the originally
                   defined plugin API.
         """
-        return (self.__class__.start_rpc_listener !=
-                NeutronPluginBaseV2.start_rpc_listener)
+        return (self.__class__.start_rpc_listeners !=
+                NeutronPluginBaseV2.start_rpc_listeners)

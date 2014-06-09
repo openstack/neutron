@@ -53,7 +53,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
     def setUp(self):
         super(TestMl2SecurityGroups, self).setUp()
         plugin = manager.NeutronManager.get_plugin()
-        plugin.start_rpc_listener()
+        plugin.start_rpc_listeners()
 
     def test_security_group_get_port_from_device(self):
         with self.network() as n:
