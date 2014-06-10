@@ -18,7 +18,7 @@ netaddr>=0.7.6
 python-neutronclient>=2.3.4,<3
 SQLAlchemy>=0.7.8,<=0.9.99
 WebOb>=1.2.3
-python-keystoneclient>=0.8.0
+python-keystoneclient>=0.9.0
 alembic>=0.4.1
 six>=1.6.0
 stevedore>=0.14
