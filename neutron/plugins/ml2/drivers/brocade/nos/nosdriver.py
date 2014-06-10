@@ -26,7 +26,7 @@ from ncclient import manager
 
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
-from neutron.plugins.brocade.nos import nctemplates as template
+from neutron.plugins.ml2.drivers.brocade.nos import nctemplates as template
 
 
 LOG = logging.getLogger(__name__)
