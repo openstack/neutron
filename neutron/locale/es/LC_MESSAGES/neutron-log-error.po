@@ -1,0 +1,170 @@
+# Translations template for neutron.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the neutron project.
+#
+# Translators:
+msgid ""
+msgstr ""
+"Project-Id-Version: Neutron\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2014-06-09 06:08+0000\n"
+"PO-Revision-Date: 2014-05-29 07:49+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Spanish (http://www.transifex.com/projects/p/neutron/language/"
+"es/)\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: neutron/openstack/common/excutils.py:76
+#, python-format
+msgid "Original exception being dropped: %s"
+msgstr "Se está descartando excepción original: %s"
+
+#: neutron/openstack/common/excutils.py:105
+#, python-format
+msgid "Unexpected exception occurred %d time(s)... retrying."
+msgstr "La excepción inesperada ha ocurrido %d vez(veces)... reintentando."
+
+#: neutron/openstack/common/periodic_task.py:179
+#, python-format
+msgid "Error during %(full_task_name)s: %(e)s"
+msgstr ""
+
+#: neutron/openstack/common/service.py:188
+msgid "Exception during rpc cleanup."
+msgstr "Excepción durante limpieza de rpc."
+
+#: neutron/openstack/common/service.py:276
+msgid "Unhandled exception"
+msgstr "Excepción no controlada"
+
+#: neutron/openstack/common/db/api.py:72
+msgid "DB exceeded retry limit."
+msgstr ""
+
+#: neutron/openstack/common/db/api.py:76
+msgid "DB connection error."
+msgstr ""
+
+#: neutron/openstack/common/db/sqlalchemy/session.py:460
+msgid "DB exception wrapped."
+msgstr "Excepción de base de datos recortada."
+
+#: neutron/openstack/common/middleware/notifier.py:40
+#, python-format
+msgid "An exception occurred processing the API call: %s "
+msgstr ""
+
+#: neutron/openstack/common/rpc/amqp.py:480
+#: neutron/openstack/common/rpc/impl_zmq.py:286
+msgid "Exception during message handling"
+msgstr "Excepción durante el manejo de mensajes"
+
+#: neutron/openstack/common/rpc/common.py:88
+msgid "Exception in string format operation"
+msgstr "Excepción en la operación de formato de cadena"
+
+#: neutron/openstack/common/rpc/common.py:292
+#, python-format
+msgid "Returning exception %s to caller"
+msgstr "Devolviendo excepción %s al interlocutor"
+
+#: neutron/openstack/common/rpc/impl_kombu.py:156
+msgid "Failed to process message ... skipping it."
+msgstr "Fallo al procesar mensaje ... omitiendo."
+
+#: neutron/openstack/common/rpc/impl_kombu.py:160
+msgid "Failed to process message ... will requeue."
+msgstr "Fallo al procesar mensaje ... se  encolará nuevamente."
+
+#: neutron/openstack/common/rpc/impl_kombu.py:571
+#, python-format
+msgid ""
+"AMQP server on %(hostname)s:%(port)d is unreachable: %(err_str)s. Trying "
+"again in %(sleep_time)d seconds."
+msgstr ""
+"El servidor AMQP en %(hostname)s:%(port)d es inalcanzable: %(err_str)s. Se "
+"volverá a intentar en %(sleep_time)d segundos."
+
+#: neutron/openstack/common/rpc/impl_kombu.py:625
+#: neutron/openstack/common/rpc/impl_qpid.py:575
+#, python-format
+msgid "Failed to declare consumer for topic '%(topic)s': %(err_str)s"
+msgstr ""
+"No se ha podido declarar consumidor para el tema '%(topic)s': %(err_str)s"
+
+#: neutron/openstack/common/rpc/impl_kombu.py:647
+#: neutron/openstack/common/rpc/impl_qpid.py:594
+#, python-format
+msgid "Failed to consume message from queue: %s"
+msgstr "No se ha podido consumir el mensaje de la cola: %s"
+
+#: neutron/openstack/common/rpc/impl_kombu.py:686
+#: neutron/openstack/common/rpc/impl_qpid.py:629
+#, python-format
+msgid "Failed to publish message to topic '%(topic)s': %(err_str)s"
+msgstr ""
+"No se ha podido publicar el mensaje para el tema '%(topic)s': %(err_str)s"
+
+#: neutron/openstack/common/rpc/impl_qpid.py:191
+msgid "Failed to process message... skipping it."
+msgstr "No se ha podido procesar el mensaje... saltándoselo."
+
+#: neutron/openstack/common/rpc/impl_qpid.py:517
+#, python-format
+msgid "Unable to connect to AMQP server: %(e)s. Sleeping %(delay)s seconds"
+msgstr ""
+"No se puede conectar con el servidor AMQP: %(e)s. En reposo durante "
+"%(delay)s segundos"
+
+#: neutron/openstack/common/rpc/impl_qpid.py:602
+msgid "Error processing message.  Skipping it."
+msgstr "Error al procesar el mensaje. Saltándolo."
+
+#: neutron/openstack/common/rpc/impl_zmq.py:96
+msgid "JSON serialization failed."
+msgstr "Ha fallado la serialización JSON."
+
+#: neutron/openstack/common/rpc/impl_zmq.py:195
+msgid "ZeroMQ socket could not be closed."
+msgstr "No se puede cerrar el socket ZeroMQ."
+
+#: neutron/openstack/common/rpc/impl_zmq.py:339
+msgid "RPC message did not include method."
+msgstr "El mensaje de RPC no incluía método."
+
+#: neutron/openstack/common/rpc/impl_zmq.py:476
+msgid "Topic socket file creation failed."
+msgstr "Ha fallado la creación de archivo de socket de tema."
+
+#: neutron/openstack/common/rpc/impl_zmq.py:482
+#, python-format
+msgid ""
+"Local per-topic backlog buffer full for topic %(topic)s. Dropping message."
+msgstr ""
+"Almacenamiento intermedio de retraso por tema local para el tema %(topic)s. "
+"Descartando mensaje."
+
+#: neutron/openstack/common/rpc/impl_zmq.py:498
+#, python-format
+msgid "Required IPC directory does not exist at %s"
+msgstr "El directorio IPC requerido no existe en %s"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:507
+#, python-format
+msgid "Permission denied to IPC directory at %s"
+msgstr "Permiso denegado para el directorio IPC en %s"
+
+#: neutron/openstack/common/rpc/impl_zmq.py:510
+msgid "Could not create ZeroMQ receiver daemon. Socket may already be in use."
+msgstr ""
+"No se ha podido crear el daemon de destinatario ZeroMQ. Es posible que ya se "
+"esté utilizando el socket."
+
+#: neutron/openstack/common/rpc/impl_zmq.py:563
+msgid "ZMQ Envelope version unsupported or unknown."
+msgstr "Versión de sobre de ZMQ no soportada o desconocida."
