@@ -781,7 +781,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                                  fake_network)
 
     def test_port_update_end(self):
-        payload = dict(port=vars(fake_port2))
+        payload = dict(port=fake_port2)
         self.cache.get_network_by_id.return_value = fake_network
         self.cache.get_port_by_id.return_value = fake_port2
         self.dhcp.port_update_end(None, payload)
@@ -792,7 +792,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                                  fake_network)
 
     def test_port_update_change_ip_on_port(self):
-        payload = dict(port=vars(fake_port1))
+        payload = dict(port=fake_port1)
         self.cache.get_network_by_id.return_value = fake_network
         updated_fake_port1 = copy.deepcopy(fake_port1)
         updated_fake_port1.fixed_ips[0].ip_address = '172.9.9.99'
