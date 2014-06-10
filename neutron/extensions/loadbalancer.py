@@ -29,6 +29,10 @@ from neutron.services import service_base
 
 
 # Loadbalancer Exceptions
+class DelayOrTimeoutInvalid(qexception.BadRequest):
+    message = _("Delay must be greater than or equal to timeout")
+
+
 class NoEligibleBackend(qexception.NotFound):
     message = _("No eligible backend for pool %(pool_id)s")
 

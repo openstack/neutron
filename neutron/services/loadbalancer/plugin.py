@@ -230,7 +230,14 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
         driver = self._get_driver_for_pool(context, m['pool_id'])
         driver.delete_member(context, m)
 
+    def _validate_hm_parameters(self, delay, timeout):
+        if delay < timeout:
+            raise loadbalancer.DelayOrTimeoutInvalid()
+
     def create_health_monitor(self, context, health_monitor):
+        new_hm = health_monitor['health_monitor']
+        self._validate_hm_parameters(new_hm['delay'], new_hm['timeout'])
+
         hm = super(LoadBalancerPlugin, self).create_health_monitor(
             context,
             health_monitor
@@ -238,7 +245,12 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
         return hm
 
     def update_health_monitor(self, context, id, health_monitor):
+        new_hm = health_monitor['health_monitor']
         old_hm = self.get_health_monitor(context, id)
+        delay = new_hm.get('delay', old_hm.get('delay'))
+        timeout = new_hm.get('timeout', old_hm.get('timeout'))
+        self._validate_hm_parameters(delay, timeout)
+
         hm = super(LoadBalancerPlugin, self).update_health_monitor(
             context,
             id,
