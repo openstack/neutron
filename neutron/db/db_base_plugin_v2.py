@@ -26,6 +26,7 @@ from sqlalchemy import sql
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
+from neutron.common import ipv6_utils
 from neutron import context as ctx
 from neutron.db import api as db
 from neutron.db import models_v2
@@ -352,6 +353,12 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             subnet_id=subnet_id).delete()
 
     @staticmethod
+    def _check_if_subnet_uses_eui64(subnet):
+        """Check if ipv6 address will be calculated via EUI64."""
+        return (subnet['ipv6_address_mode'] == constants.IPV6_SLAAC
+                or subnet['ipv6_address_mode'] == constants.DHCPV6_STATELESS)
+
+    @staticmethod
     def _generate_ip(context, subnets):
         try:
             return NeutronDbPluginV2._try_generate_ip(context, subnets)
@@ -670,6 +677,20 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     v4.append(subnet)
                 else:
                     v6.append(subnet)
+            for subnet in v6:
+                if self._check_if_subnet_uses_eui64(subnet):
+                    #(dzyu) If true, calculate an IPv6 address
+                    # by mac address and prefix, then remove this
+                    # subnet from the array of subnets that will be passed
+                    # to the _generate_ip() function call, since we just
+                    # generated an IP.
+                    mac = p['mac_address']
+                    prefix = subnet['cidr']
+                    ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
+                        prefix, mac)
+                    ips.append({'ip_address': ip_address.format(),
+                                'subnet_id': subnet['id']})
+                    v6.remove(subnet)
             version_subnets = [v4, v6]
             for subnets in version_subnets:
                 if subnets:
@@ -1378,7 +1399,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         p = port['port']
         port_id = p.get('id') or uuidutils.generate_uuid()
         network_id = p['network_id']
-        mac_address = p['mac_address']
         # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
         #                unneeded db action if the operation raises
         tenant_id = self._get_tenant_id_for_create(context, p)
@@ -1391,16 +1411,19 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
             # Ensure that a MAC address is defined and it is unique on the
             # network
-            if mac_address is attributes.ATTR_NOT_SPECIFIED:
-                mac_address = NeutronDbPluginV2._generate_mac(context,
-                                                              network_id)
+            if p['mac_address'] is attributes.ATTR_NOT_SPECIFIED:
+                #Note(scollins) Add the generated mac_address to the port,
+                #since _allocate_ips_for_port will need the mac when
+                #calculating an EUI-64 address for a v6 subnet
+                p['mac_address'] = NeutronDbPluginV2._generate_mac(context,
+                                                                   network_id)
             else:
                 # Ensure that the mac on the network is unique
                 if not NeutronDbPluginV2._check_unique_mac(context,
                                                            network_id,
-                                                           mac_address):
+                                                           p['mac_address']):
                     raise n_exc.MacAddressInUse(net_id=network_id,
-                                                mac=mac_address)
+                                                mac=p['mac_address'])
 
             # Returns the IP's for the port
             ips = self._allocate_ips_for_port(context, network, port)
@@ -1414,7 +1437,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                                   name=p['name'],
                                   id=port_id,
                                   network_id=network_id,
-                                  mac_address=mac_address,
+                                  mac_address=p['mac_address'],
                                   admin_state_up=p['admin_state_up'],
                                   status=status,
                                   device_id=p['device_id'],

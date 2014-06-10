@@ -115,6 +115,9 @@ class TestOneConvergencePluginPortsV2(test_plugin.TestPortsV2,
                 self.assertEqual(port['binding:vif_type'],
                                  portbindings.VIF_TYPE_OVS)
 
+    def test_ip_allocation_for_ipv6_subnet_slaac_adddress_mode(self):
+        self.skipTest("NVSD Plugin does not support IPV6.")
+
 
 class TestOneConvergenceBasicGet(test_plugin.TestBasicGet,
                                  OneConvergencePluginV2TestCase):
