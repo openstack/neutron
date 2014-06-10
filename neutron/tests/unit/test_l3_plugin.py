@@ -1897,9 +1897,8 @@ class L3BaseForIntTests(test_db_plugin.NeutronDbPluginV2TestCase):
         ext_mgr = ext_mgr or L3TestExtensionManager()
 
         if self.mock_rescheduling:
-            rescheduling_patcher = mock.patch(
-                '%s._check_router_needs_rescheduling' % plugin)
-            rescheduling_patcher.start().return_value = False
+            mock.patch('%s._check_router_needs_rescheduling' % plugin,
+                       new=lambda *a: False).start()
 
         super(L3BaseForIntTests, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
                                              service_plugins=service_plugins)
