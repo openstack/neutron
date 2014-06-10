@@ -81,18 +81,17 @@ class TestPlumgridPluginPortsV2(test_plugin.TestPortsV2,
 
 class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
                                   PLUMgridPluginV2TestCase):
-    def test_create_subnet_default_gw_conflict_allocation_pool_returns_409(
-            self):
-        self.skipTest("Plugin does not support Neutron allocation process")
+    _unsupported = (
+        'test_create_subnet_default_gw_conflict_allocation_pool_returns_409',
+        'test_create_subnet_defaults', 'test_create_subnet_gw_values',
+        'test_update_subnet_gateway_in_allocation_pool_returns_409',
+        'test_update_subnet_allocation_pools',
+        'test_update_subnet_allocation_pools_invalid_pool_for_cidr')
 
-    def test_create_subnet_defaults(self):
-        self.skipTest("Plugin does not support Neutron allocation process")
-
-    def test_create_subnet_gw_values(self):
-        self.skipTest("Plugin does not support Neutron allocation process")
-
-    def test_update_subnet_gateway_in_allocation_pool_returns_409(self):
-        self.skipTest("Plugin does not support Neutron allocation process")
+    def setUp(self):
+        if self._testMethodName in self._unsupported:
+            self.skipTest("Plugin does not support Neutron allocation process")
+        super(TestPlumgridPluginSubnetsV2, self).setUp()
 
 
 class TestPlumgridPluginPortBinding(PLUMgridPluginV2TestCase,

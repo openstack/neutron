@@ -704,8 +704,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'default': ATTR_NOT_SPECIFIED,
                        'validate': {'type:ip_address_or_none': None},
                        'is_visible': True},
-        #TODO(salvatore-orlando): Enable PUT on allocation_pools
-        'allocation_pools': {'allow_post': True, 'allow_put': False,
+        'allocation_pools': {'allow_post': True, 'allow_put': True,
                              'default': ATTR_NOT_SPECIFIED,
                              'validate': {'type:ip_pools': None},
                              'is_visible': True},

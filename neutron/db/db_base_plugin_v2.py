@@ -1213,6 +1213,21 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
         return self._make_subnet_dict(subnet)
 
+    def _update_subnet_allocation_pools(self, context, id, s):
+        context.session.query(models_v2.IPAllocationPool).filter_by(
+            subnet_id=id).delete()
+        new_pools = [models_v2.IPAllocationPool(
+            first_ip=p['start'], last_ip=p['end'],
+            subnet_id=id) for p in s['allocation_pools']]
+        context.session.add_all(new_pools)
+        NeutronDbPluginV2._rebuild_availability_ranges(context, [s])
+        #Gather new pools for result:
+        result_pools = [{'start': pool['start'],
+                         'end': pool['end']}
+                        for pool in s['allocation_pools']]
+        del s['allocation_pools']
+        return result_pools
+
     def update_subnet(self, context, id, subnet):
         """Update the subnet with new info.
 
@@ -1222,6 +1237,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         s = subnet['subnet']
         changed_host_routes = False
         changed_dns = False
+        changed_allocation_pools = False
         db_subnet = self._get_subnet(context, id)
         # Fill 'ip_version' and 'allocation_pools' fields with the current
         # value since _validate_subnet() expects subnet spec has 'ip_version'
@@ -1288,6 +1304,12 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                          'nexthop': route_str.partition("_")[2]})
                 del s["host_routes"]
 
+            if "allocation_pools" in s:
+                self._validate_allocation_pools(s['allocation_pools'],
+                                                s['cidr'])
+                changed_allocation_pools = True
+                new_pools = self._update_subnet_allocation_pools(context,
+                                                                 id, s)
             subnet = self._get_subnet(context, id)
             subnet.update(s)
         result = self._make_subnet_dict(subnet)
@@ -1296,6 +1318,8 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             result['dns_nameservers'] = new_dns
         if changed_host_routes:
             result['host_routes'] = new_routes
+        if changed_allocation_pools:
+            result['allocation_pools'] = new_pools
         return result
 
     def delete_subnet(self, context, id):
