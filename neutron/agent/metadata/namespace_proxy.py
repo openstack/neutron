@@ -20,6 +20,8 @@ import httplib
 import socket
 
 import eventlet
+eventlet.monkey_patch()
+
 import httplib2
 from oslo.config import cfg
 import six.moves.urllib.parse as urlparse
@@ -144,7 +146,6 @@ class ProxyDaemon(daemon.Daemon):
 
 
 def main():
-    eventlet.monkey_patch()
     opts = [
         cfg.StrOpt('network_id',
                    help=_('Network that will have instance metadata '

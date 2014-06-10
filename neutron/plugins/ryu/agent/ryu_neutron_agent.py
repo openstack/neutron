@@ -24,6 +24,8 @@ import sys
 import time
 
 import eventlet
+eventlet.monkey_patch()
+
 from oslo.config import cfg
 from ryu.app import client
 from ryu.app import conf_switch_key
@@ -282,7 +284,6 @@ class OVSNeutronOFPRyuAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
 
 def main():
-    eventlet.monkey_patch()
     cfg.CONF(project='neutron')
 
     logging_config.setup_logging(cfg.CONF)

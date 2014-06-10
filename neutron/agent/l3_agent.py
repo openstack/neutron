@@ -14,6 +14,8 @@
 #
 
 import eventlet
+eventlet.monkey_patch()
+
 import netaddr
 from oslo.config import cfg
 
@@ -967,7 +969,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
 
 
 def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
-    eventlet.monkey_patch()
     conf = cfg.CONF
     conf.register_opts(L3NATAgent.OPTS)
     config.register_interface_driver_opts_helper(conf)

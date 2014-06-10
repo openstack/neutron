@@ -24,6 +24,7 @@ import socket
 import time
 
 import eventlet
+eventlet.monkey_patch()
 
 from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
@@ -230,8 +231,6 @@ class NECNeutronAgent(object):
 
 
 def main():
-    eventlet.monkey_patch()
-
     config.CONF(project='neutron')
 
     logging_config.setup_logging(config.CONF)

@@ -18,8 +18,10 @@
 # If ../neutron/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
 
-import eventlet
 import sys
+
+import eventlet
+eventlet.monkey_patch()
 
 from oslo.config import cfg
 
@@ -34,8 +36,6 @@ LOG = logging.getLogger(__name__)
 
 
 def main():
-    eventlet.monkey_patch()
-
     # the configuration will be read into the cfg.CONF global data structure
     config.parse(sys.argv[1:])
     if not cfg.CONF.config_file:
