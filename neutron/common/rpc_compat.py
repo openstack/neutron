@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common.rpc import proxy
 
 
@@ -23,3 +24,9 @@ class RpcProxy(proxy.RpcProxy):
     emulate RpcProxy class behaviour using oslo.messaging API once the
     migration is applied.
     '''
+
+
+# exceptions
+RPCException = rpc_common.RPCException
+RemoteError = rpc_common.RemoteError
+MessagingTimeout = rpc_common.Timeout

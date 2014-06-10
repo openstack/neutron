@@ -37,7 +37,6 @@ from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.openstack.common import processutils
-from neutron.openstack.common.rpc import common as rpc_common
 from neutron.openstack.common import service
 from neutron import service as neutron_service
 from neutron.services.firewall.agents.l3reference import firewall_l3_agent
@@ -76,9 +75,9 @@ class L3PluginApi(rpc_compat.RpcProxy):
     def get_external_network_id(self, context):
         """Make a remote process call to retrieve the external network id.
 
-        @raise common.RemoteError: with TooManyExternalNetworks
-                                   as exc_type if there are
-                                   more than one external network
+        @raise rpc_compat.RemoteError: with TooManyExternalNetworks
+                                       as exc_type if there are
+                                       more than one external network
         """
         return self.call(context,
                          self.make_msg('get_external_network_id',
@@ -324,7 +323,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self.target_ex_net_id = self.plugin_rpc.get_external_network_id(
                 self.context)
             return self.target_ex_net_id
-        except rpc_common.RemoteError as e:
+        except rpc_compat.RemoteError as e:
             with excutils.save_and_reraise_exception() as ctx:
                 if e.exc_type == 'TooManyExternalNetworks':
                     ctx.reraise = False
@@ -857,7 +856,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self._process_routers(routers, all_routers=True)
             self.fullsync = False
             LOG.debug(_("_sync_routers_task successfully completed"))
-        except rpc_common.RPCException:
+        except rpc_compat.RPCException:
             LOG.exception(_("Failed synchronizing routers due to RPC error"))
             self.fullsync = True
             return

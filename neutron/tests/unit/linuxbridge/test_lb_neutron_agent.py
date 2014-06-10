@@ -25,7 +25,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.openstack.common.rpc import common as rpc_common
+from neutron.common import rpc_compat
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.linuxbridge.agent import linuxbridge_neutron_agent
 from neutron.plugins.linuxbridge.common import constants as lconst
@@ -983,14 +983,15 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             port = {"admin_state_up": True,
                     "id": "1234-5678",
                     "network_id": "123-123"}
-            plugin_rpc.update_device_up.side_effect = rpc_common.Timeout
+            timeout_class = rpc_compat.MessagingTimeout
+            plugin_rpc.update_device_up.side_effect = timeout_class
             self.lb_rpc.port_update(mock.Mock(), port=port)
             self.assertTrue(plugin_rpc.update_device_up.called)
             self.assertEqual(log.call_count, 1)
 
             log.reset_mock()
             port["admin_state_up"] = False
-            plugin_rpc.update_device_down.side_effect = rpc_common.Timeout
+            plugin_rpc.update_device_down.side_effect = timeout_class
             self.lb_rpc.port_update(mock.Mock(), port=port)
             self.assertTrue(plugin_rpc.update_device_down.called)
             self.assertEqual(log.call_count, 1)

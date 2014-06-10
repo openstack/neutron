@@ -37,7 +37,6 @@ from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common.rpc import common
 from neutron.openstack.common import service
 from neutron import service as neutron_service
 
@@ -136,7 +135,7 @@ class DhcpAgent(manager.Manager):
                         % {'net_id': network.id, 'action': action})
         except Exception as e:
             self.schedule_resync(e)
-            if (isinstance(e, common.RemoteError)
+            if (isinstance(e, rpc_compat.RemoteError)
                 and e.exc_type == 'NetworkNotFound'
                 or isinstance(e, exceptions.NetworkNotFound)):
                 LOG.warning(_("Network %s has been deleted."), network.id)

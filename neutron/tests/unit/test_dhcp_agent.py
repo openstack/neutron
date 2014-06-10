@@ -30,7 +30,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.common import constants as const
 from neutron.common import exceptions
-from neutron.openstack.common.rpc import common
+from neutron.common import rpc_compat
 from neutron.tests import base
 
 
@@ -227,7 +227,7 @@ class TestDhcpAgent(base.BaseTestCase):
 
     def test_call_driver_remote_error_net_not_found(self):
         self._test_call_driver_failure(
-            exc=common.RemoteError(exc_type='NetworkNotFound'),
+            exc=rpc_compat.RemoteError(exc_type='NetworkNotFound'),
             trace_level='warning')
 
     def test_call_driver_network_not_found(self):
