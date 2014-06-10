@@ -518,12 +518,6 @@ class ExtensionManager(object):
         except AttributeError as ex:
             LOG.exception(_("Exception loading extension: %s"), unicode(ex))
             return False
-        if hasattr(extension, 'check_env'):
-            try:
-                extension.check_env()
-            except exceptions.InvalidExtensionEnv as ex:
-                LOG.warn(_("Exception loading extension: %s"), unicode(ex))
-                return False
         return True
 
     def _load_all_extensions(self):
