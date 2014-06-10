@@ -1213,6 +1213,58 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
         return self._make_subnet_dict(subnet)
 
+    def _update_subnet_dns_nameservers(self, context, id, s):
+        old_dns_list = self._get_dns_by_subnet(context, id)
+        new_dns_addr_set = set(s["dns_nameservers"])
+        old_dns_addr_set = set([dns['address']
+                                for dns in old_dns_list])
+
+        new_dns = list(new_dns_addr_set)
+        for dns_addr in old_dns_addr_set - new_dns_addr_set:
+            for dns in old_dns_list:
+                if dns['address'] == dns_addr:
+                    context.session.delete(dns)
+        for dns_addr in new_dns_addr_set - old_dns_addr_set:
+            dns = models_v2.DNSNameServer(
+                address=dns_addr,
+                subnet_id=id)
+            context.session.add(dns)
+        del s["dns_nameservers"]
+        return new_dns
+
+    def _update_subnet_host_routes(self, context, id, s):
+
+        def _combine(ht):
+            return ht['destination'] + "_" + ht['nexthop']
+
+        old_route_list = self._get_route_by_subnet(context, id)
+
+        new_route_set = set([_combine(route)
+                             for route in s['host_routes']])
+
+        old_route_set = set([_combine(route)
+                             for route in old_route_list])
+
+        for route_str in old_route_set - new_route_set:
+            for route in old_route_list:
+                if _combine(route) == route_str:
+                    context.session.delete(route)
+        for route_str in new_route_set - old_route_set:
+            route = models_v2.SubnetRoute(
+                destination=route_str.partition("_")[0],
+                nexthop=route_str.partition("_")[2],
+                subnet_id=id)
+            context.session.add(route)
+
+        # Gather host routes for result
+        new_routes = []
+        for route_str in new_route_set:
+            new_routes.append(
+                {'destination': route_str.partition("_")[0],
+                 'nexthop': route_str.partition("_")[2]})
+        del s["host_routes"]
+        return new_routes
+
     def _update_subnet_allocation_pools(self, context, id, s):
         context.session.query(models_v2.IPAllocationPool).filter_by(
             subnet_id=id).delete()
@@ -1255,54 +1307,11 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         with context.session.begin(subtransactions=True):
             if "dns_nameservers" in s:
                 changed_dns = True
-                old_dns_list = self._get_dns_by_subnet(context, id)
-                new_dns_addr_set = set(s["dns_nameservers"])
-                old_dns_addr_set = set([dns['address']
-                                        for dns in old_dns_list])
-
-                new_dns = list(new_dns_addr_set)
-                for dns_addr in old_dns_addr_set - new_dns_addr_set:
-                    for dns in old_dns_list:
-                        if dns['address'] == dns_addr:
-                            context.session.delete(dns)
-                for dns_addr in new_dns_addr_set - old_dns_addr_set:
-                    dns = models_v2.DNSNameServer(
-                        address=dns_addr,
-                        subnet_id=id)
-                    context.session.add(dns)
-                del s["dns_nameservers"]
-
-            def _combine(ht):
-                return ht['destination'] + "_" + ht['nexthop']
+                new_dns = self._update_subnet_dns_nameservers(context, id, s)
 
             if "host_routes" in s:
                 changed_host_routes = True
-                old_route_list = self._get_route_by_subnet(context, id)
-
-                new_route_set = set([_combine(route)
-                                     for route in s['host_routes']])
-
-                old_route_set = set([_combine(route)
-                                     for route in old_route_list])
-
-                for route_str in old_route_set - new_route_set:
-                    for route in old_route_list:
-                        if _combine(route) == route_str:
-                            context.session.delete(route)
-                for route_str in new_route_set - old_route_set:
-                    route = models_v2.SubnetRoute(
-                        destination=route_str.partition("_")[0],
-                        nexthop=route_str.partition("_")[2],
-                        subnet_id=id)
-                    context.session.add(route)
-
-                # Gather host routes for result
-                new_routes = []
-                for route_str in new_route_set:
-                    new_routes.append(
-                        {'destination': route_str.partition("_")[0],
-                         'nexthop': route_str.partition("_")[2]})
-                del s["host_routes"]
+                new_routes = self._update_subnet_host_routes(context, id, s)
 
             if "allocation_pools" in s:
                 self._validate_allocation_pools(s['allocation_pools'],
