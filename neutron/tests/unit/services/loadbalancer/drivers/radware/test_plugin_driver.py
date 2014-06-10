@@ -16,11 +16,11 @@
 #
 # @author: Avishay Balderman, Radware
 
-import Queue
 import re
 
 import contextlib
 import mock
+from six.moves import queue as Queue
 
 from neutron import context
 from neutron.extensions import loadbalancer

@@ -19,7 +19,6 @@
 import base64
 import copy
 import httplib
-import Queue
 import threading
 import time
 
@@ -28,6 +27,7 @@ import eventlet
 eventlet.monkey_patch(thread=True)
 
 from oslo.config import cfg
+from six.moves import queue as Queue
 
 from neutron.api.v2 import attributes
 from neutron.common import log as call_log
