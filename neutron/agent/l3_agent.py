@@ -25,6 +25,7 @@ from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ovs_lib  # noqa
 from neutron.agent import rpc as agent_rpc
 from neutron.common import constants as l3_constants
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils as common_utils
 from neutron import context
@@ -37,7 +38,6 @@ from neutron.openstack.common import loopingcall
 from neutron.openstack.common import periodic_task
 from neutron.openstack.common import processutils
 from neutron.openstack.common.rpc import common as rpc_common
-from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import service
 from neutron import service as neutron_service
 from neutron.services.firewall.agents.l3reference import firewall_l3_agent
@@ -50,7 +50,7 @@ RPC_LOOP_INTERVAL = 1
 FLOATING_IP_CIDR_SUFFIX = '/32'
 
 
-class L3PluginApi(proxy.RpcProxy):
+class L3PluginApi(rpc_compat.RpcProxy):
     """Agent side of the l3 agent RPC API.
 
     API version history:

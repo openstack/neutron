@@ -24,12 +24,12 @@ import six
 
 from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
+from neutron.common import rpc_compat
 from neutron import context as ctx
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import proxy
 from neutron.plugins.common import constants
 from neutron.plugins.common import utils as plugin_utils
 from neutron.services.vpn.common import topics
@@ -151,7 +151,7 @@ def find_available_csrs_from_config(config_files):
     return csrs_found
 
 
-class CiscoCsrIPsecVpnDriverApi(proxy.RpcProxy):
+class CiscoCsrIPsecVpnDriverApi(rpc_compat.RpcProxy):
     """RPC API for agent to plugin messaging."""
 
     def get_vpn_services_on_host(self, context, host):

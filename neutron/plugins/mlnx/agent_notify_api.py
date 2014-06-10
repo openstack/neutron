@@ -17,14 +17,14 @@
 from oslo.config import cfg
 
 from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.rpc import proxy
 
 LOG = logging.getLogger(__name__)
 
 
-class AgentNotifierApi(proxy.RpcProxy,
+class AgentNotifierApi(rpc_compat.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin):
     """Agent side of the Embedded Switch RPC API.
 

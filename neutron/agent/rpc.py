@@ -17,11 +17,11 @@
 
 import itertools
 
+from neutron.common import rpc_compat
 from neutron.common import topics
 
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import timeutils
 
 
@@ -56,7 +56,7 @@ def create_consumers(dispatcher, prefix, topic_details):
     return connection
 
 
-class PluginReportStateAPI(proxy.RpcProxy):
+class PluginReportStateAPI(rpc_compat.RpcProxy):
     BASE_RPC_API_VERSION = '1.0'
 
     def __init__(self, topic):
@@ -74,7 +74,7 @@ class PluginReportStateAPI(proxy.RpcProxy):
             return self.cast(context, msg, topic=self.topic)
 
 
-class PluginApi(proxy.RpcProxy):
+class PluginApi(rpc_compat.RpcProxy):
     '''Agent side of the rpc API.
 
     API version history:

@@ -19,9 +19,9 @@ import abc
 
 import six
 
+from neutron.common import rpc_compat
 from neutron import manager
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.rpc import proxy
 from neutron.plugins.common import constants
 
 LOG = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class VpnDriver(object):
         pass
 
 
-class BaseIPsecVpnAgentApi(proxy.RpcProxy):
+class BaseIPsecVpnAgentApi(rpc_compat.RpcProxy):
     """Base class for IPSec API to agent."""
 
     def __init__(self, to_agent_topic, topic, default_version):

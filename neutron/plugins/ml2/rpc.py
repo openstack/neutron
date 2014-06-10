@@ -16,6 +16,7 @@
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import api as db_api
@@ -23,7 +24,6 @@ from neutron.db import dhcp_rpc_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron import manager
 from neutron.openstack.common import log
-from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import uuidutils
 from neutron.plugins.ml2 import db
 from neutron.plugins.ml2 import driver_api as api
@@ -203,7 +203,7 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
                                   q_const.PORT_STATUS_ACTIVE)
 
 
-class AgentNotifierApi(proxy.RpcProxy,
+class AgentNotifierApi(rpc_compat.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin,
                        type_tunnel.TunnelAgentRpcApiMixin):
     """Agent side of the openvswitch rpc API.

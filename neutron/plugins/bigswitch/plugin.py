@@ -58,6 +58,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
 from neutron import context as qcontext
@@ -96,7 +97,7 @@ SYNTAX_ERROR_MESSAGE = _('Syntax error in server config file, aborting plugin')
 METADATA_SERVER_IP = '169.254.169.254'
 
 
-class AgentNotifierApi(rpc.proxy.RpcProxy,
+class AgentNotifierApi(rpc_compat.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     BASE_RPC_API_VERSION = '1.1'

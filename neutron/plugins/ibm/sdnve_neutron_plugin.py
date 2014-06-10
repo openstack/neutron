@@ -24,6 +24,7 @@ from oslo.config import cfg
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -35,7 +36,6 @@ from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import proxy
 from neutron.plugins.ibm.common import config  # noqa
 from neutron.plugins.ibm.common import constants
 from neutron.plugins.ibm.common import exceptions as sdnve_exc
@@ -66,7 +66,7 @@ class SdnveRpcCallbacks():
         return info
 
 
-class AgentNotifierApi(proxy.RpcProxy):
+class AgentNotifierApi(rpc_compat.RpcProxy):
     '''Agent side of the SDN-VE rpc API.'''
 
     BASE_RPC_API_VERSION = '1.0'

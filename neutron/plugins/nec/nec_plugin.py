@@ -23,6 +23,7 @@ from neutron.api.v2 import attributes as attrs
 from neutron.common import constants as const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -41,7 +42,6 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.nec.common import config
@@ -661,7 +661,7 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.notify_security_groups_member_updated(context, port)
 
 
-class NECPluginV2AgentNotifierApi(proxy.RpcProxy,
+class NECPluginV2AgentNotifierApi(rpc_compat.RpcProxy,
                                   sg_rpc.SecurityGroupAgentRpcApiMixin):
     '''RPC API for NEC plugin agent.'''
 

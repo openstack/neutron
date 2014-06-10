@@ -24,6 +24,7 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
@@ -39,7 +40,6 @@ from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import proxy
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.ryu.common import config  # noqa
 from neutron.plugins.ryu.db import api_v2 as db_api_v2
@@ -72,7 +72,7 @@ class RyuRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         return port
 
 
-class AgentNotifierApi(proxy.RpcProxy,
+class AgentNotifierApi(rpc_compat.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     BASE_RPC_API_VERSION = '1.0'

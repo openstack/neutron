@@ -14,17 +14,17 @@
 # limitations under the License.
 
 from neutron.common import constants
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
 from neutron import manager
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.rpc import proxy
 
 
 LOG = logging.getLogger(__name__)
 
 
-class DhcpAgentNotifyAPI(proxy.RpcProxy):
+class DhcpAgentNotifyAPI(rpc_compat.RpcProxy):
     """API for plugin to notify DHCP agent."""
     BASE_RPC_API_VERSION = '1.0'
     # It seems dhcp agent does not support bulk operation
