@@ -236,8 +236,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             LOG.exception(_("Failed reporting state!"))
 
     def setup_rpc(self):
-        mac = self.int_br.get_local_port_mac()
-        self.agent_id = '%s%s' % ('ovs', (mac.replace(":", "")))
+        self.agent_id = 'ovs-agent-%s' % cfg.CONF.host
         self.topic = topics.AGENT
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.PLUGIN)

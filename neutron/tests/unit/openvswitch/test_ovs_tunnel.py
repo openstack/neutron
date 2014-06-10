@@ -105,10 +105,8 @@ class TunnelTest(base.BaseTestCase):
         ]
 
         self.mock_int_bridge = self.ovs_bridges[self.INT_BRIDGE]
-        self.mock_int_bridge.get_local_port_mac.return_value = '000000000001'
         self.mock_int_bridge_expected = [
             mock.call.set_secure_mode(),
-            mock.call.get_local_port_mac(),
             mock.call.delete_port('patch-tun'),
             mock.call.remove_all_flows(),
             mock.call.add_flow(priority=1, actions='normal'),
@@ -249,11 +247,12 @@ class TunnelTest(base.BaseTestCase):
         self._verify_mock_call(self.execute, self.execute_expected)
 
     def test_construct(self):
-        ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
-                                          self.TUN_BRIDGE,
-                                          '10.0.0.1', self.NET_MAPPING,
-                                          'sudo', 2, ['gre'],
-                                          self.VETH_MTU)
+        agent = ovs_neutron_agent.OVSNeutronAgent(self.INT_BRIDGE,
+                                                  self.TUN_BRIDGE,
+                                                  '10.0.0.1', self.NET_MAPPING,
+                                                  'sudo', 2, ['gre'],
+                                                  self.VETH_MTU)
+        self.assertEqual(agent.agent_id, 'ovs-agent-%s' % cfg.CONF.host)
         self._verify_mock_calls()
 
     # TODO(ethuleau): Initially, local ARP responder is be dependent to the
