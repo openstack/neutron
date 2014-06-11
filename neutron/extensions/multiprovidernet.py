@@ -80,10 +80,10 @@ class Multiprovidernet(extensions.ExtensionDescriptor):
     metadata about the multiple provider network extension available to
     clients. No new resources are defined by this extension. Instead,
     the existing network resource's request and response messages are
-    extended with attributes in the provider namespace.
+    extended with 'segments' attribute.
 
     With admin rights, network dictionaries returned will also include
-    provider attributes.
+    'segments' attribute.
     """
 
     @classmethod
