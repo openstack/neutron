@@ -694,7 +694,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                         self.client.add_dhcp_route_option(
                             bridge, cidr, ip, METADATA_DEFAULT_IP)
                 else:
-                # IPs have changed.  Re-map the DHCP entries
+                    # IPs have changed.  Re-map the DHCP entries
                     for cidr, ip, mac in self._dhcp_mappings(
                             context, old_ips, mac):
                         self.client.remove_dhcp_host(

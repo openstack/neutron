@@ -191,6 +191,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                 # Add profiles in database if new profiles were created in VSM
                 for pid in vsm_profiles_set - plugin_profiles_set:
                     self._add_policy_profile(vsm_profiles[pid], pid)
+
                 # Delete profiles from database if profiles were deleted in VSM
                 for pid in plugin_profiles_set - vsm_profiles_set:
                     self._delete_policy_profile(pid)
