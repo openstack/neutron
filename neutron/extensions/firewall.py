@@ -78,6 +78,11 @@ class FirewallRuleInvalidAction(qexception.InvalidInput):
                 "Only action values %(values)s are supported.")
 
 
+class FirewallRuleInvalidICMPParameter(qexception.InvalidInput):
+    message = _("%(param)s are not allowed when protocol "
+                "is set to ICMP.")
+
+
 class FirewallInvalidPortValue(qexception.InvalidInput):
     message = _("Invalid value for port %(port)s.")
 
