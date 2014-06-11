@@ -176,29 +176,24 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
             n1kvclient = n1kv_client.Client()
             policy_profiles = n1kvclient.list_port_profiles()
             vsm_profiles = {}
-            plugin_profiles = {}
+            plugin_profiles_set = set()
             # Fetch policy profiles from VSM
-            if policy_profiles:
-                for profile in policy_profiles['body'][c_const.SET]:
-                    profile_name = (profile[c_const.PROPERTIES].
-                                    get(c_const.NAME, None))
-                    profile_id = (profile[c_const.PROPERTIES].
-                                  get(c_const.ID, None))
-                    if profile_id and profile_name:
-                        vsm_profiles[profile_id] = profile_name
-                # Fetch policy profiles previously populated
-                for profile in n1kv_db_v2.get_policy_profiles():
-                    plugin_profiles[profile.id] = profile.name
-                vsm_profiles_set = set(vsm_profiles)
-                plugin_profiles_set = set(plugin_profiles)
-                # Update database if the profile sets differ.
-                if vsm_profiles_set ^ plugin_profiles_set:
+            for profile_name in policy_profiles:
+                profile_id = (policy_profiles
+                              [profile_name][c_const.PROPERTIES][c_const.ID])
+                vsm_profiles[profile_id] = profile_name
+            # Fetch policy profiles previously populated
+            for profile in n1kv_db_v2.get_policy_profiles():
+                plugin_profiles_set.add(profile.id)
+            vsm_profiles_set = set(vsm_profiles)
+            # Update database if the profile sets differ.
+            if vsm_profiles_set ^ plugin_profiles_set:
                 # Add profiles in database if new profiles were created in VSM
-                    for pid in vsm_profiles_set - plugin_profiles_set:
-                        self._add_policy_profile(vsm_profiles[pid], pid)
+                for pid in vsm_profiles_set - plugin_profiles_set:
+                    self._add_policy_profile(vsm_profiles[pid], pid)
                 # Delete profiles from database if profiles were deleted in VSM
-                    for pid in plugin_profiles_set - vsm_profiles_set:
-                        self._delete_policy_profile(pid)
+                for pid in plugin_profiles_set - vsm_profiles_set:
+                    self._delete_policy_profile(pid)
             self._remove_all_fake_policy_profiles()
         except (cisco_exceptions.VSMError,
                 cisco_exceptions.VSMConnectionFailed):
