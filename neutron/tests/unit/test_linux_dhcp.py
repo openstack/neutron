@@ -126,8 +126,8 @@ class FakeV4HostRouteGateway:
 
 
 class FakeV6HostRoute:
-    destination = 'gdca:3ba5:a17a:4ba3::/64'
-    nexthop = 'gdca:3ba5:a17a:4ba3::1'
+    destination = '2001:0200:feed:7ac0::/64'
+    nexthop = '2001:0200:feed:7ac0::1'
 
 
 class FakeV4Subnet:
@@ -193,7 +193,7 @@ class FakeV6Subnet:
     gateway_ip = 'fdca:3ba5:a17a:4ba3::1'
     enable_dhcp = True
     host_routes = [FakeV6HostRoute]
-    dns_nameservers = ['gdca:3ba5:a17a:4ba3::1']
+    dns_nameservers = ['2001:0200:feed:7ac0::1']
 
 
 class FakeV4SubnetNoDHCP:
@@ -750,8 +750,8 @@ class TestDnsmasq(TestBase):
             max_leases=256)
 
     def test_output_opts_file(self):
-        fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
-        fake_v6_cidr = 'gdca:3ba5:a17a:4ba3::/64'
+        fake_v6 = '2001:0200:feed:7ac0::1'
+        fake_v6_cidr = '2001:0200:feed:7ac0::/64'
         expected = (
             'tag:tag0,option:dns-server,8.8.8.8\n'
             'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
@@ -773,8 +773,8 @@ class TestDnsmasq(TestBase):
         self.safe.assert_called_once_with('/foo/opts', expected)
 
     def test_output_opts_file_gateway_route(self):
-        fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
-        fake_v6_cidr = 'gdca:3ba5:a17a:4ba3::/64'
+        fake_v6 = '2001:0200:feed:7ac0::1'
+        fake_v6_cidr = '2001:0200:feed:7ac0::/64'
         expected = """
 tag:tag0,option:dns-server,8.8.8.8
 tag:tag0,option:router,192.168.0.1
@@ -1043,8 +1043,8 @@ tag:tag0,option:router""".lstrip()
             'host-192-168-0-1\n'
         ).lstrip()
         exp_opt_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/opts'
-        fake_v6 = 'gdca:3ba5:a17a:4ba3::1'
-        fake_v6_cidr = 'gdca:3ba5:a17a:4ba3::/64'
+        fake_v6 = '2001:0200:feed:7ac0::1'
+        fake_v6_cidr = '2001:0200:feed:7ac0::/64'
         exp_opt_data = (
             'tag:tag0,option:dns-server,8.8.8.8\n'
             'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
