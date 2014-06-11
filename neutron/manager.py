@@ -143,9 +143,8 @@ class NeutronManager(object):
         LOG.debug(_("Loading services supported by the core plugin"))
 
         # supported service types are derived from supported extensions
-        if not hasattr(self.plugin, "supported_extension_aliases"):
-            return
-        for ext_alias in self.plugin.supported_extension_aliases:
+        for ext_alias in getattr(self.plugin,
+                                 "supported_extension_aliases", []):
             if ext_alias in constants.EXT_TO_SERVICE_MAPPING:
                 service_type = constants.EXT_TO_SERVICE_MAPPING[ext_alias]
                 self.service_plugins[service_type] = self.plugin
