@@ -125,6 +125,10 @@ class OVSBridge(BaseOVS):
             return res.strip().split('\n')
         return res
 
+    def set_secure_mode(self):
+        self.run_vsctl(['--', 'set-fail-mode', self.br_name, 'secure'],
+                       check_error=True)
+
     def set_protocols(self, protocols):
         self.run_vsctl(['--', 'set', 'bridge', self.br_name,
                         "protocols=%s" % protocols],

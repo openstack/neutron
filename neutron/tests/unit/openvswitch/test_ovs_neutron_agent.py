@@ -114,6 +114,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        'OVSNeutronAgent.setup_ancillary_bridges',
                        return_value=[]),
             mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                       'set_secure_mode'),
+            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                        'get_local_port_mac',
                        return_value='00:00:00:00:00:01'),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
@@ -884,6 +886,8 @@ class AncillaryBridgesTest(base.BaseTestCase):
             mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
                        'get_local_port_mac',
                        return_value='00:00:00:00:00:01'),
+            mock.patch('neutron.agent.linux.ovs_lib.OVSBridge.'
+                       'set_secure_mode'),
             mock.patch('neutron.agent.linux.ovs_lib.get_bridges',
                        return_value=bridges),
             mock.patch(
