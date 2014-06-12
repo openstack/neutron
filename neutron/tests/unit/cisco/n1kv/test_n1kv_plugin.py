@@ -587,7 +587,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         net_p_req = self.new_create_request('network_profiles', data)
         net_p_req.environ['neutron.context'] = context.Context('',
                                                                self.tenant_id,
-                                                               is_admin = True)
+                                                               is_admin=True)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(201, res.status_int)
         net_p = self.deserialize(self.fmt, res)
@@ -612,7 +612,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
                                              net_p['network_profile']['id'])
         update_req.environ['neutron.context'] = context.Context('',
                                                                self.tenant_id,
-                                                               is_admin = True)
+                                                               is_admin=True)
         update_res = update_req.get_response(self.ext_api)
         self.assertEqual(200, update_res.status_int)
         db_session = db.get_session()
@@ -637,7 +637,7 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
                                              net_p['network_profile']['id'])
         update_req.environ['neutron.context'] = context.Context('',
                                                                self.tenant_id,
-                                                               is_admin = True)
+                                                               is_admin=True)
         update_res = update_req.get_response(self.ext_api)
         self.assertEqual(200, update_res.status_int)
         # current tenant_id should always present

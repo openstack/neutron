@@ -187,8 +187,8 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
                     # If we find an invalid rule in the list we
                     # do not perform the update since this breaks
                     # the integrity of this list.
-                    raise firewall.FirewallRuleNotFound(firewall_rule_id=
-                                                        fwrule_id)
+                    raise firewall.FirewallRuleNotFound(
+                        firewall_rule_id=fwrule_id)
                 elif rules_dict[fwrule_id]['firewall_policy_id']:
                     if (rules_dict[fwrule_id]['firewall_policy_id'] !=
                             fwp_db['id']):
@@ -273,14 +273,14 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         status = (const.CREATED
             if cfg.CONF.router_distributed else const.PENDING_CREATE)
         with context.session.begin(subtransactions=True):
-            firewall_db = Firewall(id=uuidutils.generate_uuid(),
-                                   tenant_id=tenant_id,
-                                   name=fw['name'],
-                                   description=fw['description'],
-                                   firewall_policy_id=
-                                   fw['firewall_policy_id'],
-                                   admin_state_up=fw['admin_state_up'],
-                                   status=status)
+            firewall_db = Firewall(
+                id=uuidutils.generate_uuid(),
+                tenant_id=tenant_id,
+                name=fw['name'],
+                description=fw['description'],
+                firewall_policy_id=fw['firewall_policy_id'],
+                admin_state_up=fw['admin_state_up'],
+                status=status)
             context.session.add(firewall_db)
         return self._make_firewall_dict(firewall_db)
 
@@ -396,22 +396,22 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         dst_port_min, dst_port_max = self._get_min_max_ports_from_range(
             fwr['destination_port'])
         with context.session.begin(subtransactions=True):
-            fwr_db = FirewallRule(id=uuidutils.generate_uuid(),
-                                  tenant_id=tenant_id,
-                                  name=fwr['name'],
-                                  description=fwr['description'],
-                                  shared=fwr['shared'],
-                                  protocol=fwr['protocol'],
-                                  ip_version=fwr['ip_version'],
-                                  source_ip_address=fwr['source_ip_address'],
-                                  destination_ip_address=
-                                  fwr['destination_ip_address'],
-                                  source_port_range_min=src_port_min,
-                                  source_port_range_max=src_port_max,
-                                  destination_port_range_min=dst_port_min,
-                                  destination_port_range_max=dst_port_max,
-                                  action=fwr['action'],
-                                  enabled=fwr['enabled'])
+            fwr_db = FirewallRule(
+                id=uuidutils.generate_uuid(),
+                tenant_id=tenant_id,
+                name=fwr['name'],
+                description=fwr['description'],
+                shared=fwr['shared'],
+                protocol=fwr['protocol'],
+                ip_version=fwr['ip_version'],
+                source_ip_address=fwr['source_ip_address'],
+                destination_ip_address=fwr['destination_ip_address'],
+                source_port_range_min=src_port_min,
+                source_port_range_max=src_port_max,
+                destination_port_range_min=dst_port_min,
+                destination_port_range_max=dst_port_max,
+                action=fwr['action'],
+                enabled=fwr['enabled'])
             context.session.add(fwr_db)
         return self._make_firewall_rule_dict(fwr_db)
 

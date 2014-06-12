@@ -624,9 +624,9 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
         with self.firewall_policy() as fwp:
             fwp_id = fwp['firewall_policy']['id']
             attrs['firewall_policy_id'] = fwp_id
-            with self.firewall(firewall_policy_id=fwp_id,
-                               admin_state_up=
-                               ADMIN_STATE_UP):
+            with self.firewall(
+                    firewall_policy_id=fwp_id,
+                    admin_state_up=ADMIN_STATE_UP):
                 req = self.new_delete_request('firewall_policies', fwp_id)
                 res = req.get_response(self.ext_api)
                 self.assertEqual(res.status_int, 409)
@@ -896,10 +896,11 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
         with self.firewall_policy() as fwp:
             fwp_id = fwp['firewall_policy']['id']
             attrs['firewall_policy_id'] = fwp_id
-            with self.firewall(name=attrs['name'],
-                               firewall_policy_id=fwp_id,
-                               admin_state_up=
-                               ADMIN_STATE_UP) as firewall:
+            with self.firewall(
+                name=attrs['name'],
+                firewall_policy_id=fwp_id,
+                admin_state_up=ADMIN_STATE_UP
+            ) as firewall:
                 for k, v in attrs.iteritems():
                     self.assertEqual(firewall['firewall'][k], v)
 
@@ -919,10 +920,10 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
         with self.firewall_policy() as fwp:
             fwp_id = fwp['firewall_policy']['id']
             attrs['firewall_policy_id'] = fwp_id
-            with self.firewall(name=name,
-                               firewall_policy_id=fwp_id,
-                               admin_state_up=
-                               ADMIN_STATE_UP) as firewall:
+            with self.firewall(
+                    name=name,
+                    firewall_policy_id=fwp_id,
+                    admin_state_up=ADMIN_STATE_UP) as firewall:
                 req = self.new_show_request('firewalls',
                                             firewall['firewall']['id'],
                                             fmt=self.fmt)
@@ -953,9 +954,9 @@ class TestFirewallDBPlugin(FirewallPluginDbTestCase):
         with self.firewall_policy() as fwp:
             fwp_id = fwp['firewall_policy']['id']
             attrs['firewall_policy_id'] = fwp_id
-            with self.firewall(firewall_policy_id=fwp_id,
-                               admin_state_up=
-                               ADMIN_STATE_UP) as firewall:
+            with self.firewall(
+                    firewall_policy_id=fwp_id,
+                    admin_state_up=ADMIN_STATE_UP) as firewall:
                 data = {'firewall': {'name': name}}
                 req = self.new_update_request('firewalls', data,
                                               firewall['firewall']['id'])

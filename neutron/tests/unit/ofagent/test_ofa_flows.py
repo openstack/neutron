@@ -115,15 +115,27 @@ class TestOFAgentFlows(ofa_test_base.OFATestBase):
         (dp, ofp, ofpp) = br._get_dp()
         call = mock.call
         expected_calls = [
-            call(ofpp.OFPFlowMod(dp, instructions=[
-                 ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS,
-                 [ofpp.OFPActionSetField(tunnel_id=112),
-                 ofpp.OFPActionOutput(port=113),
-                 ofpp.OFPActionOutput(port=114)]),
-                 ofpp.OFPInstructionGotoTable(table_id=111)],
-                 match=ofpp.OFPMatch(metadata=
-                 meta.mk_metadata(111, meta.LOCAL)),
-                 priority=1, table_id=110))
+            call(
+                ofpp.OFPFlowMod(
+                    dp,
+                    instructions=[
+                        ofpp.OFPInstructionActions(
+                            ofp.OFPIT_APPLY_ACTIONS,
+                            [
+                                ofpp.OFPActionSetField(tunnel_id=112),
+                                ofpp.OFPActionOutput(port=113),
+                                ofpp.OFPActionOutput(port=114)
+                            ]
+                        ),
+                        ofpp.OFPInstructionGotoTable(table_id=111)
+                    ],
+                    match=ofpp.OFPMatch(
+                        metadata=meta.mk_metadata(111, meta.LOCAL)
+                    ),
+                    priority=1,
+                    table_id=110
+                )
+            )
         ]
         sendmsg.assert_has_calls(expected_calls)
 
@@ -134,11 +146,17 @@ class TestOFAgentFlows(ofa_test_base.OFATestBase):
         (dp, ofp, ofpp) = br._get_dp()
         call = mock.call
         expected_calls = [
-            call(ofpp.OFPFlowMod(dp, command=ofp.OFPFC_DELETE,
-                 match=ofpp.OFPMatch(metadata=
-                 meta.mk_metadata(111, meta.LOCAL)),
-                 out_group=ofp.OFPG_ANY,
-                 out_port=ofp.OFPP_ANY, priority=0, table_id=110))
+            call(
+                ofpp.OFPFlowMod(
+                    dp,
+                    command=ofp.OFPFC_DELETE,
+                    match=ofpp.OFPMatch(
+                        metadata=meta.mk_metadata(111, meta.LOCAL)
+                    ),
+                    out_group=ofp.OFPG_ANY,
+                    out_port=ofp.OFPP_ANY, priority=0, table_id=110
+                )
+            )
         ]
         sendmsg.assert_has_calls(expected_calls)
 
@@ -189,15 +207,30 @@ class TestOFAgentFlows(ofa_test_base.OFATestBase):
                 match=ofpp.OFPMatch(in_port=99,
                                     vlan_vid=151 | ofp.OFPVID_PRESENT),
                 priority=1, table_id=0)),
-            call(ofpp.OFPFlowMod(dp, instructions=[
-                ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
-                    ofpp.OFPActionPushVlan(),
-                    ofpp.OFPActionSetField(vlan_vid=151 | ofp.OFPVID_PRESENT),
-                    ofpp.OFPActionOutput(port=99), ofpp.OFPActionPopVlan()]),
-                ofpp.OFPInstructionGotoTable(table_id=13)],
-                match=ofpp.OFPMatch(metadata=
-                meta.mk_metadata(150, meta.LOCAL)),
-                priority=1, table_id=12))
+            call(
+                ofpp.OFPFlowMod(
+                    dp,
+                    instructions=[
+                        ofpp.OFPInstructionActions(
+                            ofp.OFPIT_APPLY_ACTIONS,
+                            [
+                                ofpp.OFPActionPushVlan(),
+                                ofpp.OFPActionSetField(
+                                    vlan_vid=151 | ofp.OFPVID_PRESENT
+                                ),
+                                ofpp.OFPActionOutput(port=99),
+                                ofpp.OFPActionPopVlan()
+                            ]
+                        ),
+                        ofpp.OFPInstructionGotoTable(table_id=13)
+                    ],
+                    match=ofpp.OFPMatch(
+                        metadata=meta.mk_metadata(150, meta.LOCAL)
+                    ),
+                    priority=1,
+                    table_id=12
+                )
+            )
         ]
         sendmsg.assert_has_calls(expected_calls)
 

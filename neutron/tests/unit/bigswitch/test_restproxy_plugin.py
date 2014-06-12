@@ -155,9 +155,10 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
                 # stop normal patch
                 self.httpPatch.stop()
                 with patch(HTTPCON, new=fake_server.HTTPConnectionMock500):
-                    self._delete('ports', port['port']['id'],
-                                 expected_code=
-                                 webob.exc.HTTPInternalServerError.code)
+                    self._delete(
+                        'ports',
+                        port['port']['id'],
+                        expected_code=webob.exc.HTTPInternalServerError.code)
                 self.httpPatch.start()
                 port = self._get_ports(n['network']['id'])[0]
                 self.assertEqual('BUILD', port['status'])

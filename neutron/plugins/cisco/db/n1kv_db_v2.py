@@ -943,9 +943,9 @@ def update_profile_binding(db_session, profile_id, tenants, profile_type):
             profile_id=profile_id, profile_type=profile_type).delete()
         new_tenants_set = set(tenants)
         for tenant_id in new_tenants_set:
-            tenant = n1kv_models_v2.ProfileBinding(profile_type = profile_type,
-                                                   tenant_id = tenant_id,
-                                                   profile_id = profile_id)
+            tenant = n1kv_models_v2.ProfileBinding(profile_type=profile_type,
+                                                   tenant_id=tenant_id,
+                                                   profile_id=profile_id)
             db_session.add(tenant)
 
 

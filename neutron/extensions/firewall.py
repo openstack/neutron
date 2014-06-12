@@ -152,15 +152,15 @@ def convert_protocol(value):
         if 0 <= val <= 255:
             return val
         else:
-            raise FirewallRuleInvalidProtocol(protocol=value,
-                                              values=
-                                              fw_valid_protocol_values)
+            raise FirewallRuleInvalidProtocol(
+                protocol=value,
+                values=fw_valid_protocol_values)
     elif value.lower() in fw_valid_protocol_values:
         return value.lower()
     else:
-        raise FirewallRuleInvalidProtocol(protocol=value,
-                                          values=
-                                          fw_valid_protocol_values)
+        raise FirewallRuleInvalidProtocol(
+            protocol=value,
+            values=fw_valid_protocol_values)
 
 
 def convert_action_to_case_insensitive(value):
