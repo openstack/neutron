@@ -303,7 +303,7 @@ class FakeClient:
     def _build_relation(self, src, dst, resource_type, relation):
         if relation not in self.MANAGED_RELATIONS[resource_type]:
             return  # Relation is not desired in output
-        if not '_relations' in src or not src['_relations'].get(relation):
+        if '_relations' not in src or not src['_relations'].get(relation):
             return  # Item does not have relation
         relation_data = src['_relations'].get(relation)
         dst_relations = dst.get('_relations', {})
@@ -402,7 +402,7 @@ class FakeClient:
 
             def _lswitch_match(res_uuid):
                 # verify that the switch exist
-                if parent_uuid and not parent_uuid in self._fake_lswitch_dict:
+                if parent_uuid and parent_uuid not in self._fake_lswitch_dict:
                     raise Exception(_("lswitch:%s not found") % parent_uuid)
                 if (not parent_uuid
                     or res_dict[res_uuid].get('ls_uuid') == parent_uuid):
@@ -411,7 +411,7 @@ class FakeClient:
 
             def _lrouter_match(res_uuid):
                 # verify that the router exist
-                if parent_uuid and not parent_uuid in self._fake_lrouter_dict:
+                if parent_uuid and parent_uuid not in self._fake_lrouter_dict:
                     raise Exception(_("lrouter:%s not found") % parent_uuid)
                 if (not parent_uuid or
                     res_dict[res_uuid].get('lr_uuid') == parent_uuid):

@@ -353,7 +353,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase,
         if ('device_owner' in kwargs and
             kwargs['device_owner'] == constants.DEVICE_OWNER_DHCP and
             'host' in kwargs and
-            not 'device_id' in kwargs):
+            'device_id' not in kwargs):
             device_id = utils.get_dhcp_agent_device_id(net_id, kwargs['host'])
             data['port']['device_id'] = device_id
         port_req = self.new_create_request('ports', data, fmt)
