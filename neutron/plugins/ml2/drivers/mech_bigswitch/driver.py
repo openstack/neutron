@@ -43,7 +43,7 @@ class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
     operations to the Big Switch Controller.
     """
 
-    def initialize(self, server_timeout=None):
+    def initialize(self):
         LOG.debug(_('Initializing driver'))
 
         # register plugin config opts
@@ -53,7 +53,7 @@ class BigSwitchMechanismDriver(NeutronRestProxyV2Base,
         self.native_bulk_support = False
 
         # init network ctrl connections
-        self.servers = servermanager.ServerPool(server_timeout)
+        self.servers = servermanager.ServerPool()
         self.servers.get_topo_function = self._get_all_data
         self.servers.get_topo_function_args = {'get_ports': True,
                                                'get_floating_ips': False,
