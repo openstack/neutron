@@ -211,12 +211,12 @@ class AgentDBTestCase(AgentDBTestMixIn,
     def test_list_agent(self):
         agents = self._register_agent_states()
         res = self._list('agents')
-        for agent in res['agents']:
-            if (agent['host'] == DHCP_HOSTA and
-                agent['agent_type'] == constants.AGENT_TYPE_DHCP):
+        for agt in res['agents']:
+            if (agt['host'] == DHCP_HOSTA and
+                agt['agent_type'] == constants.AGENT_TYPE_DHCP):
                 self.assertEqual(
                     'dhcp_driver',
-                    agent['configurations']['dhcp_driver'])
+                    agt['configurations']['dhcp_driver'])
                 break
         self.assertEqual(len(agents), len(res['agents']))
 
