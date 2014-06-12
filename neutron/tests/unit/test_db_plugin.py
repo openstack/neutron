@@ -3456,7 +3456,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(res.status_int,
                              webob.exc.HTTPClientError.code)
 
-    def test_update_subnet_ipv6_ra_mode_fails(self):
+    def test_update_subnet_ipv6_address_mode_fails(self):
         with self.subnet(ip_version=6, cidr='fe80::/64',
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             data = {'subnet': {'ipv6_address_mode': constants.DHCPV6_STATEFUL}}

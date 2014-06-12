@@ -45,11 +45,11 @@ from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.openvswitch.common import config  # noqa
 from neutron.plugins.openvswitch.common import constants
 
 
 LOG = logging.getLogger(__name__)
+cfg.CONF.import_group('AGENT', 'neutron.plugins.openvswitch.common.config')
 
 # A placeholder for dead vlans.
 DEAD_VLAN_TAG = str(q_const.MAX_VLAN_TAG + 1)

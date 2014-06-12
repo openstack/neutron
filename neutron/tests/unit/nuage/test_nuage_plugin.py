@@ -17,7 +17,6 @@ import contextlib
 import copy
 import os
 
-import contextlib
 import mock
 import netaddr
 from oslo.config import cfg
@@ -487,18 +486,6 @@ class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
                     fip = self._update('floatingips', fip['floatingip']['id'],
                                        {'floatingip': {'port_id': None}})
                     self.assertIsNone(fip['floatingip']['router_id'])
-
-    def test_network_update_external_failure(self):
-        self._test_network_update_external_failure()
-
-    def test_floatingip_create_different_fixed_ip_same_port(self):
-        self._test_floatingip_create_different_fixed_ip_same_port()
-
-    def test_floatingip_update_different_router(self):
-        self._test_floatingip_update_different_router()
-
-    def test_floatingip_update_different_fixed_ip_same_port(self):
-        self._test_floatingip_update_different_fixed_ip_same_port()
 
 
 class NuageRouterTestExtensionManager(object):

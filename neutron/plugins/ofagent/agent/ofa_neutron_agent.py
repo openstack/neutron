@@ -52,11 +52,11 @@ from neutron.plugins.ofagent.agent import constants as ofa_const
 from neutron.plugins.ofagent.agent import flows
 from neutron.plugins.ofagent.agent import ports
 from neutron.plugins.ofagent.agent import tables
-from neutron.plugins.ofagent.common import config  # noqa
 from neutron.plugins.openvswitch.common import constants
 
 
 LOG = logging.getLogger(__name__)
+cfg.CONF.import_group('AGENT', 'neutron.plugins.ofagent.common.config')
 
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'

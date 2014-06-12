@@ -35,11 +35,12 @@ from neutron.common import utils as n_utils
 from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.plugins.ibm.common import config  # noqa
 from neutron.plugins.ibm.common import constants
 
 
 LOG = logging.getLogger(__name__)
+cfg.CONF.import_group('SDNVE', 'neutron.plugins.ibm.common.config')
+cfg.CONF.import_group('SDNVE_AGENT', 'neutron.plugins.ibm.common.config')
 
 
 class SdnvePluginApi(agent_rpc.PluginApi):
@@ -230,7 +231,6 @@ class SdnveNeutronAgent(n_rpc.RpcCallback):
 
 
 def create_agent_config_map(config):
-
     interface_mappings = n_utils.parse_mappings(
         config.SDNVE.interface_mappings)
 
