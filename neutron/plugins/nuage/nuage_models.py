@@ -22,16 +22,16 @@ from neutron.db import models_v2
 
 
 class NetPartition(model_base.BASEV2, models_v2.HasId):
-    __tablename__ = 'net_partitions'
+    __tablename__ = 'nuage_net_partitions'
     name = Column(String(64))
     l3dom_tmplt_id = Column(String(36))
     l2dom_tmplt_id = Column(String(36))
 
 
 class NetPartitionRouter(model_base.BASEV2):
-    __tablename__ = "net_partition_router_mapping"
+    __tablename__ = "nuage_net_partition_router_mapping"
     net_partition_id = Column(String(36),
-                              ForeignKey('net_partitions.id',
+                              ForeignKey('nuage_net_partitions.id',
                                          ondelete="CASCADE"),
                               primary_key=True)
     router_id = Column(String(36),
@@ -41,7 +41,7 @@ class NetPartitionRouter(model_base.BASEV2):
 
 
 class RouterZone(model_base.BASEV2):
-    __tablename__ = "router_zone_mapping"
+    __tablename__ = "nuage_router_zone_mapping"
     router_id = Column(String(36),
                        ForeignKey('routers.id', ondelete="CASCADE"),
                        primary_key=True)
@@ -51,12 +51,12 @@ class RouterZone(model_base.BASEV2):
 
 
 class SubnetL2Domain(model_base.BASEV2):
-    __tablename__ = 'subnet_l2dom_mapping'
+    __tablename__ = 'nuage_subnet_l2dom_mapping'
     subnet_id = Column(String(36),
                        ForeignKey('subnets.id', ondelete="CASCADE"),
                        primary_key=True)
     net_partition_id = Column(String(36),
-                              ForeignKey('net_partitions.id',
+                              ForeignKey('nuage_net_partitions.id',
                                          ondelete="CASCADE"))
     nuage_subnet_id = Column(String(36))
     nuage_l2dom_tmplt_id = Column(String(36))
@@ -65,7 +65,7 @@ class SubnetL2Domain(model_base.BASEV2):
 
 
 class PortVPortMapping(model_base.BASEV2):
-    __tablename__ = 'port_mapping'
+    __tablename__ = 'nuage_port_mapping'
     port_id = Column(String(36),
                      ForeignKey('ports.id', ondelete="CASCADE"),
                      primary_key=True)
@@ -75,10 +75,28 @@ class PortVPortMapping(model_base.BASEV2):
 
 
 class RouterRoutesMapping(model_base.BASEV2, models_v2.Route):
-    __tablename__ = 'routerroutes_mapping'
+    __tablename__ = 'nuage_routerroutes_mapping'
     router_id = Column(String(36),
                        ForeignKey('routers.id',
                                   ondelete="CASCADE"),
                        primary_key=True,
                        nullable=False)
     nuage_route_id = Column(String(36))
+
+
+class FloatingIPPoolMapping(model_base.BASEV2):
+    __tablename__ = "nuage_floatingip_pool_mapping"
+    fip_pool_id = Column(String(36), primary_key=True)
+    net_id = Column(String(36),
+                    ForeignKey('networks.id', ondelete="CASCADE"))
+    router_id = Column(String(36))
+
+
+class FloatingIPMapping(model_base.BASEV2):
+    __tablename__ = 'nuage_floatingip_mapping'
+    fip_id = Column(String(36),
+                    ForeignKey('floatingips.id',
+                               ondelete="CASCADE"),
+                    primary_key=True)
+    router_id = Column(String(36))
+    nuage_fip_id = Column(String(36))

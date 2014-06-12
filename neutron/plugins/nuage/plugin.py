@@ -33,6 +33,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.db import quota_db  # noqa
+from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.openstack.common import excutils
@@ -300,11 +301,48 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_l3_create(context, net, network['network'])
         return net
 
+    def _validate_update_network(self, context, id, network):
+        req_data = network['network']
+        is_external_set = req_data.get(external_net.EXTERNAL)
+        if not attributes.is_attr_set(is_external_set):
+            return (None, None)
+        neutron_net = self.get_network(context, id)
+        if neutron_net.get(external_net.EXTERNAL) == is_external_set:
+            return (None, None)
+        subnet = self._validate_nuage_sharedresource(context, 'network', id)
+        if subnet and not is_external_set:
+            msg = _('External network with subnets can not be '
+                    'changed to non-external network')
+            raise nuage_exc.OperationNotSupported(msg=msg)
+        return (is_external_set, subnet)
+
     def update_network(self, context, id, network):
         with context.session.begin(subtransactions=True):
+            is_external_set, subnet = self._validate_update_network(context,
+                                                                    id,
+                                                                    network)
             net = super(NuagePlugin, self).update_network(context, id,
                                                           network)
             self._process_l3_update(context, net, network['network'])
+            if subnet and is_external_set:
+                subn = subnet[0]
+                subnet_l2dom = nuagedb.get_subnet_l2dom_by_id(context.session,
+                                                              subn['id'])
+                if subnet_l2dom:
+                    nuage_subnet_id = subnet_l2dom['nuage_subnet_id']
+                    nuage_l2dom_tid = subnet_l2dom['nuage_l2dom_tmplt_id']
+                    user_id = subnet_l2dom['nuage_user_id']
+                    group_id = subnet_l2dom['nuage_group_id']
+                    self.nuageclient.delete_subnet(nuage_subnet_id,
+                                                   nuage_l2dom_tid)
+                    self.nuageclient.delete_user(user_id)
+                    self.nuageclient.delete_group(group_id)
+                    nuagedb.delete_subnetl2dom_mapping(context.session,
+                                                       subnet_l2dom)
+                    self._add_nuage_sharedresource(context,
+                                                   subnet[0],
+                                                   id,
+                                                   constants.SR_TYPE_FLOATING)
         return net
 
     def delete_network(self, context, id):
@@ -341,18 +379,46 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             msg = "no-gateway option not supported with subnets"
             raise nuage_exc.OperationNotSupported(msg=msg)
 
-    def create_subnet(self, context, subnet):
+    def _delete_nuage_sharedresource(self, context, net_id):
+        sharedresource_id = self.nuageclient.delete_nuage_sharedresource(
+            net_id)
+        if sharedresource_id:
+            fip_pool_mapping = nuagedb.get_fip_pool_by_id(context.session,
+                                                          sharedresource_id)
+            if fip_pool_mapping:
+                with context.session.begin(subtransactions=True):
+                    nuagedb.delete_fip_pool_mapping(context.session,
+                                                    fip_pool_mapping)
+
+    def _validate_nuage_sharedresource(self, context, resource, net_id):
+        filter = {'network_id': [net_id]}
+        existing_subn = self.get_subnets(context, filters=filter)
+        if len(existing_subn) > 1:
+            msg = _('Only one subnet is allowed per '
+                    'external network %s') % net_id
+            raise nuage_exc.OperationNotSupported(msg=msg)
+        return existing_subn
+
+    def _add_nuage_sharedresource(self, context, subnet, net_id, type):
+        net = netaddr.IPNetwork(subnet['cidr'])
+        params = {
+            'neutron_subnet': subnet,
+            'net': net,
+            'type': type
+        }
+        fip_pool_id = self.nuageclient.create_nuage_sharedresource(params)
+        nuagedb.add_fip_pool_mapping(context.session, fip_pool_id, net_id)
+
+    def _create_nuage_sharedresource(self, context, subnet, type):
         subn = subnet['subnet']
         net_id = subn['network_id']
+        self._validate_nuage_sharedresource(context, 'subnet', net_id)
+        with context.session.begin(subtransactions=True):
+            subn = super(NuagePlugin, self).create_subnet(context, subnet)
+            self._add_nuage_sharedresource(context, subn, net_id, type)
+            return subn
 
-        if self._network_is_external(context, net_id):
-            return super(NuagePlugin, self).create_subnet(context, subnet)
-
-        self._validate_create_subnet(subn)
-
-        net_partition = self._get_net_partition_for_subnet(context, subnet)
-        neutron_subnet = super(NuagePlugin, self).create_subnet(context,
-                                                                subnet)
+    def _create_nuage_subnet(self, context, neutron_subnet, net_partition):
         net = netaddr.IPNetwork(neutron_subnet['cidr'])
         params = {
             'net_partition': net_partition,
@@ -372,21 +438,36 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             user_id = nuage_subnet['nuage_userid']
             group_id = nuage_subnet['nuage_groupid']
             id = nuage_subnet['nuage_l2domain_id']
-            session = context.session
-            with session.begin(subtransactions=True):
-                nuagedb.add_subnetl2dom_mapping(session,
+            with context.session.begin(subtransactions=True):
+                nuagedb.add_subnetl2dom_mapping(context.session,
                                                 neutron_subnet['id'],
                                                 id,
                                                 net_partition['id'],
                                                 l2dom_id=l2dom_id,
                                                 nuage_user_id=user_id,
                                                 nuage_group_id=group_id)
+
+    def create_subnet(self, context, subnet):
+        subn = subnet['subnet']
+        net_id = subn['network_id']
+
+        if self._network_is_external(context, net_id):
+            return self._create_nuage_sharedresource(
+                context, subnet, constants.SR_TYPE_FLOATING)
+
+        self._validate_create_subnet(subn)
+
+        net_partition = self._get_net_partition_for_subnet(context, subnet)
+        neutron_subnet = super(NuagePlugin, self).create_subnet(context,
+                                                                subnet)
+        self._create_nuage_subnet(context, neutron_subnet, net_partition)
         return neutron_subnet
 
     def delete_subnet(self, context, id):
         subnet = self.get_subnet(context, id)
         if self._network_is_external(context, subnet['network_id']):
-            return super(NuagePlugin, self).delete_subnet(context, id)
+            super(NuagePlugin, self).delete_subnet(context, id)
+            return self._delete_nuage_sharedresource(context, id)
 
         subnet_l2dom = nuagedb.get_subnet_l2dom_by_id(context.session, id)
         if subnet_l2dom:
@@ -523,6 +604,11 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         with session.begin(subtransactions=True):
             subnet_l2dom = nuagedb.get_subnet_l2dom_by_id(session,
                                                           subnet_id)
+            if not subnet_l2dom:
+                return super(NuagePlugin,
+                             self).remove_router_interface(context,
+                                                           router_id,
+                                                           interface_info)
             nuage_subn_id = subnet_l2dom['nuage_subnet_id']
             if self.nuageclient.vms_on_l2domain(nuage_subn_id):
                 msg = (_("Subnet %s has one or more active VMs "
@@ -727,7 +813,6 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         if net_partition:
             with session.begin(subtransactions=True):
                 nuagedb.delete_net_partition(session, net_partition)
-
         self._create_net_partition(session, default_net_part)
 
     def create_net_partition(self, context, net_partition):
@@ -767,3 +852,146 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                     fields=fields)
         return [self._make_net_partition_dict(net_partition, fields)
                 for net_partition in net_partitions]
+
+    def _check_floatingip_update(self, context, port):
+        filter = {'fixed_port_id': [port['id']]}
+        local_fip = self.get_floatingips(context,
+                                         filters=filter)
+        if local_fip:
+            fip = local_fip[0]
+            self._create_update_floatingip(context,
+                                           fip, port['id'])
+
+    def _create_update_floatingip(self, context,
+                                  neutron_fip, port_id):
+        rtr_id = neutron_fip['router_id']
+        net_id = neutron_fip['floating_network_id']
+
+        fip_pool_mapping = nuagedb.get_fip_pool_from_netid(context.session,
+                                                           net_id)
+        fip_mapping = nuagedb.get_fip_mapping_by_id(context.session,
+                                                    neutron_fip['id'])
+
+        if not fip_mapping:
+            ent_rtr_mapping = nuagedb.get_ent_rtr_mapping_by_rtrid(
+                context.session, rtr_id)
+            if not ent_rtr_mapping:
+                msg = _('router %s is not associated with '
+                        'any net-partition') % rtr_id
+                raise n_exc.BadRequest(resource='floatingip',
+                                       msg=msg)
+            params = {
+                'nuage_rtr_id': ent_rtr_mapping['nuage_router_id'],
+                'nuage_fippool_id': fip_pool_mapping['fip_pool_id'],
+                'neutron_fip_ip': neutron_fip['floating_ip_address']
+            }
+            nuage_fip_id = self.nuageclient.create_nuage_floatingip(params)
+            nuagedb.add_fip_mapping(context.session,
+                                    neutron_fip['id'],
+                                    rtr_id, nuage_fip_id)
+        else:
+            if rtr_id != fip_mapping['router_id']:
+                msg = _('Floating IP can not be associated to VM in '
+                        'different router context')
+                raise nuage_exc.OperationNotSupported(msg=msg)
+            nuage_fip_id = fip_mapping['nuage_fip_id']
+
+        fip_pool_dict = {'router_id': neutron_fip['router_id']}
+        nuagedb.update_fip_pool_mapping(fip_pool_mapping,
+                                        fip_pool_dict)
+
+        # Update VM if required
+        port_mapping = nuagedb.get_port_mapping_by_id(context.session,
+                                                      port_id)
+        if port_mapping:
+            params = {
+                'nuage_vport_id': port_mapping['nuage_vport_id'],
+                'nuage_fip_id': nuage_fip_id
+            }
+            self.nuageclient.update_nuage_vm_vport(params)
+
+    def create_floatingip(self, context, floatingip):
+        fip = floatingip['floatingip']
+        with context.session.begin(subtransactions=True):
+            neutron_fip = super(NuagePlugin, self).create_floatingip(
+                context, floatingip)
+            if not neutron_fip['router_id']:
+                return neutron_fip
+            try:
+                self._create_update_floatingip(context, neutron_fip,
+                                               fip['port_id'])
+            except (nuage_exc.OperationNotSupported, n_exc.BadRequest):
+                with excutils.save_and_reraise_exception():
+                    super(NuagePlugin, self).delete_floatingip(
+                        context, neutron_fip['id'])
+            return neutron_fip
+
+    def disassociate_floatingips(self, context, port_id):
+        super(NuagePlugin, self).disassociate_floatingips(context, port_id)
+        port_mapping = nuagedb.get_port_mapping_by_id(context.session,
+                                                      port_id)
+        if port_mapping:
+            params = {
+                'nuage_vport_id': port_mapping['nuage_vport_id'],
+                'nuage_fip_id': None
+            }
+            self.nuageclient.update_nuage_vm_vport(params)
+
+    def update_floatingip(self, context, id, floatingip):
+        fip = floatingip['floatingip']
+        orig_fip = self._get_floatingip(context, id)
+        port_id = orig_fip['fixed_port_id']
+        with context.session.begin(subtransactions=True):
+            neutron_fip = super(NuagePlugin, self).update_floatingip(
+                context, id, floatingip)
+            if fip['port_id'] is not None:
+                if not neutron_fip['router_id']:
+                    ret_msg = 'floating-ip is not associated yet'
+                    raise n_exc.BadRequest(resource='floatingip',
+                                           msg=ret_msg)
+
+                try:
+                    self._create_update_floatingip(context,
+                                                   neutron_fip,
+                                                   fip['port_id'])
+                except nuage_exc.OperationNotSupported:
+                    with excutils.save_and_reraise_exception():
+                        super(NuagePlugin,
+                              self).disassociate_floatingips(context,
+                                                             fip['port_id'])
+                except n_exc.BadRequest:
+                    with excutils.save_and_reraise_exception():
+                        super(NuagePlugin, self).delete_floatingip(context,
+                                                                   id)
+            else:
+                port_mapping = nuagedb.get_port_mapping_by_id(context.session,
+                                                              port_id)
+                if port_mapping:
+                    params = {
+                        'nuage_vport_id': port_mapping['nuage_vport_id'],
+                        'nuage_fip_id': None
+                    }
+                    self.nuageclient.update_nuage_vm_vport(params)
+            return neutron_fip
+
+    def delete_floatingip(self, context, id):
+        fip = self._get_floatingip(context, id)
+        port_id = fip['fixed_port_id']
+        with context.session.begin(subtransactions=True):
+            if port_id:
+                port_mapping = nuagedb.get_port_mapping_by_id(context.session,
+                                                              port_id)
+                if (port_mapping and
+                    port_mapping['nuage_vport_id'] is not None):
+                    params = {
+                        'nuage_vport_id': port_mapping['nuage_vport_id'],
+                        'nuage_fip_id': None
+                    }
+                    self.nuageclient.update_nuage_vm_vport(params)
+            fip_mapping = nuagedb.get_fip_mapping_by_id(context.session,
+                                                        id)
+            if fip_mapping:
+                self.nuageclient.delete_nuage_floatingip(
+                    fip_mapping['nuage_fip_id'])
+                nuagedb.delete_fip_mapping(context.session, fip_mapping)
+            super(NuagePlugin, self).delete_floatingip(context, id)

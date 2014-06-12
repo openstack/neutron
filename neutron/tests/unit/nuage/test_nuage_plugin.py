@@ -14,12 +14,14 @@
 #
 # @author: Ronak Shah, Aniket Dandekar, Nuage Networks, Alcatel-Lucent USA Inc.
 
+import contextlib
 import os
 
 import mock
 from oslo.config import cfg
 from webob import exc
 
+from neutron.extensions import external_net
 from neutron.extensions import portbindings
 from neutron.plugins.nuage import extensions
 from neutron.plugins.nuage import plugin as nuage_plugin
@@ -66,6 +68,83 @@ class NuagePluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                   API_EXT_PATH)
             super(NuagePluginV2TestCase, self).setUp(plugin=plugin,
                                                      ext_mgr=ext_mgr)
+
+    def _assert_no_assoc_fip(self, fip):
+        body = self._show('floatingips',
+                          fip['floatingip']['id'])
+        self.assertIsNone(body['floatingip']['port_id'])
+        self.assertIsNone(
+            body['floatingip']['fixed_ip_address'])
+
+    def _associate_and_assert_fip(self, fip, port, allow=True):
+        port_id = port['port']['id']
+        ip_address = (port['port']['fixed_ips']
+                      [0]['ip_address'])
+        if allow:
+            body = self._update(
+                'floatingips', fip['floatingip']['id'],
+                {'floatingip': {'port_id': port_id}})
+            self.assertEqual(
+                body['floatingip']['port_id'], port_id)
+            self.assertEqual(
+                body['floatingip']['fixed_ip_address'],
+                ip_address)
+            return body['floatingip']['router_id']
+        else:
+            code = exc.HTTPInternalServerError.code
+            self._update(
+                'floatingips', fip['floatingip']['id'],
+                {'floatingip': {'port_id': port_id}},
+                expected_code=code)
+
+    def _test_floatingip_update_different_router(self):
+        with contextlib.nested(self.subnet(cidr='10.0.0.0/24'),
+                               self.subnet(cidr='10.0.1.0/24')) as (
+                                   s1, s2):
+            with contextlib.nested(self.port(subnet=s1),
+                                   self.port(subnet=s2)) as (p1, p2):
+                private_sub1 = {'subnet':
+                                {'id':
+                                 p1['port']['fixed_ips'][0]['subnet_id']}}
+                private_sub2 = {'subnet':
+                                {'id':
+                                 p2['port']['fixed_ips'][0]['subnet_id']}}
+                with self.subnet(cidr='12.0.0.0/24') as public_sub:
+                    with contextlib.nested(
+                            self.floatingip_no_assoc_with_public_sub(
+                                private_sub1, public_sub=public_sub),
+                            self.floatingip_no_assoc_with_public_sub(
+                                private_sub2, public_sub=public_sub)) as (
+                                    (fip1, r1), (fip2, r2)):
+
+                        self._assert_no_assoc_fip(fip1)
+                        self._assert_no_assoc_fip(fip2)
+
+                        fip1_r1_res = self._associate_and_assert_fip(fip1, p1)
+                        self.assertEqual(fip1_r1_res, r1['router']['id'])
+                        # The following operation will associate the floating
+                        # ip to a different router and should fail
+                        self._associate_and_assert_fip(fip1, p2, allow=False)
+                        # disassociate fip1
+                        self._update(
+                            'floatingips', fip1['floatingip']['id'],
+                            {'floatingip': {'port_id': None}})
+                        fip2_r2_res = self._associate_and_assert_fip(fip2, p2)
+                        self.assertEqual(fip2_r2_res, r2['router']['id'])
+
+    def _test_network_update_external_failure(self):
+        with self.router() as r:
+            with self.subnet() as s1:
+                self._set_net_external(s1['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s1['subnet']['network_id'])
+                self._update('networks', s1['subnet']['network_id'],
+                             {'network': {external_net.EXTERNAL: False}},
+                             expected_code=exc.HTTPInternalServerError.code)
+                self._remove_external_gateway_from_router(
+                    r['router']['id'],
+                    s1['subnet']['network_id'])
 
 
 class TestNuageBasicGet(NuagePluginV2TestCase,
@@ -161,7 +240,12 @@ class TestNuagePortsV2(NuagePluginV2TestCase,
 
 class TestNuageL3NatTestCase(NuagePluginV2TestCase,
                              test_l3_plugin.L3NatDBIntTestCase):
-    pass
+
+    def test_floatingip_update_different_router(self):
+        self._test_floatingip_update_different_router()
+
+    def test_network_update_external_failure(self):
+        self._test_network_update_external_failure()
 
 
 class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
@@ -191,3 +275,9 @@ class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
                                                   r['router']['id'],
                                                   None,
                                                   p['port']['id'])
+
+    def test_floatingip_update_different_router(self):
+        self._test_floatingip_update_different_router()
+
+    def test_network_update_external_failure(self):
+        self._test_network_update_external_failure()
