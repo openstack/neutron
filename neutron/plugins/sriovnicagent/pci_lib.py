@@ -63,8 +63,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
                 vf_details = self._parse_vf_link_show(vf_line)
                 if vf_details:
                     vf_details_list.append(vf_details)
-        return [vf_details.get("MAC") for vf_details in
-                vf_details_list]
+        return [details.get("MAC") for details in vf_details_list]
 
     def get_vf_state(self, vf_index):
         """Get vf state {True/False}

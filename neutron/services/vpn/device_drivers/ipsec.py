@@ -692,9 +692,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
 
         # Delete any IPSec processes running
         # VPN that do not have an associated router.
-        process_ids = [process_id
-                       for process_id in self.processes
-                       if process_id not in router_ids]
+        process_ids = [pid for pid in self.processes if pid not in router_ids]
         for process_id in process_ids:
             self.destroy_router(process_id)
         self.report_status(context)
