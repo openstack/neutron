@@ -13,7 +13,6 @@
 #    under the License.
 
 import httplib
-import new
 import random
 
 import eventlet
@@ -106,16 +105,19 @@ class ApiRequestEventletTest(base.BaseTestCase):
         self.assertTrue(self.req._handle_request.called)
 
     def test_run_and_timeout(self):
-        def my_handle_request(self):
-            LOG.info('my_handle_request() self: %s' % self)
-            LOG.info('my_handle_request() dir(self): %s' % dir(self))
+        def my_handle_request():
+            LOG.info('my_handle_request() self: %s' % self.req)
+            LOG.info('my_handle_request() dir(self): %s' % dir(self.req))
             eventlet.greenthread.sleep(REQUEST_TIMEOUT * 2)
 
-        self.req._request_timeout = REQUEST_TIMEOUT
-        self.req._handle_request = new.instancemethod(
-            my_handle_request, self.req, request.EventletApiRequest)
-        self.req.start()
-        self.assertIsNone(self.req.join())
+        with mock.patch.object(
+            self.req,
+            '_handle_request',
+            new=my_handle_request
+        ):
+            self.req._request_timeout = REQUEST_TIMEOUT
+            self.req.start()
+            self.assertIsNone(self.req.join())
 
     def prep_issue_request(self):
         mysock = mock.Mock()
