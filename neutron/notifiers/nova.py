@@ -211,12 +211,11 @@ class Notifier(object):
         port._notify_event = None
 
     def send_events(self):
-        batched_events = []
-        for event in range(len(self.pending_events)):
-            batched_events.append(self.pending_events.pop())
-
-        if not batched_events:
+        if not self.pending_events:
             return
+
+        batched_events = self.pending_events
+        self.pending_events = []
 
         LOG.debug(_("Sending events: %s"), batched_events)
         try:
