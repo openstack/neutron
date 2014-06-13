@@ -110,11 +110,11 @@ class ServerProxy(object):
 
     def get_capabilities(self):
         try:
-            body = self.rest_call('GET', CAPABILITIES_PATH)[3]
+            body = self.rest_call('GET', CAPABILITIES_PATH)[2]
             self.capabilities = json.loads(body)
         except Exception:
-            LOG.error(_("Couldn't retrieve capabilities. "
-                        "Newer API calls won't be supported."))
+            LOG.exception(_("Couldn't retrieve capabilities. "
+                            "Newer API calls won't be supported."))
         LOG.info(_("The following capabilities were received "
                    "for %(server)s: %(cap)s"), {'server': self.server,
                                                 'cap': self.capabilities})
