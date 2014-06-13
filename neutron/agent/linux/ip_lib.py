@@ -28,6 +28,7 @@ OPTS = [
 ]
 
 
+VETH_MAX_NAME_LENGTH = 15
 LOOPBACK_DEVNAME = 'lo'
 # NOTE(ethuleau): depend of the version of iproute2, the vlan
 # interface details vary.

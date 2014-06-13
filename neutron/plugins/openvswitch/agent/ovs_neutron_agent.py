@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import hashlib
 import signal
 import sys
 import time
@@ -768,6 +769,28 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                              priority=0,
                              actions="drop")
 
+    def get_veth_name(self, prefix, name):
+        """Construct a veth name based on the prefix and name that does not
+           exceed the maximum length allowed for a linux device. Longer names
+           are hashed to help ensure uniqueness.
+        """
+        if len(prefix + name) <= ip_lib.VETH_MAX_NAME_LENGTH:
+            return prefix + name
+        # We can't just truncate because bridges may be distinguished
+        # by an ident at the end. A hash over the name should be unique.
+        # Leave part of the bridge name on for easier identification
+        hashlen = 6
+        namelen = ip_lib.VETH_MAX_NAME_LENGTH - len(prefix) - hashlen
+        new_name = ('%(prefix)s%(truncated)s%(hash)s' %
+                    {'prefix': prefix, 'truncated': name[0:namelen],
+                     'hash': hashlib.sha1(name).hexdigest()[0:hashlen]})
+        LOG.warning(_("Creating an interface named %(name)s exceeds the "
+                      "%(limit)d character limitation. It was shortened to "
+                      "%(new_name)s to fit."),
+                    {'name': name, 'limit': ip_lib.VETH_MAX_NAME_LENGTH,
+                     'new_name': new_name})
+        return new_name
+
     def setup_physical_bridges(self, bridge_mappings):
         '''Setup the physical network bridges.
 
@@ -799,9 +822,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.phys_brs[physical_network] = br
 
             # create veth to patch physical bridge with integration bridge
-            int_veth_name = constants.VETH_INTEGRATION_PREFIX + bridge
+            int_veth_name = self.get_veth_name(
+                constants.VETH_INTEGRATION_PREFIX, bridge)
             self.int_br.delete_port(int_veth_name)
-            phys_veth_name = constants.VETH_PHYSICAL_PREFIX + bridge
+            phys_veth_name = self.get_veth_name(
+                constants.VETH_PHYSICAL_PREFIX, bridge)
             br.delete_port(phys_veth_name)
             if ip_lib.device_exists(int_veth_name, self.root_helper):
                 ip_lib.IPDevice(int_veth_name, self.root_helper).link.delete()

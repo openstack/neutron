@@ -478,6 +478,16 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             self.assertEqual(self.agent.phys_ofports["physnet1"],
                              "int_ofport")
 
+    def test_get_veth_name(self):
+            bridge1 = "A_REALLY_LONG_BRIDGE_NAME1"
+            bridge2 = "A_REALLY_LONG_BRIDGE_NAME2"
+            self.assertEqual(len(self.agent.get_veth_name('int-', bridge1)),
+                             ip_lib.VETH_MAX_NAME_LENGTH)
+            self.assertEqual(len(self.agent.get_veth_name('int-', bridge2)),
+                             ip_lib.VETH_MAX_NAME_LENGTH)
+            self.assertNotEqual(self.agent.get_veth_name('int-', bridge1),
+                                self.agent.get_veth_name('int-', bridge2))
+
     def test_port_unbound(self):
         with mock.patch.object(self.agent, "reclaim_local_vlan") as reclvl_fn:
             self.agent.enable_tunneling = True
