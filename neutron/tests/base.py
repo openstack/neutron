@@ -36,6 +36,7 @@ from neutron.tests import post_mortem_debug
 
 
 CONF = cfg.CONF
+CONF.import_opt('state_path', 'neutron.common.config')
 TRUE_STRING = ['True', '1']
 LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
 
@@ -92,6 +93,15 @@ class BaseTestCase(testtools.TestCase):
             fixtures.FakeLogger(
                 format=LOG_FORMAT,
                 level=_level,
+                nuke_handlers=capture_logs,
+            ))
+
+        # suppress all but errors here
+        self.useFixture(
+            fixtures.FakeLogger(
+                name='neutron.api.extensions',
+                format=LOG_FORMAT,
+                level=logging.ERROR,
                 nuke_handlers=capture_logs,
             ))
 

@@ -266,3 +266,32 @@ class TestNovaNotify(base.BaseTestCase):
             self.nova_notifier.pending_events.append(
                 {'name': 'network-changed', 'server_uuid': device_id})
             self.nova_notifier.send_events()
+
+    def test_queue_event_no_event(self):
+        with mock.patch('eventlet.spawn_n') as spawn_n:
+            self.nova_notifier.queue_event(None)
+            self.assertEqual(0, len(self.nova_notifier.pending_events))
+            self.assertEqual(0, spawn_n.call_count)
+
+    def test_queue_event_first_event(self):
+        with mock.patch('eventlet.spawn_n') as spawn_n:
+            self.nova_notifier.queue_event(mock.Mock())
+            self.assertEqual(1, len(self.nova_notifier.pending_events))
+            self.assertEqual(1, spawn_n.call_count)
+
+    def test_queue_event_multiple_events(self):
+        with mock.patch('eventlet.spawn_n') as spawn_n:
+            events = 6
+            for i in range(0, events):
+                self.nova_notifier.queue_event(mock.Mock())
+            self.assertEqual(events, len(self.nova_notifier.pending_events))
+            self.assertEqual(1, spawn_n.call_count)
+
+    def test_queue_event_call_send_events(self):
+        with mock.patch.object(self.nova_notifier,
+                               'send_events') as send_events:
+            with mock.patch('eventlet.spawn_n') as spawn_n:
+                spawn_n.side_effect = lambda func: func()
+                self.nova_notifier.queue_event(mock.Mock())
+                self.assertFalse(self.nova_notifier._waiting_to_send)
+                send_events.assert_called_once_with()

@@ -58,8 +58,6 @@ class DhcpMetadataBuilder(object):
         for port in ports:
             if port['fixed_ips'][0]['subnet_id'] == subnet['id']:
                 return port['device_id']
-        else:
-            raise n_exc.NotFound()
 
     def metadata_deallocate(self, context, router_id, subnet_id):
         """Deallocate metadata services for the subnet."""
@@ -155,10 +153,11 @@ class MigrationManager(object):
             lsn_id, lsn_port_id = self.manager.lsn_port_get(
                 context, network_id, subnet_id, raise_on_err=False)
         else:
-            subnet = self.validate(context, network_id)
-            if subnet:
+            filters = {'network_id': [network_id]}
+            subnets = self.plugin.get_subnets(context, filters=filters)
+            if subnets:
                 lsn_id, lsn_port_id = self.manager.lsn_port_get(
-                    context, network_id, subnet['id'], raise_on_err=False)
+                    context, network_id, subnets[0]['id'], raise_on_err=False)
             else:
                 lsn_id = self.manager.lsn_get(context, network_id,
                                               raise_on_err=False)

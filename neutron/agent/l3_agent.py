@@ -451,7 +451,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                                namespace=ri.ns_name,
                                prefix=INTERNAL_DEV_PREFIX)
 
-        internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports]
+        # Get IPv4 only internal CIDRs
+        internal_cidrs = [p['ip_cidr'] for p in ri.internal_ports
+                          if netaddr.IPNetwork(p['ip_cidr']).version == 4]
         # TODO(salv-orlando): RouterInfo would be a better place for
         # this logic too
         ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
@@ -530,11 +532,16 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # And add them back if the action if add_rules
         if action == 'add_rules' and ex_gw_port:
             # ex_gw_port should not be None in this case
-            ex_gw_ip = ex_gw_port['fixed_ips'][0]['ip_address']
-            for rule in self.external_gateway_nat_rules(ex_gw_ip,
-                                                        internal_cidrs,
-                                                        interface_name):
-                ri.iptables_manager.ipv4['nat'].add_rule(*rule)
+            # NAT rules are added only if ex_gw_port has an IPv4 address
+            for ip_addr in ex_gw_port['fixed_ips']:
+                ex_gw_ip = ip_addr['ip_address']
+                if netaddr.IPAddress(ex_gw_ip).version == 4:
+                    rules = self.external_gateway_nat_rules(ex_gw_ip,
+                                                            internal_cidrs,
+                                                            interface_name)
+                    for rule in rules:
+                        ri.iptables_manager.ipv4['nat'].add_rule(*rule)
+                    break
         ri.iptables_manager.apply()
 
     def process_router_floating_ip_nat_rules(self, ri):
@@ -801,18 +808,24 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # _rpc_loop and _sync_routers_task will not be
         # executed in the same time because of lock.
         # so we can clear the value of updated_routers
-        # and removed_routers
+        # and removed_routers, but they can be updated by
+        # updated_routers and removed_routers rpc call
         try:
             LOG.debug(_("Starting RPC loop for %d updated routers"),
                       len(self.updated_routers))
             if self.updated_routers:
-                router_ids = list(self.updated_routers)
+                # We're capturing and clearing the list, and will
+                # process the "captured" updates in this loop,
+                # and any updates that happen due to a context switch
+                # will be picked up on the next pass.
+                updated_routers = set(self.updated_routers)
+                self.updated_routers.clear()
+                router_ids = list(updated_routers)
                 routers = self.plugin_rpc.get_routers(
                     self.context, router_ids)
-
+                # routers with admin_state_up=false will not be in the fetched
                 fetched = set([r['id'] for r in routers])
-                self.removed_routers.update(self.updated_routers - fetched)
-                self.updated_routers.clear()
+                self.removed_routers.update(updated_routers - fetched)
 
                 self._process_routers(routers)
             self._process_router_delete()

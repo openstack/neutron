@@ -207,6 +207,9 @@ def handle_network_dhcp_access(plugin, context, network, action):
              % {"action": action, "resource": network})
     if action == 'create_network':
         network_id = network['id']
+        if network.get(external_net.EXTERNAL):
+            LOG.info(_("Network %s is external: no LSN to create"), network_id)
+            return
         plugin.lsn_manager.lsn_create(context, network_id)
     elif action == 'delete_network':
         # NOTE(armando-migliaccio): on delete_network, network

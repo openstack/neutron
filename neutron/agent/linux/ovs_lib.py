@@ -14,6 +14,7 @@
 #    under the License.
 
 import distutils.version as dist_version
+import os
 import re
 
 from oslo.config import cfg
@@ -200,13 +201,29 @@ class OVSBridge(BaseOVS):
         else:
             self.run_ofctl("del-flows", [flow_expr_str])
 
+    def dump_flows_for_table(self, table):
+        retval = None
+        flow_str = "table=%s" % table
+        flows = self.run_ofctl("dump-flows", [flow_str])
+        if flows:
+            retval = '\n'.join(item for item in flows.splitlines()
+                               if 'NXST' not in item)
+        return retval
+
     def defer_apply_on(self):
         LOG.debug(_('defer_apply_on'))
         self.defer_apply_flows = True
 
     def defer_apply_off(self):
         LOG.debug(_('defer_apply_off'))
-        for action, flows in self.deferred_flows.items():
+        # Note(ethuleau): stash flows and disable deferred mode. Then apply
+        # flows from the stashed reference to be sure to not purge flows that
+        # were added between two ofctl commands.
+        stashed_deferred_flows, self.deferred_flows = (
+            self.deferred_flows, {'add': '', 'mod': '', 'del': ''}
+        )
+        self.defer_apply_flows = False
+        for action, flows in stashed_deferred_flows.items():
             if flows:
                 LOG.debug(_('Applying following deferred flows '
                             'to bridge %s'), self.br_name)
@@ -214,8 +231,6 @@ class OVSBridge(BaseOVS):
                     LOG.debug(_('%(action)s: %(flow)s'),
                               {'action': action, 'flow': line})
                 self.run_ofctl('%s-flows' % action, ['-'], flows)
-        self.defer_apply_flows = False
-        self.deferred_flows = {'add': '', 'mod': '', 'del': ''}
 
     def add_tunnel_port(self, port_name, remote_ip, local_ip,
                         tunnel_type=p_const.TYPE_GRE,
@@ -480,13 +495,9 @@ def get_installed_ovs_klm_version():
 
 
 def get_installed_kernel_version():
-    args = ["uname", "-r"]
     try:
-        cmd = utils.execute(args)
-        for line in cmd.split('\n'):
-            ver = re.findall("\d+\.\d+\.\d+", line)
-            return ver[0]
-    except Exception:
+        return os.uname()[2].split('-', 1)[0]
+    except IndexError:
         LOG.exception(_("Unable to retrieve installed Linux kernel version."))
 
 

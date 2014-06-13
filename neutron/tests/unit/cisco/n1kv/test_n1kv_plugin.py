@@ -25,6 +25,7 @@ from neutron.api.v2 import attributes
 from neutron import context
 import neutron.db.api as db
 from neutron.extensions import portbindings
+from neutron import manager
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import n1kv_db_v2
 from neutron.plugins.cisco.db import network_db_v2 as cdb
@@ -67,7 +68,7 @@ class FakeResponse(object):
 def _fake_setup_vsm(self):
     """Fake establish Communication with Cisco Nexus1000V VSM."""
     self.agent_vsm = True
-    self._poll_policies(event_type="port_profile")
+    self._populate_policy_profiles()
 
 
 class NetworkProfileTestExtensionManager(object):
@@ -502,6 +503,55 @@ class TestN1kvPorts(test_plugin.TestPortsV2,
             res = port_req.get_response(self.api)
             self.assertEqual(res.status_int, 500)
             client_patch.stop()
+
+
+class TestN1kvPolicyProfiles(N1kvPluginTestCase):
+    def test_populate_policy_profile(self):
+        client_patch = patch(n1kv_client.__name__ + ".Client",
+                             new=fake_client.TestClient)
+        client_patch.start()
+        instance = n1kv_neutron_plugin.N1kvNeutronPluginV2()
+        instance._populate_policy_profiles()
+        db_session = db.get_session()
+        profile = n1kv_db_v2.get_policy_profile(
+            db_session, '00000000-0000-0000-0000-000000000001')
+        self.assertEqual('pp-1', profile['name'])
+        client_patch.stop()
+
+    def test_populate_policy_profile_delete(self):
+        # Patch the Client class with the TestClient class
+        with patch(n1kv_client.__name__ + ".Client",
+                   new=fake_client.TestClient):
+            # Patch the _get_total_profiles() method to return a custom value
+            with patch(fake_client.__name__ +
+                       '.TestClient._get_total_profiles') as obj_inst:
+                # Return 3 policy profiles
+                obj_inst.return_value = 3
+                plugin = manager.NeutronManager.get_plugin()
+                plugin._populate_policy_profiles()
+                db_session = db.get_session()
+                profile = n1kv_db_v2.get_policy_profile(
+                    db_session, '00000000-0000-0000-0000-000000000001')
+                # Verify that DB contains only 3 policy profiles
+                self.assertEqual('pp-1', profile['name'])
+                profile = n1kv_db_v2.get_policy_profile(
+                    db_session, '00000000-0000-0000-0000-000000000002')
+                self.assertEqual('pp-2', profile['name'])
+                profile = n1kv_db_v2.get_policy_profile(
+                    db_session, '00000000-0000-0000-0000-000000000003')
+                self.assertEqual('pp-3', profile['name'])
+                self.assertRaises(c_exc.PolicyProfileIdNotFound,
+                                  n1kv_db_v2.get_policy_profile,
+                                  db_session,
+                                  '00000000-0000-0000-0000-000000000004')
+                # Return 2 policy profiles
+                obj_inst.return_value = 2
+                plugin._populate_policy_profiles()
+                # Verify that the third policy profile is deleted
+                self.assertRaises(c_exc.PolicyProfileIdNotFound,
+                                  n1kv_db_v2.get_policy_profile,
+                                  db_session,
+                                  '00000000-0000-0000-0000-000000000003')
 
 
 class TestN1kvNetworks(test_plugin.TestNetworksV2,

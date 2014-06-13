@@ -23,6 +23,7 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as p_exc
+from neutron.plugins.vmware.common import nsx_utils
 from neutron.plugins.vmware.dbexts import lsn_db
 from neutron.plugins.vmware.dhcp_meta import constants as const
 from neutron.plugins.vmware.nsxlib import lsn as lsn_api
@@ -181,8 +182,10 @@ class LsnManager(object):
         """Connect network to LSN via specified port and port_data."""
         try:
             lsn_id = None
+            switch_id = nsx_utils.get_nsx_switch_ids(
+                context.session, self.cluster, network_id)[0]
             lswitch_port_id = switch_api.get_port_by_neutron_tag(
-                self.cluster, network_id, port_id)['uuid']
+                self.cluster, switch_id, port_id)['uuid']
             lsn_id = self.lsn_get(context, network_id)
             lsn_port_id = self.lsn_port_create(context, lsn_id, port_data)
         except (n_exc.NotFound, p_exc.NsxPluginException):
@@ -213,11 +216,13 @@ class LsnManager(object):
         tenant_id = subnet['tenant_id']
         lswitch_port_id = None
         try:
+            switch_id = nsx_utils.get_nsx_switch_ids(
+                context.session, self.cluster, network_id)[0]
             lswitch_port_id = switch_api.create_lport(
-                self.cluster, network_id, tenant_id,
+                self.cluster, switch_id, tenant_id,
                 const.METADATA_PORT_ID, const.METADATA_PORT_NAME,
                 const.METADATA_DEVICE_ID, True)['uuid']
-            lsn_port_id = self.lsn_port_create(self.cluster, lsn_id, data)
+            lsn_port_id = self.lsn_port_create(context, lsn_id, data)
         except (n_exc.NotFound, p_exc.NsxPluginException,
                 api_exc.NsxApiException):
             raise p_exc.PortConfigurationError(
@@ -291,12 +296,11 @@ class LsnManager(object):
             self.lsn_port_dispose(context, network_id, const.METADATA_MAC)
 
     def _lsn_port_host_conf(self, context, network_id, subnet_id, data, hdlr):
-        lsn_id = None
-        lsn_port_id = None
+        lsn_id, lsn_port_id = self.lsn_port_get(
+            context, network_id, subnet_id, raise_on_err=False)
         try:
-            lsn_id, lsn_port_id = self.lsn_port_get(
-                context, network_id, subnet_id)
-            hdlr(self.cluster, lsn_id, lsn_port_id, data)
+            if lsn_id and lsn_port_id:
+                hdlr(self.cluster, lsn_id, lsn_port_id, data)
         except (n_exc.NotFound, api_exc.NsxApiException):
             LOG.error(_('Error while configuring LSN '
                         'port %s'), lsn_port_id)

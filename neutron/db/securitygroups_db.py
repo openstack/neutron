@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -327,6 +328,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             new_rules.add(rule['security_group_id'])
 
             self._validate_port_range(rule)
+            self._validate_ip_prefix(rule)
 
             if rule['remote_ip_prefix'] and rule['remote_group_id']:
                 raise ext_sg.SecurityGroupRemoteGroupAndRemoteIpPrefix()
@@ -406,6 +408,24 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 id = db_rule.pop('id')
                 if (i['security_group_rule'] == db_rule):
                     raise ext_sg.SecurityGroupRuleExists(id=id)
+
+    def _validate_ip_prefix(self, rule):
+        """Check that a valid cidr was specified as remote_ip_prefix
+
+        No need to check that it is in fact an IP address as this is already
+        validated by attribute validators.
+        Check that rule ethertype is consistent with remote_ip_prefix ip type.
+        Add mask to ip_prefix if absent (192.168.1.10 -> 192.168.1.10/32).
+        """
+        input_prefix = rule['remote_ip_prefix']
+        if input_prefix:
+            addr = netaddr.IPNetwork(input_prefix)
+            # set input_prefix to always include the netmask:
+            rule['remote_ip_prefix'] = str(addr)
+            # check consistency of ethertype with addr version
+            if rule['ethertype'] != "IPv%d" % (addr.version):
+                raise ext_sg.SecurityGroupRuleParameterConflict(
+                    ethertype=rule['ethertype'], cidr=input_prefix)
 
     def get_security_group_rules(self, context, filters=None, fields=None,
                                  sorts=None, limit=None, marker=None,
@@ -493,13 +513,17 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if p.get('device_owner') and p['device_owner'].startswith('network:'):
             return
 
-        valid_groups = self.get_security_groups(context, fields=['id'])
-        valid_group_map = dict((g['id'], g['id']) for g in valid_groups)
-        try:
-            return set([valid_group_map[sg_id]
-                        for sg_id in p.get(ext_sg.SECURITYGROUPS, [])])
-        except KeyError as e:
-            raise ext_sg.SecurityGroupNotFound(id=str(e))
+        port_sg = p.get(ext_sg.SECURITYGROUPS, [])
+        valid_groups = set(g['id'] for g in
+                           self.get_security_groups(context, fields=['id'],
+                                                    filters={'id': port_sg}))
+
+        requested_groups = set(port_sg)
+        port_sg_missing = requested_groups - valid_groups
+        if port_sg_missing:
+            raise ext_sg.SecurityGroupNotFound(id=str(port_sg_missing[0]))
+
+        return requested_groups
 
     def _ensure_default_security_group_on_port(self, context, port):
         # we don't apply security groups for dhcp, router

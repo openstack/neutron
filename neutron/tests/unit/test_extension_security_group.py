@@ -21,10 +21,12 @@ import webob.exc
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants as const
+from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
+from neutron.tests import base
 from neutron.tests.unit import test_db_plugin
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.test_extension_security_group.'
@@ -403,6 +405,70 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             res = self._create_security_group_rule(self.fmt, rule)
             self.deserialize(self.fmt, res)
             self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
+    def test_create_security_group_rule_invalid_ip_prefix(self):
+        name = 'webservers'
+        description = 'my webservers'
+        for bad_prefix in ['bad_ip', 256, "2001:db8:a::123/129", '172.30./24']:
+            with self.security_group(name, description) as sg:
+                sg_id = sg['security_group']['id']
+                remote_ip_prefix = bad_prefix
+                rule = self._build_security_group_rule(
+                    sg_id,
+                    'ingress',
+                    const.PROTO_NAME_TCP,
+                    '22', '22',
+                    remote_ip_prefix)
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
+    def test_create_security_group_rule_invalid_ethertype_for_prefix(self):
+        name = 'webservers'
+        description = 'my webservers'
+        test_addr = {'192.168.1.1/24': 'ipv4', '192.168.1.1/24': 'IPv6',
+                     '2001:db8:1234::/48': 'ipv6',
+                     '2001:db8:1234::/48': 'IPv4'}
+        for prefix, ether in test_addr.iteritems():
+            with self.security_group(name, description) as sg:
+                sg_id = sg['security_group']['id']
+                ethertype = ether
+                remote_ip_prefix = prefix
+                rule = self._build_security_group_rule(
+                    sg_id,
+                    'ingress',
+                    const.PROTO_NAME_TCP,
+                    '22', '22',
+                    remote_ip_prefix,
+                    None,
+                    None,
+                    ethertype)
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
+    def test_create_security_group_rule_with_unmasked_prefix(self):
+        name = 'webservers'
+        description = 'my webservers'
+        addr = {'10.1.2.3': {'mask': '32', 'ethertype': 'IPv4'},
+                'fe80::2677:3ff:fe7d:4c': {'mask': '128', 'ethertype': 'IPv6'}}
+        for ip in addr:
+            with self.security_group(name, description) as sg:
+                sg_id = sg['security_group']['id']
+                ethertype = addr[ip]['ethertype']
+                remote_ip_prefix = ip
+                rule = self._build_security_group_rule(
+                    sg_id,
+                    'ingress',
+                    const.PROTO_NAME_TCP,
+                    '22', '22',
+                    remote_ip_prefix,
+                    None,
+                    None,
+                    ethertype)
+                res = self._create_security_group_rule(self.fmt, rule)
+                self.assertEqual(res.status_int, 201)
+                res_sg = self.deserialize(self.fmt, res)
+                prefix = res_sg['security_group_rule']['remote_ip_prefix']
+                self.assertEqual(prefix, '%s/%s' % (ip, addr[ip]['mask']))
 
     def test_create_security_group_rule_tcp_protocol_as_number(self):
         name = 'webservers'
@@ -1333,6 +1399,26 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
 
                 self.deserialize(self.fmt, res)
                 self.assertEqual(res.status_int, webob.exc.HTTPBadRequest.code)
+
+
+class TestConvertIPPrefixToCIDR(base.BaseTestCase):
+
+    def test_convert_bad_ip_prefix_to_cidr(self):
+        for val in ['bad_ip', 256, "2001:db8:a::123/129"]:
+            self.assertRaises(n_exc.InvalidCIDR,
+                              ext_sg.convert_ip_prefix_to_cidr, val)
+        self.assertIsNone(ext_sg.convert_ip_prefix_to_cidr(None))
+
+    def test_convert_ip_prefix_no_netmask_to_cidr(self):
+        addr = {'10.1.2.3': '32', 'fe80::2677:3ff:fe7d:4c': '128'}
+        for k, v in addr.iteritems():
+            self.assertEqual(ext_sg.convert_ip_prefix_to_cidr(k),
+                             '%s/%s' % (k, v))
+
+    def test_convert_ip_prefix_with_netmask_to_cidr(self):
+        addresses = ['10.1.0.0/16', '10.1.2.3/32', '2001:db8:1234::/48']
+        for addr in addresses:
+            self.assertEqual(ext_sg.convert_ip_prefix_to_cidr(addr), addr)
 
 
 class TestSecurityGroupsXML(TestSecurityGroups):

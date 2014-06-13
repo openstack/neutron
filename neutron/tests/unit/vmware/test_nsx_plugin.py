@@ -767,25 +767,39 @@ class TestL3NatTestCase(L3NatTest,
 
     def test_metadatata_network_created_with_router_interface_add(self):
         self._metadata_setup()
-        with self.router() as r:
-            with self.subnet() as s:
-                self._router_interface_action('add',
-                                              r['router']['id'],
-                                              s['subnet']['id'],
-                                              None)
-                r_ports = self._list('ports')['ports']
-                self.assertEqual(len(r_ports), 2)
-                ips = []
-                for port in r_ports:
-                    ips.extend([netaddr.IPAddress(fixed_ip['ip_address'])
-                                for fixed_ip in port['fixed_ips']])
-                meta_cidr = netaddr.IPNetwork('169.254.0.0/16')
-                self.assertTrue(any([ip in meta_cidr for ip in ips]))
-                # Needed to avoid 409
-                self._router_interface_action('remove',
-                                              r['router']['id'],
-                                              s['subnet']['id'],
-                                              None)
+        with mock.patch.object(self._plugin_class, 'schedule_network') as f:
+            with self.router() as r:
+                with self.subnet() as s:
+                    self._router_interface_action('add',
+                                                  r['router']['id'],
+                                                  s['subnet']['id'],
+                                                  None)
+                    r_ports = self._list('ports')['ports']
+                    self.assertEqual(len(r_ports), 2)
+                    ips = []
+                    for port in r_ports:
+                        ips.extend([netaddr.IPAddress(fixed_ip['ip_address'])
+                                    for fixed_ip in port['fixed_ips']])
+                    meta_cidr = netaddr.IPNetwork('169.254.0.0/16')
+                    self.assertTrue(any([ip in meta_cidr for ip in ips]))
+                    # Needed to avoid 409
+                    self._router_interface_action('remove',
+                                                  r['router']['id'],
+                                                  s['subnet']['id'],
+                                                  None)
+            # Verify that the metadata network gets scheduled first, so that
+            # an active dhcp agent can pick it up
+            expected_meta_net = {
+                'status': 'ACTIVE',
+                'subnets': [],
+                'name': 'meta-%s' % r['router']['id'],
+                'admin_state_up': True,
+                'tenant_id': '',
+                'port_security_enabled': False,
+                'shared': False,
+                'id': mock.ANY
+            }
+            f.assert_called_once_with(mock.ANY, expected_meta_net)
         self._metadata_teardown()
 
     def test_metadata_network_create_rollback_on_create_subnet_failure(self):

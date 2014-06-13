@@ -64,7 +64,7 @@ class LSNTestCase(base.BaseTestCase):
     def test_lsn_for_network_create(self):
         net_id = "foo_network_id"
         tags = utils.get_tags(n_network_id=net_id)
-        obj = {"service_cluster_uuid": "foo", "tags": tags}
+        obj = {"edge_cluster_uuid": "foo", "tags": tags}
         lsnlib.lsn_for_network_create(self.cluster, net_id)
         self.mock_request.assert_called_once_with(
             "POST", "/ws.v1/lservices-node",
@@ -249,7 +249,10 @@ class LSNTestCase(base.BaseTestCase):
         self, lsn_id, lsn_port_id, is_enabled, opts):
         lsnlib.lsn_port_dhcp_configure(
             self.cluster, lsn_id, lsn_port_id, is_enabled, opts)
-        opt_array = ["%s=%s" % (key, val) for key, val in opts.iteritems()]
+        opt_array = [
+            {"name": key, "value": val}
+            for key, val in opts.iteritems()
+        ]
         self.mock_request.assert_has_calls([
             mock.call("PUT", "/ws.v1/lservices-node/%s/dhcp" % lsn_id,
                       json.dumps({"enabled": is_enabled}),
@@ -257,7 +260,7 @@ class LSNTestCase(base.BaseTestCase):
             mock.call("PUT",
                       ("/ws.v1/lservices-node/%s/"
                        "lport/%s/dhcp") % (lsn_id, lsn_port_id),
-                      json.dumps({"options": {"options": opt_array}}),
+                      json.dumps({"options": opt_array}),
                       cluster=self.cluster)
         ])
 
@@ -300,7 +303,6 @@ class LSNTestCase(base.BaseTestCase):
         expected_opts = {
             "metadata_server_ip": "1.2.3.4",
             "metadata_server_port": "8775",
-            "misc_options": []
         }
         self._test_lsn_metadata_configure(
             lsn_id, is_enabled, opts, expected_opts)
@@ -316,7 +318,10 @@ class LSNTestCase(base.BaseTestCase):
         expected_opts = {
             "metadata_server_ip": "1.2.3.4",
             "metadata_server_port": "8775",
-            "misc_options": ["metadata_proxy_shared_secret=foo_secret"]
+            "options": [{
+                "name": "metadata_proxy_shared_secret",
+                "value": "foo_secret"
+            }]
         }
         self._test_lsn_metadata_configure(
             lsn_id, is_enabled, opts, expected_opts)
