@@ -825,6 +825,11 @@ class ProfileBindingTests(base.BaseTestCase,
         self.assertEqual(binding.profile_id, test_profile_id)
         self.assertEqual(binding.profile_type, test_profile_type)
 
+    def test_get_profile_binding_not_found(self):
+        self.assertRaises(
+            c_exc.ProfileTenantBindingNotFound,
+            n1kv_db_v2.get_profile_binding, self.session, "123", "456")
+
     def test_delete_profile_binding(self):
         test_tenant_id = "d434dd90-76ec-11e2-bcfd-0800200c9a66"
         test_profile_id = "dd7b9741-76ec-11e2-bcfd-0800200c9a66"
@@ -855,9 +860,11 @@ class ProfileBindingTests(base.BaseTestCase,
         binding = n1kv_db_v2.get_profile_binding(self.session,
                                                  ctx.tenant_id,
                                                  test_profile_id)
-        self.assertIsNone(n1kv_db_v2.get_profile_binding(
+        self.assertRaises(
+            c_exc.ProfileTenantBindingNotFound,
+            n1kv_db_v2.get_profile_binding,
             self.session,
             cisco_constants.TENANT_ID_NOT_SET,
-            test_profile_id))
+            test_profile_id)
         self.assertNotEqual(binding.tenant_id,
                             cisco_constants.TENANT_ID_NOT_SET)
