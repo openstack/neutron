@@ -21,9 +21,11 @@ from oslo.config import cfg
 
 from neutron.api.v2 import attributes
 from neutron import context
+from neutron.db import l3_db
 from neutron.extensions import l3
 from neutron import manager as n_manager
 from neutron.openstack.common import uuidutils
+from neutron.plugins.common import constants as service_constants
 from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware.plugins import service as nsp
 from neutron.tests import base
@@ -140,10 +142,11 @@ class ServiceRouterTest(test_nsx_plugin.L3NatTest,
         if admin_state_up:
             data['router']['admin_state_up'] = admin_state_up
         for arg in (('admin_state_up', 'tenant_id') + (arg_list or ())):
-            # Arg must be present and not empty
-            if arg in kwargs and kwargs[arg]:
+            # Arg must be present
+            if arg in kwargs:
                 data['router'][arg] = kwargs[arg]
-        data['router']['service_router'] = True
+        if data['router'].get('service_router') is None:
+            data['router']['service_router'] = True
         router_req = self.new_create_request('routers', data, fmt)
         if set_context and tenant_id:
             # create a specific auth context for this request
@@ -151,6 +154,22 @@ class ServiceRouterTest(test_nsx_plugin.L3NatTest,
                 '', tenant_id)
 
         return router_req.get_response(self.ext_api)
+
+    def _create_and_get_router(self, active_set=True, **kwargs):
+        """Create advanced service router for services."""
+        req = self._create_router(self.fmt, self._tenant_id, **kwargs)
+        res = self.deserialize(self.fmt, req)
+        router_id = res['router']['id']
+        # manually set router status ACTIVE to pass through the router check,
+        # else mimic router creation ERROR condition.
+        status = (service_constants.ACTIVE if active_set
+                  else service_constants.ERROR)
+        self.plugin._resource_set_status(
+            context.get_admin_context(),
+            l3_db.Router,
+            router_id,
+            status)
+        return router_id
 
 
 class ServiceRouterTestCase(ServiceRouterTest,
