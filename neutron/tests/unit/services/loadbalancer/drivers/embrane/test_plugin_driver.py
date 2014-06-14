@@ -20,16 +20,19 @@
 import sys
 
 import mock
-sys.modules["heleosapi"] = mock.Mock()
 from oslo.config import cfg
 
 from neutron import context
 from neutron.openstack.common.db import exception as n_exc
+from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
+
+HELEOSAPIMOCK = mock.Mock()
+sys.modules["heleosapi"] = HELEOSAPIMOCK
 from neutron.services.loadbalancer.drivers.embrane import config  # noqa
 from neutron.services.loadbalancer.drivers.embrane import constants as h_con
 from neutron.services.loadbalancer.drivers.embrane import db as h_db
-from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
-
+# Stop the mock from persisting indefinitely in the global modules space
+del sys.modules["heleosapi"]
 
 EMBRANE_PROVIDER = ('LOADBALANCER:lbaas:neutron.services.'
                     'loadbalancer.drivers.embrane.driver.'
@@ -42,10 +45,12 @@ class TestLoadBalancerPluginBase(
     def setUp(self):
         cfg.CONF.set_override('admin_password', "admin123", 'heleoslb')
         cfg.CONF.set_override('sync_interval', 0, 'heleoslb')
-
+        mock.patch.dict(sys.modules, {'heleosapi': HELEOSAPIMOCK}).start()
         super(TestLoadBalancerPluginBase, self).setUp(
             lbaas_provider=EMBRANE_PROVIDER)
         self.driver = self.plugin.drivers['lbaas']
+        # prevent module mock from saving calls between tests
+        self.addCleanup(HELEOSAPIMOCK.reset_mock)
 
 
 class TestLoadBalancerPlugin(test_db_loadbalancer.TestLoadBalancer,

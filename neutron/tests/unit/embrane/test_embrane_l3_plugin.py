@@ -17,9 +17,6 @@
 #
 # @author:  Ivar Lazzaro, Embrane, Inc.
 
-import sys
-
-import mock
 from oslo.config import cfg
 
 from neutron.db import api as db
@@ -29,7 +26,6 @@ from neutron.tests.unit import test_l3_plugin as router_test
 
 PLUGIN_NAME = ('neutron.plugins.embrane.plugins.embrane_fake_plugin.'
                'EmbraneFakePlugin')
-sys.modules["heleosapi"] = mock.Mock()
 
 
 class TestEmbraneL3NatDBTestCase(router_test.L3NatDBIntTestCase):
