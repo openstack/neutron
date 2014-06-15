@@ -366,7 +366,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                             notifier_api.publisher_id('network'),
                             'router.interface.create',
                             notifier_api.CONF.default_notification_level,
-                            {'router.interface': info})
+                            {'router_interface': info})
         return info
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
@@ -440,7 +440,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                             notifier_api.publisher_id('network'),
                             'router.interface.delete',
                             notifier_api.CONF.default_notification_level,
-                            {'router.interface': info})
+                            {'router_interface': info})
         return info
 
     def _get_floatingip(self, context, id):
