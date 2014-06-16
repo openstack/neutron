@@ -1,4 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 
 # Copyright 2012, Nicira, Inc.
 #
@@ -606,3 +606,26 @@ class OVS_Lib_Test(base.BaseTestCase):
                         return_value=mock.Mock(address=None)):
             with testtools.ExpectedException(Exception):
                 self.br.get_local_port_mac()
+
+    def test_get_vif_port_by_id(self):
+        iface_id = "tap99id"
+        iface_name = "tap99"
+        execute_mock = mock.patch.object(
+            utils, "execute", spec=utils.execute).start()
+        self.addCleanup(mock.patch.stopall)
+        json = ('external_ids : {attached-mac="fa:16:3e:3f:59:d7",'
+                ' iface-id="%(id)s"} name : "%(name)s" ofport : 8' %
+                {'id': iface_id, 'name': iface_name})
+        find_if_mock_call = mock.call(["ovs-vsctl", self.TO, "--",
+                                       "--columns=external_ids,name,ofport",
+                                       "find", "Interface",
+                                       'external_ids:iface-id="%s"' %
+                                       'tap99id'],
+                                      root_helper=self.root_helper)
+        iface_br_mock_call = mock.call(["ovs-vsctl", self.TO,
+                                        "iface-to-br",
+                                        iface_name],
+                                       root_helper=self.root_helper)
+        execute_mock.side_effect = [json, self.BR_NAME]
+        self.br.get_vif_port_by_id(iface_id)
+        execute_mock.assert_has_calls([find_if_mock_call, iface_br_mock_call])

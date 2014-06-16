@@ -375,6 +375,13 @@ class OVSBridge(BaseOVS):
             vif_id = match.group('vif_id')
             port_name = match.group('port_name')
             ofport = int(match.group('ofport'))
+            switch = get_bridge_for_iface(self.root_helper, port_name)
+            if switch != self.br_name:
+                LOG.info(_("Port: %(port_name)s is on %(switch)s,"
+                         " not on %(br_name)s"), {'port_name': port_name,
+                         'switch': switch,
+                         'br_name': self.br_name})
+                return
             return VifPort(port_name, ofport, vif_id, vif_mac, self)
         except Exception as e:
             LOG.info(_("Unable to parse regex results. Exception: %s"), e)
