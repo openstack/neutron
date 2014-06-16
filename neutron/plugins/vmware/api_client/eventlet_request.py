@@ -16,9 +16,9 @@
 
 import eventlet
 import httplib
-import json
 import urllib
 
+from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.api_client import request
 

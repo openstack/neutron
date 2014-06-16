@@ -33,7 +33,6 @@ The following functionality is handled by this module:
 """
 import base64
 import httplib
-import json
 import os
 import socket
 import ssl
@@ -44,6 +43,7 @@ from oslo.config import cfg
 from neutron.common import exceptions
 from neutron.common import utils
 from neutron.openstack.common import excutils
+from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch.db import consistency_db as cdb
 

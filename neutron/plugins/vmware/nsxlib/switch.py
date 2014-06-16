@@ -14,12 +14,11 @@
 #    under the License.
 #
 
-import json
-
 from oslo.config import cfg
 
 from neutron.common import constants
 from neutron.common import exceptions as exception
+from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc

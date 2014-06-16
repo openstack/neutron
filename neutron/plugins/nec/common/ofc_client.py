@@ -15,12 +15,12 @@
 #    under the License.
 # @author: Ryota MIBU
 
-import json
 import time
 
 import requests
 
 from neutron.openstack.common import excutils
+from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log as logging
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc

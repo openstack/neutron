@@ -13,11 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import json
-
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.openstack.common import excutils
+from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log
 from neutron.plugins.vmware.common import utils
 from neutron.plugins.vmware import nsxlib
