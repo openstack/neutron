@@ -235,33 +235,31 @@ class VlanTypeDriver(api.TypeDriver):
     def release_segment(self, session, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
         vlan_id = segment[api.SEGMENTATION_ID]
+
+        ranges = self.network_vlan_ranges.get(physical_network, [])
+        inside = any(lo <= vlan_id <= hi for lo, hi in ranges)
+
         with session.begin(subtransactions=True):
-            try:
-                alloc = (session.query(VlanAllocation).
-                         filter_by(physical_network=physical_network,
-                                   vlan_id=vlan_id).
-                         with_lockmode('update').
-                         one())
-                alloc.allocated = False
-                inside = False
-                for vlan_min, vlan_max in self.network_vlan_ranges.get(
-                    physical_network, []):
-                    if vlan_min <= vlan_id <= vlan_max:
-                        inside = True
-                        break
-                if not inside:
-                    session.delete(alloc)
-                    LOG.debug(_("Releasing vlan %(vlan_id)s on physical "
-                                "network %(physical_network)s outside pool"),
+            query = (session.query(VlanAllocation).
+                     filter_by(physical_network=physical_network,
+                               vlan_id=vlan_id))
+            if inside:
+                count = query.update({"allocated": False})
+                if count:
+                    LOG.debug("Releasing vlan %(vlan_id)s on physical "
+                              "network %(physical_network)s to pool",
                               {'vlan_id': vlan_id,
                                'physical_network': physical_network})
-                else:
-                    LOG.debug(_("Releasing vlan %(vlan_id)s on physical "
-                                "network %(physical_network)s to pool"),
+            else:
+                count = query.delete()
+                if count:
+                    LOG.debug("Releasing vlan %(vlan_id)s on physical "
+                              "network %(physical_network)s outside pool",
                               {'vlan_id': vlan_id,
                                'physical_network': physical_network})
-            except sa.orm.exc.NoResultFound:
-                LOG.warning(_("No vlan_id %(vlan_id)s found on physical "
-                              "network %(physical_network)s"),
-                            {'vlan_id': vlan_id,
-                             'physical_network': physical_network})
+
+        if not count:
+            LOG.warning(_("No vlan_id %(vlan_id)s found on physical "
+                          "network %(physical_network)s"),
+                        {'vlan_id': vlan_id,
+                         'physical_network': physical_network})
