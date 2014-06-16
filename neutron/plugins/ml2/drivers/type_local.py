@@ -48,7 +48,7 @@ class LocalTypeDriver(api.TypeDriver):
 
     def reserve_provider_segment(self, session, segment):
         # No resources to reserve
-        pass
+        return segment
 
     def allocate_tenant_segment(self, session):
         # No resources to allocate

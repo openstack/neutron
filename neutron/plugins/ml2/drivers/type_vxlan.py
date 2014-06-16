@@ -99,6 +99,7 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
                 alloc = VxlanAllocation(vxlan_vni=segmentation_id)
                 alloc.allocated = True
                 session.add(alloc)
+        return segment
 
     def allocate_tenant_segment(self, session):
         with session.begin(subtransactions=True):

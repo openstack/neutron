@@ -85,7 +85,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def reserve_provider_segment(self, session, segment):
         network_type = segment.get(api.NETWORK_TYPE)
         driver = self.drivers.get(network_type)
-        driver.obj.reserve_provider_segment(session, segment)
+        return driver.obj.reserve_provider_segment(session, segment)
 
     def allocate_tenant_segment(self, session):
         for network_type in self.tenant_network_types:

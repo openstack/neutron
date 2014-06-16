@@ -28,6 +28,7 @@ from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers import helpers
 
 LOG = log.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class VlanAllocation(model_base.BASEV2):
     allocated = sa.Column(sa.Boolean, nullable=False)
 
 
-class VlanTypeDriver(api.TypeDriver):
+class VlanTypeDriver(helpers.TypeDriverHelper):
     """Manage state for VLAN networks with ML2.
 
     The VlanTypeDriver implements the 'vlan' network_type. VLAN
@@ -79,6 +80,7 @@ class VlanTypeDriver(api.TypeDriver):
     """
 
     def __init__(self):
+        super(VlanTypeDriver, self).__init__(VlanAllocation)
         self._parse_network_vlan_ranges()
 
     def _parse_network_vlan_ranges(self):
@@ -160,25 +162,27 @@ class VlanTypeDriver(api.TypeDriver):
         self._sync_vlan_allocations()
         LOG.info(_("VlanTypeDriver initialization complete"))
 
+    def is_partial_segment(self, segment):
+        return segment.get(api.SEGMENTATION_ID) is None
+
     def validate_provider_segment(self, segment):
         physical_network = segment.get(api.PHYSICAL_NETWORK)
-        if not physical_network:
-            msg = _("physical_network required for VLAN provider network")
-            raise exc.InvalidInput(error_message=msg)
-        if physical_network not in self.network_vlan_ranges:
-            msg = (_("physical_network '%s' unknown for VLAN provider network")
-                   % physical_network)
-            raise exc.InvalidInput(error_message=msg)
-
         segmentation_id = segment.get(api.SEGMENTATION_ID)
-        if segmentation_id is None:
-            msg = _("segmentation_id required for VLAN provider network")
-            raise exc.InvalidInput(error_message=msg)
-        if not utils.is_valid_vlan_tag(segmentation_id):
-            msg = (_("segmentation_id out of range (%(min)s through "
-                     "%(max)s)") %
-                   {'min': q_const.MIN_VLAN_TAG,
-                    'max': q_const.MAX_VLAN_TAG})
+        if physical_network:
+            if physical_network not in self.network_vlan_ranges:
+                msg = (_("physical_network '%s' unknown "
+                         " for VLAN provider network") % physical_network)
+                raise exc.InvalidInput(error_message=msg)
+            if segmentation_id:
+                if not utils.is_valid_vlan_tag(segmentation_id):
+                    msg = (_("segmentation_id out of range (%(min)s through "
+                             "%(max)s)") %
+                           {'min': q_const.MIN_VLAN_TAG,
+                            'max': q_const.MAX_VLAN_TAG})
+                    raise exc.InvalidInput(error_message=msg)
+        elif segmentation_id:
+            msg = _("segmentation_id requires physical_network for VLAN "
+                    "provider network")
             raise exc.InvalidInput(error_message=msg)
 
         for key, value in segment.items():
@@ -189,48 +193,36 @@ class VlanTypeDriver(api.TypeDriver):
                 raise exc.InvalidInput(error_message=msg)
 
     def reserve_provider_segment(self, session, segment):
-        physical_network = segment[api.PHYSICAL_NETWORK]
-        vlan_id = segment[api.SEGMENTATION_ID]
-        with session.begin(subtransactions=True):
-            try:
-                alloc = (session.query(VlanAllocation).
-                         filter_by(physical_network=physical_network,
-                                   vlan_id=vlan_id).
-                         with_lockmode('update').
-                         one())
-                if alloc.allocated:
-                    raise exc.VlanIdInUse(vlan_id=vlan_id,
-                                          physical_network=physical_network)
-                LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
-                            "network %(physical_network)s from pool"),
-                          {'vlan_id': vlan_id,
-                           'physical_network': physical_network})
-                alloc.allocated = True
-            except sa.orm.exc.NoResultFound:
-                LOG.debug(_("Reserving specific vlan %(vlan_id)s on physical "
-                            "network %(physical_network)s outside pool"),
-                          {'vlan_id': vlan_id,
-                           'physical_network': physical_network})
-                alloc = VlanAllocation(physical_network=physical_network,
-                                       vlan_id=vlan_id,
-                                       allocated=True)
-                session.add(alloc)
+        filters = {}
+        physical_network = segment.get(api.PHYSICAL_NETWORK)
+        if physical_network is not None:
+            filters['physical_network'] = physical_network
+            vlan_id = segment.get(api.SEGMENTATION_ID)
+            if vlan_id is not None:
+                filters['vlan_id'] = vlan_id
+
+        if self.is_partial_segment(segment):
+            alloc = self.allocate_partially_specified_segment(
+                session, **filters)
+            if not alloc:
+                raise exc.NoNetworkAvailable
+        else:
+            alloc = self.allocate_fully_specified_segment(
+                session, **filters)
+            if not alloc:
+                raise exc.VlanIdInUse(**filters)
+
+        return {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                api.PHYSICAL_NETWORK: alloc.physical_network,
+                api.SEGMENTATION_ID: alloc.vlan_id}
 
     def allocate_tenant_segment(self, session):
-        with session.begin(subtransactions=True):
-            alloc = (session.query(VlanAllocation).
-                     filter_by(allocated=False).
-                     with_lockmode('update').
-                     first())
-            if alloc:
-                LOG.debug(_("Allocating vlan %(vlan_id)s on physical network "
-                            "%(physical_network)s from pool"),
-                          {'vlan_id': alloc.vlan_id,
-                           'physical_network': alloc.physical_network})
-                alloc.allocated = True
-                return {api.NETWORK_TYPE: p_const.TYPE_VLAN,
-                        api.PHYSICAL_NETWORK: alloc.physical_network,
-                        api.SEGMENTATION_ID: alloc.vlan_id}
+        alloc = self.allocate_partially_specified_segment(session)
+        if not alloc:
+            return
+        return {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                api.PHYSICAL_NETWORK: alloc.physical_network,
+                api.SEGMENTATION_ID: alloc.vlan_id}
 
     def release_segment(self, session, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]

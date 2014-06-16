@@ -91,6 +91,7 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
                 alloc = GreAllocation(gre_id=segmentation_id)
                 alloc.allocated = True
                 session.add(alloc)
+        return segment
 
     def allocate_tenant_segment(self, session):
         with session.begin(subtransactions=True):

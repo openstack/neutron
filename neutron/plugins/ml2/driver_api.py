@@ -88,7 +88,8 @@ class TypeDriver(object):
         """Reserve resource associated with a provider network segment.
 
         :param session: database session
-        :param segment: segment dictionary using keys defined above
+        :param segment: segment dictionary
+        :returns: segment dictionary
 
         Called inside transaction context on session to reserve the
         type-specific resource for a provider network segment. The

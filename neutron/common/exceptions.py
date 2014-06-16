@@ -179,6 +179,11 @@ class NoNetworkAvailable(ResourceExhausted):
                 "No tenant network is available for allocation.")
 
 
+class NoNetworkFoundInMaximumAllowedAttempts(ServiceUnavailable):
+    message = _("Unable to create the network. "
+                "No available network found in maximum allowed attempts.")
+
+
 class SubnetMismatchForPort(BadRequest):
     message = _("Subnet on port %(port_id)s does not match "
                 "the requested subnet %(subnet_id)s")

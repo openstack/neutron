@@ -85,8 +85,8 @@ class FlatTypeTest(base.BaseTestCase):
     def test_reserve_provider_segment(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
                    api.PHYSICAL_NETWORK: 'flat_net1'}
-        self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self._get_allocation(self.session, segment)
+        observed = self.driver.reserve_provider_segment(self.session, segment)
+        alloc = self._get_allocation(self.session, observed)
         self.assertEqual(segment[api.PHYSICAL_NETWORK], alloc.physical_network)
 
     def test_release_segment(self):

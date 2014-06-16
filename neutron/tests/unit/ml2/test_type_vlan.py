@@ -53,22 +53,34 @@ class VlanTypeTest(base.BaseTestCase):
             physical_network=segment[api.PHYSICAL_NETWORK],
             vlan_id=segment[api.SEGMENTATION_ID]).first()
 
+    def test_partial_segment_is_partial_segment(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
+        self.assertTrue(self.driver.is_partial_segment(segment))
+
+    def test_specific_segment_is_not_partial_segment(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                   api.PHYSICAL_NETWORK: PROVIDER_NET,
+                   api.SEGMENTATION_ID: 1}
+        self.assertFalse(self.driver.is_partial_segment(segment))
+
     def test_validate_provider_segment(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                    api.PHYSICAL_NETWORK: PROVIDER_NET,
                    api.SEGMENTATION_ID: 1}
         self.assertIsNone(self.driver.validate_provider_segment(segment))
 
+    def test_validate_provider_segment_without_segmentation_id(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                   api.PHYSICAL_NETWORK: TENANT_NET}
+        self.driver.validate_provider_segment(segment)
+
+    def test_validate_provider_segment_without_physical_network(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
+        self.driver.validate_provider_segment(segment)
+
     def test_validate_provider_segment_with_missing_physical_network(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                    api.SEGMENTATION_ID: 1}
-        self.assertRaises(exc.InvalidInput,
-                          self.driver.validate_provider_segment,
-                          segment)
-
-    def test_validate_provider_segment_with_missing_segmentation_id(self):
-        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
-                   api.PHYSICAL_NETWORK: PROVIDER_NET}
         self.assertRaises(exc.InvalidInput,
                           self.driver.validate_provider_segment,
                           segment)
@@ -129,19 +141,19 @@ class VlanTypeTest(base.BaseTestCase):
                    api.SEGMENTATION_ID: 101}
         alloc = self._get_allocation(self.session, segment)
         self.assertIsNone(alloc)
-        self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self._get_allocation(self.session, segment)
+        observed = self.driver.reserve_provider_segment(self.session, segment)
+        alloc = self._get_allocation(self.session, observed)
         self.assertTrue(alloc.allocated)
 
     def test_reserve_provider_segment_already_allocated(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                    api.PHYSICAL_NETWORK: PROVIDER_NET,
                    api.SEGMENTATION_ID: 101}
-        self.driver.reserve_provider_segment(self.session, segment)
+        observed = self.driver.reserve_provider_segment(self.session, segment)
         self.assertRaises(exc.VlanIdInUse,
                           self.driver.reserve_provider_segment,
                           self.session,
-                          segment)
+                          observed)
 
     def test_reserve_provider_segment_in_tenant_pools(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
@@ -149,9 +161,38 @@ class VlanTypeTest(base.BaseTestCase):
                    api.SEGMENTATION_ID: VLAN_MIN}
         alloc = self._get_allocation(self.session, segment)
         self.assertFalse(alloc.allocated)
-        self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self._get_allocation(self.session, segment)
+        observed = self.driver.reserve_provider_segment(self.session, segment)
+        alloc = self._get_allocation(self.session, observed)
         self.assertTrue(alloc.allocated)
+
+    def test_reserve_provider_segment_without_segmentation_id(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                   api.PHYSICAL_NETWORK: TENANT_NET}
+        observed = self.driver.reserve_provider_segment(self.session, segment)
+        alloc = self._get_allocation(self.session, observed)
+        self.assertTrue(alloc.allocated)
+        vlan_id = observed[api.SEGMENTATION_ID]
+        self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
+        self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
+
+    def test_reserve_provider_segment_without_physical_network(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
+        observed = self.driver.reserve_provider_segment(self.session, segment)
+        alloc = self._get_allocation(self.session, observed)
+        self.assertTrue(alloc.allocated)
+        vlan_id = observed[api.SEGMENTATION_ID]
+        self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
+        self.assertThat(vlan_id, matchers.LessThan(VLAN_MAX + 1))
+        self.assertEqual(TENANT_NET, observed[api.PHYSICAL_NETWORK])
+
+    def test_reserve_provider_segment_all_allocateds(self):
+        for __ in range(VLAN_MIN, VLAN_MAX + 1):
+            self.driver.allocate_tenant_segment(self.session)
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
+        self.assertRaises(exc.NoNetworkAvailable,
+                          self.driver.reserve_provider_segment,
+                          self.session,
+                          segment)
 
     def test_allocate_tenant_segment(self):
         for __ in range(VLAN_MIN, VLAN_MAX + 1):

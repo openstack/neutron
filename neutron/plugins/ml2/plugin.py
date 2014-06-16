@@ -378,8 +378,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # to TypeManager.
             if segments:
                 for segment in segments:
-                    self.type_manager.reserve_provider_segment(session,
-                                                               segment)
+                    segment = self.type_manager.reserve_provider_segment(
+                        session, segment)
                     db.add_network_segment(session, network_id, segment)
             else:
                 segment = self.type_manager.allocate_tenant_segment(session)
