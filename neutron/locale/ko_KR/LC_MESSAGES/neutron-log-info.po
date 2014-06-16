@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-06-09 06:08+0000\n"
+"POT-Creation-Date: 2014-06-16 06:08+0000\n"
 "PO-Revision-Date: 2014-05-29 07:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
@@ -30,49 +30,53 @@ msgid "Skipping periodic task %(task)s because it is disabled"
 msgstr ""
 
 #: neutron/openstack/common/service.py:176
-#: neutron/openstack/common/service.py:270
 #, python-format
 msgid "Caught %s, exiting"
 msgstr "%s 발견, 종료 중"
 
-#: neutron/openstack/common/service.py:239
+#: neutron/openstack/common/service.py:240
 msgid "Parent process has died unexpectedly, exiting"
 msgstr "상위 프로세스가 예기치 않게 정지했습니다. 종료 중"
 
-#: neutron/openstack/common/service.py:309
+#: neutron/openstack/common/service.py:271
+#, python-format
+msgid "Child caught %s, exiting"
+msgstr ""
+
+#: neutron/openstack/common/service.py:310
 msgid "Forking too fast, sleeping"
 msgstr "포크가 너무 빠름. 정지 중"
 
-#: neutron/openstack/common/service.py:328
+#: neutron/openstack/common/service.py:329
 #, python-format
 msgid "Started child %d"
 msgstr "%d 하위를 시작했음"
 
-#: neutron/openstack/common/service.py:338
+#: neutron/openstack/common/service.py:339
 #, python-format
 msgid "Starting %d workers"
 msgstr "%d 작업자 시작 중"
 
-#: neutron/openstack/common/service.py:355
+#: neutron/openstack/common/service.py:356
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
 msgstr "%(pid)d 하위가 %(sig)d 신호에 의해 강제 종료됨"
 
-#: neutron/openstack/common/service.py:359
+#: neutron/openstack/common/service.py:360
 #, python-format
 msgid "Child %(pid)s exited with status %(code)d"
 msgstr "%(pid)s 하위가 %(code)d 상태와 함께 종료했음"
 
-#: neutron/openstack/common/service.py:394
+#: neutron/openstack/common/service.py:399
 #, python-format
 msgid "Caught %s, stopping children"
 msgstr "%s 발견, 하위 중지 중"
 
-#: neutron/openstack/common/service.py:403
+#: neutron/openstack/common/service.py:408
 msgid "Wait called after thread killed.  Cleaning up."
 msgstr ""
 
-#: neutron/openstack/common/service.py:414
+#: neutron/openstack/common/service.py:424
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "%d 하위에서 종료하기를 대기 중임"

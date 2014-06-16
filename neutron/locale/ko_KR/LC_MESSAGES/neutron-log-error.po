@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-06-09 06:08+0000\n"
+"POT-Creation-Date: 2014-06-16 06:08+0000\n"
 "PO-Revision-Date: 2014-05-29 07:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Korean (Korea) (http://www.transifex.com/projects/p/neutron/"
@@ -38,7 +38,7 @@ msgstr ""
 msgid "Exception during rpc cleanup."
 msgstr ""
 
-#: neutron/openstack/common/service.py:276
+#: neutron/openstack/common/service.py:277
 msgid "Unhandled exception"
 msgstr "처리되지 않은 예외"
 
@@ -48,7 +48,7 @@ msgstr ""
 
 #: neutron/openstack/common/db/api.py:76
 msgid "DB connection error."
-msgstr ""
+msgstr "데이터 베이스 연결 에러."
 
 #: neutron/openstack/common/db/sqlalchemy/session.py:460
 msgid "DB exception wrapped."
