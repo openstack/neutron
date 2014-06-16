@@ -22,6 +22,7 @@ import random
 from oslo.config import cfg
 
 from neutron.common import config
+from neutron.common import rpc_compat
 from neutron import context
 from neutron.db import api as session
 from neutron import manager
@@ -29,7 +30,6 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common.rpc import service
 from neutron.openstack.common import service as common_service
 from neutron import wsgi
 
@@ -178,7 +178,7 @@ def _run_wsgi(app_name):
     return server
 
 
-class Service(service.Service):
+class Service(rpc_compat.Service):
     """Service object for binaries running on hosts.
 
     A service takes a manager and enables rpc by listening to queues based
