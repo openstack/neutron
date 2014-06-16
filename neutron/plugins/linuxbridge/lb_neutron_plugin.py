@@ -45,7 +45,6 @@ from neutron.extensions import providernet as provider
 from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.linuxbridge.common import constants
@@ -283,7 +282,7 @@ class LinuxBridgePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # RPC support
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.callbacks = LinuxBridgeRpcCallbacks()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         for svc_topic in self.service_topics.values():

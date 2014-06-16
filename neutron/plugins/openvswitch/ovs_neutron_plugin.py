@@ -48,7 +48,6 @@ from neutron.extensions import providernet as provider
 from neutron import manager
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.openvswitch.common import config  # noqa
@@ -336,7 +335,7 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # RPC support
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
         self.agent_notifiers[q_const.AGENT_TYPE_DHCP] = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()

@@ -91,7 +91,7 @@ class AgentRPCMethods(base.BaseTestCase):
             mock.call().consume_in_thread()
         ]
 
-        call_to_patch = 'neutron.openstack.common.rpc.create_connection'
+        call_to_patch = 'neutron.common.rpc_compat.create_connection'
         with mock.patch(call_to_patch) as create_connection:
             rpc.create_consumers(dispatcher, 'foo', [('topic', 'op')])
             create_connection.assert_has_calls(expected)
@@ -107,7 +107,7 @@ class AgentRPCMethods(base.BaseTestCase):
             mock.call().consume_in_thread()
         ]
 
-        call_to_patch = 'neutron.openstack.common.rpc.create_connection'
+        call_to_patch = 'neutron.common.rpc_compat.create_connection'
         with mock.patch(call_to_patch) as create_connection:
             rpc.create_consumers(dispatcher, 'foo', [('topic', 'op', 'node1')])
             create_connection.assert_has_calls(expected)

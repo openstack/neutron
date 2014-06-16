@@ -31,7 +31,6 @@ from neutron.extensions import lbaas_agentscheduler
 from neutron.extensions import portbindings
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer.drivers import abstract_driver
 
@@ -346,7 +345,7 @@ class AgentDriverBase(abstract_driver.LoadBalancerAbstractDriver):
             return
 
         self.plugin.agent_callbacks = LoadBalancerCallbacks(self.plugin)
-        self.plugin.conn = rpc.create_connection(new=True)
+        self.plugin.conn = rpc_compat.create_connection(new=True)
         self.plugin.conn.create_consumer(
             topics.LOADBALANCER_PLUGIN,
             self.plugin.agent_callbacks.create_rpc_dispatcher(),

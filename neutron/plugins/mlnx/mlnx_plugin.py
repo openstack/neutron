@@ -25,6 +25,7 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
 from neutron.db import agentschedulers_db
@@ -40,7 +41,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.mlnx import agent_notify_api
@@ -119,7 +119,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         # RPC support
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.callbacks = rpc_callbacks.MlnxRpcCallbacks()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         for svc_topic in self.service_topics.values():

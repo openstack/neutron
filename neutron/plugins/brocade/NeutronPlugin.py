@@ -51,7 +51,6 @@ from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import context
 from neutron.openstack.common import importutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.plugins.brocade.db import models as brocade_db
 from neutron.plugins.brocade import vlanbm as vbm
 from neutron.plugins.common import constants as svc_constants
@@ -264,7 +263,7 @@ class BrocadePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.rpc_context = context.RequestContext('neutron', 'neutron',
                                                   is_admin=False)
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.callbacks = BridgeRpcCallbacks()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         for svc_topic in self.service_topics.values():

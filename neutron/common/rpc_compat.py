@@ -60,7 +60,7 @@ class Service(service.Service):
     def start(self):
         super(Service, self).start()
 
-        self.conn = rpc.create_connection(new=True)
+        self.conn = create_connection(new=True)
         LOG.debug("Creating Consumer connection for Service %s" %
                   self.topic)
 
@@ -91,6 +91,10 @@ class Service(service.Service):
         except Exception:
             pass
         super(Service, self).stop()
+
+
+# functions
+create_connection = rpc.create_connection
 
 
 # exceptions

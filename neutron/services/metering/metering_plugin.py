@@ -15,10 +15,10 @@
 # under the License.
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db.metering import metering_db
 from neutron.db.metering import metering_rpc
-from neutron.openstack.common import rpc
 
 
 class MeteringPlugin(metering_db.MeteringDbMixin):
@@ -30,7 +30,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
 
         self.callbacks = metering_rpc.MeteringRpcCallbacks(self)
 
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.conn.create_consumer(
             topics.METERING_PLUGIN,
             self.callbacks.create_rpc_dispatcher(),

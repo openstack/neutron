@@ -47,7 +47,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
 from neutron.plugins.midonet.common import config  # noqa
 from neutron.plugins.midonet.common import net_util
 from neutron.plugins.midonet import midonet_lib
@@ -384,7 +383,7 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def setup_rpc(self):
         # RPC support
         self.topic = topics.PLUGIN
-        self.conn = rpc.create_connection(new=True)
+        self.conn = rpc_compat.create_connection(new=True)
         self.callbacks = MidoRpcCallbacks()
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,

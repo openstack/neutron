@@ -44,7 +44,7 @@ class TestCiscoIPsecDriverValidation(base.BaseTestCase):
 
     def setUp(self):
         super(TestCiscoIPsecDriverValidation, self).setUp()
-        mock.patch('neutron.openstack.common.rpc.create_connection').start()
+        mock.patch('neutron.common.rpc_compat.create_connection').start()
         self.service_plugin = mock.Mock()
         self.driver = ipsec_driver.CiscoCsrIPsecVPNDriver(self.service_plugin)
         self.context = n_ctx.Context('some_user', 'some_tenant')
@@ -284,7 +284,7 @@ class TestCiscoIPsecDriver(base.BaseTestCase):
         super(TestCiscoIPsecDriver, self).setUp()
         dbapi.configure_db()
         self.addCleanup(dbapi.clear_db)
-        mock.patch('neutron.openstack.common.rpc.create_connection').start()
+        mock.patch('neutron.common.rpc_compat.create_connection').start()
 
         l3_agent = mock.Mock()
         l3_agent.host = FAKE_HOST
