@@ -37,10 +37,11 @@ BALANCE_MAP = {
 }
 
 STATS_MAP = {
-    constants.STATS_ACTIVE_CONNECTIONS: 'qcur',
-    constants.STATS_MAX_CONNECTIONS: 'qmax',
+    constants.STATS_ACTIVE_CONNECTIONS: 'scur',
+    constants.STATS_MAX_CONNECTIONS: 'smax',
     constants.STATS_CURRENT_SESSIONS: 'scur',
     constants.STATS_MAX_SESSIONS: 'smax',
+    constants.STATS_TOTAL_CONNECTIONS: 'stot',
     constants.STATS_TOTAL_SESSIONS: 'stot',
     constants.STATS_IN_BYTES: 'bin',
     constants.STATS_OUT_BYTES: 'bout',
