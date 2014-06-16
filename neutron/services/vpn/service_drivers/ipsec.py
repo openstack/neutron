@@ -17,6 +17,7 @@
 import netaddr
 
 from neutron.common import rpc as n_rpc
+from neutron.common import rpc_compat
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import rpc
 from neutron.services.vpn.common import topics
@@ -29,7 +30,7 @@ IPSEC = 'ipsec'
 BASE_IPSEC_VERSION = '1.0'
 
 
-class IPsecVpnDriverCallBack(object):
+class IPsecVpnDriverCallBack(rpc_compat.RpcCallback):
     """Callback for IPSecVpnDriver rpc."""
 
     # history
@@ -38,6 +39,7 @@ class IPsecVpnDriverCallBack(object):
     RPC_API_VERSION = BASE_IPSEC_VERSION
 
     def __init__(self, driver):
+        super(IPsecVpnDriverCallBack, self).__init__()
         self.driver = driver
 
     def create_rpc_dispatcher(self):
@@ -57,7 +59,8 @@ class IPsecVpnDriverCallBack(object):
         plugin.update_status_by_agent(context, status)
 
 
-class IPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi):
+class IPsecVpnAgentApi(service_drivers.BaseIPsecVpnAgentApi,
+                       rpc_compat.RpcCallback):
     """Agent RPC API for IPsecVPNAgent."""
 
     RPC_API_VERSION = BASE_IPSEC_VERSION

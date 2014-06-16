@@ -48,13 +48,15 @@ from neutron.plugins.ryu.db import api_v2 as db_api_v2
 LOG = logging.getLogger(__name__)
 
 
-class RyuRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+class RyuRpcCallbacks(rpc_compat.RpcCallback,
+                      dhcp_rpc_base.DhcpRpcCallbackMixin,
                       l3_rpc_base.L3RpcCallbackMixin,
                       sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
 
     def __init__(self, ofp_rest_api_addr):
+        super(RyuRpcCallbacks, self).__init__()
         self.ofp_rest_api_addr = ofp_rest_api_addr
 
     def create_rpc_dispatcher(self):

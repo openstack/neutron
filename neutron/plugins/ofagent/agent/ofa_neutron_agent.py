@@ -33,6 +33,7 @@ from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as n_const
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -159,7 +160,8 @@ class OFANeutronAgentRyuApp(app_manager.RyuApp):
         agent.daemon_loop()
 
 
-class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+class OFANeutronAgent(rpc_compat.RpcCallback,
+                      sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     """A agent for OpenFlow Agent ML2 mechanism driver.
 
     OFANeutronAgent is a OpenFlow Agent agent for a ML2 plugin.
@@ -199,6 +201,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                minimization, the number of seconds to wait before respawning
                the ovsdb monitor.
         """
+        super(OFANeutronAgent, self).__init__()
         self.ryuapp = ryuapp
         self.veth_mtu = veth_mtu
         self.root_helper = root_helper

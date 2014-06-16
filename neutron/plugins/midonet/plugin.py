@@ -30,6 +30,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -177,7 +178,8 @@ def _check_resource_exists(func, id, name, raise_exc=False):
             raise MidonetPluginException(msg=exc)
 
 
-class MidoRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
+class MidoRpcCallbacks(rpc_compat.RpcCallback,
+                       dhcp_rpc_base.DhcpRpcCallbackMixin):
     RPC_API_VERSION = '1.1'
 
     def create_rpc_dispatcher(self):

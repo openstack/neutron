@@ -35,6 +35,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as logging_config
 from neutron.common import constants as q_const
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
@@ -86,7 +87,8 @@ class OVSSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
         self.init_firewall(defer_refresh_firewall=True)
 
 
-class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
+class OVSNeutronAgent(rpc_compat.RpcCallback,
+                      sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                       l2population_rpc.L2populationRpcCallBackMixin):
     '''Implements OVS-based tunneling, VLANs and flat networks.
 
@@ -147,6 +149,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         :param arp_responder: Optional, enable local ARP responder if it is
                supported.
         '''
+        super(OVSNeutronAgent, self).__init__()
         self.veth_mtu = veth_mtu
         self.root_helper = root_helper
         self.available_local_vlans = set(moves.xrange(q_const.MIN_VLAN_TAG,

@@ -25,6 +25,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as ntn_exc
 from neutron.common import rpc as n_rpc
+from neutron.common import rpc_compat
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import dhcp_rpc_base
@@ -43,7 +44,8 @@ METADATA_GATEWAY_IP = '169.254.169.253'
 METADATA_DHCP_ROUTE = '169.254.169.254/32'
 
 
-class NSXRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin):
+class NSXRpcCallbacks(rpc_compat.RpcCallback,
+                      dhcp_rpc_base.DhcpRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'
 

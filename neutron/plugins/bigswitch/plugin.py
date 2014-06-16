@@ -115,7 +115,8 @@ class AgentNotifierApi(rpc_compat.RpcProxy,
                          topic=self.topic_port_update)
 
 
-class RestProxyCallbacks(sg_rpc_base.SecurityGroupServerRpcCallbackMixin,
+class RestProxyCallbacks(rpc_compat.RpcCallback,
+                         sg_rpc_base.SecurityGroupServerRpcCallbackMixin,
                          dhcp_rpc_base.DhcpRpcCallbackMixin):
 
     RPC_API_VERSION = '1.1'

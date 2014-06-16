@@ -18,6 +18,7 @@ from oslo.config import cfg
 
 from neutron.common import constants as q_const
 from neutron.common import rpc as q_rpc
+from neutron.common import rpc_compat
 from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
@@ -29,7 +30,8 @@ from neutron.plugins.mlnx.db import mlnx_db_v2 as db
 LOG = logging.getLogger(__name__)
 
 
-class MlnxRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+class MlnxRpcCallbacks(rpc_compat.RpcCallback,
+                       dhcp_rpc_base.DhcpRpcCallbackMixin,
                        l3_rpc_base.L3RpcCallbackMixin,
                        sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
     # History
@@ -38,9 +40,6 @@ class MlnxRpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
 
     #to be compatible with Linux Bridge Agent on Network Node
     TAP_PREFIX_LEN = 3
-
-    def __init__(self):
-        pass
 
     def create_rpc_dispatcher(self):
         """Get the rpc dispatcher for this manager.

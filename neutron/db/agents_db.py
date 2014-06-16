@@ -19,6 +19,7 @@ from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
+from neutron.common import rpc_compat
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import agent as ext_agent
@@ -195,13 +196,14 @@ class AgentDbMixin(ext_agent.AgentPluginBase):
                     return self._create_or_update_agent(context, agent)
 
 
-class AgentExtRpcCallback(object):
+class AgentExtRpcCallback(rpc_compat.RpcCallback):
     """Processes the rpc report in plugin implementations."""
 
     RPC_API_VERSION = '1.0'
     START_TIME = timeutils.utcnow()
 
     def __init__(self, plugin=None):
+        super(AgentExtRpcCallback, self).__init__()
         self.plugin = plugin
 
     def report_state(self, context, **kwargs):

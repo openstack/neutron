@@ -30,6 +30,7 @@ from neutron.agent.linux import ovs_lib
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as logging_config
 from neutron.common import constants as n_const
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -51,7 +52,7 @@ class SdnvePluginApi(agent_rpc.PluginApi):
                          topic=self.topic)
 
 
-class SdnveNeutronAgent():
+class SdnveNeutronAgent(rpc_compat.RpcCallback):
 
     RPC_API_VERSION = '1.1'
 
@@ -70,6 +71,7 @@ class SdnveNeutronAgent():
         :param controller_ip: Ip address of SDN-VE controller.
         '''
 
+        super(SdnveNeutronAgent, self).__init__()
         self.root_helper = root_helper
         self.int_bridge_name = integ_br
         self.controller_ip = controller_ip

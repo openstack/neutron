@@ -35,10 +35,11 @@ from neutron.plugins.common import constants as const
 LOG = logging.getLogger(__name__)
 
 
-class FirewallCallbacks(object):
+class FirewallCallbacks(rpc_compat.RpcCallback):
     RPC_API_VERSION = '1.0'
 
     def __init__(self, plugin):
+        super(FirewallCallbacks, self).__init__()
         self.plugin = plugin
 
     def create_rpc_dispatcher(self):

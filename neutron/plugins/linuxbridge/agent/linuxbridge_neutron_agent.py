@@ -657,7 +657,8 @@ class LinuxBridgeManager:
                 self.remove_fdb_bridge_entry(mac, agent_ip, interface)
 
 
-class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
+class LinuxBridgeRpcCallbacks(rpc_compat.RpcCallback,
+                              sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                               l2pop_rpc.L2populationRpcCallBackMixin):
 
     # Set RPC API version to 1.0 by default.
@@ -666,6 +667,7 @@ class LinuxBridgeRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     RPC_API_VERSION = '1.1'
 
     def __init__(self, context, agent):
+        super(LinuxBridgeRpcCallbacks, self).__init__()
         self.context = context
         self.agent = agent
         self.sg_agent = agent
