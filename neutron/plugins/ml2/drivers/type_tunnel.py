@@ -64,16 +64,13 @@ class TunnelTypeDriver(api.TypeDriver):
         LOG.info(_("%(type)s ID ranges: %(range)s"),
                  {'type': tunnel_type, 'range': current_range})
 
+    def is_partial_segment(self, segment):
+        return segment.get(api.SEGMENTATION_ID) is None
+
     def validate_provider_segment(self, segment):
         physical_network = segment.get(api.PHYSICAL_NETWORK)
         if physical_network:
             msg = _("provider:physical_network specified for %s "
-                    "network") % segment.get(api.NETWORK_TYPE)
-            raise exc.InvalidInput(error_message=msg)
-
-        segmentation_id = segment.get(api.SEGMENTATION_ID)
-        if not segmentation_id:
-            msg = _("segmentation_id required for %s provider "
                     "network") % segment.get(api.NETWORK_TYPE)
             raise exc.InvalidInput(error_message=msg)
 
