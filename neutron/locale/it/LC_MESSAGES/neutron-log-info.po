@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-06-09 06:08+0000\n"
+"POT-Creation-Date: 2014-06-16 06:08+0000\n"
 "PO-Revision-Date: 2014-05-29 07:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Italian (http://www.transifex.com/projects/p/neutron/language/"
@@ -30,49 +30,53 @@ msgid "Skipping periodic task %(task)s because it is disabled"
 msgstr ""
 
 #: neutron/openstack/common/service.py:176
-#: neutron/openstack/common/service.py:270
 #, python-format
 msgid "Caught %s, exiting"
 msgstr "Rilevato %s, esistente"
 
-#: neutron/openstack/common/service.py:239
+#: neutron/openstack/common/service.py:240
 msgid "Parent process has died unexpectedly, exiting"
 msgstr "Il processo principale è stato interrotto inaspettatamente, uscire"
 
-#: neutron/openstack/common/service.py:309
+#: neutron/openstack/common/service.py:271
+#, python-format
+msgid "Child caught %s, exiting"
+msgstr ""
+
+#: neutron/openstack/common/service.py:310
 msgid "Forking too fast, sleeping"
 msgstr "Sblocco troppo veloce, attendere"
 
-#: neutron/openstack/common/service.py:328
+#: neutron/openstack/common/service.py:329
 #, python-format
 msgid "Started child %d"
 msgstr "Child avviato %d"
 
-#: neutron/openstack/common/service.py:338
+#: neutron/openstack/common/service.py:339
 #, python-format
 msgid "Starting %d workers"
 msgstr "Avvio %d operatori"
 
-#: neutron/openstack/common/service.py:355
+#: neutron/openstack/common/service.py:356
 #, python-format
 msgid "Child %(pid)d killed by signal %(sig)d"
 msgstr "Child %(pid)d interrotto dal segnale %(sig)d"
 
-#: neutron/openstack/common/service.py:359
+#: neutron/openstack/common/service.py:360
 #, python-format
 msgid "Child %(pid)s exited with status %(code)d"
 msgstr "Child %(pid)s terminato con stato %(code)d"
 
-#: neutron/openstack/common/service.py:394
+#: neutron/openstack/common/service.py:399
 #, python-format
 msgid "Caught %s, stopping children"
 msgstr "Intercettato %s, arresto in corso dei children"
 
-#: neutron/openstack/common/service.py:403
+#: neutron/openstack/common/service.py:408
 msgid "Wait called after thread killed.  Cleaning up."
 msgstr ""
 
-#: neutron/openstack/common/service.py:414
+#: neutron/openstack/common/service.py:424
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "In attesa %d degli elementi secondari per uscire"
