@@ -175,7 +175,7 @@ class NeutronManager(object):
             # for the same type is a fatal exception
             if plugin_inst.get_plugin_type() in self.service_plugins:
                 raise ValueError(_("Multiple plugins for service "
-                                   "%s were configured"),
+                                   "%s were configured") %
                                  plugin_inst.get_plugin_type())
 
             self.service_plugins[plugin_inst.get_plugin_type()] = plugin_inst
