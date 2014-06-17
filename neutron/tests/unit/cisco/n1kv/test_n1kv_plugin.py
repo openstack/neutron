@@ -264,6 +264,8 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
             netp['network_profile']['sub_type'] = 'enhanced' or 'native_vxlan'
             netp['network_profile']['multicast_ip_range'] = ("224.1.1.1-"
                                                              "224.1.1.10")
+        elif segment_type == 'trunk':
+            netp['network_profile']['sub_type'] = 'vlan'
         return netp
 
     def test_create_network_profile_vlan(self):
@@ -277,6 +279,19 @@ class TestN1kvNetworkProfiles(N1kvPluginTestCase):
         net_p_req = self.new_create_request('network_profiles', data)
         res = net_p_req.get_response(self.ext_api)
         self.assertEqual(res.status_int, 201)
+
+    def test_create_network_profile_trunk(self):
+        data = self._prepare_net_profile_data('trunk')
+        net_p_req = self.new_create_request('network_profiles', data)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 201)
+
+    def test_create_network_profile_trunk_missing_subtype(self):
+        data = self._prepare_net_profile_data('trunk')
+        data['network_profile'].pop('sub_type')
+        net_p_req = self.new_create_request('network_profiles', data)
+        res = net_p_req.get_response(self.ext_api)
+        self.assertEqual(res.status_int, 400)
 
     def test_create_network_profile_overlay_unreasonable_seg_range(self):
         data = self._prepare_net_profile_data('overlay')
