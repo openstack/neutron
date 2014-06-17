@@ -78,6 +78,7 @@ class NsxCache(object):
                 # The item is not anymore in NSX, so delete it
                 del resources[uuid]
                 del self._uuid_dict_mappings[uuid]
+                LOG.debug("Removed item %s from NSX object cache", uuid)
 
         def do_hash(item):
             return hash(jsonutils.dumps(item))
@@ -95,6 +96,7 @@ class NsxCache(object):
                     resources[item_id]['data'] = item
                 # Mark the item as hit in any case
                 resources[item_id]['hit'] = True
+                LOG.debug("Updating item %s in NSX object cache", item_id)
             else:
                 resources[item_id] = {'hash': do_hash(item)}
                 resources[item_id]['hit'] = True
@@ -103,6 +105,7 @@ class NsxCache(object):
                 # add a uuid to dict mapping for easy retrieval
                 # with __getitem__
                 self._uuid_dict_mappings[item_id] = resources
+                LOG.debug("Added item %s to NSX object cache", item_id)
 
     def _delete_resources(self, resources):
         # Mark for removal all the elements which have not been visited.
@@ -622,12 +625,14 @@ class NsxSynchronizer():
         LOG.debug(_("Number of chunks: %d"), num_chunks)
         # Find objects which have changed on NSX side and need
         # to be synchronized
+        LOG.debug("Processing NSX cache for updated objects")
         (ls_uuids, lr_uuids, lp_uuids) = self._nsx_cache.process_updates(
             lswitches, lrouters, lswitchports)
         # Process removed objects only at the last chunk
         scan_missing = (sp.current_chunk == num_chunks - 1 and
                         not sp.init_sync_performed)
         if sp.current_chunk == num_chunks - 1:
+            LOG.debug("Processing NSX cache for deleted objects")
             self._nsx_cache.process_deletes()
             ls_uuids = self._nsx_cache.get_lswitches(
                 changed_only=not scan_missing)
