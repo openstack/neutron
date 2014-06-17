@@ -71,7 +71,8 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
                 ipt_mgr = router_info.iptables_manager
                 self._remove_chains(fwid, ipt_mgr)
                 self._remove_default_chains(ipt_mgr)
-                ipt_mgr.apply()
+                # apply the changes immediately (no defer in firewall path)
+                ipt_mgr.defer_apply_off()
         except (LookupError, RuntimeError):
             # catch known library exceptions and raise Fwaas generic exception
             LOG.exception(_("Failed to delete firewall: %s"), fwid)
@@ -106,8 +107,8 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
                 self._add_default_policy_chain_v4v6(ipt_mgr)
                 self._enable_policy_chain(fwid, ipt_mgr)
 
-                # apply the changes
-                ipt_mgr.apply()
+                # apply the changes immediately (no defer in firewall path)
+                ipt_mgr.defer_apply_off()
         except (LookupError, RuntimeError):
             # catch known library exceptions and raise Fwaas generic exception
             LOG.exception(_("Failed to apply default policy on firewall: %s"),
@@ -128,8 +129,8 @@ class IptablesFwaasDriver(fwaas_base.FwaasDriverBase):
             #create chain based on configured policy
             self._setup_chains(firewall, ipt_mgr)
 
-            # apply the changes
-            ipt_mgr.apply()
+            # apply the changes immediately (no defer in firewall path)
+            ipt_mgr.defer_apply_off()
 
     def _get_chain_name(self, fwid, ver, direction):
         return '%s%s%s' % (CHAIN_NAME_PREFIX[direction],
