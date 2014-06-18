@@ -116,7 +116,7 @@ def convert_protocol(value):
     try:
         val = int(value)
         if val >= 0 and val <= 255:
-            return val
+            return value
         raise SecurityGroupRuleInvalidProtocol(
             protocol=value, values=sg_supported_protocols)
     except (ValueError, TypeError):
