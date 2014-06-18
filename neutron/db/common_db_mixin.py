@@ -70,13 +70,18 @@ class CommonDbMixin(object):
         """
         return weakref.proxy(self)
 
+    def model_query_scope(self, context, model):
+        # NOTE(jkoelker) non-admin queries are scoped to their tenant_id
+        # NOTE(salvatore-orlando): unless the model allows for shared objects
+        # NOTE(mestery): Or the user has the advsvc role
+        return ((not context.is_admin and hasattr(model, 'tenant_id')) and
+                (not context.is_advsvc and hasattr(model, 'tenant_id')))
+
     def _model_query(self, context, model):
         query = context.session.query(model)
         # define basic filter condition for model query
-        # NOTE(jkoelker) non-admin queries are scoped to their tenant_id
-        # NOTE(salvatore-orlando): unless the model allows for shared objects
         query_filter = None
-        if not context.is_admin and hasattr(model, 'tenant_id'):
+        if self.model_query_scope(context, model):
             if hasattr(model, 'shared'):
                 query_filter = ((model.tenant_id == context.tenant_id) |
                                 (model.shared == sql.true()))

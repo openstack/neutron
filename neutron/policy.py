@@ -39,6 +39,7 @@ LOG = log.getLogger(__name__)
 _POLICY_PATH = None
 _POLICY_CACHE = {}
 ADMIN_CTX_POLICY = 'context_is_admin'
+ADVSVC_CTX_POLICY = 'context_is_advsvc'
 # Maps deprecated 'extension' policies to new-style policies
 DEPRECATED_POLICY_MAP = {
     'extension:provider_network':
@@ -414,6 +415,19 @@ def check_is_admin(context):
     admin_policy = (ADMIN_CTX_POLICY in policy._rules
                     and ADMIN_CTX_POLICY or 'role:admin')
     return policy.check(admin_policy, target, credentials)
+
+
+def check_is_advsvc(context):
+    """Verify context has advsvc rights according to policy settings."""
+    init()
+    # the target is user-self
+    credentials = context.to_dict()
+    target = credentials
+    # Backward compatibility: if ADVSVC_CTX_POLICY is not
+    # found, default to validating role:advsvc
+    advsvc_policy = (ADVSVC_CTX_POLICY in policy._rules
+                    and ADVSVC_CTX_POLICY or 'role:advsvc')
+    return policy.check(advsvc_policy, target, credentials)
 
 
 def _extract_roles(rule, roles):
