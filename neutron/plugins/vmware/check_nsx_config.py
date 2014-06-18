@@ -90,7 +90,7 @@ def main():
         help(sys.argv[0])
     args = ['--config-file']
     args.append(sys.argv[1])
-    config.parse(args)
+    config.init(args)
     print("----------------------- Database Options -----------------------")
     print("\tconnection: %s" % cfg.CONF.database.connection)
     print("\tretry_interval: %d" % cfg.CONF.database.retry_interval)

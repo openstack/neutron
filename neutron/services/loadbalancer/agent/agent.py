@@ -16,6 +16,8 @@
 #
 # @author: Mark McClain, DreamHost
 
+import sys
+
 import eventlet
 eventlet.monkey_patch()
 
@@ -23,6 +25,7 @@ from oslo.config import cfg
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
+from neutron.common import config as common_config
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.openstack.common import service
@@ -57,7 +60,7 @@ def main():
     config.register_agent_state_opts_helper(cfg.CONF)
     config.register_root_helper(cfg.CONF)
 
-    cfg.CONF(project='neutron')
+    common_config.init(sys.argv[1:])
     config.setup_logging(cfg.CONF)
 
     mgr = manager.LbaasAgentManager(cfg.CONF)

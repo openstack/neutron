@@ -18,6 +18,8 @@
 # @author: Gary Duan, vArmour Networks Inc.
 #
 
+import sys
+
 import eventlet
 eventlet.monkey_patch()
 
@@ -29,6 +31,7 @@ from neutron.agent import l3_agent
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
+from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import topics
 from neutron.openstack.common import log as logging
@@ -337,7 +340,7 @@ def main():
     config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
-    conf(project='neutron')
+    common_config.init(sys.argv[1:])
     config.setup_logging(conf)
     server = neutron_service.Service.create(
         binary='neutron-l3-agent',

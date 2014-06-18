@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import sys
 import time
 
 import eventlet
@@ -23,6 +24,7 @@ from oslo.config import cfg
 
 from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
+from neutron.common import config as common_config
 from neutron.common import constants as constants
 from neutron.common import rpc_compat
 from neutron.common import topics
@@ -287,7 +289,7 @@ def main():
     conf.register_opts(MeteringAgent.Opts)
     config.register_agent_state_opts_helper(conf)
     config.register_root_helper(conf)
-    conf(project='neutron')
+    common_config.init(sys.argv[1:])
     config.setup_logging(conf)
     server = neutron_service.Service.create(
         binary='neutron-metering-agent',

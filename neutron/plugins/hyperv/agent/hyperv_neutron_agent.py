@@ -20,6 +20,7 @@
 
 import platform
 import re
+import sys
 import time
 
 import eventlet
@@ -30,7 +31,7 @@ from oslo.config import cfg
 from neutron.agent.common import config
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
-from neutron.common import config as logging_config
+from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import rpc_compat
 from neutron.common import topics
@@ -472,8 +473,8 @@ class HyperVNeutronAgent(rpc_compat.RpcCallback):
 
 
 def main():
-    cfg.CONF(project='neutron')
-    logging_config.setup_logging(cfg.CONF)
+    common_config.init(sys.argv[1:])
+    common_config.setup_logging(cfg.CONF)
 
     plugin = HyperVNeutronAgent()
 

@@ -27,7 +27,7 @@ from oslo.config import cfg
 
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
-from neutron.common import config as logging_config
+from neutron.common import config as common_config
 from neutron.common import constants as q_constants
 from neutron.common import rpc_compat
 from neutron.common import topics
@@ -421,8 +421,8 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
 
 
 def main():
-    cfg.CONF(project='neutron')
-    logging_config.setup_logging(cfg.CONF)
+    common_config.init(sys.argv[1:])
+    common_config.setup_logging(cfg.CONF)
 
     try:
         interface_mappings = q_utils.parse_mappings(

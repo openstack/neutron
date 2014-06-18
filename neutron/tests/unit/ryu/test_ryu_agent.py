@@ -610,15 +610,15 @@ class TestRyuNeutronAgent(RyuAgentTestCase):
                      'CONF.AGENT.root_helper': 'helper'}
         with contextlib.nested(
             mock.patch(self._AGENT_NAME + '.cfg', **cfg_attrs),
-            mock.patch(self._AGENT_NAME + '.logging_config'),
+            mock.patch(self._AGENT_NAME + '.common_config'),
             mock.patch(self._AGENT_NAME + '._get_tunnel_ip',
                        return_value='10.0.0.1'),
             mock.patch(self._AGENT_NAME + '._get_ovsdb_ip',
                        return_value='172.16.0.1'),
-        ) as (mock_conf, mock_log_conf, _tun, _ovsdb):
+        ) as (mock_conf, mock_common_conf, _tun, _ovsdb):
             self.mod_agent.main()
 
-        mock_log_conf.assert_has_calls([
+        mock_common_conf.assert_has_calls([
             mock.call(mock_conf)
         ])
 

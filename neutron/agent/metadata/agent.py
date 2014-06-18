@@ -20,6 +20,7 @@ import hashlib
 import hmac
 import os
 import socket
+import sys
 
 import eventlet
 eventlet.monkey_patch()
@@ -384,7 +385,7 @@ def main():
     cache.register_oslo_configs(cfg.CONF)
     cfg.CONF.set_default(name='cache_url', default='memory://?default_ttl=5')
     agent_conf.register_agent_state_opts_helper(cfg.CONF)
-    cfg.CONF(project='neutron')
+    config.init(sys.argv[1:])
     config.setup_logging(cfg.CONF)
     utils.log_opt_values(LOG)
     proxy = UnixDomainMetadataProxy(cfg.CONF)

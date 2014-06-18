@@ -109,7 +109,7 @@ class BaseTestCase(testtools.TestCase):
         if args is None:
             args = ['--config-file', etcdir('neutron.conf.test')]
         if conf is None:
-            config.parse(args=args)
+            config.init(args=args)
         else:
             conf(args)
 

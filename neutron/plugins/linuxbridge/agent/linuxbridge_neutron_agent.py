@@ -36,7 +36,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
-from neutron.common import config as logging_config
+from neutron.common import config as common_config
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.common import rpc_compat
@@ -1029,9 +1029,9 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
 
 
 def main():
-    cfg.CONF(project='neutron')
+    common_config.init(sys.argv[1:])
 
-    logging_config.setup_logging(cfg.CONF)
+    common_config.setup_logging(cfg.CONF)
     try:
         interface_mappings = q_utils.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)

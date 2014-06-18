@@ -21,6 +21,8 @@ subnets.
 
 """
 
+import sys
+
 from oslo.config import cfg
 
 from neutron.common import config
@@ -30,7 +32,7 @@ from neutron.openstack.common.notifier import api as notifier_api
 
 
 def main():
-    cfg.CONF(project='neutron')
+    config.init(sys.argv[1:])
     config.setup_logging(cfg.CONF)
 
     cxt = context.get_admin_context()

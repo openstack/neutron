@@ -166,7 +166,7 @@ class RestProxyAgent(rpc_compat.RpcCallback,
 
 
 def main():
-    cfg.CONF(project='neutron')
+    config.init(sys.argv[1:])
     config.setup_logging(cfg.CONF)
     pl_config.register_config()
 

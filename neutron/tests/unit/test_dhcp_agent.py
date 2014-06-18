@@ -28,6 +28,7 @@ from neutron.agent.common import config
 from neutron.agent import dhcp_agent
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
+from neutron.common import config as common_config
 from neutron.common import constants as const
 from neutron.common import exceptions
 from neutron.common import rpc_compat
@@ -157,7 +158,7 @@ class TestDhcpAgent(base.BaseTestCase):
                         config.register_root_helper(cfg.CONF)
                         cfg.CONF.register_opts(dhcp.OPTS)
                         cfg.CONF.register_opts(interface.OPTS)
-                        cfg.CONF(project='neutron')
+                        common_config.init(sys.argv[1:])
                         agent_mgr = dhcp_agent.DhcpAgentWithStateReport(
                             'testhost')
                         eventlet.greenthread.sleep(1)

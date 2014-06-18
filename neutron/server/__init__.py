@@ -37,7 +37,7 @@ LOG = logging.getLogger(__name__)
 
 def main():
     # the configuration will be read into the cfg.CONF global data structure
-    config.parse(sys.argv[1:])
+    config.init(sys.argv[1:])
     if not cfg.CONF.config_file:
         sys.exit(_("ERROR: Unable to find configuration file via the default"
                    " search paths (~/.neutron/, ~/, /etc/neutron/, /etc/) and"

@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+import sys
+
 import eventlet
 eventlet.monkey_patch()
 
@@ -26,6 +28,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ovs_lib  # noqa
 from neutron.agent import rpc as agent_rpc
+from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
 from neutron.common import rpc_compat
 from neutron.common import topics
@@ -977,7 +980,7 @@ def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
     config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
-    conf(project='neutron')
+    common_config.init(sys.argv[1:])
     config.setup_logging(conf)
     server = neutron_service.Service.create(
         binary='neutron-l3-agent',
