@@ -217,6 +217,14 @@ class CommonDbMixin(object):
             return getattr(self, '_get_%s' % resource)(context, marker)
         return None
 
+    def _filter_non_model_columns(self, data, model):
+        """Remove all the attributes from data which are not columns of
+        the model passed as second parameter.
+        """
+        columns = [c.name for c in model.__table__.columns]
+        return dict((k, v) for (k, v) in
+                    data.iteritems() if k in columns)
+
 
 class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                         CommonDbMixin):
@@ -254,14 +262,6 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         cur_funcs = cls._dict_extend_functions.get(resource, [])
         cur_funcs.extend(funcs)
         cls._dict_extend_functions[resource] = cur_funcs
-
-    def _filter_non_model_columns(self, data, model):
-        """Remove all the attributes from data which are not columns of
-        the model passed as second parameter.
-        """
-        columns = [c.name for c in model.__table__.columns]
-        return dict((k, v) for (k, v) in
-                    data.iteritems() if k in columns)
 
     def _get_network(self, context, id):
         try:
