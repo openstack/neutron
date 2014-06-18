@@ -245,14 +245,16 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase,
     def test_make_router_dict_with_ext_gw(self):
         router_dict = self.target_object._make_router_dict(self.router)
         self.assertEqual({'network_id': self.ext_net_id,
-                          'enable_snat': True},
+                          'enable_snat': True,
+                          'external_fixed_ips': []},
                          router_dict[l3.EXTERNAL_GW_INFO])
 
     def test_make_router_dict_with_ext_gw_snat_disabled(self):
         self.router.enable_snat = False
         router_dict = self.target_object._make_router_dict(self.router)
         self.assertEqual({'network_id': self.ext_net_id,
-                          'enable_snat': False},
+                          'enable_snat': False,
+                          'external_fixed_ips': []},
                          router_dict[l3.EXTERNAL_GW_INFO])
 
     def test_build_routers_list_no_ext_gw(self):
@@ -364,7 +366,10 @@ class ExtGwModeIntTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
                               ('admin_state_up', True), ('status', 'ACTIVE'),
                               ('external_gateway_info',
                                {'network_id': ext_net_id,
-                                'enable_snat': snat_expected_value})]
+                                'enable_snat': snat_expected_value,
+                                'external_fixed_ips': [{
+                                    'ip_address': mock.ANY,
+                                    'subnet_id': s['subnet']['id']}]})]
             with self.router(
                 name=name, admin_state_up=True, tenant_id=tenant_id,
                 external_gateway_info=input_value) as router:

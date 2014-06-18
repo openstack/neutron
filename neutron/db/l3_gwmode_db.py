@@ -43,7 +43,13 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             nw_id = router_db.gw_port['network_id']
             router_res[EXTERNAL_GW_INFO] = {
                 'network_id': nw_id,
-                'enable_snat': router_db.enable_snat}
+                'enable_snat': router_db.enable_snat,
+                'external_fixed_ips': [
+                    {'subnet_id': ip["subnet_id"],
+                     'ip_address': ip["ip_address"]}
+                    for ip in router_db.gw_port['fixed_ips']
+                ]
+            }
 
     def _update_router_gw_info(self, context, router_id, info, router=None):
         # Load the router only if necessary
