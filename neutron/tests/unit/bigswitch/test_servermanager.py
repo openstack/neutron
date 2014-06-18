@@ -74,6 +74,15 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             )
             sslgetmock.assert_has_calls([mock.call(('example.org', 443))])
 
+    def test_consistency_watchdog_stops_with_0_polling_interval(self):
+        pl = manager.NeutronManager.get_plugin()
+        pl.servers.capabilities = ['consistency']
+        self.watch_p.stop()
+        with mock.patch('eventlet.sleep') as smock:
+            # should return immediately a polling interval of 0
+            pl.servers._consistency_watchdog(0)
+            self.assertFalse(smock.called)
+
     def test_consistency_watchdog(self):
         pl = manager.NeutronManager.get_plugin()
         pl.servers.capabilities = []

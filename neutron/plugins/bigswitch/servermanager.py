@@ -550,6 +550,10 @@ class ServerPool(object):
             LOG.warning(_("Backend server(s) do not support automated "
                           "consitency checks."))
             return
+        if not polling_interval:
+            LOG.warning(_("Consistency watchdog disabled by polling interval "
+                          "setting of %s."), polling_interval)
+            return
         while True:
             # If consistency is supported, all we have to do is make any
             # rest call and the consistency header will be added. If it

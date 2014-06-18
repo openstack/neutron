@@ -63,7 +63,7 @@ restproxy_opts = [
                        "synchronization to the controller.")),
     cfg.IntOpt('consistency_interval', default=60,
                help=_("Time between verifications that the backend controller "
-                      "database is consistent with Neutron")),
+                      "database is consistent with Neutron. (0 to disable)")),
     cfg.IntOpt('server_timeout', default=10,
                help=_("Maximum number of seconds to wait for proxy request "
                       "to connect and complete.")),
