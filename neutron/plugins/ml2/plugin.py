@@ -736,9 +736,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._delete_port_security_group_bindings(context, id)
             LOG.debug(_("Calling base delete_port"))
             if l3plugin:
-                l3plugin.disassociate_floatingips(context, id)
+                router_ids = l3plugin.disassociate_floatingips(
+                    context, id, do_notify=False)
 
             super(Ml2Plugin, self).delete_port(context, id)
+
+        # now that we've left db transaction, we are safe to notify
+        if l3plugin:
+            l3plugin.notify_routers_updated(context, router_ids)
 
         try:
             self.mechanism_manager.delete_port_postcommit(mech_context)

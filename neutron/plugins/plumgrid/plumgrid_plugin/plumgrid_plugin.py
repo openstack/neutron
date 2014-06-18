@@ -242,7 +242,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             # Plugin DB - Port Create and Return port
             port_db = super(NeutronPluginPLUMgridV2,
                             self).get_port(context, port_id)
-            self.disassociate_floatingips(context, port_id)
+            router_ids = self.disassociate_floatingips(
+                context, port_id, do_notify=False)
             super(NeutronPluginPLUMgridV2, self).delete_port(context, port_id)
 
             if port_db["device_owner"] == constants.DEVICE_OWNER_ROUTER_GW:
@@ -256,6 +257,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
+
+        # now that we've left db transaction, we are safe to notify
+        self.notify_routers_updated(context, router_ids)
 
     def get_port(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
@@ -528,7 +532,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
 
-    def disassociate_floatingips(self, context, port_id):
+    def disassociate_floatingips(self, context, port_id, do_notify=True):
         LOG.debug(_("Neutron PLUMgrid Director: disassociate_floatingips() "
                     "called"))
 
@@ -546,8 +550,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         except Exception as err_message:
             raise plum_excep.PLUMgridException(err_msg=err_message)
 
-        super(NeutronPluginPLUMgridV2,
-              self).disassociate_floatingips(context, port_id)
+        return super(NeutronPluginPLUMgridV2, self).disassociate_floatingips(
+            context, port_id, do_notify=do_notify)
 
     """
     Internal PLUMgrid Fuctions

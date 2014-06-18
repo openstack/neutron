@@ -353,14 +353,15 @@ class EmbranePlugin(object):
                 args=(nat_info,))
         return result
 
-    def disassociate_floatingips(self, context, port_id):
+    def disassociate_floatingips(self, context, port_id, do_notify=True):
         try:
             fip_qry = context.session.query(l3_db.FloatingIP)
             floating_ip = fip_qry.filter_by(fixed_port_id=port_id).one()
             router_id = floating_ip["router_id"]
         except exc.NoResultFound:
             return
-        self._l3super.disassociate_floatingips(self, context, port_id)
+        router_ids = self._l3super.disassociate_floatingips(
+            self, context, port_id, do_notify=do_notify)
         if router_id:
             neutron_router = self._get_router(context, router_id)
             fip_id = floating_ip["id"]
@@ -373,3 +374,4 @@ class EmbranePlugin(object):
                     p_con.Events.RESET_NAT_RULE, neutron_router, context,
                     state_change),
                 args=(fip_id,))
+        return router_ids
