@@ -20,9 +20,9 @@ SQLAlchemy>=0.7.8,<=0.9.99
 WebOb>=1.2.3
 python-keystoneclient>=0.9.0
 alembic>=0.4.1
-six>=1.6.0
+six>=1.7.0
 stevedore>=0.14
-oslo.config>=1.2.0
+oslo.config>=1.2.1
 oslo.rootwrap
 
 python-novaclient>=2.17.0
