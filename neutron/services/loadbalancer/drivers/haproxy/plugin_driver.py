@@ -19,3 +19,7 @@ from neutron.services.loadbalancer.drivers.haproxy import namespace_driver
 
 class HaproxyOnHostPluginDriver(agent_driver_base.AgentDriverBase):
     device_driver = namespace_driver.DRIVER_NAME
+
+
+class HaproxyOnHostPluginDriverv2(agent_driver_base.AgentDriverBase):
+    device_driver = namespace_driver.DRIVER_NAME

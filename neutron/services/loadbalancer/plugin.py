@@ -20,8 +20,10 @@ from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as qdbapi
 from neutron.db.loadbalancer import loadbalancer_db as ldb
+from neutron.db.loadbalancer import loadbalancer_dbv2 as ldbv2
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import loadbalancer
+from neutron.extensions import loadbalancerv2
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -91,6 +93,14 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
         raise n_exc.Invalid(_("Error retrieving driver for provider %s") %
                             provider)
 
+    def _get_driver_for_load_balancer(self, context, load_balancer_id):
+        load_balancer = self.get_load_balancer(context, load_balancer_id)
+        try:
+            return self.drivers[load_balancer['provider']]
+        except KeyError:
+            raise n_exc.Invalid(_("Error retrieving provider for load balancer"
+                                  " %s") % load_balancer_id)
+
     def _get_driver_for_pool(self, context, pool_id):
         pool = self.get_pool(context, pool_id)
         try:
@@ -131,10 +141,10 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
         driver = self._get_driver_for_pool(context, v['pool_id'])
         driver.delete_vip(context, v)
 
-    def _get_provider_name(self, context, pool):
-        if ('provider' in pool and
-            pool['provider'] != attrs.ATTR_NOT_SPECIFIED):
-            provider_name = pconf.normalize_provider_name(pool['provider'])
+    def _get_provider_name(self, context, entity):
+        if ('provider' in entity and
+                entity['provider'] != attrs.ATTR_NOT_SPECIFIED):
+            provider_name = pconf.normalize_provider_name(entity['provider'])
             self.validate_provider(provider_name)
             return provider_name
         else:
@@ -324,3 +334,358 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
         if provider not in self.drivers:
             raise pconf.ServiceProviderNotFound(
                 provider=provider, service_type=constants.LOADBALANCER)
+
+
+class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
+                           agent_scheduler.LbaasAgentSchedulerDbMixin):
+    """Implementation of the Neutron Loadbalancer Service Plugin.
+
+    This class manages the workflow of LBaaS request/response.
+    Most DB related works are implemented in class
+    loadbalancer_db.LoadBalancerPluginDb.
+    """
+    supported_extension_aliases = ["lbaasv2",
+                                   "lbaas_agent_scheduler",
+                                   "service-type"]
+
+    # lbaas agent notifiers to handle agent update operations;
+    # can be updated by plugin drivers while loading;
+    # will be extracted by neutron manager when loading service plugins;
+    agent_notifiers = {}
+
+    def __init__(self):
+        """Initialization for the loadbalancer service plugin."""
+
+        qdbapi.register_models()
+        self.service_type_manager = st_db.ServiceTypeManager.get_instance()
+        self._load_drivers()
+
+    def _load_drivers(self):
+        """Loads plugin-drivers specified in configuration."""
+        self.drivers, self.default_provider = service_base.load_drivers(
+            constants.LOADBALANCERv2, self)
+
+        # we're at the point when extensions are not loaded yet
+        # so prevent policy from being loaded
+        ctx = context.get_admin_context(load_admin_roles=False)
+        # stop service in case provider was removed, but resources were not
+        self._check_orphan_pool_associations(ctx, self.drivers.keys())
+
+    def _check_orphan_pool_associations(self, context, provider_names):
+        """Checks remaining associations between pools and providers.
+
+        If admin has not undeployed resources with provider that was deleted
+        from configuration, neutron service is stopped. Admin must delete
+        resources prior to removing providers from configuration.
+        """
+        loadbalancers = super(LoadBalancerPluginv2, self).get_loadbalancers(
+            context)
+        lost_providers = set(
+            [loadbalancer.provider.provider_name
+             for loadbalancer in loadbalancers
+             if loadbalancer.provider.provider_name not in provider_names])
+        # resources are left without provider - stop the service
+        if lost_providers:
+            msg = _("Delete associated load balancers before "
+                    "removing providers %s") % list(lost_providers)
+            LOG.exception(msg)
+            raise SystemExit(1)
+
+    def _get_driver_for_provider(self, provider):
+        if provider in self.drivers:
+            return self.drivers[provider]
+        # raise if not associated (should never be reached)
+        raise n_exc.Invalid(_("Error retrieving driver for provider %s") %
+                            provider)
+
+    def _get_driver_for_loadbalancer(self, context, loadbalancer_id):
+        loadbalancer = super(LoadBalancerPluginv2, self).get_loadbalancer(
+            context, loadbalancer_id)
+        try:
+            return self.drivers[loadbalancer.provider.provider_name]
+        except KeyError:
+            raise n_exc.Invalid(_("Error retrieving provider for load balancer"
+                                  " %s") % loadbalancer_id)
+
+    def _get_provider_name(self, context, entity):
+        if ('provider' in entity and
+                entity['provider'] != attrs.ATTR_NOT_SPECIFIED):
+            provider_name = pconf.normalize_provider_name(entity['provider'])
+            self.validate_provider(provider_name)
+            return provider_name
+        else:
+            if not self.default_provider:
+                raise pconf.DefaultServiceProviderNotFound(
+                    service_type=constants.LOADBALANCER)
+            return self.default_provider
+
+    def _is_driver_new_style(self, driver):
+        return not hasattr(driver, 'create_vip')
+
+    def _call_driver_operation(self, driver_method, db_entity,
+                               old_db_entity=None):
+        try:
+            if old_db_entity:
+                driver_method(context, old_db_entity, db_entity)
+            else:
+                driver_method(context, db_entity)
+        except Exception as driver_exception:
+            self.update_status(context, db_entity.__class__, db_entity.id,
+                               constants.ERROR)
+            raise loadbalancerv2.DriverError(
+                message=driver_exception.message)
+        self.update_status(context, db_entity.__class__, db_entity.id,
+                           constants.ACTIVE)
+
+    def get_plugin_type(self):
+        return constants.LOADBALANCERv2
+
+    def get_plugin_description(self):
+        return "Neutron LoadBalancer Service Plugin v2"
+
+    def create_loadbalancer(self, context, loadbalancer):
+        loadbalancer = loadbalancer.get('loadbalancer')
+        provider_name = self._get_provider_name(
+            context, loadbalancer)
+        lb_db = super(LoadBalancerPluginv2, self).create_loadbalancer(
+            context, loadbalancer)
+        self.service_type_manager.add_resource_association(
+            context,
+            constants.LOADBALANCER,
+            provider_name, lb_db.id)
+        driver = self.drivers[provider_name]
+        if self._is_driver_new_style(driver):
+            self._call_driver_operation(driver.load_balancer.create, lb_db)
+        return lb_db.to_dict()
+
+    def update_loadbalancer(self, context, id, loadbalancer):
+        loadbalancer = loadbalancer.get('loadbalancer')
+        old_lb = super(LoadBalancerPluginv2, self).get_loadbalancer(context,
+                                                                    id)
+        updated_lb = super(LoadBalancerPluginv2, self).update_loadbalancer(
+            context, id, loadbalancer)
+        driver = self._get_driver_for_provider(old_lb.provider.provider_name)
+        if self._is_driver_new_style(driver):
+            self._call_driver_operation(driver.load_balancer.update,
+                                        updated_lb, old_db_entity=old_lb)
+        return updated_lb.to_dict()
+
+    def delete_loadbalancer(self, context, id, body=None):
+        old_lb = super(LoadBalancerPluginv2, self).get_loadbalancer(context,
+                                                                    id)
+        self.assert_modification_allowed(old_lb)
+        self.update_status(context, ldbv2.LoadBalancer,
+                           id, constants.PENDING_DELETE)
+        driver = self._get_driver_for_provider(old_lb.provider.provider_name)
+        if self._is_driver_new_style(driver):
+            self._call_driver_operation(driver.load_balancer.create, old_lb)
+
+    def get_loadbalancer(self, context, id, fields=None):
+        lb_db = super(LoadBalancerPluginv2, self).get_loadbalancer(
+            context, id, fields)
+        return self._fields(lb_db.to_dict(), fields)
+
+    def get_loadbalancers(self, context, filters=None, fields=None):
+        loadbalancers = super(LoadBalancerPluginv2, self).get_loadbalancers(
+            context, filters=filters, fields=fields)
+        lb_dicts = [self._fields(lb.to_dict(), fields) for lb in loadbalancers]
+        return lb_dicts
+
+    def create_listener(self, context, listener):
+        listener = listener.get('listener')
+        if listener.get('loadbalancer_id') == attrs.ATTR_NOT_SPECIFIED:
+            listener['loadbalancer_id'] = None
+        if listener.get('default_pool_id') == attrs.ATTR_NOT_SPECIFIED:
+            listener['default_pool_id'] = None
+
+        listener_db = super(LoadBalancerPluginv2, self).create_listener(
+            context, listener)
+        if listener_db.loadbalancer:
+            driver = self._get_driver_for_loadbalancer(
+                context, listener_db.loadbalancer_id)
+            #TODO(call driver.listener.create())
+            #This may be a noop on some LB solutions.
+            #If load_balancer_id is already not provisioned
+            #on the backend LB, call #driver.loadbalancer.create()
+        return listener_db.to_dict()
+
+    def update_listener(self, context, id, listener):
+        #A listener's load_balancer_id is immutable.
+        #Other fields can be changed.
+        if listener.get('loadbalancer_id') != attrs.ATTR_NOT_SPECIFIED:
+            raise loadbalancerv2.LBIdImmutable()
+        listener_db_entry = self.get_listener(context, id)
+        if not listener_db_entry:
+            raise loadbalancerv2.ListenerNotFound(id)
+        #status is updated in update_listener
+        listener_db = super(LoadBalancerPluginv2, self).update_listener(
+            context, id, listener)
+        #TODO(driver.listener.update())
+        #set the status to success or error as reqd.
+        return listener_db.to_dict()
+
+    def delete_listener(self, context, id):
+        #If a listener is associated with a loadbalancer, it may or may not
+        #be deletable on the LB - leave this to the driver implementation.
+        listener_db = super(LoadBalancerPluginv2, self).get_listener(
+            context, id)
+        if listener_db is None:
+            return
+        if listener_db.load_balancer_id is None:
+            #Just delete the db entry and return.
+            super(LoadBalancerPluginv2, self).delete_listener(context, id)
+        else:
+            self.update_status(
+                context,
+                ldbv2.Listener,
+                id, constants.PENDING_DELETE)
+            #TODO(call driver.listener.delete())
+        return
+
+    def get_listener(self, context, id, fields=None):
+        listener_db = super(LoadBalancerPluginv2, self).get_listener(
+            context, id, fields)
+        return self._fields(listener_db.to_dict(), fields)
+
+    def get_listeners(self, context, filters=None, fields=None):
+        listeners = super(LoadBalancerPluginv2, self).get_listeners(
+            context, filters=filters, fields=fields)
+        listener_dicts = [self._fields(listener.to_dict(), fields)
+                          for listener in listeners]
+        return listener_dicts
+
+    def create_nodepool(self, context, nodepool):
+        nodepool = nodepool.get('nodepool')
+        db_pool = super(LoadBalancerPluginv2, self).create_nodepool(
+            context, nodepool)
+        #no need to call driver since on create it cannot be linked to a load
+        #balancer
+        return db_pool.to_dict()
+
+    def update_nodepool(self, context, id, nodepool):
+        nodepool = nodepool.get('nodepool')
+        old_nodepool = super(LoadBalancerPluginv2, self).get_nodepool(
+            context, id)
+        updated_nodepool = super(LoadBalancerPluginv2, self).update_nodepool(
+            context, id, nodepool)
+        if (updated_nodepool.listener and
+                updated_nodepool.listener.loadbalancer):
+            driver = self._get_driver_for_loadbalancer(
+                context, updated_nodepool.listener.loadbalancer_id)
+            #TODO(call driver.pool.update)
+        return updated_nodepool.to_dict()
+
+    def delete_nodepool(self, context, id):
+        pass
+
+    def get_nodepools(self, context, filters=None, fields=None):
+        pools = super(LoadBalancerPluginv2, self).get_nodepools(
+            context, filters=filters, fields=fields)
+        pool_dict = [self._fields(pool.to_dict(), fields) for pool in pools]
+        return pool_dict
+
+    def get_nodepool(self, context, id, fields=None):
+        pool_db = super(LoadBalancerPluginv2, self).get_nodepool(context,
+                                                                 id,
+                                                                 fields)
+        return self._fields(pool_db.to_dict(), fields)
+
+    def create_nodepool_member(self, context, member, nodepool_id):
+        member = member.get('member')
+        member_db = super(LoadBalancerPluginv2, self).create_nodepool_member(
+            context, member, nodepool_id)
+        if (member_db.pool and member_db.pool.listener and
+                member_db.pool.listener.loadbalancer):
+            driver = self._get_driver_for_loadbalancer(
+                context, member.pool.listener.loadbalancer_id)
+            #TODO(call driver.member.updat())
+        return member_db.to_dict()
+
+    def update_nodepool_member(self, context, member, id, nodepool_id):
+        member = member.get('member')
+        old_member = super(LoadBalancerPluginv2, self).get_nodepool(
+            context, id)
+        updated_member = super(LoadBalancerPluginv2,
+                               self).update_nodepool_member(context, id,
+                                                            member,
+                                                            nodepool_id)
+        if (updated_member.pool and updated_member.pool.listener and
+                updated_member.pool.listener.loadbalancer):
+            driver = self._get_driver_for_loadbalancer(
+                context, updated_member.pool.listener.loadbalancer_id)
+            #TODO(call driver.member.update)
+
+    def delete_nodepool_member(self, context, id, nodepool_id):
+        pass
+
+    def get_nodepool_members(self, context, nodepool_id, filters=None,
+                             fields=None):
+        members = super(LoadBalancerPluginv2, self).get_nodepool_members(
+            context, nodepool_id, filters=filters, fields=fields)
+        member_dict = [self._fields(member.to_dict(), fields)
+                       for member in members]
+        return member_dict
+
+    def get_nodepool_member(self, context, id, nodepool_id, filters=None,
+                            fields=None):
+        member = super(LoadBalancerPluginv2, self).get_nodepool_member(
+            context, id, nodepool_id, filters=filters, fields=fields)
+        return member.to_dict()
+
+    def get_member(self, context, id, fields=None):
+        pass
+
+    def get_members(self, context, filters=None, fields=None):
+        pass
+
+    def create_healthmonitor(self, context, healthmonitor):
+        healthmonitor = healthmonitor.get('healthmonitor')
+        hm = super(LoadBalancerPluginv2, self).create_healthmonitor(
+            context, healthmonitor)
+        return hm.to_dict()
+
+    def update_healthmonitor(self, context, id, healthmonitor):
+        old_hm = super(LoadBalancerPluginv2, self).get_healthmonitor(
+            context, id)
+        healthmonitor = healthmonitor.get('healthmonitor')
+        updated_hm = super(LoadBalancerPluginv2, self).update_healthmonitor(
+            context, id, healthmonitor)
+        #TODO(driver.healthmonitor.update())
+        return updated_hm.to_dict()
+
+    def delete_healthmonitor(self, context, id):
+        super(LoadBalancerPluginv2, self).delete_healthmonitor(
+            context, id)
+        #TODO(driver implementation may want to do some more processing)
+        #driver.healthmonitor.update()
+        #TODO(Note that we don't want any db access within the driver)
+
+    def get_healthmonitor(self, context, id, fields=None):
+        hm_db = super(LoadBalancerPluginv2, self).get_healthmonitor(
+            context, id, fields)
+        return self._fields(hm_db.to_dict(), fields)
+
+    def get_healthmonitors(self, context, filters=None, fields=None):
+        healthmonitors = super(LoadBalancerPluginv2, self).get_healthmonitors(
+            context, filters=filters, fields=fields)
+        hm_dicts = [self._fields(healthmonitor.to_dict(), fields)
+                    for healthmonitor in healthmonitors]
+        return hm_dicts
+
+    def stats(self, context, loadbalancer_id):
+        driver = self._get_driver_for_loadbalancer(context, loadbalancer_id)
+        #TODO(get stats from driver)
+        stats_data = None
+        # stats_data = driver.stats(context, loadbalancer_id)
+        # if we get something from the driver -
+        # update the db and return the value from db
+        # else - return what we have in db
+        if stats_data:
+            super(LoadBalancerPluginv2, self).update_loadbalancer_stats(
+                context,
+                loadbalancer_id,
+                stats_data
+            )
+        db_stats = super(LoadBalancerPluginv2, self).stats(context,
+                                                           loadbalancer_id)
+        return db_stats.to_dict()
