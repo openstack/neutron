@@ -19,6 +19,7 @@ import contextlib
 import mock
 import webob.exc
 
+from neutron import context as neutron_context
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.bigswitch import servermanager
@@ -109,6 +110,27 @@ class TestBigSwitchMechDriverPortsV2(test_db_plugin.TestPortsV2,
                 )
             ])
         self.spawn_p.start()
+
+    def test_udpate404_triggers_background_sync(self):
+        with contextlib.nested(
+            mock.patch(SERVER_POOL + '.rest_update_port',
+                       side_effect=servermanager.RemoteRestError(
+                           reason=servermanager.NXNETWORK, status=404)),
+            mock.patch(DRIVER + '._send_all_data'),
+            self.port()
+        ) as (mock_update, mock_send_all, p):
+            plugin = manager.NeutronManager.get_plugin()
+            context = neutron_context.get_admin_context()
+            plugin.update_port(context, p['port']['id'],
+                               {'port': {'device_id': 'devid',
+                                         'binding:host_id': 'host'}})
+            mock_send_all.assert_has_calls([
+                mock.call(
+                    send_routers=False, send_ports=True,
+                    send_floating_ips=False,
+                    triggered_by_tenant=p['port']['tenant_id']
+                )
+            ])
 
     def test_backend_request_contents(self):
         with contextlib.nested(

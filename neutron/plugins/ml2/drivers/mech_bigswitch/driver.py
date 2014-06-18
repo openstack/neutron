@@ -18,12 +18,14 @@
 # @author: Sumit Naiksatam, sumitnaiksatam@gmail.com, Big Switch Networks, Inc.
 # @author: Kevin Benton, Big Switch Networks, Inc.
 import copy
+import httplib
 
 import eventlet
 from oslo.config import cfg
 
 from neutron import context as ctx
 from neutron.extensions import portbindings
+from neutron.openstack.common import excutils
 from neutron.openstack.common import log
 from neutron.plugins.bigswitch import config as pl_config
 from neutron.plugins.bigswitch import plugin
@@ -84,8 +86,24 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
         # update port on the network controller
         port = self._prepare_port_for_controller(context)
         if port:
-            self.servers.rest_update_port(port["network"]["tenant_id"],
-                                          port["network"]["id"], port)
+            try:
+                self.servers.rest_update_port(port["network"]["tenant_id"],
+                                              port["network"]["id"], port)
+            except servermanager.RemoteRestError as e:
+                with excutils.save_and_reraise_exception() as ctxt:
+                    if (cfg.CONF.RESTPROXY.auto_sync_on_failure and
+                        e.status == httplib.NOT_FOUND and
+                        servermanager.NXNETWORK in e.reason):
+                        ctxt.reraise = False
+                        LOG.error(_("Iconsistency with backend controller "
+                                    "triggering full synchronization."))
+                        topoargs = self.servers.get_topo_function_args
+                        self._send_all_data(
+                            send_ports=topoargs['get_ports'],
+                            send_floating_ips=topoargs['get_floating_ips'],
+                            send_routers=topoargs['get_routers'],
+                            triggered_by_tenant=port["network"]["tenant_id"]
+                        )
 
     def delete_port_postcommit(self, context):
         # delete port on the network controller
