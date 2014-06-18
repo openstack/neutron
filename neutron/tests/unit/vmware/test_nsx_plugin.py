@@ -483,6 +483,19 @@ class L3NatTest(test_l3_plugin.L3BaseForIntTests, NsxPluginV2TestCase):
                                       pnet.PHYSICAL_NETWORK,
                                       pnet.SEGMENTATION_ID))
 
+    #REVISIT: remove the following skips if external IP spec support is added
+    def test_router_create_with_gwinfo_ext_ip(self):
+        raise self.skipException('External IP specification unsupported')
+
+    def test_router_create_with_gwinfo_ext_ip_non_admin(self):
+        raise self.skipException('External IP specification unsupported')
+
+    def test_router_update_gateway_with_different_external_subnet(self):
+        raise self.skipException('External IP specification unsupported')
+
+    def test_router_create_with_gwinfo_ext_ip_subnet(self):
+        raise self.skipException('External IP specification unsupported')
+
 
 class TestL3NatTestCase(L3NatTest,
                         test_l3_plugin.L3NatDBIntTestCase,

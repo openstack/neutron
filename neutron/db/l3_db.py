@@ -265,13 +265,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
 
         return candidates
 
-    def _create_router_gw_port(self, context, router, network_id):
+    def _create_router_gw_port(self, context, router, network_id, ext_ips):
+        if ext_ips and len(ext_ips) > 1:
+            msg = _("Routers support only 1 external IP")
+            raise n_exc.BadRequest(resource='router', msg=msg)
         # Port has no 'tenant-id', as it is hidden from user
         gw_port = self._core_plugin.create_port(context.elevated(), {
             'port': {'tenant_id': '',  # intentionally not set
                      'network_id': network_id,
                      'mac_address': attributes.ATTR_NOT_SPECIFIED,
-                     'fixed_ips': attributes.ATTR_NOT_SPECIFIED,
+                     'fixed_ips': ext_ips or attributes.ATTR_NOT_SPECIFIED,
                      'device_id': router['id'],
                      'device_owner': DEVICE_OWNER_ROUTER_GW,
                      'admin_state_up': True,
@@ -295,40 +298,57 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
             context.session.add(router)
             context.session.add(router_port)
 
-    def _validate_gw_info(self, context, gw_port, info):
+    def _validate_gw_info(self, context, gw_port, info, ext_ips):
         network_id = info['network_id'] if info else None
         if network_id:
             network_db = self._core_plugin._get_network(context, network_id)
             if not network_db.external:
                 msg = _("Network %s is not an external network") % network_id
                 raise n_exc.BadRequest(resource='router', msg=msg)
+            if ext_ips:
+                subnets = self._core_plugin._get_subnets_by_network(context,
+                                                                    network_id)
+                for s in subnets:
+                    if not s['gateway_ip']:
+                        continue
+                    for ext_ip in ext_ips:
+                        if ext_ip.get('ip_address') == s['gateway_ip']:
+                            msg = _("External IP %s is the same as the "
+                                    "gateway IP") % ext_ip.get('ip_address')
+                            raise n_exc.BadRequest(resource='router', msg=msg)
         return network_id
 
-    def _delete_current_gw_port(self, context, router_id, router, new_network):
-        """Delete gw port, if it is attached to an old network."""
-        is_gw_port_attached_to_existing_network = (
-            router.gw_port and router.gw_port['network_id'] != new_network)
+    def _delete_current_gw_port(self, context, router_id, router, new_network,
+                                ext_ip_change):
+        """Delete gw port if attached to an old network or IPs changed."""
+        port_requires_deletion = (
+            router.gw_port and
+            (router.gw_port['network_id'] != new_network or ext_ip_change)
+        )
+        if not port_requires_deletion:
+            return
         admin_ctx = context.elevated()
-        if is_gw_port_attached_to_existing_network:
-            if self.get_floatingips_count(
-                admin_ctx, {'router_id': [router_id]}):
-                raise l3.RouterExternalGatewayInUseByFloatingIp(
-                    router_id=router_id, net_id=router.gw_port['network_id'])
-            with context.session.begin(subtransactions=True):
-                gw_port = router.gw_port
-                router.gw_port = None
-                context.session.add(router)
-                context.session.expire(gw_port)
-                vpnservice = manager.NeutronManager.get_service_plugins().get(
-                    constants.VPN)
-                if vpnservice:
-                    vpnservice.check_router_in_use(context, router_id)
-            self._core_plugin.delete_port(
-                admin_ctx, gw_port['id'], l3_port_check=False)
 
-    def _create_gw_port(self, context, router_id, router, new_network):
+        if self.get_floatingips_count(
+            admin_ctx, {'router_id': [router_id]}):
+            raise l3.RouterExternalGatewayInUseByFloatingIp(
+                router_id=router_id, net_id=router.gw_port['network_id'])
+        with context.session.begin(subtransactions=True):
+            gw_port = router.gw_port
+            router.gw_port = None
+            context.session.add(router)
+            context.session.expire(gw_port)
+            vpnservice = manager.NeutronManager.get_service_plugins().get(
+                constants.VPN)
+            if vpnservice:
+                vpnservice.check_router_in_use(context, router_id)
+        self._core_plugin.delete_port(
+            admin_ctx, gw_port['id'], l3_port_check=False)
+
+    def _create_gw_port(self, context, router_id, router, new_network,
+                        ext_ips, ext_ip_change):
         new_valid_gw_port_attachment = (
-            new_network and (not router.gw_port or
+            new_network and (not router.gw_port or ext_ip_change or
                              router.gw_port['network_id'] != new_network))
         if new_valid_gw_port_attachment:
             subnets = self._core_plugin._get_subnets_by_network(context,
@@ -337,7 +357,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
                 self._check_for_dup_router_subnet(context, router,
                                                   new_network, subnet['id'],
                                                   subnet['cidr'])
-            self._create_router_gw_port(context, router, new_network)
+            self._create_router_gw_port(context, router, new_network, ext_ips)
 
     def _update_router_gw_info(self, context, router_id, info, router=None):
         # TODO(salvatore-orlando): guarantee atomic behavior also across
@@ -345,9 +365,34 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase):
         # class (e.g.: delete_port)
         router = router or self._get_router(context, router_id)
         gw_port = router.gw_port
-        network_id = self._validate_gw_info(context, gw_port, info)
-        self._delete_current_gw_port(context, router_id, router, network_id)
-        self._create_gw_port(context, router_id, router, network_id)
+        ext_ips = info.get('external_fixed_ips') if info else []
+        ext_ip_change = self._check_for_external_ip_change(
+            context, gw_port, ext_ips)
+        network_id = self._validate_gw_info(context, gw_port, info, ext_ips)
+        self._delete_current_gw_port(context, router_id, router, network_id,
+                                     ext_ip_change)
+        self._create_gw_port(context, router_id, router, network_id, ext_ips,
+                             ext_ip_change)
+
+    def _check_for_external_ip_change(self, context, gw_port, ext_ips):
+        # determine if new external IPs differ from the existing fixed_ips
+        if not ext_ips:
+            # no external_fixed_ips were included
+            return False
+        if not gw_port:
+            return True
+
+        subnet_ids = set(ip['subnet_id'] for ip in gw_port['fixed_ips'])
+        new_subnet_ids = set(f['subnet_id'] for f in ext_ips
+                             if f.get('subnet_id'))
+        subnet_change = not new_subnet_ids == subnet_ids
+        if subnet_change:
+            return True
+        ip_addresses = set(ip['ip_address'] for ip in gw_port['fixed_ips'])
+        new_ip_addresses = set(f['ip_address'] for f in ext_ips
+                               if f.get('ip_address'))
+        ip_address_change = not ip_addresses == new_ip_addresses
+        return ip_address_change
 
     def _ensure_router_not_in_use(self, context, router_id):
         admin_ctx = context.elevated()
