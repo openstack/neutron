@@ -1502,8 +1502,8 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
                             u'ipsec_site_connections': {
                                 u'1': {u'status': constants.ACTIVE,
                                        u'updated_pending_status': True},
-                            u'2': {u'status': constants.DOWN,
-                                   u'updated_pending_status': True}}
+                                u'2': {u'status': constants.DOWN,
+                                       u'updated_pending_status': True}}
                             },
                            {u'id': u'456',
                             u'updated_pending_status': True,
