@@ -141,6 +141,7 @@ class OVSNeutronAgent(rpc_compat.RpcCallback,
                the agent. If set, will automatically set enable_tunneling to
                True.
         :param veth_mtu: MTU size for veth interfaces.
+        :param l2_population: Optional, whether L2 population is turned on
         :param minimize_polling: Optional, whether to minimize polling by
                monitoring ovsdb for interface changes.
         :param ovsdb_monitor_respawn_interval: Optional, when using polling
