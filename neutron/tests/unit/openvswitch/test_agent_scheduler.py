@@ -1040,7 +1040,6 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             agent.RESOURCE_ATTRIBUTE_MAP)
-        self.addCleanup(self.dhcp_notifier_cls_p.stop)
         self.addCleanup(self.restore_attribute_map)
 
     def restore_attribute_map(self):
@@ -1190,7 +1189,6 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             agent.RESOURCE_ATTRIBUTE_MAP)
-        self.addCleanup(self.dhcp_notifier_cls_p.stop)
         self.addCleanup(self.restore_attribute_map)
 
     def restore_attribute_map(self):
