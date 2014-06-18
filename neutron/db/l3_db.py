@@ -81,12 +81,21 @@ class FloatingIP(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 class L3_NAT_db_mixin(l3.RouterPluginBase):
     """Mixin class to add L3/NAT router methods to db_base_plugin_v2."""
 
-    l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotify
     router_device_owners = (
         DEVICE_OWNER_ROUTER_INTF,
         DEVICE_OWNER_ROUTER_GW,
         DEVICE_OWNER_FLOATINGIP
     )
+
+    @property
+    def l3_rpc_notifier(self):
+        if not hasattr(self, '_l3_rpc_notifier'):
+            self._l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
+        return self._l3_rpc_notifier
+
+    @l3_rpc_notifier.setter
+    def l3_rpc_notifier(self, value):
+        self._l3_rpc_notifier = value
 
     @property
     def _core_plugin(self):

@@ -84,5 +84,3 @@ class L2populationAgentNotifyAPI(rpc_compat.RpcProxy):
             else:
                 self._notification_fanout(context, 'update_fdb_entries',
                                           fdb_entries)
-
-L2populationAgentNotify = L2populationAgentNotifyAPI()

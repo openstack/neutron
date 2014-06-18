@@ -131,7 +131,7 @@ class MellanoxEswitchPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
         self.agent_notifiers[q_const.AGENT_TYPE_L3] = (
-            l3_rpc_agent_api.L3AgentNotify
+            l3_rpc_agent_api.L3AgentNotifyAPI()
         )
 
     def _parse_network_config(self):
