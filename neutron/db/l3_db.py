@@ -877,7 +877,14 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                           {'port_id': port_db['id'],
                            'port_owner': port_db['device_owner']})
 
-    def disassociate_floatingips(self, context, port_id):
+    def disassociate_floatingips(self, context, port_id, do_notify=True):
+        """Disassociate all floating IPs linked to specific port.
+
+        @param port_id: ID of the port to disassociate floating IPs.
+        @param do_notify: whether we should notify routers right away.
+        @return: set of router-ids that require notification updates
+                 if do_notify is False, otherwise None.
+        """
         router_ids = set()
 
         with context.session.begin(subtransactions=True):
@@ -888,7 +895,15 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                 floating_ip.update({'fixed_port_id': None,
                                     'fixed_ip_address': None,
                                     'router_id': None})
+        if do_notify:
+            self.notify_routers_updated(context, router_ids)
+            # since caller assumes that we handled notifications on its
+            # behalf, return nothing
+            return
 
+        return router_ids
+
+    def notify_routers_updated(self, context, router_ids):
         if router_ids:
             self.l3_rpc_notifier.routers_updated(
                 context, list(router_ids),
