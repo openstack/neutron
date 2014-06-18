@@ -41,12 +41,16 @@ class Notifier(object):
     def __init__(self):
         # TODO(arosen): we need to cache the endpoints and figure out
         # how to deal with different regions here....
-        bypass_url = "%s/%s" % (cfg.CONF.nova_url,
-                                cfg.CONF.nova_admin_tenant_id)
+        if cfg.CONF.nova_admin_tenant_id:
+            bypass_url = "%s/%s" % (cfg.CONF.nova_url,
+                                    cfg.CONF.nova_admin_tenant_id)
+        else:
+            bypass_url = None
+
         self.nclient = nclient.Client(
             username=cfg.CONF.nova_admin_username,
             api_key=cfg.CONF.nova_admin_password,
-            project_id=None,
+            project_id=cfg.CONF.nova_admin_tenant_name,
             tenant_id=cfg.CONF.nova_admin_tenant_id,
             auth_url=cfg.CONF.nova_admin_auth_url,
             cacert=cfg.CONF.nova_ca_certificates_file,
