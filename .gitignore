@@ -25,3 +25,4 @@ subunit.log
 .venv/
 *.mo
 *.sw?
+*~
