@@ -218,14 +218,15 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             socket.recv.return_value = raw_stats
 
             exp_stats = {'connection_errors': '0',
-                         'active_connections': '1',
+                         'active_connections': '3',
                          'current_sessions': '3',
                          'bytes_in': '7764',
-                         'max_connections': '2',
+                         'max_connections': '4',
                          'max_sessions': '4',
                          'bytes_out': '2365',
                          'response_errors': '0',
                          'total_sessions': '10',
+                         'total_connections': '10',
                          'members': {
                              '32a6c2a3-420a-44c3-955d-86bd2fc6871e': {
                                  'status': 'ACTIVE',
