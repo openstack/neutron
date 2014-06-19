@@ -227,6 +227,13 @@ class TestQoSQueue(NsxPluginV2TestCase):
         res = self._create_qos_queue('json', body)
         self.assertEqual(res.status_int, 400)
 
+    def test_dscp_value_with_qos_marking_trusted_returns_400(self):
+        body = {'qos_queue': {'tenant_id': 'admin', 'dscp': '1',
+                              'qos_marking': 'trusted',
+                              'name': 'foo', 'min': 20, 'max': 20}}
+        res = self._create_qos_queue('json', body)
+        self.assertEqual(res.status_int, 400)
+
     def test_non_admin_cannot_create_queue(self):
         body = {'qos_queue': {'tenant_id': 'not_admin',
                               'name': 'foo', 'min': 20, 'max': 20}}
