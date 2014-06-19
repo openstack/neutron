@@ -1,4 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
 # Copyright 2012 Isaku Yamahata <yamahata at private email ne jp>
 # All Rights Reserved.
 #
