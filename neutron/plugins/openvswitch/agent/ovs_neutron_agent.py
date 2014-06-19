@@ -195,7 +195,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         self.int_br = ovs_lib.OVSBridge(integ_br, self.root_helper)
         self.setup_integration_br()
-        self.int_br.set_secure_mode()
         # Stores port update notifications for processing in main rpc loop
         self.updated_ports = set()
         self.setup_rpc()
@@ -663,6 +662,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         #   ovs-vsctl -- --may-exist add-br BRIDGE_NAME
         # which does nothing if bridge already exists.
         self.int_br.create()
+        self.int_br.set_secure_mode()
 
         self.int_br.delete_port(cfg.CONF.OVS.int_peer_patch_port)
         self.int_br.remove_all_flows()
@@ -1249,6 +1249,13 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 ancillary_ports.clear()
                 sync = False
                 polling_manager.force_polling()
+            ovs_restarted = self.check_ovs_restart()
+            if ovs_restarted:
+                self.setup_integration_br()
+                self.setup_physical_bridges(self.bridge_mappings)
+                if self.enable_tunneling:
+                    self.setup_tunnel_br()
+                    tunnel_sync = True
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
                 LOG.info(_("Agent tunnel out of sync with plugin!"))
@@ -1257,12 +1264,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 except Exception:
                     LOG.exception(_("Error while synchronizing tunnels"))
                     tunnel_sync = True
-            ovs_restarted = self.check_ovs_restart()
-            if ovs_restarted:
-                self.setup_integration_br()
-                self.setup_physical_bridges(self.bridge_mappings)
-                if self.enable_tunneling:
-                    self.setup_tunnel_br()
             if self._agent_has_updates(polling_manager) or ovs_restarted:
                 try:
                     LOG.debug(_("Agent rpc_loop - iteration:%(iter_num)d - "
