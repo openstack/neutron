@@ -15,11 +15,16 @@
 
 from oslo.config import cfg
 
+from neutron import context
 from neutron.extensions import portbindings
+from neutron.extensions import securitygroup as ext_sg
+from neutron.plugins.openvswitch import ovs_neutron_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_extension_allowedaddresspairs as test_pair
 from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
+
+import mock
 
 
 class OpenvswitchPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
@@ -86,3 +91,69 @@ class TestOpenvswitchPortBindingHost(
 class TestOpenvswitchAllowedAddressPairs(OpenvswitchPluginV2TestCase,
                                          test_pair.TestAllowedAddressPairs):
     pass
+
+
+class TestOpenvswitchUpdatePort(OpenvswitchPluginV2TestCase,
+                                ovs_neutron_plugin.OVSNeutronPluginV2):
+
+    def test_update_port_add_remove_security_group(self):
+        get_port_func = (
+            'neutron.db.db_base_plugin_v2.'
+            'NeutronDbPluginV2.get_port'
+        )
+        with mock.patch(get_port_func) as mock_get_port:
+            mock_get_port.return_value = {
+                ext_sg.SECURITYGROUPS: ["sg1", "sg2"],
+                "admin_state_up": True,
+                "fixed_ips": "fake_ip",
+                "network_id": "fake_id"}
+
+            update_port_func = (
+                'neutron.db.db_base_plugin_v2.'
+                'NeutronDbPluginV2.update_port'
+            )
+            with mock.patch(update_port_func) as mock_update_port:
+                mock_update_port.return_value = {
+                    ext_sg.SECURITYGROUPS: ["sg2", "sg3"],
+                    "admin_state_up": True,
+                    "fixed_ips": "fake_ip",
+                    "network_id": "fake_id"}
+
+                fake_func = (
+                    'neutron.plugins.openvswitch.'
+                    'ovs_db_v2.get_network_binding'
+                )
+                with mock.patch(fake_func) as mock_func:
+                    class MockBinding:
+                        network_type = "fake"
+                        segmentation_id = "fake"
+                        physical_network = "fake"
+
+                    mock_func.return_value = MockBinding()
+
+                    ctx = context.Context('', 'somebody')
+                    self.update_port(ctx, "id", {
+                        "port": {
+                            ext_sg.SECURITYGROUPS: [
+                                "sg2", "sg3"]}})
+
+                    sgmu = self.notifier.security_groups_member_updated
+                    sgmu.assert_called_with(ctx, set(['sg1', 'sg3']))
+
+    def setUp(self):
+        super(TestOpenvswitchUpdatePort, self).setUp()
+        self.update_security_group_on_port = mock.MagicMock(return_value=True)
+        self._process_portbindings_create_and_update = mock.MagicMock(
+            return_value=True)
+        self._update_extra_dhcp_opts_on_port = mock.MagicMock(
+            return_value=True)
+        self.update_address_pairs_on_port = mock.MagicMock(
+            return_value=True)
+
+        class MockNotifier:
+            def __init__(self):
+                self.port_update = mock.MagicMock(return_value=True)
+                self.security_groups_member_updated = mock.MagicMock(
+                    return_value=True)
+
+        self.notifier = MockNotifier()
