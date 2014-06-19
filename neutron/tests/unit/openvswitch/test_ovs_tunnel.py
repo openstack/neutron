@@ -107,12 +107,12 @@ class TunnelTest(base.BaseTestCase):
         self.mock_int_bridge = self.ovs_bridges[self.INT_BRIDGE]
         self.mock_int_bridge_expected = [
             mock.call.create(),
+            mock.call.set_secure_mode(),
             mock.call.delete_port('patch-tun'),
             mock.call.remove_all_flows(),
             mock.call.add_flow(priority=1, actions='normal'),
             mock.call.add_flow(priority=0, table=constants.CANARY_TABLE,
                                actions='drop'),
-            mock.call.set_secure_mode(),
         ]
 
         self.mock_map_tun_bridge = self.ovs_bridges[self.MAP_TUN_BRIDGE]
