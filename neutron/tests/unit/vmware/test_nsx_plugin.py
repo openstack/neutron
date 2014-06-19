@@ -958,23 +958,28 @@ class TestL3NatTestCase(L3NatTest,
         with self.port() as p:
             private_sub = {'subnet': {'id':
                                       p['port']['fixed_ips'][0]['subnet_id']}}
-            with self.floatingip_no_assoc(private_sub) as fip:
-                port_id = p['port']['id']
-                body = self._update('floatingips', fip['floatingip']['id'],
-                                    {'floatingip': {'port_id': port_id}})
-                self.assertEqual(body['floatingip']['port_id'], port_id)
-                # Floating IP status should be active
-                self.assertEqual(constants.FLOATINGIP_STATUS_ACTIVE,
-                                 body['floatingip']['status'])
-                # Disassociate
-                body = self._update('floatingips', fip['floatingip']['id'],
-                                    {'floatingip': {'port_id': None}})
-                body = self._show('floatingips', fip['floatingip']['id'])
-                self.assertIsNone(body['floatingip']['port_id'])
-                self.assertIsNone(body['floatingip']['fixed_ip_address'])
-                # Floating IP status should be down
-                self.assertEqual(constants.FLOATINGIP_STATUS_DOWN,
-                                 body['floatingip']['status'])
+            plugin = manager.NeutronManager.get_plugin()
+            with mock.patch.object(plugin, 'notify_routers_updated') as notify:
+                with self.floatingip_no_assoc(private_sub) as fip:
+                    port_id = p['port']['id']
+                    body = self._update('floatingips', fip['floatingip']['id'],
+                                        {'floatingip': {'port_id': port_id}})
+                    self.assertEqual(body['floatingip']['port_id'], port_id)
+                    # Floating IP status should be active
+                    self.assertEqual(constants.FLOATINGIP_STATUS_ACTIVE,
+                                     body['floatingip']['status'])
+                    # Disassociate
+                    body = self._update('floatingips', fip['floatingip']['id'],
+                                        {'floatingip': {'port_id': None}})
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertIsNone(body['floatingip']['port_id'])
+                    self.assertIsNone(body['floatingip']['fixed_ip_address'])
+                    # Floating IP status should be down
+                    self.assertEqual(constants.FLOATINGIP_STATUS_DOWN,
+                                     body['floatingip']['status'])
+
+                # check that notification was not requested
+                self.assertFalse(notify.called)
 
     def test_create_router_maintenance_returns_503(self):
         with self._create_l3_ext_network() as net:
