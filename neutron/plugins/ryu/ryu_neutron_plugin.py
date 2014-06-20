@@ -147,7 +147,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         for svc_topic in self.service_topics.values():
             self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
-        self.conn.consume_in_thread()
+        self.conn.consume_in_threads()
 
     def _create_all_tenant_network(self):
         for net in db_api_v2.network_all_tenant_list():

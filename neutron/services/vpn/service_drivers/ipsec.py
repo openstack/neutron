@@ -79,7 +79,7 @@ class IPsecVPNDriver(service_drivers.VpnDriver):
             topics.IPSEC_DRIVER_TOPIC,
             self.callbacks.create_rpc_dispatcher(),
             fanout=False)
-        self.conn.consume_in_thread()
+        self.conn.consume_in_threads()
         self.agent_rpc = IPsecVpnAgentApi(
             topics.IPSEC_AGENT_TOPIC, BASE_IPSEC_VERSION)
 

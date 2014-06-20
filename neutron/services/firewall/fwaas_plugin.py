@@ -172,7 +172,7 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
             topics.FIREWALL_PLUGIN,
             self.callbacks.create_rpc_dispatcher(),
             fanout=False)
-        self.conn.consume_in_thread()
+        self.conn.consume_in_threads()
 
         self.agent_rpc = FirewallAgentApi(
             topics.L3_AGENT,

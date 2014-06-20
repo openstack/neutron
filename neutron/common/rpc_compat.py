@@ -123,8 +123,8 @@ class Service(service.Service):
         if callable(getattr(self.manager, 'initialize_service_hook', None)):
             self.manager.initialize_service_hook(self)
 
-        # Consume from all consumers in a thread
-        self.conn.consume_in_thread()
+        # Consume from all consumers in threads
+        self.conn.consume_in_threads()
 
     def stop(self):
         # Try to shut the connection down, but if we get any sort of
@@ -148,7 +148,7 @@ class Connection(object):
         server = n_rpc.get_server(target, proxy)
         self.servers.append(server)
 
-    def consume_in_thread(self):
+    def consume_in_threads(self):
         for server in self.servers:
             server.start()
         return self.servers

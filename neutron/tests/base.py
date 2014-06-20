@@ -172,7 +172,7 @@ class BaseTestCase(testtools.TestCase):
 
         # don't actually start RPC listeners when testing
         self.useFixture(fixtures.MonkeyPatch(
-            'neutron.common.rpc_compat.Connection.consume_in_thread',
+            'neutron.common.rpc_compat.Connection.consume_in_threads',
             fake_consume_in_threads))
 
         self.useFixture(fixtures.MonkeyPatch(

@@ -88,7 +88,7 @@ class AgentRPCMethods(base.BaseTestCase):
             mock.call(new=True),
             mock.call().create_consumer('foo-topic-op', dispatcher,
                                         fanout=True),
-            mock.call().consume_in_thread()
+            mock.call().consume_in_threads()
         ]
 
         call_to_patch = 'neutron.common.rpc_compat.create_connection'
@@ -104,7 +104,7 @@ class AgentRPCMethods(base.BaseTestCase):
                                         fanout=True),
             mock.call().create_consumer('foo-topic-op.node1', dispatcher,
                                         fanout=False),
-            mock.call().consume_in_thread()
+            mock.call().consume_in_threads()
         ]
 
         call_to_patch = 'neutron.common.rpc_compat.create_connection'

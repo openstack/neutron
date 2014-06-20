@@ -144,8 +144,8 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
-        # Consume from all consumers in a thread
-        self.conn.consume_in_thread()
+        # Consume from all consumers in threads
+        self.conn.consume_in_threads()
 
     def _update_base_binding_dict(self, tenant_type):
         if tenant_type == constants.TENANT_TYPE_OVERLAY:

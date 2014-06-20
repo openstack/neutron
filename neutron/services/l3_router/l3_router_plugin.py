@@ -80,7 +80,7 @@ class L3RouterPlugin(db_base_plugin_v2.CommonDbMixin,
         self.dispatcher = self.callbacks.create_rpc_dispatcher()
         self.conn.create_consumer(self.topic, self.dispatcher,
                                   fanout=False)
-        self.conn.consume_in_thread()
+        self.conn.consume_in_threads()
 
     def get_plugin_type(self):
         return constants.L3_ROUTER_NAT
