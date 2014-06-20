@@ -230,6 +230,13 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
         else:
             return '%d:%d' % (min_port, max_port)
 
+    def _validate_fwr_protocol_parameters(self, fwr):
+        protocol = fwr['protocol']
+        if protocol not in (const.TCP, const.UDP):
+            if fwr['source_port'] or fwr['destination_port']:
+                raise firewall.FirewallRuleInvalidICMPParameter(
+                    param="Source, destination port")
+
     def create_firewall(self, context, firewall):
         LOG.debug(_("create_firewall() called"))
         fw = firewall['firewall']
@@ -341,6 +348,7 @@ class Firewall_db_mixin(firewall.FirewallPluginBase, base_db.CommonDbMixin):
     def create_firewall_rule(self, context, firewall_rule):
         LOG.debug(_("create_firewall_rule() called"))
         fwr = firewall_rule['firewall_rule']
+        self._validate_fwr_protocol_parameters(fwr)
         tenant_id = self._get_tenant_id_for_create(context, fwr)
         src_port_min, src_port_max = self._get_min_max_ports_from_range(
             fwr['source_port'])
