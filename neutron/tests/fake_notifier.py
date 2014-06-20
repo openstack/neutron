@@ -30,7 +30,9 @@ FakeMessage = collections.namedtuple('Message',
 
 class FakeNotifier(object):
 
-    def __init__(self, transport, publisher_id=None):
+    def __init__(self, transport, publisher_id=None,
+                 driver=None, topic=None,
+                 serializer=None, retry=None):
         self.transport = transport
         self.publisher_id = publisher_id
         for priority in ('debug', 'info', 'warn', 'error', 'critical'):

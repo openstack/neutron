@@ -54,7 +54,8 @@ def init(conf):
     TRANSPORT = messaging.get_transport(conf,
                                         allowed_remote_exmods=exmods,
                                         aliases=TRANSPORT_ALIASES)
-    NOTIFIER = messaging.Notifier(TRANSPORT)
+    serializer = RequestContextSerializer()
+    NOTIFIER = messaging.Notifier(TRANSPORT, serializer=serializer)
 
 
 def cleanup():
@@ -79,7 +80,7 @@ def get_allowed_exmods():
 
 def get_client(target, version_cap=None, serializer=None):
     assert TRANSPORT is not None
-    serializer = PluginRpcSerializer(serializer)
+    serializer = RequestContextSerializer(serializer)
     return messaging.RPCClient(TRANSPORT,
                                target,
                                version_cap=version_cap,
@@ -88,7 +89,7 @@ def get_client(target, version_cap=None, serializer=None):
 
 def get_server(target, endpoints, serializer=None):
     assert TRANSPORT is not None
-    serializer = PluginRpcSerializer(serializer)
+    serializer = RequestContextSerializer(serializer)
     return messaging.get_rpc_server(TRANSPORT,
                                     target,
                                     endpoints,
@@ -103,12 +104,12 @@ def get_notifier(service=None, host=None, publisher_id=None):
     return NOTIFIER.prepare(publisher_id=publisher_id)
 
 
-class PluginRpcSerializer(om_serializer.Serializer):
+class RequestContextSerializer(om_serializer.Serializer):
     """This serializer is used to convert RPC common context into
     Neutron Context.
     """
-    def __init__(self, base):
-        super(PluginRpcSerializer, self).__init__()
+    def __init__(self, base=None):
+        super(RequestContextSerializer, self).__init__()
         self._base = base
 
     def serialize_entity(self, ctxt, entity):
