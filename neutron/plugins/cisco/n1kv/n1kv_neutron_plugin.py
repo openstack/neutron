@@ -160,7 +160,7 @@ class N1kvNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         """Start a green thread to pull policy profiles from VSM."""
         while True:
             self._populate_policy_profiles()
-            eventlet.sleep(int(c_conf.CISCO_N1K.poll_duration))
+            eventlet.sleep(c_conf.CISCO_N1K.poll_duration)
 
     def _populate_policy_profiles(self):
         """
