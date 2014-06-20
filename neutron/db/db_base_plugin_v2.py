@@ -449,7 +449,14 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     msg = _('IP address %s is not a valid IP for the defined '
                             'subnet') % fixed['ip_address']
                     raise n_exc.InvalidInput(error_message=msg)
-
+                if self._check_if_subnet_uses_eui64(subnet):
+                    msg = (_("IPv6 address %(address)s can not be directly "
+                            "assigned to a port on subnet %(id)s with "
+                            "%(mode)s address mode") %
+                           {'address': fixed['ip_address'],
+                            'id': subnet_id,
+                            'mode': subnet['ipv6_address_mode']})
+                    raise n_exc.InvalidInput(error_message=msg)
                 fixed_ip_set.append({'subnet_id': subnet_id,
                                      'ip_address': fixed['ip_address']})
             else:
@@ -459,7 +466,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             raise n_exc.InvalidInput(error_message=msg)
         return fixed_ip_set
 
-    def _allocate_fixed_ips(self, context, fixed_ips):
+    def _allocate_fixed_ips(self, context, fixed_ips, mac_address):
         """Allocate IP addresses according to the configured fixed_ips."""
         ips = []
         for fixed in fixed_ips:
@@ -472,15 +479,24 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             # Only subnet ID is specified => need to generate IP
             # from subnet
             else:
-                subnets = [self._get_subnet(context, fixed['subnet_id'])]
-                # IP address allocation
-                result = self._generate_ip(context, subnets)
-                ips.append({'ip_address': result['ip_address'],
-                            'subnet_id': result['subnet_id']})
+                subnet = self._get_subnet(context, fixed['subnet_id'])
+                if (subnet['ip_version'] == 6 and
+                        self._check_if_subnet_uses_eui64(subnet)):
+                    prefix = subnet['cidr']
+                    ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
+                        prefix, mac_address)
+                    ips.append({'ip_address': ip_address.format(),
+                                'subnet_id': subnet['id']})
+                else:
+                    subnets = [subnet]
+                    # IP address allocation
+                    result = self._generate_ip(context, subnets)
+                    ips.append({'ip_address': result['ip_address'],
+                                'subnet_id': result['subnet_id']})
         return ips
 
     def _update_ips_for_port(self, context, network_id, port_id, original_ips,
-                             new_ips):
+                             new_ips, mac_address):
         """Add or remove IPs from the port."""
         ips = []
         # These ips are still on the port and haven't been removed
@@ -511,7 +527,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
 
         if to_add:
             LOG.debug(_("Port update. Adding %s"), to_add)
-            ips = self._allocate_fixed_ips(context, to_add)
+            ips = self._allocate_fixed_ips(context, to_add, mac_address)
         return ips, prev_ips
 
     def _allocate_ips_for_port(self, context, port):
@@ -529,7 +545,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
             configured_ips = self._test_fixed_ips_for_port(context,
                                                            p["network_id"],
                                                            p['fixed_ips'])
-            ips = self._allocate_fixed_ips(context, configured_ips)
+            ips = self._allocate_fixed_ips(context,
+                                           configured_ips,
+                                           p['mac_address'])
         else:
             filter = {'network_id': [p['network_id']]}
             subnets = self.get_subnets(context, filters=filter)
@@ -548,10 +566,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                     # subnet from the array of subnets that will be passed
                     # to the _generate_ip() function call, since we just
                     # generated an IP.
-                    mac = p['mac_address']
                     prefix = subnet['cidr']
                     ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
-                        prefix, mac)
+                        prefix, p['mac_address'])
                     if not self._check_unique_ip(
                         context, p['network_id'],
                         subnet['id'], ip_address.format()):
@@ -1377,8 +1394,9 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
                 changed_ips = True
                 original = self._make_port_dict(port, process_extensions=False)
                 added_ips, prev_ips = self._update_ips_for_port(
-                    context, port["network_id"], id, original["fixed_ips"],
-                    p['fixed_ips'])
+                    context, port["network_id"], id,
+                    original["fixed_ips"], p['fixed_ips'],
+                    original['mac_address'])
 
                 # Update ips if necessary
                 for ip in added_ips:
