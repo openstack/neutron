@@ -119,7 +119,7 @@ class RpcWorker(object):
         # existing sql connections avoids producing errors later when they are
         # discovered to be broken.
         session.get_engine().pool.dispose()
-        self._servers = self._plugin.start_rpc_listener()
+        self._servers = self._plugin.start_rpc_listeners()
 
     def wait(self):
         for server in self._servers:
@@ -136,14 +136,14 @@ class RpcWorker(object):
 def serve_rpc():
     plugin = manager.NeutronManager.get_plugin()
 
-    # If 0 < rpc_workers then start_rpc_listener would be called in a
+    # If 0 < rpc_workers then start_rpc_listeners would be called in a
     # subprocess and we cannot simply catch the NotImplementedError.  It is
     # simpler to check this up front by testing whether the plugin supports
     # multiple RPC workers.
     if not plugin.rpc_workers_supported():
-        LOG.debug(_("Active plugin doesn't implement start_rpc_listener"))
+        LOG.debug(_("Active plugin doesn't implement start_rpc_listeners"))
         if 0 < cfg.CONF.rpc_workers:
-            msg = _("'rpc_workers = %d' ignored because start_rpc_listener "
+            msg = _("'rpc_workers = %d' ignored because start_rpc_listeners "
                     "is not implemented.")
             LOG.error(msg, cfg.CONF.rpc_workers)
         raise NotImplementedError

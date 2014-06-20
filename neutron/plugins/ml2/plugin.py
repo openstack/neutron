@@ -125,7 +125,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
 
-    def start_rpc_listener(self):
+    def start_rpc_listeners(self):
         self.callbacks = rpc.RpcCallbacks(self.notifier, self.type_manager)
         self.topic = topics.PLUGIN
         self.conn = rpc_compat.create_connection(new=True)
