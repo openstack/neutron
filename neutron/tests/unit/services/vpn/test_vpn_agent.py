@@ -127,9 +127,9 @@ class TestVPNAgent(base.BaseTestCase):
         iptables = mock.Mock()
         ri.iptables_manager.ipv4['nat'] = iptables
         self.agent.router_info = {router_id: ri}
-        self.agent.remove_nat_rule(router_id, 'fake_chain', 'fake_rule')
+        self.agent.remove_nat_rule(router_id, 'fake_chain', 'fake_rule', True)
         iptables.remove_rule.assert_called_once_with(
-            'fake_chain', 'fake_rule')
+            'fake_chain', 'fake_rule', top=True)
 
     def test_remove_rule_with_no_router(self):
         self.agent.router_info = {}
