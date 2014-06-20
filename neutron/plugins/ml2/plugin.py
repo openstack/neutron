@@ -157,8 +157,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         raise exc.InvalidInput(error_message=msg)
 
     def _process_provider_create(self, network):
-        segments = []
-
         if any(attributes.is_attr_set(network.get(f))
                for f in (provider.NETWORK_TYPE, provider.PHYSICAL_NETWORK,
                          provider.SEGMENTATION_ID)):
@@ -175,12 +173,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             segments = [{provider.NETWORK_TYPE: network_type,
                          provider.PHYSICAL_NETWORK: physical_network,
                          provider.SEGMENTATION_ID: segmentation_id}]
+            return [self._process_provider_segment(s) for s in segments]
         elif attributes.is_attr_set(network.get(mpnet.SEGMENTS)):
-            segments = network[mpnet.SEGMENTS]
-        else:
-            return
-
-        return [self._process_provider_segment(s) for s in segments]
+            segments = [self._process_provider_segment(s)
+                        for s in network[mpnet.SEGMENTS]]
+            mpnet.check_duplicate_segments(
+                segments,
+                self.type_manager.is_partial_segment)
+            return segments
 
     def _get_attribute(self, attrs, key):
         value = attrs.get(key)

@@ -64,6 +64,14 @@ class TypeDriver(object):
         pass
 
     @abc.abstractmethod
+    def is_partial_segment(self, segment):
+        """Return True if segment is a partially specified segment.
+
+        :param segment: segment dictionary
+        :returns: boolean
+        """
+
+    @abc.abstractmethod
     def validate_provider_segment(self, segment):
         """Validate attributes of a provider network segment.
 

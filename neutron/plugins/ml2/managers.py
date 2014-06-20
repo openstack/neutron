@@ -73,6 +73,15 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             LOG.info(_("Initializing driver for type '%s'"), network_type)
             driver.obj.initialize()
 
+    def is_partial_segment(self, segment):
+        network_type = segment[api.NETWORK_TYPE]
+        driver = self.drivers.get(network_type)
+        if driver:
+            return driver.obj.is_partial_segment(segment)
+        else:
+            msg = _("network_type value '%s' not supported") % network_type
+            raise exc.InvalidInput(error_message=msg)
+
     def validate_provider_segment(self, segment):
         network_type = segment[api.NETWORK_TYPE]
         driver = self.drivers.get(network_type)

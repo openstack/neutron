@@ -745,10 +745,12 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                webob.exc.HTTPBadRequest})
 
     def _validate_provider_create(self, context, network):
-        if not attr.is_attr_set(network.get(mpnet.SEGMENTS)):
+        segments = network.get(mpnet.SEGMENTS)
+        if not attr.is_attr_set(segments):
             return
 
-        for segment in network[mpnet.SEGMENTS]:
+        mpnet.check_duplicate_segments(segments)
+        for segment in segments:
             network_type = segment.get(pnet.NETWORK_TYPE)
             physical_network = segment.get(pnet.PHYSICAL_NETWORK)
             segmentation_id = segment.get(pnet.SEGMENTATION_ID)

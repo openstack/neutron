@@ -326,7 +326,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         res = network_req.get_response(self.api)
         self.assertEqual(400, res.status_int)
 
-    def test_create_network_duplicate_segments(self):
+    def test_create_network_duplicate_full_segments(self):
         data = {'network': {'name': 'net1',
                             mpnet.SEGMENTS:
                             [{pnet.NETWORK_TYPE: 'vlan',
@@ -339,6 +339,18 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)
         self.assertEqual(400, res.status_int)
+
+    def test_create_network_duplicate_partial_segments(self):
+        data = {'network': {'name': 'net1',
+                            mpnet.SEGMENTS:
+                            [{pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1'},
+                             {pnet.NETWORK_TYPE: 'vlan',
+                              pnet.PHYSICAL_NETWORK: 'physnet1'}],
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        res = network_req.get_response(self.api)
+        self.assertEqual(201, res.status_int)
 
     def test_release_segment_no_type_driver(self):
         segment = {driver_api.NETWORK_TYPE: 'faketype',
