@@ -17,7 +17,6 @@
 from oslo.config import cfg
 
 from neutron.common import constants as q_const
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron.db import agents_db
 from neutron.db import api as db_api
@@ -48,8 +47,7 @@ class MlnxRpcCallbacks(rpc_compat.RpcCallback,
         or support more than one class as the target of RPC messages,
         override this method.
         """
-        return q_rpc.PluginRpcDispatcher([self,
-                                          agents_db.AgentExtRpcCallback()])
+        return [self, agents_db.AgentExtRpcCallback()]
 
     @classmethod
     def get_port_from_device(cls, device):

@@ -38,7 +38,6 @@ from neutron.common import topics
 from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.hyperv.agent import utils
 from neutron.plugins.hyperv.agent import utilsfactory
@@ -106,8 +105,7 @@ class HyperVSecurityAgent(rpc_compat.RpcCallback,
                                                      consumers)
 
     def _create_rpc_dispatcher(self):
-        rpc_callback = HyperVSecurityCallbackMixin(self)
-        return dispatcher.RpcDispatcher([rpc_callback])
+        return [HyperVSecurityCallbackMixin(self)]
 
 
 class HyperVSecurityCallbackMixin(rpc_compat.RpcCallback,
@@ -236,7 +234,7 @@ class HyperVNeutronAgent(rpc_compat.RpcCallback):
             segmentation_id, port['admin_state_up'])
 
     def _create_rpc_dispatcher(self):
-        return dispatcher.RpcDispatcher([self])
+        return [self]
 
     def _get_vswitch_name(self, network_type, physical_network):
         if network_type != p_const.TYPE_LOCAL:

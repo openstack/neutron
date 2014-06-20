@@ -23,11 +23,11 @@ import shutil
 import jinja2
 import netaddr
 from oslo.config import cfg
+from oslo import messaging
 import six
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron import context
 from neutron.openstack.common import lockutils
@@ -487,9 +487,11 @@ class IPsecDriver(device_drivers.DeviceDriver):
 
     RPC_API_VERSION = '1.0'
 
+    # TODO(ihrachys): we can't use RpcCallback here due to inheritance
+    # issues
+    target = messaging.Target(version=RPC_API_VERSION)
+
     def __init__(self, agent, host):
-        # TODO(ihrachys): we can't use RpcCallback here due to
-        # inheritance issues
         self.agent = agent
         self.conf = self.agent.conf
         self.root_helper = self.agent.root_helper
@@ -514,7 +516,7 @@ class IPsecDriver(device_drivers.DeviceDriver):
             interval=self.conf.ipsec.ipsec_status_check_interval)
 
     def create_rpc_dispatcher(self):
-        return q_rpc.PluginRpcDispatcher([self])
+        return [self]
 
     def _update_nat(self, vpnservice, func):
         """Setting up nat rule in iptables.

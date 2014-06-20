@@ -27,7 +27,7 @@ class AgentRPCPluginApi(base.BaseTestCase):
         agent = rpc.PluginApi('fake_topic')
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expect_val = 'foo'
-        with mock.patch('neutron.openstack.common.rpc.call') as rpc_call:
+        with mock.patch('neutron.common.rpc_compat.RpcProxy.call') as rpc_call:
             rpc_call.return_value = expect_val
             func_obj = getattr(agent, method)
             if method == 'tunnel_sync':

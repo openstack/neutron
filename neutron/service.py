@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
 import inspect
 import logging as std_logging
 import os
 import random
 
 from oslo.config import cfg
+from oslo.messaging import server as rpc_server
 
 from neutron.common import config
 from neutron.common import rpc_compat
@@ -112,23 +112,25 @@ class RpcWorker(object):
     """Wraps a worker to be handled by ProcessLauncher"""
     def __init__(self, plugin):
         self._plugin = plugin
-        self._server = None
+        self._servers = []
 
     def start(self):
         # We may have just forked from parent process.  A quick disposal of the
         # existing sql connections avoids producing errors later when they are
         # discovered to be broken.
         session.get_engine().pool.dispose()
-        self._server = self._plugin.start_rpc_listener()
+        self._servers = self._plugin.start_rpc_listener()
 
     def wait(self):
-        if isinstance(self._server, eventlet.greenthread.GreenThread):
-            self._server.wait()
+        for server in self._servers:
+            if isinstance(server, rpc_server.MessageHandlingServer):
+                server.wait()
 
     def stop(self):
-        if isinstance(self._server, eventlet.greenthread.GreenThread):
-            self._server.kill()
-            self._server = None
+        for server in self._servers:
+            if isinstance(server, rpc_server.MessageHandlingServer):
+                server.kill()
+            self._servers = []
 
 
 def serve_rpc():

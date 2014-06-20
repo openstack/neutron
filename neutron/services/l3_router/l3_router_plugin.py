@@ -21,7 +21,6 @@ from oslo.config import cfg
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import constants as q_const
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import api as qdbapi
@@ -46,7 +45,7 @@ class L3RouterPluginRpcCallbacks(rpc_compat.RpcCallback,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         """
-        return q_rpc.PluginRpcDispatcher([self])
+        return [self]
 
 
 class L3RouterPlugin(db_base_plugin_v2.CommonDbMixin,

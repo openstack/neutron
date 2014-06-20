@@ -13,24 +13,63 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.config import cfg
+from oslo import messaging
+
+from neutron.common import rpc as n_rpc
 from neutron.openstack.common import log as logging
-from neutron.openstack.common import rpc
-from neutron.openstack.common.rpc import common as rpc_common
-from neutron.openstack.common.rpc import dispatcher as rpc_dispatcher
-from neutron.openstack.common.rpc import proxy
 from neutron.openstack.common import service
 
 
 LOG = logging.getLogger(__name__)
 
 
-class RpcProxy(proxy.RpcProxy):
+class RpcProxy(object):
     '''
     This class is created to facilitate migration from oslo-incubator
     RPC layer implementation to oslo.messaging and is intended to
     emulate RpcProxy class behaviour using oslo.messaging API once the
     migration is applied.
     '''
+    RPC_API_NAMESPACE = None
+
+    def __init__(self, topic, default_version, version_cap=None):
+        self.topic = topic
+        target = messaging.Target(topic=topic, version=default_version)
+        self._client = n_rpc.get_client(target, version_cap=version_cap)
+
+    def make_msg(self, method, **kwargs):
+        return {'method': method,
+                'namespace': self.RPC_API_NAMESPACE,
+                'args': kwargs}
+
+    def call(self, context, msg, **kwargs):
+        return self.__call_rpc_method(
+            context, msg, rpc_method='call', **kwargs)
+
+    def cast(self, context, msg, **kwargs):
+        self.__call_rpc_method(context, msg, rpc_method='cast', **kwargs)
+
+    def fanout_cast(self, context, msg, **kwargs):
+        kwargs['fanout'] = True
+        self.__call_rpc_method(context, msg, rpc_method='cast', **kwargs)
+
+    def __call_rpc_method(self, context, msg, **kwargs):
+        options = dict(
+            ((opt, kwargs[opt])
+             for opt in ('fanout', 'timeout', 'topic', 'version')
+             if kwargs.get(opt))
+        )
+        if msg['namespace']:
+            options['namespace'] = msg['namespace']
+
+        if options:
+            callee = self._client.prepare(**options)
+        else:
+            callee = self._client
+
+        func = getattr(callee, kwargs['rpc_method'])
+        return func(context, msg['method'], **msg['args'])
 
 
 class RpcCallback(object):
@@ -40,6 +79,11 @@ class RpcCallback(object):
     callback version using oslo.messaging API once the migration is
     applied.
     '''
+    RPC_API_VERSION = '1.0'
+
+    def __init__(self):
+        super(RpcCallback, self).__init__()
+        self.target = messaging.Target(version=self.RPC_API_VERSION)
 
 
 class Service(service.Service):
@@ -64,8 +108,7 @@ class Service(service.Service):
         LOG.debug("Creating Consumer connection for Service %s" %
                   self.topic)
 
-        dispatcher = rpc_dispatcher.RpcDispatcher([self.manager],
-                                                  self.serializer)
+        dispatcher = [self.manager]
 
         # Share this same connection for these Consumers
         self.conn.create_consumer(self.topic, dispatcher, fanout=False)
@@ -93,11 +136,30 @@ class Service(service.Service):
         super(Service, self).stop()
 
 
+class Connection(object):
+
+    def __init__(self):
+        super(Connection, self).__init__()
+        self.servers = []
+
+    def create_consumer(self, topic, proxy, fanout=False):
+        target = messaging.Target(
+            topic=topic, server=cfg.CONF.host, fanout=fanout)
+        server = n_rpc.get_server(target, proxy)
+        self.servers.append(server)
+
+    def consume_in_thread(self):
+        for server in self.servers:
+            server.start()
+        return self.servers
+
+
 # functions
-create_connection = rpc.create_connection
+def create_connection(new=True):
+    return Connection()
 
 
 # exceptions
-RPCException = rpc_common.RPCException
-RemoteError = rpc_common.RemoteError
-MessagingTimeout = rpc_common.Timeout
+RPCException = messaging.MessagingException
+RemoteError = messaging.RemoteError
+MessagingTimeout = messaging.MessagingTimeout

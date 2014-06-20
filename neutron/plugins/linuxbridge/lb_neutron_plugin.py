@@ -23,7 +23,6 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.common import utils
@@ -72,8 +71,7 @@ class LinuxBridgeRpcCallbacks(rpc_compat.RpcCallback,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return q_rpc.PluginRpcDispatcher([self,
-                                          agents_db.AgentExtRpcCallback()])
+        return [self, agents_db.AgentExtRpcCallback()]
 
     @classmethod
     def get_port_from_device(cls, device):

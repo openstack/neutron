@@ -18,7 +18,6 @@
 from oslo.config import cfg
 
 from neutron.agent.common import config
-from neutron.openstack.common import rpc  # noqa
 from neutron.plugins.nec.common import constants as nconst
 
 

@@ -23,7 +23,6 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import constants as q_const
 from neutron.common import exceptions as nexception
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
@@ -61,8 +60,7 @@ class NVSDPluginRpcCallbacks(rpc_compat.RpcCallback,
 
     def create_rpc_dispatcher(self):
         """Get the rpc dispatcher for this manager."""
-        return q_rpc.PluginRpcDispatcher([self,
-                                          agents_db.AgentExtRpcCallback()])
+        return [self, agents_db.AgentExtRpcCallback()]
 
     @staticmethod
     def get_port_from_device(device):

@@ -37,7 +37,6 @@ from neutron.common import utils as n_utils
 from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.ibm.common import config  # noqa
 from neutron.plugins.ibm.common import constants
 
@@ -156,7 +155,7 @@ class SdnveNeutronAgent(rpc_compat.RpcCallback):
                                              "out-of-band")
 
     def create_rpc_dispatcher(self):
-        return dispatcher.RpcDispatcher([self])
+        return [self]
 
     def setup_integration_br(self, bridge_name, reset_br, out_of_band,
                              controller_ip=None):

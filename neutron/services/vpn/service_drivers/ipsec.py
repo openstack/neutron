@@ -16,7 +16,6 @@
 #    under the License.
 import netaddr
 
-from neutron.common import rpc as n_rpc
 from neutron.common import rpc_compat
 from neutron.openstack.common import log as logging
 from neutron.services.vpn.common import topics
@@ -42,7 +41,7 @@ class IPsecVpnDriverCallBack(rpc_compat.RpcCallback):
         self.driver = driver
 
     def create_rpc_dispatcher(self):
-        return n_rpc.PluginRpcDispatcher([self])
+        return [self]
 
     def get_vpn_services_on_host(self, context, host=None):
         """Returns the vpnservices on the host."""

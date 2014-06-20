@@ -24,7 +24,6 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
 from neutron.common import exceptions as ntn_exc
-from neutron.common import rpc as n_rpc
 from neutron.common import rpc_compat
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -55,8 +54,7 @@ class NSXRpcCallbacks(rpc_compat.RpcCallback,
         If a manager would like to set an rpc API version, or support more than
         one class as the target of rpc messages, override this method.
         '''
-        return n_rpc.PluginRpcDispatcher([self,
-                                          agents_db.AgentExtRpcCallback()])
+        return [self, agents_db.AgentExtRpcCallback()]
 
 
 def handle_network_dhcp_access(plugin, context, network, action):

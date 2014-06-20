@@ -18,10 +18,10 @@ import mock
 from oslo.config import cfg
 
 from neutron.agent.common import config
-from neutron.openstack.common.notifier import test_notifier
 from neutron.openstack.common import uuidutils
 from neutron.services.metering.agents import metering_agent
 from neutron.tests import base
+from neutron.tests import fake_notifier
 
 
 _uuid = uuidutils.generate_uuid
@@ -96,8 +96,8 @@ class TestMeteringOperations(base.BaseTestCase):
                                                           'bytes': 444}}
         self.agent._metering_loop()
 
-        self.assertNotEqual(len(test_notifier.NOTIFICATIONS), 0)
-        for n in test_notifier.NOTIFICATIONS:
+        self.assertNotEqual(len(fake_notifier.NOTIFICATIONS), 0)
+        for n in fake_notifier.NOTIFICATIONS:
             if n['event_type'] == 'l3.meter':
                 break
 

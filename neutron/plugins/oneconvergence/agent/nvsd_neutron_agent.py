@@ -32,7 +32,6 @@ from neutron.common import topics
 from neutron import context as n_context
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import log as logging
-from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.oneconvergence.lib import config
 
 LOG = logging.getLogger(__name__)
@@ -120,8 +119,7 @@ class NVSDNeutronAgent(rpc_compat.RpcCallback):
                                                 self, self.sg_agent)
         self.callback_sg = SecurityGroupAgentRpcCallback(self.context,
                                                          self.sg_agent)
-        self.dispatcher = dispatcher.RpcDispatcher([self.callback_oc,
-                                                    self.callback_sg])
+        self.dispatcher = [self.callback_oc, self.callback_sg]
         # Define the listening consumer for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.SECURITY_GROUP, topics.UPDATE]]

@@ -45,7 +45,9 @@ from neutron.openstack.common import systemd
 from neutron.openstack.common import threadgroup
 
 
-rpc = importutils.try_import('neutron.openstack.common.rpc')
+#rpc = importutils.try_import('neutron.openstack.common.rpc')
+# TODO(ihrachys): restore once oslo-rpc code is removed from the tree
+rpc = None
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 

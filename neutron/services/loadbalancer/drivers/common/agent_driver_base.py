@@ -22,7 +22,6 @@ from oslo.config import cfg
 
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc as q_rpc
 from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.db import agents_db
@@ -66,8 +65,7 @@ class LoadBalancerCallbacks(rpc_compat.RpcCallback):
         self.plugin = plugin
 
     def create_rpc_dispatcher(self):
-        return q_rpc.PluginRpcDispatcher(
-            [self, agents_db.AgentExtRpcCallback(self.plugin)])
+        return [self, agents_db.AgentExtRpcCallback(self.plugin)]
 
     def get_ready_devices(self, context, host=None):
         with context.session.begin(subtransactions=True):

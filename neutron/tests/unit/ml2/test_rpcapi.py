@@ -20,9 +20,9 @@ Unit Tests for ml2 rpc
 import mock
 
 from neutron.agent import rpc as agent_rpc
+from neutron.common import rpc_compat
 from neutron.common import topics
 from neutron.openstack.common import context
-from neutron.openstack.common import rpc
 from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2 import rpc as plugin_rpc
 from neutron.tests import base
@@ -34,20 +34,19 @@ class RpcApiTestCase(base.BaseTestCase):
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if method == 'call' else None
         expected_msg = rpcapi.make_msg(method, **kwargs)
-        expected_msg['version'] = rpcapi.BASE_RPC_API_VERSION
         if rpc_method == 'cast' and method == 'run_instance':
             kwargs['call'] = False
 
+        rpc = rpc_compat.RpcProxy
         with mock.patch.object(rpc, rpc_method) as rpc_method_mock:
             rpc_method_mock.return_value = expected_retval
             retval = getattr(rpcapi, method)(ctxt, **kwargs)
 
         self.assertEqual(retval, expected_retval)
-
-        expected_args = [ctxt, topic, expected_msg]
-        for arg, expected_arg in zip(rpc_method_mock.call_args[0],
-                                     expected_args):
-            self.assertEqual(arg, expected_arg)
+        expected = [
+            mock.call(ctxt, expected_msg, topic=topic)
+        ]
+        rpc_method_mock.assert_has_calls(expected)
 
     def test_delete_network(self):
         rpcapi = plugin_rpc.AgentNotifierApi(topics.AGENT)

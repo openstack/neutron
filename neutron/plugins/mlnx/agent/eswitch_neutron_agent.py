@@ -35,7 +35,6 @@ from neutron.common import utils as q_utils
 from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import loopingcall
-from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.mlnx.agent import utils
 from neutron.plugins.mlnx.common import config  # noqa
@@ -218,7 +217,7 @@ class MlnxEswitchRpcCallbacks(rpc_compat.RpcCallback,
         or support more than one class as the target of rpc messages,
         override this method.
         """
-        return dispatcher.RpcDispatcher([self])
+        return [self]
 
 
 class MlnxEswitchPluginApi(agent_rpc.PluginApi,

@@ -36,7 +36,6 @@ from neutron import context as q_context
 from neutron.extensions import securitygroup as ext_sg
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log
-from neutron.openstack.common.rpc import dispatcher
 from neutron.plugins.bigswitch import config as pl_config
 
 LOG = log.getLogger(__name__)
@@ -106,7 +105,7 @@ class RestProxyAgent(rpc_compat.RpcCallback,
         self.topic = topics.AGENT
         self.plugin_rpc = PluginApi(topics.PLUGIN)
         self.context = q_context.get_admin_context_without_session()
-        self.dispatcher = dispatcher.RpcDispatcher([self])
+        self.dispatcher = [self]
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.SECURITY_GROUP, topics.UPDATE]]
         self.connection = agent_rpc.create_consumers(self.dispatcher,
