@@ -53,9 +53,6 @@ class CiscoCsrIPsecVpnDriverCallBack(rpc_compat.RpcCallback):
         super(CiscoCsrIPsecVpnDriverCallBack, self).__init__()
         self.driver = driver
 
-    def create_rpc_dispatcher(self):
-        return [self]
-
     def get_vpn_services_on_host(self, context, host=None):
         """Retuns info on the vpnservices on the host."""
         plugin = self.driver.service_plugin
@@ -88,12 +85,10 @@ class CiscoCsrIPsecVPNDriver(service_drivers.VpnDriver):
 
     def __init__(self, service_plugin):
         super(CiscoCsrIPsecVPNDriver, self).__init__(service_plugin)
-        self.callbacks = CiscoCsrIPsecVpnDriverCallBack(self)
+        self.endpoints = [CiscoCsrIPsecVpnDriverCallBack(self)]
         self.conn = rpc_compat.create_connection(new=True)
         self.conn.create_consumer(
-            topics.CISCO_IPSEC_DRIVER_TOPIC,
-            self.callbacks.create_rpc_dispatcher(),
-            fanout=False)
+            topics.CISCO_IPSEC_DRIVER_TOPIC, self.endpoints, fanout=False)
         self.conn.consume_in_threads()
         self.agent_rpc = CiscoCsrIPsecVpnAgentApi(
             topics.CISCO_IPSEC_AGENT_TOPIC, BASE_IPSEC_VERSION)

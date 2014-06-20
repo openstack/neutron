@@ -97,15 +97,12 @@ class HyperVSecurityAgent(rpc_compat.RpcCallback,
 
     def _setup_rpc(self):
         self.topic = topics.AGENT
-        self.dispatcher = self._create_rpc_dispatcher()
+        self.endpoints = [HyperVSecurityCallbackMixin(self)]
         consumers = [[topics.SECURITY_GROUP, topics.UPDATE]]
 
-        self.connection = agent_rpc.create_consumers(self.dispatcher,
+        self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers)
-
-    def _create_rpc_dispatcher(self):
-        return [HyperVSecurityCallbackMixin(self)]
 
 
 class HyperVSecurityCallbackMixin(rpc_compat.RpcCallback,
@@ -165,13 +162,13 @@ class HyperVNeutronAgent(rpc_compat.RpcCallback):
         # RPC network init
         self.context = context.get_admin_context_without_session()
         # Handle updates from service
-        self.dispatcher = self._create_rpc_dispatcher()
+        self.endpoints = [self]
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
                      [topics.PORT, topics.DELETE],
                      [constants.TUNNEL, topics.UPDATE]]
-        self.connection = agent_rpc.create_consumers(self.dispatcher,
+        self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers)
 
@@ -232,9 +229,6 @@ class HyperVNeutronAgent(rpc_compat.RpcCallback):
             port['id'], port['network_id'],
             network_type, physical_network,
             segmentation_id, port['admin_state_up'])
-
-    def _create_rpc_dispatcher(self):
-        return [self]
 
     def _get_vswitch_name(self, network_type, physical_network):
         if network_type != p_const.TYPE_LOCAL:

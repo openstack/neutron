@@ -504,19 +504,14 @@ class IPsecDriver(device_drivers.DeviceDriver):
         self.processes = {}
         self.process_status_cache = {}
 
-        self.conn.create_consumer(
-            node_topic,
-            self.create_rpc_dispatcher(),
-            fanout=False)
+        self.endpoints = [self]
+        self.conn.create_consumer(node_topic, self.endpoints, fanout=False)
         self.conn.consume_in_threads()
         self.agent_rpc = IPsecVpnDriverApi(topics.IPSEC_DRIVER_TOPIC, '1.0')
         self.process_status_cache_check = loopingcall.FixedIntervalLoopingCall(
             self.report_status, self.context)
         self.process_status_cache_check.start(
             interval=self.conf.ipsec.ipsec_status_check_interval)
-
-    def create_rpc_dispatcher(self):
-        return [self]
 
     def _update_nat(self, vpnservice, func):
         """Setting up nat rule in iptables.

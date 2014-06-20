@@ -19,7 +19,6 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
 from neutron.common import rpc_compat
 from neutron.common import topics
-from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
@@ -57,14 +56,6 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
         # to one, this could break. Fix this and add a unit test to cover this
         # test in H3.
         super(RpcCallbacks, self).__init__(notifier, type_manager)
-
-    def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
-
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        '''
-        return [self, agents_db.AgentExtRpcCallback()]
 
     @classmethod
     def _device_to_port_id(cls, device):

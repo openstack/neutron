@@ -57,9 +57,6 @@ class RyuRpcCallbacks(rpc_compat.RpcCallback,
         super(RyuRpcCallbacks, self).__init__()
         self.ofp_rest_api_addr = ofp_rest_api_addr
 
-    def create_rpc_dispatcher(self):
-        return [self]
-
     def get_ofp_rest_api(self, context, **kwargs):
         LOG.debug(_("get_ofp_rest_api: %s"), self.ofp_rest_api_addr)
         return self.ofp_rest_api_addr
@@ -143,10 +140,9 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
         self.conn = rpc_compat.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
-        self.callbacks = RyuRpcCallbacks(self.ofp_api_host)
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        self.endpoints = [RyuRpcCallbacks(self.ofp_api_host)]
         for svc_topic in self.service_topics.values():
-            self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
+            self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)
         self.conn.consume_in_threads()
 
     def _create_all_tenant_network(self):

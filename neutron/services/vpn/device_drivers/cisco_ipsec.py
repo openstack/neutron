@@ -198,10 +198,8 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
 
         self.service_state = {}
 
-        self.conn.create_consumer(
-            node_topic,
-            self.create_rpc_dispatcher(),
-            fanout=False)
+        self.endpoints = [self]
+        self.conn.create_consumer(node_topic, self.endpoints, fanout=False)
         self.conn.consume_in_threads()
         self.agent_rpc = (
             CiscoCsrIPsecVpnDriverApi(topics.CISCO_IPSEC_DRIVER_TOPIC, '1.0'))
@@ -224,9 +222,6 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
                                                        v['password'],
                                                        v['timeout']))
                           for k, v in csrs_found.items()])
-
-    def create_rpc_dispatcher(self):
-        return [self]
 
     def vpnservice_updated(self, context, **kwargs):
         """Handle VPNaaS service driver change notifications."""

@@ -40,9 +40,6 @@ class FirewallCallbacks(rpc_compat.RpcCallback):
         super(FirewallCallbacks, self).__init__()
         self.plugin = plugin
 
-    def create_rpc_dispatcher(self):
-        return [self]
-
     def set_firewall_status(self, context, firewall_id, status, **kwargs):
         """Agent uses this to set a firewall's status."""
         LOG.debug(_("set_firewall_status() called"))
@@ -165,13 +162,11 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
         """Do the initialization for the firewall service plugin here."""
         qdbapi.register_models()
 
-        self.callbacks = FirewallCallbacks(self)
+        self.endpoints = [FirewallCallbacks(self)]
 
         self.conn = rpc_compat.create_connection(new=True)
         self.conn.create_consumer(
-            topics.FIREWALL_PLUGIN,
-            self.callbacks.create_rpc_dispatcher(),
-            fanout=False)
+            topics.FIREWALL_PLUGIN, self.endpoints, fanout=False)
         self.conn.consume_in_threads()
 
         self.agent_rpc = FirewallAgentApi(

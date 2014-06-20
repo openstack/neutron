@@ -41,7 +41,7 @@ class TestFirewallCallbacks(test_db_firewall.FirewallPluginDbTestCase):
     def setUp(self):
         super(TestFirewallCallbacks,
               self).setUp(fw_plugin=FW_PLUGIN_KLASS)
-        self.callbacks = self.plugin.callbacks
+        self.callbacks = self.plugin.endpoints[0]
 
     def test_set_firewall_status(self):
         ctx = context.get_admin_context()
@@ -210,7 +210,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
 
     def setUp(self):
         super(TestFirewallPluginBase, self).setUp(fw_plugin=FW_PLUGIN_KLASS)
-        self.callbacks = self.plugin.callbacks
+        self.callbacks = self.plugin.endpoints[0]
 
     def test_create_second_firewall_not_permitted(self):
         with self.firewall():
@@ -342,7 +342,7 @@ class TestFirewallPluginBase(test_db_firewall.TestFirewallDBPlugin):
                 for k, v in attrs.iteritems():
                     self.assertEqual(fw_db[k], v)
             # cleanup the pending firewall
-            self.plugin.callbacks.firewall_deleted(ctx, fw_id)
+            self.plugin.endpoints[0].firewall_deleted(ctx, fw_id)
 
     def test_delete_firewall_after_agent_delete(self):
         ctx = context.get_admin_context()

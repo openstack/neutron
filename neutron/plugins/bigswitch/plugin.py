@@ -119,9 +119,6 @@ class RestProxyCallbacks(rpc_compat.RpcCallback,
 
     RPC_API_VERSION = '1.1'
 
-    def create_rpc_dispatcher(self):
-        return [self, agents_db.AgentExtRpcCallback()]
-
     def get_port_from_device(self, device):
         port_id = re.sub(r"^tap", "", device)
         port = self.get_port_and_sgs(port_id)
@@ -505,9 +502,9 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
         self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
             self._dhcp_agent_notifier
         )
-        self.callbacks = RestProxyCallbacks()
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher,
+        self.endpoints = [RestProxyCallbacks(),
+                          agents_db.AgentExtRpcCallback()]
+        self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         # Consume from all consumers in threads
         self.conn.consume_in_threads()

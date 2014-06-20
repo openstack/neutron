@@ -30,9 +30,6 @@ class MeteringRpcCallbacks(object):
     def __init__(self, meter_plugin):
         self.meter_plugin = meter_plugin
 
-    def create_rpc_dispatcher(self):
-        return [self]
-
     def get_sync_data_metering(self, context, **kwargs):
         l3_plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)

@@ -83,31 +83,31 @@ class AgentPluginReportState(base.BaseTestCase):
 
 class AgentRPCMethods(base.BaseTestCase):
     def test_create_consumers(self):
-        dispatcher = mock.Mock()
+        endpoints = [mock.Mock()]
         expected = [
             mock.call(new=True),
-            mock.call().create_consumer('foo-topic-op', dispatcher,
+            mock.call().create_consumer('foo-topic-op', endpoints,
                                         fanout=True),
             mock.call().consume_in_threads()
         ]
 
         call_to_patch = 'neutron.common.rpc_compat.create_connection'
         with mock.patch(call_to_patch) as create_connection:
-            rpc.create_consumers(dispatcher, 'foo', [('topic', 'op')])
+            rpc.create_consumers(endpoints, 'foo', [('topic', 'op')])
             create_connection.assert_has_calls(expected)
 
     def test_create_consumers_with_node_name(self):
-        dispatcher = mock.Mock()
+        endpoints = [mock.Mock()]
         expected = [
             mock.call(new=True),
-            mock.call().create_consumer('foo-topic-op', dispatcher,
+            mock.call().create_consumer('foo-topic-op', endpoints,
                                         fanout=True),
-            mock.call().create_consumer('foo-topic-op.node1', dispatcher,
+            mock.call().create_consumer('foo-topic-op.node1', endpoints,
                                         fanout=False),
             mock.call().consume_in_threads()
         ]
 
         call_to_patch = 'neutron.common.rpc_compat.create_connection'
         with mock.patch(call_to_patch) as create_connection:
-            rpc.create_consumers(dispatcher, 'foo', [('topic', 'op', 'node1')])
+            rpc.create_consumers(endpoints, 'foo', [('topic', 'op', 'node1')])
             create_connection.assert_has_calls(expected)

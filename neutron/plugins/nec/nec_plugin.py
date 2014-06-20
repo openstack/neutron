@@ -146,14 +146,14 @@ class NECPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         # NOTE: callback_sg is referred to from the sg unit test.
         self.callback_sg = SecurityGroupServerRpcCallback()
-        self.dispatcher = [
+        self.endpoints = [
             NECPluginV2RPCCallbacks(self.safe_reference),
             DhcpRpcCallback(),
             L3RpcCallback(),
             self.callback_sg,
             agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():
-            self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
+            self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)
         # Consume from all consumers in threads
         self.conn.consume_in_threads()
 
@@ -714,14 +714,6 @@ class NECPluginV2RPCCallbacks(rpc_compat.RpcCallback):
     def __init__(self, plugin):
         super(NECPluginV2RPCCallbacks, self).__init__()
         self.plugin = plugin
-
-    def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
-
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        '''
-        return [self]
 
     def update_ports(self, rpc_context, **kwargs):
         """Update ports' information and activate/deavtivate them.

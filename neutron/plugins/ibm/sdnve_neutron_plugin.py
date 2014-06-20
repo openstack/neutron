@@ -48,13 +48,6 @@ class SdnveRpcCallbacks():
     def __init__(self, notifier):
         self.notifier = notifier  # used to notify the agent
 
-    def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        '''
-        return [self, agents_db.AgentExtRpcCallback()]
-
     def sdnve_info(self, rpc_context, **kwargs):
         '''Update new information.'''
         info = kwargs.get('info')
@@ -140,9 +133,9 @@ class SdnvePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.topic = topics.PLUGIN
         self.conn = rpc_compat.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
-        self.callbacks = SdnveRpcCallbacks(self.notifier)
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher,
+        self.endpoints = [SdnveRpcCallbacks(self.notifier),
+                          agents_db.AgentExtRpcCallback()]
+        self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         # Consume from all consumers in threads
         self.conn.consume_in_threads()

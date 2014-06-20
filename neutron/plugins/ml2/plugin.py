@@ -25,6 +25,7 @@ from neutron.common import constants as const
 from neutron.common import exceptions as exc
 from neutron.common import rpc_compat
 from neutron.common import topics
+from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
@@ -126,11 +127,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         )
 
     def start_rpc_listeners(self):
-        self.callbacks = rpc.RpcCallbacks(self.notifier, self.type_manager)
+        self.endpoints = [rpc.RpcCallbacks(self.notifier, self.type_manager),
+                          agents_db.AgentExtRpcCallback()]
         self.topic = topics.PLUGIN
         self.conn = rpc_compat.create_connection(new=True)
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher,
+        self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         return self.conn.consume_in_threads()
 

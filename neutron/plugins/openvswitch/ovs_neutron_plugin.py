@@ -73,14 +73,6 @@ class OVSRpcCallbacks(rpc_compat.RpcCallback,
         self.notifier = notifier
         self.tunnel_type = tunnel_type
 
-    def create_rpc_dispatcher(self):
-        '''Get the rpc dispatcher for this manager.
-
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        '''
-        return [self, agents_db.AgentExtRpcCallback()]
-
     @classmethod
     def get_port_from_device(cls, device):
         port = ovs_db_v2.get_port_from_device(device)
@@ -341,10 +333,10 @@ class OVSNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         self.agent_notifiers[q_const.AGENT_TYPE_L3] = (
             l3_rpc_agent_api.L3AgentNotifyAPI()
         )
-        self.callbacks = OVSRpcCallbacks(self.notifier, self.tunnel_type)
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
+        self.endpoints = [OVSRpcCallbacks(self.notifier, self.tunnel_type),
+                          agents_db.AgentExtRpcCallback()]
         for svc_topic in self.service_topics.values():
-            self.conn.create_consumer(svc_topic, self.dispatcher, fanout=False)
+            self.conn.create_consumer(svc_topic, self.endpoints, fanout=False)
         # Consume from all consumers in threads
         self.conn.consume_in_threads()
 

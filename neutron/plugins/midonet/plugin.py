@@ -180,16 +180,6 @@ class MidoRpcCallbacks(rpc_compat.RpcCallback,
                        dhcp_rpc_base.DhcpRpcCallbackMixin):
     RPC_API_VERSION = '1.1'
 
-    def create_rpc_dispatcher(self):
-        """Get the rpc dispatcher for this manager.
-
-        This a basic implementation that will call the plugin like get_ports
-        and handle basic events
-        If a manager would like to set an rpc API version, or support more than
-        one class as the target of rpc messages, override this method.
-        """
-        return [self, agents_db.AgentExtRpcCallback()]
-
 
 class MidonetPluginException(n_exc.NeutronException):
     message = _("%(msg)s")
@@ -382,9 +372,9 @@ class MidonetPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # RPC support
         self.topic = topics.PLUGIN
         self.conn = rpc_compat.create_connection(new=True)
-        self.callbacks = MidoRpcCallbacks()
-        self.dispatcher = self.callbacks.create_rpc_dispatcher()
-        self.conn.create_consumer(self.topic, self.dispatcher,
+        self.endpoints = [MidoRpcCallbacks(),
+                          agents_db.AgentExtRpcCallback()]
+        self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
         # Consume from all consumers in threads
         self.conn.consume_in_threads()
