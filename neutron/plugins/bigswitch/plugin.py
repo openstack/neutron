@@ -178,11 +178,13 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
                       get_routers=True):
         admin_context = qcontext.get_admin_context()
         networks = []
-
-        all_networks = self.get_networks(admin_context) or []
+        # this method is used by the ML2 driver so it can't directly invoke
+        # the self.get_(ports|networks) methods
+        plugin = manager.NeutronManager.get_plugin()
+        all_networks = plugin.get_networks(admin_context) or []
         for net in all_networks:
             mapped_network = self._get_mapped_network_with_subnets(net)
-            flips_n_ports = {}
+            flips_n_ports = mapped_network
             if get_floating_ips:
                 flips_n_ports = self._get_network_with_floatingips(
                     mapped_network)
@@ -190,8 +192,8 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
             if get_ports:
                 ports = []
                 net_filter = {'network_id': [net.get('id')]}
-                net_ports = self.get_ports(admin_context,
-                                           filters=net_filter) or []
+                net_ports = plugin.get_ports(admin_context,
+                                             filters=net_filter) or []
                 for port in net_ports:
                     mapped_port = self._map_state_and_status(port)
                     mapped_port['attachment'] = {
