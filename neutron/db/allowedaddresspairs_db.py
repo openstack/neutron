@@ -48,11 +48,6 @@ class AllowedAddressPairsMixin(object):
                 # use port.mac_address if no mac address in address pair
                 if 'mac_address' not in address_pair:
                     address_pair['mac_address'] = port['mac_address']
-                for fixed_ip in port['fixed_ips']:
-                    if ((fixed_ip['ip_address'] == address_pair['ip_address'])
-                        and (port['mac_address'] ==
-                             address_pair['mac_address'])):
-                        raise addr_pair.AddressPairMatchesPortFixedIPAndMac()
                 db_pair = AllowedAddressPair(
                     port_id=port['id'],
                     mac_address=address_pair['mac_address'],
