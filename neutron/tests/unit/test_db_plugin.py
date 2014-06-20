@@ -1233,6 +1233,34 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(ips[1]['ip_address'], '10.0.0.4')
                 self.assertEqual(ips[1]['subnet_id'], subnet['subnet']['id'])
 
+    def test_update_port_invalid_fixed_ip_address_v6_slaac(self):
+        with self.subnet(
+            cidr='2607:f0d0:1002:51::/64',
+            ip_version=6,
+            ipv6_address_mode=constants.IPV6_SLAAC,
+            gateway_ip=attributes.ATTR_NOT_SPECIFIED) as subnet:
+            with self.port(subnet=subnet) as port:
+                ips = port['port']['fixed_ips']
+                self.assertEqual(len(ips), 1)
+                port_mac = port['port']['mac_address']
+                subnet_cidr = subnet['subnet']['cidr']
+                eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                                 port_mac))
+                self.assertEqual(ips[0]['ip_address'], eui_addr)
+                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
+
+                data = {'port': {'fixed_ips': [{'subnet_id':
+                                                subnet['subnet']['id'],
+                                                'ip_address':
+                                                '2607:f0d0:1002:51::5'}]}}
+                req = self.new_update_request('ports', data,
+                                              port['port']['id'])
+                res = req.get_response(self.api)
+                err = self.deserialize(self.fmt, res)
+                self.assertEqual(res.status_int,
+                                 webob.exc.HTTPClientError.code)
+                self.assertEqual(err['NeutronError']['type'], 'InvalidInput')
+
     def test_requested_duplicate_mac(self):
         with self.port() as port:
             mac = port['port']['mac_address']
@@ -1291,20 +1319,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 # Check configuring of duplicate IP
                 kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                          'ip_address': ips[0]['ip_address']}]}
-                net_id = port['port']['network_id']
-                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
-
-    def test_generated_duplicate_ip_ipv6(self):
-        with self.subnet(ip_version=6,
-                         cidr="2014::/64",
-                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
-            with self.port(subnet=subnet,
-                           fixed_ips=[{'subnet_id': subnet['subnet']['id'],
-                                       'ip_address':
-                                       "2014::1322:33ff:fe44:5566"}]) as port:
-                # Check configuring of duplicate IP
-                kwargs = {"mac_address": "11:22:33:44:55:66"}
                 net_id = port['port']['network_id']
                 res = self._create_port(self.fmt, net_id=net_id, **kwargs)
                 self.assertEqual(res.status_int, webob.exc.HTTPConflict.code)
@@ -1392,6 +1406,57 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(ips[1]['subnet_id'], subnet2['subnet']['id'])
                 self._delete('ports', port3['port']['id'])
                 self._delete('ports', port4['port']['id'])
+
+    def test_requested_invalid_fixed_ip_address_v6_slaac(self):
+        with self.subnet(gateway_ip='fe80::1',
+                         cidr='2607:f0d0:1002:51::/64',
+                         ip_version=6,
+                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
+            kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
+                                     'ip_address': '2607:f0d0:1002:51::5'}]}
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            self.assertEqual(res.status_int,
+                             webob.exc.HTTPClientError.code)
+
+    def test_requested_subnet_id_v6_slaac(self):
+        with self.subnet(gateway_ip='fe80::1',
+                         cidr='2607:f0d0:1002:51::/64',
+                         ip_version=6,
+                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
+            with self.port(subnet,
+                           fixed_ips=[{'subnet_id':
+                                       subnet['subnet']['id']}]) as port:
+                port_mac = port['port']['mac_address']
+                subnet_cidr = subnet['subnet']['cidr']
+                eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                                 port_mac))
+                self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
+                                 eui_addr)
+
+    def test_requested_subnet_id_v4_and_v6_slaac(self):
+        with self.network() as network:
+            with contextlib.nested(
+                self.subnet(network),
+                self.subnet(network,
+                            cidr='2607:f0d0:1002:51::/64',
+                            ip_version=6,
+                            gateway_ip='fe80::1',
+                            ipv6_address_mode=constants.IPV6_SLAAC)
+            ) as (subnet, subnet2):
+                with self.port(
+                    subnet,
+                    fixed_ips=[{'subnet_id': subnet['subnet']['id']},
+                               {'subnet_id': subnet2['subnet']['id']}]
+                ) as port:
+                    ips = port['port']['fixed_ips']
+                    self.assertEqual(len(ips), 2)
+                    self.assertEqual(ips[0]['ip_address'], '10.0.0.2')
+                    port_mac = port['port']['mac_address']
+                    subnet_cidr = subnet2['subnet']['cidr']
+                    eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+                            subnet_cidr, port_mac))
+                    self.assertEqual(ips[1]['ip_address'], eui_addr)
 
     def test_ip_allocation_for_ipv6_subnet_slaac_address_mode(self):
         res = self._create_network(fmt=self.fmt, name='net',
