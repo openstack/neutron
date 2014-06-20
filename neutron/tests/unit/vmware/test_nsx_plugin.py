@@ -338,6 +338,23 @@ class TestNetworksV2(test_plugin.TestNetworksV2, NsxPluginV2TestCase):
                               context.get_admin_context(),
                               net['network']['id'], data)
 
+    def test_update_network_with_name_calls_nsx(self):
+        with mock.patch.object(
+            nsxlib.switch, 'update_lswitch') as update_lswitch_mock:
+            # don't worry about deleting this network, do not use
+            # context manager
+            ctx = context.get_admin_context()
+            plugin = manager.NeutronManager.get_plugin()
+            net = plugin.create_network(
+                ctx, {'network': {'name': 'xxx',
+                                  'admin_state_up': True,
+                                  'shared': False,
+                                  'port_security_enabled': True}})
+            plugin.update_network(ctx, net['id'],
+                                  {'network': {'name': 'yyy'}})
+        update_lswitch_mock.assert_called_once_with(
+            mock.ANY, mock.ANY, 'yyy')
+
 
 class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
 
