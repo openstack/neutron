@@ -18,6 +18,7 @@
 # @author: Rudrajit Tapadar, Cisco Systems, Inc.
 
 import base64
+import eventlet
 import netaddr
 import requests
 
@@ -28,6 +29,7 @@ from neutron.openstack.common import log as logging
 from neutron.plugins.cisco.common import cisco_constants as c_const
 from neutron.plugins.cisco.common import cisco_credentials_v2 as c_cred
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
+from neutron.plugins.cisco.common import config as c_conf
 from neutron.plugins.cisco.db import network_db_v2
 from neutron.plugins.cisco.extensions import n1kv
 
@@ -121,6 +123,8 @@ class Client(object):
     clusters_path = "/cluster"
     encap_profiles_path = "/encapsulation-profile"
     encap_profile_path = "/encapsulation-profile/%s"
+
+    pool = eventlet.GreenPool(c_conf.CISCO_N1K.http_pool_size)
 
     def __init__(self, **kwargs):
         """Initialize a new client for the plugin."""
@@ -433,11 +437,12 @@ class Client(object):
             body = jsonutils.dumps(body, indent=2)
             LOG.debug(_("req: %s"), body)
         try:
-            resp = requests.request(method,
-                                    url=action,
-                                    data=body,
-                                    headers=headers,
-                                    timeout=self.timeout)
+            resp = self.pool.spawn(requests.request,
+                                   method,
+                                   url=action,
+                                   data=body,
+                                   headers=headers,
+                                   timeout=self.timeout).wait()
         except Exception as e:
             raise c_exc.VSMConnectionFailed(reason=e)
         LOG.debug(_("status_code %s"), resp.status_code)

@@ -80,6 +80,8 @@ cisco_n1k_opts = [
                help=_("N1K policy profile for network node")),
     cfg.StrOpt('poll_duration', default='10',
                help=_("N1K Policy profile polling duration in seconds")),
+    cfg.IntOpt('http_pool_size', default=4,
+               help=_("Number of threads to use to make HTTP requests")),
 ]
 
 cfg.CONF.register_opts(cisco_opts, "CISCO")
