@@ -13,8 +13,8 @@
 #    under the License.
 
 import copy
-import json
 
+from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.vshield.common import exceptions
 

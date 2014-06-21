@@ -16,12 +16,11 @@
 #
 # @author: Akihiro Motoki
 
-import json
-
 import mock
 from oslo.config import cfg
 import requests
 
+from neutron.openstack.common import jsonutils as json
 from neutron.plugins.nec.common import config
 from neutron.plugins.nec.common import exceptions as nexc
 from neutron.plugins.nec.common import ofc_client

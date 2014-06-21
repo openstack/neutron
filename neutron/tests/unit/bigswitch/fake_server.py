@@ -17,8 +17,7 @@
 # @author: Kevin Benton, <kevin.benton@bigswitch.com>
 #
 
-import json
-
+from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import log as logging
 from neutron.plugins.bigswitch import servermanager
 

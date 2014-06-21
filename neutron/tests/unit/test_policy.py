@@ -15,7 +15,6 @@
 
 """Test of Policy Engine For Neutron"""
 
-import json
 import urllib2
 
 import fixtures
@@ -28,6 +27,7 @@ from neutron.common import exceptions
 from neutron import context
 from neutron import manager
 from neutron.openstack.common import importutils
+from neutron.openstack.common import jsonutils as json
 from neutron.openstack.common import policy as common_policy
 from neutron import policy
 from neutron.tests import base

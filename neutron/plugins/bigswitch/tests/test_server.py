@@ -24,11 +24,12 @@ Used for NeutronRestProxy tests
 """
 from __future__ import print_function
 
-import json
 import re
 
 from six import moves
 from wsgiref import simple_server
+
+from neutron.openstack.common import jsonutils as json
 
 
 class TestNetworkCtrl(object):
