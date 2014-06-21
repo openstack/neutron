@@ -18,6 +18,7 @@ import contextlib
 import uuid
 import webob.exc
 
+from neutron import manager
 from neutron.plugins.nuage.extensions import netpartition as netpart_ext
 from neutron.tests.unit.nuage import test_nuage_plugin
 from neutron.tests.unit import test_extensions
@@ -89,3 +90,11 @@ class NetPartitionTestCase(test_nuage_plugin.NuagePluginV2TestCase):
             res = self.deserialize(self.fmt, req.get_response(self.ext_api))
             self.assertEqual(res['net_partition']['name'],
                              npart['net_partition']['name'])
+
+    def test_create_existing_default_netpartition(self):
+        name = 'default_test_np'
+        netpart1 = self._make_netpartition(self.fmt, name)
+        nuage_plugin = manager.NeutronManager.get_plugin()
+        netpart2 = nuage_plugin._create_default_net_partition(name)
+        self.assertEqual(netpart1['net_partition']['name'],
+                         netpart2['name'])

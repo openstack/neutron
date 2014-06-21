@@ -806,14 +806,23 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._make_net_partition_dict(net_partitioninst)
 
     def _create_default_net_partition(self, default_net_part):
-        self.nuageclient.check_del_def_net_partition(default_net_part)
+        def_netpart = self.nuageclient.get_def_netpartition_data(
+            default_net_part)
         session = db.get_session()
-        net_partition = nuagedb.get_net_partition_by_name(session,
-                                                          default_net_part)
-        if net_partition:
+        if def_netpart:
+            net_partition = nuagedb.get_net_partition_by_name(
+                session, default_net_part)
             with session.begin(subtransactions=True):
-                nuagedb.delete_net_partition(session, net_partition)
-        self._create_net_partition(session, default_net_part)
+                if net_partition:
+                    nuagedb.delete_net_partition(session, net_partition)
+                net_part = nuagedb.add_net_partition(session,
+                                                     def_netpart['np_id'],
+                                                     def_netpart['l3dom_tid'],
+                                                     def_netpart['l2dom_tid'],
+                                                     default_net_part)
+                return self._make_net_partition_dict(net_part)
+        else:
+            return self._create_net_partition(session, default_net_part)
 
     def create_net_partition(self, context, net_partition):
         ent = net_partition['net_partition']
