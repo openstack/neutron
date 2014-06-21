@@ -509,16 +509,6 @@ class LinuxBridgeManager:
             int_vxlan.link.delete()
             LOG.debug(_("Done deleting vxlan interface %s"), interface)
 
-    def update_devices(self, registered_devices):
-        devices = self.get_tap_devices()
-        if devices == registered_devices:
-            return
-        added = devices - registered_devices
-        removed = registered_devices - devices
-        return {'current': devices,
-                'added': added,
-                'removed': removed}
-
     def get_tap_devices(self):
         devices = set()
         for device in os.listdir(BRIDGE_FS):
@@ -679,57 +669,14 @@ class LinuxBridgeRpcCallbacks(rpc_compat.RpcCallback,
         self.agent.br_mgr.delete_vlan_bridge(bridge_name)
 
     def port_update(self, context, **kwargs):
-        LOG.debug(_("port_update received"))
-        # Check port exists on node
-        port = kwargs.get('port')
-        tap_device_name = self.agent.br_mgr.get_tap_device_name(port['id'])
-        devices = self.agent.br_mgr.get_tap_devices()
-        if tap_device_name not in devices:
-            return
-
-        if 'security_groups' in port:
-            self.sg_agent.refresh_firewall()
-        try:
-            if port['admin_state_up']:
-                network_type = kwargs.get('network_type')
-                if network_type:
-                    segmentation_id = kwargs.get('segmentation_id')
-                else:
-                    # compatibility with pre-Havana RPC vlan_id encoding
-                    vlan_id = kwargs.get('vlan_id')
-                    (network_type,
-                     segmentation_id) = lconst.interpret_vlan_id(vlan_id)
-                physical_network = kwargs.get('physical_network')
-                # create the networking for the port
-                if self.agent.br_mgr.add_interface(port['network_id'],
-                                                   network_type,
-                                                   physical_network,
-                                                   segmentation_id,
-                                                   port['id']):
-                    # update plugin about port status
-                    self.agent.plugin_rpc.update_device_up(self.context,
-                                                           tap_device_name,
-                                                           self.agent.agent_id,
-                                                           cfg.CONF.host)
-                else:
-                    self.agent.plugin_rpc.update_device_down(
-                        self.context,
-                        tap_device_name,
-                        self.agent.agent_id,
-                        cfg.CONF.host
-                    )
-            else:
-                bridge_name = self.agent.br_mgr.get_bridge_name(
-                    port['network_id'])
-                self.agent.br_mgr.remove_interface(bridge_name,
-                                                   tap_device_name)
-                # update plugin about port status
-                self.agent.plugin_rpc.update_device_down(self.context,
-                                                         tap_device_name,
-                                                         self.agent.agent_id,
-                                                         cfg.CONF.host)
-        except rpc_compat.MessagingTimeout:
-            LOG.error(_("RPC timeout while updating port %s"), port['id'])
+        port_id = kwargs['port']['id']
+        tap_name = self.agent.br_mgr.get_tap_device_name(port_id)
+        # Put the tap name in the updated_devices set.
+        # Do not store port details, as if they're used for processing
+        # notifications there is no guarantee the notifications are
+        # processed in the same order as the relevant API requests.
+        self.agent.updated_devices.add(tap_name)
+        LOG.debug(_("port_update RPC received for port: %s"), port_id)
 
     def fdb_add(self, context, fdb_entries):
         LOG.debug(_("fdb_add received"))
@@ -835,6 +782,8 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
             'agent_type': constants.AGENT_TYPE_LINUXBRIDGE,
             'start_flag': True}
 
+        # stores received port_updates for processing by the main loop
+        self.updated_devices = set()
         self.setup_rpc(interface_mappings.values())
         self.init_firewall()
 
@@ -896,18 +845,30 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
     def process_network_devices(self, device_info):
         resync_a = False
         resync_b = False
-        if 'added' in device_info:
-            resync_a = self.treat_devices_added(device_info['added'])
-        if 'removed' in device_info:
+
+        self.prepare_devices_filter(device_info.get('added'))
+
+        if device_info.get('updated'):
+            self.refresh_firewall()
+
+        # Updated devices are processed the same as new ones, as their
+        # admin_state_up may have changed. The set union prevents duplicating
+        # work when a device is new and updated in the same polling iteration.
+        devices_added_updated = (set(device_info.get('added'))
+                                 | set(device_info.get('updated')))
+        if devices_added_updated:
+            resync_a = self.treat_devices_added_updated(devices_added_updated)
+
+        if device_info.get('removed'):
             resync_b = self.treat_devices_removed(device_info['removed'])
         # If one of the above operations fails => resync with plugin
         return (resync_a | resync_b)
 
-    def treat_devices_added(self, devices):
+    def treat_devices_added_updated(self, devices):
         resync = False
-        self.prepare_devices_filter(devices)
+
         for device in devices:
-            LOG.debug(_("Port %s added"), device)
+            LOG.debug(_("Treating added or updated device: %s"), device)
             try:
                 details = self.plugin_rpc.get_device_details(self.context,
                                                              device,
@@ -976,6 +937,22 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
             self.br_mgr.remove_empty_bridges()
         return resync
 
+    def scan_devices(self, registered_devices, updated_devices):
+        curr_devices = self.br_mgr.get_tap_devices()
+        device_info = {}
+        device_info['current'] = curr_devices
+        device_info['added'] = curr_devices - registered_devices
+        # we don't want to process updates for devices that don't exist
+        device_info['updated'] = updated_devices & curr_devices
+        # we need to clean up after devices are removed
+        device_info['removed'] = registered_devices - curr_devices
+        return device_info
+
+    def _device_info_has_changes(self, device_info):
+        return (device_info.get('added')
+                or device_info.get('updated')
+                or device_info.get('removed'))
+
     def daemon_loop(self):
         sync = True
         devices = set()
@@ -989,15 +966,16 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                 devices.clear()
                 sync = False
             device_info = {}
+            # Save updated devices dict to perform rollback in case
+            # resync would be needed, and then clear self.updated_devices.
+            # As the greenthread should not yield between these
+            # two statements, this will should be thread-safe.
+            updated_devices_copy = self.updated_devices
+            self.updated_devices = set()
             try:
-                device_info = self.br_mgr.update_devices(devices)
-            except Exception:
-                LOG.exception(_("Update devices failed"))
-                sync = True
-            try:
-                # notify plugin about device deltas
-                if device_info:
-                    LOG.debug(_("Agent loop has new devices!"))
+                device_info = self.scan_devices(devices, updated_devices_copy)
+                if self._device_info_has_changes(device_info):
+                    LOG.debug(_("Agent loop found changes! %s"), device_info)
                     # If treat devices fails - indicates must resync with
                     # plugin
                     sync = self.process_network_devices(device_info)
@@ -1006,6 +984,10 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                 LOG.exception(_("Error in agent loop. Devices info: %s"),
                               device_info)
                 sync = True
+                # Restore devices that were removed from this set earlier
+                # without overwriting ones that may have arrived since.
+                self.updated_devices |= updated_devices_copy
+
             # sleep till end of polling interval
             elapsed = (time.time() - start)
             if (elapsed < self.polling_interval):
