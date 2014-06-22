@@ -20,6 +20,7 @@ import re
 
 import contextlib
 import mock
+from oslo.config import cfg
 from six.moves import queue as Queue
 
 from neutron import context
@@ -643,6 +644,138 @@ class TestLoadBalancerPlugin(TestLoadBalancerPluginBase):
                         ]
                         self.driver_rest_call_mock.assert_has_calls(
                             calls, any_order=True)
+
+    def test_create_member_on_different_subnets(self):
+        with contextlib.nested(
+            self.subnet(),
+            self.subnet(cidr='20.0.0.0/24'),
+            self.subnet(cidr='30.0.0.0/24')
+        ) as (vip_sub, pool_sub, member_sub):
+            with self.pool(provider='radware',
+                           subnet_id=pool_sub['subnet']['id']) as pool:
+                with contextlib.nested(
+                    self.port(subnet=vip_sub,
+                              fixed_ips=[{'ip_address': '10.0.0.2'}]),
+                    self.port(subnet=pool_sub,
+                              fixed_ips=[{'ip_address': '20.0.0.2'}]),
+                    self.port(subnet=member_sub,
+                              fixed_ips=[{'ip_address': '30.0.0.2'}])
+                ):
+                    with contextlib.nested(
+                        self.member(pool_id=pool['pool']['id'],
+                                    address='10.0.0.2'),
+                        self.member(pool_id=pool['pool']['id'],
+                                    address='20.0.0.2'),
+                        self.member(pool_id=pool['pool']['id'],
+                                    address='30.0.0.2')
+                    ) as (member_vip, member_pool, member_out):
+                        with self.vip(pool=pool, subnet=vip_sub):
+                            calls = [
+                                mock.call(
+                                    'POST', '/api/workflow/' +
+                                    pool['pool']['id'] +
+                                    '/action/BaseCreate',
+                                    mock.ANY, driver.TEMPLATE_HEADER
+                                )
+                            ]
+                            self.driver_rest_call_mock.assert_has_calls(
+                                calls, any_order=True)
+
+                            mock_calls = self.driver_rest_call_mock.mock_calls
+                            params = mock_calls[-2][1][2]['parameters']
+                            member_subnet_array = params['member_subnet_array']
+                            member_mask_array = params['member_mask_array']
+                            member_gw_array = params['member_gw_array']
+                            self.assertEqual(member_subnet_array,
+                                             ['10.0.0.0',
+                                              '255.255.255.255',
+                                              '30.0.0.0'])
+                            self.assertEqual(member_mask_array,
+                                             ['255.255.255.0',
+                                              '255.255.255.255',
+                                              '255.255.255.0'])
+                            self.assertEqual(
+                                member_gw_array,
+                                [pool_sub['subnet']['gateway_ip'],
+                                 '255.255.255.255',
+                                 pool_sub['subnet']['gateway_ip']])
+
+    def test_create_member_on_different_subnet_no_port(self):
+        with contextlib.nested(
+            self.subnet(),
+            self.subnet(cidr='20.0.0.0/24'),
+            self.subnet(cidr='30.0.0.0/24')
+        ) as (vip_sub, pool_sub, member_sub):
+            with self.pool(provider='radware',
+                           subnet_id=pool_sub['subnet']['id']) as pool:
+                with self.member(pool_id=pool['pool']['id'],
+                                 address='30.0.0.2'):
+                    with self.vip(pool=pool, subnet=vip_sub):
+                        calls = [
+                            mock.call(
+                                'POST', '/api/workflow/' +
+                                pool['pool']['id'] +
+                                '/action/BaseCreate',
+                                mock.ANY, driver.TEMPLATE_HEADER
+                            )
+                        ]
+                        self.driver_rest_call_mock.assert_has_calls(
+                            calls, any_order=True)
+
+                        mock_calls = self.driver_rest_call_mock.mock_calls
+                        params = mock_calls[-2][1][2]['parameters']
+                        member_subnet_array = params['member_subnet_array']
+                        member_mask_array = params['member_mask_array']
+                        member_gw_array = params['member_gw_array']
+                        self.assertEqual(member_subnet_array,
+                                         ['30.0.0.2'])
+                        self.assertEqual(member_mask_array,
+                                         ['255.255.255.255'])
+                        self.assertEqual(member_gw_array,
+                                         [pool_sub['subnet']['gateway_ip']])
+
+    def test_create_member_on_different_subnet_multiple_ports(self):
+        cfg.CONF.set_override("allow_overlapping_ips", 'true')
+        with self.network() as other_net:
+            with contextlib.nested(
+                self.subnet(),
+                self.subnet(cidr='20.0.0.0/24'),
+                self.subnet(cidr='30.0.0.0/24'),
+                self.subnet(network=other_net, cidr='30.0.0.0/24')
+            ) as (vip_sub, pool_sub, member_sub1, member_sub2):
+                with self.pool(provider='radware',
+                               subnet_id=pool_sub['subnet']['id']) as pool:
+                    with contextlib.nested(
+                        self.port(subnet=member_sub1,
+                                  fixed_ips=[{'ip_address': '30.0.0.2'}]),
+                        self.port(subnet=member_sub2,
+                                  fixed_ips=[{'ip_address': '30.0.0.2'}])):
+                        with self.member(pool_id=pool['pool']['id'],
+                                         address='30.0.0.2'):
+                            with self.vip(pool=pool, subnet=vip_sub):
+                                calls = [
+                                    mock.call(
+                                        'POST', '/api/workflow/' +
+                                        pool['pool']['id'] +
+                                        '/action/BaseCreate',
+                                        mock.ANY, driver.TEMPLATE_HEADER
+                                    )
+                                ]
+                                self.driver_rest_call_mock.assert_has_calls(
+                                    calls, any_order=True)
+
+                                calls = self.driver_rest_call_mock.mock_calls
+                                params = calls[-2][1][2]['parameters']
+                                m_sub_array = params['member_subnet_array']
+                                m_mask_array = params['member_mask_array']
+                                m_gw_array = params['member_gw_array']
+                                self.assertEqual(m_sub_array,
+                                                 ['30.0.0.2'])
+                                self.assertEqual(m_mask_array,
+                                                 ['255.255.255.255'])
+                                self.assertEqual(
+                                    m_gw_array,
+                                    [pool_sub['subnet']['gateway_ip']])
 
     def test_update_member_with_vip(self):
         with self.subnet() as subnet:
