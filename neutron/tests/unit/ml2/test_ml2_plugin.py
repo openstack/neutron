@@ -15,6 +15,7 @@
 
 import mock
 import testtools
+import uuid
 import webob
 
 from neutron.common import exceptions as exc
@@ -112,8 +113,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_update_port_status_build(self):
         with self.port() as port:
-            self.assertEqual(port['port']['status'], 'DOWN')
-            self.assertEqual(self.port_create_status, 'DOWN')
+            self.assertEqual('DOWN', port['port']['status'])
+            self.assertEqual('DOWN', self.port_create_status)
 
     def test_update_non_existent_port(self):
         ctx = context.get_admin_context()
@@ -217,9 +218,9 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         network_req = self.new_create_request('networks', data)
         network = self.deserialize(self.fmt,
                                    network_req.get_response(self.api))
-        self.assertEqual(network['network'][pnet.NETWORK_TYPE], 'vlan')
-        self.assertEqual(network['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
-        self.assertEqual(network['network'][pnet.SEGMENTATION_ID], 1)
+        self.assertEqual('vlan', network['network'][pnet.NETWORK_TYPE])
+        self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(1, network['network'][pnet.SEGMENTATION_ID])
         self.assertNotIn(mpnet.SEGMENTS, network['network'])
 
     def test_create_network_single_multiprovider(self):
@@ -231,17 +232,17 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                             'tenant_id': 'tenant_one'}}
         net_req = self.new_create_request('networks', data)
         network = self.deserialize(self.fmt, net_req.get_response(self.api))
-        self.assertEqual(network['network'][pnet.NETWORK_TYPE], 'vlan')
-        self.assertEqual(network['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
-        self.assertEqual(network['network'][pnet.SEGMENTATION_ID], 1)
+        self.assertEqual('vlan', network['network'][pnet.NETWORK_TYPE])
+        self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(1, network['network'][pnet.SEGMENTATION_ID])
         self.assertNotIn(mpnet.SEGMENTS, network['network'])
 
         # Tests get_network()
         net_req = self.new_show_request('networks', network['network']['id'])
         network = self.deserialize(self.fmt, net_req.get_response(self.api))
-        self.assertEqual(network['network'][pnet.NETWORK_TYPE], 'vlan')
-        self.assertEqual(network['network'][pnet.PHYSICAL_NETWORK], 'physnet1')
-        self.assertEqual(network['network'][pnet.SEGMENTATION_ID], 1)
+        self.assertEqual('vlan', network['network'][pnet.NETWORK_TYPE])
+        self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
+        self.assertEqual(1, network['network'][pnet.SEGMENTATION_ID])
         self.assertNotIn(mpnet.SEGMENTS, network['network'])
 
     def test_create_network_multiprovider(self):
@@ -285,7 +286,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)
-        self.assertEqual(res.status_int, 400)
+        self.assertEqual(400, res.status_int)
 
     def test_create_network_duplicate_segments(self):
         data = {'network': {'name': 'net1',
@@ -299,7 +300,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                             'tenant_id': 'tenant_one'}}
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)
-        self.assertEqual(res.status_int, 400)
+        self.assertEqual(400, res.status_int)
 
     def test_release_segment_no_type_driver(self):
         segment = {driver_api.NETWORK_TYPE: 'faketype',
@@ -374,45 +375,139 @@ class Ml2PluginV2FaultyDriverTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
 class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
 
-    def test_update_network_faulty(self):
+    def test_create_network_faulty(self):
 
-        def mock_update_network_postcommit(self, context):
-            raise ml2_exc.MechanismDriverError(
-                method='update_network_postcommit')
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'create_network_postcommit',
+                               side_effect=ml2_exc.MechanismDriverError):
+            tenant_id = str(uuid.uuid4())
+            data = {'network': {'name': 'net1',
+                                'tenant_id': tenant_id}}
+            req = self.new_create_request('networks', data)
+            res = req.get_response(self.api)
+            self.assertEqual(500, res.status_int)
+            error = self.deserialize(self.fmt, res)
+            self.assertEqual('MechanismDriverError',
+                             error['NeutronError']['type'])
+            query_params = "tenant_id=%s" % tenant_id
+            nets = self._list('networks', query_params=query_params)
+            self.assertFalse(nets['networks'])
+
+    def test_delete_network_faulty(self):
+
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'delete_network_postcommit',
+                               side_effect=ml2_exc.MechanismDriverError):
+            with mock.patch.object(mech_logger.LoggerMechanismDriver,
+                                   'delete_network_postcommit') as dnp:
+
+                data = {'network': {'name': 'net1',
+                                    'tenant_id': 'tenant_one'}}
+                network_req = self.new_create_request('networks', data)
+                network_res = network_req.get_response(self.api)
+                self.assertEqual(201, network_res.status_int)
+                network = self.deserialize(self.fmt, network_res)
+                net_id = network['network']['id']
+                req = self.new_delete_request('networks', net_id)
+                res = req.get_response(self.api)
+                self.assertEqual(204, res.status_int)
+                # Test if other mechanism driver was called
+                self.assertTrue(dnp.called)
+                self._show('networks', net_id,
+                           expected_code=webob.exc.HTTPNotFound.code)
+
+    def test_update_network_faulty(self):
 
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'update_network_postcommit',
-                               new=mock_update_network_postcommit):
+                               side_effect=ml2_exc.MechanismDriverError):
             with mock.patch.object(mech_logger.LoggerMechanismDriver,
                                    'update_network_postcommit') as unp:
 
                 data = {'network': {'name': 'net1',
                                     'tenant_id': 'tenant_one'}}
                 network_req = self.new_create_request('networks', data)
-                network = self.deserialize(
-                    self.fmt,
-                    network_req.get_response(self.api))
+                network_res = network_req.get_response(self.api)
+                self.assertEqual(201, network_res.status_int)
+                network = self.deserialize(self.fmt, network_res)
+                net_id = network['network']['id']
 
-                data = {'network': {'name': 'a_brand_new_name'}}
-                req = self.new_update_request('networks',
-                                              data,
-                                              network['network']['id'])
+                new_name = 'a_brand_new_name'
+                data = {'network': {'name': new_name}}
+                req = self.new_update_request('networks', data, net_id)
                 res = req.get_response(self.api)
-                self.assertEqual(res.status_int, 500)
+                self.assertEqual(500, res.status_int)
+                error = self.deserialize(self.fmt, res)
+                self.assertEqual('MechanismDriverError',
+                                 error['NeutronError']['type'])
                 # Test if other mechanism driver was called
                 self.assertTrue(unp.called)
+                net = self._show('networks', net_id)
+                self.assertEqual(new_name, net['network']['name'])
 
-                self._delete('networks', network['network']['id'])
+                self._delete('networks', net_id)
+
+    def test_create_subnet_faulty(self):
+
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'create_subnet_postcommit',
+                               side_effect=ml2_exc.MechanismDriverError):
+
+            with self.network() as network:
+                net_id = network['network']['id']
+                data = {'subnet': {'network_id': net_id,
+                                   'cidr': '10.0.20.0/24',
+                                   'ip_version': '4',
+                                   'name': 'subnet1',
+                                   'tenant_id':
+                                   network['network']['tenant_id'],
+                                   'gateway_ip': '10.0.2.1'}}
+                req = self.new_create_request('subnets', data)
+                res = req.get_response(self.api)
+                self.assertEqual(500, res.status_int)
+                error = self.deserialize(self.fmt, res)
+                self.assertEqual('MechanismDriverError',
+                                 error['NeutronError']['type'])
+                query_params = "network_id=%s" % net_id
+                subnets = self._list('subnets', query_params=query_params)
+                self.assertFalse(subnets['subnets'])
+
+    def test_delete_subnet_faulty(self):
+
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'delete_subnet_postcommit',
+                               side_effect=ml2_exc.MechanismDriverError):
+            with mock.patch.object(mech_logger.LoggerMechanismDriver,
+                                   'delete_subnet_postcommit') as dsp:
+
+                with self.network() as network:
+                    data = {'subnet': {'network_id':
+                                       network['network']['id'],
+                                       'cidr': '10.0.20.0/24',
+                                       'ip_version': '4',
+                                       'name': 'subnet1',
+                                       'tenant_id':
+                                       network['network']['tenant_id'],
+                                       'gateway_ip': '10.0.2.1'}}
+                    subnet_req = self.new_create_request('subnets', data)
+                    subnet_res = subnet_req.get_response(self.api)
+                    self.assertEqual(201, subnet_res.status_int)
+                    subnet = self.deserialize(self.fmt, subnet_res)
+                    subnet_id = subnet['subnet']['id']
+
+                    req = self.new_delete_request('subnets', subnet_id)
+                    res = req.get_response(self.api)
+                    self.assertEqual(204, res.status_int)
+                    # Test if other mechanism driver was called
+                    self.assertTrue(dsp.called)
+                    self._show('subnets', subnet_id,
+                               expected_code=webob.exc.HTTPNotFound.code)
 
     def test_update_subnet_faulty(self):
 
-        def mock_update_subnet_postcommit(self, context):
-            raise ml2_exc.MechanismDriverError(
-                method='update_subnet_postcommit')
-
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'update_subnet_postcommit',
-                               new=mock_update_subnet_postcommit):
+                               side_effect=ml2_exc.MechanismDriverError):
             with mock.patch.object(mech_logger.LoggerMechanismDriver,
                                    'update_subnet_postcommit') as usp:
 
@@ -426,30 +521,54 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                                        network['network']['tenant_id'],
                                        'gateway_ip': '10.0.2.1'}}
                     subnet_req = self.new_create_request('subnets', data)
-                    subnet = self.deserialize(
-                        self.fmt,
-                        subnet_req.get_response(self.api))
-
-                    data = {'subnet': {'name': 'a_brand_new_name'}}
-                    req = self.new_update_request('subnets',
-                                                  data,
-                                                  subnet['subnet']['id'])
+                    subnet_res = subnet_req.get_response(self.api)
+                    self.assertEqual(201, subnet_res.status_int)
+                    subnet = self.deserialize(self.fmt, subnet_res)
+                    subnet_id = subnet['subnet']['id']
+                    new_name = 'a_brand_new_name'
+                    data = {'subnet': {'name': new_name}}
+                    req = self.new_update_request('subnets', data, subnet_id)
                     res = req.get_response(self.api)
-                    self.assertEqual(res.status_int, 500)
+                    self.assertEqual(500, res.status_int)
+                    error = self.deserialize(self.fmt, res)
+                    self.assertEqual('MechanismDriverError',
+                                     error['NeutronError']['type'])
                     # Test if other mechanism driver was called
                     self.assertTrue(usp.called)
+                    subnet = self._show('subnets', subnet_id)
+                    self.assertEqual(new_name, subnet['subnet']['name'])
 
                     self._delete('subnets', subnet['subnet']['id'])
 
-    def test_update_port_faulty(self):
+    def test_create_port_faulty(self):
 
-        def mock_update_port_postcommit(self, context):
-            raise ml2_exc.MechanismDriverError(
-                method='update_port_postcommit')
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                               'create_port_postcommit',
+                               side_effect=ml2_exc.MechanismDriverError):
+
+            with self.network() as network:
+                net_id = network['network']['id']
+                data = {'port': {'network_id': net_id,
+                                 'tenant_id':
+                                 network['network']['tenant_id'],
+                                 'name': 'port1',
+                                 'admin_state_up': 1,
+                                 'fixed_ips': []}}
+                req = self.new_create_request('ports', data)
+                res = req.get_response(self.api)
+                self.assertEqual(500, res.status_int)
+                error = self.deserialize(self.fmt, res)
+                self.assertEqual('MechanismDriverError',
+                                 error['NeutronError']['type'])
+                query_params = "network_id=%s" % net_id
+                ports = self._list('ports', query_params=query_params)
+                self.assertFalse(ports['ports'])
+
+    def test_update_port_faulty(self):
 
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'update_port_postcommit',
-                               new=mock_update_port_postcommit):
+                               side_effect=ml2_exc.MechanismDriverError):
             with mock.patch.object(mech_logger.LoggerMechanismDriver,
                                    'update_port_postcommit') as upp:
 
@@ -461,17 +580,22 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                                      'admin_state_up': 1,
                                      'fixed_ips': []}}
                     port_req = self.new_create_request('ports', data)
-                    port = self.deserialize(
-                        self.fmt,
-                        port_req.get_response(self.api))
+                    port_res = port_req.get_response(self.api)
+                    self.assertEqual(201, port_res.status_int)
+                    port = self.deserialize(self.fmt, port_res)
+                    port_id = port['port']['id']
 
-                    data = {'port': {'name': 'a_brand_new_name'}}
-                    req = self.new_update_request('ports',
-                                                  data,
-                                                  port['port']['id'])
+                    new_name = 'a_brand_new_name'
+                    data = {'port': {'name': new_name}}
+                    req = self.new_update_request('ports', data, port_id)
                     res = req.get_response(self.api)
-                    self.assertEqual(res.status_int, 500)
+                    self.assertEqual(500, res.status_int)
+                    error = self.deserialize(self.fmt, res)
+                    self.assertEqual('MechanismDriverError',
+                                     error['NeutronError']['type'])
                     # Test if other mechanism driver was called
                     self.assertTrue(upp.called)
+                    port = self._show('ports', port_id)
+                    self.assertEqual(new_name, port['port']['name'])
 
                     self._delete('ports', port['port']['id'])
