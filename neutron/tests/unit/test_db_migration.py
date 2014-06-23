@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2012 New Dream Network, LLC (DreamHost)
 # All Rights Reserved.
 #
