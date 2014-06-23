@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2014.2.dev124.g431937c\n"
+"Project-Id-Version: neutron 2014.2.dev142.gad86fe3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-06-21 06:08+0000\n"
+"POT-Creation-Date: 2014-06-23 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4296,7 +4296,7 @@ msgstr ""
 #: neutron/plugins/bigswitch/config.py:65
 msgid ""
 "Time between verifications that the backend controller database is "
-"consistent with Neutron"
+"consistent with Neutron. (0 to disable)"
 msgstr ""
 
 #: neutron/plugins/bigswitch/config.py:68
@@ -4696,7 +4696,12 @@ msgstr ""
 msgid "Backend server(s) do not support automated consitency checks."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:562
+#: neutron/plugins/bigswitch/servermanager.py:554
+#, python-format
+msgid "Consistency watchdog disabled by polling interval setting of %s."
+msgstr ""
+
+#: neutron/plugins/bigswitch/servermanager.py:566
 msgid "Encountered an error checking controller health."
 msgstr ""
 
@@ -5270,7 +5275,11 @@ msgstr ""
 msgid "N1K Policy profile polling duration in seconds"
 msgstr ""
 
-#: neutron/plugins/cisco/common/config.py:135
+#: neutron/plugins/cisco/common/config.py:84
+msgid "Number of threads to use to make HTTP requests"
+msgstr ""
+
+#: neutron/plugins/cisco/common/config.py:137
 #: neutron/plugins/ml2/drivers/cisco/apic/config.py:68
 #: neutron/plugins/ml2/drivers/cisco/nexus/config.py:58
 msgid "Some config files were not parsed properly"
@@ -5585,29 +5594,29 @@ msgstr ""
 msgid "L3 enabled on Nexus plugin, delete SVI from switch"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:224
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:228
 msgid "Logical network"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:249
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:253
 msgid "network_segment_pool"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:294
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:298
 msgid "Invalid input for CIDR"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:434
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:438
 #, python-format
 msgid "req: %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:443
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:448
 #, python-format
 msgid "status_code %s"
 msgstr ""
 
-#: neutron/plugins/cisco/n1kv/n1kv_client.py:451
+#: neutron/plugins/cisco/n1kv/n1kv_client.py:456
 #, python-format
 msgid "VSM: %s"
 msgstr ""
@@ -14268,13 +14277,13 @@ msgstr ""
 msgid "No more DHCP agents"
 msgstr ""
 
-#: neutron/scheduler/dhcp_agent_scheduler.py:112
-#, python-format
-msgid "DHCP agent %s is not active"
+#: neutron/scheduler/dhcp_agent_scheduler.py:110
+msgid "No non-hosted networks"
 msgstr ""
 
-#: neutron/scheduler/dhcp_agent_scheduler.py:119
-msgid "No non-hosted networks"
+#: neutron/scheduler/dhcp_agent_scheduler.py:121
+#, python-format
+msgid "DHCP agent %s is not active"
 msgstr ""
 
 #: neutron/scheduler/l3_agent_scheduler.py:65
@@ -15166,241 +15175,240 @@ msgstr ""
 msgid "Removing SNAT port for subnet %s as this is the last pool using it..."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:63
+#: neutron/services/loadbalancer/drivers/radware/driver.py:64
 msgid "IP address of vDirect server."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:65
+#: neutron/services/loadbalancer/drivers/radware/driver.py:66
 msgid "IP address of secondary vDirect server."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:68
+#: neutron/services/loadbalancer/drivers/radware/driver.py:69
 msgid "vDirect user name."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:71
+#: neutron/services/loadbalancer/drivers/radware/driver.py:72
 msgid "vDirect user password."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:74
+#: neutron/services/loadbalancer/drivers/radware/driver.py:75
 msgid "Service ADC type. Default: VA."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:77
+#: neutron/services/loadbalancer/drivers/radware/driver.py:78
 msgid "Service ADC version."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:80
+#: neutron/services/loadbalancer/drivers/radware/driver.py:81
 msgid "Enables or disables the Service HA pair. Default: False."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:84
+#: neutron/services/loadbalancer/drivers/radware/driver.py:85
 msgid "Service throughput. Default: 1000."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:87
+#: neutron/services/loadbalancer/drivers/radware/driver.py:88
 msgid "Service SSL throughput. Default: 100."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:90
+#: neutron/services/loadbalancer/drivers/radware/driver.py:91
 msgid "Service compression throughput. Default: 100."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:93
+#: neutron/services/loadbalancer/drivers/radware/driver.py:94
 msgid "Size of service cache. Default: 20."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:96
+#: neutron/services/loadbalancer/drivers/radware/driver.py:97
 msgid "Name of l2_l3 workflow. Default: openstack_l2_l3."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:100
+#: neutron/services/loadbalancer/drivers/radware/driver.py:101
 msgid "Name of l4 workflow. Default: openstack_l4."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:108
+#: neutron/services/loadbalancer/drivers/radware/driver.py:109
 msgid "Parameter for l2_l3 workflow constructor."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:115
+#: neutron/services/loadbalancer/drivers/radware/driver.py:116
 msgid "Parameter for l2_l3 workflow setup."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:118
+#: neutron/services/loadbalancer/drivers/radware/driver.py:119
 msgid "List of actions that are not pushed to the completion queue."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:122
+#: neutron/services/loadbalancer/drivers/radware/driver.py:123
 msgid "Name of the l4 workflow action. Default: BaseCreate."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:126
+#: neutron/services/loadbalancer/drivers/radware/driver.py:127
 msgid "Resource pool IDs."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:129
+#: neutron/services/loadbalancer/drivers/radware/driver.py:130
 msgid "A required VLAN for the interswitch link to use."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:132
+#: neutron/services/loadbalancer/drivers/radware/driver.py:133
 msgid ""
 "Enable or disable Alteon interswitch link for stateful session failover. "
 "Default: False."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:229
+#: neutron/services/loadbalancer/drivers/radware/driver.py:233
 #, python-format
 msgid ""
-"vip: %(vip)s, extended_vip: %(extended_vip)s, network_id: "
-"%(vip_network_id)s, service_name: %(service_name)s, pip_info: "
-"%(pip_info)s"
+"vip: %(vip)s, extended_vip: %(extended_vip)s, service_name: "
+"%(service_name)s, "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:264
+#: neutron/services/loadbalancer/drivers/radware/driver.py:267
 #, python-format
 msgid "Retrieved pip nport: %(port)r for vip: %(vip)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:272
+#: neutron/services/loadbalancer/drivers/radware/driver.py:275
 #, python-format
 msgid "Found no pip nports associated with vip: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:281
+#: neutron/services/loadbalancer/drivers/radware/driver.py:284
 #, python-format
 msgid "Failed to remove workflow %s. Going to set vip to ERROR status"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:295
+#: neutron/services/loadbalancer/drivers/radware/driver.py:298
 #, python-format
 msgid "pip nport id: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:299
+#: neutron/services/loadbalancer/drivers/radware/driver.py:302
 #, python-format
 msgid "pip nport delete failed: %r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:387
+#: neutron/services/loadbalancer/drivers/radware/driver.py:390
 #, python-format
 msgid ""
 "_handle_pool_health_monitor. health_monitor = %(hm_id)s pool_id = "
 "%(pool_id)s delete = %(delete)s vip_id = %(vip_id)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:418
+#: neutron/services/loadbalancer/drivers/radware/driver.py:421
 msgid "Starting operation completion handling thread"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:448
+#: neutron/services/loadbalancer/drivers/radware/driver.py:451
 #, python-format
 msgid "_update_workflow response: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:457
-#: neutron/services/loadbalancer/drivers/radware/driver.py:488
+#: neutron/services/loadbalancer/drivers/radware/driver.py:460
+#: neutron/services/loadbalancer/drivers/radware/driver.py:491
 #, python-format
 msgid "Pushing operation %s to the queue"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:465
+#: neutron/services/loadbalancer/drivers/radware/driver.py:468
 #, python-format
 msgid "Remove the workflow %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:473
+#: neutron/services/loadbalancer/drivers/radware/driver.py:476
 #, python-format
 msgid "Post-remove workflow function %r completed"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:477
+#: neutron/services/loadbalancer/drivers/radware/driver.py:480
 #, python-format
 msgid "Post-remove workflow function %r failed"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:594
+#: neutron/services/loadbalancer/drivers/radware/driver.py:597
 #, python-format
 msgid "create_workflow response: %s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:663
+#: neutron/services/loadbalancer/drivers/radware/driver.py:666
 #, python-format
 msgid ""
 "vDirectRESTClient:init server=%(server)s, secondary "
 "server=%(sec_server)s, port=%(port)d, ssl=%(ssl)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:669
+#: neutron/services/loadbalancer/drivers/radware/driver.py:672
 #, python-format
 msgid "Fliping servers. Current is: %(server)s, switching to %(secondary)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:682
+#: neutron/services/loadbalancer/drivers/radware/driver.py:685
 msgid ""
 "REST client is not able to recover since only one vDirect server is "
 "configured."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:690
+#: neutron/services/loadbalancer/drivers/radware/driver.py:693
 #, python-format
 msgid "vDirect server is not responding (%s)."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:694
+#: neutron/services/loadbalancer/drivers/radware/driver.py:697
 #, python-format
 msgid "vDirect server is not active (%s)."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:722
+#: neutron/services/loadbalancer/drivers/radware/driver.py:725
 msgid "vdirectRESTClient: Could not establish HTTPS connection"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:729
+#: neutron/services/loadbalancer/drivers/radware/driver.py:732
 msgid "vdirectRESTClient: Could not establish HTTP connection"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:746
+#: neutron/services/loadbalancer/drivers/radware/driver.py:749
 #, python-format
 msgid "vdirectRESTClient: %(action)s failure, %(e)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:814
+#: neutron/services/loadbalancer/drivers/radware/driver.py:817
 #, python-format
 msgid ""
 "Operation %(oper)s is completed after %(sec_to_completion)d sec with "
 "success status: %(success)s :"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:826
+#: neutron/services/loadbalancer/drivers/radware/driver.py:829
 #, python-format
 msgid "Operation %(operation)s failed. Reason: %(msg)s"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:858
+#: neutron/services/loadbalancer/drivers/radware/driver.py:861
 #, python-format
 msgid "Operation %s is not completed yet.."
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:873
+#: neutron/services/loadbalancer/drivers/radware/driver.py:876
 msgid "Exception was thrown inside OperationCompletionHandler"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:882
+#: neutron/services/loadbalancer/drivers/radware/driver.py:885
 #, python-format
 msgid "Post-operation function %(func)r completed after operation %(oper)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:888
+#: neutron/services/loadbalancer/drivers/radware/driver.py:891
 #, python-format
 msgid "Post-operation function %(func)r failed after operation %(oper)r"
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:929
+#: neutron/services/loadbalancer/drivers/radware/driver.py:932
 #, python-format
 msgid "_update: %s "
 msgstr ""
 
-#: neutron/services/loadbalancer/drivers/radware/driver.py:969
+#: neutron/services/loadbalancer/drivers/radware/driver.py:972
 #, python-format
 msgid "_remove_object_from_db %s"
 msgstr ""
