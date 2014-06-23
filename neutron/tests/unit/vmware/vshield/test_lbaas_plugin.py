@@ -108,6 +108,11 @@ class TestLoadbalancerPlugin(
         self.ext_api = None
         self.plugin = None
 
+    def _create_and_get_router(self):
+        req = self._create_router(self.fmt, self._tenant_id)
+        res = self.deserialize(self.fmt, req)
+        return res['router']['id']
+
     def _get_vip_optional_args(self):
         args = super(TestLoadbalancerPlugin, self)._get_vip_optional_args()
         return args + ('router_id',)
@@ -147,7 +152,7 @@ class TestLoadbalancerPlugin(
                     for k, v in keys:
                         self.assertEqual(res['health_monitor'][k], v)
 
-    def test_create_vip(self, **kwargs):
+    def test_create_vip(self, **extras):
         expected = {
             'name': 'vip1',
             'description': '',
@@ -156,14 +161,11 @@ class TestLoadbalancerPlugin(
             'connection_limit': -1,
             'admin_state_up': True,
             'status': 'ACTIVE',
+            'router_id': self._create_and_get_router(),
             'tenant_id': self._tenant_id,
         }
-        if 'router_id' in kwargs:
-            expected['router_id'] = kwargs.pop('router_id')
-        else:
-            expected['router_id'] = self._create_and_get_router()
 
-        expected.update(kwargs)
+        expected.update(extras)
 
         name = expected['name']
 
@@ -181,7 +183,7 @@ class TestLoadbalancerPlugin(
             )
             with self.vip(
                 router_id=expected['router_id'], name=name,
-                pool=pool, subnet=subnet, **kwargs) as vip:
+                pool=pool, subnet=subnet, **extras) as vip:
                 for k in ('id', 'address', 'port_id', 'pool_id'):
                     self.assertTrue(vip['vip'].get(k, None))
                 self.assertEqual(
@@ -189,23 +191,6 @@ class TestLoadbalancerPlugin(
                          for k, v in vip['vip'].items() if k in expected),
                     expected
                 )
-
-    def test_create_vip_with_invalid_router(self):
-        self.assertRaises(
-            web_exc.HTTPClientError,
-            self.test_create_vip, router_id=None)
-        self.assertRaises(
-            web_exc.HTTPClientError,
-            self.test_create_vip, router_id='invalid_router_id')
-        router_id = self._create_and_get_router(
-            arg_list=('service_router',), service_router=False)
-        self.assertRaises(
-            web_exc.HTTPClientError,
-            self.test_create_vip, router_id=router_id)
-        router_id = self._create_and_get_router(active_set=False)
-        self.assertRaises(
-            web_exc.HTTPClientError,
-            self.test_create_vip, router_id=router_id)
 
     def test_create_vip_with_session_persistence(self):
         self.test_create_vip(session_persistence={'type': 'HTTP_COOKIE'})

@@ -520,17 +520,6 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
                 router_id=router_id,
                 firewall_id=firewalls[0]['id'])
 
-    def check_router(self, context, router_id):
-        if not router_id:
-            msg = _("router_id is not provided!")
-            raise n_exc.BadRequest(resource='router', msg=msg)
-        router = self._get_router(context, router_id)
-        if not self._is_advanced_service_router(context, router=router):
-            msg = _("router_id:%s is not an advanced router!") % router['id']
-            raise n_exc.BadRequest(resource='router', msg=msg)
-        if router['status'] != service_constants.ACTIVE:
-            raise nsx_exc.AdvRouterServiceUnavailable(router_id=router['id'])
-
     def _delete_lrouter(self, context, router_id, nsx_router_id):
         binding = vcns_db.get_vcns_router_binding(context.session, router_id)
         if not binding:
@@ -914,7 +903,14 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
     def create_firewall(self, context, firewall):
         LOG.debug(_("create_firewall() called"))
         router_id = firewall['firewall'].get(vcns_const.ROUTER_ID)
-        self.check_router(context, router_id)
+        if not router_id:
+            msg = _("router_id is not provided!")
+            LOG.error(msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
+        if not self._is_advanced_service_router(context, router_id):
+            msg = _("router_id:%s is not an advanced router!") % router_id
+            LOG.error(msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
         if self._get_resource_router_id_binding(
             context, firewall_db.Firewall, router_id=router_id):
             msg = _("A firewall is already associated with the router")
@@ -1223,7 +1219,16 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
     def create_vip(self, context, vip):
         LOG.debug(_("create_vip() called"))
         router_id = vip['vip'].get(vcns_const.ROUTER_ID)
-        self.check_router(context, router_id)
+        if not router_id:
+            msg = _("router_id is not provided!")
+            LOG.error(msg)
+            raise n_exc.BadRequest(resource='router', msg=msg)
+
+        if not self._is_advanced_service_router(context, router_id):
+            msg = _("router_id: %s is not an advanced router!") % router_id
+            LOG.error(msg)
+            raise nsx_exc.NsxPluginException(err_msg=msg)
+
         #Check whether the vip port is an external port
         subnet_id = vip['vip']['subnet_id']
         network_id = self.get_subnet(context, subnet_id)['network_id']
@@ -1602,7 +1607,11 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
     def create_vpnservice(self, context, vpnservice):
         LOG.debug(_("create_vpnservice() called"))
         router_id = vpnservice['vpnservice'].get('router_id')
-        self.check_router(context, router_id)
+        if not self._is_advanced_service_router(context, router_id):
+            msg = _("router_id:%s is not an advanced router!") % router_id
+            LOG.warning(msg)
+            raise exceptions.VcnsBadRequest(resource='router', msg=msg)
+
         if self.get_vpnservices(context, filters={'router_id': [router_id]}):
             msg = _("a vpnservice is already associated with the router: %s"
                     ) % router_id
