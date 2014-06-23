@@ -79,18 +79,22 @@ class TestVpnPlugin(test_db_vpnaas.VPNTestMixin,
         self.plugin = None
 
     @contextlib.contextmanager
-    def router(self, vlan_id=None, do_delete=True, **kwargs):
+    def router(self, vlan_id=None):
         with self._create_l3_ext_network(vlan_id) as net:
             with self.subnet(cidr='100.0.0.0/24', network=net) as s:
-                router_id = self._create_and_get_router(**kwargs)
+                data = {'router': {'tenant_id': self._tenant_id}}
+                data['router']['service_router'] = True
+                router_req = self.new_create_request('routers', data, self.fmt)
+
+                res = router_req.get_response(self.ext_api)
+                router = self.deserialize(self.fmt, res)
                 self._add_external_gateway_to_router(
-                    router_id, s['subnet']['network_id'])
-                router = self._show('routers', router_id)
+                    router['router']['id'],
+                    s['subnet']['network_id'])
+                router = self._show('routers', router['router']['id'])
                 yield router
-                if do_delete:
-                    self._remove_external_gateway_from_router(
-                        router_id, s['subnet']['network_id'])
-                    self._delete('routers', router_id)
+
+                self._delete('routers', router['router']['id'])
 
     def test_create_vpnservice(self, **extras):
         """Test case to create a vpnservice."""
@@ -130,33 +134,6 @@ class TestVpnPlugin(test_db_vpnaas.VPNTestMixin,
                         subnet_id=(subnet['subnet']['id']))
                     self.assertEqual(
                         res.status_int, webob.exc.HTTPConflict.code)
-
-    def test_create_vpnservice_with_invalid_router(self):
-        """Test case to create vpnservices with invalid router."""
-        with self.subnet(cidr='10.2.0.0/24') as subnet:
-            with contextlib.nested(
-                self.router(arg_list=('service_router',),
-                            service_router=False),
-                self.router(active_set=False)) as (r1, r2):
-                res = self._create_vpnservice(
-                    'json', 'vpnservice', True,
-                    router_id='invalid_id',
-                    subnet_id=(subnet['subnet']['id']))
-                self.assertEqual(
-                    res.status_int, webob.exc.HTTPBadRequest.code)
-                res = self._create_vpnservice(
-                    'json', 'vpnservice', True,
-                    router_id=r1['router']['id'],
-                    subnet_id=(subnet['subnet']['id']))
-                self.assertEqual(
-                    res.status_int, webob.exc.HTTPBadRequest.code)
-                res = self._create_vpnservice(
-                    'json', 'vpnservice', True,
-                    router_id=r2['router']['id'],
-                    subnet_id=(subnet['subnet']['id']))
-                self.assertEqual(
-                    res.status_int,
-                    webob.exc.HTTPServiceUnavailable.code)
 
     def test_update_vpnservice(self):
         """Test case to update a vpnservice."""
