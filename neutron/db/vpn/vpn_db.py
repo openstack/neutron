@@ -27,6 +27,7 @@ from neutron.db import l3_agentschedulers_db as l3_agent_db
 from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db.vpn import vpn_validator
 from neutron.extensions import vpnaas
 from neutron import manager
 from neutron.openstack.common import excutils
@@ -36,8 +37,6 @@ from neutron.plugins.common import constants
 from neutron.plugins.common import utils
 
 LOG = logging.getLogger(__name__)
-
-IP_MIN_MTU = {4: 68, 6: 1280}
 
 
 class IPsecPeerCidr(model_base.BASEV2):
@@ -167,6 +166,17 @@ class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
         """Do the initialization for the vpn service plugin here."""
         qdbapi.register_models()
 
+    def _get_validator(self):
+        """Obtain validator to use for attribute validation.
+
+        Subclasses may override this with a different valdiator, as needed.
+        Note: some UTs will directly create a VPNPluginDb object and then
+        call its methods, instead of creating a VPNDriverPlugin, which
+        will have a service driver associated that will provide a
+        validator object. As a result, we use the reference validator here.
+        """
+        return vpn_validator.VpnReferenceValidator()
+
     def update_status(self, context, model, v_id, status):
         with context.session.begin(subtransactions=True):
             v_db = self._get_resource(context, model, v_id)
@@ -225,14 +235,17 @@ class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
 
         return self._fields(res, fields)
 
+    def _get_subnet_ip_version(self, context, vpnservice_id):
+        vpn_service_db = self._get_vpnservice(context, vpnservice_id)
+        subnet = vpn_service_db.subnet['cidr']
+        ip_version = netaddr.IPNetwork(subnet).version
+        return ip_version
+
     def create_ipsec_site_connection(self, context, ipsec_site_connection):
         ipsec_sitecon = ipsec_site_connection['ipsec_site_connection']
-        dpd = ipsec_sitecon['dpd']
-        ipsec_sitecon['dpd_action'] = dpd.get('action', 'hold')
-        ipsec_sitecon['dpd_interval'] = dpd.get('interval', 30)
-        ipsec_sitecon['dpd_timeout'] = dpd.get('timeout', 120)
+        validator = self._get_validator()
+        validator.assign_sensible_ipsec_sitecon_defaults(ipsec_sitecon)
         tenant_id = self._get_tenant_id_for_create(context, ipsec_sitecon)
-        self._check_dpd(ipsec_sitecon)
         with context.session.begin(subtransactions=True):
             #Check permissions
             self._get_resource(context,
@@ -244,9 +257,11 @@ class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
             self._get_resource(context,
                                IPsecPolicy,
                                ipsec_sitecon['ipsecpolicy_id'])
-            self._check_mtu(context,
-                            ipsec_sitecon['mtu'],
-                            ipsec_sitecon['vpnservice_id'])
+            vpnservice_id = ipsec_sitecon['vpnservice_id']
+            ip_version = self._get_subnet_ip_version(context, vpnservice_id)
+            validator.validate_ipsec_site_connection(context,
+                                                     ipsec_sitecon,
+                                                     ip_version)
             ipsec_site_conn_db = IPsecSiteConnection(
                 id=uuidutils.generate_uuid(),
                 tenant_id=tenant_id,
@@ -264,7 +279,7 @@ class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
                 dpd_timeout=ipsec_sitecon['dpd_timeout'],
                 admin_state_up=ipsec_sitecon['admin_state_up'],
                 status=constants.PENDING_CREATE,
-                vpnservice_id=ipsec_sitecon['vpnservice_id'],
+                vpnservice_id=vpnservice_id,
                 ikepolicy_id=ipsec_sitecon['ikepolicy_id'],
                 ipsecpolicy_id=ipsec_sitecon['ipsecpolicy_id']
             )
@@ -277,52 +292,34 @@ class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
                 context.session.add(peer_cidr_db)
         return self._make_ipsec_site_connection_dict(ipsec_site_conn_db)
 
-    def _check_dpd(self, ipsec_sitecon):
-        if ipsec_sitecon['dpd_timeout'] <= ipsec_sitecon['dpd_interval']:
-            raise vpnaas.IPsecSiteConnectionDpdIntervalValueError(
-                attr='dpd_timeout')
-
-    def _check_mtu(self, context, mtu, vpnservice_id):
-        vpn_service_db = self._get_vpnservice(context, vpnservice_id)
-        subnet = vpn_service_db.subnet['cidr']
-        version = netaddr.IPNetwork(subnet).version
-        if mtu < IP_MIN_MTU[version]:
-            raise vpnaas.IPsecSiteConnectionMtuError(mtu=mtu, version=version)
-
     def update_ipsec_site_connection(
             self, context,
             ipsec_site_conn_id, ipsec_site_connection):
-        conn = ipsec_site_connection['ipsec_site_connection']
+        ipsec_sitecon = ipsec_site_connection['ipsec_site_connection']
         changed_peer_cidrs = False
+        validator = self._get_validator()
         with context.session.begin(subtransactions=True):
             ipsec_site_conn_db = self._get_resource(
                 context,
                 IPsecSiteConnection,
                 ipsec_site_conn_id)
-            dpd = conn.get('dpd', {})
-            if dpd.get('action'):
-                conn['dpd_action'] = dpd.get('action')
-            if dpd.get('interval') or dpd.get('timeout'):
-                conn['dpd_interval'] = dpd.get(
-                    'interval', ipsec_site_conn_db.dpd_interval)
-                conn['dpd_timeout'] = dpd.get(
-                    'timeout', ipsec_site_conn_db.dpd_timeout)
-                self._check_dpd(conn)
-
-            if 'mtu' in conn:
-                self._check_mtu(context,
-                                conn['mtu'],
-                                ipsec_site_conn_db.vpnservice_id)
-
+            vpnservice_id = ipsec_site_conn_db['vpnservice_id']
+            ip_version = self._get_subnet_ip_version(context, vpnservice_id)
+            validator.assign_sensible_ipsec_sitecon_defaults(
+                ipsec_sitecon, ipsec_site_conn_db)
+            validator.validate_ipsec_site_connection(
+                context,
+                ipsec_sitecon,
+                ip_version)
             self.assert_update_allowed(ipsec_site_conn_db)
 
-            if "peer_cidrs" in conn:
+            if "peer_cidrs" in ipsec_sitecon:
                 changed_peer_cidrs = True
                 old_peer_cidr_list = ipsec_site_conn_db['peer_cidrs']
                 old_peer_cidr_dict = dict(
                     (peer_cidr['cidr'], peer_cidr)
                     for peer_cidr in old_peer_cidr_list)
-                new_peer_cidr_set = set(conn["peer_cidrs"])
+                new_peer_cidr_set = set(ipsec_sitecon["peer_cidrs"])
                 old_peer_cidr_set = set(old_peer_cidr_dict)
 
                 new_peer_cidrs = list(new_peer_cidr_set)
@@ -333,9 +330,9 @@ class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
                         cidr=peer_cidr,
                         ipsec_site_connection_id=ipsec_site_conn_id)
                     context.session.add(pcidr)
-                del conn["peer_cidrs"]
-            if conn:
-                ipsec_site_conn_db.update(conn)
+                del ipsec_sitecon["peer_cidrs"]
+            if ipsec_sitecon:
+                ipsec_site_conn_db.update(ipsec_sitecon)
         result = self._make_ipsec_site_connection_dict(ipsec_site_conn_db)
         if changed_peer_cidrs:
             result['peer_cidrs'] = new_peer_cidrs
@@ -556,31 +553,12 @@ class VPNPluginDb(vpnaas.VPNPluginBase, base_db.CommonDbMixin):
                'status': vpnservice['status']}
         return self._fields(res, fields)
 
-    def _check_router(self, context, router_id):
-        l3_plugin = manager.NeutronManager.get_service_plugins().get(
-            constants.L3_ROUTER_NAT)
-        router = l3_plugin.get_router(context, router_id)
-        if not router.get(l3_db.EXTERNAL_GW_INFO):
-            raise vpnaas.RouterIsNotExternal(router_id=router_id)
-
-    def _check_subnet_id(self, context, router_id, subnet_id):
-        core_plugin = manager.NeutronManager.get_plugin()
-        ports = core_plugin.get_ports(
-            context,
-            filters={
-                'fixed_ips': {'subnet_id': [subnet_id]},
-                'device_id': [router_id]})
-        if not ports:
-            raise vpnaas.SubnetIsNotConnectedToRouter(
-                subnet_id=subnet_id,
-                router_id=router_id)
-
     def create_vpnservice(self, context, vpnservice):
         vpns = vpnservice['vpnservice']
         tenant_id = self._get_tenant_id_for_create(context, vpns)
-        self._check_router(context, vpns['router_id'])
-        self._check_subnet_id(context, vpns['router_id'], vpns['subnet_id'])
+        validator = self._get_validator()
         with context.session.begin(subtransactions=True):
+            validator.validate_vpnservice(context, vpns)
             vpnservice_db = VPNService(id=uuidutils.generate_uuid(),
                                        tenant_id=tenant_id,
                                        name=vpns['name'],

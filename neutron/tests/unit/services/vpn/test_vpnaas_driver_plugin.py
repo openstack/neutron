@@ -18,6 +18,7 @@ import mock
 
 from neutron.common import constants
 from neutron import context
+from neutron.db.vpn import vpn_validator
 from neutron import manager
 from neutron.plugins.common import constants as p_constants
 from neutron.services.vpn.service_drivers import ipsec as ipsec_driver
@@ -32,6 +33,7 @@ VPN_DRIVER_CLASS = 'neutron.services.vpn.plugin.VPNDriverPlugin'
 class TestVPNDriverPlugin(test_db_vpnaas.TestVpnaas,
                           test_agent_scheduler.AgentSchedulerTestMixIn,
                           test_agent_ext_plugin.AgentDBTestMixIn):
+
     def setUp(self):
         self.adminContext = context.get_admin_context()
         driver_cls_p = mock.patch(
@@ -40,6 +42,7 @@ class TestVPNDriverPlugin(test_db_vpnaas.TestVpnaas,
         driver_cls = driver_cls_p.start()
         self.driver = mock.Mock()
         self.driver.service_type = ipsec_driver.IPSEC
+        self.driver.validator = vpn_validator.VpnReferenceValidator()
         driver_cls.return_value = self.driver
         super(TestVPNDriverPlugin, self).setUp(
             vpnaas_plugin=VPN_DRIVER_CLASS)
