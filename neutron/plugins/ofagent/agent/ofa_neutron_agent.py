@@ -871,10 +871,10 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         return (int_veth, phys_veth)
 
     def _phys_br_block_untranslated_traffic(self, br, physical_network):
-        match = br.ofparser.OFPMatch(in_port=int(
+        match = self.int_br.ofparser.OFPMatch(in_port=int(
             self.int_ofports[physical_network]))
-        msg = br.ofparser.OFPFlowMod(self.int_br.datapath,
-                                     priority=2, match=match)
+        msg = self.int_br.ofparser.OFPFlowMod(self.int_br.datapath,
+                                              priority=2, match=match)
         self.ryu_send_msg(msg)
         match = br.ofparser.OFPMatch(in_port=int(
             self.phys_ofports[physical_network]))
