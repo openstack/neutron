@@ -364,9 +364,14 @@ class Dnsmasq(DhcpLocalProcess):
             if subnet.ip_version == 4:
                 mode = 'static'
             else:
-                # TODO(mark): how do we indicate other options
-                # ra-only, slaac, ra-nameservers, and ra-stateless.
-                mode = 'static'
+                # Note(scollins) If the IPv6 attributes are not set, set it as
+                # static to preserve previous behavior
+                if (not getattr(subnet, 'ipv6_ra_mode', None) and
+                        not getattr(subnet, 'ipv6_address_mode', None)):
+                    mode = 'static'
+                elif getattr(subnet, 'ipv6_ra_mode', None) is None:
+                    # RA mode is not set - do not launch dnsmasq
+                    continue
             if self.version >= self.MINIMUM_VERSION:
                 set_tag = 'set:'
             else:
@@ -443,8 +448,18 @@ class Dnsmasq(DhcpLocalProcess):
             name,  # Host name and domain name in the format 'hostname.domain'.
         )
         """
+        v6_nets = dict((subnet.id, subnet) for subnet in
+                       self.network.subnets if subnet.ip_version == 6)
         for port in self.network.ports:
             for alloc in port.fixed_ips:
+                # Note(scollins) Only create entries that are
+                # associated with the subnet being managed by this
+                # dhcp agent
+                if alloc.subnet_id in v6_nets:
+                    ra_mode = v6_nets[alloc.subnet_id].ipv6_ra_mode
+                    addr_mode = v6_nets[alloc.subnet_id].ipv6_address_mode
+                    if (ra_mode is None and addr_mode == constants.IPV6_SLAAC):
+                        continue
                 hostname = 'host-%s' % alloc.ip_address.replace(
                     '.', '-').replace(':', '-')
                 fqdn = '%s.%s' % (hostname, self.conf.dhcp_domain)
