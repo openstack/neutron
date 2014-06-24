@@ -19,9 +19,10 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_flat
 from neutron.tests import base
+from oslo.config import cfg
 
 
-FLAT_NETWORKS = 'flat_net1, flat_net2'
+FLAT_NETWORKS = ['flat_net1', 'flat_net2']
 
 
 class FlatTypeTest(base.BaseTestCase):
@@ -29,8 +30,9 @@ class FlatTypeTest(base.BaseTestCase):
     def setUp(self):
         super(FlatTypeTest, self).setUp()
         db.configure_db()
+        cfg.CONF.set_override('flat_networks', FLAT_NETWORKS,
+                              group='ml2_type_flat')
         self.driver = type_flat.FlatTypeDriver()
-        self.driver._parse_networks(FLAT_NETWORKS)
         self.session = db.get_session()
         self.addCleanup(db.clear_db)
 
@@ -42,6 +44,16 @@ class FlatTypeTest(base.BaseTestCase):
         segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
                    api.PHYSICAL_NETWORK: 'flat_net1'}
         self.driver.validate_provider_segment(segment)
+
+    def test_validate_provider_phynet_name(self):
+        self.assertRaises(exc.InvalidInput,
+                          self.driver._parse_networks,
+                          entries=[''])
+
+    def test_validate_provider_phynet_name_multiple(self):
+        self.assertRaises(exc.InvalidInput,
+                          self.driver._parse_networks,
+                          entries=['flat_net1', ''])
 
     def test_validate_provider_segment_without_physnet_restriction(self):
         self.driver._parse_networks('*')
