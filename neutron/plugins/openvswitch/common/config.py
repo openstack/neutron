@@ -86,6 +86,8 @@ agent_opts = [
     cfg.BoolOpt('dont_fragment', default=True,
                 help=_("Set or un-set the don't fragment (DF) bit on "
                        "outgoing IP packet carrying GRE/VXLAN tunnel")),
+    cfg.BoolOpt('enable_distributed_routing', default=False,
+                help=_("Make the l2 agent run in DVR mode ")),
 ]
 
 

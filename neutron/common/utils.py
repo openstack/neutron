@@ -271,6 +271,15 @@ def is_valid_vlan_tag(vlan):
     return q_const.MIN_VLAN_TAG <= vlan <= q_const.MAX_VLAN_TAG
 
 
+def get_random_mac(base_mac):
+    mac = [int(base_mac[0], 16), int(base_mac[1], 16),
+           int(base_mac[2], 16), random.randint(0x00, 0xff),
+           random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+    if base_mac[3] != '00':
+        mac[3] = int(base_mac[3], 16)
+    return ':'.join(["%02x" % x for x in mac])
+
+
 def get_random_string(length):
     """Get a random hex string of the specified length.
 

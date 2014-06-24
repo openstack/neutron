@@ -12,8 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+
+import six
+
 from neutron.api.v2 import attributes
 from neutron.common import constants
+from neutron.common import exceptions
 
 DISTRIBUTED = 'distributed'
 EXTENDED_ATTRIBUTES_2_0 = {
@@ -26,6 +31,15 @@ EXTENDED_ATTRIBUTES_2_0 = {
                       'enforce_policy': True},
     }
 }
+
+
+class DVRMacAddressNotFound(exceptions.NotFound):
+    message = _("Distributed Virtual Router Mac Address for "
+                "host %(host)s does not exist.")
+
+
+class MacAddressGenerationFailure(exceptions.ServiceUnavailable):
+    message = _("Unable to generate unique DVR mac for host %(host)s.")
 
 
 class Dvr(object):
@@ -65,3 +79,19 @@ class Dvr(object):
             return EXTENDED_ATTRIBUTES_2_0
         else:
             return {}
+
+
+@six.add_metaclass(abc.ABCMeta)
+class DVRMacAddressPluginBase(object):
+
+    @abc.abstractmethod
+    def delete_dvr_mac_address(self, context, host):
+        pass
+
+    @abc.abstractmethod
+    def get_dvr_mac_address_list(self, context):
+        pass
+
+    @abc.abstractmethod
+    def get_dvr_mac_address_by_host(self, context, host):
+        pass

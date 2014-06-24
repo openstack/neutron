@@ -77,3 +77,40 @@ class PortBinding(model_base.BASEV2):
         backref=orm.backref("port_binding",
                             lazy='joined', uselist=False,
                             cascade='delete'))
+
+
+class DVRPortBinding(model_base.BASEV2):
+    """Represent binding-related state of a DVR port.
+
+    Port binding for all the ports associated to a DVR identified by router_id.
+    """
+
+    __tablename__ = 'ml2_dvr_port_bindings'
+
+    port_id = sa.Column(sa.String(36),
+                        sa.ForeignKey('ports.id', ondelete="CASCADE"),
+                        primary_key=True)
+    host = sa.Column(sa.String(255), nullable=False, primary_key=True)
+    router_id = sa.Column(sa.String(36), nullable=True)
+    vif_type = sa.Column(sa.String(64), nullable=False)
+    vif_details = sa.Column(sa.String(4095), nullable=False, default='',
+                            server_default='')
+    vnic_type = sa.Column(sa.String(64), nullable=False,
+                          default=portbindings.VNIC_NORMAL,
+                          server_default=portbindings.VNIC_NORMAL)
+    profile = sa.Column(sa.String(BINDING_PROFILE_LEN), nullable=False,
+                        default='', server_default='')
+    cap_port_filter = sa.Column(sa.Boolean, nullable=False)
+    driver = sa.Column(sa.String(64))
+    segment = sa.Column(sa.String(36),
+                        sa.ForeignKey('ml2_network_segments.id',
+                                      ondelete="SET NULL"))
+    status = sa.Column(sa.String(16), nullable=False)
+
+    # Add a relationship to the Port model in order to instruct SQLAlchemy to
+    # eagerly load port bindings
+    port = orm.relationship(
+        models_v2.Port,
+        backref=orm.backref("dvr_port_binding",
+                            lazy='joined', uselist=False,
+                            cascade='delete'))
