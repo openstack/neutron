@@ -13,6 +13,7 @@ requests>=1.1
 iso8601>=0.1.9
 jsonrpclib
 Jinja2
+keystonemiddleware
 kombu>=2.4.8
 netaddr>=0.7.6
 python-neutronclient>=2.3.4,<3
