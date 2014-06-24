@@ -70,7 +70,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         return dvrma
 
     def _create_dvr_mac_address(self, context, host):
-        """Create dvr mac address for a given host."""
+        """Create DVR mac address for a given host."""
         base_mac = cfg.CONF.dvr_base_mac.split(':')
         max_retries = cfg.CONF.mac_generation_retries
         for attempt in reversed(range(max_retries)):
@@ -83,6 +83,10 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                     LOG.debug("Generated DVR mac for host %(host)s "
                               "is %(mac_address)s",
                               {'host': host, 'mac_address': mac_address})
+                dvr_macs = self.get_dvr_mac_address_list(context)
+                # TODO(vivek): improve scalability of this fanout by
+                # sending a single mac address rather than the entire set
+                self.notifier.dvr_mac_address_update(context, dvr_macs)
                 return self._make_dvr_mac_address_dict(dvr_mac_binding)
             except db_exc.DBDuplicateEntry:
                 LOG.debug("Generated DVR mac %(mac)s exists."

@@ -70,18 +70,36 @@ class L3RpcCallbackMixin(object):
             LOG.debug(_("Checking router: %(id)s for host: %(host)s"),
                       {'id': router['id'], 'host': host})
             self._ensure_host_set_on_port(context, plugin, host,
-                                          router.get('gw_port'))
+                                          router.get('gw_port'),
+                                          router['id'])
             for interface in router.get(constants.INTERFACE_KEY, []):
                 self._ensure_host_set_on_port(context, plugin, host,
-                                              interface)
+                                              interface, router['id'])
 
-    def _ensure_host_set_on_port(self, context, plugin, host, port):
+    def _ensure_host_set_on_port(self, context, plugin, host, port,
+                                 router_id=None):
         if (port and
-            (port.get(portbindings.HOST_ID) != host or
+            (port.get('device_owner') !=
+             constants.DEVICE_OWNER_DVR_INTERFACE and
+             port.get(portbindings.HOST_ID) != host or
              port.get(portbindings.VIF_TYPE) ==
              portbindings.VIF_TYPE_BINDING_FAILED)):
+            # All ports, including ports created for SNAT'ing for
+            # DVR are handled here
             plugin.update_port(context, port['id'],
                                {'port': {portbindings.HOST_ID: host}})
+        elif (port and
+              port.get('device_owner') ==
+              constants.DEVICE_OWNER_DVR_INTERFACE):
+            # Ports that are DVR interfaces have multiple bindings (based on
+            # of hosts on which DVR router interfaces are spawned). Such
+            # bindings are created/updated here by invoking
+            # update_dvr_port_binding
+            plugin.update_dvr_port_binding(context, port['id'],
+                                           {'port':
+                                            {portbindings.HOST_ID: host,
+                                             'device_id': router_id}
+                                            })
 
     def get_external_network_id(self, context, **kwargs):
         """Get one external network id for l3 agent.

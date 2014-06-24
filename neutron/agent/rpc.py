@@ -77,7 +77,9 @@ class PluginApi(n_rpc.RpcProxy):
 
     API version history:
         1.0 - Initial version.
-
+        1.3 - get_device_details rpc signature upgrade to obtain 'host' and
+              return value to include fixed_ips and device_owner for
+              the device port
     '''
 
     BASE_RPC_API_VERSION = '1.1'
@@ -86,25 +88,31 @@ class PluginApi(n_rpc.RpcProxy):
         super(PluginApi, self).__init__(
             topic=topic, default_version=self.BASE_RPC_API_VERSION)
 
-    def get_device_details(self, context, device, agent_id):
+    def get_device_details(self, context, device, agent_id, host=None):
         return self.call(context,
                          self.make_msg('get_device_details', device=device,
-                                       agent_id=agent_id),
+                                       agent_id=agent_id, host=host),
                          topic=self.topic)
 
-    def get_devices_details_list(self, context, devices, agent_id):
+    def get_devices_details_list(self, context, devices, agent_id, host=None):
         res = []
         try:
             res = self.call(context,
                             self.make_msg('get_devices_details_list',
                                           devices=devices,
-                                          agent_id=agent_id),
-                            topic=self.topic, version='1.2')
+                                          agent_id=agent_id,
+                                          host=host),
+                            topic=self.topic, version='1.3')
         except messaging.UnsupportedVersion:
+            # If the server has not been upgraded yet, a DVR-enabled agent
+            # may not work correctly, however it can function in 'degraded'
+            # mode, in that DVR routers may not be in the system yet, and
+            # it might be not necessary to retrieve info about the host.
+            LOG.warn(_('DVR functionality requires a server upgrade.'))
             res = [
                 self.call(context,
                           self.make_msg('get_device_details', device=device,
-                                        agent_id=agent_id),
+                                        agent_id=agent_id, host=host),
                           topic=self.topic)
                 for device in devices
             ]

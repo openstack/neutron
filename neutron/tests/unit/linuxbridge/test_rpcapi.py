@@ -113,15 +113,16 @@ class rpcApiTestCase(base.BaseTestCase):
         self._test_lb_api(rpcapi, topics.PLUGIN,
                           'get_device_details', rpc_method='call',
                           device='fake_device',
-                          agent_id='fake_agent_id')
+                          agent_id='fake_agent_id',
+                          host='fake_host')
 
     def test_devices_details_list(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
         self._test_lb_api(rpcapi, topics.PLUGIN,
                           'get_devices_details_list', rpc_method='call',
                           devices=['fake_device1', 'fake_device2'],
-                          agent_id='fake_agent_id',
-                          version='1.2')
+                          agent_id='fake_agent_id', host='fake_host',
+                          version='1.3')
 
     def test_update_device_down(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
