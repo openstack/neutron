@@ -129,6 +129,19 @@ class TestPlumgridAllocationPool(PLUMgridPluginV2TestCase):
         pool = plugin._allocate_pools_for_subnet(context, subnet)
         self.assertEqual(allocation_pool, pool)
 
+    def test_conflict_dhcp_gw_ip(self):
+        cidr = '10.0.0.0/24'
+        gateway_ip = '10.0.0.1'
+        subnet = {'gateway_ip': gateway_ip,
+                  'cidr': cidr,
+                  'ip_version': 4}
+        allocation_pool = [{"start": '10.0.0.3',
+                            "end": '10.0.0.254'}]
+        context = None
+        plugin = NeutronManager.get_plugin()
+        pool = plugin._allocate_pools_for_subnet(context, subnet)
+        self.assertEqual(allocation_pool, pool)
+
 
 class TestPlumgridProvidernet(PLUMgridPluginV2TestCase):
 
