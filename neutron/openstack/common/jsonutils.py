@@ -31,11 +31,23 @@ This module provides a few things:
 '''
 
 
+import codecs
 import datetime
 import functools
 import inspect
 import itertools
-import json
+import sys
+
+if sys.version_info < (2, 7):
+    # On Python <= 2.6, json module is not C boosted, so try to use
+    # simplejson module if available
+    try:
+        import simplejson as json
+    except ImportError:
+        import json
+else:
+    import json
+
 try:
     import xmlrpclib
 except ImportError:
@@ -50,6 +62,7 @@ import six
 
 from neutron.openstack.common import gettextutils
 from neutron.openstack.common import importutils
+from neutron.openstack.common import strutils
 from neutron.openstack.common import timeutils
 
 netaddr = importutils.try_import("netaddr")
@@ -164,12 +177,12 @@ def dumps(value, default=to_primitive, **kwargs):
     return json.dumps(value, default=default, **kwargs)
 
 
-def loads(s):
-    return json.loads(s)
+def loads(s, encoding='utf-8'):
+    return json.loads(strutils.safe_decode(s, encoding))
 
 
-def load(s):
-    return json.load(s)
+def load(fp, encoding='utf-8'):
+    return json.load(codecs.getreader(encoding)(fp))
 
 
 try:
