@@ -22,7 +22,7 @@ from ryu.app import rest_nw_id
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2
@@ -45,7 +45,7 @@ from neutron.plugins.ryu.db import api_v2 as db_api_v2
 LOG = logging.getLogger(__name__)
 
 
-class RyuRpcCallbacks(rpc_compat.RpcCallback,
+class RyuRpcCallbacks(n_rpc.RpcCallback,
                       dhcp_rpc_base.DhcpRpcCallbackMixin,
                       l3_rpc_base.L3RpcCallbackMixin,
                       sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
@@ -68,7 +68,7 @@ class RyuRpcCallbacks(rpc_compat.RpcCallback,
         return port
 
 
-class AgentNotifierApi(rpc_compat.RpcProxy,
+class AgentNotifierApi(n_rpc.RpcProxy,
                        sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     BASE_RPC_API_VERSION = '1.0'
@@ -137,7 +137,7 @@ class RyuNeutronPluginV2(db_base_plugin_v2.NeutronDbPluginV2,
     def _setup_rpc(self):
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.notifier = AgentNotifierApi(topics.AGENT)
         self.endpoints = [RyuRpcCallbacks(self.ofp_api_host)]
         for svc_topic in self.service_topics.values():

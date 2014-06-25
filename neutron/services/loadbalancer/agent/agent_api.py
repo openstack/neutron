@@ -14,10 +14,10 @@
 #
 # @author: Mark McClain, DreamHost
 
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 
 
-class LbaasAgentApi(rpc_compat.RpcProxy):
+class LbaasAgentApi(n_rpc.RpcProxy):
     """Agent side of the Agent to Plugin RPC API."""
 
     API_VERSION = '2.0'

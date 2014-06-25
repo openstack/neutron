@@ -15,7 +15,7 @@
 from oslo.config import cfg
 
 from neutron.common import constants as q_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
 from neutron.db import l3_rpc_base
@@ -26,7 +26,7 @@ from neutron.plugins.mlnx.db import mlnx_db_v2 as db
 LOG = logging.getLogger(__name__)
 
 
-class MlnxRpcCallbacks(rpc_compat.RpcCallback,
+class MlnxRpcCallbacks(n_rpc.RpcCallback,
                        dhcp_rpc_base.DhcpRpcCallbackMixin,
                        l3_rpc_base.L3RpcCallbackMixin,
                        sg_db_rpc.SecurityGroupServerRpcCallbackMixin):

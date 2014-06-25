@@ -25,7 +25,7 @@ from neutron.tests import base
 class TestLbaasService(base.BaseTestCase):
     def test_start(self):
         with mock.patch.object(
-            agent.rpc_compat.Service, 'start'
+            agent.n_rpc.Service, 'start'
         ) as mock_start:
 
             mgr = mock.Mock()

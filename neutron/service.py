@@ -22,7 +22,7 @@ from oslo.config import cfg
 from oslo.messaging import server as rpc_server
 
 from neutron.common import config
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron import context
 from neutron.db import api as session
 from neutron import manager
@@ -180,7 +180,7 @@ def _run_wsgi(app_name):
     return server
 
 
-class Service(rpc_compat.Service):
+class Service(n_rpc.Service):
     """Service object for binaries running on hosts.
 
     A service takes a manager and enables rpc by listening to queues based

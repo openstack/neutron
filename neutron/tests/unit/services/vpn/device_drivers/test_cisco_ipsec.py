@@ -399,7 +399,7 @@ class TestCiscoCsrIPsecDeviceDriverSyncStatuses(base.BaseTestCase):
 
     def setUp(self):
         super(TestCiscoCsrIPsecDeviceDriverSyncStatuses, self).setUp()
-        for klass in ['neutron.common.rpc_compat.create_connection',
+        for klass in ['neutron.common.rpc.create_connection',
                       'neutron.context.get_admin_context_without_session',
                       'neutron.openstack.common.'
                       'loopingcall.FixedIntervalLoopingCall']:

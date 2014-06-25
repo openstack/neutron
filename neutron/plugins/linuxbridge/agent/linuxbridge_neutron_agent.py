@@ -37,7 +37,7 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as q_utils
 from neutron import context
@@ -642,7 +642,7 @@ class LinuxBridgeManager:
                 self.remove_fdb_bridge_entry(mac, agent_ip, interface)
 
 
-class LinuxBridgeRpcCallbacks(rpc_compat.RpcCallback,
+class LinuxBridgeRpcCallbacks(n_rpc.RpcCallback,
                               sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                               l2pop_rpc.L2populationRpcCallBackMixin):
 

@@ -30,7 +30,7 @@ from neutron.agent.linux import ovs_lib  # noqa
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as common_utils
 from neutron import context
@@ -54,7 +54,7 @@ RPC_LOOP_INTERVAL = 1
 FLOATING_IP_CIDR_SUFFIX = '/32'
 
 
-class L3PluginApi(rpc_compat.RpcProxy):
+class L3PluginApi(n_rpc.RpcProxy):
     """Agent side of the l3 agent RPC API.
 
     API version history:
@@ -80,9 +80,9 @@ class L3PluginApi(rpc_compat.RpcProxy):
     def get_external_network_id(self, context):
         """Make a remote process call to retrieve the external network id.
 
-        @raise rpc_compat.RemoteError: with TooManyExternalNetworks
-                                       as exc_type if there are
-                                       more than one external network
+        @raise n_rpc.RemoteError: with TooManyExternalNetworks as
+                                  exc_type if there are more than one
+                                  external network
         """
         return self.call(context,
                          self.make_msg('get_external_network_id',
@@ -328,7 +328,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self.target_ex_net_id = self.plugin_rpc.get_external_network_id(
                 self.context)
             return self.target_ex_net_id
-        except rpc_compat.RemoteError as e:
+        except n_rpc.RemoteError as e:
             with excutils.save_and_reraise_exception() as ctx:
                 if e.exc_type == 'TooManyExternalNetworks':
                     ctx.reraise = False
@@ -861,7 +861,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             self._process_routers(routers, all_routers=True)
             self.fullsync = False
             LOG.debug(_("_sync_routers_task successfully completed"))
-        except rpc_compat.RPCException:
+        except n_rpc.RPCException:
             LOG.exception(_("Failed synchronizing routers due to RPC error"))
             self.fullsync = True
             return

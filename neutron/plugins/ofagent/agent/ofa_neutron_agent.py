@@ -33,7 +33,7 @@ from neutron.agent.linux import utils
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as n_const
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
@@ -159,7 +159,7 @@ class OFANeutronAgentRyuApp(app_manager.RyuApp):
         agent.daemon_loop()
 
 
-class OFANeutronAgent(rpc_compat.RpcCallback,
+class OFANeutronAgent(n_rpc.RpcCallback,
                       sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     """A agent for OpenFlow Agent ML2 mechanism driver.
 

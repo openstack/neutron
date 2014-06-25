@@ -117,11 +117,11 @@ class TestL2PopulationRpcTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.fanout_topic = topics.get_topic_name(topics.AGENT,
                                                   topics.L2POPULATION,
                                                   topics.UPDATE)
-        fanout = ('neutron.common.rpc_compat.RpcProxy.fanout_cast')
+        fanout = ('neutron.common.rpc.RpcProxy.fanout_cast')
         fanout_patch = mock.patch(fanout)
         self.mock_fanout = fanout_patch.start()
 
-        cast = ('neutron.common.rpc_compat.RpcProxy.cast')
+        cast = ('neutron.common.rpc.RpcProxy.cast')
         cast_patch = mock.patch(cast)
         self.mock_cast = cast_patch.start()
 

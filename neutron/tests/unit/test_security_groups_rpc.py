@@ -27,7 +27,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as const
 from neutron.common import ipv6_utils as ipv6
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron import context
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
@@ -1100,7 +1100,7 @@ class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
              topic='fake_topic')])
 
 
-class FakeSGNotifierAPI(rpc_compat.RpcProxy,
+class FakeSGNotifierAPI(n_rpc.RpcProxy,
                         sg_rpc.SecurityGroupAgentRpcApiMixin):
     pass
 

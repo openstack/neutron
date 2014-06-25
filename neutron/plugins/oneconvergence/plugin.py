@@ -23,7 +23,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import constants as q_const
 from neutron.common import exceptions as nexception
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -51,7 +51,7 @@ LOG = logging.getLogger(__name__)
 IPv6 = 6
 
 
-class NVSDPluginRpcCallbacks(rpc_compat.RpcCallback,
+class NVSDPluginRpcCallbacks(n_rpc.RpcCallback,
                              dhcp_rpc_base.DhcpRpcCallbackMixin,
                              l3_rpc_base.L3RpcCallbackMixin,
                              sg_db_rpc.SecurityGroupServerRpcCallbackMixin):
@@ -66,7 +66,7 @@ class NVSDPluginRpcCallbacks(rpc_compat.RpcCallback,
         return port
 
 
-class NVSDPluginV2AgentNotifierApi(rpc_compat.RpcProxy,
+class NVSDPluginV2AgentNotifierApi(n_rpc.RpcProxy,
                                    sg_rpc.SecurityGroupAgentRpcApiMixin):
 
     BASE_RPC_API_VERSION = '1.0'
@@ -153,7 +153,7 @@ class OneConvergencePluginV2(db_base_plugin_v2.NeutronDbPluginV2,
         # RPC support
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.notifier = NVSDPluginV2AgentNotifierApi(topics.AGENT)
         self.agent_notifiers[q_const.AGENT_TYPE_DHCP] = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()

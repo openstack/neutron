@@ -18,7 +18,7 @@
 from oslo.config import cfg
 
 from neutron.common import exceptions as n_exception
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron import context as neutron_context
 from neutron.db import api as qdbapi
@@ -31,7 +31,7 @@ from neutron.plugins.common import constants as const
 LOG = logging.getLogger(__name__)
 
 
-class FirewallCallbacks(rpc_compat.RpcCallback):
+class FirewallCallbacks(n_rpc.RpcCallback):
     RPC_API_VERSION = '1.0'
 
     def __init__(self, plugin):
@@ -101,7 +101,7 @@ class FirewallCallbacks(rpc_compat.RpcCallback):
         return fw_tenant_list
 
 
-class FirewallAgentApi(rpc_compat.RpcProxy):
+class FirewallAgentApi(n_rpc.RpcProxy):
     """Plugin side of plugin to agent RPC API."""
 
     API_VERSION = '1.0'
@@ -162,7 +162,7 @@ class FirewallPlugin(firewall_db.Firewall_db_mixin):
 
         self.endpoints = [FirewallCallbacks(self)]
 
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.conn.create_consumer(
             topics.FIREWALL_PLUGIN, self.endpoints, fanout=False)
         self.conn.consume_in_threads()

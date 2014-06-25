@@ -18,7 +18,7 @@ from oslo.config import cfg
 
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -185,7 +185,7 @@ class HyperVNeutronPlugin(agents_db.AgentDbMixin,
         # RPC support
         self.service_topics = {svc_constants.CORE: topics.PLUGIN,
                                svc_constants.L3_ROUTER_NAT: topics.L3PLUGIN}
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         self.notifier = agent_notifier_api.AgentNotifierApi(
             topics.AGENT)
         self.endpoints = [rpc_callbacks.HyperVRpcCallbacks(self.notifier),

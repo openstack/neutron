@@ -20,7 +20,7 @@ from oslo.config import cfg
 
 from neutron.common import constants as q_const
 from neutron.common import exceptions as n_exc
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db.loadbalancer import loadbalancer_db
@@ -49,7 +49,7 @@ class DriverNotSpecified(n_exc.NeutronException):
                 "in plugin driver.")
 
 
-class LoadBalancerCallbacks(rpc_compat.RpcCallback):
+class LoadBalancerCallbacks(n_rpc.RpcCallback):
 
     RPC_API_VERSION = '2.0'
     # history
@@ -232,7 +232,7 @@ class LoadBalancerCallbacks(rpc_compat.RpcCallback):
         self.plugin.update_pool_stats(context, pool_id, data=stats)
 
 
-class LoadBalancerAgentApi(rpc_compat.RpcProxy):
+class LoadBalancerAgentApi(n_rpc.RpcProxy):
     """Plugin side of plugin to agent RPC API."""
 
     BASE_RPC_API_VERSION = '2.0'
@@ -341,7 +341,7 @@ class AgentDriverBase(abstract_driver.LoadBalancerAbstractDriver):
             LoadBalancerCallbacks(self.plugin),
             agents_db.AgentExtRpcCallback(self.plugin)
         ]
-        self.plugin.conn = rpc_compat.create_connection(new=True)
+        self.plugin.conn = n_rpc.create_connection(new=True)
         self.plugin.conn.create_consumer(
             topics.LOADBALANCER_PLUGIN,
             self.plugin.agent_endpoints,

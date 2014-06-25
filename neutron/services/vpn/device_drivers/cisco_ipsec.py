@@ -24,7 +24,7 @@ from oslo import messaging
 import six
 
 from neutron.common import exceptions
-from neutron.common import rpc_compat
+from neutron.common import rpc as n_rpc
 from neutron import context as ctx
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
@@ -150,7 +150,7 @@ def find_available_csrs_from_config(config_files):
     return csrs_found
 
 
-class CiscoCsrIPsecVpnDriverApi(rpc_compat.RpcProxy):
+class CiscoCsrIPsecVpnDriverApi(n_rpc.RpcProxy):
     """RPC API for agent to plugin messaging."""
 
     def get_vpn_services_on_host(self, context, host):
@@ -192,7 +192,7 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
 
     def __init__(self, agent, host):
         self.host = host
-        self.conn = rpc_compat.create_connection(new=True)
+        self.conn = n_rpc.create_connection(new=True)
         context = ctx.get_admin_context_without_session()
         node_topic = '%s.%s' % (topics.CISCO_IPSEC_AGENT_TOPIC, self.host)
 
