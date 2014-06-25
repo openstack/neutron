@@ -857,20 +857,20 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
            exceed the maximum length allowed for a linux device. Longer names
            are hashed to help ensure uniqueness.
         """
-        if len(prefix + name) <= ip_lib.VETH_MAX_NAME_LENGTH:
+        if len(prefix + name) <= q_const.DEVICE_NAME_MAX_LEN:
             return prefix + name
         # We can't just truncate because bridges may be distinguished
         # by an ident at the end. A hash over the name should be unique.
         # Leave part of the bridge name on for easier identification
         hashlen = 6
-        namelen = ip_lib.VETH_MAX_NAME_LENGTH - len(prefix) - hashlen
+        namelen = q_const.DEVICE_NAME_MAX_LEN - len(prefix) - hashlen
         new_name = ('%(prefix)s%(truncated)s%(hash)s' %
                     {'prefix': prefix, 'truncated': name[0:namelen],
                      'hash': hashlib.sha1(name).hexdigest()[0:hashlen]})
         LOG.warning(_("Creating an interface named %(name)s exceeds the "
                       "%(limit)d character limitation. It was shortened to "
                       "%(new_name)s to fit."),
-                    {'name': name, 'limit': ip_lib.VETH_MAX_NAME_LENGTH,
+                    {'name': name, 'limit': q_const.DEVICE_NAME_MAX_LEN,
                      'new_name': new_name})
         return new_name
 

@@ -25,6 +25,7 @@ import tempfile
 from eventlet.green import subprocess
 from eventlet import greenthread
 
+from neutron.common import constants
 from neutron.common import utils
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
@@ -85,12 +86,11 @@ def execute(cmd, root_helper=None, process_input=None, addl_env=None,
 
 
 def get_interface_mac(interface):
-    DEVICE_NAME_LEN = 15
     MAC_START = 18
     MAC_END = 24
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927,
-                       struct.pack('256s', interface[:DEVICE_NAME_LEN]))
+        struct.pack('256s', interface[:constants.DEVICE_NAME_MAX_LEN]))
     return ''.join(['%02x:' % ord(char)
                     for char in info[MAC_START:MAC_END]])[:-1]
 

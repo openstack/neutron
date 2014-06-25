@@ -488,9 +488,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             bridge1 = "A_REALLY_LONG_BRIDGE_NAME1"
             bridge2 = "A_REALLY_LONG_BRIDGE_NAME2"
             self.assertEqual(len(self.agent.get_veth_name('int-', bridge1)),
-                             ip_lib.VETH_MAX_NAME_LENGTH)
+                             n_const.DEVICE_NAME_MAX_LEN)
             self.assertEqual(len(self.agent.get_veth_name('int-', bridge2)),
-                             ip_lib.VETH_MAX_NAME_LENGTH)
+                             n_const.DEVICE_NAME_MAX_LEN)
             self.assertNotEqual(self.agent.get_veth_name('int-', bridge1),
                                 self.agent.get_veth_name('int-', bridge2))
 

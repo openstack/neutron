@@ -17,7 +17,7 @@ import random
 
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
-from neutron.plugins.common import constants as q_const
+from neutron.common import constants as n_const
 from neutron.tests import base
 
 
@@ -56,7 +56,7 @@ class BaseLinuxTestCase(base.BaseTestCase):
         :param *args *kwargs: These will be passed to the create function.
         """
         while True:
-            name = self.get_rand_name(q_const.MAX_DEV_NAME_LEN, name_prefix)
+            name = self.get_rand_name(n_const.DEV_NAME_MAX_LEN, name_prefix)
             try:
                 return creation_func(name, *args, **kwargs)
             except RuntimeError:
