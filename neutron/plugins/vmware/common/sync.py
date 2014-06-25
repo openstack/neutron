@@ -71,7 +71,7 @@ class NsxCache(object):
         resources = self._uuid_dict_mappings[key]
         return resources[key]
 
-    def _update_resources(self, resources, new_resources):
+    def _clear_changed_flag_and_remove_from_cache(self, resources):
         # Clear the 'changed' attribute for all items
         for uuid, item in resources.items():
             if item.pop('changed', None) and not item.get('data'):
@@ -79,6 +79,10 @@ class NsxCache(object):
                 del resources[uuid]
                 del self._uuid_dict_mappings[uuid]
                 LOG.debug("Removed item %s from NSX object cache", uuid)
+
+    def _update_resources(self, resources, new_resources, clear_changed=True):
+        if clear_changed:
+            self._clear_changed_flag_and_remove_from_cache(resources)
 
         def do_hash(item):
             return hash(jsonutils.dumps(item))
@@ -132,13 +136,14 @@ class NsxCache(object):
         return self._get_resource_ids(self._lswitchports, changed_only)
 
     def update_lswitch(self, lswitch):
-        self._update_resources(self._lswitches, [lswitch])
+        self._update_resources(self._lswitches, [lswitch], clear_changed=False)
 
     def update_lrouter(self, lrouter):
-        self._update_resources(self._lrouters, [lrouter])
+        self._update_resources(self._lrouters, [lrouter], clear_changed=False)
 
     def update_lswitchport(self, lswitchport):
-        self._update_resources(self._lswitchports, [lswitchport])
+        self._update_resources(self._lswitchports, [lswitchport],
+                               clear_changed=False)
 
     def process_updates(self, lswitches=None,
                         lrouters=None, lswitchports=None):
