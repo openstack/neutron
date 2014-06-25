@@ -146,7 +146,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         namespace = get_ns_name(pool_id)
         root_ns = ip_lib.IPWrapper(self.root_helper)
 
-        socket_path = self._get_state_file_path(pool_id, 'sock')
+        socket_path = self._get_state_file_path(pool_id, 'sock', False)
         if root_ns.netns.exists(namespace) and os.path.exists(socket_path):
             try:
                 s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -157,7 +157,7 @@ class HaproxyNSDriver(agent_device_driver.AgentDeviceDriver):
         return False
 
     def get_stats(self, pool_id):
-        socket_path = self._get_state_file_path(pool_id, 'sock')
+        socket_path = self._get_state_file_path(pool_id, 'sock', False)
         TYPE_BACKEND_REQUEST = 2
         TYPE_SERVER_REQUEST = 4
         if os.path.exists(socket_path):
