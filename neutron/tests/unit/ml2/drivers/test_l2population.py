@@ -303,6 +303,46 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.mock_fanout.assert_called_with(
                         mock.ANY, 'add_fdb_entries', expected)
 
+    def test_fdb_called_for_active_ports(self):
+        self._register_ml2_agents()
+
+        with self.subnet(network=self._network) as subnet:
+            host_arg = {portbindings.HOST_ID: HOST}
+            with self.port(subnet=subnet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                host_arg = {portbindings.HOST_ID: HOST + '_2'}
+                with self.port(subnet=subnet,
+                               device_owner=DEVICE_OWNER_COMPUTE,
+                               arg_list=(portbindings.HOST_ID,),
+                               **host_arg):
+                    p1 = port1['port']
+
+                    device1 = 'tap' + p1['id']
+
+                    self.mock_cast.reset_mock()
+                    self.mock_fanout.reset_mock()
+                    self.callbacks.update_device_up(self.adminContext,
+                                                    agent_id=HOST,
+                                                    device=device1)
+
+                    p1_ips = [p['ip_address'] for p in p1['fixed_ips']]
+
+                    self.assertFalse(self.mock_cast.called)
+
+                    expected2 = {p1['network_id']:
+                                 {'ports':
+                                  {'20.0.0.1': [constants.FLOODING_ENTRY,
+                                                l2pop_rpc.PortInfo(
+                                                    p1['mac_address'],
+                                                    p1_ips[0])]},
+                                  'network_type': 'vxlan',
+                                  'segment_id': 1}}
+
+                    self.mock_fanout.assert_called_with(
+                        mock.ANY, 'add_fdb_entries', expected2)
+
     def test_fdb_add_two_agents(self):
         self._register_ml2_agents()
 
@@ -323,13 +363,17 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     p1 = port1['port']
                     p2 = port2['port']
 
-                    device = 'tap' + p1['id']
+                    device1 = 'tap' + p1['id']
+                    device2 = 'tap' + p2['id']
 
                     self.mock_cast.reset_mock()
                     self.mock_fanout.reset_mock()
                     self.callbacks.update_device_up(self.adminContext,
+                                                    agent_id=HOST + '_2',
+                                                    device=device2)
+                    self.callbacks.update_device_up(self.adminContext,
                                                     agent_id=HOST,
-                                                    device=device)
+                                                    device=device1)
 
                     p1_ips = [p['ip_address'] for p in p1['fixed_ips']]
                     p2_ips = [p['ip_address'] for p in p2['fixed_ips']]
@@ -381,13 +425,17 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                             p1 = port1['port']
                             p3 = port3['port']
 
-                            device = 'tap' + p3['id']
+                            device1 = 'tap' + p1['id']
+                            device3 = 'tap' + p3['id']
 
                             self.mock_cast.reset_mock()
                             self.mock_fanout.reset_mock()
                             self.callbacks.update_device_up(
+                                self.adminContext, agent_id=HOST + '_2',
+                                device=device1)
+                            self.callbacks.update_device_up(
                                 self.adminContext, agent_id=HOST,
-                                device=device)
+                                device=device3)
 
                             p1_ips = [p['ip_address']
                                       for p in p1['fixed_ips']]
@@ -886,10 +934,10 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
                                   'get_agent_ip',
                                   side_effect=agent_ip_side_effect),
                 mock.patch.object(l2pop_db.L2populationDbMixin,
-                                  'get_nondvr_network_ports',
+                                  'get_nondvr_active_network_ports',
                                   new=fdb_network_ports_query),
                 mock.patch.object(l2pop_db.L2populationDbMixin,
-                                  'get_dvr_network_ports',
+                                  'get_dvr_active_network_ports',
                                   new=tunnel_network_ports_query)):
             session = mock.Mock()
             agent = mock.Mock()
