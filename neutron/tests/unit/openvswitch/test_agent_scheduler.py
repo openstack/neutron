@@ -464,12 +464,15 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         with self.port() as port1:
             dhcp_agents = self._list_dhcp_agents_hosting_network(
                 port1['port']['network_id'])
+        self._delete('ports', port1['port']['id'])
+        self._delete('networks', port1['port']['network_id'])
         self.assertEqual(1, len(dhcp_agents['agents']))
         agents = self._list_agents()
         self._disable_agent(agents['agents'][0]['id'])
         with self.port() as port2:
             dhcp_agents = self._list_dhcp_agents_hosting_network(
                 port2['port']['network_id'])
+        self._delete('ports', port2['port']['id'])
         self.assertEqual(0, len(dhcp_agents['agents']))
 
     def test_network_scheduler_with_down_agent(self):
@@ -488,12 +491,15 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             with self.port() as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
                     port['port']['network_id'])
+            self._delete('ports', port['port']['id'])
+            self._delete('networks', port['port']['network_id'])
             self.assertEqual(1, len(dhcp_agents['agents']))
         with mock.patch(is_agent_down_str) as mock_is_agent_down:
             mock_is_agent_down.return_value = True
             with self.port() as port:
                 dhcp_agents = self._list_dhcp_agents_hosting_network(
                     port['port']['network_id'])
+            self._delete('ports', port['port']['id'])
             self.assertEqual(0, len(dhcp_agents['agents']))
 
     def test_network_scheduler_with_hosted_network(self):
@@ -517,13 +523,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             mock_hosting_agents.return_value = plugin.get_agents_db(
                 self.adminContext)
-            with self.network('test', do_delete=False) as net1:
+            with self.network('test') as net1:
                 pass
             with self.subnet(network=net1,
-                             cidr='10.0.1.0/24',
-                             do_delete=False) as subnet1:
+                             cidr='10.0.1.0/24') as subnet1:
                 pass
-            with self.port(subnet=subnet1, do_delete=False) as port2:
+            with self.port(subnet=subnet1) as port2:
                 pass
         dhcp_agents = self._list_dhcp_agents_hosting_network(
             port2['port']['network_id'])
@@ -1149,7 +1154,7 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         self._assert_notify(notifications, expected_event_type)
 
     def test_network_remove_from_dhcp_agent_notification(self):
-        with self.network(do_delete=False) as net1:
+        with self.network() as net1:
             network_id = net1['network']['id']
             self._register_agent_states()
             hosta_id = self._get_agent_id(constants.AGENT_TYPE_DHCP,
@@ -1191,18 +1196,15 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                  'configurations': {'dhcp_driver': 'dhcp_driver',
                                     'use_namespaces': True, },
                  'agent_type': constants.AGENT_TYPE_DHCP})
-        with self.network(do_delete=False) as net1:
+        with self.network() as net1:
             with self.subnet(network=net1,
-                             gateway_ip=gateway,
-                             do_delete=False) as subnet1:
+                             gateway_ip=gateway) as subnet1:
                 if owner:
                     with self.port(subnet=subnet1,
-                                   do_delete=False,
                                    device_owner=owner) as port:
                         return [net1, subnet1, port]
                 else:
-                    with self.port(subnet=subnet1,
-                                   do_delete=False) as port:
+                    with self.port(subnet=subnet1) as port:
                         return [net1, subnet1, port]
 
     def _notification_mocks(self, hosts, net, subnet, port):

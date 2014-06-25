@@ -116,14 +116,14 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             rv.getresponse.return_value.getheader.return_value = 'HASHHEADER'
             rv.getresponse.return_value.status = 200
             rv.getresponse.return_value.read.return_value = ''
-            with self.network():
+            with self.network() as network:
                 callheaders = rv.request.mock_calls[0][1][3]
                 self.assertIn('X-BSN-BVS-HASH-MATCH', callheaders)
                 # first call will be empty to indicate no previous state hash
                 self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'], '')
                 # change the header that will be received on delete call
                 rv.getresponse.return_value.getheader.return_value = 'HASH2'
-
+            self._delete('networks', network['network']['id'])
             # net delete should have used header received on create
             callheaders = rv.request.mock_calls[1][1][3]
             self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'], 'HASHHEADER')
@@ -142,10 +142,11 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             rv.getresponse.return_value.getheader.return_value = 'HASHHEADER'
             rv.getresponse.return_value.status = 200
             rv.getresponse.return_value.read.return_value = ''
-            with self.network():
+            with self.network() as net:
                 # change the header that will be received on delete call
                 rv.getresponse.return_value.getheader.return_value = 'EVIL'
                 rv.getresponse.return_value.status = 'GARBAGE'
+                self._delete('networks', net['network']['id'])
 
             # create again should not use header from delete call
             with self.network():

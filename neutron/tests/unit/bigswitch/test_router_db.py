@@ -97,7 +97,7 @@ class RouterDBTestCase(RouterDBTestBase,
         with self.router() as r:
             with self.subnet() as s:
                 with self.subnet(cidr='10.0.10.0/24') as s1:
-                    with self.port(subnet=s1, do_delete=False) as p:
+                    with self.port(subnet=s1) as p:
                         self._router_interface_action('add',
                                                       r['router']['id'],
                                                       None,
@@ -116,7 +116,7 @@ class RouterDBTestCase(RouterDBTestBase,
     def test_router_remove_router_interface_wrong_port_returns_404(self):
         with self.router() as r:
             with self.subnet() as s:
-                with self.port(subnet=s, do_delete=False) as p:
+                with self.port(subnet=s) as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,
@@ -262,7 +262,7 @@ class RouterDBTestCase(RouterDBTestBase,
     def test_router_remove_interface_wrong_subnet_returns_400(self):
         with self.router() as r:
             with self.subnet(cidr='10.0.10.0/24') as s:
-                with self.port(do_delete=False) as p:
+                with self.port() as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,
@@ -281,7 +281,7 @@ class RouterDBTestCase(RouterDBTestBase,
     def test_router_remove_interface_wrong_port_returns_404(self):
         with self.router() as r:
             with self.subnet(cidr='10.0.10.0/24'):
-                with self.port(do_delete=False) as p:
+                with self.port() as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,

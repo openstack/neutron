@@ -268,6 +268,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                     yield req.get_response(self.api)
                     if expected_failure:
                         self._create_deviceowner_mock()
+        self._delete('ports', port['port']['id'])
+        self._delete('networks', network['network']['id'])
 
     def _assertExpectedHTTP(self, status, exc):
         """Confirm that an HTTP status corresponds to an expected exception.
@@ -480,6 +482,7 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
                     add_keyword_expected=False))
                 self.mock_ncclient.reset_mock()
                 yield
+            self._delete('ports', port['port']['id'])
 
         # Create network and subnet
         with self.network(name=NETWORK_NAME) as network:

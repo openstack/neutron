@@ -937,14 +937,14 @@ class TestL3NatTestCase(L3NatTest,
         subnets = self._list('subnets')['subnets']
         with self.subnet() as s:
             with self.port(subnet=s, device_id='1234',
-                           device_owner=constants.DEVICE_OWNER_DHCP):
+                           device_owner=constants.DEVICE_OWNER_DHCP) as port:
                 subnets = self._list('subnets')['subnets']
                 self.assertEqual(len(subnets), 1)
                 self.assertEqual(subnets[0]['host_routes'][0]['nexthop'],
                                  '10.0.0.2')
                 self.assertEqual(subnets[0]['host_routes'][0]['destination'],
                                  '169.254.169.254/32')
-
+            self._delete('ports', port['port']['id'])
             subnets = self._list('subnets')['subnets']
             # Test that route is deleted after dhcp port is removed
             self.assertEqual(len(subnets[0]['host_routes']), 0)

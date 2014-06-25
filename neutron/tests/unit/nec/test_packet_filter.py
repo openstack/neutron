@@ -100,6 +100,8 @@ class TestNecPluginPacketFilterBase(test_nec_plugin.NecPluginV2TestCase):
             yield pf
             if do_delete:
                 self._delete('packet_filters', pf['packet_filter']['id'])
+            if not network:
+                self._delete('networks', network_to_use['network']['id'])
 
     @contextlib.contextmanager
     def packet_filter_on_port(self, port=None, fmt=None, do_delete=True,
@@ -552,7 +554,7 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
                    expected_code=webob.exc.HTTPNotFound.code)
 
     def test_auto_delete_pf_in_port_deletion(self):
-        with self.port(do_delete=False) as port:
+        with self.port() as port:
             network = self._show('networks', port['port']['network_id'])
 
             with self.packet_filter_on_network(network=network) as pfn:

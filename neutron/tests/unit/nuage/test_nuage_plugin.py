@@ -248,6 +248,7 @@ class NuagePluginV2TestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                         self.assertEqual(
                             fip2['floatingip']['port_id'],
                             body['floatingip']['port_id'])
+                        self._delete('ports', p['port']['id'])
 
                     # Test that port has been successfully deleted.
                     body = self._show('ports', p['port']['id'],
@@ -430,7 +431,7 @@ class TestNuageExtrarouteTestCase(NuagePluginV2TestCase,
     def test_router_update_with_dup_destination_address(self):
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s:
-                with self.port(subnet=s, do_delete=False) as p:
+                with self.port(subnet=s) as p:
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,

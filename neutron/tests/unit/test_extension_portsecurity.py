@@ -371,8 +371,8 @@ class TestPortSecurity(PortSecurityDBTestCase):
                 self.assertEqual(res.status_int, 403)
 
     def test_update_port_security_off_shared_network(self):
-        with self.network(shared=True, do_delete=False) as net:
-            with self.subnet(network=net, do_delete=False):
+        with self.network(shared=True) as net:
+            with self.subnet(network=net):
                 res = self._create_port('json', net['network']['id'],
                                         tenant_id='not_network_owner',
                                         set_context=True)

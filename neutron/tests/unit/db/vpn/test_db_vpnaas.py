@@ -271,6 +271,9 @@ class VPNTestMixin(object):
             if res.status_int >= 400:
                 raise webob.exc.HTTPClientError(
                     code=res.status_int, detail=vpnservice)
+            self._delete('subnets', public_sub['subnet']['id'])
+        if not subnet:
+            self._delete('subnets', tmp_subnet['subnet']['id'])
 
     def _create_ipsec_site_connection(self, fmt, name='test',
                                       peer_address='192.168.1.10',
@@ -1132,6 +1135,7 @@ class TestVpnaas(VPNPluginDbTestCase):
                                 dpd)
                     except webob.exc.HTTPClientError as ce:
                         self.assertEqual(ce.code, expected_status_int)
+        self._delete('subnets', subnet['subnet']['id'])
 
     def test_create_ipsec_site_connection(self, **extras):
         """Test case to create an ipsec_site_connection."""
@@ -1256,6 +1260,7 @@ class TestVpnaas(VPNPluginDbTestCase):
                                 self.assertEqual(v, sorted(actual[k]))
                             else:
                                 self.assertEqual(v, actual[k])
+        self._delete('networks', subnet['subnet']['network_id'])
 
     def test_show_ipsec_site_connection(self):
         """Test case to show a ipsec_site_connection."""
