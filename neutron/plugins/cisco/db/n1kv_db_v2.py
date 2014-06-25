@@ -891,7 +891,7 @@ def get_profile_binding(db_session, tenant_id, profile_id):
         return (db_session.query(n1kv_models_v2.ProfileBinding).filter_by(
             tenant_id=tenant_id, profile_id=profile_id).one())
     except exc.NoResultFound:
-        c_exc.ProfileTenantBindingNotFound(profile_id=profile_id)
+        raise c_exc.ProfileTenantBindingNotFound(profile_id=profile_id)
 
 
 def delete_profile_binding(db_session, tenant_id, profile_id):
