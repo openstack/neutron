@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo import messaging
-
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
@@ -37,7 +35,8 @@ TAP_DEVICE_PREFIX = 'tap'
 TAP_DEVICE_PREFIX_LENGTH = 3
 
 
-class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
+class RpcCallbacks(n_rpc.RpcCallback,
+                   dhcp_rpc_base.DhcpRpcCallbackMixin,
                    sg_db_rpc.SecurityGroupServerRpcCallbackMixin,
                    type_tunnel.TunnelRpcCallbackMixin):
 
@@ -46,16 +45,9 @@ class RpcCallbacks(dhcp_rpc_base.DhcpRpcCallbackMixin,
     #   1.0 Initial version (from openvswitch/linuxbridge)
     #   1.1 Support Security Group RPC
 
-    # FIXME(ihrachys): we can't use n_rpc.RpcCallback here due to
-    # inheritance problems
-    target = messaging.Target(version=RPC_API_VERSION)
-
     def __init__(self, notifier, type_manager):
-        # REVISIT(kmestery): This depends on the first three super classes
-        # not having their own __init__ functions. If an __init__() is added
-        # to one, this could break. Fix this and add a unit test to cover this
-        # test in H3.
-        super(RpcCallbacks, self).__init__(notifier, type_manager)
+        self.setup_tunnel_callback_mixin(notifier, type_manager)
+        super(RpcCallbacks, self).__init__()
 
     @classmethod
     def _device_to_port_id(cls, device):
