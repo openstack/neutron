@@ -273,17 +273,17 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
 
     def test_treat_devices_added_updated_admin_state_up_true(self):
         agent = self.agent
-        mock_details = {'port_id': 'port123',
+        mock_details = {'device': 'dev123',
+                        'port_id': 'port123',
                         'network_id': 'net123',
                         'admin_state_up': True,
                         'network_type': 'vlan',
                         'segmentation_id': 100,
                         'physical_network': 'physnet1'}
         agent.plugin_rpc = mock.Mock()
-        agent.plugin_rpc.get_device_details.return_value = mock_details
+        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
         agent.br_mgr = mock.Mock()
         agent.br_mgr.add_interface.return_value = True
-
         resync_needed = agent.treat_devices_added_updated(set(['tap1']))
 
         self.assertFalse(resync_needed)
@@ -293,21 +293,22 @@ class TestLinuxBridgeAgent(base.BaseTestCase):
         self.assertTrue(agent.plugin_rpc.update_device_up.called)
 
     def test_treat_devices_added_updated_admin_state_up_false(self):
-        mock_details = {'port_id': 'port123',
+        agent = self.agent
+        mock_details = {'device': 'dev123',
+                        'port_id': 'port123',
                         'network_id': 'net123',
                         'admin_state_up': False,
                         'network_type': 'vlan',
                         'segmentation_id': 100,
                         'physical_network': 'physnet1'}
-        self.agent.plugin_rpc = mock.Mock()
-        self.agent.plugin_rpc.get_device_details.return_value = mock_details
-        self.agent.remove_port_binding = mock.Mock()
-
-        resync_needed = self.agent.treat_devices_added_updated(set(['tap1']))
+        agent.plugin_rpc = mock.Mock()
+        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
+        agent.remove_port_binding = mock.Mock()
+        resync_needed = agent.treat_devices_added_updated(set(['tap1']))
 
         self.assertFalse(resync_needed)
-        self.agent.remove_port_binding.assert_called_with('net123', 'port123')
-        self.assertFalse(self.agent.plugin_rpc.update_device_up.called)
+        agent.remove_port_binding.assert_called_with('net123', 'port123')
+        self.assertFalse(agent.plugin_rpc.update_device_up.called)
 
 
 class TestLinuxBridgeManager(base.BaseTestCase):

@@ -14,6 +14,7 @@
 #    under the License.
 
 import itertools
+from oslo import messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -90,6 +91,24 @@ class PluginApi(n_rpc.RpcProxy):
                          self.make_msg('get_device_details', device=device,
                                        agent_id=agent_id),
                          topic=self.topic)
+
+    def get_devices_details_list(self, context, devices, agent_id):
+        res = []
+        try:
+            res = self.call(context,
+                            self.make_msg('get_devices_details_list',
+                                          devices=devices,
+                                          agent_id=agent_id),
+                            topic=self.topic, version='1.2')
+        except messaging.UnsupportedVersion:
+            res = [
+                self.call(context,
+                          self.make_msg('get_device_details', device=device,
+                                        agent_id=agent_id),
+                          topic=self.topic)
+                for device in devices
+            ]
+        return res
 
     def update_device_down(self, context, device, agent_id, host=None):
         return self.call(context,

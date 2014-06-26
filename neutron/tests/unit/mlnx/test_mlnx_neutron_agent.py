@@ -76,7 +76,7 @@ class TestEswitchAgent(base.BaseTestCase):
         self.agent.eswitch.get_vnics_mac.return_value = []
 
     def test_treat_devices_added_returns_true_for_missing_device(self):
-        attrs = {'get_device_details.side_effect': Exception()}
+        attrs = {'get_devices_details_list.side_effect': Exception()}
         self.agent.plugin_rpc.configure_mock(**attrs)
         with contextlib.nested(
             mock.patch('neutron.plugins.mlnx.agent.eswitch_neutron_agent.'
@@ -95,8 +95,9 @@ class TestEswitchAgent(base.BaseTestCase):
             mock.patch('neutron.plugins.mlnx.agent.eswitch_neutron_agent.'
                        'EswitchManager.get_vnics_mac',
                        return_value=[]),
-            mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
-                              return_value=details),
+            mock.patch.object(self.agent.plugin_rpc,
+                              'get_devices_details_list',
+                              return_value=[details]),
             mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),
             mock.patch.object(self.agent, func_name)
         ) as (vnics_fn, get_dev_fn, upd_dev_up, func):

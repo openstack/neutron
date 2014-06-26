@@ -312,20 +312,22 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
             LOG.debug(_("No port %s defined on agent."), port_id)
 
     def treat_devices_added(self, devices):
-        resync = False
-        for device in devices:
+        try:
+            devs_details_list = self.plugin_rpc.get_devices_details_list(
+                self.context,
+                devices,
+                self.agent_id)
+        except Exception as e:
+            LOG.debug("Unable to get device details for devices "
+                      "with MAC address %(devices)s: due to %(exc)s",
+                      {'devices': devices, 'exc': e})
+            # resync is needed
+            return True
+
+        for dev_details in devs_details_list:
+            device = dev_details['device']
             LOG.info(_("Adding port with mac %s"), device)
-            try:
-                dev_details = self.plugin_rpc.get_device_details(
-                    self.context,
-                    device,
-                    self.agent_id)
-            except Exception as e:
-                LOG.debug(_("Unable to get device dev_details for device "
-                          "with mac_address %(device)s: due to %(exc)s"),
-                          {'device': device, 'exc': e})
-                resync = True
-                continue
+
             if 'port_id' in dev_details:
                 LOG.info(_("Port %s updated"), device)
                 LOG.debug(_("Device details %s"), str(dev_details))
@@ -343,7 +345,7 @@ class MlnxEswitchNeutronAgent(sg_rpc.SecurityGroupAgentRpcMixin):
             else:
                 LOG.debug(_("Device with mac_address %s not defined "
                           "on Neutron Plugin"), device)
-        return resync
+        return False
 
     def treat_devices_removed(self, devices):
         resync = False

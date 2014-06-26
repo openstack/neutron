@@ -61,7 +61,8 @@ class LinuxBridgeRpcCallbacks(n_rpc.RpcCallback,
 
     # history
     #   1.1 Support Security Group RPC
-    RPC_API_VERSION = '1.1'
+    #   1.2 Support get_devices_details_list
+    RPC_API_VERSION = '1.2'
     # Device names start with "tap"
     TAP_PREFIX_LEN = 3
 
@@ -101,6 +102,16 @@ class LinuxBridgeRpcCallbacks(n_rpc.RpcCallback,
             entry = {'device': device}
             LOG.debug(_("%s can not be found in database"), device)
         return entry
+
+    def get_devices_details_list(self, rpc_context, **kwargs):
+        return [
+            self.get_device_details(
+                rpc_context,
+                device=device,
+                **kwargs
+            )
+            for device in kwargs.pop('devices', [])
+        ]
 
     def update_device_down(self, rpc_context, **kwargs):
         """Device no longer exists on agent."""

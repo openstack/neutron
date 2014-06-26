@@ -65,8 +65,9 @@ class OVSRpcCallbacks(n_rpc.RpcCallback,
     # history
     #   1.0 Initial version
     #   1.1 Support Security Group RPC
+    #   1.2 Support get_devices_details_list
 
-    RPC_API_VERSION = '1.1'
+    RPC_API_VERSION = '1.2'
 
     def __init__(self, notifier, tunnel_type):
         super(OVSRpcCallbacks, self).__init__()
@@ -104,6 +105,16 @@ class OVSRpcCallbacks(n_rpc.RpcCallback,
             entry = {'device': device}
             LOG.debug(_("%s can not be found in database"), device)
         return entry
+
+    def get_devices_details_list(self, rpc_context, **kwargs):
+        return [
+            self.get_device_details(
+                rpc_context,
+                device=device,
+                **kwargs
+            )
+            for device in kwargs.pop('devices', [])
+        ]
 
     def update_device_down(self, rpc_context, **kwargs):
         """Device no longer exists on agent."""

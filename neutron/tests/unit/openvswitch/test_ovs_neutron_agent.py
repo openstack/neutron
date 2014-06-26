@@ -283,7 +283,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
 
     def test_treat_devices_added_returns_true_for_missing_device(self):
         with contextlib.nested(
-            mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
+            mock.patch.object(self.agent.plugin_rpc,
+                              'get_devices_details_list',
                               side_effect=Exception()),
             mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
                               return_value=mock.Mock())):
@@ -299,8 +300,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
         :returns: whether the named function was called
         """
         with contextlib.nested(
-            mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
-                              return_value=details),
+            mock.patch.object(self.agent.plugin_rpc,
+                              'get_devices_details_list',
+                              return_value=[details]),
             mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
                               return_value=port),
             mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),
@@ -346,8 +348,9 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                              'segmentation_id': 'bar',
                              'network_type': 'baz'}
         with contextlib.nested(
-            mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
-                              return_value=fake_details_dict),
+            mock.patch.object(self.agent.plugin_rpc,
+                              'get_devices_details_list',
+                              return_value=[fake_details_dict]),
             mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
                               return_value=mock.MagicMock()),
             mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),

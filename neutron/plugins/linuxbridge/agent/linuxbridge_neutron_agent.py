@@ -861,38 +861,39 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
         return (resync_a | resync_b)
 
     def treat_devices_added_updated(self, devices):
-        resync = False
+        try:
+            devices_details_list = self.plugin_rpc.get_devices_details_list(
+                self.context, devices, self.agent_id)
+        except Exception as e:
+            LOG.debug("Unable to get port details for "
+                      "%(devices)s: %(e)s",
+                      {'devices': devices, 'e': e})
+            # resync is needed
+            return True
 
-        for device in devices:
-            LOG.debug(_("Treating added or updated device: %s"), device)
-            try:
-                details = self.plugin_rpc.get_device_details(self.context,
-                                                             device,
-                                                             self.agent_id)
-            except Exception as e:
-                LOG.debug(_("Unable to get port details for "
-                            "%(device)s: %(e)s"),
-                          {'device': device, 'e': e})
-                resync = True
-                continue
-            if 'port_id' in details:
+        for device_details in devices_details_list:
+            device = device_details['device']
+            LOG.debug("Port %s added", device)
+
+            if 'port_id' in device_details:
                 LOG.info(_("Port %(device)s updated. Details: %(details)s"),
-                         {'device': device, 'details': details})
-                if details['admin_state_up']:
+                         {'device': device, 'details': device_details})
+                if device_details['admin_state_up']:
                     # create the networking for the port
-                    network_type = details.get('network_type')
+                    network_type = device_details.get('network_type')
                     if network_type:
-                        segmentation_id = details.get('segmentation_id')
+                        segmentation_id = device_details.get('segmentation_id')
                     else:
                         # compatibility with pre-Havana RPC vlan_id encoding
-                        vlan_id = details.get('vlan_id')
+                        vlan_id = device_details.get('vlan_id')
                         (network_type,
                          segmentation_id) = lconst.interpret_vlan_id(vlan_id)
-                    if self.br_mgr.add_interface(details['network_id'],
-                                                 network_type,
-                                                 details['physical_network'],
-                                                 segmentation_id,
-                                                 details['port_id']):
+                    if self.br_mgr.add_interface(
+                        device_details['network_id'],
+                        network_type,
+                        device_details['physical_network'],
+                        segmentation_id,
+                        device_details['port_id']):
 
                         # update plugin about port status
                         self.plugin_rpc.update_device_up(self.context,
@@ -905,11 +906,11 @@ class LinuxBridgeNeutronAgentRPC(sg_rpc.SecurityGroupAgentRpcMixin):
                                                            self.agent_id,
                                                            cfg.CONF.host)
                 else:
-                    self.remove_port_binding(details['network_id'],
-                                             details['port_id'])
+                    self.remove_port_binding(device_details['network_id'],
+                                             device_details['port_id'])
             else:
                 LOG.info(_("Device %s not defined on plugin"), device)
-        return resync
+        return False
 
     def treat_devices_removed(self, devices):
         resync = False
