@@ -223,6 +223,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         self.available_local_vlans = set(xrange(ofa_const.LOCAL_VLAN_MIN,
                                                 ofa_const.LOCAL_VLAN_MAX))
         self.tunnel_types = tunnel_types or []
+        l2pop_network_types = list(set(self.tunnel_types +
+                                       [p_const.TYPE_VLAN]))
         self.agent_state = {
             'binary': 'neutron-ofa-agent',
             'host': cfg.CONF.host,
@@ -230,7 +232,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             'configurations': {'bridge_mappings': bridge_mappings,
                                'tunnel_types': self.tunnel_types,
                                'tunneling_ip': local_ip,
-                               'l2_population': True},
+                               'l2_population': True,
+                               'l2pop_network_types': l2pop_network_types},
             'agent_type': n_const.AGENT_TYPE_OFA,
             'start_flag': True}
 
@@ -340,23 +343,29 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         LOG.debug("fdb_add received")
         for lvm, agent_ports in self.get_agent_ports(fdb_entries,
                                                      self.local_vlan_map):
-            local = agent_ports.pop(self.local_ip, None)
-            if local:
-                self._fdb_add_arp(lvm, {self.local_ip: local})
-            if len(agent_ports):
-                self.fdb_add_tun(context, self.int_br, lvm, agent_ports,
-                                 self.tun_ofports)
+            if lvm.network_type in self.tunnel_types:
+                local = agent_ports.pop(self.local_ip, None)
+                if local:
+                    self._fdb_add_arp(lvm, {self.local_ip: local})
+                if len(agent_ports):
+                    self.fdb_add_tun(context, self.int_br, lvm, agent_ports,
+                                     self.tun_ofports)
+            else:
+                self._fdb_add_arp(lvm, agent_ports)
 
     def fdb_remove(self, context, fdb_entries):
         LOG.debug("fdb_remove received")
         for lvm, agent_ports in self.get_agent_ports(fdb_entries,
                                                      self.local_vlan_map):
-            local = agent_ports.pop(self.local_ip, None)
-            if local:
-                self._fdb_remove_arp(lvm, {self.local_ip: local})
-            if len(agent_ports):
-                self.fdb_remove_tun(context, self.int_br, lvm, agent_ports,
-                                    self.tun_ofports)
+            if lvm.network_type in self.tunnel_types:
+                local = agent_ports.pop(self.local_ip, None)
+                if local:
+                    self._fdb_remove_arp(lvm, {self.local_ip: local})
+                if len(agent_ports):
+                    self.fdb_remove_tun(context, self.int_br, lvm, agent_ports,
+                                        self.tun_ofports)
+            else:
+                self._fdb_remove_arp(lvm, agent_ports)
 
     @log.log
     def _fdb_add_arp(self, lvm, agent_ports):
