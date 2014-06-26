@@ -23,6 +23,7 @@ from oslo.config import cfg
 
 LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('AGENT', 'neutron.plugins.openvswitch.common.config')
+cfg.CONF.import_group('OVS', 'neutron.plugins.openvswitch.common.config')
 
 
 class BoolOptCallback(cfg.BoolOpt):
@@ -68,6 +69,8 @@ def enable_tests_from_config():
     if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_override('ovs_vxlan', True)
     if cfg.CONF.AGENT.tunnel_types:
+        cfg.CONF.set_override('ovs_patch', True)
+    if not cfg.CONF.OVS.use_veth_interconnection:
         cfg.CONF.set_override('ovs_patch', True)
 
 

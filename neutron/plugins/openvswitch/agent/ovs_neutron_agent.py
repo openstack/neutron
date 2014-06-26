@@ -110,9 +110,9 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
     tunnels on the tunnel bridge.
 
     For each virtual network realized as a VLAN or flat network, a
-    veth is used to connect the local VLAN on the integration bridge
-    with the physical network bridge, with flow rules adding,
-    modifying, or stripping VLAN tags as necessary.
+    veth or a pair of patch ports is used to connect the local VLAN on
+    the integration bridge with the physical network bridge, with flow
+    rules adding, modifying, or stripping VLAN tags as necessary.
     '''
 
     # history
@@ -127,7 +127,8 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                  minimize_polling=False,
                  ovsdb_monitor_respawn_interval=(
                      constants.DEFAULT_OVSDBMON_RESPAWN),
-                 arp_responder=False):
+                 arp_responder=False,
+                 use_veth_interconnection=False):
         '''Constructor.
 
         :param integ_br: name of the integration bridge.
@@ -148,8 +149,11 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                the ovsdb monitor.
         :param arp_responder: Optional, enable local ARP responder if it is
                supported.
+        :param use_veth_interconnection: use veths instead of patch ports to
+               interconnect the integration bridge to physical bridges.
         '''
         super(OVSNeutronAgent, self).__init__()
+        self.use_veth_interconnection = use_veth_interconnection
         self.veth_mtu = veth_mtu
         self.root_helper = root_helper
         self.available_local_vlans = set(moves.xrange(q_const.MIN_VLAN_TAG,
@@ -858,10 +862,11 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                              priority=0,
                              actions="drop")
 
-    def get_veth_name(self, prefix, name):
-        """Construct a veth name based on the prefix and name that does not
-           exceed the maximum length allowed for a linux device. Longer names
-           are hashed to help ensure uniqueness.
+    def get_peer_name(self, prefix, name):
+        """Construct a peer name based on the prefix and name.
+
+        The peer name can not exceed the maximum length allowed for a linux
+        device. Longer names are hashed to help ensure uniqueness.
         """
         if len(prefix + name) <= q_const.DEVICE_NAME_MAX_LEN:
             return prefix + name
@@ -910,40 +915,55 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
             br.add_flow(priority=1, actions="normal")
             self.phys_brs[physical_network] = br
 
-            # create veth to patch physical bridge with integration bridge
-            int_veth_name = self.get_veth_name(
-                constants.VETH_INTEGRATION_PREFIX, bridge)
-            self.int_br.delete_port(int_veth_name)
-            phys_veth_name = self.get_veth_name(
-                constants.VETH_PHYSICAL_PREFIX, bridge)
-            br.delete_port(phys_veth_name)
-            if ip_lib.device_exists(int_veth_name, self.root_helper):
-                ip_lib.IPDevice(int_veth_name, self.root_helper).link.delete()
-                # Give udev a chance to process its rules here, to avoid
-                # race conditions between commands launched by udev rules
-                # and the subsequent call to ip_wrapper.add_veth
-                utils.execute(['/sbin/udevadm', 'settle', '--timeout=10'])
-            int_veth, phys_veth = ip_wrapper.add_veth(int_veth_name,
-                                                      phys_veth_name)
-            self.int_ofports[physical_network] = self.int_br.add_port(int_veth)
-            self.phys_ofports[physical_network] = br.add_port(phys_veth)
+            # interconnect physical and integration bridges using veth/patchs
+            int_if_name = self.get_peer_name(constants.PEER_INTEGRATION_PREFIX,
+                                             bridge)
+            phys_if_name = self.get_peer_name(constants.PEER_PHYSICAL_PREFIX,
+                                              bridge)
+            self.int_br.delete_port(int_if_name)
+            br.delete_port(phys_if_name)
+            if self.use_veth_interconnection:
+                if ip_lib.device_exists(int_if_name, self.root_helper):
+                    ip_lib.IPDevice(int_if_name,
+                                    self.root_helper).link.delete()
+                    # Give udev a chance to process its rules here, to avoid
+                    # race conditions between commands launched by udev rules
+                    # and the subsequent call to ip_wrapper.add_veth
+                    utils.execute(['/sbin/udevadm', 'settle', '--timeout=10'])
+                int_veth, phys_veth = ip_wrapper.add_veth(int_if_name,
+                                                          phys_if_name)
+                int_ofport = self.int_br.add_port(int_veth)
+                phys_ofport = br.add_port(phys_veth)
+            else:
+                # Create patch ports without associating them in order to block
+                # untranslated traffic before association
+                int_ofport = self.int_br.add_patch_port(
+                    int_if_name, constants.NONEXISTENT_PEER)
+                phys_ofport = br.add_patch_port(
+                    phys_if_name, constants.NONEXISTENT_PEER)
 
-            # block all untranslated traffic over veth between bridges
-            self.int_br.add_flow(priority=2,
-                                 in_port=self.int_ofports[physical_network],
+            self.int_ofports[physical_network] = int_ofport
+            self.phys_ofports[physical_network] = phys_ofport
+
+            # block all untranslated traffic between bridges
+            self.int_br.add_flow(priority=2, in_port=int_ofport,
                                  actions="drop")
-            br.add_flow(priority=2,
-                        in_port=self.phys_ofports[physical_network],
-                        actions="drop")
+            br.add_flow(priority=2, in_port=phys_ofport, actions="drop")
 
-            # enable veth to pass traffic
-            int_veth.link.set_up()
-            phys_veth.link.set_up()
-
-            if self.veth_mtu:
-                # set up mtu size for veth interfaces
-                int_veth.link.set_mtu(self.veth_mtu)
-                phys_veth.link.set_mtu(self.veth_mtu)
+            if self.use_veth_interconnection:
+                # enable veth to pass traffic
+                int_veth.link.set_up()
+                phys_veth.link.set_up()
+                if self.veth_mtu:
+                    # set up mtu size for veth interfaces
+                    int_veth.link.set_mtu(self.veth_mtu)
+                    phys_veth.link.set_mtu(self.veth_mtu)
+            else:
+                # associate patch ports to pass traffic
+                self.int_br.set_db_attribute('Interface', int_if_name,
+                                             'options:peer', phys_if_name)
+                br.set_db_attribute('Interface', phys_if_name,
+                                    'options:peer', int_if_name)
 
     def scan_ports(self, registered_ports, updated_ports=None):
         cur_ports = self.int_br.get_vif_port_set()
@@ -1475,6 +1495,7 @@ def create_agent_config_map(config):
         veth_mtu=config.AGENT.veth_mtu,
         l2_population=config.AGENT.l2_population,
         arp_responder=config.AGENT.arp_responder,
+        use_veth_interconnection=config.OVS.use_veth_interconnection,
     )
 
     # If enable_tunneling is TRUE, set tunnel_type to default to GRE

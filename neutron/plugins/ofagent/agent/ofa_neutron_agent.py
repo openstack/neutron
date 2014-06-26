@@ -854,8 +854,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
 
     def _phys_br_patch_physical_bridge_with_integration_bridge(
             self, br, physical_network, bridge, ip_wrapper):
-        int_veth_name = constants.VETH_INTEGRATION_PREFIX + bridge
-        phys_veth_name = constants.VETH_PHYSICAL_PREFIX + bridge
+        int_veth_name = constants.PEER_INTEGRATION_PREFIX + bridge
+        phys_veth_name = constants.PEER_PHYSICAL_PREFIX + bridge
         self._phys_br_prepare_create_veth(br, int_veth_name, phys_veth_name)
         int_veth, phys_veth = self._phys_br_create_veth(br, int_veth_name,
                                                         phys_veth_name,
