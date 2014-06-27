@@ -56,7 +56,7 @@ class BaseLinuxTestCase(base.BaseTestCase):
         :param *args *kwargs: These will be passed to the create function.
         """
         while True:
-            name = self.get_rand_name(n_const.DEV_NAME_MAX_LEN, name_prefix)
+            name = self.get_rand_name(n_const.DEVICE_NAME_MAX_LEN, name_prefix)
             try:
                 return creation_func(name, *args, **kwargs)
             except RuntimeError:
