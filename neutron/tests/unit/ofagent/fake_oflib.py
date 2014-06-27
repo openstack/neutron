@@ -62,7 +62,7 @@ def _mkcls(name):
             self._hist = []
 
         def __getattr__(self, name):
-            return name
+            return self._kwargs[name]
 
         def __repr__(self):
             args = map(repr, self._args)
@@ -74,6 +74,8 @@ def _mkcls(name):
 
 
 class _Mod(object):
+    _cls_cache = {}
+
     def __init__(self, name):
         self._name = name
 
@@ -81,7 +83,13 @@ class _Mod(object):
         fullname = '%s.%s' % (self._name, name)
         if '_' in name:  # constants are named like OFPxxx_yyy_zzz
             return _SimpleValue(fullname)
-        return _mkcls(fullname)
+        try:
+            return self._cls_cache[fullname]
+        except KeyError:
+            pass
+        cls = _mkcls(fullname)
+        self._cls_cache[fullname] = cls
+        return cls
 
     def __repr__(self):
         return 'Mod(%s)' % (self._name,)
