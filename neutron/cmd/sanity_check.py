@@ -51,12 +51,23 @@ def check_ovs_patch():
     return result
 
 
+def check_nova_notify():
+    result = checks.nova_notify_supported()
+    if not result:
+        LOG.error(_('Nova notifcations are enabled, but novaclient is not '
+                    'installed. Either disable nova notifications or install '
+                    'python-novaclient.'))
+    return result
+
+
 # Define CLI opts to test specific features, with a calback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
                     help=_('Check for vxlan support')),
     BoolOptCallback('ovs_patch', check_ovs_patch, default=False,
                     help=_('Check for patch port support')),
+    BoolOptCallback('nova_notify', check_nova_notify, default=False,
+                    help=_('Check for nova notification support')),
 ]
 
 
@@ -72,6 +83,9 @@ def enable_tests_from_config():
         cfg.CONF.set_override('ovs_patch', True)
     if not cfg.CONF.OVS.use_veth_interconnection:
         cfg.CONF.set_override('ovs_patch', True)
+    if (cfg.CONF.notify_nova_on_port_status_changes or
+            cfg.CONF.notify_nova_on_port_data_changes):
+        cfg.CONF.set_override('nova_notify', True)
 
 
 def all_tests_passed():

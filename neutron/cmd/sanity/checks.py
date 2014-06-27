@@ -34,3 +34,11 @@ def patch_supported(root_helper):
     with ovs_lib.OVSBridge(name, root_helper) as br:
         port = br.add_patch_port(patch_name, peer_name)
         return port != ovs_const.INVALID_OFPORT
+
+
+def nova_notify_supported():
+    try:
+        import neutron.notifiers.nova  # noqa since unused
+        return True
+    except ImportError:
+        return False
