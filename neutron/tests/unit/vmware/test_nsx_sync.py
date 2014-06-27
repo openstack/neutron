@@ -200,6 +200,12 @@ class CacheTestCase(base.BaseTestCase):
         self.nsx_cache.process_updates(lswitches, LROUTERS, LSWITCHPORTS)
         self.assertNotIn(deleted_lswitch['uuid'], self.nsx_cache._lswitches)
 
+    def test_update_resource_does_not_cleanup_deleted_resources(self):
+        deleted_lswitch, lswitches = self._test_process_updates_with_removals()
+        self.nsx_cache.process_deletes()
+        self.nsx_cache.update_lswitch(deleted_lswitch)
+        self.assertIn(deleted_lswitch['uuid'], self.nsx_cache._lswitches)
+
     def _verify_delete(self, resource, deleted=True, hit=True):
         cached_resource = self.nsx_cache[resource['uuid']]
         data_field = 'data_bk' if deleted else 'data'
