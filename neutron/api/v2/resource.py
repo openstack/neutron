@@ -124,7 +124,7 @@ def Resource(controller, faults=None, deserializers=None, serializers=None):
                 {'NotImplementedError': e.message})
             kwargs = {'body': body, 'content_type': content_type}
             raise webob.exc.HTTPNotImplemented(**kwargs)
-        except Exception as e:
+        except Exception:
             # NOTE(jkoelker) Everything else is 500
             LOG.exception(_('%s failed'), action)
             # Do not expose details of 500 error to clients.

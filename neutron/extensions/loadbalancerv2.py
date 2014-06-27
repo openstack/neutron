@@ -56,7 +56,7 @@ class ListenerInUse(qexception.InUse):
     message = _("Pool %(pool_id)s is using this listener")
 
 
-class LBIdImmutable(qexception.NeutronException):
+class LoadBalancerIDImmutable(qexception.NeutronException):
     message = _("Cannot change loadbalancer id of a listener")
 
 
@@ -73,7 +73,7 @@ class HealthMonitorNotFound(qexception.NotFound):
 
 
 class StateInvalid(qexception.NeutronException):
-    message = _("Invalid state %(state)s of Loadbalancer resource %(id)s")
+    message = _("Invalid state %(state)s of loadbalancer resource %(id)s")
 
 
 class PoolInUse(qexception.InUse):
@@ -90,7 +90,7 @@ class LoadBalancerStatsNotFound(qexception.NotFound):
 
 
 class MemberExists(qexception.NeutronException):
-    message = _("Member with address %(address)s and port %(port)s "
+    message = _("Member with address %(address)s and protocol_port %(port)s "
                 "already present in pool %(pool)s")
 
 
@@ -146,12 +146,12 @@ RESOURCE_ATTRIBUTE_MAP = {
         'description': {'allow_post': True, 'allow_put': True,
                         'validate': {'type:string': None},
                         'is_visible': True, 'default': ''},
-        'loadbalancer_id': {'allow_post': True, 'allow_put': False,
-                            'validate': {'type:uuid': None},
+        'loadbalancer_id': {'allow_post': True, 'allow_put': True,
+                            'validate': {'type:uuid_or_none': None},
                             'default': attr.ATTR_NOT_SPECIFIED,
                             'is_visible': True},
-        'default_pool_id': {'allow_post': True, 'allow_put': False,
-                            'validate': {'type:uuid': None},
+        'default_pool_id': {'allow_post': True, 'allow_put': True,
+                            'validate': {'type:uuid_or_none': None},
                             'default': attr.ATTR_NOT_SPECIFIED,
                             'is_visible': True},
         'connection_limit': {'allow_post': True, 'allow_put': True,
@@ -172,10 +172,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'default': True,
                            'convert_to': attr.convert_to_boolean,
                            'is_visible': True},
-        'address': {'allow_post': True, 'allow_put': False,
-                    'default': attr.ATTR_NOT_SPECIFIED,
-                    'validate': {'type:ip_address_or_none': None},
-                    'is_visible': True}
+        'status': {'allow_post': False, 'allow_put': False,
+                   'is_visible': True}
     },
     'nodepools': {
         'id': {'allow_post': False, 'allow_put': False,
@@ -193,7 +191,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'validate': {'type:string': None},
                         'is_visible': True, 'default': ''},
         'healthmonitor_id': {'allow_post': True, 'allow_put': True,
-                             'validate': {'type:string': None},
+                             'validate': {'type:string_or_none': None},
                              'is_visible': True,
                              'default': attr.ATTR_NOT_SPECIFIED},
         'protocol': {'allow_post': True, 'allow_put': False,
