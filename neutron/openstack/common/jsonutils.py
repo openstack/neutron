@@ -168,12 +168,12 @@ def dumps(value, default=to_primitive, **kwargs):
     return json.dumps(value, default=default, **kwargs)
 
 
-def loads(s, encoding='utf-8'):
-    return json.loads(strutils.safe_decode(s, encoding))
+def loads(s, encoding='utf-8', **kwargs):
+    return json.loads(strutils.safe_decode(s, encoding), **kwargs)
 
 
-def load(fp, encoding='utf-8'):
-    return json.load(codecs.getreader(encoding)(fp))
+def load(fp, encoding='utf-8', **kwargs):
+    return json.load(codecs.getreader(encoding)(fp), **kwargs)
 
 
 try:
