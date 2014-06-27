@@ -17,6 +17,7 @@
 import netaddr
 from oslo.config import cfg
 
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.db.firewall import firewall_db
 from neutron.db import l3_db
@@ -758,6 +759,10 @@ class NsxAdvancedPlugin(sr_db.ServiceRouter_mixin,
             # do sync work (rollback, re-configure, or make router down)
             self._update_nat_rules(context, router)
             self._update_interface(context, router)
+        elif not router_id:
+            # The floating IP has been disassociated and should be set to DOWN
+            self.update_floatingip_status(context, fip['id'],
+                                          constants.FLOATINGIP_STATUS_DOWN)
         return fip
 
     def delete_floatingip(self, context, id):

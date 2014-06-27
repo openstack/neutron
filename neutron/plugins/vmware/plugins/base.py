@@ -1892,6 +1892,14 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                 pass
         return (port_id, internal_ip, router_id)
 
+    def _floatingip_status(self, floatingip_db, associated):
+        if (associated and
+            floatingip_db['status'] != constants.FLOATINGIP_STATUS_ACTIVE):
+            return constants.FLOATINGIP_STATUS_ACTIVE
+        elif (not associated and
+              floatingip_db['status'] != constants.FLOATINGIP_STATUS_DOWN):
+            return constants.FLOATINGIP_STATUS_DOWN
+
     def _update_fip_assoc(self, context, fip, floatingip_db, external_port):
         """Update floating IP association data.
 
@@ -1984,10 +1992,12 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                    'internal_ip': internal_ip})
                     msg = _("Failed to update NAT rules for floatingip update")
                     raise nsx_exc.NsxPluginException(err_msg=msg)
-
-        floatingip_db.update({'fixed_ip_address': internal_ip,
-                              'fixed_port_id': port_id,
-                              'router_id': router_id})
+        # Update also floating ip status (no need to call base class method)
+        floatingip_db.update(
+            {'fixed_ip_address': internal_ip,
+             'fixed_port_id': port_id,
+             'router_id': router_id,
+             'status': self._floatingip_status(floatingip_db, router_id)})
 
     def delete_floatingip(self, context, id):
         fip_db = self._get_floatingip(context, id)

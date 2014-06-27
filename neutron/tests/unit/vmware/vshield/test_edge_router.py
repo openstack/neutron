@@ -20,6 +20,7 @@ import mock
 from oslo.config import cfg
 
 from neutron.api.v2 import attributes
+from neutron.common import constants
 from neutron import context
 from neutron.extensions import l3
 from neutron import manager as n_manager
@@ -231,6 +232,9 @@ class ServiceRouterTestCase(ServiceRouterTest,
         super(ServiceRouterTestCase,
               self)._test_router_update_gateway_on_l3_ext_net(
                   vlan_id, validate_ext_gw=False)
+
+    def test_floatingip_update(self):
+        self._test_floatingip_update(constants.FLOATINGIP_STATUS_ACTIVE)
 
 
 class TestProxyCreateLswitch(base.BaseTestCase):
