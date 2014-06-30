@@ -271,7 +271,7 @@ class Listener(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     default_pool = orm.relationship(
         NodePool, backref=orm.backref("listener", uselist=False))
     loadbalancer = orm.relationship(
-        LoadBalancer, backref=orm.backref("listener", uselist=False))
+        LoadBalancer, backref=orm.backref("listeners"))
 
     def to_dict(self):
         listener_dict = {'id': self.id,
