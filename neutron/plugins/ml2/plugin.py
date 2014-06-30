@@ -15,6 +15,7 @@
 import contextlib
 
 from oslo.config import cfg
+from oslo.db import exception as os_db_exception
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc as sa_exc
 
@@ -40,7 +41,6 @@ from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
-from neutron.openstack.common import db as os_db
 from neutron.openstack.common import excutils
 from neutron.openstack.common import importutils
 from neutron.openstack.common import jsonutils
@@ -500,7 +500,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         # network record, so explicit removal is not necessary.
                         LOG.debug(_("Committing transaction"))
                         break
-            except os_db.exception.DBError as e:
+            except os_db_exception.DBError as e:
                 with excutils.save_and_reraise_exception() as ctxt:
                     if isinstance(e.inner_exception, sql_exc.IntegrityError):
                         ctxt.reraise = False

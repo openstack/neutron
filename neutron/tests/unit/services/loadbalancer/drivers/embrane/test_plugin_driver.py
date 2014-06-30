@@ -19,9 +19,9 @@ import sys
 
 import mock
 from oslo.config import cfg
+from oslo.db import exception as n_exc
 
 from neutron import context
-from neutron.openstack.common.db import exception as n_exc
 from neutron.tests.unit.db.loadbalancer import test_db_loadbalancer
 
 HELEOSAPIMOCK = mock.Mock()

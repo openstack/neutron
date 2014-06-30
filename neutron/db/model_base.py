@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.db.sqlalchemy import models
 from sqlalchemy.ext import declarative
 from sqlalchemy import orm
-
-from neutron.openstack.common.db.sqlalchemy import models
 
 
 class NeutronBase(models.ModelBase):

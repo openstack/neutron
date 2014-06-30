@@ -14,12 +14,12 @@
 # limitations under the License.
 
 import mock
+from oslo.db import exception as exc
 
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import api as db
 from neutron.db import db_base_plugin_v2 as base_plugin
-from neutron.openstack.common.db import exception as exc
 from neutron.tests import base
 
 

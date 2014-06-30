@@ -16,12 +16,12 @@
 import random
 
 from oslo.config import cfg
+from oslo.db import exception as db_exc
 from sqlalchemy import sql
 
 from neutron.common import constants
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log as logging
 
 
