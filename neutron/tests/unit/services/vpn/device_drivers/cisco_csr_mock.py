@@ -16,21 +16,30 @@
 
 """Mock REST requests to Cisco Cloud Services Router."""
 
+# Note: Currently, this makes use of the httmock package, which it was decided
+# not to be included in test_requirements. To use this module in testing, you
+# must locally add httmock to test_requirements and import it, or place the
+# httmock.py source file in this directory, and import that file (as commented
+# out below).
+#
+# TODO(pcm): Rework this module to use the httpretty package, which uses a
+# register mechanism, instead of a context manager.
+
 import re
 
 import functools
-# import httmock
+try:
+    import httmock
+except (NameError, ImportError):
+    exit()
 import requests
 from requests import exceptions as r_exc
 
 from neutron.openstack.common import log as logging
-# TODO(pcm) Remove once httmock package is added to test-requirements. For
-# now, uncomment and include httmock source to UT
-from neutron.tests.unit.services.vpn import device_drivers
+# from neutron.tests.unit.services.vpn.device_drivers import httmock
+
 
 LOG = logging.getLogger(__name__)
-
-httmock = device_drivers.httmock
 
 
 def repeat(n):
