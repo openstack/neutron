@@ -115,7 +115,7 @@ class MemberV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     subnet_id = sa.Column(sa.String(36), nullable=True)
     status = sa.Column(sa.String(16), nullable=False)
 
-    def to_dict(self):
+    def to_dict(self, pool=False):
         member_dict = {'id': self.id,
                        'tenant_id': self.tenant_id,
                        'address': self.address,
@@ -124,6 +124,11 @@ class MemberV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                        'subnet_id': self.subnet_id,
                        'status': self.status,
                        'admin_state_up': self.admin_state_up}
+        if pool and self.pool:
+            member_dict['pool'] = self.pool.to_dict(members=True,
+                                                    listener=True,
+                                                    healthmonitor=True,
+                                                    sessionpersistence=True)
         return member_dict
 
 
@@ -146,7 +151,7 @@ class HealthMonitorV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     status = sa.Column(sa.String(16), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
 
-    def to_dict(self):
+    def to_dict(self, pool=False):
         hm_dict = {'id': self.id,
                    'type': self.type,
                    'delay': self.delay,
@@ -157,6 +162,10 @@ class HealthMonitorV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                    'expected_codes': self.expected_codes,
                    'admin_state_up': self.admin_state_up,
                    'status': self.status}
+        if pool and self.pool:
+            hm_dict['pool'] = self.pool.to_dict(listener=True,
+                                                members=True,
+                                                sessionpersistence=True)
         return hm_dict
 
 
@@ -194,7 +203,8 @@ class NodePool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
         backref=orm.backref("pool", uselist=False),
         cascade="all, delete-orphan")
 
-    def to_dict(self):
+    def to_dict(self, members=False, healthmonitor=False, listener=False,
+                sessionpersistence=False):
         pool_dict = {'id': self.id,
                      'tenant_id': self.tenant_id,
                      'name': self.name,
@@ -204,6 +214,15 @@ class NodePool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                      'lb_algorithm': self.lb_algorithm,
                      'status': self.status,
                      'admin_state_up': self.admin_state_up}
+        if members and self.members:
+            pool_dict['members'] = [member.to_dict()
+                                    for member in self.members]
+        if healthmonitor and self.healthmonitor:
+            pool_dict['healthmonitor'] = self.healthmonitor.to_dict()
+        if listener and self.listener:
+            pool_dict['listener'] = self.listener.to_dict(loadbalancer=True)
+        if sessionpersistence and self.sessionpersistence:
+            pool_dict['sessionpersistence'] = self.sessionpersistence.to_dict()
         return pool_dict
 
 
@@ -239,7 +258,7 @@ class LoadBalancer(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
         viewonly=True
     )
 
-    def to_dict(self):
+    def to_dict(self, listeners=False):
         lb_dict = {'id': self.id,
                    'tenant_id': self.tenant_id,
                    'name': self.name,
@@ -249,6 +268,9 @@ class LoadBalancer(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                    'vip_port_id': self.vip_port_id,
                    'status': self.status,
                    'admin_state_up': self.admin_state_up}
+        if listeners and self.listeners:
+            lb_dict['listeners'] = [listener.to_dict(default_pool=True)
+                                    for listener in self.listeners]
         return lb_dict
 
 
@@ -273,7 +295,7 @@ class Listener(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     loadbalancer = orm.relationship(
         LoadBalancer, backref=orm.backref("listeners"))
 
-    def to_dict(self):
+    def to_dict(self, loadbalancer=False, default_pool=False):
         listener_dict = {'id': self.id,
                          'tenant_id': self.tenant_id,
                          'loadbalancer_id': self.loadbalancer_id,
@@ -283,6 +305,12 @@ class Listener(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                          'connection_limit': self.connection_limit,
                          'admin_state_up': self.admin_state_up,
                          'status': self.status}
+        if loadbalancer and self.loadbalancer:
+            listener_dict['loadbalancer'] = self.loadbalancer.to_dict(
+                listeners=True)
+        if default_pool and self.default_pool:
+            listener_dict['default_pool'] = self.default_pool.to_dict(
+                members=True, healthmonitor=True, sessionpersistence=True)
         return listener_dict
 
 
