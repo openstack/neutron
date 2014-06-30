@@ -125,6 +125,8 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                        return_value='00:00:00:00:00:01'),
             mock.patch('neutron.agent.linux.utils.get_interface_mac',
                        return_value='00:00:00:00:00:01'),
+            mock.patch('neutron.agent.linux.ovs_lib.'
+                       'get_bridges'),
             mock.patch('neutron.openstack.common.loopingcall.'
                        'FixedIntervalLoopingCall',
                        new=MockFixedIntervalLoopingCall),
@@ -516,10 +518,11 @@ class TestOvsNeutronAgent(base.BaseTestCase):
             mock.patch.object(ip_lib.IPWrapper, "add_veth"),
             mock.patch.object(ip_lib.IpLinkCommand, "delete"),
             mock.patch.object(ip_lib.IpLinkCommand, "set_up"),
-            mock.patch.object(ip_lib.IpLinkCommand, "set_mtu")
+            mock.patch.object(ip_lib.IpLinkCommand, "set_mtu"),
+            mock.patch.object(ovs_lib, "get_bridges")
         ) as (devex_fn, sysexit_fn, utilsexec_fn, remflows_fn, ovs_addfl_fn,
-              ovs_addport_fn, ovs_delport_fn, br_addport_fn,
-              br_delport_fn, addveth_fn, linkdel_fn, linkset_fn, linkmtu_fn):
+              ovs_addport_fn, ovs_delport_fn, br_addport_fn, br_delport_fn,
+              addveth_fn, linkdel_fn, linkset_fn, linkmtu_fn, get_br_fn):
             devex_fn.return_value = True
             parent = mock.MagicMock()
             parent.attach_mock(utilsexec_fn, 'utils_execute')
@@ -529,6 +532,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                        ip_lib.IPDevice("phy-br-eth1"))
             ovs_addport_fn.return_value = "int_ofport"
             br_addport_fn.return_value = "phys_veth"
+            get_br_fn.return_value = ["br-eth"]
             self.agent.setup_physical_bridges({"physnet1": "br-eth"})
             expected_calls = [mock.call.link_delete(),
                               mock.call.utils_execute(['/sbin/udevadm',

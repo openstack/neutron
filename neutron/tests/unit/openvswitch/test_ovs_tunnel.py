@@ -241,14 +241,12 @@ class TunnelTest(base.BaseTestCase):
                                actions="drop")
         ]
 
-        self.device_exists_expected = [
-            mock.call(self.MAP_TUN_BRIDGE, 'sudo'),
-        ]
+        self.device_exists_expected = []
 
         self.ipdevice_expected = []
         self.ipwrapper_expected = [mock.call('sudo')]
 
-        self.get_bridges_expected = [mock.call('sudo')]
+        self.get_bridges_expected = [mock.call('sudo'), mock.call('sudo')]
 
         self.inta_expected = []
         self.intb_expected = []
@@ -656,7 +654,6 @@ class TunnelTestUseVethInterco(TunnelTest):
         ]
 
         self.device_exists_expected = [
-            mock.call(self.MAP_TUN_BRIDGE, 'sudo'),
             mock.call('int-%s' % self.MAP_TUN_BRIDGE, 'sudo'),
         ]
 
@@ -670,7 +667,7 @@ class TunnelTestUseVethInterco(TunnelTest):
                                  'phy-%s' % self.MAP_TUN_BRIDGE)
         ]
 
-        self.get_bridges_expected = [mock.call('sudo')]
+        self.get_bridges_expected = [mock.call('sudo'), mock.call('sudo')]
 
         self.inta_expected = [mock.call.link.set_up()]
         self.intb_expected = [mock.call.link.set_up()]

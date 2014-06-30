@@ -898,13 +898,14 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         self.int_ofports = {}
         self.phys_ofports = {}
         ip_wrapper = ip_lib.IPWrapper(self.root_helper)
+        ovs_bridges = ovs_lib.get_bridges(self.root_helper)
         for physical_network, bridge in bridge_mappings.iteritems():
             LOG.info(_("Mapping physical network %(physical_network)s to "
                        "bridge %(bridge)s"),
                      {'physical_network': physical_network,
                       'bridge': bridge})
             # setup physical bridge
-            if not ip_lib.device_exists(bridge, self.root_helper):
+            if bridge not in ovs_bridges:
                 LOG.error(_("Bridge %(bridge)s for physical network "
                             "%(physical_network)s does not exist. Agent "
                             "terminated!"),
