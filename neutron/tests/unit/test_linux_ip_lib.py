@@ -792,7 +792,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
             execute.assert_called_once_with(
                 ['ip', 'netns', 'exec', 'ns',
                  'sysctl', '-w', 'net.ipv4.conf.all.promote_secondaries=1'],
-                root_helper='sudo', check_exit_code=True)
+                root_helper='sudo', check_exit_code=True, extra_ok_codes=None)
 
     def test_delete_namespace(self):
         with mock.patch('neutron.agent.linux.utils.execute'):
@@ -830,7 +830,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
             execute.assert_called_once_with(['ip', 'netns', 'exec', 'ns', 'ip',
                                              'link', 'list'],
                                             root_helper='sudo',
-                                            check_exit_code=True)
+                                            check_exit_code=True,
+                                            extra_ok_codes=None)
 
     def test_execute_env_var_prepend(self):
         self.parent.namespace = 'ns'
@@ -841,7 +842,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
                 ['ip', 'netns', 'exec', 'ns', 'env'] +
                 ['%s=%s' % (k, v) for k, v in env.items()] +
                 ['ip', 'link', 'list'],
-                root_helper='sudo', check_exit_code=True)
+                root_helper='sudo', check_exit_code=True, extra_ok_codes=None)
 
     def test_execute_nosudo_with_no_namespace(self):
         with mock.patch('neutron.agent.linux.utils.execute') as execute:
@@ -850,7 +851,8 @@ class TestIpNetnsCommand(TestIPCmdBase):
             self.netns_cmd.execute(['test'])
             execute.assert_called_once_with(['test'],
                                             root_helper=None,
-                                            check_exit_code=True)
+                                            check_exit_code=True,
+                                            extra_ok_codes=None)
 
 
 class TestDeviceExists(base.BaseTestCase):

@@ -1115,6 +1115,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
         else:
             net = netaddr.IPNetwork(ip_cidr)
             device.addr.delete(net.version, ip_cidr)
+            self.driver.delete_conntrack_state(root_helper=self.root_helper,
+                                               namespace=ri.ns_name,
+                                               ip=ip_cidr)
             if ri.router['distributed']:
                 self.floating_ip_removed_dist(ri, ip_cidr)
 

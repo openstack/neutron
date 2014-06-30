@@ -46,3 +46,6 @@ ip6tables-restore: CommandFilter, ip6tables-restore, root
 # Keepalived
 keepalived: CommandFilter, keepalived, root
 kill_keepalived: KillFilter, root, /usr/sbin/keepalived, -HUP, -15, -9
+
+# l3 agent to delete floatingip's conntrack state
+conntrack: CommandFilter, conntrack, root
