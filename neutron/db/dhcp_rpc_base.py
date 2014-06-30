@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from oslo.config import cfg
+from oslo.db import exception as db_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import constants
@@ -21,7 +22,6 @@ from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 

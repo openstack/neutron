@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.db import exception as db_exc
 from six import moves
 from sqlalchemy import func
 from sqlalchemy.orm import exc
@@ -23,7 +24,6 @@ from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
-from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log as logging
 from neutron.plugins.openvswitch.common import constants
 from neutron.plugins.openvswitch import ovs_models_v2

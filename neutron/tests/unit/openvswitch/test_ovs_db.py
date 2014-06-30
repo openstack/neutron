@@ -15,14 +15,14 @@
 
 import mock
 from oslo.config import cfg
+from oslo.db import exception as db_exc
+from oslo.db.sqlalchemy import session
 from six import moves
 import testtools
 from testtools import matchers
 
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db
-from neutron.openstack.common.db import exception as db_exc
-from neutron.openstack.common.db.sqlalchemy import session
 from neutron.plugins.openvswitch import ovs_db_v2
 from neutron.plugins.openvswitch import ovs_models_v2 as ovs_models
 from neutron.tests import base

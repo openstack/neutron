@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.db import exception as d_exc
+
 from neutron import context
 from neutron.db import api as db
 from neutron.db import models_v2
-from neutron.openstack.common.db import exception as d_exc
 from neutron.plugins.vmware.dbexts import db as nsx_db
 from neutron.plugins.vmware.dbexts import models
 from neutron.tests import base

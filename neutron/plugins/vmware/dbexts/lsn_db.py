@@ -15,13 +15,13 @@
 #    under the License.
 #
 
+from oslo.db import exception as d_exc
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import orm
 from sqlalchemy import String
 
 from neutron.db import models_v2
-from neutron.openstack.common.db import exception as d_exc
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.common import exceptions as p_exc
 

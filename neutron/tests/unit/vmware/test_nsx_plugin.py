@@ -18,6 +18,7 @@ import contextlib
 import mock
 import netaddr
 from oslo.config import cfg
+from oslo.db import exception as db_exc
 from sqlalchemy import exc as sql_exc
 import webob.exc
 
@@ -33,7 +34,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron.extensions import securitygroup as secgrp
 from neutron import manager
-from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.api_client import exception as api_exc

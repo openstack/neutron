@@ -14,19 +14,15 @@
 #    under the License.
 
 from oslo.config import cfg
+from oslo.db.sqlalchemy import session
 import sqlalchemy as sql
 
 from neutron.db import model_base
-from neutron.openstack.common.db.sqlalchemy import session
 from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
 BASE = model_base.BASEV2
-
-cfg.CONF.import_opt('connection',
-                    'neutron.openstack.common.db.options',
-                    group='database')
 
 _FACADE = None
 
@@ -35,8 +31,7 @@ def _create_facade_lazily():
     global _FACADE
 
     if _FACADE is None:
-        _FACADE = session.EngineFacade.from_config(
-            cfg.CONF.database.connection, cfg.CONF, sqlite_fk=True)
+        _FACADE = session.EngineFacade.from_config(cfg.CONF, sqlite_fk=True)
 
     return _FACADE
 

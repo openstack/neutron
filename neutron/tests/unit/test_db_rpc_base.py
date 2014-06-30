@@ -14,11 +14,11 @@
 # limitations under the License.
 
 import mock
+from oslo.db import exception as db_exc
 
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.db import dhcp_rpc_base
-from neutron.openstack.common.db import exception as db_exc
 from neutron.tests import base
 
 

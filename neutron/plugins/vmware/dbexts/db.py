@@ -14,10 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo.db import exception as db_exc
 from sqlalchemy.orm import exc
 
 import neutron.db.api as db
-from neutron.openstack.common.db import exception as db_exc
 from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.vmware.dbexts import models
