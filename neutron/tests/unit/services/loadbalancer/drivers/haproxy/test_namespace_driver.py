@@ -163,7 +163,7 @@ class TestHaproxyNSDriver(base.BaseTestCase):
             mock.patch('socket.socket'),
             mock.patch('os.path.exists'),
         ) as (gsp, ip_wrap, socket, path_exists):
-            gsp.side_effect = lambda x, y: '/pool/' + y
+            gsp.side_effect = lambda x, y, z: '/pool/' + y
 
             ip_wrap.return_value.netns.exists.return_value = True
             path_exists.return_value = True
@@ -210,7 +210,7 @@ class TestHaproxyNSDriver(base.BaseTestCase):
                 mock.patch('socket.socket'),
                 mock.patch('os.path.exists'),
         ) as (gsp, socket, path_exists):
-            gsp.side_effect = lambda x, y: '/pool/' + y
+            gsp.side_effect = lambda x, y, z: '/pool/' + y
             path_exists.return_value = True
             socket.return_value = socket
             socket.recv.return_value = raw_stats
