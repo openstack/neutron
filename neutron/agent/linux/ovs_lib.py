@@ -182,7 +182,7 @@ class OVSBridge(BaseOVS):
         try:
             int(ofport)
             return ofport
-        except ValueError:
+        except (ValueError, TypeError):
             return constants.INVALID_OFPORT
 
     def get_datapath_id(self):
