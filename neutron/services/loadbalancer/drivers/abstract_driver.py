@@ -18,6 +18,14 @@ import abc
 
 import six
 
+#
+# DEPRECATION WARNING.  THIS ABSTRACT DRIVER IS FOR THE LBAAS V1 OBJECT
+# MODEL AND SHOULD NO LONGER BE USED TO CREATE DRIVERS.
+#
+# PLEASE REFER TO driver_base.py and driver_mixins.py for the newest
+# lbaas driver base classes.
+#
+
 
 @six.add_metaclass(abc.ABCMeta)
 class LoadBalancerAbstractDriver(object):
