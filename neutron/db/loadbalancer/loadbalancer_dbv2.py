@@ -42,7 +42,7 @@ from neutron.services.loadbalancer import constants as lb_const
 LOG = logging.getLogger(__name__)
 
 
-class SessionPersistencev2(model_base.BASEV2):
+class SessionPersistenceV2(model_base.BASEV2):
 
     @declarative.declared_attr
     def __tablename__(cls):
@@ -58,8 +58,15 @@ class SessionPersistencev2(model_base.BASEV2):
                      nullable=False)
     cookie_name = sa.Column(sa.String(1024))
 
-    def to_dict(self):
-        pass
+    def to_dict(self, pool=False):
+        sp_dict = {'type': self.type}
+        if self.cookie_name:
+            sp_dict['cookie_name'] = self.cookie_name
+        if pool and self.pool:
+            sp_dict['pool'] = self.pool.to_dict(members=True,
+                                                listener=True,
+                                                healthmonitor=True)
+        return sp_dict
 
 
 class LoadBalancerStatistics(model_base.BASEV2):
@@ -87,12 +94,18 @@ class LoadBalancerStatistics(model_base.BASEV2):
                                'Current value is %(value)d.') % data)
         return value
 
-    def to_dict(self):
-        res = {lb_const.STATS_IN_BYTES: self.bytes_in,
-               lb_const.STATS_OUT_BYTES: self.bytes_out,
-               lb_const.STATS_ACTIVE_CONNECTIONS: self.active_connections,
-               lb_const.STATS_TOTAL_CONNECTIONS: self.total_connections}
-        return {'stats': res}
+    def to_dict(self, loadbalancer=False):
+        stats_dict = {lb_const.STATS_IN_BYTES: self.bytes_in,
+                      lb_const.STATS_OUT_BYTES: self.bytes_out,
+                      lb_const.STATS_ACTIVE_CONNECTIONS:
+                          self.active_connections,
+                      lb_const.STATS_TOTAL_CONNECTIONS:
+                          self.total_connections}
+        if loadbalancer and self.loadbalancer:
+            stats_dict['loadbalancer'] = self.loadbalancer.to_dict(
+                listeners=True)
+
+        return stats_dict
 
 
 class MemberV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
@@ -153,6 +166,7 @@ class HealthMonitorV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
     def to_dict(self, pool=False):
         hm_dict = {'id': self.id,
+                   'tenant_id': self.tenant_id,
                    'type': self.type,
                    'delay': self.delay,
                    'timeout': self.timeout,
@@ -198,13 +212,13 @@ class PoolV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     healthmonitor = orm.relationship(
         HealthMonitorV2, backref=orm.backref("pool", uselist=False))
     sessionpersistence = orm.relationship(
-        SessionPersistencev2,
+        SessionPersistenceV2,
         uselist=False,
         backref=orm.backref("pool", uselist=False),
         cascade="all, delete-orphan")
 
     def to_dict(self, members=False, healthmonitor=False, listener=False,
-                sessionpersistence=False):
+                sessionpersistence=True):
         pool_dict = {'id': self.id,
                      'tenant_id': self.tenant_id,
                      'name': self.name,
@@ -214,15 +228,19 @@ class PoolV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                      'lb_algorithm': self.lb_algorithm,
                      'status': self.status,
                      'admin_state_up': self.admin_state_up}
-        if members and self.members:
+        if members:
+            member_list = self.members or []
             pool_dict['members'] = [member.to_dict()
-                                    for member in self.members]
+                                    for member in member_list]
         if healthmonitor and self.healthmonitor:
             pool_dict['healthmonitor'] = self.healthmonitor.to_dict()
         if listener and self.listener:
             pool_dict['listener'] = self.listener.to_dict(loadbalancer=True)
         if sessionpersistence and self.sessionpersistence:
-            pool_dict['sessionpersistence'] = self.sessionpersistence.to_dict()
+            pool_dict['session_persistence'] = \
+                self.sessionpersistence.to_dict()
+        else:
+            pool_dict['session_persistence'] = None
         return pool_dict
 
 
@@ -258,7 +276,7 @@ class LoadBalancer(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
         viewonly=True
     )
 
-    def to_dict(self, listeners=False):
+    def to_dict(self, listeners=False, stats=False):
         lb_dict = {'id': self.id,
                    'tenant_id': self.tenant_id,
                    'name': self.name,
@@ -271,6 +289,8 @@ class LoadBalancer(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
         if listeners and self.listeners:
             lb_dict['listeners'] = [listener.to_dict(default_pool=True)
                                     for listener in self.listeners]
+        if stats and self.stats:
+            lb_dict['stats'] = self.stats.to_dict()
         return lb_dict
 
 
@@ -280,6 +300,11 @@ class Listener(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     @declarative.declared_attr
     def __tablename__(cls):
         return "lbaas_listeners"
+
+    __table_args__ = (
+        sa.schema.UniqueConstraint('loadbalancer_id', 'protocol_port',
+                                   name='uniq_listener0loadbalancer_id00port'),
+    )
 
     name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255))
@@ -299,6 +324,8 @@ class Listener(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
 
     def to_dict(self, loadbalancer=False, default_pool=False):
         listener_dict = {'id': self.id,
+                         'name': self.name,
+                         'description': self.description,
                          'tenant_id': self.tenant_id,
                          'loadbalancer_id': self.loadbalancer_id,
                          'default_pool_id': self.default_pool_id,
@@ -309,7 +336,7 @@ class Listener(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
                          'status': self.status}
         if loadbalancer and self.loadbalancer:
             listener_dict['loadbalancer'] = self.loadbalancer.to_dict(
-                listeners=True)
+                listeners=True, stats=True)
         if default_pool and self.default_pool:
             listener_dict['default_pool'] = self.default_pool.to_dict(
                 members=True, healthmonitor=True, sessionpersistence=True)
@@ -433,7 +460,7 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
                                 options(orm.noload('vip_port')).
                                 one())
                 except exc.NoResultFound:
-                    raise loadbalancer.VipNotFound(vip_id=id)
+                    raise loadbalancerv2.LoadBalancerNotFound(lb_id=id)
             else:
                 model_db = self._get_resource(context, model, id)
             if model_db.status != status:
@@ -474,10 +501,11 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
     def delete_loadbalancer(self, context, id):
         with context.session.begin(subtransactions=True):
             lb_db = self._get_resource(context, LoadBalancer, id)
-            if lb_db.listener:
+            if lb_db.listeners or len(lb_db.listeners) > 0:
                 raise loadbalancerv2.LoadBalancerInUse(
-                    listener_id=lb_db.listener.id)
+                    listener_id=lb_db.listener[0].id)
             context.session.delete(lb_db)
+            context.session.delete(lb_db.vip_port)
 
     def get_loadbalancers(self, context, filters=None, fields=None):
         return self._get_resources(context, LoadBalancer, filters=filters)
@@ -488,30 +516,44 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
 
     def create_listener(self, context, listener):
         tenant_id = self._get_tenant_id_for_create(context, listener)
-        with context.session.begin(subtransactions=True):
-            listener['status'] = constants.PENDING_CREATE
+        try:
+            with context.session.begin(subtransactions=True):
+                listener['status'] = constants.PENDING_CREATE
 
-            #Check for unspecified loadbalancer_id and listener_id and
-            #set to None
-            if (listener.get('loadbalancer_id') ==
-                    attributes.ATTR_NOT_SPECIFIED):
-                listener['loadbalancer_id'] = None
-            if (listener.get('default_pool_id') ==
-                    attributes.ATTR_NOT_SPECIFIED):
-                listener['default_pool_id'] = None
-            listener_db_entry = Listener(
-                id=uuidutils.generate_uuid(),
-                tenant_id=tenant_id,
-                name=listener['name'],
-                description=listener['description'],
-                loadbalancer_id=listener['loadbalancer_id'],
-                default_pool_id=listener['default_pool_id'],
-                protocol=listener['protocol'],
-                protocol_port=listener['protocol_port'],
-                connection_limit=listener['connection_limit'],
-                admin_state_up=listener['admin_state_up'],
-                status=listener['status'])
-            context.session.add(listener_db_entry)
+                #Check for unspecified loadbalancer_id and listener_id and
+                #set to None
+                if (listener.get('loadbalancer_id') ==
+                        attributes.ATTR_NOT_SPECIFIED):
+                    listener['loadbalancer_id'] = None
+                if (listener.get('default_pool_id') ==
+                        attributes.ATTR_NOT_SPECIFIED):
+                    listener['default_pool_id'] = None
+
+                if listener.get('default_pool_id'):
+                    pool = self._get_resource(context, PoolV2,
+                                              listener['default_pool_id'])
+                    if pool.protocol != listener.get('protocol'):
+                        raise loadbalancerv2.ListenerPoolProtocolMismatch(
+                            listener_proto=listener['protocol'],
+                            pool_proto=pool.protocol)
+
+                listener_db_entry = Listener(
+                    id=uuidutils.generate_uuid(),
+                    tenant_id=tenant_id,
+                    name=listener['name'],
+                    description=listener['description'],
+                    loadbalancer_id=listener['loadbalancer_id'],
+                    default_pool_id=listener['default_pool_id'],
+                    protocol=listener['protocol'],
+                    protocol_port=listener['protocol_port'],
+                    connection_limit=listener['connection_limit'],
+                    admin_state_up=listener['admin_state_up'],
+                    status=listener['status'])
+                context.session.add(listener_db_entry)
+        except exception.DBDuplicateEntry:
+            raise loadbalancerv2.LoadBalancerListenerProtocolPortExists(
+                lb_id=listener['loadbalancer_id'],
+                protocol_port=listener['protocol_port'])
         return listener_db_entry
 
     def update_listener(self, context, id, listener):
@@ -525,6 +567,12 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
                 listener.get('loadbalancer_id') !=
                     attributes.ATTR_NOT_SPECIFIED):
                 raise loadbalancerv2.LoadBalancerIDImmutable()
+            if (listener.get('loadbalancer_id') ==
+                    attributes.ATTR_NOT_SPECIFIED):
+                listener['loadbalancer_id'] = None
+            if (listener.get('default_pool_id') ==
+                    attributes.ATTR_NOT_SPECIFIED):
+                listener['default_pool_id'] = None
 
             listener_db.update(listener)
         return listener_db
@@ -542,12 +590,77 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
         listener = self._get_resource(context, Listener, id)
         return listener
 
+    def _check_session_persistence_info(self, info):
+        """Performs sanity check on session persistence info.
+
+        :param info: Session persistence info
+        """
+        if info['type'] == 'APP_COOKIE':
+            if not info.get('cookie_name'):
+                raise ValueError(_("'cookie_name' should be specified for this"
+                                   " type of session persistence."))
+        else:
+            if 'cookie_name' in info:
+                raise ValueError(_("'cookie_name' is not allowed for this type"
+                                   " of session persistence"))
+
+    def _create_session_persistence_db(self, session_info, pool_id):
+        self._check_session_persistence_info(session_info)
+
+        sp_db = SessionPersistenceV2(
+            type=session_info['type'],
+            cookie_name=session_info.get('cookie_name'),
+            pool_id=pool_id)
+        return sp_db
+
+    def _update_pool_session_persistence(self, context, pool_id, info):
+        self._check_session_persistence_info(info)
+
+        pool = self._get_resource(context, PoolV2, pool_id)
+
+        with context.session.begin(subtransactions=True):
+            # Update sessionPersistence table
+            sess_qry = context.session.query(SessionPersistenceV2)
+            sesspersist_db = sess_qry.filter_by(pool_id=pool_id).first()
+
+            # Insert a None cookie_info if it is not present to overwrite an
+            # an existing value in the database.
+            if 'cookie_name' not in info:
+                info['cookie_name'] = None
+
+            if sesspersist_db:
+                sesspersist_db.update(info)
+            else:
+                sesspersist_db = SessionPersistenceV2(
+                    type=info['type'],
+                    cookie_name=info['cookie_name'],
+                    pool_id=pool_id)
+                context.session.add(sesspersist_db)
+                # Update vip table
+                pool.session_persistence = sesspersist_db
+            context.session.add(pool)
+
+    def _delete_session_persistence(self, context, pool_id):
+        with context.session.begin(subtransactions=True):
+            sess_qry = context.session.query(SessionPersistenceV2)
+            sess_qry.filter_by(pool_id=pool_id).delete()
+
     def create_pool(self, context, pool):
         tenant_id = self._get_tenant_id_for_create(context, pool)
         with context.session.begin(subtransactions=True):
             pool['status'] = constants.PENDING_CREATE
             if pool['healthmonitor_id'] == attributes.ATTR_NOT_SPECIFIED:
                 pool['healthmonitor_id'] = None
+            if pool['healthmonitor_id'] is not None:
+                self._get_resource(context, HealthMonitorV2,
+                                   pool['healthmonitor_id'])
+                filters = {'healthmonitor_id': [pool['healthmonitor_id']]}
+                hmpool = self._get_resources(context,
+                                             PoolV2,
+                                             filters=filters)
+                if hmpool:
+                    raise loadbalancerv2.HealthMonitorInUse(monitor_id=id)
+
             pool_db = PoolV2(id=uuidutils.generate_uuid(),
                              tenant_id=tenant_id,
                              name=pool['name'],
@@ -557,11 +670,27 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
                              admin_state_up=pool['admin_state_up'],
                              healthmonitor_id=pool['healthmonitor_id'],
                              status=pool['status'])
+
+            session_info = pool['session_persistence']
+            if session_info:
+                s_p = self._create_session_persistence_db(session_info,
+                                                          pool_db.id)
+                pool_db.sessionpersistence = s_p
+
             context.session.add(pool_db)
         return pool_db
 
     def update_pool(self, context, id, pool):
         with context.session.begin(subtransactions=True):
+            if pool.get('healthmonitor_id'):
+                self._get_resource(context, HealthMonitorV2,
+                                   pool.get('healthmonitor_id'))
+            sp = pool.pop('session_persistence', None)
+            if sp:
+                self._update_pool_session_persistence(context, id, sp)
+            else:
+                self._delete_session_persistence(context, id)
+
             pool_db = self._get_resource(context, PoolV2, id)
 
             pool_db.update(pool)
@@ -635,6 +764,11 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
             raise loadbalancerv2.PoolNotFound(pool_id=pool_id)
         return member
 
+    def delete_member(self, context, id):
+        with context.session.begin(subtransactions=True):
+            member_db = self._get_resource(context, MemberV2, id)
+            context.session.delete(member_db)
+
     def create_healthmonitor(self, context, healthmonitor):
         tenant_id = self._get_tenant_id_for_create(context, healthmonitor)
         with context.session.begin(subtransactions=True):
@@ -674,7 +808,13 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
         return hms
 
     def update_loadbalancer_stats(self, context, loadbalancer_id, stats_data):
-        pass
+        stats_data = stats_data or {}
+        with context.session.begin(subtransactions=True):
+            lb_db = self._get_resource(context, LoadBalancer, loadbalancer_id)
+            self.assert_modification_allowed(lb_db)
+            lb_db.stats = self._create_loadbalancer_stats(context,
+                                                          loadbalancer_id,
+                                                          data=stats_data)
 
     def stats(self, context, loadbalancer_id):
         with context.session.begin(subtransactions=True):

@@ -424,7 +424,7 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
     def _is_driver_new_style(self, driver):
         return not hasattr(driver, 'create_vip')
 
-    def _call_driver_operation(self, driver_method, db_entity,
+    def _call_driver_operation(self, context, driver_method, db_entity,
                                old_db_entity=None):
         try:
             if old_db_entity:
@@ -450,7 +450,7 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
             context, loadbalancer)
         self.service_type_manager.add_resource_association(
             context,
-            constants.LOADBALANCER,
+            constants.LOADBALANCERv2,
             provider_name, lb_db.id)
         driver = self.drivers[provider_name]
         if self._is_driver_new_style(driver):
@@ -473,6 +473,9 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
                                         updated_lb, old_db_entity=old_lb)
         return updated_lb.to_dict()
 
+    def _delete_db_loadbalancer(self, context, id):
+        super(LoadBalancerPluginv2, self).delete_loadbalancer(context, id)
+
     def delete_loadbalancer(self, context, id, body=None):
         self.test_and_set_status(context, ldbv2.LoadBalancer, id,
                                  constants.PENDING_DELETE)
@@ -481,7 +484,7 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
         driver = self._get_driver_for_provider(old_lb.provider.provider_name)
         if self._is_driver_new_style(driver):
             self._call_driver_operation(
-                context, driver.load_balancer.create, old_lb)
+                context, driver.load_balancer.delete, old_lb)
 
     def get_loadbalancer(self, context, id, fields=None):
         lb_db = super(LoadBalancerPluginv2, self).get_loadbalancer(
@@ -539,6 +542,9 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
             self.update_status(context, ldbv2.Listener, id, constants.ACTIVE)
 
         return listener_db.to_dict()
+
+    def _delete_db_listener(self, context, id):
+        super(LoadBalancerPluginv2, self).delete_listener(context, id)
 
     def delete_listener(self, context, id, body=None):
         self.test_and_set_status(context, ldbv2.Listener, id,
@@ -612,6 +618,9 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
 
         return updated_pool.to_dict()
 
+    def _delete_db_nodepool(self, context, id):
+        super(LoadBalancerPluginv2, self).delete_pool(context, id)
+
     def delete_pool(self, context, id, body=None):
         self.test_and_set_status(context, ldbv2.PoolV2, id,
                                  constants.PENDING_DELETE)
@@ -638,7 +647,7 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
         pool_db = super(LoadBalancerPluginv2, self).get_pool(context,
                                                              id,
                                                              fields)
-        return self._fields(pool_db.to_dict(), fields)
+        return self._fields(pool_db.to_dict(members=True), fields)
 
     def create_pool_member(self, context, member, pool_id):
         #TODO(do we want to set the status of the pool as well?)
@@ -762,6 +771,9 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
 
         return updated_hm.to_dict()
 
+    def _delete_db_healthmonitor(self, context, id):
+        super(LoadBalancerPluginv2, self).delete_healthmonitor(context, id)
+
     def delete_healthmonitor(self, context, id, body=None):
         self.test_and_set_status(context, ldbv2.HealthMonitorV2, id,
                                  constants.PENDING_DELETE)
@@ -794,9 +806,9 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
 
     def stats(self, context, loadbalancer_id):
         driver = self._get_driver_for_loadbalancer(context, loadbalancer_id)
-        #TODO(get stats from driver)
         stats_data = None
-        # stats_data = driver.stats(context, loadbalancer_id)
+        if self._is_driver_new_style(driver):
+            stats_data = driver.load_balancer.stats(context, loadbalancer_id)
         # if we get something from the driver -
         # update the db and return the value from db
         # else - return what we have in db
@@ -808,4 +820,4 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
             )
         db_stats = super(LoadBalancerPluginv2, self).stats(context,
                                                            loadbalancer_id)
-        return db_stats.to_dict()
+        return {'stats': db_stats.to_dict()}
