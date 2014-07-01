@@ -111,7 +111,10 @@ class TestOvsdbMonitor(BaseMonitorTest):
         while True:
             output = list(self.monitor.iter_stdout())
             if output:
-                return output[0]
+                # Output[0] is header row with spaces for column separation.
+                # The column widths can vary depending on the data in the
+                # columns, so compress multiple spaces to one for testing.
+                return ' '.join(output[0].split())
             eventlet.sleep(0.01)
 
     def test_killed_monitor_respawns(self):
