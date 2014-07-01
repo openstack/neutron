@@ -499,18 +499,15 @@ class TestOFANeutronAgent(OFAAgentTestCase):
 
     def _test_process_network_ports(self, port_info):
         with contextlib.nested(
-            mock.patch.object(self.agent.sg_agent, "prepare_devices_filter"),
-            mock.patch.object(self.agent.sg_agent, "refresh_firewall"),
+            mock.patch.object(self.agent.sg_agent, "setup_port_filters"),
             mock.patch.object(self.agent, "treat_devices_added_or_updated",
                               return_value=False),
             mock.patch.object(self.agent, "treat_devices_removed",
                               return_value=False)
-        ) as (prep_dev_filter, refresh_fw,
-              device_added_updated, device_removed):
+        ) as (setup_port_filters, device_added_updated, device_removed):
             self.assertFalse(self.agent.process_network_ports(port_info))
-            prep_dev_filter.assert_called_once_with(port_info['added'])
-            if port_info.get('updated'):
-                self.assertEqual(1, refresh_fw.call_count)
+            setup_port_filters.assert_called_once_with(
+                port_info['added'], port_info.get('updated', set()))
             device_added_updated.assert_called_once_with(
                 port_info['added'] | port_info.get('updated', set()))
             device_removed.assert_called_once_with(port_info['removed'])
