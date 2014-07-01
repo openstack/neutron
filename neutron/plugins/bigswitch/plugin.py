@@ -975,6 +975,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
             self.servers.rest_delete_router(tenant_id, router_id)
             return ret_val
 
+    @put_context_in_serverpool
     def add_router_interface(self, context, router_id, interface_info):
 
         LOG.debug(_("NeutronRestProxyV2: add_router_interface() called"))
@@ -1003,6 +1004,7 @@ class NeutronRestProxyV2(NeutronRestProxyV2Base,
                                                    intf_details)
             return new_intf_info
 
+    @put_context_in_serverpool
     def remove_router_interface(self, context, router_id, interface_info):
 
         LOG.debug(_("NeutronRestProxyV2: remove_router_interface() called"))
