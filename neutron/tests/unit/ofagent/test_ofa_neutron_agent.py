@@ -438,9 +438,10 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),
             mock.patch.object(self.agent.plugin_rpc, 'update_device_down'),
             mock.patch.object(self.agent, func_name)
-        ) as (get_dev_fn, get_vif_func, upd_dev_up, upd_dev_down, func):
+        ) as (get_dev_fn, _get_ports, upd_dev_up, upd_dev_down, func):
             self.assertFalse(self.agent.treat_devices_added_or_updated(
                 [port.port_name]))
+        _get_ports.assert_called_once_with(self.agent.int_br)
         return func.called
 
     def test_treat_devices_added_updated_ignores_invalid_ofport(self):
