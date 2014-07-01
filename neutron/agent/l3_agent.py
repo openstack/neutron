@@ -843,6 +843,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
     @periodic_task.periodic_task
     @lockutils.synchronized('l3-agent', 'neutron-')
+    def periodic_sync_routers_task(self, context):
+        self._sync_routers_task(context)
+
     def _sync_routers_task(self, context):
         if self.services_sync:
             super(L3NATAgent, self).process_services_sync(context)
@@ -864,15 +867,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         except n_rpc.RPCException:
             LOG.exception(_("Failed synchronizing routers due to RPC error"))
             self.fullsync = True
-            return
         except Exception:
             LOG.exception(_("Failed synchronizing routers"))
             self.fullsync = True
-
-        # Resync is not necessary for the cleanup of stale
-        # namespaces.
-        if self._clean_stale_namespaces:
-            self._cleanup_namespaces(routers)
+        else:
+            # Resync is not necessary for the cleanup of stale namespaces
+            if self._clean_stale_namespaces:
+                self._cleanup_namespaces(routers)
 
     def after_start(self):
         LOG.info(_("L3 agent started"))
