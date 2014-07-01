@@ -281,6 +281,8 @@ class Listener(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     def __tablename__(cls):
         return "lbaas_listeners"
 
+    name = sa.Column(sa.String(255))
+    description = sa.Column(sa.String(255))
     default_pool_id = sa.Column(sa.String(36), sa.ForeignKey("lbaas_pools.id"),
                                 unique=True)
     loadbalancer_id = sa.Column(sa.String(36), sa.ForeignKey(
@@ -500,6 +502,8 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
             listener_db_entry = Listener(
                 id=uuidutils.generate_uuid(),
                 tenant_id=tenant_id,
+                name=listener['name'],
+                description=listener['description'],
                 loadbalancer_id=listener['loadbalancer_id'],
                 default_pool_id=listener['default_pool_id'],
                 protocol=listener['protocol'],

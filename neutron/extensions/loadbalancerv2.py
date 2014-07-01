@@ -143,6 +143,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:string': None},
                       'required_by_policy': True,
                       'is_visible': True},
+        'name': {'allow_post': True, 'allow_put': True,
+                 'validate': {'type:string': None},
+                 'default': '',
+                 'is_visible': True},
         'description': {'allow_post': True, 'allow_put': True,
                         'validate': {'type:string': None},
                         'is_visible': True, 'default': ''},
@@ -461,11 +465,11 @@ class LoadBalancerPluginBaseV2(service_base.ServicePluginBase):
         pass
 
     @abc.abstractmethod
-    def create_nodepool(self, context, pool):
+    def create_nodepool(self, context, nodepool):
         pass
 
     @abc.abstractmethod
-    def update_nodepool(self, context, id, pool):
+    def update_nodepool(self, context, id, nodepool):
         pass
 
     @abc.abstractmethod
@@ -478,24 +482,28 @@ class LoadBalancerPluginBaseV2(service_base.ServicePluginBase):
 
     # Pool Member methods.
     @abc.abstractmethod
-    def get_nodepool_members(self, context, pool_id, filters=None,
+    def get_nodepool_members(self, context, nodepool_id,
+                             filters=None,
                              fields=None):
         pass
 
     @abc.abstractmethod
-    def get_nodepool_member(self, context, id, pool_id, fields=None):
+    def get_nodepool_member(self, context, id, nodepool_id,
+                            fields=None):
         pass
 
     @abc.abstractmethod
-    def create_nodepool_member(self, context, member, pool_id):
+    def create_nodepool_member(self, context, member,
+                               nodepool_id):
         pass
 
     @abc.abstractmethod
-    def update_nodepool_member(self, context, member, id, pool_id):
+    def update_nodepool_member(self, context, member, id,
+                               nodepool_id):
         pass
 
     @abc.abstractmethod
-    def delete_nodepool_member(self, context, id, pool_id):
+    def delete_nodepool_member(self, context, id, nodepool_id):
         pass
 
     # Health monitor methods.
@@ -517,4 +525,12 @@ class LoadBalancerPluginBaseV2(service_base.ServicePluginBase):
 
     @abc.abstractmethod
     def delete_healthmonitor(self, context, id):
+        pass
+
+    @abc.abstractmethod
+    def get_members(self, context, filters=None, fields=None):
+        pass
+
+    @abc.abstractmethod
+    def get_member(self, context, id, fields=None):
         pass

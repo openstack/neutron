@@ -135,6 +135,8 @@ def upgrade(active_plugins=None, options=None):
         u'lbaas_listeners',
         sa.Column(u'tenant_id', sa.String(255), nullable=True),
         sa.Column(u'id', sa.String(36), nullable=False),
+        sa.Column(u'name', sa.String(255), nullable=True),
+        sa.Column(u'description', sa.String(255), nullable=True),
         sa.Column(u'protocol', sa.Enum(u'HTTP', u'HTTPS', u'TCP', u'UDP',
                                        name=u'lb_protocols'),
                   nullable=True),

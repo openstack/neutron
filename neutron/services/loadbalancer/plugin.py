@@ -28,7 +28,6 @@ from neutron.openstack.common import excutils
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
 from neutron.services.loadbalancer import agent_scheduler
-from neutron.services.loadbalancer.drivers.common import agent_driver_base
 from neutron.services import provider_configuration as pconf
 from neutron.services import service_base
 
