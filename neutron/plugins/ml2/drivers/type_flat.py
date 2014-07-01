@@ -67,9 +67,10 @@ class FlatTypeDriver(api.TypeDriver):
         if '*' in self.flat_networks:
             LOG.info(_("Arbitrary flat physical_network names allowed"))
             self.flat_networks = None
+        elif not all(self.flat_networks):
+            msg = _("physical network name is empty")
+            raise exc.InvalidInput(error_message=msg)
         else:
-            # TODO(rkukura): Validate that each physical_network name
-            # is neither empty nor too long.
             LOG.info(_("Allowable flat physical_network names: %s"),
                      self.flat_networks)
 
