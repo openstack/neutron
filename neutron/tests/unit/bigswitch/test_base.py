@@ -52,6 +52,7 @@ class BigSwitchTestBase(object):
         # The mock interferes with HTTP(S) connection caching
         cfg.CONF.set_override('cache_connections', False, 'RESTPROXY')
         cfg.CONF.set_override('service_plugins', ['bigswitch_l3'])
+        cfg.CONF.set_override('add_meta_server_route', False, 'RESTPROXY')
 
     def setup_patches(self):
         self.plugin_notifier_p = mock.patch(NOTIFIER)
