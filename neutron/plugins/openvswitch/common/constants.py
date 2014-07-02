@@ -45,6 +45,9 @@ LEARN_FROM_TUN = 10
 UCAST_TO_TUN = 20
 ARP_RESPONDER = 21
 FLOOD_TO_TUN = 22
+
+# Tables for integration bridge
+# Table 0 is used for forwarding.
 CANARY_TABLE = 23
 
 # Map tunnel types to tables number
