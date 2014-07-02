@@ -319,23 +319,22 @@ class OVS_Lib_Test(base.BaseTestCase):
             process_input=None,
             root_helper=self.root_helper)
 
-    def test_get_port_ofport(self):
+    def _test_get_port_ofport(self, ofport, expected_result):
         pname = "tap99"
-        ofport = "6"
         self.execute.return_value = ofport
-        self.assertEqual(self.br.get_port_ofport(pname), ofport)
+        self.assertEqual(self.br.get_port_ofport(pname), expected_result)
         self.execute.assert_called_once_with(
             ["ovs-vsctl", self.TO, "get", "Interface", pname, "ofport"],
             root_helper=self.root_helper)
 
-    def test_get_port_ofport_non_int(self):
-        pname = "tap99"
-        ofport = "[]"
-        self.execute.return_value = ofport
-        self.assertEqual(self.br.get_port_ofport(pname), const.INVALID_OFPORT)
-        self.execute.assert_called_once_with(
-            ["ovs-vsctl", self.TO, "get", "Interface", pname, "ofport"],
-            root_helper=self.root_helper)
+    def test_get_port_ofport_succeeds_for_valid_ofport(self):
+        self._test_get_port_ofport("6", "6")
+
+    def test_get_port_ofport_returns_invalid_ofport_for_non_int(self):
+        self._test_get_port_ofport("[]", const.INVALID_OFPORT)
+
+    def test_get_port_ofport_returns_invalid_ofport_for_none(self):
+        self._test_get_port_ofport(None, const.INVALID_OFPORT)
 
     def test_get_datapath_id(self):
         datapath_id = '"0000b67f4fbcc149"'
