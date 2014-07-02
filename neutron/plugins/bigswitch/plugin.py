@@ -365,11 +365,12 @@ class NeutronRestProxyV2Base(db_base_plugin_v2.NeutronDbPluginV2,
                 cfg_vif_type = override
         port[portbindings.VIF_TYPE] = cfg_vif_type
 
+        sg_enabled = sg_rpc.is_firewall_enabled()
         port[portbindings.VIF_DETAILS] = {
             # TODO(rkukura): Replace with new VIF security details
             portbindings.CAP_PORT_FILTER:
             'security-group' in self.supported_extension_aliases,
-            portbindings.OVS_HYBRID_PLUG: True
+            portbindings.OVS_HYBRID_PLUG: sg_enabled
         }
         return port
 

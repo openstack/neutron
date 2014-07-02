@@ -28,7 +28,8 @@ from neutron.tests.unit import test_security_groups_rpc as test_sg_rpc
 class TestNecPortBinding(test_bindings.PortBindingsTestCase,
                          test_nec_plugin.NecPluginV2TestCase):
     VIF_TYPE = portbindings.VIF_TYPE_OVS
-    HAS_PORT_FILTER = True
+    VIF_DETAILS = {portbindings.CAP_PORT_FILTER: True,
+                   portbindings.OVS_HYBRID_PLUG: True}
     ENABLE_SG = True
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_HYBRID_DRIVER
 
@@ -41,7 +42,8 @@ class TestNecPortBinding(test_bindings.PortBindingsTestCase,
 
 
 class TestNecPortBindingNoSG(TestNecPortBinding):
-    HAS_PORT_FILTER = False
+    VIF_DETAILS = {portbindings.CAP_PORT_FILTER: False,
+                   portbindings.OVS_HYBRID_PLUG: False}
     ENABLE_SG = False
     FIREWALL_DRIVER = test_sg_rpc.FIREWALL_NOOP_DRIVER
 
