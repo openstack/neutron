@@ -129,7 +129,7 @@ class Client(object):
         self.format = 'json'
         self.hosts = self._get_vsm_hosts()
         self.action_prefix = 'http://%s/api/n1k' % self.hosts[0]
-        self.timeout = c_const.DEFAULT_HTTP_TIMEOUT
+        self.timeout = c_conf.CISCO_N1K.http_timeout
 
     def list_port_profiles(self):
         """
