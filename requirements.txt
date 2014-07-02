@@ -2,7 +2,7 @@ pbr>=0.6,!=0.7,<1.0
 
 Paste
 PasteDeploy>=1.5.0
-Routes>=1.12.3
+Routes>=1.12.3,!=2.0
 anyjson>=0.3.3
 argparse
 Babel>=1.3
