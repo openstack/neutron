@@ -17,6 +17,7 @@
 #    under the License.
 # @author: Fumihiko Kakuma, VA Linux Systems Japan K.K.
 
+from neutron.agent import securitygroups_rpc
 from neutron.common import constants
 from neutron.extensions import portbindings
 from neutron.openstack.common import log
@@ -38,11 +39,13 @@ class OfagentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """
 
     def __init__(self):
+        sg_enabled = securitygroups_rpc.is_firewall_enabled()
+        vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
+                       portbindings.OVS_HYBRID_PLUG: sg_enabled}
         super(OfagentMechanismDriver, self).__init__(
             constants.AGENT_TYPE_OFA,
             portbindings.VIF_TYPE_OVS,
-            {portbindings.CAP_PORT_FILTER: True,
-             portbindings.OVS_HYBRID_PLUG: True})
+            vif_details)
 
     def check_segment_for_agent(self, segment, agent):
         mappings = agent['configurations'].get('bridge_mappings', {})
