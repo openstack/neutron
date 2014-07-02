@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-06-16 06:08+0000\n"
-"PO-Revision-Date: 2014-06-14 19:31+0000\n"
-"Last-Translator: Carsten Duch <cad@teuto.net>\n"
+"POT-Creation-Date: 2014-07-02 06:08+0000\n"
+"PO-Revision-Date: 2014-06-30 20:07+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: German (http://www.transifex.com/projects/p/neutron/language/"
 "de/)\n"
 "Language: de\n"
@@ -24,11 +24,12 @@ msgstr ""
 #, python-format
 msgid "Skipping periodic task %(task)s because its interval is negative"
 msgstr ""
+"Überspringe periodische Aufgabe %(task)s weil der Intervall negativ ist"
 
 #: neutron/openstack/common/periodic_task.py:130
 #, python-format
 msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr ""
+msgstr "Überspringe periodische Aufgabe %(task)s weil sie deaktiviert ist"
 
 #: neutron/openstack/common/service.py:176
 #, python-format
@@ -43,7 +44,7 @@ msgstr ""
 #: neutron/openstack/common/service.py:271
 #, python-format
 msgid "Child caught %s, exiting"
-msgstr ""
+msgstr "Untergeordnetes Element %s abgefangen; Vorgang wird beendet"
 
 #: neutron/openstack/common/service.py:310
 msgid "Forking too fast, sleeping"
@@ -82,50 +83,3 @@ msgstr "Warten aufgerufen nach dem der Thread abgebrochen wurde. Bereinige."
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "Warten auf Beenden von %d untergeordneten Elementen"
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:379
-#, python-format
-msgid "Deleting duplicated row with id: %(id)s from table: %(table)s"
-msgstr "Lösche doppelte Zeile mit der ID %(id)s aus der Tabelle %(table)s"
-
-#: neutron/openstack/common/rpc/impl_kombu.py:498
-#, python-format
-msgid "Reconnecting to AMQP server on %(hostname)s:%(port)d"
-msgstr ""
-"Wiederherstellung der Verbindung zu AMQP-Server auf %(hostname)s:%(port)d"
-
-#: neutron/openstack/common/rpc/impl_kombu.py:520
-#, python-format
-msgid "Connected to AMQP server on %(hostname)s:%(port)d"
-msgstr "Verbunden mit AMQP-Server auf %(hostname)s:%(port)d"
-
-#: neutron/openstack/common/rpc/impl_qpid.py:523
-#, python-format
-msgid "Connected to AMQP server on %s"
-msgstr "Verbunden mit AMQP-Server auf %s"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:371
-msgid "Registering reactor"
-msgstr "Registrieren von Reaktor"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:383
-msgid "In reactor registered"
-msgstr "Eingangsreaktor registriert"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:388
-msgid "Consuming socket"
-msgstr "Socketverwendung"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:438
-#, python-format
-msgid "Creating proxy for topic: %s"
-msgstr "Erstellen von Proxy für Topic: %s"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:591
-msgid "Skipping topic registration. Already registered."
-msgstr "Überspringen von Topicregistrierung. Bereits registriert."
-
-#: neutron/openstack/common/rpc/matchmaker.py:216
-#, python-format
-msgid "Matchmaker unregistered: %(key)s, %(host)s"
-msgstr "MatchMaker nicht registriert: %(key)s, %(host)s"

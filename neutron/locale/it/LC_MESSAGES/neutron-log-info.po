@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-06-16 06:08+0000\n"
-"PO-Revision-Date: 2014-05-29 07:49+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2014-07-02 06:08+0000\n"
+"PO-Revision-Date: 2014-06-30 20:07+0000\n"
+"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Italian (http://www.transifex.com/projects/p/neutron/language/"
 "it/)\n"
 "Language: it\n"
@@ -23,11 +23,12 @@ msgstr ""
 #, python-format
 msgid "Skipping periodic task %(task)s because its interval is negative"
 msgstr ""
+"Abbadono dell'attività periodica %(task)s perché l'intervalo è negativo"
 
 #: neutron/openstack/common/periodic_task.py:130
 #, python-format
 msgid "Skipping periodic task %(task)s because it is disabled"
-msgstr ""
+msgstr "Abbadono dell'attività periodica %(task)s perché è disabilitata"
 
 #: neutron/openstack/common/service.py:176
 #, python-format
@@ -80,49 +81,3 @@ msgstr ""
 #, python-format
 msgid "Waiting on %d children to exit"
 msgstr "In attesa %d degli elementi secondari per uscire"
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:379
-#, python-format
-msgid "Deleting duplicated row with id: %(id)s from table: %(table)s"
-msgstr ""
-
-#: neutron/openstack/common/rpc/impl_kombu.py:498
-#, python-format
-msgid "Reconnecting to AMQP server on %(hostname)s:%(port)d"
-msgstr "Riconnessione al server AMQP su %(hostname)s:%(port)d"
-
-#: neutron/openstack/common/rpc/impl_kombu.py:520
-#, python-format
-msgid "Connected to AMQP server on %(hostname)s:%(port)d"
-msgstr "Connesso al server AMQP su %(hostname)s:%(port)d"
-
-#: neutron/openstack/common/rpc/impl_qpid.py:523
-#, python-format
-msgid "Connected to AMQP server on %s"
-msgstr "Connesso al serve AMQP su %s"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:371
-msgid "Registering reactor"
-msgstr "Registrazione del reattore"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:383
-msgid "In reactor registered"
-msgstr "Reactor interno registrato"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:388
-msgid "Consuming socket"
-msgstr "Utilizzo socket"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:438
-#, python-format
-msgid "Creating proxy for topic: %s"
-msgstr "Creazione del proxy per il topic: %s"
-
-#: neutron/openstack/common/rpc/impl_zmq.py:591
-msgid "Skipping topic registration. Already registered."
-msgstr "La registrazione dell'argomento viene ignorata. È già registrata."
-
-#: neutron/openstack/common/rpc/matchmaker.py:216
-#, python-format
-msgid "Matchmaker unregistered: %(key)s, %(host)s"
-msgstr ""
