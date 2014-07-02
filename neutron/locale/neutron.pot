@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2014.2.dev208.gfe57b96\n"
+"Project-Id-Version: neutron 2014.2.dev234.g1ed9e7a\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-06-30 06:06+0000\n"
+"POT-Creation-Date: 2014-07-02 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -592,7 +592,7 @@ msgstr ""
 msgid "Error importing interface driver '%s'"
 msgstr ""
 
-#: neutron/agent/l3_agent.py:238 neutron/agent/linux/dhcp.py:729
+#: neutron/agent/l3_agent.py:238 neutron/agent/linux/dhcp.py:730
 #: neutron/services/metering/drivers/iptables/iptables_driver.py:89
 msgid "An interface driver must be specified"
 msgstr ""
@@ -1035,64 +1035,64 @@ msgid ""
 " or above!"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:424
+#: neutron/agent/linux/dhcp.py:425
 #, python-format
 msgid "Killing dhcpmasq for network since all subnets have turned off DHCP: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:436
+#: neutron/agent/linux/dhcp.py:437
 #, python-format
 msgid "Pid %d is stale, relaunching dnsmasq"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:437
+#: neutron/agent/linux/dhcp.py:438
 #, python-format
 msgid "Reloading allocations for network: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:487
+#: neutron/agent/linux/dhcp.py:488
 #, python-format
 msgid "Building host file: %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:497
+#: neutron/agent/linux/dhcp.py:498
 #, python-format
 msgid "Adding %(mac)s : %(name)s : %(ip)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:513
+#: neutron/agent/linux/dhcp.py:514
 #, python-format
 msgid "Done building host file %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:736
+#: neutron/agent/linux/dhcp.py:737
 #, python-format
 msgid "Error importing interface driver '%(driver)s': %(inner)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:776
+#: neutron/agent/linux/dhcp.py:777
 #, python-format
 msgid "Setting gateway for dhcp netns on net %(n)s to %(ip)s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:786
+#: neutron/agent/linux/dhcp.py:787
 #, python-format
 msgid "Removing gateway for dhcp netns on net %s"
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:830
+#: neutron/agent/linux/dhcp.py:831
 #, python-format
 msgid ""
 "DHCP port %(device_id)s on network %(network_id)s does not yet exist. "
 "Checking for a reserved port."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:844
+#: neutron/agent/linux/dhcp.py:845
 #, python-format
 msgid "DHCP port %(device_id)s on network %(network_id)s does not yet exist."
 msgstr ""
 
-#: neutron/agent/linux/dhcp.py:879 neutron/debug/debug_agent.py:67
+#: neutron/agent/linux/dhcp.py:880 neutron/debug/debug_agent.py:67
 #, python-format
 msgid "Reusing existing device: %s."
 msgstr ""
@@ -2146,21 +2146,21 @@ msgid ""
 "the agent."
 msgstr ""
 
-#: neutron/common/config.py:151
+#: neutron/common/config.py:152
 #, python-format
 msgid "Base MAC: %s"
 msgstr ""
 
-#: neutron/common/config.py:162
+#: neutron/common/config.py:163
 msgid "Logging enabled!"
 msgstr ""
 
-#: neutron/common/config.py:178
+#: neutron/common/config.py:179
 #, python-format
 msgid "Config paste file: %s"
 msgstr ""
 
-#: neutron/common/config.py:183
+#: neutron/common/config.py:184
 #, python-format
 msgid "Unable to load %(app_name)s from configuration file %(config_path)s."
 msgstr ""
@@ -2566,12 +2566,12 @@ msgstr ""
 msgid "Number of DHCP agents scheduled to host a network."
 msgstr ""
 
-#: neutron/db/api.py:77
+#: neutron/db/api.py:72
 #, python-format
 msgid "Database registration exception: %s"
 msgstr ""
 
-#: neutron/db/api.py:89
+#: neutron/db/api.py:84
 msgid "Database exception"
 msgstr ""
 
@@ -2891,8 +2891,8 @@ msgid ""
 msgstr ""
 
 #: neutron/db/l3_db.py:417 neutron/db/l3_db.py:543
-#: neutron/plugins/bigswitch/plugin.py:1009
-#: neutron/plugins/bigswitch/plugin.py:1018
+#: neutron/plugins/bigswitch/plugin.py:1011
+#: neutron/plugins/bigswitch/plugin.py:1020
 msgid "Either subnet_id or port_id must be specified"
 msgstr ""
 
@@ -4191,57 +4191,6 @@ msgid ""
 "%(remove_in)s. It will not be superseded."
 msgstr ""
 
-#: neutron/openstack/common/db/exception.py:44
-msgid "Invalid Parameter: Unicode is not supported by the current database."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:58
-msgid "Sort key supplied was not valid."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:119
-msgid "Unknown sort direction, must be 'desc' or 'asc'"
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:162
-#, python-format
-msgid ""
-"There is no `deleted` column in `%s` table. Project doesn't use soft-"
-"deleted feature."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:174
-#, python-format
-msgid "Unrecognized read_deleted value '%s'"
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:181
-#, python-format
-msgid "There is no `project_id` column in `%s` table."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:243
-msgid "model should be a subclass of ModelBase"
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:286
-#, python-format
-msgid ""
-"Please specify column %s in col_name_col_instance param. It is required "
-"because column has unsupported type by sqlite)."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:292
-#, python-format
-msgid ""
-"col_name_col_instance param has wrong type of column instance for column "
-"%s It should be instance of sqlalchemy.Column."
-msgstr ""
-
-#: neutron/openstack/common/db/sqlalchemy/utils.py:400
-msgid "Unsupported id columns type"
-msgstr ""
-
 #: neutron/openstack/common/middleware/catch_errors.py:40
 #, python-format
 msgid "An error occurred during processing the request: %s"
@@ -4470,44 +4419,44 @@ msgstr ""
 msgid "NeutronRestProxyV2: delete_router() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:973
+#: neutron/plugins/bigswitch/plugin.py:974
 msgid "NeutronRestProxyV2: add_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1001
+#: neutron/plugins/bigswitch/plugin.py:1003
 msgid "NeutronRestProxyV2: remove_router_interface() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1035
+#: neutron/plugins/bigswitch/plugin.py:1037
 msgid "NeutronRestProxyV2: create_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1052
+#: neutron/plugins/bigswitch/plugin.py:1054
 #, python-format
 msgid "NeutronRestProxyV2: Unable to create remote floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1059
+#: neutron/plugins/bigswitch/plugin.py:1061
 msgid "NeutronRestProxyV2: update_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1076
+#: neutron/plugins/bigswitch/plugin.py:1078
 msgid "NeutronRestProxyV2: delete_floatingip() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1091
+#: neutron/plugins/bigswitch/plugin.py:1094
 msgid "NeutronRestProxyV2: diassociate_floatingips() called"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1122
+#: neutron/plugins/bigswitch/plugin.py:1125
 msgid "NeutronRestProxyV2: too many external networks"
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1137
+#: neutron/plugins/bigswitch/plugin.py:1140
 msgid "Adding host route: "
 msgstr ""
 
-#: neutron/plugins/bigswitch/plugin.py:1138
+#: neutron/plugins/bigswitch/plugin.py:1141
 #, python-format
 msgid "Destination:%(dst)s nexthop:%(next)s"
 msgstr ""
@@ -4521,197 +4470,197 @@ msgstr ""
 msgid "Updating router rules to %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:77
+#: neutron/plugins/bigswitch/servermanager.py:78
 #, python-format
 msgid "Error in REST call to remote network controller: %(reason)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:116
+#: neutron/plugins/bigswitch/servermanager.py:117
 msgid "Couldn't retrieve capabilities. Newer API calls won't be supported."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:118
+#: neutron/plugins/bigswitch/servermanager.py:119
 #, python-format
 msgid "The following capabilities were received for %(server)s: %(cap)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:147
+#: neutron/plugins/bigswitch/servermanager.py:148
 #, python-format
 msgid "ServerProxy: server=%(server)s, port=%(port)d, ssl=%(ssl)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:150
+#: neutron/plugins/bigswitch/servermanager.py:151
 #, python-format
 msgid ""
 "ServerProxy: resource=%(resource)s, data=%(data)r, headers=%(headers)r, "
 "action=%(action)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:171
+#: neutron/plugins/bigswitch/servermanager.py:172
 msgid "ServerProxy: Could not establish HTTPS connection"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:179
+#: neutron/plugins/bigswitch/servermanager.py:180
 msgid "ServerProxy: Could not establish HTTP connection"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:212
+#: neutron/plugins/bigswitch/servermanager.py:213
 #, python-format
 msgid "ServerProxy: %(action)s failure, %(e)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:215
+#: neutron/plugins/bigswitch/servermanager.py:216
 #, python-format
 msgid ""
 "ServerProxy: status=%(status)d, reason=%(reason)r, ret=%(ret)s, "
 "data=%(data)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:227
+#: neutron/plugins/bigswitch/servermanager.py:228
 msgid "ServerPool: initializing"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:250
+#: neutron/plugins/bigswitch/servermanager.py:251
 msgid "Servers not defined. Aborting server manager."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:257
+#: neutron/plugins/bigswitch/servermanager.py:258
 #, python-format
 msgid "Servers must be defined as <ip>:<port>. Configuration was %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:265
+#: neutron/plugins/bigswitch/servermanager.py:266
 msgid "ServerPool: initialization done"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:311
+#: neutron/plugins/bigswitch/servermanager.py:316
 #, python-format
 msgid "ssl_cert_directory [%s] does not exist. Create it or disable ssl."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:328
+#: neutron/plugins/bigswitch/servermanager.py:333
 #, python-format
 msgid "No certificates were found to verify controller %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:370
+#: neutron/plugins/bigswitch/servermanager.py:375
 #, python-format
 msgid ""
 "Could not retrieve initial certificate from controller %(server)s. Error "
 "details: %(error)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:375
+#: neutron/plugins/bigswitch/servermanager.py:380
 #, python-format
 msgid "Storing to certificate for host %(server)s at %(path)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:417
+#: neutron/plugins/bigswitch/servermanager.py:422
 msgid "Server requires synchronization, but no topology function was defined."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:432
+#: neutron/plugins/bigswitch/servermanager.py:437
 #, python-format
 msgid ""
 "ServerProxy: %(action)s failure for servers: %(server)r Response: "
 "%(response)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:438
+#: neutron/plugins/bigswitch/servermanager.py:443
 #, python-format
 msgid ""
 "ServerProxy: Error details: status=%(status)d, reason=%(reason)r, "
 "ret=%(ret)s, data=%(data)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:445
+#: neutron/plugins/bigswitch/servermanager.py:450
 #, python-format
 msgid "ServerProxy: %(action)s failure for all servers: %(server)r"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:468
+#: neutron/plugins/bigswitch/servermanager.py:473
 #, python-format
 msgid ""
 "NeutronRestProxyV2: Received and ignored error code %(code)s on "
 "%(action)s action to resource %(resource)s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:478
+#: neutron/plugins/bigswitch/servermanager.py:483
 #, python-format
 msgid "Unable to create remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:484
+#: neutron/plugins/bigswitch/servermanager.py:489
 #, python-format
 msgid "Unable to update remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:489
+#: neutron/plugins/bigswitch/servermanager.py:494
 #, python-format
 msgid "Unable to delete remote router: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:495
+#: neutron/plugins/bigswitch/servermanager.py:500
 #, python-format
 msgid "Unable to add router interface: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:500
+#: neutron/plugins/bigswitch/servermanager.py:505
 #, python-format
 msgid "Unable to delete remote intf: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:506
+#: neutron/plugins/bigswitch/servermanager.py:511
 #, python-format
 msgid "Unable to create remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:512
 #: neutron/plugins/bigswitch/servermanager.py:517
+#: neutron/plugins/bigswitch/servermanager.py:522
 #, python-format
 msgid "Unable to update remote network: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:526
+#: neutron/plugins/bigswitch/servermanager.py:531
 #, python-format
 msgid "No device MAC attached to port %s. Skipping notification to controller."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:531
+#: neutron/plugins/bigswitch/servermanager.py:536
 #, python-format
 msgid "Unable to create remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:536
+#: neutron/plugins/bigswitch/servermanager.py:541
 #, python-format
 msgid "Unable to delete remote port: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:546
+#: neutron/plugins/bigswitch/servermanager.py:551
 #, python-format
 msgid "Unable to create floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:551
+#: neutron/plugins/bigswitch/servermanager.py:556
 #, python-format
 msgid "Unable to update floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:556
+#: neutron/plugins/bigswitch/servermanager.py:561
 #, python-format
 msgid "Unable to delete floating IP: %s"
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:561
+#: neutron/plugins/bigswitch/servermanager.py:566
 msgid "Backend server(s) do not support automated consitency checks."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:565
+#: neutron/plugins/bigswitch/servermanager.py:570
 #, python-format
 msgid "Consistency watchdog disabled by polling interval setting of %s."
 msgstr ""
 
-#: neutron/plugins/bigswitch/servermanager.py:577
+#: neutron/plugins/bigswitch/servermanager.py:582
 msgid "Encountered an error checking controller health."
 msgstr ""
 
@@ -4745,9 +4694,9 @@ msgstr ""
 
 #: neutron/plugins/bigswitch/agent/restproxy_agent.py:161
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:226
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:993
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1011
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1404
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1457
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1458
 #: neutron/plugins/ryu/agent/ryu_neutron_agent.py:278
 #, python-format
 msgid "Loop iteration exceeded interval (%(polling_interval)s vs. %(elapsed)s)!"
@@ -6457,10 +6406,10 @@ msgid "Removing port failed for device %(device)s: %(e)s"
 msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:436
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:962
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:994
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:382
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1306
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1354
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1355
 msgid "Agent out of sync with plugin!"
 msgstr ""
 
@@ -6481,9 +6430,9 @@ msgstr ""
 
 #: neutron/plugins/hyperv/agent/hyperv_neutron_agent.py:472
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:269
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1017
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1035
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:159
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1540
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1541
 msgid "Agent initialized successfully, now running... "
 msgstr ""
 
@@ -7033,7 +6982,7 @@ msgid "Controller IPs: %s"
 msgstr ""
 
 #: neutron/plugins/ibm/agent/sdnve_neutron_agent.py:263
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1527
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1528
 #, python-format
 msgid "%s Agent terminated!"
 msgstr ""
@@ -7401,7 +7350,7 @@ msgstr ""
 
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:879
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1114
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1131
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1132
 #, python-format
 msgid "Port %(device)s updated. Details: %(details)s"
 msgstr ""
@@ -7411,8 +7360,8 @@ msgstr ""
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:368
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1134
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1196
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1151
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1215
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1152
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1216
 #, python-format
 msgid "Device %s not defined on plugin"
 msgstr ""
@@ -7420,8 +7369,8 @@ msgstr ""
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:919
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1164
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1181
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1183
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1200
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1184
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1201
 #, python-format
 msgid "Attachment %s removed"
 msgstr ""
@@ -7429,8 +7378,8 @@ msgstr ""
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:927
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1171
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1188
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1190
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1207
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1191
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1208
 #, python-format
 msgid "port_removed failed for %(device)s: %(e)s"
 msgstr ""
@@ -7438,32 +7387,32 @@ msgstr ""
 #: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:931
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:366
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1193
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1212
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1213
 #, python-format
 msgid "Port %s updated."
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:957
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:984
 msgid "LinuxBridge Agent RPC Daemon Started!"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:975
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:998
 #, python-format
 msgid "Agent loop found changes! %s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:981
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1002
 #, python-format
 msgid "Error in agent loop. Devices info: %s"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1007
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1025
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:419
 #, python-format
 msgid "Parsing physical_interface_mappings failed: %s. Agent terminated!"
 msgstr ""
 
-#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1010
+#: neutron/plugins/linuxbridge/agent/linuxbridge_neutron_agent.py:1028
 #: neutron/plugins/mlnx/agent/eswitch_neutron_agent.py:422
 #, python-format
 msgid "Interface mappings: %s"
@@ -8683,40 +8632,44 @@ msgstr ""
 msgid "Arbitrary flat physical_network names allowed"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:73
+#: neutron/plugins/ml2/drivers/type_flat.py:71
+msgid "physical network name is empty"
+msgstr ""
+
+#: neutron/plugins/ml2/drivers/type_flat.py:74
 #, python-format
 msgid "Allowable flat physical_network names: %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:80
+#: neutron/plugins/ml2/drivers/type_flat.py:81
 msgid "ML2 FlatTypeDriver initialization complete"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:85
+#: neutron/plugins/ml2/drivers/type_flat.py:86
 msgid "physical_network required for flat provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:88
+#: neutron/plugins/ml2/drivers/type_flat.py:89
 #, python-format
 msgid "physical_network '%s' unknown for flat provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:95
+#: neutron/plugins/ml2/drivers/type_flat.py:96
 #, python-format
 msgid "%s prohibited for flat provider network"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:109
+#: neutron/plugins/ml2/drivers/type_flat.py:110
 #, python-format
 msgid "Reserving flat network on physical network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:127
+#: neutron/plugins/ml2/drivers/type_flat.py:128
 #, python-format
 msgid "Releasing flat network on physical network %s"
 msgstr ""
 
-#: neutron/plugins/ml2/drivers/type_flat.py:130
+#: neutron/plugins/ml2/drivers/type_flat.py:131
 #, python-format
 msgid "No flat network found on physical network %s"
 msgstr ""
@@ -10507,7 +10460,7 @@ msgid "Agent failed to create agent config map"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:273
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1285
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1286
 #, python-format
 msgid "Unable to create tunnel port. Invalid remote IP: %s"
 msgstr ""
@@ -10629,13 +10582,13 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:911
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:902
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:903
 #, python-format
 msgid "Mapping physical network %(physical_network)s to bridge %(bridge)s"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:917
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:908
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:909
 #, python-format
 msgid ""
 "Bridge %(bridge)s for physical network %(physical_network)s does not "
@@ -10643,37 +10596,37 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:988
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1012
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1013
 #, python-format
 msgid "Port '%(port_name)s' has lost its vlan tag '%(vlan_tag)d'!"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1021
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1041
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1042
 #, python-format
 msgid "VIF port: %s has no ofport configured, and might not be able to transmit"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1029
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1051
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1052
 #, python-format
 msgid "No VIF port for port %s defined on agent."
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1042
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1064
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1065
 #: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:686
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:820
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:824
 msgid "ofport should have a value that can be interpreted as an integer"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1045
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1067
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1068
 #: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:669
 #: neutron/tests/unit/ofagent/test_ofa_neutron_agent.py:689
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:803
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:823
-#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:840
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:807
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:827
+#: neutron/tests/unit/openvswitch/test_ovs_neutron_agent.py:844
 #, python-format
 msgid "Failed to set-up %(type)s tunnel port to %(ip)s"
 msgstr ""
@@ -10684,7 +10637,7 @@ msgid "Processing port %s"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1099
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1126
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1127
 #, python-format
 msgid ""
 "Port %s was not found on the integration bridge and will therefore not be"
@@ -10698,25 +10651,25 @@ msgid "Unable to get port details for %(device)s: %(e)s"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1125
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1142
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1143
 #, python-format
 msgid "Setting status for %s to UP"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1129
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1146
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1147
 #, python-format
 msgid "Setting status for %s to DOWN"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1132
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1149
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1150
 #, python-format
 msgid "Configuration for device %s completed."
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1142
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1170
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1171
 #, python-format
 msgid "Ancillary Port %s added"
 msgstr ""
@@ -10736,7 +10689,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1238
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1263
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1264
 #, python-format
 msgid ""
 "process_ancillary_network_ports - iteration: %(iter_num)d - "
@@ -10744,7 +10697,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1247
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1272
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1273
 #, python-format
 msgid ""
 "process_ancillary_network_ports - iteration: %(iter_num)d - "
@@ -10752,7 +10705,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1274
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1314
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1315
 #, python-format
 msgid "Unable to sync tunnel IP %(local_ip)s: %(e)s"
 msgstr ""
@@ -10763,12 +10716,12 @@ msgid "Agent ovsdb_monitor_loop - iteration:%d started"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1313
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1368
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1369
 msgid "Agent tunnel out of sync with plugin!"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1317
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1372
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1373
 msgid "Error while synchronizing tunnels"
 msgstr ""
 
@@ -10787,7 +10740,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1344
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1399
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1400
 #, python-format
 msgid "Starting to process devices in:%s"
 msgstr ""
@@ -10814,7 +10767,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1388
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1441
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1442
 msgid "Error while processing VIF ports"
 msgstr ""
 
@@ -10826,7 +10779,7 @@ msgid ""
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1431
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1485
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1486
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr ""
@@ -10837,7 +10790,7 @@ msgid "Invalid tunnel type specificed: %s"
 msgstr ""
 
 #: neutron/plugins/ofagent/agent/ofa_neutron_agent.py:1457
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1512
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1513
 msgid "Tunneling cannot be enabled without a valid local_ip."
 msgstr ""
 
@@ -11214,68 +11167,68 @@ msgid ""
 "limitation. It was shortened to %(new_name)s to fit."
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1242
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1243
 #, python-format
 msgid ""
 "process_network_ports - iteration:%(iter_num)d "
 "-treat_devices_added_or_updated completed in %(elapsed).3f"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1250
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1251
 #, python-format
 msgid ""
 "process_network_ports - iteration:%(iter_num)d -treat_devices_removed "
 "completed in %(elapsed).3f"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1351
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1352
 #, python-format
 msgid "Agent rpc_loop - iteration:%d started"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1376
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1377
 #, python-format
 msgid ""
 "Agent rpc_loop - iteration:%(iter_num)d - starting polling. "
 "Elapsed:%(elapsed).3f"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1389
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1390
 #, python-format
 msgid ""
 "Agent rpc_loop - iteration:%(iter_num)d - port information retrieved. "
 "Elapsed:%(elapsed).3f"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1404
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1405
 #, python-format
 msgid ""
 "Agent rpc_loop - iteration:%(iter_num)d -ports processed. "
 "Elapsed:%(elapsed).3f"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1418
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1419
 #, python-format
 msgid ""
 "Agent rpc_loop - iteration:%(iter_num)d -ancillary port info retrieved. "
 "Elapsed:%(elapsed).3f"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1427
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1428
 #, python-format
 msgid ""
 "Agent rpc_loop - iteration:%(iter_num)d - ancillary ports processed. "
 "Elapsed:%(elapsed).3f"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1448
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1449
 #, python-format
 msgid ""
 "Agent rpc_loop - iteration:%(iter_num)d completed. Processed ports "
 "statistics: %(port_stats)s. Elapsed:%(elapsed).3f"
 msgstr ""
 
-#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1509
+#: neutron/plugins/openvswitch/agent/ovs_neutron_agent.py:1510
 #, python-format
 msgid "Invalid tunnel type specified: %s"
 msgstr ""
@@ -13666,12 +13619,6 @@ msgstr ""
 msgid "Start deploying %(edge_id)s for router %(name)s"
 msgstr ""
 
-#: neutron/plugins/vmware/plugins/service.py:1733
-#: neutron/plugins/vmware/plugins/service.py:1770
-#, python-format
-msgid "Failed to deploy Edge for router %s"
-msgstr ""
-
 #: neutron/plugins/vmware/plugins/service.py:1751
 #, python-format
 msgid "Router %s not found"
@@ -13680,6 +13627,11 @@ msgstr ""
 #: neutron/plugins/vmware/plugins/service.py:1754
 #, python-format
 msgid "Successfully deployed %(edge_id)s for router %(name)s"
+msgstr ""
+
+#: neutron/plugins/vmware/plugins/service.py:1770
+#, python-format
+msgid "Failed to deploy Edge for router %s"
 msgstr ""
 
 #: neutron/plugins/vmware/plugins/service.py:1786
