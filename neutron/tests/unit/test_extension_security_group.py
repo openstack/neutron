@@ -1429,7 +1429,7 @@ class TestConvertIPPrefixToCIDR(base.BaseTestCase):
 
 class TestConvertProtocol(base.BaseTestCase):
     def test_convert_numeric_protocol(self):
-        assert(isinstance(ext_sg.convert_protocol('2'), str))
+        self.assertIsInstance(ext_sg.convert_protocol('2'), str)
 
     def test_convert_bad_protocol(self):
         for val in ['bad', '256', '-1']:
