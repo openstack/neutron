@@ -46,8 +46,12 @@ class BaseSudoTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(BaseSudoTestCase, self).setUp()
-        self.root_helper = os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD)
+        env = os.environ
+        self.sudo_enabled = env.get('OS_SUDO_TESTING') in base.TRUE_STRING
+        self.root_helper = env.get('OS_ROOTWRAP_CMD', SUDO_CMD)
+        self.fail_on_missing_deps = (
+            env.get('OS_FAIL_ON_MISSING_DEPS') in base.TRUE_STRING)
 
     def check_sudo_enabled(self):
-        if os.environ.get('OS_SUDO_TESTING') not in base.TRUE_STRING:
+        if not self.sudo_enabled:
             self.skipTest('testing with sudo is not enabled')

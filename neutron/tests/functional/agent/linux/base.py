@@ -29,7 +29,7 @@ class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
         try:
             utils.execute(cmd, root_helper=root_helper)
         except RuntimeError as e:
-            if error_text in str(e):
+            if error_text in str(e) and not self.fail_on_missing_deps:
                 self.skipTest(skip_msg)
             raise
 

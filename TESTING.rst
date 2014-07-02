@@ -4,16 +4,16 @@ Testing Neutron
 Overview
 --------
 
-The unit tests are meant to cover as much code as possible and should
-be executed without the service running. They are designed to test
-the various pieces of the neutron tree to make sure any new changes
-don't break existing functionality.
+The unit tests (neutron/test/unit/) are meant to cover as much code as
+possible and should be executed without the service running. They are
+designed to test the various pieces of the neutron tree to make sure
+any new changes don't break existing functionality.
 
-The functional tests are intended to validate actual system
-interaction.  Mocks should be used sparingly, if at all.  Care
-should be taken to ensure that existing system resources are not
-modified and that resources created in tests are properly cleaned
-up.
+The functional tests (neutron/tests/functional/) are intended to
+validate actual system interaction.  Mocks should be used sparingly,
+if at all.  Care should be taken to ensure that existing system
+resources are not modified and that resources created in tests are
+properly cleaned up.
 
 Development process
 -------------------
@@ -99,6 +99,16 @@ Running unit tests is as easy as executing this in the root directory of the
 Neutron source code::
 
     tox
+
+To run functional tests that do not require sudo privileges or
+specific-system dependencies::
+
+    tox -e functional
+
+To run all the functional tests in an environment that has been configured
+by devstack to support sudo and system-specific dependencies::
+
+    tox -e dsvm-functional
 
 For more information on the standard Tox-based test infrastructure used by
 OpenStack and how to do some common test/debugging procedures with Testr,
