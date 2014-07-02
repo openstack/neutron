@@ -12,35 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
 import random
 
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
-from neutron.tests import base
+from neutron.tests.functional import base as functional_base
 
 
 BR_PREFIX = 'test-br'
 
 
-class BaseLinuxTestCase(base.BaseTestCase):
-    def setUp(self, root_helper='sudo'):
-        super(BaseLinuxTestCase, self).setUp()
+class BaseLinuxTestCase(functional_base.BaseSudoTestCase):
 
-        self.root_helper = root_helper
-
-    def check_command(self, cmd, error_text, skip_msg):
+    def check_command(self, cmd, error_text, skip_msg, root_helper=None):
         try:
-            utils.execute(cmd)
+            utils.execute(cmd, root_helper=root_helper)
         except RuntimeError as e:
             if error_text in str(e):
                 self.skipTest(skip_msg)
             raise
-
-    def check_sudo_enabled(self):
-        if os.environ.get('OS_SUDO_TESTING') not in base.TRUE_STRING:
-            self.skipTest('testing with sudo is not enabled')
 
     def get_rand_name(self, max_length, prefix='test'):
         name = prefix + str(random.randint(1, 0x7fffffff))
@@ -64,8 +55,8 @@ class BaseLinuxTestCase(base.BaseTestCase):
 
 
 class BaseOVSLinuxTestCase(BaseLinuxTestCase):
-    def setUp(self, root_helper='sudo'):
-        super(BaseOVSLinuxTestCase, self).setUp(root_helper)
+    def setUp(self):
+        super(BaseOVSLinuxTestCase, self).setUp()
         self.ovs = ovs_lib.BaseOVS(self.root_helper)
 
     def create_ovs_bridge(self, br_prefix=BR_PREFIX):

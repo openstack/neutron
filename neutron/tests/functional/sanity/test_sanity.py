@@ -13,10 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
 from neutron.cmd.sanity import checks
 from neutron.tests import base
+from neutron.tests.functional import base as functional_base
 
 
 class SanityTestCase(base.BaseTestCase):
@@ -34,7 +33,7 @@ class SanityTestCase(base.BaseTestCase):
         checks.nova_notify_supported()
 
 
-class SanityTestCaseRoot(base.BaseTestCase):
+class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
     """Sanity checks that require root access.
 
     Tests that just call checks.some_function() are to ensure that
@@ -43,13 +42,7 @@ class SanityTestCaseRoot(base.BaseTestCase):
     """
     def setUp(self):
         super(SanityTestCaseRoot, self).setUp()
-
-        self.root_helper = 'sudo'
         self.check_sudo_enabled()
-
-    def check_sudo_enabled(self):
-        if os.environ.get('OS_SUDO_TESTING') not in base.TRUE_STRING:
-            self.skipTest('testing with sudo is not enabled')
 
     def test_ovs_vxlan_support_runs(self):
         checks.vxlan_supported(self.root_helper)
