@@ -1730,10 +1730,10 @@ class VcnsCallbacks(object):
             vcns_db.update_vcns_router_binding(
                 context.session, neutron_router_id, edge_id=edge_id)
         else:
-                LOG.debug(_("Failed to deploy Edge for router %s"), name)
-                vcns_db.update_vcns_router_binding(
-                    context.session, neutron_router_id,
-                    status=service_constants.ERROR)
+            LOG.debug("Failed to deploy Edge for router %s", name)
+            vcns_db.update_vcns_router_binding(
+                context.session, neutron_router_id,
+                status=service_constants.ERROR)
 
     def edge_deploy_result(self, task):
         """callback when deployment task finished."""
