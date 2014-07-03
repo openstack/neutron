@@ -236,7 +236,7 @@ class SecurityGroupAgentRpcMixin(object):
         security group membership or rules.
 
         :param new_devices: set containing identifiers for new devices
-        :param updated_devices: set containining identifiers for
+        :param updated_devices: set containing identifiers for
         updated devices
         """
         if new_devices:
