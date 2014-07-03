@@ -31,6 +31,10 @@ from neutron.services import service_base
 
 
 # Loadbalancer Exceptions
+class RequiredAttributeNotSpecified(qexception.BadRequest):
+    message = _("Required attribute %(attr_name)s not specified.")
+
+
 class DelayOrTimeoutInvalid(qexception.BadRequest):
     message = _("Delay must be greater than or equal to timeout")
 
@@ -179,7 +183,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True}
     },
-    'nodepools': {
+    'pools': {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True,
@@ -203,6 +207,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                      'is_visible': True},
         'lb_algorithm': {'allow_post': True, 'allow_put': True,
                          'validate': {'type:string': None},
+                         #TODO(remove when old API is removed because this is
+                         #a required attribute)
+                         'default': attr.ATTR_NOT_SPECIFIED,
                          'is_visible': True},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
@@ -263,8 +270,8 @@ RESOURCE_ATTRIBUTE_MAP = {
 
 SUB_RESOURCE_ATTRIBUTE_MAP = {
     'members': {
-        'parent': {'collection_name': 'nodepools',
-                   'member_name': 'nodepool'},
+        'parent': {'collection_name': 'pools',
+                   'member_name': 'pool'},
         'parameters': {
             'id': {'allow_post': False, 'allow_put': False,
                    'validate': {'type:uuid': None},
@@ -457,23 +464,23 @@ class LoadBalancerPluginBaseV2(service_base.ServicePluginBase):
     # Pool methods.
 
     @abc.abstractmethod
-    def get_nodepools(self, context, filters=None, fields=None):
+    def get_pools(self, context, filters=None, fields=None):
         pass
 
     @abc.abstractmethod
-    def get_nodepool(self, context, id, fields=None):
+    def get_pool(self, context, id, fields=None):
         pass
 
     @abc.abstractmethod
-    def create_nodepool(self, context, nodepool):
+    def create_pool(self, context, pool):
         pass
 
     @abc.abstractmethod
-    def update_nodepool(self, context, id, nodepool):
+    def update_pool(self, context, id, pool):
         pass
 
     @abc.abstractmethod
-    def delete_nodepool(self, context, id):
+    def delete_pool(self, context, id):
         pass
 
     @abc.abstractmethod
@@ -482,28 +489,28 @@ class LoadBalancerPluginBaseV2(service_base.ServicePluginBase):
 
     # Pool Member methods.
     @abc.abstractmethod
-    def get_nodepool_members(self, context, nodepool_id,
-                             filters=None,
-                             fields=None):
+    def get_pool_members(self, context, pool_id,
+                         filters=None,
+                         fields=None):
         pass
 
     @abc.abstractmethod
-    def get_nodepool_member(self, context, id, nodepool_id,
-                            fields=None):
+    def get_pool_member(self, context, id, pool_id,
+                        fields=None):
         pass
 
     @abc.abstractmethod
-    def create_nodepool_member(self, context, member,
-                               nodepool_id):
+    def create_pool_member(self, context, member,
+                           pool_id):
         pass
 
     @abc.abstractmethod
-    def update_nodepool_member(self, context, member, id,
-                               nodepool_id):
+    def update_pool_member(self, context, member, id,
+                           pool_id):
         pass
 
     @abc.abstractmethod
-    def delete_nodepool_member(self, context, id, nodepool_id):
+    def delete_pool_member(self, context, id, pool_id):
         pass
 
     # Health monitor methods.

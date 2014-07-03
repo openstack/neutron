@@ -176,6 +176,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'is_visible': True, 'default': ''},
         'subnet_id': {'allow_post': True, 'allow_put': False,
                       'validate': {'type:uuid': None},
+                      #Only doing this because of new API
+                      #This should be validated in plugin that it is
+                      #a required attribute
+                      'default': attr.ATTR_NOT_SPECIFIED,
                       'is_visible': True},
         'protocol': {'allow_post': True, 'allow_put': False,
                      'validate': {'type:values': ['TCP', 'HTTP', 'HTTPS']},
@@ -185,6 +189,10 @@ RESOURCE_ATTRIBUTE_MAP = {
                      'is_visible': True, 'default': attr.ATTR_NOT_SPECIFIED},
         'lb_method': {'allow_post': True, 'allow_put': True,
                       'validate': {'type:string': None},
+                      #Only doing this because of new API
+                      #This should be validated in plugin that it is
+                      #a required attribute
+                      'default': attr.ATTR_NOT_SPECIFIED,
                       'is_visible': True},
         'members': {'allow_post': False, 'allow_put': False,
                     'is_visible': True},
