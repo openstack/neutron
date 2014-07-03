@@ -116,24 +116,25 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def release_segment(self, session, segment):
         vxlan_vni = segment[api.SEGMENTATION_ID]
+
+        inside = any(lo <= vxlan_vni <= hi for lo, hi in self.vxlan_vni_ranges)
+
         with session.begin(subtransactions=True):
-            try:
-                alloc = (session.query(VxlanAllocation).
-                         filter_by(vxlan_vni=vxlan_vni).
-                         with_lockmode('update').
-                         one())
-                alloc.allocated = False
-                for low, high in self.vxlan_vni_ranges:
-                    if low <= vxlan_vni <= high:
-                        LOG.debug(_("Releasing vxlan tunnel %s to pool"),
-                                  vxlan_vni)
-                        break
-                else:
-                    session.delete(alloc)
-                    LOG.debug(_("Releasing vxlan tunnel %s outside pool"),
+            query = (session.query(VxlanAllocation).
+                     filter_by(vxlan_vni=vxlan_vni))
+            if inside:
+                count = query.update({"allocated": False})
+                if count:
+                    LOG.debug("Releasing vxlan tunnel %s to pool",
                               vxlan_vni)
-            except sa_exc.NoResultFound:
-                LOG.warning(_("vxlan_vni %s not found"), vxlan_vni)
+            else:
+                count = query.delete()
+                if count:
+                    LOG.debug("Releasing vxlan tunnel %s outside pool",
+                              vxlan_vni)
+
+        if not count:
+            LOG.warning(_("vxlan_vni %s not found"), vxlan_vni)
 
     def _sync_vxlan_allocations(self):
         """

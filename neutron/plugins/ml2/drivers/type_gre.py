@@ -108,24 +108,22 @@ class GreTypeDriver(type_tunnel.TunnelTypeDriver):
 
     def release_segment(self, session, segment):
         gre_id = segment[api.SEGMENTATION_ID]
+
+        inside = any(lo <= gre_id <= hi for lo, hi in self.gre_id_ranges)
+
         with session.begin(subtransactions=True):
-            try:
-                alloc = (session.query(GreAllocation).
-                         filter_by(gre_id=gre_id).
-                         with_lockmode('update').
-                         one())
-                alloc.allocated = False
-                for lo, hi in self.gre_id_ranges:
-                    if lo <= gre_id <= hi:
-                        LOG.debug(_("Releasing gre tunnel %s to pool"),
-                                  gre_id)
-                        break
-                else:
-                    session.delete(alloc)
-                    LOG.debug(_("Releasing gre tunnel %s outside pool"),
-                              gre_id)
-            except sa_exc.NoResultFound:
-                LOG.warning(_("gre_id %s not found"), gre_id)
+            query = session.query(GreAllocation).filter_by(gre_id=gre_id)
+            if inside:
+                count = query.update({"allocated": False})
+                if count:
+                    LOG.debug("Releasing gre tunnel %s to pool", gre_id)
+            else:
+                count = query.delete()
+                if count:
+                    LOG.debug("Releasing gre tunnel %s outside pool", gre_id)
+
+        if not count:
+            LOG.warning(_("gre_id %s not found"), gre_id)
 
     def _sync_gre_allocations(self):
         """Synchronize gre_allocations table with configured tunnel ranges."""
