@@ -169,7 +169,7 @@ class HealthMonitorV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
         return hm_dict
 
 
-class NodePool(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
+class PoolV2(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     """Represents a v2 neutron load balancer pool."""
 
     @declarative.declared_attr
@@ -293,7 +293,7 @@ class Listener(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     status = sa.Column(sa.String(16), nullable=False)
     default_pool = orm.relationship(
-        NodePool, backref=orm.backref("listener", uselist=False))
+        PoolV2, backref=orm.backref("listener", uselist=False))
     loadbalancer = orm.relationship(
         LoadBalancer, backref=orm.backref("listeners"))
 
@@ -343,7 +343,7 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
                     raise loadbalancerv2.LoadBalancerNotFound(lb_id=id)
                 if issubclass(model, Listener):
                     raise loadbalancerv2.ListenerNotFound(listener_id=id)
-                elif issubclass(model, NodePool):
+                elif issubclass(model, PoolV2):
                     raise loadbalancerv2.PoolNotFound(pool_id=id)
                 elif issubclass(model, MemberV2):
                     raise loadbalancer.MemberNotFound(member_id=id)
@@ -542,49 +542,49 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
         listener = self._get_resource(context, Listener, id)
         return listener
 
-    def create_nodepool(self, context, nodepool):
-        tenant_id = self._get_tenant_id_for_create(context, nodepool)
+    def create_pool(self, context, pool):
+        tenant_id = self._get_tenant_id_for_create(context, pool)
         with context.session.begin(subtransactions=True):
-            nodepool['status'] = constants.PENDING_CREATE
-            if nodepool['healthmonitor_id'] == attributes.ATTR_NOT_SPECIFIED:
-                nodepool['healthmonitor_id'] = None
-            pool_db = NodePool(id=uuidutils.generate_uuid(),
-                               tenant_id=tenant_id,
-                               name=nodepool['name'],
-                               description=nodepool['description'],
-                               protocol=nodepool['protocol'],
-                               lb_algorithm=nodepool['lb_algorithm'],
-                               admin_state_up=nodepool['admin_state_up'],
-                               healthmonitor_id=nodepool['healthmonitor_id'],
-                               status=nodepool['status'])
+            pool['status'] = constants.PENDING_CREATE
+            if pool['healthmonitor_id'] == attributes.ATTR_NOT_SPECIFIED:
+                pool['healthmonitor_id'] = None
+            pool_db = PoolV2(id=uuidutils.generate_uuid(),
+                             tenant_id=tenant_id,
+                             name=pool['name'],
+                             description=pool['description'],
+                             protocol=pool['protocol'],
+                             lb_algorithm=pool['lb_algorithm'],
+                             admin_state_up=pool['admin_state_up'],
+                             healthmonitor_id=pool['healthmonitor_id'],
+                             status=pool['status'])
             context.session.add(pool_db)
         return pool_db
 
-    def update_nodepool(self, context, id, nodepool):
+    def update_pool(self, context, id, pool):
         with context.session.begin(subtransactions=True):
-            pool_db = self._get_resource(context, NodePool, id)
+            pool_db = self._get_resource(context, PoolV2, id)
 
-            pool_db.update(nodepool)
+            pool_db.update(pool)
 
         return pool_db
 
-    def delete_nodepool(self, context, id):
+    def delete_pool(self, context, id):
         with context.session.begin(subtransactions=True):
-            pool_db = self._get_resource(context, NodePool, id)
+            pool_db = self._get_resource(context, PoolV2, id)
             context.session.delete(pool_db)
 
-    def get_nodepools(self, context, filters=None, fields=None):
-        return self._get_resources(context, NodePool, filters=filters)
+    def get_pools(self, context, filters=None, fields=None):
+        return self._get_resources(context, PoolV2, filters=filters)
 
-    def get_nodepool(self, context, id, fields=None):
-        pool = self._get_resource(context, NodePool, id)
+    def get_pool(self, context, id, fields=None):
+        pool = self._get_resource(context, PoolV2, id)
         return pool
 
-    def create_nodepool_member(self, context, member, nodepool_id):
+    def create_pool_member(self, context, member, pool_id):
         tenant_id = self._get_tenant_id_for_create(context, member)
         try:
             with context.session.begin(subtransactions=True):
-                pool_db = self._get_resource(context, NodePool, nodepool_id)
+                pool_db = self._get_resource(context, PoolV2, pool_id)
 
                 #set status based on if member's pool is part of a
                 #load balancer
@@ -595,7 +595,7 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
                 member_db = MemberV2(
                     id=uuidutils.generate_uuid(),
                     tenant_id=tenant_id,
-                    pool_id=nodepool_id,
+                    pool_id=pool_id,
                     address=member['address'],
                     protocol_port=member['protocol_port'],
                     weight=member.get('weight') or 1,
@@ -606,35 +606,33 @@ class LoadBalancerPluginDbv2(loadbalancerv2.LoadBalancerPluginBaseV2,
         except exception.DBDuplicateEntry:
             raise loadbalancerv2.MemberExists(address=member['address'],
                                               port=member['protocol_port'],
-                                              pool=nodepool_id)
+                                              pool=pool_id)
         return member_db
 
-    def update_nodepool_member(self, context, id, member, nodepool_id):
+    def update_pool_member(self, context, id, member, pool_id):
         with context.session.begin(subtransactions=True):
-            self._get_resource(context, NodePool, nodepool_id)
+            self._get_resource(context, PoolV2, pool_id)
             member_db = self._get_resource(context, MemberV2, id)
             if member_db:
                 member_db.update(member)
         return member_db
 
-    def delete_nodepool_member(self, context, id, nodepool_id):
+    def delete_pool_member(self, context, id, pool_id):
         with context.session.begin(subtransactions=True):
             member_db = self._get_resource(context, MemberV2, id)
             context.session.delete(member_db)
 
-    def get_nodepool_members(self, context, nodepool_id, filters=None,
-                             fields=None):
+    def get_pool_members(self, context, pool_id, filters=None, fields=None):
         if filters:
             filters.update(filters)
         else:
-            filters = {'pool_id': [nodepool_id]}
+            filters = {'pool_id': [pool_id]}
         return self._get_resources(context, MemberV2, filters=filters)
 
-    def get_nodepool_member(self, context, id, nodepool_id, filters=None,
-                            fields=None):
+    def get_pool_member(self, context, id, pool_id, filters=None, fields=None):
         member = self._get_resource(context, MemberV2, id)
-        if member.pool_id != nodepool_id:
-            raise loadbalancerv2.PoolNotFound(pool_id=nodepool_id)
+        if member.pool_id != pool_id:
+            raise loadbalancerv2.PoolNotFound(pool_id=pool_id)
         return member
 
     def create_healthmonitor(self, context, healthmonitor):

@@ -146,6 +146,16 @@ class LoadBalancerPlugin(ldb.LoadBalancerPluginDb,
             return self.default_provider
 
     def create_pool(self, context, pool):
+        #This validation is because the new API version also has a resource
+        #called pool and these attributes have to be optional in the old API
+        #so they are not required attributes of the new.  Its complicated.
+        if (pool['pool']['lb_method'] == attrs.ATTR_NOT_SPECIFIED):
+            raise loadbalancerv2.RequiredAttributeNotSpecified(
+                attr_name='lb_method')
+        if (pool['pool']['subnet_id'] == attrs.ATTR_NOT_SPECIFIED):
+            raise loadbalancerv2.RequiredAttributeNotSpecified(
+                attr_name='subnet_id')
+
         provider_name = self._get_provider_name(context, pool['pool'])
         p = super(LoadBalancerPlugin, self).create_pool(context, pool)
 
@@ -499,7 +509,8 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
                 self._call_driver_operation(
                     context, driver.listener.create, listener_db)
         else:
-            self.update_status(context, ldbv2.Listener, id, constants.ACTIVE)
+            self.update_status(context, ldbv2.Listener, listener_db.id,
+                               constants.ACTIVE)
 
         return listener_db.to_dict()
 
@@ -558,45 +569,53 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
                           for listener in listeners]
         return listener_dicts
 
-    def create_nodepool(self, context, nodepool):
-        nodepool = nodepool.get('nodepool')
-        db_pool = super(LoadBalancerPluginv2, self).create_nodepool(
-            context, nodepool)
+    def create_pool(self, context, pool):
+        pool = pool.get('pool')
+
+        #This validation should only exist while the old version of the API
+        #exists.
+        if ('lb_algorithm' not in pool or
+                pool['lb_algorithm'] == attrs.ATTR_NOT_SPECIFIED):
+            raise loadbalancerv2.RequiredAttributeNotSpecified(
+                attr_name='lb_algorithm')
+
+        db_pool = super(LoadBalancerPluginv2, self).create_pool(
+            context, pool)
         #no need to call driver since on create it cannot be linked to a load
         #balancer, but will still update status to ACTIVE
-        self.update_status(context, ldbv2.NodePool, db_pool.id,
+        self.update_status(context, ldbv2.PoolV2, db_pool.id,
                            constants.ACTIVE)
         return db_pool.to_dict()
 
-    def update_nodepool(self, context, id, nodepool):
-        self.test_and_set_status(context, ldbv2.NodePool, id,
+    def update_pool(self, context, id, pool):
+        self.test_and_set_status(context, ldbv2.PoolV2, id,
                                  constants.PENDING_UPDATE)
-        nodepool = nodepool.get('nodepool')
-        old_nodepool = super(LoadBalancerPluginv2, self).get_nodepool(
+        pool = pool.get('pool')
+        old_pool = super(LoadBalancerPluginv2, self).get_pool(
             context, id)
-        updated_nodepool = super(LoadBalancerPluginv2, self).update_nodepool(
-            context, id, nodepool)
+        updated_pool = super(LoadBalancerPluginv2, self).update_pool(
+            context, id, pool)
 
         #if pool is associated with a load balancer then send to driver
         #if not then update status to ACTIVE
-        if (updated_nodepool.listener and
-                updated_nodepool.listener.loadbalancer):
+        if (updated_pool.listener and
+                updated_pool.listener.loadbalancer):
             driver = self._get_driver_for_loadbalancer(
-                context, updated_nodepool.listener.loadbalancer_id)
+                context, updated_pool.listener.loadbalancer_id)
             if self._is_driver_new_style(driver):
                 self._call_driver_operation(context,
                                             driver.pool.update,
-                                            updated_nodepool,
-                                            old_db_entity=old_nodepool)
+                                            updated_pool,
+                                            old_db_entity=old_pool)
         else:
-            self.update_status(context, ldbv2.NodePool, id, constants.ACTIVE)
+            self.update_status(context, ldbv2.PoolV2, id, constants.ACTIVE)
 
-        return updated_nodepool.to_dict()
+        return updated_pool.to_dict()
 
-    def delete_nodepool(self, context, id, body=None):
-        self.test_and_set_status(context, ldbv2.NodePool, id,
+    def delete_pool(self, context, id, body=None):
+        self.test_and_set_status(context, ldbv2.PoolV2, id,
                                  constants.PENDING_DELETE)
-        db_pool = super(LoadBalancerPluginv2, self).get_nodepool(context, id)
+        db_pool = super(LoadBalancerPluginv2, self).get_pool(context, id)
 
         #if pool is associated with a load balancer then send to driver,
         #if not just delete from the database
@@ -607,25 +626,25 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
                 self._call_driver_operation(context, driver.pool.delete,
                                             db_pool)
         else:
-            super(LoadBalancerPluginv2, self).delete_nodepool(context, id)
+            super(LoadBalancerPluginv2, self).delete_pool(context, id)
 
-    def get_nodepools(self, context, filters=None, fields=None):
-        pools = super(LoadBalancerPluginv2, self).get_nodepools(
+    def get_pools(self, context, filters=None, fields=None):
+        pools = super(LoadBalancerPluginv2, self).get_pools(
             context, filters=filters, fields=fields)
         pool_dict = [self._fields(pool.to_dict(), fields) for pool in pools]
         return pool_dict
 
-    def get_nodepool(self, context, id, fields=None):
-        pool_db = super(LoadBalancerPluginv2, self).get_nodepool(context,
-                                                                 id,
-                                                                 fields)
+    def get_pool(self, context, id, fields=None):
+        pool_db = super(LoadBalancerPluginv2, self).get_pool(context,
+                                                             id,
+                                                             fields)
         return self._fields(pool_db.to_dict(), fields)
 
-    def create_nodepool_member(self, context, member, nodepool_id):
+    def create_pool_member(self, context, member, pool_id):
         #TODO(do we want to set the status of the pool as well?)
         member = member.get('member')
-        member_db = super(LoadBalancerPluginv2, self).create_nodepool_member(
-            context, member, nodepool_id)
+        member_db = super(LoadBalancerPluginv2, self).create_pool_member(
+            context, member, pool_id)
 
         #if member's pool is associated with a load balancer then send to
         #driver, if not just update the status to ACTIVE
@@ -638,21 +657,22 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
                                             driver.member.create,
                                             member_db)
         else:
-            self.update_status(context, ldbv2.MemberV2, id, constants.ACTIVE)
+            self.update_status(context, ldbv2.MemberV2, member_db.id,
+                               constants.ACTIVE)
 
         return member_db.to_dict()
 
-    def update_nodepool_member(self, context, id, member, nodepool_id):
+    def update_pool_member(self, context, id, member, pool_id):
         #TODO(do we want to set the status of the pool as well?)
         self.test_and_set_status(context, ldbv2.MemberV2, id,
                                  constants.PENDING_UPDATE)
         member = member.get('member')
-        old_member = super(LoadBalancerPluginv2, self).get_nodepool_member(
-            context, id, nodepool_id)
+        old_member = super(LoadBalancerPluginv2, self).get_pool_member(
+            context, id, pool_id)
         updated_member = super(LoadBalancerPluginv2,
-                               self).update_nodepool_member(context, id,
-                                                            member,
-                                                            nodepool_id)
+                               self).update_pool_member(context, id,
+                                                        member,
+                                                        pool_id)
         if (updated_member.pool and updated_member.pool.listener and
                 updated_member.pool.listener.loadbalancer):
             driver = self._get_driver_for_loadbalancer(
@@ -667,12 +687,12 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
 
         return updated_member.to_dict()
 
-    def delete_nodepool_member(self, context, id, nodepool_id, body=None):
+    def delete_pool_member(self, context, id, pool_id, body=None):
         #TODO(do we want to set the status of the pool as well?)
         self.test_and_set_status(context, ldbv2.MemberV2, id,
                                  constants.PENDING_DELETE)
-        db_member = super(LoadBalancerPluginv2, self).get_nodepool_member(
-            context, id, nodepool_id)
+        db_member = super(LoadBalancerPluginv2, self).get_pool_member(
+            context, id, pool_id)
 
         #if member's pool is associated with a load balancer then send to
         #driver, if not then just delete it from the database
@@ -684,21 +704,19 @@ class LoadBalancerPluginv2(ldbv2.LoadBalancerPluginDbv2,
                                             driver.member.delete_member,
                                             db_member)
         else:
-            super(LoadBalancerPluginv2, self).delete_nodepool_member(
-                context, id, nodepool_id)
+            super(LoadBalancerPluginv2, self).delete_pool_member(
+                context, id, pool_id)
 
-    def get_nodepool_members(self, context, nodepool_id, filters=None,
-                             fields=None):
-        members = super(LoadBalancerPluginv2, self).get_nodepool_members(
-            context, nodepool_id, filters=filters, fields=fields)
+    def get_pool_members(self, context, pool_id, filters=None, fields=None):
+        members = super(LoadBalancerPluginv2, self).get_pool_members(
+            context, pool_id, filters=filters, fields=fields)
         member_dict = [self._fields(member.to_dict(), fields)
                        for member in members]
         return member_dict
 
-    def get_nodepool_member(self, context, id, nodepool_id, filters=None,
-                            fields=None):
-        member = super(LoadBalancerPluginv2, self).get_nodepool_member(
-            context, id, nodepool_id, filters=filters, fields=fields)
+    def get_pool_member(self, context, id, pool_id, filters=None, fields=None):
+        member = super(LoadBalancerPluginv2, self).get_pool_member(
+            context, id, pool_id, filters=filters, fields=fields)
         return member.to_dict()
 
     def get_member(self, context, id, fields=None):
