@@ -17,7 +17,6 @@
 # @author: Dustin Lundquist, Blue Box Group
 
 from neutron.plugins.common import constants
-from neutron.services import loadbalancer
 
 
 class Plugin(object):
@@ -144,4 +143,3 @@ class Plugin(object):
     def update_status(self, context, model, id, status,
                       status_description=None):
         pass
-

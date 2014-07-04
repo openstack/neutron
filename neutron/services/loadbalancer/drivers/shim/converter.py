@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2014 Blue Box Group, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -16,19 +14,34 @@
 #
 # @author: Dustin Lundquist, Blue Box Group
 
+from neutron.extensions import loadbalancerv2
+
 
 class LBObjectModelConverter(object):
     """Convert LBaaS v2 object model to v1 dicts"""
 
-    def _first_listener(load_balancer):
-        return (load_balancer.listeners or [{}])[0]
+    def __init__(self, driver):
+        self.driver = driver
+
+    def _first_listener(self, load_balancer):
+        return (load_balancer['listeners'] or [{}])[0]
 
     def lb_to_vip(self, load_balancer):
+        if len(load_balancer.listeners) > 1:
+            raise loadbalancerv2.RequiredAttributeNotSpecified(
+                load_balancer_id=load_balancer.id,
+                driver_name=self.driver.__class__.__name__)
+
         listener = self._first_listener(load_balancer)
 
         return self.listener_to_vip(listener)
 
     def listener_to_vip(self, listener):
+        if not listener:
+            return None
+
+        load_balancer = listener['load_balancer']
+
         res = {'id': listener.id,
                'tenant_id': load_balancer.tenant_id,
                'name': load_balancer.name,

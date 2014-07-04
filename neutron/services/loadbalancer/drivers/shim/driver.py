@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2014 Blue Box Group, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -18,17 +16,17 @@
 
 from neutron.services.loadbalancer.drivers import driver_base
 from neutron.services.loadbalancer.drivers.shim import converter
-from neutron.services.loadblanacer.drivers.shim import plugin
+from neutron.services.loadbalancer.drivers.shim import plugin
 
 
 class LBShimDriver(driver_base.LoadBalancerBaseDriver):
     """Wrap a v1 LBaaS driver to present the v2 interface"""
 
-    def __init__(self, plugin_v2, driver):
-        self.converter = converter.LBObjectModelConverter()
-        self._plugin_v2 = plugin_v2
-        self.driver = driver
-        self.plugin = plugin.Plugin(self._plugin_v2, self.converter)
+    def __init__(self, plugin_v2, driver_cls):
+        self.converter = converter.LBObjectModelConverter(self)
+        self.plugin = plugin_v2
+        self.wrapped_plugin = plugin.Plugin(self.plugin, self.converter)
+        self.wrapped_driver = driver_cls(self.wrapped_plugin)
 
         self.load_balancer = LBShimLoadBalancerManager(self)
         self.listener = LBShimListenerManager(self)
@@ -39,100 +37,95 @@ class LBShimDriver(driver_base.LoadBalancerBaseDriver):
 
 class LBShimLoadBalancerManager(driver_base.BaseLoadBalancerManager):
 
-    def __init__(self, shim):
-        self._shim = shim
-
     def create(self, context, load_balancer):
-        vip = self._shim.converter.lb_to_vip(load_balancer)
+        vip = self.driver.converter.lb_to_vip(load_balancer)
 
-        self.shim.driver.create_vip(context, vip)
+        self.driver.wrapped_driver.create_vip(context, vip)
 
     def update(self, context, old_load_balancer, load_balancer):
-        old_vip = self._shim.converter.lb_to_vip(old_load_balancer)
-        vip = self._shim.converter.lb_to_vip(load_balancer)
+        old_vip = self.driver.converter.lb_to_vip(old_load_balancer)
+        vip = self.driver.converter.lb_to_vip(load_balancer)
 
         self.shim.driver.update_vip(context, old_vip, vip)
 
     def delete(self, context, load_balancer):
-        vip = self._shim.converter.lb_to_vip(load_balancer)
+        vip = self.driver.converter.lb_to_vip(load_balancer)
 
-        self._shim.driver.delete_vip(context, vip)
+        self.driver.wrapped_driver.delete_vip(context, vip)
 
     def stats(self, context, load_balancer):
         listener = (load_balancer.listeners or [{}])[0]
 
-        self._shim.driver.stats(context, pool.default_pool_id)
+        self.driver.wrapped_driver.stats(context, listener.default_pool_id)
+
+    def refresh(self, context, load_balancer):
+        pass
 
 
 class LBShimListenerManager(driver_base.BaseListenerManager):
 
-    def __init__(self, shim):
-        self._shim = shim
-
     def create(self, context, listener):
-        vip = self._shim.converter.listener_to_vip(listener)
+        vip = self.driver.converter.listener_to_vip(listener)
 
-        self.shim.driver.create_vip(context, vip)
+        self.driver.wrapped_driver.create_vip(context, vip)
 
     def update(self, context, old_listener, listener):
-        vip = self._shim.converter.listener_to_vip(listener)
-        old_vip = self._shim.converter.listener_to_vip(old_listener)
+        vip = self.driver.converter.listener_to_vip(listener)
+        old_vip = self.driver.converter.listener_to_vip(old_listener)
 
-        self._shim.driver.update_vip(context, old_vip, vip)
+        self.driver.wrapped_driver.update_vip(context, old_vip, vip)
 
     def delete(self, context, listener):
-        vip = self._shim.converter.listener_to_vip(listener)
+        vip = self.driver.converter.listener_to_vip(listener)
 
-        self._shim.driver.delete_vip(context, vip)
+        self.driver.wrapped_driver.delete_vip(context, vip)
 
 
 class LBShimPoolManager(driver_base.BasePoolManager):
 
-    def __init__(self, shim):
-        self._shim = shim
-
     def create(self, context, pool):
-        pool = self._shim.converter.pool(pool)
+        pool = self.driver.converter.pool(pool)
 
-        self._shim.driver.create_pool(context, pool)
+        self.driver.wrapped_driver.create_pool(context, pool)
 
     def update(self, context, old_pool, pool):
-        old_pool = self._shim.converter.pool(old_pool)
-        pool = self._shim.converter.pool(pool)
+        old_pool = self.driver.converter.pool(old_pool)
+        pool = self.driver.converter.pool(pool)
 
-        self._shim.driver.update_pool(context, old_pool, pool)
+        self.driver.wrapped_driver.update_pool(context, old_pool, pool)
 
     def delete(self, context, pool):
-        pool = self._shim.converter.pool(pool)
+        pool = self.driver.converter.pool(pool)
 
-        self._shim.driver.delete_pool(context, pool)
+        self.driver.wrapped_driver.delete_pool(context, pool)
 
 
 class LBShimMemberManager(driver_base.BaseMemberManager):
 
-    def __init__(self, shim):
-        self._shim = shim
-
     def create(self, context, member):
-        member = self._shim.converter.member(member)
+        member = self.driver.converter.member(member)
 
-        self._shim.driver.create_member(context, member)
+        self.driver.wrapped_driver.create_member(context, member)
 
     def update(self, context, old_member, member):
-        member = self._shim.converter.member(member)
-        old_member = self._shim.converter.member(old_member)
+        member = self.driver.converter.member(member)
+        old_member = self.driver.converter.member(old_member)
 
-        self._shim.driver.update_member(context, old_member, member)
+        self.driver.wrapped_driver.update_member(context, old_member, member)
 
     def delete(self, context, member):
-        member = self._shim.converter.member(member)
+        member = self.driver.converter.member(member)
 
-        self._shim.driver.delete_member(context, member)
+        self.driver.wrapped_driver.delete_member(context, member)
 
 
 class LBShimHealthMonitorManager(driver_base.BaseHealthMonitorManager):
 
-    def __init__(self, shim):
-        self._shim = shim
+    def create(self, context, member):
+        pass
 
-    # TODO(convert health monitors)
+    def update(self, context, old_member, member):
+        pass
+
+    def delete(self, context, member):
+        pass

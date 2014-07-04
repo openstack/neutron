@@ -117,6 +117,11 @@ class DriverError(qexception.NeutronException):
     message = _("An error happened in the driver: %(message)s")
 
 
+class LBConfigurationUnsupported(qexception.NeutronException):
+    message = _("Load balancer %(load_balancer_id)s configuration is not"
+                "supported by driver %(driver_name)s")
+
+
 RESOURCE_ATTRIBUTE_MAP = {
     'loadbalancers': {
         'id': {'allow_post': False, 'allow_put': False,
