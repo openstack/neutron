@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mock
+
+from sqlalchemy.orm import query
+
 from neutron import context
 from neutron.db import api as db_api
 from neutron.db import l3_db
@@ -65,6 +69,22 @@ class Ml2DBTestCase(base.BaseTestCase):
                 status='DOWN')
             self.ctx.session.add(record)
             return record
+
+    def test_ensure_dvr_port_binding_deals_with_db_duplicate(self):
+        network_id = 'foo_network_id'
+        port_id = 'foo_port_id'
+        router_id = 'foo_router_id'
+        host_id = 'foo_host_id'
+        self._setup_neutron_network(network_id, [port_id])
+        self._setup_dvr_binding(network_id, port_id, router_id, host_id)
+        with mock.patch.object(query.Query, 'first') as query_first:
+            query_first.return_value = []
+            with mock.patch.object(ml2_db.LOG, 'debug') as log_trace:
+                binding = ml2_db.ensure_dvr_port_binding(
+                    self.ctx.session, port_id, host_id, router_id)
+        self.assertTrue(query_first.called)
+        self.assertTrue(log_trace.called)
+        self.assertEqual(port_id, binding.port_id)
 
     def test_ensure_dvr_port_binding(self):
         network_id = 'foo_network_id'
