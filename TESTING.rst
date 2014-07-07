@@ -123,11 +123,11 @@ class separating it from the module path with a colon.
 For example, the following would run only the JSONV2TestCase tests from
 neutron/tests/unit/test_api_v2.py::
 
-      $ ./run_tests.sh neutron.tests.unit.test_api_v2:JSONV2TestCase
+      $ ./run_tests.sh neutron.tests.unit.test_api_v2.JSONV2TestCase
 
 or::
 
-      $ ./tox neutron.tests.unit.test_api_v2:JSONV2TestCase
+      $ tox -e py27 neutron.tests.unit.test_api_v2.JSONV2TestCase
 
 Adding more tests
 ~~~~~~~~~~~~~~~~~
