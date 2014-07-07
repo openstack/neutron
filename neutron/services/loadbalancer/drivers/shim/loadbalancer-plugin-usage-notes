@@ -1,0 +1,26 @@
+$ grep -r 'self\.plugin\.' neutron/services/loadbalancer/ | cut -d: -f2- | sed -e 's/^[ \t]*//' | sed -e 's/[^ ]* = //' | cut -d\( -f1| cut -d. -f1-3 | sort -u
+self.plugin._core_plugin
+self.plugin._delete_db_member
+self.plugin._delete_db_pool
+self.plugin._delete_db_pool_health_monitor
+self.plugin._delete_db_vip
+self.plugin._get_resource
+self.plugin._make_health_monitor_dict
+self.plugin._make_member_dict
+self.plugin._make_pool_dict
+self.plugin._make_vip_dict
+self.plugin.agent_callbacks
+self.plugin.agent_notifiers
+self.plugin.conn
+self.plugin.drivers
+self.plugin.get_lbaas_agent_hosting_pool
+self.plugin.get_lbaas_agents
+self.plugin.get_members
+self.plugin.get_pool
+self.plugin.get_pools
+self.plugin.get_vip
+self.plugin.list_pools_on_lbaas_agent
+self.plugin.populate_vip_graph
+self.plugin.update_pool_health_monitor
+self.plugin.update_pool_stats
+self.plugin.update_status
