@@ -426,12 +426,12 @@ class TunnelTest(base.BaseTestCase):
 
     def testDaemonLoop(self):
         reply2 = {'current': set(['tap0']),
-                  'added': set([]),
+                  'added': set(['tap2']),
                   'removed': set([])}
 
         reply3 = {'current': set(['tap2']),
                   'added': set([]),
-                  'removed': set([])}
+                  'removed': set(['tap0'])}
 
         self.mox.StubOutWithMock(log.ContextAdapter, 'exception')
         log.ContextAdapter.exception(
@@ -439,19 +439,20 @@ class TunnelTest(base.BaseTestCase):
                 Exception('Fake exception to get out of the loop'))
 
         self.mox.StubOutWithMock(
-            ovs_neutron_agent.OVSNeutronAgent, 'update_ports')
-        ovs_neutron_agent.OVSNeutronAgent.update_ports(set()).AndReturn(reply2)
-        ovs_neutron_agent.OVSNeutronAgent.update_ports(
-            set(['tap0'])).AndReturn(reply3)
+            ovs_neutron_agent.OVSNeutronAgent, 'scan_ports')
+        ovs_neutron_agent.OVSNeutronAgent.scan_ports(
+            set(), set()).AndReturn(reply2)
+        ovs_neutron_agent.OVSNeutronAgent.scan_ports(
+            set(['tap0']), set()).AndReturn(reply3)
         self.mox.StubOutWithMock(
             ovs_neutron_agent.OVSNeutronAgent, 'process_network_ports')
         ovs_neutron_agent.OVSNeutronAgent.process_network_ports(
             {'current': set(['tap0']),
              'removed': set([]),
-             'added': set([])}).AndReturn(False)
+             'added': set(['tap2'])}).AndReturn(False)
         ovs_neutron_agent.OVSNeutronAgent.process_network_ports(
-            {'current': set(['tap0']),
-             'removed': set([]),
+            {'current': set(['tap2']),
+             'removed': set(['tap0']),
              'added': set([])}).AndRaise(
                  Exception('Fake exception to get out of the loop'))
         self.mox.ReplayAll()
