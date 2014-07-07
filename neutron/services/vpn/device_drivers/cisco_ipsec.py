@@ -216,11 +216,7 @@ class CiscoCsrIPsecDriver(device_drivers.DeviceDriver):
         else:
             raise SystemExit(_('No Cisco CSR configurations found in: %s') %
                              cfg.CONF.config_file)
-        self.csrs = dict([(k, csr_client.CsrRestClient(v['rest_mgmt'],
-                                                       v['tunnel_ip'],
-                                                       v['username'],
-                                                       v['password'],
-                                                       v['timeout']))
+        self.csrs = dict([(k, csr_client.CsrRestClient(v))
                           for k, v in csrs_found.items()])
 
     def vpnservice_updated(self, context, **kwargs):

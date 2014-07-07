@@ -19,18 +19,18 @@
 import re
 
 import functools
-# import httmock
+# TODO(pcm): Remove when switch to requests-mock package. Comment out, if use
+# local copy of httmock.py source. Needed for PEP8.
+import httmock
 import requests
 from requests import exceptions as r_exc
 
 from neutron.openstack.common import log as logging
 # TODO(pcm) Remove once httmock package is added to test-requirements. For
-# now, uncomment and include httmock source to UT
-from neutron.tests.unit.services.vpn import device_drivers
+# now, uncomment and include httmock source to unit test.
+# from neutron.tests.unit.services.vpn.device_drivers import httmock
 
 LOG = logging.getLogger(__name__)
-
-httmock = device_drivers.httmock
 
 
 def repeat(n):

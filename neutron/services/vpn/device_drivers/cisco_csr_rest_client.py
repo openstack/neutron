@@ -44,13 +44,13 @@ class CsrRestClient(object):
 
     """REST CsrRestClient for accessing the Cisco Cloud Services Router."""
 
-    def __init__(self, host, tunnel_ip, username, password, timeout=None):
-        self.host = host
-        self.tunnel_ip = tunnel_ip
-        self.auth = (username, password)
+    def __init__(self, settings):
+        self.host = settings['rest_mgmt']
+        self.tunnel_ip = settings['tunnel_ip']
+        self.auth = (settings['username'], settings['password'])
         self.token = None
         self.status = requests.codes.OK
-        self.timeout = timeout
+        self.timeout = settings.get('timeout')
         self.max_tries = 5
         self.session = requests.Session()
 
