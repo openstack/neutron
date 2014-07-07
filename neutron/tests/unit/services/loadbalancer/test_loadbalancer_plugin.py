@@ -661,27 +661,27 @@ class LoadBalancerExtensionV2TestCase(test_api_v2_extension.ExtensionTestCase):
     def test_pool_create(self):
         pool_id = _uuid()
         hm_id = _uuid()
-        data = {'nodepool': {'name': 'pool1',
-                             'description': 'descr_pool1',
-                             'protocol': 'HTTP',
-                             'lb_algorithm': 'ROUND_ROBIN',
-                             'healthmonitor_id': hm_id,
-                             'admin_state_up': True,
-                             'tenant_id': _uuid()}}
-        return_value = copy.copy(data['nodepool'])
+        data = {'pool': {'name': 'pool1',
+                         'description': 'descr_pool1',
+                         'protocol': 'HTTP',
+                         'lb_algorithm': 'ROUND_ROBIN',
+                         'healthmonitor_id': hm_id,
+                         'admin_state_up': True,
+                         'tenant_id': _uuid()}}
+        return_value = copy.copy(data['pool'])
         return_value.update({'status': "ACTIVE", 'id': pool_id})
 
         instance = self.plugin.return_value
-        instance.create_nodepool.return_value = return_value
-        res = self.api.post(_get_path('lbaas/nodepools', fmt=self.fmt),
+        instance.create_pool.return_value = return_value
+        res = self.api.post(_get_path('lbaas/pools', fmt=self.fmt),
                             self.serialize(data),
                             content_type='application/%s' % self.fmt)
-        instance.create_nodepool.assert_called_with(mock.ANY,
-                                                nodepool=data)
+        instance.create_pool.assert_called_with(mock.ANY,
+                                                pool=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
         res = self.deserialize(res)
-        self.assertIn('nodepool', res)
-        self.assertEqual(res['nodepool'], return_value)
+        self.assertIn('pool', res)
+        self.assertEqual(res['pool'], return_value)
 
     def test_pool_list(self):
         pool_id = _uuid()
@@ -691,17 +691,17 @@ class LoadBalancerExtensionV2TestCase(test_api_v2_extension.ExtensionTestCase):
                          'id': pool_id}]
 
         instance = self.plugin.return_value
-        instance.get_nodepools.return_value = return_value
+        instance.get_pools.return_value = return_value
 
-        res = self.api.get(_get_path('lbaas/nodepools', fmt=self.fmt))
+        res = self.api.get(_get_path('lbaas/pools', fmt=self.fmt))
 
-        instance.get_nodepools.assert_called_with(mock.ANY, fields=mock.ANY,
+        instance.get_pools.assert_called_with(mock.ANY, fields=mock.ANY,
                                               filters=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
 
     def test_pool_update(self):
         pool_id = _uuid()
-        update_data = {'nodepool': {'admin_state_up': False}}
+        update_data = {'pool': {'admin_state_up': False}}
         return_value = {'name': 'pool1',
                         'admin_state_up': False,
                         'tenant_id': _uuid(),
@@ -709,18 +709,18 @@ class LoadBalancerExtensionV2TestCase(test_api_v2_extension.ExtensionTestCase):
                         'id': pool_id}
 
         instance = self.plugin.return_value
-        instance.update_nodepool.return_value = return_value
+        instance.update_pool.return_value = return_value
 
-        res = self.api.put(_get_path('lbaas/nodepools', id=pool_id,
+        res = self.api.put(_get_path('lbaas/pools', id=pool_id,
                                      fmt=self.fmt),
                            self.serialize(update_data))
 
-        instance.update_nodepool.assert_called_with(mock.ANY, pool_id,
-                                                nodepool=update_data)
+        instance.update_pool.assert_called_with(mock.ANY, pool_id,
+                                                pool=update_data)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
-        self.assertIn('nodepool', res)
-        self.assertEqual(res['nodepool'], return_value)
+        self.assertIn('pool', res)
+        self.assertEqual(res['pool'], return_value)
 
     def test_pool_get(self):
         pool_id = _uuid()
@@ -731,20 +731,20 @@ class LoadBalancerExtensionV2TestCase(test_api_v2_extension.ExtensionTestCase):
                         'id': pool_id}
 
         instance = self.plugin.return_value
-        instance.get_nodepool.return_value = return_value
+        instance.get_pool.return_value = return_value
 
-        res = self.api.get(_get_path('lbaas/nodepools', id=pool_id,
+        res = self.api.get(_get_path('lbaas/pools', id=pool_id,
                                      fmt=self.fmt))
 
-        instance.get_nodepool.assert_called_with(mock.ANY, pool_id,
+        instance.get_pool.assert_called_with(mock.ANY, pool_id,
                                              fields=mock.ANY)
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
-        self.assertIn('nodepool', res)
-        self.assertEqual(res['nodepool'], return_value)
+        self.assertIn('pool', res)
+        self.assertEqual(res['pool'], return_value)
 
     def test_pool_delete(self):
-        self._test_entity_delete('nodepool')
+        self._test_entity_delete('pool')
 
     def test_pool_member_create(self):
         subnet_id = _uuid()
@@ -759,21 +759,21 @@ class LoadBalancerExtensionV2TestCase(test_api_v2_extension.ExtensionTestCase):
         return_value.update({'status': "ACTIVE", 'id': member_id})
 
         instance = self.plugin.return_value
-        instance.create_nodepool_member.return_value = return_value
-        res = self.api.post(_get_path('lbaas/nodepools/pid1/members',
+        instance.create_pool_member.return_value = return_value
+        res = self.api.post(_get_path('lbaas/pools/pid1/members',
                                       fmt=self.fmt),
                             self.serialize(data),
                             content_type='application/%s'
                                          % self.fmt)
-        instance.create_nodepool_member.assert_called_with(mock.ANY,
-                                                           nodepool_id='pid1',
-                                                           member=data)
+        instance.create_pool_member.assert_called_with(mock.ANY,
+                                                       pool_id='pid1',
+                                                       member=data)
         self.assertEqual(res.status_int, exc.HTTPCreated.code)
         res = self.deserialize(res)
         self.assertIn('member', res)
         self.assertEqual(res['member'], return_value)
 
-    def test_nodepool_member_list(self):
+    def test_pool_member_list(self):
         member_id = _uuid()
         return_value = [{'name': 'member1',
                          'admin_state_up': True,
@@ -781,21 +781,21 @@ class LoadBalancerExtensionV2TestCase(test_api_v2_extension.ExtensionTestCase):
                          'id': member_id}]
 
         instance = self.plugin.return_value
-        instance.get_nodepools.return_value = return_value
+        instance.get_pools.return_value = return_value
 
-        res = self.api.get(_get_path('lbaas/nodepools/pid1/members',
+        res = self.api.get(_get_path('lbaas/pools/pid1/members',
                                      fmt=self.fmt))
 
-        instance.get_nodepool_members.assert_called_with(mock.ANY,
-                                                         fields=mock.ANY,
-                                                         filters=mock.ANY,
-                                                         nodepool_id='pid1')
+        instance.get_pool_members.assert_called_with(mock.ANY,
+                                                     fields=mock.ANY,
+                                                     filters=mock.ANY,
+                                                     pool_id='pid1')
         self.assertEqual(res.status_int, exc.HTTPOk.code)
 
     @unittest.skip('mock autospec bug causes false negative.'
                    'Similar bug: '
                    'https://code.google.com/p/mock/issues/detail?id=224')
-    def test_nodepool_member_update(self):
+    def test_pool_member_update(self):
         member_id = _uuid()
         update_data = {'member': {'admin_state_up': False}}
         return_value = {'admin_state_up': False,
@@ -804,25 +804,25 @@ class LoadBalancerExtensionV2TestCase(test_api_v2_extension.ExtensionTestCase):
                         'id': member_id}
 
         instance = self.plugin.return_value
-        instance.update_nodepool_member.return_value = return_value
+        instance.update_pool_member.return_value = return_value
 
-        res = self.api.put(_get_path('lbaas/nodepools/pid1/members',
+        res = self.api.put(_get_path('lbaas/pools/pid1/members',
                                      id=member_id,
                                      fmt=self.fmt),
                            self.serialize(update_data),
                            content_type='application/%s'
                                         % self.fmt)
 
-        instance.update_nodepool_member.assert_called_with(mock.ANY,
-                                                           member_id,
-                                                           member=update_data,
-                                                           nodepool_id='pid1')
+        instance.update_pool_member.assert_called_with(mock.ANY,
+                                                       member_id,
+                                                       member=update_data,
+                                                       pool_id='pid1')
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
         self.assertIn('member', res)
         self.assertEqual(res['member'], return_value)
 
-    def test_nodepool_member_get(self):
+    def test_pool_member_get(self):
         member_id = _uuid()
         return_value = {'admin_state_up': False,
                         'tenant_id': _uuid(),
@@ -830,29 +830,29 @@ class LoadBalancerExtensionV2TestCase(test_api_v2_extension.ExtensionTestCase):
                         'id': member_id}
 
         instance = self.plugin.return_value
-        instance.get_nodepool_member.return_value = return_value
+        instance.get_pool_member.return_value = return_value
 
-        res = self.api.get(_get_path('lbaas/nodepools/pid1/members',
+        res = self.api.get(_get_path('lbaas/pools/pid1/members',
                                      id=member_id, fmt=self.fmt))
 
-        instance.get_nodepool_member.assert_called_with(mock.ANY,
-                                                        member_id,
-                                                        fields=mock.ANY,
-                                                        nodepool_id='pid1')
+        instance.get_pool_member.assert_called_with(mock.ANY,
+                                                    member_id,
+                                                    fields=mock.ANY,
+                                                    pool_id='pid1')
         self.assertEqual(res.status_int, exc.HTTPOk.code)
         res = self.deserialize(res)
         self.assertIn('member', res)
         self.assertEqual(res['member'], return_value)
 
-    def test_nodepool_member_delete(self):
+    def test_pool_member_delete(self):
         entity_id = _uuid()
         res = self.api.delete(
-            test_api_v2._get_path('lbaas/nodepools/pid1/members',
+            test_api_v2._get_path('lbaas/pools/pid1/members',
                                   id=entity_id, fmt=self.fmt))
         delete_entity = getattr(self.plugin.return_value,
-                                "delete_nodepool_member")
+                                "delete_pool_member")
         delete_entity.assert_called_with(mock.ANY, entity_id,
-                                         nodepool_id='pid1')
+                                         pool_id='pid1')
         self.assertEqual(res.status_int, exc.HTTPNoContent.code)
 
     def test_health_monitor_create(self):

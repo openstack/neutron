@@ -43,7 +43,7 @@ class LoadBalancerNotFound(qexception.NotFound):
     message = _("Load Balancer %(lb_id)s could not be found")
 
 
-class LoadBalancerExists(qexception.NeutronException):
+class LoadBalancerExists(qexception.BadRequest):
     message = _("A LoadBalancer with the specified IP %(lb_ip)s")
 
 
@@ -51,9 +51,19 @@ class LoadBalancerInUse(qexception.InUse):
     message = _("Listener %(listener_id)s is using this load balancer")
 
 
+class LoadBalancerListenerProtocolPortExists(qexception.Conflict):
+    message = _("Load Balancer %(lb_id)s alread has a listener with "
+                "protocol_port of %(protocol_port)s")
+
+
 class ListenerNotFound(qexception.NotFound):
     message = _("A Listener with the specified id %(listener_id)s cloud not "
                 "be found")
+
+
+class ListenerPoolProtocolMismatch(qexception.Conflict):
+    message = _("Listener protocol %(listener_proto)s and pool protocol "
+                "%(pool_proto)s are not compatible.")
 
 
 class ListenerInUse(qexception.InUse):
@@ -93,7 +103,7 @@ class LoadBalancerStatsNotFound(qexception.NotFound):
     message = _("Statistics of Load Balancer %(lb_id)s could not be found")
 
 
-class MemberExists(qexception.NeutronException):
+class MemberExists(qexception.Conflict):
     message = _("Member with address %(address)s and protocol_port %(port)s "
                 "already present in pool %(pool)s")
 
@@ -203,7 +213,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                              'is_visible': True,
                              'default': attr.ATTR_NOT_SPECIFIED},
         'protocol': {'allow_post': True, 'allow_put': False,
-                     'validate': {'type:values': ['TCP', 'HTTP', 'HTTPS']},
+                     'validate': {'type:values': ['TCP', 'HTTP', 'HTTPS',
+                                                  'UDP']},
                      'is_visible': True},
         'lb_algorithm': {'allow_post': True, 'allow_put': True,
                          'validate': {'type:string': None},
@@ -211,6 +222,20 @@ RESOURCE_ATTRIBUTE_MAP = {
                          #a required attribute)
                          'default': attr.ATTR_NOT_SPECIFIED,
                          'is_visible': True},
+        'session_persistence': {'allow_post': True, 'allow_put': True,
+                                'convert_to': attr.convert_none_to_empty_dict,
+                                'default': {},
+                                'validate': {
+                                    'type:dict_or_empty': {
+                                        'type': {'type:values': ['APP_COOKIE',
+                                                                 'HTTP_COOKIE',
+                                                                 'SOURCE_IP'],
+                                                 'required': True},
+                                        'cookie_name': {'type:string': None,
+                                                        'required': False}}},
+                                'is_visible': True},
+        'members': {'allow_post': False, 'allow_put': False,
+                    'is_visible': True},
         'admin_state_up': {'allow_post': True, 'allow_put': True,
                            'default': True,
                            'convert_to': attr.convert_to_boolean,
@@ -360,6 +385,8 @@ class Loadbalancerv2(extensions.ExtensionDescriptor):
         plural_mappings = resource_helper.build_plural_mappings(
             {}, RESOURCE_ATTRIBUTE_MAP)
         action_map = {'loadbalancer': {'stats': 'GET'}}
+        plural_mappings['members'] = 'member'
+        attr.PLURALS.update(plural_mappings)
         resources = resource_helper.build_resource_info(
             plural_mappings,
             RESOURCE_ATTRIBUTE_MAP,
@@ -379,7 +406,9 @@ class Loadbalancerv2(extensions.ExtensionDescriptor):
             controller = base.create_resource(collection_name, resource_name,
                                               plugin, params,
                                               allow_bulk=True,
-                                              parent=parent)
+                                              parent=parent,
+                                              allow_pagination=True,
+                                              allow_sorting=True)
 
             resource = extensions.ResourceExtension(
                 collection_name,

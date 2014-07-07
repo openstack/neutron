@@ -182,20 +182,21 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return self._req('POST', resource, data, fmt, id=id,
                          subresource=subresource)
 
-    def new_list_request(self, resource, fmt=None, params=None,
+    def new_list_request(self, resource, fmt=None, params=None, id=None,
                          subresource=None):
         return self._req(
-            'GET', resource, None, fmt, params=params, subresource=subresource
+            'GET', resource, None, fmt, params=params, subresource=subresource,
+            id=id
         )
 
     def new_show_request(self, resource, id, fmt=None,
-                         subresource=None, fields=None):
+                         subresource=None, sub_id=None, fields=None):
         if fields:
             params = "&".join(["fields=%s" % x for x in fields])
         else:
             params = None
         return self._req('GET', resource, None, fmt, id=id,
-                         params=params, subresource=subresource)
+                         params=params, subresource=subresource, sub_id=sub_id)
 
     def new_delete_request(self, resource, id, fmt=None, subresource=None,
                            sub_id=None):
@@ -210,10 +211,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         )
 
     def new_update_request(self, resource, data, id, fmt=None,
-                           subresource=None, context=None):
+                           subresource=None, context=None, sub_id=None):
         return self._req(
             'PUT', resource, data, fmt, id=id, subresource=subresource,
-            context=context
+            context=context, sub_id=sub_id
         )
 
     def new_action_request(self, resource, data, id, action, fmt=None,
@@ -572,17 +573,29 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 self._delete('ports', port['port']['id'])
 
     def _test_list_with_sort(self, resource,
-                             items, sorts, resources=None, query_params=''):
+                             items, sorts, resources=None,
+                             query_params='',
+                             id=None,
+                             subresource=None,
+                             subresources=None):
         query_str = query_params
         for key, direction in sorts:
             query_str = query_str + "&sort_key=%s&sort_dir=%s" % (key,
                                                                   direction)
         if not resources:
             resources = '%ss' % resource
+        if subresource and not subresources:
+            subresources = '%ss' % subresource
         req = self.new_list_request(resources,
-                                    params=query_str)
+                                    params=query_str,
+                                    id=id,
+                                    subresource=subresources)
         api = self._api_for_resource(resources)
         res = self.deserialize(self.fmt, req.get_response(api))
+        if subresource:
+            resource = subresource
+        if subresources:
+            resources = subresources
         resource = resource.replace('-', '_')
         resources = resources.replace('-', '_')
         expected_res = [item[resource]['id'] for item in items]
@@ -593,16 +606,26 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                    limit, expected_page_num,
                                    resources=None,
                                    query_params='',
-                                   verify_key='id'):
+                                   verify_key='id',
+                                   id=None,
+                                   subresource=None,
+                                   subresources=None):
         if not resources:
             resources = '%ss' % resource
+        if subresource and not subresources:
+            subresources = '%ss' % subresource
         query_str = query_params + '&' if query_params else ''
         query_str = query_str + ("limit=%s&sort_key=%s&"
                                  "sort_dir=%s") % (limit, sort[0], sort[1])
-        req = self.new_list_request(resources, params=query_str)
+        req = self.new_list_request(resources, params=query_str, id=id,
+                                    subresource=subresources)
         items_res = []
         page_num = 0
         api = self._api_for_resource(resources)
+        if subresource:
+            resource = subresource
+        if subresources:
+            resources = subresources
         resource = resource.replace('-', '_')
         resources = resources.replace('-', '_')
         while req:
@@ -628,18 +651,31 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _test_list_with_pagination_reverse(self, resource, items, sort,
                                            limit, expected_page_num,
                                            resources=None,
-                                           query_params=''):
+                                           query_params='',
+                                           id=None,
+                                           subresource=None,
+                                           subresources=None):
         if not resources:
             resources = '%ss' % resource
+        if subresource and not subresources:
+            subresources = '%ss' % subresource
         resource = resource.replace('-', '_')
         api = self._api_for_resource(resources)
-        marker = items[-1][resource]['id']
+        if subresource:
+            marker = items[-1][subresource]['id']
+        else:
+            marker = items[-1][resource]['id']
         query_str = query_params + '&' if query_params else ''
         query_str = query_str + ("limit=%s&page_reverse=True&"
                                  "sort_key=%s&sort_dir=%s&"
                                  "marker=%s") % (limit, sort[0], sort[1],
                                                  marker)
-        req = self.new_list_request(resources, params=query_str)
+        req = self.new_list_request(resources, params=query_str, id=id,
+                                    subresource=subresources)
+        if subresource:
+            resource = subresource
+        if subresources:
+            resources = subresources
         item_res = [items[-1][resource]]
         page_num = 0
         resources = resources.replace('-', '_')
