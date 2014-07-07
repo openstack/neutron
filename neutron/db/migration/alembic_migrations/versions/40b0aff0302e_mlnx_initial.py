@@ -122,7 +122,7 @@ def upgrade(active_plugins=None, options=None):
     )
 
     op.add_column('routers', sa.Column('enable_snat', sa.Boolean(),
-                                       nullable=False, default=True))
+                                       nullable=False, server_default="1"))
     op.create_table(
         'securitygroupportbindings',
         sa.Column('port_id', sa.String(length=36), nullable=False),
