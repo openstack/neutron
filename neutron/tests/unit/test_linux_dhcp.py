@@ -684,7 +684,8 @@ class TestDhcpLocalProcess(TestBase):
 
 class TestDnsmasq(TestBase):
     def _test_spawn(self, extra_options, network=FakeDualNetwork(),
-                    max_leases=16777216, lease_duration=86400):
+                    max_leases=16777216, lease_duration=86400,
+                    has_static=True):
         def mock_get_conf_file_name(kind, ensure_conf_dir=False):
             return '/dhcp/%s/%s' % (network.id, kind)
 
@@ -719,7 +720,11 @@ class TestDnsmasq(TestBase):
             lease_duration = 'infinite'
         else:
             seconds = 's'
-        expected.extend('--dhcp-range=set:tag%d,%s,static,%s%s' %
+        if has_static:
+            prefix = '--dhcp-range=set:tag%d,%s,static,%s%s'
+        else:
+            prefix = '--dhcp-range=set:tag%d,%s,%s%s'
+        expected.extend(prefix %
                         (i, s.cidr.split('/')[0], lease_duration, seconds)
                         for i, s in enumerate(network.subnets))
 
@@ -764,6 +769,14 @@ class TestDnsmasq(TestBase):
     def test_spawn_no_dhcp_domain(self):
         self.conf.set_override('dhcp_domain', '')
         self._test_spawn(['--conf-file='])
+
+    def test_spawn_no_dnsmasq_ipv6_mode(self):
+        network = FakeV6Network()
+        subnet = FakeV6Subnet()
+        subnet.ipv6_ra_mode = True
+        network.subnets = [subnet]
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
+                         network, has_static=False)
 
     def test_spawn_cfg_dns_server(self):
         self.conf.set_override('dnsmasq_dns_servers', ['8.8.8.8'])

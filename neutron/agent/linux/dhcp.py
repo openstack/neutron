@@ -359,6 +359,7 @@ class Dnsmasq(DhcpLocalProcess):
 
         possible_leases = 0
         for i, subnet in enumerate(self.network.subnets):
+            mode = None
             # if a subnet is specified to have dhcp disabled
             if not subnet.enable_dhcp:
                 continue
@@ -373,6 +374,7 @@ class Dnsmasq(DhcpLocalProcess):
                 elif getattr(subnet, 'ipv6_ra_mode', None) is None:
                     # RA mode is not set - do not launch dnsmasq
                     continue
+
             if self.version >= self.MINIMUM_VERSION:
                 set_tag = 'set:'
             else:
@@ -385,9 +387,15 @@ class Dnsmasq(DhcpLocalProcess):
             else:
                 lease = '%ss' % self.conf.dhcp_lease_duration
 
-            cmd.append('--dhcp-range=%s%s,%s,%s,%s' %
-                       (set_tag, self._TAG_PREFIX % i,
-                        cidr.network, mode, lease))
+            # mode is optional and is not set - skip it
+            if mode:
+                cmd.append('--dhcp-range=%s%s,%s,%s,%s' %
+                           (set_tag, self._TAG_PREFIX % i,
+                            cidr.network, mode, lease))
+            else:
+                cmd.append('--dhcp-range=%s%s,%s,%s' %
+                           (set_tag, self._TAG_PREFIX % i,
+                            cidr.network, lease))
 
             possible_leases += cidr.size
 
