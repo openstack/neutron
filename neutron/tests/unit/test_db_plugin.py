@@ -1105,6 +1105,14 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                             neutron_context=neutron_context)
         self.assertEqual(port['port']['admin_state_up'], False)
 
+    def test_update_device_id_unchanged(self):
+        with self.port() as port:
+            data = {'port': {'admin_state_up': True,
+                             'device_id': port['port']['device_id']}}
+            req = self.new_update_request('ports', data, port['port']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual(res['port']['admin_state_up'], True)
+
     def test_update_device_id_null(self):
         with self.port() as port:
             data = {'port': {'device_id': None}}
