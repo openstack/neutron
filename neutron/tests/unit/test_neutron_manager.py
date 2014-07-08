@@ -56,9 +56,8 @@ class NeutronManagerTestCase(base.BaseTestCase):
         mgr = manager.NeutronManager.get_instance()
         plugin = mgr.get_service_plugins()[constants.DUMMY]
 
-        self.assertTrue(
-            isinstance(plugin,
-                       (dummy_plugin.DummyServicePlugin, types.ClassType)),
+        self.assertIsInstance(
+            plugin, (dummy_plugin.DummyServicePlugin, types.ClassType),
             "loaded plugin should be of type neutronDummyPlugin")
 
     def test_service_plugin_by_name_is_loaded(self):
@@ -67,9 +66,8 @@ class NeutronManagerTestCase(base.BaseTestCase):
         mgr = manager.NeutronManager.get_instance()
         plugin = mgr.get_service_plugins()[constants.DUMMY]
 
-        self.assertTrue(
-            isinstance(plugin,
-                       (dummy_plugin.DummyServicePlugin, types.ClassType)),
+        self.assertIsInstance(
+            plugin, (dummy_plugin.DummyServicePlugin, types.ClassType),
             "loaded plugin should be of type neutronDummyPlugin")
 
     def test_multiple_plugins_specified_for_service_type(self):
