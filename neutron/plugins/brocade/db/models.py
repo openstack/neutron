@@ -35,7 +35,8 @@ class BrocadeNetwork(model_base.BASEV2, models_v2.HasId):
 class BrocadePort(model_base.BASEV2):
     """Schema for brocade port."""
 
-    port_id = sa.Column(sa.String(36), primary_key=True, default="")
+    port_id = sa.Column(sa.String(36), primary_key=True, default="",
+                        server_default='')
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey("brocadenetworks.id"),
                            nullable=False)

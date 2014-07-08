@@ -17,6 +17,7 @@ from oslo.config import cfg
 from six import moves
 import sqlalchemy as sa
 from sqlalchemy.orm import exc as sa_exc
+from sqlalchemy import sql
 
 from neutron.common import exceptions as exc
 from neutron.db import api as db_api
@@ -45,7 +46,8 @@ class GreAllocation(model_base.BASEV2):
 
     gre_id = sa.Column(sa.Integer, nullable=False, primary_key=True,
                        autoincrement=False)
-    allocated = sa.Column(sa.Boolean, nullable=False, default=False)
+    allocated = sa.Column(sa.Boolean, nullable=False, default=False,
+                          server_default=sql.false())
 
 
 class GreEndpoints(model_base.BASEV2):

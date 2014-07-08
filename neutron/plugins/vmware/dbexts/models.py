@@ -17,6 +17,7 @@
 
 from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String
 from sqlalchemy import orm
+from sqlalchemy import sql
 
 from neutron.db import l3_db
 from neutron.db import model_base
@@ -125,8 +126,10 @@ class NSXRouterExtAttributes(model_base.BASEV2):
     router_id = Column(String(36),
                        ForeignKey('routers.id', ondelete="CASCADE"),
                        primary_key=True)
-    distributed = Column(Boolean, default=False, nullable=False)
-    service_router = Column(Boolean, default=False, nullable=False)
+    distributed = Column(Boolean, default=False, server_default=sql.false(),
+                         nullable=False)
+    service_router = Column(Boolean, default=False, server_default=sql.false(),
+                            nullable=False)
     # Add a relationship to the Router model in order to instruct
     # SQLAlchemy to eagerly load this association
     router = orm.relationship(

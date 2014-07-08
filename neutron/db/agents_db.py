@@ -19,6 +19,7 @@ from oslo.config import cfg
 from oslo.db import exception as db_exc
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
+from sqlalchemy import sql
 
 from neutron.common import rpc as n_rpc
 from neutron.db import model_base
@@ -54,7 +55,7 @@ class Agent(model_base.BASEV2, models_v2.HasId):
     # TOPIC.host is a target topic
     host = sa.Column(sa.String(255), nullable=False)
     admin_state_up = sa.Column(sa.Boolean, default=True,
-                               nullable=False)
+                               server_default=sql.true(), nullable=False)
     # the time when first report came from agents
     created_at = sa.Column(sa.DateTime, nullable=False)
     # the time when first report came after agents start
