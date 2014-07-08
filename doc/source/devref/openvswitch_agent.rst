@@ -15,6 +15,14 @@ VLAN Tags
 
 .. _OpenVSwitch: http://openvswitch.org
 
+
+GRE Tunnels
+-----------
+
+GRE Tunneling is documented in depth in the `Networking in too much
+detail <http://openstack.redhat.com/Networking_in_too_much_detail>`_
+by RedHat.
+
 Further Reading
 ---------------
 
