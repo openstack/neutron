@@ -96,6 +96,7 @@ class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
 class TestPlumgridPluginPortBinding(PLUMgridPluginV2TestCase,
                                     test_bindings.PortBindingsTestCase):
     VIF_TYPE = portbindings.VIF_TYPE_IOVISOR
+    HAS_PORT_FILTER = True
 
     def setUp(self):
         super(TestPlumgridPluginPortBinding, self).setUp()

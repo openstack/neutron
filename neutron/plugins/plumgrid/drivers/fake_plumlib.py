@@ -96,3 +96,21 @@ class Plumlib():
     def disassociate_floatingips(self, fip, port_id):
         return dict((key, fip[key]) for key in ("id", "floating_network_id",
                                                 "floating_ip_address"))
+
+    def create_security_group(self, sg_db):
+        pass
+
+    def update_security_group(self, sg_db):
+        pass
+
+    def delete_security_group(self, sg_db):
+        pass
+
+    def create_security_group_rule(self, sg_rule_db):
+        pass
+
+    def create_security_group_rule_bulk(self, sg_rule_db):
+        pass
+
+    def delete_security_group_rule(self, sg_rule_db):
+        pass
