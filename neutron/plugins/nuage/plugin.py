@@ -935,8 +935,10 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                         context, neutron_fip['id'])
             return neutron_fip
 
-    def disassociate_floatingips(self, context, port_id):
-        super(NuagePlugin, self).disassociate_floatingips(context, port_id)
+    def disassociate_floatingips(self, context, port_id, do_notify=True):
+        router_ids = super(NuagePlugin, self).disassociate_floatingips(
+            context, port_id, do_notify=do_notify)
+
         port_mapping = nuagedb.get_port_mapping_by_id(context.session,
                                                       port_id)
         if port_mapping:
@@ -946,10 +948,13 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             }
             self.nuageclient.update_nuage_vm_vport(params)
 
+        return router_ids
+
     def update_floatingip(self, context, id, floatingip):
         fip = floatingip['floatingip']
         orig_fip = self._get_floatingip(context, id)
         port_id = orig_fip['fixed_port_id']
+        router_ids = []
         with context.session.begin(subtransactions=True):
             neutron_fip = super(NuagePlugin, self).update_floatingip(
                 context, id, floatingip)
@@ -965,9 +970,9 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                    fip['port_id'])
                 except nuage_exc.OperationNotSupported:
                     with excutils.save_and_reraise_exception():
-                        super(NuagePlugin,
-                              self).disassociate_floatingips(context,
-                                                             fip['port_id'])
+                        router_ids = super(
+                            NuagePlugin, self).disassociate_floatingips(
+                                context, fip['port_id'], do_notify=False)
                 except n_exc.BadRequest:
                     with excutils.save_and_reraise_exception():
                         super(NuagePlugin, self).delete_floatingip(context,
@@ -981,7 +986,11 @@ class NuagePlugin(db_base_plugin_v2.NeutronDbPluginV2,
                         'nuage_fip_id': None
                     }
                     self.nuageclient.update_nuage_vm_vport(params)
-            return neutron_fip
+
+        # now that we've left db transaction, we are safe to notify
+        self.notify_routers_updated(context, router_ids)
+
+        return neutron_fip
 
     def delete_floatingip(self, context, id):
         fip = self._get_floatingip(context, id)
