@@ -35,6 +35,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as q_const
+from neutron.common import exceptions
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils as q_utils
@@ -50,6 +51,11 @@ LOG = logging.getLogger(__name__)
 
 # A placeholder for dead vlans.
 DEAD_VLAN_TAG = str(q_const.MAX_VLAN_TAG + 1)
+
+
+class DeviceListRetrievalError(exceptions.NeutronException):
+    message = _("Unable to retrieve port details for devices: %(devices)s "
+                "because of error: %(error)s")
 
 
 # A class to represent a VIF (i.e., a port that has 'iface-id' and 'vif-mac'
@@ -1106,26 +1112,23 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                     self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
 
     def treat_devices_added_or_updated(self, devices, ovs_restarted):
+        skipped_devices = []
         try:
             devices_details_list = self.plugin_rpc.get_devices_details_list(
                 self.context,
                 devices,
                 self.agent_id)
         except Exception as e:
-            LOG.debug("Unable to get port details for %(devices)s: %(e)s",
-                      {'devices': devices, 'e': e})
-            # resync is needed
-            return True
+            raise DeviceListRetrievalError(devices=devices, error=e)
         for details in devices_details_list:
             device = details['device']
             LOG.debug("Processing port: %s", device)
             port = self.int_br.get_vif_port_by_id(device)
             if not port:
-                # The port has disappeared and should not be processed
-                # There is no need to put the port DOWN in the plugin as
-                # it never went up in the first place
+                # The port disappeared and cannot be processed
                 LOG.info(_("Port %s was not found on the integration bridge "
                            "and will therefore not be processed"), device)
+                skipped_devices.append(device)
                 continue
 
             if 'port_id' in details:
@@ -1139,6 +1142,10 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                                     details['admin_state_up'],
                                     ovs_restarted)
                 # update plugin about port status
+                # FIXME(salv-orlando): Failures while updating device status
+                # must be handled appropriately. Otherwise this might prevent
+                # neutron server from sending network-vif-* events to the nova
+                # API server, thus possibly preventing instance spawn.
                 if details.get('admin_state_up'):
                     LOG.debug(_("Setting status for %s to UP"), device)
                     self.plugin_rpc.update_device_up(
@@ -1152,7 +1159,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 LOG.warn(_("Device %s not defined on plugin"), device)
                 if (port and port.ofport != -1):
                     self.port_dead(port)
-        return False
+        return skipped_devices
 
     def treat_ancillary_devices_added(self, devices):
         try:
@@ -1161,10 +1168,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 devices,
                 self.agent_id)
         except Exception as e:
-            LOG.debug("Unable to get port details for "
-                      "%(devices)s: %(e)s", {'devices': devices, 'e': e})
-            # resync is needed
-            return True
+            raise DeviceListRetrievalError(devices=devices, error=e)
 
         for details in devices_details_list:
             device = details['device']
@@ -1175,7 +1179,6 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                                              device,
                                              self.agent_id,
                                              cfg.CONF.host)
-        return False
 
     def treat_devices_removed(self, devices):
         resync = False
@@ -1238,13 +1241,29 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                                  port_info.get('updated', set()))
         if devices_added_updated:
             start = time.time()
-            resync_a = self.treat_devices_added_or_updated(
-                devices_added_updated, ovs_restarted)
-            LOG.debug(_("process_network_ports - iteration:%(iter_num)d -"
-                        "treat_devices_added_or_updated completed "
-                        "in %(elapsed).3f"),
-                      {'iter_num': self.iter_num,
-                       'elapsed': time.time() - start})
+            try:
+                skipped_devices = self.treat_devices_added_or_updated(
+                    devices_added_updated, ovs_restarted)
+                LOG.debug(_("process_network_ports - iteration:%(iter_num)d -"
+                            "treat_devices_added_or_updated completed. "
+                            "Skipped %(num_skipped)d devices of "
+                            "%(num_current)d devices currently available. "
+                            "Time elapsed: %(elapsed).3f"),
+                          {'iter_num': self.iter_num,
+                           'num_skipped': len(skipped_devices),
+                           'num_current': len(port_info['current']),
+                           'elapsed': time.time() - start})
+                # Update the list of current ports storing only those which
+                # have been actually processed.
+                port_info['current'] = (port_info['current'] -
+                                        set(skipped_devices))
+            except DeviceListRetrievalError:
+                # Need to resync as there was an error with server
+                # communication.
+                LOG.exception(_("process_network_ports - iteration:%d - "
+                                "failure while retrieving port details "
+                                "from server"), self.iter_num)
+                resync_a = True
         if 'removed' in port_info:
             start = time.time()
             resync_b = self.treat_devices_removed(port_info['removed'])
@@ -1260,12 +1279,20 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         resync_b = False
         if 'added' in port_info:
             start = time.time()
-            resync_a = self.treat_ancillary_devices_added(port_info['added'])
-            LOG.debug(_("process_ancillary_network_ports - iteration: "
-                        "%(iter_num)d - treat_ancillary_devices_added "
-                        "completed in %(elapsed).3f"),
-                      {'iter_num': self.iter_num,
-                       'elapsed': time.time() - start})
+            try:
+                self.treat_ancillary_devices_added(port_info['added'])
+                LOG.debug(_("process_ancillary_network_ports - iteration: "
+                            "%(iter_num)d - treat_ancillary_devices_added "
+                            "completed in %(elapsed).3f"),
+                        {'iter_num': self.iter_num,
+                        'elapsed': time.time() - start})
+            except DeviceListRetrievalError:
+                # Need to resync as there was an error with server
+                # communication.
+                LOG.exception(_("process_ancillary_network_ports - "
+                                "iteration:%d - failure while retrieving "
+                                "port details from server"), self.iter_num)
+                resync_a = True
         if 'removed' in port_info:
             start = time.time()
             resync_b = self.treat_ancillary_devices_removed(
@@ -1386,7 +1413,6 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                     self.updated_ports = set()
                     reg_ports = (set() if ovs_restarted else ports)
                     port_info = self.scan_ports(reg_ports, updated_ports_copy)
-                    ports = port_info['current']
                     LOG.debug(_("Agent rpc_loop - iteration:%(iter_num)d - "
                                 "port information retrieved. "
                                 "Elapsed:%(elapsed).3f"),
@@ -1412,6 +1438,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                             len(port_info.get('updated', [])))
                         port_stats['regular']['removed'] = (
                             len(port_info.get('removed', [])))
+                    ports = port_info['current']
                     # Treat ancillary devices if they exist
                     if self.ancillary_brs:
                         port_info = self.update_ancillary_ports(
