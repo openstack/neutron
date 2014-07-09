@@ -23,7 +23,7 @@ from testtools import matchers
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as db
-from neutron.db import db_base_plugin_v2
+from neutron.db import common_db_mixin
 from neutron.plugins.cisco.common import cisco_constants
 from neutron.plugins.cisco.common import cisco_exceptions as c_exc
 from neutron.plugins.cisco.db import n1kv_db_v2
@@ -769,7 +769,7 @@ class PolicyProfileTests(base.BaseTestCase):
 
 class ProfileBindingTests(base.BaseTestCase,
                           n1kv_db_v2.NetworkProfile_db_mixin,
-                          db_base_plugin_v2.CommonDbMixin):
+                          common_db_mixin.CommonDbMixin):
 
     def setUp(self):
         super(ProfileBindingTests, self).setUp()

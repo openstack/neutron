@@ -22,7 +22,7 @@ from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import api as qdbapi
-from neutron.db import db_base_plugin_v2
+from neutron.db import common_db_mixin
 from neutron.db import extraroute_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_gwmode_db
@@ -38,7 +38,7 @@ class L3RouterPluginRpcCallbacks(n_rpc.RpcCallback,
     RPC_API_VERSION = '1.1'
 
 
-class L3RouterPlugin(db_base_plugin_v2.CommonDbMixin,
+class L3RouterPlugin(common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
                      l3_gwmode_db.L3_NAT_db_mixin,
                      l3_agentschedulers_db.L3AgentSchedulerDbMixin):

@@ -20,7 +20,7 @@ from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron.db import db_base_plugin_v2 as base_db
+from neutron.db import common_db_mixin as base_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import firewall

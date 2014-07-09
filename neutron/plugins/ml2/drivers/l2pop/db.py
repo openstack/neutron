@@ -21,7 +21,7 @@ from sqlalchemy import sql
 
 from neutron.common import constants as const
 from neutron.db import agents_db
-from neutron.db import db_base_plugin_v2 as base_db
+from neutron.db import common_db_mixin as base_db
 from neutron.db import models_v2
 from neutron.openstack.common import jsonutils
 from neutron.openstack.common import timeutils

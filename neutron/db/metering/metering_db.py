@@ -21,7 +21,7 @@ from sqlalchemy import orm
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import constants
 from neutron.db import api as dbapi
-from neutron.db import db_base_plugin_v2 as base_db
+from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_db
 from neutron.db import model_base
 from neutron.db import models_v2

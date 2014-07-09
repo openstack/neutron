@@ -29,7 +29,6 @@ LOG = logging.getLogger(__name__)
 
 
 class ApicL3ServicePlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                          db_base_plugin_v2.CommonDbMixin,
                           extraroute_db.ExtraRoute_db_mixin,
                           l3_gwmode_db.L3_NAT_db_mixin):
     """Implementation of the APIC L3 Router Service Plugin.

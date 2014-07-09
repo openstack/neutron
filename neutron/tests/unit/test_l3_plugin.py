@@ -27,6 +27,7 @@ from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.db import api as qdbapi
+from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_agentschedulers_db
@@ -283,7 +284,7 @@ class TestNoL3NatPlugin(TestL3NatBasePlugin):
 
 # A L3 routing service plugin class for tests with plugins that
 # delegate away L3 routing functionality
-class TestL3NatServicePlugin(db_base_plugin_v2.CommonDbMixin,
+class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
                              l3_db.L3_NAT_db_mixin):
 
     supported_extension_aliases = ["router"]

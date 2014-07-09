@@ -21,7 +21,7 @@ from sqlalchemy.orm import validates
 
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
-from neutron.db import db_base_plugin_v2 as base_db
+from neutron.db import common_db_mixin as base_db
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import servicetype_db as st_db

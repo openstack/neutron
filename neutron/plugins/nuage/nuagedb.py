@@ -14,7 +14,7 @@
 #
 # @author: Ronak Shah, Nuage Networks, Alcatel-Lucent USA Inc.
 
-from neutron.db import db_base_plugin_v2
+from neutron.db import common_db_mixin
 from neutron.plugins.nuage import nuage_models
 
 
@@ -130,7 +130,7 @@ def get_net_partition_by_id(session, id):
 
 def get_net_partitions(session, filters=None, fields=None):
     query = session.query(nuage_models.NetPartition)
-    common_db = db_base_plugin_v2.CommonDbMixin()
+    common_db = common_db_mixin.CommonDbMixin()
     query = common_db._apply_filters_to_query(query,
                                               nuage_models.NetPartition,
                                               filters)

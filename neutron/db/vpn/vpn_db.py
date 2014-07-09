@@ -22,7 +22,7 @@ from sqlalchemy.orm import exc
 
 from neutron.common import constants as n_constants
 from neutron.db import api as qdbapi
-from neutron.db import db_base_plugin_v2 as base_db
+from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_agentschedulers_db as l3_agent_db
 from neutron.db import l3_db
 from neutron.db import model_base
