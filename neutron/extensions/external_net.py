@@ -29,7 +29,7 @@ EXTERNAL = 'router:external'
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {EXTERNAL: {'allow_post': True,
                             'allow_put': True,
-                            'default': attr.ATTR_NOT_SPECIFIED,
+                            'default': False,
                             'is_visible': True,
                             'convert_to': attr.convert_to_boolean,
                             'enforce_policy': True,
