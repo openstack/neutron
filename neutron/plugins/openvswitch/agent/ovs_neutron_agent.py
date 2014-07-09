@@ -229,6 +229,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                               root_helper)
         # Initialize iteration counter
         self.iter_num = 0
+        self.run_daemon_loop = True
 
     def _check_ovs_version(self):
         if p_const.TYPE_VXLAN in self.tunnel_types:
@@ -1234,7 +1235,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ancillary_ports = set()
         tunnel_sync = True
         ovs_restarted = False
-        while True:
+        while self.run_daemon_loop:
             start = time.time()
             port_stats = {'regular': {'added': 0,
                                       'updated': 0,
@@ -1360,9 +1361,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
             self.rpc_loop(polling_manager=pm)
 
-
-def handle_sigterm(signum, frame):
-    sys.exit(1)
+    def _handle_sigterm(self, signum, frame):
+        LOG.debug("Agent caught SIGTERM, quitting daemon loop.")
+        self.run_daemon_loop = False
 
 
 def create_agent_config_map(config):
@@ -1426,12 +1427,11 @@ def main():
         cfg.CONF.set_default('ip_lib_force_root', True)
 
     agent = OVSNeutronAgent(**agent_config)
-    signal.signal(signal.SIGTERM, handle_sigterm)
+    signal.signal(signal.SIGTERM, agent._handle_sigterm)
 
     # Start everything.
     LOG.info(_("Agent initialized successfully, now running... "))
     agent.daemon_loop()
-    sys.exit(0)
 
 
 if __name__ == "__main__":
