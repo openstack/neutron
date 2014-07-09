@@ -55,13 +55,16 @@ class PortBinding(model_base.BASEV2):
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey('ports.id', ondelete="CASCADE"),
                         primary_key=True)
-    host = sa.Column(sa.String(255), nullable=False, default='')
+    host = sa.Column(sa.String(255), nullable=False, default='',
+                     server_default='')
     vnic_type = sa.Column(sa.String(64), nullable=False,
-                          default=portbindings.VNIC_NORMAL)
+                          default=portbindings.VNIC_NORMAL,
+                          server_default=portbindings.VNIC_NORMAL)
     profile = sa.Column(sa.String(BINDING_PROFILE_LEN), nullable=False,
-                        default='')
+                        default='', server_default='')
     vif_type = sa.Column(sa.String(64), nullable=False)
-    vif_details = sa.Column(sa.String(4095), nullable=False, default='')
+    vif_details = sa.Column(sa.String(4095), nullable=False, default='',
+                            server_default='')
     driver = sa.Column(sa.String(64))
     segment = sa.Column(sa.String(36),
                         sa.ForeignKey('ml2_network_segments.id',
