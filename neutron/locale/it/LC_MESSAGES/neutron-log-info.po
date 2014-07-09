@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the neutron project.
 #
 # Translators:
+# PierAlberto <pieralbertopierini@gmail.com>, 2014
 msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-02 06:08+0000\n"
-"PO-Revision-Date: 2014-06-30 20:07+0000\n"
-"Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
+"POT-Creation-Date: 2014-07-09 06:08+0000\n"
+"PO-Revision-Date: 2014-07-06 03:50+0000\n"
+"Last-Translator: PierAlberto <pieralbertopierini@gmail.com>\n"
 "Language-Team: Italian (http://www.transifex.com/projects/p/neutron/language/"
 "it/)\n"
 "Language: it\n"
@@ -42,7 +43,7 @@ msgstr "Il processo principale è stato interrotto inaspettatamente, uscire"
 #: neutron/openstack/common/service.py:271
 #, python-format
 msgid "Child caught %s, exiting"
-msgstr ""
+msgstr "Cogliere Child %s, uscendo"
 
 #: neutron/openstack/common/service.py:310
 msgid "Forking too fast, sleeping"
@@ -75,7 +76,7 @@ msgstr "Intercettato %s, arresto in corso dei children"
 
 #: neutron/openstack/common/service.py:408
 msgid "Wait called after thread killed.  Cleaning up."
-msgstr ""
+msgstr "Attendere la chiamata dopo l'uccisione de filo. Bonifica."
 
 #: neutron/openstack/common/service.py:424
 #, python-format
