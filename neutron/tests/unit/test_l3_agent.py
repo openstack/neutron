@@ -91,6 +91,22 @@ class TestBasicRouterOperations(base.BaseTestCase):
             'neutron.openstack.common.loopingcall.FixedIntervalLoopingCall')
         self.looping_call_p.start()
 
+    def test__sync_routers_task_raise_exception(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.plugin_api.get_routers.side_effect = Exception()
+        with mock.patch.object(agent, '_cleanup_namespaces') as f:
+            agent._sync_routers_task(agent.context)
+        self.assertFalse(f.called)
+
+    def test__sync_routers_task_call_clean_stale_namespaces(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.plugin_api.get_routers.return_value = mock.ANY
+        with mock.patch.object(agent, '_cleanup_namespaces') as f:
+            with mock.patch.object(agent, '_process_routers') as g:
+                agent._sync_routers_task(agent.context)
+        self.assertTrue(f.called)
+        g.assert_called_with(mock.ANY, all_routers=True)
+
     def test_router_info_create(self):
         id = _uuid()
         ri = l3_agent.RouterInfo(id, self.conf.root_helper,
