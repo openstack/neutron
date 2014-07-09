@@ -163,9 +163,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         query = query.filter(
             RouterL3AgentBinding.l3_agent_id == agent.id)
 
-        if not router_ids:
-            pass
-        else:
+        if router_ids:
             query = query.filter(
                 RouterL3AgentBinding.router_id.in_(router_ids))
         router_ids = [item[0] for item in query]
