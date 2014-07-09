@@ -649,7 +649,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         if cur_tag != str(lvm.vlan):
             self.int_br.set_db_attribute("Port", port.port_name, "tag",
                                          str(lvm.vlan))
-            if int(port.ofport) != -1:
+            if port.ofport != -1:
                 match = self.int_br.ofparser.OFPMatch(in_port=port.ofport)
                 msg = self.int_br.ofparser.OFPFlowMod(
                     self.int_br.datapath,
@@ -1018,6 +1018,13 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def treat_vif_port(self, vif_port, port_id, network_id, network_type,
                        physical_network, segmentation_id, admin_state_up):
         if vif_port:
+            # When this function is called for a port, the port should have
+            # an OVS ofport configured, as only these ports were considered
+            # for being treated. If that does not happen, it is a potential
+            # error condition of which operators should be aware
+            if not vif_port.ofport:
+                LOG.warn(_("VIF port: %s has no ofport configured, and might "
+                           "not be able to transmit"), vif_port.vif_id)
             if admin_state_up:
                 self.port_bound(vif_port, network_id, network_type,
                                 physical_network, segmentation_id)
@@ -1088,6 +1095,14 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
         resync = False
         for device in devices:
             LOG.debug(_("Processing port %s"), device)
+            port = self.int_br.get_vif_port_by_id(device)
+            if not port:
+                # The port has disappeared and should not be processed
+                # There is no need to put the port DOWN in the plugin as
+                # it never went up in the first place
+                LOG.info(_("Port %s was not found on the integration bridge "
+                           "and will therefore not be processed"), device)
+                continue
             try:
                 details = self.plugin_rpc.get_device_details(self.context,
                                                              device,
@@ -1098,7 +1113,6 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                           {'device': device, 'e': e})
                 resync = True
                 continue
-            port = self.int_br.get_vif_port_by_id(details['device'])
             if 'port_id' in details:
                 LOG.info(_("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': details})
@@ -1121,7 +1135,7 @@ class OFANeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
                 LOG.info(_("Configuration for device %s completed."), device)
             else:
                 LOG.warn(_("Device %s not defined on plugin"), device)
-                if (port and int(port.ofport) != -1):
+                if (port and port.ofport != -1):
                     self.port_dead(port)
         return resync
 

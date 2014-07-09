@@ -414,8 +414,11 @@ class TestOFANeutronAgent(OFAAgentTestCase):
         self.assertEqual(expected, actual)
 
     def test_treat_devices_added_returns_true_for_missing_device(self):
-        with mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
-                               side_effect=Exception()):
+        with contextlib.nested(
+            mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
+                              side_effect=Exception()),
+            mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
+                              return_value=mock.Mock())):
             self.assertTrue(self.agent.treat_devices_added_or_updated([{}]))
 
     def _mock_treat_devices_added_updated(self, details, port, func_name):
@@ -449,6 +452,14 @@ class TestOFANeutronAgent(OFAAgentTestCase):
         port.ofport = 1
         self.assertTrue(self._mock_treat_devices_added_updated(
             mock.MagicMock(), port, 'port_dead'))
+
+    def test_treat_devices_added_does_not_process_missing_port(self):
+        with contextlib.nested(
+            mock.patch.object(self.agent.plugin_rpc, 'get_device_details'),
+            mock.patch.object(self.agent.int_br, 'get_vif_port_by_id',
+                              return_value=None)
+        ) as (get_dev_fn, get_vif_func):
+            self.assertFalse(get_dev_fn.called)
 
     def test_treat_devices_added_updated_updates_known_port(self):
         details = mock.MagicMock()
