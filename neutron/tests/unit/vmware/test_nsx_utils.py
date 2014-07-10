@@ -16,11 +16,14 @@
 import mock
 
 from neutron.db import api as db_api
+from neutron.extensions import multiprovidernet as mpnet
+from neutron.extensions import providernet as pnet
 from neutron.openstack.common import uuidutils
 from neutron.plugins.vmware.api_client import exception as api_exc
 from neutron.plugins.vmware.common import exceptions as nsx_exc
 from neutron.plugins.vmware.common import nsx_utils
 from neutron.plugins.vmware.common import utils
+from neutron.plugins.vmware.dbexts import models
 from neutron.plugins.vmware import nsxlib
 from neutron.tests import base
 from neutron.tests.unit import vmware
@@ -305,6 +308,57 @@ class NsxUtilsTestCase(base.BaseTestCase):
                                           module_name='nsxlib.secgroup'),
                         return_value=[]):
             self._verify_get_nsx_sec_profile_id(None)
+
+    def test_convert_to_nsx_transport_zones_no_multiprovider(self):
+        test_net = {'id': 'whatever'}
+        results = nsx_utils.convert_to_nsx_transport_zones(
+            'meh_zone_uuid', test_net,
+            default_transport_type='meh_transport_type')
+        self.assertEqual(1, len(results))
+        result = results[0]
+        self.assertEqual('meh_zone_uuid', result['zone_uuid'])
+        self.assertEqual('meh_transport_type', result['transport_type'])
+
+    def _verify_nsx_transport_zones(self, results):
+        self.assertEqual(2, len(results))
+        result_1 = results[0]
+        self.assertEqual(utils.NetworkTypes.BRIDGE,
+                         result_1['transport_type'])
+        self.assertEqual([{'transport': 66}],
+                         result_1['binding_config']['vlan_translation'])
+        self.assertEqual('whatever_tz_1', result_1['zone_uuid'])
+        result_2 = results[1]
+        self.assertEqual(utils.NetworkTypes.STT,
+                         result_2['transport_type'])
+        self.assertNotIn('binding_config', result_2)
+        self.assertEqual('whatever_tz_2', result_2['zone_uuid'])
+
+    def test_convert_to_nsx_transport_zones_with_bindings(self):
+        binding_1 = models.TzNetworkBinding(
+            'whatever',
+            utils.NetworkTypes.VLAN,
+            'whatever_tz_1',
+            66)
+        binding_2 = models.TzNetworkBinding(
+            'whatever',
+            utils.NetworkTypes.STT,
+            'whatever_tz_2',
+            None)
+        results = nsx_utils.convert_to_nsx_transport_zones(
+            'meh_zone_uuid', None, bindings=[binding_1, binding_2])
+        self._verify_nsx_transport_zones(results)
+
+    def test_convert_to_nsx_transport_zones_with_multiprovider(self):
+        segments = [
+            {pnet.NETWORK_TYPE: utils.NetworkTypes.VLAN,
+             pnet.PHYSICAL_NETWORK: 'whatever_tz_1',
+             pnet.SEGMENTATION_ID: 66},
+            {pnet.NETWORK_TYPE: utils.NetworkTypes.STT,
+             pnet.PHYSICAL_NETWORK: 'whatever_tz_2'},
+        ]
+        results = nsx_utils.convert_to_nsx_transport_zones(
+            'meh_zone_uuid', {'id': 'whatever_net', mpnet.SEGMENTS: segments})
+        self._verify_nsx_transport_zones(results)
 
 
 class ClusterManagementTestCase(nsx_base.NsxlibTestCase):

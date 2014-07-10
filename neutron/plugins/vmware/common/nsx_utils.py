@@ -13,10 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
+from neutron.extensions import multiprovidernet as mpnet
+from neutron.extensions import providernet as pnet
 from neutron.openstack.common import log
 from neutron.plugins.vmware.api_client import client
 from neutron.plugins.vmware.api_client import exception as api_exc
+from neutron.plugins.vmware.common import utils as vmw_utils
 from neutron.plugins.vmware.dbexts import db as nsx_db
 from neutron.plugins.vmware.dbexts import networkgw_db
 from neutron.plugins.vmware import nsx_cluster
@@ -245,3 +249,70 @@ def get_nsx_device_statuses(cluster, tenant_id):
         else:
             LOG.warn(_("Unable to retrieve operational status for "
                        "gateway devices"))
+
+
+def _convert_bindings_to_nsx_transport_zones(bindings):
+    nsx_transport_zones_config = []
+    for binding in bindings:
+        transport_entry = {}
+        if binding.binding_type in [vmw_utils.NetworkTypes.FLAT,
+                                    vmw_utils.NetworkTypes.VLAN]:
+            transport_entry['transport_type'] = (
+                vmw_utils.NetworkTypes.BRIDGE)
+            transport_entry['binding_config'] = {}
+            vlan_id = binding.vlan_id
+            if vlan_id:
+                transport_entry['binding_config'] = (
+                    {'vlan_translation': [{'transport': vlan_id}]})
+        else:
+            transport_entry['transport_type'] = binding.binding_type
+        transport_entry['zone_uuid'] = binding.phy_uuid
+        nsx_transport_zones_config.append(transport_entry)
+    return nsx_transport_zones_config
+
+
+def _convert_segments_to_nsx_transport_zones(segments, default_tz_uuid):
+    nsx_transport_zones_config = []
+    for transport_zone in segments:
+        for value in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
+                      pnet.SEGMENTATION_ID]:
+            if transport_zone.get(value) == attr.ATTR_NOT_SPECIFIED:
+                transport_zone[value] = None
+
+        transport_entry = {}
+        transport_type = transport_zone.get(pnet.NETWORK_TYPE)
+        if transport_type in [vmw_utils.NetworkTypes.FLAT,
+                              vmw_utils.NetworkTypes.VLAN]:
+            transport_entry['transport_type'] = (
+                vmw_utils.NetworkTypes.BRIDGE)
+            transport_entry['binding_config'] = {}
+            vlan_id = transport_zone.get(pnet.SEGMENTATION_ID)
+            if vlan_id:
+                transport_entry['binding_config'] = (
+                    {'vlan_translation': [{'transport': vlan_id}]})
+        else:
+            transport_entry['transport_type'] = transport_type
+        transport_entry['zone_uuid'] = (
+            transport_zone[pnet.PHYSICAL_NETWORK] or default_tz_uuid)
+        nsx_transport_zones_config.append(transport_entry)
+    return nsx_transport_zones_config
+
+
+def convert_to_nsx_transport_zones(
+    default_tz_uuid, network=None, bindings=None,
+    default_transport_type=None):
+
+    # Convert fields from provider request to nsx format
+    if (network and not attr.is_attr_set(
+        network.get(mpnet.SEGMENTS))):
+        return [{"zone_uuid": default_tz_uuid,
+                 "transport_type": default_transport_type}]
+
+    # Convert fields from db to nsx format
+    if bindings:
+        return _convert_bindings_to_nsx_transport_zones(bindings)
+
+    # If we end up here we need to convert multiprovider segments into nsx
+    # transport zone configurations
+    return _convert_segments_to_nsx_transport_zones(
+        network.get(mpnet.SEGMENTS), default_tz_uuid)

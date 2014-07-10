@@ -877,56 +877,10 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def _convert_to_nsx_transport_zones(self, cluster, network=None,
                                         bindings=None):
-        nsx_transport_zones_config = []
-
-        # Convert fields from provider request to nsx format
-        if (network and not attr.is_attr_set(
-            network.get(mpnet.SEGMENTS))):
-            return [{"zone_uuid": cluster.default_tz_uuid,
-                     "transport_type": cfg.CONF.NSX.default_transport_type}]
-
-        # Convert fields from db to nsx format
-        if bindings:
-            transport_entry = {}
-            for binding in bindings:
-                if binding.binding_type in [c_utils.NetworkTypes.FLAT,
-                                            c_utils.NetworkTypes.VLAN]:
-                    transport_entry['transport_type'] = (
-                        c_utils.NetworkTypes.BRIDGE)
-                    transport_entry['binding_config'] = {}
-                    vlan_id = binding.vlan_id
-                    if vlan_id:
-                        transport_entry['binding_config'] = (
-                            {'vlan_translation': [{'transport': vlan_id}]})
-                else:
-                    transport_entry['transport_type'] = binding.binding_type
-                transport_entry['zone_uuid'] = binding.phy_uuid
-                nsx_transport_zones_config.append(transport_entry)
-            return nsx_transport_zones_config
-
-        for transport_zone in network.get(mpnet.SEGMENTS):
-            for value in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
-                          pnet.SEGMENTATION_ID]:
-                if transport_zone.get(value) == attr.ATTR_NOT_SPECIFIED:
-                    transport_zone[value] = None
-
-            transport_entry = {}
-            transport_type = transport_zone.get(pnet.NETWORK_TYPE)
-            if transport_type in [c_utils.NetworkTypes.FLAT,
-                                  c_utils.NetworkTypes.VLAN]:
-                transport_entry['transport_type'] = c_utils.NetworkTypes.BRIDGE
-                transport_entry['binding_config'] = {}
-                vlan_id = transport_zone.get(pnet.SEGMENTATION_ID)
-                if vlan_id:
-                    transport_entry['binding_config'] = (
-                        {'vlan_translation': [{'transport': vlan_id}]})
-            else:
-                transport_entry['transport_type'] = transport_type
-            transport_entry['zone_uuid'] = (
-                transport_zone[pnet.PHYSICAL_NETWORK] or
-                cluster.default_tz_uuid)
-            nsx_transport_zones_config.append(transport_entry)
-        return nsx_transport_zones_config
+        # TODO(salv-orlando): Remove this method and call nsx-utils direct
+        return nsx_utils.convert_to_nsx_transport_zones(
+            cluster.default_tz_uuid, network, bindings,
+            default_transport_type=cfg.CONF.NSX.default_transport_type)
 
     def _convert_to_transport_zones_dict(self, network):
         """Converts the provider request body to multiprovider.
