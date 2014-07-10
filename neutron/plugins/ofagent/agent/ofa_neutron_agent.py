@@ -302,20 +302,6 @@ class OFANeutronAgent(n_rpc.RpcCallback,
                 self._report_state)
             heartbeat.start(interval=report_interval)
 
-    @staticmethod
-    def _get_ofport_name(interface_id):
-        """Convert from neutron device id (uuid) to OpenFlow port name.
-
-        This needs to be synced with ML2 plugin's _device_to_port_id().
-
-        An assumption: The switch uses an OS's interface name as the
-        corresponding OpenFlow port name.
-        NOTE(yamamoto): While it's true for Open vSwitch, it isn't
-        necessarily true everywhere.  For example, LINC uses something
-        like "LogicalSwitch0-Port2".
-        """
-        return "tap" + interface_id[0:11]
-
     def _get_ports(self, br):
         """Generate ports.Port instances for the given bridge."""
         datapath = br.datapath
@@ -330,7 +316,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
 
     def _get_ofport_names(self, br):
         """Return a set of OpenFlow port names for the given bridge."""
-        return set(p.port_name for p in self._get_ports(br))
+        return set(p.normalized_port_name() for p in
+                   self._get_ports(br) if p.is_neutron_port())
 
     def get_net_uuid(self, vif_id):
         for network_id, vlan_mapping in self.local_vlan_map.iteritems():
@@ -353,7 +340,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         # Even if full port details might be provided to this call,
         # they are not used since there is no guarantee the notifications
         # are processed in the same order as the relevant API requests
-        self.updated_ports.add(self._get_ofport_name(port['id']))
+        self.updated_ports.add(ports.get_normalized_port_name(port['id']))
         LOG.debug(_("port_update received port %s"), port['id'])
 
     def tunnel_update(self, context, **kwargs):
@@ -1089,8 +1076,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
 
     def treat_devices_added_or_updated(self, devices):
         resync = False
-        all_ports = dict((p.port_name, p) for p in
-                         self._get_ports(self.int_br))
+        all_ports = dict((p.normalized_port_name(), p) for p in
+                         self._get_ports(self.int_br) if p.is_neutron_port())
         for device in devices:
             LOG.debug(_("Processing port %s"), device)
             if device not in all_ports:
