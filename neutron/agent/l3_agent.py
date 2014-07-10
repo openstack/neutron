@@ -468,7 +468,8 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
             host_namespaces = root_ip.get_namespaces(self.root_helper)
             return set(ns for ns in host_namespaces
-                       if ns.startswith(NS_PREFIX))
+                       if (ns.startswith(NS_PREFIX)
+                           or ns.startswith(SNAT_NS_PREFIX)))
         except RuntimeError:
             LOG.exception(_('RuntimeError in obtaining router list '
                             'for namespace cleanup.'))
@@ -483,6 +484,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         The argument router_ids is the list of ids for known routers.
         """
         ns_to_ignore = set(NS_PREFIX + id for id in router_ids)
+        ns_to_ignore.update(SNAT_NS_PREFIX + id for id in router_ids)
         ns_to_destroy = router_namespaces - ns_to_ignore
         self._destroy_stale_router_namespaces(ns_to_destroy)
 
@@ -542,7 +544,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 ns_ip.del_veth(d.name)
             elif d.name.startswith(FIP_EXT_DEV_PREFIX):
                 # single port from FIP NS to br-ext
-                # TODO(mrsmith): remove br-ext interface
+                # TODO(carl) Where does the port get deleted?
                 LOG.debug('DVR: unplug: %s', d.name)
                 self.driver.unplug(d.name,
                                    bridge=self.conf.external_network_bridge,

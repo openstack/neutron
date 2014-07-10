@@ -1691,6 +1691,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         good_namespace_list = [l3_agent.NS_PREFIX + r['id']
                                for r in router_list]
+        good_namespace_list += [l3_agent.SNAT_NS_PREFIX + r['id']
+                                for r in router_list]
         self.mock_ip.get_namespaces.return_value = (stale_namespace_list +
                                                     good_namespace_list +
                                                     other_namespaces)
@@ -1703,16 +1705,24 @@ class TestBasicRouterOperations(base.BaseTestCase):
         pm.reset_mock()
 
         agent._destroy_router_namespace = mock.MagicMock()
+        agent._destroy_snat_namespace = mock.MagicMock()
         ns_list = agent._list_namespaces()
         agent._cleanup_namespaces(ns_list, [r['id'] for r in router_list])
 
-        # Expect process manager to disable two processes (metadata_proxy
-        # and radvd) per stale namespace.
-        expected_pm_disables = 2 * len(stale_namespace_list)
+        # Expect process manager to disable one radvd per stale namespace
+        expected_pm_disables = len(stale_namespace_list)
+
+        # Expect process manager to disable metadata proxy per qrouter ns
+        qrouters = [n for n in stale_namespace_list
+                    if n.startswith(l3_agent.NS_PREFIX)]
+        expected_pm_disables += len(qrouters)
+
         self.assertEqual(expected_pm_disables, pm.disable.call_count)
         self.assertEqual(agent._destroy_router_namespace.call_count,
-                         len(stale_namespace_list))
-        expected_args = [mock.call(ns) for ns in stale_namespace_list]
+                         len(qrouters))
+        self.assertEqual(agent._destroy_snat_namespace.call_count,
+                         len(stale_namespace_list) - len(qrouters))
+        expected_args = [mock.call(ns) for ns in qrouters]
         agent._destroy_router_namespace.assert_has_calls(expected_args,
                                                          any_order=True)
         self.assertFalse(agent._clean_stale_namespaces)
@@ -1720,7 +1730,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def test_cleanup_namespace(self):
         self.conf.set_override('router_id', None)
         stale_namespaces = [l3_agent.NS_PREFIX + 'foo',
-                            l3_agent.NS_PREFIX + 'bar']
+                            l3_agent.NS_PREFIX + 'bar',
+                            l3_agent.SNAT_NS_PREFIX + 'foo']
         other_namespaces = ['unknown']
 
         self._cleanup_namespace_test(stale_namespaces,
@@ -1730,7 +1741,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
     def test_cleanup_namespace_with_registered_router_ids(self):
         self.conf.set_override('router_id', None)
         stale_namespaces = [l3_agent.NS_PREFIX + 'cccc',
-                            l3_agent.NS_PREFIX + 'eeeee']
+                            l3_agent.NS_PREFIX + 'eeeee',
+                            l3_agent.SNAT_NS_PREFIX + 'fffff']
         router_list = [{'id': 'foo', 'distributed': False},
                        {'id': 'aaaa', 'distributed': False}]
         other_namespaces = ['qdhcp-aabbcc', 'unknown']
