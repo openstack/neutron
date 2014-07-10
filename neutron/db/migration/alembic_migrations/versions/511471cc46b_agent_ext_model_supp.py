@@ -43,6 +43,7 @@ migration_for_plugins = [
     'neutron.plugins.oneconvergence.plugin.OneConvergencePluginV2',
     'neutron.plugins.mlnx.mlnx_plugin.MellanoxEswitchPlugin',
     'neutron.plugins.ml2.plugin.Ml2Plugin',
+    'neutron.plugins.bigswitch.plugin.NeutronRestProxyV2',
 ]
 
 from alembic import op
