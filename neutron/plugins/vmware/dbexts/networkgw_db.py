@@ -19,6 +19,7 @@ from sqlalchemy.orm import exc as sa_orm_exc
 
 from neutron.api.v2 import attributes
 from neutron.common import exceptions
+from neutron.common import utils
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.openstack.common import log as logging
@@ -199,13 +200,15 @@ class NetworkGatewayMixin(networkgw.NetworkGatewayPluginBase):
                                connection_attrs))
         seg_type = network_mapping_info.get(SEGMENTATION_TYPE)
         seg_id = network_mapping_info.get(SEGMENTATION_ID)
-        if not seg_type and seg_id:
-            msg = _("In order to specify a segmentation id the "
-                    "segmentation type must be specified as well")
-            raise exceptions.InvalidInput(error_message=msg)
-        elif seg_type and seg_type.lower() == 'flat' and seg_id:
+        # The NSX plugin accepts 0 as a valid vlan tag
+        seg_id_valid = seg_id == 0 or utils.is_valid_vlan_tag(seg_id)
+        if seg_type.lower() == 'flat' and seg_id:
             msg = _("Cannot specify a segmentation id when "
                     "the segmentation type is flat")
+            raise exceptions.InvalidInput(error_message=msg)
+        elif (seg_type.lower() == 'vlan' and not seg_id_valid):
+            msg = _("Invalid segmentation id (%d) for "
+                    "vlan segmentation type") % seg_id
             raise exceptions.InvalidInput(error_message=msg)
         return network_id
 

@@ -652,8 +652,11 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def test_connect_and_disconnect_network_no_seg_type(self):
         self._test_connect_and_disconnect_network(None)
 
-    def test_connect_and_disconnect_network_with_segmentation_id(self):
+    def test_connect_and_disconnect_network_vlan_with_segmentation_id(self):
         self._test_connect_and_disconnect_network('vlan', 999)
+
+    def test_connect_and_disconnect_network_vlan_without_segmentation_id(self):
+        self._test_connect_and_disconnect_network('vlan')
 
     def test_connect_network_multiple_times(self):
         with self._network_gateway() as gw:
@@ -714,6 +717,22 @@ class NetworkGatewayDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                      gw[self.gw_resource]['id'],
                                      net_1['network']['id'],
                                      'vlan', 555)
+
+    def test_connect_network_vlan_invalid_seg_id_returns_400(self):
+        with self._network_gateway() as gw:
+            with self.network() as net:
+                # above upper bound
+                self._gateway_action('connect',
+                                     gw[self.gw_resource]['id'],
+                                     net['network']['id'],
+                                     'vlan', 4095,
+                                     expected_status=exc.HTTPBadRequest.code)
+                # below lower bound (0 is valid for NSX plugin)
+                self._gateway_action('connect',
+                                     gw[self.gw_resource]['id'],
+                                     net['network']['id'],
+                                     'vlan', -1,
+                                     expected_status=exc.HTTPBadRequest.code)
 
     def test_connect_invalid_network_returns_400(self):
         with self._network_gateway() as gw:
