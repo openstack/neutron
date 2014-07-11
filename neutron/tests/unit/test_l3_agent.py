@@ -121,7 +121,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def setUp(self):
         super(TestBasicRouterOperations, self).setUp()
-        self.conf = cfg.ConfigOpts()
+        self.conf = agent_config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(l3_agent.L3NATAgent.OPTS)
         agent_config.register_interface_driver_opts_helper(self.conf)
@@ -140,6 +140,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.utils_exec_p = mock.patch(
             'neutron.agent.linux.utils.execute')
         self.utils_exec = self.utils_exec_p.start()
+
+        self.utils_replace_file_p = mock.patch(
+            'neutron.agent.linux.utils.replace_file')
+        self.utils_replace_file = self.utils_replace_file_p.start()
 
         self.external_process_p = mock.patch(
             'neutron.agent.linux.external_process.ProcessManager')
@@ -441,6 +445,38 @@ class TestBasicRouterOperations(base.BaseTestCase):
             else:
                 self.assertIn(r.rule, expected_rules)
 
+    @staticmethod
+    def _router_append_interface(router, count=1, ip_version=4,
+                                 ra_mode=None, addr_mode=None):
+        if ip_version == 4:
+            ip_pool = '35.4.%i.4'
+            cidr_pool = '35.4.%i.0/24'
+            gw_pool = '35.4.%i.1'
+        elif ip_version == 6:
+            ip_pool = 'fd01:%x::6'
+            cidr_pool = 'fd01:%x::/64'
+            gw_pool = 'fd01:%x::1'
+        else:
+            raise ValueError("Invalid ip_version: %s" % ip_version)
+
+        interfaces = router[l3_constants.INTERFACE_KEY]
+        current = sum(
+            [netaddr.IPNetwork(p['subnet']['cidr']).version == ip_version
+             for p in interfaces])
+
+        for i in range(current, current + count):
+            interfaces.append(
+                {'id': _uuid(),
+                 'network_id': _uuid(),
+                 'admin_state_up': True,
+                 'fixed_ips': [{'ip_address': ip_pool % i,
+                                'subnet_id': _uuid()}],
+                 'mac_address': 'ca:fe:de:ad:be:ef',
+                 'subnet': {'cidr': cidr_pool % i,
+                            'gateway_ip': gw_pool % i,
+                            'ipv6_ra_mode': ra_mode,
+                            'ipv6_address_mode': addr_mode}})
+
     def _prepare_router_data(self, ip_version=4,
                              enable_snat=None, num_internal_ports=1):
         if ip_version == 4:
@@ -451,6 +487,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
             ip_addr = 'fd00::4'
             cidr = 'fd00::/64'
             gateway_ip = 'fd00::1'
+        else:
+            raise ValueError("Invalid ip_version: %s" % ip_version)
 
         router_id = _uuid()
         ex_gw_port = {'id': _uuid(),
@@ -459,22 +497,15 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                      'subnet_id': _uuid()}],
                       'subnet': {'cidr': cidr,
                                  'gateway_ip': gateway_ip}}
-        int_ports = []
-        for i in range(num_internal_ports):
-            int_ports.append({'id': _uuid(),
-                              'network_id': _uuid(),
-                              'admin_state_up': True,
-                              'fixed_ips': [{'ip_address': '35.4.%s.4' % i,
-                                             'subnet_id': _uuid()}],
-                              'mac_address': 'ca:fe:de:ad:be:ef',
-                              'subnet': {'cidr': '35.4.%s.0/24' % i,
-                                         'gateway_ip': '35.4.%s.1' % i}})
 
         router = {
             'id': router_id,
-            l3_constants.INTERFACE_KEY: int_ports,
+            l3_constants.INTERFACE_KEY: [],
             'routes': [],
             'gw_port': ex_gw_port}
+        self._router_append_interface(router, count=num_internal_ports,
+                                      ip_version=ip_version)
+
         if enable_snat is not None:
             router['enable_snat'] = enable_snat
         return router
@@ -725,15 +756,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.process_router(ri)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
         # Add an interface and reprocess
-        router[l3_constants.INTERFACE_KEY].append(
-            {'id': _uuid(),
-             'network_id': _uuid(),
-             'admin_state_up': True,
-             'fixed_ips': [{'ip_address': '35.4.1.4',
-                            'subnet_id': _uuid()}],
-             'mac_address': 'ca:fe:de:ad:be:ef',
-             'subnet': {'cidr': '35.4.1.0/24',
-                        'gateway_ip': '35.4.1.1'}})
+        self._router_append_interface(router)
         # Reassign the router object to RouterInfo
         ri.router = router
         agent.process_router(ri)
@@ -772,9 +795,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
             self.assertFalse(external_gateway_nat_rules.called)
             self.assertEqual(orig_nat_rules, new_nat_rules)
 
-    def test_process_router_ipv6_interface_added(self):
+    def _process_router_ipv6_interface_added(
+            self, router, ra_mode=None, addr_mode=None):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = self._prepare_router_data()
         ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
                                  self.conf.use_namespaces, router=router)
         agent.external_gateway_added = mock.Mock()
@@ -782,23 +805,53 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.process_router(ri)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
         # Add an IPv6 interface and reprocess
-        router[l3_constants.INTERFACE_KEY].append(
-            {'id': _uuid(),
-             'network_id': _uuid(),
-             'admin_state_up': True,
-             'fixed_ips': [{'ip_address': 'fd00::2',
-                            'subnet_id': _uuid()}],
-             'mac_address': 'ca:fe:de:ad:be:ef',
-             'subnet': {'cidr': 'fd00::/64',
-                        'gateway_ip': 'fd00::1'}})
+        self._router_append_interface(router, count=1, ip_version=6,
+                                      ra_mode=ra_mode, addr_mode=addr_mode)
         # Reassign the router object to RouterInfo
         ri.router = router
         agent.process_router(ri)
-        # For some reason set logic does not work well with
-        # IpTablesRule instances
+        # IPv4 NAT rules should not be changed by adding an IPv6 interface
         nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
                            if r not in orig_nat_rules]
         self.assertFalse(nat_rules_delta)
+        return ri
+
+    def _expected_call_lookup_ri_process(self, ri, process):
+        """Expected call if a process is looked up in a router instance."""
+        return [mock.call(cfg.CONF,
+                          ri.router['id'],
+                          self.conf.root_helper,
+                          ri.ns_name,
+                          process)]
+
+    def _assert_ri_process_enabled(self, ri, process):
+        """Verify that process was enabled for a router instance."""
+        expected_calls = self._expected_call_lookup_ri_process(ri, process)
+        expected_calls.append(mock.call().enable(mock.ANY, True))
+        self.assertEqual(expected_calls, self.external_process.mock_calls)
+
+    def _assert_ri_process_disabled(self, ri, process):
+        """Verify that process was disabled for a router instance."""
+        expected_calls = self._expected_call_lookup_ri_process(ri, process)
+        expected_calls.append(mock.call().disable())
+        self.assertEqual(expected_calls, self.external_process.mock_calls)
+
+    def test_process_router_ipv6_interface_added(self):
+        router = self._prepare_router_data()
+        ri = self._process_router_ipv6_interface_added(router)
+        self._assert_ri_process_enabled(ri, 'radvd')
+        # Expect radvd configured without prefix
+        self.assertNotIn('prefix',
+                         self.utils_replace_file.call_args[0][1].split())
+
+    def test_process_router_ipv6_slaac_interface_added(self):
+        router = self._prepare_router_data()
+        ri = self._process_router_ipv6_interface_added(
+            router, ra_mode=l3_constants.IPV6_SLAAC)
+        self._assert_ri_process_enabled(ri, 'radvd')
+        # Expect radvd configured with prefix
+        self.assertIn('prefix',
+                      self.utils_replace_file.call_args[0][1].split())
 
     def test_process_router_ipv6v4_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -810,28 +863,12 @@ class TestBasicRouterOperations(base.BaseTestCase):
         agent.process_router(ri)
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
         # Add an IPv4 and IPv6 interface and reprocess
-        router[l3_constants.INTERFACE_KEY].append(
-            {'id': _uuid(),
-             'network_id': _uuid(),
-             'admin_state_up': True,
-             'fixed_ips': [{'ip_address': '35.4.1.4',
-                            'subnet_id': _uuid()}],
-             'mac_address': 'ca:fe:de:ad:be:ef',
-             'subnet': {'cidr': '35.4.1.0/24',
-                        'gateway_ip': '35.4.1.1'}})
-
-        router[l3_constants.INTERFACE_KEY].append(
-            {'id': _uuid(),
-             'network_id': _uuid(),
-             'admin_state_up': True,
-             'fixed_ips': [{'ip_address': 'fd00::2',
-                            'subnet_id': _uuid()}],
-             'mac_address': 'ca:fe:de:ad:be:ef',
-             'subnet': {'cidr': 'fd00::/64',
-                        'gateway_ip': 'fd00::1'}})
+        self._router_append_interface(router, count=1, ip_version=4)
+        self._router_append_interface(router, count=1, ip_version=6)
         # Reassign the router object to RouterInfo
         ri.router = router
         agent.process_router(ri)
+        self._assert_ri_process_enabled(ri, 'radvd')
         # For some reason set logic does not work well with
         # IpTablesRule instances
         nat_rules_delta = [r for r in ri.iptables_manager.ipv4['nat'].rules
@@ -861,6 +898,25 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self._verify_snat_rules(nat_rules_delta, router, negate=True)
         # send_arp is called both times process_router is called
         self.assertEqual(self.send_arp.call_count, 2)
+
+    def test_process_router_ipv6_interface_removed(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = self._prepare_router_data()
+        ri = l3_agent.RouterInfo(router['id'], self.conf.root_helper,
+                                 self.conf.use_namespaces, router=router)
+        agent.external_gateway_added = mock.Mock()
+        ri.router = router
+        agent.process_router(ri)
+        # Add an IPv6 interface and reprocess
+        self._router_append_interface(router, count=1, ip_version=6)
+        agent.process_router(ri)
+        self._assert_ri_process_enabled(ri, 'radvd')
+        # Reset the calls so we can check for disable radvd
+        self.external_process.reset_mock()
+        # Remove the IPv6 interface and reprocess
+        del router[l3_constants.INTERFACE_KEY][1]
+        agent.process_router(ri)
+        self._assert_ri_process_disabled(ri, 'radvd')
 
     def test_process_router_internal_network_added_unexpected_error(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1358,7 +1414,10 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ns_list = agent._list_namespaces()
         agent._cleanup_namespaces(ns_list, [r['id'] for r in router_list])
 
-        self.assertEqual(pm.disable.call_count, len(stale_namespace_list))
+        # Expect process manager to disable two processes (metadata_proxy
+        # and radvd) per stale namespace.
+        expected_pm_disables = 2 * len(stale_namespace_list)
+        self.assertEqual(expected_pm_disables, pm.disable.call_count)
         self.assertEqual(agent._destroy_router_namespace.call_count,
                          len(stale_namespace_list))
         expected_args = [mock.call(ns) for ns in stale_namespace_list]

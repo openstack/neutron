@@ -29,6 +29,7 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import ovs_lib  # noqa
+from neutron.agent.linux import ra
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as l3_constants
@@ -427,6 +428,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             if self.conf.enable_metadata_proxy:
                 self._destroy_metadata_proxy(ns[len(NS_PREFIX):], ns)
 
+            ra.disable_ipv6_ra(ns[len(NS_PREFIX):], ns, self.root_helper)
             try:
                 self._destroy_router_namespace(ns)
             except RuntimeError:
@@ -579,15 +581,31 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                      p['id'] not in existing_port_ids]
         old_ports = [p for p in ri.internal_ports if
                      p['id'] not in current_port_ids]
+
+        new_ipv6_port = False
+        old_ipv6_port = False
         for p in new_ports:
             self._set_subnet_info(p)
             self.internal_network_added(ri, p['network_id'], p['id'],
                                         p['ip_cidr'], p['mac_address'])
             ri.internal_ports.append(p)
+            if (not new_ipv6_port and
+                    netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
+                new_ipv6_port = True
 
         for p in old_ports:
             self.internal_network_removed(ri, p['id'], p['ip_cidr'])
             ri.internal_ports.remove(p)
+            if (not old_ipv6_port and
+                    netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
+                old_ipv6_port = True
+
+        if new_ipv6_port or old_ipv6_port:
+            ra.enable_ipv6_ra(ri.router_id,
+                              ri.ns_name,
+                              internal_ports,
+                              self.get_internal_device_name,
+                              self.root_helper)
 
         existing_devices = self._get_existing_devices(ri)
         current_internal_devs = set([n for n in existing_devices

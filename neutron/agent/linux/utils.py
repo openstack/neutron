@@ -18,6 +18,7 @@
 import fcntl
 import os
 import shlex
+import shutil
 import socket
 import struct
 import tempfile
@@ -126,3 +127,51 @@ def find_child_pids(pid):
                 ctxt.reraise = False
                 return []
     return [x.strip() for x in raw_pids.split('\n') if x.strip()]
+
+
+def _get_conf_dir(cfg_root, uuid, ensure_conf_dir):
+    confs_dir = os.path.abspath(os.path.normpath(cfg_root))
+    conf_dir = os.path.join(confs_dir, uuid)
+    if ensure_conf_dir:
+        if not os.path.isdir(conf_dir):
+            os.makedirs(conf_dir, 0o755)
+    return conf_dir
+
+
+def get_conf_file_name(cfg_root, uuid, cfg_file, ensure_conf_dir=False):
+    """Returns the file name for a given kind of config file."""
+    conf_dir = _get_conf_dir(cfg_root, uuid, ensure_conf_dir)
+    return os.path.join(conf_dir, cfg_file)
+
+
+def get_value_from_conf_file(cfg_root, uuid, cfg_file, converter=None):
+    """A helper function to read a value from one of a config file."""
+    file_name = get_conf_file_name(cfg_root, uuid, cfg_file)
+    msg = _('Error while reading %s')
+
+    try:
+        with open(file_name, 'r') as f:
+            try:
+                return converter and converter(f.read()) or f.read()
+            except ValueError:
+                msg = _('Unable to convert value in %s')
+    except IOError:
+        msg = _('Unable to access %s')
+
+    LOG.debug(msg % file_name)
+    return None
+
+
+def remove_conf_files(cfg_root, uuid):
+    conf_dir = _get_conf_dir(cfg_root, uuid, False)
+    shutil.rmtree(conf_dir, ignore_errors=True)
+
+
+def remove_conf_file(cfg_root, uuid, cfg_file):
+    """Remove a config file. Remove the directory if this is the last file."""
+    conf_file = get_conf_file_name(cfg_root, uuid, cfg_file)
+    if os.path.exists(conf_file):
+        os.unlink(conf_file)
+        conf_dir = _get_conf_dir(cfg_root, uuid, False)
+        if not os.listdir(conf_dir):
+            shutil.rmtree(conf_dir, ignore_errors=True)
