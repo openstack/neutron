@@ -57,7 +57,7 @@ def upgrade(active_plugins=None, options=None):
         return
 
     op.add_column('routers', sa.Column('enable_snat', sa.Boolean(),
-                                       nullable=False, default=True))
+                                       nullable=False, server_default="1"))
     # Set enable_snat to True for existing routers
     op.execute("UPDATE routers SET enable_snat=True")
 
