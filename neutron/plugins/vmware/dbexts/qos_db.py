@@ -16,6 +16,7 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
+from sqlalchemy import sql
 
 from neutron.api.v2 import attributes as attr
 from neutron.db import db_base_plugin_v2
@@ -31,7 +32,7 @@ LOG = log.getLogger(__name__)
 
 class QoSQueue(model_base.BASEV2, models_v2.HasId, models_v2.HasTenant):
     name = sa.Column(sa.String(255))
-    default = sa.Column(sa.Boolean, default=False)
+    default = sa.Column(sa.Boolean, default=False, server_default=sql.false())
     min = sa.Column(sa.Integer, nullable=False)
     max = sa.Column(sa.Integer, nullable=True)
     qos_marking = sa.Column(sa.Enum('untrusted', 'trusted',

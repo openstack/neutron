@@ -16,6 +16,7 @@
 # @author: Arvind Somya (asomya@cisco.com), Cisco Systems Inc.
 
 import sqlalchemy as sa
+from sqlalchemy import sql
 
 from neutron.db import api as db_api
 from neutron.db import model_base
@@ -31,7 +32,8 @@ class NetworkEPG(model_base.BASEV2):
     network_id = sa.Column(sa.String(255), nullable=False, primary_key=True)
     epg_id = sa.Column(sa.String(64), nullable=False)
     segmentation_id = sa.Column(sa.String(64), nullable=False)
-    provider = sa.Column(sa.Boolean, default=False, nullable=False)
+    provider = sa.Column(sa.Boolean, default=False, server_default=sql.false(),
+                         nullable=False)
 
 
 class PortProfile(model_base.BASEV2):

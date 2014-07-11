@@ -14,6 +14,7 @@
 #
 
 import sqlalchemy as sa
+from sqlalchemy import sql
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
@@ -26,7 +27,8 @@ EXTERNAL_GW_INFO = l3.EXTERNAL_GW_INFO
 
 # Modify the Router Data Model adding the enable_snat attribute
 setattr(l3_db.Router, 'enable_snat',
-        sa.Column(sa.Boolean, default=True, nullable=False))
+        sa.Column(sa.Boolean, default=True, server_default=sql.true(),
+                  nullable=False))
 
 
 class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
