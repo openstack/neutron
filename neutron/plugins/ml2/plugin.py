@@ -939,6 +939,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._bind_port_if_needed(port_context)
 
     def update_port_status(self, context, port_id, status, host=None):
+        """
+        Returns port_id (non-truncated uuid) if the port exists.
+        Otherwise returns None.
+        """
         updated = False
         session = context.session
         # REVISIT: Serialize this operation with a semaphore to
@@ -951,7 +955,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if not port:
                 LOG.warning(_("Port %(port)s updated up by agent not found"),
                             {'port': port_id})
-                return False
+                return None
             if port.status != status:
                 original_port = self._make_port_dict(port)
                 port.status = status
@@ -967,7 +971,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if updated:
             self.mechanism_manager.update_port_postcommit(mech_context)
 
-        return True
+        return port['id']
 
     def port_bound_to_host(self, context, port_id, host):
         port_host = db.get_port_binding_host(port_id)
