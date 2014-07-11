@@ -48,7 +48,6 @@ class EventletApiRequest(request.ApiRequest):
 
     def __init__(self, client_obj, url, method="GET", body=None,
                  headers=None,
-                 request_timeout=request.DEFAULT_REQUEST_TIMEOUT,
                  retries=request.DEFAULT_RETRIES,
                  auto_login=True,
                  redirects=request.DEFAULT_REDIRECTS,
@@ -59,7 +58,7 @@ class EventletApiRequest(request.ApiRequest):
         self._method = method
         self._body = body
         self._headers = headers or {}
-        self._request_timeout = request_timeout
+        self._request_timeout = http_timeout * retries
         self._retries = retries
         self._auto_login = auto_login
         self._redirects = redirects
@@ -109,7 +108,7 @@ class EventletApiRequest(request.ApiRequest):
         '''Return a copy of this request instance.'''
         return EventletApiRequest(
             self._api_client, self._url, self._method, self._body,
-            self._headers, self._request_timeout, self._retries,
+            self._headers, self._retries,
             self._auto_login, self._redirects, self._http_timeout)
 
     def _run(self):
@@ -220,14 +219,13 @@ class GenericRequestEventlet(EventletApiRequest):
 
     def __init__(self, client_obj, method, url, body, content_type,
                  auto_login=False,
-                 request_timeout=request.DEFAULT_REQUEST_TIMEOUT,
                  http_timeout=request.DEFAULT_HTTP_TIMEOUT,
                  retries=request.DEFAULT_RETRIES,
                  redirects=request.DEFAULT_REDIRECTS):
         headers = {"Content-Type": content_type}
         super(GenericRequestEventlet, self).__init__(
             client_obj, url, method, body, headers,
-            request_timeout=request_timeout, retries=retries,
+            retries=retries,
             auto_login=auto_login, redirects=redirects,
             http_timeout=http_timeout)
 

@@ -45,7 +45,6 @@ class NSXClusterTest(base.BaseTestCase):
                     'default_l2_gw_service_uuid': uuidutils.generate_uuid(),
                     'nsx_user': 'foo',
                     'nsx_password': 'bar',
-                    'req_timeout': 45,
                     'http_timeout': 25,
                     'retries': 7,
                     'redirects': 23,
@@ -89,7 +88,6 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertEqual(cluster.nsx_password, 'bar')
 
     def _assert_extra_options(self, cluster):
-        self.assertEqual(14, cluster.req_timeout)
         self.assertEqual(13, cluster.http_timeout)
         self.assertEqual(12, cluster.redirects)
         self.assertEqual(11, cluster.retries)
@@ -124,8 +122,7 @@ class ConfigurationTest(base.BaseTestCase):
         self.assertIsNone(cfg.CONF.default_tz_uuid)
         self.assertEqual('admin', cfg.CONF.nsx_user)
         self.assertEqual('admin', cfg.CONF.nsx_password)
-        self.assertEqual(30, cfg.CONF.req_timeout)
-        self.assertEqual(30, cfg.CONF.http_timeout)
+        self.assertEqual(75, cfg.CONF.http_timeout)
         self.assertEqual(2, cfg.CONF.retries)
         self.assertEqual(2, cfg.CONF.redirects)
         self.assertIsNone(cfg.CONF.nsx_controllers)
@@ -247,7 +244,6 @@ class OldNVPConfigurationTest(base.BaseTestCase):
         cluster = plugin.cluster
         # Verify old nvp_* params have been fully parsed
         self._assert_required_options(cluster)
-        self.assertEqual(4, cluster.req_timeout)
         self.assertEqual(3, cluster.http_timeout)
         self.assertEqual(2, cluster.retries)
         self.assertEqual(2, cluster.redirects)

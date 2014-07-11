@@ -282,7 +282,6 @@ class SyncTestCase(base.BaseTestCase):
         self.fake_cluster.api_client = client.NsxApiClient(
             ('1.1.1.1', '999', True),
             self.fake_cluster.nsx_user, self.fake_cluster.nsx_password,
-            request_timeout=self.fake_cluster.req_timeout,
             http_timeout=self.fake_cluster.http_timeout,
             retries=self.fake_cluster.retries,
             redirects=self.fake_cluster.redirects)

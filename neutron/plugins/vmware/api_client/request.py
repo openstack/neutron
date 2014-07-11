@@ -30,7 +30,6 @@ from neutron.plugins.vmware import api_client
 
 LOG = logging.getLogger(__name__)
 
-DEFAULT_REQUEST_TIMEOUT = 30
 DEFAULT_HTTP_TIMEOUT = 30
 DEFAULT_RETRIES = 2
 DEFAULT_REDIRECTS = 2

@@ -35,12 +35,9 @@ class NsxApiClient(eventlet_client.EventletApiClient):
                  gen_timeout=base.GENERATION_ID_TIMEOUT,
                  use_https=True,
                  connect_timeout=base.DEFAULT_CONNECT_TIMEOUT,
-                 request_timeout=30, http_timeout=10, retries=2, redirects=2):
+                 http_timeout=75, retries=2, redirects=2):
         '''Constructor. Adds the following:
 
-        :param request_timeout: all operations (including retries, redirects
-            from unresponsive controllers, etc) should finish within this
-            timeout.
         :param http_timeout: how long to wait before aborting an
             unresponsive controller (and allow for retries to another
             controller in the cluster)
@@ -53,7 +50,7 @@ class NsxApiClient(eventlet_client.EventletApiClient):
             gen_timeout=gen_timeout, use_https=use_https,
             connect_timeout=connect_timeout)
 
-        self._request_timeout = request_timeout
+        self._request_timeout = http_timeout * retries
         self._http_timeout = http_timeout
         self._retries = retries
         self._redirects = redirects
@@ -85,7 +82,6 @@ class NsxApiClient(eventlet_client.EventletApiClient):
 
         g = eventlet_request.GenericRequestEventlet(
             self, method, url, body, content_type, auto_login=True,
-            request_timeout=self._request_timeout,
             http_timeout=self._http_timeout,
             retries=self._retries, redirects=self._redirects)
         g.start()
