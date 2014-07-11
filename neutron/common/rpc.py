@@ -16,9 +16,12 @@
 
 from oslo.config import cfg
 from oslo import messaging
+from oslo.messaging.rpc import dispatcher as rpc_dispatcher
 from oslo.messaging import serializer as om_serializer
+from oslo.messaging import server as msg_server
 
 from neutron.common import exceptions
+from neutron.common import log
 from neutron import context
 from neutron.openstack.common import log as logging
 from neutron.openstack.common import service
@@ -90,11 +93,8 @@ def get_client(target, version_cap=None, serializer=None):
 def get_server(target, endpoints, serializer=None):
     assert TRANSPORT is not None
     serializer = RequestContextSerializer(serializer)
-    return messaging.get_rpc_server(TRANSPORT,
-                                    target,
-                                    endpoints,
-                                    executor='eventlet',
-                                    serializer=serializer)
+    dispatcher = RPCDispatcher(target, endpoints, serializer)
+    return msg_server.MessageHandlingServer(TRANSPORT, dispatcher, 'eventlet')
 
 
 def get_notifier(service=None, host=None, publisher_id=None):
@@ -102,6 +102,13 @@ def get_notifier(service=None, host=None, publisher_id=None):
     if not publisher_id:
         publisher_id = "%s.%s" % (service, host or cfg.CONF.host)
     return NOTIFIER.prepare(publisher_id=publisher_id)
+
+
+class RPCDispatcher(rpc_dispatcher.RPCDispatcher):
+    def __call__(self, incoming):
+        LOG.debug('Incoming RPC: ctxt:%s message:%s', incoming.ctxt,
+                  incoming.message)
+        return super(RPCDispatcher, self).__call__(incoming)
 
 
 class RequestContextSerializer(om_serializer.Serializer):
@@ -156,13 +163,16 @@ class RpcProxy(object):
                 'namespace': self.RPC_API_NAMESPACE,
                 'args': kwargs}
 
+    @log.log
     def call(self, context, msg, **kwargs):
         return self.__call_rpc_method(
             context, msg, rpc_method='call', **kwargs)
 
+    @log.log
     def cast(self, context, msg, **kwargs):
         self.__call_rpc_method(context, msg, rpc_method='cast', **kwargs)
 
+    @log.log
     def fanout_cast(self, context, msg, **kwargs):
         kwargs['fanout'] = True
         self.__call_rpc_method(context, msg, rpc_method='cast', **kwargs)
