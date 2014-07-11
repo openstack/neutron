@@ -1316,10 +1316,10 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                                        constants.DEFAULT_OVSDBMON_RESPAWN)
         mock_loop.assert_called_once_with(polling_manager=mock.ANY)
 
-    def test__setup_tunnel_port_error_negative(self):
+    def test_setup_tunnel_port_invalid_ofport(self):
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'add_tunnel_port',
-                              return_value='-1'),
+                              return_value=ovs_lib.INVALID_OFPORT),
             mock.patch.object(ovs_neutron_agent.LOG, 'error')
         ) as (add_tunnel_port_fn, log_error_fn):
             ofport = self.agent._setup_tunnel_port(
@@ -1332,27 +1332,7 @@ class TestOvsNeutronAgent(base.BaseTestCase):
                 {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
             self.assertEqual(ofport, 0)
 
-    def test__setup_tunnel_port_error_not_int(self):
-        with contextlib.nested(
-            mock.patch.object(self.agent.tun_br, 'add_tunnel_port',
-                              return_value=None),
-            mock.patch.object(ovs_neutron_agent.LOG, 'exception'),
-            mock.patch.object(ovs_neutron_agent.LOG, 'error')
-        ) as (add_tunnel_port_fn, log_exc_fn, log_error_fn):
-            ofport = self.agent._setup_tunnel_port(
-                self.agent.tun_br, 'gre-1', 'remote_ip', p_const.TYPE_GRE)
-            add_tunnel_port_fn.assert_called_once_with(
-                'gre-1', 'remote_ip', self.agent.local_ip, p_const.TYPE_GRE,
-                self.agent.vxlan_udp_port, self.agent.dont_fragment)
-            log_exc_fn.assert_called_once_with(
-                _("ofport should have a value that can be "
-                  "interpreted as an integer"))
-            log_error_fn.assert_called_once_with(
-                _("Failed to set-up %(type)s tunnel port to %(ip)s"),
-                {'type': p_const.TYPE_GRE, 'ip': 'remote_ip'})
-            self.assertEqual(ofport, 0)
-
-    def test__setup_tunnel_port_error_negative_df_disabled(self):
+    def test_setup_tunnel_port_error_negative_df_disabled(self):
         with contextlib.nested(
             mock.patch.object(self.agent.tun_br, 'add_tunnel_port',
                               return_value='-1'),

@@ -363,11 +363,16 @@ class OVS_Lib_Test(base.BaseTestCase):
                           "actions=normal",
             root_helper=self.root_helper)
 
+    def _set_timeout(self, val):
+        self.TO = '--timeout=%d' % val
+        self.br.vsctl_timeout = val
+
     def _test_get_port_ofport(self, ofport, expected_result):
         pname = "tap99"
+        self._set_timeout(0)  # Don't waste precious time retrying
         self.execute.return_value = ofport
         self.assertEqual(self.br.get_port_ofport(pname), expected_result)
-        self.execute.assert_called_once_with(
+        self.execute.assert_called_with(
             ["ovs-vsctl", self.TO, "get", "Interface", pname, "ofport"],
             root_helper=self.root_helper)
 
@@ -379,6 +384,10 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_get_port_ofport_returns_invalid_ofport_for_none(self):
         self._test_get_port_ofport(None, ovs_lib.INVALID_OFPORT)
+
+    def test_get_port_ofport_returns_invalid_for_invalid(self):
+        self._test_get_port_ofport(ovs_lib.INVALID_OFPORT,
+                                   ovs_lib.INVALID_OFPORT)
 
     def test_get_datapath_id(self):
         datapath_id = '"0000b67f4fbcc149"'
@@ -539,7 +548,8 @@ class OVS_Lib_Test(base.BaseTestCase):
         ofport = "6"
 
         # Each element is a tuple of (expected mock call, return_value)
-        command = ["ovs-vsctl", self.TO, "add-port", self.BR_NAME, pname]
+        command = ["ovs-vsctl", self.TO, "--", "--may-exist", "add-port",
+                   self.BR_NAME, pname]
         command.extend(["--", "set", "Interface", pname])
         command.extend(["type=patch", "options:peer=" + peer])
         expected_calls_and_values = [
