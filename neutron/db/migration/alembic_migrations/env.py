@@ -18,8 +18,9 @@ from logging import config as logging_config
 
 from alembic import context
 from oslo.config import cfg
+from oslo.db.sqlalchemy import session
 import sqlalchemy as sa
-from sqlalchemy import create_engine, event, pool
+from sqlalchemy import event
 
 from neutron.db import model_base
 from neutron.openstack.common import importutils
@@ -96,10 +97,7 @@ def run_migrations_online():
 
     """
     set_mysql_engine()
-
-    engine = create_engine(
-        neutron_config.database.connection,
-        poolclass=pool.NullPool)
+    engine = session.create_engine(neutron_config.database.connection)
 
     connection = engine.connect()
     context.configure(

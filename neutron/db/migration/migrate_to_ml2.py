@@ -60,6 +60,7 @@ To manually test migration from ovs to ml2 with devstack:
 
 import argparse
 
+from oslo.db.sqlalchemy import session
 import sqlalchemy as sa
 
 from neutron.extensions import portbindings
@@ -126,7 +127,7 @@ class BaseMigrateToMl2_Icehouse(object):
 
     def __call__(self, connection_url, save_tables=False, tunnel_type=None,
                  vxlan_udp_port=None):
-        engine = sa.create_engine(connection_url)
+        engine = session.create_engine(connection_url)
         metadata = sa.MetaData()
         check_db_schema_version(engine, metadata)
 
