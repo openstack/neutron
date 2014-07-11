@@ -14,14 +14,12 @@
 #    under the License.
 
 import random
-import weakref
 
 import netaddr
 from oslo.config import cfg
 from sqlalchemy import event
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
-from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
 from neutron.common import constants

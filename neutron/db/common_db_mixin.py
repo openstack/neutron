@@ -15,12 +15,10 @@
 
 import weakref
 
-from oslo.config import cfg
 from sqlalchemy import sql
 
 from neutron.common import exceptions as n_exc
 from neutron.db import sqlalchemyutils
-from neutron.plugins.common import constants as service_constants
 
 
 class CommonDbMixin(object):
