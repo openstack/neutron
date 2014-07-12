@@ -720,6 +720,7 @@ def add_vm_network(db_session,
             network_id=network_id,
             port_count=port_count)
         db_session.add(vm_network)
+        return vm_network
 
 
 def update_vm_network_port_count(db_session, name, port_count):
