@@ -125,7 +125,7 @@ class NetworkProfile(model_base.BASEV2, models_v2.HasId):
     sub_type = sa.Column(sa.String(255))
     segment_range = sa.Column(sa.String(255))
     multicast_ip_index = sa.Column(sa.Integer, default=0,
-                                   server_default=sql.false())
+                                   server_default='0')
     multicast_ip_range = sa.Column(sa.String(255))
     physical_network = sa.Column(sa.String(255))
 
