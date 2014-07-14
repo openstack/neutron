@@ -972,6 +972,25 @@ class TestL3NatTestCase(L3NatTest,
                     self.assertEqual(webob.exc.HTTPServiceUnavailable.code,
                                      res.status_int)
 
+    def test_router_add_interface_port_removes_security_group(self):
+        with self.router() as r:
+            with self.port(no_delete=True) as p:
+                body = self._router_interface_action('add',
+                                                     r['router']['id'],
+                                                     None,
+                                                     p['port']['id'])
+                self.assertIn('port_id', body)
+                self.assertEqual(body['port_id'], p['port']['id'])
+
+                # fetch port and confirm no security-group on it.
+                body = self._show('ports', p['port']['id'])
+                self.assertEqual(body['port']['security_groups'], [])
+                # clean-up
+                self._router_interface_action('remove',
+                                              r['router']['id'],
+                                              None,
+                                              p['port']['id'])
+
 
 class ExtGwModeTestCase(NsxPluginV2TestCase,
                         test_ext_gw_mode.ExtGwModeIntTestCase):
