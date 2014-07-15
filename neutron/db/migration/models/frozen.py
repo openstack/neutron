@@ -33,6 +33,23 @@ from neutron.db import model_base
 from neutron.openstack.common import uuidutils
 
 
+# Dictionary of all tables that was renamed:
+# {new_table_name: old_table_name}
+renamed_tables = {
+    'subnetroutes': 'routes',
+    'cisco_credentials': 'credentials',
+    'cisco_nexusport_bindings': 'nexusport_bindings',
+    'cisco_qos_policies': 'qoss',
+    'tz_network_bindings': 'nvp_network_bindings',
+    'multi_provider_networks': 'nvp_multi_provider_networks',
+    'net_partitions': 'nuage_net_partitions',
+    'net_partition_router_mapping': 'nuage_net_partition_router_mapping',
+    'router_zone_mapping': 'nuage_router_zone_mapping',
+    'subnet_l2dom_mapping': 'nuage_subnet_l2dom_mapping',
+    'port_mapping': 'nuage_port_mapping',
+    'routerroutes_mapping': 'nuage_routerroutes_mapping',
+}
+
 #neutron/plugins/ml2/drivers/mech_arista/db.py
 UUID_LEN = 36
 STR_LEN = 255
