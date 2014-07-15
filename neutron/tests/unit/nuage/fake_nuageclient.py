@@ -161,3 +161,27 @@ class FakeNuageClient(object):
 
     def get_usergroup(self, tenant, net_partition_id):
         return uuidutils.generate_uuid(), uuidutils.generate_uuid()
+
+    def get_sg_vptag_mapping(self, id):
+        pass
+
+    def validate_nuage_sg_rule_definition(self, params):
+        pass
+
+    def create_nuage_sgrule(self, params):
+        pass
+
+    def update_nuage_vport(self, params):
+        pass
+
+    def delete_nuage_sgrule(self, params):
+        pass
+
+    def delete_nuage_secgroup(self, params):
+        pass
+
+    def process_port_create_security_group(self, params):
+        pass
+
+    def delete_port_security_group_bindings(self, params):
+        pass
