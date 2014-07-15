@@ -16,6 +16,15 @@ import webob.exc
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as nexception
+from oslo.config import cfg
+
+allowed_address_pair_opts = [
+    #TODO(limao): use quota framework when it support quota for attributes
+    cfg.IntOpt('max_allowed_address_pair', default=10,
+               help=_("Maximum number of allowed address pairs")),
+]
+
+cfg.CONF.register_opts(allowed_address_pair_opts)
 
 
 class AllowedAddressPairsMissingIP(nexception.InvalidInput):
@@ -36,8 +45,17 @@ class AddressPairMatchesPortFixedIPAndMac(nexception.InvalidInput):
     message = _("Port's Fixed IP and Mac Address match an address pair entry.")
 
 
+class AllowedAddressPairExhausted(nexception.BadRequest):
+    message = _("The number of allowed address pair "
+                "exceeds the maximum %(quota)s.")
+
+
 def _validate_allowed_address_pairs(address_pairs, valid_values=None):
     unique_check = {}
+    if len(address_pairs) > cfg.CONF.max_allowed_address_pair:
+        raise AllowedAddressPairExhausted(
+            quota=cfg.CONF.max_allowed_address_pair)
+
     for address_pair in address_pairs:
         # mac_address is optional, if not set we use the mac on the port
         if 'mac_address' in address_pair:
