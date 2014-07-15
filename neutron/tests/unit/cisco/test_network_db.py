@@ -262,6 +262,33 @@ class CiscoNetworkCredentialDbTest(CiscoNetworkDbTest):
                           self._network_plugin.get_credential_details,
                           "dummyCredentialId")
 
+    def test_credential_delete_all_n1kv(self):
+        cred_nexus_1 = self._cred_test_obj('nexus', 1)
+        cred_nexus_2 = self._cred_test_obj('nexus', 2)
+        cred_n1kv_1 = self.CredObj('n1kv-1', 'cisco', '123456', 'n1kv')
+        cred_n1kv_2 = self.CredObj('n1kv-2', 'cisco', '123456', 'n1kv')
+        cred_nexus_1_id = cdb.add_credential(
+            cred_nexus_1.cname, cred_nexus_1.usr,
+            cred_nexus_1.pwd, cred_nexus_1.ctype).credential_id
+        cred_nexus_2_id = cdb.add_credential(
+            cred_nexus_2.cname, cred_nexus_2.usr,
+            cred_nexus_2.pwd, cred_nexus_2.ctype).credential_id
+        cred_n1kv_1_id = cdb.add_credential(
+            cred_n1kv_1.cname, cred_n1kv_1.usr,
+            cred_n1kv_1.pwd, cred_n1kv_1.ctype).credential_id
+        cred_n1kv_2_id = cdb.add_credential(
+            cred_n1kv_2.cname, cred_n1kv_2.usr,
+            cred_n1kv_2.pwd, cred_n1kv_2.ctype).credential_id
+        cdb.delete_all_n1kv_credentials()
+        cred = cdb.get_credential(cred_nexus_1_id)
+        self.assertIsNotNone(cred)
+        cred = cdb.get_credential(cred_nexus_2_id)
+        self.assertIsNotNone(cred)
+        self.assertRaises(c_exc.CredentialNotFound,
+                          cdb.get_credential, cred_n1kv_1_id)
+        self.assertRaises(c_exc.CredentialNotFound,
+                          cdb.get_credential, cred_n1kv_2_id)
+
 
 class CiscoCredentialStoreTest(base.BaseTestCase):
 
