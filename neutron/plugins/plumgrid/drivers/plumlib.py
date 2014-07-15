@@ -97,3 +97,21 @@ class Plumlib(object):
 
     def disassociate_floatingips(self, floating_ip, port_id):
         self.plumlib.disassociate_floatingips(floating_ip, port_id)
+
+    def create_security_group(self, sg_db):
+        self.plumlib.create_security_group(sg_db)
+
+    def update_security_group(self, sg_db):
+        self.plumlib.update_security_group(sg_db)
+
+    def delete_security_group(self, sg_db):
+        self.plumlib.delete_security_group(sg_db)
+
+    def create_security_group_rule(self, sg_rule_db):
+        self.plumlib.create_security_group_rule(sg_rule_db)
+
+    def create_security_group_rule_bulk(self, sg_rule_db):
+        self.plumlib.create_security_group_rule_bulk(sg_rule_db)
+
+    def delete_security_group_rule(self, sg_rule_db):
+        self.plumlib.delete_security_group_rule(sg_rule_db)
