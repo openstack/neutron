@@ -19,7 +19,6 @@ import mock
 import webob.exc as wexc
 
 from neutron.api.v2 import base
-from neutron.common import constants as n_const
 from neutron import context
 from neutron.extensions import portbindings
 from neutron import manager
@@ -123,14 +122,32 @@ class CiscoML2MechanismTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
             new_callable=mock.PropertyMock).start()
         self.mock_original_bound_segment.return_value = None
 
-        mock_status = mock.patch.object(
+        # Use _is_status_active method to determine bind state.
+        def _mock_check_bind_state(port_context):
+            if (port_context[portbindings.VIF_TYPE] !=
+                portbindings.VIF_TYPE_UNBOUND):
+                return True
+            else:
+                return False
+
+        self.mock_status = mock.patch.object(
             mech_cisco_nexus.CiscoNexusMechanismDriver,
             '_is_status_active').start()
-        mock_status.return_value = n_const.PORT_STATUS_ACTIVE
+        self.mock_status.side_effect = _mock_check_bind_state
 
         super(CiscoML2MechanismTestCase, self).setUp(ML2_PLUGIN)
 
         self.port_create_status = 'DOWN'
+
+    def _create_deviceowner_mock(self):
+        # Mock deviceowner method for UT's that expect update precommit
+        # failures. This allows control of delete_port_pre/postcommit()
+        # actions.
+        mock_deviceowner = mock.patch.object(
+            mech_cisco_nexus.CiscoNexusMechanismDriver,
+            '_is_deviceowner_compute').start()
+        mock_deviceowner.return_value = False
+        self.addCleanup(mock_deviceowner.stop)
 
     @contextlib.contextmanager
     def _patch_ncclient(self, attr, value):
@@ -223,7 +240,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
     @contextlib.contextmanager
     def _create_resources(self, name=NETWORK_NAME, cidr=CIDR_1,
                           device_id=DEVICE_ID_1,
-                          host_id=COMP_HOST_NAME):
+                          host_id=COMP_HOST_NAME,
+                          expected_failure=False):
         """Create network, subnet, and port resources for test cases.
 
         Create a network, subnet, port and then update the port, yield the
@@ -233,18 +251,23 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         :param cidr: cidr address of subnetwork to be created.
         :param device_id: Device ID to use for port to be created/updated.
         :param host_id: Host ID to use for port create/update.
-
+        :param expected_failure: Set to True when an update_port_precommit
+            failure is expected. Results in no actions being taken in
+            delete_port_pre/postcommit() methods.
         """
         with self.network(name=name) as network:
             with self.subnet(network=network, cidr=cidr) as subnet:
                 with self.port(subnet=subnet, cidr=cidr) as port:
+
                     data = {'port': {portbindings.HOST_ID: host_id,
                                      'device_id': device_id,
-                                     'device_owner': 'compute:none',
+                                     'device_owner': DEVICE_OWNER,
                                      'admin_state_up': True}}
                     req = self.new_update_request('ports', data,
                                                   port['port']['id'])
                     yield req.get_response(self.api)
+                    if expected_failure:
+                        self._create_deviceowner_mock()
 
     def _assertExpectedHTTP(self, status, exc):
         """Confirm that an HTTP status corresponds to an expected exception.
@@ -578,7 +601,8 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         a fictitious host name during port creation.
 
         """
-        with self._create_resources(host_id='fake_host') as result:
+        with self._create_resources(host_id='fake_host',
+                                    expected_failure=True) as result:
             self._assertExpectedHTTP(result.status_int,
                                      c_exc.NexusComputeHostNotConfigured)
 
@@ -586,10 +610,11 @@ class TestCiscoPortsV2(CiscoML2MechanismTestCase,
         """Test handling of a NexusMissingRequiredFields exception.
 
         Test the Cisco NexusMissingRequiredFields exception by using
-        empty host_id and device_id values during port creation.
+        empty device_id value during port creation.
 
         """
-        with self._create_resources(device_id='', host_id='') as result:
+        with self._create_resources(device_id='',
+                                    expected_failure=True) as result:
             self._assertExpectedHTTP(result.status_int,
                                      c_exc.NexusMissingRequiredFields)
 

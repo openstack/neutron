@@ -82,10 +82,11 @@ class AgentMechanismDriverBase(api.MechanismDriver):
         :param agent: agents_db entry describing agent to bind
         :returns: True iff segment has been bound for agent
 
-        Called inside transaction during bind_port() so that derived
-        MechanismDrivers can use agent_db data along with built-in
-        knowledge of the corresponding agent's capabilities to attempt
-        to bind to the specified network segment for the agent.
+        Called outside any transaction during bind_port() so that
+        derived MechanismDrivers can use agent_db data along with
+        built-in knowledge of the corresponding agent's capabilities
+        to attempt to bind to the specified network segment for the
+        agent.
 
         If the segment can be bound for the agent, this function must
         call context.set_binding() with appropriate values and then

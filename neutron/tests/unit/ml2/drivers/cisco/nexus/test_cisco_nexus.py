@@ -74,7 +74,8 @@ class FakePortContext(object):
             'status': PORT_STATE,
             'device_id': device_id,
             'device_owner': DEVICE_OWNER,
-            portbindings.HOST_ID: host_name
+            portbindings.HOST_ID: host_name,
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS
         }
         self._network = network_context
         self._segment = network_context.network_segments

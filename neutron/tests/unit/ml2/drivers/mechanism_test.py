@@ -142,17 +142,7 @@ class TestMechanismDriver(api.MechanismDriver):
         self._check_port_context(context, False)
 
     def bind_port(self, context):
-        # REVISIT(rkukura): The upcoming fix for bug 1276391 will
-        # ensure the MDs see the unbinding of the port as a port
-        # update prior to re-binding, at which point this should be
-        # removed.
-        self.bound_ports.discard(context.current['id'])
-
-        # REVISIT(rkukura): Currently, bind_port() is called as part
-        # of either a create or update transaction. The fix for bug
-        # 1276391 will change it to be called outside any transaction,
-        # so the context.original* will no longer be available.
-        self._check_port_context(context, context.original is not None)
+        self._check_port_context(context, False)
 
         host = context.current.get(portbindings.HOST_ID, None)
         segment = context.network.network_segments[0][api.ID]

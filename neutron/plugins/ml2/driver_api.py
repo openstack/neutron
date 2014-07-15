@@ -588,10 +588,21 @@ class MechanismDriver(object):
 
         :param context: PortContext instance describing the port
 
-        Called inside transaction context on session, prior to
-        create_port_precommit or update_port_precommit, to
-        attempt to establish a port binding. If the driver is able to
-        bind the port, it calls context.set_binding with the binding
-        details.
+        Called outside any transaction to attempt to establish a port
+        binding using this mechanism driver. If the driver is able to
+        bind the port, it must call context.set_binding() with the
+        binding details. If the binding results are committed after
+        bind_port() returns, they will be seen by all mechanism
+        drivers as update_port_precommit() and
+        update_port_postcommit() calls.
+
+        Note that if some other thread or process concurrently binds
+        or updates the port, these binding results will not be
+        committed, and update_port_precommit() and
+        update_port_postcommit() will not be called on the mechanism
+        drivers with these results. Because binding results can be
+        discarded rather than committed, drivers should avoid making
+        persistent state changes in bind_port(), or else must ensure
+        that such state changes are eventually cleaned up.
         """
         pass

@@ -85,8 +85,8 @@ class BigSwitchMechanismDriver(plugin.NeutronRestProxyV2Base,
         port = self._prepare_port_for_controller(context)
         if port:
             try:
-                self.servers.rest_update_port(port["network"]["tenant_id"],
-                                              port["network"]["id"], port)
+                self.async_port_create(port["network"]["tenant_id"],
+                                       port["network"]["id"], port)
             except servermanager.RemoteRestError as e:
                 with excutils.save_and_reraise_exception() as ctxt:
                     if (cfg.CONF.RESTPROXY.auto_sync_on_failure and

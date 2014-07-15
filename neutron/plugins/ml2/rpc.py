@@ -17,9 +17,9 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import constants as q_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.db import api as db_api
 from neutron.db import dhcp_rpc_base
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.openstack.common import log
 from neutron.openstack.common import uuidutils
@@ -83,64 +83,43 @@ class RpcCallbacks(n_rpc.RpcCallback,
                   {'device': device, 'agent_id': agent_id})
         port_id = self._device_to_port_id(device)
 
-        session = db_api.get_session()
-        with session.begin(subtransactions=True):
-            port = db.get_port(session, port_id)
-            if not port:
-                LOG.warning(_("Device %(device)s requested by agent "
-                              "%(agent_id)s not found in database"),
-                            {'device': device, 'agent_id': agent_id})
-                return {'device': device}
+        plugin = manager.NeutronManager.get_plugin()
+        port_context = plugin.get_bound_port_context(rpc_context, port_id)
+        if not port_context:
+            LOG.warning(_("Device %(device)s requested by agent "
+                          "%(agent_id)s not found in database"),
+                        {'device': device, 'agent_id': agent_id})
+            return {'device': device}
 
-            segments = db.get_network_segments(session, port.network_id)
-            if not segments:
-                LOG.warning(_("Device %(device)s requested by agent "
-                              "%(agent_id)s has network %(network_id)s with "
-                              "no segments"),
-                            {'device': device,
-                             'agent_id': agent_id,
-                             'network_id': port.network_id})
-                return {'device': device}
+        segment = port_context.bound_segment
+        port = port_context.current
 
-            binding = db.ensure_port_binding(session, port.id)
-            if not binding.segment:
-                LOG.warning(_("Device %(device)s requested by agent "
-                              "%(agent_id)s on network %(network_id)s not "
-                              "bound, vif_type: %(vif_type)s"),
-                            {'device': device,
-                             'agent_id': agent_id,
-                             'network_id': port.network_id,
-                             'vif_type': binding.vif_type})
-                return {'device': device}
+        if not segment:
+            LOG.warning(_("Device %(device)s requested by agent "
+                          "%(agent_id)s on network %(network_id)s not "
+                          "bound, vif_type: %(vif_type)s"),
+                        {'device': device,
+                         'agent_id': agent_id,
+                         'network_id': port['network_id'],
+                         'vif_type': port[portbindings.VIF_TYPE]})
+            return {'device': device}
 
-            segment = self._find_segment(segments, binding.segment)
-            if not segment:
-                LOG.warning(_("Device %(device)s requested by agent "
-                              "%(agent_id)s on network %(network_id)s "
-                              "invalid segment, vif_type: %(vif_type)s"),
-                            {'device': device,
-                             'agent_id': agent_id,
-                             'network_id': port.network_id,
-                             'vif_type': binding.vif_type})
-                return {'device': device}
+        new_status = (q_const.PORT_STATUS_BUILD if port['admin_state_up']
+                      else q_const.PORT_STATUS_DOWN)
+        if port['status'] != new_status:
+            plugin.update_port_status(rpc_context,
+                                      port_id,
+                                      new_status)
 
-            new_status = (q_const.PORT_STATUS_BUILD if port.admin_state_up
-                          else q_const.PORT_STATUS_DOWN)
-            if port.status != new_status:
-                plugin = manager.NeutronManager.get_plugin()
-                plugin.update_port_status(rpc_context,
-                                          port_id,
-                                          new_status)
-                port.status = new_status
-            entry = {'device': device,
-                     'network_id': port.network_id,
-                     'port_id': port.id,
-                     'admin_state_up': port.admin_state_up,
-                     'network_type': segment[api.NETWORK_TYPE],
-                     'segmentation_id': segment[api.SEGMENTATION_ID],
-                     'physical_network': segment[api.PHYSICAL_NETWORK]}
-            LOG.debug(_("Returning: %s"), entry)
-            return entry
+        entry = {'device': device,
+                 'network_id': port['network_id'],
+                 'port_id': port_id,
+                 'admin_state_up': port['admin_state_up'],
+                 'network_type': segment[api.NETWORK_TYPE],
+                 'segmentation_id': segment[api.SEGMENTATION_ID],
+                 'physical_network': segment[api.PHYSICAL_NETWORK]}
+        LOG.debug(_("Returning: %s"), entry)
+        return entry
 
     def get_devices_details_list(self, rpc_context, **kwargs):
         return [
@@ -151,11 +130,6 @@ class RpcCallbacks(n_rpc.RpcCallback,
             )
             for device in kwargs.pop('devices', [])
         ]
-
-    def _find_segment(self, segments, segment_id):
-        for segment in segments:
-            if segment[api.ID] == segment_id:
-                return segment
 
     def update_device_down(self, rpc_context, **kwargs):
         """Device no longer exists on agent."""
