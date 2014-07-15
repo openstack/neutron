@@ -86,8 +86,8 @@ class EmbraneLbaas(abstract_driver.LoadBalancerAbstractDriver):
         if vip.get('connection_limit') and vip['connection_limit'] != -1:
             raise h_exc.UnsupportedException(
                 err_msg=_('Connection limit is not supported by Embrane LB'))
-        persistance = vip.get('session_persistence')
-        if (persistance and persistance.get('type') ==
+        persistence = vip.get('session_persistence')
+        if (persistence and persistence.get('type') ==
                 lbcon.SESSION_PERSISTENCE_APP_COOKIE):
             p_type = vip['session_persistence']['type']
             raise h_exc.UnsupportedException(
