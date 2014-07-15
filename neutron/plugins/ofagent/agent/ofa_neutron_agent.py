@@ -1089,7 +1089,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
 
     def treat_devices_added_or_updated(self, devices):
         resync = False
-        all_ports = dict((p.port_name, p) for p in self._get_ports())
+        all_ports = dict((p.port_name, p) for p in
+                         self._get_ports(self.int_br))
         for device in devices:
             LOG.debug(_("Processing port %s"), device)
             if device not in all_ports:
