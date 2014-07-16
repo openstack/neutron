@@ -697,6 +697,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         ip_devs = ip_wrapper.get_devices(exclude_loopback=True)
         return [ip_dev.name for ip_dev in ip_devs]
 
+    @common_utils.exception_logger()
     def process_router(self, ri):
         # TODO(mrsmith) - we shouldn't need to check here
         if 'distributed' not in ri.router:

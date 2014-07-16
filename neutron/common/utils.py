@@ -33,6 +33,7 @@ from eventlet.green import subprocess
 from oslo.config import cfg
 
 from neutron.common import constants as q_const
+from neutron.openstack.common import excutils
 from neutron.openstack.common import lockutils
 from neutron.openstack.common import log as logging
 
@@ -308,3 +309,29 @@ def cpu_count():
         return multiprocessing.cpu_count()
     except NotImplementedError:
         return 1
+
+
+class exception_logger(object):
+    """Wrap a function and log raised exception
+
+    :param logger: the logger to log the exception default is LOG.exception
+
+    :returns: origin value if no exception raised; re-raise the exception if
+              any occurred
+
+    """
+    def __init__(self, logger=None):
+        self.logger = logger
+
+    def __call__(self, func):
+        if self.logger is None:
+            LOG = logging.getLogger(func.__module__)
+            self.logger = LOG.exception
+
+        def call(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                with excutils.save_and_reraise_exception():
+                    self.logger(e)
+        return call
