@@ -187,7 +187,7 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
                 firewall_policy_id=fwp_id,
                 router_id=self._create_and_get_router(),
                 admin_state_up=test_db_firewall.ADMIN_STATE_UP,
-                no_delete=True) as fw:
+                do_delete=False) as fw:
                 fw_id = fw['firewall']['id']
                 with ctx.session.begin(subtransactions=True):
                     req = self.new_delete_request('firewalls', fw_id)

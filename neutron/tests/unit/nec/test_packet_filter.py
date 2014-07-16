@@ -552,7 +552,7 @@ class TestNecPluginPacketFilter(TestNecPluginPacketFilterBase):
                    expected_code=webob.exc.HTTPNotFound.code)
 
     def test_auto_delete_pf_in_port_deletion(self):
-        with self.port(no_delete=True) as port:
+        with self.port(do_delete=False) as port:
             network = self._show('networks', port['port']['network_id'])
 
             with self.packet_filter_on_network(network=network) as pfn:

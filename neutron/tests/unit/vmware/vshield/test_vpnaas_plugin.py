@@ -170,7 +170,7 @@ class TestVpnPlugin(test_db_vpnaas.VPNTestMixin,
                 with self.vpnservice(name='vpnservice',
                                      subnet=subnet,
                                      router=router,
-                                     no_delete=True) as vpnservice:
+                                     do_delete=False) as vpnservice:
                     req = self.new_delete_request(
                         'vpnservices', vpnservice['vpnservice']['id'])
                     res = req.get_response(self.ext_api)
@@ -385,7 +385,7 @@ class TestVpnPlugin(test_db_vpnaas.VPNTestMixin,
     def test_delete_ipsec_site_connection(self):
         """Test case to delete a ipsec_site_connection."""
         with self.ipsec_site_connection(
-                no_delete=True) as ipsec_site_connection:
+                do_delete=False) as ipsec_site_connection:
             req = self.new_delete_request(
                 'ipsec-site-connections',
                 ipsec_site_connection['ipsec_site_connection']['id']

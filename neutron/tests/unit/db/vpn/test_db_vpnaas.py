@@ -106,7 +106,7 @@ class VPNTestMixin(object):
                   lifetime_value=3600,
                   ike_version='v1',
                   pfs='group5',
-                  no_delete=False,
+                  do_delete=True,
                   **kwargs):
         if not fmt:
             fmt = self.fmt
@@ -124,7 +124,7 @@ class VPNTestMixin(object):
             raise webob.exc.HTTPClientError(code=res.status_int)
         ikepolicy = self.deserialize(fmt or self.fmt, res)
         yield ikepolicy
-        if not no_delete:
+        if do_delete:
             self._delete('ikepolicies', ikepolicy['ikepolicy']['id'])
 
     def _create_ipsecpolicy(self, fmt,
@@ -168,7 +168,7 @@ class VPNTestMixin(object):
                     lifetime_units='seconds',
                     lifetime_value=3600,
                     pfs='group5',
-                    no_delete=False, **kwargs):
+                    do_delete=True, **kwargs):
         if not fmt:
             fmt = self.fmt
         res = self._create_ipsecpolicy(fmt,
@@ -185,7 +185,7 @@ class VPNTestMixin(object):
             raise webob.exc.HTTPClientError(code=res.status_int)
         ipsecpolicy = self.deserialize(fmt or self.fmt, res)
         yield ipsecpolicy
-        if not no_delete:
+        if do_delete:
             self._delete('ipsecpolicies', ipsecpolicy['ipsecpolicy']['id'])
 
     def _create_vpnservice(self, fmt, name,
@@ -217,7 +217,7 @@ class VPNTestMixin(object):
                    subnet=None,
                    router=None,
                    admin_state_up=True,
-                   no_delete=False,
+                   do_delete=True,
                    plug_subnet=True,
                    external_subnet_cidr='192.168.100.0/24',
                    external_router=True,
@@ -256,7 +256,7 @@ class VPNTestMixin(object):
             if res.status_int < 400:
                 yield vpnservice
 
-            if not no_delete and vpnservice.get('vpnservice'):
+            if do_delete and vpnservice.get('vpnservice'):
                 self._delete('vpnservices',
                              vpnservice['vpnservice']['id'])
             if plug_subnet:
@@ -340,7 +340,7 @@ class VPNTestMixin(object):
                               vpnservice=None,
                               ikepolicy=None,
                               ipsecpolicy=None,
-                              admin_state_up=True, no_delete=False,
+                              admin_state_up=True, do_delete=True,
                               **kwargs):
         if not fmt:
             fmt = self.fmt
@@ -379,7 +379,7 @@ class VPNTestMixin(object):
             )
             yield ipsec_site_connection
 
-            if not no_delete:
+            if do_delete:
                 self._delete(
                     'ipsec-site-connections',
                     ipsec_site_connection[
@@ -475,7 +475,7 @@ class TestVpnaas(VPNPluginDbTestCase):
 
     def test_delete_ikepolicy(self):
         """Test case to delete an ikepolicy."""
-        with self.ikepolicy(no_delete=True) as ikepolicy:
+        with self.ikepolicy(do_delete=False) as ikepolicy:
             req = self.new_delete_request('ikepolicies',
                                           ikepolicy['ikepolicy']['id'])
             res = req.get_response(self.ext_api)
@@ -667,7 +667,7 @@ class TestVpnaas(VPNPluginDbTestCase):
 
     def test_delete_ipsecpolicy(self):
         """Test case to delete an ipsecpolicy."""
-        with self.ipsecpolicy(no_delete=True) as ipsecpolicy:
+        with self.ipsecpolicy(do_delete=False) as ipsecpolicy:
             req = self.new_delete_request('ipsecpolicies',
                                           ipsecpolicy['ipsecpolicy']['id'])
             res = req.get_response(self.ext_api)
@@ -980,7 +980,7 @@ class TestVpnaas(VPNPluginDbTestCase):
     def test_delete_vpnservice(self):
         """Test case to delete a vpnservice."""
         with self.vpnservice(name='vpnserver',
-                             no_delete=True) as vpnservice:
+                             do_delete=False) as vpnservice:
             req = self.new_delete_request('vpnservices',
                                           vpnservice['vpnservice']['id'])
             res = req.get_response(self.ext_api)
@@ -1226,7 +1226,7 @@ class TestVpnaas(VPNPluginDbTestCase):
     def test_delete_ipsec_site_connection(self):
         """Test case to delete a ipsec_site_connection."""
         with self.ipsec_site_connection(
-                no_delete=True) as ipsec_site_connection:
+                do_delete=False) as ipsec_site_connection:
             req = self.new_delete_request(
                 'ipsec-site-connections',
                 ipsec_site_connection['ipsec_site_connection']['id']

@@ -88,7 +88,7 @@ class TestBigSwitchProxyPortsV2(test_plugin.TestPortsV2,
             with self.subnet(network=net, do_delete=False) as sub:
                 with self.port(
                     subnet=sub,
-                    no_delete=True,
+                    do_delete=False,
                     device_owner=constants.DEVICE_OWNER_ROUTER_INTF
                 ) as port:
                     # router ports should be immediately active

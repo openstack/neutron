@@ -117,12 +117,12 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
 
     @contextlib.contextmanager
     def security_group(self, name='webservers', description='webservers',
-                       fmt=None, no_delete=False):
+                       fmt=None, do_delete=True):
         if not fmt:
             fmt = self.fmt
         security_group = self._make_security_group(fmt, name, description)
         yield security_group
-        if not no_delete:
+        if do_delete:
             self._delete('security-groups',
                          security_group['security_group']['id'])
 
@@ -132,7 +132,7 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                             direction='ingress', protocol=const.PROTO_NAME_TCP,
                             port_range_min='22', port_range_max='22',
                             remote_ip_prefix=None, remote_group_id=None,
-                            fmt=None, no_delete=False, ethertype=const.IPv4):
+                            fmt=None, do_delete=True, ethertype=const.IPv4):
         if not fmt:
             fmt = self.fmt
         rule = self._build_security_group_rule(security_group_id,
@@ -144,7 +144,7 @@ class SecurityGroupsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
                                                ethertype=ethertype)
         security_group_rule = self._make_security_group_rule(self.fmt, rule)
         yield security_group_rule
-        if not no_delete:
+        if do_delete:
             self._delete('security-group-rules',
                          security_group_rule['security_group_rule']['id'])
 
@@ -546,7 +546,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_delete_security_group(self):
         name = 'webservers'
         description = 'my webservers'
-        with self.security_group(name, description, no_delete=True) as sg:
+        with self.security_group(name, description, do_delete=False) as sg:
             remote_group_id = sg['security_group']['id']
             self._delete('security-groups', remote_group_id,
                          webob.exc.HTTPNoContent.code)

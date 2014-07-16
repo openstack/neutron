@@ -515,7 +515,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                              cidr='10.0.1.0/24',
                              do_delete=False) as subnet1:
                 pass
-            with self.port(subnet=subnet1, no_delete=True) as port2:
+            with self.port(subnet=subnet1, do_delete=False) as port2:
                 pass
         dhcp_agents = self._list_dhcp_agents_hosting_network(
             port2['port']['network_id'])
@@ -1114,12 +1114,12 @@ class OvsDhcpAgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                              do_delete=False) as subnet1:
                 if owner:
                     with self.port(subnet=subnet1,
-                                   no_delete=True,
+                                   do_delete=False,
                                    device_owner=owner) as port:
                         return [net1, subnet1, port]
                 else:
                     with self.port(subnet=subnet1,
-                                   no_delete=True) as port:
+                                   do_delete=False) as port:
                         return [net1, subnet1, port]
 
     def _notification_mocks(self, hosts, net, subnet, port):

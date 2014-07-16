@@ -90,20 +90,20 @@ class MeteringPluginDbTestCaseMixin(object):
 
     @contextlib.contextmanager
     def metering_label(self, name='label', description='desc',
-                       fmt=None, no_delete=False, **kwargs):
+                       fmt=None, do_delete=True, **kwargs):
         if not fmt:
             fmt = self.fmt
         metering_label = self._make_metering_label(fmt, name,
                                                    description, **kwargs)
         yield metering_label
-        if not no_delete:
+        if do_delete:
             self._delete('metering-labels',
                          metering_label['metering_label']['id'])
 
     @contextlib.contextmanager
     def metering_label_rule(self, metering_label_id=None, direction='ingress',
                             remote_ip_prefix='10.0.0.0/24',
-                            excluded='false', fmt=None, no_delete=False):
+                            excluded='false', fmt=None, do_delete=True):
         if not fmt:
             fmt = self.fmt
         metering_label_rule = self._make_metering_label_rule(fmt,
@@ -112,7 +112,7 @@ class MeteringPluginDbTestCaseMixin(object):
                                                              remote_ip_prefix,
                                                              excluded)
         yield metering_label_rule
-        if not no_delete:
+        if do_delete:
             self._delete('metering-label-rules',
                          metering_label_rule['metering_label_rule']['id'])
 
@@ -155,7 +155,7 @@ class MeteringPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
         description = 'my metering label'
 
         with self.metering_label(name, description,
-                                 no_delete=True) as metering_label:
+                                 do_delete=False) as metering_label:
             metering_label_id = metering_label['metering_label']['id']
             self._delete('metering-labels', metering_label_id, 204)
 
@@ -206,7 +206,7 @@ class MeteringPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
                                           direction,
                                           remote_ip_prefix,
                                           excluded,
-                                          no_delete=True) as label_rule:
+                                          do_delete=False) as label_rule:
                 rule_id = label_rule['metering_label_rule']['id']
                 self._delete('metering-label-rules', rule_id, 204)
 

@@ -524,10 +524,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                      admin_state_up, **kwargs)
         yield network
         if do_delete:
-            # The do_delete parameter allows you to control whether the
-            # created network is immediately deleted again. Therefore, this
-            # function is also usable in tests, which require the creation
-            # of many networks.
             self._delete('networks', network['network']['id'])
 
     @contextlib.contextmanager
@@ -562,13 +558,13 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 self._delete('subnets', subnet['subnet']['id'])
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fmt=None, no_delete=False,
+    def port(self, subnet=None, fmt=None, do_delete=True,
              **kwargs):
         with optional_ctx(subnet, self.subnet) as subnet_to_use:
             net_id = subnet_to_use['subnet']['network_id']
             port = self._make_port(fmt or self.fmt, net_id, **kwargs)
             yield port
-            if not no_delete:
+            if do_delete:
                 self._delete('ports', port['port']['id'])
 
     def _test_list_with_sort(self, resource,
@@ -1065,7 +1061,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(port['port']['id'], sport['port']['id'])
 
     def test_delete_port(self):
-        with self.port(no_delete=True) as port:
+        with self.port(do_delete=False) as port:
             self._delete('ports', port['port']['id'])
             self._show('ports', port['port']['id'],
                        expected_code=webob.exc.HTTPNotFound.code)
@@ -1669,8 +1665,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         ctx = context.get_admin_context()
         with self.subnet() as subnet:
             with contextlib.nested(
-                self.port(subnet=subnet, device_id='owner1', no_delete=True),
-                self.port(subnet=subnet, device_id='owner1', no_delete=True),
+                self.port(subnet=subnet, device_id='owner1', do_delete=False),
+                self.port(subnet=subnet, device_id='owner1', do_delete=False),
                 self.port(subnet=subnet, device_id='owner2'),
             ) as (p1, p2, p3):
                 network_id = subnet['subnet']['network_id']
@@ -1687,7 +1683,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         ctx = context.get_admin_context()
         with self.subnet() as subnet:
             with contextlib.nested(
-                self.port(subnet=subnet, device_id='owner1', no_delete=True),
+                self.port(subnet=subnet, device_id='owner1', do_delete=False),
                 self.port(subnet=subnet, device_id='owner1'),
                 self.port(subnet=subnet, device_id='owner2'),
             ) as (p1, p2, p3):
