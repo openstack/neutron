@@ -35,6 +35,7 @@ from neutron import manager
 from neutron.openstack.common import timeutils
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as service_constants
+from neutron.tests import fake_notifier
 from neutron.tests.unit import test_agent_ext_plugin
 from neutron.tests.unit import test_db_plugin as test_plugin
 from neutron.tests.unit import test_extensions
@@ -170,6 +171,10 @@ class AgentSchedulerTestMixIn(object):
         res = req.get_response(self.ext_api)
         self.assertEqual(res.status_int, expected_code)
 
+    def _assert_notify(self, notifications, expected_event_type):
+        event_types = [event['event_type'] for event in notifications]
+        self.assertIn(expected_event_type, event_types)
+
     def _register_one_agent_state(self, agent_state):
         callback = agents_db.AgentExtRpcCallback()
         callback.report_state(self.adminContext,
@@ -223,6 +228,9 @@ class OvsAgentSchedulerTestCaseBase(test_l3_plugin.L3NatTestCaseMixin,
         self.l3agentscheduler_dbMinxin = (
             manager.NeutronManager.get_service_plugins().get(
                 service_constants.L3_ROUTER_NAT))
+        self.notify_p = mock.patch(
+            'neutron.extensions.l3agentscheduler.notify')
+        self.patched_notify = self.notify_p.start()
 
     def restore_attribute_map(self):
         # Restore the original RESOURCE_ATTRIBUTE_MAP
@@ -1186,6 +1194,7 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             agent.RESOURCE_ATTRIBUTE_MAP)
         self.addCleanup(self.restore_attribute_map)
+        fake_notifier.reset()
 
     def restore_attribute_map(self):
         # Restore the original RESOURCE_ATTRIBUTE_MAP
@@ -1208,6 +1217,9 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                     'router_added_to_agent',
                     payload=routers),
                 topic='l3_agent.hosta')
+            notifications = fake_notifier.NOTIFICATIONS
+            expected_event_type = 'l3_agent.router.add'
+            self._assert_notify(notifications, expected_event_type)
 
     def test_router_remove_from_l3_agent_notification(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -1226,6 +1238,9 @@ class OvsL3AgentNotifierTestCase(test_l3_plugin.L3NatTestCaseMixin,
                     'router_removed_from_agent',
                     payload={'router_id': router1['router']['id']}),
                 topic='l3_agent.hosta')
+            notifications = fake_notifier.NOTIFICATIONS
+            expected_event_type = 'l3_agent.router.remove'
+            self._assert_notify(notifications, expected_event_type)
 
     def test_agent_updated_l3_agent_notification(self):
         plugin = manager.NeutronManager.get_plugin()
