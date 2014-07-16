@@ -1294,6 +1294,7 @@ class NeutronDbPluginV2(neutron_plugin_base_v2.NeutronPluginBaseV2,
         p = port['port']
 
         changed_ips = False
+        changed_device_id = False
         with context.session.begin(subtransactions=True):
             port = self._get_port(context, id)
             if 'device_owner' in p:
