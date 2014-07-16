@@ -716,7 +716,8 @@ class TestL3NatTestCase(L3NatTest,
         self._test_create_l3_ext_network(666)
 
     def test_floatingip_with_assoc_fails(self):
-        self._test_floatingip_with_assoc_fails(self._plugin_name)
+        self._test_floatingip_with_assoc_fails(
+            "%s.%s" % (self._plugin_name, "_update_fip_assoc"))
 
     def test_floatingip_with_invalid_create_port(self):
         self._test_floatingip_with_invalid_create_port(self._plugin_name)
