@@ -38,6 +38,14 @@ NOTIFIER = ('neutron.plugins.ml2.rpc.AgentNotifierApi')
 OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
 
 
+def _mock_port(is_neutron=True, normalized_name=None):
+    p = mock.Mock()
+    p.is_neutron_port.return_value = is_neutron
+    if normalized_name:
+        p.normalized_port_name.return_value = normalized_name
+    return p
+
+
 class OFAAgentTestCase(base.BaseTestCase):
 
     _AGENT_NAME = 'neutron.plugins.ofagent.agent.ofa_neutron_agent'
@@ -419,14 +427,16 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
                               side_effect=Exception()),
             mock.patch.object(self.agent, '_get_ports',
-                              return_value=[mock.Mock(port_name='xxx')])):
+                              return_value=[_mock_port(True, 'xxx')])):
             self.assertTrue(self.agent.treat_devices_added_or_updated(['xxx']))
 
-    def _mock_treat_devices_added_updated(self, details, port, func_name):
+    def _mock_treat_devices_added_updated(self, details, port, all_ports,
+                                          func_name):
         """Mock treat devices added or updated.
 
         :param details: the details to return for the device
-        :param port: the port that get_vif_port_by_id should return
+        :param port: port name to process
+        :param all_ports: the port that _get_ports return
         :param func_name: the function that should be called
         :returns: whether the named function was called
         """
@@ -434,27 +444,28 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
                               return_value=details),
             mock.patch.object(self.agent, '_get_ports',
-                              return_value=[port]),
+                              return_value=all_ports),
             mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),
             mock.patch.object(self.agent.plugin_rpc, 'update_device_down'),
             mock.patch.object(self.agent, func_name)
         ) as (get_dev_fn, _get_ports, upd_dev_up, upd_dev_down, func):
-            self.assertFalse(self.agent.treat_devices_added_or_updated(
-                [port.port_name]))
+            self.assertFalse(self.agent.treat_devices_added_or_updated([port]))
         _get_ports.assert_called_once_with(self.agent.int_br)
         return func.called
 
     def test_treat_devices_added_updated_ignores_invalid_ofport(self):
-        port = mock.Mock()
-        port.ofport = -1
+        port_name = 'hoge'
+        p1 = _mock_port(True, port_name)
+        p1.ofport = -1
         self.assertFalse(self._mock_treat_devices_added_updated(
-            mock.MagicMock(), port, 'port_dead'))
+            mock.MagicMock(), port_name, [p1], 'port_dead'))
 
     def test_treat_devices_added_updated_marks_unknown_port_as_dead(self):
-        port = mock.Mock()
-        port.ofport = 1
+        port_name = 'hoge'
+        p1 = _mock_port(True, port_name)
+        p1.ofport = 1
         self.assertTrue(self._mock_treat_devices_added_updated(
-            mock.MagicMock(), port, 'port_dead'))
+            mock.MagicMock(), port_name, [p1], 'port_dead'))
 
     def test_treat_devices_added_does_not_process_missing_port(self):
         with contextlib.nested(
@@ -465,10 +476,14 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             self.assertFalse(get_dev_fn.called)
 
     def test_treat_devices_added_updated_updates_known_port(self):
+        port_name = 'tapd3315981-0b'
+        p1 = _mock_port(False)
+        p2 = _mock_port(True, port_name)
+        ports = [p1, p2]
         details = mock.MagicMock()
         details.__contains__.side_effect = lambda x: True
         self.assertTrue(self._mock_treat_devices_added_updated(
-            details, mock.Mock(), 'treat_vif_port'))
+            details, port_name, ports, 'treat_vif_port'))
 
     def test_treat_devices_added_updated_put_port_down(self):
         fake_details_dict = {'admin_state_up': False,
@@ -482,16 +497,17 @@ class TestOFANeutronAgent(OFAAgentTestCase):
             mock.patch.object(self.agent.plugin_rpc, 'get_device_details',
                               return_value=fake_details_dict),
             mock.patch.object(self.agent, '_get_ports',
-                              return_value=[mock.Mock(port_name='xxx')]),
+                              return_value=[_mock_port(True, 'xxx')]),
             mock.patch.object(self.agent.plugin_rpc, 'update_device_up'),
             mock.patch.object(self.agent.plugin_rpc, 'update_device_down'),
             mock.patch.object(self.agent, 'treat_vif_port')
-        ) as (get_dev_fn, get_vif_func, upd_dev_up,
+        ) as (get_dev_fn, _get_ports, upd_dev_up,
               upd_dev_down, treat_vif_port):
             self.assertFalse(self.agent.treat_devices_added_or_updated(
                 ['xxx']))
             self.assertTrue(treat_vif_port.called)
             self.assertTrue(upd_dev_down.called)
+        _get_ports.assert_called_once_with(self.agent.int_br)
 
     def test_treat_devices_removed_returns_true_for_missing_device(self):
         with mock.patch.object(self.agent.plugin_rpc, 'update_device_down',
@@ -989,7 +1005,7 @@ class TestOFANeutronAgent(OFAAgentTestCase):
 
     def test__get_ofport_names(self):
         names = ['p111', 'p222', 'p333']
-        ps = [mock.Mock(port_name=x, ofport=names.index(x)) for x in names]
+        ps = [_mock_port(True, x) for x in names]
         with mock.patch.object(self.agent, '_get_ports',
                                return_value=ps) as _get_ports:
             result = self.agent._get_ofport_names('hoge')
