@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2012, Nachi Ueno, NTT MCL, Inc.
 # All Rights Reserved.
 #
@@ -18,6 +16,10 @@
 import netaddr
 from oslo.config import cfg
 
+import keystoneclient.middleware.auth_token
+from neutronclient.common import exceptions
+from neutronclient.v2_0 import client
+
 from neutron.agent import firewall
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
@@ -33,6 +35,17 @@ CHAIN_NAME_PREFIX = {INGRESS_DIRECTION: 'i',
                      EGRESS_DIRECTION: 'o',
                      SPOOF_FILTER: 's'}
 LINUX_DEV_LEN = 14
+
+anti_spoof_opts = [
+    cfg.BoolOpt('disable_anti_spoofing',
+                default=False,
+                help=_('Disable anti-spoofing for Neutron services ports')),
+    cfg.StrOpt('sec_group_svc_VM_name',
+               help=_("Security group service VM name")),
+]
+
+CONF = cfg.CONF
+CONF.register_opts(anti_spoof_opts)
 
 
 class IptablesFirewallDriver(firewall.FirewallDriver):
@@ -261,10 +274,50 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         ipv4_iptables_rule = []
         ipv6_iptables_rule = []
         if direction == EGRESS_DIRECTION:
-            self._spoofing_rule(port,
-                                ipv4_iptables_rule,
-                                ipv6_iptables_rule)
-            ipv4_iptables_rule += self._drop_dhcp_rule()
+	    sg_match = False
+            secgrid=""
+            if(CONF.disable_anti_spoofing):
+                # Disable anti-spoofing for specified security group
+
+                # neutronClient credentials from neutron.conf
+                # authUrl example: 'http://172.19.148.164:35357/v2.0/'
+                authUrl= ('%s://%s:%s/v2.0/' %
+                                       (CONF.keystone_authtoken.auth_protocol,
+                                        CONF.keystone_authtoken.auth_host,
+                                        CONF.keystone_authtoken.auth_port))
+                neutronClient = client.Client(
+                    username=CONF.keystone_authtoken.admin_user,
+                    password=CONF.keystone_authtoken.admin_password,
+                    tenant_name=CONF.keystone_authtoken.admin_tenant_name,
+                    auth_url=authUrl)
+                try:
+                    # Check if the security group service VM name configured
+                    # in neutron.conf matches one of this port's security group
+                    # names.
+                    for secgrid in port['security_groups']:
+                        secgrp = neutronClient.show_security_group(secgrid)
+                        if secgrp['security_group']['name'] == \
+                                                CONF.sec_group_svc_VM_name:
+                            sg_match = True
+                            break
+                except exceptions.NeutronException as e:
+                    LOG.error(_('Neutron Client show_security_group call'
+                                ' error: %s for sec group id %s'),
+                                str(e), str(secgrid))
+
+                # If port's sec gp isn't config in neutron.conf, add rule.
+                if (not sg_match):
+                    self._spoofing_rule(port,
+                                        ipv4_iptables_rule,
+                                        ipv6_iptables_rule)
+                    ipv4_iptables_rule += self._drop_dhcp_rule()
+
+            # For egress direction, anti spoofing is disabled. Add rule.
+            else:
+                self._spoofing_rule(port,
+                                    ipv4_iptables_rule,
+                                    ipv6_iptables_rule)
+                ipv4_iptables_rule += self._drop_dhcp_rule()
         if direction == INGRESS_DIRECTION:
             ipv6_iptables_rule += self._accept_inbound_icmpv6()
         ipv4_iptables_rule += self._convert_sgr_to_iptables_rules(
@@ -379,3 +432,5 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
 
     def _get_device_name(self, port):
         return (self.OVS_HYBRID_TAP_PREFIX + port['device'])[:LINUX_DEV_LEN]
+
+
