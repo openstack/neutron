@@ -938,7 +938,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return self._bind_port_if_needed(port_context)
 
-    def update_port_status(self, context, port_id, status):
+    def update_port_status(self, context, port_id, status, host=None):
         updated = False
         session = context.session
         # REVISIT: Serialize this operation with a semaphore to
@@ -969,6 +969,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return True
 
-    def port_bound_to_host(self, port_id, host):
+    def port_bound_to_host(self, context, port_id, host):
         port_host = db.get_port_binding_host(port_id)
         return (port_host == host)
