@@ -55,6 +55,9 @@ class VPNDriverPlugin(VPNPlugin, vpn_db.VPNPluginRpcDbMixin):
         vpnservice = None
         return self._get_driver_for_vpnservice(vpnservice)
 
+    def _get_validator(self):
+        return self.ipsec_driver.validator
+
     def create_ipsec_site_connection(self, context, ipsec_site_connection):
         ipsec_site_connection = super(
             VPNDriverPlugin, self).create_ipsec_site_connection(

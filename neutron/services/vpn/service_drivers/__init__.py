@@ -18,6 +18,7 @@ import abc
 import six
 
 from neutron.common import rpc as n_rpc
+from neutron.db.vpn import vpn_validator
 from neutron import manager
 from neutron.openstack.common import log as logging
 from neutron.plugins.common import constants
@@ -28,8 +29,11 @@ LOG = logging.getLogger(__name__)
 @six.add_metaclass(abc.ABCMeta)
 class VpnDriver(object):
 
-    def __init__(self, service_plugin):
+    def __init__(self, service_plugin, validator=None):
         self.service_plugin = service_plugin
+        if validator is None:
+            validator = vpn_validator.VpnReferenceValidator()
+        self.validator = validator
 
     @property
     def service_type(self):
