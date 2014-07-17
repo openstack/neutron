@@ -111,7 +111,6 @@ class PortBindingsTestCase(test_db_plugin.NeutronDbPluginV2TestCase):
     def _test_update_port_binding_profile(self, profile):
         profile_arg = {portbindings.PROFILE: profile}
         with self.port() as port:
-            # print "(1) %s" % port
             self._check_port_binding_profile(port['port'])
             port_id = port['port']['id']
             ctx = context.get_admin_context()
