@@ -443,8 +443,8 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         binding.
         """
         binding = context._binding
-        LOG.debug(_("Attempting to bind port %(port)s on host %(host)s "
-                    "for vnic_type %(vnic_type)s with profile %(profile)s"),
+        LOG.debug("Attempting to bind port %(port)s on host %(host)s "
+                  "for vnic_type %(vnic_type)s with profile %(profile)s",
                   {'port': context._port['id'],
                    'host': binding.host,
                    'vnic_type': binding.vnic_type,
@@ -454,12 +454,12 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 driver.obj.bind_port(context)
                 if binding.segment:
                     binding.driver = driver.name
-                    LOG.debug(_("Bound port: %(port)s, host: %(host)s, "
-                                "vnic_type: %(vnic_type)s, "
-                                "profile: %(profile)s"
-                                "driver: %(driver)s, vif_type: %(vif_type)s, "
-                                "vif_details: %(vif_details)s, "
-                                "segment: %(segment)s"),
+                    LOG.debug("Bound port: %(port)s, host: %(host)s, "
+                              "vnic_type: %(vnic_type)s, "
+                              "profile: %(profile)s, "
+                              "driver: %(driver)s, vif_type: %(vif_type)s, "
+                              "vif_details: %(vif_details)s, "
+                              "segment: %(segment)s",
                               {'port': context._port['id'],
                                'host': binding.host,
                                'vnic_type': binding.vnic_type,
