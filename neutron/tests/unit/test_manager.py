@@ -105,7 +105,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
                               "MultiServiceCorePlugin")
         mgr = manager.NeutronManager.get_instance()
         svc_plugins = mgr.get_service_plugins()
-        self.assertEqual(3, len(svc_plugins))
+        self.assertEqual(4, len(svc_plugins))
         self.assertIn(constants.CORE, svc_plugins.keys())
         self.assertIn(constants.LOADBALANCER, svc_plugins.keys())
         self.assertIn(constants.DUMMY, svc_plugins.keys())

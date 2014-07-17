@@ -163,5 +163,16 @@
 
     "get_service_provider": "rule:regular_user",
     "get_lsn": "rule:admin_only",
-    "create_lsn": "rule:admin_only"
+    "create_lsn": "rule:admin_only",
+
+    "create_flavor": "rule:admin_only",
+    "update_flavor": "rule:admin_only",
+    "delete_flavor": "rule:admin_only",
+    "get_flavors": "rule:regular_user",
+    "get_flavor": "rule:regular_user",
+    "create_service_profile": "rule:admin_only",
+    "update_service_profile": "rule:admin_only",
+    "delete_service_profile": "rule:admin_only",
+    "get_service_profiles": "rule:admin_only",
+    "get_service_profile": "rule:admin_only"
 }

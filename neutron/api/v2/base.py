@@ -414,6 +414,9 @@ class Controller(object):
                            action,
                            item[self._resource],
                            pluralized=self._collection)
+            if 'tenant_id' not in item[self._resource]:
+                # no tenant_id - no quota check
+                continue
             try:
                 tenant_id = item[self._resource]['tenant_id']
                 count = quota.QUOTAS.count(request.context, self._resource,
@@ -571,8 +574,7 @@ class Controller(object):
         return result
 
     @staticmethod
-    def _populate_tenant_id(context, res_dict, is_create):
-
+    def _populate_tenant_id(context, res_dict, attr_info, is_create):
         if (('tenant_id' in res_dict and
              res_dict['tenant_id'] != context.tenant_id and
              not context.is_admin)):
@@ -583,9 +585,9 @@ class Controller(object):
         if is_create and 'tenant_id' not in res_dict:
             if context.tenant_id:
                 res_dict['tenant_id'] = context.tenant_id
-            else:
+            elif 'tenant_id' in attr_info:
                 msg = _("Running without keystone AuthN requires "
-                        " that tenant_id is specified")
+                        "that tenant_id is specified")
                 raise webob.exc.HTTPBadRequest(msg)
 
     @staticmethod
@@ -627,7 +629,7 @@ class Controller(object):
             msg = _("Unable to find '%s' in request body") % resource
             raise webob.exc.HTTPBadRequest(msg)
 
-        Controller._populate_tenant_id(context, res_dict, is_create)
+        Controller._populate_tenant_id(context, res_dict, attr_info, is_create)
         Controller._verify_attributes(res_dict, attr_info)
 
         if is_create:  # POST
