@@ -159,9 +159,9 @@ class RpcCallbacks(n_rpc.RpcCallback,
             return {'device': device,
                     'exists': port_exists}
 
-        port_exists = plugin.update_port_status(rpc_context, port_id,
-                                                q_const.PORT_STATUS_DOWN,
-                                                host)
+        port_exists = bool(plugin.update_port_status(rpc_context, port_id,
+                                                     q_const.PORT_STATUS_DOWN,
+                                                     host))
 
         return {'device': device,
                 'exists': port_exists}
@@ -182,9 +182,9 @@ class RpcCallbacks(n_rpc.RpcCallback,
                       {'device': device, 'host': host})
             return
 
-        plugin.update_port_status(rpc_context, port_id,
-                                  q_const.PORT_STATUS_ACTIVE,
-                                  host)
+        port_id = plugin.update_port_status(rpc_context, port_id,
+                                            q_const.PORT_STATUS_ACTIVE,
+                                            host)
         l3plugin = manager.NeutronManager.get_service_plugins().get(
             service_constants.L3_ROUTER_NAT)
         if l3plugin:
