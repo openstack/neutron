@@ -60,6 +60,14 @@ class FakePortContext(api.PortContext):
         return None
 
     @property
+    def status(self):
+        return 'DOWN'
+
+    @property
+    def original_status(self):
+        return None
+
+    @property
     def network(self):
         return self._network_context
 
@@ -72,6 +80,14 @@ class FakePortContext(api.PortContext):
 
     @property
     def original_bound_segment(self):
+        return None
+
+    @property
+    def host(self):
+        return ''
+
+    @property
+    def original_host(self):
         return None
 
     @property
