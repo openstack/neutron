@@ -36,6 +36,10 @@ class RouterExtraAttributes(model_base.BASEV2):
     distributed = sa.Column(sa.Boolean, default=False,
                             server_default=sa.sql.false(),
                             nullable=False)
+    # Whether the router is to be considered a 'service' router
+    service_router = sa.Column(sa.Boolean, default=False,
+                               server_default=sa.sql.false(),
+                               nullable=False)
     router = orm.relationship(
         l3_db.Router,
         backref=orm.backref("extra_attributes", lazy='joined',

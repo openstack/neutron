@@ -119,3 +119,7 @@ class LsnMigrationConflict(n_exc.Conflict):
 
 class LsnConfigurationConflict(NsxPluginException):
     message = _("Configuration conflict on Logical Service Node %(lsn_id)s")
+
+
+class ReadOnlyAttribute(NsxPluginException):
+    message = _("Cannot update read-only attribute %(attribute)s")

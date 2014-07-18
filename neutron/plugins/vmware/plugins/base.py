@@ -35,6 +35,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import extraroute_db
 from neutron.db import l3_db
+from neutron.db import l3_dvr_db
 from neutron.db import l3_gwmode_db
 from neutron.db import models_v2
 from neutron.db import portbindings_db
@@ -62,7 +63,6 @@ from neutron.plugins.vmware.common import securitygroups as sg_utils
 from neutron.plugins.vmware.common import sync
 from neutron.plugins.vmware.common import utils as c_utils
 from neutron.plugins.vmware.dbexts import db as nsx_db
-from neutron.plugins.vmware.dbexts import distributedrouter as dist_rtr
 from neutron.plugins.vmware.dbexts import maclearning as mac_db
 from neutron.plugins.vmware.dbexts import networkgw_db
 from neutron.plugins.vmware.dbexts import qos_db
@@ -88,7 +88,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                   agentschedulers_db.DhcpAgentSchedulerDbMixin,
                   db_base_plugin_v2.NeutronDbPluginV2,
                   dhcpmeta_modes.DhcpMetadataAccess,
-                  dist_rtr.DistributedRouter_mixin,
+                  l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                   external_net_db.External_net_db_mixin,
                   extraroute_db.ExtraRoute_db_mixin,
                   l3_gwmode_db.L3_NAT_db_mixin,
@@ -101,6 +101,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     supported_extension_aliases = ["allowed-address-pairs",
                                    "binding",
+                                   "dvr",
                                    "dist-router",
                                    "ext-gw-mode",
                                    "extraroute",
@@ -739,6 +740,8 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         base.FAULT_MAP.update({nsx_exc.InvalidNovaZone:
                                webob.exc.HTTPBadRequest,
                                nsx_exc.NoMorePortsException:
+                               webob.exc.HTTPBadRequest,
+                               nsx_exc.ReadOnlyAttribute:
                                webob.exc.HTTPBadRequest,
                                nsx_exc.MaintenanceInProgress:
                                webob.exc.HTTPServiceUnavailable,
@@ -1438,7 +1441,7 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
                                          admin_state_up=r['admin_state_up'],
                                          status=lrouter['status'])
                 context.session.add(router_db)
-                self._process_nsx_router_create(context, router_db, r)
+                self._process_extra_attr_router_create(context, router_db, r)
                 # Ensure neutron router is moved into the transaction's buffer
                 context.session.flush()
                 # Add mapping between neutron and nsx identifiers
@@ -1481,6 +1484,9 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self.cluster, nsx_router_id, routes)
 
     def update_router(self, context, router_id, router):
+        if isinstance(router['router'].get('distributed'), bool):
+            # Router conversion is not supported
+            raise nsx_exc.ReadOnlyAttribute(attribute='distributed')
         # Either nexthop is updated or should be kept as it was before
         r = router['router']
         nexthop = None
