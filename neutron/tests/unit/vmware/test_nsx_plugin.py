@@ -985,6 +985,7 @@ class TestL3NatTestCase(L3NatTest,
                 # fetch port and confirm no security-group on it.
                 body = self._show('ports', p['port']['id'])
                 self.assertEqual(body['port']['security_groups'], [])
+                self.assertFalse(body['port']['port_security_enabled'])
                 # clean-up
                 self._router_interface_action('remove',
                                               r['router']['id'],
