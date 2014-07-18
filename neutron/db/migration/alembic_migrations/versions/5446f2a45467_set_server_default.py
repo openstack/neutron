@@ -14,6 +14,7 @@
 #
 
 """set_server_default
+
 Revision ID: 5446f2a45467
 Revises: 2db5203cb7a9
 Create Date: 2014-07-07 18:31:30.384522
@@ -96,18 +97,17 @@ def set_default_mlnx(default):
 
 
 def set_default_cisco(default):
+    profile_binding_default = (cisco_constants.TENANT_ID_NOT_SET
+                               if default else None)
+    profile_default = '0' if default else None
     if default:
         default = sqlalchemy.sql.false()
-        op.alter_column('cisco_n1kv_profile_bindings', 'tenant_id',
-                        existing_type=sa.String(length=36),
-                        server_default=cisco_constants.TENANT_ID_NOT_SET,
-                        existing_nullable=False)
-    else:
-        op.alter_column('cisco_n1kv_profile_bindings', 'tenant_id',
-                        existing_type=sa.String(length=36),
-                        server_default=None, existing_nullable=False)
+    op.alter_column('cisco_n1kv_profile_bindings', 'tenant_id',
+                    existing_type=sa.String(length=36),
+                    server_default=profile_binding_default,
+                    existing_nullable=False)
     op.alter_column('cisco_network_profiles', 'multicast_ip_index',
-                    server_default=default, existing_type=sa.Integer)
+                    server_default=profile_default, existing_type=sa.Integer)
     op.alter_column('cisco_n1kv_vlan_allocations', 'allocated',
                     existing_type=sa.Boolean,
                     server_default=default, existing_nullable=False)
