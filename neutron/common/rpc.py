@@ -147,6 +147,7 @@ class RpcProxy(object):
     RPC_API_NAMESPACE = None
 
     def __init__(self, topic, default_version, version_cap=None):
+        super(RpcProxy, self).__init__()
         self.topic = topic
         target = messaging.Target(topic=topic, version=default_version)
         self._client = get_client(target, version_cap=version_cap)
