@@ -413,11 +413,11 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
         return DEVICE_OWNER_ROUTER_INTF
 
     def _validate_interface_info(self, interface_info):
-        if not interface_info:
+        port_id_specified = interface_info and 'port_id' in interface_info
+        subnet_id_specified = interface_info and 'subnet_id' in interface_info
+        if not (port_id_specified or subnet_id_specified):
             msg = _("Either subnet_id or port_id must be specified")
             raise n_exc.BadRequest(resource='router', msg=msg)
-        port_id_specified = 'port_id' in interface_info
-        subnet_id_specified = 'subnet_id' in interface_info
         if port_id_specified and subnet_id_specified:
             msg = _("Cannot specify both subnet-id and port-id")
             raise n_exc.BadRequest(resource='router', msg=msg)
