@@ -24,6 +24,10 @@ from neutron.tests import base
 
 class ConfigurationTest(base.BaseTestCase):
 
+    def setup_config(self):
+        # don't use default config
+        pass
+
     def test_defaults(self):
         self.assertEqual('0.0.0.0', cfg.CONF.bind_host)
         self.assertEqual(9696, cfg.CONF.bind_port)

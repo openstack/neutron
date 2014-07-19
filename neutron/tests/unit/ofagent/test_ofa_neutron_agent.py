@@ -54,10 +54,12 @@ class OFAAgentTestCase(base.BaseTestCase):
         super(OFAAgentTestCase, self).setUp()
         self.fake_oflib_of = fake_oflib.patch_fake_oflib_of().start()
         self.mod_agent = importutils.import_module(self._AGENT_NAME)
+        self.ryuapp = mock.Mock()
+
+    def setup_config(self):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        self.ryuapp = mock.Mock()
         cfg.CONF.register_cli_opts([
             cfg.StrOpt('ofp-listen-host', default='',
                        help='openflow listen host'),

@@ -22,6 +22,10 @@ from neutron.tests import base
 
 class TestNetnsCleanup(base.BaseTestCase):
 
+    def setup_config(self):
+        # don't use default config
+        pass
+
     def test_setup_conf(self):
         expected_opts = interface.OPTS
         conf = util.setup_conf()
