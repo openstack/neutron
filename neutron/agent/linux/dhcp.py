@@ -454,7 +454,7 @@ class Dnsmasq(DhcpLocalProcess):
             port,  # a DictModel instance representing the port.
             alloc,  # a DictModel instance of the allocated ip and subnet.
             host_name,  # Host name.
-            name,  # Host name and domain name in the format 'hostname.domain'.
+            name,  # Canonical hostname in the format 'hostname[.domain]'.
         )
         """
         v6_nets = dict((subnet.id, subnet) for subnet in
@@ -471,7 +471,9 @@ class Dnsmasq(DhcpLocalProcess):
                         continue
                 hostname = 'host-%s' % alloc.ip_address.replace(
                     '.', '-').replace(':', '-')
-                fqdn = '%s.%s' % (hostname, self.conf.dhcp_domain)
+                fqdn = hostname
+                if self.conf.dhcp_domain:
+                    fqdn = '%s.%s' % (fqdn, self.conf.dhcp_domain)
                 yield (port, alloc, hostname, fqdn)
 
     def _output_hosts_file(self):

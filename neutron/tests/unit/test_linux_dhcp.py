@@ -767,8 +767,12 @@ class TestDnsmasq(TestBase):
         self._test_spawn(['--conf-file=/foo', '--domain=openstacklocal'])
 
     def test_spawn_no_dhcp_domain(self):
+        (exp_host_name, exp_host_data,
+         exp_addn_name, exp_addn_data) = self._test_no_dhcp_domain_alloc_data
         self.conf.set_override('dhcp_domain', '')
         self._test_spawn(['--conf-file='])
+        self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
+                                    mock.call(exp_addn_name, exp_addn_data)])
 
     def test_spawn_no_dnsmasq_ipv6_mode(self):
         network = FakeV6Network()
@@ -1061,6 +1065,38 @@ tag:tag0,option:router""".lstrip()
             dm._output_opts_file()
 
         self.safe.assert_called_once_with('/foo/opts', expected)
+
+    @property
+    def _test_no_dhcp_domain_alloc_data(self):
+        exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
+        exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2,'
+                         '192.168.0.2\n'
+                         '00:00:f3:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--2,'
+                         '[fdca:3ba5:a17a:4ba3::2]\n'
+                         '00:00:0f:aa:bb:cc,host-192-168-0-3,'
+                         '192.168.0.3\n'
+                         '00:00:0f:aa:bb:cc,host-fdca-3ba5-a17a-4ba3--3,'
+                         '[fdca:3ba5:a17a:4ba3::3]\n'
+                         '00:00:0f:rr:rr:rr,host-192-168-0-1,'
+                         '192.168.0.1\n').lstrip()
+        exp_addn_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/addn_hosts'
+        exp_addn_data = (
+            '192.168.0.2\t'
+            'host-192-168-0-2 host-192-168-0-2\n'
+            'fdca:3ba5:a17a:4ba3::2\t'
+            'host-fdca-3ba5-a17a-4ba3--2 '
+            'host-fdca-3ba5-a17a-4ba3--2\n'
+            '192.168.0.3\thost-192-168-0-3 '
+            'host-192-168-0-3\n'
+            'fdca:3ba5:a17a:4ba3::3\t'
+            'host-fdca-3ba5-a17a-4ba3--3 '
+            'host-fdca-3ba5-a17a-4ba3--3\n'
+            '192.168.0.1\t'
+            'host-192-168-0-1 '
+            'host-192-168-0-1\n'
+        ).lstrip()
+        return (exp_host_name, exp_host_data,
+                exp_addn_name, exp_addn_data)
 
     @property
     def _test_reload_allocation_data(self):
