@@ -293,7 +293,7 @@ firewall_quota_opts = [
                help=_('Number of firewall policies allowed per tenant. '
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_firewall_rule',
-               default=-1,
+               default=100,
                help=_('Number of firewall rules allowed per tenant. '
                       'A negative value means unlimited.')),
 ]
