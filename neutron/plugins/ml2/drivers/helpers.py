@@ -60,35 +60,38 @@ class TypeDriverHelper(api.TypeDriver):
                         # Segment not allocated
                         LOG.debug("%(type)s segment %(segment)s allocate "
                                   "started ",
-                                  type=network_type, segment=raw_segment)
+                                  {"type": network_type,
+                                   "segment": raw_segment})
                         count = (session.query(self.model).
                                  filter_by(allocated=False, **raw_segment).
                                  update({"allocated": True}))
                         if count:
                             LOG.debug("%(type)s segment %(segment)s allocate "
                                       "done ",
-                                      type=network_type, segment=raw_segment)
+                                  {"type": network_type,
+                                   "segment": raw_segment})
                             return alloc
 
                         # Segment allocated or deleted since select
                         LOG.debug("%(type)s segment %(segment)s allocate "
                                   "failed: segment has been allocated or "
                                   "deleted",
-                                  type=network_type, segment=raw_segment)
+                                  {"type": network_type,
+                                   "segment": raw_segment})
 
                 # Segment to create or already allocated
                 LOG.debug("%(type)s segment %(segment)s create started",
-                          type=network_type, segment=raw_segment)
+                          {"type": network_type, "segment": raw_segment})
                 alloc = self.model(allocated=True, **raw_segment)
                 alloc.save(session)
                 LOG.debug("%(type)s segment %(segment)s create done",
-                          type=network_type, segment=raw_segment)
+                          {"type": network_type, "segment": raw_segment})
 
         except db_exc.DBDuplicateEntry:
             # Segment already allocated (insert failure)
             alloc = None
             LOG.debug("%(type)s segment %(segment)s create failed",
-                      type=network_type, segment=raw_segment)
+                      {"type": network_type, "segment": raw_segment})
 
         return alloc
 
@@ -115,24 +118,24 @@ class TypeDriverHelper(api.TypeDriver):
                 raw_segment = dict((k, alloc[k]) for k in self.primary_keys)
                 LOG.debug("%(type)s segment allocate from pool, attempt "
                           "%(attempt)s started with %(segment)s ",
-                          type=network_type, attempt=attempt,
-                          segment=raw_segment)
+                          {"type": network_type, "attempt": attempt,
+                           "segment": raw_segment})
                 count = (session.query(self.model).
                          filter_by(allocated=False, **raw_segment).
                          update({"allocated": True}))
                 if count:
                     LOG.debug("%(type)s segment allocate from pool, attempt "
                               "%(attempt)s success with %(segment)s ",
-                              type=network_type, attempt=attempt,
-                              segment=raw_segment)
+                              {"type": network_type, "attempt": attempt,
+                               "segment": raw_segment})
                     return alloc
 
                 # Segment allocated since select
                 LOG.debug("Allocate %(type)s segment from pool, "
                           "attempt %(attempt)s failed with segment "
                           "%(segment)s",
-                          type=network_type, attempt=attempt,
-                          segment=raw_segment)
+                          {"type": network_type, "attempt": attempt,
+                           "segment": raw_segment})
 
         LOG.warning(_("Allocate %(type)s segment from pool failed "
                       "after %(number)s failed attempts"),

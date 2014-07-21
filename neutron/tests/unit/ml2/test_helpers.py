@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import fixtures
+import logging
 import mock
 from sqlalchemy.orm import query
 
@@ -42,6 +44,12 @@ class HelpersTest(base.BaseTestCase):
         self.driver._sync_vlan_allocations()
         self.session = db.get_session()
         self.addCleanup(db.clear_db)
+        self.useFixture(
+            fixtures.FakeLogger(
+                name=helpers.__name__,
+                format=base.LOG_FORMAT,
+                level=logging.DEBUG
+            ))
 
     def check_raw_segment(self, expected, observed):
         for key, value in expected.items():
