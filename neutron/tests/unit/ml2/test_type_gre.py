@@ -112,9 +112,9 @@ class GreTypeTest(base.BaseTestCase):
         segment = {api.NETWORK_TYPE: 'gre',
                    api.PHYSICAL_NETWORK: 'None',
                    api.SEGMENTATION_ID: 101}
-        self.driver.reserve_provider_segment(self.session, segment)
+        observed = self.driver.reserve_provider_segment(self.session, segment)
         alloc = self.driver.get_gre_allocation(self.session,
-                                               segment[api.SEGMENTATION_ID])
+                                               observed[api.SEGMENTATION_ID])
         self.assertTrue(alloc.allocated)
 
         with testtools.ExpectedException(exc.TunnelIdInUse):
@@ -122,18 +122,18 @@ class GreTypeTest(base.BaseTestCase):
 
         self.driver.release_segment(self.session, segment)
         alloc = self.driver.get_gre_allocation(self.session,
-                                               segment[api.SEGMENTATION_ID])
+                                               observed[api.SEGMENTATION_ID])
         self.assertFalse(alloc.allocated)
 
         segment[api.SEGMENTATION_ID] = 1000
-        self.driver.reserve_provider_segment(self.session, segment)
+        observed = self.driver.reserve_provider_segment(self.session, segment)
         alloc = self.driver.get_gre_allocation(self.session,
-                                               segment[api.SEGMENTATION_ID])
+                                               observed[api.SEGMENTATION_ID])
         self.assertTrue(alloc.allocated)
 
         self.driver.release_segment(self.session, segment)
         alloc = self.driver.get_gre_allocation(self.session,
-                                               segment[api.SEGMENTATION_ID])
+                                               observed[api.SEGMENTATION_ID])
         self.assertIsNone(alloc)
 
     def test_allocate_tenant_segment(self):
