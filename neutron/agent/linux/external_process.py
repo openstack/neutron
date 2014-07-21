@@ -14,8 +14,6 @@
 #
 # @author: Mark McClain, DreamHost
 
-import os
-
 from oslo.config import cfg
 
 from neutron.agent.linux import ip_lib
@@ -38,25 +36,40 @@ class ProcessManager(object):
 
     Note: The manager expects uuid to be in cmdline.
     """
-    def __init__(self, conf, uuid, root_helper='sudo', namespace=None):
+    def __init__(self, conf, uuid, root_helper='sudo',
+                 namespace=None, service=None):
         self.conf = conf
         self.uuid = uuid
         self.root_helper = root_helper
         self.namespace = namespace
+        if service:
+            self.service_pid_fname = 'pid.' + service
+        else:
+            self.service_pid_fname = 'pid'
 
-    def enable(self, cmd_callback):
+    def enable(self, cmd_callback, reload_cfg=False):
         if not self.active:
             cmd = cmd_callback(self.get_pid_file_name(ensure_pids_dir=True))
 
             ip_wrapper = ip_lib.IPWrapper(self.root_helper, self.namespace)
             ip_wrapper.netns.execute(cmd)
+        elif reload_cfg:
+            self.reload_cfg()
 
-    def disable(self):
+    def reload_cfg(self):
+        self.disable('HUP')
+
+    def disable(self, sig='9'):
         pid = self.pid
 
         if self.active:
-            cmd = ['kill', '-9', pid]
+            cmd = ['kill', '-%s' % (sig), pid]
             utils.execute(cmd, self.root_helper)
+            # In the case of shutting down, remove the pid file
+            if sig == '9':
+                utils.remove_conf_file(self.conf.external_pids,
+                                       self.uuid,
+                                       self.service_pid_fname)
         elif pid:
             LOG.debug(_('Process for %(uuid)s pid %(pid)d is stale, ignoring '
                         'command'), {'uuid': self.uuid, 'pid': pid})
@@ -65,28 +78,18 @@ class ProcessManager(object):
 
     def get_pid_file_name(self, ensure_pids_dir=False):
         """Returns the file name for a given kind of config file."""
-        pids_dir = os.path.abspath(os.path.normpath(self.conf.external_pids))
-        if ensure_pids_dir and not os.path.isdir(pids_dir):
-            os.makedirs(pids_dir, 0o755)
-
-        return os.path.join(pids_dir, self.uuid + '.pid')
+        return utils.get_conf_file_name(self.conf.external_pids,
+                                        self.uuid,
+                                        self.service_pid_fname,
+                                        ensure_pids_dir)
 
     @property
     def pid(self):
         """Last known pid for this external process spawned for this uuid."""
-        file_name = self.get_pid_file_name()
-        msg = _('Error while reading %s')
-
-        try:
-            with open(file_name, 'r') as f:
-                return int(f.read())
-        except IOError:
-            msg = _('Unable to access %s')
-        except ValueError:
-            msg = _('Unable to convert value in %s')
-
-        LOG.debug(msg, file_name)
-        return None
+        return utils.get_value_from_conf_file(self.conf.external_pids,
+                                              self.uuid,
+                                              self.service_pid_fname,
+                                              int)
 
     @property
     def active(self):

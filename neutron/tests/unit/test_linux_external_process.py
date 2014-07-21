@@ -120,27 +120,27 @@ class TestProcessManager(base.BaseTestCase):
                     debug.assert_called_once_with(mock.ANY, mock.ANY)
 
     def test_get_pid_file_name_existing(self):
-        with mock.patch.object(ep.os.path, 'isdir') as isdir:
+        with mock.patch.object(ep.utils.os.path, 'isdir') as isdir:
             isdir.return_value = True
             manager = ep.ProcessManager(self.conf, 'uuid')
             retval = manager.get_pid_file_name(ensure_pids_dir=True)
-            self.assertEqual(retval, '/var/path/uuid.pid')
+            self.assertEqual(retval, '/var/path/uuid/pid')
 
     def test_get_pid_file_name_not_existing(self):
-        with mock.patch.object(ep.os.path, 'isdir') as isdir:
-            with mock.patch.object(ep.os, 'makedirs') as makedirs:
+        with mock.patch.object(ep.utils.os.path, 'isdir') as isdir:
+            with mock.patch.object(ep.utils.os, 'makedirs') as makedirs:
                 isdir.return_value = False
                 manager = ep.ProcessManager(self.conf, 'uuid')
                 retval = manager.get_pid_file_name(ensure_pids_dir=True)
-                self.assertEqual(retval, '/var/path/uuid.pid')
-                makedirs.assert_called_once_with('/var/path', 0o755)
+                self.assertEqual(retval, '/var/path/uuid/pid')
+                makedirs.assert_called_once_with('/var/path/uuid', 0o755)
 
     def test_get_pid_file_name_default(self):
-        with mock.patch.object(ep.os.path, 'isdir') as isdir:
+        with mock.patch.object(ep.utils.os.path, 'isdir') as isdir:
             isdir.return_value = True
             manager = ep.ProcessManager(self.conf, 'uuid')
             retval = manager.get_pid_file_name(ensure_pids_dir=False)
-            self.assertEqual(retval, '/var/path/uuid.pid')
+            self.assertEqual(retval, '/var/path/uuid/pid')
             self.assertFalse(isdir.called)
 
     def test_pid(self):
