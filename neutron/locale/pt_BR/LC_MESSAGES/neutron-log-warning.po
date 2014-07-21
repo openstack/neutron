@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-02 06:08+0000\n"
-"PO-Revision-Date: 2014-06-30 19:27+0000\n"
+"POT-Creation-Date: 2014-07-21 06:06+0000\n"
+"PO-Revision-Date: 2014-07-18 21:01+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/"
 "neutron/language/pt_BR/)\n"
@@ -18,6 +18,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: neutron/policy.py:94
+#, python-format
+msgid ""
+"Found deprecated policy rule:%s. Please consider upgrading your policy "
+"configuration file"
+msgstr ""
+"Encontrada regra deprecada: %s. Por favor considere atualizar seu arquivo de "
+"regras de políticas"
+
+#: neutron/policy.py:137
+#, python-format
+msgid "Unable to find data type descriptor for attribute %s"
+msgstr ""
+"Não foi possível encontrar o descritor de tipo de dados para o atributo %s"
 
 #: neutron/openstack/common/service.py:364
 #, python-format

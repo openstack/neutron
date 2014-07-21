@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-02 06:08+0000\n"
-"PO-Revision-Date: 2014-06-30 20:07+0000\n"
+"POT-Creation-Date: 2014-07-21 06:06+0000\n"
+"PO-Revision-Date: 2014-07-18 20:49+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/neutron/language/"
 "es/)\n"
@@ -18,6 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: neutron/policy.py:106
+#, python-format
+msgid ""
+"Inserting policy:%(new_policy)s in place of deprecated policy:%(old_policy)s"
+msgstr ""
 
 #: neutron/openstack/common/periodic_task.py:125
 #, python-format
