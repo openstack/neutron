@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-21 06:06+0000\n"
-"PO-Revision-Date: 2014-07-18 21:01+0000\n"
+"POT-Creation-Date: 2014-07-22 06:06+0000\n"
+"PO-Revision-Date: 2014-07-21 17:03+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/neutron/"
 "language/zh_CN/)\n"
@@ -29,6 +29,12 @@ msgstr "被废弃的策略%s不支持功能回退，这个策略将不再被使�
 #: neutron/policy.py:280
 #, python-format
 msgid "Policy check error while calling %s!"
+msgstr ""
+
+#: neutron/cmd/sanity_check.py:58
+msgid ""
+"Nova notifications are enabled, but novaclient is not installed. Either "
+"disable nova notifications or install python-novaclient."
 msgstr ""
 
 #: neutron/openstack/common/excutils.py:76
