@@ -21,8 +21,8 @@ from oslo.config import cfg
 import sqlalchemy as sa
 from sqlalchemy import create_engine, event, pool
 
+from neutron.db.migration.models import head  # noqa
 from neutron.db import model_base
-from neutron.openstack.common import importutils
 
 
 MYSQL_ENGINE = None
@@ -39,9 +39,6 @@ logging_config.fileConfig(config.config_file_name)
 plugin_class_path = neutron_config.core_plugin
 active_plugins = [plugin_class_path]
 active_plugins += neutron_config.service_plugins
-
-for class_path in active_plugins:
-    importutils.import_class(class_path)
 
 # set the target for 'autogenerate' support
 target_metadata = model_base.BASEV2.metadata
