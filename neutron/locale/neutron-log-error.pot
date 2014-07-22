@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 2014.2.dev361.ge693d5b\n"
+"Project-Id-Version: neutron 2014.2.dev390.g1b621fc\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-21 06:06+0000\n"
+"POT-Creation-Date: 2014-07-22 06:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,6 +27,12 @@ msgstr ""
 #: neutron/policy.py:280
 #, python-format
 msgid "Policy check error while calling %s!"
+msgstr ""
+
+#: neutron/cmd/sanity_check.py:58
+msgid ""
+"Nova notifications are enabled, but novaclient is not installed. Either "
+"disable nova notifications or install python-novaclient."
 msgstr ""
 
 #: neutron/openstack/common/excutils.py:76

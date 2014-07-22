@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-21 06:06+0000\n"
-"PO-Revision-Date: 2014-07-18 21:01+0000\n"
+"POT-Creation-Date: 2014-07-22 06:06+0000\n"
+"PO-Revision-Date: 2014-07-21 17:03+0000\n"
 "Last-Translator: openstackjenkins <jenkins@openstack.org>\n"
 "Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/"
 "neutron/language/pt_BR/)\n"
@@ -32,6 +32,12 @@ msgstr ""
 #, python-format
 msgid "Policy check error while calling %s!"
 msgstr "Erro de verificação de políticas enquanto chamando %s!"
+
+#: neutron/cmd/sanity_check.py:58
+msgid ""
+"Nova notifications are enabled, but novaclient is not installed. Either "
+"disable nova notifications or install python-novaclient."
+msgstr ""
 
 #: neutron/openstack/common/excutils.py:76
 #, python-format
