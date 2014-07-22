@@ -25,6 +25,7 @@ from neutron.db import model_base
 from neutron.openstack.common import log
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
+from neutron.plugins.ml2.drivers import helpers
 from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)
@@ -68,7 +69,10 @@ class VxlanEndpoints(model_base.BASEV2):
         return "<VxlanTunnelEndpoint(%s)>" % self.ip_address
 
 
-class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
+class VxlanTypeDriver(helpers.TypeDriverHelper, type_tunnel.TunnelTypeDriver):
+
+    def __init__(self):
+        super(VxlanTypeDriver, self).__init__(VxlanAllocation)
 
     def get_type(self):
         return p_const.TYPE_VXLAN
@@ -83,39 +87,27 @@ class VxlanTypeDriver(type_tunnel.TunnelTypeDriver):
         self._sync_vxlan_allocations()
 
     def reserve_provider_segment(self, session, segment):
-        segmentation_id = segment.get(api.SEGMENTATION_ID)
-        with session.begin(subtransactions=True):
-            try:
-                alloc = (session.query(VxlanAllocation).
-                         filter_by(vxlan_vni=segmentation_id).
-                         with_lockmode('update').
-                         one())
-                if alloc.allocated:
-                    raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
-                LOG.debug(_("Reserving specific vxlan tunnel %s from pool"),
-                          segmentation_id)
-                alloc.allocated = True
-            except sa_exc.NoResultFound:
-                LOG.debug(_("Reserving specific vxlan tunnel %s outside pool"),
-                          segmentation_id)
-                alloc = VxlanAllocation(vxlan_vni=segmentation_id)
-                alloc.allocated = True
-                session.add(alloc)
-        return segment
+        if self.is_partial_segment(segment):
+            alloc = self.allocate_partially_specified_segment(session)
+            if not alloc:
+                raise exc.NoNetworkAvailable
+        else:
+            segmentation_id = segment.get(api.SEGMENTATION_ID)
+            alloc = self.allocate_fully_specified_segment(
+                session, vxlan_vni=segmentation_id)
+            if not alloc:
+                raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
+        return {api.NETWORK_TYPE: p_const.TYPE_VXLAN,
+                api.PHYSICAL_NETWORK: None,
+                api.SEGMENTATION_ID: alloc.vxlan_vni}
 
     def allocate_tenant_segment(self, session):
-        with session.begin(subtransactions=True):
-            alloc = (session.query(VxlanAllocation).
-                     filter_by(allocated=False).
-                     with_lockmode('update').
-                     first())
-            if alloc:
-                LOG.debug(_("Allocating vxlan tunnel vni %(vxlan_vni)s"),
-                          {'vxlan_vni': alloc.vxlan_vni})
-                alloc.allocated = True
-                return {api.NETWORK_TYPE: p_const.TYPE_VXLAN,
-                        api.PHYSICAL_NETWORK: None,
-                        api.SEGMENTATION_ID: alloc.vxlan_vni}
+        alloc = self.allocate_partially_specified_segment(session)
+        if not alloc:
+            return
+        return {api.NETWORK_TYPE: p_const.TYPE_VXLAN,
+                api.PHYSICAL_NETWORK: None,
+                api.SEGMENTATION_ID: alloc.vxlan_vni}
 
     def release_segment(self, session, segment):
         vxlan_vni = segment[api.SEGMENTATION_ID]
