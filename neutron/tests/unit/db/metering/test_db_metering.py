@@ -142,6 +142,8 @@ class MeteringPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
         app = config.load_paste_app('extensions_test_app')
         self.ext_api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
+
+class TestMetering(MeteringPluginDbTestCase):
     def test_create_metering_label(self):
         name = 'my label'
         description = 'my metering label'
@@ -287,5 +289,5 @@ class MeteringPluginDbTestCase(test_db_plugin.NeutronDbPluginV2TestCase,
                                               metering_label_rule)
 
 
-class TestMeteringDbXML(MeteringPluginDbTestCase):
+class TestMeteringDbXML(TestMetering):
     fmt = 'xml'
