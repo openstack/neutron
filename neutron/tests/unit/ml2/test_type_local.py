@@ -27,6 +27,10 @@ class LocalTypeTest(base.BaseTestCase):
         self.driver = type_local.LocalTypeDriver()
         self.session = None
 
+    def test_is_partial_segment(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_LOCAL}
+        self.assertFalse(self.driver.is_partial_segment(segment))
+
     def test_validate_provider_segment(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_LOCAL}
         self.driver.validate_provider_segment(segment)

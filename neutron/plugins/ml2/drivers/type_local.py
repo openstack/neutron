@@ -40,6 +40,9 @@ class LocalTypeDriver(api.TypeDriver):
     def initialize(self):
         pass
 
+    def is_partial_segment(self, segment):
+        return False
+
     def validate_provider_segment(self, segment):
         for key, value in segment.iteritems():
             if value and key not in [api.NETWORK_TYPE]:

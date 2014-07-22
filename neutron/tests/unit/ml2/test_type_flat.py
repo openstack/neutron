@@ -40,6 +40,11 @@ class FlatTypeTest(base.BaseTestCase):
         return session.query(type_flat.FlatAllocation).filter_by(
             physical_network=segment[api.PHYSICAL_NETWORK]).first()
 
+    def test_is_partial_segment(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
+                   api.PHYSICAL_NETWORK: 'flat_net1'}
+        self.assertFalse(self.driver.is_partial_segment(segment))
+
     def test_validate_provider_segment(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
                    api.PHYSICAL_NETWORK: 'flat_net1'}

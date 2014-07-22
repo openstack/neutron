@@ -81,6 +81,9 @@ class FlatTypeDriver(api.TypeDriver):
     def initialize(self):
         LOG.info(_("ML2 FlatTypeDriver initialization complete"))
 
+    def is_partial_segment(self, segment):
+        return False
+
     def validate_provider_segment(self, segment):
         physical_network = segment.get(api.PHYSICAL_NETWORK)
         if not physical_network:
