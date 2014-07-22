@@ -291,7 +291,7 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
 
     def test_update_firewall_policy_with_no_firewall(self):
         name = "new_firewall_policy1"
-        attrs = self._get_test_firewall_policy_attrs(name)
+        attrs = self._get_test_firewall_policy_attrs(name, audited=False)
 
         with self.firewall_policy(shared=test_db_firewall.SHARED,
                                   firewall_rules=None,
@@ -305,7 +305,7 @@ class FirewallPluginTestCase(test_db_firewall.FirewallPluginDbTestCase,
 
     def test_update_firewall_policy_with_firewall(self):
         name = "new_firewall_policy1"
-        attrs = self._get_test_firewall_policy_attrs(name)
+        attrs = self._get_test_firewall_policy_attrs(name, audited=False)
 
         with self.firewall_policy(shared=test_db_firewall.SHARED,
                                   firewall_rules=None,
