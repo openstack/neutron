@@ -135,6 +135,10 @@ def add_command_parsers(subparsers):
         parser.add_argument('--delta', type=int)
         parser.add_argument('--sql', action='store_true')
         parser.add_argument('revision', nargs='?')
+        parser.add_argument('--mysql-engine',
+                            default='',
+                            help='Change MySQL storage engine of current '
+                                 'existing tables')
         parser.set_defaults(func=do_upgrade_downgrade)
 
     parser = subparsers.add_parser('stamp')
