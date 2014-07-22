@@ -39,7 +39,9 @@ ML2_BROCADE = [cfg.StrOpt('address', default='',
                cfg.StrOpt('physical_networks', default='',
                           help=_('Allowed physical networks')),
                cfg.StrOpt('ostype', default='NOS',
-                          help=_('Unused'))
+                          help=_('OS Type of the switch')),
+               cfg.StrOpt('osversion', default='4.0.0',
+                          help=_('OS Version number'))
                ]
 
 cfg.CONF.register_opts(ML2_BROCADE, "ml2_brocade")
@@ -66,11 +68,51 @@ class BrocadeMechanism(driver_api.MechanismDriver):
     def brocade_init(self):
         """Brocade specific initialization for this class."""
 
-        self._switch = {'address': cfg.CONF.ml2_brocade.address,
-                        'username': cfg.CONF.ml2_brocade.username,
-                        'password': cfg.CONF.ml2_brocade.password
-                        }
+        osversion = None
+        self._switch = {
+            'address': cfg.CONF.ml2_brocade.address,
+            'username': cfg.CONF.ml2_brocade.username,
+            'password': cfg.CONF.ml2_brocade.password,
+            'ostype': cfg.CONF.ml2_brocade.ostype,
+            'osversion': cfg.CONF.ml2_brocade.osversion}
+
         self._driver = importutils.import_object(NOS_DRIVER)
+
+        # Detect version of NOS on the switch
+        osversion = self._switch['osversion']
+        if osversion == "autodetect":
+            osversion = self._driver.get_nos_version(
+                self._switch['address'],
+                self._switch['username'],
+                self._switch['password'])
+
+        virtual_fabric_enabled = self._driver.is_virtual_fabric_enabled(
+            self._switch['address'],
+            self._switch['username'],
+            self._switch['password'])
+
+        if virtual_fabric_enabled:
+            LOG.debug(_("Virtual Fabric: enabled"))
+        else:
+            LOG.debug(_("Virtual Fabric: not enabled"))
+
+        self.set_features_enabled(osversion, virtual_fabric_enabled)
+
+    def set_features_enabled(self, nos_version, virtual_fabric_enabled):
+        self._virtual_fabric_enabled = virtual_fabric_enabled
+        version = nos_version.split(".", 2)
+
+        # Starting 4.1.0 port profile domains are supported
+        if int(version[0]) >= 5 or (int(version[0]) >= 4
+                                    and int(version[1]) >= 1):
+            self._pp_domains_supported = True
+        else:
+            self._pp_domains_supported = False
+        self._driver.set_features_enabled(self._pp_domains_supported,
+                                          self._virtual_fabric_enabled)
+
+    def get_features_enabled(self):
+        return self._pp_domains_supported, self._virtual_fabric_enabled
 
     def create_network_precommit(self, mech_context):
         """Create Network in the mechanism specific database table."""
