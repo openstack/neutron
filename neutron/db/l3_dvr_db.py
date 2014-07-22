@@ -180,9 +180,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 context.elevated(), router_id, port['network_id'],
                 port['fixed_ips'][0]['subnet_id'])
 
-        return self.notify_router_interface_action(
-            context, router_id, port['tenant_id'], port['id'],
-            port['fixed_ips'][0]['subnet_id'], 'add')
+        router_interface_info = self._make_router_interface_info(
+            router_id, port['tenant_id'], port['id'],
+            port['fixed_ips'][0]['subnet_id'])
+        self.notify_router_interface_action(
+            context, router_interface_info, 'add')
+        return router_interface_info
 
     def remove_router_interface(self, context, router_id, interface_info):
         if not interface_info:
@@ -205,9 +208,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self.delete_csnat_router_interface_ports(
                 context.elevated(), router, subnet_id=subnet_id)
 
-        return self.notify_router_interface_action(
-            context, router_id, port['tenant_id'], port['id'],
-            subnet['id'], 'remove')
+        router_interface_info = self._make_router_interface_info(
+            router_id, port['tenant_id'], port['id'],
+            port['fixed_ips'][0]['subnet_id'])
+        self.notify_router_interface_action(
+            context, router_interface_info, 'remove')
+        return router_interface_info
 
     def get_snat_sync_interfaces(self, context, router_ids):
         """Query router interfaces that relate to list of router_ids."""

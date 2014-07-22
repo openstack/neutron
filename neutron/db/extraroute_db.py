@@ -51,11 +51,11 @@ class RouterRoute(model_base.BASEV2, models_v2.Route):
                                                   cascade='delete'))
 
 
-class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
+class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     """Mixin class to support extra route configuration on router."""
 
     def _extend_router_dict_extraroute(self, router_res, router_db):
-        router_res['routes'] = (ExtraRoute_db_mixin.
+        router_res['routes'] = (ExtraRoute_dbonly_mixin.
                                 _make_extra_route_list(
                                     router_db['route_list']
                                 ))
@@ -71,7 +71,7 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
             if 'routes' in r:
                 self._update_extra_routes(context, router_db, r['routes'])
             routes = self._get_extra_routes_by_router_id(context, id)
-        router_updated = super(ExtraRoute_db_mixin, self).update_router(
+        router_updated = super(ExtraRoute_dbonly_mixin, self).update_router(
             context, id, router)
         router_updated['routes'] = routes
 
@@ -159,7 +159,7 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
 
     def get_router(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
-            router = super(ExtraRoute_db_mixin, self).get_router(
+            router = super(ExtraRoute_dbonly_mixin, self).get_router(
                 context, id, fields)
             return router
 
@@ -167,14 +167,15 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
         with context.session.begin(subtransactions=True):
-            routers = super(ExtraRoute_db_mixin, self).get_routers(
+            routers = super(ExtraRoute_dbonly_mixin, self).get_routers(
                 context, filters, fields, sorts=sorts, limit=limit,
                 marker=marker, page_reverse=page_reverse)
             return routers
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
-        super(ExtraRoute_db_mixin, self)._confirm_router_interface_not_in_use(
+        super(ExtraRoute_dbonly_mixin,
+            self)._confirm_router_interface_not_in_use(
             context, router_id, subnet_id)
         subnet_db = self._core_plugin._get_subnet(context, subnet_id)
         subnet_cidr = netaddr.IPNetwork(subnet_db['cidr'])
@@ -183,3 +184,8 @@ class ExtraRoute_db_mixin(l3_db.L3_NAT_db_mixin):
             if netaddr.all_matching_cidrs(route['nexthop'], [subnet_cidr]):
                 raise extraroute.RouterInterfaceInUseByRoute(
                     router_id=router_id, subnet_id=subnet_id)
+
+
+class ExtraRoute_db_mixin(ExtraRoute_dbonly_mixin, l3_db.L3_NAT_db_mixin):
+    """Mixin class to support extra route configuration on router with rpc."""
+    pass

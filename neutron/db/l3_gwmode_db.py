@@ -31,7 +31,7 @@ setattr(l3_db.Router, 'enable_snat',
                   nullable=False))
 
 
-class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
+class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     """Mixin class to add configurable gateway modes."""
 
     # Register dict extend functions for ports and networks
@@ -56,7 +56,7 @@ class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
             router.enable_snat = enable_snat
 
         # Calls superclass, pass router db object for avoiding re-loading
-        super(L3_NAT_db_mixin, self)._update_router_gw_info(
+        super(L3_NAT_dbonly_mixin, self)._update_router_gw_info(
             context, router_id, info, router=router)
         # Returning the router might come back useful if this
         # method is overridden in child classes
@@ -70,3 +70,7 @@ class L3_NAT_db_mixin(l3_db.L3_NAT_db_mixin):
                 # Add enable_snat key
                 rtr['enable_snat'] = rtr[EXTERNAL_GW_INFO]['enable_snat']
         return routers
+
+
+class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, l3_db.L3_NAT_db_mixin):
+    pass
