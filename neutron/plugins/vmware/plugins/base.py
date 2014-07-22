@@ -1674,10 +1674,11 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
         if port_id:
             port_data = self.get_port(context, port_id)
             # If security groups are present we need to remove them as
-            # this is a router port.
+            # this is a router port and disable port security.
             if port_data['security_groups']:
                 self.update_port(context, port_id,
-                                 {'port': {'security_groups': []}})
+                                 {'port': {'security_groups': [],
+                                           psec.PORTSECURITY: False}})
             nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
                 context.session, self.cluster, port_id)
             # Unplug current attachment from lswitch port
