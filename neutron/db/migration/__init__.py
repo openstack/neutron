@@ -51,3 +51,18 @@ def alter_enum(table, column, enum_type, nullable):
     else:
         op.alter_column(table, column, type_=enum_type,
                         existing_nullable=nullable)
+
+
+def create_table_if_not_exist_psql(table_name, values):
+    if op.get_bind().engine.dialect.server_version_info < (9, 1, 0):
+        op.execute("CREATE LANGUAGE plpgsql")
+    op.execute("CREATE OR REPLACE FUNCTION execute(TEXT) RETURNS VOID AS $$"
+               "BEGIN EXECUTE $1; END;"
+               "$$ LANGUAGE plpgsql STRICT;")
+    op.execute("CREATE OR REPLACE FUNCTION table_exist(TEXT) RETURNS bool as "
+               "$$ SELECT exists(select 1 from pg_class where relname=$1);"
+               "$$ language sql STRICT;")
+    op.execute("SELECT execute($$CREATE TABLE %(name)s %(columns)s $$) "
+               "WHERE NOT table_exist(%(name)r);" %
+               {'name': table_name,
+                'columns': values})
