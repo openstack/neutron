@@ -250,6 +250,20 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             # should have returned before calling _make_port_dict
             self.assertFalse(mpd_mock.mock_calls)
 
+    def test_port_binding_profile_not_changed(self):
+        profile = {'e': 5}
+        profile_arg = {portbindings.PROFILE: profile}
+        with self.port(arg_list=(portbindings.PROFILE,),
+                       **profile_arg) as port:
+            self._check_port_binding_profile(port['port'], profile)
+            port_id = port['port']['id']
+            state_arg = {'admin_state_up': True}
+            port = self._update('ports', port_id,
+                                {'port': state_arg})['port']
+            self._check_port_binding_profile(port, profile)
+            port = self._show('ports', port_id)['port']
+            self._check_port_binding_profile(port, profile)
+
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):
     HAS_PORT_FILTER = False
