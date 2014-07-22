@@ -984,14 +984,6 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
 
     def delete_network(self, context, id):
         external = self._network_is_external(context, id)
-        # Before deleting ports, ensure the peer of a NSX logical
-        # port with a patch attachment is removed too
-        port_filter = {'network_id': [id],
-                       'device_owner': [constants.DEVICE_OWNER_ROUTER_INTF]}
-        router_iface_ports = self.get_ports(context, filters=port_filter)
-        for port in router_iface_ports:
-            nsx_switch_id, nsx_port_id = nsx_utils.get_nsx_switch_and_port_id(
-                context.session, self.cluster, id)
         # Before removing entry from Neutron DB, retrieve NSX switch
         # identifiers for removing them from backend
         if not external:
@@ -1001,41 +993,15 @@ class NsxPluginV2(addr_pair_db.AllowedAddressPairsMixin,
             self._process_l3_delete(context, id)
             super(NsxPluginV2, self).delete_network(context, id)
 
-        # clean up network owned ports
-        for port in router_iface_ports:
-            try:
-                if nsx_port_id:
-                    nsx_router_id = nsx_utils.get_nsx_router_id(
-                        context.session, self.cluster, port['device_id'])
-                    routerlib.delete_peer_router_lport(self.cluster,
-                                                       nsx_router_id,
-                                                       nsx_switch_id,
-                                                       nsx_port_id)
-                else:
-                    LOG.warning(_("A nsx lport identifier was not found for "
-                                  "neutron port '%s'. Unable to remove "
-                                  "the peer router port for this switch port"),
-                                port['id'])
-
-            except (TypeError, KeyError,
-                    api_exc.NsxApiException,
-                    api_exc.ResourceNotFound):
-                # Do not raise because the issue might as well be that the
-                # router has already been deleted, so there would be nothing
-                # to do here
-                LOG.warning(_("Ignoring exception as this means the peer for "
-                              "port '%s' has already been deleted."),
-                            nsx_port_id)
-
         # Do not go to NSX for external networks
         if not external:
             try:
                 switchlib.delete_networks(self.cluster, id, lswitch_ids)
-                LOG.debug(_("delete_network completed for tenant: %s"),
-                          context.tenant_id)
             except n_exc.NotFound:
-                LOG.warning(_("Did not found lswitch %s in NSX"), id)
+                LOG.warning(_("The following logical switches were not found "
+                              "on the NSX backend:%s"), lswitch_ids)
         self.handle_network_dhcp_access(context, id, action='delete_network')
+        LOG.debug("Delete network complete for network: %s", id)
 
     def get_network(self, context, id, fields=None):
         with context.session.begin(subtransactions=True):
