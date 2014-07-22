@@ -921,9 +921,9 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk port create")
         ctx = context.get_admin_context()
         with self.network() as net:
-            orig = NeutronManager._instance.plugin.create_port
-            with mock.patch.object(NeutronManager._instance.plugin,
-                                   'create_port') as patched_plugin:
+            plugin = NeutronManager.get_plugin()
+            orig = plugin.create_port
+            with mock.patch.object(plugin, 'create_port') as patched_plugin:
 
                 def side_effect(*args, **kwargs):
                     return self._fail_second_call(patched_plugin, orig,
@@ -2435,9 +2435,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnets_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk subnet create")
-        orig = NeutronManager._instance.plugin.create_subnet
-        with mock.patch.object(NeutronManager._instance.plugin,
-                               'create_subnet') as patched_plugin:
+        plugin = NeutronManager.get_plugin()
+        orig = plugin.create_subnet
+        with mock.patch.object(plugin, 'create_subnet') as patched_plugin:
             def side_effect(*args, **kwargs):
                 return self._fail_second_call(patched_plugin, orig,
                                               *args, **kwargs)
