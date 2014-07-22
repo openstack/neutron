@@ -5,9 +5,10 @@
 
 # -- External Resources:
 
- The homepage for Neutron is: http://launchpad.net/neutron .  Use this
- site for asking for help, and filing bugs. Code is available on github at
- <http://github.com/openstack/neutron>.
+ The homepage for Neutron is: http://launchpad.net/neutron.  Use this
+ site for asking for help, and filing bugs. Code is available on
+ git.openstack.org at
+ <http://git.openstack.org/cgit/openstack/neutron>.
 
  The latest and most in-depth documentation on how to use Neutron is
  available at: <http://docs.openstack.org>.  This includes:
