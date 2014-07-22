@@ -28,7 +28,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
-from neutron.agent.linux import ovs_lib  # noqa
 from neutron.agent.linux import ra
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
@@ -53,6 +52,18 @@ LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qrouter-'
 INTERNAL_DEV_PREFIX = 'qr-'
 EXTERNAL_DEV_PREFIX = 'qg-'
+SNAT_INT_DEV_PREFIX = 'sg-'
+FIP_NS_PREFIX = 'fip-'
+SNAT_NS_PREFIX = 'snat-'
+FIP_2_ROUTER_DEV_PREFIX = 'fpr-'
+ROUTER_2_FIP_DEV_PREFIX = 'rfp-'
+FIP_EXT_DEV_PREFIX = 'fg-'
+FIP_LL_PREFIX = '169.254.30.'
+# Route Table index for FIPs
+FIP_RT_TBL = 16
+# Rule priority range for FIPs
+FIP_PR_START = 32768
+FIP_PR_END = FIP_PR_START + 40000
 RPC_LOOP_INTERVAL = 1
 FLOATING_IP_CIDR_SUFFIX = '/32'
 # Lower value is higher priority
@@ -67,6 +78,10 @@ class L3PluginApi(n_rpc.RpcProxy):
     API version history:
         1.0 - Initial version.
         1.1 - Floating IP operational status updates
+        1.2 - DVR support: new L3 plugin methods added.
+              - get_ports_by_subnet
+              - get_agent_gateway_port
+              Needed by the agent when operating in DVR/DVR_SNAT mode
 
     """
 
@@ -105,6 +120,22 @@ class L3PluginApi(n_rpc.RpcProxy):
                          topic=self.topic,
                          version='1.1')
 
+    def get_ports_by_subnet(self, context, subnet_id):
+        """Retrieve ports by subnet id."""
+        return self.call(context,
+                         self.make_msg('get_ports_by_subnet', host=self.host,
+                                       subnet_id=subnet_id),
+                         topic=self.topic,
+                         version='1.2')
+
+    def get_agent_gateway_port(self, context, fip_net):
+        """Get or create an agent_gateway_port."""
+        return self.call(context,
+                         self.make_msg('get_agent_gateway_port',
+                                       network_id=fip_net, host=self.host),
+                         topic=self.topic,
+                         version='1.2')
+
 
 class RouterInfo(object):
 
@@ -114,7 +145,9 @@ class RouterInfo(object):
         self._snat_enabled = None
         self._snat_action = None
         self.internal_ports = []
+        self.snat_ports = []
         self.floating_ips = set()
+        self.floating_ips_dict = {}
         self.root_helper = root_helper
         self.use_namespaces = use_namespaces
         # Invoke the setter for establishing initial SNAT action
@@ -125,6 +158,12 @@ class RouterInfo(object):
             #FIXME(danwent): use_ipv6=True,
             namespace=self.ns_name)
         self.routes = []
+        # DVR Data
+        # Linklocal router to floating IP addr
+        self.rtr_2_fip = None
+        # Linklocal floating to router IP addr
+        self.fip_2_rtr = None
+        self.dist_fip_count = 0
 
     @property
     def router(self):
@@ -301,10 +340,27 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             It was previously a list of routers in dict format.
             It is now a list of router IDs only.
             Per rpc versioning rules,  it is backwards compatible.
+        1.2 - DVR support: new L3 agent methods added.
+              - add_arp_entry
+              - del_arp_entry
+              Needed by the L3 service when dealing with DVR
     """
-    RPC_API_VERSION = '1.1'
+    RPC_API_VERSION = '1.2'
 
     OPTS = [
+        cfg.StrOpt('agent_mode', default='legacy',
+                   help=_("The working mode for the agent. Allowed modes are: "
+                          "'legacy' - this preserves the existing behavior "
+                          "where the L3 agent is deployed on a centralized "
+                          "networking node to provide L3 services like DNAT, "
+                          "and SNAT. Use this mode if you do not want to "
+                          "adopt DVR. 'dvr' - this mode enables DVR "
+                          "functionality and must be used for an L3 agent "
+                          "that runs on a compute host. 'dvr_snat' - this "
+                          "enables centralized SNAT support in conjunction "
+                          "with DVR.  This mode must be used for an L3 agent "
+                          "running on a centralized node (or in single-host "
+                          "deployments, e.g. devstack)")),
         cfg.StrOpt('external_network_bridge', default='br-ex',
                    help=_("Name of bridge used for external network "
                           "traffic.")),
@@ -366,6 +422,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
         self._clean_stale_namespaces = self.conf.use_namespaces
 
+        # dvr data
+        self.agent_gateway_port = None
+        self.agent_fip_count = 0
+        self.local_ips = set(range(2, 251))
+        self.fip_priorities = set(range(FIP_PR_START, FIP_PR_END))
+
         self._queue = RouterProcessingQueue()
         super(L3NATAgent, self).__init__(conf=self.conf)
 
@@ -425,41 +487,89 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         one attempt will be made to delete them.
         """
         for ns in router_namespaces:
-            if self.conf.enable_metadata_proxy:
-                self._destroy_metadata_proxy(ns[len(NS_PREFIX):], ns)
-
             ra.disable_ipv6_ra(ns[len(NS_PREFIX):], ns, self.root_helper)
             try:
-                self._destroy_router_namespace(ns)
+                self._destroy_namespace(ns)
             except RuntimeError:
                 LOG.exception(_('Failed to destroy stale router namespace '
                                 '%s'), ns)
         self._clean_stale_namespaces = False
 
-    def _destroy_router_namespace(self, namespace):
-        ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=namespace)
+    def _destroy_namespace(self, ns):
+        if ns.startswith(NS_PREFIX):
+            if self.conf.enable_metadata_proxy:
+                self._destroy_metadata_proxy(ns[len(NS_PREFIX):], ns)
+            self._destroy_router_namespace(ns)
+        elif ns.startswith(FIP_NS_PREFIX):
+            self._destroy_fip_namespace(ns)
+        elif ns.startswith(SNAT_NS_PREFIX):
+            self._destroy_snat_namespace(ns)
+
+    def _delete_namespace(self, ns_ip, ns):
+        try:
+            ns_ip.netns.delete(ns)
+        except RuntimeError:
+            msg = _('Failed trying to delete namespace: %s') % ns
+            LOG.exception(msg)
+
+    def _destroy_snat_namespace(self, ns):
+        ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
+        # delete internal interfaces
+        for d in ns_ip.get_devices(exclude_loopback=True):
+            if d.name.startswith(SNAT_INT_DEV_PREFIX):
+                LOG.debug('Unplugging DVR device %s', d.name)
+                self.driver.unplug(d.name, namespace=ns,
+                                   prefix=SNAT_INT_DEV_PREFIX)
+
+        # TODO(mrsmith): delete ext-gw-port
+        LOG.debug('DVR: destroy snat ns: %s', ns)
+        if self.conf.router_delete_namespaces:
+            self._delete_namespace(ns_ip, ns)
+
+    def _destroy_fip_namespace(self, ns):
+        ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
+        for d in ns_ip.get_devices(exclude_loopback=True):
+            if d.name.startswith(FIP_2_ROUTER_DEV_PREFIX):
+                # internal link between IRs and FIP NS
+                # TODO(mrsmith): remove IR interfaces (IP pool?)
+                pass
+            elif d.name.startswith(FIP_EXT_DEV_PREFIX):
+                # single port from FIP NS to br-ext
+                # TODO(mrsmith): remove br-ext interface
+                LOG.debug('DVR: unplug: %s', d.name)
+                self.driver.unplug(d.name,
+                                   bridge=self.conf.external_network_bridge,
+                                   namespace=ns,
+                                   prefix=FIP_EXT_DEV_PREFIX)
+        LOG.debug('DVR: destroy fip ns: %s', ns)
+        # TODO(mrsmith): add LOG warn if fip count != 0
+        if self.conf.router_delete_namespaces:
+            self._delete_namespace(ns_ip, ns)
+        self.agent_gateway_port = None
+
+    def _destroy_router_namespace(self, ns):
+        ns_ip = ip_lib.IPWrapper(self.root_helper, namespace=ns)
         for d in ns_ip.get_devices(exclude_loopback=True):
             if d.name.startswith(INTERNAL_DEV_PREFIX):
                 # device is on default bridge
-                self.driver.unplug(d.name, namespace=namespace,
+                self.driver.unplug(d.name, namespace=ns,
                                    prefix=INTERNAL_DEV_PREFIX)
             elif d.name.startswith(EXTERNAL_DEV_PREFIX):
                 self.driver.unplug(d.name,
                                    bridge=self.conf.external_network_bridge,
-                                   namespace=namespace,
+                                   namespace=ns,
                                    prefix=EXTERNAL_DEV_PREFIX)
 
         if self.conf.router_delete_namespaces:
-            try:
-                ns_ip.netns.delete(namespace)
-            except RuntimeError:
-                msg = _('Failed trying to delete namespace: %s')
-                LOG.exception(msg % namespace)
+            self._delete_namespace(ns_ip, ns)
+
+    def _create_namespace(self, name):
+        ip_wrapper_root = ip_lib.IPWrapper(self.root_helper)
+        ip_wrapper = ip_wrapper_root.ensure_namespace(name)
+        ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
     def _create_router_namespace(self, ri):
-            ip_wrapper_root = ip_lib.IPWrapper(self.root_helper)
-            ip_wrapper = ip_wrapper_root.ensure_namespace(ri.ns_name)
-            ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
+        self._create_namespace(ri.ns_name)
 
     def _fetch_external_net_id(self, force=False):
         """Find UUID of single external network for this agent."""
@@ -553,6 +663,24 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             ns_name)
         pm.disable()
 
+    def _set_subnet_arp_info(self, ri, port):
+        """Set ARP info retrieved from Plugin for existing ports."""
+        if 'id' not in port['subnet'] or not ri.router['distributed']:
+            return
+        subnet_id = port['subnet']['id']
+        subnet_ports = (
+            self.plugin_rpc.get_ports_by_subnet(self.context,
+                                                subnet_id))
+
+        for p in subnet_ports:
+            if (p['device_owner'] not in (
+                l3_constants.DEVICE_OWNER_ROUTER_INTF,
+                l3_constants.DEVICE_OWNER_DVR_INTERFACE)):
+                for fixed_ip in p['fixed_ips']:
+                    self._update_arp_entry(ri, fixed_ip['ip_address'],
+                                           p['mac_address'],
+                                           subnet_id, 'add')
+
     def _set_subnet_info(self, port):
         ips = port['fixed_ips']
         if not ips:
@@ -570,9 +698,13 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         return [ip_dev.name for ip_dev in ip_devs]
 
     def process_router(self, ri):
+        # TODO(mrsmith) - we shouldn't need to check here
+        if 'distributed' not in ri.router:
+            ri.router['distributed'] = False
         ri.iptables_manager.defer_apply_on()
         ex_gw_port = self._get_ex_gw_port(ri)
         internal_ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
+        snat_ports = ri.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
         existing_port_ids = set([p['id'] for p in ri.internal_ports])
         current_port_ids = set([p['id'] for p in internal_ports
                                 if p['admin_state_up']])
@@ -586,15 +718,15 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         old_ipv6_port = False
         for p in new_ports:
             self._set_subnet_info(p)
-            self.internal_network_added(ri, p['network_id'], p['id'],
-                                        p['ip_cidr'], p['mac_address'])
+            self.internal_network_added(ri, p)
             ri.internal_ports.append(p)
+            self._set_subnet_arp_info(ri, p)
             if (not new_ipv6_port and
                     netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
                 new_ipv6_port = True
 
         for p in old_ports:
-            self.internal_network_removed(ri, p['id'], p['ip_cidr'])
+            self.internal_network_removed(ri, p)
             ri.internal_ports.remove(p)
             if (not old_ipv6_port and
                     netaddr.IPNetwork(p['subnet']['cidr']).version == 6):
@@ -653,8 +785,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # Process static routes for router
         self.routes_updated(ri)
         # Process SNAT rules for external gateway
-        ri.perform_snat_action(self._handle_router_snat_rules,
-                               internal_cidrs, interface_name)
+        if (not ri.router['distributed'] or
+            ex_gw_port and ri.router['gw_port_host'] == self.host):
+            ri.perform_snat_action(self._handle_router_snat_rules,
+                                   internal_cidrs, interface_name)
 
         # Process SNAT/DNAT rules for floating IPs
         fip_statuses = {}
@@ -684,6 +818,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
         # Update ex_gw_port and enable_snat on the router info cache
         ri.ex_gw_port = ex_gw_port
+        ri.snat_ports = snat_ports
         ri.enable_snat = ri.router.get('enable_snat')
 
     def _handle_router_snat_rules(self, ri, ex_gw_port, internal_cidrs,
@@ -692,13 +827,19 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # This is safe because if use_namespaces is set as False
         # then the agent can only configure one router, otherwise
         # each router's SNAT rules will be in their own namespace
-        ri.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
-        ri.iptables_manager.ipv4['nat'].empty_chain('snat')
+        if ri.router['distributed']:
+            iptables_manager = ri.snat_iptables_manager
+        else:
+            iptables_manager = ri.iptables_manager
 
-        # Add back the jump to float-snat
-        ri.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
+        iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
+        iptables_manager.ipv4['nat'].empty_chain('snat')
 
-        # And add them back if the action if add_rules
+        if not ri.router['distributed']:
+            # Add back the jump to float-snat
+            iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
+
+        # And add them back if the action is add_rules
         if action == 'add_rules' and ex_gw_port:
             # ex_gw_port should not be None in this case
             # NAT rules are added only if ex_gw_port has an IPv4 address
@@ -709,8 +850,31 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                                                             internal_cidrs,
                                                             interface_name)
                     for rule in rules:
-                        ri.iptables_manager.ipv4['nat'].add_rule(*rule)
+                        iptables_manager.ipv4['nat'].add_rule(*rule)
                     break
+        iptables_manager.apply()
+
+    def _handle_router_fip_nat_rules(self, ri, interface_name, action):
+        """Configures NAT rules for Floating IPs for DVR.
+
+           Remove all the rules. This is safe because if
+           use_namespaces is set as False then the agent can
+           only configure one router, otherwise each router's
+           NAT rules will be in their own namespace.
+        """
+        ri.iptables_manager.ipv4['nat'].empty_chain('POSTROUTING')
+        ri.iptables_manager.ipv4['nat'].empty_chain('snat')
+
+        # Add back the jump to float-snat
+        ri.iptables_manager.ipv4['nat'].add_rule('snat', '-j $float-snat')
+
+        # And add them back if the action is add_rules
+        if action == 'add_rules' and interface_name:
+            rule = ('POSTROUTING', '! -i %(interface_name)s '
+                    '! -o %(interface_name)s -m conntrack ! '
+                    '--ctstate DNAT -j ACCEPT' %
+                    {'interface_name': interface_name})
+            ri.iptables_manager.ipv4['nat'].add_rule(*rule)
         ri.iptables_manager.apply()
 
     def process_router_floating_ip_nat_rules(self, ri):
@@ -721,8 +885,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         # Clear out all iptables rules for floating ips
         ri.iptables_manager.ipv4['nat'].clear_rules_by_tag('floating_ip')
 
+        floating_ips = self.get_floating_ips(ri)
         # Loop once to ensure that floating ips are configured.
-        for fip in ri.router.get(l3_constants.FLOATINGIP_KEY, []):
+        for fip in floating_ips:
             # Rebuild iptables rules for the floating ip.
             fixed = fip['fixed_ip_address']
             fip_ip = fip['floating_ip_address']
@@ -739,14 +904,33 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         those that should not longer be configured.
         """
         fip_statuses = {}
-        interface_name = self.get_external_device_name(ex_gw_port['id'])
+
+        floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
+        if ri.router['distributed']:
+            # filter out only FIPs for this host/agent
+            floating_ips = [i for i in floating_ips if i['host'] == self.host]
+            if floating_ips and self.agent_gateway_port is None:
+                self._create_agent_gateway_port(ri, floating_ips[0]
+                                                ['floating_network_id'])
+
+            if self.agent_gateway_port:
+                if floating_ips and ri.dist_fip_count == 0:
+                    self.create_rtr_2_fip_link(ri, floating_ips[0]
+                                               ['floating_network_id'])
+                interface_name = self.get_rtr_int_device_name(ri.router_id)
+            else:
+                # there are no fips or agent port, no work to do
+                return fip_statuses
+        else:
+            interface_name = self.get_external_device_name(ex_gw_port['id'])
+
         device = ip_lib.IPDevice(interface_name, self.root_helper,
                                  namespace=ri.ns_name)
         existing_cidrs = set([addr['cidr'] for addr in device.addr.list()])
         new_cidrs = set()
 
         # Loop once to ensure that floating ips are configured.
-        for fip in ri.router.get(l3_constants.FLOATINGIP_KEY, []):
+        for fip in floating_ips:
             fip_ip = fip['floating_ip_address']
             ip_cidr = str(fip_ip) + FLOATING_IP_CIDR_SUFFIX
 
@@ -765,10 +949,15 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                     LOG.warn(_("Unable to configure IP address for "
                                "floating IP: %s"), fip['id'])
                     continue
-                # As GARP is processed in a distinct thread the call below
-                # won't raise an exception to be handled.
-                self._send_gratuitous_arp_packet(
-                    ri, interface_name, fip_ip)
+                if ri.router['distributed']:
+                    # Special Handling for DVR - update FIP namespace
+                    # and ri.namespace to handle DVR based FIP
+                    self.floating_ip_added_dist(ri, fip)
+                else:
+                    # As GARP is processed in a distinct thread the call below
+                    # won't raise an exception to be handled.
+                    self._send_gratuitous_arp_packet(
+                        ri.ns_name, interface_name, fip_ip)
             fip_statuses[fip['id']] = (
                 l3_constants.FLOATINGIP_STATUS_ACTIVE)
 
@@ -777,26 +966,48 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             if ip_cidr.endswith(FLOATING_IP_CIDR_SUFFIX):
                 net = netaddr.IPNetwork(ip_cidr)
                 device.addr.delete(net.version, ip_cidr)
+                if ri.router['distributed']:
+                    self.floating_ip_removed_dist(ri, ip_cidr)
         return fip_statuses
 
     def _get_ex_gw_port(self, ri):
         return ri.router.get('gw_port')
 
-    def _arping(self, ri, interface_name, ip_address):
+    def _arping(self, ns_name, interface_name, ip_address, distributed=False):
+        if distributed:
+            device = ip_lib.IPDevice(interface_name, self.root_helper,
+                                     namespace=ns_name)
+            ip_cidr = str(ip_address) + FLOATING_IP_CIDR_SUFFIX
+            net = netaddr.IPNetwork(ip_cidr)
+            device.addr.add(net.version, ip_cidr, str(net.broadcast))
+
         arping_cmd = ['arping', '-A',
                       '-I', interface_name,
                       '-c', self.conf.send_arp_for_ha,
                       ip_address]
         try:
             ip_wrapper = ip_lib.IPWrapper(self.root_helper,
-                                          namespace=ri.ns_name)
+                                          namespace=ns_name)
             ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
         except Exception as e:
             LOG.error(_("Failed sending gratuitous ARP: %s"), str(e))
+        if distributed:
+            device.addr.delete(net.version, ip_cidr)
 
-    def _send_gratuitous_arp_packet(self, ri, interface_name, ip_address):
+    def _send_gratuitous_arp_packet(self, ns_name, interface_name, ip_address,
+                                    distributed=False):
         if self.conf.send_arp_for_ha > 0:
-            eventlet.spawn_n(self._arping, ri, interface_name, ip_address)
+            eventlet.spawn_n(self._arping, ns_name, interface_name, ip_address,
+                             distributed)
+
+    def get_internal_port(self, ri, subnet_id):
+        """Return internal router port based on subnet_id."""
+        router_ports = ri.router.get(l3_constants.INTERFACE_KEY, [])
+        for port in router_ports:
+            fips = port['fixed_ips']
+            for f in fips:
+                if f['subnet_id'] == subnet_id:
+                    return port
 
     def get_internal_device_name(self, port_id):
         return (INTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
@@ -804,38 +1015,184 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def get_external_device_name(self, port_id):
         return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
 
+    def get_fip_ext_device_name(self, port_id):
+        return (FIP_EXT_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
+
+    def get_rtr_int_device_name(self, router_id):
+        return (ROUTER_2_FIP_DEV_PREFIX + router_id)[:self.driver.DEV_NAME_LEN]
+
+    def get_fip_int_device_name(self, router_id):
+        return (FIP_2_ROUTER_DEV_PREFIX + router_id)[:self.driver.DEV_NAME_LEN]
+
+    def get_snat_int_device_name(self, port_id):
+        return (SNAT_INT_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
+
+    def get_fip_ns_name(self, ext_net_id):
+        return (FIP_NS_PREFIX + ext_net_id)
+
+    def get_snat_ns_name(self, router_id):
+        return (SNAT_NS_PREFIX + router_id)
+
+    def get_snat_interfaces(self, ri):
+        return ri.router.get(l3_constants.SNAT_ROUTER_INTF_KEY, [])
+
+    def get_floating_ips(self, ri):
+        """Filter Floating IPs to be hosted on this agent."""
+        floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
+        if ri.router['distributed']:
+            floating_ips = [i for i in floating_ips if i['host'] == self.host]
+        return floating_ips
+
+    def _map_internal_interfaces(self, ri, int_port, snat_ports):
+        """Return the SNAT port for the given internal interface port."""
+        fixed_ip = int_port['fixed_ips'][0]
+        subnet_id = fixed_ip['subnet_id']
+        match_port = [p for p in snat_ports if
+                      p['fixed_ips'][0]['subnet_id'] == subnet_id]
+        if match_port:
+            return match_port[0]
+        else:
+            LOG.error(_('DVR: no map match_port found!'))
+
+    def _create_dvr_gateway(self, ri, ex_gw_port, gw_interface_name,
+                            internal_cidrs, snat_ports):
+        """Create SNAT namespace."""
+        snat_ns_name = self.get_snat_ns_name(ri.router['id'])
+        self._create_namespace(snat_ns_name)
+        # connect snat_ports to br_int from SNAT namespace
+        for port in snat_ports:
+            # create interface_name
+            self._set_subnet_info(port)
+            interface_name = self.get_snat_int_device_name(port['id'])
+            self._internal_network_added(snat_ns_name, port['network_id'],
+                                         port['id'], port['ip_cidr'],
+                                         port['mac_address'], interface_name,
+                                         SNAT_INT_DEV_PREFIX)
+        self._external_gateway_added(ri, ex_gw_port, gw_interface_name,
+                                     internal_cidrs, snat_ns_name,
+                                     preserve_ips=[])
+        ri.snat_iptables_manager = (
+            iptables_manager.IptablesManager(
+                root_helper=self.root_helper, namespace=snat_ns_name
+            )
+        )
+
     def external_gateway_added(self, ri, ex_gw_port,
                                interface_name, internal_cidrs):
+        if ri.router['distributed']:
+            ip_wrapr = ip_lib.IPWrapper(self.root_helper, namespace=ri.ns_name)
+            ip_wrapr.netns.execute(['sysctl', '-w',
+                                   'net.ipv4.conf.all.send_redirects=0'])
+            snat_ports = self.get_snat_interfaces(ri)
+            for p in ri.internal_ports:
+                gateway = self._map_internal_interfaces(ri, p, snat_ports)
+                id_name = self.get_internal_device_name(p['id'])
+                if gateway:
+                    self._snat_redirect_add(ri, gateway['fixed_ips'][0]
+                                            ['ip_address'], p, id_name)
 
-        self.driver.plug(ex_gw_port['network_id'],
-                         ex_gw_port['id'], interface_name,
-                         ex_gw_port['mac_address'],
-                         bridge=self.conf.external_network_bridge,
-                         namespace=ri.ns_name,
-                         prefix=EXTERNAL_DEV_PREFIX)
+            if self.conf.agent_mode == 'dvr_snat' and (
+                    ri.router['gw_port_host'] == self.host):
+                if snat_ports:
+                    self._create_dvr_gateway(ri, ex_gw_port,
+                                             interface_name,
+                                             internal_cidrs, snat_ports)
+            for port in snat_ports:
+                for ip in port['fixed_ips']:
+                    self._update_arp_entry(ri, ip['ip_address'],
+                                           port['mac_address'],
+                                           ip['subnet_id'], 'add')
+            return
 
         # Compute a list of addresses this router is supposed to have.
         # This avoids unnecessarily removing those addresses and
         # causing a momentarily network outage.
-        floating_ips = ri.router.get(l3_constants.FLOATINGIP_KEY, [])
+        floating_ips = self.get_floating_ips(ri)
         preserve_ips = [ip['floating_ip_address'] + FLOATING_IP_CIDR_SUFFIX
                         for ip in floating_ips]
 
+        self._external_gateway_added(ri, ex_gw_port, interface_name,
+                                     internal_cidrs, ri.ns_name,
+                                     preserve_ips)
+
+    def _external_gateway_added(self, ri, ex_gw_port, interface_name,
+                                internal_cidrs, ns_name, preserve_ips):
+        if not ip_lib.device_exists(interface_name,
+                                    root_helper=self.root_helper,
+                                    namespace=ns_name):
+            self.driver.plug(ex_gw_port['network_id'],
+                             ex_gw_port['id'], interface_name,
+                             ex_gw_port['mac_address'],
+                             bridge=self.conf.external_network_bridge,
+                             namespace=ns_name,
+                             prefix=EXTERNAL_DEV_PREFIX)
+
         self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
-                            namespace=ri.ns_name,
+                            namespace=ns_name,
                             gateway=ex_gw_port['subnet'].get('gateway_ip'),
                             extra_subnets=ex_gw_port.get('extra_subnets', []),
                             preserve_ips=preserve_ips)
         ip_address = ex_gw_port['ip_cidr'].split('/')[0]
-        self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
+        self._send_gratuitous_arp_packet(ns_name,
+                                         interface_name, ip_address)
+
+    def agent_gateway_added(self, ns_name, ex_gw_port,
+                            interface_name):
+        """Add Floating IP gateway port to FIP namespace."""
+        if not ip_lib.device_exists(interface_name,
+                                    root_helper=self.root_helper,
+                                    namespace=ns_name):
+            self.driver.plug(ex_gw_port['network_id'],
+                             ex_gw_port['id'], interface_name,
+                             ex_gw_port['mac_address'],
+                             bridge=self.conf.external_network_bridge,
+                             namespace=ns_name,
+                             prefix=FIP_EXT_DEV_PREFIX)
+
+        self.driver.init_l3(interface_name, [ex_gw_port['ip_cidr']],
+                            namespace=ns_name)
+        ip_address = ex_gw_port['ip_cidr'].split('/')[0]
+        self._send_gratuitous_arp_packet(ns_name, interface_name, ip_address)
+
+        gw_ip = ex_gw_port['subnet']['gateway_ip']
+        if gw_ip:
+            ipd = ip_lib.IPDevice(interface_name, self.root_helper,
+                                  namespace=ns_name)
+            ipd.route.add_gateway(gw_ip)
+
+        cmd = ['sysctl', '-w', 'net.ipv4.conf.%s.proxy_arp=1' % interface_name]
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper, namespace=ns_name)
+        ip_wrapper.netns.execute(cmd, check_exit_code=False)
+
+    def internal_ns_interface_added(self, ip_cidr,
+                                    interface_name, ns_name):
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper, namespace=ns_name)
+        ip_wrapper.netns.execute(['ip', 'addr', 'add',
+                                  ip_cidr, 'dev', interface_name])
 
     def external_gateway_removed(self, ri, ex_gw_port,
                                  interface_name, internal_cidrs):
+        if ri.router['distributed']:
+            for p in ri.internal_ports:
+                internal_interface = self.get_internal_device_name(p['id'])
+                self._snat_redirect_remove(ri, p, internal_interface)
+
+            if self.conf.agent_mode == 'dvr_snat' and (
+                ex_gw_port['binding:host_id'] == self.host):
+                ns_name = self.get_snat_ns_name(ri.router['id'])
+            else:
+                # not hosting agent - no work to do
+                LOG.debug('DVR: CSNAT not hosted: %s', ex_gw_port)
+                return
+        else:
+            ns_name = ri.ns_name
 
         self.driver.unplug(interface_name,
                            bridge=self.conf.external_network_bridge,
-                           namespace=ri.ns_name,
+                           namespace=ns_name,
                            prefix=EXTERNAL_DEV_PREFIX)
+        if ri.router['distributed']:
+            self._destroy_snat_namespace(ns_name)
 
     def metadata_filter_rules(self):
         rules = []
@@ -863,23 +1220,100 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             rules.extend(self.internal_network_nat_rules(ex_gw_ip, cidr))
         return rules
 
-    def internal_network_added(self, ri, network_id, port_id,
-                               internal_cidr, mac_address):
-        interface_name = self.get_internal_device_name(port_id)
+    def _snat_redirect_add(self, ri, gateway, sn_port, sn_int):
+        """Adds rules and routes for SNAT redirection."""
+        try:
+            snat_idx = netaddr.IPNetwork(sn_port['ip_cidr']).value
+            ns_ipr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
+            ns_ipd = ip_lib.IPDevice(sn_int, self.root_helper,
+                                     namespace=ri.ns_name)
+            ns_ipd.route.add_gateway(gateway, table=snat_idx)
+            ns_ipr.add_rule_from(sn_port['ip_cidr'], snat_idx, snat_idx)
+            ns_ipr.netns.execute(['sysctl', '-w', 'net.ipv4.conf.%s.'
+                                 'send_redirects=0' % sn_int])
+        except Exception:
+            LOG.exception(_('DVR: error adding redirection logic'))
+
+    def _snat_redirect_remove(self, ri, sn_port, sn_int):
+        """Removes rules and routes for SNAT redirection."""
+        try:
+            snat_idx = netaddr.IPNetwork(sn_port['ip_cidr']).value
+            ns_ipr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
+            ns_ipd = ip_lib.IPDevice(sn_int, self.root_helper,
+                                     namespace=ri.ns_name)
+            ns_ipd.route.delete_gateway(table=snat_idx)
+            ns_ipr.delete_rule_priority(snat_idx)
+        except Exception:
+            LOG.exception(_('DVR: removed snat failed'))
+
+    def _internal_network_added(self, ns_name, network_id, port_id,
+                                internal_cidr, mac_address,
+                                interface_name, prefix):
         if not ip_lib.device_exists(interface_name,
                                     root_helper=self.root_helper,
-                                    namespace=ri.ns_name):
+                                    namespace=ns_name):
             self.driver.plug(network_id, port_id, interface_name, mac_address,
-                             namespace=ri.ns_name,
-                             prefix=INTERNAL_DEV_PREFIX)
+                             namespace=ns_name,
+                             prefix=prefix)
 
         self.driver.init_l3(interface_name, [internal_cidr],
-                            namespace=ri.ns_name)
+                            namespace=ns_name)
         ip_address = internal_cidr.split('/')[0]
-        self._send_gratuitous_arp_packet(ri, interface_name, ip_address)
+        self._send_gratuitous_arp_packet(ns_name, interface_name, ip_address)
 
-    def internal_network_removed(self, ri, port_id, internal_cidr):
+    def internal_network_added(self, ri, port):
+        network_id = port['network_id']
+        port_id = port['id']
+        internal_cidr = port['ip_cidr']
+        mac_address = port['mac_address']
+
         interface_name = self.get_internal_device_name(port_id)
+
+        self._internal_network_added(ri.ns_name, network_id, port_id,
+                                     internal_cidr, mac_address,
+                                     interface_name, INTERNAL_DEV_PREFIX)
+
+        ex_gw_port = self._get_ex_gw_port(ri)
+        if ri.router['distributed'] and ex_gw_port:
+            snat_ports = self.get_snat_interfaces(ri)
+            snat_ip = self._map_internal_interfaces(ri, port, snat_ports)
+            if snat_ip:
+                self._snat_redirect_add(ri, snat_ip['fixed_ips'][0]
+                                        ['ip_address'], port, interface_name)
+            if self.conf.agent_mode == 'dvr_snat' and (
+                    ri.router['gw_port_host'] == self.host):
+                ns_name = self.get_snat_ns_name(ri.router['id'])
+                for port in snat_ports:
+                    self._set_subnet_info(port)
+                    interface_name = self.get_snat_int_device_name(port['id'])
+                    self._internal_network_added(ns_name, port['network_id'],
+                                                 port['id'], internal_cidr,
+                                                 port['mac_address'],
+                                                 interface_name,
+                                                 SNAT_INT_DEV_PREFIX)
+
+    def internal_network_removed(self, ri, port):
+        port_id = port['id']
+        interface_name = self.get_internal_device_name(port_id)
+        if ri.router['distributed'] and ri.ex_gw_port:
+            # DVR handling code for SNAT
+            self._snat_redirect_remove(ri, port, interface_name)
+            if self.conf.agent_mode == 'dvr_snat' and (
+                ri.ex_gw_port['binding:host_id'] == self.host):
+                snat_port = self._map_internal_interfaces(ri, port,
+                                                          ri.snat_ports)
+                if snat_port:
+                    snat_interface = (
+                        self.get_snat_int_device_name(snat_port['id'])
+                    )
+                    ns_name = self.get_snat_ns_name(ri.router['id'])
+                    prefix = SNAT_INT_DEV_PREFIX
+                    if ip_lib.device_exists(snat_interface,
+                                            root_helper=self.root_helper,
+                                            namespace=ns_name):
+                        self.driver.unplug(snat_interface, namespace=ns_name,
+                                           prefix=prefix)
+
         if ip_lib.device_exists(interface_name,
                                 root_helper=self.root_helper,
                                 namespace=ri.ns_name):
@@ -890,6 +1324,118 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         rules = [('snat', '-s %s -j SNAT --to-source %s' %
                  (internal_cidr, ex_gw_ip))]
         return rules
+
+    def _create_agent_gateway_port(self, ri, network_id):
+        """Create Floating IP gateway port.
+
+           Request port creation from Plugin then creates
+           Floating IP namespace and adds gateway port.
+        """
+        self.agent_gateway_port = (
+            self.plugin_rpc.get_agent_gateway_port(
+                self.context, network_id))
+        if 'subnet' not in self.agent_gateway_port:
+            LOG.error(_('Missing subnet/agent_gateway_port'))
+            return
+        self._set_subnet_info(self.agent_gateway_port)
+
+        # add fip-namespace and agent_gateway_port
+        fip_ns_name = (
+            self.get_fip_ns_name(str(network_id)))
+        self._create_namespace(fip_ns_name)
+        interface_name = (
+            self.get_fip_ext_device_name(self.agent_gateway_port['id']))
+        self.agent_gateway_added(fip_ns_name, self.agent_gateway_port,
+                                 interface_name)
+
+    def create_rtr_2_fip_link(self, ri, network_id):
+        """Create interface between router and Floating IP namespace."""
+        rtr_2_fip_name = self.get_rtr_int_device_name(ri.router_id)
+        fip_2_rtr_name = self.get_fip_int_device_name(ri.router_id)
+        fip_ns_name = self.get_fip_ns_name(str(network_id))
+
+        # add link local IP to interface
+        if ri.rtr_2_fip is None:
+            ri.rtr_2_fip = FIP_LL_PREFIX + str(self.local_ips.pop())
+        if ri.fip_2_rtr is None:
+            ri.fip_2_rtr = FIP_LL_PREFIX + str(self.local_ips.pop())
+        ip_wrapper = ip_lib.IPWrapper(self.root_helper,
+                                      namespace=ri.ns_name)
+        int_dev = ip_wrapper.add_veth(rtr_2_fip_name,
+                                      fip_2_rtr_name, fip_ns_name)
+        self.internal_ns_interface_added(ri.rtr_2_fip + '/31',
+                                         rtr_2_fip_name, ri.ns_name)
+        self.internal_ns_interface_added(ri.fip_2_rtr + '/31',
+                                         fip_2_rtr_name, fip_ns_name)
+        int_dev[0].link.set_up()
+        int_dev[1].link.set_up()
+        # add default route for the link local interface
+        device = ip_lib.IPDevice(rtr_2_fip_name, self.root_helper,
+                                 namespace=ri.ns_name)
+        device.route.add_gateway(ri.fip_2_rtr, table=FIP_RT_TBL)
+        #setup the NAT rules and chains
+        self._handle_router_fip_nat_rules(ri, rtr_2_fip_name, 'add_rules')
+
+    def floating_ip_added_dist(self, ri, fip):
+        """Add floating IP to FIP namespace."""
+        floating_ip = fip['floating_ip_address']
+        fixed_ip = fip['fixed_ip_address']
+        rule_pr = self.fip_priorities.pop()
+        ri.floating_ips_dict[floating_ip] = rule_pr
+        fip_2_rtr_name = self.get_fip_int_device_name(ri.router_id)
+        ip_rule = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
+        ip_rule.add_rule_from(fixed_ip, FIP_RT_TBL, rule_pr)
+
+        #Add routing rule in fip namespace
+        fip_cidr = str(floating_ip) + FLOATING_IP_CIDR_SUFFIX
+        fip_ns_name = self.get_fip_ns_name(str(fip['floating_network_id']))
+        device = ip_lib.IPDevice(fip_2_rtr_name, self.root_helper,
+                                 namespace=fip_ns_name)
+        device.route.add_route(fip_cidr, ri.rtr_2_fip)
+        interface_name = (
+            self.get_fip_ext_device_name(self.agent_gateway_port['id']))
+        self._send_gratuitous_arp_packet(fip_ns_name,
+                                         interface_name, floating_ip,
+                                         distributed=True)
+        # update internal structures
+        self.agent_fip_count = self.agent_fip_count + 1
+        ri.dist_fip_count = ri.dist_fip_count + 1
+
+    def floating_ip_removed_dist(self, ri, fip_cidr):
+        """Remove floating IP from FIP namespace."""
+        floating_ip = fip_cidr.split('/')[0]
+        rtr_2_fip_name = self.get_rtr_int_device_name(ri.router_id)
+        fip_2_rtr_name = self.get_fip_int_device_name(ri.router_id)
+        fip_ns_name = self.get_fip_ns_name(str(self._fetch_external_net_id()))
+        ip_rule_rtr = ip_lib.IpRule(self.root_helper, namespace=ri.ns_name)
+        if floating_ip in ri.floating_ips_dict:
+            rule_pr = ri.floating_ips_dict[floating_ip]
+            #TODO(rajeev): Handle else case - exception/log?
+        else:
+            rule_pr = None
+
+        ip_rule_rtr.delete_rule_priority(rule_pr)
+        self.fip_priorities.add(rule_pr)
+        device = ip_lib.IPDevice(fip_2_rtr_name, self.root_helper,
+                                 namespace=fip_ns_name)
+
+        device.route.delete_route(fip_cidr, ri.rtr_2_fip)
+        # check if this is the last FIP for this router
+        ri.dist_fip_count = ri.dist_fip_count - 1
+        if ri.dist_fip_count == 0:
+            #remove default route entry
+            device = ip_lib.IPDevice(rtr_2_fip_name, self.root_helper,
+                                     namespace=ri.ns_name)
+            device.route.delete_gateway(ri.fip_2_rtr, table=FIP_RT_TBL)
+            self.local_ips.add(ri.rtr_2_fip.rsplit('.', 1)[1])
+            ri.rtr_2_fip = None
+            self.local_ips.add(ri.fip_2_rtr.rsplit('.', 1)[1])
+            ri.fip_2_rtr = None
+            # TODO(mrsmith): remove interface
+        # clean up fip-namespace if this is the last FIP
+        self.agent_fip_count = self.agent_fip_count - 1
+        if self.agent_fip_count == 0:
+            self._destroy_fip_namespace(fip_ns_name)
 
     def floating_forward_rules(self, floating_ip, fixed_ip):
         return [('PREROUTING', '-d %s -j DNAT --to %s' %
@@ -904,6 +1450,46 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         LOG.debug(_('Got router deleted notification for %s'), router_id)
         update = RouterUpdate(router_id, PRIORITY_RPC, action=DELETE_ROUTER)
         self._queue.add(update)
+
+    def _update_arp_entry(self, ri, ip, mac, subnet_id, operation):
+        """Add or delete arp entry into router namespace."""
+        port = self.get_internal_port(ri, subnet_id)
+        if 'id' in port:
+            ip_cidr = str(ip) + '/32'
+            try:
+                # TODO(mrsmith): optimize the calls below for bulk calls
+                net = netaddr.IPNetwork(ip_cidr)
+                interface_name = self.get_internal_device_name(port['id'])
+                device = ip_lib.IPDevice(interface_name, self.root_helper,
+                                         namespace=ri.ns_name)
+                if operation == 'add':
+                    device.neigh.add(net.version, ip, mac)
+                elif operation == 'delete':
+                    device.neigh.delete(net.version, ip, mac)
+            except Exception:
+                LOG.exception(_("DVR: Failed updating arp entry"))
+                self.fullsync = True
+
+    def add_arp_entry(self, context, payload):
+        """Add arp entry into router namespace.  Called from RPC."""
+        arp_table = payload['arp_table']
+        router_id = payload['router_id']
+        ip = arp_table['ip_address']
+        mac = arp_table['mac_address']
+        subnet_id = arp_table['subnet_id']
+        ri = self.router_info.get(router_id)
+        self._update_arp_entry(ri, ip, mac, subnet_id, 'add')
+
+    def del_arp_entry(self, context, payload):
+        """Delete arp entry from router namespace.  Called from RPC."""
+        arp_table = payload['arp_table']
+        router_id = payload['router_id']
+        ip = arp_table['ip_address']
+        mac = arp_table['mac_address']
+        subnet_id = arp_table['subnet_id']
+        ri = self.router_info.get(router_id)
+        if ri:
+            self._update_arp_entry(ri, ip, mac, subnet_id, 'delete')
 
     def routers_updated(self, context, routers):
         """Deal with routers modification and creation RPC message."""
@@ -1115,6 +1701,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
             'host': host,
             'topic': topics.L3_AGENT,
             'configurations': {
+                'agent_mode': self.conf.agent_mode,
                 'use_namespaces': self.conf.use_namespaces,
                 'router_id': self.conf.router_id,
                 'handle_internal_only_routers':
