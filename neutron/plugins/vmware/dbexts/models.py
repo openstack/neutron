@@ -40,9 +40,8 @@ class TzNetworkBinding(model_base.BASEV2):
     binding_type = Column(Enum('flat', 'vlan', 'stt', 'gre', 'l3_ext',
                                name='tz_network_bindings_binding_type'),
                           nullable=False, primary_key=True)
-    phy_uuid = Column(String(36), primary_key=True, nullable=True)
-    vlan_id = Column(Integer, primary_key=True, nullable=True,
-                     autoincrement=False)
+    phy_uuid = Column(String(36), primary_key=True, default='')
+    vlan_id = Column(Integer, primary_key=True, autoincrement=False, default=0)
 
     def __init__(self, network_id, binding_type, phy_uuid, vlan_id):
         self.network_id = network_id
