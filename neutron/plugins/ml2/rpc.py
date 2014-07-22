@@ -125,7 +125,8 @@ class RpcCallbacks(n_rpc.RpcCallback,
                  'segmentation_id': segment[api.SEGMENTATION_ID],
                  'physical_network': segment[api.PHYSICAL_NETWORK],
                  'fixed_ips': port['fixed_ips'],
-                 'device_owner': port['device_owner']}
+                 'device_owner': port['device_owner'],
+                 'profile': port[portbindings.PROFILE]}
         LOG.debug(_("Returning: %s"), entry)
         return entry
 

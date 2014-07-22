@@ -87,6 +87,7 @@ AGENT_TYPE_MLNX = 'Mellanox plugin agent'
 AGENT_TYPE_METERING = 'Metering agent'
 AGENT_TYPE_METADATA = 'Metadata agent'
 AGENT_TYPE_SDNVE = 'IBM SDN-VE agent'
+AGENT_TYPE_NIC_SWITCH = 'NIC Switch agent'
 L2_AGENT_TOPIC = 'N/A'
 
 PAGINATION_INFINITE = 'infinite'
