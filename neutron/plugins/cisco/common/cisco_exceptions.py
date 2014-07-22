@@ -169,6 +169,12 @@ class NetworkProfileNotFound(exceptions.NotFound):
     message = _("Network Profile %(profile)s could not be found.")
 
 
+class NetworkProfileInUse(exceptions.InUse):
+    """Network Profile with the given UUID is in use."""
+    message = _("One or more network segments belonging to network "
+                "profile %(profile)s is in use.")
+
+
 class NoMoreNetworkSegments(exceptions.NoNetworkAvailable):
     """Network segments exhausted for the given network profile."""
     message = _("No more segments available in network segment pool "
