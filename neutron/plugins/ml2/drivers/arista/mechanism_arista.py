@@ -23,9 +23,9 @@ from neutron.extensions import portbindings
 from neutron.openstack.common import log as logging
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api
-from neutron.plugins.ml2.drivers.mech_arista import config  # noqa
-from neutron.plugins.ml2.drivers.mech_arista import db
-from neutron.plugins.ml2.drivers.mech_arista import exceptions as arista_exc
+from neutron.plugins.ml2.drivers.arista import config  # noqa
+from neutron.plugins.ml2.drivers.arista import db
+from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
 
 LOG = logging.getLogger(__name__)
 

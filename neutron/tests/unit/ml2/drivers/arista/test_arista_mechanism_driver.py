@@ -18,9 +18,9 @@ from oslo.config import cfg
 
 from neutron.common import constants as n_const
 import neutron.db.api as ndb
-from neutron.plugins.ml2.drivers.mech_arista import db
-from neutron.plugins.ml2.drivers.mech_arista import exceptions as arista_exc
-from neutron.plugins.ml2.drivers.mech_arista import mechanism_arista as arista
+from neutron.plugins.ml2.drivers.arista import db
+from neutron.plugins.ml2.drivers.arista import exceptions as arista_exc
+from neutron.plugins.ml2.drivers.arista import mechanism_arista as arista
 from neutron.tests import base
 
 
