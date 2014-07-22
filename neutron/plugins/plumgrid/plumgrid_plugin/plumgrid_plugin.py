@@ -590,12 +590,17 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         pools = []
         # Auto allocate the pool around gateway_ip
         net = netaddr.IPNetwork(subnet['cidr'])
-        first_ip = net.first + 2
+        boundary = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
+        potential_dhcp_ip = int(net.first + 1)
+        if boundary == potential_dhcp_ip:
+            first_ip = net.first + 3
+            boundary = net.first + 2
+        else:
+            first_ip = net.first + 2
         last_ip = net.last - 1
-        gw_ip = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
         # Use the gw_ip to find a point for splitting allocation pools
         # for this subnet
-        split_ip = min(max(gw_ip, net.first), net.last)
+        split_ip = min(max(boundary, net.first), net.last)
         if split_ip > first_ip:
             pools.append({'start': str(netaddr.IPAddress(first_ip)),
                           'end': str(netaddr.IPAddress(split_ip - 1))})
