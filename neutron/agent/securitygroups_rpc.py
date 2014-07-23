@@ -80,8 +80,7 @@ class SecurityGroupServerRpcApiMixin(object):
         return self.call(context,
                          self.make_msg('security_group_rules_for_devices',
                                        devices=devices),
-                         version=SG_RPC_VERSION,
-                         topic=self.topic)
+                         version=SG_RPC_VERSION)
 
 
 class SecurityGroupAgentRpcCallbackMixin(object):

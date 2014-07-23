@@ -96,8 +96,7 @@ class L3PluginApi(n_rpc.RpcProxy):
         """Make a remote process call to retrieve the sync data for routers."""
         return self.call(context,
                          self.make_msg('sync_routers', host=self.host,
-                                       router_ids=router_ids),
-                         topic=self.topic)
+                                       router_ids=router_ids))
 
     def get_external_network_id(self, context):
         """Make a remote process call to retrieve the external network id.
@@ -108,8 +107,7 @@ class L3PluginApi(n_rpc.RpcProxy):
         """
         return self.call(context,
                          self.make_msg('get_external_network_id',
-                                       host=self.host),
-                         topic=self.topic)
+                                       host=self.host))
 
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Call the plugin update floating IPs's operational status."""
@@ -117,7 +115,6 @@ class L3PluginApi(n_rpc.RpcProxy):
                          self.make_msg('update_floatingip_statuses',
                                        router_id=router_id,
                                        fip_statuses=fip_statuses),
-                         topic=self.topic,
                          version='1.1')
 
     def get_ports_by_subnet(self, context, subnet_id):

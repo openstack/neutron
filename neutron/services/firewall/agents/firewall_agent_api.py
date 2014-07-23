@@ -52,15 +52,13 @@ class FWaaSPluginApiMixin(n_rpc.RpcProxy):
         """Make a RPC to set the status of a firewall."""
         return self.call(context,
                          self.make_msg('set_firewall_status', host=self.host,
-                                       firewall_id=firewall_id, status=status),
-                         topic=self.topic)
+                                       firewall_id=firewall_id, status=status))
 
     def firewall_deleted(self, context, firewall_id):
         """Make a RPC to indicate that the firewall resources are deleted."""
         return self.call(context,
                          self.make_msg('firewall_deleted', host=self.host,
-                                       firewall_id=firewall_id),
-                         topic=self.topic)
+                                       firewall_id=firewall_id))
 
 
 class FWaaSAgentRpcCallbackMixin(object):

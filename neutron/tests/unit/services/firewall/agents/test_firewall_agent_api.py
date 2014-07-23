@@ -77,8 +77,7 @@ class TestFWaaSAgentApi(base.BaseTestCase):
 
             mock_call.assert_called_once_with(
                 mock.sentinel.context,
-                mock_make_msg.return_value,
-                topic='topic')
+                mock_make_msg.return_value)
 
     def test_firewall_deleted(self):
         with contextlib.nested(
@@ -99,5 +98,4 @@ class TestFWaaSAgentApi(base.BaseTestCase):
 
             mock_call.assert_called_once_with(
                 mock.sentinel.context,
-                mock_make_msg.return_value,
-                topic='topic')
+                mock_make_msg.return_value)

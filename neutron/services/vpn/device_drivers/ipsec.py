@@ -454,8 +454,7 @@ class IPsecVpnDriverApi(n_rpc.RpcProxy):
         return self.call(context,
                          self.make_msg('get_vpn_services_on_host',
                                        host=host),
-                         version=self.IPSEC_PLUGIN_VERSION,
-                         topic=self.topic)
+                         version=self.IPSEC_PLUGIN_VERSION)
 
     def update_status(self, context, status):
         """Update local status.
@@ -466,8 +465,7 @@ class IPsecVpnDriverApi(n_rpc.RpcProxy):
         return self.cast(context,
                          self.make_msg('update_status',
                                        status=status),
-                         version=self.IPSEC_PLUGIN_VERSION,
-                         topic=self.topic)
+                         version=self.IPSEC_PLUGIN_VERSION)
 
 
 @six.add_metaclass(abc.ABCMeta)

@@ -168,8 +168,7 @@ class RyuPluginApi(agent_rpc.PluginApi,
     def get_ofp_rest_api_addr(self, context):
         LOG.debug(_("Get Ryu rest API address"))
         return self.call(context,
-                         self.make_msg('get_ofp_rest_api'),
-                         topic=self.topic)
+                         self.make_msg('get_ofp_rest_api'))
 
 
 class RyuSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):

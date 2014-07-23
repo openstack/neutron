@@ -114,24 +114,21 @@ class FirewallAgentApi(n_rpc.RpcProxy):
         return self.fanout_cast(
             context,
             self.make_msg('create_firewall', firewall=firewall,
-                          host=self.host),
-            topic=self.topic
+                          host=self.host)
         )
 
     def update_firewall(self, context, firewall):
         return self.fanout_cast(
             context,
             self.make_msg('update_firewall', firewall=firewall,
-                          host=self.host),
-            topic=self.topic
+                          host=self.host)
         )
 
     def delete_firewall(self, context, firewall):
         return self.fanout_cast(
             context,
             self.make_msg('delete_firewall', firewall=firewall,
-                          host=self.host),
-            topic=self.topic
+                          host=self.host)
         )
 
 

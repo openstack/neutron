@@ -118,8 +118,7 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
                              set_context=True):
                 with self.metering_label(tenant_id=self.tenant_id,
                                          set_context=True):
-                    self.mock_fanout.assert_called_with(self.ctx, expected,
-                                                        topic=self.topic)
+                    self.mock_fanout.assert_called_with(self.ctx, expected)
 
     def test_remove_metering_label_rpc_call(self):
         expected = {'args':
@@ -138,11 +137,9 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
         with self.router(tenant_id=self.tenant_id, set_context=True):
             with self.metering_label(tenant_id=self.tenant_id,
                                      set_context=True):
-                self.mock_fanout.assert_called_with(self.ctx, expected,
-                                                    topic=self.topic)
+                self.mock_fanout.assert_called_with(self.ctx, expected)
             expected['method'] = 'remove_metering_label'
-            self.mock_fanout.assert_called_with(self.ctx, expected,
-                                                topic=self.topic)
+            self.mock_fanout.assert_called_with(self.ctx, expected)
 
     def test_remove_one_metering_label_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
@@ -179,10 +176,8 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
                 self.mock_uuid.return_value = second_uuid
                 with self.metering_label(tenant_id=self.tenant_id,
                                          set_context=True):
-                    self.mock_fanout.assert_called_with(self.ctx, expected_add,
-                                                        topic=self.topic)
-                self.mock_fanout.assert_called_with(self.ctx, expected_remove,
-                                                    topic=self.topic)
+                    self.mock_fanout.assert_called_with(self.ctx, expected_add)
+                self.mock_fanout.assert_called_with(self.ctx, expected_remove)
 
     def test_update_metering_label_rules_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
@@ -237,11 +232,9 @@ class TestMeteringPlugin(test_db_plugin.NeutronDbPluginV2TestCase,
                     self.mock_uuid.return_value = second_uuid
                     with self.metering_label_rule(l['id'], direction='egress'):
                         self.mock_fanout.assert_called_with(self.ctx,
-                                                            expected_add,
-                                                            topic=self.topic)
+                                                            expected_add)
                     self.mock_fanout.assert_called_with(self.ctx,
-                                                        expected_del,
-                                                        topic=self.topic)
+                                                        expected_del)
 
     def test_delete_metering_label_does_not_clear_router_tenant_id(self):
         tenant_id = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'

@@ -31,7 +31,9 @@ class rpcApiTestCase(base.BaseTestCase):
     def _test_ovs_api(self, rpcapi, topic, method, rpc_method, **kwargs):
         ctxt = context.RequestContext('fake_user', 'fake_project')
         expected_retval = 'foo' if method == 'call' else None
-        expected_kwargs = {'topic': topic}
+        expected_kwargs = {}
+        if topic:
+            expected_kwargs['topic'] = topic
         if 'version' in kwargs:
             expected_kwargs['version'] = kwargs.pop('version')
         expected_msg = rpcapi.make_msg(method, **kwargs)
@@ -94,7 +96,7 @@ class rpcApiTestCase(base.BaseTestCase):
 
     def test_device_details(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_ovs_api(rpcapi, topics.PLUGIN,
+        self._test_ovs_api(rpcapi, None,
                            'get_device_details', rpc_method='call',
                            device='fake_device',
                            agent_id='fake_agent_id',
@@ -102,7 +104,7 @@ class rpcApiTestCase(base.BaseTestCase):
 
     def test_devices_details_list(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_ovs_api(rpcapi, topics.PLUGIN,
+        self._test_ovs_api(rpcapi, None,
                            'get_devices_details_list', rpc_method='call',
                            devices=['fake_device1', 'fake_device2'],
                            agent_id='fake_agent_id', host='fake_host',
@@ -110,7 +112,7 @@ class rpcApiTestCase(base.BaseTestCase):
 
     def test_update_device_down(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_ovs_api(rpcapi, topics.PLUGIN,
+        self._test_ovs_api(rpcapi, None,
                            'update_device_down', rpc_method='call',
                            device='fake_device',
                            agent_id='fake_agent_id',
@@ -118,14 +120,14 @@ class rpcApiTestCase(base.BaseTestCase):
 
     def test_tunnel_sync(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_ovs_api(rpcapi, topics.PLUGIN,
+        self._test_ovs_api(rpcapi, None,
                            'tunnel_sync', rpc_method='call',
                            tunnel_ip='fake_tunnel_ip',
                            tunnel_type=None)
 
     def test_update_device_up(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        self._test_ovs_api(rpcapi, topics.PLUGIN,
+        self._test_ovs_api(rpcapi, None,
                            'update_device_up', rpc_method='call',
                            device='fake_device',
                            agent_id='fake_agent_id',
