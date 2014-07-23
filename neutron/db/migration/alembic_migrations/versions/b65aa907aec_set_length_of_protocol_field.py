@@ -16,7 +16,7 @@
 """set_length_of_protocol_field
 
 Revision ID: b65aa907aec
-Revises: 2447ad0e9585
+Revises: 1e5dd1d09b22
 Create Date: 2014-03-21 16:30:10.626649
 
 """
@@ -25,28 +25,22 @@ Create Date: 2014-03-21 16:30:10.626649
 revision = 'b65aa907aec'
 down_revision = '1e5dd1d09b22'
 
-# Change to ['*'] if this migration applies to all plugins
+# This migration will be executed only if then Neutron db contains tables for
+# the firewall service plugin
+# This migration will not be executed in offline mode
 
-migration_for_plugins = [
-    'neutron.services.firewall.fwaas_plugin.FirewallPlugin'
-]
-
-from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
 
+@migration.skip_if_offline
 def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.alter_column('firewall_rules', 'protocol', type_=sa.String(40),
-                    existing_nullable=True)
+    migration.alter_column_if_exists(
+        'firewall_rules', 'protocol',
+        type_=sa.String(40),
+        existing_nullable=True)
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
     pass

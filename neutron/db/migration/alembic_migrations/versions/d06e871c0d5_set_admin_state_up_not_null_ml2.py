@@ -25,30 +25,28 @@ Create Date: 2014-03-21 17:22:20.545186
 revision = 'd06e871c0d5'
 down_revision = '4eca4a84f08a'
 
-# Change to ['*'] if this migration applies to all plugins
+# This migration will be executed only if the neutron DB schema
+# contains the tables for the ML2 plugin brocade driver.
+# This migration will be skipped when executed in offline mode.
 
-migration_for_plugins = [
-    'neutron.plugins.ml2.plugin.Ml2Plugin'
-]
 
-from alembic import op
 import sqlalchemy as sa
 
 
 from neutron.db import migration
 
 
+@migration.skip_if_offline
 def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
+    migration.alter_column_if_exists(
+        'ml2_brocadeports', 'admin_state_up',
+        nullable=False,
+        existing_type=sa.Boolean)
 
-    op.alter_column('ml2_brocadeports', 'admin_state_up', nullable=False,
-                    existing_type=sa.Boolean)
 
-
+@migration.skip_if_offline
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.alter_column('ml2_brocadeports', 'admin_state_up', nullable=True,
-                    existing_type=sa.Boolean)
+    migration.alter_column_if_exists(
+        'ml2_brocadeports', 'admin_state_up',
+        nullable=True,
+        existing_type=sa.Boolean)

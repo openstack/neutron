@@ -25,11 +25,6 @@ Create Date: 2014-05-14 14:47:53.148132
 revision = '10cd28e692e9'
 down_revision = '1b837a7125a9'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.nuage.plugin.NuagePlugin'
-]
 
 from alembic import op
 import sqlalchemy as sa
@@ -38,9 +33,6 @@ from neutron.db import migration
 
 
 def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
     op.create_table(
         'routerroutes_mapping',
         sa.Column('router_id', sa.String(length=36), nullable=False),
@@ -48,21 +40,27 @@ def upgrade(active_plugins=None, options=None):
         sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
                                 ondelete='CASCADE'),
     )
-    op.create_table(
-        'routerroutes',
-        sa.Column('destination', sa.String(length=64), nullable=False),
-        sa.Column('nexthop', sa.String(length=64), nullable=False),
-        sa.Column('router_id', sa.String(length=36), nullable=False),
-        sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('destination', 'nexthop',
-                                'router_id'),
-    )
+    # This table might already exist as it might have been created
+    # if another plugin was configured before the nuage one
+    if op.get_bind().engine.dialect.name == 'postgresql':
+        migration.create_table_if_not_exist_psql(
+            'routerroutes',
+            ("(destination VARCHAR(64) NOT NULL,"
+             "nexthop VARCHAR(64) NOT NULL,"
+             "router_id VARCHAR(36) NOT NULL,"
+             "PRIMARY KEY (destination, nexthop, router_id),"
+             "FOREIGN KEY (router_id) REFERENCES routers (id) "
+             "ON DELETE CASCADE ON UPDATE CASCADE)"))
+    else:
+        op.execute("CREATE TABLE IF NOT EXISTS routerroutes( "
+                   "destination VARCHAR(64) NOT NULL,"
+                   "nexthop VARCHAR(64) NOT NULL,"
+                   "router_id VARCHAR(36) NOT NULL,"
+                   "PRIMARY KEY (destination, nexthop, router_id),"
+                   "FOREIGN KEY (router_id) REFERENCES routers (id) "
+                   "ON DELETE CASCADE ON UPDATE CASCADE)")
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.drop_table('routerroutes')
-    op.drop_table('routerroutes_mapping')
+    # The routerroutes table should not be dropped
+    op.execute('DROP TABLE IF EXISTS routerroutes_mapping')

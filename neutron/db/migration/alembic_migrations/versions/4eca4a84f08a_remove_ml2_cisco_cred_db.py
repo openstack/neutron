@@ -25,35 +25,31 @@ Create Date: 2014-04-10 19:32:46.697189
 revision = '4eca4a84f08a'
 down_revision = '33c3db036fe4'
 
-# Change to ['*'] if this migration applies to all plugins
-
-migration_for_plugins = [
-    'neutron.plugins.ml2.plugin.Ml2Plugin'
-]
 
 from alembic import op
-import sqlalchemy as sa
 
 from neutron.db import migration
 
 
 def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.drop_table('cisco_ml2_credentials')
+    op.execute('DROP TABLE IF EXISTS cisco_ml2_credentials')
 
 
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.create_table(
-        'cisco_ml2_credentials',
-        sa.Column('credential_id', sa.String(length=255), nullable=True),
-        sa.Column('tenant_id', sa.String(length=255), nullable=False),
-        sa.Column('credential_name', sa.String(length=255), nullable=False),
-        sa.Column('user_name', sa.String(length=255), nullable=True),
-        sa.Column('password', sa.String(length=255), nullable=True),
-        sa.PrimaryKeyConstraint('tenant_id', 'credential_name')
-    )
+    if op.get_bind().engine.dialect.name == 'postgresql':
+        migration.create_table_if_not_exist_psql(
+            'cisco_ml2_credentials',
+            ("(credential_id VARCHAR(255) NULL,"
+             "tenant_id VARCHAR(255) NOT NULL,"
+             "credential_name VARCHAR(255) NOT NULL,"
+             "user_name VARCHAR(255) NULL,"
+             "password VARCHAR(255) NULL,"
+             "PRIMARY KEY (tenant_id, credential_name))"))
+    else:
+        op.execute('CREATE TABLE IF NOT EXISTS cisco_ml2_credentials( '
+                   'credential_id VARCHAR(255) NULL,'
+                   'tenant_id VARCHAR(255) NOT NULL,'
+                   'credential_name VARCHAR(255) NOT NULL,'
+                   'user_name VARCHAR(255) NULL,'
+                   'password VARCHAR(255) NULL,'
+                   'PRIMARY KEY (tenant_id, credential_name))')

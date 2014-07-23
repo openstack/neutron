@@ -25,30 +25,27 @@ Create Date: 2014-03-17 11:00:17.539028
 revision = '54f7549a0e5f'
 down_revision = 'icehouse'
 
-# Change to ['*'] if this migration applies to all plugins
+# This migration will be executed only if the neutron DB schema
+# contains the tables for VPN service plugin.
+# This migration will be skipped when executed in offline mode.
 
-migration_for_plugins = [
-    'neutron.services.vpn.plugin.VPNDriverPlugin'
-]
 
-from alembic import op
 import sqlalchemy as sa
-
 
 from neutron.db import migration
 
 
+@migration.skip_if_offline
 def upgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
+    migration.alter_column_if_exists(
+        'ipsec_site_connections', 'peer_address',
+        existing_type=sa.String(255),
+        nullable=False)
 
-    op.alter_column('ipsec_site_connections', 'peer_address',
-                    existing_type=sa.String(255), nullable=False)
 
-
+@migration.skip_if_offline
 def downgrade(active_plugins=None, options=None):
-    if not migration.should_run(active_plugins, migration_for_plugins):
-        return
-
-    op.alter_column('ipsec_site_connections', 'peer_address', nullable=True,
-                    existing_type=sa.String(255))
+    migration.alter_column_if_exists(
+        'ipsec_site_connections', 'peer_address',
+        nullable=True,
+        existing_type=sa.String(255))
