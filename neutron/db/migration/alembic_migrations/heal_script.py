@@ -69,7 +69,7 @@ def heal():
         'compare_server_default': _compare_server_default,
     }
     mc = alembic.migration.MigrationContext.configure(op.get_bind(), opts=opts)
-
+    set_storage_engine(op.get_bind(), "InnoDB")
     diff1 = autogen.compare_metadata(mc, models_metadata)
     # Alembic does not contain checks for foreign keys. Because of that it
     # checks separately.
@@ -320,3 +320,11 @@ def _compare_server_default(ctxt, ins_col, meta_col, insp_def, meta_def,
         )
 
     return None  # tells alembic to use the default comparison method
+
+
+def set_storage_engine(bind, engine):
+    insp = sqlalchemy.engine.reflection.Inspector.from_engine(bind)
+    if bind.dialect.name == 'mysql':
+        for table in insp.get_table_names():
+            if insp.get_table_options(table)['mysql_engine'] != engine:
+                op.execute("ALTER TABLE %s ENGINE=%s" % (table, engine))
