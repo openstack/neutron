@@ -97,7 +97,7 @@ class OVSSecurityGroupAgent(sg_rpc.SecurityGroupAgentRpcMixin):
 
 class OVSNeutronAgent(n_rpc.RpcCallback,
                       sg_rpc.SecurityGroupAgentRpcCallbackMixin,
-                      l2population_rpc.L2populationRpcCallBackMixin,
+                      l2population_rpc.L2populationRpcCallBackTunnelMixin,
                       dvr_rpc.DVRAgentRpcCallbackMixin):
     '''Implements OVS-based tunneling, VLANs and flat networks.
 
@@ -348,61 +348,35 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
             return
         tun_name = '%s-%s' % (tunnel_type, tunnel_id)
         if not self.l2_pop:
-            self.setup_tunnel_port(tun_name, tunnel_ip, tunnel_type)
+            self._setup_tunnel_port(tun_name, tunnel_ip, tunnel_type)
 
     def fdb_add(self, context, fdb_entries):
-        LOG.debug(_("fdb_add received"))
-        for network_id, values in fdb_entries.items():
-            lvm = self.local_vlan_map.get(network_id)
-            if not lvm:
-                # Agent doesn't manage any port in this network
-                continue
-            agent_ports = values.get('ports')
+        LOG.debug("fdb_add received")
+        for lvm, agent_ports in self.get_agent_ports(fdb_entries,
+                                                     self.local_vlan_map):
             agent_ports.pop(self.local_ip, None)
             if len(agent_ports):
                 if not self.enable_distributed_routing:
                     self.tun_br.defer_apply_on()
-                for agent_ip, ports in agent_ports.items():
-                    # Ensure we have a tunnel port with this remote agent
-                    ofport = self.tun_br_ofports[
-                        lvm.network_type].get(agent_ip)
-                    if not ofport:
-                        remote_ip_hex = self.get_ip_in_hex(agent_ip)
-                        if not remote_ip_hex:
-                            continue
-                        port_name = '%s-%s' % (lvm.network_type, remote_ip_hex)
-                        ofport = self.setup_tunnel_port(port_name, agent_ip,
-                                                        lvm.network_type)
-                        if ofport == 0:
-                            continue
-                    for port in ports:
-                        self._add_fdb_flow(port, agent_ip, lvm, ofport)
+                self.fdb_add_tun(context, lvm, agent_ports,
+                                 self.tun_br_ofports)
                 if not self.enable_distributed_routing:
                     self.tun_br.defer_apply_off()
 
     def fdb_remove(self, context, fdb_entries):
-        LOG.debug(_("fdb_remove received"))
-        for network_id, values in fdb_entries.items():
-            lvm = self.local_vlan_map.get(network_id)
-            if not lvm:
-                # Agent doesn't manage any more ports in this network
-                continue
-            agent_ports = values.get('ports')
+        LOG.debug("fdb_remove received")
+        for lvm, agent_ports in self.get_agent_ports(fdb_entries,
+                                                     self.local_vlan_map):
             agent_ports.pop(self.local_ip, None)
             if len(agent_ports):
                 if not self.enable_distributed_routing:
                     self.tun_br.defer_apply_on()
-                for agent_ip, ports in agent_ports.items():
-                    ofport = self.tun_br_ofports[
-                        lvm.network_type].get(agent_ip)
-                    if not ofport:
-                        continue
-                    for port in ports:
-                        self._del_fdb_flow(port, agent_ip, lvm, ofport)
+                self.fdb_remove_tun(context, lvm, agent_ports,
+                                    self.tun_br_ofports)
                 if not self.enable_distributed_routing:
                     self.tun_br.defer_apply_off()
 
-    def _add_fdb_flow(self, port_info, agent_ip, lvm, ofport):
+    def add_fdb_flow(self, port_info, remote_ip, lvm, ofport):
         if port_info == q_const.FLOODING_ENTRY:
             lvm.tun_ofports.add(ofport)
             ofports = ','.join(lvm.tun_ofports)
@@ -422,7 +396,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                                      "output:%s" %
                                      (lvm.segmentation_id, ofport))
 
-    def _del_fdb_flow(self, port_info, agent_ip, lvm, ofport):
+    def del_fdb_flow(self, port_info, remote_ip, lvm, ofport):
         if port_info == q_const.FLOODING_ENTRY:
             lvm.tun_ofports.remove(ofport)
             if len(lvm.tun_ofports) > 0:
@@ -436,8 +410,6 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 # This local vlan doesn't require any more tunnelling
                 self.tun_br.delete_flows(table=constants.FLOOD_TO_TUN,
                                          dl_vlan=lvm.vlan)
-            # Check if this tunnel port is still used
-            self.cleanup_tunnel_port(ofport, lvm.network_type)
         else:
             self._set_arp_responder('remove', lvm.vlan, port_info[0],
                                     port_info[1])
@@ -485,15 +457,6 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                 before = state.get('before')
                 for mac, ip in before:
                     self._set_arp_responder('remove', lvm.vlan, mac, ip)
-
-    def fdb_update(self, context, fdb_entries):
-        LOG.debug(_("fdb_update received"))
-        for action, values in fdb_entries.items():
-            method = '_fdb_' + action
-            if not hasattr(self, method):
-                raise NotImplementedError()
-
-            getattr(self, method)(context, values)
 
     def _set_arp_responder(self, action, lvid, mac_str, ip_str):
         '''Set the ARP respond entry.
@@ -1111,7 +1074,7 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         else:
             LOG.debug(_("No VIF port for port %s defined on agent."), port_id)
 
-    def setup_tunnel_port(self, port_name, remote_ip, tunnel_type):
+    def _setup_tunnel_port(self, port_name, remote_ip, tunnel_type):
         ofport = self.tun_br.add_tunnel_port(port_name,
                                              remote_ip,
                                              self.local_ip,
@@ -1148,6 +1111,16 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                                          "set_tunnel:%s,output:%s" %
                                          (vlan_mapping.segmentation_id,
                                           ofports))
+        return ofport
+
+    def setup_tunnel_port(self, remote_ip, network_type):
+        remote_ip_hex = self.get_ip_in_hex(remote_ip)
+        if not remote_ip_hex:
+            return 0
+        port_name = '%s-%s' % (network_type, remote_ip_hex)
+        ofport = self._setup_tunnel_port(port_name,
+                                         remote_ip,
+                                         network_type)
         return ofport
 
     def cleanup_tunnel_port(self, tun_ofport, tunnel_type):
@@ -1393,9 +1366,8 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                                 continue
                             tun_name = '%s-%s' % (tunnel_type,
                                                   tunnel_id or remote_ip_hex)
-                            self.setup_tunnel_port(tun_name,
-                                                   tunnel['ip_address'],
-                                                   tunnel_type)
+                            self._setup_tunnel_port(
+                                tun_name, tunnel['ip_address'], tunnel_type)
         except Exception as e:
             LOG.debug(_("Unable to sync tunnel IP %(local_ip)s: %(e)s"),
                       {'local_ip': self.local_ip, 'e': e})

@@ -1,0 +1,190 @@
+# Copyright (C) 2014 VA Linux Systems Japan K.K.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+# @author: Fumihiko Kakuma, VA Linux Systems Japan K.K.
+
+import contextlib
+
+import mock
+
+from neutron.common import constants as n_const
+from neutron.tests.unit.agent import l2population_rpc_base
+
+
+class TestL2populationRpcCallBackTunnelMixin(
+    l2population_rpc_base.TestL2populationRpcCallBackTunnelMixinBase):
+
+    def test_get_agent_ports_no_data(self):
+        for lvm, agent_ports in self.fakeagent.get_agent_ports(
+            self.fdb_entries1, {}):
+            self.assertIsNone(lvm)
+            self.assertEqual({}, agent_ports)
+
+    def test_get_agent_ports_non_existence_key_in_lvm(self):
+        results = {}
+        del self.local_vlan_map1[self.lvms[1].net]
+        for lvm, agent_ports in self.fakeagent.get_agent_ports(
+            self.fdb_entries1, self.local_vlan_map1):
+            results[lvm] = agent_ports
+        expected = {
+            self.lvm1: {
+                self.ports[0].ip: [[self.lvms[0].mac, self.lvms[0].ip]],
+                self.local_ip: []},
+            None: {},
+            self.lvm3: {
+                self.ports[2].ip: [[self.lvms[2].mac, self.lvms[2].ip]],
+                self.local_ip: []},
+        }
+        self.assertEqual(expected, results)
+
+    def test_get_agent_ports_no_agent_ports(self):
+        results = {}
+        self.fdb_entries1[self.lvms[1].net]['ports'] = {}
+        for lvm, agent_ports in self.fakeagent.get_agent_ports(
+            self.fdb_entries1, self.local_vlan_map1):
+            results[lvm] = agent_ports
+        expected = {
+            self.lvm1: {
+                self.ports[0].ip: [[self.lvms[0].mac, self.lvms[0].ip]],
+                self.local_ip: []},
+            self.lvm2: {},
+            self.lvm3: {
+                self.ports[2].ip: [[self.lvms[2].mac, self.lvms[2].ip]],
+                self.local_ip: []},
+        }
+        self.assertEqual(expected, results)
+
+    def test_fdb_add_tun(self):
+        with contextlib.nested(
+            mock.patch.object(self.fakeagent, 'setup_tunnel_port'),
+            mock.patch.object(self.fakeagent, 'add_fdb_flow'),
+        ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
+            self.fakeagent.fdb_add_tun('context', self.lvm1,
+                                       self.agent_ports, self.ofports)
+        expected = [
+            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
+                      self.lvm1, self.ports[0].ofport),
+            mock.call([self.lvms[1].mac, self.lvms[1].ip], self.ports[1].ip,
+                      self.lvm1, self.ports[1].ofport),
+            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
+                      self.lvm1, self.ports[2].ofport),
+        ]
+        self.assertEqual(sorted(expected),
+                         sorted(mock_add_fdb_flow.call_args_list))
+
+    def test_fdb_add_tun_non_existence_key_in_ofports(self):
+        ofport = self.lvm1.network_type + '0a0a0a0a'
+        del self.ofports[self.type_gre][self.ports[1].ip]
+        with contextlib.nested(
+            mock.patch.object(self.fakeagent, 'setup_tunnel_port',
+                              return_value=ofport),
+            mock.patch.object(self.fakeagent, 'add_fdb_flow'),
+        ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
+            self.fakeagent.fdb_add_tun('context', self.lvm1,
+                                       self.agent_ports, self.ofports)
+        mock_setup_tunnel_port.assert_called_once_with(
+            self.ports[1].ip, self.lvm1.network_type)
+        expected = [
+            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
+                      self.lvm1, self.ports[0].ofport),
+            mock.call([self.lvms[1].mac, self.lvms[1].ip], self.ports[1].ip,
+                      self.lvm1, ofport),
+            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
+                      self.lvm1, self.ports[2].ofport),
+        ]
+        self.assertEqual(sorted(expected),
+                         sorted(mock_add_fdb_flow.call_args_list))
+
+    def test_fdb_add_tun_unavailable_ofport(self):
+        del self.ofports[self.type_gre][self.ports[1].ip]
+        with contextlib.nested(
+            mock.patch.object(self.fakeagent, 'setup_tunnel_port',
+                              return_value=0),
+            mock.patch.object(self.fakeagent, 'add_fdb_flow'),
+        ) as (mock_setup_tunnel_port, mock_add_fdb_flow):
+            self.fakeagent.fdb_add_tun('context', self.lvm1,
+                                       self.agent_ports, self.ofports)
+        mock_setup_tunnel_port.assert_called_once_with(
+            self.ports[1].ip, self.lvm1.network_type)
+        expected = [
+            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
+                      self.lvm1, self.ports[0].ofport),
+            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
+                      self.lvm1, self.ports[2].ofport),
+        ]
+        self.assertEqual(sorted(expected),
+                         sorted(mock_add_fdb_flow.call_args_list))
+
+    def test_fdb_remove_tun(self):
+        with mock.patch.object(
+            self.fakeagent, 'del_fdb_flow') as mock_del_fdb_flow:
+            self.fakeagent.fdb_remove_tun('context', self.lvm1,
+                                          self.agent_ports, self.ofports)
+        expected = [
+            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
+                      self.lvm1, self.ports[0].ofport),
+            mock.call([self.lvms[1].mac, self.lvms[1].ip], self.ports[1].ip,
+                      self.lvm1, self.ports[1].ofport),
+            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
+                      self.lvm1, self.ports[2].ofport),
+        ]
+        self.assertEqual(sorted(expected),
+                         sorted(mock_del_fdb_flow.call_args_list))
+
+    def test_fdb_remove_tun_flooding_entry(self):
+        self.agent_ports[self.ports[1].ip] = [n_const.FLOODING_ENTRY]
+        with contextlib.nested(
+            mock.patch.object(self.fakeagent, 'del_fdb_flow'),
+            mock.patch.object(self.fakeagent, 'cleanup_tunnel_port'),
+        ) as (mock_del_fdb_flow, mock_cleanup_tunnel_port):
+            self.fakeagent.fdb_remove_tun('context', self.lvm1,
+                                          self.agent_ports, self.ofports)
+        expected = [
+            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
+                      self.lvm1, self.ports[0].ofport),
+            mock.call([n_const.FLOODING_ENTRY[0], n_const.FLOODING_ENTRY[1]],
+                      self.ports[1].ip, self.lvm1, self.ports[1].ofport),
+            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
+                      self.lvm1, self.ports[2].ofport),
+        ]
+        self.assertEqual(sorted(expected),
+                         sorted(mock_del_fdb_flow.call_args_list))
+        mock_cleanup_tunnel_port.assert_called_once_with(
+            self.ports[1].ofport, self.lvm1.network_type)
+
+    def test_fdb_remove_tun_non_existence_key_in_ofports(self):
+        del self.ofports[self.type_gre][self.ports[1].ip]
+        with mock.patch.object(
+            self.fakeagent, 'del_fdb_flow') as mock_del_fdb_flow:
+            self.fakeagent.fdb_remove_tun('context', self.lvm1,
+                                          self.agent_ports, self.ofports)
+        expected = [
+            mock.call([self.lvms[0].mac, self.lvms[0].ip], self.ports[0].ip,
+                      self.lvm1, self.ports[0].ofport),
+            mock.call([self.lvms[2].mac, self.lvms[2].ip], self.ports[2].ip,
+                      self.lvm1, self.ports[2].ofport),
+        ]
+        self.assertEqual(sorted(expected),
+                         sorted(mock_del_fdb_flow.call_args_list))
+
+    def test_fdb_update(self):
+        fake__fdb_chg_ip = mock.Mock()
+        self.fakeagent._fdb_chg_ip = fake__fdb_chg_ip
+        self.fakeagent.fdb_update('context', self.upd_fdb_entry1)
+        fake__fdb_chg_ip.assert_called_once_with(
+            'context', self.upd_fdb_entry1_val)
+
+    def test_fdb_update_non_existence_method(self):
+        self.assertRaises(NotImplementedError,
+                          self.fakeagent.fdb_update,
+                          'context', self.upd_fdb_entry1)

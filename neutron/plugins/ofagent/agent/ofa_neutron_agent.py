@@ -26,6 +26,7 @@ from ryu.base import app_manager
 from ryu.lib import hub
 from ryu.ofproto import ofproto_v1_3 as ryu_ofp13
 
+from neutron.agent import l2population_rpc
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import polling
@@ -161,13 +162,16 @@ class OFANeutronAgentRyuApp(app_manager.RyuApp):
 
 
 class OFANeutronAgent(n_rpc.RpcCallback,
-                      sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+                      sg_rpc.SecurityGroupAgentRpcCallbackMixin,
+                      l2population_rpc.L2populationRpcCallBackTunnelMixin):
     """A agent for OpenFlow Agent ML2 mechanism driver.
 
     OFANeutronAgent is a OpenFlow Agent agent for a ML2 plugin.
     This is as a ryu application thread.
+    This has the following features.
     - An agent acts as an OpenFlow controller on each compute nodes.
     - OpenFlow 1.3 (vendor agnostic unlike OVS extensions).
+    - l2-population is mandatory.
     """
 
     # history
@@ -178,8 +182,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
     def __init__(self, ryuapp, integ_br, tun_br, local_ip,
                  bridge_mappings, root_helper,
                  polling_interval, tunnel_types=None,
-                 veth_mtu=None, l2_population=False,
-                 minimize_polling=False,
+                 veth_mtu=None, minimize_polling=False,
                  ovsdb_monitor_respawn_interval=(
                      constants.DEFAULT_OVSDBMON_RESPAWN)):
         """Constructor.
@@ -208,7 +211,6 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         self.available_local_vlans = set(xrange(n_const.MIN_VLAN_TAG,
                                                 n_const.MAX_VLAN_TAG))
         self.tunnel_types = tunnel_types or []
-        self.l2_pop = l2_population
         self.agent_state = {
             'binary': 'neutron-ofa-agent',
             'host': cfg.CONF.host,
@@ -216,7 +218,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             'configurations': {'bridge_mappings': bridge_mappings,
                                'tunnel_types': self.tunnel_types,
                                'tunneling_ip': local_ip,
-                               'l2_population': self.l2_pop},
+                               'l2_population': True},
             'agent_type': n_const.AGENT_TYPE_OFA,
             'start_flag': True}
 
@@ -291,8 +293,8 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
-                     [constants.TUNNEL, topics.UPDATE],
-                     [topics.SECURITY_GROUP, topics.UPDATE]]
+                     [topics.SECURITY_GROUP, topics.UPDATE],
+                     [topics.L2POPULATION, topics.UPDATE, cfg.CONF.host]]
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers)
@@ -341,45 +343,100 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         # they are not used since there is no guarantee the notifications
         # are processed in the same order as the relevant API requests
         self.updated_ports.add(ports.get_normalized_port_name(port['id']))
-        LOG.debug(_("port_update received port %s"), port['id'])
+        LOG.debug("port_update received port %s", port['id'])
 
-    def tunnel_update(self, context, **kwargs):
-        LOG.debug(_("tunnel_update received"))
-        if not self.enable_tunneling:
-            return
-        tunnel_ip = kwargs.get('tunnel_ip')
-        tunnel_type = kwargs.get('tunnel_type')
-        if not tunnel_type:
-            LOG.error(_("No tunnel_type specified, cannot create tunnels"))
-            return
-        if tunnel_type not in self.tunnel_types:
-            LOG.error(_("tunnel_type %s not supported by agent"), tunnel_type)
-            return
-        if tunnel_ip == self.local_ip:
-            return
-        tun_name = self._create_tunnel_port_name(tunnel_type, tunnel_ip)
-        if not tun_name:
-            return
-        self.setup_tunnel_port(tun_name, tunnel_ip, tunnel_type)
+    def fdb_add(self, context, fdb_entries):
+        LOG.debug("fdb_add received")
+        for lvm, agent_ports in self.get_agent_ports(fdb_entries,
+                                                     self.local_vlan_map):
+            agent_ports.pop(self.local_ip, None)
+            if len(agent_ports):
+                self.fdb_add_tun(context, lvm, agent_ports,
+                                 self.tun_br_ofports)
 
-    def _provision_local_vlan_outbound_for_tunnel(self, lvid,
-                                                  segmentation_id, ofports):
-        br = self.tun_br
-        match = br.ofparser.OFPMatch(
-            vlan_vid=int(lvid) | ryu_ofp13.OFPVID_PRESENT)
-        actions = [br.ofparser.OFPActionPopVlan(),
-                   br.ofparser.OFPActionSetField(
-                       tunnel_id=int(segmentation_id))]
-        for ofport in ofports:
-            actions.append(br.ofparser.OFPActionOutput(ofport, 0))
-        instructions = [br.ofparser.OFPInstructionActions(
-                        ryu_ofp13.OFPIT_APPLY_ACTIONS, actions)]
-        msg = br.ofparser.OFPFlowMod(
-            br.datapath,
-            table_id=constants.FLOOD_TO_TUN,
-            priority=1,
-            match=match, instructions=instructions)
+    def fdb_remove(self, context, fdb_entries):
+        LOG.debug("fdb_remove received")
+        for lvm, agent_ports in self.get_agent_ports(fdb_entries,
+                                                     self.local_vlan_map):
+            agent_ports.pop(self.local_ip, None)
+            if len(agent_ports):
+                self.fdb_remove_tun(context, lvm, agent_ports,
+                                    self.tun_br_ofports)
+
+    def _add_fdb_flooding_flow(self, lvm):
+        datapath = self.tun_br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        match = ofpp.OFPMatch(
+            vlan_vid=int(lvm.vlan) | ofp.OFPVID_PRESENT)
+        actions = [ofpp.OFPActionPopVlan(),
+                   ofpp.OFPActionSetField(
+                       tunnel_id=int(lvm.segmentation_id))]
+        for tun_ofport in lvm.tun_ofports:
+            actions.append(ofpp.OFPActionOutput(int(tun_ofport), 0))
+        instructions = [ofpp.OFPInstructionActions(
+                        ofp.OFPIT_APPLY_ACTIONS, actions)]
+        msg = ofpp.OFPFlowMod(datapath,
+                              table_id=constants.FLOOD_TO_TUN,
+                              command=ofp.OFPFC_ADD,
+                              priority=1,
+                              match=match, instructions=instructions)
         self.ryu_send_msg(msg)
+
+    def add_fdb_flow(self, port_info, remote_ip, lvm, ofport):
+        datapath = self.tun_br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        if port_info == n_const.FLOODING_ENTRY:
+            lvm.tun_ofports.add(ofport)
+            self._add_fdb_flooding_flow(lvm)
+        else:
+            match = ofpp.OFPMatch(
+                vlan_vid=int(lvm.vlan) | ofp.OFPVID_PRESENT,
+                eth_dst=port_info[0])
+            actions = [ofpp.OFPActionPopVlan(),
+                       ofpp.OFPActionSetField(
+                           tunnel_id=int(lvm.segmentation_id)),
+                       ofpp.OFPActionOutput(int(ofport), 0)]
+            instructions = [ofpp.OFPInstructionActions(
+                            ofp.OFPIT_APPLY_ACTIONS, actions)]
+            msg = ofpp.OFPFlowMod(datapath,
+                                  table_id=constants.UCAST_TO_TUN,
+                                  command=ofp.OFPFC_ADD,
+                                  priority=2,
+                                  match=match, instructions=instructions)
+            self.ryu_send_msg(msg)
+
+    def del_fdb_flow(self, port_info, remote_ip, lvm, ofport):
+        datapath = self.tun_br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        if port_info == n_const.FLOODING_ENTRY:
+            lvm.tun_ofports.remove(ofport)
+            if len(lvm.tun_ofports) > 0:
+                self._add_fdb_flooding_flow(lvm)
+            else:
+                # This local vlan doesn't require any more tunelling
+                match = ofpp.OFPMatch(
+                    vlan_vid=int(lvm.vlan) | ofp.OFPVID_PRESENT)
+                msg = ofpp.OFPFlowMod(datapath,
+                                      table_id=constants.FLOOD_TO_TUN,
+                                      command=ofp.OFPFC_DELETE,
+                                      out_group=ofp.OFPG_ANY,
+                                      out_port=ofp.OFPP_ANY,
+                                      match=match)
+                self.ryu_send_msg(msg)
+        else:
+            match = ofpp.OFPMatch(
+                vlan_vid=int(lvm.vlan) | ofp.OFPVID_PRESENT,
+                eth_dst=port_info[0])
+            msg = ofpp.OFPFlowMod(datapath,
+                                  table_id=constants.UCAST_TO_TUN,
+                                  command=ofp.OFPFC_DELETE,
+                                  out_group=ofp.OFPG_ANY,
+                                  out_port=ofp.OFPP_ANY,
+                                  match=match)
+            self.ryu_send_msg(msg)
 
     def _provision_local_vlan_inbound_for_tunnel(self, lvid, network_type,
                                                  segmentation_id):
@@ -404,11 +461,6 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         self.ryu_send_msg(msg)
 
     def _local_vlan_for_tunnel(self, lvid, network_type, segmentation_id):
-        ofports = [int(ofport) for ofport in
-                   self.tun_br_ofports[network_type].values()]
-        if ofports:
-            self._provision_local_vlan_outbound_for_tunnel(
-                lvid, segmentation_id, ofports)
         self._provision_local_vlan_inbound_for_tunnel(lvid, network_type,
                                                       segmentation_id)
 
@@ -588,6 +640,9 @@ class OFANeutronAgent(n_rpc.RpcCallback,
                     out_port=ryu_ofp13.OFPP_ANY,
                     match=match)
                 self.ryu_send_msg(msg)
+                # Try to remove tunnel ports if not used by other networks
+                for ofport in lvm.tun_ofports:
+                    self.cleanup_tunnel_port(ofport, lvm.network_type)
         elif lvm.network_type in (p_const.TYPE_FLAT, p_const.TYPE_VLAN):
             if lvm.physical_network in self.phys_brs:
                 self._reclaim_local_vlan_outbound(lvm)
@@ -1015,7 +1070,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         else:
             LOG.debug(_("No VIF port for port %s defined on agent."), port_id)
 
-    def setup_tunnel_port(self, port_name, remote_ip, tunnel_type):
+    def _setup_tunnel_port(self, port_name, remote_ip, tunnel_type):
         ofport = self.tun_br.add_tunnel_port(port_name,
                                              remote_ip,
                                              self.local_ip,
@@ -1044,35 +1099,44 @@ class OFANeutronAgent(n_rpc.RpcCallback,
                                               match=match,
                                               instructions=instructions)
         self.ryu_send_msg(msg)
-
-        ofports = [int(p) for p in self.tun_br_ofports[tunnel_type].values()]
-        if ofports:
-            # Update flooding flows to include the new tunnel
-            for network_id, vlan_mapping in self.local_vlan_map.iteritems():
-                if vlan_mapping.network_type == tunnel_type:
-                    match = self.tun_br.ofparser.OFPMatch(
-                        vlan_vid=int(vlan_mapping.vlan) |
-                        ryu_ofp13.OFPVID_PRESENT)
-                    actions = [
-                        self.tun_br.ofparser.OFPActionPopVlan(),
-                        self.tun_br.ofparser.OFPActionSetField(
-                            tunnel_id=int(vlan_mapping.segmentation_id))]
-                    actions.extend(
-                        self.tun_br.ofparser.OFPActionOutput(p, 0)
-                        for p in ofports
-                    )
-                    instructions = [
-                        self.tun_br.ofparser.OFPInstructionActions(
-                            ryu_ofp13.OFPIT_APPLY_ACTIONS,
-                            actions)]
-                    msg = self.tun_br.ofparser.OFPFlowMod(
-                        self.tun_br.datapath,
-                        table_id=constants.FLOOD_TO_TUN,
-                        priority=1,
-                        match=match,
-                        instructions=instructions)
-                    self.ryu_send_msg(msg)
         return ofport
+
+    def setup_tunnel_port(self, remote_ip, network_type):
+        port_name = self._create_tunnel_port_name(network_type, remote_ip)
+        if not port_name:
+            return 0
+        ofport = self._setup_tunnel_port(port_name,
+                                         remote_ip,
+                                         network_type)
+        return ofport
+
+    def _remove_tunnel_port(self, tun_ofport, tunnel_type):
+        datapath = self.tun_br.datapath
+        ofp = datapath.ofproto
+        ofpp = datapath.ofproto_parser
+        for remote_ip, ofport in self.tun_br_ofports[tunnel_type].items():
+            if ofport == tun_ofport:
+                port_name = self._create_tunnel_port_name(tunnel_type,
+                                                          remote_ip)
+                if port_name:
+                    self.tun_br.delete_port(port_name)
+                match = ofpp.OFPMatch(in_port=int(ofport))
+                msg = ofpp.OFPFlowMod(datapath,
+                                      command=ofp.OFPFC_DELETE,
+                                      out_group=ofp.OFPG_ANY,
+                                      out_port=ofp.OFPP_ANY,
+                                      match=match)
+                self.ryu_send_msg(msg)
+                self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
+
+    def cleanup_tunnel_port(self, tun_ofport, tunnel_type):
+        # Check if this tunnel port is still used
+        for lvm in self.local_vlan_map.values():
+            if tun_ofport in lvm.tun_ofports:
+                break
+        # If not, remove it
+        else:
+            self._remove_tunnel_port(tun_ofport, tunnel_type)
 
     def treat_devices_added_or_updated(self, devices):
         resync = False
@@ -1245,19 +1309,9 @@ class OFANeutronAgent(n_rpc.RpcCallback,
         resync = False
         try:
             for tunnel_type in self.tunnel_types:
-                details = self.plugin_rpc.tunnel_sync(self.context,
-                                                      self.local_ip,
-                                                      tunnel_type)
-                tunnels = details['tunnels']
-                for tunnel in tunnels:
-                    if self.local_ip != tunnel['ip_address']:
-                        tun_name = self._create_tunnel_port_name(
-                            tunnel_type, tunnel['ip_address'])
-                        if not tun_name:
-                            continue
-                        self.setup_tunnel_port(tun_name,
-                                               tunnel['ip_address'],
-                                               tunnel_type)
+                self.plugin_rpc.tunnel_sync(self.context,
+                                            self.local_ip,
+                                            tunnel_type)
         except Exception as e:
             LOG.debug(_("Unable to sync tunnel IP %(local_ip)s: %(e)s"),
                       {'local_ip': self.local_ip, 'e': e})
@@ -1428,7 +1482,6 @@ def create_agent_config_map(config):
         minimize_polling=config.AGENT.minimize_polling,
         tunnel_types=config.AGENT.tunnel_types,
         veth_mtu=config.AGENT.veth_mtu,
-        l2_population=False,
         ovsdb_monitor_respawn_interval=constants.DEFAULT_OVSDBMON_RESPAWN,
     )
 
