@@ -18,9 +18,6 @@ from neutron.common import log as call_log
 from neutron.tests import base
 
 
-MODULE_NAME = 'neutron.tests.unit.test_common_log'
-
-
 class TargetKlass(object):
 
     @call_log.log
@@ -32,39 +29,29 @@ class TestCallLog(base.BaseTestCase):
     def setUp(self):
         super(TestCallLog, self).setUp()
         self.klass = TargetKlass()
-        self.expected_format = ('%(class_name)s method %(method_name)s '
-                                'called with arguments %(args)s %(kwargs)s')
-        self.expected_data = {'class_name': MODULE_NAME + '.TargetKlass',
-                              'method_name': 'test_method',
-                              'args': (),
-                              'kwargs': {}}
+        logger = self.klass.test_method.im_func.func_closure[0].cell_contents
+        self.log_debug = mock.patch.object(logger, 'debug').start()
+
+    def _test_call_log(self, *args, **kwargs):
+        expected_format = ('%(class_name)s method %(method_name)s '
+                           'called with arguments %(args)s %(kwargs)s')
+        expected_data = {'class_name': '%s.%s' % (
+                         __name__,
+                         self.klass.__class__.__name__),
+                         'method_name': 'test_method',
+                         'args': args,
+                         'kwargs': kwargs}
+        self.klass.test_method(*args, **kwargs)
+        self.log_debug.assert_called_once_with(expected_format, expected_data)
 
     def test_call_log_all_args(self):
-        self.expected_data['args'] = (10, 20)
-        with mock.patch.object(call_log.LOG, 'debug') as log_debug:
-            self.klass.test_method(10, 20)
-            log_debug.assert_called_once_with(self.expected_format,
-                                              self.expected_data)
+        self._test_call_log(10, 20)
 
     def test_call_log_all_kwargs(self):
-        self.expected_data['kwargs'] = {'arg1': 10, 'arg2': 20}
-        with mock.patch.object(call_log.LOG, 'debug') as log_debug:
-            self.klass.test_method(arg1=10, arg2=20)
-            log_debug.assert_called_once_with(self.expected_format,
-                                              self.expected_data)
+        self._test_call_log(arg1=10, arg2=20)
 
     def test_call_log_known_args_unknown_args_kwargs(self):
-        self.expected_data['args'] = (10, 20, 30)
-        self.expected_data['kwargs'] = {'arg4': 40}
-        with mock.patch.object(call_log.LOG, 'debug') as log_debug:
-            self.klass.test_method(10, 20, 30, arg4=40)
-            log_debug.assert_called_once_with(self.expected_format,
-                                              self.expected_data)
+        self._test_call_log(10, 20, 30, arg4=40)
 
     def test_call_log_known_args_kwargs_unknown_kwargs(self):
-        self.expected_data['args'] = (10,)
-        self.expected_data['kwargs'] = {'arg2': 20, 'arg3': 30, 'arg4': 40}
-        with mock.patch.object(call_log.LOG, 'debug') as log_debug:
-            self.klass.test_method(10, arg2=20, arg3=30, arg4=40)
-            log_debug.assert_called_once_with(self.expected_format,
-                                              self.expected_data)
+        self._test_call_log(10, arg2=20, arg3=30, arg4=40)
