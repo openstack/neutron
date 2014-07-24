@@ -39,6 +39,7 @@
     "update_network:provider:network_type": "rule:admin_only",
     "update_network:provider:physical_network": "rule:admin_only",
     "update_network:provider:segmentation_id": "rule:admin_only",
+    "update_network:router:external": "rule:admin_only",
     "delete_network": "rule:admin_or_owner",
 
     "create_port": "",
