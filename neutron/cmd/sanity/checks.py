@@ -15,12 +15,14 @@
 
 import netaddr
 
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ip_link_support
 from neutron.agent.linux import ovs_lib
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils
 from neutron.i18n import _LE
 from neutron.openstack.common import log as logging
+from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants as const
 from neutron.plugins.openvswitch.common import constants as ovs_const
 
@@ -107,3 +109,16 @@ def vf_management_supported(root_helper):
                           "ip link command"))
         return False
     return True
+
+
+def netns_read_requires_helper(root_helper):
+    ipw = ip_lib.IPWrapper(root_helper)
+    nsname = "netnsreadtest-" + uuidutils.generate_uuid()
+    ipw.netns.add(nsname)
+    try:
+        # read without root_helper. if exists, not required.
+        ipw_nohelp = ip_lib.IPWrapper()
+        exists = ipw_nohelp.netns.exists(nsname)
+    finally:
+        ipw.netns.delete(nsname)
+    return not exists
