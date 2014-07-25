@@ -149,21 +149,23 @@ class NetworkContext(object):
 
     @abc.abstractproperty
     def current(self):
-        """Return the current state of the network.
+        """Return the network in its current configuration.
 
-        Return the current state of the network, as defined by
-        NeutronPluginBaseV2.create_network and all extensions in the
-        ml2 plugin.
+        Return the network, as defined by NeutronPluginBaseV2.
+        create_network and all extensions in the ml2 plugin, with
+        all its properties 'current' at the time the context was
+        established.
         """
         pass
 
     @abc.abstractproperty
     def original(self):
-        """Return the original state of the network.
+        """Return the network in its original configuration.
 
-        Return the original state of the network, prior to a call to
-        update_network. Method is only valid within calls to
-        update_network_precommit and update_network_postcommit.
+        Return the network, with all its properties set to their
+        original values prior to a call to update_network. Method is
+        only valid within calls to update_network_precommit and
+        update_network_postcommit.
         """
         pass
 
@@ -185,21 +187,23 @@ class SubnetContext(object):
 
     @abc.abstractproperty
     def current(self):
-        """Return the current state of the subnet.
+        """Return the subnet in its current configuration.
 
-        Return the current state of the subnet, as defined by
-        NeutronPluginBaseV2.create_subnet and all extensions in the
-        ml2 plugin.
+        Return the subnet, as defined by NeutronPluginBaseV2.
+        create_subnet and all extensions in the ml2 plugin, with
+        all its properties 'current' at the time the context was
+        established.
         """
         pass
 
     @abc.abstractproperty
     def original(self):
-        """Return the original state of the subnet.
+        """Return the subnet in its original configuration.
 
-        Return the original state of the subnet, prior to a call to
-        update_subnet. Method is only valid within calls to
-        update_subnet_precommit and update_subnet_postcommit.
+        Return the subnet, with all its properties set to their
+        original values prior to a call to update_subnet. Method is
+        only valid within calls to update_subnet_precommit and
+        update_subnet_postcommit.
         """
         pass
 
@@ -216,21 +220,37 @@ class PortContext(object):
 
     @abc.abstractproperty
     def current(self):
-        """Return the current state of the port.
+        """Return the port in its current configuration.
 
-        Return the current state of the port, as defined by
-        NeutronPluginBaseV2.create_port and all extensions in the ml2
-        plugin.
+        Return the port, as defined by NeutronPluginBaseV2.
+        create_port and all extensions in the ml2 plugin, with
+        all its properties 'current' at the time the context was
+        established.
         """
         pass
 
     @abc.abstractproperty
     def original(self):
-        """Return the original state of the port.
+        """Return the port in its original configuration.
 
-        Return the original state of the port, prior to a call to
-        update_port. Method is only valid within calls to
-        update_port_precommit and update_port_postcommit.
+        Return the port, with all its properties set to their
+        original values prior to a call to update_port. Method is
+        only valid within calls to update_port_precommit and
+        update_port_postcommit.
+        """
+        pass
+
+    @abc.abstractproperty
+    def status(self):
+        """Return the status of the current port."""
+        pass
+
+    @abc.abstractproperty
+    def original_status(self):
+        """Return the status of the original port.
+
+        The method is only valid within calls to update_port_precommit and
+        update_port_postcommit.
         """
         pass
 
@@ -251,6 +271,20 @@ class PortContext(object):
         Return the original bound segment dictionary, prior to a call
         to update_port.  Method is only valid within calls to
         update_port_precommit and update_port_postcommit.
+        """
+        pass
+
+    @abc.abstractproperty
+    def host(self):
+        """Return the host associated with the 'current' port."""
+        pass
+
+    @abc.abstractproperty
+    def original_host(self):
+        """Return the host associated with the 'original' port.
+
+        Method is only valid within calls to update_port_precommit
+        and update_port_postcommit.
         """
         pass
 

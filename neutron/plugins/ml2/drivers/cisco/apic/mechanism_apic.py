@@ -93,7 +93,7 @@ class APICMechanismDriver(api.MechanismDriver):
             # Not a compute port, return
             return
 
-        host = port.get(portbindings.HOST_ID)
+        host = context.host
         # Check host that the dhcp agent is running on
         filters = {'device_owner': 'network:dhcp',
                    'network_id': network}

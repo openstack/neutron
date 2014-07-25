@@ -155,8 +155,7 @@ class CiscoNexusMechanismDriver(api.MechanismDriver):
 
     def _is_vm_migration(self, context):
         if not context.bound_segment and context.original_bound_segment:
-            return (context.current.get(portbindings.HOST_ID) !=
-                    context.original.get(portbindings.HOST_ID))
+            return context.host != context.original_host
 
     def _port_action(self, port, segment, func):
         """Verify configuration and then process event."""
