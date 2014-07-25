@@ -118,6 +118,83 @@ class TestExclusiveRouterProcessor(base.BaseTestCase):
         self.assertEqual(2, len([i for i in master.updates()]))
 
 
+class TestLinkLocalAddrAllocator(base.BaseTestCase):
+    def setUp(self):
+        super(TestLinkLocalAddrAllocator, self).setUp()
+        self.subnet = netaddr.IPNetwork('169.254.31.0/24')
+
+    def test__init__(self):
+        a = l3_agent.LinkLocalAllocator('/file', self.subnet.cidr)
+        self.assertEqual('/file', a.state_file)
+        self.assertEqual({}, a.allocations)
+
+    def test__init__readfile(self):
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_read') as read:
+            read.return_value = ["da873ca2,169.254.31.28/31\n"]
+            a = l3_agent.LinkLocalAllocator('/file', self.subnet.cidr)
+
+        self.assertTrue('da873ca2' in a.remembered)
+        self.assertEqual({}, a.allocations)
+
+    def test_allocate(self):
+        a = l3_agent.LinkLocalAllocator('/file', self.subnet.cidr)
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_write') as write:
+            subnet = a.allocate('deadbeef')
+
+        self.assertTrue('deadbeef' in a.allocations)
+        self.assertTrue(subnet not in a.pool)
+        self._check_allocations(a.allocations)
+        write.assert_called_once_with(['deadbeef,%s\n' % subnet.cidr])
+
+    def test_allocate_from_file(self):
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_read') as read:
+            read.return_value = ["deadbeef,169.254.31.88/31\n"]
+            a = l3_agent.LinkLocalAllocator('/file', self.subnet.cidr)
+
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_write') as write:
+            subnet = a.allocate('deadbeef')
+
+        self.assertEqual(netaddr.IPNetwork('169.254.31.88/31'), subnet)
+        self.assertTrue(subnet not in a.pool)
+        self._check_allocations(a.allocations)
+        self.assertFalse(write.called)
+
+    def test_allocate_exhausted_pool(self):
+        subnet = netaddr.IPNetwork('169.254.31.0/31')
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_read') as read:
+            read.return_value = ["deadbeef,169.254.31.0/31\n"]
+            a = l3_agent.LinkLocalAllocator('/file', subnet.cidr)
+
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_write') as write:
+            allocation = a.allocate('abcdef12')
+
+        self.assertEqual(subnet, allocation)
+        self.assertFalse('deadbeef' in a.allocations)
+        self.assertTrue('abcdef12' in a.allocations)
+        self.assertTrue(allocation not in a.pool)
+        self._check_allocations(a.allocations)
+        write.assert_called_once_with(['abcdef12,%s\n' % allocation.cidr])
+
+        self.assertRaises(RuntimeError, a.allocate, 'deadbeef')
+
+    def test_release(self):
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_write') as write:
+            a = l3_agent.LinkLocalAllocator('/file', self.subnet.cidr)
+            subnet = a.allocate('deadbeef')
+            write.reset_mock()
+            a.release('deadbeef')
+
+        self.assertTrue('deadbeef' not in a.allocations)
+        self.assertTrue(subnet in a.pool)
+        self.assertEqual({}, a.allocations)
+        write.assert_called_once_with([])
+
+    def _check_allocations(self, allocations):
+        for key, subnet in allocations.items():
+            self.assertTrue(subnet in self.subnet)
+            self.assertEqual(subnet.prefixlen, 31)
+
+
 def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
                             addr_mode=None):
     if ip_version == 4:
@@ -787,8 +864,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
         device.addr.list.return_value = []
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
 
-        fip_statuses = agent.process_router_floating_ip_addresses(
-            ri, {'id': _uuid()})
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_write'):
+            fip_statuses = agent.process_router_floating_ip_addresses(
+                ri, {'id': _uuid()})
         self.assertEqual({fip_id: l3_constants.FLOATINGIP_STATUS_ACTIVE},
                          fip_statuses)
         device.addr.add.assert_called_once_with(4, '15.1.2.3/32', '15.1.2.3')
@@ -1843,12 +1921,13 @@ class TestBasicRouterOperations(base.BaseTestCase):
         fip_2_rtr_name = agent.get_fip_int_device_name(ri.router_id)
         fip_ns_name = agent.get_fip_ns_name(str(fip['floating_network_id']))
 
-        agent.create_rtr_2_fip_link(ri, fip['floating_network_id'])
+        with mock.patch.object(l3_agent.LinkLocalAllocator, '_write'):
+            agent.create_rtr_2_fip_link(ri, fip['floating_network_id'])
         self.mock_ip.add_veth.assert_called_with(rtr_2_fip_name,
                                                  fip_2_rtr_name, fip_ns_name)
         # TODO(mrsmith): add more aasserts -
         self.mock_ip_dev.route.add_gateway.assert_called_once_with(
-            ri.fip_2_rtr, table=16)
+            '169.254.31.29', table=16)
 
     # TODO(mrsmith): test _create_agent_gateway_port
 
@@ -1872,12 +1951,14 @@ class TestBasicRouterOperations(base.BaseTestCase):
                'floating_network_id': _uuid(),
                'port_id': _uuid()}
         agent.agent_gateway_port = agent_gw_port
+        ri.rtr_fip_subnet = l3_agent.LinkLocalAddressPair('169.254.30.42/31')
         agent.floating_ip_added_dist(ri, fip)
         self.mock_rule.add_rule_from.assert_called_with('192.168.0.1',
                                                         16, FIP_PRI)
         # TODO(mrsmith): add more asserts
 
-    def test_floating_ip_removed_dist(self):
+    @mock.patch.object(l3_agent.LinkLocalAllocator, '_write')
+    def test_floating_ip_removed_dist(self, write):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = prepare_router_data()
         agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
@@ -1896,20 +1977,24 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri.fip_2_rtr = '11.22.33.42'
         ri.rtr_2_fip = '11.22.33.40'
         agent.agent_gateway_port = agent_gw_port
+        s = l3_agent.LinkLocalAddressPair('169.254.30.42/31')
+        ri.rtr_fip_subnet = s
         agent.floating_ip_removed_dist(ri, fip_cidr)
         self.mock_rule.delete_rule_priority.assert_called_with(FIP_PRI)
         self.mock_ip_dev.route.delete_route.assert_called_with(fip_cidr,
-                                                               ri.rtr_2_fip)
+                                                               str(s.ip))
         with mock.patch.object(agent, '_destroy_fip_namespace') as f:
             ri.dist_fip_count = 1
             agent.agent_fip_count = 1
             fip_ns_name = agent.get_fip_ns_name(
                 str(agent._fetch_external_net_id()))
+            ri.rtr_fip_subnet = agent.local_subnets.allocate(ri.router_id)
+            _, fip_to_rtr = ri.rtr_fip_subnet.get_pair()
             agent.floating_ip_removed_dist(ri, fip_cidr)
             self.mock_ip.del_veth.assert_called_once_with(
                 agent.get_fip_int_device_name(router['id']))
             self.mock_ip_dev.route.delete_gateway.assert_called_once_with(
-                '11.22.33.42', table=16)
+                str(fip_to_rtr.ip), table=16)
             f.assert_called_once_with(fip_ns_name)
 
 

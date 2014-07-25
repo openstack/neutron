@@ -49,6 +49,7 @@ class TestVarmourRouter(base.BaseTestCase):
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.root_helper = 'sudo'
+        self.conf.state_path = ''
 
         self.device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists')
