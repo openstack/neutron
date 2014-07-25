@@ -768,9 +768,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
         interface_name = None
         if ex_gw_port_id:
             interface_name = self.get_external_device_name(ex_gw_port_id)
-        if ex_gw_port and ex_gw_port != ri.ex_gw_port:
+        if ex_gw_port:
             self._set_subnet_info(ex_gw_port)
-            self.external_gateway_added(ri, ex_gw_port, interface_name)
+            if not ri.ex_gw_port:
+                self.external_gateway_added(ri, ex_gw_port, interface_name)
+            elif ex_gw_port != ri.ex_gw_port:
+                self.external_gateway_updated(ri, ex_gw_port, interface_name)
         elif not ex_gw_port and ri.ex_gw_port:
             self.external_gateway_removed(ri, ri.ex_gw_port, interface_name)
 
@@ -1116,6 +1119,19 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
         self._external_gateway_added(ri, ex_gw_port, interface_name,
                                      ri.ns_name, preserve_ips)
+
+    def external_gateway_updated(self, ri, ex_gw_port, interface_name):
+        preserve_ips = []
+        if ri.router['distributed']:
+            ns_name = self.get_snat_ns_name(ri.router['id'])
+        else:
+            ns_name = ri.ns_name
+            floating_ips = self.get_floating_ips(ri)
+            preserve_ips = [ip['floating_ip_address'] + FLOATING_IP_CIDR_SUFFIX
+                            for ip in floating_ips]
+
+        self._external_gateway_added(ri, ex_gw_port, interface_name,
+                                     ns_name, preserve_ips)
 
     def _external_gateway_added(self, ri, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
