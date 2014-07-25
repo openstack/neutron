@@ -80,6 +80,51 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
             rmock.assert_called_with('GET', '/health', '', {}, [], False)
             self.assertEqual(1, len(lmock.mock_calls))
 
+    def test_consistency_hash_header(self):
+        # mock HTTP class instead of rest_call so we can see headers
+        with mock.patch(HTTPCON) as conmock:
+            rv = conmock.return_value
+            rv.getresponse.return_value.getheader.return_value = 'HASHHEADER'
+            rv.getresponse.return_value.status = 200
+            rv.getresponse.return_value.read.return_value = ''
+            with self.network():
+                callheaders = rv.request.mock_calls[0][1][3]
+                self.assertIn('X-BSN-BVS-HASH-MATCH', callheaders)
+                # first call will be empty to indicate no previous state hash
+                self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'], '')
+                # change the header that will be received on delete call
+                rv.getresponse.return_value.getheader.return_value = 'HASH2'
+
+            # net delete should have used header received on create
+            callheaders = rv.request.mock_calls[1][1][3]
+            self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'], 'HASHHEADER')
+
+            # create again should now use header received from prev delete
+            with self.network():
+                callheaders = rv.request.mock_calls[2][1][3]
+                self.assertIn('X-BSN-BVS-HASH-MATCH', callheaders)
+                self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'],
+                                 'HASH2')
+
+    def test_consistency_hash_header_no_update_on_bad_response(self):
+        # mock HTTP class instead of rest_call so we can see headers
+        with mock.patch(HTTPCON) as conmock:
+            rv = conmock.return_value
+            rv.getresponse.return_value.getheader.return_value = 'HASHHEADER'
+            rv.getresponse.return_value.status = 200
+            rv.getresponse.return_value.read.return_value = ''
+            with self.network():
+                # change the header that will be received on delete call
+                rv.getresponse.return_value.getheader.return_value = 'EVIL'
+                rv.getresponse.return_value.status = 'GARBAGE'
+
+            # create again should not use header from delete call
+            with self.network():
+                callheaders = rv.request.mock_calls[2][1][3]
+                self.assertIn('X-BSN-BVS-HASH-MATCH', callheaders)
+                self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'],
+                                 'HASHHEADER')
+
     def test_file_put_contents(self):
         pl = NeutronManager.get_plugin()
         with mock.patch(SERVERMANAGER + '.open', create=True) as omock:
