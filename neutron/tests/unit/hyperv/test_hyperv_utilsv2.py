@@ -361,7 +361,8 @@ class TestHyperVUtilsV2(base.BaseTestCase):
         for direction in [self._utils._ACL_DIR_IN, self._utils._ACL_DIR_OUT]:
             for acl_type, address in [ipv4_pair, ipv6_pair]:
                 for protocol in [self._utils._TCP_PROTOCOL,
-                                 self._utils._UDP_PROTOCOL]:
+                                 self._utils._UDP_PROTOCOL,
+                                 self._utils._ICMP_PROTOCOL]:
                     calls.append(mock.call(m_port, direction, acl_type,
                                            self._utils._ACL_ACTION_DENY,
                                            self._utils._ACL_DEFAULT,
