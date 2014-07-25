@@ -114,6 +114,8 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
         with mock.patch(HTTPCON) as conmock:
             rv = conmock.return_value
             rv.getresponse.return_value.getheader.return_value = 'HASHHEADER'
+            rv.getresponse.return_value.status = 200
+            rv.getresponse.return_value.read.return_value = ''
             with self.network():
                 callheaders = rv.request.mock_calls[0][1][3]
                 self.assertIn('X-BSN-BVS-HASH-MATCH', callheaders)
@@ -132,6 +134,25 @@ class ServerManagerTests(test_rp.BigSwitchProxyPluginV2TestCase):
                 self.assertIn('X-BSN-BVS-HASH-MATCH', callheaders)
                 self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'],
                                  'HASH2')
+
+    def test_consistency_hash_header_no_update_on_bad_response(self):
+        # mock HTTP class instead of rest_call so we can see headers
+        with mock.patch(HTTPCON) as conmock:
+            rv = conmock.return_value
+            rv.getresponse.return_value.getheader.return_value = 'HASHHEADER'
+            rv.getresponse.return_value.status = 200
+            rv.getresponse.return_value.read.return_value = ''
+            with self.network():
+                # change the header that will be received on delete call
+                rv.getresponse.return_value.getheader.return_value = 'EVIL'
+                rv.getresponse.return_value.status = 'GARBAGE'
+
+            # create again should not use header from delete call
+            with self.network():
+                callheaders = rv.request.mock_calls[2][1][3]
+                self.assertIn('X-BSN-BVS-HASH-MATCH', callheaders)
+                self.assertEqual(callheaders['X-BSN-BVS-HASH-MATCH'],
+                                 'HASHHEADER')
 
     def test_file_put_contents(self):
         pl = manager.NeutronManager.get_plugin()
