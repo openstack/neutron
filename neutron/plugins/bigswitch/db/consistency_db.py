@@ -55,13 +55,13 @@ class HashHandler(object):
         if self.transaction:
             raise MultipleReadForUpdateCalls()
         self.transaction = self.session.begin(subtransactions=True)
-        # Lock for update here to prevent another server from reading the hash
-        # while this one is in the middle of a transaction.
-        # This may not lock the SQL table in MySQL Galera deployments
-        # but that's okay because the worst case is a double-sync
+        # REVISIT(kevinbenton): locking here with the DB is prone to deadlocks
+        # in various multi-REST-call scenarios (router intfs, flips, etc).
+        # Since it doesn't work in Galera deployments anyway, another sync
+        # mechanism will have to be introduced to prevent inefficient double
+        # syncs in HA deployments.
         res = (self.session.query(ConsistencyHash).
-               filter_by(hash_id=self.hash_id).
-               with_lockmode('update').first())
+               filter_by(hash_id=self.hash_id).first())
         if not res:
             return ''
         self.hash_db_obj = res

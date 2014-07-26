@@ -37,6 +37,7 @@ import json
 import os
 import socket
 import ssl
+import weakref
 
 import eventlet
 import eventlet.corolocal
@@ -267,14 +268,18 @@ class ServerPool(object):
 
     def set_context(self, context):
         # this context needs to be local to the greenthread
-        # so concurrent requests don't use the wrong context
-        self.contexts[eventlet.corolocal.get_ident()] = context
+        # so concurrent requests don't use the wrong context.
+        # Use a weakref so the context is garbage collected
+        # after the plugin is done with it.
+        ref = weakref.ref(context)
+        self.contexts[eventlet.corolocal.get_ident()] = ref
 
-    def pop_context(self):
-        # Don't store these contexts after use. They should only
-        # last for one request.
+    def get_context_ref(self):
+        # Try to get the context cached for this thread. If one
+        # doesn't exist or if it's been garbage collected, this will
+        # just return None.
         try:
-            return self.contexts.pop(eventlet.corolocal.get_ident())
+            return self.contexts[eventlet.corolocal.get_ident()]()
         except KeyError:
             return None
 
@@ -404,7 +409,7 @@ class ServerPool(object):
     @utils.synchronized('bsn-rest-call')
     def rest_call(self, action, resource, data, headers, ignore_codes,
                   timeout=False):
-        hash_handler = cdb.HashHandler(context=self.pop_context())
+        hash_handler = cdb.HashHandler(context=self.get_context_ref())
         good_first = sorted(self.servers, key=lambda x: x.failed)
         first_response = None
         for active_server in good_first:
