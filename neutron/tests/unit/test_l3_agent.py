@@ -229,7 +229,8 @@ def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
                         'ipv6_address_mode': addr_mode}})
 
 
-def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1):
+def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
+                        enable_floating_ip=False):
     if ip_version == 4:
         ip_addr = '19.4.4.4'
         cidr = '19.4.4.0/24'
@@ -243,6 +244,7 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1):
 
     router_id = _uuid()
     ex_gw_port = {'id': _uuid(),
+                  'mac_address': 'ca:fe:de:ad:be:ef',
                   'network_id': _uuid(),
                   'fixed_ips': [{'ip_address': ip_addr,
                                  'subnet_id': _uuid()}],
@@ -255,6 +257,14 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1):
         l3_constants.INTERFACE_KEY: [],
         'routes': [],
         'gw_port': ex_gw_port}
+
+    if enable_floating_ip:
+        router[l3_constants.FLOATINGIP_KEY] = [{
+            'id': _uuid(),
+            'port_id': _uuid(),
+            'floating_ip_address': '19.4.4.2',
+            'fixed_ip_address': '10.0.0.1'}]
+
     router_append_interface(router, count=num_internal_ports,
                             ip_version=ip_version)
 

@@ -1899,8 +1899,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
         LOG.info(_("agent_updated by server side %s!"), payload)
 
 
-def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
-    conf = cfg.CONF
+def _register_opts(conf):
     conf.register_opts(L3NATAgent.OPTS)
     config.register_interface_driver_opts_helper(conf)
     config.register_use_namespaces_opts_helper(conf)
@@ -1908,8 +1907,12 @@ def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
     config.register_root_helper(conf)
     conf.register_opts(interface.OPTS)
     conf.register_opts(external_process.OPTS)
+
+
+def main(manager='neutron.agent.l3_agent.L3NATAgentWithStateReport'):
+    _register_opts(cfg.CONF)
     common_config.init(sys.argv[1:])
-    config.setup_logging(conf)
+    config.setup_logging(cfg.CONF)
     server = neutron_service.Service.create(
         binary='neutron-l3-agent',
         topic=topics.L3_AGENT,
