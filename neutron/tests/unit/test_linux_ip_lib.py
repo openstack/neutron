@@ -287,12 +287,13 @@ class TestIpWrapper(base.BaseTestCase):
         with mock.patch.object(ip_lib, 'IPDevice') as ip_dev:
             ip = ip_lib.IPWrapper('sudo')
             with mock.patch.object(ip.netns, 'exists') as ns_exists:
-                ns_exists.return_value = False
-                ip.ensure_namespace('ns')
-                self.execute.assert_has_calls(
-                    [mock.call([], 'netns', ('add', 'ns'), 'sudo', None)])
-                ip_dev.assert_has_calls([mock.call('lo', 'sudo', 'ns'),
-                                         mock.call().link.set_up()])
+                with mock.patch('neutron.agent.linux.utils.execute'):
+                    ns_exists.return_value = False
+                    ip.ensure_namespace('ns')
+                    self.execute.assert_has_calls(
+                        [mock.call([], 'netns', ('add', 'ns'), 'sudo', None)])
+                    ip_dev.assert_has_calls([mock.call('lo', 'sudo', 'ns'),
+                                             mock.call().link.set_up()])
 
     def test_ensure_namespace_existing(self):
         with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd:
@@ -764,9 +765,14 @@ class TestIpNetnsCommand(TestIPCmdBase):
         self.netns_cmd = ip_lib.IpNetnsCommand(self.parent)
 
     def test_add_namespace(self):
-        ns = self.netns_cmd.add('ns')
-        self._assert_sudo([], ('add', 'ns'), force_root_namespace=True)
-        self.assertEqual(ns.namespace, 'ns')
+        with mock.patch('neutron.agent.linux.utils.execute') as execute:
+            ns = self.netns_cmd.add('ns')
+            self._assert_sudo([], ('add', 'ns'), force_root_namespace=True)
+            self.assertEqual(ns.namespace, 'ns')
+            execute.assert_called_once_with(
+                ['ip', 'netns', 'exec', 'ns',
+                 'sysctl', '-w', 'net.ipv4.conf.all.promote_secondaries=1'],
+                root_helper='sudo', check_exit_code=True)
 
     def test_delete_namespace(self):
         with mock.patch('neutron.agent.linux.utils.execute'):
