@@ -234,7 +234,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
 
     def _mock_port_bound(self, ofport=None, new_local_vlan=None,
                          old_local_vlan=None):
-        port = mock.Mock()
+        port_name = 'tap96408df7-16'
+        port = _mock_port(True, port_name)
         port.ofport = ofport
         net_uuid = 'my-net-uuid'
         ofp = self.agent.int_br.datapath.ofproto
@@ -270,6 +271,8 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
         else:
             self.assertFalse(set_ovs_db_func.called)
             self.assertFalse(ryu_send_msg_func.called)
+        self.assertTrue(self.agent.local_vlan_map[net_uuid].
+                        vif_ports[port_name] is port)
 
     def test_port_bound_deletes_flows_for_valid_ofport(self):
         self._mock_port_bound(ofport=1, new_local_vlan=1)

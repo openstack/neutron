@@ -695,7 +695,7 @@ class OFANeutronAgent(n_rpc.RpcCallback,
             self.provision_local_vlan(net_uuid, network_type,
                                       physical_network, segmentation_id)
         lvm = self.local_vlan_map[net_uuid]
-        lvm.vif_ports[port.port_name] = port
+        lvm.vif_ports[port.normalized_port_name()] = port
         # Do not bind a port if it's already bound
         cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag")
         if cur_tag != str(lvm.vlan):
