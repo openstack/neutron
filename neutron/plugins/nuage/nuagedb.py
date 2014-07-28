@@ -18,6 +18,40 @@ from neutron.db import common_db_mixin
 from neutron.plugins.nuage import nuage_models
 
 
+def add_net_partition(session, netpart_id,
+                      l3dom_id, l2dom_id,
+                      ent_name):
+    net_partitioninst = nuage_models.NetPartition(id=netpart_id,
+                                                  name=ent_name,
+                                                  l3dom_tmplt_id=l3dom_id,
+                                                  l2dom_tmplt_id=l2dom_id)
+    session.add(net_partitioninst)
+    return net_partitioninst
+
+
+def delete_net_partition(session, net_partition):
+    session.delete(net_partition)
+
+
+def get_net_partition_by_name(session, name):
+    query = session.query(nuage_models.NetPartition)
+    return query.filter_by(name=name).first()
+
+
+def get_net_partition_by_id(session, id):
+    query = session.query(nuage_models.NetPartition)
+    return query.filter_by(id=id).first()
+
+
+def get_net_partitions(session, filters=None, fields=None):
+    query = session.query(nuage_models.NetPartition)
+    common_db = common_db_mixin.CommonDbMixin()
+    query = common_db._apply_filters_to_query(query,
+                                              nuage_models.NetPartition,
+                                              filters)
+    return query
+
+
 def add_entrouter_mapping(session, np_id,
                           router_id,
                           n_l3id):
@@ -25,17 +59,6 @@ def add_entrouter_mapping(session, np_id,
                                                       router_id=router_id,
                                                       nuage_router_id=n_l3id)
     session.add(ent_rtr_mapping)
-
-
-def add_rtrzone_mapping(session, neutron_router_id,
-                        nuage_zone_id,
-                        nuage_user_id=None,
-                        nuage_group_id=None):
-    rtr_zone_mapping = nuage_models.RouterZone(router_id=neutron_router_id,
-                                               nuage_zone_id=nuage_zone_id,
-                                               nuage_user_id=nuage_user_id,
-                                               nuage_group_id=nuage_group_id)
-    session.add(rtr_zone_mapping)
 
 
 def add_subnetl2dom_mapping(session, neutron_subnet_id,
@@ -62,54 +85,9 @@ def delete_subnetl2dom_mapping(session, subnet_l2dom):
     session.delete(subnet_l2dom)
 
 
-def add_port_vport_mapping(session, port_id, nuage_vport_id,
-                           nuage_vif_id, static_ip):
-    port_mapping = nuage_models.PortVPortMapping(port_id=port_id,
-                                                 nuage_vport_id=nuage_vport_id,
-                                                 nuage_vif_id=nuage_vif_id,
-                                                 static_ip=static_ip)
-    session.add(port_mapping)
-    return port_mapping
-
-
-def update_port_vport_mapping(port_mapping,
-                              new_dict):
-    port_mapping.update(new_dict)
-
-
-def get_port_mapping_by_id(session, id):
-    query = session.query(nuage_models.PortVPortMapping)
-    return query.filter_by(port_id=id).first()
-
-
-def get_ent_rtr_mapping_by_rtrid(session, rtrid):
-    query = session.query(nuage_models.NetPartitionRouter)
-    return query.filter_by(router_id=rtrid).first()
-
-
-def get_rtr_zone_mapping(session, router_id):
-    query = session.query(nuage_models.RouterZone)
-    return query.filter_by(router_id=router_id).first()
-
-
 def get_subnet_l2dom_by_id(session, id):
     query = session.query(nuage_models.SubnetL2Domain)
     return query.filter_by(subnet_id=id).first()
-
-
-def add_net_partition(session, netpart_id,
-                      l3dom_id, l2dom_id,
-                      ent_name):
-    net_partitioninst = nuage_models.NetPartition(id=netpart_id,
-                                                  name=ent_name,
-                                                  l3dom_tmplt_id=l3dom_id,
-                                                  l2dom_tmplt_id=l2dom_id)
-    session.add(net_partitioninst)
-    return net_partitioninst
-
-
-def delete_net_partition(session, net_partition):
-    session.delete(net_partition)
 
 
 def get_ent_rtr_mapping_by_entid(session,
@@ -118,85 +96,6 @@ def get_ent_rtr_mapping_by_entid(session,
     return query.filter_by(net_partition_id=entid).all()
 
 
-def get_net_partition_by_name(session, name):
-    query = session.query(nuage_models.NetPartition)
-    return query.filter_by(name=name).first()
-
-
-def get_net_partition_by_id(session, id):
-    query = session.query(nuage_models.NetPartition)
-    return query.filter_by(id=id).first()
-
-
-def get_net_partitions(session, filters=None, fields=None):
-    query = session.query(nuage_models.NetPartition)
-    common_db = common_db_mixin.CommonDbMixin()
-    query = common_db._apply_filters_to_query(query,
-                                              nuage_models.NetPartition,
-                                              filters)
-    return query
-
-
-def delete_static_route(session, static_route):
-    session.delete(static_route)
-
-
-def get_router_route_mapping(session, id, route):
-    qry = session.query(nuage_models.RouterRoutesMapping)
-    return qry.filter_by(router_id=id,
-                         destination=route['destination'],
-                         nexthop=route['nexthop']).one()
-
-
-def add_static_route(session, router_id, nuage_rtr_id,
-                     destination, nexthop):
-    staticrt = nuage_models.RouterRoutesMapping(router_id=router_id,
-                                                nuage_route_id=nuage_rtr_id,
-                                                destination=destination,
-                                                nexthop=nexthop)
-    session.add(staticrt)
-    return staticrt
-
-
-def add_fip_mapping(session, neutron_fip_id, router_id, nuage_fip_id):
-    fip = nuage_models.FloatingIPMapping(fip_id=neutron_fip_id,
-                                         router_id=router_id,
-                                         nuage_fip_id=nuage_fip_id)
-    session.add(fip)
-    return fip
-
-
-def delete_fip_mapping(session, fip_mapping):
-    session.delete(fip_mapping)
-
-
-def add_fip_pool_mapping(session, fip_pool_id, net_id, router_id=None):
-    fip_pool_mapping = nuage_models.FloatingIPPoolMapping(
-        fip_pool_id=fip_pool_id,
-        net_id=net_id,
-        router_id=router_id)
-    session.add(fip_pool_mapping)
-    return fip_pool_mapping
-
-
-def delete_fip_pool_mapping(session, fip_pool_mapping):
-    session.delete(fip_pool_mapping)
-
-
-def get_fip_pool_by_id(session, id):
-    query = session.query(nuage_models.FloatingIPPoolMapping)
-    return query.filter_by(fip_pool_id=id).first()
-
-
-def get_fip_pool_from_netid(session, net_id):
-    query = session.query(nuage_models.FloatingIPPoolMapping)
-    return query.filter_by(net_id=net_id).first()
-
-
-def get_fip_mapping_by_id(session, id):
-    qry = session.query(nuage_models.FloatingIPMapping)
-    return qry.filter_by(fip_id=id).first()
-
-
-def update_fip_pool_mapping(fip_pool_mapping, new_dict):
-    fip_pool_mapping.update(new_dict)
+def get_ent_rtr_mapping_by_rtrid(session, rtrid):
+    query = session.query(nuage_models.NetPartitionRouter)
+    return query.filter_by(router_id=rtrid).first()
