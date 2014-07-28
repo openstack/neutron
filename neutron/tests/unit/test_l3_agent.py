@@ -520,19 +520,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
                                      'subnet_id': _uuid()}],
                       'subnet': {'cidr': cidr,
                                  'gateway_ip': gateway_ip}}
-        int_ports = []
         self.subnet_id_list = []
         for i in range(num_internal_ports):
             self.subnet_id_list.append(_uuid())
-            subnet_id = self.subnet_id_list[i]
-            int_ports.append({'id': _uuid(),
-                              'network_id': _uuid(),
-                              'admin_state_up': True,
-                              'fixed_ips': [{'ip_address': '35.4.%s.4' % i,
-                                             'subnet_id': subnet_id}],
-                              'mac_address': 'ca:fe:de:ad:be:ef',
-                              'subnet': {'cidr': '35.4.%s.0/24' % i,
-                                         'gateway_ip': '35.4.%s.1' % i}})
 
         router = {
             'id': router_id,
