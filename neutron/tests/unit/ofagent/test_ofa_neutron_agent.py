@@ -544,20 +544,6 @@ class TestOFANeutronAgent(ofa_test_base.OFAAgentTestBase):
                 self.agent.int_br_device_count
             )
 
-    def test_network_delete(self):
-        with contextlib.nested(
-            mock.patch.object(self.agent, "reclaim_local_vlan"),
-            mock.patch.object(self.agent.tun_br, "cleanup_tunnel_port")
-        ) as (recl_fn, clean_tun_fn):
-            self.agent.network_delete("unused_context",
-                                      network_id="123")
-            self.assertFalse(recl_fn.called)
-            self.agent.local_vlan_map["123"] = "LVM object"
-            self.agent.network_delete("unused_context",
-                                      network_id="123")
-            self.assertFalse(clean_tun_fn.called)
-            recl_fn.assert_called_with("123")
-
     def test_port_update(self):
         port = {"id": "b1981919-f516-11e3-a8f4-08606e7f74e7",
                 "network_id": "124",
