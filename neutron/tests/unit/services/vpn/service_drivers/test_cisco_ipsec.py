@@ -13,12 +13,13 @@
 #    under the License.
 
 import mock
-# from oslo.config import cfg
+from oslo.config import cfg
 
 from neutron import context as n_ctx
+from neutron.db import servicetype_db as st_db
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
-# from neutron.services.vpn import plugin as vpn_plugin
+from neutron.services.vpn import plugin as vpn_plugin
 from neutron.services.vpn.service_drivers import cisco_csr_db as csr_db
 from neutron.services.vpn.service_drivers import cisco_ipsec as ipsec_driver
 from neutron.services.vpn.service_drivers import cisco_validator as validator
@@ -53,21 +54,24 @@ CISCO_IPSEC_SERVICE_DRIVER = ('neutron.services.vpn.service_drivers.'
                               'cisco_ipsec.CiscoCsrIPsecVPNDriver')
 
 
-# class TestCiscoValidatorSelection(base.BaseTestCase):
-#
-#     def setUp(self):
-#         super(TestCiscoValidatorSelection, self).setUp()
-#         vpnaas_provider = (constants.VPN + ':vpnaas:' +
-#                            CISCO_IPSEC_SERVICE_DRIVER + ':default')
-#         cfg.CONF.set_override('service_provider',
-#                               [vpnaas_provider],
-#                               'service_providers')
-#         mock.patch('neutron.common.rpc.create_connection').start()
-#         self.vpn_plugin = vpn_plugin.VPNDriverPlugin()
-#
-#     def test_reference_driver_used(self):
-#         self.assertIsInstance(self.vpn_plugin._get_validator(),
-#                               validator.CiscoCsrVpnValidator)
+class TestCiscoValidatorSelection(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestCiscoValidatorSelection, self).setUp()
+        vpnaas_provider = (constants.VPN + ':vpnaas:' +
+                           CISCO_IPSEC_SERVICE_DRIVER + ':default')
+        cfg.CONF.set_override('service_provider',
+                              [vpnaas_provider],
+                              'service_providers')
+        stm = st_db.ServiceTypeManager()
+        mock.patch('neutron.db.servicetype_db.ServiceTypeManager.get_instance',
+                   return_value=stm).start()
+        mock.patch('neutron.common.rpc.create_connection').start()
+        self.vpn_plugin = vpn_plugin.VPNDriverPlugin()
+
+    def test_reference_driver_used(self):
+        self.assertIsInstance(self.vpn_plugin._get_validator(),
+                              validator.CiscoCsrVpnValidator)
 
 
 class TestCiscoIPsecDriverValidation(base.BaseTestCase):

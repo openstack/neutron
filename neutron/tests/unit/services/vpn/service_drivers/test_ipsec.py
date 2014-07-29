@@ -14,17 +14,16 @@
 #    under the License.
 
 import mock
-# TODO(pcm): Uncomment once oslo.messaging 1.4.0.0a2 or newer is available
-# from oslo.config import cfg
+from oslo.config import cfg
 
 from neutron import context as n_ctx
 from neutron.db import l3_db
+from neutron.db import servicetype_db as st_db
 from neutron.db.vpn import vpn_validator
 from neutron.extensions import vpnaas
 from neutron.openstack.common import uuidutils
 from neutron.plugins.common import constants
-# TODO(pcm): Uncomment once oslo.messaging 1.4.0.0a2 or newer is available
-# from neutron.services.vpn import plugin as vpn_plugin
+from neutron.services.vpn import plugin as vpn_plugin
 from neutron.services.vpn.service_drivers import ipsec as ipsec_driver
 from neutron.tests import base
 
@@ -47,24 +46,25 @@ IPV6 = 6
 IPSEC_SERVICE_DRIVER = ('neutron.services.vpn.service_drivers.'
                         'ipsec.IPsecVPNDriver')
 
-# TODO(pcm): Uncomment, once oslo.messaging package 1.4.0.0a2 or
-# newer is released and available for Neutron.
-#
-# class TestValidatorSelection(base.BaseTestCase):
-#
-#     def setUp(self):
-#         super(TestValidatorSelection, self).setUp()
-#         vpnaas_provider = (constants.VPN + ':vpnaas:' +
-#                            IPSEC_SERVICE_DRIVER + ':default')
-#         cfg.CONF.set_override('service_provider',
-#                               [vpnaas_provider],
-#                               'service_providers')
-#         mock.patch('neutron.common.rpc.create_connection').start()
-#         self.vpn_plugin = vpn_plugin.VPNDriverPlugin()
-#
-#     def test_reference_driver_used(self):
-#         self.assertIsInstance(self.vpn_plugin._get_validator(),
-#                               vpn_validator.VpnReferenceValidator)
+
+class TestValidatorSelection(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestValidatorSelection, self).setUp()
+        vpnaas_provider = (constants.VPN + ':vpnaas:' +
+                           IPSEC_SERVICE_DRIVER + ':default')
+        cfg.CONF.set_override('service_provider',
+                              [vpnaas_provider],
+                              'service_providers')
+        mock.patch('neutron.common.rpc.create_connection').start()
+        stm = st_db.ServiceTypeManager()
+        mock.patch('neutron.db.servicetype_db.ServiceTypeManager.get_instance',
+                   return_value=stm).start()
+        self.vpn_plugin = vpn_plugin.VPNDriverPlugin()
+
+    def test_reference_driver_used(self):
+        self.assertIsInstance(self.vpn_plugin._get_validator(),
+                              vpn_validator.VpnReferenceValidator)
 
 
 class TestIPsecDriverValidation(base.BaseTestCase):
